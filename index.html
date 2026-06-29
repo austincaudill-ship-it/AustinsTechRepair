@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Austin's Tech Repair Group" />
+  <title>Austin's Tech Repair Group</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700;1,800;1,900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <style>
+    :root{
+      --blue:#0057ff;
+      --blue-soft:rgba(0,87,255,.08);
+      --black:#0a0a0a;
+      --white:#fafafa;
+      --gray:#8a8a8e;
+      --light:#f2f2f7;
+      --shadow:0 16px 50px rgba(0,0,0,.08);
+      --mono:"Space Mono",monospace;
+      --nav-h:68px;
+      --footer-bg:#111;
+    }
+    *,*::before,*::after{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:"Plus Jakarta Sans",sans-serif;
+      background:var(--white);
+      color:var(--black);
+      overflow-x:hidden;
+      -webkit-tap-highlight-color:transparent;
+      text-rendering:optimizeLegibility
+    }
+    body.menu-open,body.search-open,body.cart-open,body.policy-open{overflow:hidden;touch-action:none}
+    a,button,input,textarea{font:inherit}
+    button{appearance:none;border:0;background:none;color:inherit;padding:0;cursor:pointer}
+    a{color:inherit;text-decoration:none}
+    :focus-visible{outline:3px solid var(--blue);outline-offset:3px;border-radius:10px}
+    .skip-link{
+      position:absolute;left:12px;top:12px;transform:translateY(-200%);
+      background:var(--black);color:var(--white);padding:10px 14px;border-radius:999px;z-index:3000
+    }
+    .skip-link:focus{transform:translateY(0)}
+
+    .header{
+      position:fixed;inset:0 0 auto 0;height:var(--nav-h);z-index:1100;
+      display:flex;align-items:center;justify-content:space-between;gap:14px;
+      padding:0 16px;background:rgba(250,250,250,.92);backdrop-filter:blur(18px) saturate(180%);
+      border-bottom:1px solid rgba(0,0,0,.06)
+    }
+    .brand{display:flex;align-items:center;gap:10px;min-width:0}
+    .brand-mark{
+      width:34px;height:34px;border-radius:10px;background:var(--blue);color:#fff;display:grid;place-items:center;flex:0 0 auto
+    }
+    .brand-name{
+      font-size:12px;font-weight:900;font-style:italic;text-transform:uppercase;letter-spacing:-.04em;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+    }
+    .header-actions{display:flex;align-items:center;gap:8px}
+    .icon-btn{
+      width:42px;height:42px;border-radius:12px;display:grid;place-items:center;color:var(--gray);position:relative;
+      transition:background .2s,color .2s,transform .2s
+    }
+    .icon-btn:hover{background:rgba(0,0,0,.04);color:var(--black)}
+    .icon-btn.red{color:#e11d48}
+    .cart-badge{
+      position:absolute;top:5px;right:5px;min-width:18px;height:18px;padding:0 4px;border-radius:999px;background:#e11d48;color:#fff;
+      display:none;align-items:center;justify-content:center;font-size:10px;font-weight:800;border:2px solid #fff
+    }
+    .cart-badge.show{display:flex}
+
+    .page{display:none;min-height:100vh;padding-top:var(--nav-h)}
+    .page.active{display:block;animation:fadeUp .35s ease both}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+    .mobile-menu,.search-overlay,.policy-overlay{
+      position:fixed;inset:0;z-index:1050;opacity:0;pointer-events:none;transition:opacity .2s ease
+    }
+    .mobile-menu.open,.search-overlay.open,.policy-overlay.open{opacity:1;pointer-events:auto}
+    .mobile-menu{background:rgba(10,10,10,.72);backdrop-filter:blur(10px)}
+    .menu-panel{
+      width:min(420px,88vw);height:100%;margin-left:auto;background:var(--black);color:var(--white);
+      transform:translateX(100%);transition:transform .22s ease;display:flex;flex-direction:column;padding:88px 22px 22px;position:relative
+    }
+    .mobile-menu.open .menu-panel{transform:translateX(0)}
+    .menu-close,.search-close,.policy-close{
+      position:absolute;top:18px;right:18px;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;
+      cursor:pointer;color:var(--gray);background:rgba(255,255,255,.04)
+    }
+    .menu-links{display:flex;flex-direction:column;gap:6px}
+    .menu-link{
+      text-align:left;font-size:clamp(30px,9vw,56px);font-weight:900;font-style:italic;letter-spacing:-.05em;text-transform:uppercase;
+      color:rgba(255,255,255,.18);line-height:1;cursor:pointer;transition:color .2s
+    }
+    .menu-link:hover{color:var(--white)}
+    .menu-footer{
+      margin-top:auto;padding-top:28px;border-top:1px solid rgba(255,255,255,.08);
+      display:flex;justify-content:space-between;gap:16px;align-items:flex-end;flex-wrap:wrap
+    }
+    .menu-phone{font-family:var(--mono);color:var(--blue);font-size:12px;letter-spacing:.05em}
+    .menu-tag{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.28);max-width:260px;text-align:right}
+
+    .search-overlay{background:rgba(10,10,10,.92);backdrop-filter:blur(10px)}
+    .search-panel{
+      width:min(760px,calc(100% - 24px));height:min(100vh - 24px,920px);margin:12px auto;border-radius:28px;overflow:hidden;
+      box-shadow:var(--shadow);background:var(--white);color:var(--black);position:relative;display:flex;flex-direction:column;padding:84px 20px 22px
+    }
+    .search-bar{
+      display:flex;align-items:center;gap:12px;border-bottom:2px solid var(--black);padding-bottom:14px;margin-bottom:18px
+    }
+    .search-bar input{
+      flex:1;min-width:0;border:0;outline:none;background:transparent;font-size:clamp(24px,7vw,42px);font-weight:900;font-style:italic;letter-spacing:-.04em
+    }
+    .search-bar input::placeholder{color:#d0d0d6}
+    .search-results{display:flex;flex-direction:column;gap:10px;overflow:auto;padding-bottom:20px}
+    .search-result{
+      display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px 0;border-bottom:1px solid var(--light);cursor:pointer;text-align:left
+    }
+    .search-result-name{font-weight:900;font-style:italic;text-transform:uppercase;letter-spacing:-.02em;font-size:17px}
+    .search-result-meta{font-family:var(--mono);font-size:11px;color:var(--blue);white-space:nowrap}
+
+    .hero,.content-wrap{max-width:1120px;margin:0 auto;padding:48px 18px 64px}
+    .hero{padding-top:64px}
+    .hero-eyebrow,.section-tag,.footer-col-title{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--blue)}
+    .hero-headline{
+      margin:0 0 16px;font-size:clamp(52px,14vw,108px);line-height:.92;font-weight:900;font-style:italic;letter-spacing:-.05em;text-transform:uppercase;
+      max-width:11ch
+    }
+    .hero-headline em{display:block;font-style:normal;color:var(--blue)}
+    .hero-sub{margin:0 0 28px;max-width:560px;font-size:16px;line-height:1.7;color:var(--gray)}
+    .hero-search{
+      display:flex;align-items:center;gap:10px;max-width:720px;margin:0 0 26px;padding:14px 16px;border:1px solid var(--light);border-radius:18px;background:#fff;box-shadow:0 10px 40px rgba(0,0,0,.04)
+    }
+    .hero-search input{
+      flex:1;min-width:0;border:0;outline:none;background:transparent;font-size:18px;font-weight:700
+    }
+    .hero-search button{
+      flex:0 0 auto;padding:12px 16px;border-radius:12px;background:var(--black);color:#fff;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.08em
+    }
+
+    .slash-divider{display:flex;align-items:center;gap:12px;margin-bottom:30px}
+    .slash-marks{display:flex;gap:5px}
+    .slash-mark{width:2px;height:32px;border-radius:999px;background:var(--blue);transform:skewX(-18deg)}
+    .slash-mark:nth-child(2){opacity:.45}
+    .slash-mark:nth-child(3){opacity:.18}
+    .slash-line{flex:1;height:1px;background:var(--light)}
+
+    .service-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .service-card{
+      position:relative;overflow:hidden;background:var(--light);border:1.5px solid transparent;border-radius:22px;padding:20px;cursor:pointer;
+      transition:transform .2s,background .2s,border-color .2s;min-height:128px;text-align:left
+    }
+    .service-card:hover{background:#fff;border-color:var(--blue);transform:translateY(-3px)}
+    .service-card.dark{background:var(--black);color:var(--white)}
+    .service-icon{font-size:19px;color:var(--blue);margin-bottom:12px}
+    .service-card.dark .service-icon{color:#4d8eff}
+    .service-label{margin:0;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.04em}
+    .service-sub{margin:4px 0 0;font-size:11px;color:var(--gray);font-weight:600}
+    .service-card.dark .service-sub{color:rgba(255,255,255,.44)}
+    .service-card.feature{grid-column:span 2}
+
+    .flip-card{perspective:1200px;min-height:128px}
+    .flip-card-inner{
+      position:relative;width:100%;height:100%;min-height:128px;transition:transform .7s ease;transform-style:preserve-3d
+    }
+    .flip-card.flipped .flip-card-inner{transform:rotateY(180deg)}
+    .flip-card-face{
+      position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:22px;padding:20px;display:flex;flex-direction:column;justify-content:flex-start;text-align:left
+    }
+    .flip-card-front{background:var(--light);border:1.5px solid transparent}
+    .flip-card-back{
+      background:linear-gradient(180deg,#111,#000);color:#fff;transform:rotateY(180deg);border:1.5px solid rgba(255,255,255,.06);gap:10px
+    }
+    .flip-card-back h4{margin:0;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#4d8eff}
+    .flip-card-back p{margin:0;font-size:12px;line-height:1.6;color:rgba(255,255,255,.84)}
+
+    .section-title{
+      margin:0 0 8px;font-size:clamp(34px,8vw,58px);line-height:.96;font-weight:900;font-style:italic;letter-spacing:-.05em;text-transform:uppercase
+    }
+    .section-copy{margin:0 0 26px;color:var(--gray);max-width:760px;line-height:1.7}
+
+    .slideshow{
+      position:relative;width:100%;height:clamp(320px,55vh,760px);min-height:320px;border-radius:28px;overflow:hidden;background:#111;box-shadow:var(--shadow)
+    }
+    .slide{position:absolute;inset:0;opacity:0;transition:opacity .8s ease;background-size:cover;background-position:center center;background-repeat:no-repeat}
+    .slide.active{opacity:1}
+    .slide-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.1),rgba(0,0,0,.52))}
+    .slide-caption{position:absolute;left:18px;right:18px;bottom:18px;color:#fff;z-index:2}
+    .slide-caption h3{margin:0 0 6px;font-size:28px;line-height:1;font-weight:900;font-style:italic;text-transform:uppercase;letter-spacing:-.04em}
+    .slide-caption p{margin:0;max-width:520px;font-size:14px;line-height:1.6;color:rgba(255,255,255,.82)}
+
+    .about-hero{
+      background:var(--black);color:var(--white);padding:64px 18px 54px;position:relative;overflow:hidden
+    }
+    .about-hero::before{
+      content:"ATR";position:absolute;right:-8px;bottom:-28px;font-size:160px;font-weight:900;font-style:italic;letter-spacing:-.06em;color:rgba(255,255,255,.03)
+    }
+    .about-title{
+      margin:12px 0 0;font-size:clamp(40px,10vw,74px);line-height:.95;font-weight:900;font-style:italic;letter-spacing:-.05em;text-transform:uppercase;max-width:10ch
+    }
+    .about-body p{max-width:720px;margin:0 0 18px;font-size:16px;line-height:1.75;color:var(--gray)}
+
+    .product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
+    .product-card{
+      border:1px solid var(--light);border-radius:24px;background:#fff;overflow:hidden;transition:box-shadow .2s,border-color .2s,transform .2s
+    }
+    .product-card:hover{border-color:rgba(0,87,255,.2);box-shadow:0 12px 40px rgba(0,0,0,.06);transform:translateY(-2px)}
+    .product-img{aspect-ratio:1/1;background:var(--light);overflow:hidden}
+    .product-img img{width:100%;height:100%;object-fit:cover;transition:transform .45s ease}
+    .product-card:hover .product-img img{transform:scale(1.05)}
+    .product-info{padding:18px}
+    .product-tag{margin:0 0 6px;font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--blue)}
+    .product-name{margin:0 0 4px;font-size:16px;font-weight:900;font-style:italic;text-transform:uppercase;letter-spacing:-.03em}
+    .product-desc{margin:0 0 16px;font-size:12px;line-height:1.55;color:var(--gray);font-weight:500}
+    .product-footer{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .product-price{font-family:var(--mono);font-size:15px;font-weight:700}
+    .buy-btn{border-radius:10px;padding:9px 14px;background:var(--black);color:#fff;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.06em}
+    .buy-btn:hover{background:var(--blue)}
+
+    .repair-card{background:#fff;border:1px solid var(--light);border-radius:30px;padding:28px 22px;box-shadow:var(--shadow)}
+    .repair-step{display:none}
+    .repair-step.active{display:block;animation:fadeUp .35s ease both}
+    .step-title{margin:0 0 18px;font-size:30px;line-height:1;font-weight:900;font-style:italic;letter-spacing:-.04em;text-transform:uppercase}
+    .option-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .option-btn,.issue-btn{cursor:pointer;transition:border-color .2s,background .2s,color .2s,transform .2s}
+    .option-btn{
+      min-height:70px;padding:18px 16px;border-radius:16px;background:var(--light);border:1.5px solid transparent;font-weight:900;font-style:italic;
+      text-transform:uppercase;color:var(--black);text-align:left
+    }
+    .option-btn:hover{background:#fff;border-color:var(--blue);color:var(--blue);transform:translateY(-1px)}
+    .issue-list{display:flex;flex-direction:column;gap:8px}
+    .issue-btn{
+      padding:16px 18px;border-radius:14px;background:var(--light);border:1.5px solid transparent;font-weight:800;font-style:italic;text-transform:uppercase;
+      text-align:left;display:flex;align-items:center;justify-content:space-between;color:var(--black)
+    }
+    .issue-btn:hover{background:#fff;border-color:var(--blue);color:var(--blue)}
+
+    .field{display:grid;gap:6px}
+    .field label{font-size:11px;font-family:var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--gray)}
+    .form-field{
+      width:100%;background:var(--light);border:1.5px solid transparent;border-radius:14px;padding:16px 16px;color:var(--black);outline:none;transition:border-color .2s,background .2s
+    }
+    .form-field:focus{background:#fff;border-color:var(--blue)}
+    .form-grid{display:grid;gap:10px}
+    .cta-primary{
+      width:100%;border:0;border-radius:16px;padding:18px 22px;background:var(--black);color:#fff;cursor:pointer;font-weight:900;font-style:italic;
+      text-transform:uppercase;letter-spacing:.08em;transition:transform .15s,background .2s
+    }
+    .cta-primary:hover{background:var(--blue);transform:translateY(-1px)}
+    .back-btn{margin-top:16px;color:var(--gray);font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+    .back-btn:hover{color:var(--black)}
+
+    .footer{
+      background:var(--footer-bg);color:rgba(255,255,255,.55);padding:44px 18px 30px;font-size:12px
+    }
+    .footer-top,.footer-legal,.footer-bottom{max-width:1120px;margin:0 auto}
+    .footer-top{
+      display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:22px;padding-bottom:24px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:18px
+    }
+    .footer-links-col{display:flex;flex-direction:column;gap:10px}
+    .footer-link{color:rgba(255,255,255,.42);transition:color .2s;text-align:left}
+    .footer-link:hover{color:#fff}
+    .legal-block{margin-bottom:18px}
+    .legal-heading{
+      margin:0 0 8px;font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.65)
+    }
+    .legal-heading.red{color:#ff453a}
+    .payment-row{display:flex;gap:10px;flex-wrap:wrap}
+    .payment-badge{
+      height:42px;min-width:84px;border-radius:10px;background:#1b1b1b;border:1px solid rgba(255,255,255,.05);display:grid;place-items:center;
+      color:rgba(255,255,255,.7);font-size:13px;font-weight:900;letter-spacing:-.02em;padding:0 12px
+    }
+    .footer-bottom{
+      margin-top:20px;padding-top:18px;border-top:1px solid rgba(255,255,255,.08);display:flex;gap:14px;justify-content:space-between;align-items:center;flex-wrap:wrap
+    }
+    .footer-copy{font-size:11px}
+    .footer-wordmark{font-weight:900;font-style:italic;letter-spacing:-.03em;text-transform:uppercase;color:rgba(255,255,255,.18)}
+
+    .cart-drawer{
+      position:fixed;inset:0;z-index:1200;pointer-events:none;opacity:0;transition:opacity .18s ease
+    }
+    .cart-drawer.open{pointer-events:auto;opacity:1}
+    .cart-drawer__backdrop{position:absolute;inset:0;background:rgba(10,10,10,.5)}
+    .cart-drawer__panel{
+      position:absolute;top:0;right:0;width:min(420px,100%);height:100%;background:#fff;box-shadow:-20px 0 60px rgba(0,0,0,.18);
+      transform:translateX(100%);transition:transform .22s ease;display:flex;flex-direction:column
+    }
+    .cart-drawer.open .cart-drawer__panel{transform:translateX(0)}
+    .cart-drawer__header,.cart-drawer__footer{padding:18px;border-bottom:1px solid var(--light)}
+    .cart-drawer__footer{border-top:1px solid var(--light);border-bottom:0;margin-top:auto}
+    .cart-drawer__items{padding:14px 18px;overflow:auto;flex:1;display:flex;flex-direction:column;gap:12px}
+    .cart-item{display:flex;gap:12px;align-items:flex-start;padding:12px;border:1px solid var(--light);border-radius:16px}
+    .cart-item__img{width:62px;height:62px;border-radius:12px;object-fit:cover;background:var(--light);flex:0 0 auto}
+    .cart-item__meta{flex:1;min-width:0}
+    .cart-item__name{margin:0 0 4px;font-weight:900;font-style:italic;text-transform:uppercase;font-size:13px}
+    .cart-item__line{margin:0;font-size:12px;color:var(--gray)}
+    .cart-item__actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+    .cart-mini-btn{border:0;border-radius:10px;padding:7px 10px;background:var(--light);cursor:pointer;font-size:11px;font-weight:800}
+    .cart-drawer__total{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;font-weight:800}
+
+    .policy-overlay{
+      position:fixed;inset:0;width:100vw;height:100dvh;background:rgba(10,10,10,.88);backdrop-filter:blur(12px);z-index:1300
+    }
+    .policy-panel{
+      width:100vw;height:100dvh;margin:0;border-radius:0;background:#fff;position:relative;overflow:hidden;box-shadow:none;display:flex;flex-direction:column;padding:84px 18px 18px
+    }
+    .policy-body{
+      flex:1;overflow:auto;padding-right:6px;line-height:1.75;color:#333;font-size:15px
+    }
+    .policy-body h2{
+      margin:0 0 4px;font-size:28px;font-style:italic;text-transform:uppercase;letter-spacing:-.04em
+    }
+    .policy-body .eff{
+      font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--blue);margin-bottom:18px
+    }
+    .policy-body section{margin-top:16px;padding-top:16px;border-top:1px solid #e9e9ef}
+
+    .info-list{display:grid;gap:10px}
+    .info-row{display:flex;align-items:center;gap:12px;padding:16px 18px;border:1px solid var(--light);border-radius:16px;background:#fff}
+    .info-num{font-family:var(--mono);font-size:11px;color:var(--blue);min-width:32px}
+    .info-text{flex:1;font-size:14px;line-height:1.6}
+    .info-arrow{color:var(--gray)}
+
+    @media (max-width: 840px){.footer-top{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media (max-width:720px){
+      .service-grid,.option-grid,.footer-top{grid-template-columns:1fr}
+      .service-card.feature{grid-column:auto}
+      .menu-tag{text-align:left}
+      .search-panel{width:calc(100% - 16px);height:calc(100vh - 16px);margin:8px auto}
+      .cart-drawer__panel{width:min(92vw,420px)}
+    }
+.form-thanks{
+  margin-top:12px;
+  padding:14px 16px;
+  border-radius:14px;
+  background:#e8f5ee;
+  color:#116b3a;
+  font-weight:800;
+}
+
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+
+  <header class="header">
+    <a class="brand" href="#" data-page="home" aria-label="Austin's Tech Repair Group home">
+      <div class="brand-mark"><i class="fas fa-tools" aria-hidden="true"></i></div>
+      <span class="brand-name">Austin's Tech Repair Group</span>
+    </a>
+
+    <div class="header-actions">
+      <button class="icon-btn" id="search-toggle" type="button" aria-label="Open search" aria-haspopup="dialog" aria-expanded="false">
+        <i class="fas fa-search" aria-hidden="true"></i>
+      </button>
+      <button class="icon-btn" id="cart-toggle" type="button" aria-label="Cart" aria-haspopup="dialog" aria-expanded="false">
+        <i class="fas fa-cart-shopping" aria-hidden="true"></i>
+        <span id="cart-badge" class="cart-badge">0</span>
+      </button>
+      <button class="icon-btn" id="menu-toggle" type="button" aria-label="Open menu" aria-haspopup="dialog" aria-expanded="false">
+        <i class="fas fa-bars" aria-hidden="true"></i>
+      </button>
+    </div>
+  </header>
+
+  <nav class="mobile-menu" id="mobile-menu" aria-hidden="true">
+    <div class="menu-panel" role="dialog" aria-modal="true" aria-labelledby="menu-title">
+      <button class="menu-close" id="menu-close" type="button" aria-label="Close menu"><i class="fas fa-times"></i></button>
+      <p id="menu-title" class="hero-eyebrow" style="margin-bottom:18px;">// Menu</p>
+      <div class="menu-links">
+        <button class="menu-link" type="button" data-page="home">Home</button>
+        <button class="menu-link" type="button" data-page="shop">Shop</button>
+        <button class="menu-link" type="button" data-page="repair">Repair</button>
+        <button class="menu-link" type="button" data-page="about">About</button>
+        <button class="menu-link" type="button" data-page="contact">Contact</button>
+        <button class="menu-link" type="button" data-page="b2b">B2B</button>
+        <button class="menu-link" type="button" data-page="atr-one">ATR One</button>
+        <button class="menu-link" type="button" data-page="employee">Employee Portal</button>
+      </div>
+      <div class="menu-footer">
+        <a class="menu-phone" href="tel:5134788077">513-478-8077</a>
+        <span class="menu-tag">Dayton, OH and nearby areas · Est. 2010</span>
+      </div>
+    </div>
+  </nav>
+
+  <section class="search-overlay" id="search-overlay" aria-hidden="true">
+    <div class="search-panel" role="dialog" aria-modal="true" aria-labelledby="search-title">
+      <button class="search-close" id="search-close" type="button" aria-label="Close search"><i class="fas fa-times"></i></button>
+      <p id="search-title" class="hero-eyebrow" style="margin-bottom:18px;">// Search</p>
+      <div class="search-bar">
+        <input id="search-input" type="text" placeholder="Search repairs..." autocomplete="off" spellcheck="false" aria-label="Search repairs" />
+      </div>
+      <div id="search-results" class="search-results" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section class="policy-overlay" id="policy-overlay" aria-hidden="true">
+    <div class="policy-panel" role="dialog" aria-modal="true" aria-labelledby="policy-title">
+      <button class="policy-close" id="policy-close" type="button" aria-label="Close policy"><i class="fas fa-times"></i></button>
+      <div class="policy-body" id="policy-body"></div>
+    </div>
+  </section>
+
+  <main id="main-content">
+    <section id="home" class="page active">
+      <div class="hero">
+        <p class="hero-eyebrow">// Austin's Tech Repair Group</p>
+        <h1 class="hero-headline"><em>Fast. Local.</em> Tech Support.</h1>
+        <p class="hero-sub">Repairs, cleanups, B2B help, and device support built around what your devices actually need.</p>
+        <form class="hero-search" id="hero-search-form">
+          <input id="hero-search-input" type="text" placeholder="Search repairs, devices, or support..." aria-label="Search repairs, devices, or support" />
+          <button type="submit">Search</button>
+        </form>
+        <div class="slash-divider" aria-hidden="true">
+          <div class="slash-marks"><span class="slash-mark"></span><span class="slash-mark"></span><span class="slash-mark"></span></div>
+          <div class="slash-line"></div>
+        </div>
+        <div class="service-grid">
+          <button class="service-card flip-card" type="button" data-device="Phones">
+            <div class="flip-card-inner">
+              <div class="flip-card-face flip-card-front">
+                <div class="service-icon"><i class="fas fa-mobile-alt"></i></div>
+                <p class="service-label">Phones</p>
+                <p class="service-sub">Screen, battery, board, software</p>
+              </div>
+              <div class="flip-card-face flip-card-back">
+                <h4>Phones</h4>
+                <p>We handle cracked screens, battery swaps, charging issues, camera problems, speaker or microphone repairs, software trouble, and fast data transfer help.</p>
+              </div>
+            </div>
+          </button>
+          <button class="service-card flip-card" type="button" data-device="Tablets">
+            <div class="flip-card-inner">
+              <div class="flip-card-face flip-card-front">
+                <div class="service-icon"><i class="fas fa-tablet-screen-button"></i></div>
+                <p class="service-label">Tablets</p>
+                <p class="service-sub">Screen, battery, charging, software</p>
+              </div>
+              <div class="flip-card-face flip-card-back">
+                <h4>Tablets</h4>
+                <p>Tablet work includes display replacement, charging port repair, touch troubleshooting, battery service, and setup support when software gets in the way.</p>
+              </div>
+            </div>
+          </button>
+          <button class="service-card flip-card" type="button" data-device="Computers">
+            <div class="flip-card-inner">
+              <div class="flip-card-face flip-card-front">
+                <div class="service-icon"><i class="fas fa-laptop"></i></div>
+                <p class="service-label">Computers</p>
+                <p class="service-sub">Drives, power, RAM, displays</p>
+              </div>
+              <div class="flip-card-face flip-card-back">
+                <h4>Computers</h4>
+                <p>For computers, we cover SSD upgrades, RAM installs, virus cleanup, display repair, power issues, software recovery, and data rescue support.</p>
+              </div>
+            </div>
+          </button>
+          <button class="service-card flip-card" type="button" data-device="Gaming">
+            <div class="flip-card-inner">
+              <div class="flip-card-face flip-card-front">
+                <div class="service-icon"><i class="fas fa-gamepad"></i></div>
+                <p class="service-label">Gaming</p>
+                <p class="service-sub">HDMI, power, storage, overheating</p>
+              </div>
+              <div class="flip-card-face flip-card-back">
+                <h4>Gaming</h4>
+                <p>We work on consoles, HDMI ports, cooling fans, storage upgrades, power faults, controller problems, and overheating diagnostics.</p>
+              </div>
+            </div>
+          </button>
+          <button class="service-card flip-card" type="button" data-device="Smart Watches">
+            <div class="flip-card-inner">
+              <div class="flip-card-face flip-card-front">
+                <div class="service-icon"><i class="fas fa-stopwatch"></i></div>
+                <p class="service-label">Smart Watches</p>
+                <p class="service-sub">Display, battery, sync, pairing</p>
+              </div>
+              <div class="flip-card-face flip-card-back">
+                <h4>Smart Watches</h4>
+                <p>Smart watch help includes battery service, display issues, charging problems, pairing fixes, syncing support, and button or crown repairs.</p>
+              </div>
+            </div>
+          </button>
+          <button class="service-card dark feature" type="button" data-page="shop"><div class="service-icon"><i class="fas fa-bag-shopping"></i></div><p class="service-label">Shop</p><p class="service-sub">Parts, accessories, and gear</p></button>
+          <button class="service-card dark feature" type="button" data-page="b2b"><div class="service-icon"><i class="fas fa-screwdriver-wrench"></i></div><p class="service-label">B2B Support</p><p class="service-sub">Software, websites, networks, office tech</p></button>
+          <button class="service-card dark feature" type="button" data-page="atr-one"><div class="service-icon"><i class="fas fa-star"></i></div><p class="service-label">ATR One</p><p class="service-sub">$19.99 subscriber special</p></button>
+        </div>
+      </div>
+    </section>
+
+    <section id="shop" class="page">
+      <div class="content-wrap">
+        <h2 class="section-title">Shop</h2>
+        <p class="section-copy">Cases, protectors, audio, power, and everyday repair-ready accessories.</p>
+        <div class="product-grid">
+          <article class="product-card">
+            <div class="product-img"><img src="https://images.unsplash.com/photo-1585802542015-05c0b6f2b1fb?auto=format&fit=crop&w=900&q=80" alt="Screen protector" /></div>
+            <div class="product-info"><p class="product-tag">Accessory</p><h3 class="product-name">Screen Protector</h3><p class="product-desc">Tempered protection for phones and tablets.</p><div class="product-footer"><span class="product-price">$14.99</span><button class="buy-btn" type="button" data-add-cart='{"id":"sp-01","name":"Screen Protector","price":14.99,"image":"https://images.unsplash.com/photo-1585802542015-05c0b6f2b1fb?auto=format&fit=crop&w=900&q=80"}'>Add to Cart</button></div></div>
+          </article>
+          <article class="product-card">
+            <div class="product-img"><img src="https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=900&q=80" alt="Headphones" /></div>
+            <div class="product-info"><p class="product-tag">Audio</p><h3 class="product-name">Headphones</h3><p class="product-desc">Great for calls, gaming, and music.</p><div class="product-footer"><span class="product-price">$29.99</span><button class="buy-btn" type="button" data-add-cart='{"id":"hp-01","name":"Headphones","price":29.99,"image":"https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=900&q=80"}'>Add to Cart</button></div></div>
+          </article>
+          <article class="product-card">
+            <div class="product-img"><img src="https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=900&q=80" alt="Tablet case" /></div>
+            <div class="product-info"><p class="product-tag">Case</p><h3 class="product-name">Tablet Case</h3><p class="product-desc">Protection for everyday tablet use.</p><div class="product-footer"><span class="product-price">$19.99</span><button class="buy-btn" type="button" data-add-cart='{"id":"tc-01","name":"Tablet Case","price":19.99,"image":"https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=900&q=80"}'>Add to Cart</button></div></div>
+          </article>
+          <article class="product-card">
+            <div class="product-img"><img src="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=900&q=80" alt="Laptop case" /></div>
+            <div class="product-info"><p class="product-tag">Case</p><h3 class="product-name">Laptop Case</h3><p class="product-desc">Slim protection for laptops and notebooks.</p><div class="product-footer"><span class="product-price">$24.99</span><button class="buy-btn" type="button" data-add-cart='{"id":"lc-01","name":"Laptop Case","price":24.99,"image":"https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=900&q=80"}'>Add to Cart</button></div></div>
+          </article>
+          <article class="product-card">
+            <div class="product-img"><img src="https://images.unsplash.com/photo-1484704849700-f032a568e944?auto=format&fit=crop&w=900&q=80" alt="Gaming accessory" /></div>
+            <div class="product-info"><p class="product-tag">Gaming</p><h3 class="product-name">Console Accessory</h3><p class="product-desc">Useful add-on for gaming systems.</p><div class="product-footer"><span class="product-price">$34.99</span><button class="buy-btn" type="button" data-add-cart='{"id":"gc-01","name":"Console Accessory","price":34.99,"image":"https://images.unsplash.com/photo-1484704849700-f032a568e944?auto=format&fit=crop&w=900&q=80"}'>Add to Cart</button></div></div>
+          </article>
+          <article class="product-card">
+            <div class="product-img"><img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=80" alt="Smart watch band" /></div>
+            <div class="product-info"><p class="product-tag">Smart Watch</p><h3 class="product-name">Watch Band</h3><p class="product-desc">Comfortable everyday replacement band.</p><div class="product-footer"><span class="product-price">$17.99</span><button class="buy-btn" type="button" data-add-cart='{"id":"sw-01","name":"Watch Band","price":17.99,"image":"https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=80"}'>Add to Cart</button></div></div>
+          </article>
+          <article class="product-card">
+            <div class="product-img"><img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80" alt="USB cable" /></div>
+            <div class="product-info"><p class="product-tag">Accessory</p><h3 class="product-name">USB Cable</h3><p class="product-desc">Reliable charging and data cable.</p><div class="product-footer"><span class="product-price">$9.99</span><button class="buy-btn" type="button" data-add-cart='{"id":"usb-01","name":"USB Cable","price":9.99,"image":"https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80"}'>Add to Cart</button></div></div>
+          </article>
+          <article class="product-card">
+            <div class="product-img"><img src="https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=900&q=80" alt="Phone charger" /></div>
+            <div class="product-info"><p class="product-tag">Power</p><h3 class="product-name">Fast Charger</h3><p class="product-desc">Quick charge adapter for everyday use.</p><div class="product-footer"><span class="product-price">$24.99</span><button class="buy-btn" type="button" data-add-cart='{"id":"chg-01","name":"Fast Charger","price":24.99,"image":"https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=900&q=80"}'>Add to Cart</button></div></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="repair" class="page">
+      <div class="content-wrap">
+        <h2 class="section-title">Repair</h2>
+        <p class="section-copy">Pick a device, choose the issue, and continue through the triage steps.</p>
+        <div class="repair-card">
+          <div class="repair-step active" id="step-device">
+            <p class="section-tag">// Step 01</p>
+            <h3 class="step-title">Select Device Type</h3>
+            <div class="option-grid">
+              <button class="option-btn" type="button" data-device="Phones">Phone</button>
+              <button class="option-btn" type="button" data-device="Tablets">Tablet</button>
+              <button class="option-btn" type="button" data-device="Computers">Computer</button>
+              <button class="option-btn" type="button" data-device="Gaming">Gaming</button>
+              <button class="option-btn" type="button" data-device="Smart Watches">Smart Watch</button>
+              <button class="option-btn" type="button" data-device="Business">Business</button>
+            </div>
+          </div>
+          <div class="repair-step" id="step-issue">
+            <p class="section-tag">// Step 02</p>
+            <h3 class="step-title" id="issue-title">Select Issue</h3>
+            <div class="issue-list" id="issue-list"></div>
+            <button class="back-btn" type="button" data-back="device">← Back</button>
+          </div>
+          <div class="repair-step" id="step-final">
+            <p class="section-tag">// Step 03</p>
+            <h3 class="step-title">Contact Info</h3>
+            <form id="dispatch-form" class="form-grid">
+              <div class="field"><label for="full-name">Full name</label><input id="full-name" class="form-field" type="text" required /></div>
+              <div class="field"><label for="phone-number">Phone number</label><input id="phone-number" class="form-field" type="tel" required /></div>
+              <div class="field"><label for="city-zip">City or ZIP code</label><input id="city-zip" class="form-field" type="text" required /></div>
+              <button class="cta-primary" type="submit">Request Service →</button>
+            </form>
+
+            <button class="back-btn" type="button" data-back="issue">← Back</button>
+<p id="contact-thanks" class="form-thanks" hidden>Thanks — your message was sent.</p>
+<p id="repair-thanks" class="form-thanks" hidden>Thanks — your repair request was sent.</p>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="atr-one" class="page">
+      <div class="content-wrap">
+        <p class="hero-eyebrow">// ATR One</p>
+        <h1 class="hero-headline"><em>Member.</em> Perks.</h1>
+        <p class="hero-sub">Your $19.99 monthly plan with priority benefits, discounted hardware service, and member-only support extras.</p>
+        <div class="slash-divider" aria-hidden="true">
+          <div class="slash-marks"><span class="slash-mark"></span><span class="slash-mark"></span><span class="slash-mark"></span></div>
+          <div class="slash-line"></div>
+        </div>
+        <div class="service-grid">
+          <button class="service-card dark feature" type="button"><div class="service-icon"><i class="fas fa-shield-heart"></i></div><p class="service-label">Free Screen Protectors</p><p class="service-sub">Included for active members</p></button>
+          <button class="service-card dark feature" type="button"><div class="service-icon"><i class="fas fa-broom"></i></div><p class="service-label">Free Cleaning</p><p class="service-sub">Device cleaning and basic refresh</p></button>
+          <button class="service-card dark feature" type="button"><div class="service-icon"><i class="fas fa-bolt"></i></div><p class="service-label">Priority Service Calls</p><p class="service-sub">Get to the front of the queue</p></button>
+          <button class="service-card dark feature" type="button"><div class="service-icon"><i class="fas fa-clock"></i></div><p class="service-label">Same Day Repair</p><p class="service-sub">When parts and schedule allow</p></button>
+          <button class="service-card dark feature" type="button"><div class="service-icon"><i class="fas fa-tags"></i></div><p class="service-label">20% Off Hardware Repair</p><p class="service-sub">Savings on eligible hardware labor</p></button>
+          <button class="service-card dark feature" type="button"><div class="service-icon"><i class="fas fa-truck-fast"></i></div><p class="service-label">Priority Shipping</p><p class="service-sub">Included with your membership</p></button>
+          <button class="service-card dark feature" type="button" data-add-cart='{"id":"atr-one-sub","name":"ATR One Subscription","price":19.99,"image":"https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80"}'><div class="service-icon"><i class="fas fa-cart-shopping"></i></div><p class="service-label">Subscribe</p><p class="service-sub">$19.99 monthly ATR One plan</p></button>
+        </div>
+      </div>
+    </section>
+
+    <section id="about" class="page">
+      <div class="about-hero"><p class="hero-eyebrow">// About Us</p><h2 class="about-title">Built to keep tech simple.</h2></div>
+      <div class="content-wrap about-body"><p><strong>Austin's Tech Repair Group</strong> is built around practical repairs, clear communication, and fast support for home and business customers.</p><p>We handle phone, tablet, computer, gaming, and smart watch support, plus ongoing B2B and office tech service.</p></div>
+    </section>
+
+    <section id="b2b" class="page">
+      <div class="content-wrap">
+        <h2 class="section-title">B2B</h2>
+        <p class="section-copy">Business support for offices, shops, and local teams.</p>
+        <div class="service-grid">
+          <button class="service-card" type="button"><div class="service-icon"><i class="fas fa-network-wired"></i></div><p class="service-label">Networking</p><p class="service-sub">Wi-Fi, switches, routers, and setup</p></button>
+          <button class="service-card" type="button"><div class="service-icon"><i class="fas fa-server"></i></div><p class="service-label">Servers</p><p class="service-sub">Storage, backups, and infrastructure</p></button>
+          <button class="service-card" type="button"><div class="service-icon"><i class="fas fa-cloud"></i></div><p class="service-label">Cloud Services</p><p class="service-sub">Accounts, apps, and syncing</p></button>
+          <button class="service-card" type="button"><div class="service-icon"><i class="fas fa-headset"></i></div><p class="service-label">Helpdesk</p><p class="service-sub">User support and troubleshooting</p></button>
+        </div>
+      </div>
+    </section>
+
+    <section id="contact" class="page">
+      <div class="content-wrap">
+        <h2 class="section-title">Contact</h2>
+        <p class="section-copy">Message us, call, or use the form below.</p>
+        <div class="repair-card" style="max-width:760px;">
+          <form id="contact-form" class="form-grid">
+            <div class="field"><label for="contact-name">Full name</label><input id="contact-name" class="form-field" type="text" required /></div>
+            <div class="field"><label for="contact-email">Email</label><input id="contact-email" class="form-field" type="email" required /></div>
+            <div class="field"><label for="contact-message">Message</label><textarea id="contact-message" class="form-field" rows="5" required></textarea></div>
+            <button class="cta-primary" type="submit">Open Google Form →</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <section id="employee" class="page">
+      <div class="content-wrap">
+        <h2 class="section-title">Employee Portal</h2>
+        <p class="section-copy">Internal access for ticketing and support.</p>
+        <div class="repair-card" style="max-width:760px;">
+          <form id="employee-login-form" class="form-grid">
+            <div class="field"><label for="employee-user">Username</label><input id="employee-user" class="form-field" type="text" autocomplete="username" required /></div>
+            <div class="field"><label for="employee-pass">Password</label><input id="employee-pass" class="form-field" type="password" autocomplete="current-password" required /></div>
+            <button class="cta-primary" type="submit">Enter Portal →</button>
+          </form>
+          <p id="employee-status" style="margin:14px 0 0;color:var(--gray);font-size:13px;"></p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="content-wrap" style="padding:0;max-width:1120px;">
+      <div class="slideshow" aria-label="Service slideshow">
+        <div class="slide active" style="background-image:url('https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1600&q=80')"></div>
+        <div class="slide" style="background-image:url('https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1600&q=80')"></div>
+        <div class="slide" style="background-image:url('https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1600&q=80')"></div>
+        <div class="slide" style="background-image:url('https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=1600&q=80')"></div>
+        <div class="slide" style="background-image:url('https://images.unsplash.com/photo-1526406915894-7bcd65f60845?auto=format&fit=crop&w=1600&q=80')"></div>
+        <div class="slide-overlay"></div>
+        <div class="slide-caption"><h3>Repairs in progress</h3><p>Phones, computers, tablets, gaming systems, and smart watches — the work you do not want to interrupt your day.</p></div>
+      </div>
+
+      <div style="height:26px"></div>
+
+      <div class="footer-top">
+        <div class="footer-links-col">
+          <span class="footer-col-title">Navigate</span>
+          <button class="footer-link" data-page="home">Home</button>
+          <button class="footer-link" data-page="shop">Shop</button>
+          <button class="footer-link" data-page="repair">Repair</button>
+          <button class="footer-link" data-page="about">About</button>
+        </div>
+        <div class="footer-links-col">
+          <span class="footer-col-title">More</span>
+          <button class="footer-link" data-page="contact">Contact</button>
+          <button class="footer-link" data-page="b2b">B2B</button>
+          <button class="footer-link" data-page="atr-one">ATR One</button>
+          <button class="footer-link" data-page="employee">Employee Portal</button>
+        </div>
+        <div class="footer-links-col">
+          <span class="footer-col-title">Policies</span>
+          <button class="footer-link" data-policy="privacy">Privacy Policy</button>
+          <button class="footer-link" data-policy="repair">Repair Service Agreement</button>
+          <button class="footer-link" data-policy="backup">Data Backup Waiver</button>
+          <button class="footer-link" data-policy="warranty-policy">1-Year Warranty Policy</button>
+          <button class="footer-link" data-policy="terms">Terms & Conditions</button>
+          <button class="footer-link" data-policy="website-terms">Website Terms of Use</button>
+        </div>
+        <div class="footer-links-col">
+          <span class="footer-col-title">Payments</span>
+          <div class="payment-row">
+            <span class="payment-badge">VISA</span>
+            <span class="payment-badge">MC</span>
+            <span class="payment-badge">DISC</span>
+            <span class="payment-badge">AMEX</span>
+            <span class="payment-badge">PayPal</span>
+            <span class="payment-badge">Cash</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-legal">
+        <div class="legal-block">
+          <p class="legal-heading">Payment Methods</p>
+          <p>Cash · Card · Apple Pay · Google Pay · PayPal · Square · Shopify checkout for products</p>
+        </div>
+        <div class="legal-block">
+          <p class="legal-heading red">Reviews</p>
+          <p><a class="footer-link" href="https://www.google.com" target="_blank" rel="noopener">Write Google Review</a> | <a class="footer-link" href="https://www.yelp.com" target="_blank" rel="noopener">Write Yelp Review</a></p>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <span class="footer-copy">Copyright 2026 © <strong>Austin's Tech Repair Group</strong></span>
+        <span class="footer-wordmark">ATR Group</span>
+      </div>
+    </div>
+  </footer>
+
+  <section class="cart-drawer" id="cart-drawer" aria-hidden="true">
+    <div class="cart-drawer__backdrop" id="cart-drawer-close"></div>
+    <aside class="cart-drawer__panel" role="dialog" aria-modal="true" aria-label="Shopping cart">
+      <div class="cart-drawer__header">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+          <h2 class="section-title" style="font-size:24px;margin:0;">Your Cart</h2>
+          <button class="menu-close" id="cart-drawer-close-btn" type="button" aria-label="Close cart" style="position:static;"><i class="fas fa-times"></i></button>
+        </div>
+      </div>
+      <div class="cart-drawer__items" id="cart-drawer-items"></div>
+      <div class="cart-drawer__footer">
+        <div class="cart-drawer__total"><span>Total</span><strong id="cart-drawer-total">$0.00</strong></div>
+        <button class="cta-primary" type="button" id="cart-checkout">Checkout</button>
+        <button class="cta-primary" type="button" id="cart-clear" style="margin-top:10px;background:#444;">Clear Cart</button>
+      </div>
+    </aside>
+  </section>
+
+  <script>
+    const pages = [...document.querySelectorAll('.page')];
+    const contentMap = { home:home, shop:shop, repair:repair, about:about, contact:contact, b2b:b2b, employee:employee, 'atr-one':document.getElementById('atr-one') };
+    const searchOverlay = document.getElementById('search-overlay');
+    const searchInput = document.getElementById('search-input');
+    const heroSearchForm = document.getElementById('hero-search-form');
+    const heroSearchInput = document.getElementById('hero-search-input');
+    const searchResults = document.getElementById('search-results');
+    const searchToggle = document.getElementById('search-toggle');
+    const menuToggle = document.getElementById('menu-toggle');
+    const mobileMenu = document.getElementById('mobile-menu');
+    const menuClose = document.getElementById('menu-close');
+    const cartBadge = document.getElementById('cart-badge');
+    const cartDrawer = document.getElementById('cart-drawer');
+    const cartDrawerItems = document.getElementById('cart-drawer-items');
+    const cartDrawerTotal = document.getElementById('cart-drawer-total');
+    const issueTitle = document.getElementById('issue-title');
+    const issueList = document.getElementById('issue-list');
+    const stepDevice = document.getElementById('step-device');
+    const stepIssue = document.getElementById('step-issue');
+    const stepFinal = document.getElementById('step-final');
+    const employeeStatus = document.getElementById('employee-status');
+    const policyOverlay = document.getElementById('policy-overlay');
+    const policyBody = document.getElementById('policy-body');
+
+    const GOOGLE_FORM_URL = 'https://docs.google.com/forms/d/e/YOUR_FORM_ID/viewform';
+    const SQUARE_APPT_URL = 'https://squareup.com/appointments/book/YOUR-SQUARE-LINK';
+
+    const repairData = {
+      Phones:{ title:'Phone Issues', makes:['Apple','Samsung','Google','Motorola','Other'], issues:['Screen','Battery','Charging Port','Camera','Speaker','Microphone','Water Damage','Software','Data Transfer'] },
+      Tablets:{ title:'Tablet Issues', makes:['Apple','Samsung','Amazon','Lenovo','Other'], issues:['Screen','Battery','Charging Port','Touch Issues','Camera','Speaker','Microphone','Water Damage','Software','Data Transfer'] },
+      Computers:{ title:'Computer Issues', makes:['Apple','Dell','HP','Lenovo','Acer','Custom Build','Other'], issues:['Hard Drive / SSD','Motherboard','RAM / Memory','Power Supply','Display','Keyboard','Trackpad / Mouse','Charging / DC Jack','Virus Removal','Software','Data Recovery'] },
+      Gaming:{ title:'Gaming Issues', makes:['PlayStation','Xbox','Nintendo','PC','Other'], issues:['HDMI Port','Power','Overheating','Storage','Disc Drive','Controller / Input','Fan / Cooling','Software','Data Recovery'] },
+      'Smart Watches':{ title:'Smart Watch Issues', makes:['Apple','Samsung','Fitbit','Garmin','Other'], issues:['Battery','Display','Charging','Pairing','Sync Issues','Buttons / Crown','Water Damage','Software'] },
+      Business:{ title:'Business Support', makes:['Microsoft','Dell','HP','Lenovo','Canon','Brother','Other'], issues:['Helpdesk & End-User Support','Network & Infrastructure','Cybersecurity','Cloud Services','Backup & Disaster Recovery','Microsoft 365 / SaaS Support','Servers / Storage','VoIP / Phone Systems','Website Support','Application Support','IT Consulting','Project Implementation'] }
+    };
+
+    let cart = loadCart();
+    let slideIndex = 0;
+    let activeFlipCard = null;
+    let repairState = { device:'', make:'', model:'', type:'' };
+
+    const policies = {
+      privacy:`<h2>Privacy Policy</h2><div class="eff">Effective Date: June 21, 2026</div><p>Austin’s Tech Repair Group LLC respects your privacy and is committed to protecting the personal information entrusted to us.</p><section><strong>1. Information We Collect</strong><p>We may collect personal information, device and service information, payment information, communications, and website/technical information.</p></section><section><strong>2. Customer Device Data</strong><p>Technicians may have incidental access to data stored on your device.</p></section>`,
+      repair:`<h2>Repair Service Agreement</h2><div class="eff">Authorization, liability, payment, and Ohio law</div><p>By submitting a device for service, the customer authorizes Austin’s Tech Repair Group LLC to perform requested diagnostic, repair, installation, maintenance, recovery, or consulting services.</p><section><strong>Authorization</strong><p>The customer authorizes repair work.</p></section><section><strong>Diagnostic Services</strong><p>Diagnostic fees are non-refundable once diagnostic work has begun.</p></section><section><strong>Customer Data</strong><p>The customer acknowledges that repairs may involve risk of data loss.</p></section><section><strong>Payment</strong><p>Payment is due upon completion of services unless otherwise agreed in writing.</p></section><section><strong>Warranty</strong><p>Service warranties apply only as stated by Austin’s Tech Repair Group at the time of service.</p></section>`,
+      backup:`<h2>Data Backup &amp; Loss Waiver</h2><div class="eff">Customer responsibility for backups</div><p>Repair procedures may result in loss, corruption, deletion, or alteration of data.</p>`,
+      'warranty-policy':`<h2>1-Year Limited Warranty Policy</h2><div class="eff">Effective Date: June 21, 2026</div><p>Austin’s Tech Repair Group LLC warrants repair labor and installed replacement parts against defects in workmanship and materials for one (1) year.</p>`,
+      terms:`<h2>Terms &amp; Conditions</h2><p>Use of this site and our services is subject to these terms.</p>`,
+      'website-terms':`<h2>Website Terms of Use</h2><p>All content is provided “AS IS.”</p>`
+    };
+
+    function loadCart(){ try { return JSON.parse(localStorage.getItem('atr_cart')) || []; } catch { return []; } }
+    function saveCart(){ localStorage.setItem('atr_cart', JSON.stringify(cart)); updateCart(); renderCartDrawer(); }
+    function updateCart(){ const count = cart.reduce((s, i) => s + (i.qty || 1), 0); cartBadge.textContent = count; cartBadge.classList.toggle('show', count > 0); document.getElementById('cart-toggle').classList.toggle('red', count > 0); }
+    function renderCartDrawer(){
+      if(!cart.length){ cartDrawerItems.innerHTML = '<p style="color:var(--gray);margin:0;">Cart is empty.</p>'; cartDrawerTotal.textContent = '$0.00'; return; }
+      cartDrawerItems.innerHTML = cart.map(item => `
+        <div class="cart-item">
+          <img class="cart-item__img" src="${item.image || 'https://via.placeholder.com/120'}" alt="${item.name}" />
+          <div class="cart-item__meta">
+            <p class="cart-item__name">${item.name}</p>
+            <p class="cart-item__line">$${Number(item.price || 0).toFixed(2)} × ${item.qty || 1}</p>
+            <div class="cart-item__actions">
+              <button class="cart-mini-btn" type="button" data-cart-dec="${item.id}">-</button>
+              <button class="cart-mini-btn" type="button" data-cart-inc="${item.id}">+</button>
+              <button class="cart-mini-btn" type="button" data-cart-remove="${item.id}">Remove</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+      cartDrawerTotal.textContent = '$' + cart.reduce((s, i) => s + ((i.price || 0) * (i.qty || 1)), 0).toFixed(2);
+    }
+    function setPage(pageId){ pages.forEach(p => p.classList.remove('active')); if(contentMap[pageId]) contentMap[pageId].classList.add('active'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    function openMenu(){ mobileMenu.classList.add('open'); document.body.classList.add('menu-open'); mobileMenu.setAttribute('aria-hidden','false'); }
+    function closeMenu(){ mobileMenu.classList.remove('open'); document.body.classList.remove('menu-open'); mobileMenu.setAttribute('aria-hidden','true'); }
+    function openSearch(){ searchOverlay.classList.add('open'); document.body.classList.add('search-open'); searchToggle.setAttribute('aria-expanded','true'); setTimeout(() => searchInput.focus(), 50); }
+    function closeSearch(){ searchOverlay.classList.remove('open'); document.body.classList.remove('search-open'); searchToggle.setAttribute('aria-expanded','false'); }
+    function openCart(){ cartDrawer.classList.add('open'); cartDrawer.setAttribute('aria-hidden','false'); document.body.classList.add('cart-open'); }
+    function closeCart(){ cartDrawer.classList.remove('open'); cartDrawer.setAttribute('aria-hidden','true'); document.body.classList.remove('cart-open'); }
+    function openPolicy(key){ const html = policies[key]; if(!html) return; policyBody.innerHTML = html; policyOverlay.classList.add('open'); document.body.classList.add('policy-open'); policyOverlay.setAttribute('aria-hidden','false'); }
+    function closePolicy(){ policyOverlay.classList.remove('open'); document.body.classList.remove('policy-open'); policyOverlay.setAttribute('aria-hidden','true'); policyBody.innerHTML = ''; }
+
+    function renderSearch(q){
+      const items = [['home','Home','Main landing page'],['shop','Shop','Browse products'],['repair','Repair','Start a repair request'],['about','About','Learn about us'],['contact','Contact','Send a message'],['b2b','B2B','Business support'],['atr-one','ATR One','$19.99 subscriber special'],['employee','Employee Portal','Internal login']];
+      const f = items.filter(x => !q || x[1].toLowerCase().includes(q.toLowerCase()) || x[2].toLowerCase().includes(q.toLowerCase()));
+      searchResults.innerHTML = f.map(x => `<button class="search-result" type="button" data-page="${x[0]}"><span class="search-result-name">${x[1]}</span><span class="search-result-meta">${x[2]}</span></button>`).join('') || '<p style="color:var(--gray);">No results.</p>';
+    }
+
+    function showDeviceStep(){ stepDevice.classList.add('active'); stepIssue.classList.remove('active'); stepFinal.classList.remove('active'); }
+    function showMakeStep(){ stepDevice.classList.remove('active'); stepIssue.classList.add('active'); stepFinal.classList.remove('active'); }
+    function showFinalStep(){ stepDevice.classList.remove('active'); stepIssue.classList.remove('active'); stepFinal.classList.add('active'); }
+    function renderIssues(device){
+      const data = repairData[device];
+      issueTitle.textContent = data.title;
+      issueList.innerHTML = `
+        <div class="option-grid" style="margin-bottom:12px;">
+          ${data.makes.map(item => `<button class="option-btn" type="button" data-make="${item}">${item}</button>`).join('')}
+        </div>
+        <div class="issue-list">
+          ${data.issues.map(item => `<button class="issue-btn" type="button" data-type="${item}">${item} <i class="fas fa-arrow-right"></i></button>`).join('')}
+        </div>
+      `;
+    }
+
+    function startSlideShow(){
+      const slides = [...document.querySelectorAll('.slide')];
+      if(!slides.length) return;
+      setInterval(() => {
+        slides[slideIndex].classList.remove('active');
+        slideIndex = (slideIndex + 1) % slides.length;
+        slides[slideIndex].classList.add('active');
+      }, 4500);
+    }
+
+    function addToCart(product){
+      const existing = cart.find(i => i.id === product.id);
+      if(existing) existing.qty = (existing.qty || 1) + 1;
+      else cart.push({ ...product, qty: 1 });
+      saveCart();
+      openCart();
+    }
+    function removeFromCart(id){ cart = cart.filter(i => i.id !== id); saveCart(); }
+    function changeQty(id, delta){ const item = cart.find(x => x.id === id); if(!item) return; item.qty = (item.qty || 1) + delta; if(item.qty <= 0) cart = cart.filter(x => x.id !== id); saveCart(); }
+    function buildShopifyCheckoutUrl(){ return `https://YOUR-SHOPIFY-STORE.myshopify.com/cart/${cart.map(item => `${item.id}:${item.qty || 1}`).join(',')}`; }
+    function buildSquareUrl(){
+      const params = new URLSearchParams();
+      params.set('device', repairState.device || '');
+      params.set('make', repairState.make || '');
+      params.set('model', repairState.model || '');
+      params.set('repair', repairState.type || '');
+      return `${SQUARE_APPT_URL}?${params.toString()}`;
+    }
+
+    document.addEventListener('click', e => {
+      const pageBtn = e.target.closest('[data-page]');
+      if(pageBtn && contentMap[pageBtn.dataset.page]){ setPage(pageBtn.dataset.page); closeMenu(); closeSearch(); }
+
+      const policyBtn = e.target.closest('[data-policy]');
+      if(policyBtn) openPolicy(policyBtn.dataset.policy);
+
+      const addCartBtn = e.target.closest('[data-add-cart]');
+      if(addCartBtn){ e.preventDefault(); e.stopPropagation(); addToCart(JSON.parse(addCartBtn.dataset.addCart)); return; }
+
+      const flipCardBtn = e.target.closest('.flip-card');
+      if(flipCardBtn){
+        if(activeFlipCard && activeFlipCard !== flipCardBtn) activeFlipCard.classList.remove('flipped');
+        const isFlipped = flipCardBtn.classList.contains('flipped');
+        flipCardBtn.classList.toggle('flipped', !isFlipped);
+        activeFlipCard = !isFlipped ? flipCardBtn : null;
+      }
+
+      const deviceBtn = e.target.closest('[data-device]');
+      if(deviceBtn){
+        repairState.device = deviceBtn.dataset.device;
+        setPage('repair');
+        renderIssues(repairState.device);
+        showMakeStep();
+        return;
+      }
+
+      const makeBtn = e.target.closest('[data-make]');
+      if(makeBtn){
+        repairState.make = makeBtn.dataset.make;
+        showFinalStep();
+        return;
+      }
+
+      const typeBtn = e.target.closest('[data-type]');
+      if(typeBtn){
+        repairState.type = typeBtn.dataset.type;
+        showFinalStep();
+        return;
+      }
+
+      const backBtn = e.target.closest('[data-back]');
+      if(backBtn){
+        if(backBtn.dataset.back === 'device') showDeviceStep();
+        if(backBtn.dataset.back === 'issue') showMakeStep();
+      }
+
+      const inc = e.target.closest('[data-cart-inc]');
+      const dec = e.target.closest('[data-cart-dec]');
+      const remove = e.target.closest('[data-cart-remove]');
+      if(inc) changeQty(inc.dataset.cartInc, 1);
+      if(dec) changeQty(dec.dataset.cartDec, -1);
+      if(remove) removeFromCart(remove.dataset.cartRemove);
+
+      if(e.target === mobileMenu) closeMenu();
+      if(e.target === cartDrawer) closeCart();
+      if(e.target === policyOverlay) closePolicy();
+    });
+
+    menuToggle.addEventListener('click', () => mobileMenu.classList.contains('open') ? closeMenu() : openMenu());
+    menuClose.addEventListener('click', closeMenu);
+    searchToggle.addEventListener('click', () => searchOverlay.classList.contains('open') ? closeSearch() : openSearch());
+    document.getElementById('search-close').addEventListener('click', closeSearch);
+    searchInput.addEventListener('input', e => renderSearch(e.target.value));
+    heroSearchForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const value = heroSearchInput.value.trim().toLowerCase();
+      if(!value) return;
+      const target = value.includes('shop') ? 'shop' : value.includes('repair') ? 'repair' : value.includes('about') ? 'about' : value.includes('contact') ? 'contact' : value.includes('b2b') ? 'b2b' : value.includes('atr') ? 'atr-one' : 'repair';
+      setPage(target);
+    });
+    document.getElementById('cart-toggle').addEventListener('click', () => cartDrawer.classList.contains('open') ? closeCart() : openCart());
+    document.getElementById('cart-drawer-close').addEventListener('click', closeCart);
+    document.getElementById('cart-drawer-close-btn').addEventListener('click', closeCart);
+    document.getElementById('cart-clear').addEventListener('click', () => { cart = []; saveCart(); });
+    document.getElementById('cart-checkout').addEventListener('click', () => { if(cart.length) window.location.href = buildShopifyCheckoutUrl(); });
+
+    document.getElementById('contact-form').addEventListener('submit', e => { e.preventDefault(); window.open(GOOGLE_FORM_URL, '_blank', 'noopener'); });
+    document.getElementById('employee-login-form').addEventListener('submit', e => { e.preventDefault(); const user = document.getElementById('employee-user').value.trim(); const pass = document.getElementById('employee-pass').value.trim(); employeeStatus.textContent = user && pass ? 'Access would be validated by a secure backend login.' : 'Enter credentials to continue.'; });
+    document.getElementById('dispatch-form').addEventListener('submit', e => { e.preventDefault(); window.open(buildSquareUrl(), '_blank', 'noopener'); });
+    document.getElementById('policy-close').addEventListener('click', closePolicy);
+    document.querySelector('.brand').addEventListener('click', e => { e.preventDefault(); setPage('home'); closeMenu(); });
+    document.querySelectorAll('.footer-link[data-page]').forEach(btn => btn.addEventListener('click', () => setPage(btn.dataset.page)));
+    document.addEventListener('keydown', e => { if(e.key === 'Escape'){ closeMenu(); closeSearch(); closeCart(); closePolicy(); } });
+
+    renderSearch('');
+    updateCart();
+    renderCartDrawer();
+    showDeviceStep();
+    startSlideShow();
+function resetTrackedForms() {
+  ['contact-form', 'dispatch-form'].forEach(id => {
+    const form = document.getElementById(id);
+    if (form) form.reset();
+  });
+}
+
+window.addEventListener('pageshow', () => {
+  resetTrackedForms();
+});
+
+window.addEventListener('beforeunload', () => {
+  resetTrackedForms();
+});
+
+document.getElementById('contact-form')?.addEventListener('submit', e => {
+  e.preventDefault();
+  window.open(GOOGLE_FORM_URL, '_blank', 'noopener');
+  e.currentTarget.reset();
+});
+
+document.getElementById('dispatch-form')?.addEventListener('submit', e => {
+  e.preventDefault();
+  window.open(buildSquareUrl(), '_blank', 'noopener');
+  e.currentTarget.reset();
+});
+
+function showThanks(id, message) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = message;
+  el.hidden = false;
+}
+
+function hideThanks(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.hidden = true;
+}
+
+window.addEventListener('pageshow', () => {
+  ['contact-form', 'dispatch-form'].forEach(id => document.getElementById(id)?.reset());
+  hideThanks('contact-thanks');
+  hideThanks('repair-thanks');
+});
+
+window.addEventListener('beforeunload', () => {
+  ['contact-form', 'dispatch-form'].forEach(id => document.getElementById(id)?.reset());
+  hideThanks('contact-thanks');
+  hideThanks('repair-thanks');
+});
+
+document.getElementById('contact-form')?.addEventListener('submit', e => {
+  e.preventDefault();
+  window.open(GOOGLE_FORM_URL, '_blank', 'noopener');
+  e.currentTarget.reset();
+  showThanks('contact-thanks', 'Thanks — your message was sent.');
+});
+
+document.getElementById('dispatch-form')?.addEventListener('submit', e => {
+  e.preventDefault();
+  window.open(buildSquareUrl(), '_blank', 'noopener');
+  e.currentTarget.reset();
+  showThanks('repair-thanks', 'Thanks — your repair request was sent.');
+});
+
+
+
+  </script>
+</body>
+</html>
