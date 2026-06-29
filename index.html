@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Austin's Tech Repair Group | Master Build</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
+        
+        :root { --atr-blue: #0071e3; --atr-gradient: linear-gradient(135deg, #0071e3 0%, #00d4ff 100%); }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #ffffff; color: #1d1d1f; overflow-x: hidden; scroll-behavior: smooth; }
+        
+        .glass-nav { background: rgba(255, 255, 255, 0.75); backdrop-filter: saturate(180%) blur(20px); z-index: 1000; }
+        
+        #mobile-menu {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
+            background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(25px);
+            transform: scale(0) rotate(-180deg); opacity: 0;
+            transition: all 0.6s cubic-bezier(0.68, -0.6, 0.27, 1.55);
+            z-index: 40; padding-top: 100px;
+        }
+        #mobile-menu.open { transform: scale(1) rotate(0deg); opacity: 1; }
+
+        .vortex-icon { width: 18px; height: 18px; position: relative; cursor: pointer; }
+        .vortex-icon span { display: block; position: absolute; height: 1.5px; width: 100%; background: #1d1d1f; transition: .4s ease; }
+        .vortex-icon span:nth-child(1) { top: 3px; }
+        .vortex-icon span:nth-child(2) { top: 9px; }
+        .vortex-icon span:nth-child(3) { top: 15px; }
+        .vortex-icon.open span:nth-child(1) { top: 9px; transform: rotate(135deg); }
+        .vortex-icon.open span:nth-child(2) { opacity: 0; left: -20px; }
+        .vortex-icon.open span:nth-child(3) { top: 9px; transform: rotate(-135deg); }
+
+        /* Carousel & Layout */
+        .carousel-track { display: flex; transition: transform 0.5s ease-in-out; }
+        .carousel-item { min-width: 100%; height: 350px; background-size: cover; background-position: center; border-radius: 40px; }
+        .page { display: none; min-height: 100vh; padding-top: 80px; animation: pageIn 0.6s ease; }
+        .page.active { display: block; }
+        @keyframes pageIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+
+        .fleet-card { background: #ffffff; border: 1px solid #f2f2f7; border-radius: 32px; padding: 2.5rem; transition: 0.3s; cursor: pointer; text-align: center; }
+        .fleet-card:hover { transform: translateY(-8px); border-color: var(--atr-blue); box-shadow: 0 15px 30px rgba(0,113,227,0.1); }
+        
+        /* Store Styling */
+        .store-card { background: #f5f5f7; border-radius: 28px; padding: 30px; transition: 0.4s; overflow: hidden; position: relative; border: 1px solid transparent; }
+        .store-card:hover { transform: scale(1.02); border-color: var(--atr-blue); background: #ffffff; box-shadow: 0 20px 40px rgba(0,0,0,0.05); }
+
+        .apple-footer { background: #f5f5f7; color: #6e6e73; font-size: 12px; padding: 40px 22px; border-top: 1px solid #d2d2d7; }
+        .footer-links { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; display: flex; flex-direction: column; gap: 8px; }
+        .footer-links.open { max-height: 500px; padding-bottom: 15px; }
+        .footer-label { font-weight: 600; color: #1d1d1f; cursor: pointer; padding: 12px 0; display: flex; justify-content: space-between; border-bottom: 1px solid #d2d2d7; }
+    </style>
+</head>
+<body>
+
+    <nav class="fixed w-full glass-nav border-b border-gray-100">
+        <div class="max-w-[1000px] mx-auto px-4 h-[48px] flex items-center justify-between">
+            <div class="flex items-center gap-2 cursor-pointer" onclick="showPage('home')">
+                <div class="w-6 h-6 bg-blue-600 rounded-md flex items-center justify-center text-white shadow-sm"><i class="fas fa-tools text-[10px]"></i></div>
+                <span class="font-extrabold uppercase tracking-tighter text-sm">Austin's Tech. Repair Group</span>
+            </div>
+            
+            <div class="flex items-center gap-6 text-gray-500">
+                <i class="fas fa-search text-sm cursor-pointer hover:text-black"></i>
+                <a href="https://austins-tech-repair-group.square.site/cart" target="_blank" class="relative cursor-pointer hover:text-black">
+                    <i class="fas fa-shopping-bag text-sm text-blue-600"></i>
+                </a>
+                <div class="vortex-icon" id="menu-toggle" onclick="toggleMenu()">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div id="mobile-menu" class="px-10">
+        <div class="flex flex-col gap-6 text-4xl font-black italic uppercase tracking-tighter">
+            <a onclick="showPage('home')">Home</a>
+            <a onclick="showPage('store')">Shop </a>
+            <a onclick="showPage('repair')"> Repair</a>
+            <a onclick="showPage('atr-one')">ATR-ONE Plan</a>
+            <a onclick="showPage('support')">Support </a>
+            <a onclick="showPage('about')">About</a>
+        </div>
+    </div>
+
+        <!-- HOME PAGE -->
+    <main id="home" class="page active">
+        <section class="max-w-[1000px] mx-auto px-6 py-12 text-center">
+            <h1 class="text-4xl md:text-7xl font-black italic tracking-tighter leading-tight mb-6">
+                Every technology big or small, we <span class="text-blue-600">tackle them all.</span>
+            </h1>
+            <p class="text-lg text-gray-500 font-medium mb-10 max-w-2xl mx-auto leading-relaxed">
+                Even the complex ones they say to throw away. We got you. Right to your doorstep, we come to you.
+            </p>
+
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-20">
+                <div onclick="startRepair('Phone')" class="fleet-card"><i class="fas fa-mobile-alt text-2xl mb-2 text-blue-600"></i><p class="text-[10px] font-black uppercase">Phones</p></div>
+                <div onclick="startRepair('Computer')" class="fleet-card"><i class="fas fa-laptop text-2xl mb-2 text-blue-600"></i><p class="text-[10px] font-black uppercase">Computers</p></div>
+                <div onclick="startRepair('Gaming')" class="fleet-card"><i class="fas fa-gamepad text-2xl mb-2 text-blue-600"></i><p class="text-[10px] font-black uppercase">Gaming</p></div>
+                <div onclick="showPage('store')" class="fleet-card border-blue-200"><i class="fas fa-shopping-cart text-2xl mb-2 text-blue-600"></i><p class="text-[10px] font-black uppercase">Shop Devices</p></div>
+                <div onclick="showPage('atr-one')" class="fleet-card bg-black text-white shadow-2xl"><i class="fas fa-star text-2xl mb-2 text-blue-400"></i><p class="text-[10px] font-black uppercase text-white">ATR-ONE</p></div>
+                <div onclick="showPage('about')" class="fleet-card"><i class="fas fa-chalkboard-teacher text-2xl mb-2 text-blue-600"></i><p class="text-[10px] font-black uppercase">Personal Setup</p></div>
+                <div onclick="startRepair('Watch')" class="fleet-card"><i class="fas fa-clock text-2xl mb-2 text-blue-600"></i><p class="text-[10px] font-black uppercase">Watches</p></div>
+                <div onclick="startRepair('Network')" class="fleet-card"><i class="fas fa-network-wired text-2xl mb-2 text-blue-600"></i><p class="text-[10px] font-black uppercase">Networking</p></div>
+                <div onclick="showPage('repair')" class="fleet-card border-blue-600"><i class="fas fa-tools text-2xl mb-2 text-blue-600"></i><p class="text-[10px] font-black uppercase">Start Dispatch</p></div>
+            </div>
+        </section>
+    </main>
+	
+   <!-- Work Slideshow -->
+            <div class="relative overflow-hidden rounded-[40px] shadow-2xl mb-16">
+                <div class="carousel-track" id="carousel">
+                    <div class="carousel-item" style="background-image: url('https://images.unsplash.com/photo-1512499617640-c74ae3a79d37?auto=format&fit=crop&w=1000&q=80')"></div>
+                    <div class="carousel-item" style="background-image: url('https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=1000&q=80')"></div>
+                    <div class="carousel-item" style="background-image: url('https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1000&q=80')"></div>
+                    <div class="carousel-item" style="background-image: url('https://images.unsplash.com/photo-1486401899868-0e435ed85128?auto=format&fit=crop&w=1000&q=80')"></div>
+                    <div class="carousel-item" style="background-image: url('https://images.unsplash.com/photo-1508685096489-7aac291ba597?auto=format&fit=crop&w=1000&q=80')"></div>
+                </div>
+            </div>
+
+    <main id="store" class="page">
+        <section class="max-w-[1100px] mx-auto px-6 py-12">
+            <div class="mb-12">
+                <h2 class="text-5xl font-black italic uppercase tracking-tighter">Certified Pre-Owned.</h2>
+                <p class="text-blue-600 font-bold uppercase tracking-widest text-xs mt-2">Tested by ATR Technicians • Local Delivery Included</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="store-card group">
+                    <h3 class="text-2xl font-black italic uppercase mb-2">Smartphones</h3>
+                    <p class="text-sm text-gray-500 mb-6">iPhone & Android. Unlocked for any carrier.</p>
+                    <a href="https://austins-tech-repair-group.square.site/?category_id=PHONES" target="_blank" class="text-blue-600 font-bold text-sm">Shop Phones &rarr;</a>
+                </div>
+
+                <div class="store-card group">
+                    <h3 class="text-2xl font-black italic uppercase mb-2">Computers</h3>
+                    <p class="text-sm text-gray-500 mb-6">MacBooks & Professional Laptops. Cleaned & Optimized.</p>
+                    <a href="https://austins-tech-repair-group.square.site/?category_id=COMPUTERS" target="_blank" class="text-blue-600 font-bold text-sm">Shop Computers &rarr;</a>
+                </div>
+
+                <div class="store-card group">
+                    <h3 class="text-2xl font-black italic uppercase mb-2">Tablets</h3>
+                    <p class="text-sm text-gray-500 mb-6">iPads & Galaxy Tabs. Perfect for work or play.</p>
+                    <a href="https://austins-tech-repair-group.square.site/?category_id=TABLETS" target="_blank" class="text-blue-600 font-bold text-sm">Shop Tablets &rarr;</a>
+                </div>
+            </div>
+
+            <div class="mt-12 p-10 bg-black text-white rounded-[40px] text-center">
+                <h4 class="text-xl font-bold italic mb-2">Buy Online. We Deliver Today.</h4>
+                <p class="text-gray-400 text-sm">Every device purchase includes a professional setup session at your door.</p>
+            </div>
+        </section>
+    </main>
+
+    <main id="repair" class="page">
+        <section class="max-w-xl mx-auto px-6 py-12">
+            <div class="bg-white rounded-[40px] shadow-2xl border p-10">
+                <div id="step-brand" class="repair-step active text-center">
+                    <h2 id="brand-title" class="text-3xl font-black italic mb-8 uppercase text-blue-600">Select Make</h2>
+                    <div id="brand-options" class="grid grid-cols-2 gap-3"></div>
+                </div>
+                <div id="step-final" class="repair-step">
+                    <h2 class="text-3xl font-black italic mb-6 text-blue-600 uppercase text-center">Dispatch Info</h2>
+                    <textarea placeholder="Issue description..." class="w-full p-5 bg-slate-50 rounded-2xl mb-4 h-32 outline-none ring-1 ring-slate-100"></textarea>
+                    <input type="text" placeholder="Full Name" class="w-full p-4 bg-slate-50 rounded-xl mb-3 outline-none ring-1 ring-slate-100">
+                    <input type="tel" placeholder="Phone" class="w-full p-4 bg-slate-50 rounded-xl mb-6 outline-none ring-1 ring-slate-100">
+                    <button onclick="showPage('home')" class="w-full bg-black text-white py-5 rounded-2xl font-black uppercase">Send Technician</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <main id="support" class="page">
+        <section class="max-w-3xl mx-auto px-6 py-12">
+            <h2 class="text-5xl font-black italic mb-2 uppercase tracking-tighter text-center">Support Hub.</h2>
+            <form class="bg-white p-10 rounded-[45px] shadow-2xl border border-gray-50 space-y-6">
+                <select class="w-full p-4 bg-slate-50 rounded-2xl font-bold outline-none ring-1 ring-slate-100">
+                    <option>Warranty Claim</option>
+                    <option>Billing Issue</option>
+                    <option>Shop & Delivery Inquiry</option>
+                </select>
+                <textarea placeholder="Describe how we can help..." class="w-full p-4 bg-slate-50 rounded-2xl h-40 outline-none ring-1 ring-slate-100"></textarea>
+                <button type="submit" class="w-full bg-black text-white py-5 rounded-2xl font-black uppercase shadow-xl hover:bg-blue-600 transition">Submit Request</button>
+                <div class="text-center pt-6"><a href="tel:5134788077" class="text-blue-600 text-2xl font-black underline">(513) 478-8077</a></div>
+            </form>
+        </section>
+    </main>
+
+    <main id="about" class="page">
+        <section class="max-w-3xl mx-auto px-6 py-20 text-center md:text-left">
+            <h2 class="text-6xl font-black italic mb-10 uppercase tracking-tighter">A Legacy of <span class="text-blue-600">Precision.</span></h2>
+            <p class="text-xl text-gray-500 font-medium leading-relaxed">Established 2010. We perfected surgical mobile repair in Cincinnati and decentralized in 2015. Today, we bring Dayton's master technician bench directly to your doorstep.</p>
+        </section>
+    </main>
+
+    <footer class="apple-footer">
+        <div class="max-w-[980px] mx-auto">
+            <div class="flex items-center gap-2 mb-10 text-black font-black uppercase text-xs">
+                <div class="w-5 h-5 bg-blue-600 rounded-sm flex items-center justify-center text-white"><i class="fas fa-tools text-[8px]"></i></div>
+                <i class="fas fa-chevron-right text-[8px] text-gray-300 mx-2"></i>
+                <span>Shop & Support</span>
+                <i class="fas fa-chevron-right text-[8px] text-gray-300 mx-2"></i>
+                <span>Austin's Tech</span>
+            </div>
+
+            <div class="footer-section" onclick="toggleFooter(this)"><div class="footer-label">Shop Devices <i class="fas fa-plus"></i></div><div class="footer-links"><a onclick="showPage('store')">Certified Pre-Owned Phones</a><a onclick="showPage('store')">Laptops & PCs</a><a onclick="showPage('store')">Tablets</a></div></div>
+            <div class="footer-section" onclick="toggleFooter(this)"><div class="footer-label">Repair Services <i class="fas fa-plus"></i></div><div class="footer-links"><a onclick="startRepair('Phone')">iPhone Repair</a><a onclick="startRepair('Computer')">Mac & PC</a><a onclick="startRepair('Gaming')">Gaming Consoles</a></div></div>
+            <div class="footer-section" onclick="toggleFooter(this)"><div class="footer-label">Membership <i class="fas fa-plus"></i></div><div class="footer-links"><a onclick="showPage('atr-one')">Join ATR-ONE</a><a onclick="showPage('support')">Account Help</a></div></div>
+
+            <div class="pt-8 text-[11px] leading-relaxed">
+                <p>Buy online or call: <a href="tel:5134788077" class="text-blue-600 underline">513-478-8077</a>. Free doorstep delivery on all shop orders.</p>
+                <div class="border-t border-gray-300 mt-6 pt-6 flex flex-col md:flex-row justify-between items-start gap-4">
+                    <p>Copyright © 2026 Austin's Tech Repair Group. All rights reserved.</p>
+                    <div class="flex gap-4 font-bold uppercase text-[10px]">
+                        <a onclick="alert('Privacy...')">Privacy</a><span>|</span><a onclick="alert('Terms...')">Terms</a><span>|</span><a onclick="showPage('home')">Sitemap</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const brands = { 'Phone': ['iPhone', 'Samsung', 'Motorola', 'Pixel'], 'Computer': ['MacBook', 'iMac', 'PC Laptop', 'Custom PC'], 'Gaming': ['PS5', 'Xbox', 'Switch'], 'Watch': ['Apple Watch'], 'Network': ['Starlink', 'Router Setup'], 'Tablet': ['iPad', 'Galaxy Tab'] };
+        
+        function showPage(pageId) {
+            document.getElementById('mobile-menu').classList.remove('open');
+            document.getElementById('menu-toggle').classList.remove('open');
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            window.scrollTo(0,0);
+        }
+
+        function toggleMenu() {
+            document.getElementById('mobile-menu').classList.toggle('open');
+            document.getElementById('menu-toggle').classList.toggle('open');
+        }
+
+        function startRepair(category) {
+            showPage('repair');
+            const options = document.getElementById('brand-options');
+            const title = document.getElementById('brand-title');
+            options.innerHTML = '';
+            title.innerText = `Which ${category}?`;
+            brands[category].forEach(b => {
+                const btn = document.createElement('button');
+                btn.className = "p-6 bg-slate-50 rounded-2xl font-bold hover:bg-blue-600 hover:text-white transition";
+                btn.innerText = b;
+                btn.onclick = () => { document.querySelectorAll('.repair-step').forEach(s => s.classList.remove('active')); document.getElementById('step-final').classList.add('active'); };
+                options.appendChild(btn);
+            });
+        }
+
+        function toggleFooter(el) {
+            const links = el.querySelector('.footer-links');
+            const icon = el.querySelector('i');
+            links.classList.toggle('open');
+            icon.classList.toggle('fa-plus');
+            icon.classList.toggle('fa-minus');
+        }
+    </script>
+</body>
+</html>
+
