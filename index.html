@@ -683,11 +683,36 @@
     </p>          </div>
         </div>
 
-        <!-- JotForm Contact Form -->
-        <div class="reveal repair-card" style="max-width: 760px;">
-          <h3 style="font-size: var(--text-lg); font-weight: 800; margin-bottom: var(--space-4);">Send a Message</h3>
-          <script type="text/javascript" src="https://form.jotform.com/jsform/261955946010055"></script>
-        </div>
+    <!-- JotForm Contact Form -->
+<div class="reveal repair-card" style="max-width: 760px; width: 100%;">
+  <h3 style="font-size: var(--text-lg); font-weight: 800; margin-bottom: var(--space-4);">Send a Message</h3>
+  <iframe
+    id="JotFormIFrame-261955946010055"
+    title="Send a Message"
+    onload="window.parent.scrollTo(0,0)"
+    allowtransparency="true"
+    allow="geolocation; microphone; camera; fullscreen"
+    src="https://form.jotform.com/261955946010055"
+    frameborder="0"
+    style="min-width: 100%; max-width: 100%; height: 539px; border: none;"
+    scrolling="no">
+  </iframe>
+  <script type="text/javascript">
+    var iframe = document.getElementById("JotFormIFrame-261955946010055");
+    if (window.addEventListener) {
+      window.addEventListener("message", handleIFrameMessage, false);
+    } else if (window.attachEvent) {
+      window.attachEvent("onmessage", handleIFrameMessage);
+    }
+    function handleIFrameMessage(e) {
+      if (typeof e.data !== 'string') return;
+      var args = e.data.split(":");
+      if (args[0] === "setHeight" && iframe) {
+        iframe.style.height = args[1] + "px";
+      }
+    }
+  </script>
+</div>
 
         <!-- File Upload Section -->
         <div class="reveal repair-card" style="max-width: 760px; margin-top: var(--space-6);">
