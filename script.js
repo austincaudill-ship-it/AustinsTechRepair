@@ -116,12 +116,12 @@
 
   /* ===== POLICIES ===== */
   const policies = {
-    privacy: `<h2>Privacy Policy</h2><div class="eff">Effective Date: June 21, 2026</div><p>Austin's Tech Repair Group LLC respects your privacy and is committed to protecting the personal information entrusted to us.</p><section><strong>1. Information We Collect</strong><p>We may collect personal information (name, phone, email, address), device and service information, payment information, communications, and website/technical information.</p></section><section><strong>2. Customer Device Data</strong><p>Technicians may have incidental access to data stored on your device. We do not intentionally access, copy, or share personal data unless necessary for the repair service requested.</p></section><section><strong>3. How We Use Your Information</strong><p>We use your information to provide repair services, process payments, send service updates, and improve our services.</p></section><section><strong>4. Information Sharing</strong><p>We do not sell or rent your personal information. We may share it with service providers (payment processors, parts suppliers) as needed to complete your repair.</p></section><section><strong>5. Data Security</strong><p>We implement reasonable security measures to protect your information, including secure payment processing through Square and Shopify.</p></section><section><strong>6. Your Rights</strong><p>You may request access to, correction of, or deletion of your personal information at any time by contacting us.</p></section><section><strong>7. Contact</strong><p>For privacy questions, contact us at 513-478-8077 or through our contact form.</p></section>`,
-    repair: `<h2>Repair Service Agreement</h2><div class="eff">Authorization, liability, payment, and Ohio law</div><p>By submitting a device for service, the customer authorizes Austin's Tech Repair Group LLC to perform requested diagnostic, repair, installation, maintenance, recovery, or consulting services.</p><section><strong>Authorization</strong><p>The customer authorizes repair work on the submitted device. A separate signed authorization may be required for major repairs.</p></section><section><strong>Diagnostic Services</strong><p>Diagnostic fees are non-refundable once diagnostic work has begun. Free diagnostics are offered for most standard repairs.</p></section><section><strong>Customer Data</strong><p>The customer acknowledges that repairs may involve risk of data loss. We recommend backing up all data before submitting any device. See Data Backup Waiver.</p></section><section><strong>Payment</strong><p>Payment is due upon completion of services unless otherwise agreed in writing. We accept cash, card, Apple Pay, Google Pay, PayPal, Square, and Shopify checkout.</p></section><section><strong>Warranty</strong><p>Service warranties apply only as stated by Austin's Tech Repair Group at the time of service. See 1-Year Warranty Policy.</p></section><section><strong>Governing Law</strong><p>This agreement is governed by the laws of the State of Ohio.</p></section>`,
-    backup: `<h2>Data Backup & Loss Waiver</h2><div class="eff">Customer responsibility for backups</div><p>Repair procedures may result in loss, corruption, deletion, or alteration of data stored on your device.</p><section><strong>Customer Responsibility</strong><p>The customer is solely responsible for backing up all data before submitting a device for repair. Austin's Tech Repair Group is not liable for any data loss that occurs during the repair process.</p></section><strong>Data Recovery Services</strong><p>We offer data recovery services for an additional fee. However, successful recovery is not guaranteed in all cases.</p><section><strong>Acknowledgment</strong><p>By submitting a device, the customer acknowledges this waiver and accepts the risks associated with data loss during repair.</p></section>`,
-    'warranty-policy': `<h2>1-Year Limited Warranty Policy</h2><div class="eff">Effective Date: June 21, 2026</div><p>Austin's Tech Repair Group LLC warrants repair labor and installed replacement parts against defects in workmanship and materials for one (1) year from the date of service.</p><section><strong>What's Covered</strong><p>Labor performed during the repair, and replacement parts installed by our technicians, against defects in materials and workmanship.</p></section><section><strong>What's Not Covered</strong><p>Accidental damage, water damage, drop damage, screen cracks after repair, software issues caused by user action, unauthorized modifications, or normal wear and tear.</p></section><section><strong>Claim Process</strong><p>To make a warranty claim, bring the device and original repair receipt to our location. We will inspect the device and, if the issue is covered, repair or replace the defective part at no charge.</p></section><section><strong>Limitations</strong><p>This warranty is non-transferable and applies only to the original customer and device. Our liability is limited to the cost of the original repair.</p></section>`,
-    terms: `<h2>Terms & Conditions</h2><div class="eff">Use of services and website</div><p>Use of this site and our services is subject to these terms and conditions.</p><section><strong>1. Acceptance</strong><p>By using our website or services, you agree to these terms.</p></section><section><strong>2. Services</strong><p>We provide device repair and IT support services. Specific service terms may be provided separately for B2B contracts.</p></section><section><strong>3. Pricing</strong><p>All prices are subject to change. Estimates provided online are approximate and final pricing is confirmed after diagnostic inspection.</p></section><section><strong>4. Payment</strong><p>Payments are processed securely through Square or Shopify. We do not store credit card information on our servers.</p></section><section><strong>5. Limitation of Liability</strong><p>Austin's Tech Repair Group LLC is not liable for indirect, incidental, or consequential damages arising from repair services.</p></section><section><strong>6. Independent Provider</strong><p>We are an independent repair provider, not affiliated with any device manufacturer.</p></section>`,
-    'website-terms': `<h2>Website Terms of Use</h2><div class="eff">Use of this website</div><p>All content is provided "AS IS" without warranty of any kind.</p><section><strong>1. Use of Content</strong><p>Content on this website is for informational purposes. You may not reproduce, distribute, or use content without permission.</p></section><section><strong>2. Third-Party Links</strong><p>This website may contain links to third-party websites. We are not responsible for the content or practices of these sites.</p></section><section><strong>3. E-Commerce</strong><p>Product purchases are processed through Shopify or Square. Each platform's terms of service apply to transactions.</p></section><section><strong>4. Privacy</strong><p>See our Privacy Policy for information on how we handle your data.</p></section><section><strong>5. Changes</strong><p>We reserve the right to update these terms at any time. Continued use of the website constitutes acceptance of updated terms.</p></section>`,
+    privacy: `<h2>Privacy Policy</h2><div class="eff">Effective Date: June 21, 2026</div><p>Austin's Tech Repair Group LLC respects your privacy and is committed to protecting the personal inform[...]
+    repair: `<h2>Repair Service Agreement</h2><div class="eff">Authorization, liability, payment, and Ohio law</div><p>By submitting a device for service, the customer authorizes Austin's Tech Re[...]
+    backup: `<h2>Data Backup & Loss Waiver</h2><div class="eff">Customer responsibility for backups</div><p>Repair procedures may result in loss, corruption, deletion, or alteration of data store[...]
+    'warranty-policy': `<h2>1-Year Limited Warranty Policy</h2><div class="eff">Effective Date: June 21, 2026</div><p>Austin's Tech Repair Group LLC warrants repair labor and installed replacemen[...]
+    terms: `<h2>Terms & Conditions</h2><div class="eff">Use of services and website</div><p>Use of this site and our services is subject to these terms and conditions.</p><section><strong>1. Acce[...]
+    'website-terms': `<h2>Website Terms of Use</h2><div class="eff">Use of this website</div><p>All content is provided "AS IS" without warranty of any kind.</p><section><strong>1. Use of Content[...]
   };
 
   /* ===== STATE ===== */
@@ -166,7 +166,34 @@
     updateCart();
     renderCartDrawer();
     renderSearch('');
+    
+    // Initialize URL-based navigation
+    initHashNavigation();
+    loadPageFromHash();
+    
+    // Listen for back button
+    window.addEventListener('hashchange', loadPageFromHash);
   });
+
+  /* ===== URL HASH NAVIGATION ===== */
+  function initHashNavigation() {
+    // Update hash when setting a page
+    window.setPageWithHash = function(pageId) {
+      window.location.hash = pageId;
+    };
+  }
+
+  function loadPageFromHash() {
+    let pageId = window.location.hash.slice(1) || 'home';
+    
+    // Validate that the page exists
+    if (!document.getElementById(pageId)) {
+      pageId = 'home';
+      window.location.hash = pageId;
+    }
+    
+    setPage(pageId);
+  }
 
   /* ===== THEME TOGGLE ===== */
   function initTheme() {
@@ -193,7 +220,8 @@
       const pageBtn = e.target.closest('[data-page]');
       if (pageBtn) {
         e.preventDefault();
-        setPage(pageBtn.getAttribute('data-page'));
+        const pageId = pageBtn.getAttribute('data-page');
+        window.location.hash = pageId;
         closeMenu();
         closeSearch();
         closeCart();
@@ -233,11 +261,11 @@
     // Brand click
     const brand = document.querySelector('.brand');
     if (brand) {
-      brand.addEventListener('click', () => setPage('home'));
+      brand.addEventListener('click', () => { window.location.hash = 'home'; });
       brand.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          setPage('home');
+          window.location.hash = 'home';
         }
       });
     }
@@ -498,7 +526,7 @@
   function showCheckoutNotice(platform, total) {
     const notice = document.createElement('div');
     notice.style.cssText =
-      'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--dark-bg);color:#fff;padding:16px 24px;border-radius:12px;z-index:5000;font-size:14px;font-weight:700;box-shadow:0 8px 32px rgba(0,0,0,.3);';
+      'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--dark-bg);color:#fff;padding:16px 24px;border-radius:12px;z-index:5000;font-size:14px;font-weight:700;box-sha[...]
     notice.innerHTML = `<i class="fas fa-circle-check" style="color:var(--success);margin-right:8px;"></i> Redirecting to ${platform} checkout... Total: $${total.toFixed(2)}`;
     document.body.appendChild(notice);
     setTimeout(() => notice.remove(), 4000);
@@ -607,7 +635,7 @@
     issueList.innerHTML = data.issues
       .map(
         (item) =>
-          `<button class="issue-btn" type="button" data-type="${item.name}" data-estimate="${item.estimate}">${item.name} <span style="font-family:var(--font-mono);font-size:var(--text-xs);color:var(--text-muted);">${item.estimate}</span> <i class="fas fa-arrow-right"></i></button>`
+          `<button class="issue-btn" type="button" data-type="${item.name}" data-estimate="${item.estimate}">${item.name} <span style="font-family:var(--font-mono);font-size:var(--text-xs);color:[...]
       )
       .join('');
   }
@@ -621,7 +649,7 @@
     ]
       .map(
         (item) =>
-          `<div style="padding:var(--space-3) var(--space-4);background:var(--surface-2);border-radius:var(--radius-lg);border:1px solid var(--border);"><span style="font-family:var(--font-mono);font-size:var(--text-xs);text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);display:block;margin-bottom:2px;">${item.label}</span><strong style="font-size:var(--text-sm);">${item.value}</strong></div>`
+          `<div style="padding:var(--space-3) var(--space-4);background:var(--surface-2);border-radius:var(--radius-lg);border:1px solid var(--border);"><span style="font-family:var(--font-mono);[...]
       )
       .join('');
 
@@ -725,7 +753,7 @@
       const removeBtn = document.createElement('button');
       removeBtn.type = 'button';
       removeBtn.style.cssText =
-        'position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.7);color:#fff;border:none;font-size:10px;cursor:pointer;display:grid;place-items:center;';
+        'position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.7);color:#fff;border:none;font-size:10px;cursor:pointer;display:grid;place-items:cente[...]
       removeBtn.innerHTML = '<i class="fas fa-times"></i>';
       removeBtn.onclick = (e) => {
         e.stopPropagation();
