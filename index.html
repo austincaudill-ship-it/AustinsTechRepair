@@ -815,46 +815,21 @@
       </div>
     </section>
 
-    <!-- ===================== EMPLOYEE PORTAL ===================== -->
- <div id="loginView" class="login-wrap">
-  <div class="login-card">
-    <div class="eyebrow">Austin's Tech Repair Group LLC</div>
-    <h1>Employee Portal</h1>
-    <p>Sign in to access repair operations, parts, orders, and internal tools.</p>
-    
-    <!-- Existing Username/Passcode Form (Kept intact) -->
-    <div class="field" style="margin-bottom: var(--space-4);">
-      <label for="username">Username</label>
-      <input id="username" type="text" autocomplete="username" placeholder="Enter username" class="form-field" />
-    </div>
-    
-    <div class="field" style="margin-bottom: var(--space-4);">
-      <label for="passcode">Passcode</label>
-      <input id="passcode" type="password" autocomplete="current-password" placeholder="Enter passcode" class="form-field" />
-    </div>
-    
-    <button class="btn btn-primary btn-block" onclick="login()">Login</button>
+ <!-- ===================== EMPLOYEE PORTAL ===================== -->
+    <section id="employee" class="page">
 
-    <!-- Divider -->
-    <div style="display: flex; align-items: center; text-align: center; margin: var(--space-4) 0; color: var(--text-secondary, #94a3b8); font-size: var(--text-sm);">
-      <hr style="flex: 1; border: none; border-top: 1px solid var(--border-color, #334155);">
-      <span style="padding: 0 10px;">OR</span>
-      <hr style="flex: 1; border: none; border-top: 1px solid var(--border-color, #334155);">
-    </div>
 
-    <!-- Social / Enterprise Auth Buttons -->
-    <div style="display: flex; flex-direction: column; gap: var(--space-3, 12px);">
-      <button id="google-auth-btn" class="btn btn-block" style="background-color: #ffffff; color: #1f2937; border: 1px solid #d1d5db; display: flex; align-items: center; justify-content: center; gap: 10px;">
-        <i class="fa-brands fa-google"></i> Sign in with Google
-      </button>
-      <button id="apple-auth-btn" class="btn btn-block" style="background-color: #111827; color: #ffffff; border: 1px solid #374151; display: flex; align-items: center; justify-content: center; gap: 10px;">
-        <i class="fa-brands fa-apple"></i> Sign in with Apple
-      </button>
-    </div>
-
-    <p id="loginMsg" style="color: var(--danger); margin-top: var(--space-3); font-size: var(--text-sm);"></p>
-  </div>
-</div>
+      <div id="loginView" class="login-wrap">
+        <div class="login-card">
+          <div class="eyebrow">Austin's Tech Repair Group LLC</div>
+          <h1>Employee Portal</h1>
+          <p>Sign in to access repair operations, parts, orders, and internal tools.</p>
+          <div class="field" style="margin-bottom: var(--space-4);"><label for="username">Username</label><input id="username" type="text" autocomplete="username" placeholder="Enter username" class="form-field" /></div>
+          <div class="field" style="margin-bottom: var(--space-4);"><label for="passcode">Passcode</label><input id="passcode" type="password" autocomplete="current-password" placeholder="Enter passcode" class="form-field" /></div>
+          <button class="btn btn-primary btn-block" onclick="login()">Login</button>
+          <p id="loginMsg" style="color: var(--danger); margin-top: var(--space-3); font-size: var(--text-sm);"></p>
+        </div>
+      </div>
       <div id="portalView" class="app hidden">
         <aside class="sidebar">
           <div class="brand-portal">
