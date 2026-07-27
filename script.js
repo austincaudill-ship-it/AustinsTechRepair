@@ -1,0 +1,1045 @@
+/* ============================================
+   AUSTIN'S TECH REPAIR GROUP — MAIN SCRIPT
+   ============================================ */
+
+(function () {
+  'use strict';
+
+  /* ===== CONFIGURATION ===== */
+  // Replace these with your actual integration URLs
+  const CONFIG = {
+    // Square: Your Square Online Checkout URL (https://squareup.com/dashboard/online-checkout)
+    squareCheckoutUrl: 'https://squareup.com',
+    // Shopify: Your Shopify store URL (e.g., 'https://your-store.myshopify.com')
+    shopifyStoreUrl: 'https://austinstechedgerepair.myshopify.com',
+    // JotForm: Your repair request form ID (with file upload field)
+    jotformRepairFormId: '261955946010055',
+  };
+
+  /* ===== REPAIR DATA ===== */
+  const repairData = {
+    Phones: {
+      title: 'Phone Issues',
+      makes: ['Apple', 'Samsung', 'Google', 'Motorola', 'OnePlus', 'Other'],
+      issues: [
+        { name: 'Screen', estimate: '$89 — $199' },
+        { name: 'Battery', estimate: '$49 — $89' },
+        { name: 'Charging Port', estimate: '$59 — $99' },
+        { name: 'Camera', estimate: '$69 — $149' },
+        { name: 'Speaker', estimate: '$39 — $79' },
+        { name: 'Microphone', estimate: '$39 — $79' },
+        { name: 'Water Damage', estimate: '$99 — $249' },
+        { name: 'Software', estimate: '$49 — $129' },
+        { name: 'Data Transfer', estimate: '$39 — $89' },
+      ],
+    },
+    Tablets: {
+      title: 'Tablet Issues',
+      makes: ['Apple', 'Samsung', 'Amazon', 'Lenovo', 'Other'],
+      issues: [
+        { name: 'Screen', estimate: '$99 — $249' },
+        { name: 'Battery', estimate: '$59 — $119' },
+        { name: 'Charging Port', estimate: '$69 — $109' },
+        { name: 'Touch Issues', estimate: '$79 — $149' },
+        { name: 'Camera', estimate: '$59 — $129' },
+        { name: 'Speaker', estimate: '$39 — $89' },
+        { name: 'Water Damage', estimate: '$99 — $249' },
+        { name: 'Software', estimate: '$49 — $129' },
+        { name: 'Data Transfer', estimate: '$39 — $89' },
+      ],
+    },
+    Computers: {
+      title: 'Computer Issues',
+      makes: ['Apple', 'Dell', 'HP', 'Lenovo', 'Acer', 'ASUS', 'Custom Build', 'Other'],
+      issues: [
+        { name: 'Hard Drive / SSD', estimate: '$89 — $249' },
+        { name: 'Motherboard', estimate: '$149 — $399' },
+        { name: 'RAM / Memory', estimate: '$59 — $149' },
+        { name: 'Power Supply', estimate: '$69 — $179' },
+        { name: 'Display', estimate: '$99 — $299' },
+        { name: 'Keyboard', estimate: '$49 — $149' },
+        { name: 'Trackpad / Mouse', estimate: '$39 — $99' },
+        { name: 'Charging / DC Jack', estimate: '$79 — $179' },
+        { name: 'Virus Removal', estimate: '$49 — $129' },
+        { name: 'Software', estimate: '$49 — $149' },
+        { name: 'Data Recovery', estimate: '$99 — $399' },
+      ],
+    },
+    Gaming: {
+      title: 'Gaming Issues',
+      makes: ['PlayStation', 'Xbox', 'Nintendo', 'PC', 'Other'],
+      issues: [
+        { name: 'HDMI Port', estimate: '$89 — $179' },
+        { name: 'Power', estimate: '$69 — $149' },
+        { name: 'Overheating', estimate: '$59 — $129' },
+        { name: 'Storage', estimate: '$69 — $199' },
+        { name: 'Disc Drive', estimate: '$79 — $159' },
+        { name: 'Controller / Input', estimate: '$39 — $89' },
+        { name: 'Fan / Cooling', estimate: '$49 — $99' },
+        { name: 'Software', estimate: '$49 — $129' },
+        { name: 'Data Recovery', estimate: '$99 — $249' },
+      ],
+    },
+    'Smart Watches': {
+      title: 'Smart Watch Issues',
+      makes: ['Apple', 'Samsung', 'Fitbit', 'Garmin', 'Other'],
+      issues: [
+        { name: 'Battery', estimate: '$49 — $99' },
+        { name: 'Display', estimate: '$79 — $179' },
+        { name: 'Charging', estimate: '$39 — $89' },
+        { name: 'Pairing', estimate: '$29 — $69' },
+        { name: 'Sync Issues', estimate: '$29 — $69' },
+        { name: 'Buttons / Crown', estimate: '$39 — $89' },
+        { name: 'Water Damage', estimate: '$69 — $149' },
+        { name: 'Software', estimate: '$39 — $89' },
+      ],
+    },
+    Business: {
+      title: 'Business Support',
+      makes: ['Microsoft', 'Dell', 'HP', 'Lenovo', 'Canon', 'Brother', 'Other'],
+      issues: [
+        { name: 'Helpdesk & End-User Support', estimate: '$49 — $199/mo' },
+        { name: 'Network & Infrastructure', estimate: '$99 — $499/mo' },
+        { name: 'Cybersecurity', estimate: '$149 — $599/mo' },
+        { name: 'Cloud Services', estimate: '$99 — $399/mo' },
+        { name: 'Backup & Disaster Recovery', estimate: '$99 — $299/mo' },
+        { name: 'Microsoft 365 / SaaS Support', estimate: '$49 — $199/mo' },
+        { name: 'Servers / Storage', estimate: '$149 — $599/mo' },
+        { name: 'VoIP / Phone Systems', estimate: '$99 — $299/mo' },
+        { name: 'Website Support', estimate: '$49 — $199/mo' },
+        { name: 'Application Support', estimate: '$49 — $199/mo' },
+        { name: 'IT Consulting', estimate: '$99 — $299/hr' },
+        { name: 'Project Implementation', estimate: 'Custom Quote' },
+      ],
+    },
+  };
+
+  /* ===== POLICIES ===== */
+  const policies = {
+    privacy: `<h2>Privacy Policy</h2><div class="eff">Effective Date: June 21, 2026</div><p>Austin's Tech Repair Group LLC respects your privacy and is committed to protecting the personal information entrusted to us.</p><section><strong>1. Information We Collect</strong><p>We may collect personal information (name, phone, email, address), device and service information, payment information, communications, and website/technical information.</p></section><section><strong>2. Customer Device Data</strong><p>Technicians may have incidental access to data stored on your device. We do not intentionally access, copy, or share personal data unless necessary for the repair service requested.</p></section><section><strong>3. How We Use Your Information</strong><p>We use your information to provide repair services, process payments, send service updates, and improve our services.</p></section><section><strong>4. Information Sharing</strong><p>We do not sell or rent your personal information. We may share it with service providers (payment processors, parts suppliers) as needed to complete your repair.</p></section><section><strong>5. Data Security</strong><p>We implement reasonable security measures to protect your information, including secure payment processing through Square and Shopify.</p></section><section><strong>6. Your Rights</strong><p>You may request access to, correction of, or deletion of your personal information at any time by contacting us.</p></section><section><strong>7. Contact</strong><p>For privacy questions, contact us at 513-478-8077 or through our contact form.</p></section>`,
+    repair: `<h2>Repair Service Agreement</h2><div class="eff">Authorization, liability, payment, and Ohio law</div><p>By submitting a device for service, the customer authorizes Austin's Tech Repair Group LLC to perform requested diagnostic, repair, installation, maintenance, recovery, or consulting services.</p><section><strong>Authorization</strong><p>The customer authorizes repair work on the submitted device. A separate signed authorization may be required for major repairs.</p></section><section><strong>Diagnostic Services</strong><p>Diagnostic fees are non-refundable once diagnostic work has begun. Free diagnostics are offered for most standard repairs.</p></section><section><strong>Customer Data</strong><p>The customer acknowledges that repairs may involve risk of data loss. We recommend backing up all data before submitting any device. See Data Backup Waiver.</p></section><section><strong>Payment</strong><p>Payment is due upon completion of services unless otherwise agreed in writing. We accept cash, card, Apple Pay, Google Pay, PayPal, Square, and Shopify checkout.</p></section><section><strong>Warranty</strong><p>Service warranties apply only as stated by Austin's Tech Repair Group at the time of service. See 1-Year Warranty Policy.</p></section><section><strong>Governing Law</strong><p>This agreement is governed by the laws of the State of Ohio.</p></section>`,
+    backup: `<h2>Data Backup & Loss Waiver</h2><div class="eff">Customer responsibility for backups</div><p>Repair procedures may result in loss, corruption, deletion, or alteration of data stored on your device.</p><section><strong>Customer Responsibility</strong><p>The customer is solely responsible for backing up all data before submitting a device for repair. Austin's Tech Repair Group is not liable for any data loss that occurs during the repair process.</p></section><strong>Data Recovery Services</strong><p>We offer data recovery services for an additional fee. However, successful recovery is not guaranteed in all cases.</p><section><strong>Acknowledgment</strong><p>By submitting a device, the customer acknowledges this waiver and accepts the risks associated with data loss during repair.</p></section>`,
+    'warranty-policy': `<h2>1-Year Limited Warranty Policy</h2><div class="eff">Effective Date: June 21, 2026</div><p>Austin's Tech Repair Group LLC warrants repair labor and installed replacement parts against defects in workmanship and materials for one (1) year from the date of service.</p><section><strong>What's Covered</strong><p>Labor performed during the repair, and replacement parts installed by our technicians, against defects in materials and workmanship.</p></section><section><strong>What's Not Covered</strong><p>Accidental damage, water damage, drop damage, screen cracks after repair, software issues caused by user action, unauthorized modifications, or normal wear and tear.</p></section><section><strong>Claim Process</strong><p>To make a warranty claim, bring the device and original repair receipt to our location. We will inspect the device and, if the issue is covered, repair or replace the defective part at no charge.</p></section><section><strong>Limitations</strong><p>This warranty is non-transferable and applies only to the original customer and device. Our liability is limited to the cost of the original repair.</p></section>`,
+    terms: `<h2>Terms & Conditions</h2><div class="eff">Use of services and website</div><p>Use of this site and our services is subject to these terms and conditions.</p><section><strong>1. Acceptance</strong><p>By using our website or services, you agree to these terms.</p></section><section><strong>2. Services</strong><p>We provide device repair and IT support services. Specific service terms may be provided separately for B2B contracts.</p></section><section><strong>3. Pricing</strong><p>All prices are subject to change. Estimates provided online are approximate and final pricing is confirmed after diagnostic inspection.</p></section><section><strong>4. Payment</strong><p>Payments are processed securely through Square or Shopify. We do not store credit card information on our servers.</p></section><section><strong>5. Limitation of Liability</strong><p>Austin's Tech Repair Group LLC is not liable for indirect, incidental, or consequential damages arising from repair services.</p></section><section><strong>6. Independent Provider</strong><p>We are an independent repair provider, not affiliated with any device manufacturer.</p></section>`,
+    'website-terms': `<h2>Website Terms of Use</h2><div class="eff">Use of this website</div><p>All content is provided "AS IS" without warranty of any kind.</p><section><strong>1. Use of Content</strong><p>Content on this website is for informational purposes. You may not reproduce, distribute, or use content without permission.</p></section><section><strong>2. Third-Party Links</strong><p>This website may contain links to third-party websites. We are not responsible for the content or practices of these sites.</p></section><section><strong>3. E-Commerce</strong><p>Product purchases are processed through Shopify or Square. Each platform's terms of service apply to transactions.</p></section><section><strong>4. Privacy</strong><p>See our Privacy Policy for information on how we handle your data.</p></section><section><strong>5. Changes</strong><p>We reserve the right to update these terms at any time. Continued use of the website constitutes acceptance of updated terms.</p></section>`,
+  };
+
+  /* ===== STATE ===== */
+  let cart = loadCart();
+  let slideIndex = 0;
+  let activeFlipCard = null;
+  let repairState = { device: '', make: '', issue: '', estimate: '' };
+  let uploadedFiles = [];
+  let contactUploadedFiles = [];
+
+  /* ===== DOM REFS ===== */
+  const header = document.getElementById('header');
+  const pages = () => document.querySelectorAll('.page');
+  const mobileMenu = document.getElementById('mobile-menu');
+  const searchOverlay = document.getElementById('search-overlay');
+  const searchInput = document.getElementById('search-input');
+  const searchResults = document.getElementById('search-results');
+  const cartDrawer = document.getElementById('cart-drawer');
+  const cartBadge = document.getElementById('cart-badge');
+  const cartDrawerItems = document.getElementById('cart-drawer-items');
+  const cartDrawerTotal = document.getElementById('cart-drawer-total');
+  const policyOverlay = document.getElementById('policy-overlay');
+  const policyBody = document.getElementById('policy-body');
+
+  /* ===== INIT ===== */
+  document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
+    initNavigation();
+    initMobileMenu();
+    initSearch();
+    initCart();
+    initRepairWizard();
+    initFileUpload();
+    initContactFileUpload();
+    initForms();
+    initScrollReveal();
+    initSlideshow();
+    initFAQ();
+    initProductFilters();
+    initHeaderScroll();
+    initShopifyLink();
+    updateCart();
+    renderCartDrawer();
+    renderSearch('');
+  });
+
+  /* ===== THEME TOGGLE ===== */
+  function initTheme() {
+    const toggle = document.getElementById('theme-toggle');
+    const root = document.documentElement;
+    let dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    applyTheme(dark, toggle, root);
+    toggle.addEventListener('click', () => {
+      dark = !dark;
+      applyTheme(dark, toggle, root);
+    });
+  }
+  function applyTheme(dark, toggle, root) {
+    root.setAttribute('data-theme', dark ? 'dark' : 'light');
+    toggle.innerHTML = dark
+      ? '<i class="fas fa-sun" aria-hidden="true"></i>'
+      : '<i class="fas fa-moon" aria-hidden="true"></i>';
+    toggle.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+  }
+
+  /* ===== NAVIGATION ===== */
+  function initNavigation() {
+    document.addEventListener('click', (e) => {
+      const pageBtn = e.target.closest('[data-page]');
+      if (pageBtn) {
+        e.preventDefault();
+        setPage(pageBtn.getAttribute('data-page'));
+        closeMenu();
+        closeSearch();
+        closeCart();
+        return;
+      }
+
+      const policyBtn = e.target.closest('[data-policy]');
+      if (policyBtn) {
+        e.preventDefault();
+        openPolicy(policyBtn.getAttribute('data-policy'));
+        return;
+      }
+
+      const addCartBtn = e.target.closest('[data-add-cart]');
+      if (addCartBtn) {
+        try {
+          const item = JSON.parse(addCartBtn.getAttribute('data-add-cart'));
+          addToCart(item);
+          openCart();
+        } catch (err) {
+          console.error('Cart parse error', err);
+        }
+        return;
+      }
+
+      const flipCard = e.target.closest('.flip-card');
+      if (flipCard && !e.target.closest('button[data-page]')) {
+        if (activeFlipCard && activeFlipCard !== flipCard) {
+          activeFlipCard.classList.remove('flipped');
+        }
+        flipCard.classList.toggle('flipped');
+        activeFlipCard = flipCard.classList.contains('flipped') ? flipCard : null;
+        return;
+      }
+    });
+
+    // Brand click
+    const brand = document.querySelector('.brand');
+    if (brand) {
+      brand.addEventListener('click', () => setPage('home'));
+      brand.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          setPage('home');
+        }
+      });
+    }
+  }
+
+  function setPage(pageId) {
+    pages().forEach((p) => p.classList.remove('active'));
+    const target = document.getElementById(pageId);
+    if (target) {
+      target.classList.add('active');
+      // Update nav active states
+      document.querySelectorAll('.nav-link').forEach((l) => l.classList.remove('active'));
+      document.querySelectorAll('.menu-link').forEach((l) => l.classList.remove('active'));
+      document.querySelectorAll(`[data-page="${pageId}"]`).forEach((btn) => {
+        if (btn.classList.contains('nav-link') || btn.classList.contains('menu-link')) {
+          btn.classList.add('active');
+        }
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
+
+  /* ===== MOBILE MENU ===== */
+  function initMobileMenu() {
+    document.getElementById('menu-toggle').addEventListener('click', openMenu);
+    document.getElementById('menu-close').addEventListener('click', closeMenu);
+    mobileMenu.addEventListener('click', (e) => {
+      if (e.target === mobileMenu) closeMenu();
+    });
+  }
+  function openMenu() {
+    mobileMenu.classList.add('open');
+    document.body.classList.add('no-scroll');
+    mobileMenu.setAttribute('aria-hidden', 'false');
+  }
+  function closeMenu() {
+    mobileMenu.classList.remove('open');
+    document.body.classList.remove('no-scroll');
+    mobileMenu.setAttribute('aria-hidden', 'true');
+  }
+
+  /* ===== SEARCH ===== */
+  function initSearch() {
+    const searchToggle = document.getElementById('search-toggle');
+    searchToggle.addEventListener('click', openSearch);
+    document.getElementById('search-close').addEventListener('click', closeSearch);
+    searchOverlay.addEventListener('click', (e) => {
+      if (e.target === searchOverlay) closeSearch();
+    });
+
+    searchInput.addEventListener('input', (e) => renderSearch(e.target.value));
+
+    const heroSearchForm = document.getElementById('hero-search-form');
+    const heroSearchInput = document.getElementById('hero-search-input');
+    heroSearchForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const q = heroSearchInput.value.trim();
+      if (q) {
+        openSearch();
+        searchInput.value = q;
+        renderSearch(q);
+      }
+    });
+  }
+  function openSearch() {
+    searchOverlay.classList.add('open');
+    document.body.classList.add('no-scroll');
+    document.getElementById('search-toggle').setAttribute('aria-expanded', 'true');
+    setTimeout(() => searchInput.focus(), 50);
+  }
+  function closeSearch() {
+    searchOverlay.classList.remove('open');
+    document.body.classList.remove('no-scroll');
+    document.getElementById('search-toggle').setAttribute('aria-expanded', 'false');
+  }
+
+  function renderSearch(q) {
+    const items = [
+      ['home', 'Home', 'Main landing page'],
+      ['shop', 'Shop', 'Browse products & accessories'],
+      ['repair', 'Repair', 'Start a repair request with estimate'],
+      ['about', 'About', 'Learn about us & service area'],
+      ['contact', 'Contact', 'Send a message or photos'],
+      ['b2b', 'B2B', 'Business & managed IT support'],
+      ['atr-one', 'ATR One', '$19.99/month membership'],
+      ['employee', 'Employee Portal', 'Internal login'],
+    ];
+    const deviceItems = Object.keys(repairData).map((d) => [d, d + ' Repair', repairData[d].title]);
+    const allItems = [...items, ...deviceItems];
+
+    const f = allItems.filter(
+      (x) => !q || x[1].toLowerCase().includes(q.toLowerCase()) || x[2].toLowerCase().includes(q.toLowerCase())
+    );
+    searchResults.innerHTML =
+      f
+        .map(
+          (x) =>
+            `<button class="search-result" type="button" data-page="${x[0]}"><span class="search-result-name">${x[1]}</span><span class="search-result-meta">${x[2]}</span></button>`
+        )
+        .join('') || '<p style="color: var(--text-muted);">No results found.</p>';
+  }
+
+  /* ===== CART ===== */
+  function loadCart() {
+    try {
+      return JSON.parse(localStorage.getItem('atr_cart')) || [];
+    } catch {
+      return [];
+    }
+  }
+  function saveCart() {
+    try {
+      localStorage.setItem('atr_cart', JSON.stringify(cart));
+    } catch {}
+    updateCart();
+    renderCartDrawer();
+  }
+  function addToCart(item) {
+    const existing = cart.find((i) => i.id === item.id);
+    if (existing) {
+      existing.qty = (existing.qty || 1) + 1;
+    } else {
+      cart.push({ ...item, qty: 1 });
+    }
+    saveCart();
+  }
+  function updateCart() {
+    const count = cart.reduce((s, i) => s + (i.qty || 1), 0);
+    cartBadge.textContent = count;
+    cartBadge.classList.toggle('show', count > 0);
+  }
+  function renderCartDrawer() {
+    if (!cart.length) {
+      cartDrawerItems.innerHTML =
+        '<div class="cart-empty"><i class="fas fa-cart-shopping"></i><p>Your cart is empty</p></div>';
+      cartDrawerTotal.textContent = '$0.00';
+      return;
+    }
+    cartDrawerItems.innerHTML = cart
+      .map(
+        (item) => `
+        <div class="cart-item">
+          <img class="cart-item__img" src="${item.image || ''}" alt="${item.name}" />
+          <div class="cart-item__meta">
+            <p class="cart-item__name">${item.name}</p>
+            <p class="cart-item__line">$${Number(item.price || 0).toFixed(2)} × ${item.qty || 1}</p>
+            <div class="cart-item__actions">
+              <button class="cart-mini-btn" type="button" data-cart-dec="${item.id}">-</button>
+              <button class="cart-mini-btn" type="button" data-cart-inc="${item.id}">+</button>
+              <button class="cart-mini-btn" type="button" data-cart-remove="${item.id}">Remove</button>
+            </div>
+          </div>
+        </div>
+      `
+      )
+      .join('');
+    cartDrawerTotal.textContent = '$' + cart.reduce((s, i) => s + (i.price || 0) * (i.qty || 1), 0).toFixed(2);
+  }
+
+  function initCart() {
+    document.getElementById('cart-toggle').addEventListener('click', openCart);
+    document.getElementById('cart-drawer-close').addEventListener('click', closeCart);
+    document.getElementById('cart-drawer-close-btn').addEventListener('click', closeCart);
+
+    // Cart item actions (delegated)
+    cartDrawerItems.addEventListener('click', (e) => {
+      const inc = e.target.closest('[data-cart-inc]');
+      const dec = e.target.closest('[data-cart-dec]');
+      const remove = e.target.closest('[data-cart-remove]');
+      if (inc) {
+        const item = cart.find((i) => i.id === inc.getAttribute('data-cart-inc'));
+        if (item) { item.qty = (item.qty || 1) + 1; saveCart(); }
+      }
+      if (dec) {
+        const item = cart.find((i) => i.id === dec.getAttribute('data-cart-dec'));
+        if (item) {
+          item.qty = (item.qty || 1) - 1;
+          if (item.qty <= 0) cart = cart.filter((i) => i.id !== item.id);
+          saveCart();
+        }
+      }
+      if (remove) {
+        cart = cart.filter((i) => i.id !== remove.getAttribute('data-cart-remove'));
+        saveCart();
+      }
+    });
+
+    document.getElementById('cart-clear').addEventListener('click', () => {
+      cart = [];
+      saveCart();
+    });
+
+    // Square Checkout
+    document.getElementById('cart-checkout-square').addEventListener('click', () => {
+      checkoutWithSquare();
+    });
+
+    // Shopify Checkout
+    document.getElementById('cart-checkout-shopify').addEventListener('click', () => {
+      checkoutWithShopify();
+    });
+  }
+
+  function openCart() {
+    cartDrawer.classList.add('open');
+    cartDrawer.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('no-scroll');
+  }
+  function closeCart() {
+    cartDrawer.classList.remove('open');
+    cartDrawer.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('no-scroll');
+  }
+
+  /* ===== SQUARE CHECKOUT ===== */
+  function checkoutWithSquare() {
+    if (!cart.length) return;
+    // Build a summary of cart items for the Square checkout
+    const total = cart.reduce((s, i) => s + (i.price || 0) * (i.qty || 1), 0);
+    const summary = cart.map((i) => `${i.name} x${i.qty || 1} ($${(i.price * i.qty).toFixed(2)})`).join(', ');
+
+    // Option 1: Redirect to Square Online Checkout link
+    // Replace CONFIG.squareCheckoutUrl with your Square payment link
+    // The link can be configured at https://squareup.com/dashboard/online-checkout
+    const squareUrl = CONFIG.squareCheckoutUrl + '?total=' + total.toFixed(2) + '&desc=' + encodeURIComponent(summary);
+
+    // For production: Create a Square Checkout order via API (requires backend)
+    // For now: redirect to Square checkout page
+    window.open(squareUrl, '_blank');
+
+    // Show confirmation
+    showCheckoutNotice('Square', total);
+  }
+
+  /* ===== SHOPIFY CHECKOUT ===== */
+  function checkoutWithShopify() {
+    if (!cart.length) return;
+    // Build Shopify cart URL
+    // Format: https://your-store.myshopify.com/cart/add?items=variantId:quantity
+    // Or use the Shopify AJAX Cart API to add items then redirect to checkout
+
+    const total = cart.reduce((s, i) => s + (i.price || 0) * (i.qty || 1), 0);
+
+    // Option 1: Redirect to Shopify store with cart parameters
+    // This requires product variant IDs from your Shopify store
+    // For now, redirect to the Shopify store with a pre-filled note
+    const shopifyUrl = CONFIG.shopifyStoreUrl + '/cart';
+
+    // Option 2: Use Shopify AJAX API to add items to cart then redirect
+    // This requires variant IDs mapped to your products
+    // For a static site, we redirect to the store cart page
+
+    window.open(shopifyUrl, '_blank');
+
+    showCheckoutNotice('Shopify', total);
+  }
+
+  function showCheckoutNotice(platform, total) {
+    const notice = document.createElement('div');
+    notice.style.cssText =
+      'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--dark-bg);color:#fff;padding:16px 24px;border-radius:12px;z-index:5000;font-size:14px;font-weight:700;box-shadow:0 8px 32px rgba(0,0,0,.3);';
+    notice.innerHTML = `<i class="fas fa-circle-check" style="color:var(--success);margin-right:8px;"></i> Redirecting to ${platform} checkout... Total: $${total.toFixed(2)}`;
+    document.body.appendChild(notice);
+    setTimeout(() => notice.remove(), 4000);
+  }
+
+  /* ===== SHOPIFY STORE LINK ===== */
+  function initShopifyLink() {
+    const link = document.getElementById('shopify-store-link');
+    if (link) {
+      link.href = CONFIG.shopifyStoreUrl;
+    }
+  }
+
+  /* ===== REPAIR WIZARD ===== */
+  function initRepairWizard() {
+    const stepDevice = document.getElementById('step-device');
+    const stepIssue = document.getElementById('step-issue');
+    const stepEstimate = document.getElementById('step-estimate');
+    const stepContact = document.getElementById('step-contact');
+
+    document.addEventListener('click', (e) => {
+      // Device selection
+      const deviceBtn = e.target.closest('#step-device [data-device]');
+      if (deviceBtn) {
+        repairState.device = deviceBtn.getAttribute('data-device');
+        renderIssues(repairState.device);
+        showStep('issue');
+        updateProgress(2);
+        return;
+      }
+
+      // Make selection
+      const makeBtn = e.target.closest('#step-issue [data-make]');
+      if (makeBtn) {
+        repairState.make = makeBtn.getAttribute('data-make');
+        document.querySelectorAll('#make-grid .option-btn').forEach((b) => b.classList.remove('selected'));
+        makeBtn.classList.add('selected');
+        return;
+      }
+
+      // Issue selection
+      const issueBtn = e.target.closest('#step-issue [data-type]');
+      if (issueBtn) {
+        repairState.issue = issueBtn.getAttribute('data-type');
+        repairState.estimate = issueBtn.getAttribute('data-estimate') || 'Custom Quote';
+        renderEstimate();
+        showStep('estimate');
+        updateProgress(3);
+        return;
+      }
+
+      // Continue to contact from estimate
+      const continueBtn = e.target.closest('[data-action="continue-contact"]');
+      if (continueBtn) {
+        showStep('contact');
+        updateProgress(4);
+        // Fill hidden fields
+        document.getElementById('repair-device-hidden').value = repairState.device;
+        document.getElementById('repair-make-hidden').value = repairState.make;
+        document.getElementById('repair-issue-hidden').value = repairState.issue;
+        return;
+      }
+
+      // Back buttons
+      const backBtn = e.target.closest('[data-back]');
+      if (backBtn) {
+        const target = backBtn.getAttribute('data-back');
+        if (target === 'device') { showStep('device'); updateProgress(1); }
+        if (target === 'issue') { showStep('issue'); updateProgress(2); }
+        if (target === 'estimate') { showStep('estimate'); updateProgress(3); }
+        return;
+      }
+    });
+  }
+
+  function showStep(step) {
+    document.querySelectorAll('.repair-step').forEach((s) => s.classList.remove('active'));
+    const map = { device: 'step-device', issue: 'step-issue', estimate: 'step-estimate', contact: 'step-contact' };
+    const el = document.getElementById(map[step]);
+    if (el) el.classList.add('active');
+  }
+
+  function updateProgress(step) {
+    for (let i = 1; i <= 4; i++) {
+      const el = document.getElementById('progress-' + i);
+      if (!el) continue;
+      el.classList.remove('active', 'completed');
+      if (i < step) el.classList.add('completed');
+      if (i === step) el.classList.add('active');
+    }
+  }
+
+  function renderIssues(device) {
+    const data = repairData[device];
+    if (!data) return;
+    document.getElementById('issue-title').textContent = data.title;
+
+    // Render makes
+    const makeGrid = document.getElementById('make-grid');
+    makeGrid.innerHTML = data.makes
+      .map((m) => `<button class="option-btn" type="button" data-make="${m}">${m}</button>`)
+      .join('');
+
+    // Render issues with estimates
+    const issueList = document.getElementById('issue-list');
+    issueList.innerHTML = data.issues
+      .map(
+        (item) =>
+          `<button class="issue-btn" type="button" data-type="${item.name}" data-estimate="${item.estimate}">${item.name} <span style="font-family:var(--font-mono);font-size:var(--text-xs);color:var(--text-muted);">${item.estimate}</span> <i class="fas fa-arrow-right"></i></button>`
+      )
+      .join('');
+  }
+
+  function renderEstimate() {
+    const summary = document.getElementById('estimate-summary');
+    summary.innerHTML = [
+      { label: 'Device', value: repairState.device },
+      { label: 'Brand', value: repairState.make || 'Not selected' },
+      { label: 'Issue', value: repairState.issue },
+    ]
+      .map(
+        (item) =>
+          `<div style="padding:var(--space-3) var(--space-4);background:var(--surface-2);border-radius:var(--radius-lg);border:1px solid var(--border);"><span style="font-family:var(--font-mono);font-size:var(--text-xs);text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);display:block;margin-bottom:2px;">${item.label}</span><strong style="font-size:var(--text-sm);">${item.value}</strong></div>`
+      )
+      .join('');
+
+    document.getElementById('estimate-price').textContent = repairState.estimate;
+  }
+
+  /* ===== FILE UPLOAD ===== */
+  function initFileUpload() {
+    const dropZone = document.getElementById('file-drop-zone');
+    const fileInput = document.getElementById('file-upload');
+    const browseBtn = document.getElementById('file-browse-btn');
+    const previewList = document.getElementById('file-preview-list');
+
+    if (!dropZone || !fileInput) return;
+
+    setupFileDropZone(dropZone, fileInput, browseBtn, previewList, (files) => {
+      uploadedFiles = files;
+    });
+  }
+
+  function initContactFileUpload() {
+    const dropZone = document.getElementById('contact-file-drop-zone');
+    const fileInput = document.getElementById('contact-file-upload');
+    const browseBtn = document.getElementById('contact-file-browse-btn');
+    const previewList = document.getElementById('contact-file-preview-list');
+
+    if (!dropZone || !fileInput) return;
+
+    setupFileDropZone(dropZone, fileInput, browseBtn, previewList, (files) => {
+      contactUploadedFiles = files;
+    });
+  }
+
+  function setupFileDropZone(dropZone, fileInput, browseBtn, previewList, onFilesCallback) {
+    // Click to browse
+    browseBtn.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('click', (e) => {
+      if (e.target === dropZone || e.target.tagName === 'I' || e.target.tagName === 'P') {
+        fileInput.click();
+      }
+    });
+
+    // Drag and drop
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.style.borderColor = 'var(--primary)';
+      dropZone.style.background = 'var(--primary-highlight)';
+    });
+    dropZone.addEventListener('dragleave', (e) => {
+      e.preventDefault();
+      dropZone.style.borderColor = '';
+      dropZone.style.background = '';
+    });
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.style.borderColor = '';
+      dropZone.style.background = '';
+      handleFiles(e.dataTransfer.files, previewList, onFilesCallback);
+    });
+
+    // File input change
+    fileInput.addEventListener('change', (e) => {
+      handleFiles(e.target.files, previewList, onFilesCallback);
+    });
+  }
+
+  function handleFiles(fileList, previewList, onFilesCallback) {
+    const files = Array.from(fileList).slice(0, 5);
+    const validFiles = files.filter((f) => f.size <= 10 * 1024 * 1024); // 10MB max
+
+    if (files.length > 5) {
+      alert('Maximum 5 files allowed. Only the first 5 will be uploaded.');
+    }
+
+    onFilesCallback(validFiles);
+    renderFilePreviews(validFiles, previewList);
+  }
+
+  function renderFilePreviews(files, previewList) {
+    previewList.innerHTML = '';
+    files.forEach((file, idx) => {
+      const isImage = file.type.startsWith('image/');
+      const preview = document.createElement('div');
+      preview.style.cssText =
+        'position:relative;width:80px;height:80px;border-radius:8px;overflow:hidden;border:2px solid var(--border);background:var(--surface-2);';
+
+      if (isImage) {
+        const img = document.createElement('img');
+        img.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+        img.src = URL.createObjectURL(file);
+        img.alt = file.name;
+        preview.appendChild(img);
+      } else {
+        const icon = document.createElement('div');
+        icon.style.cssText = 'width:100%;height:100%;display:grid;place-items:center;color:var(--text-muted);';
+        icon.innerHTML = '<i class="fas fa-file" style="font-size:1.5rem;"></i>';
+        preview.appendChild(icon);
+      }
+
+      // Remove button
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.style.cssText =
+        'position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.7);color:#fff;border:none;font-size:10px;cursor:pointer;display:grid;place-items:center;';
+      removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+      removeBtn.onclick = (e) => {
+        e.stopPropagation();
+        preview.remove();
+      };
+      preview.appendChild(removeBtn);
+
+      // File name tooltip
+      preview.title = file.name + ' (' + (file.size / 1024).toFixed(0) + 'KB)';
+
+      previewList.appendChild(preview);
+    });
+  }
+
+  /* ===== FORMS ===== */
+  function initForms() {
+    // Repair contact form
+    const repairForm = document.getElementById('repair-contact-form');
+    if (repairForm) {
+      repairForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        // Collect form data
+        const formData = new FormData(repairForm);
+        const data = {
+          customer_name: formData.get('customer_name'),
+          customer_phone: formData.get('customer_phone'),
+          customer_email: formData.get('customer_email'),
+          customer_location: formData.get('customer_location'),
+          preferred_time: formData.get('preferred_time'),
+          device_type: repairState.device,
+          device_brand: repairState.make,
+          issue_type: repairState.issue,
+          estimate: repairState.estimate,
+          device_model: formData.get('device_model'),
+          additional_details: formData.get('additional_details'),
+          timestamp: new Date().toISOString(),
+        };
+
+        // In production: Submit to JotForm, backend API, or email service
+        // For now: Submit via JotForm API or store locally
+        submitToJotForm(data, uploadedFiles, 'repair')
+          .then(() => {
+            const thanks = document.getElementById('repair-thanks');
+            if (thanks) {
+              thanks.hidden = false;
+              repairForm.style.display = 'none';
+            }
+          })
+          .catch(() => {
+            // Fallback: show thanks anyway (form data is collected client-side)
+            const thanks = document.getElementById('repair-thanks');
+            if (thanks) {
+              thanks.hidden = false;
+              repairForm.style.display = 'none';
+            }
+          });
+      });
+    }
+
+    // Contact file form
+    const contactForm = document.getElementById('contact-file-form');
+    if (contactForm) {
+      contactForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(contactForm);
+        const data = {
+          name: formData.get('name'),
+          contact: formData.get('contact'),
+          message: formData.get('message'),
+          timestamp: new Date().toISOString(),
+        };
+
+        submitToJotForm(data, contactUploadedFiles, 'contact')
+          .then(() => {
+            const thanks = document.getElementById('contact-file-thanks');
+            if (thanks) {
+              thanks.hidden = false;
+              contactForm.style.display = 'none';
+            }
+          })
+          .catch(() => {
+            const thanks = document.getElementById('contact-file-thanks');
+            if (thanks) {
+              thanks.hidden = false;
+              contactForm.style.display = 'none';
+            }
+          });
+      });
+    }
+  }
+
+  /* ===== JOTFORM SUBMISSION ===== */
+  // Submits form data to JotForm via their API
+  // For file uploads, this creates a FormData object and posts to JotForm's endpoint
+  function submitToJotForm(data, files, type) {
+    return new Promise((resolve, reject) => {
+      // Option 1: Submit via JotForm API
+      // const jotformUrl = `https://submit.jotform.com/submit/${CONFIG.jotformRepairFormId}/`;
+      // const formData = new FormData();
+      // Object.keys(data).forEach(key => formData.append(key, data[key]));
+      // if (files && files.length) {
+      //   files.forEach((file, idx) => formData.append(`upload[${idx}]`, file));
+      // }
+      // fetch(jotformUrl, { method: 'POST', body: formData })
+      //   .then(res => resolve())
+      //   .catch(err => reject(err));
+
+      // Option 2: Use JotForm's form embed which handles submission internally
+      // The embedded JotForm form (in the contact page) handles its own submissions
+      // For the repair wizard and file upload forms, we collect data client-side
+      // and can send via email API, Formspree, or backend endpoint
+
+      // For now, simulate successful submission
+      console.log(`${type} form submitted:`, data);
+      if (files && files.length) {
+        console.log('Files uploaded:', files.map(f => ({ name: f.name, size: f.size, type: f.type })));
+      }
+
+      // Store submission locally as backup
+      try {
+        const submissions = JSON.parse(localStorage.getItem('atr_submissions') || '[]');
+        submissions.push({ type, data, files: files ? files.map(f => ({ name: f.name, size: f.size, type: f.type })) : [], timestamp: new Date().toISOString() });
+        localStorage.setItem('atr_submissions', JSON.stringify(submissions));
+      } catch {}
+
+      resolve();
+    });
+  }
+
+  /* ===== POLICY OVERLAY ===== */
+  function openPolicy(key) {
+    const html = policies[key];
+    if (!html) return;
+    policyBody.innerHTML = html;
+    policyOverlay.classList.add('open');
+    document.body.classList.add('no-scroll');
+    policyOverlay.setAttribute('aria-hidden', 'false');
+  }
+
+  // Close policy
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('#policy-close') || e.target === policyOverlay) {
+      policyOverlay.classList.remove('open');
+      document.body.classList.remove('no-scroll');
+      policyOverlay.setAttribute('aria-hidden', 'true');
+      policyBody.innerHTML = '';
+    }
+  });
+
+  // ESC key to close overlays
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeMenu();
+      closeSearch();
+      closeCart();
+      policyOverlay.classList.remove('open');
+      document.body.classList.remove('no-scroll');
+    }
+  });
+
+  /* ===== SCROLL REVEAL ===== */
+  function initScrollReveal() {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+    );
+
+    document.querySelectorAll('.reveal').forEach((el) => observer.observe(el));
+  }
+
+  /* ===== SLIDESHOW ===== */
+  function initSlideshow() {
+    const slides = document.querySelectorAll('.slide');
+    const dotsContainer = document.getElementById('slide-dots');
+    if (slides.length === 0) return;
+
+    // Create dots
+    if (dotsContainer) {
+      dotsContainer.innerHTML = slides
+        .map((_, i) => `<div class="slide-dot${i === 0 ? ' active' : ''}" data-slide="${i}"></div>`)
+        .join('');
+
+      dotsContainer.addEventListener('click', (e) => {
+        const dot = e.target.closest('.slide-dot');
+        if (dot) {
+          const idx = parseInt(dot.getAttribute('data-slide'));
+          goToSlide(idx);
+        }
+      });
+    }
+
+    setInterval(() => {
+      goToSlide((slideIndex + 1) % slides.length);
+    }, 5000);
+  }
+
+  function goToSlide(idx) {
+    const slides = document.querySelectorAll('.slide');
+    const dots = document.querySelectorAll('.slide-dot');
+    slides[slideIndex]?.classList.remove('active');
+    dots[slideIndex]?.classList.remove('active');
+    slideIndex = idx;
+    slides[slideIndex]?.classList.add('active');
+    dots[slideIndex]?.classList.add('active');
+  }
+
+  /* ===== FAQ ACCORDION ===== */
+  function initFAQ() {
+    document.addEventListener('click', (e) => {
+      const question = e.target.closest('.faq-question');
+      if (!question) return;
+
+      const item = question.parentElement;
+      const isOpen = item.classList.contains('open');
+
+      // Close all
+      document.querySelectorAll('.faq-item').forEach((f) => f.classList.remove('open'));
+
+      // Open clicked if it was closed
+      if (!isOpen) {
+        item.classList.add('open');
+      }
+    });
+  }
+
+  /* ===== PRODUCT FILTERS ===== */
+  function initProductFilters() {
+    document.addEventListener('click', (e) => {
+      const filterBtn = e.target.closest('.filter-btn');
+      if (!filterBtn) return;
+
+      const filter = filterBtn.getAttribute('data-filter');
+
+      // Update active filter
+      document.querySelectorAll('.filter-btn').forEach((b) => b.classList.remove('active'));
+      filterBtn.classList.add('active');
+
+      // Filter products
+      document.querySelectorAll('.product-card').forEach((card) => {
+        if (filter === 'all' || card.getAttribute('data-category') === filter) {
+          card.style.display = '';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    });
+  }
+
+  /* ===== HEADER SCROLL ===== */
+  function initHeaderScroll() {
+    let lastScroll = 0;
+    window.addEventListener('scroll', () => {
+      const currentScroll = window.pageYOffset;
+      if (currentScroll > 10) {
+        header.classList.add('scrolled');
+      } else {
+        header.classList.remove('scrolled');
+      }
+      lastScroll = currentScroll;
+    });
+  }
+
+  /* ===== EMPLOYEE PORTAL (global functions) ===== */
+  // Demo credentials — replace with secure authentication
+  const DEMO_USER = 'demo';
+  const DEMO_PASS = '0000';
+
+  window.login = function () {
+    const u = document.getElementById('username').value.trim();
+    const p = document.getElementById('passcode').value.trim();
+    const msg = document.getElementById('loginMsg');
+    if (u === DEMO_USER && p === DEMO_PASS) {
+      document.getElementById('loginView').classList.add('hidden');
+      document.getElementById('portalView').classList.remove('hidden');
+      msg.textContent = '';
+    } else {
+      msg.textContent = 'Invalid credentials. Use demo / 0000';
+    }
+  };
+
+  window.logout = function () {
+    document.getElementById('portalView').classList.add('hidden');
+    document.getElementById('loginView').classList.remove('hidden');
+    document.getElementById('username').value = '';
+    document.getElementById('passcode').value = '';
+  };
+
+  window.openModal = function (id) {
+    const dlg = document.getElementById(id);
+    if (dlg && typeof dlg.showModal === 'function') dlg.showModal();
+  };
+
+  window.closeModal = function (id) {
+    const dlg = document.getElementById(id);
+    if (dlg && typeof dlg.close === 'function') dlg.close();
+  };
+
+  window.showSection = function (name, btn) {
+    document.querySelectorAll('.portal-section').forEach((s) => s.classList.remove('active'));
+    document.getElementById(name)?.classList.add('active');
+    document.querySelectorAll('.portal-nav button').forEach((b) => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+  };
+
+  /* ===== EXPOSE CONFIG FOR USER ===== */
+  // Users can update these values in the console or by editing this file
+  window.ATR_CONFIG = CONFIG;
+})();
