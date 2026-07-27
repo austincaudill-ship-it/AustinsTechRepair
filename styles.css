@@ -264,6 +264,7 @@ p, li, figcaption { text-wrap: pretty; max-width: 72ch; }
   font-size: var(--text-xs); font-weight: 800; text-transform: uppercase;
   letter-spacing: 0.03em; color: var(--text-muted); white-space: nowrap;
   transition: background var(--transition), color var(--transition);
+  text-decoration: none; cursor: pointer;
 }
 .nav-link:hover, .nav-link.active { background: var(--primary-highlight); color: var(--primary); }
 
@@ -909,6 +910,7 @@ p, li, figcaption { text-wrap: pretty; max-width: 72ch; }
 .menu-close:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
 .menu-links { display: flex; flex-direction: column; gap: var(--space-2); overflow-y: auto; padding-bottom: var(--space-5); }
 .menu-link {
+  text-decoration: none; cursor: pointer;
   text-align: left; font-size: clamp(var(--text-xl), 7vw, var(--text-3xl));
   font-weight: 800; font-family: var(--font-display);
   letter-spacing: -0.04em; text-transform: uppercase;
@@ -1041,7 +1043,7 @@ p, li, figcaption { text-wrap: pretty; max-width: 72ch; }
 }
 .footer-col-title { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent-blue); margin-bottom: var(--space-4); }
 .footer-links-col { display: flex; flex-direction: column; gap: var(--space-3); }
-.footer-link { color: rgba(255, 255, 255, 0.42); transition: color var(--transition); text-align: left; }
+.footer-link { color: rgba(255, 255, 255, 0.42); transition: color var(--transition); text-align: left; text-decoration: none; cursor: pointer; }
 .footer-link:hover { color: #fff; }
 .legal-block { margin-bottom: var(--space-5); }
 .legal-heading { margin-bottom: var(--space-2); font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255, 255, 255, 0.65); }

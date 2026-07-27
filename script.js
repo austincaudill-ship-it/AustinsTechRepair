@@ -156,29 +156,34 @@
   const policyBody = document.getElementById('policy-body');
 
   /* ===== INIT ===== */
+  // Wrap each init call so one failure can't break the rest
+  function safeInit(name, fn) {
+    try { fn(); } catch (err) { console.error('Init error in ' + name + ':', err); }
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
-    initTheme();
-    initNavigation();
-    initMobileMenu();
-    initSearch();
-    initCart();
-    initRepairWizard();
-    initFileUpload();
-    initContactFileUpload();
-    initForms();
-    initScrollReveal();
-    initSlideshow();
-    initFAQ();
-    initProductFilters();
-    initHeaderScroll();
-    initShopifyLink();
-    updateCart();
-    renderCartDrawer();
-    renderSearch('');
+    safeInit('theme', initTheme);
+    safeInit('navigation', initNavigation);
+    safeInit('mobileMenu', initMobileMenu);
+    safeInit('search', initSearch);
+    safeInit('cart', initCart);
+    safeInit('repairWizard', initRepairWizard);
+    safeInit('fileUpload', initFileUpload);
+    safeInit('contactFileUpload', initContactFileUpload);
+    safeInit('forms', initForms);
+    safeInit('scrollReveal', initScrollReveal);
+    safeInit('slideshow', initSlideshow);
+    safeInit('faq', initFAQ);
+    safeInit('productFilters', initProductFilters);
+    safeInit('headerScroll', initHeaderScroll);
+    safeInit('shopifyLink', initShopifyLink);
+    safeInit('updateCart', updateCart);
+    safeInit('renderCartDrawer', renderCartDrawer);
+    safeInit('renderSearch', () => renderSearch(''));
     
     // Initialize URL-based navigation
-    initHashNavigation();
-    loadPageFromHash();
+    safeInit('hashNavigation', initHashNavigation);
+    safeInit('loadPageFromHash', loadPageFromHash);
     
     // Listen for back button
     window.addEventListener('hashchange', loadPageFromHash);
@@ -907,7 +912,7 @@
     if (slides.length === 0) return;
 
     if (dotsContainer) {
-      dotsContainer.innerHTML = slides
+      dotsContainer.innerHTML = Array.from(slides)
         .map((_, i) => `<div class="slide-dot${i === 0 ? ' active' : ''}" data-slide="${i}"></div>`)
         .join('');
 
