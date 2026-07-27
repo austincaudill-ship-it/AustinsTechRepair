@@ -545,7 +545,21 @@ p, li, figcaption { text-wrap: pretty; max-width: 72ch; }
   margin: 0; font-size: var(--text-xs); line-height: 1.6;
   color: rgba(255, 255, 255, 0.84);
 }
+/* ============================================
+   REPAIR WIZARD COMPONENT
+   ============================================ */
+.repair-step {
+  display: none;
+}
 
+.repair-step.active {
+  display: block;
+}
+
+.option-btn.selected {
+  border-color: var(--primary);
+  background-color: var(--primary-light, rgba(0, 0, 0, 0.05));
+}
 /* ============================================
    PROCESS TIMELINE
    ============================================ */
