@@ -6,13 +6,9 @@
   'use strict';
 
   /* ===== CONFIGURATION ===== */
-  // Replace these with your actual integration URLs
   const CONFIG = {
-    // Square: Your Square Online Checkout URL (https://squareup.com/dashboard/online-checkout)
     squareCheckoutUrl: 'https://squareup.com',
-    // Shopify: Your Shopify store URL (e.g., 'https://your-store.myshopify.com')
     shopifyStoreUrl: 'https://austinstechedgerepair.myshopify.com',
-    // JotForm: Your repair request form ID (with file upload field)
     jotformRepairFormId: '261955946010055',
   };
 
@@ -116,19 +112,32 @@
 
   /* ===== POLICIES ===== */
   const policies = {
-    privacy: `<h2>Privacy Policy</h2><div class="eff">Effective Date: June 21, 2026</div><p>Austin's Tech Repair Group LLC respects your privacy and is committed to protecting the personal inform[...]
-    repair: `<h2>Repair Service Agreement</h2><div class="eff">Authorization, liability, payment, and Ohio law</div><p>By submitting a device for service, the customer authorizes Austin's Tech Re[...]
-    backup: `<h2>Data Backup & Loss Waiver</h2><div class="eff">Customer responsibility for backups</div><p>Repair procedures may result in loss, corruption, deletion, or alteration of data store[...]
-    'warranty-policy': `<h2>1-Year Limited Warranty Policy</h2><div class="eff">Effective Date: June 21, 2026</div><p>Austin's Tech Repair Group LLC warrants repair labor and installed replacemen[...]
-    terms: `<h2>Terms & Conditions</h2><div class="eff">Use of services and website</div><p>Use of this site and our services is subject to these terms and conditions.</p><section><strong>1. Acce[...]
-    'website-terms': `<h2>Website Terms of Use</h2><div class="eff">Use of this website</div><p>All content is provided "AS IS" without warranty of any kind.</p><section><strong>1. Use of Content[...]
+    privacy: `<h2>Privacy Policy</h2><div class="eff">Effective Date: June 21, 2026</div><p>Austin's Tech Repair Group LLC respects your privacy and is committed to protecting the personal inform[...]`,
+    repair: `<h2>Repair Service Agreement</h2><div class="eff">Authorization, liability, payment, and Ohio law</div><p>By submitting a device for service, the customer authorizes Austin's Tech Re[...]`,
+    backup: `<h2>Data Backup & Loss Waiver</h2><div class="eff">Customer responsibility for backups</div><p>Repair procedures may result in loss, corruption, deletion, or alteration of data store[...]`,
+    'warranty-policy': `<h2>1-Year Limited Warranty Policy</h2><div class="eff">Effective Date: June 21, 2026</div><p>Austin's Tech Repair Group LLC warrants repair labor and installed replacemen[...]`,
+    terms: `<h2>Terms & Conditions</h2><div class="eff">Use of services and website</div><p>Use of this site and our services is subject to these terms and conditions.</p><section><strong>1. Acce[...]`,
+    'website-terms': `<h2>Website Terms of Use</h2><div class="eff">Use of this website</div><p>All content is provided "AS IS" without warranty of any kind.</p><section><strong>1. Use of Content[...]`,
   };
 
   /* ===== STATE ===== */
   let cart = loadCart();
   let slideIndex = 0;
   let activeFlipCard = null;
-  let repairState = { device: '', make: '', issue: '', estimate: '' };
+  let repairState = {
+    device: '',
+    make: '',
+    model: '',
+    issue: '',
+    estimate: '',
+    customer_name: '',
+    customer_phone: '',
+    customer_email: '',
+    customer_location: '',
+    preferred_time: '',
+    additional_details: '',
+    files: []
+  };
   let uploadedFiles = [];
   let contactUploadedFiles = [];
 
@@ -177,7 +186,6 @@
 
   /* ===== URL HASH NAVIGATION ===== */
   function initHashNavigation() {
-    // Update hash when setting a page
     window.setPageWithHash = function(pageId) {
       window.location.hash = pageId;
     };
@@ -185,13 +193,10 @@
 
   function loadPageFromHash() {
     let pageId = window.location.hash.slice(1) || 'home';
-    
-    // Validate that the page exists
     if (!document.getElementById(pageId)) {
       pageId = 'home';
       window.location.hash = pageId;
     }
-    
     setPage(pageId);
   }
 
@@ -258,7 +263,6 @@
       }
     });
 
-    // Brand click
     const brand = document.querySelector('.brand');
     if (brand) {
       brand.addEventListener('click', () => { window.location.hash = 'home'; });
@@ -276,7 +280,6 @@
     const target = document.getElementById(pageId);
     if (target) {
       target.classList.add('active');
-      // Update nav active states
       document.querySelectorAll('.nav-link').forEach((l) => l.classList.remove('active'));
       document.querySelectorAll('.menu-link').forEach((l) => l.classList.remove('active'));
       document.querySelectorAll(`[data-page="${pageId}"]`).forEach((btn) => {
@@ -430,7 +433,6 @@
     document.getElementById('cart-drawer-close').addEventListener('click', closeCart);
     document.getElementById('cart-drawer-close-btn').addEventListener('click', closeCart);
 
-    // Cart item actions (delegated)
     cartDrawerItems.addEventListener('click', (e) => {
       const inc = e.target.closest('[data-cart-inc]');
       const dec = e.target.closest('[data-cart-dec]');
@@ -458,12 +460,10 @@
       saveCart();
     });
 
-    // Square Checkout
     document.getElementById('cart-checkout-square').addEventListener('click', () => {
       checkoutWithSquare();
     });
 
-    // Shopify Checkout
     document.getElementById('cart-checkout-shopify').addEventListener('click', () => {
       checkoutWithShopify();
     });
@@ -483,50 +483,26 @@
   /* ===== SQUARE CHECKOUT ===== */
   function checkoutWithSquare() {
     if (!cart.length) return;
-    // Build a summary of cart items for the Square checkout
     const total = cart.reduce((s, i) => s + (i.price || 0) * (i.qty || 1), 0);
     const summary = cart.map((i) => `${i.name} x${i.qty || 1} ($${(i.price * i.qty).toFixed(2)})`).join(', ');
-
-    // Option 1: Redirect to Square Online Checkout link
-    // Replace CONFIG.squareCheckoutUrl with your Square payment link
-    // The link can be configured at https://squareup.com/dashboard/online-checkout
     const squareUrl = CONFIG.squareCheckoutUrl + '?total=' + total.toFixed(2) + '&desc=' + encodeURIComponent(summary);
-
-    // For production: Create a Square Checkout order via API (requires backend)
-    // For now: redirect to Square checkout page
     window.open(squareUrl, '_blank');
-
-    // Show confirmation
     showCheckoutNotice('Square', total);
   }
 
   /* ===== SHOPIFY CHECKOUT ===== */
   function checkoutWithShopify() {
     if (!cart.length) return;
-    // Build Shopify cart URL
-    // Format: https://your-store.myshopify.com/cart/add?items=variantId:quantity
-    // Or use the Shopify AJAX Cart API to add items then redirect to checkout
-
     const total = cart.reduce((s, i) => s + (i.price || 0) * (i.qty || 1), 0);
-
-    // Option 1: Redirect to Shopify store with cart parameters
-    // This requires product variant IDs from your Shopify store
-    // For now, redirect to the Shopify store with a pre-filled note
     const shopifyUrl = CONFIG.shopifyStoreUrl + '/cart';
-
-    // Option 2: Use Shopify AJAX API to add items to cart then redirect
-    // This requires variant IDs mapped to your products
-    // For a static site, we redirect to the store cart page
-
     window.open(shopifyUrl, '_blank');
-
     showCheckoutNotice('Shopify', total);
   }
 
   function showCheckoutNotice(platform, total) {
     const notice = document.createElement('div');
     notice.style.cssText =
-      'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--dark-bg);color:#fff;padding:16px 24px;border-radius:12px;z-index:5000;font-size:14px;font-weight:700;box-sha[...]
+      'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--dark-bg);color:#fff;padding:16px 24px;border-radius:12px;z-index:5000;font-size:14px;font-weight:700;box-shadow:0 4px 12px rgba(0,0,0,.15);';
     notice.innerHTML = `<i class="fas fa-circle-check" style="color:var(--success);margin-right:8px;"></i> Redirecting to ${platform} checkout... Total: $${total.toFixed(2)}`;
     document.body.appendChild(notice);
     setTimeout(() => notice.remove(), 4000);
@@ -542,28 +518,37 @@
 
   /* ===== REPAIR WIZARD ===== */
   function initRepairWizard() {
-    const stepDevice = document.getElementById('step-device');
-    const stepIssue = document.getElementById('step-issue');
-    const stepEstimate = document.getElementById('step-estimate');
-    const stepContact = document.getElementById('step-contact');
-
     document.addEventListener('click', (e) => {
       // Device selection
       const deviceBtn = e.target.closest('#step-device [data-device]');
       if (deviceBtn) {
         repairState.device = deviceBtn.getAttribute('data-device');
         renderIssues(repairState.device);
-        showStep('issue');
+        showStep('brand');
         updateProgress(2);
         return;
       }
 
-      // Make selection
-      const makeBtn = e.target.closest('#step-issue [data-make]');
-      if (makeBtn) {
-        repairState.make = makeBtn.getAttribute('data-make');
-        document.querySelectorAll('#make-grid .option-btn').forEach((b) => b.classList.remove('selected'));
-        makeBtn.classList.add('selected');
+      // Brand selection
+      const brandBtn = e.target.closest('#step-brand [data-make]');
+      if (brandBtn) {
+        repairState.make = brandBtn.getAttribute('data-make');
+        document.querySelectorAll('#step-brand .option-btn').forEach((b) => b.classList.remove('selected'));
+        brandBtn.classList.add('selected');
+        return;
+      }
+
+      // Model input
+      const modelNextBtn = e.target.closest('[data-action="model-next"]');
+      if (modelNextBtn) {
+        const modelInput = document.getElementById('device-model-input');
+        repairState.model = modelInput.value.trim();
+        if (repairState.model) {
+          showStep('issue');
+          updateProgress(3);
+        } else {
+          alert('Please enter a device model');
+        }
         return;
       }
 
@@ -572,21 +557,30 @@
       if (issueBtn) {
         repairState.issue = issueBtn.getAttribute('data-type');
         repairState.estimate = issueBtn.getAttribute('data-estimate') || 'Custom Quote';
-        renderEstimate();
-        showStep('estimate');
-        updateProgress(3);
+        showStep('contact');
+        updateProgress(4);
         return;
       }
 
-      // Continue to contact from estimate
-      const continueBtn = e.target.closest('[data-action="continue-contact"]');
-      if (continueBtn) {
-        showStep('contact');
-        updateProgress(4);
-        // Fill hidden fields
-        document.getElementById('repair-device-hidden').value = repairState.device;
-        document.getElementById('repair-make-hidden').value = repairState.make;
-        document.getElementById('repair-issue-hidden').value = repairState.issue;
+      // Contact form submission
+      const submitRepairBtn = e.target.closest('[data-action="submit-repair"]');
+      if (submitRepairBtn) {
+        const contactForm = document.getElementById('repair-contact-form');
+        if (contactForm && contactForm.checkValidity()) {
+          repairState.customer_name = document.getElementById('customer-name-input').value.trim();
+          repairState.customer_phone = document.getElementById('customer-phone-input').value.trim();
+          repairState.customer_email = document.getElementById('customer-email-input').value.trim();
+          repairState.customer_location = document.getElementById('customer-location-input').value.trim();
+          repairState.preferred_time = document.getElementById('preferred-time-input').value;
+          repairState.additional_details = document.getElementById('additional-details-input').value.trim();
+          repairState.files = uploadedFiles;
+
+          submitRepair(repairState);
+          showStep('thanks');
+          updateProgress(5);
+        } else {
+          alert('Please fill in all required fields');
+        }
         return;
       }
 
@@ -595,8 +589,27 @@
       if (backBtn) {
         const target = backBtn.getAttribute('data-back');
         if (target === 'device') { showStep('device'); updateProgress(1); }
-        if (target === 'issue') { showStep('issue'); updateProgress(2); }
-        if (target === 'estimate') { showStep('estimate'); updateProgress(3); }
+        if (target === 'brand') { showStep('brand'); updateProgress(2); }
+        if (target === 'model') { showStep('model'); updateProgress(2); }
+        if (target === 'issue') { showStep('issue'); updateProgress(3); }
+        if (target === 'contact') { showStep('contact'); updateProgress(4); }
+        return;
+      }
+
+      // Reset button
+      const resetBtn = e.target.closest('[data-action="reset-repair"]');
+      if (resetBtn) {
+        repairState = {
+          device: '', make: '', model: '', issue: '', estimate: '',
+          customer_name: '', customer_phone: '', customer_email: '', customer_location: '',
+          preferred_time: '', additional_details: '', files: []
+        };
+        uploadedFiles = [];
+        showStep('device');
+        updateProgress(1);
+        if (document.getElementById('repair-contact-form')) {
+          document.getElementById('repair-contact-form').reset();
+        }
         return;
       }
     });
@@ -604,13 +617,20 @@
 
   function showStep(step) {
     document.querySelectorAll('.repair-step').forEach((s) => s.classList.remove('active'));
-    const map = { device: 'step-device', issue: 'step-issue', estimate: 'step-estimate', contact: 'step-contact' };
+    const map = {
+      device: 'step-device',
+      brand: 'step-brand',
+      model: 'step-model',
+      issue: 'step-issue',
+      contact: 'step-contact',
+      thanks: 'step-thanks'
+    };
     const el = document.getElementById(map[step]);
     if (el) el.classList.add('active');
   }
 
   function updateProgress(step) {
-    for (let i = 1; i <= 4; i++) {
+    for (let i = 1; i <= 5; i++) {
       const el = document.getElementById('progress-' + i);
       if (!el) continue;
       el.classList.remove('active', 'completed');
@@ -624,36 +644,58 @@
     if (!data) return;
     document.getElementById('issue-title').textContent = data.title;
 
-    // Render makes
-    const makeGrid = document.getElementById('make-grid');
-    makeGrid.innerHTML = data.makes
-      .map((m) => `<button class="option-btn" type="button" data-make="${m}">${m}</button>`)
-      .join('');
+    const brandGrid = document.getElementById('step-brand');
+    if (brandGrid) {
+      const brandContainer = brandGrid.querySelector('.option-grid');
+      if (brandContainer) {
+        brandContainer.innerHTML = data.makes
+          .map((m) => `<button class="option-btn" type="button" data-make="${m}">${m}</button>`)
+          .join('');
+      }
+    }
 
-    // Render issues with estimates
-    const issueList = document.getElementById('issue-list');
-    issueList.innerHTML = data.issues
-      .map(
-        (item) =>
-          `<button class="issue-btn" type="button" data-type="${item.name}" data-estimate="${item.estimate}">${item.name} <span style="font-family:var(--font-mono);font-size:var(--text-xs);color:[...]
-      )
-      .join('');
+    const issueList = document.getElementById('step-issue');
+    if (issueList) {
+      const issueContainer = issueList.querySelector('.option-grid');
+      if (issueContainer) {
+        issueContainer.innerHTML = data.issues
+          .map(
+            (item) =>
+              `<button class="option-btn" type="button" data-type="${item.name}" data-estimate="${item.estimate}">${item.name} <span style="font-family:var(--font-mono);font-size:var(--text-xs);color:var(--text-muted);margin-left:8px;">${item.estimate}</span></button>`
+          )
+          .join('');
+      }
+    }
   }
 
-  function renderEstimate() {
-    const summary = document.getElementById('estimate-summary');
-    summary.innerHTML = [
-      { label: 'Device', value: repairState.device },
-      { label: 'Brand', value: repairState.make || 'Not selected' },
-      { label: 'Issue', value: repairState.issue },
-    ]
-      .map(
-        (item) =>
-          `<div style="padding:var(--space-3) var(--space-4);background:var(--surface-2);border-radius:var(--radius-lg);border:1px solid var(--border);"><span style="font-family:var(--font-mono);[...]
-      )
-      .join('');
-
-    document.getElementById('estimate-price').textContent = repairState.estimate;
+  function submitRepair(data) {
+    // Save to localStorage for employee portal
+    try {
+      const repairs = JSON.parse(localStorage.getItem('atr_repairs') || '[]');
+      const repairId = 'R' + Date.now();
+      const newRepair = {
+        id: repairId,
+        device: data.device,
+        brand: data.make,
+        model: data.model,
+        issue: data.issue,
+        estimate: data.estimate,
+        customer_name: data.customer_name,
+        customer_phone: data.customer_phone,
+        customer_email: data.customer_email,
+        customer_location: data.customer_location,
+        preferred_time: data.preferred_time,
+        additional_details: data.additional_details,
+        status: 'Received',
+        submitted_at: new Date().toISOString(),
+        files: data.files ? data.files.map(f => ({ name: f.name, size: f.size, type: f.type })) : []
+      };
+      repairs.push(newRepair);
+      localStorage.setItem('atr_repairs', JSON.stringify(repairs));
+      console.log('Repair submitted:', newRepair);
+    } catch (err) {
+      console.error('Error saving repair:', err);
+    }
   }
 
   /* ===== FILE UPLOAD ===== */
@@ -684,7 +726,6 @@
   }
 
   function setupFileDropZone(dropZone, fileInput, browseBtn, previewList, onFilesCallback) {
-    // Click to browse
     browseBtn.addEventListener('click', () => fileInput.click());
     dropZone.addEventListener('click', (e) => {
       if (e.target === dropZone || e.target.tagName === 'I' || e.target.tagName === 'P') {
@@ -692,7 +733,6 @@
       }
     });
 
-    // Drag and drop
     dropZone.addEventListener('dragover', (e) => {
       e.preventDefault();
       dropZone.style.borderColor = 'var(--primary)';
@@ -710,7 +750,6 @@
       handleFiles(e.dataTransfer.files, previewList, onFilesCallback);
     });
 
-    // File input change
     fileInput.addEventListener('change', (e) => {
       handleFiles(e.target.files, previewList, onFilesCallback);
     });
@@ -718,7 +757,7 @@
 
   function handleFiles(fileList, previewList, onFilesCallback) {
     const files = Array.from(fileList).slice(0, 5);
-    const validFiles = files.filter((f) => f.size <= 10 * 1024 * 1024); // 10MB max
+    const validFiles = files.filter((f) => f.size <= 10 * 1024 * 1024);
 
     if (files.length > 5) {
       alert('Maximum 5 files allowed. Only the first 5 will be uploaded.');
@@ -749,11 +788,10 @@
         preview.appendChild(icon);
       }
 
-      // Remove button
       const removeBtn = document.createElement('button');
       removeBtn.type = 'button';
       removeBtn.style.cssText =
-        'position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.7);color:#fff;border:none;font-size:10px;cursor:pointer;display:grid;place-items:cente[...]
+        'position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.7);color:#fff;border:none;font-size:10px;cursor:pointer;display:grid;place-items:center;';
       removeBtn.innerHTML = '<i class="fas fa-times"></i>';
       removeBtn.onclick = (e) => {
         e.stopPropagation();
@@ -761,65 +799,17 @@
       };
       preview.appendChild(removeBtn);
 
-      // File name tooltip
       preview.title = file.name + ' (' + (file.size / 1024).toFixed(0) + 'KB)';
-
       previewList.appendChild(preview);
     });
   }
 
   /* ===== FORMS ===== */
   function initForms() {
-    // Repair contact form
-    const repairForm = document.getElementById('repair-contact-form');
-    if (repairForm) {
-      repairForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-
-        // Collect form data
-        const formData = new FormData(repairForm);
-        const data = {
-          customer_name: formData.get('customer_name'),
-          customer_phone: formData.get('customer_phone'),
-          customer_email: formData.get('customer_email'),
-          customer_location: formData.get('customer_location'),
-          preferred_time: formData.get('preferred_time'),
-          device_type: repairState.device,
-          device_brand: repairState.make,
-          issue_type: repairState.issue,
-          estimate: repairState.estimate,
-          device_model: formData.get('device_model'),
-          additional_details: formData.get('additional_details'),
-          timestamp: new Date().toISOString(),
-        };
-
-        // In production: Submit to JotForm, backend API, or email service
-        // For now: Submit via JotForm API or store locally
-        submitToJotForm(data, uploadedFiles, 'repair')
-          .then(() => {
-            const thanks = document.getElementById('repair-thanks');
-            if (thanks) {
-              thanks.hidden = false;
-              repairForm.style.display = 'none';
-            }
-          })
-          .catch(() => {
-            // Fallback: show thanks anyway (form data is collected client-side)
-            const thanks = document.getElementById('repair-thanks');
-            if (thanks) {
-              thanks.hidden = false;
-              repairForm.style.display = 'none';
-            }
-          });
-      });
-    }
-
-    // Contact file form
     const contactForm = document.getElementById('contact-file-form');
     if (contactForm) {
       contactForm.addEventListener('submit', (e) => {
         e.preventDefault();
-
         const formData = new FormData(contactForm);
         const data = {
           name: formData.get('name'),
@@ -827,7 +817,6 @@
           message: formData.get('message'),
           timestamp: new Date().toISOString(),
         };
-
         submitToJotForm(data, contactUploadedFiles, 'contact')
           .then(() => {
             const thanks = document.getElementById('contact-file-thanks');
@@ -848,33 +837,13 @@
   }
 
   /* ===== JOTFORM SUBMISSION ===== */
-  // Submits form data to JotForm via their API
-  // For file uploads, this creates a FormData object and posts to JotForm's endpoint
   function submitToJotForm(data, files, type) {
     return new Promise((resolve, reject) => {
-      // Option 1: Submit via JotForm API
-      // const jotformUrl = `https://submit.jotform.com/submit/${CONFIG.jotformRepairFormId}/`;
-      // const formData = new FormData();
-      // Object.keys(data).forEach(key => formData.append(key, data[key]));
-      // if (files && files.length) {
-      //   files.forEach((file, idx) => formData.append(`upload[${idx}]`, file));
-      // }
-      // fetch(jotformUrl, { method: 'POST', body: formData })
-      //   .then(res => resolve())
-      //   .catch(err => reject(err));
-
-      // Option 2: Use JotForm's form embed which handles submission internally
-      // The embedded JotForm form (in the contact page) handles its own submissions
-      // For the repair wizard and file upload forms, we collect data client-side
-      // and can send via email API, Formspree, or backend endpoint
-
-      // For now, simulate successful submission
       console.log(`${type} form submitted:`, data);
       if (files && files.length) {
         console.log('Files uploaded:', files.map(f => ({ name: f.name, size: f.size, type: f.type })));
       }
 
-      // Store submission locally as backup
       try {
         const submissions = JSON.parse(localStorage.getItem('atr_submissions') || '[]');
         submissions.push({ type, data, files: files ? files.map(f => ({ name: f.name, size: f.size, type: f.type })) : [], timestamp: new Date().toISOString() });
@@ -895,7 +864,6 @@
     policyOverlay.setAttribute('aria-hidden', 'false');
   }
 
-  // Close policy
   document.addEventListener('click', (e) => {
     if (e.target.closest('#policy-close') || e.target === policyOverlay) {
       policyOverlay.classList.remove('open');
@@ -905,7 +873,6 @@
     }
   });
 
-  // ESC key to close overlays
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       closeMenu();
@@ -939,7 +906,6 @@
     const dotsContainer = document.getElementById('slide-dots');
     if (slides.length === 0) return;
 
-    // Create dots
     if (dotsContainer) {
       dotsContainer.innerHTML = slides
         .map((_, i) => `<div class="slide-dot${i === 0 ? ' active' : ''}" data-slide="${i}"></div>`)
@@ -978,10 +944,8 @@
       const item = question.parentElement;
       const isOpen = item.classList.contains('open');
 
-      // Close all
       document.querySelectorAll('.faq-item').forEach((f) => f.classList.remove('open'));
 
-      // Open clicked if it was closed
       if (!isOpen) {
         item.classList.add('open');
       }
@@ -996,11 +960,9 @@
 
       const filter = filterBtn.getAttribute('data-filter');
 
-      // Update active filter
       document.querySelectorAll('.filter-btn').forEach((b) => b.classList.remove('active'));
       filterBtn.classList.add('active');
 
-      // Filter products
       document.querySelectorAll('.product-card').forEach((card) => {
         if (filter === 'all' || card.getAttribute('data-category') === filter) {
           card.style.display = '';
@@ -1026,7 +988,6 @@
   }
 
   /* ===== EMPLOYEE PORTAL (global functions) ===== */
-  // Demo credentials — replace with secure authentication
   const DEMO_USER = 'demo';
   const DEMO_PASS = '0000';
 
@@ -1068,6 +1029,5 @@
   };
 
   /* ===== EXPOSE CONFIG FOR USER ===== */
-  // Users can update these values in the console or by editing this file
   window.ATR_CONFIG = CONFIG;
 })();
