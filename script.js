@@ -1,6 +1,7 @@
+```javascript
 /* ============================================
-   AUSTIN'S TECH REPAIR GROUP — MAIN SCRIPT
-   ============================================ */
+    AUSTIN'S TECH REPAIR GROUP — MAIN SCRIPT
+    ============================================ */
 
 (function () {
   'use strict';
@@ -112,12 +113,12 @@
 
   /* ===== POLICIES ===== */
   const policies = {
-    privacy: `<h2>Privacy Policy</h2><div class="eff">Effective Date: June 21, 2026</div><p>Austin's Tech Repair Group LLC respects your privacy and is committed to protecting the personal inform[...]`,
-    repair: `<h2>Repair Service Agreement</h2><div class="eff">Authorization, liability, payment, and Ohio law</div><p>By submitting a device for service, the customer authorizes Austin's Tech Re[...]`,
-    backup: `<h2>Data Backup & Loss Waiver</h2><div class="eff">Customer responsibility for backups</div><p>Repair procedures may result in loss, corruption, deletion, or alteration of data store[...]`,
-    'warranty-policy': `<h2>1-Year Limited Warranty Policy</h2><div class="eff">Effective Date: June 21, 2026</div><p>Austin's Tech Repair Group LLC warrants repair labor and installed replacemen[...]`,
-    terms: `<h2>Terms & Conditions</h2><div class="eff">Use of services and website</div><p>Use of this site and our services is subject to these terms and conditions.</p><section><strong>1. Acce[...]`,
-    'website-terms': `<h2>Website Terms of Use</h2><div class="eff">Use of this website</div><p>All content is provided "AS IS" without warranty of any kind.</p><section><strong>1. Use of Content[...]`,
+    privacy: `<h2>Privacy Policy</h2><div class="eff">Effective Date: June 21, 2026</div><p>Austin's Tech Repair Group LLC respects your privacy and is committed to protecting the personal info...</p>`,
+    repair: `<h2>Repair Service Agreement</h2><div class="eff">Authorization, liability, payment, and Ohio law</div><p>By submitting a device for service, the customer authorizes Austin's Tech Repair Group LLC...</p>`,
+    backup: `<h2>Data Backup & Loss Waiver</h2><div class="eff">Customer responsibility for backups</div><p>Repair procedures may result in loss, corruption, deletion, or alteration of data stored...</p>`,
+    'warranty-policy': `<h2>1-Year Limited Warranty Policy</h2><div class="eff">Effective Date: June 21, 2026</div><p>Austin's Tech Repair Group LLC warrants repair labor and installed replacement parts...</p>`,
+    terms: `<h2>Terms & Conditions</h2><div class="eff">Use of services and website</div><p>Use of this site and our services is subject to these terms and conditions.</p>`,
+    'website-terms': `<h2>Website Terms of Use</h2><div class="eff">Use of this website</div><p>All content is provided "AS IS" without warranty of any kind.</p>`,
   };
 
   /* ===== STATE ===== */
@@ -156,7 +157,6 @@
   const policyBody = document.getElementById('policy-body');
 
   /* ===== INIT ===== */
-  // Wrap each init call so one failure can't break the rest
   function safeInit(name, fn) {
     try { fn(); } catch (err) { console.error('Init error in ' + name + ':', err); }
   }
@@ -181,11 +181,9 @@
     safeInit('renderCartDrawer', renderCartDrawer);
     safeInit('renderSearch', () => renderSearch(''));
     
-    // Initialize URL-based navigation
     safeInit('hashNavigation', initHashNavigation);
     safeInit('loadPageFromHash', loadPageFromHash);
     
-    // Listen for back button
     window.addEventListener('hashchange', loadPageFromHash);
   });
 
@@ -328,15 +326,17 @@
 
     const heroSearchForm = document.getElementById('hero-search-form');
     const heroSearchInput = document.getElementById('hero-search-input');
-    heroSearchForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const q = heroSearchInput.value.trim();
-      if (q) {
-        openSearch();
-        searchInput.value = q;
-        renderSearch(q);
-      }
-    });
+    if (heroSearchForm && heroSearchInput) {
+      heroSearchForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const q = heroSearchInput.value.trim();
+        if (q) {
+          openSearch();
+          searchInput.value = q;
+          renderSearch(q);
+        }
+      });
+    }
   }
   function openSearch() {
     searchOverlay.classList.add('open');
@@ -524,45 +524,59 @@
   /* ===== REPAIR WIZARD ===== */
   function initRepairWizard() {
     document.addEventListener('click', (e) => {
-      // Device selection
+      // Device selection (Step 1)
       const deviceBtn = e.target.closest('#step-device [data-device]');
       if (deviceBtn) {
         repairState.device = deviceBtn.getAttribute('data-device');
-        renderIssues(repairState.device);
-        showStep('brand');
+        
+        // Populate Step 2 options dynamically based on selected device
+        renderRepairStep2(repairState.device);
+
+        showStep('step-issue'); // Step 2 container
         updateProgress(2);
         return;
       }
 
-      // Brand selection
-      const brandBtn = e.target.closest('#step-brand [data-make]');
+      // Brand selection (Make)
+      const brandBtn = e.target.closest('#make-grid .option-btn');
       if (brandBtn) {
-        repairState.make = brandBtn.getAttribute('data-make');
-        document.querySelectorAll('#step-brand .option-btn').forEach((b) => b.classList.remove('selected'));
-        brandBtn.classList.add('selected');
-        return;
-      }
-
-      // Model input
-      const modelNextBtn = e.target.closest('[data-action="model-next"]');
-      if (modelNextBtn) {
-        const modelInput = document.getElementById('device-model-input');
-        repairState.model = modelInput.value.trim();
-        if (repairState.model) {
-          showStep('issue');
-          updateProgress(3);
-        } else {
-          alert('Please enter a device model');
+        repairState.make = brandBtn.textContent.trim();
+        const makeGrid = document.getElementById('make-grid');
+        if (makeGrid) {
+          makeGrid.querySelectorAll('.option-btn').forEach((b) => b.classList.remove('selected'));
         }
+        brandBtn.classList.add('selected');
+        
+        const hiddenMake = document.getElementById('repair-make-hidden');
+        if (hiddenMake) hiddenMake.value = repairState.make;
+
+        checkStep2Complete();
         return;
       }
 
       // Issue selection
-      const issueBtn = e.target.closest('#step-issue [data-type]');
+      const issueBtn = e.target.closest('#issue-list .option-btn');
       if (issueBtn) {
-        repairState.issue = issueBtn.getAttribute('data-type');
+        repairState.issue = issueBtn.getAttribute('data-type') || issueBtn.textContent.trim().split(' ')[0];
         repairState.estimate = issueBtn.getAttribute('data-estimate') || 'Custom Quote';
-        showStep('contact');
+
+        const issueList = document.getElementById('issue-list');
+        if (issueList) {
+          issueList.querySelectorAll('.option-btn').forEach((b) => b.classList.remove('selected'));
+        }
+        issueBtn.classList.add('selected');
+
+        const hiddenIssue = document.getElementById('repair-issue-hidden');
+        if (hiddenIssue) hiddenIssue.value = repairState.issue;
+
+        checkStep2Complete();
+        return;
+      }
+
+      // Continue to Contact button from estimate view
+      const continueContactBtn = e.target.closest('[data-action="continue-contact"]');
+      if (continueContactBtn) {
+        showStep('step-contact');
         updateProgress(4);
         return;
       }
@@ -581,23 +595,22 @@
           repairState.files = uploadedFiles;
 
           submitRepair(repairState);
-          showStep('thanks');
+          showStep('step-thanks');
           updateProgress(5);
         } else {
-          alert('Please fill in all required fields');
+          if (contactForm) contactForm.reportValidity();
+          else alert('Please fill in all required fields');
         }
         return;
       }
 
       // Back buttons
-      const backBtn = e.target.closest('[data-back]');
+      const backBtn = e.target.closest('.back-btn');
       if (backBtn) {
         const target = backBtn.getAttribute('data-back');
-        if (target === 'device') { showStep('device'); updateProgress(1); }
-        if (target === 'brand') { showStep('brand'); updateProgress(2); }
-        if (target === 'model') { showStep('model'); updateProgress(2); }
-        if (target === 'issue') { showStep('issue'); updateProgress(3); }
-        if (target === 'contact') { showStep('contact'); updateProgress(4); }
+        if (target === 'device') { showStep('step-device'); updateProgress(1); }
+        if (target === 'issue') { showStep('step-issue'); updateProgress(2); }
+        if (target === 'estimate') { showStep('step-estimate'); updateProgress(3); }
         return;
       }
 
@@ -610,7 +623,7 @@
           preferred_time: '', additional_details: '', files: []
         };
         uploadedFiles = [];
-        showStep('device');
+        showStep('step-device');
         updateProgress(1);
         if (document.getElementById('repair-contact-form')) {
           document.getElementById('repair-contact-form').reset();
@@ -620,17 +633,30 @@
     });
   }
 
-  function showStep(step) {
+  function checkStep2Complete() {
+    if (repairState.make && repairState.issue) {
+      setTimeout(() => {
+        updateEstimate();
+        showStep('step-estimate');
+        updateProgress(3);
+      }, 300);
+    }
+  }
+
+  function updateEstimate() {
+    const summary = document.getElementById('estimate-summary');
+    if (summary) {
+      summary.innerHTML = `
+        <span style="padding: 6px 12px; background: rgba(0,0,0,0.05); border-radius: 6px; font-size: 0.85rem; font-weight: 600;">Device: ${repairState.device}</span> 
+        <span style="padding: 6px 12px; background: rgba(0,0,0,0.05); border-radius: 6px; font-size: 0.85rem; font-weight: 600;">Brand: ${repairState.make}</span> 
+        <span style="padding: 6px 12px; background: rgba(0,0,0,0.05); border-radius: 6px; font-size: 0.85rem; font-weight: 600;">Issue: ${repairState.issue}</span>
+      `;
+    }
+  }
+
+  function showStep(stepId) {
     document.querySelectorAll('.repair-step').forEach((s) => s.classList.remove('active'));
-    const map = {
-      device: 'step-device',
-      brand: 'step-brand',
-      model: 'step-model',
-      issue: 'step-issue',
-      contact: 'step-contact',
-      thanks: 'step-thanks'
-    };
-    const el = document.getElementById(map[step]);
+    const el = document.getElementById(stepId);
     if (el) el.classList.add('active');
   }
 
@@ -644,37 +670,29 @@
     }
   }
 
-  function renderIssues(device) {
+  function renderRepairStep2(device) {
     const data = repairData[device];
     if (!data) return;
-    document.getElementById('issue-title').textContent = data.title;
 
-    const brandGrid = document.getElementById('step-brand');
-    if (brandGrid) {
-      const brandContainer = brandGrid.querySelector('.option-grid');
-      if (brandContainer) {
-        brandContainer.innerHTML = data.makes
-          .map((m) => `<button class="option-btn" type="button" data-make="${m}">${m}</button>`)
-          .join('');
-      }
+    const makeGrid = document.getElementById('make-grid');
+    if (makeGrid) {
+      makeGrid.innerHTML = data.makes
+        .map((m) => `<button class="option-btn" type="button">${m}</button>`)
+        .join('');
     }
 
-    const issueList = document.getElementById('step-issue');
+    const issueList = document.getElementById('issue-list');
     if (issueList) {
-      const issueContainer = issueList.querySelector('.option-grid');
-      if (issueContainer) {
-        issueContainer.innerHTML = data.issues
-          .map(
-            (item) =>
-              `<button class="option-btn" type="button" data-type="${item.name}" data-estimate="${item.estimate}">${item.name} <span style="font-family:var(--font-mono);font-size:var(--text-xs);color:var(--text-muted);margin-left:8px;">${item.estimate}</span></button>`
-          )
-          .join('');
-      }
+      issueList.innerHTML = data.issues
+        .map(
+          (item) =>
+            `<button class="option-btn" type="button" data-type="${item.name}" data-estimate="${item.estimate}">${item.name} <span style="font-family:var(--font-mono);font-size:var(--text-xs);color:var(--text-muted);margin-left:8px;">${item.estimate}</span></button>`
+        )
+        .join('');
     }
   }
 
   function submitRepair(data) {
-    // Save to localStorage for employee portal
     try {
       const repairs = JSON.parse(localStorage.getItem('atr_repairs') || '[]');
       const repairId = 'R' + Date.now();
@@ -697,7 +715,6 @@
       };
       repairs.push(newRepair);
       localStorage.setItem('atr_repairs', JSON.stringify(repairs));
-      console.log('Repair submitted:', newRepair);
     } catch (err) {
       console.error('Error saving repair:', err);
     }
@@ -731,7 +748,7 @@
   }
 
   function setupFileDropZone(dropZone, fileInput, browseBtn, previewList, onFilesCallback) {
-    browseBtn.addEventListener('click', () => fileInput.click());
+    if (browseBtn) browseBtn.addEventListener('click', () => fileInput.click());
     dropZone.addEventListener('click', (e) => {
       if (e.target === dropZone || e.target.tagName === 'I' || e.target.tagName === 'P') {
         fileInput.click();
@@ -774,7 +791,7 @@
 
   function renderFilePreviews(files, previewList) {
     previewList.innerHTML = '';
-    files.forEach((file, idx) => {
+    files.forEach((file) => {
       const isImage = file.type.startsWith('image/');
       const preview = document.createElement('div');
       preview.style.cssText =
@@ -843,12 +860,7 @@
 
   /* ===== JOTFORM SUBMISSION ===== */
   function submitToJotForm(data, files, type) {
-    return new Promise((resolve, reject) => {
-      console.log(`${type} form submitted:`, data);
-      if (files && files.length) {
-        console.log('Files uploaded:', files.map(f => ({ name: f.name, size: f.size, type: f.type })));
-      }
-
+    return new Promise((resolve) => {
       try {
         const submissions = JSON.parse(localStorage.getItem('atr_submissions') || '[]');
         submissions.push({ type, data, files: files ? files.map(f => ({ name: f.name, size: f.size, type: f.type })) : [], timestamp: new Date().toISOString() });
@@ -1033,6 +1045,7 @@
     if (btn) btn.classList.add('active');
   };
 
-  /* ===== EXPOSE CONFIG FOR USER ===== */
   window.ATR_CONFIG = CONFIG;
 })();
+
+```
