@@ -28,34 +28,64 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // Step 1: Device Button Clicks
-  const deviceBtns = document.querySelectorAll('#step-device .option-btn');
-  deviceBtns.forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      state.device = btn.getAttribute('data-device');
-      
-      const hiddenDevice = document.getElementById('repair-device-hidden');
-      if (hiddenDevice) hiddenDevice.value = state.device;
+  // Helper: safe element getter
+  const $ = (id) => document.getElementById(id);
+  const normalizeId = (id) => id ? (id.startsWith('#') ? id.slice(1) : id) : id;
 
-      // Reset state for step 2 on new device selection
-      state.brand = '';
-      state.issue = '';
-      const hiddenMake = document.getElementById('repair-make-hidden');
-      const hiddenIssue = document.getElementById('repair-issue-hidden');
-      if (hiddenMake) hiddenMake.value = '';
-      if (hiddenIssue) hiddenIssue.value = '';
+  // Core Step Switcher & Progress Bar updater (single implementation)
+  function switchStep(targetId, stepNumber) {
+    const id = normalizeId(targetId);
+    document.querySelectorAll('.repair-step').forEach(step => step.classList.remove('active'));
+    const targetStep = document.getElementById(id);
+    if (targetStep) {
+      targetStep.classList.add('active');
+      // accessibility: ensure focus
+      if (!targetStep.hasAttribute('tabindex')) targetStep.setAttribute('tabindex', '-1');
+      try { targetStep.focus({ preventScroll: true }); } catch (e) { /* ignore */ }
+    } else {
+      console.warn('switchStep: target step not found:', id);
+    }
 
-      populateStep2(state.device);
-      switchStep('step-issue', 2);
-    });
+    document.querySelectorAll('.progress-step').forEach(pStep => pStep.classList.remove('active'));
+    for (let i = 1; i <= (stepNumber || 1); i++) {
+      const pDot = document.getElementById('progress-' + i);
+      if (pDot) pDot.classList.add('active');
+    }
+  }
+
+  // Ensure existing device buttons are handled reliably by delegation in case markup changes
+  const stepDevice = $('step-device');
+  stepDevice && stepDevice.addEventListener('click', (e) => {
+    const btn = e.target.closest('.option-btn');
+    if (!btn || !stepDevice.contains(btn)) return;
+    e.preventDefault();
+
+    // Visual selection for device buttons
+    stepDevice.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+
+    state.device = btn.getAttribute('data-device') || (btn.dataset && btn.dataset.device) || btn.textContent.trim();
+
+    const hiddenDevice = $('repair-device-hidden');
+    if (hiddenDevice) hiddenDevice.value = state.device;
+
+    // Reset step 2 state
+    state.brand = '';
+    state.issue = '';
+    const hiddenMake = $('repair-make-hidden');
+    const hiddenIssue = $('repair-issue-hidden');
+    if (hiddenMake) hiddenMake.value = '';
+    if (hiddenIssue) hiddenIssue.value = '';
+
+    populateStep2(state.device);
+    switchStep('step-issue', 2);
   });
 
   // Populate Step 2 (Brands & Issues)
   function populateStep2(deviceType) {
     const data = repairData[deviceType] || { brands: ['Standard'], issues: ['General Repair'] };
-    
-    const makeGrid = document.getElementById('make-grid');
+
+    const makeGrid = $('make-grid');
     if (makeGrid) {
       makeGrid.innerHTML = '';
       data.brands.forEach(brand => {
@@ -63,21 +93,20 @@ document.addEventListener('DOMContentLoaded', () => {
         bBtn.type = 'button';
         bBtn.className = 'option-btn';
         bBtn.textContent = brand;
-        bBtn.addEventListener('click', () => {
-          makeGrid.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
-          bBtn.classList.add('selected');
-          state.brand = brand;
-          
-          const hiddenMake = document.getElementById('repair-make-hidden');
-          if (hiddenMake) hiddenMake.value = brand;
-          
-          checkStep2Complete();
+        bBtn.setAttribute('data-brand', brand);
+        bBtn.setAttribute('aria-pressed', 'false');
+        bBtn.tabIndex = 0;
+        bBtn.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            bBtn.click();
+          }
         });
         makeGrid.appendChild(bBtn);
       });
     }
 
-    const issueList = document.getElementById('issue-list');
+    const issueList = $('issue-list');
     if (issueList) {
       issueList.innerHTML = '';
       data.issues.forEach(issue => {
@@ -85,20 +114,62 @@ document.addEventListener('DOMContentLoaded', () => {
         iBtn.type = 'button';
         iBtn.className = 'option-btn';
         iBtn.textContent = issue;
-        iBtn.addEventListener('click', () => {
-          issueList.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
-          iBtn.classList.add('selected');
-          state.issue = issue;
-          
-          const hiddenIssue = document.getElementById('repair-issue-hidden');
-          if (hiddenIssue) hiddenIssue.value = issue;
-          
-          checkStep2Complete();
+        iBtn.setAttribute('data-issue', issue);
+        iBtn.setAttribute('aria-pressed', 'false');
+        iBtn.tabIndex = 0;
+        iBtn.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            iBtn.click();
+          }
         });
         issueList.appendChild(iBtn);
       });
     }
   }
+
+  // Delegated handlers for brand and issue selections (works for dynamic buttons)
+  const makeGrid = $('make-grid');
+  makeGrid && makeGrid.addEventListener('click', (e) => {
+    const btn = e.target.closest('.option-btn');
+    if (!btn || !makeGrid.contains(btn)) return;
+    e.preventDefault();
+
+    makeGrid.querySelectorAll('.option-btn').forEach(b => {
+      b.classList.remove('selected');
+      b.setAttribute('aria-pressed', 'false');
+    });
+    btn.classList.add('selected');
+    btn.setAttribute('aria-pressed', 'true');
+
+    const brand = btn.getAttribute('data-brand') || btn.textContent.trim();
+    state.brand = brand;
+    const hiddenMake = $('repair-make-hidden');
+    if (hiddenMake) hiddenMake.value = brand;
+
+    checkStep2Complete();
+  });
+
+  const issueList = $('issue-list');
+  issueList && issueList.addEventListener('click', (e) => {
+    const btn = e.target.closest('.option-btn');
+    if (!btn || !issueList.contains(btn)) return;
+    e.preventDefault();
+
+    issueList.querySelectorAll('.option-btn').forEach(b => {
+      b.classList.remove('selected');
+      b.setAttribute('aria-pressed', 'false');
+    });
+    btn.classList.add('selected');
+    btn.setAttribute('aria-pressed', 'true');
+
+    const issue = btn.getAttribute('data-issue') || btn.textContent.trim();
+    state.issue = issue;
+    const hiddenIssue = $('repair-issue-hidden');
+    if (hiddenIssue) hiddenIssue.value = issue;
+
+    checkStep2Complete();
+  });
 
   // Ensures BOTH Brand and Issue are picked before advancing
   function checkStep2Complete() {
@@ -111,27 +182,36 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateEstimate() {
-    const summary = document.getElementById('estimate-summary');
+    const summary = $('estimate-summary');
     if (summary) {
-      summary.innerHTML = `
-        <span style="padding: 6px 12px; background: rgba(0,0,0,0.05); border-radius: 6px; font-size: 0.85rem; font-weight: 600;">Device: ${state.device}</span> 
-        <span style="padding: 6px 12px; background: rgba(0,0,0,0.05); border-radius: 6px; font-size: 0.85rem; font-weight: 600;">Brand: ${state.brand}</span> 
-        <span style="padding: 6px 12px; background: rgba(0,0,0,0.05); border-radius: 6px; font-size: 0.85rem; font-weight: 600;">Issue: ${state.issue}</span>
-      `;
+      summary.innerHTML = `\n        <span style="padding: 6px 12px; background: rgba(0,0,0,0.05); border-radius: 6px; font-size: 0.85rem; font-weight: 600;">Device: ${escapeHtml(state.device)}</span> \n        <span style="padding: 6px 12px; background: rgba(0,0,0,0.05); border-radius: 6px; font-size: 0.85rem; font-weight: 600;">Brand: ${escapeHtml(state.brand)}</span> \n        <span style="padding: 6px 12px; background: rgba(0,0,0,0.05); border-radius: 6px; font-size: 0.85rem; font-weight: 600;">Issue: ${escapeHtml(state.issue)}</span>\n      `;
     }
+  }
+
+  // basic HTML escape for safety when inserting user-visible strings
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
   }
 
   // Continue to Contact button
   const continueBtn = document.querySelector('[data-action="continue-contact"]');
   if (continueBtn) {
-    continueBtn.addEventListener('click', () => {
+    continueBtn.addEventListener('click', (e) => {
+      e.preventDefault();
       switchStep('step-contact', 4);
     });
   }
 
   // Back Button Handlers
   document.querySelectorAll('.back-btn').forEach(bBtn => {
-    bBtn.addEventListener('click', () => {
+    bBtn.addEventListener('click', (e) => {
+      e.preventDefault();
       const target = bBtn.getAttribute('data-back');
       if (target === 'device') switchStep('step-device', 1);
       if (target === 'issue') switchStep('step-issue', 2);
@@ -139,16 +219,4 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Core Step Switcher & Progress Bar updater
-  function switchStep(targetId, stepNumber) {
-    document.querySelectorAll('.repair-step').forEach(step => step.classList.remove('active'));
-    const targetStep = document.getElementById(targetId);
-    if (targetStep) targetStep.classList.add('active');
-
-    document.querySelectorAll('.progress-step').forEach(pStep => pStep.classList.remove('active'));
-    for (let i = 1; i <= stepNumber; i++) {
-      const pDot = document.getElementById('progress-' + i);
-      if (pDot) pDot.classList.add('active');
-    }
-  }
 });
