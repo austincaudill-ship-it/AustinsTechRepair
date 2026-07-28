@@ -38,6 +38,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const hiddenDevice = document.getElementById('repair-device-hidden');
       if (hiddenDevice) hiddenDevice.value = state.device;
 
+      // Reset state for step 2 on new device selection
+      state.brand = '';
+      state.issue = '';
+      const hiddenMake = document.getElementById('repair-make-hidden');
+      const hiddenIssue = document.getElementById('repair-issue-hidden');
+      if (hiddenMake) hiddenMake.value = '';
+      if (hiddenIssue) hiddenIssue.value = '';
+
       populateStep2(state.device);
       switchStep('step-issue', 2);
     });
@@ -59,8 +67,10 @@ document.addEventListener('DOMContentLoaded', () => {
           makeGrid.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
           bBtn.classList.add('selected');
           state.brand = brand;
+          
           const hiddenMake = document.getElementById('repair-make-hidden');
           if (hiddenMake) hiddenMake.value = brand;
+          
           checkStep2Complete();
         });
         makeGrid.appendChild(bBtn);
@@ -79,8 +89,10 @@ document.addEventListener('DOMContentLoaded', () => {
           issueList.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
           iBtn.classList.add('selected');
           state.issue = issue;
+          
           const hiddenIssue = document.getElementById('repair-issue-hidden');
           if (hiddenIssue) hiddenIssue.value = issue;
+          
           checkStep2Complete();
         });
         issueList.appendChild(iBtn);
@@ -88,8 +100,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Ensures BOTH Brand and Issue are picked before advancing
   function checkStep2Complete() {
-    if (state.brand && state.issue) {
+    if (state.brand !== '' && state.issue !== '') {
       setTimeout(() => {
         updateEstimate();
         switchStep('step-estimate', 3);
