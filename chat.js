@@ -132,6 +132,14 @@
         handleUserSendMessage();
       }
     });
+
+    // HOOK INTO EMPLOYEE PORTAL "Launch Assistant" BUTTON
+    const dashboardLaunchBtn = document.getElementById('chatHoverBtn');
+    if (dashboardLaunchBtn) {
+      dashboardLaunchBtn.addEventListener('click', () => {
+        openChat();
+      });
+    }
   }
 
   function toggleChat() {
@@ -160,12 +168,23 @@
     chatWindow.classList.remove('active');
   }
 
+  // SAFE APPENDING TO PREVENT XSS
   function appendMessage(sender, text) {
     const msgDiv = document.createElement('div');
     msgDiv.className = `chat-message ${sender}`;
     
-    const formattedText = text.replace(/\n/g, '<br>');
-    msgDiv.innerHTML = `<div class="message-bubble">${formattedText}</div>`;
+    const bubble = document.createElement('div');
+    bubble.className = 'message-bubble';
+    
+    const lines = text.split('\n');
+    lines.forEach((line, index) => {
+      bubble.appendChild(document.createTextNode(line));
+      if (index < lines.length - 1) {
+        bubble.appendChild(document.createElement('br'));
+      }
+    });
+
+    msgDiv.appendChild(bubble);
     messagesContainer.appendChild(msgDiv);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
   }
@@ -197,7 +216,6 @@
     appendMessage('user', text);
     chatInput.value = '';
 
-    // Remove any existing active quick replies when user types manually
     const existingQR = messagesContainer.querySelector('.chat-quick-replies');
     if (existingQR) existingQR.remove();
 
@@ -208,7 +226,6 @@
     const lowerQuery = query.toLowerCase();
     let bestMatch = null;
 
-    // Search KB keywords
     for (const key in KB) {
       const item = KB[key];
       const matchFound = item.keywords.some(kw => lowerQuery.includes(kw));
@@ -218,7 +235,6 @@
       }
     }
 
-    // Typing indicator delay simulation
     setTimeout(() => {
       if (bestMatch) {
         appendMessage('bot', bestMatch);
@@ -227,6 +243,18 @@
       }
     }, 400);
   }
+
+  // Expose basic controls to window so your portal buttons or scripts can trigger it
+  window.ATR_Chat = {
+    open: openChat,
+    close: closeChat,
+    toggle: toggleChat,
+    ask: function(question) {
+      openChat();
+      appendMessage('user', question);
+      processQuery(question);
+    }
+  };
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', buildWidget);
