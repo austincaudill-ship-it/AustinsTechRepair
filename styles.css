@@ -110,6 +110,21 @@ button {
   display: none !important;
 }
 
+/* Skip Link */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--primary);
+  color: white;
+  padding: var(--space-2) var(--space-4);
+  z-index: 1000;
+  transition: top var(--transition);
+}
+.skip-link:focus {
+  top: 0;
+}
+
 /* ==========================================================================
    Header & Navigation
    ========================================================================== */
@@ -747,7 +762,7 @@ button {
 }
 
 /* ==========================================================================
-   Repair Request Wizard
+   Repair Request Wizard & Clickable Issue Buttons
    ========================================================================== */
 .repair-card {
   background: var(--surface);
@@ -846,6 +861,46 @@ button {
   border-color: var(--primary);
   background: var(--surface);
   box-shadow: 0 0 0 2px var(--primary);
+}
+
+/* Fix for Repair Issue List Buttons */
+.issue-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+  width: 100%;
+}
+
+.issue-item-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: var(--space-4) var(--space-5);
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  transition: all var(--transition);
+  text-align: left;
+}
+
+.issue-item-btn:hover {
+  border-color: var(--primary);
+  background: var(--surface);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.issue-item-btn.active, .issue-item-btn.selected {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #fff;
 }
 
 /* ==========================================================================
