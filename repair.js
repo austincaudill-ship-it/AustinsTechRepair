@@ -130,22 +130,22 @@
       const data = deviceData[selectedDevice];
       if (data && makeGrid) {
         makeGrid.innerHTML = data.brands.map(brand =>
-          `<button class="option-btn" type="button" data-brand="${brand}">${brand}</button>`
+          `<button class="option-btn" type="button" data-brand="${brand}"><i class="fas fa-tag"></i> <span>${brand}</span></button>`
         ).join('');
         makeGrid.querySelectorAll('.option-btn').forEach(b => {
           b.addEventListener('click', () => selectBrand(b));
         });
       }
 
-      // Populate issues
+      // Populate issues using proper interactive button elements (.issue-item-btn)
       if (data && issueList) {
         issueList.innerHTML = data.issues.map(issue =>
-          `<div class="issue-item" data-issue="${issue.name}" data-min="${issue.min}" data-max="${issue.max}">
-            <span>${issue.name}</span>
-            <span class="price-range">$${issue.min} — $${issue.max}</span>
-          </div>`
+          `<button type="button" class="issue-item-btn" data-issue="${issue.name}" data-min="${issue.min}" data-max="${issue.max}">
+            <span style="font-weight: 600;">${issue.name}</span>
+            <span style="font-family: var(--font-mono); font-size: 0.9rem; color: var(--primary); font-weight: 700;">$${issue.min} — $${issue.max}</span>
+          </button>`
         ).join('');
-        issueList.querySelectorAll('.issue-item').forEach(item => {
+        issueList.querySelectorAll('.issue-item-btn').forEach(item => {
           item.addEventListener('click', () => selectIssue(item));
         });
       }
@@ -174,8 +174,8 @@
       min: parseInt(item.getAttribute('data-min')),
       max: parseInt(item.getAttribute('data-max')),
     };
-    document.querySelectorAll('#issue-list .issue-item').forEach(i => i.classList.remove('selected'));
-    item.classList.add('selected');
+    document.querySelectorAll('#issue-list .issue-item-btn').forEach(i => i.classList.remove('selected', 'active'));
+    item.classList.add('selected', 'active');
 
     // Update estimate
     if (estimateSummary) {
@@ -188,6 +188,7 @@
       chips.forEach(chip => {
         const el = document.createElement('span');
         el.className = 'estimate-chip';
+        el.style.cssText = 'padding: var(--space-3) var(--space-4); background: var(--surface-alt); border-radius: var(--radius-lg); border: 1px solid var(--border); display: inline-block; margin-right: 8px; margin-bottom: 8px; font-size: 0.9rem;';
         el.innerHTML = `<strong>${chip.label}:</strong> ${chip.value}`;
         estimateSummary.appendChild(el);
       });
@@ -260,7 +261,7 @@
       const reader = new FileReader();
       reader.onload = (e) => {
         const preview = document.createElement('div');
-        preview.style.cssText = 'width: 80px; height: 80px; border-radius: var(--radius-md); overflow: hidden; position: relative; background: var(--surface-2);';
+        preview.style.cssText = 'width: 80px; height: 80px; border-radius: var(--radius-md); overflow: hidden; position: relative; background: var(--surface-alt);';
         if (file.type.startsWith('image/')) {
           preview.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;" /><div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.6);color:#fff;font-size:0.5rem;padding:2px;text-align:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${file.name}</div>`;
         } else {
