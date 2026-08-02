@@ -1,8 +1,9 @@
 /* ==========================================================================
-   Austin's Tech Repair Group LLC — Main Stylesheet
+   Austin's Tech Repair Group LLC — Apple-Inspired Master Stylesheet
    ========================================================================== */
 
 :root {
+  /* Core Palette */
   --primary: #0057ff;
   --primary-hover: #0044cc;
   --bg: #f8fafc;
@@ -11,17 +12,19 @@
   --text: #0f172a;
   --text-muted: #64748b;
   --text-faint: #94a3b8;
-  --border: #e2e8f0;
+  --border: rgba(226, 232, 240, 0.8);
   --border-hover: #cbd5e1;
   --danger: #ef4444;
   --success: #22c55e;
   --warning: #f59e0b;
   --accent-blue: #38bdf8;
   
-  --font-display: 'Cabinet Grotesk', 'Plus Jakarta Sans', sans-serif;
-  --font-body: 'Plus Jakarta Sans', sans-serif;
+  /* Precision Typography */
+  --font-display: 'Cabinet Grotesk', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'Space Mono', monospace;
 
+  /* Consistent Spacing Scale */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -33,6 +36,7 @@
   --space-12: 3rem;
   --space-16: 4rem;
 
+  /* Apple-Style Corner Radii */
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
@@ -40,10 +44,11 @@
   --radius-2xl: 1.5rem;
   --radius-full: 9999px;
 
-  --transition: 0.2s ease-in-out;
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  /* Transitions & Shadows */
+  --transition: 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.06), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
   --content-wide: 1200px;
 }
 
@@ -54,10 +59,16 @@
   --text: #f9fafb;
   --text-muted: #9ca3af;
   --text-faint: #6b7280;
-  --border: #374151;
+  --border: rgba(55, 65, 81, 0.8);
   --border-hover: #4b5563;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
 }
 
+/* ==========================================================================
+   Base & Reset
+   ========================================================================== */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -73,10 +84,11 @@ body {
   font-family: var(--font-body);
   background-color: var(--bg);
   color: var(--text);
-  line-height: 1.5;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
-  padding-bottom: 70px;
+  padding-bottom: 74px; /* Space for mobile navigation */
 }
 
 @media (min-width: 1024px) {
@@ -100,6 +112,7 @@ button, input, select, textarea {
   color: inherit;
   background: none;
   border: none;
+  outline: none;
 }
 
 button {
@@ -110,7 +123,7 @@ button {
   display: none !important;
 }
 
-/* Skip Link */
+/* Skip Link for Accessibility */
 .skip-link {
   position: absolute;
   top: -40px;
@@ -120,13 +133,15 @@ button {
   padding: var(--space-2) var(--space-4);
   z-index: 1000;
   transition: top var(--transition);
+  border-radius: 0 0 var(--radius-md) 0;
+  font-weight: 600;
 }
 .skip-link:focus {
   top: 0;
 }
 
 /* ==========================================================================
-   Header & Navigation
+   Header & Navigation (Glassmorphic)
    ========================================================================== */
 .header {
   position: sticky;
@@ -136,9 +151,14 @@ button {
   align-items: center;
   justify-content: space-between;
   padding: var(--space-4) var(--space-6);
-  background: var(--surface);
+  background: rgba(255, 255, 255, 0.85);
   border-bottom: 1px solid var(--border);
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+[data-theme="dark"] .header {
+  background: rgba(17, 24, 39, 0.85);
 }
 
 .brand {
@@ -156,8 +176,9 @@ button {
   height: 40px;
   background: var(--primary);
   color: white;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   font-size: 1.25rem;
+  box-shadow: 0 2px 8px rgba(0, 87, 255, 0.3);
 }
 
 .brand-info {
@@ -167,14 +188,16 @@ button {
 
 .brand-name {
   font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 1.1rem;
-  letter-spacing: -0.025em;
+  font-weight: 800;
+  font-size: 1.15rem;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
 }
 
 .brand-sub {
   font-size: 0.75rem;
   color: var(--text-muted);
+  font-weight: 500;
 }
 
 .nav-desktop {
@@ -190,8 +213,8 @@ button {
 }
 
 .nav-link {
-  font-weight: 500;
-  font-size: 0.95rem;
+  font-weight: 600;
+  font-size: 0.925rem;
   color: var(--text-muted);
   transition: color var(--transition);
   position: relative;
@@ -236,6 +259,7 @@ button {
 .icon-btn:hover, .theme-toggle:hover {
   background: var(--border);
   border-color: var(--border-hover);
+  transform: translateY(-1px);
 }
 
 .cart-badge {
@@ -247,12 +271,13 @@ button {
   justify-content: center;
   min-width: 20px;
   height: 20px;
-  padding: 0 4px;
+  padding: 0 6px;
   background: var(--primary);
   color: white;
   font-size: 0.7rem;
   font-weight: 700;
   border-radius: var(--radius-full);
+  box-shadow: 0 2px 4px rgba(0, 87, 255, 0.4);
 }
 
 /* ==========================================================================
@@ -302,6 +327,7 @@ button {
   z-index: 1000;
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s ease-in-out;
@@ -317,7 +343,7 @@ button {
   top: 0;
   right: 0;
   width: 100%;
-  max-width: 400px;
+  max-width: 380px;
   height: 100%;
   background: var(--surface);
   padding: var(--space-6);
@@ -325,7 +351,7 @@ button {
   flex-direction: column;
   box-shadow: var(--shadow-lg);
   transform: translateX(100%);
-  transition: transform 0.3s ease-in-out;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   pointer-events: auto;
   z-index: 1001;
 }
@@ -341,6 +367,10 @@ button {
   margin-bottom: var(--space-4);
   color: var(--text-muted);
   cursor: pointer;
+  transition: color var(--transition);
+}
+.menu-close:hover {
+  color: var(--text);
 }
 
 .menu-links {
@@ -354,13 +384,14 @@ button {
 .menu-link {
   font-family: var(--font-display);
   font-size: 1.25rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text);
   padding: var(--space-3) 0;
   border-bottom: 1px solid var(--border);
   cursor: pointer;
+  transition: color var(--transition);
 }
-.menu-link.active {
+.menu-link.active, .menu-link:hover {
   color: var(--primary);
 }
 
@@ -376,16 +407,21 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-around;
-  background: var(--surface);
+  background: rgba(255, 255, 255, 0.9);
   border-top: 1px solid var(--border);
-  padding: var(--space-2);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
+  padding: var(--space-2) 0;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="dark"] .mobile-bottom-nav {
+  background: rgba(17, 24, 39, 0.9);
 }
 
 @media (min-width: 1024px) {
   .mobile-bottom-nav {
-    display: none;
+    display: none !important;
   }
 }
 
@@ -396,23 +432,25 @@ button {
   justify-content: center;
   gap: 2px;
   flex: 1;
-  padding: var(--space-2) 0;
+  padding: var(--space-1) 0;
   color: var(--text-muted);
   font-size: 0.7rem;
   font-weight: 600;
-  transition: color var(--transition);
+  transition: all var(--transition);
 }
 
 .bottom-nav-item i {
-  font-size: 1.2rem;
+  font-size: 1.15rem;
+  margin-bottom: 2px;
 }
 
 .bottom-nav-item:hover, .bottom-nav-item.active {
   color: var(--primary);
+  transform: translateY(-1px);
 }
 
 /* ==========================================================================
-   Pages & Layout Containers
+   Pages & Section Headers
    ========================================================================== */
 .page {
   display: none;
@@ -436,18 +474,30 @@ button {
   align-items: center;
 }
 
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--primary);
+  letter-spacing: 0.12em;
+  margin-bottom: var(--space-2);
+}
+
 .section-title {
   font-family: var(--font-display);
   font-size: clamp(2rem, 4vw, 2.75rem);
   font-weight: 800;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.035em;
   line-height: 1.1;
   margin-bottom: var(--space-3);
+  color: var(--text);
 }
 
 .section-copy {
   color: var(--text-muted);
   font-size: 1.05rem;
+  line-height: 1.6;
 }
 
 /* ==========================================================================
@@ -465,13 +515,13 @@ button {
 .hero-bg {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 50% 20%, rgba(0, 87, 255, 0.08) 0%, transparent 60%);
+  background: radial-gradient(circle at 50% 15%, rgba(0, 87, 255, 0.08) 0%, transparent 65%);
   pointer-events: none;
 }
 
 .hero-content {
   position: relative;
-  max-width: 800px;
+  max-width: 840px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -482,9 +532,10 @@ button {
   font-family: var(--font-display);
   font-size: clamp(2.5rem, 6vw, 4.25rem);
   font-weight: 900;
-  letter-spacing: -0.035em;
-  line-height: 1.05;
+  letter-spacing: -0.04em;
+  line-height: 1.08;
   margin-bottom: var(--space-5);
+  color: var(--text);
 }
 
 .hero-headline em {
@@ -495,9 +546,9 @@ button {
 .hero-sub {
   font-size: 1.15rem;
   color: var(--text-muted);
-  max-width: 640px;
+  max-width: 660px;
   margin-bottom: var(--space-8);
-  line-height: 1.6;
+  line-height: 1.65;
 }
 
 .hero-cta-group {
@@ -513,10 +564,12 @@ button {
   justify-content: center;
   gap: var(--space-2);
   font-weight: 600;
+  font-size: 0.95rem;
   padding: var(--space-3) var(--space-6);
   border-radius: var(--radius-xl);
   transition: all var(--transition);
   text-align: center;
+  border: 1px solid transparent;
 }
 
 .btn-primary {
@@ -526,6 +579,27 @@ button {
 }
 .btn-primary:hover {
   background: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 87, 255, 0.35);
+}
+
+.btn-dark {
+  background: var(--text);
+  color: var(--surface);
+}
+.btn-dark:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.btn-light {
+  background: var(--surface-alt);
+  color: var(--text);
+  border-color: var(--border);
+}
+.btn-light:hover {
+  background: var(--border);
+  border-color: var(--border-hover);
   transform: translateY(-1px);
 }
 
@@ -545,7 +619,9 @@ button {
   margin: 0 auto;
   padding: 0 var(--space-5);
   position: relative;
-  height: 420px;
+  min-height: 380px;
+  display: flex;
+  align-items: center;
 }
 
 .showcase-slide {
@@ -557,8 +633,8 @@ button {
   gap: var(--space-10);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.8s ease-in-out, transform 0.8s ease-in-out;
-  transform: translateY(20px);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateY(16px);
   padding: 0 var(--space-5);
 }
 
@@ -566,6 +642,15 @@ button {
   opacity: 1;
   pointer-events: auto;
   transform: translateY(0);
+  position: relative;
+}
+
+@media (max-width: 768px) {
+  .showcase-slide, .showcase-slide.reverse {
+    flex-direction: column;
+    text-align: center;
+    gap: var(--space-6);
+  }
 }
 
 .showcase-slide.reverse {
@@ -592,7 +677,7 @@ button {
   font-family: var(--font-display);
   font-size: clamp(1.75rem, 3vw, 2.5rem);
   font-weight: 800;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
   line-height: 1.15;
 }
 
@@ -604,7 +689,8 @@ button {
 
 .showcase-image {
   flex: 1;
-  height: 320px;
+  height: 300px;
+  width: 100%;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-2xl);
@@ -626,16 +712,16 @@ button {
 }
 
 .showcase-dot {
-  width: 10px;
-  height: 10px;
-  background: var(--border);
+  width: 8px;
+  height: 8px;
+  background: var(--border-hover);
   border-radius: var(--radius-full);
   cursor: pointer;
   transition: all var(--transition);
 }
 
 .showcase-dot.active {
-  width: 30px;
+  width: 24px;
   background: var(--primary);
   border-radius: var(--radius-full);
 }
@@ -656,14 +742,16 @@ button {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-full);
-  font-weight: 500;
-  font-size: 0.9rem;
+  font-weight: 600;
+  font-size: 0.875rem;
   transition: all var(--transition);
+  color: var(--text-muted);
 }
 .filter-btn:hover, .filter-btn.active {
   background: var(--primary);
   color: white;
   border-color: var(--primary);
+  box-shadow: 0 2px 8px rgba(0, 87, 255, 0.25);
 }
 
 .product-grid {
@@ -683,8 +771,8 @@ button {
 }
 .product-card:hover {
   border-color: var(--primary);
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-md);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
 }
 
 .product-img {
@@ -697,10 +785,10 @@ button {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform var(--transition);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .product-card:hover .product-img img {
-  transform: scale(1.05);
+  transform: scale(1.06);
 }
 
 .product-info {
@@ -721,13 +809,13 @@ button {
 
 .product-name {
   font-family: var(--font-display);
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-weight: 700;
   margin-bottom: var(--space-2);
 }
 
 .product-desc {
-  font-size: 0.85rem;
+  font-size: 0.875rem;
   color: var(--text-muted);
   margin-bottom: var(--space-4);
   flex-grow: 1;
@@ -762,7 +850,7 @@ button {
 }
 
 /* ==========================================================================
-   Repair Request Wizard & Clickable Issue Buttons
+   Repair Request Wizard & Interactive Option Buttons
    ========================================================================== */
 .repair-card {
   background: var(--surface);
@@ -791,8 +879,8 @@ button {
 }
 
 .progress-dot {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   background: var(--surface-alt);
   border: 2px solid var(--border);
   color: var(--text-muted);
@@ -801,7 +889,7 @@ button {
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 0.875rem;
   transition: all var(--transition);
 }
 
@@ -809,6 +897,7 @@ button {
   background: var(--primary);
   border-color: var(--primary);
   color: white;
+  box-shadow: 0 0 0 4px rgba(0, 87, 255, 0.15);
 }
 
 .progress-label {
@@ -832,11 +921,12 @@ button {
   font-size: 1.5rem;
   font-weight: 800;
   margin-bottom: var(--space-6);
+  letter-spacing: -0.025em;
 }
 
 .option-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: var(--space-4);
   margin-bottom: var(--space-6);
 }
@@ -882,7 +972,7 @@ button {
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
   font-family: var(--font-body);
-  font-size: var(--text-base);
+  font-size: 0.95rem;
   font-weight: 600;
   color: var(--text);
   cursor: pointer;
@@ -900,7 +990,247 @@ button {
 .issue-item-btn.active, .issue-item-btn.selected {
   border-color: var(--primary);
   background: var(--primary);
-  color: #fff;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 87, 255, 0.25);
+}
+
+/* ==========================================================================
+   Dashboard & Employee Portal Features
+   ========================================================================== */
+.search-header {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+  padding: var(--space-4) 0;
+  margin-bottom: var(--space-6);
+}
+
+@media (min-width: 768px) {
+  .search-header {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+  }
+}
+
+.search-main-bar,
+.search-devices-bar {
+  display: flex;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-2) var(--space-4);
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.search-main-bar:focus-within,
+.search-devices-bar:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 87, 255, 0.15);
+}
+
+.search-main-bar input,
+.search-devices-bar input {
+  width: 100%;
+  outline: none;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+}
+
+@media (min-width: 768px) {
+  .content-grid {
+    grid-template-columns: repeat(12, 1fr);
+  }
+  .col-4 { grid-column: span 4; }
+  .col-6 { grid-column: span 6; }
+  .col-8 { grid-column: span 8; }
+  .col-12 { grid-column: span 12; }
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-2xl);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+  display: flex;
+  flex-direction: column;
+}
+
+.card:hover {
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-md);
+}
+
+.card h3 {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 800;
+  margin-bottom: var(--space-2);
+  display: flex;
+  align-items: center;
+  letter-spacing: -0.02em;
+}
+
+/* Collapsible Card Component */
+.collapsible-card .card-header {
+  user-select: none;
+}
+
+.collapsible-card .collapse-icon {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  transition: transform var(--transition);
+}
+
+.collapsible-card.is-collapsed .collapse-icon {
+  transform: rotate(-90deg);
+}
+
+.collapsible-card.is-collapsed .card-body {
+  display: none;
+}
+
+/* Grid Tiles (Shop & Repair Overview) */
+.grid-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: var(--space-3);
+  margin-top: auto;
+}
+
+.tile {
+  background: var(--surface-alt);
+  padding: var(--space-4) var(--space-3);
+  border-radius: var(--radius-xl);
+  border: 1px solid transparent;
+  text-align: center;
+  transition: all var(--transition);
+}
+
+.tile:hover {
+  border-color: var(--primary);
+  background: var(--surface);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Google Map Placeholder */
+.map-placeholder {
+  width: 100%;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  height: 220px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  margin-top: auto;
+}
+
+/* Comparison Table */
+.comparison-section {
+  grid-column: 1 / -1;
+}
+
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.925rem;
+  margin-top: var(--space-3);
+}
+
+.comparison-table th {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--text);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 2px solid var(--border);
+}
+
+.comparison-table td {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.comparison-table tr:last-child td {
+  border-bottom: none;
+}
+
+.comparison-table tr:hover td {
+  background: var(--surface-alt);
+  color: var(--text);
+}
+
+/* Bottom Action Panel */
+.bottom-action-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: flex-end;
+  align-items: center;
+  padding: var(--space-6) 0;
+  border-top: 1px solid var(--border);
+  margin-top: var(--space-8);
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-xl);
+  transition: all var(--transition);
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 4px 14px rgba(0, 87, 255, 0.25);
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.action-btn:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.action-btn.secondary {
+  background: var(--surface-alt);
+  color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow: none;
+}
+
+.action-btn.secondary:hover {
+  background: var(--border);
+  border-color: var(--border-hover);
+}
+
+/* ==========================================================================
+   Chart & Canvas Sizing Controls
+   ========================================================================== */
+.chart-container {
+  position: relative;
+  width: 100%;
+  height: 280px;
+  margin-top: var(--space-3);
+}
+
+.chart-container-sm {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  margin-top: var(--space-3);
 }
 
 /* ==========================================================================
@@ -931,9 +1261,10 @@ button {
 
 .footer-col-title {
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 800;
   font-size: 0.95rem;
   margin-bottom: var(--space-2);
+  letter-spacing: -0.01em;
 }
 
 .footer-link {
@@ -962,12 +1293,14 @@ button {
   font-size: 0.85rem;
   color: var(--text-muted);
 }
+
 .footer-wordmark {
   font-family: var(--font-mono);
   font-weight: 700;
   color: var(--text);
 }
 
+/* Cart Drawer */
 .cart-drawer {
   position: fixed;
   inset: 0;
@@ -985,8 +1318,9 @@ button {
 .cart-drawer__backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 .cart-drawer__panel {
   position: relative;
@@ -998,7 +1332,7 @@ button {
   flex-direction: column;
   box-shadow: var(--shadow-lg);
   transform: translateX(100%);
-  transition: transform 0.3s ease-in-out;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .cart-drawer[aria-hidden="false"] .cart-drawer__panel {
   transform: translateX(0);
@@ -1052,7 +1386,8 @@ button {
 .cart-drawer__total {
   display: flex;
   justify-content: space-between;
-  font-size: 1.1rem;
-  font-weight: 700;
+  font-size: 1.15rem;
+  font-weight: 800;
   margin-bottom: var(--space-4);
+  font-family: var(--font-display);
 }
