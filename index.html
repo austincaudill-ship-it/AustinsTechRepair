@@ -843,11 +843,9 @@
           <div class="eyebrow">Austin's Tech Repair Group LLC</div>
           <h1>Employee Portal</h1>
           <p>Sign in to access repair operations, parts, orders, and internal tools.</p>
-          <form onsubmit="event.preventDefault(); login();">
-            <div class="field" style="margin-bottom: var(--space-4);"><label for="username">Username</label><input id="username" type="text" autocomplete="username" placeholder="Enter username" class="form-field" /></div>
-            <div class="field" style="margin-bottom: var(--space-4);"><label for="passcode">Passcode</label><input id="passcode" type="password" autocomplete="current-password" placeholder="Enter passcode" class="form-field" /></div>
-            <button type="submit" class="btn btn-primary btn-block">Login</button>
-          </form>
+          <div class="field" style="margin-bottom: var(--space-4);"><label for="username">Username</label><input id="username" type="text" autocomplete="username" placeholder="Enter username" class="form-field" /></div>
+          <div class="field" style="margin-bottom: var(--space-4);"><label for="passcode">Passcode</label><input id="passcode" type="password" autocomplete="current-password" placeholder="Enter passcode" class="form-field" /></div>
+          <button class="btn btn-primary btn-block" onclick="login()">Login</button>
           <p id="loginMsg" style="color: var(--danger); margin-top: var(--space-3); font-size: var(--text-sm);"></p>
         </div>
       </div>
