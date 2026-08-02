@@ -300,11 +300,11 @@ button {
   transform: translateY(-9px) rotate(-45deg);
 }
 
-/* Mobile Menu Overlay Drawer */
+/* Mobile Menu Overlay Drawer (Fixed Clickability with High z-index) */
 .mobile-menu {
   position: fixed;
   inset: 0;
-  z-index: 200;
+  z-index: 1000;
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(4px);
   opacity: 0;
@@ -331,6 +331,8 @@ button {
   box-shadow: var(--shadow-lg);
   transform: translateX(100%);
   transition: transform 0.3s ease-in-out;
+  pointer-events: auto;
+  z-index: 1001;
 }
 
 .mobile-menu[aria-hidden="false"] .menu-panel {
@@ -359,8 +361,9 @@ button {
   font-size: 1.25rem;
   font-weight: 600;
   color: var(--text);
-  padding: var(--space-2) 0;
+  padding: var(--space-3) 0;
   border-bottom: 1px solid var(--border);
+  cursor: pointer;
 }
 
 .menu-link.active {
