@@ -129,7 +129,29 @@
     </div>
   </nav>
 
-<!-- ============================================ SEARCH OVERLAY ============================================ -->
+<!-- ============================================ MOBILE MENU ============================================ -->
+  <nav class="mobile-menu" id="mobile-menu" aria-hidden="true">
+    <div class="menu-panel" role="dialog" aria-modal="true" aria-labelledby="menu-title">
+      <button class="menu-close" id="menu-close" type="button" aria-label="Close menu"><i class="fas fa-times"></i></button>
+      <p id="menu-title" class="eyebrow">Navigation</p>
+      <div class="menu-links">
+        <a class="menu-link active" href="#home" data-page="home">Home</a>
+        <a class="menu-link" href="#shop" data-page="shop">Shop</a>
+        <a class="menu-link" href="#repair" data-page="repair">Repair</a>
+        <a class="menu-link" href="#about" data-page="about">About</a>
+        <a class="menu-link" href="#contact" data-page="contact">Contact</a>
+        <a class="menu-link" href="#b2b" data-page="b2b">B2B</a>
+        <a class="menu-link" href="#atr-one" data-page="atr-one">ATR One</a>
+        <a class="menu-link" href="#employee" data-page="employee">Employee Portal</a>
+      </div>
+      <div class="menu-footer">
+        <a class="menu-phone" href="tel:5134788077"><i class="fas fa-phone"></i> 513-478-8077</a>
+        <span class="menu-tag">Xenia, Dayton & Southeastern Ohio · Est. 2010</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ============================================ SEARCH OVERLAY ============================================ -->
   <section class="search-overlay" id="search-overlay" aria-hidden="true">
     <div class="search-panel" role="dialog" aria-modal="true" aria-labelledby="search-title">
       <button class="search-close" id="search-close" type="button" aria-label="Close search"><i class="fas fa-times"></i></button>
@@ -140,6 +162,17 @@
       <div id="search-results" class="search-results" aria-live="polite"></div>
     </div>
   </section>
+
+  <!-- ============================================ POLICY OVERLAY ============================================ -->
+  <section class="policy-overlay" id="policy-overlay" aria-hidden="true">
+    <div class="policy-panel" role="dialog" aria-modal="true" aria-labelledby="policy-title">
+      <button class="policy-close" id="policy-close" type="button" aria-label="Close policy"><i class="fas fa-times"></i></button>
+      <div class="policy-body" id="policy-body"></div>
+    </div>
+  </section>
+
+  <!-- ============================================ MAIN CONTENT ============================================ -->
+  <main id="main-content">
   <!-- ============================================ POLICY OVERLAY ============================================ -->
   <section class="policy-overlay" id="policy-overlay" aria-hidden="true">
     <div class="policy-panel" role="dialog" aria-modal="true" aria-labelledby="policy-title">
