@@ -34,7 +34,7 @@
   }
 
   initTheme();
-})();
+
   /* ---- Page Navigation ---- */
   const pages = document.querySelectorAll('.page');
   const navLinks = document.querySelectorAll('[data-page]');
