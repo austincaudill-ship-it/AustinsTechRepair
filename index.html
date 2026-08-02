@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -888,14 +888,136 @@
             </div>
           </header>
 
-          <!-- DASHBOARD -->
+          <!-- DASHBOARD (ENHANCED WITH NEW PROTOTYPE HOOKS & WIDGETS) -->
           <section id="portal-dashboard" class="portal-section active">
+            <!-- New Top Search Bar Hooked to Main/Device Search -->
+            <div class="search-header" style="margin-bottom: var(--space-6);">
+              <div class="search-main-bar">
+                <i class="fas fa-search" style="opacity: 0.4; margin-right: 0.5rem;"></i>
+                <input type="text" id="mainSearchInput" placeholder="Quick Search customer tickets, orders, or SKUs..." autocomplete="off">
+              </div>
+              <div class="search-devices-bar">
+                <i class="fas fa-laptop-medical" style="opacity: 0.4; margin-right: 0.5rem;"></i>
+                <input type="text" id="deviceSearchInput" placeholder="Quick Search devices (iPhone 13, PS5, Dell XPS)..." autocomplete="off">
+              </div>
+            </div>
+
             <div class="portal-section-header">
               <div><h2>Dashboard</h2><p>Business overview for today</p></div>
               <button class="pbtn pbtn-primary" onclick="openTicketModal()"><i class="fas fa-plus"></i> New Repair Ticket</button>
             </div>
+            
             <div class="stats-grid" id="dashboard-stats"></div>
+
             <div class="content-grid">
+              <!-- Collapsible AI Chat Assistant Component -->
+              <section class="card collapsible-card col-12" id="chat-assistant-card">
+                <div class="card-header" onclick="toggleCard(this)" role="button" tabindex="0" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+                  <h3 style="margin: 0;"><i class="fas fa-robot" style="color: var(--primary); margin-right: 0.5rem;"></i> AI Diagnostic Assistant</h3>
+                  <span class="collapse-icon"><i class="fas fa-chevron-down"></i></span>
+                </div>
+                <div class="card-body" style="margin-top: 1rem;">
+                  <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Instant schematic lookup, component voltage guides, and customer ticket summarization.</p>
+                  <button class="action-btn" id="chatHoverBtn" style="background: var(--primary); color: white; border: none; padding: 0.6rem 1.2rem; border-radius: var(--radius-lg); font-weight: 600; cursor: pointer;">
+                    <i class="fas fa-comment-dots"></i> Launch Assistant
+                  </button>
+                </div>
+              </section>
+
+              <!-- New Shop & Repair Overview Tiles -->
+              <section class="card col-6">
+                <h3><i class="fas fa-store" style="color: var(--primary); margin-right: 0.5rem;"></i> Shop Overview</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Parts inventory and retail accessories.</p>
+                <div class="grid-tiles">
+                  <div class="tile">
+                    <span style="display: block; font-size: 1.25rem; font-weight: 800; color: var(--text);">24</span>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">OLED Screens</span>
+                  </div>
+                  <div class="tile">
+                    <span style="display: block; font-size: 1.25rem; font-weight: 800; color: var(--text);">18</span>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">Batteries</span>
+                  </div>
+                  <div class="tile">
+                    <span style="display: block; font-size: 1.25rem; font-weight: 800; color: var(--primary);">Active</span>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">Shopify Sync</span>
+                  </div>
+                </div>
+              </section>
+
+              <section class="card col-6">
+                <h3><i class="fas fa-screwdriver-wrench" style="color: var(--primary); margin-right: 0.5rem;"></i> Repair Status</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Current active bench pipeline.</p>
+                <div class="grid-tiles">
+                  <div class="tile">
+                    <span style="display: block; font-size: 1.25rem; font-weight: 800; color: var(--warning);">6</span>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">In Queue</span>
+                  </div>
+                  <div class="tile">
+                    <span style="display: block; font-size: 1.25rem; font-weight: 800; color: var(--primary);">3</span>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">Diagnostics</span>
+                  </div>
+                  <div class="tile">
+                    <span style="display: block; font-size: 1.25rem; font-weight: 800; color: var(--success);">4</span>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">Ready for Pickup</span>
+                  </div>
+                </div>
+              </section>
+
+              <!-- New Google Map Service Area Card -->
+              <section class="card col-6">
+                <h3><i class="fas fa-map-location-dot" style="color: var(--primary); margin-right: 0.5rem;"></i> Service Area Map</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Mobile repair dispatch coverage across Xenia, Dayton, and Southeastern Ohio.</p>
+                <div class="map-placeholder">
+                  <iframe 
+                    title="Service Area - Xenia and Dayton Ohio"
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d196463.1557454228!2d-84.31422735!3d39.7390729!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x884080d5aeb87563%3A0x62804b4dcd695e1a!2sXenia%2C%20OH!5e0!3m2!1sen!2sus!4v1700000000000!5m2!1sen!2sus" 
+                    width="100%" 
+                    height="100%" 
+                    style="border:0;" 
+                    allowfullscreen="" 
+                    loading="lazy" 
+                    referrerpolicy="no-referrer-when-downgrade">
+                  </iframe>
+                </div>
+              </section>
+
+              <!-- New Comparison Table Card -->
+              <section class="card col-6 comparison-section">
+                <h3><i class="fas fa-star" style="color: var(--warning); margin-right: 0.5rem;"></i> Service Tier Comparison</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Customer perks and savings overview.</p>
+                <table class="comparison-table">
+                  <thead>
+                    <tr>
+                      <th>Benefit</th>
+                      <th>Standard Client</th>
+                      <th style="color: var(--primary);">ATR One ($19.99/mo)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td style="font-weight: 600;">Hardware Labor Discount</td>
+                      <td>Standard Rate</td>
+                      <td style="font-weight: 700; color: var(--success);">20% Off</td>
+                    </tr>
+                    <tr>
+                      <td style="font-weight: 600;">Screen Protectors</td>
+                      <td>$14.99 Retail</td>
+                      <td style="font-weight: 700; color: var(--success);">Included Free</td>
+                    </tr>
+                    <tr>
+                      <td style="font-weight: 600;">Turnaround Priority</td>
+                      <td>Standard Queue</td>
+                      <td style="font-weight: 700; color: var(--primary);">Front of Queue</td>
+                    </tr>
+                    <tr>
+                      <td style="font-weight: 600;">Device Deep Clean</td>
+                      <td>Add-On Fee</td>
+                      <td style="font-weight: 700; color: var(--success);">Included Free</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </section>
+
               <div class="card col-8">
                 <h3><i class="fas fa-chart-line"></i> Revenue — Last 7 Days</h3>
                 <div class="chart-container"><canvas id="revenueChart"></canvas></div>
@@ -922,6 +1044,16 @@
                 </div>
               </div>
             </div>
+
+            <!-- New Dashboard Bottom Action Panel -->
+            <footer class="bottom-action-panel">
+              <button class="action-btn secondary" id="resetBtn">
+                <i class="fas fa-rotate-left"></i> Reset Views
+              </button>
+              <button class="action-btn" id="saveBtn">
+                <i class="fas fa-save"></i> Save Changes
+              </button>
+            </footer>
           </section>
 
           <!-- REPAIR TICKETS -->
@@ -1827,3 +1959,4 @@
   </nav>
 </body>
 </html>
+                                                                                    
