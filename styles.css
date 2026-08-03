@@ -1391,3 +1391,17 @@ button {
   margin-bottom: var(--space-4);
   font-family: var(--font-display);
 }
+
+/* ==========================================================================
+   Contact Form — full-width variant of .repair-card
+   ========================================================================== */
+.repair-card.contact-form-card {
+  max-width: 100%;
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .repair-card.contact-form-card {
+    padding: var(--space-5);
+  }
+}
