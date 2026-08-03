@@ -677,37 +677,29 @@
             <p style="font-size: var(--text-sm); color: var(--text-muted); margin: 0;">Monday-Saturday: 8:00 AM - 5:00 PM</p>
           </div>
         </div>
+<!-- JotForm Contact Form -->
+<div class="reveal repair-card" style="max-width: 100%; width: 100%; box-sizing: border-box;">
+  <h3 style="font-size: var(--text-lg); font-weight: 800; margin-bottom: var(--space-4);">Send a Message</h3>
 
-        <!-- JotForm Contact Form -->
-        <div class="reveal repair-card" style="max-width: 760px; width: 100%;">
-          <h3 style="font-size: var(--text-lg); font-weight: 800; margin-bottom: var(--space-4);">Send a Message</h3>
-          <iframe
-            id="JotFormIFrame-261955946010055"
-            title="Send a Message"
-            onload="window.parent.scrollTo(0,0)"
-            allowtransparency="true"
-            allow="geolocation; microphone; camera; fullscreen"
-            src="https://form.jotform.com/261955946010055"
-            frameborder="0"
-            style="min-width: 100%; max-width: 100%; height: 539px; border: none;"
-            scrolling="no">
-          </iframe>
-          <script type="text/javascript">
-            var iframe = document.getElementById("JotFormIFrame-261955946010055");
-            if (window.addEventListener) {
-              window.addEventListener("message", handleIFrameMessage, false);
-            } else if (window.attachEvent) {
-              window.attachEvent("onmessage", handleIFrameMessage);
-            }
-            function handleIFrameMessage(e) {
-              if (typeof e.data !== 'string') return;
-              var args = e.data.split(":");
-              if (args[0] === "setHeight" && iframe) {
-                iframe.style.height = args[1] + "px";
-              }
-            }
-          </script>
-        </div>
+  <iframe
+    id="JotFormIFrame-261955946010055"
+    title="Send a Message"
+    onload="window.parent.scrollTo(0,0)"
+    allowtransparency="true"
+    allow="geolocation; microphone; camera; fullscreen"
+    src="https://form.jotform.com/261955946010055"
+    frameborder="0"
+    style="width: 100%; min-width: 100%; max-width: 100%; height: 539px; border: none; display: block;"
+    scrolling="no">
+  </iframe>
+
+  <script src="https://cdn.jotfor.ms/s/umd/latest/for-form-embed-handler.js"></script>
+  <script>
+    if (window.jotformEmbedHandler) {
+      window.jotformEmbedHandler("iframe[id='JotFormIFrame-261955946010055']", "https://form.jotform.com");
+    }
+  </script>
+</div>
 
         <!-- File Upload Section -->
         <div class="reveal repair-card" style="max-width: 760px; margin-top: var(--space-6);">
