@@ -88,7 +88,6 @@
       <a class="nav-link" href="#contact" data-page="contact">Contact</a>
       <a class="nav-link" href="#b2b" data-page="b2b">B2B</a>
       <a class="nav-link" href="#atr-one" data-page="atr-one">ATR One</a>
-      <a class="nav-link" href="#employee" data-page="employee">Portal</a>
     </nav>
 
     <div class="header-actions">
@@ -121,7 +120,6 @@
         <a class="menu-link" href="#contact" data-page="contact">Contact</a>
         <a class="menu-link" href="#b2b" data-page="b2b">B2B</a>
         <a class="menu-link" href="#atr-one" data-page="atr-one">ATR One</a>
-        <a class="menu-link" href="#employee" data-page="employee">Employee Portal</a>
       </div>
       <div class="menu-footer">
         <a class="menu-phone" href="tel:5134788077"><i class="fas fa-phone"></i> 513-478-8077</a>
@@ -1433,7 +1431,6 @@
           <span class="footer-col-title">Services</span>
           <a class="footer-link" href="#b2b" data-page="b2b">B2B & Managed IT</a>
           <a class="footer-link" href="#atr-one" data-page="atr-one">ATR One Membership</a>
-          <a class="footer-link" href="#employee" data-page="employee">Employee Portal</a>
           <a class="footer-link" href="tel:5134788077">513-478-8077</a>
         </div>
         <div class="footer-links-col">
@@ -1473,7 +1470,8 @@
 
       <div class="footer-bottom">
         <span class="footer-copy">Copyright 2026 © <strong>Austin's Tech Repair Group LLC</strong></span>
-        <span class="footer-wordmark">ATR Group</span>
+        <!-- Hidden/Discreet Employee Portal Trigger attached to 'ATR Group' wordmark -->
+        <a href="#employee" data-page="employee" class="footer-wordmark" style="text-decoration: none; cursor: pointer; color: inherit;" title="Employee Portal">ATR Group</a>
       </div>
     </div>
   </footer>
@@ -1977,7 +1975,7 @@
             }
         };
 
-        // FIXED: Target ONLY buttons with the data-policy attribute so site navigation anchor links work normally
+        // Target ONLY buttons with the data-policy attribute for policy popups
         document.querySelectorAll("button.footer-link[data-policy]").forEach(button => {
             button.addEventListener("click", (e) => {
                 const policyKey = e.target.getAttribute("data-policy");
