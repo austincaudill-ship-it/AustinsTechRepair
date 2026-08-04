@@ -5,7 +5,8 @@
 document.addEventListener('DOMContentLoaded', () => {
   // Navigation & Page Elements
   const bottomNavItems = document.querySelectorAll('.mobile-bottom-nav .bottom-nav-item');
-  const desktopNavLinks = document.querySelectorAll('.nav-link, .menu-link, .footer-link[data-page]');  const pages = document.querySelectorAll('.page');
+  const desktopNavLinks = document.querySelectorAll('.nav-link, .menu-link');
+  const pages = document.querySelectorAll('.page');
   const mobileMenu = document.querySelector('.mobile-menu');
   const menuCloseBtn = document.querySelector('.menu-close');
 
@@ -229,9 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
       dot.addEventListener('click', () => {
         currentSlide = index;
         showSlide(currentSlide);
-      }
-                           document.querySelectorAll('.flip-card').forEach(card => {
-  card.addEventListener('click', () => {
-    card.classList.toggle('is-flipped');
-  });
+      });
+    });
+  }
 });
