@@ -1977,8 +1977,8 @@
             }
         };
 
-        // Open modal on click
-        document.querySelectorAll(".footer-link").forEach(button => {
+        // FIXED: Target ONLY buttons with the data-policy attribute so site navigation anchor links work normally
+        document.querySelectorAll("button.footer-link[data-policy]").forEach(button => {
             button.addEventListener("click", (e) => {
                 const policyKey = e.target.getAttribute("data-policy");
                 if (policies[policyKey]) {
@@ -2018,7 +2018,7 @@
             }
         }, { passive: true });
 
-        document.querySelectorAll(".footer-link").forEach(button => {
+        document.querySelectorAll("button.footer-link[data-policy]").forEach(button => {
             button.addEventListener("click", () => {
                 initialScrollY = window.scrollY;
             });
