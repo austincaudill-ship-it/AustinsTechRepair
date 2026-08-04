@@ -718,31 +718,6 @@
           }
         </style>
 
-        <!-- File Upload Section -->
-        <div class="reveal repair-card" style="max-width: 760px; margin-top: var(--space-6);">
-          <h3 style="font-size: var(--text-lg); font-weight: 800; margin-bottom: var(--space-2);">Send Us Device Photos</h3>
-          <p style="color: var(--text-muted); margin-bottom: var(--space-5); font-size: var(--text-sm);">Upload photos of your damaged device for a faster, more accurate quote. We'll review them and reach out with next steps.</p>
-
-          <form id="contact-file-form" enctype="multipart/form-data">
-            <div style="border: 2px dashed var(--border); border-radius: var(--radius-xl); padding: var(--space-6); text-align: center; margin-bottom: var(--space-4); transition: all var(--transition);" id="contact-file-drop-zone">
-              <i class="fas fa-cloud-arrow-up" style="font-size: 2.5rem; color: var(--primary); margin-bottom: var(--space-3);"></i>
-              <p style="font-weight: 800; margin-bottom: var(--space-2);">Drop photos here or click to browse</p>
-              <p style="font-size: var(--text-xs); color: var(--text-muted); margin-bottom: var(--space-4);">JPG, PNG, HEIC, PDF · Max 5 files · 10MB each</p>
-              <input type="file" id="contact-file-upload" name="device-photos" multiple accept="image/*,.pdf" style="display: none;" />
-              <button class="btn btn-light" type="button" id="contact-file-browse-btn"><i class="fas fa-folder-open"></i> Browse Files</button>
-              <div id="contact-file-preview-list" style="display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-4); justify-content: center;"></div>
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-bottom: var(--space-3);">
-              <div class="field"><label for="contact-name">Your Name <span style="color: var(--danger);">*</span></label><input id="contact-name" class="form-field" type="text" name="name" required placeholder="John Smith" /></div>
-              <div class="field"><label for="contact-phone">Phone or Email <span style="color: var(--danger);">*</span></label><input id="contact-phone" class="form-field" type="text" name="contact" required placeholder="Phone or email" /></div>
-            </div>
-            <div class="field" style="margin-bottom: var(--space-4);"><label for="contact-message">Message (optional)</label><textarea id="contact-message" class="form-field" name="message" rows="3" placeholder="Tell us about your device and what's wrong..."></textarea></div>
-            <button class="cta-primary" type="submit"><i class="fas fa-paper-plane"></i> Send Photos & Message</button>
-          </form>
-          <p id="contact-file-thanks" class="form-thanks" hidden><i class="fas fa-circle-check"></i> Thank you. Your photos and message have been sent. We'll reach out shortly.</p>
-        </div>
-      </div>
-    </section>
 
     <!-- ===================== B2B PAGE ===================== -->
     <section id="b2b" class="page">
