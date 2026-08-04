@@ -13,6 +13,7 @@
   <meta name="keywords" content="phone repair, computer repair, tablet repair, screen repair, battery replacement, tech repair Ohio, Xenia repair, Dayton repair, B2B IT support, game console repair" />
   <meta name="author" content="Austin's Tech Repair Group LLC" />
   <meta name="robots" content="index, follow" />
+  
   <!-- Open Graph -->
   <meta property="og:type" content="website" />
   <meta property="og:title" content="Austin's Tech Repair Group LLC | Expert Device Repair in Ohio" />
@@ -101,8 +102,8 @@
         <i class="fas fa-cart-shopping" aria-hidden="true"></i>
         <span id="cart-badge" class="cart-badge">0</span>
       </button>
-      <button class="icon-btn" id="menu-toggle" type="button" aria-label="Open menu" aria-haspopup="dialog" aria-expanded="false">
-        <i class="fas fa-bars" aria-hidden="true"></i>
+      <button class="icon-btn mobile-menu-toggle" id="menu-toggle" type="button" aria-label="Open menu" aria-haspopup="dialog" aria-expanded="false">
+        <span></span><span></span><span></span>
       </button>
     </div>
   </header>
@@ -677,46 +678,46 @@
             <p style="font-size: var(--text-sm); color: var(--text-muted); margin: 0;">Monday-Saturday: 8:00 AM - 5:00 PM</p>
           </div>
         </div>
-<!-- JotForm Contact Form -->
-<div class="reveal repair-card jotform-wrap" style="max-width: 100%; width: 100%; box-sizing: border-box;">
-  <h3 style="font-size: var(--text-lg); font-weight: 800; margin-bottom: var(--space-4);">Send a Message</h3>
 
-  <iframe
-    id="JotFormIFrame-261955946010055"
-    title="Send a Message"
-    onload="window.parent.scrollTo(0,0)"
-    allowtransparency="true"
-    allow="geolocation; microphone; camera; fullscreen"
-    src="https://form.jotform.com/261955946010055"
-    frameborder="0"
-    style="width: 100%; min-width: 100%; max-width: 100%; height: 539px; border: none; display: block;"
-    scrolling="no">
-  </iframe>
+        <!-- JotForm Contact Form -->
+        <div class="reveal repair-card jotform-wrap" style="max-width: 100%; width: 100%; box-sizing: border-box;">
+          <h3 style="font-size: var(--text-lg); font-weight: 800; margin-bottom: var(--space-4);">Send a Message</h3>
 
-  <script src="https://cdn.jotfor.ms/s/umd/latest/for-form-embed-handler.js"></script>
-  <script>
-    if (window.jotformEmbedHandler) {
-      window.jotformEmbedHandler("iframe[id='JotFormIFrame-261955946010055']", "https://form.jotform.com");
-    }
-  </script>
-</div>
+          <iframe
+            id="JotFormIFrame-261955946010055"
+            title="Send a Message"
+            onload="window.parent.scrollTo(0,0)"
+            allowtransparency="true"
+            allow="geolocation; microphone; camera; fullscreen"
+            src="https://form.jotform.com/261955946010055"
+            frameborder="0"
+            style="width: 100%; min-width: 100%; max-width: 100%; height: 539px; border: none; display: block;"
+            scrolling="no">
+          </iframe>
 
-<style>
-  /* On mobile, let the form bleed out to the full viewport width,
-     ignoring the parent card's padding/margins */
-  @media (max-width: 768px) {
-    .jotform-wrap {
-      width: 100vw !important;
-      max-width: 100vw !important;
-      margin-left: 50%;
-      transform: translateX(-50%);
-      padding-left: 12px;
-      padding-right: 12px;
-      box-sizing: border-box;
-      border-radius: 0;
-    }
-  }
-</style>
+          <script src="https://cdn.jotfor.ms/s/umd/latest/for-form-embed-handler.js"></script>
+          <script>
+            if (window.jotformEmbedHandler) {
+              window.jotformEmbedHandler("iframe[id='JotFormIFrame-261955946010055']", "https://form.jotform.com");
+            }
+          </script>
+        </div>
+
+        <style>
+          @media (max-width: 768px) {
+            .jotform-wrap {
+              width: 100vw !important;
+              max-width: 100vw !important;
+              margin-left: 50%;
+              transform: translateX(-50%);
+              padding-left: 12px;
+              padding-right: 12px;
+              box-sizing: border-box;
+              border-radius: 0;
+            }
+          }
+        </style>
+
         <!-- File Upload Section -->
         <div class="reveal repair-card" style="max-width: 760px; margin-top: var(--space-6);">
           <h3 style="font-size: var(--text-lg); font-weight: 800; margin-bottom: var(--space-2);">Send Us Device Photos</h3>
@@ -896,9 +897,8 @@
             </div>
           </header>
 
-          <!-- DASHBOARD (ENHANCED WITH NEW PROTOTYPE HOOKS & WIDGETS) -->
+          <!-- DASHBOARD -->
           <section id="portal-dashboard" class="portal-section active">
-            <!-- New Top Search Bar Hooked to Main/Device Search -->
             <div class="search-header" style="margin-bottom: var(--space-6);">
               <div class="search-main-bar">
                 <i class="fas fa-search" style="opacity: 0.4; margin-right: 0.5rem;"></i>
@@ -918,7 +918,6 @@
             <div class="stats-grid" id="dashboard-stats"></div>
 
             <div class="content-grid">
-              <!-- Collapsible AI Chat Assistant Component -->
               <section class="card collapsible-card col-12" id="chat-assistant-card">
                 <div class="card-header" onclick="toggleCard(this)" role="button" tabindex="0" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
                   <h3 style="margin: 0;"><i class="fas fa-robot" style="color: var(--primary); margin-right: 0.5rem;"></i> AI Diagnostic Assistant</h3>
@@ -932,7 +931,6 @@
                 </div>
               </section>
 
-              <!-- New Shop & Repair Overview Tiles -->
               <section class="card col-6">
                 <h3><i class="fas fa-store" style="color: var(--primary); margin-right: 0.5rem;"></i> Shop Overview</h3>
                 <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Parts inventory and retail accessories.</p>
@@ -971,7 +969,6 @@
                 </div>
               </section>
 
-              <!-- New Google Map Service Area Card -->
               <section class="card col-6">
                 <h3><i class="fas fa-map-location-dot" style="color: var(--primary); margin-right: 0.5rem;"></i> Service Area Map</h3>
                 <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Mobile repair dispatch coverage across Xenia, Dayton, and Southeastern Ohio.</p>
@@ -989,7 +986,6 @@
                 </div>
               </section>
 
-              <!-- New Comparison Table Card -->
               <section class="card col-6 comparison-section">
                 <h3><i class="fas fa-star" style="color: var(--warning); margin-right: 0.5rem;"></i> Service Tier Comparison</h3>
                 <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Customer perks and savings overview.</p>
@@ -1053,7 +1049,6 @@
               </div>
             </div>
 
-            <!-- New Dashboard Bottom Action Panel -->
             <footer class="bottom-action-panel">
               <button class="action-btn secondary" id="resetBtn">
                 <i class="fas fa-rotate-left"></i> Reset Views
@@ -1385,7 +1380,6 @@
   <!-- ============================================ APPLE-STYLE SHOWCASE CAROUSEL ============================================ -->
   <section class="apple-showcase">
     <div class="showcase-container">
-      <!-- Slide 1: Text Left, Image Right -->
       <div class="showcase-slide active">
         <div class="showcase-content">
           <span class="showcase-tag">Component Diagnostics</span>
@@ -1397,7 +1391,6 @@
         </div>
       </div>
 
-      <!-- Slide 2: Image Left, Text Right (Reverse) -->
       <div class="showcase-slide reverse">
         <div class="showcase-content">
           <span class="showcase-tag">ATR One Membership</span>
@@ -1409,7 +1402,6 @@
         </div>
       </div>
 
-      <!-- Slide 3: Text Left, Image Right -->
       <div class="showcase-slide">
         <div class="showcase-content">
           <span class="showcase-tag">Enterprise & B2B Solutions</span>
@@ -1422,7 +1414,6 @@
       </div>
     </div>
 
-    <!-- Showcase Navigation Dots -->
     <div class="showcase-dots">
       <span class="showcase-dot active"></span>
       <span class="showcase-dot"></span>
@@ -1433,7 +1424,6 @@
   <!-- ============================================ FOOTER ============================================ -->
   <footer class="footer">
     <div style="max-width: var(--content-wide); margin: 0 auto; padding: 0 var(--space-5);">
-      <!-- Slideshow -->
       <div class="slideshow" aria-label="Service slideshow">
         <div class="slide active" style="background-image:url('https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1600&q=80')"></div>
         <div class="slide" style="background-image:url('https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1600&q=80')"></div>
@@ -1530,7 +1520,6 @@
   </section>
 
   <!-- ============================================ PORTAL CRUD MODALS ============================================ -->
-  <!-- New/Edit Ticket Modal -->
   <dialog id="ticketModal">
     <div class="modal-head">
       <h3 id="ticketModalTitle">New Repair Ticket</h3>
@@ -1627,7 +1616,6 @@
     </div>
   </dialog>
 
-  <!-- Ticket Detail Modal -->
   <dialog id="ticketDetailModal">
     <div class="modal-head">
       <h3 id="ticketDetailTitle">Ticket Details</h3>
@@ -1640,7 +1628,6 @@
     </div>
   </dialog>
 
-  <!-- Customer Modal -->
   <dialog id="customerModal">
     <div class="modal-head">
       <h3 id="customerModalTitle">Add Customer</h3>
@@ -1682,7 +1669,6 @@
     </div>
   </dialog>
 
-  <!-- Part Modal -->
   <dialog id="partModal">
     <div class="modal-head">
       <h3 id="partModalTitle">Add Part</h3>
@@ -1750,7 +1736,6 @@
     </div>
   </dialog>
 
-  <!-- Order Modal -->
   <dialog id="orderModal">
     <div class="modal-head">
       <h3 id="orderModalTitle">New Order</h3>
@@ -1818,7 +1803,6 @@
     </div>
   </dialog>
 
-  <!-- Transaction Modal -->
   <dialog id="transactionModal">
     <div class="modal-head">
       <h3>Add Transaction</h3>
@@ -1869,7 +1853,6 @@
     </div>
   </dialog>
 
-  <!-- Employee Modal -->
   <dialog id="employeeModal">
     <div class="modal-head">
       <h3 id="employeeModalTitle">Add Employee</h3>
@@ -1919,7 +1902,6 @@
     </div>
   </dialog>
 
-  <!-- Confirm Delete Modal -->
   <dialog id="confirmModal">
     <div class="modal-head">
       <h3>Confirm Delete</h3>
