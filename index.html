@@ -13,7 +13,6 @@
   <meta name="keywords" content="phone repair, computer repair, tablet repair, screen repair, battery replacement, tech repair Ohio, Xenia repair, Dayton repair, B2B IT support, game console repair" />
   <meta name="author" content="Austin's Tech Repair Group LLC" />
   <meta name="robots" content="index, follow" />
-  
   <!-- Open Graph -->
   <meta property="og:type" content="website" />
   <meta property="og:title" content="Austin's Tech Repair Group LLC | Expert Device Repair in Ohio" />
@@ -88,6 +87,7 @@
       <a class="nav-link" href="#contact" data-page="contact">Contact</a>
       <a class="nav-link" href="#b2b" data-page="b2b">B2B</a>
       <a class="nav-link" href="#atr-one" data-page="atr-one">ATR One</a>
+      <a class="nav-link" href="#employee" data-page="employee">Portal</a>
     </nav>
 
     <div class="header-actions">
@@ -101,8 +101,8 @@
         <i class="fas fa-cart-shopping" aria-hidden="true"></i>
         <span id="cart-badge" class="cart-badge">0</span>
       </button>
-      <button class="icon-btn mobile-menu-toggle" id="menu-toggle" type="button" aria-label="Open menu" aria-haspopup="dialog" aria-expanded="false">
-        <span></span><span></span><span></span>
+      <button class="icon-btn" id="menu-toggle" type="button" aria-label="Open menu" aria-haspopup="dialog" aria-expanded="false">
+        <i class="fas fa-bars" aria-hidden="true"></i>
       </button>
     </div>
   </header>
@@ -120,6 +120,7 @@
         <a class="menu-link" href="#contact" data-page="contact">Contact</a>
         <a class="menu-link" href="#b2b" data-page="b2b">B2B</a>
         <a class="menu-link" href="#atr-one" data-page="atr-one">ATR One</a>
+        <a class="menu-link" href="#employee" data-page="employee">Employee Portal</a>
       </div>
       <div class="menu-footer">
         <a class="menu-phone" href="tel:5134788077"><i class="fas fa-phone"></i> 513-478-8077</a>
@@ -140,18 +141,13 @@
     </div>
   </section>
 
-  <!-- ============================================ POLICY MODAL (POP-UP) ============================================ -->
-  <div id="policy-modal" class="policy-modal-overlay" style="display: none;">
-    <div class="policy-modal-container">
-      <div class="policy-modal-header">
-        <h2 id="policy-modal-title">Policy Title</h2>
-        <button class="policy-close-btn" aria-label="Close modal">&times;</button>
-      </div>
-      <div class="policy-modal-body" id="policy-modal-content">
-        <!-- Dynamic content loads here -->
-      </div>
+  <!-- ============================================ POLICY OVERLAY ============================================ -->
+  <section class="policy-overlay" id="policy-overlay" aria-hidden="true">
+    <div class="policy-panel" role="dialog" aria-modal="true" aria-labelledby="policy-title">
+      <button class="policy-close" id="policy-close" type="button" aria-label="Close policy"><i class="fas fa-times"></i></button>
+      <div class="policy-body" id="policy-body"></div>
     </div>
-  </div>
+  </section>
 
   <!-- ============================================ MAIN CONTENT ============================================ -->
   <main id="main-content">
@@ -457,7 +453,7 @@
       </div>
     </section>
 
-      <!-- ===================== REPAIR PAGE ===================== -->
+     <!-- ===================== REPAIR PAGE ===================== -->
     <section id="repair" class="page">
       <div class="container">
         <div class="section-header reveal">
@@ -681,46 +677,71 @@
             <p style="font-size: var(--text-sm); color: var(--text-muted); margin: 0;">Monday-Saturday: 8:00 AM - 5:00 PM</p>
           </div>
         </div>
+<!-- JotForm Contact Form -->
+<div class="reveal repair-card jotform-wrap" style="max-width: 100%; width: 100%; box-sizing: border-box;">
+  <h3 style="font-size: var(--text-lg); font-weight: 800; margin-bottom: var(--space-4);">Send a Message</h3>
 
-        <!-- JotForm Contact Form -->
-        <div class="reveal repair-card jotform-wrap" style="max-width: 100%; width: 100%; box-sizing: border-box;">
-          <h3 style="font-size: var(--text-lg); font-weight: 800; margin-bottom: var(--space-4);">Send a Message</h3>
+  <iframe
+    id="JotFormIFrame-261955946010055"
+    title="Send a Message"
+    onload="window.parent.scrollTo(0,0)"
+    allowtransparency="true"
+    allow="geolocation; microphone; camera; fullscreen"
+    src="https://form.jotform.com/261955946010055"
+    frameborder="0"
+    style="width: 100%; min-width: 100%; max-width: 100%; height: 539px; border: none; display: block;"
+    scrolling="no">
+  </iframe>
 
-          <iframe
-            id="JotFormIFrame-261955946010055"
-            title="Send a Message"
-            onload="window.parent.scrollTo(0,0)"
-            allowtransparency="true"
-            allow="geolocation; microphone; camera; fullscreen"
-            src="https://form.jotform.com/261955946010055"
-            frameborder="0"
-            style="width: 100%; min-width: 100%; max-width: 100%; height: 539px; border: none; display: block;"
-            scrolling="no">
-          </iframe>
+  <script src="https://cdn.jotfor.ms/s/umd/latest/for-form-embed-handler.js"></script>
+  <script>
+    if (window.jotformEmbedHandler) {
+      window.jotformEmbedHandler("iframe[id='JotFormIFrame-261955946010055']", "https://form.jotform.com");
+    }
+  </script>
+</div>
 
-          <script src="https://cdn.jotfor.ms/s/umd/latest/for-form-embed-handler.js"></script>
-          <script>
-            if (window.jotformEmbedHandler) {
-              window.jotformEmbedHandler("iframe[id='JotFormIFrame-261955946010055']", "https://form.jotform.com");
-            }
-          </script>
+<style>
+  /* On mobile, let the form bleed out to the full viewport width,
+     ignoring the parent card's padding/margins */
+  @media (max-width: 768px) {
+    .jotform-wrap {
+      width: 100vw !important;
+      max-width: 100vw !important;
+      margin-left: 50%;
+      transform: translateX(-50%);
+      padding-left: 12px;
+      padding-right: 12px;
+      box-sizing: border-box;
+      border-radius: 0;
+    }
+  }
+</style>
+        <!-- File Upload Section -->
+        <div class="reveal repair-card" style="max-width: 760px; margin-top: var(--space-6);">
+          <h3 style="font-size: var(--text-lg); font-weight: 800; margin-bottom: var(--space-2);">Send Us Device Photos</h3>
+          <p style="color: var(--text-muted); margin-bottom: var(--space-5); font-size: var(--text-sm);">Upload photos of your damaged device for a faster, more accurate quote. We'll review them and reach out with next steps.</p>
+
+          <form id="contact-file-form" enctype="multipart/form-data">
+            <div style="border: 2px dashed var(--border); border-radius: var(--radius-xl); padding: var(--space-6); text-align: center; margin-bottom: var(--space-4); transition: all var(--transition);" id="contact-file-drop-zone">
+              <i class="fas fa-cloud-arrow-up" style="font-size: 2.5rem; color: var(--primary); margin-bottom: var(--space-3);"></i>
+              <p style="font-weight: 800; margin-bottom: var(--space-2);">Drop photos here or click to browse</p>
+              <p style="font-size: var(--text-xs); color: var(--text-muted); margin-bottom: var(--space-4);">JPG, PNG, HEIC, PDF · Max 5 files · 10MB each</p>
+              <input type="file" id="contact-file-upload" name="device-photos" multiple accept="image/*,.pdf" style="display: none;" />
+              <button class="btn btn-light" type="button" id="contact-file-browse-btn"><i class="fas fa-folder-open"></i> Browse Files</button>
+              <div id="contact-file-preview-list" style="display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-4); justify-content: center;"></div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-bottom: var(--space-3);">
+              <div class="field"><label for="contact-name">Your Name <span style="color: var(--danger);">*</span></label><input id="contact-name" class="form-field" type="text" name="name" required placeholder="John Smith" /></div>
+              <div class="field"><label for="contact-phone">Phone or Email <span style="color: var(--danger);">*</span></label><input id="contact-phone" class="form-field" type="text" name="contact" required placeholder="Phone or email" /></div>
+            </div>
+            <div class="field" style="margin-bottom: var(--space-4);"><label for="contact-message">Message (optional)</label><textarea id="contact-message" class="form-field" name="message" rows="3" placeholder="Tell us about your device and what's wrong..."></textarea></div>
+            <button class="cta-primary" type="submit"><i class="fas fa-paper-plane"></i> Send Photos & Message</button>
+          </form>
+          <p id="contact-file-thanks" class="form-thanks" hidden><i class="fas fa-circle-check"></i> Thank you. Your photos and message have been sent. We'll reach out shortly.</p>
         </div>
-
-        <style>
-          @media (max-width: 768px) {
-            .jotform-wrap {
-              width: 100vw !important;
-              max-width: 100vw !important;
-              margin-left: 50%;
-              transform: translateX(-50%);
-              padding-left: 12px;
-              padding-right: 12px;
-              box-sizing: border-box;
-              border-radius: 0;
-            }
-          }
-        </style>
-
+      </div>
+    </section>
 
     <!-- ===================== B2B PAGE ===================== -->
     <section id="b2b" class="page">
@@ -875,8 +896,9 @@
             </div>
           </header>
 
-          <!-- DASHBOARD -->
+          <!-- DASHBOARD (ENHANCED WITH NEW PROTOTYPE HOOKS & WIDGETS) -->
           <section id="portal-dashboard" class="portal-section active">
+            <!-- New Top Search Bar Hooked to Main/Device Search -->
             <div class="search-header" style="margin-bottom: var(--space-6);">
               <div class="search-main-bar">
                 <i class="fas fa-search" style="opacity: 0.4; margin-right: 0.5rem;"></i>
@@ -896,6 +918,7 @@
             <div class="stats-grid" id="dashboard-stats"></div>
 
             <div class="content-grid">
+              <!-- Collapsible AI Chat Assistant Component -->
               <section class="card collapsible-card col-12" id="chat-assistant-card">
                 <div class="card-header" onclick="toggleCard(this)" role="button" tabindex="0" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
                   <h3 style="margin: 0;"><i class="fas fa-robot" style="color: var(--primary); margin-right: 0.5rem;"></i> AI Diagnostic Assistant</h3>
@@ -909,6 +932,7 @@
                 </div>
               </section>
 
+              <!-- New Shop & Repair Overview Tiles -->
               <section class="card col-6">
                 <h3><i class="fas fa-store" style="color: var(--primary); margin-right: 0.5rem;"></i> Shop Overview</h3>
                 <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Parts inventory and retail accessories.</p>
@@ -947,6 +971,7 @@
                 </div>
               </section>
 
+              <!-- New Google Map Service Area Card -->
               <section class="card col-6">
                 <h3><i class="fas fa-map-location-dot" style="color: var(--primary); margin-right: 0.5rem;"></i> Service Area Map</h3>
                 <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Mobile repair dispatch coverage across Xenia, Dayton, and Southeastern Ohio.</p>
@@ -964,6 +989,7 @@
                 </div>
               </section>
 
+              <!-- New Comparison Table Card -->
               <section class="card col-6 comparison-section">
                 <h3><i class="fas fa-star" style="color: var(--warning); margin-right: 0.5rem;"></i> Service Tier Comparison</h3>
                 <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Customer perks and savings overview.</p>
@@ -1027,6 +1053,7 @@
               </div>
             </div>
 
+            <!-- New Dashboard Bottom Action Panel -->
             <footer class="bottom-action-panel">
               <button class="action-btn secondary" id="resetBtn">
                 <i class="fas fa-rotate-left"></i> Reset Views
@@ -1358,6 +1385,7 @@
   <!-- ============================================ APPLE-STYLE SHOWCASE CAROUSEL ============================================ -->
   <section class="apple-showcase">
     <div class="showcase-container">
+      <!-- Slide 1: Text Left, Image Right -->
       <div class="showcase-slide active">
         <div class="showcase-content">
           <span class="showcase-tag">Component Diagnostics</span>
@@ -1369,6 +1397,7 @@
         </div>
       </div>
 
+      <!-- Slide 2: Image Left, Text Right (Reverse) -->
       <div class="showcase-slide reverse">
         <div class="showcase-content">
           <span class="showcase-tag">ATR One Membership</span>
@@ -1380,6 +1409,7 @@
         </div>
       </div>
 
+      <!-- Slide 3: Text Left, Image Right -->
       <div class="showcase-slide">
         <div class="showcase-content">
           <span class="showcase-tag">Enterprise & B2B Solutions</span>
@@ -1392,15 +1422,18 @@
       </div>
     </div>
 
+    <!-- Showcase Navigation Dots -->
     <div class="showcase-dots">
       <span class="showcase-dot active"></span>
       <span class="showcase-dot"></span>
       <span class="showcase-dot"></span>
     </div>
   </section>
-<!-- ============================================ FOOTER ============================================ -->
+
+  <!-- ============================================ FOOTER ============================================ -->
   <footer class="footer">
     <div style="max-width: var(--content-wide); margin: 0 auto; padding: 0 var(--space-5);">
+      <!-- Slideshow -->
       <div class="slideshow" aria-label="Service slideshow">
         <div class="slide active" style="background-image:url('https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1600&q=80')"></div>
         <div class="slide" style="background-image:url('https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1600&q=80')"></div>
@@ -1418,7 +1451,6 @@
       <div style="height: var(--space-6);"></div>
 
       <div class="footer-top">
-        <!-- Column 1: Navigate -->
         <div class="footer-links-col">
           <span class="footer-col-title">Navigate</span>
           <a class="footer-link" href="#home" data-page="home">Home</a>
@@ -1427,37 +1459,31 @@
           <a class="footer-link" href="#about" data-page="about">About</a>
           <a class="footer-link" href="#contact" data-page="contact">Contact</a>
         </div>
-
-        <!-- Column 2: Services (Restored direct page links) -->
         <div class="footer-links-col">
           <span class="footer-col-title">Services</span>
-          <a class="footer-link" href="#services" data-page="services">All Services</a>
           <a class="footer-link" href="#b2b" data-page="b2b">B2B & Managed IT</a>
           <a class="footer-link" href="#atr-one" data-page="atr-one">ATR One Membership</a>
-          <a class="footer-link" href="tel:5134788077"><i class="fas fa-phone-alt" style="margin-right: 6px; font-size: 0.85em;"></i> 513-478-8077</a>
+          <a class="footer-link" href="#employee" data-page="employee">Employee Portal</a>
+          <a class="footer-link" href="tel:5134788077">513-478-8077</a>
         </div>
-
-        <!-- Column 3: Policies -->
         <div class="footer-links-col">
           <span class="footer-col-title">Policies</span>
-          <a class="footer-link" href="#policy-privacy" data-policy="privacy">Privacy Policy</a>
-          <a class="footer-link" href="#policy-repair" data-policy="repair">Repair Service Agreement</a>
-          <a class="footer-link" href="#policy-backup" data-policy="backup">Data Backup Waiver</a>
-          <a class="footer-link" href="#policy-warranty" data-policy="warranty-policy">1-Year Warranty Policy</a>
-          <a class="footer-link" href="#policy-terms" data-policy="terms">Terms & Conditions</a>
-          <a class="footer-link" href="#policy-website" data-policy="website-terms">Website Terms of Use</a>
+          <button class="footer-link" data-policy="privacy">Privacy Policy</button>
+          <button class="footer-link" data-policy="repair">Repair Service Agreement</button>
+          <button class="footer-link" data-policy="backup">Data Backup Waiver</button>
+          <button class="footer-link" data-policy="warranty-policy">1-Year Warranty Policy</button>
+          <button class="footer-link" data-policy="terms">Terms & Conditions</button>
+          <button class="footer-link" data-policy="website-terms">Website Terms of Use</button>
         </div>
-
-        <!-- Column 4: Payments & Reviews -->
         <div class="footer-links-col">
           <span class="footer-col-title">Payments & Reviews</span>
-          <div class="payment-row" style="margin-bottom: var(--space-4); display: flex; flex-wrap: wrap; gap: 6px;">
-            <span class="payment-badge" title="Visa">VISA</span>
-            <span class="payment-badge" title="Mastercard">MC</span>
-            <span class="payment-badge" title="Discover">DISC</span>
-            <span class="payment-badge" title="American Express">AMEX</span>
-            <span class="payment-badge" title="PayPal">PayPal</span>
-            <span class="payment-badge" title="Cash">Cash</span>
+          <div class="payment-row" style="margin-bottom: var(--space-4);">
+            <span class="payment-badge">VISA</span>
+            <span class="payment-badge">MC</span>
+            <span class="payment-badge">DISC</span>
+            <span class="payment-badge">AMEX</span>
+            <span class="payment-badge">PayPal</span>
+            <span class="payment-badge">Cash</span>
           </div>
           <a class="footer-link" href="https://maps.app.goo.gl/JDzEADFMWRfU4DKB6" target="_blank" rel="noopener"><i class="fab fa-google"></i> Google Review</a>
           <a class="footer-link" href="https://www.yelp.com/biz/austin-s-tech-repair-group-dayton-3" target="_blank" rel="noopener"><i class="fab fa-yelp"></i> Yelp Review</a>
@@ -1475,13 +1501,13 @@
         </div>
       </div>
 
-      <!-- Footer Bottom: Restored Original Discreet Employee Portal Trigger on 'ATR Group' wordmark -->
       <div class="footer-bottom">
         <span class="footer-copy">Copyright 2026 © <strong>Austin's Tech Repair Group LLC</strong></span>
-        <a href="#employee" data-page="employee" class="footer-wordmark" style="text-decoration: none; cursor: pointer; color: inherit;" title="Employee Portal">ATR Group</a>
+        <span class="footer-wordmark">ATR Group</span>
       </div>
     </div>
   </footer>
+
   <!-- ============================================ CART DRAWER ============================================ -->
   <section class="cart-drawer" id="cart-drawer" aria-hidden="true">
     <div class="cart-drawer__backdrop" id="cart-drawer-close"></div>
@@ -1504,6 +1530,7 @@
   </section>
 
   <!-- ============================================ PORTAL CRUD MODALS ============================================ -->
+  <!-- New/Edit Ticket Modal -->
   <dialog id="ticketModal">
     <div class="modal-head">
       <h3 id="ticketModalTitle">New Repair Ticket</h3>
@@ -1600,6 +1627,7 @@
     </div>
   </dialog>
 
+  <!-- Ticket Detail Modal -->
   <dialog id="ticketDetailModal">
     <div class="modal-head">
       <h3 id="ticketDetailTitle">Ticket Details</h3>
@@ -1612,6 +1640,7 @@
     </div>
   </dialog>
 
+  <!-- Customer Modal -->
   <dialog id="customerModal">
     <div class="modal-head">
       <h3 id="customerModalTitle">Add Customer</h3>
@@ -1653,6 +1682,7 @@
     </div>
   </dialog>
 
+  <!-- Part Modal -->
   <dialog id="partModal">
     <div class="modal-head">
       <h3 id="partModalTitle">Add Part</h3>
@@ -1720,6 +1750,7 @@
     </div>
   </dialog>
 
+  <!-- Order Modal -->
   <dialog id="orderModal">
     <div class="modal-head">
       <h3 id="orderModalTitle">New Order</h3>
@@ -1787,6 +1818,7 @@
     </div>
   </dialog>
 
+  <!-- Transaction Modal -->
   <dialog id="transactionModal">
     <div class="modal-head">
       <h3>Add Transaction</h3>
@@ -1837,6 +1869,7 @@
     </div>
   </dialog>
 
+  <!-- Employee Modal -->
   <dialog id="employeeModal">
     <div class="modal-head">
       <h3 id="employeeModalTitle">Add Employee</h3>
@@ -1886,6 +1919,7 @@
     </div>
   </dialog>
 
+  <!-- Confirm Delete Modal -->
   <dialog id="confirmModal">
     <div class="modal-head">
       <h3>Confirm Delete</h3>
@@ -1907,128 +1941,6 @@
   <script src="portal.js"></script>
   <script src="repair.js"></script>
   <script src="chat.js"></script>
-
-  <!-- Policy Modals Handler Script -->
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-        const modal = document.getElementById("policy-modal");
-        const modalTitle = document.getElementById("policy-modal-title");
-        const modalContent = document.getElementById("policy-modal-content");
-        const closeBtn = document.querySelector(".policy-close-btn");
-        const bodyContainer = document.querySelector(".policy-modal-body");
-
-        // Complete policy texts curated for Austin's Tech Repair Group LLC by the Legal Director
-        const policies = {
-            "privacy": {
-                title: "Privacy Policy",
-                content: `
-                    <h3>1. Information We Collect</h3>
-                    <p>Austin's Tech Repair Group LLC collects personal data strictly necessary to fulfill repair operations, process secure retail transactions, and manage enterprise client contracts. This includes contact details, device credentials required for diagnostics, and account billing history.</p>
-                    <h3>2. Use and Protection of Information</h3>
-                    <p>Your data is used exclusively for internal service updates, warranty verification, and customer communication. We do not sell, rent, or trade customer information with external marketing entities.</p>
-                    <h3>3. Device Credentials & Data Privacy</h3>
-                    <p>Device passcodes or temporary decryption keys requested during intake are utilized solely for pre- and post-repair functionality testing and are purged immediately following job closure.</p>
-                `
-            },
-            "repair": {
-                title: "Repair Service Agreement",
-                content: `
-                    <h3>1. Service Authorization</h3>
-                    <p>The client authorizes Austin's Tech Repair Group LLC, its technicians, and authorized representatives to perform diagnostic testing, component-level troubleshooting, and hardware/software repairs on the submitted device.</p>
-                    <h3>2. Inherent Repair Risks</h3>
-                    <p>While component-level microsoldering and electronic repairs are performed under strict industry standards, severely damaged, water-damaged, or structurally compromised devices carry inherent risks of component failure. Austin's Tech Repair Group LLC accepts no liability for pre-existing latent failures.</p>
-                    <h3>3. Abandoned Property Protocol</h3>
-                    <p>Devices left unclaimed for greater than sixty (60) days following documented completion notification will be classified as abandoned property and may be legally recycled, liquidated, or disposed of to offset storage and diagnostic costs.</p>
-                `
-            },
-            "backup": {
-                title: "Data Backup Waiver",
-                content: `
-                    <h3>1. Mandatory Client Responsibility</h3>
-                    <p>Data loss is an inherent risk during software restorations, operating system upgrades, and hardware interventions (such as storage drive replacements or board-level repairs). <strong>The client is solely responsible for maintaining verified backups</strong> of all data prior to releasing equipment for service.</p>
-                    <h3>2. Release of Liability</h3>
-                    <p>Austin's Tech Repair Group LLC assumes zero liability for any loss, corruption, or destruction of files, operating systems, personal data, or customized settings resulting from repair procedures or component diagnostics.</p>
-                `
-            },
-            "warranty-policy": {
-                title: "1-Year Warranty Policy",
-                content: `
-                    <h3>1. Scope of Coverage</h3>
-                    <p>Austin's Tech Repair Group LLC provides a 1-year limited warranty covering component quality and workmanship on all standard repairs performed by our technicians, unless explicitly stated otherwise (e.g., specific liquid damage mitigation or battery maintenance windows).</p>
-                    <h3>2. Exclusions & Voids</h3>
-                    <p>This warranty is strictly voided by subsequent physical damage, accidental drops, liquid/moisture exposure post-repair, unauthorized software tampering, or physical opening of the device by any third-party service provider.</p>
-                    <h3>3. Claim Execution</h3>
-                    <p>To validate a claim, the client must present the original service invoice. Warranty coverage applies strictly to the identical component failure initially addressed under the original repair order.</p>
-                `
-            },
-            "terms": {
-                title: "Terms & Conditions",
-                content: `
-                    <h3>1. Financial Terms & Settlement</h3>
-                    <p>Payment for diagnostic services, ordered replacement components, and completed technical repairs is due in full prior to or at the time of device release. We accept approved credit cards, cash, and digital processing options.</p>
-                    <h3>2. Diagnostics & Quote Approvals</h3>
-                    <p>Advanced diagnostic procedures may incur a baseline fee communicated upfront. Work beyond standard diagnostic evaluation requires explicit client authorization prior to part procurement and repair execution.</p>
-                `
-            },
-            "website-terms": {
-                title: "Website Terms of Use",
-                content: `
-                    <h3>1. Intellectual Property Rights</h3>
-                    <p>All digital content, trademarks, software layouts, portal code, and branding elements displayed on the Austin's Tech Repair Group LLC platform are our exclusive property and protected under applicable copyright laws.</p>
-                    <h3>2. Limitation of Liability</h3>
-                    <p>The company provides website access on an "as-is" basis without warranties of uninterrupted uptime and assumes no legal liability for typographical errors or pricing fluctuations posted online.</p>
-                `
-            }
-        };
-
-        // Target ONLY buttons with the data-policy attribute for policy popups
-        document.querySelectorAll("button.footer-link[data-policy]").forEach(button => {
-            button.addEventListener("click", (e) => {
-                const policyKey = e.target.getAttribute("data-policy");
-                if (policies[policyKey]) {
-                    modalTitle.textContent = policies[policyKey].title;
-                    modalContent.innerHTML = policies[policyKey].content;
-                    modal.style.display = "flex";
-                    bodyContainer.scrollTop = 0; 
-                }
-            });
-        });
-
-        // Close via X button
-        closeBtn.addEventListener("click", () => {
-            modal.style.display = "none";
-        });
-
-        // Close via clicking outside modal box
-        window.addEventListener("click", (e) => {
-            if (e.target === modal) {
-                modal.style.display = "none";
-            }
-        });
-
-        // Disable right-click context menu strictly inside the policy text box
-        modalContent.addEventListener("contextmenu", (e) => {
-            e.preventDefault();
-        });
-
-        // Close automatically if user scrolls away significantly
-        let initialScrollY = window.scrollY;
-        window.addEventListener("scroll", () => {
-            if (modal.style.display === "flex") {
-                const currentScrollY = window.scrollY;
-                if (Math.abs(currentScrollY - initialScrollY) > 50) {
-                    modal.style.display = "none";
-                }
-            }
-        }, { passive: true });
-
-        document.querySelectorAll("button.footer-link[data-policy]").forEach(button => {
-            button.addEventListener("click", () => {
-                initialScrollY = window.scrollY;
-            });
-        });
-    });
-  </script>
 
   <!-- Mobile Thumb-Friendly Bottom Navigation Bar -->
   <nav class="mobile-bottom-nav" aria-label="Mobile Bottom Navigation">
