@@ -229,7 +229,9 @@ document.addEventListener('DOMContentLoaded', () => {
       dot.addEventListener('click', () => {
         currentSlide = index;
         showSlide(currentSlide);
-      });
-    });
-  }
+      }
+                           document.querySelectorAll('.flip-card').forEach(card => {
+  card.addEventListener('click', () => {
+    card.classList.toggle('is-flipped');
+  });
 });
