@@ -1439,15 +1439,192 @@
         </div>
 
         <!-- Column 3: Policies -->
-        <div class="footer-links-col">
-          <span class="footer-col-title">Policies</span>
-          <a class="footer-link" href="#policy-privacy" data-policy="privacy">Privacy Policy</a>
-          <a class="footer-link" href="#policy-repair" data-policy="repair">Repair Service Agreement</a>
-          <a class="footer-link" href="#policy-backup" data-policy="backup">Data Backup Waiver</a>
-          <a class="footer-link" href="#policy-warranty" data-policy="warranty-policy">1-Year Warranty Policy</a>
-          <a class="footer-link" href="#policy-terms" data-policy="terms">Terms & Conditions</a>
-          <a class="footer-link" href="#policy-website" data-policy="website-terms">Website Terms of Use</a>
+        <!-- Footer Policy Integration & In-Depth Policies Modal/Overlay Code -->
+
+<!-- Footer Links to Trigger Policies -->
+<footer class="bg-dark text-white py-5">
+    <div class="container">
+        <div class="row gy-4 align-items-center">
+            <div class="col-md-6">
+                <p class="mb-0">&copy; 2026 Austin's Tech Repair Group LLC. All rights reserved.</p>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <ul class="list-inline mb-0">
+                    <li class="list-inline-item"><a href="#" class="text-white text-decoration-none policy-trigger" data-policy="all">Store Policies</a></li>
+                    <li class="list-inline-item ms-3"><a href="#" class="text-white text-decoration-none policy-trigger" data-policy="warranty">Warranty Terms</a></li>
+                    <li class="list-inline-item ms-3"><a href="#" class="text-white text-decoration-none policy-trigger" data-policy="privacy">Data Privacy</a></li>
+                </ul>
+            </div>
         </div>
+    </div>
+</footer>
+
+<!-- In-Depth Policies Interactive Overlay/Modal -->
+<div id="policiesOverlay" class="policies-overlay" style="display: none;">
+    <div class="policies-backdrop"></div>
+    <div class="policies-container container my-5">
+        <div class="card shadow-lg border-0 position-relative">
+            <!-- Close Button (X) -->
+            <button type="button" id="closePoliciesBtn" class="btn-close position-absolute top-0 end-0 m-4 fs-4 z-3" aria-label="Close"></button>
+            
+            <div class="card-body p-5 max-height-scrollable">
+                <div class="text-center mb-5">
+                    <h2 class="fw-bold text-dark">Comprehensive Store Policies & Terms</h2>
+                    <p class="text-muted">Detailed guidelines governing our component-level repair workflows, data security protocols, and device handling standards.</p>
+                </div>
+
+                <div class="row g-5">
+                    <!-- In-Depth Warranty Policy -->
+                    <div class="col-lg-12 policy-block" id="policy-warranty-section">
+                        <div class="d-flex align-items-start mb-3">
+                            <div class="text-primary me-3 fs-3"><i class="fas fa-shield-alt"></i></div>
+                            <div>
+                                <h3 class="fw-bold text-dark mb-2">1. Component Repair & Service Warranty</h3>
+                                <p class="text-muted">
+                                    Austin's Tech Repair Group LLC stands firmly behind the precision of our component-level diagnostics and technical labor. Every standard repair is backed by a comprehensive limited warranty covering both replaced parts and associated labor against manufacturing defects, faulty components, or direct workmanship failure.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="bg-light p-4 rounded border-start border-primary border-4 ms-5">
+                            <ul class="list-unstyled text-muted mb-0">
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i><strong>Coverage Window:</strong> Standard hardware repairs include a dedicated warranty period starting from the date of device pickup or return shipment.</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i><strong>Exclusions:</strong> Warranty coverage is strictly voided in cases of subsequent physical drops, liquid/moisture immersion, unauthorized third-party teardowns, or user-inflicted software corruption (e.g., failed custom firmware flashing).</li>
+                                <li><i class="fas fa-check text-success me-2"></i><strong>Micro-Soldering & Board Repair:</strong> Board-level repairs carry specialized testing phases; intermittent latent failures due to underlying PCB degradation may require secondary evaluation.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- In-Depth Data Privacy & Security -->
+                    <div class="col-lg-12 policy-block" id="policy-privacy-section">
+                        <div class="d-flex align-items-start mb-3">
+                            <div class="text-primary me-3 fs-3"><i class="fas fa-lock"></i></div>
+                            <div>
+                                <h3 class="fw-bold text-dark mb-2">2. Data Privacy, Confidentiality & Security Protocols</h3>
+                                <p class="text-muted">
+                                    We recognize the absolute sensitivity of personal photos, messages, corporate files, and credentials stored on modern smartphones, tablets, computers, and gaming systems. Our diagnostic procedures adhere to rigid security standards to guarantee complete confidentiality.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="bg-light p-4 rounded border-start border-primary border-4 ms-5">
+                            <ul class="list-unstyled text-muted mb-0">
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i><strong>No Unauthorized Access:</strong> Technicians interact solely with hardware subsystems and diagnostic test software. Personal files are never opened, extracted, viewed, or copied.</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i><strong>Client Data Backups:</strong> Clients are strongly advised to perform full backups prior to check-in. While rare, deep hardware interventions or storage chip extraction can carry baseline electronic risks.</li>
+                                <li><i class="fas fa-check text-success me-2"></i><strong>GDPR/Privacy Compliance:</strong> All device diagnostic logs and client records are encrypted and retained strictly for transaction reference and warranty tracking.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- In-Depth Diagnostics, Estimates & Abandoned Property -->
+                    <div class="col-lg-12 policy-block" id="policy-diagnostics-section">
+                        <div class="d-flex align-items-start mb-3">
+                            <div class="text-primary me-3 fs-3"><i class="fas fa-clipboard-check"></i></div>
+                            <div>
+                                <h3 class="fw-bold text-dark mb-2">3. Diagnostics, Estimates & Abandoned Property Policy</h3>
+                                <p class="text-muted">
+                                    Transparency guides our operational workflow. No repair work is initiated without prior client authorization following a complete, multi-point diagnostic evaluation.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="bg-light p-4 rounded border-start border-primary border-4 ms-5">
+                            <ul class="list-unstyled text-muted mb-0">
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i><strong>Upfront Approval:</strong> Estimates detail parts cost, labor complexity, and estimated turnaround time. Additional hidden fees or surprise charges are strictly prohibited.</li>
+                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i><strong>Unrepairable Devices:</strong> If a device is deemed unrepairable due to severe structural or motherboard failure, standard diagnostic fees (if applicable) will be communicated beforehand.</li>
+                                <li><i class="fas fa-check text-success me-2"></i><strong>Abandoned Devices:</strong> Devices left unclaimed for more than 60 days following final repair notification and documented client outreach will be handled in accordance with local commercial storage and property regulations to cover incurred administrative costs.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-5">
+                    <button class="btn btn-dark px-5 py-2 fw-bold" id="closePoliciesBottomBtn">Got It / Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom CSS for Overlay & Scrolling -->
+<style>
+.policies-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.policies-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+}
+.policies-container {
+    position: relative;
+    max-width: 900px;
+    max-height: 85vh;
+    z-index: 10000;
+}
+.max-height-scrollable {
+    max-height: 85vh;
+    overflow-y: auto;
+}
+</style>
+
+<!-- JavaScript for Interactivity (Open, X Close, Click Outside, Scroll Away) -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const overlay = document.getElementById("policiesOverlay");
+    const triggers = document.querySelectorAll(".policy-trigger");
+    const closeBtn = document.getElementById("closePoliciesBtn");
+    const closeBottomBtn = document.getElementById("closePoliciesBottomBtn");
+    const backdrop = document.querySelector(".policies-backdrop");
+
+    let initialScrollY = window.scrollY;
+    const scrollThreshold = 100; // Pixels scrolled before auto-closing
+
+    function openPolicies(e) {
+        e.preventDefault();
+        overlay.style.display = "flex";
+        initialScrollY = window.scrollY; // Capture scroll position when opened
+        document.body.style.overflow = "hidden"; // Prevent background body scroll
+    }
+
+    function closePolicies() {
+        overlay.style.display = "none";
+        document.body.style.overflow = "auto";
+    }
+
+    // Trigger open from footer links
+    triggers.forEach(trigger => {
+        trigger.addEventListener("click", openPolicies);
+    });
+
+    // Close via X button or bottom button
+    if (closeBtn) closeBtn.addEventListener("click", closePolicies);
+    if (closeBottomBtn) closeBottomBtn.addEventListener("click", closePolicies);
+
+    // Close via click/tap outside (backdrop)
+    if (backdrop) {
+        backdrop.addEventListener("click", closePolicies);
+    }
+
+    // Close via scroll away (detects significant scroll distance after opening)
+    window.addEventListener("scroll", function () {
+        if (overlay.style.display === "flex") {
+            if (Math.abs(window.scrollY - initialScrollY) > scrollThreshold) {
+                closePolicies();
+            }
+        }
+    });
+});
+</script>
 
         <!-- Column 4: Payments & Reviews -->
         <div class="footer-links-col">
