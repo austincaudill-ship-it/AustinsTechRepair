@@ -618,7 +618,14 @@
           <div class="card" style="text-align: center;">
             <i class="fas fa-clock" style="font-size: var(--text-xl); color: var(--primary); margin-bottom: var(--space-2);"></i>
             <h4 style="margin-bottom: var(--space-1);">Hours</h4>
-            <p style="font-size: var(--text-sm); color: var(--text-muted); margin: 0;">Monday-Saturday: 8:00 AM - 5:00 PM</p>
+            <p style="font-size: var(--text-sm); color: var(--text-muted); margin: 0;">Monday	5:30 AM–10 PM Tuesday	5:30 AM–10 PM
+Wednesday	5:30 AM–10 PM
+Thursday	5:30 AM–10 PM
+Friday	5:30 AM–10 PM
+Saturday	8:30 AM–10 PM
+Sunday	9 AM–5 PM
+
+ </p>
        
           </div>
           
@@ -730,28 +737,80 @@
           </table>
         </div>
 
-        <!-- FAQ -->
-     
-            <p class="eyebrow">ATR One FAQ</p>
-            <h3 class="section-title" style="font-size: var(--text-xl);">Membership Questions</h3>
-          </div>
-          <div class="faq-list">
-            <div class="faq-item">
-              <button class="faq-question" type="button">Can I cancel anytime? <i class="fas fa-chevron-down"></i></button>
-              <div class="faq-answer"><div class="faq-answer-inner">Yes. ATR One is a month-to-month subscription with no long-term contract. Cancel anytime and your benefits continue until the end of your billing period.</div></div>
-            </div>
-            <div class="faq-item">
-              <button class="faq-question" type="button">Does the 20% discount apply to parts? <i class="fas fa-chevron-down"></i></button>
-              <div class="faq-answer"><div class="faq-answer-inner">The 20% discount applies to hardware labor charges on eligible repairs. Parts costs are billed at standard pricing. We'll always provide a transparent quote before any work begins.</div></div>
-            </div>
-            <div class="faq-item">
-              <button class="faq-question" type="button">Is this available for business customers? <i class="fas fa-chevron-down"></i></button>
-              <div class="faq-answer"><div class="faq-answer-inner">Yes. B2B customers can enroll in ATR One for their business devices. For multi-device or fleet management, contact us about custom B2B plans.</div></div>
-            </div>
-          </div>
-        </div>
+     <!-- FAQ -->
+<p class="eyebrow">ATR One FAQ</p>
+<h3 class="section-title" style="font-size: var(--text-xl);">Membership Questions</h3>
+
+<div class="faq-list">
+  <!-- FAQ Item 1 -->
+  <div class="faq-item" style="border-bottom: 1px solid #eee; margin-bottom: 15px; transition: all 0.3s ease;">
+    <button class="faq-question" type="button" style="width: 100%; text-align: left; background: none; border: none; padding: 15px 0; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+      Can I cancel anytime? <i class="fas fa-chevron-down" style="transition: transform 0.3s ease;"></i>
+    </button>
+    <!-- faq-answer starts max-height: 0 and overflow: hidden to stay collapsed by default -->
+    <div class="faq-answer" style="max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.4s ease; padding: 0 15px;">
+      <div class="faq-answer-inner" style="padding-bottom: 15px;">
+        Yes. ATR One is a month-to-month subscription with no long-term contract. Cancel anytime and your benefits continue until the end of your billing period.
       </div>
-    </section>
+    </div>
+  </div>
+
+  <!-- FAQ Item 2 -->
+  <div class="faq-item" style="border-bottom: 1px solid #eee; margin-bottom: 15px; transition: all 0.3s ease;">
+    <button class="faq-question" type="button" style="width: 100%; text-align: left; background: none; border: none; padding: 15px 0; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+      Does the 20% discount apply to parts? <i class="fas fa-chevron-down" style="transition: transform 0.3s ease;"></i>
+    </button>
+    <div class="faq-answer" style="max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.4s ease; padding: 0 15px;">
+      <div class="faq-answer-inner" style="padding-bottom: 15px;">
+        The 20% discount applies to hardware labor charges on eligible repairs. Parts costs are billed at standard pricing. We'll always provide a transparent quote before any work begins.
+      </div>
+    </div>
+  </div>
+
+  <!-- FAQ Item 3 -->
+  <div class="faq-item" style="border-bottom: 1px solid #eee; margin-bottom: 15px; transition: all 0.3s ease;">
+    <button class="faq-question" type="button" style="width: 100%; text-align: left; background: none; border: none; padding: 15px 0; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+      Is this available for business customers? <i class="fas fa-chevron-down" style="transition: transform 0.3s ease;"></i>
+    </button>
+    <div class="faq-answer" style="max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.4s ease; padding: 0 15px;">
+      <div class="faq-answer-inner" style="padding-bottom: 15px;">
+        Yes. B2B customers can enroll in ATR One for their business devices. For multi-device or fleet management, contact us about custom B2B plans.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Scroll-Driven Expansion Script -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const faqItems = document.querySelectorAll(".faq-item");
+
+    const observerOptions = {
+      root: null,
+      rootMargin: "0px 0px -20% 0px", // Triggers slightly before the item enters the bottom of the viewport
+      threshold: 0.3 // Opens when 30% of the item is visible
+    };
+
+    const observer = new IntersectionObserver((entries, observer) => {
+      entries.forEach(entry => {
+        const answer = entry.target.querySelector(".faq-answer");
+        const icon = entry.target.querySelector(".fas.fa-chevron-down");
+
+        if (entry.isIntersecting) {
+          // Open on scroll into view
+          answer.style.maxHeight = answer.scrollHeight + "px";
+          if (icon) icon.style.transform = "rotate(180deg)";
+        } else {
+          // Collapse when scrolled away out of view
+          answer.style.maxHeight = "0px";
+          if (icon) icon.style.transform = "rotate(0deg)";
+        }
+      });
+    }, observerOptions);
+
+    faqItems.forEach(item => observer.observe(item));
+  });
+</script>
           </center>
     <!-- ===================== EMPLOYEE PORTAL ===================== -->
     <section id="employee" class="page">
