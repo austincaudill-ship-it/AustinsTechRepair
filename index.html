@@ -547,6 +547,7 @@
     </section>
 
     <!-- ===================== ABOUT PAGE ===================== -->
+          <center>
     <section id="about" class="page">
       <div class="about-hero">
         <p class="eyebrow" style="color: var(--accent-blue);">About Us</p>
@@ -591,8 +592,9 @@
         </div>
       </div>
     </section>
-
+          </center>
     <!-- ===================== CONTACT PAGE ===================== -->
+          <center>
     <section id="contact" class="page">
       <div class="container">
         <div class="section-header reveal">
@@ -617,8 +619,12 @@
             <i class="fas fa-clock" style="font-size: var(--text-xl); color: var(--primary); margin-bottom: var(--space-2);"></i>
             <h4 style="margin-bottom: var(--space-1);">Hours</h4>
             <p style="font-size: var(--text-sm); color: var(--text-muted); margin: 0;">Monday-Saturday: 8:00 AM - 5:00 PM</p>
+       
           </div>
+          
         </div>
+      
+    
 <!-- JotForm Contact Form -->
 <div class="reveal repair-card jotform-wrap" style="max-width: 100%; width: 100%; box-sizing: border-box;">
   <h3 style="font-size: var(--text-lg); font-weight: 800; margin-bottom: var(--space-4);">Send a Message</h3>
@@ -642,50 +648,12 @@
     }
   </script>
 </div>
-
-<style>
-  /* On mobile, let the form bleed out to the full viewport width,
-     ignoring the parent card's padding/margins */
-  @media (max-width: 768px) {
-    .jotform-wrap {
-      width: 100vw !important;
-      max-width: 100vw !important;
-      margin-left: 50%;
-      transform: translateX(-50%);
-      padding-left: 12px;
-      padding-right: 12px;
-      box-sizing: border-box;
-      border-radius: 0;
-    }
-  }
-</style>
-        <!-- File Upload Section -->
-        <div class="reveal repair-card" style="max-width: 760px; margin-top: var(--space-6);">
-          <h3 style="font-size: var(--text-lg); font-weight: 800; margin-bottom: var(--space-2);">Send Us Device Photos</h3>
-          <p style="color: var(--text-muted); margin-bottom: var(--space-5); font-size: var(--text-sm);">Upload photos of your damaged device for a faster, more accurate quote. We'll review them and reach out with next steps.</p>
-
-          <form id="contact-file-form" enctype="multipart/form-data">
-            <div style="border: 2px dashed var(--border); border-radius: var(--radius-xl); padding: var(--space-6); text-align: center; margin-bottom: var(--space-4); transition: all var(--transition);" id="contact-file-drop-zone">
-              <i class="fas fa-cloud-arrow-up" style="font-size: 2.5rem; color: var(--primary); margin-bottom: var(--space-3);"></i>
-              <p style="font-weight: 800; margin-bottom: var(--space-2);">Drop photos here or click to browse</p>
-              <p style="font-size: var(--text-xs); color: var(--text-muted); margin-bottom: var(--space-4);">JPG, PNG, HEIC, PDF · Max 5 files · 10MB each</p>
-              <input type="file" id="contact-file-upload" name="device-photos" multiple accept="image/*,.pdf" style="display: none;" />
-              <button class="btn btn-light" type="button" id="contact-file-browse-btn"><i class="fas fa-folder-open"></i> Browse Files</button>
-              <div id="contact-file-preview-list" style="display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-4); justify-content: center;"></div>
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-bottom: var(--space-3);">
-              <div class="field"><label for="contact-name">Your Name <span style="color: var(--danger);">*</span></label><input id="contact-name" class="form-field" type="text" name="name" required placeholder="John Smith" /></div>
-              <div class="field"><label for="contact-phone">Phone or Email <span style="color: var(--danger);">*</span></label><input id="contact-phone" class="form-field" type="text" name="contact" required placeholder="Phone or email" /></div>
-            </div>
-            <div class="field" style="margin-bottom: var(--space-4);"><label for="contact-message">Message (optional)</label><textarea id="contact-message" class="form-field" name="message" rows="3" placeholder="Tell us about your device and what's wrong..."></textarea></div>
-            <button class="cta-primary" type="submit"><i class="fas fa-paper-plane"></i> Send Photos & Message</button>
-          </form>
-          <p id="contact-file-thanks" class="form-thanks" hidden><i class="fas fa-circle-check"></i> Thank you. Your photos and message have been sent. We'll reach out shortly.</p>
-        </div>
-      </div>
+</div>
     </section>
+          </center>
 
     <!-- ===================== B2B PAGE ===================== -->
+          <center>
     <section id="b2b" class="page">
       <div class="b2b-hero">
         <p class="eyebrow" style="color: var(--accent-blue);">Business Solutions</p>
@@ -714,8 +682,9 @@
         </div>
       </div>
     </section>
-
+          </center>
     <!-- ===================== ATR ONE PAGE ===================== -->
+          <center>
     <section id="atr-one" class="page">
       <div class="atr-one-hero">
         <p class="eyebrow" style="justify-content: center;">ATR One Membership</p>
@@ -762,8 +731,7 @@
         </div>
 
         <!-- FAQ -->
-        <div class="reveal" style="max-width: 800px; margin: var(--space-12) auto 0;">
-          <div class="section-header" style="text-align: center;">
+     
             <p class="eyebrow">ATR One FAQ</p>
             <h3 class="section-title" style="font-size: var(--text-xl);">Membership Questions</h3>
           </div>
@@ -784,7 +752,7 @@
         </div>
       </div>
     </section>
-
+          </center>
     <!-- ===================== EMPLOYEE PORTAL ===================== -->
     <section id="employee" class="page">
       <div id="loginView" class="login-wrap">
