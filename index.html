@@ -1429,33 +1429,206 @@ Sunday	9 AM–5 PM
 
       <div style="height: var(--space-6);"></div>
 
-     <div class="footer-top">
-        <div class="footer-links-col">
-          <span class="footer-col-title">Navigate</span>
-          <a class="footer-link" href="https://austinstechrepairgroup.com/#home" data-page="home">Home</a>
-          <a class="footer-link" href="https://austinstechrepairgroup.com/#shop" data-page="shop">Shop</a>
-          <a class="footer-link" href="https://austinstechrepairgroup.com/#repair" data-page="repair">Repair</a>
-          <a class="footer-link" href="https://austinstechrepairgroup.com/#about" data-page="about">About</a>
-          <a class="footer-link" href="https://austinstechrepairgroup.com/#contact" data-page="contact">Contact</a>
+  <!-- Footer Section -->
+    <div class="footer-top">
+      <div class="footer-links-col">
+        <span class="footer-col-title">Navigate</span>
+        <a class="footer-link" href="https://austinstechrepairgroup.com/#home" data-page="home">Home</a>
+        <a class="footer-link" href="https://austinstechrepairgroup.com/#shop" data-page="shop">Shop</a>
+        <a class="footer-link" href="https://austinstechrepairgroup.com/#repair" data-page="repair">Repair</a>
+        <a class="footer-link" href="https://austinstechrepairgroup.com/#about" data-page="about">About</a>
+        <a class="footer-link" href="https://austinstechrepairgroup.com/#contact" data-page="contact">Contact</a>
+      </div>
+      <div class="footer-links-col">
+        <span class="footer-col-title">Services</span>
+        <a class="footer-link" href="https://austinstechrepairgroup.com/#b2b" data-page="b2b">B2B & Managed IT</a>
+        <a class="footer-link" href="https://austinstechrepairgroup.com/#atr-one" data-page="atr-one">ATR One Membership</a>
+        <a class="footer-link" href="https://austinstechrepairgroup.com/#employee" data-page="employee">Employee Portal</a>
+        <a class="footer-link" href="tel:5134788077">513-478-8077</a>
+      </div>
+      <div class="footer-links-col">
+        <span class="footer-col-title">Policies</span>
+        <a class="footer-link policy-trigger" href="#privacy" data-policy="privacy">Privacy Policy</a>
+        <a class="footer-link policy-trigger" href="#repair" data-policy="repair">Repair Service Agreement</a>
+        <a class="footer-link policy-trigger" href="#backup" data-policy="backup">Data Backup Waiver</a>
+        <a class="footer-link policy-trigger" href="#warranty-policy" data-policy="warranty-policy">1-Year Warranty Policy</a>
+        <a class="footer-link policy-trigger" href="#terms" data-policy="terms">Terms & Conditions</a>
+        <a class="footer-link policy-trigger" href="#website-terms" data-policy="website-terms">Website Terms of Use</a>
+      </div>
+      <div class="footer-links-col">
+        <span class="footer-col-title">Support Area</span>
+        <span class="footer-link">Xenia, Dayton & SE Ohio</span>
+        <span class="footer-link">Est. 2010</span>
+      </div>
+    </div>
+
+    <!-- Policy Modal Overlay & Pop-up Window -->
+    <div class="policy-modal" id="policy-modal" aria-hidden="true">
+      <div class="policy-modal-backdrop" id="policy-backdrop"></div>
+      <div class="policy-modal-panel" role="dialog" aria-modal="true" aria-labelledby="policy-title">
+        <button class="policy-close" id="policy-close" type="button" aria-label="Close policy window"><i class="fas fa-times"></i></button>
+        <h3 id="policy-title" class="policy-modal-title">Policy Title</h3>
+        <div class="policy-modal-body" id="policy-content">
+          <!-- Dynamic policy text loads here -->
         </div>
-        <div class="footer-links-col">
-          <span class="footer-col-title">Services</span>
-          <a class="footer-link" href="https://austinstechrepairgroup.com/#b2b" data-page="b2b">B2B & Managed IT</a>
-          <a class="footer-link" href="https://austinstechrepairgroup.com/#atr-one" data-page="atr-one">ATR One Membership</a>
-          <a class="footer-link" href="https://austinstechrepairgroup.com/#employee" data-page="employee">Employee Portal</a>
-          <a class="footer-link" href="tel:5134788077">513-478-8077</a>
-        </div>
-        <div class="footer-links-col">
-          <span class="footer-col-title">Policies</span>
-          <a class="footer-link" href="https://austinstechrepairgroup.com/policies.html?policy=privacy" data-policy="privacy">Privacy Policy</a>
-          <a class="footer-link" href="https://austinstechrepairgroup.com/policies.html?policy=repair" data-policy="repair">Repair Service Agreement</a>
-          <a class="footer-link" href="https://austinstechrepairgroup.com/policies.html?policy=backup" data-policy="backup">Data Backup Waiver</a>
-          <a class="footer-link" href="https://austinstechrepairgroup.com/policies.html?policy=warranty-policy" data-policy="warranty-policy">1-Year Warranty Policy</a>
-          <a class="footer-link" href="https://austinstechrepairgroup.com/policies.html?policy=terms" data-policy="terms">Terms & Conditions</a>
-          <a class="footer-link" href="https://austinstechrepairgroup.com/policies.html?policy=website-terms" data-policy="website-terms">Website Terms of Use</a>
-        </div>
-        <div class="footer-links-col">
-      
+      </div>
+    </div>
+
+    <style>
+      /* Policy Modal Styling */
+      .policy-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 2000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.25s ease, visibility 0.25s ease;
+      }
+      .policy-modal.active {
+        opacity: 1;
+        visibility: visible;
+      }
+      .policy-modal-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.75);
+      }
+      .policy-modal-panel {
+        position: relative;
+        background: #ffffff;
+        color: #334155;
+        width: 100%;
+        max-width: 650px;
+        max-height: 85vh;
+        border-radius: 0.75rem;
+        padding: 2rem;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        display: flex;
+        flex-direction: column;
+        z-index: 2010;
+      }
+      .policy-close {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: #f1f5f9;
+        border: none;
+        width: 2.25rem;
+        height: 2.25rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: #0f172a;
+        font-size: 1rem;
+        transition: background 0.2s;
+      }
+      .policy-close:hover {
+        background: #e2e8f0;
+      }
+      .policy-modal-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 1rem;
+        padding-right: 2rem;
+      }
+      .policy-modal-body {
+        overflow-y: auto;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        color: #475569;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+    </style>
+
+    <script>
+      // Policy Content Dictionary
+      const policyData = {
+        "privacy": {
+          title: "Privacy Policy",
+          content: `<p>At Austin's Tech Repair Group LLC, we respect your privacy and are committed to protecting any personal information you provide when requesting a repair, buying accessories, or using our mobile services.</p>
+                    <p><strong>Information Collection:</strong> We collect contact details (name, phone number, email, address) and device specifications strictly required to process service orders and communicate repair status.</p>
+                    <p><strong>Data Security:</strong> Your payment details and personal files are handled securely. We never sell or share your personal data with third-party marketers.</p>`
+        },
+        "repair": {
+          title: "Repair Service Agreement",
+          content: `<p>By submitting a device for diagnostic or repair services to Austin's Tech Repair Group LLC, you authorize our technicians to perform necessary diagnostic tests and repairs.</p>
+                    <p><strong>Unclaimed Devices:</strong> Devices left unclaimed for over 60 days following notification of repair completion may be recycled or sold to cover storage costs, subject to local regulations.</p>
+                    <p><strong>Water Damage Disclaimer:</strong> Water-damaged devices can experience unpredictable component degradation post-repair; additional failures subsequent to initial intake are not the liability of Austin's Tech Repair Group LLC.</p>`
+        },
+        "backup": {
+          title: "Data Backup Waiver",
+          content: `<p>Data loss can occasionally occur during complex component-level diagnostics, software recovery, or hardware replacements (e.g., storage upgrades or OS troubleshooting).</p>
+                    <p><strong>Customer Responsibility:</strong> Customers are strongly advised to back up all vital data before handing over any device. Austin's Tech Repair Group LLC assumes no liability for lost data, photos, or documents.</p>`
+        },
+        "warranty-policy": {
+          title: "1-Year Warranty Policy",
+          content: `<p>All repairs performed by Austin's Tech Repair Group LLC are backed by our comprehensive <strong>1-Year Warranty</strong> covering parts and craftsmanship.</p>
+                    <p><strong>Coverage Exclusions:</strong> This warranty does not cover physical impact damage, subsequent liquid exposure, drops, or software issues introduced after the device has been returned to the customer.</p>`
+        },
+        "terms": {
+          title: "Terms & Conditions",
+          content: `<p>All services, product purchases through Square or Shopify, and membership plans (such as ATR One) provided by Austin's Tech Repair Group LLC are governed by these standard terms.</p>
+                    <p>Prices quoted online are estimated baselines; final binding pricing is confirmed post-diagnostic inspection before physical repair work commences.</p>`
+        },
+        "website-terms": {
+          title: "Website Terms of Use",
+          content: `<p>By accessing austinstechrepairgroup.com, you agree to comply with our web usage rules. All content, logos, and site architecture are the property of Austin's Tech Repair Group LLC.</p>
+                    <p>Unauthorized reproduction or scraping of text, branding, or media assets is strictly prohibited.</p>`
+        }
+      };
+
+      // Modal Controller Script
+      const modal = document.getElementById('policy-modal');
+      const modalBackdrop = document.getElementById('policy-backdrop');
+      const modalClose = document.getElementById('policy-close');
+      const modalTitle = document.getElementById('policy-title');
+      const modalContent = document.getElementById('policy-content');
+      const triggers = document.querySelectorAll('.policy-trigger');
+
+      function openPolicy(policyKey) {
+        const data = policyData[policyKey];
+        if (data) {
+          modalTitle.textContent = data.title;
+          modalContent.innerHTML = data.content;
+          modal.classList.add('active');
+          modal.setAttribute('aria-hidden', 'false');
+          document.body.style.overflow = 'hidden';
+        }
+      }
+
+      function closePolicy() {
+        modal.classList.remove('active');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+      }
+
+      triggers.forEach(trigger => {
+        trigger.addEventListener('click', (e) => {
+          e.preventDefault();
+          const policyKey = trigger.getAttribute('data-policy');
+          openPolicy(policyKey);
+        });
+      });
+
+      modalClose.addEventListener('click', closePolicy);
+      modalBackdrop.addEventListener('click', closePolicy);
+
+      // Close modal on ESC key
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+          closePolicy();
+        }
+      });
+    </script>
      
           <a class="footer-link" href="https://maps.app.goo.gl/JDzEADFMWRfU4DKB6" target="_blank" rel="noopener"><i class="fab fa-google"></i> Google Review</a>
           <a class="footer-link" href="https://www.yelp.com/biz/austin-s-tech-repair-group-dayton-3" target="_blank" rel="noopener"><i class="fab fa-yelp"></i> Yelp Review</a>
