@@ -66,32 +66,35 @@
 </head>
 <body>
 
-  <!-- ============================================ HEADER ============================================ ->
-
-<!-- Header Navigation Section -->
-<header class="site-header">
-  <div class="nav-container">
-    <div class="nav-brand">
-      <a href="https://austinstechrepairgroup.com/#home" class="brand-logo" data-page="home">Austin's Tech Repair Group</a>
+  <!-- ============================================ HEADER ============================================ -->
+  <header class="header" id="header">
+    <div class="brand" data-page="home" role="button" tabindex="0" aria-label="Go to home page">
+      <div class="brand-mark"><i class="fas fa-screwdriver-wrench" aria-hidden="true"></i></div>
+      <div class="brand-info">
+        <span class="brand-name">Austin's Tech Repair Group</span>
+        <span class="brand-sub">Professional Services</span>
+      </div>
     </div>
-    
-    <nav class="main-nav" aria-label="Main Navigation">
-      <a class="nav-link" href="https://austinstechrepairgroup.com/#home" data-page="home">Home</a>
-      <a class="nav-link" href="https://austinstechrepairgroup.com/#shop" data-page="shop">Shop</a>
-      <a class="nav-link" href="https://austinstechrepairgroup.com/#repair" data-page="repair">Repair</a>
-      <a class="nav-link" href="https://austinstechrepairgroup.com/#about" data-page="about">About</a>
-      <a class="nav-link" href="https://austinstechrepairgroup.com/#contact" data-page="contact">Contact</a>
-      <a class="nav-link" href="https://austinstechrepairgroup.com/#b2b" data-page="b2b">B2B & IT</a>
-      <a class="nav-link" href="https://austinstechrepairgroup.com/#atr-one" data-page="atr-one">ATR One</a>
-      <a class="nav-link" href="https://austinstechrepairgroup.com/#employee" data-page="employee">Portal</a>
+
+    <nav class="nav-desktop" aria-label="Main navigation">
+      <a class="nav-link active" href="#home" data-page="home">Home</a>
+      <a class="nav-link" href="#shop" data-page="shop">Shop</a>
+      <a class="nav-link" href="#repair" data-page="repair">Repair</a>
+      <a class="nav-link" href="#about" data-page="about">About</a>
+      <a class="nav-link" href="#contact" data-page="contact">Contact</a>
+      <a class="nav-link" href="#b2b" data-page="b2b">B2B</a>
+      <a class="nav-link" href="#atr-one" data-page="atr-one">ATR One</a>
+      <a class="nav-link" href="#employee" data-page="employee">Portal</a>
     </nav>
 
-    <div class="nav-cta">
-      <a class="nav-link phone-link" href="tel:5134788077">513-478-8077</a>
+    <div class="header-actions">
+  
+      <button class="icon-btn" id="cart-toggle" type="button" aria-label="Shopping cart" aria-haspopup="dialog" aria-expanded="false">
+        <i class="fas fa-cart-shopping" aria-hidden="true"></i>
+        <span id="cart-badge" class="cart-badge">0</span>
+      </button>
     </div>
-  </div>
-</header>
-    
+  </header>
 
   <!-- ============================================ MOBILE MENU ============================================ -->
 <nav class="mobile-menu" id="mobile-menu" aria-hidden="true">
