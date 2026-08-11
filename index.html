@@ -101,6 +101,25 @@
   </button>
 </div>
 
+<!-- Cart Drawer / Modal Overlay -->
+<div id="cart-drawer" class="cart-drawer" aria-hidden="true">
+  <div class="cart-content">
+    <div class="cart-header">
+      <h2>Your Cart</h2>
+      <button class="icon-btn" id="cart-close" type="button" aria-label="Close cart">
+        <!-- Clean X Icon to close -->
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <!-- Container where cart items are rendered -->
+    <div id="cart-items-container"></div>
+  </div>
+</div>
+
+
   </header>
 
   <!-- ============================================ MOBILE MENU ============================================ -->
@@ -1667,26 +1686,7 @@
 
 
 
-  <!-- ============================================ CART DRAWER ============================================ -->
-  <section class="cart-drawer" id="cart-drawer" aria-hidden="true">
-    <div class="cart-drawer__backdrop" id="cart-drawer-close"></div>
-    <aside class="cart-drawer__panel" role="dialog" aria-modal="true" aria-label="Shopping cart">
-      <div class="cart-drawer__header">
-        <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); width: 100%;">
-          <h2 style="font-size: var(--text-lg); font-weight: 800; margin: 0; font-family: var(--font-display);">Your Cart</h2>
-          <button id="cart-close" type="button" aria-label="Close cart" onclick="document.getElementById('cart-drawer').style.display='none'" style="background: none; border: none; cursor: pointer; padding: 8px; font-size: 1.25rem; line-height: 1;">✕</button>
-        </div>
-      </div>
-      <div class="cart-drawer__items" id="cart-drawer-items"></div>
-      <div class="cart-drawer__footer">
-        <div class="cart-drawer__total"><span>Total</span><strong id="cart-drawer-total">$0.00</strong></div>
-        <button class="cta-primary" type="button" id="cart-checkout-square"><i class="fab fa-square"></i> Checkout with Square</button>
-        <button class="cta-primary" type="button" id="cart-checkout-shopify" style="background: #95bf47; margin-top: var(--space-2);"><i class="fab fa-shopify"></i> Checkout with Shopify</button>
-        <button class="btn btn-ghost btn-block" type="button" id="cart-clear" style="margin-top: var(--space-2);">Clear Cart</button>
-        <p style="font-size: var(--text-xs); color: var(--text-muted); text-align: center; margin-top: var(--space-3);">Secure checkout powered by Square and Shopify.</p>
-      </div>
-    </aside>
-  </section>
+  
 
   <!-- ============================================ PORTAL CRUD MODALS ============================================ -->
   <!-- New/Edit Ticket Modal -->
