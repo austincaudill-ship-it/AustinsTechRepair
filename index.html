@@ -90,36 +90,16 @@
       <a class="nav-link" href="#employee" data-page="employee">Portal</a>
     </nav>
 
-<div class="header-actions">
-  <button class="icon-btn" id="cart-toggle" type="button" aria-label="Shopping cart" aria-haspopup="dialog" aria-expanded="false">
-    <svg class="cart-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <circle cx="8" cy="21" r="1"></circle>
-      <circle cx="19" cy="21" r="1"></circle>
-      <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
-    </svg>
-    <span id="cart-badge" class="cart-badge">0</span>
-  </button>
-</div>
-
-<!-- Cart Drawer / Modal Overlay -->
-<div id="cart-drawer" class="cart-drawer" aria-hidden="true">
-  <div class="cart-content">
-    <div class="cart-header">
-      <h2>Your Cart</h2>
-      <button class="icon-btn" id="cart-close" type="button" aria-label="Close cart">
-        <!-- Clean X Icon to close -->
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
+    <div class="header-actions">
+      <button class="icon-btn" id="cart-toggle" type="button" aria-label="Shopping cart" aria-haspopup="dialog" aria-expanded="false">
+        <svg class="cart-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="8" cy="21" r="1"></circle>
+          <circle cx="19" cy="21" r="1"></circle>
+          <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
         </svg>
+        <span id="cart-badge" class="cart-badge">0</span>
       </button>
     </div>
-    <!-- Container where cart items are rendered -->
-    <div id="cart-items-container"></div>
-  </div>
-</div>
-
-
   </header>
 
   <!-- ============================================ MOBILE MENU ============================================ -->
@@ -189,7 +169,6 @@
               </div>
                 <p>Cracked screens, battery swaps, charging port repair, camera issues, speaker/mic fixes, water damage recovery, software troubleshooting, and fast data transfer.</p>
               </div>
-            </div>
           </button>
           <br>
           <button class="service-card flip-card reveal reveal-delay-1" type="button" data-device="Tablets">
@@ -197,10 +176,8 @@
               <div class="flip-card-face flip-card-front">
                 <h4>Tablets</h4>
               </div>
-          
                 <p>Display replacement, charging port repair, touch troubleshooting, battery service, camera fixes, and full software setup support.</p>
               </div>
-            </div>
           </button>
           <br>
           <button class="service-card flip-card reveal reveal-delay-2" type="button" data-device="Computers">
@@ -208,10 +185,8 @@
               <div class="flip-card-face flip-card-front">
                 <h4>Computers</h4>
               </div>
-          
                 <p>SSD upgrades, RAM installs, virus cleanup, display repair, power issues, DC jack repair, software recovery, and data rescue.</p>
               </div>
-            </div>
           </button>
           <br>
           <button class="service-card flip-card reveal reveal-delay-3" type="button" data-device="Gaming">
@@ -219,10 +194,8 @@
               <div class="flip-card-face flip-card-front">
                 <h4>Gaming</h4>
               </div>
-          
                 <p>Console HDMI port repair, cooling fan replacement, storage upgrades, power fault diagnostics, controller fixes, and overheating solutions.</p>
               </div>
-            </div>
           </button>
           <br>
           <button class="service-card flip-card reveal" type="button" data-device="Smart Watches">
@@ -230,10 +203,8 @@
               <div class="flip-card-face flip-card-front">
                 <h4>Smart Watches</h4>
               </div>
-        
                 <p>Battery service, display replacement, charging issues, pairing fixes, syncing support, and button or crown repairs.</p>
               </div>
-            </div>
           </button>
           <br>
           <button class="service-card flip-card reveal" type="button" data-device="Accessories">
@@ -241,10 +212,8 @@
               <div class="flip-card-face flip-card-front">
                 <h4>Shop Accessories & ATR One</h4>
               </div>
-        
                 <p>Shop Parts & Accessories: Cases, screen protectors, chargers, and gear — checkout with Square or Shopify. Subscribe to ATR One Here.</p>
               </div>
-            </div>
           </button>
           <br>
           <button class="service-card flip-card reveal" type="button" data-device="Business Services">
@@ -252,10 +221,8 @@
               <div class="flip-card-face flip-card-front">
                 <h4>Business Services</h4>
               </div>
-          
                 <p>Printers, setup, remote support, mass imaging, schools, offices, battery service, display replacement, charging issues, pairing fixes, syncing support, and hardware maintenance.</p>
               </div>
-            </div>
           </button>
           <br>
         </div>
@@ -885,9 +852,8 @@
             </div>
           </header>
 
-          <!-- DASHBOARD (ENHANCED WITH NEW PROTOTYPE HOOKS & WIDGETS) -->
+          <!-- DASHBOARD -->
           <section id="portal-dashboard" class="portal-section active">
-            <!-- New Top Search Bar Hooked to Main/Device Search -->
             <div class="search-header" style="margin-bottom: var(--space-6);">
               <div class="search-main-bar">
                 <i class="fas fa-search" style="opacity: 0.4; margin-right: 0.5rem;"></i>
@@ -907,7 +873,6 @@
             <div class="stats-grid" id="dashboard-stats"></div>
 
             <div class="content-grid">
-              <!-- Collapsible AI Chat Assistant Component -->
               <section class="card collapsible-card col-12" id="chat-assistant-card">
                 <div class="card-header" onclick="toggleCard(this)" role="button" tabindex="0" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
                   <h3 style="margin: 0;"><i class="fas fa-robot" style="color: var(--primary); margin-right: 0.5rem;"></i> AI Diagnostic Assistant</h3>
@@ -921,7 +886,6 @@
                 </div>
               </section>
 
-              <!-- New Shop & Repair Overview Tiles -->
               <section class="card col-6">
                 <h3><i class="fas fa-store" style="color: var(--primary); margin-right: 0.5rem;"></i> Shop Overview</h3>
                 <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Parts inventory and retail accessories.</p>
@@ -960,7 +924,6 @@
                 </div>
               </section>
 
-              <!-- New Google Map Service Area Card -->
               <section class="card col-6">
                 <h3><i class="fas fa-map-location-dot" style="color: var(--primary); margin-right: 0.5rem;"></i> Service Area Map</h3>
                 <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Mobile repair dispatch coverage across Xenia, Dayton, and Southeastern Ohio.</p>
@@ -978,7 +941,6 @@
                 </div>
               </section>
 
-              <!-- New Comparison Table Card -->
               <section class="card col-6 comparison-section">
                 <h3><i class="fas fa-star" style="color: var(--warning); margin-right: 0.5rem;"></i> Service Tier Comparison</h3>
                 <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Customer perks and savings overview.</p>
@@ -1042,7 +1004,6 @@
               </div>
             </div>
 
-            <!-- New Dashboard Bottom Action Panel -->
             <footer class="bottom-action-panel">
               <button class="action-btn secondary" id="resetBtn">
                 <i class="fas fa-rotate-left"></i> Reset Views
@@ -1087,7 +1048,7 @@
             </div>
           </section>
 
-          <!-- REPAIR QUEUE (KANBAN) -->
+          <!-- REPAIR QUEUE -->
           <section id="portal-queue" class="portal-section">
             <div class="portal-section-header">
               <div><h2>Repair Queue</h2><p>Click status arrows to move tickets through the pipeline</p></div>
@@ -1374,7 +1335,6 @@
   <!-- ============================================ APPLE-STYLE SHOWCASE CAROUSEL ============================================ -->
   <section class="apple-showcase">
     <div class="showcase-container">
-      <!-- Slide 1: Text Left, Image Right -->
       <div class="showcase-slide active">
         <div class="showcase-content">
           <span class="showcase-tag">Component Diagnostics</span>
@@ -1386,7 +1346,6 @@
         </div>
       </div>
 
-      <!-- Slide 2: Image Left, Text Right (Reverse) -->
       <div class="showcase-slide reverse">
         <div class="showcase-content">
           <span class="showcase-tag">ATR One Membership</span>
@@ -1398,7 +1357,6 @@
         </div>
       </div>
 
-      <!-- Slide 3: Text Left, Image Right -->
       <div class="showcase-slide">
         <div class="showcase-content">
           <span class="showcase-tag">Enterprise & B2B Solutions</span>
@@ -1411,7 +1369,6 @@
       </div>
     </div>
 
-    <!-- Showcase Navigation Dots -->
     <div class="showcase-dots">
       <span class="showcase-dot active"></span>
       <span class="showcase-dot"></span>
@@ -1465,19 +1422,39 @@
           <a class="footer-link policy-trigger" href="#terms" data-policy="terms">Terms & Conditions</a>
           <a class="footer-link policy-trigger" href="#website-terms" data-policy="website-terms">Website Terms of Use</a>
         </div>
-     <div class="footer-links-col">
-  <span class="footer-col-title">Support Area</span>
-  <span class="footer-link">Xenia, Dayton & SE Ohio</span>
-  <span class="footer-link">Est. 2010</span>
-  <span class="footer-link">Montgomery County</span>
-  <span class="footer-link">Miami County</span>
-  <span class="footer-link">Warren County</span>
-  <span class="footer-link">Greene County</span>
-  <span class="footer-link">Butler County</span>
-  <span class="footer-link">Hamilton County</span>
-</div>
-
+        <div class="footer-links-col">
+          <span class="footer-col-title">Support Area</span>
+          <span class="footer-link">Xenia, Dayton & SE Ohio</span>
+          <span class="footer-link">Est. 2010</span>
+          <span class="footer-link">Montgomery County</span>
+          <span class="footer-link">Miami County</span>
+          <span class="footer-link">Warren County</span>
+          <span class="footer-link">Greene County</span>
+          <span class="footer-link">Butler County</span>
+          <span class="footer-link">Hamilton County</span>
+        </div>
       </div>
+
+      <!-- ============================================ CART DRAWER (FIXED) ============================================ -->
+      <section class="cart-drawer" id="cart-drawer" aria-hidden="true">
+        <div class="cart-drawer__backdrop" id="cart-drawer-close"></div>
+        <aside class="cart-drawer__panel" role="dialog" aria-modal="true" aria-label="Shopping cart">
+          <div class="cart-drawer__header">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); width: 100%;">
+              <h2 style="font-size: var(--text-lg); font-weight: 800; margin: 0; font-family: var(--font-display);">Your Cart</h2>
+              <button id="cart-close" type="button" aria-label="Close cart" style="background: none; border: none; cursor: pointer; padding: 8px; font-size: 1.25rem; line-height: 1;">✕</button>
+            </div>
+          </div>
+          <div class="cart-drawer__items" id="cart-drawer-items"></div>
+          <div class="cart-drawer__footer">
+            <div class="cart-drawer__total"><span>Total</span><strong id="cart-drawer-total">$0.00</strong></div>
+            <button class="cta-primary" type="button" id="cart-checkout-square"><i class="fab fa-square"></i> Checkout with Square</button>
+            <button class="cta-primary" type="button" id="cart-checkout-shopify" style="background: #95bf47; margin-top: var(--space-2);"><i class="fab fa-shopify"></i> Checkout with Shopify</button>
+            <button class="btn btn-ghost btn-block" type="button" id="cart-clear" style="margin-top: var(--space-2);">Clear Cart</button>
+            <p style="font-size: var(--text-xs); color: var(--text-muted); text-align: center; margin-top: var(--space-3);">Secure checkout powered by Square and Shopify.</p>
+          </div>
+        </aside>
+      </section>
 
       <!-- Policy Modal Overlay & Pop-up Window -->
       <div class="policy-modal" id="policy-modal" aria-hidden="true">
@@ -1485,125 +1462,32 @@
         <div class="policy-modal-panel" role="dialog" aria-modal="true" aria-labelledby="policy-title">
           <button class="policy-close" id="policy-close" type="button" aria-label="Close policy window"><i class="fas fa-times"></i></button>
           <h3 id="policy-title" class="policy-modal-title">Policy Title</h3>
-          <div class="policy-modal-body" id="policy-content">
-            <!-- Dynamic policy text loads here -->
-          </div>
+          <div class="policy-modal-body" id="policy-content"></div>
         </div>
       </div>
 
       <style>
-        /* Policy Modal Styling */
         .policy-modal {
-          position: fixed;
-          inset: 0;
-          z-index: 2000;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 1rem;
-          opacity: 0;
-          visibility: hidden;
-          transition: opacity 0.25s ease, visibility 0.25s ease;
+          position: fixed; inset: 0; z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 1rem; opacity: 0; visibility: hidden; transition: opacity 0.25s ease, visibility 0.25s ease;
         }
-        .policy-modal.active {
-          opacity: 1;
-          visibility: visible;
-        }
-        .policy-modal-backdrop {
-          position: absolute;
-          inset: 0;
-          background: rgba(15, 23, 42, 0.75);
-        }
-        .policy-modal-panel {
-          position: relative;
-          background: #ffffff;
-          color: #334155;
-          width: 100%;
-          max-width: 650px;
-          max-height: 85vh;
-          border-radius: 0.75rem;
-          padding: 2rem;
-          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-          display: flex;
-          flex-direction: column;
-          z-index: 2010;
-        }
-        .policy-close {
-          position: absolute;
-          top: 1rem;
-          right: 1rem;
-          background: #f1f5f9;
-          border: none;
-          width: 2.25rem;
-          height: 2.25rem;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          color: #0f172a;
-          font-size: 1rem;
-          transition: background 0.2s;
-        }
-        .policy-close:hover {
-          background: #e2e8f0;
-        }
-        .policy-modal-title {
-          font-size: 1.25rem;
-          font-weight: 700;
-          color: #0f172a;
-          margin-bottom: 1rem;
-          padding-right: 2rem;
-        }
-        .policy-modal-body {
-          overflow-y: auto;
-          font-size: 0.95rem;
-          line-height: 1.6;
-          color: #475569;
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-        }
+        .policy-modal.active { opacity: 1; visibility: visible; }
+        .policy-modal-backdrop { position: absolute; inset: 0; background: rgba(15, 23, 42, 0.75); }
+        .policy-modal-panel { position: relative; background: #ffffff; color: #334155; width: 100%; max-width: 650px; max-height: 85vh; border-radius: 0.75rem; padding: 2rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; z-index: 2010; }
+        .policy-close { position: absolute; top: 1rem; right: 1rem; background: #f1f5f9; border: none; width: 2.25rem; height: 2.25rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #0f172a; font-size: 1rem; }
+        .policy-modal-title { font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-bottom: 1rem; padding-right: 2rem; }
+        .policy-modal-body { overflow-y: auto; font-size: 0.95rem; line-height: 1.6; color: #475569; display: flex; flex-direction: column; gap: 1rem; }
       </style>
 
       <script>
-        // Policy Content Dictionary
         const policyData = {
-          "privacy": {
-            title: "Privacy Policy",
-            content: `<p>At Austin's Tech Repair Group LLC, we respect your privacy and are committed to protecting any personal information you provide when requesting a repair, buying accessories, or using our mobile services.</p>
-                      <p><strong>Information Collection:</strong> We collect contact details (name, phone number, email, address) and device specifications strictly required to process service orders and communicate repair status.</p>
-                      <p><strong>Data Security:</strong> Your payment details and personal files are handled securely. We never sell or share your personal data with third-party marketers.</p>`
-          },
-          "repair": {
-            title: "Repair Service Agreement",
-            content: `<p>By submitting a device for diagnostic or repair services to Austin's Tech Repair Group LLC, you authorize our technicians to perform necessary diagnostic tests and repairs.</p>
-                      <p><strong>Unclaimed Devices:</strong> Devices left unclaimed for over 60 days following notification of repair completion may be recycled or sold to cover storage costs, subject to local regulations.</p>
-                      <p><strong>Water Damage Disclaimer:</strong> Water-damaged devices can experience unpredictable component degradation post-repair; additional failures subsequent to initial intake are not the liability of Austin's Tech Repair Group LLC.</p>`
-          },
-          "backup": {
-            title: "Data Backup Waiver",
-            content: `<p>Data loss can occasionally occur during complex component-level diagnostics, software recovery, or hardware replacements (e.g., storage upgrades or OS troubleshooting).</p>
-                      <p><strong>Customer Responsibility:</strong> Customers are strongly advised to back up all vital data before handing over any device. Austin's Tech Repair Group LLC assumes no liability for lost data, photos, or documents.</p>`
-          },
-          "warranty-policy": {
-            title: "1-Year Warranty Policy",
-            content: `<p>All repairs performed by Austin's Tech Repair Group LLC are backed by our comprehensive <strong>1-Year Warranty</strong> covering parts and craftsmanship.</p>
-                      <p><strong>Coverage Exclusions:</strong> This warranty does not cover physical impact damage, subsequent liquid exposure, drops, or software issues introduced after the device has been returned to the customer.</p>`
-          },
-          "terms": {
-            title: "Terms & Conditions",
-            content: `<p>All services, product purchases through Square or Shopify, and membership plans (such as ATR One) provided by Austin's Tech Repair Group LLC are governed by these standard terms.</p>
-                      <p>Prices quoted online are estimated baselines; final binding pricing is confirmed post-diagnostic inspection before physical repair work commences.</p>`
-          },
-          "website-terms": {
-            title: "Website Terms of Use",
-            content: `<p>By accessing austinstechrepairgroup.com, you agree to comply with our web usage rules. All content, logos, and site architecture are the property of Austin's Tech Repair Group LLC.</p>
-                      <p>Unauthorized reproduction or scraping of text, branding, or media assets is strictly prohibited.</p>`
-          }
+          "privacy": { title: "Privacy Policy", content: `<p>At Austin's Tech Repair Group LLC, we respect your privacy and are committed to protecting any personal information you provide when requesting a repair, buying accessories, or using our mobile services.</p>` },
+          "repair": { title: "Repair Service Agreement", content: `<p>By submitting a device for diagnostic or repair services to Austin's Tech Repair Group LLC, you authorize our technicians to perform necessary diagnostic tests and repairs.</p>` },
+          "backup": { title: "Data Backup Waiver", content: `<p>Data loss can occasionally occur during complex component-level diagnostics, software recovery, or hardware replacements.</p>` },
+          "warranty-policy": { title: "1-Year Warranty Policy", content: `<p>All repairs performed by Austin's Tech Repair Group LLC are backed by our comprehensive <strong>1-Year Warranty</strong> covering parts and craftsmanship.</p>` },
+          "terms": { title: "Terms & Conditions", content: `<p>All services, product purchases through Square or Shopify, and membership plans provided by Austin's Tech Repair Group LLC are governed by these standard terms.</p>` },
+          "website-terms": { title: "Website Terms of Use", content: `<p>By accessing austinstechrepairgroup.com, you agree to comply with our web usage rules. All content, logos, and site architecture are the property of Austin's Tech Repair Group LLC.</p>` }
         };
 
-        // Modal Controller Script
         const modal = document.getElementById('policy-modal');
         const modalBackdrop = document.getElementById('policy-backdrop');
         const modalClose = document.getElementById('policy-close');
@@ -1631,20 +1515,13 @@
         triggers.forEach(trigger => {
           trigger.addEventListener('click', (e) => {
             e.preventDefault();
-            const policyKey = trigger.getAttribute('data-policy');
-            openPolicy(policyKey);
+            openPolicy(trigger.getAttribute('data-policy'));
           });
         });
 
         modalClose.addEventListener('click', closePolicy);
         modalBackdrop.addEventListener('click', closePolicy);
-
-        // Close modal on ESC key
-        document.addEventListener('keydown', (e) => {
-          if (e.key === 'Escape' && modal.classList.contains('active')) {
-            closePolicy();
-          }
-        });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.classList.contains('active')) closePolicy(); });
       </script>
       
       <center>
@@ -1654,42 +1531,37 @@
         </div>
       </center>
 
-    <footer class="site-footer">
-    <div class="footer-container">
-      <div class="footer-legal">
-        <div class="legal-block">
-          <p class="legal-heading" style="font-size: 0.85rem;">Payment Methods</p>
-          <div class="payment-badge-row" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 0.75rem;">
-            <span class="payment-badge" style="display: inline-flex; align-items: center; gap: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Cash</span>
-            <span class="payment-badge" style="display: inline-flex; align-items: center; gap: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> Card</span>
-            <span class="payment-badge" style="display: inline-flex; align-items: center; gap: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.27c.64-.78 1.08-1.86.96-2.94-1 .04-2.05.67-2.69 1.45-.58.69-1.1 1.79-.96 2.85 1.12.09 2.05-.56 2.69-1.36z"/></svg> Apple Pay</span>
-            <span class="payment-badge" style="display: inline-flex; align-items: center; gap: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.8 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.7 2.9C6.2 7.3 8.9 5 12 5zm5.7 8.3c0-.5-.1-1-.2-1.4H12v2.8h3.2c-.2 1-.7 1.9-1.6 2.5l2.5 2c1.5-1.4 2.6-3.5 2.6-5.9zM12 23c3.2 0 6-1.1 8-3l-2.5-2c-1.1.7-2.5 1.2-5.5 1.2-3.1 0-5.8-2.3-6.7-5.3H1.4l-3.8 2.9C3.5 20.4 7.4 23 12 23z"/></svg> Google Pay</span>
-            <span class="payment-badge" style="display: inline-flex; align-items: center; gap: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M7.076 21.338H2.47a.641.641 0 0 1-.633-.74L4.945.901C5.022.382 5.466 0 5.992 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.842.875 5.034-.582 2.996-2.32 4.932-5.02 5.63-1.07.278-2.348.419-3.834.419H8.625c-.477 0-.882.352-.953.824l-1.01 6.402a.64.64 0 0 0 .633.74h-.219z"/></svg> PayPal</span>
-            <span class="payment-badge" style="display: inline-flex; align-items: center; gap: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/></svg> Square checkout</span>
-            <span class="payment-badge" style="display: inline-flex; align-items: center; gap: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M15.54 4.55l-3.54-2-3.54 2L4 7.45v9.1l4.46 2.9 3.54 2 3.54-2L20 16.55v-9.1l-4.46-2.9z"/></svg> Shopify checkout for products</span>
+      <footer class="site-footer">
+        <div class="footer-container">
+          <div class="footer-legal">
+            <div class="legal-block">
+              <p class="legal-heading" style="font-size: 0.85rem;">Payment Methods</p>
+              <div class="payment-badge-row" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 0.75rem;">
+                <span class="payment-badge">Cash</span>
+                <span class="payment-badge">Card</span>
+                <span class="payment-badge">Apple Pay</span>
+                <span class="payment-badge">Google Pay</span>
+                <span class="payment-badge">PayPal</span>
+                <span class="payment-badge">Square checkout</span>
+                <span class="payment-badge">Shopify checkout for products</span>
+              </div>
+            </div>
+            <div class="legal-block" style="margin-top: 12px;">
+              <p class="legal-heading red" style="font-size: 0.8rem;">Independent Repair Provider</p>
+              <p style="font-size: 0.7rem; line-height: 1.4; max-width: 800px; color: #888;">Austin's Tech Repair Group LLC is an independent repair service. We are not affiliated with, endorsed by, or sponsored by Apple, Samsung, Sony, Microsoft, Nintendo, Google, HP, Dell, Asus, Lenovo, or any other manufacturer.</p>
+            </div>
+          </div>
+
+          <div class="footer-bottom" style="font-size: 0.75rem; margin-top: 12px; display: flex; justify-content: space-between; align-items: center;">
+            <span class="footer-copy">Copyright 2026 © <strong>Austin's Tech Repair Group Sole Proprietorship</strong></span>
+            <span class="footer-wordmark">ATR Group</span>
           </div>
         </div>
-        <div class="legal-block" style="margin-top: 12px;">
-          <p class="legal-heading red" style="font-size: 0.8rem;">Independent Repair Provider</p>
-          <p style="font-size: 0.7rem; line-height: 1.4; max-width: 800px; color: #888;">Austin's Tech Repair Group LLC is an independent repair service. We are not affiliated with, endorsed by, or sponsored by Apple, Samsung, Sony, Microsoft, Nintendo, Google, HP, Dell, Asus, Lenovo, or any other manufacturer. All trademarks and brand names are the property of their respective owners. We operate solely as a third-party repair provider.</p>
-        </div>
-      </div>
-
-      <div class="footer-bottom" style="font-size: 0.75rem; margin-top: 12px; display: flex; justify-content: space-between; align-items: center;">
-        <span class="footer-copy">Copyright 2026 © <strong>Austin's Tech Repair Group Sole Proprietorship</strong></span>
-        <span class="footer-wordmark">ATR Group</span>
-      </div>
+      </footer>
     </div>
   </footer>
 
-
-
-
-
-  
-
   <!-- ============================================ PORTAL CRUD MODALS ============================================ -->
-  <!-- New/Edit Ticket Modal -->
   <dialog id="ticketModal">
     <div class="modal-head">
       <h3 id="ticketModalTitle">New Repair Ticket</h3>
@@ -1699,85 +1571,38 @@
       <input type="hidden" id="ticket-edit-id">
       <div class="portal-form-grid">
         <div class="portal-form-row">
-          <div class="portal-field">
-            <label>Customer Name *</label>
-            <input type="text" id="ticket-customer" placeholder="e.g. Sarah Mitchell">
-          </div>
-          <div class="portal-field">
-            <label>Phone *</label>
-            <input type="text" id="ticket-phone" placeholder="(513) 555-0100">
-          </div>
+          <div class="portal-field"><label>Customer Name *</label><input type="text" id="ticket-customer" placeholder="e.g. Sarah Mitchell"></div>
+          <div class="portal-field"><label>Phone *</label><input type="text" id="ticket-phone" placeholder="(513) 555-0100"></div>
         </div>
         <div class="portal-form-row">
-          <div class="portal-field">
-            <label>Email</label>
-            <input type="email" id="ticket-email" placeholder="customer@email.com">
-          </div>
-          <div class="portal-field">
-            <label>Device Type *</label>
+          <div class="portal-field"><label>Email</label><input type="email" id="ticket-email" placeholder="customer@email.com"></div>
+          <div class="portal-field"><label>Device Type *</label>
             <select id="ticket-device-type">
-              <option value="Phone">Phone</option>
-              <option value="Tablet">Tablet</option>
-              <option value="Laptop">Laptop</option>
-              <option value="Desktop">Desktop</option>
-              <option value="Console">Console</option>
-              <option value="Smartwatch">Smartwatch</option>
-              <option value="Other">Other</option>
+              <option value="Phone">Phone</option><option value="Tablet">Tablet</option><option value="Laptop">Laptop</option><option value="Desktop">Desktop</option><option value="Console">Console</option><option value="Smartwatch">Smartwatch</option><option value="Other">Other</option>
             </select>
           </div>
         </div>
         <div class="portal-form-row">
-          <div class="portal-field">
-            <label>Brand *</label>
-            <input type="text" id="ticket-brand" placeholder="e.g. Apple, Samsung, Dell">
-          </div>
-          <div class="portal-field">
-            <label>Device Model *</label>
-            <input type="text" id="ticket-device" placeholder="e.g. iPhone 13 Pro">
+          <div class="portal-field"><label>Brand *</label><input type="text" id="ticket-brand" placeholder="e.g. Apple, Samsung, Dell"></div>
+          <div class="portal-field"><label>Device Model *</label><input type="text" id="ticket-device" placeholder="e.g. iPhone 13 Pro"></div>
+        </div>
+        <div class="portal-form-row">
+          <div class="portal-field"><label>Issue *</label><input type="text" id="ticket-issue" placeholder="e.g. Screen replacement"></div>
+          <div class="portal-field"><label>Priority</label>
+            <select id="ticket-priority"><option value="Normal">Normal</option><option value="Low">Low</option><option value="High">High</option><option value="Urgent">Urgent</option></select>
           </div>
         </div>
         <div class="portal-form-row">
-          <div class="portal-field">
-            <label>Issue *</label>
-            <input type="text" id="ticket-issue" placeholder="e.g. Screen replacement">
-          </div>
-          <div class="portal-field">
-            <label>Priority</label>
-            <select id="ticket-priority">
-              <option value="Normal">Normal</option>
-              <option value="Low">Low</option>
-              <option value="High">High</option>
-              <option value="Urgent">Urgent</option>
-            </select>
-          </div>
+          <div class="portal-field"><label>Parts Cost ($)</label><input type="number" id="ticket-parts-cost" value="0" min="0" step="0.01"></div>
+          <div class="portal-field"><label>Labor Cost ($)</label><input type="number" id="ticket-labor-cost" value="0" min="0" step="0.01"></div>
         </div>
         <div class="portal-form-row">
-          <div class="portal-field">
-            <label>Parts Cost ($)</label>
-            <input type="number" id="ticket-parts-cost" value="0" min="0" step="0.01">
-          </div>
-          <div class="portal-field">
-            <label>Labor Cost ($)</label>
-            <input type="number" id="ticket-labor-cost" value="0" min="0" step="0.01">
+          <div class="portal-field"><label>Retail Price ($)</label><input type="number" id="ticket-price" value="0" min="0" step="0.01"></div>
+          <div class="portal-field"><label>Assigned To</label>
+            <select id="ticket-assigned"><option value="Demo User">Demo User</option><option value="Unassigned">Unassigned</option></select>
           </div>
         </div>
-        <div class="portal-form-row">
-          <div class="portal-field">
-            <label>Retail Price ($)</label>
-            <input type="number" id="ticket-price" value="0" min="0" step="0.01">
-          </div>
-          <div class="portal-field">
-            <label>Assigned To</label>
-            <select id="ticket-assigned">
-              <option value="Demo User">Demo User</option>
-              <option value="Unassigned">Unassigned</option>
-            </select>
-          </div>
-        </div>
-        <div class="portal-field">
-          <label>Notes</label>
-          <textarea id="ticket-notes" rows="3" placeholder="Repair notes, diagnostics, customer requests..."></textarea>
-        </div>
+        <div class="portal-field"><label>Notes</label><textarea id="ticket-notes" rows="3" placeholder="Repair notes..."></textarea></div>
       </div>
     </div>
     <div class="modal-footer">
@@ -1786,314 +1611,7 @@
     </div>
   </dialog>
 
-  <!-- Ticket Detail Modal -->
-  <dialog id="ticketDetailModal">
-    <div class="modal-head">
-      <h3 id="ticketDetailTitle">Ticket Details</h3>
-      <button class="modal-close" onclick="closeModal('ticketDetailModal')"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="modal-body" id="ticketDetailBody"></div>
-    <div class="modal-footer">
-      <button class="pbtn pbtn-light" onclick="closeModal('ticketDetailModal')">Close</button>
-      <button class="pbtn pbtn-primary" id="ticketDetailEdit"><i class="fas fa-edit"></i> Edit Ticket</button>
-    </div>
-  </dialog>
-
-  <!-- Customer Modal -->
-  <dialog id="customerModal">
-    <div class="modal-head">
-      <h3 id="customerModalTitle">Add Customer</h3>
-      <button class="modal-close" onclick="closeModal('customerModal')"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="modal-body">
-      <input type="hidden" id="customer-edit-id">
-      <div class="portal-form-grid">
-        <div class="portal-field">
-          <label>Name *</label>
-          <input type="text" id="customer-name" placeholder="Full name">
-        </div>
-        <div class="portal-form-row">
-          <div class="portal-field">
-            <label>Phone *</label>
-            <input type="text" id="customer-phone" placeholder="(513) 555-0100">
-          </div>
-          <div class="portal-field">
-            <label>Email</label>
-            <input type="email" id="customer-email" placeholder="customer@email.com">
-          </div>
-        </div>
-        <div class="portal-field">
-          <label>Address</label>
-          <input type="text" id="customer-address" placeholder="City, State">
-        </div>
-        <div class="portal-field">
-          <label>ATR One Member</label>
-          <select id="customer-member">
-            <option value="false">No</option>
-            <option value="true">Yes</option>
-          </select>
-        </div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="pbtn pbtn-light" onclick="closeModal('customerModal')">Cancel</button>
-      <button class="pbtn pbtn-primary" onclick="saveCustomer()"><i class="fas fa-save"></i> Save</button>
-    </div>
-  </dialog>
-
-  <!-- Part Modal -->
-  <dialog id="partModal">
-    <div class="modal-head">
-      <h3 id="partModalTitle">Add Part</h3>
-      <button class="modal-close" onclick="closeModal('partModal')"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="modal-body">
-      <input type="hidden" id="part-edit-id">
-      <div class="portal-form-grid">
-        <div class="portal-form-row">
-          <div class="portal-field">
-            <label>Part Name *</label>
-            <input type="text" id="part-name" placeholder="e.g. iPhone 13 OLED Screen">
-          </div>
-          <div class="portal-field">
-            <label>SKU *</label>
-            <input type="text" id="part-sku" placeholder="e.g. IP13-OLED">
-          </div>
-        </div>
-        <div class="portal-form-row">
-          <div class="portal-field">
-            <label>Category</label>
-            <select id="part-category">
-              <option value="Screens">Screens</option>
-              <option value="Batteries">Batteries</option>
-              <option value="Ports">Ports</option>
-              <option value="Cameras">Cameras</option>
-              <option value="Tools">Tools</option>
-              <option value="Accessories">Accessories</option>
-            </select>
-          </div>
-          <div class="portal-field">
-            <label>Quantity *</label>
-            <input type="number" id="part-qty" value="1" min="0">
-          </div>
-        </div>
-        <div class="portal-form-row">
-          <div class="portal-field">
-            <label>Cost ($)</label>
-            <input type="number" id="part-cost" value="0" min="0" step="0.01">
-          </div>
-          <div class="portal-field">
-            <label>Retail ($)</label>
-            <input type="number" id="part-retail" value="0" min="0" step="0.01">
-          </div>
-        </div>
-        <div class="portal-form-row">
-          <div class="portal-field">
-            <label>Supplier</label>
-            <input type="text" id="part-supplier" placeholder="e.g. MobileSentrix">
-          </div>
-          <div class="portal-field">
-            <label>Shelf Location</label>
-            <input type="text" id="part-location" placeholder="e.g. Shelf A-1">
-          </div>
-        </div>
-        <div class="portal-field">
-          <label>Reorder Level</label>
-          <input type="number" id="part-reorder" value="3" min="0">
-        </div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="pbtn pbtn-light" onclick="closeModal('partModal')">Cancel</button>
-      <button class="pbtn pbtn-primary" onclick="savePart()"><i class="fas fa-save"></i> Save</button>
-    </div>
-  </dialog>
-
-  <!-- Order Modal -->
-  <dialog id="orderModal">
-    <div class="modal-head">
-      <h3 id="orderModalTitle">New Order</h3>
-      <button class="modal-close" onclick="closeModal('orderModal')"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="modal-body">
-      <input type="hidden" id="order-edit-id">
-      <div class="portal-form-grid">
-        <div class="portal-form-row">
-          <div class="portal-field">
-            <label>Platform *</label>
-            <select id="order-platform">
-              <option value="Amazon">Amazon</option>
-              <option value="eBay">eBay</option>
-              <option value="MobileSentrix">MobileSentrix</option>
-              <option value="Shopify">Shopify</option>
-              <option value="Square">Square</option>
-              <option value="Distro">Distro</option>
-              <option value="Shirts & Tools">Shirts & Tools</option>
-            </select>
-          </div>
-          <div class="portal-field">
-            <label>Order # *</label>
-            <input type="text" id="order-number" placeholder="e.g. AMZ-12345">
-          </div>
-        </div>
-        <div class="portal-field">
-          <label>Items Ordered</label>
-          <textarea id="order-items" rows="2" placeholder="e.g. 5x iPhone 13 OLED Screens..."></textarea>
-        </div>
-        <div class="portal-form-row">
-          <div class="portal-field">
-            <label>Total Cost ($)</label>
-            <input type="number" id="order-cost" value="0" min="0" step="0.01">
-          </div>
-          <div class="portal-field">
-            <label>Status</label>
-            <select id="order-status">
-              <option value="Pending">Pending</option>
-              <option value="Shipped">Shipped</option>
-              <option value="Received">Received</option>
-              <option value="Cancelled">Cancelled</option>
-            </select>
-          </div>
-        </div>
-        <div class="portal-form-row">
-          <div class="portal-field">
-            <label>Expected Date</label>
-            <input type="date" id="order-expected">
-          </div>
-          <div class="portal-field">
-            <label>Tracking #</label>
-            <input type="text" id="order-tracking" placeholder="Tracking number">
-          </div>
-        </div>
-        <div class="portal-field">
-          <label>Notes</label>
-          <textarea id="order-notes" rows="2" placeholder="Order notes..."></textarea>
-        </div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="pbtn pbtn-light" onclick="closeModal('orderModal')">Cancel</button>
-      <button class="pbtn pbtn-primary" onclick="saveOrder()"><i class="fas fa-save"></i> Save</button>
-    </div>
-  </dialog>
-
-  <!-- Transaction Modal -->
-  <dialog id="transactionModal">
-    <div class="modal-head">
-      <h3>Add Transaction</h3>
-      <button class="modal-close" onclick="closeModal('transactionModal')"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="modal-body">
-      <div class="portal-form-grid">
-        <div class="portal-form-row">
-          <div class="portal-field">
-            <label>Type</label>
-            <select id="txn-type">
-              <option value="Repair">Repair</option>
-              <option value="Product">Product Sale</option>
-              <option value="Subscription">ATR One</option>
-              <option value="B2B">B2B Service</option>
-            </select>
-          </div>
-          <div class="portal-field">
-            <label>Amount ($)</label>
-            <input type="number" id="txn-amount" value="0" min="0" step="0.01">
-          </div>
-        </div>
-        <div class="portal-form-row">
-          <div class="portal-field">
-            <label>Cost ($)</label>
-            <input type="number" id="txn-cost" value="0" min="0" step="0.01">
-          </div>
-          <div class="portal-field">
-            <label>Payment Method</label>
-            <select id="txn-method">
-              <option value="Square">Square</option>
-              <option value="Cash">Cash</option>
-              <option value="Card">Card</option>
-              <option value="PayPal">PayPal</option>
-              <option value="Shopify">Shopify</option>
-            </select>
-          </div>
-        </div>
-        <div class="portal-field">
-          <label>Related Ticket #</label>
-          <input type="text" id="txn-ticket" placeholder="e.g. T1042 (optional)">
-        </div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="pbtn pbtn-light" onclick="closeModal('transactionModal')">Cancel</button>
-      <button class="pbtn pbtn-primary" onclick="saveTransaction()"><i class="fas fa-save"></i> Add</button>
-    </div>
-  </dialog>
-
-  <!-- Employee Modal -->
-  <dialog id="employeeModal">
-    <div class="modal-head">
-      <h3 id="employeeModalTitle">Add Employee</h3>
-      <button class="modal-close" onclick="closeModal('employeeModal')"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="modal-body">
-      <input type="hidden" id="employee-edit-id">
-      <div class="portal-form-grid">
-        <div class="portal-field">
-          <label>Name *</label>
-          <input type="text" id="employee-name" placeholder="Full name">
-        </div>
-        <div class="portal-form-row">
-          <div class="portal-field">
-            <label>Role</label>
-            <select id="employee-role">
-              <option value="Technician">Technician</option>
-              <option value="Senior Technician">Senior Technician</option>
-              <option value="Manager">Manager</option>
-              <option value="Front Desk">Front Desk</option>
-              <option value="Owner">Owner</option>
-            </select>
-          </div>
-          <div class="portal-field">
-            <label>Status</label>
-            <select id="employee-status">
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-            </select>
-          </div>
-        </div>
-        <div class="portal-form-row">
-          <div class="portal-field">
-            <label>Email</label>
-            <input type="email" id="employee-email" placeholder="employee@atr.com">
-          </div>
-          <div class="portal-field">
-            <label>Phone</label>
-            <input type="text" id="employee-phone" placeholder="(513) 555-0100">
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="pbtn pbtn-light" onclick="closeModal('employeeModal')">Cancel</button>
-      <button class="pbtn pbtn-primary" onclick="saveEmployee()"><i class="fas fa-save"></i> Save</button>
-    </div>
-  </dialog>
-
-  <!-- Confirm Delete Modal -->
-  <dialog id="confirmModal">
-    <div class="modal-head">
-      <h3>Confirm Delete</h3>
-      <button class="modal-close" onclick="closeModal('confirmModal')"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="modal-body">
-      <p id="confirmMessage" style="font-size: var(--text-sm);">Are you sure you want to delete this item? This action cannot be undone.</p>
-    </div>
-    <div class="modal-footer">
-      <button class="pbtn pbtn-light" onclick="closeModal('confirmModal')">Cancel</button>
-      <button class="pbtn pbtn-danger" id="confirmDeleteBtn"><i class="fas fa-trash"></i> Delete</button>
-    </div>
-  </dialog>
-
-  <!-- ============================================ SCRIPTS ============================================ -->
+  <!-- SCRIPTS -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
   <script src="script.js"></script>
@@ -2103,27 +1621,11 @@
 
   <!-- Mobile Thumb-Friendly Bottom Navigation Bar -->
   <nav class="mobile-bottom-nav" aria-label="Mobile Bottom Navigation">
-    <a href="#home" class="bottom-nav-item active" data-page="home">
-      <i class="fa-solid fa-house"></i>
-      <span>Home</span>
-    </a>
-    <a href="#shop" class="bottom-nav-item" data-page="shop">
-      <i class="fa-solid fa-store"></i>
-      <span>Shop</span>
-    </a>
-    <a href="#repair" class="bottom-nav-item" data-page="repair">
-      <i class="fa-solid fa-screwdriver-wrench"></i>
-      <span>Repair</span>
-    </a>
-    <a href="#b2b" class="bottom-nav-item" data-page="b2b">
-      <i class="fa-solid fa-briefcase"></i>
-      <span>B2B</span>
-    </a>
-    <button class="bottom-nav-item" id="bottom-menu-toggle" type="button">
-      <i class="fa-solid fa-bars"></i>
-      <span>Menu</span>
-    </button>
+    <a href="#home" class="bottom-nav-item active" data-page="home"><i class="fa-solid fa-house"></i><span>Home</span></a>
+    <a href="#shop" class="bottom-nav-item" data-page="shop"><i class="fa-solid fa-store"></i><span>Shop</span></a>
+    <a href="#repair" class="bottom-nav-item" data-page="repair"><i class="fa-solid fa-screwdriver-wrench"></i><span>Repair</span></a>
+    <a href="#b2b" class="bottom-nav-item" data-page="b2b"><i class="fa-solid fa-briefcase"></i><span>B2B</span></a>
+    <button class="bottom-nav-item" id="bottom-menu-toggle" type="button"><i class="fa-solid fa-bars"></i><span>Menu</span></button>
   </nav>
 </body>
 </html>
-
