@@ -13,11 +13,15 @@
   <meta name="keywords" content="phone repair, computer repair, tablet repair, screen repair, battery replacement, tech repair Ohio, Xenia repair, Dayton repair, B2B IT support, game console repair" />
   <meta name="author" content="Austin's Tech Repair Group LLC" />
   <meta name="robots" content="index, follow" />
+  
+  <!-- Canonical Tag -->
+  <link rel="canonical" href="https://austinstechrepairgroup.com/" />
+
   <!-- Open Graph -->
   <meta property="og:type" content="website" />
   <meta property="og:title" content="Austin's Tech Repair Group LLC | Expert Device Repair in Ohio" />
   <meta property="og:description" content="Same-day repairs for phones, computers, tablets, gaming, and more. 1-year warranty. Mobile service available. Serving Xenia, Dayton, and Southeastern Ohio." />
-  <meta property="og:url" content="https://austinstechrepairgroup.com/#home/" />
+  <meta property="og:url" content="https://austinstechrepairgroup.com/" />
   <meta property="og:image" content="https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?auto=format&fit=crop&w=1200&q=80" />
 
   <!-- Twitter Card -->
@@ -42,7 +46,7 @@
     "areaServed": "Xenia, Dayton, and Southeastern Ohio",
     "priceRange": "$$",
     "openingHours": "Mo-Sa 08:00-17:00",
-    "url": "https://austinstechrepairgroup.com/#home",
+    "url": "https://austinstechrepairgroup.com/",
     "sameAs": [
       "https://maps.app.goo.gl/JDzEADFMWRfU4DKB6",
       "https://www.yelp.com/biz/austin-s-tech-repair-group-dayton-3"
@@ -56,7 +60,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700;1,800;1,900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
   <link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@400,500,700,800&display=swap" rel="stylesheet" />
 
- 
   <!-- Styles -->
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="portal.css" />
@@ -87,22 +90,24 @@
       <a class="nav-link" href="#employee" data-page="employee">Portal</a>
     </nav>
 
-<div class="header-actions">
-  <button class="icon-btn" id="cart-toggle" type="button" aria-label="Shopping cart" aria-haspopup="dialog" aria-expanded="false">
-    <svg class="cart-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <circle cx="8" cy="21" r="1"></circle>
-      <circle cx="19" cy="21" r="1"></circle>
-      <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
-    </svg>
-    <span id="cart-badge" class="cart-badge">0</span>
-  </button>
-</div>
-
-
+    <div class="header-actions">
+      <button class="icon-btn" id="cart-toggle" type="button" aria-label="Shopping cart" aria-haspopup="dialog" aria-expanded="false">
+        <svg class="cart-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="8" cy="21" r="1"></circle>
+          <circle cx="19" cy="21" r="1"></circle>
+          <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
+          <!-- X slicing into an equal sign overlay -->
+          <line x1="9" y1="9" x2="15" y2="15"></line>
+          <line x1="15" y1="9" x2="9" y2="15"></line>
+          <line x1="8" y1="18" x2="16" y2="18"></line>
+        </svg>
+        <span id="cart-badge" class="cart-badge">0</span>
+      </button>
+    </div>
   </header>
 
   <!-- ============================================ MOBILE MENU ============================================ -->
-<nav class="mobile-menu" id="mobile-menu" aria-hidden="true">
+  <nav class="mobile-menu" id="mobile-menu" aria-hidden="true">
     <div class="menu-panel" role="dialog" aria-modal="true" aria-labelledby="menu-title">
       <button class="menu-close" id="menu-close" type="button" aria-label="Close menu"><i class="fas fa-times"></i></button>
       <p id="menu-title" class="eyebrow">Navigation</p>
@@ -123,6 +128,7 @@
     </div>
   </nav>
 
+  <main>
     <!-- ===================== HOME PAGE ===================== -->
     <section id="home" class="page active">
       <center>
@@ -134,117 +140,119 @@
           <p class="eyebrow">Austin's Tech Repair Group</p>
           <h1 class="hero-headline">We Bring The Service <em>To You.</em> Local Repair & Support.</h1>
           <p class="hero-sub">Professional repairs, tuneups, setups, B2B IT support, and services built around what your devices actually need — backed by a 1-year warranty.</p>
-<div class="hero-cta-group">
+          <div class="hero-cta-group">
             <a class="btn btn-primary btn-lg" href="https://form.jotform.com/261955946010055" role="button"><i class="fas fa-wrench"></i> Schedule Your Appointment</a>
             <a class="btn btn-dark btn-lg" href="tel:5134788077"><i class="fas fa-phone"></i> Call Now</a>
-            <a class="btn btn-light btn-lg" href="https://austinstechrepairgroup.com/#atr-one"
-            role="button"><i class="fas fa-star"></i> ATR One</a>
+            <a class="btn btn-light btn-lg" href="https://austinstechrepairgroup.com/#atr-one" role="button"><i class="fas fa-star"></i> ATR One</a>
           </div>
-          
-          
+        </div>
+      </div>
 
       <!-- Trust Bar -->
-   
-        <div class="trust-bar">
+      <div class="trust-bar">
         <div class="trust-item"><i class="fas fa-shield-halved"></i> 1-Year Warranty</div>
         <div class="trust-item"><i class="fas fa-bolt"></i> Same-Day Service on most services</div>
         <div class="trust-item"><i class="fas fa-truck"></i> We Come To You</div>
         <div class="trust-item"><i class="fas fa-star"></i> 10+ Years Of customer service Experience</div>
         <div class="trust-item"><i class="fas fa-hand-holding-dollar"></i> Free Diagnostics</div>
       </div>
-   
-   
 
       <!-- Service Categories -->
-
       <div class="container">
         <div class="section-header reveal"> 
           <p class="eyebrow">Examples of devices We Fix</p>
           <h2 class="section-title">Expert Repair for Every Device</h2>
           <p class="section-copy">From cracked screens to complex motherboard diagnostics, we handle it all. Tap any card to see what we cover.</p>
         </div>
-<br>
+        <br>
         <div class="service-grid">
           <button class="service-card flip-card reveal" type="button" data-device="Phones">
             <div class="flip-card-inner">
               <div class="flip-card-face flip-card-front">
+                <h4>Phones</h4>
+              </div>
               <div class="flip-card-face flip-card-back">
                 <h4>Phones</h4>
                 <p>Cracked screens, battery swaps, charging port repair, camera issues, speaker/mic fixes, water damage recovery, software troubleshooting, and fast data transfer.</p>
               </div>
             </div>
           </button>
-<br>
+          <br>
           <button class="service-card flip-card reveal reveal-delay-1" type="button" data-device="Tablets">
             <div class="flip-card-inner">
               <div class="flip-card-face flip-card-front">
+                <h4>Tablets</h4>
+              </div>
               <div class="flip-card-face flip-card-back">
                 <h4>Tablets</h4>
                 <p>Display replacement, charging port repair, touch troubleshooting, battery service, camera fixes, and full software setup support.</p>
               </div>
             </div>
           </button>
-<br>
+          <br>
           <button class="service-card flip-card reveal reveal-delay-2" type="button" data-device="Computers">
             <div class="flip-card-inner">
               <div class="flip-card-face flip-card-front">
+                <h4>Computers</h4>
+              </div>
               <div class="flip-card-face flip-card-back">
                 <h4>Computers</h4>
                 <p>SSD upgrades, RAM installs, virus cleanup, display repair, power issues, DC jack repair, software recovery, and data rescue.</p>
               </div>
             </div>
           </button>
-<br>
+          <br>
           <button class="service-card flip-card reveal reveal-delay-3" type="button" data-device="Gaming">
             <div class="flip-card-inner">   
               <div class="flip-card-face flip-card-front">
+                <h4>Gaming</h4>
+              </div>
               <div class="flip-card-face flip-card-back">
                 <h4>Gaming</h4>
                 <p>Console HDMI port repair, cooling fan replacement, storage upgrades, power fault diagnostics, controller fixes, and overheating solutions.</p>
               </div>
             </div>
           </button>
-<br>
+          <br>
           <button class="service-card flip-card reveal" type="button" data-device="Smart Watches">
             <div class="flip-card-inner">
               <div class="flip-card-face flip-card-front">
+                <h4>Smart Watches</h4>
+              </div>
               <div class="flip-card-face flip-card-back">
                 <h4>Smart Watches</h4>
                 <p>Battery service, display replacement, charging issues, pairing fixes, syncing support, and button or crown repairs.</p>
               </div>
             </div>
           </button>
-<br>
-             <button class="service-card flip-card reveal" type="button" data-device="Smart Watches">
+          <br>
+          <button class="service-card flip-card reveal" type="button" data-device="Accessories">
             <div class="flip-card-inner">
               <div class="flip-card-face flip-card-front">
+                <h4>Shop Accessories & ATR One</h4>
+              </div>
               <div class="flip-card-face flip-card-back">
-                <h4>Shop Accessoiries and ATR One</h4>
-                <p>Shop Parts & Accessories
-Cases, screen protectors, chargers, and gear — checkout with Square or Shopify Subscribe to ATR One Here.</p>
+                <h4>Shop Accessories & ATR One</h4>
+                <p>Shop Parts & Accessories: Cases, screen protectors, chargers, and gear — checkout with Square or Shopify. Subscribe to ATR One Here.</p>
               </div>
             </div>
           </button>
-<br>
-            <button class="service-card flip-card reveal" type="button" data-device="Smart Watches">
+          <br>
+          <button class="service-card flip-card reveal" type="button" data-device="Business Services">
             <div class="flip-card-inner">
               <div class="flip-card-face flip-card-front">
+                <h4>Business Services</h4>
+              </div>
               <div class="flip-card-face flip-card-back">
-                <h4>Smart Watches</h4>
-                <p>Battery service, display replacement, charging issues, pairing fixes, syncing support, and button or crown repairs.</p>
+                <h4>Business Services</h4>
+                <p>Printers, setup, remote support, mass imaging, schools, offices, battery service, display replacement, charging issues, pairing fixes, syncing support, and hardware maintenance.</p>
               </div>
             </div>
           </button>
-<br>    <button class="service-card flip-card reveal" type="button" data-device="Smart Watches">
-            <div class="flip-card-inner">
-              <div class="flip-card-face flip-card-front">
-              <div class="flip-card-face flip-card-back">
-                <h4>Bussiness Services</h4>
-                <p>Printers, Setup ,remote support mass imaging , schools, offices,Battery service, display replacement, charging issues, pairing fixes, syncing support, and button or crown repairs.</p>
-              </div>
-            </div>
-          </button>
-<br>
+          <br>
+        </div>
+      </div>
+
       <!-- How It Works -->
       <div class="process-section" style="padding: var(--space-16) var(--space-5);">
         <div class="container">
@@ -409,7 +417,7 @@ Cases, screen protectors, chargers, and gear — checkout with Square or Shopify
       </div>
     </section>
 
-     <!-- ===================== REPAIR PAGE ===================== -->
+    <!-- ===================== REPAIR PAGE ===================== -->
     <section id="repair" class="page">
       <div class="container">
         <div class="section-header reveal">
@@ -561,171 +569,158 @@ Cases, screen protectors, chargers, and gear — checkout with Square or Shopify
     </section>
 
     <!-- ===================== ABOUT PAGE ===================== -->
-          <center>
     <section id="about" class="page">
-      <div class="about-hero">
-        <p class="eyebrow" style="color: var(--accent-blue);">About Us</p>
-        <h2 class="about-title">Built to keep tech simple.</h2>
-      </div>
-      <div class="container about-body">
-        <p class="reveal"><strong>Austin's Tech Repair Group</strong> is built around practical repairs, clear communication, and fast support for home and business customers across the Miami Valley and Southeastern Ohio.</p>
-        <p class="reveal">Since 2010, we've handled phone, tablet, computer, gaming, and smart watch support, plus ongoing B2B and managed IT services. We're an independent repair provider — not affiliated with or endorsed by any manufacturer — but we use quality parts and back every repair with a 1-year warranty.</p>
-        <p class="reveal">We bring the service to you. Whether it's a cracked screen, a dead laptop, or your entire office network, our team responds fast and communicates clearly from diagnosis to pickup.</p>
-
-        <div class="about-stats reveal">
-          <div class="about-stat"><strong>15+</strong><span>Years in Business</span></div>
-          <div class="about-stat"><strong>10k+</strong><span>Devices Repaired</span></div>
-          <div class="about-stat"><strong>1yr</strong><span>Warranty on Repairs</span></div>
-          <div class="about-stat"><strong>Same Day</strong><span>Service Available</span></div>
+      <center>
+        <div class="about-hero">
+          <p class="eyebrow" style="color: var(--accent-blue);">About Us</p>
+          <h2 class="about-title">Built to keep tech simple.</h2>
         </div>
+        <div class="container about-body">
+          <p class="reveal"><strong>Austin's Tech Repair Group</strong> is built around practical repairs, clear communication, and fast support for home and business customers across the Miami Valley and Southeastern Ohio.</p>
+          <p class="reveal">Since 2010, we've handled phone, tablet, computer, gaming, and smart watch support, plus ongoing B2B and managed IT services. We're an independent repair provider — not affiliated with or endorsed by any manufacturer — but we use quality parts and back every repair with a 1-year warranty.</p>
+          <p class="reveal">We bring the service to you. Whether it's a cracked screen, a dead laptop, or your entire office network, our team responds fast and communicates clearly from diagnosis to pickup.</p>
 
-        <!-- Service Area -->
-        <center>
-        <div class="reveal" style="margin-top: var(--space-12);">
-          <div class="section-header" style="text-align: left; align-items: flex-start;">
-            <p class="eyebrow">Service Area</p>
-            <h3 class="section-title" style="font-size: var(--text-xl);">Where We Serve</h3>
+          <div class="about-stats reveal">
+            <div class="about-stat"><strong>15+</strong><span>Years in Business</span></div>
+            <div class="about-stat"><strong>10k+</strong><span>Devices Repaired</span></div>
+            <div class="about-stat"><strong>1yr</strong><span>Warranty on Repairs</span></div>
+            <div class="about-stat"><strong>Same Day</strong><span>Service Available</span></div>
           </div>
-          <div class="service-area-grid">
-            <div class="area-map-placeholder">
-              <div style="text-align: center;">
-                <i class="fas fa-map-location-dot" style="font-size: 3rem; color: var(--primary); margin-bottom: var(--space-3);"></i>
-                <p>Mobile service throughout the Miami Valley</p>
-              </div>
+
+          <!-- Service Area -->
+          <div class="reveal" style="margin-top: var(--space-12);">
+            <div class="section-header" style="text-align: left; align-items: flex-start;">
+              <p class="eyebrow">Service Area</p>
+              <h3 class="section-title" style="font-size: var(--text-xl);">Where We Serve</h3>
             </div>
-            <ul class="area-list" role="list">
-              <li><i class="fas fa-location-dot"></i> Xenia, OH</li>
-              <li><i class="fas fa-location-dot"></i> Dayton, OH</li>
-              <li><i class="fas fa-location-dot"></i> Beavercreek, OH</li>
-              <li><i class="fas fa-location-dot"></i> Kettering, OH</li>
-              <li><i class="fas fa-location-dot"></i> Centerville, OH</li>
-              <li><i class="fas fa-location-dot"></i> Springboro, OH</li>
-              <li><i class="fas fa-location-dot"></i> Wilmington, OH</li>
-              <li><i class="fas fa-location-dot"></i> And surrounding Southeastern Ohio areas</li>
-            </ul>
+            <div class="service-area-grid">
+              <div class="area-map-placeholder">
+                <div style="text-align: center;">
+                  <i class="fas fa-map-location-dot" style="font-size: 3rem; color: var(--primary); margin-bottom: var(--space-3);"></i>
+                  <p>Mobile service throughout the Miami Valley</p>
+                </div>
+              </div>
+              <ul class="area-list" role="list">
+                <li><i class="fas fa-location-dot"></i> Xenia, OH</li>
+                <li><i class="fas fa-location-dot"></i> Dayton, OH</li>
+                <li><i class="fas fa-location-dot"></i> Beavercreek, OH</li>
+                <li><i class="fas fa-location-dot"></i> Kettering, OH</li>
+                <li><i class="fas fa-location-dot"></i> Centerville, OH</li>
+                <li><i class="fas fa-location-dot"></i> Springboro, OH</li>
+                <li><i class="fas fa-location-dot"></i> Wilmington, OH</li>
+                <li><i class="fas fa-location-dot"></i> And surrounding Southeastern Ohio areas</li>
+              </ul>
+            </div>
           </div>
         </div>
-      </div>
+      </center>
     </section>
-          </center>
+
     <!-- ===================== CONTACT PAGE ===================== -->
-          <center>
     <section id="contact" class="page">
-      <div class="container">
-        <div class="section-header reveal">
-          <p class="eyebrow">Get in Touch</p>
-          <h2 class="section-title">Contact Us</h2>
-          <p class="section-copy">Have a question, need a quote, or want to send photos of your device damage? Drop us a message below or call us directly.</p>
-        </div>
-
-        <!-- Contact Options -->
-        <div class="reveal" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4); margin-bottom: var(--space-8); max-width: 800px; margin-left: auto; margin-right: auto;">
-          <a class="card" href="tel:5134788077" style="text-align: center; text-decoration: none;">
-            <i class="fas fa-phone" style="font-size: var(--text-xl); color: var(--primary); margin-bottom: var(--space-2);"></i>
-            <h4 style="margin-bottom: var(--space-1);">Call</h4>
-            <p style="font-size: var(--text-sm); color: var(--text-muted); margin: 0;">513-478-8077</p>
-          </a>
-          <a class="card" href="sms:5134788077" style="text-align: center; text-decoration: none;">
-            <i class="fas fa-comment-sms" style="font-size: var(--text-xl); color: var(--primary); margin-bottom: var(--space-2);"></i>
-            <h4 style="margin-bottom: var(--space-1);">Text</h4>
-            <p style="font-size: var(--text-sm); color: var(--text-muted); margin: 0;">Send a message</p>
-          </a>
-          <div class="card" style="text-align: center;">
-            <i class="fas fa-clock" style="font-size: var(--text-xl); color: var(--primary); margin-bottom: var(--space-2);"></i>
-            <h4 style="margin-bottom: var(--space-1);">Hours</h4>
-            <p style="font-size: var(--text-sm); color: var(--text-muted); margin: 0;">Monday	5:30 AM–10 PM Tuesday	5:30 AM–10 PM
-Wednesday	5:30 AM–10 PM
-Thursday	5:30 AM–10 PM
-Friday	5:30 AM–10 PM
-Saturday	8:30 AM–10 PM
-Sunday	9 AM–5 PM
-
- </p>
-       
+      <center>
+        <div class="container">
+          <div class="section-header reveal">
+            <p class="eyebrow">Get in Touch</p>
+            <h2 class="section-title">Contact Us</h2>
+            <p class="section-copy">Have a question, need a quote, or want to send photos of your device damage? Drop us a message below or call us directly.</p>
           </div>
-          
+
+          <!-- Contact Options -->
+          <div class="reveal" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4); margin-bottom: var(--space-8); max-width: 800px; margin-left: auto; margin-right: auto;">
+            <a class="card" href="tel:5134788077" style="text-align: center; text-decoration: none;">
+              <i class="fas fa-phone" style="font-size: var(--text-xl); color: var(--primary); margin-bottom: var(--space-2);"></i>
+              <h4 style="margin-bottom: var(--space-1);">Call</h4>
+              <p style="font-size: var(--text-sm); color: var(--text-muted); margin: 0;">513-478-8077</p>
+            </a>
+            <a class="card" href="sms:5134788077" style="text-align: center; text-decoration: none;">
+              <i class="fas fa-comment-sms" style="font-size: var(--text-xl); color: var(--primary); margin-bottom: var(--space-2);"></i>
+              <h4 style="margin-bottom: var(--space-1);">Text</h4>
+              <p style="font-size: var(--text-sm); color: var(--text-muted); margin: 0;">Send a message</p>
+            </a>
+            <div class="card" style="text-align: center;">
+              <i class="fas fa-clock" style="font-size: var(--text-xl); color: var(--primary); margin-bottom: var(--space-2);"></i>
+              <h4 style="margin-bottom: var(--space-1);">Hours</h4>
+              <p style="font-size: var(--text-sm); color: var(--text-muted); margin: 0; white-space: pre-line;">Monday 5:30 AM–10 PM
+Tuesday 5:30 AM–10 PM
+Wednesday 5:30 AM–10 PM
+Thursday 5:30 AM–10 PM
+Friday 5:30 AM–10 PM
+Saturday 8:30 AM–10 PM
+Sunday 9 AM–5 PM</p>
+            </div>
+          </div>
+        
+          <!-- JotForm Contact Form -->
+          <div class="reveal repair-card jotform-wrap" style="max-width: 100%; width: 100%; box-sizing: border-box;">
+            <h3 style="font-size: var(--text-lg); font-weight: 800; margin-bottom: var(--space-4);">Send a Message</h3>
+
+            <iframe
+              id="JotFormIFrame-261955946010055"
+              title="Send a Message"
+              onload="window.parent.scrollTo(0,0)"
+              allowtransparency="true"
+              allow="geolocation; microphone; camera; fullscreen"
+              src="https://form.jotform.com/261955946010055"
+              frameborder="0"
+              style="width: 100%; min-width: 100%; max-width: 100%; height: 539px; border: none; display: block;"
+              scrolling="no">
+            </iframe>
+
+            <script src="https://cdn.jotfor.ms/s/umd/latest/for-form-embed-handler.js"></script>
+            <script>
+              if (window.jotformEmbedHandler) {
+                window.jotformEmbedHandler("iframe[id='JotFormIFrame-261955946010055']", "https://form.jotform.com");
+              }
+            </script>
+          </div>
         </div>
-      
-    
-<!-- JotForm Contact Form -->
-<div class="reveal repair-card jotform-wrap" style="max-width: 100%; width: 100%; box-sizing: border-box;">
-  <h3 style="font-size: var(--text-lg); font-weight: 800; margin-bottom: var(--space-4);">Send a Message</h3>
-
-  <iframe
-    id="JotFormIFrame-261955946010055"
-    title="Send a Message"
-    onload="window.parent.scrollTo(0,0)"
-    allowtransparency="true"
-    allow="geolocation; microphone; camera; fullscreen"
-    src="https://form.jotform.com/261955946010055"
-    frameborder="0"
-    style="width: 100%; min-width: 100%; max-width: 100%; height: 539px; border: none; display: block;"
-    scrolling="no">
-  </iframe>
-
-  <script src="https://cdn.jotfor.ms/s/umd/latest/for-form-embed-handler.js"></script>
-  <script>
-    if (window.jotformEmbedHandler) {
-      window.jotformEmbedHandler("iframe[id='JotFormIFrame-261955946010055']", "https://form.jotform.com");
-    }
-  </script>
-</div>
-</div>
+      </center>
     </section>
-          </center>
 
     <!-- ===================== B2B PAGE ===================== -->
-          <center>
     <section id="b2b" class="page">
-      <div class="b2b-hero">
-        <p class="eyebrow" style="color: var(--accent-blue);">Business Solutions</p>
-        <h2 class="about-title">B2B & Managed IT Services</h2>
-        <p style="max-width: 560px; margin-top: var(--space-4); color: rgba(255, 255, 255, 0.6);">Complete technology support for offices, shops, and local teams across the Miami Valley.</p>
-      </div>
-<div class="services-container">
-  
-  <div class="service-card">
-    <h3>Networking</h3>
-    <p>Wi-Fi, switches, routers, VLANs, and complete network setup</p>
-  </div>
-
-  <div class="service-card">
-    <h3>Servers</h3>
-    <p>Storage, backups, virtualization, and infrastructure management</p>
-  </div>
-
-  <div class="service-card">
-    <h3>Cloud Services</h3>
-    <p>Microsoft 365, Google Workspace, account management, app migration</p>
-  </div>
-
-  <div class="service-card">
-    <h3>Helpdesk</h3>
-    <p>End-user support, remote troubleshooting, and ticket management</p>
-  </div>
-
-  <div class="service-card">
-    <h3>Cybersecurity</h3>
-    <p>Threat assessment, firewall config, endpoint protection, training</p>
-  </div>
-
-  <div class="service-card">
-    <h3>Backup & Recovery</h3>
-    <p>Disaster recovery planning, automated backups, data restoration</p>
-  </div>
-
-  <div class="service-card">
-    <h3>VoIP & Phone Systems</h3>
-    <p>Setup, configuration, and ongoing support for business communications</p>
-  </div>
-
-  <div class="service-card">
-    <h3>Website Support</h3>
-    <p>Maintenance, updates, hosting, and development assistance</p>
-  </div>
-
-</div>
-
+      <center>
+        <div class="b2b-hero">
+          <p class="eyebrow" style="color: var(--accent-blue);">Business Solutions</p>
+          <h2 class="about-title">B2B & Managed IT Services</h2>
+          <p style="max-width: 560px; margin-top: var(--space-4); color: rgba(255, 255, 255, 0.6);">Complete technology support for offices, shops, and local teams across the Miami Valley.</p>
+        </div>
+        
+        <div class="services-container">
+          <div class="service-card">
+            <h3>Networking</h3>
+            <p>Wi-Fi, switches, routers, VLANs, and complete network setup</p>
+          </div>
+          <div class="service-card">
+            <h3>Servers</h3>
+            <p>Storage, backups, virtualization, and infrastructure management</p>
+          </div>
+          <div class="service-card">
+            <h3>Cloud Services</h3>
+            <p>Microsoft 365, Google Workspace, account management, app migration</p>
+          </div>
+          <div class="service-card">
+            <h3>Helpdesk</h3>
+            <p>End-user support, remote troubleshooting, and ticket management</p>
+          </div>
+          <div class="service-card">
+            <h3>Cybersecurity</h3>
+            <p>Threat assessment, firewall config, endpoint protection, training</p>
+          </div>
+          <div class="service-card">
+            <h3>Backup & Recovery</h3>
+            <p>Disaster recovery planning, automated backups, data restoration</p>
+          </div>
+          <div class="service-card">
+            <h3>VoIP & Phone Systems</h3>
+            <p>Setup, configuration, and ongoing support for business communications</p>
+          </div>
+          <div class="service-card">
+            <h3>Website Support</h3>
+            <p>Maintenance, updates, hosting, and development assistance</p>
+          </div>
+        </div>
 
         <div class="cta-section reveal">
           <h2>Need Managed IT for Your Business?</h2>
@@ -735,131 +730,101 @@ Sunday	9 AM–5 PM
             <a class="btn btn-light btn-lg" href="tel:5134788077"><i class="fas fa-phone"></i> 513-478-8077</a>
           </div>
         </div>
-      </div>
+      </center>
     </section>
-          </center>
+
     <!-- ===================== ATR ONE PAGE ===================== -->
-          <center>
     <section id="atr-one" class="page">
-      <div class="atr-one-hero">
-        <p class="eyebrow" style="justify-content: center;">ATR One Membership</p>
-        <h1 class="hero-headline" style="font-size: var(--text-3xl); margin-bottom: var(--space-4);"><em>Member.</em> Perks.</h1>
-        <p class="hero-sub" style="margin: 0 auto var(--space-8);">Your $19.99/month membership with priority benefits, discounted hardware service, and member-only support extras.</p>
+      <center>
+        <div class="atr-one-hero">
+          <p class="eyebrow" style="justify-content: center;">ATR One Membership</p>
+          <h1 class="hero-headline" style="font-size: var(--text-3xl); margin-bottom: var(--space-4);"><em>Member.</em> Perks.</h1>
+          <p class="hero-sub" style="margin: 0 auto var(--space-8);">Your $19.99/month membership with priority benefits, discounted hardware service, and member-only support extras.</p>
 
-        <div class="atr-one-card reveal">
-          <p class="eyebrow" style="color: var(--accent-blue); justify-content: center;">Monthly Plan</p>
-          <p class="atr-one-price">$19.99 <span>/month</span></p>
-          <p style="color: rgba(255, 255, 255, 0.5); margin-bottom: var(--space-5); font-size: var(--text-sm);">Cancel anytime. No long-term contracts.</p>
-          <button class="btn btn-primary btn-lg btn-block" type="button" data-add-cart='{"id":"atr-one-sub","name":"ATR One Membership","price":19.99,"category":"Subscription","image":"https://images.unsplash.com/photo-1526406915894-7bcd65f60845?auto=format&fit=crop&w=900&q=80"}'><i class="fas fa-star"></i> Join ATR One</button>
-        </div>
-      </div>
-
-      <div class="container">
-        <!-- Benefits Grid -->
-        <div class="section-header reveal">
-          <p class="eyebrow">Member Benefits</p>
-          <h2 class="section-title">Everything Included</h2>
-        </div>
-        <div class="service-grid" style="margin-bottom: var(--space-8);">
-          <div class="service-card dark feature reveal"><div class="service-icon"><i class="fas fa-shield-heart"></i></div><p class="service-label">Free Screen Protectors</p><p class="service-sub">Included on all repaired devices for active members</p></div>
-          <div class="service-card dark feature reveal reveal-delay-1"><div class="service-icon"><i class="fas fa-broom"></i></div><p class="service-label">Free Device Cleaning</p><p class="service-sub">Cleaning and basic refresh on any visit</p></div>
-          <div class="service-card dark feature reveal reveal-delay-2"><div class="service-icon"><i class="fas fa-bolt"></i></div><p class="service-label">Priority Service</p><p class="service-sub">Skip the queue, get serviced first</p></div>
-          <div class="service-card dark feature reveal reveal-delay-3"><div class="service-icon"><i class="fas fa-clock"></i></div><p class="service-label">Same-Day Repair</p><p class="service-sub">When parts and schedule allow</p></div>
-          <div class="service-card dark feature reveal"><div class="service-icon"><i class="fas fa-tags"></i></div><p class="service-label">20% Off Hardware Repair</p><p class="service-sub">Savings on eligible hardware labor</p></div>
-          <div class="service-card dark feature reveal reveal-delay-1"><div class="service-icon"><i class="fas fa-truck-fast"></i></div><p class="service-label">Priority Shipping</p><p class="service-sub">Faster shipping on all orders and parts</p></div>
+          <div class="atr-one-card reveal">
+            <p class="eyebrow" style="color: var(--accent-blue); justify-content: center;">Monthly Plan</p>
+            <p class="atr-one-price">$19.99 <span>/month</span></p>
+            <p style="color: rgba(255, 255, 255, 0.5); margin-bottom: var(--space-5); font-size: var(--text-sm);">Cancel anytime. No long-term contracts.</p>
+            <button class="btn btn-primary btn-lg btn-block" type="button" data-add-cart='{"id":"atr-one-sub","name":"ATR One Membership","price":19.99,"category":"Subscription","image":"https://images.unsplash.com/photo-1526406915894-7bcd65f60845?auto=format&fit=crop&w=900&q=80"}'><i class="fas fa-star"></i> Join ATR One</button>
+          </div>
         </div>
 
-        <!-- Comparison Table -->
-        <div class="reveal" style="overflow-x: auto;">
-          <table class="comparison-table">
-            <thead><tr><th>Feature</th><th>Non-Member</th><th>ATR One Member</th></tr></thead>
-            <tbody>
-              <tr><td>Screen Protector on Repairs</td><td><i class="fas fa-times cross"></i></td><td><i class="fas fa-check check"></i> Free</td></tr>
-              <tr><td>Device Cleaning</td><td><i class="fas fa-times cross"></i></td><td><i class="fas fa-check check"></i> Free</td></tr>
-              <tr><td>Hardware Repair Discount</td><td>Standard pricing</td><td><i class="fas fa-check check"></i> 20% off</td></tr>
-              <tr><td>Service Queue Priority</td><td>Standard</td><td><i class="fas fa-check check"></i> Priority</td></tr>
-              <tr><td>Same-Day Service</td><td>When available</td><td><i class="fas fa-check check"></i> Guaranteed priority</td></tr>
-              <tr><td>Shipping Priority</td><td>Standard</td><td><i class="fas fa-check check"></i> Priority</td></tr>
-              <tr><td>Monthly Cost</td><td>—</td><td>$19.99</td></tr>
-            </tbody>
-          </table>
+        <div class="container">
+          <!-- Benefits Grid -->
+          <div class="section-header reveal">
+            <p class="eyebrow">Member Benefits</p>
+            <h2 class="section-title">Everything Included</h2>
+          </div>
+          <div class="service-grid" style="margin-bottom: var(--space-8);">
+            <div class="service-card dark feature reveal"><div class="service-icon"><i class="fas fa-shield-heart"></i></div><p class="service-label">Free Screen Protectors</p><p class="service-sub">Included on all repaired devices for active members</p></div>
+            <div class="service-card dark feature reveal reveal-delay-1"><div class="service-icon"><i class="fas fa-broom"></i></div><p class="service-label">Free Device Cleaning</p><p class="service-sub">Cleaning and basic refresh on any visit</p></div>
+            <div class="service-card dark feature reveal reveal-delay-2"><div class="service-icon"><i class="fas fa-bolt"></i></div><p class="service-label">Priority Service</p><p class="service-sub">Skip the queue, get serviced first</p></div>
+            <div class="service-card dark feature reveal reveal-delay-3"><div class="service-icon"><i class="fas fa-clock"></i></div><p class="service-label">Same-Day Repair</p><p class="service-sub">When parts and schedule allow</p></div>
+            <div class="service-card dark feature reveal"><div class="service-icon"><i class="fas fa-tags"></i></div><p class="service-label">20% Off Hardware Repair</p><p class="service-sub">Savings on eligible hardware labor</p></div>
+            <div class="service-card dark feature reveal reveal-delay-1"><div class="service-icon"><i class="fas fa-truck-fast"></i></div><p class="service-label">Priority Shipping</p><p class="service-sub">Faster shipping on all orders and parts</p></div>
+          </div>
+
+          <!-- Comparison Table -->
+          <div class="reveal" style="overflow-x: auto;">
+            <table class="comparison-table">
+              <thead><tr><th>Feature</th><th>Non-Member</th><th>ATR One Member</th></tr></thead>
+              <tbody>
+                <tr><td>Screen Protector on Repairs</td><td><i class="fas fa-times cross"></i></td><td><i class="fas fa-check check"></i> Free</td></tr>
+                <tr><td>Device Cleaning</td><td><i class="fas fa-times cross"></i></td><td><i class="fas fa-check check"></i> Free</td></tr>
+                <tr><td>Hardware Repair Discount</td><td>Standard pricing</td><td><i class="fas fa-check check"></i> 20% off</td></tr>
+                <tr><td>Service Queue Priority</td><td>Standard</td><td><i class="fas fa-check check"></i> Priority</td></tr>
+                <tr><td>Same-Day Service</td><td>When available</td><td><i class="fas fa-check check"></i> Guaranteed priority</td></tr>
+                <tr><td>Shipping Priority</td><td>Standard</td><td><i class="fas fa-check check"></i> Priority</td></tr>
+                <tr><td>Monthly Cost</td><td>—</td><td>$19.99</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- FAQ -->
+          <p class="eyebrow" style="margin-top: var(--space-12);">ATR One FAQ</p>
+          <h3 class="section-title" style="font-size: var(--text-xl);">Membership Questions</h3>
+
+          <div class="faq-list" style="max-width: 800px; margin: 0 auto; text-align: left;">
+            <!-- FAQ Item 1 -->
+            <div class="faq-item" style="border-bottom: 1px solid #eee; margin-bottom: 15px; transition: all 0.3s ease;">
+              <button class="faq-question" type="button" style="width: 100%; text-align: left; background: none; border: none; padding: 15px 0; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+                Can I cancel anytime? <i class="fas fa-chevron-down" style="transition: transform 0.3s ease;"></i>
+              </button>
+              <div class="faq-answer" style="max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.4s ease; padding: 0 15px;">
+                <div class="faq-answer-inner" style="padding-bottom: 15px;">
+                  Yes. ATR One is a month-to-month subscription with no long-term contract. Cancel anytime and your benefits continue until the end of your billing period.
+                </div>
+              </div>
+            </div>
+
+            <!-- FAQ Item 2 -->
+            <div class="faq-item" style="border-bottom: 1px solid #eee; margin-bottom: 15px; transition: all 0.3s ease;">
+              <button class="faq-question" type="button" style="width: 100%; text-align: left; background: none; border: none; padding: 15px 0; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+                Does the 20% discount apply to parts? <i class="fas fa-chevron-down" style="transition: transform 0.3s ease;"></i>
+              </button>
+              <div class="faq-answer" style="max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.4s ease; padding: 0 15px;">
+                <div class="faq-answer-inner" style="padding-bottom: 15px;">
+                  The 20% discount applies to hardware labor charges on eligible repairs. Parts costs are billed at standard pricing. We'll always provide a transparent quote before any work begins.
+                </div>
+              </div>
+            </div>
+
+            <!-- FAQ Item 3 -->
+            <div class="faq-item" style="border-bottom: 1px solid #eee; margin-bottom: 15px; transition: all 0.3s ease;">
+              <button class="faq-question" type="button" style="width: 100%; text-align: left; background: none; border: none; padding: 15px 0; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+                Is this available for business customers? <i class="fas fa-chevron-down" style="transition: transform 0.3s ease;"></i>
+              </button>
+              <div class="faq-answer" style="max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.4s ease; padding: 0 15px;">
+                <div class="faq-answer-inner" style="padding-bottom: 15px;">
+                  Yes. B2B customers can enroll in ATR One for their business devices. For multi-device or fleet management, contact us about custom B2B plans.
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+      </center>
+    </section>
 
-     <!-- FAQ -->
-<p class="eyebrow">ATR One FAQ</p>
-<h3 class="section-title" style="font-size: var(--text-xl);">Membership Questions</h3>
-
-<div class="faq-list">
-  <!-- FAQ Item 1 -->
-  <div class="faq-item" style="border-bottom: 1px solid #eee; margin-bottom: 15px; transition: all 0.3s ease;">
-    <button class="faq-question" type="button" style="width: 100%; text-align: left; background: none; border: none; padding: 15px 0; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
-      Can I cancel anytime? <i class="fas fa-chevron-down" style="transition: transform 0.3s ease;"></i>
-    </button>
-    <!-- faq-answer starts max-height: 0 and overflow: hidden to stay collapsed by default -->
-    <div class="faq-answer" style="max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.4s ease; padding: 0 15px;">
-      <div class="faq-answer-inner" style="padding-bottom: 15px;">
-        Yes. ATR One is a month-to-month subscription with no long-term contract. Cancel anytime and your benefits continue until the end of your billing period.
-      </div>
-    </div>
-  </div>
-
-  <!-- FAQ Item 2 -->
-  <div class="faq-item" style="border-bottom: 1px solid #eee; margin-bottom: 15px; transition: all 0.3s ease;">
-    <button class="faq-question" type="button" style="width: 100%; text-align: left; background: none; border: none; padding: 15px 0; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
-      Does the 20% discount apply to parts? <i class="fas fa-chevron-down" style="transition: transform 0.3s ease;"></i>
-    </button>
-    <div class="faq-answer" style="max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.4s ease; padding: 0 15px;">
-      <div class="faq-answer-inner" style="padding-bottom: 15px;">
-        The 20% discount applies to hardware labor charges on eligible repairs. Parts costs are billed at standard pricing. We'll always provide a transparent quote before any work begins.
-      </div>
-    </div>
-  </div>
-
-  <!-- FAQ Item 3 -->
-  <div class="faq-item" style="border-bottom: 1px solid #eee; margin-bottom: 15px; transition: all 0.3s ease;">
-    <button class="faq-question" type="button" style="width: 100%; text-align: left; background: none; border: none; padding: 15px 0; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
-      Is this available for business customers? <i class="fas fa-chevron-down" style="transition: transform 0.3s ease;"></i>
-    </button>
-    <div class="faq-answer" style="max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.4s ease; padding: 0 15px;">
-      <div class="faq-answer-inner" style="padding-bottom: 15px;">
-        Yes. B2B customers can enroll in ATR One for their business devices. For multi-device or fleet management, contact us about custom B2B plans.
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Scroll-Driven Expansion Script -->
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const faqItems = document.querySelectorAll(".faq-item");
-
-    const observerOptions = {
-      root: null,
-      rootMargin: "0px 0px -20% 0px", // Triggers slightly before the item enters the bottom of the viewport
-      threshold: 0.3 // Opens when 30% of the item is visible
-    };
-
-    const observer = new IntersectionObserver((entries, observer) => {
-      entries.forEach(entry => {
-        const answer = entry.target.querySelector(".faq-answer");
-        const icon = entry.target.querySelector(".fas.fa-chevron-down");
-
-        if (entry.isIntersecting) {
-          // Open on scroll into view
-          answer.style.maxHeight = answer.scrollHeight + "px";
-          if (icon) icon.style.transform = "rotate(180deg)";
-        } else {
-          // Collapse when scrolled away out of view
-          answer.style.maxHeight = "0px";
-          if (icon) icon.style.transform = "rotate(0deg)";
-        }
-      });
-    }, observerOptions);
-
-    faqItems.forEach(item => observer.observe(item));
-  });
-</script>
-          </center>
     <!-- ===================== EMPLOYEE PORTAL ===================== -->
     <section id="employee" class="page">
       <div id="loginView" class="login-wrap">
@@ -1459,7 +1424,7 @@ Sunday	9 AM–5 PM
         <div class="slide" style="background-image:url('https://images.unsplash.com/photo-1526406915894-7bcd65f60845?auto=format&fit=crop&w=1600&q=80')"></div>
         <div class="slide-overlay"></div>
         <div class="slide-caption">
-          <h3>Repairs We In Specislize</h3>
+          <h3>Repairs We Specialize In</h3>
           <p>Phones, laptop and desktop computers, tablets, gaming consoles, and smartwatches — handled so you can keep your day moving.</p>
         </div>
         <div class="slide-dots" id="slide-dots"></div>
@@ -1467,211 +1432,213 @@ Sunday	9 AM–5 PM
 
       <div style="height: var(--space-6);"></div>
 
-  <!-- Footer Section -->
-    <div class="footer-top">
-      <div class="footer-links-col">
-        <span class="footer-col-title">Navigate</span>
-        <a class="footer-link" href="https://austinstechrepairgroup.com/#home" data-page="home">Home</a>
-        <a class="footer-link" href="https://austinstechrepairgroup.com/#shop" data-page="shop">Shop</a>
-        <a class="footer-link" href="https://austinstechrepairgroup.com/#repair" data-page="repair">Repair</a>
-        <a class="footer-link" href="https://austinstechrepairgroup.com/#about" data-page="about">About</a>
-        <a class="footer-link" href="https://austinstechrepairgroup.com/#contact" data-page="contact">Contact</a>
-      </div>
-      <div class="footer-links-col">
-        <span class="footer-col-title">Services</span>
-        <a class="footer-link" href="https://austinstechrepairgroup.com/#b2b" data-page="b2b">B2B & Managed IT</a>
-        <a class="footer-link" href="https://austinstechrepairgroup.com/#atr-one" data-page="atr-one">ATR One Membership</a>
-        <a class="footer-link" href="https://austinstechrepairgroup.com/#employee" data-page="employee">Employee Portal</a>
-        <a class="footer-link" href="tel:5134788077">513-478-8077</a>
-      </div>
-      <div class="footer-links-col">
-        <span class="footer-col-title">Policies</span>
-        <a class="footer-link policy-trigger" href="#privacy" data-policy="privacy">Privacy Policy</a>
-        <a class="footer-link policy-trigger" href="#repair" data-policy="repair">Repair Service Agreement</a>
-        <a class="footer-link policy-trigger" href="#backup" data-policy="backup">Data Backup Waiver</a>
-        <a class="footer-link policy-trigger" href="#warranty-policy" data-policy="warranty-policy">1-Year Warranty Policy</a>
-        <a class="footer-link policy-trigger" href="#terms" data-policy="terms">Terms & Conditions</a>
-        <a class="footer-link policy-trigger" href="#website-terms" data-policy="website-terms">Website Terms of Use</a>
-      </div>
-      <div class="footer-links-col">
-        <span class="footer-col-title">Support Area</span>
-        <span class="footer-link">Xenia, Dayton & SE Ohio</span>
-        <span class="footer-link">Est. 2010</span>
-      </div>
-    </div>
-
-    <!-- Policy Modal Overlay & Pop-up Window -->
-    <div class="policy-modal" id="policy-modal" aria-hidden="true">
-      <div class="policy-modal-backdrop" id="policy-backdrop"></div>
-      <div class="policy-modal-panel" role="dialog" aria-modal="true" aria-labelledby="policy-title">
-        <button class="policy-close" id="policy-close" type="button" aria-label="Close policy window"><i class="fas fa-times"></i></button>
-        <h3 id="policy-title" class="policy-modal-title">Policy Title</h3>
-        <div class="policy-modal-body" id="policy-content">
-          <!-- Dynamic policy text loads here -->
+      <!-- Footer Section -->
+      <div class="footer-top">
+        <div class="footer-links-col">
+          <span class="footer-col-title">Navigate</span>
+          <a class="footer-link" href="https://austinstechrepairgroup.com/#home" data-page="home">Home</a>
+          <a class="footer-link" href="https://austinstechrepairgroup.com/#shop" data-page="shop">Shop</a>
+          <a class="footer-link" href="https://austinstechrepairgroup.com/#repair" data-page="repair">Repair</a>
+          <a class="footer-link" href="https://austinstechrepairgroup.com/#about" data-page="about">About</a>
+          <a class="footer-link" href="https://austinstechrepairgroup.com/#contact" data-page="contact">Contact</a>
+        </div>
+        <div class="footer-links-col">
+          <span class="footer-col-title">Services</span>
+          <a class="footer-link" href="https://austinstechrepairgroup.com/#b2b" data-page="b2b">B2B & Managed IT</a>
+          <a class="footer-link" href="https://austinstechrepairgroup.com/#atr-one" data-page="atr-one">ATR One Membership</a>
+          <a class="footer-link" href="https://austinstechrepairgroup.com/#employee" data-page="employee">Employee Portal</a>
+          <a class="footer-link" href="tel:5134788077">513-478-8077</a>
+        </div>
+        <div class="footer-links-col">
+          <span class="footer-col-title">Policies</span>
+          <a class="footer-link policy-trigger" href="#privacy" data-policy="privacy">Privacy Policy</a>
+          <a class="footer-link policy-trigger" href="#repair" data-policy="repair">Repair Service Agreement</a>
+          <a class="footer-link policy-trigger" href="#backup" data-policy="backup">Data Backup Waiver</a>
+          <a class="footer-link policy-trigger" href="#warranty-policy" data-policy="warranty-policy">1-Year Warranty Policy</a>
+          <a class="footer-link policy-trigger" href="#terms" data-policy="terms">Terms & Conditions</a>
+          <a class="footer-link policy-trigger" href="#website-terms" data-policy="website-terms">Website Terms of Use</a>
+        </div>
+        <div class="footer-links-col">
+          <span class="footer-col-title">Support Area</span>
+          <span class="footer-link">Xenia, Dayton & SE Ohio</span>
+          <span class="footer-link">Est. 2010</span>
         </div>
       </div>
-    </div>
 
-    <style>
-      /* Policy Modal Styling */
-      .policy-modal {
-        position: fixed;
-        inset: 0;
-        z-index: 2000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 1rem;
-        opacity: 0;
-        visibility: hidden;
-        transition: opacity 0.25s ease, visibility 0.25s ease;
-      }
-      .policy-modal.active {
-        opacity: 1;
-        visibility: visible;
-      }
-      .policy-modal-backdrop {
-        position: absolute;
-        inset: 0;
-        background: rgba(15, 23, 42, 0.75);
-      }
-      .policy-modal-panel {
-        position: relative;
-        background: #ffffff;
-        color: #334155;
-        width: 100%;
-        max-width: 650px;
-        max-height: 85vh;
-        border-radius: 0.75rem;
-        padding: 2rem;
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        display: flex;
-        flex-direction: column;
-        z-index: 2010;
-      }
-      .policy-close {
-        position: absolute;
-        top: 1rem;
-        right: 1rem;
-        background: #f1f5f9;
-        border: none;
-        width: 2.25rem;
-        height: 2.25rem;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        color: #0f172a;
-        font-size: 1rem;
-        transition: background 0.2s;
-      }
-      .policy-close:hover {
-        background: #e2e8f0;
-      }
-      .policy-modal-title {
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: #0f172a;
-        margin-bottom: 1rem;
-        padding-right: 2rem;
-      }
-      .policy-modal-body {
-        overflow-y: auto;
-        font-size: 0.95rem;
-        line-height: 1.6;
-        color: #475569;
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-      }
-    </style>
+      <!-- Policy Modal Overlay & Pop-up Window -->
+      <div class="policy-modal" id="policy-modal" aria-hidden="true">
+        <div class="policy-modal-backdrop" id="policy-backdrop"></div>
+        <div class="policy-modal-panel" role="dialog" aria-modal="true" aria-labelledby="policy-title">
+          <button class="policy-close" id="policy-close" type="button" aria-label="Close policy window"><i class="fas fa-times"></i></button>
+          <h3 id="policy-title" class="policy-modal-title">Policy Title</h3>
+          <div class="policy-modal-body" id="policy-content">
+            <!-- Dynamic policy text loads here -->
+          </div>
+        </div>
+      </div>
 
-    <script>
-      // Policy Content Dictionary
-      const policyData = {
-        "privacy": {
-          title: "Privacy Policy",
-          content: `<p>At Austin's Tech Repair Group LLC, we respect your privacy and are committed to protecting any personal information you provide when requesting a repair, buying accessories, or using our mobile services.</p>
-                    <p><strong>Information Collection:</strong> We collect contact details (name, phone number, email, address) and device specifications strictly required to process service orders and communicate repair status.</p>
-                    <p><strong>Data Security:</strong> Your payment details and personal files are handled securely. We never sell or share your personal data with third-party marketers.</p>`
-        },
-        "repair": {
-          title: "Repair Service Agreement",
-          content: `<p>By submitting a device for diagnostic or repair services to Austin's Tech Repair Group LLC, you authorize our technicians to perform necessary diagnostic tests and repairs.</p>
-                    <p><strong>Unclaimed Devices:</strong> Devices left unclaimed for over 60 days following notification of repair completion may be recycled or sold to cover storage costs, subject to local regulations.</p>
-                    <p><strong>Water Damage Disclaimer:</strong> Water-damaged devices can experience unpredictable component degradation post-repair; additional failures subsequent to initial intake are not the liability of Austin's Tech Repair Group LLC.</p>`
-        },
-        "backup": {
-          title: "Data Backup Waiver",
-          content: `<p>Data loss can occasionally occur during complex component-level diagnostics, software recovery, or hardware replacements (e.g., storage upgrades or OS troubleshooting).</p>
-                    <p><strong>Customer Responsibility:</strong> Customers are strongly advised to back up all vital data before handing over any device. Austin's Tech Repair Group LLC assumes no liability for lost data, photos, or documents.</p>`
-        },
-        "warranty-policy": {
-          title: "1-Year Warranty Policy",
-          content: `<p>All repairs performed by Austin's Tech Repair Group LLC are backed by our comprehensive <strong>1-Year Warranty</strong> covering parts and craftsmanship.</p>
-                    <p><strong>Coverage Exclusions:</strong> This warranty does not cover physical impact damage, subsequent liquid exposure, drops, or software issues introduced after the device has been returned to the customer.</p>`
-        },
-        "terms": {
-          title: "Terms & Conditions",
-          content: `<p>All services, product purchases through Square or Shopify, and membership plans (such as ATR One) provided by Austin's Tech Repair Group LLC are governed by these standard terms.</p>
-                    <p>Prices quoted online are estimated baselines; final binding pricing is confirmed post-diagnostic inspection before physical repair work commences.</p>`
-        },
-        "website-terms": {
-          title: "Website Terms of Use",
-          content: `<p>By accessing austinstechrepairgroup.com, you agree to comply with our web usage rules. All content, logos, and site architecture are the property of Austin's Tech Repair Group LLC.</p>
-                    <p>Unauthorized reproduction or scraping of text, branding, or media assets is strictly prohibited.</p>`
+      <style>
+        /* Policy Modal Styling */
+        .policy-modal {
+          position: fixed;
+          inset: 0;
+          z-index: 2000;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 1rem;
+          opacity: 0;
+          visibility: hidden;
+          transition: opacity 0.25s ease, visibility 0.25s ease;
         }
-      };
-
-      // Modal Controller Script
-      const modal = document.getElementById('policy-modal');
-      const modalBackdrop = document.getElementById('policy-backdrop');
-      const modalClose = document.getElementById('policy-close');
-      const modalTitle = document.getElementById('policy-title');
-      const modalContent = document.getElementById('policy-content');
-      const triggers = document.querySelectorAll('.policy-trigger');
-
-      function openPolicy(policyKey) {
-        const data = policyData[policyKey];
-        if (data) {
-          modalTitle.textContent = data.title;
-          modalContent.innerHTML = data.content;
-          modal.classList.add('active');
-          modal.setAttribute('aria-hidden', 'false');
-          document.body.style.overflow = 'hidden';
+        .policy-modal.active {
+          opacity: 1;
+          visibility: visible;
         }
-      }
+        .policy-modal-backdrop {
+          position: absolute;
+          inset: 0;
+          background: rgba(15, 23, 42, 0.75);
+        }
+        .policy-modal-panel {
+          position: relative;
+          background: #ffffff;
+          color: #334155;
+          width: 100%;
+          max-width: 650px;
+          max-height: 85vh;
+          border-radius: 0.75rem;
+          padding: 2rem;
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+          display: flex;
+          flex-direction: column;
+          z-index: 2010;
+        }
+        .policy-close {
+          position: absolute;
+          top: 1rem;
+          right: 1rem;
+          background: #f1f5f9;
+          border: none;
+          width: 2.25rem;
+          height: 2.25rem;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          color: #0f172a;
+          font-size: 1rem;
+          transition: background 0.2s;
+        }
+        .policy-close:hover {
+          background: #e2e8f0;
+        }
+        .policy-modal-title {
+          font-size: 1.25rem;
+          font-weight: 700;
+          color: #0f172a;
+          margin-bottom: 1rem;
+          padding-right: 2rem;
+        }
+        .policy-modal-body {
+          overflow-y: auto;
+          font-size: 0.95rem;
+          line-height: 1.6;
+          color: #475569;
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+        }
+      </style>
 
-      function closePolicy() {
-        modal.classList.remove('active');
-        modal.setAttribute('aria-hidden', 'true');
-        document.body.style.overflow = '';
-      }
+      <script>
+        // Policy Content Dictionary
+        const policyData = {
+          "privacy": {
+            title: "Privacy Policy",
+            content: `<p>At Austin's Tech Repair Group LLC, we respect your privacy and are committed to protecting any personal information you provide when requesting a repair, buying accessories, or using our mobile services.</p>
+                      <p><strong>Information Collection:</strong> We collect contact details (name, phone number, email, address) and device specifications strictly required to process service orders and communicate repair status.</p>
+                      <p><strong>Data Security:</strong> Your payment details and personal files are handled securely. We never sell or share your personal data with third-party marketers.</p>`
+          },
+          "repair": {
+            title: "Repair Service Agreement",
+            content: `<p>By submitting a device for diagnostic or repair services to Austin's Tech Repair Group LLC, you authorize our technicians to perform necessary diagnostic tests and repairs.</p>
+                      <p><strong>Unclaimed Devices:</strong> Devices left unclaimed for over 60 days following notification of repair completion may be recycled or sold to cover storage costs, subject to local regulations.</p>
+                      <p><strong>Water Damage Disclaimer:</strong> Water-damaged devices can experience unpredictable component degradation post-repair; additional failures subsequent to initial intake are not the liability of Austin's Tech Repair Group LLC.</p>`
+          },
+          "backup": {
+            title: "Data Backup Waiver",
+            content: `<p>Data loss can occasionally occur during complex component-level diagnostics, software recovery, or hardware replacements (e.g., storage upgrades or OS troubleshooting).</p>
+                      <p><strong>Customer Responsibility:</strong> Customers are strongly advised to back up all vital data before handing over any device. Austin's Tech Repair Group LLC assumes no liability for lost data, photos, or documents.</p>`
+          },
+          "warranty-policy": {
+            title: "1-Year Warranty Policy",
+            content: `<p>All repairs performed by Austin's Tech Repair Group LLC are backed by our comprehensive <strong>1-Year Warranty</strong> covering parts and craftsmanship.</p>
+                      <p><strong>Coverage Exclusions:</strong> This warranty does not cover physical impact damage, subsequent liquid exposure, drops, or software issues introduced after the device has been returned to the customer.</p>`
+          },
+          "terms": {
+            title: "Terms & Conditions",
+            content: `<p>All services, product purchases through Square or Shopify, and membership plans (such as ATR One) provided by Austin's Tech Repair Group LLC are governed by these standard terms.</p>
+                      <p>Prices quoted online are estimated baselines; final binding pricing is confirmed post-diagnostic inspection before physical repair work commences.</p>`
+          },
+          "website-terms": {
+            title: "Website Terms of Use",
+            content: `<p>By accessing austinstechrepairgroup.com, you agree to comply with our web usage rules. All content, logos, and site architecture are the property of Austin's Tech Repair Group LLC.</p>
+                      <p>Unauthorized reproduction or scraping of text, branding, or media assets is strictly prohibited.</p>`
+          }
+        };
 
-      triggers.forEach(trigger => {
-        trigger.addEventListener('click', (e) => {
-          e.preventDefault();
-          const policyKey = trigger.getAttribute('data-policy');
-          openPolicy(policyKey);
+        // Modal Controller Script
+        const modal = document.getElementById('policy-modal');
+        const modalBackdrop = document.getElementById('policy-backdrop');
+        const modalClose = document.getElementById('policy-close');
+        const modalTitle = document.getElementById('policy-title');
+        const modalContent = document.getElementById('policy-content');
+        const triggers = document.querySelectorAll('.policy-trigger');
+
+        function openPolicy(policyKey) {
+          const data = policyData[policyKey];
+          if (data) {
+            modalTitle.textContent = data.title;
+            modalContent.innerHTML = data.content;
+            modal.classList.add('active');
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+          }
+        }
+
+        function closePolicy() {
+          modal.classList.remove('active');
+          modal.setAttribute('aria-hidden', 'true');
+          document.body.style.overflow = '';
+        }
+
+        triggers.forEach(trigger => {
+          trigger.addEventListener('click', (e) => {
+            e.preventDefault();
+            const policyKey = trigger.getAttribute('data-policy');
+            openPolicy(policyKey);
+          });
         });
-      });
 
-      modalClose.addEventListener('click', closePolicy);
-      modalBackdrop.addEventListener('click', closePolicy);
+        modalClose.addEventListener('click', closePolicy);
+        modalBackdrop.addEventListener('click', closePolicy);
 
-      // Close modal on ESC key
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && modal.classList.contains('active')) {
-          closePolicy();
-        }
-      });
-    </script>
-     <center>
-          <a class="footer-link" href="https://maps.app.goo.gl/JDzEADFMWRfU4DKB6" target="_blank" rel="noopener"><i class="fab fa-google"></i> Google Review</a>
+        // Close modal on ESC key
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && modal.classList.contains('active')) {
+            closePolicy();
+          }
+        });
+      </script>
+      
+      <center>
+        <div style="margin-top: var(--space-4); margin-bottom: var(--space-6);">
+          <a class="footer-link" href="https://maps.app.goo.gl/JDzEADFMWRfU4DKB6" target="_blank" rel="noopener" style="margin-right: var(--space-4);"><i class="fab fa-google"></i> Google Review</a>
           <a class="footer-link" href="https://www.yelp.com/biz/austin-s-tech-repair-group-dayton-3" target="_blank" rel="noopener"><i class="fab fa-yelp"></i> Yelp Review</a>
         </div>
-      </div>
+      </center>
 
       <div class="footer-legal">
         <div class="legal-block">
@@ -1690,15 +1657,15 @@ Sunday	9 AM–5 PM
       </div>
     </div>
   </footer>
-    </center>
+
   <!-- ============================================ CART DRAWER ============================================ -->
   <section class="cart-drawer" id="cart-drawer" aria-hidden="true">
     <div class="cart-drawer__backdrop" id="cart-drawer-close"></div>
     <aside class="cart-drawer__panel" role="dialog" aria-modal="true" aria-label="Shopping cart">
       <div class="cart-drawer__header">
-        <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); width: 100%;">
           <h2 style="font-size: var(--text-lg); font-weight: 800; margin: 0; font-family: var(--font-display);">Your Cart</h2>
-          <button class="menu-close" id="cart-drawer-close-btn" type="button" aria-label="Close cart" style="position: static;"><i class="fas fa-times"></i></button>
+          <button id="cart-close" type="button" aria-label="Close cart" onclick="document.getElementById('cart-drawer').style.display='none'" style="background: none; border: none; cursor: pointer; padding: 8px; font-size: 1.25rem; line-height: 1;">✕</button>
         </div>
       </div>
       <div class="cart-drawer__items" id="cart-drawer-items"></div>
@@ -2150,3 +2117,4 @@ Sunday	9 AM–5 PM
   </nav>
 </body>
 </html>
+
