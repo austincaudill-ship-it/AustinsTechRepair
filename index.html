@@ -1553,6 +1553,57 @@
               <p style="font-size: 0.70rem; line-height: 1.4; max-width: 800px; color: #888;">Austin's Tech Repair Group LLC is an independent repair service. We are not affiliated with, endorsed by, or sponsored by Apple, Samsung, Sony, Microsoft, Nintendo, Google, HP, Dell, Asus, Lenovo, or any other manufacturer. All trademarks and brand names are the property of their respective owners. We operate solely as a third-party repair provider.</p>
             </div>
           </div>
+<!-- ============================================ ADD APP TO HOME SCREEN PROMPT BANNER ============================================ -->
+<div id="pwa-install-banner" class="fixed bottom-20 sm:bottom-6 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-lg bg-slate-900/95 backdrop-blur border border-sky-500/40 rounded-2xl p-4 sm:p-5 shadow-2xl shadow-sky-500/10 flex flex-col sm:flex-row items-center gap-4 transition-all duration-300" style="display: none;">
+    
+    <!-- Generated App Icon Graphic -->
+    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-sky-500 to-blue-700 flex-shrink-0 flex items-center justify-center shadow-md shadow-sky-500/20 relative">
+        <i class="fa-solid fa-mobile-screen-button text-white text-2xl"></i>
+        <div class="absolute -bottom-1 -right-1 bg-slate-950 text-sky-400 p-1 rounded-full border border-sky-500/40 text-[10px]">
+            <i class="fa-solid fa-plus"></i>
+        </div>
+    </div>
+
+    <!-- Banner Text Content -->
+    <div class="flex-grow text-center sm:text-left">
+        <h3 class="text-sm font-bold text-white mb-1">Add App to Home Screen</h3>
+        <p class="text-xs text-slate-400 leading-relaxed">
+            Get quick access to parts, repair quotes, and customer tools instantly from your device home screen!
+        </p>
+        <div class="mt-2 text-[11px] text-sky-400 font-medium flex items-center justify-center sm:justify-start gap-1.5">
+            <span>iPhone: Tap <i class="fa-solid fa-arrow-up-from-bracket inline"></i> then "Add to Home Screen"</span>
+        </div>
+        <div class="mt-0.5 text-[11px] text-sky-400 font-medium flex items-center justify-center sm:justify-start gap-1.5">
+            <span>Android: Tap Menu <i class="fa-solid fa-ellipsis-vertical inline"></i> then "Add to Home Screen"</span>
+        </div>
+    </div>
+
+    <!-- Dismiss Button -->
+    <button id="dismiss-pwa-banner" class="absolute top-3 right-3 sm:static p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
+        <i class="fa-solid fa-xmark"></i>
+    </button>
+</div>
+
+<script>
+    // --- PWA INSTALL BANNER & CART FIXES INTEGRATION SCRIPT ---
+    document.addEventListener('DOMContentLoaded', () => {
+        const pwaBanner = document.getElementById('pwa-install-banner');
+        const dismissBannerBtn = document.getElementById('dismiss-pwa-banner');
+
+        if (pwaBanner && !sessionStorage.getItem('pwa_banner_dismissed')) {
+            setTimeout(() => {
+                pwaBanner.style.display = 'flex';
+            }, 3000);
+        }
+
+        if (dismissBannerBtn && pwaBanner) {
+            dismissBannerBtn.addEventListener('click', () => {
+                pwaBanner.style.display = 'none';
+                sessionStorage.setItem('pwa_banner_dismissed', 'true');
+            });
+        }
+    });
+</script>
 
           <div class="footer-bottom" style="font-size: 0.75rem; margin-top: 12px; display: flex; justify-content: space-between; align-items: center;">
             <span class="footer-copy">Copyright 2026 © <strong>Austin's Tech Repair Group Sole Proprietorship</strong></span>
