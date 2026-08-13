@@ -53,7 +53,33 @@ I'm<!DOCTYPE html>
     ]
   }
   </script>
+<script>
+// Handle section switching based on URL hash on load and when hash changes
+function handleRoute() {
+  const hash = window.location.hash.substring(1); // gets 'repair', 'shop', 'home', etc.
+  if (!hash) return;
 
+  // Find the target page/section element
+  const targetElement = document.getElementById(hash) || document.querySelector(`[data-page="${hash}"]`);
+  
+  if (targetElement) {
+    // If you use a function to switch tabs/pages, call it here, for example:
+    // switchPage(hash);
+    
+    // Or if it's a simple display toggle:
+    document.querySelectorAll('.page-section').forEach(section => {
+      section.style.display = 'none';
+    });
+    targetElement.style.display = 'block';
+  }
+}
+
+// Run on initial load
+window.addEventListener('DOMContentLoaded', handleRoute);
+
+// Run when the hash changes (e.g. clicking bookmarks or back/forward buttons)
+window.addEventListener('hashchange', handleRoute);
+</script>
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
