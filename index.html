@@ -39,7 +39,7 @@
     "telephone": "+1-513-478-8077",
     "address": {
       "@type": "PostalAddress",
-      "addressLocality": "Xenia",
+      "addressLocality": "Spring Valley",
       "addressRegion": "OH",
       "addressCountry": "US"
     },
@@ -101,8 +101,8 @@
 
             // Auto close mobile menu if open
             const mobileMenu = document.getElementById('mobile-menu');
-            if (mobileMenu && mobileMenu.classList.contains('active')) {
-              mobileMenu.classList.remove('active');
+            if (mobileMenu && mobileMenu.getAttribute('aria-hidden') === 'false') {
+              mobileMenu.setAttribute('aria-hidden', 'true');
             }
           }
         }
@@ -128,8 +128,8 @@
 <body>
 
   <!-- ============================================ HEADER ============================================ -->
-  <header class="site-header">
-    <a href="#home" class="brand" data-page="home" style="text-decoration: none; color: inherit; display: flex; align-items: center; cursor: pointer;" aria-label="Go to home page">
+  <header class="header">
+    <a href="#home" class="brand" data-page="home" aria-label="Go to home page">
       <div class="brand-mark"><i class="fas fa-screwdriver-wrench" aria-hidden="true"></i></div>
       <div class="brand-info">
         <span class="brand-name">Austin's Tech Repair Group</span>
@@ -148,7 +148,7 @@
       <a class="nav-link" href="#employee" data-page="employee">Portal</a>
     </nav>
 
-    <!-- Clean Apple-Style Shopping Cart Icon -->
+    <!-- Header Actions & Cart Icon -->
     <div class="header-actions">
       <button class="icon-btn" id="cart-toggle" type="button" aria-label="Shopping cart" aria-haspopup="dialog" aria-expanded="false">
         <svg class="cart-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -178,7 +178,7 @@
       </div>
       <div class="menu-footer">
         <a class="menu-phone" href="tel:5134788077"><i class="fas fa-phone"></i> 513-478-8077</a>
-        <span class="menu-tag">Xenia, Dayton & Southeastern Ohio · Est. 2010</span>
+        <span class="menu-tag">Spring Valley & Dayton, OH · Est. 2010</span>
       </div>
     </div>
   </nav>
@@ -186,7 +186,6 @@
   <main>
     <!-- ===================== HOME PAGE ===================== -->
     <section id="home" class="page active">
-      <center>
       <!-- Hero -->
       <div class="hero">
         <div class="hero-bg" aria-hidden="true"></div>
@@ -219,71 +218,63 @@
           <h2 class="section-title">Expert Repair for Every Device</h2>
           <p class="section-copy">From cracked screens to complex motherboard diagnostics, we handle it all. Tap any card to see what we cover.</p>
         </div>
-        <br>
         <div class="service-grid">
           <button class="service-card flip-card reveal" type="button" data-device="Phones">
             <div class="flip-card-inner">
               <div class="flip-card-face flip-card-front">
                 <h4>Phones</h4>
               </div>
-                <p>Cracked screens, battery swaps, charging port repair, camera issues, speaker/mic fixes, water damage recovery, software troubleshooting, and fast data transfer.</p>
-              </div>
+              <p>Cracked screens, battery swaps, charging port repair, camera issues, speaker/mic fixes, water damage recovery, software troubleshooting, and fast data transfer.</p>
+            </div>
           </button>
-          <br>
           <button class="service-card flip-card reveal reveal-delay-1" type="button" data-device="Tablets">
             <div class="flip-card-inner">
               <div class="flip-card-face flip-card-front">
                 <h4>Tablets</h4>
               </div>
-                <p>Display replacement, charging port repair, touch troubleshooting, battery service, camera fixes, and full software setup support.</p>
-              </div>
+              <p>Display replacement, charging port repair, touch troubleshooting, battery service, camera fixes, and full software setup support.</p>
+            </div>
           </button>
-          <br>
           <button class="service-card flip-card reveal reveal-delay-2" type="button" data-device="Computers">
             <div class="flip-card-inner">
               <div class="flip-card-face flip-card-front">
                 <h4>Computers</h4>
               </div>
-                <p>SSD upgrades, RAM installs, virus cleanup, display repair, power issues, DC jack repair, software recovery, and data rescue.</p>
-              </div>
+              <p>SSD upgrades, RAM installs, virus cleanup, display repair, power issues, DC jack repair, software recovery, and data rescue.</p>
+            </div>
           </button>
-          <br>
           <button class="service-card flip-card reveal reveal-delay-3" type="button" data-device="Gaming">
             <div class="flip-card-inner">   
               <div class="flip-card-face flip-card-front">
                 <h4>Gaming</h4>
               </div>
-                <p>Console HDMI port repair, cooling fan replacement, storage upgrades, power fault diagnostics, controller fixes, and overheating solutions.</p>
-              </div>
+              <p>Console HDMI port repair, cooling fan replacement, storage upgrades, power fault diagnostics, controller fixes, and overheating solutions.</p>
+            </div>
           </button>
-          <br>
           <button class="service-card flip-card reveal" type="button" data-device="Smart Watches">
             <div class="flip-card-inner">
               <div class="flip-card-face flip-card-front">
                 <h4>Smart Watches</h4>
               </div>
-                <p>Battery service, display replacement, charging issues, pairing fixes, syncing support, and button or crown repairs.</p>
-              </div>
+              <p>Battery service, display replacement, charging issues, pairing fixes, syncing support, and button or crown repairs.</p>
+            </div>
           </button>
-          <br>
           <button class="service-card flip-card reveal" type="button" data-device="Accessories">
             <div class="flip-card-inner">
               <div class="flip-card-face flip-card-front">
                 <h4>Shop Accessories & ATR One</h4>
               </div>
-                <p>Shop Parts & Accessories: Cases, screen protectors, chargers, and gear — checkout with Square or Shopify. Subscribe to ATR One Here.</p>
-              </div>
+              <p>Shop Parts & Accessories: Cases, screen protectors, chargers, and gear — checkout with Square or Shopify. Subscribe to ATR One Here.</p>
+            </div>
           </button>
-          <br>
           <button class="service-card flip-card reveal" type="button" data-device="Business Services">
             <div class="flip-card-inner">
               <div class="flip-card-face flip-card-front">
                 <h4>Business Services</h4>
               </div>
-                <p>Printers, setup, remote support, mass imaging, schools, offices, battery service, display replacement, charging issues, pairing fixes, syncing support, and hardware maintenance.</p>
-              </div>
+              <p>Printers, setup, remote support, mass imaging, schools, offices, battery service, display replacement, charging issues, pairing fixes, syncing support, and hardware maintenance.</p>
+            </div>
           </button>
-          <br>
         </div>
       </div>
 
@@ -382,7 +373,6 @@
           <a class="btn btn-light btn-lg" href="tel:5134788077"><i class="fas fa-phone"></i> 513-478-8077</a>
         </div>
       </div>
-      </center>
     </section>
 
     <!-- ===================== SHOP PAGE ===================== -->
@@ -516,7 +506,7 @@
             <div class="estimate-box">
               <p class="label">Estimated Price Range</p>
               <p class="price" id="estimate-price">$50 — $150</p>
-              <p class="note">Final pricing confirmed after free diagnostic. Parts availability may affect timeline.</p>
+              <p class="note">Final pricing confirmed after free diagnostic. Parts availability may affect timeline. ($15 dispatch fee collected upfront is credited toward final price).</p>
             </div>
             <div style="display: flex; gap: var(--space-3); margin-top: var(--space-5); flex-wrap: wrap;">
               <button class="btn btn-primary" type="button" data-action="continue-contact"><i class="fas fa-arrow-right"></i> Continue to Photos</button>
@@ -562,7 +552,7 @@
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
                 <div class="field">
                   <label for="city-zip">City or ZIP Code <span style="color: var(--danger);">*</span></label>
-                  <input id="city-zip" class="form-field" type="text" name="customer_location" required placeholder="Xenia, OH" />
+                  <input id="city-zip" class="form-field" type="text" name="customer_location" required placeholder="Spring Valley, OH" />
                 </div>
                 <div class="field">
                   <label for="preferred-time">Preferred Contact Time</label>
@@ -662,6 +652,7 @@
         </div>
 
         <ul class="area-list" role="list" style="display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-3); list-style: none; padding: 0; margin-top: var(--space-6); max-width: 800px; margin-left: auto; margin-right: auto;">
+          <li><i class="fas fa-location-dot"></i> Spring Valley, OH</li>
           <li><i class="fas fa-location-dot"></i> Xenia, OH</li>
           <li><i class="fas fa-location-dot"></i> Dayton, OH</li>
           <li><i class="fas fa-location-dot"></i> Beavercreek, OH</li>
@@ -669,78 +660,75 @@
           <li><i class="fas fa-location-dot"></i> Centerville, OH</li>
           <li><i class="fas fa-location-dot"></i> Springboro, OH</li>
           <li><i class="fas fa-location-dot"></i> Wilmington, OH</li>
-          <li><i class="fas fa-location-dot"></i> And surrounding Southeastern Ohio areas</li>
         </ul>
       </div>
     </section>
 
     <!-- ===================== CONTACT PAGE ===================== -->
     <section id="contact" class="page">
-      <center>
-        <div class="container">
-          <div class="section-header reveal">
-            <p class="eyebrow">Get in Touch</p>
-            <h2 class="section-title">Contact Us</h2>
-            <p class="section-copy">Have a question, need a quote, or want to send photos of your device damage? Drop us a message below or call us directly.</p>
-          </div>
+      <div class="container">
+        <div class="section-header reveal">
+          <p class="eyebrow">Get in Touch</p>
+          <h2 class="section-title">Contact Us</h2>
+          <p class="section-copy">Have a question, need a quote, or want to send photos of your device damage? Drop us a message below or call us directly.</p>
+        </div>
 
-          <div class="reveal" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: var(--space-3); margin-bottom: var(--space-8); max-width: 900px; margin-left: auto; margin-right: auto;">
-            <a class="card" href="tel:5134788077" style="text-align: center; text-decoration: none; padding: var(--space-4) var(--space-2);">
-              <i class="fas fa-phone" style="font-size: var(--text-lg); color: var(--primary); margin-bottom: var(--space-2);"></i>
-              <h4 style="margin-bottom: var(--space-1); font-size: var(--text-base);">Call</h4>
-              <p style="font-size: var(--text-xs); color: var(--text-muted); margin: 0;">513-478-8077</p>
-            </a>
-            <a class="card" href="sms:5134788077" style="text-align: center; text-decoration: none; padding: var(--space-4) var(--space-2);">
-              <i class="fas fa-comment-sms" style="font-size: var(--text-lg); color: var(--primary); margin-bottom: var(--space-2);"></i>
-              <h4 style="margin-bottom: var(--space-1); font-size: var(--text-base);">Text</h4>
-              <p style="font-size: var(--text-xs); color: var(--text-muted); margin: 0;">Send message</p>
-            </a>
-            <div class="card" style="text-align: center; padding: var(--space-4) var(--space-2);">
-              <i class="fas fa-clock" style="font-size: var(--text-lg); color: var(--primary); margin-bottom: var(--space-2);"></i>
-              <h4 style="margin-bottom: var(--space-1); font-size: var(--text-base);">Hours</h4>
-              <p style="font-size: 11px; color: var(--text-muted); margin: 0; line-height: 1.4;">
-                <strong>Mon–Fri:</strong> 5:30 AM–10 PM<br>
-                <strong>Sat:</strong> 8:30 AM–10 PM<br>
-                <strong>Sun:</strong> 9 AM–5 PM
-              </p>
-            </div>
-          </div>
-
-          <div class="reveal repair-card jotform-wrap" style="max-width: 100%; width: 100%; box-sizing: border-box;">
-            <h3 style="font-size: var(--text-lg); font-weight: 800; margin-bottom: var(--space-4);">Send a Message</h3>
-
-            <iframe
-              id="JotFormIFrame-261955946010055"
-              title="Send a Message"
-              onload="window.parent.scrollTo(0,0)"
-              allowtransparency="true"
-              allow="geolocation; microphone; camera; fullscreen"
-              src="https://form.jotform.com/261955946010055"
-              frameborder="0"
-              style="width: 100%; min-width: 100%; max-width: 100%; height: 539px; border: none; display: block;"
-              scrolling="no">
-            </iframe>
-
-            <script src="https://cdn.jotfor.ms/s/umd/latest/for-form-embed-handler.js"></script>
-            <script>
-              if (window.jotformEmbedHandler) {
-                window.jotformEmbedHandler("iframe[id='JotFormIFrame-261955946010055']", "https://form.jotform.com");
-              }
-            </script>
+        <div class="reveal" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-3); margin-bottom: var(--space-8); max-width: 900px; margin-left: auto; margin-right: auto;">
+          <a class="card" href="tel:5134788077" style="text-align: center; text-decoration: none; padding: var(--space-4) var(--space-2);">
+            <i class="fas fa-phone" style="font-size: var(--text-lg); color: var(--primary); margin-bottom: var(--space-2);"></i>
+            <h4 style="margin-bottom: var(--space-1); font-size: var(--text-base);">Call</h4>
+            <p style="font-size: var(--text-xs); color: var(--text-muted); margin: 0;">513-478-8077</p>
+          </a>
+          <a class="card" href="sms:5134788077" style="text-align: center; text-decoration: none; padding: var(--space-4) var(--space-2);">
+            <i class="fas fa-comment-sms" style="font-size: var(--text-lg); color: var(--primary); margin-bottom: var(--space-2);"></i>
+            <h4 style="margin-bottom: var(--space-1); font-size: var(--text-base);">Text</h4>
+            <p style="font-size: var(--text-xs); color: var(--text-muted); margin: 0;">Send message</p>
+          </a>
+          <div class="card" style="text-align: center; padding: var(--space-4) var(--space-2);">
+            <i class="fas fa-clock" style="font-size: var(--text-lg); color: var(--primary); margin-bottom: var(--space-2);"></i>
+            <h4 style="margin-bottom: var(--space-1); font-size: var(--text-base);">Hours</h4>
+            <p style="font-size: 11px; color: var(--text-muted); margin: 0; line-height: 1.4;">
+              <strong>Mon–Fri:</strong> 5:30 AM–10 PM<br>
+              <strong>Sat:</strong> 8:30 AM–10 PM<br>
+              <strong>Sun:</strong> 9 AM–5 PM
+            </p>
           </div>
         </div>
-      </center>
+
+        <div class="reveal repair-card jotform-wrap" style="max-width: 100%; width: 100%; box-sizing: border-box;">
+          <h3 style="font-size: var(--text-lg); font-weight: 800; margin-bottom: var(--space-4);">Send a Message</h3>
+
+          <iframe
+            id="JotFormIFrame-261955946010055"
+            title="Send a Message"
+            onload="window.parent.scrollTo(0,0)"
+            allowtransparency="true"
+            allow="geolocation; microphone; camera; fullscreen"
+            src="https://form.jotform.com/261955946010055"
+            frameborder="0"
+            style="width: 100%; min-width: 100%; max-width: 100%; height: 539px; border: none; display: block;"
+            scrolling="no">
+          </iframe>
+
+          <script src="https://cdn.jotfor.ms/s/umd/latest/for-form-embed-handler.js"></script>
+          <script>
+            if (window.jotformEmbedHandler) {
+              window.jotformEmbedHandler("iframe[id='JotFormIFrame-261955946010055']", "https://form.jotform.com");
+            }
+          </script>
+        </div>
+      </div>
     </section>
 
     <!-- ===================== B2B PAGE ===================== -->
     <section id="b2b" class="page">
-      <center>
-        <div class="b2b-hero">
-          <p class="eyebrow" style="color: var(--accent-blue);">Business Solutions</p>
-          <h2 class="about-title">B2B & Managed IT Services</h2>
-          <p style="max-width: 560px; margin-top: var(--space-4); color: rgba(255, 255, 255, 0.6);">Complete technology support for offices, shops, and local teams across the Miami Valley.</p>
-        </div>
-        
+      <div class="b2b-hero text-center">
+        <p class="eyebrow" style="color: var(--accent-blue);">Business Solutions</p>
+        <h2 class="about-title">B2B & Managed IT Services</h2>
+        <p style="max-width: 560px; margin: var(--space-4) auto 0; color: rgba(255, 255, 255, 0.6);">Complete technology support for offices, shops, and local teams across the Miami Valley.</p>
+      </div>
+      
+      <div class="container">
         <div class="services-container">
           <div class="service-card">
             <h3>Networking</h3>
@@ -784,93 +772,91 @@
             <a class="btn btn-light btn-lg" href="tel:5134788077"><i class="fas fa-phone"></i> 513-478-8077</a>
           </div>
         </div>
-      </center>
+      </div>
     </section>
 
     <!-- ===================== ATR ONE PAGE ===================== -->
     <section id="atr-one" class="page">
-      <center>
-        <div class="atr-one-hero">
-          <p class="eyebrow" style="justify-content: center;">ATR One Membership</p>
-          <h1 class="hero-headline" style="font-size: var(--text-3xl); margin-bottom: var(--space-4);"><em>Member.</em> Perks.</h1>
-          <p class="hero-sub" style="margin: 0 auto var(--space-8);">Your $19.99/month membership with priority benefits, discounted hardware service, and member-only support extras.</p>
+      <div class="atr-one-hero text-center">
+        <p class="eyebrow" style="justify-content: center;">ATR One Membership</p>
+        <h1 class="hero-headline" style="font-size: var(--text-3xl); margin-bottom: var(--space-4);"><em>Member.</em> Perks.</h1>
+        <p class="hero-sub" style="margin: 0 auto var(--space-8);">Your $19.99/month membership with priority benefits, discounted hardware service, and member-only support extras.</p>
 
-          <div class="atr-one-card reveal">
-            <p class="eyebrow" style="color: var(--accent-blue); justify-content: center;">Monthly Plan</p>
-            <p class="atr-one-price">$19.99 <span>/month</span></p>
-            <p style="color: rgba(255, 255, 255, 0.5); margin-bottom: var(--space-5); font-size: var(--text-sm);">Cancel anytime. No long-term contracts.</p>
-            <button class="btn btn-primary btn-lg btn-block" type="button" data-add-cart='{"id":"atr-one-sub","name":"ATR One Membership","price":19.99,"category":"Subscription","image":"https://images.unsplash.com/photo-1526406915894-7bcd65f60845?auto=format&fit=crop&w=900&q=80"}'><i class="fas fa-star"></i> Join ATR One</button>
-          </div>
+        <div class="atr-one-card reveal">
+          <p class="eyebrow" style="color: var(--accent-blue); justify-content: center;">Monthly Plan</p>
+          <p class="atr-one-price">$19.99 <span>/month</span></p>
+          <p style="color: rgba(255, 255, 255, 0.5); margin-bottom: var(--space-5); font-size: var(--text-sm);">Cancel anytime. No long-term contracts.</p>
+          <button class="btn btn-primary btn-lg btn-block" type="button" data-add-cart='{"id":"atr-one-sub","name":"ATR One Membership","price":19.99,"category":"Subscription","image":"https://images.unsplash.com/photo-1526406915894-7bcd65f60845?auto=format&fit=crop&w=900&q=80"}'><i class="fas fa-star"></i> Join ATR One</button>
+        </div>
+      </div>
+
+      <div class="container">
+        <div class="section-header reveal">
+          <p class="eyebrow">Member Benefits</p>
+          <h2 class="section-title">Everything Included</h2>
+        </div>
+        <div class="service-grid" style="margin-bottom: var(--space-8);">
+          <div class="service-card dark feature reveal"><div class="service-icon"><i class="fas fa-shield-heart"></i></div><p class="service-label">Free Screen Protectors</p><p class="service-sub">Included on all repaired devices for active members</p></div>
+          <div class="service-card dark feature reveal reveal-delay-1"><div class="service-icon"><i class="fas fa-broom"></i></div><p class="service-label">Free Device Cleaning</p><p class="service-sub">Cleaning and basic refresh on any visit</p></div>
+          <div class="service-card dark feature reveal reveal-delay-2"><div class="service-icon"><i class="fas fa-bolt"></i></div><p class="service-label">Priority Service</p><p class="service-sub">Skip the queue, get serviced first</p></div>
+          <div class="service-card dark feature reveal reveal-delay-3"><div class="service-icon"><i class="fas fa-clock"></i></div><p class="service-label">Same-Day Repair</p><p class="service-sub">When parts and schedule allow</p></div>
+          <div class="service-card dark feature reveal"><div class="service-icon"><i class="fas fa-tags"></i></div><p class="service-label">20% Off Hardware Repair</p><p class="service-sub">Savings on eligible hardware labor</p></div>
+          <div class="service-card dark feature reveal reveal-delay-1"><div class="service-icon"><i class="fas fa-truck-fast"></i></div><p class="service-label">Priority Shipping</p><p class="service-sub">Faster shipping on all orders and parts</p></div>
         </div>
 
-        <div class="container">
-          <div class="section-header reveal">
-            <p class="eyebrow">Member Benefits</p>
-            <h2 class="section-title">Everything Included</h2>
-          </div>
-          <div class="service-grid" style="margin-bottom: var(--space-8);">
-            <div class="service-card dark feature reveal"><div class="service-icon"><i class="fas fa-shield-heart"></i></div><p class="service-label">Free Screen Protectors</p><p class="service-sub">Included on all repaired devices for active members</p></div>
-            <div class="service-card dark feature reveal reveal-delay-1"><div class="service-icon"><i class="fas fa-broom"></i></div><p class="service-label">Free Device Cleaning</p><p class="service-sub">Cleaning and basic refresh on any visit</p></div>
-            <div class="service-card dark feature reveal reveal-delay-2"><div class="service-icon"><i class="fas fa-bolt"></i></div><p class="service-label">Priority Service</p><p class="service-sub">Skip the queue, get serviced first</p></div>
-            <div class="service-card dark feature reveal reveal-delay-3"><div class="service-icon"><i class="fas fa-clock"></i></div><p class="service-label">Same-Day Repair</p><p class="service-sub">When parts and schedule allow</p></div>
-            <div class="service-card dark feature reveal"><div class="service-icon"><i class="fas fa-tags"></i></div><p class="service-label">20% Off Hardware Repair</p><p class="service-sub">Savings on eligible hardware labor</p></div>
-            <div class="service-card dark feature reveal reveal-delay-1"><div class="service-icon"><i class="fas fa-truck-fast"></i></div><p class="service-label">Priority Shipping</p><p class="service-sub">Faster shipping on all orders and parts</p></div>
-          </div>
+        <div class="reveal" style="overflow-x: auto;">
+          <table class="comparison-table">
+            <thead><tr><th>Feature</th><th>Non-Member</th><th>ATR One Member</th></tr></thead>
+            <tbody>
+              <tr><td>Screen Protector on Repairs</td><td><i class="fas fa-times cross"></i></td><td><i class="fas fa-check check"></i> Free</td></tr>
+              <tr><td>Device Cleaning</td><td><i class="fas fa-times cross"></i></td><td><i class="fas fa-check check"></i> Free</td></tr>
+              <tr><td>Hardware Repair Discount</td><td>Standard pricing</td><td><i class="fas fa-check check"></i> 20% off</td></tr>
+              <tr><td>Service Queue Priority</td><td>Standard</td><td><i class="fas fa-check check"></i> Priority</td></tr>
+              <tr><td>Same-Day Service</td><td>When available</td><td><i class="fas fa-check check"></i> Guaranteed priority</td></tr>
+              <tr><td>Shipping Priority</td><td>Standard</td><td><i class="fas fa-check check"></i> Priority</td></tr>
+              <tr><td>Monthly Cost</td><td>—</td><td>$19.99</td></tr>
+            </tbody>
+          </table>
+        </div>
 
-          <div class="reveal" style="overflow-x: auto;">
-            <table class="comparison-table">
-              <thead><tr><th>Feature</th><th>Non-Member</th><th>ATR One Member</th></tr></thead>
-              <tbody>
-                <tr><td>Screen Protector on Repairs</td><td><i class="fas fa-times cross"></i></td><td><i class="fas fa-check check"></i> Free</td></tr>
-                <tr><td>Device Cleaning</td><td><i class="fas fa-times cross"></i></td><td><i class="fas fa-check check"></i> Free</td></tr>
-                <tr><td>Hardware Repair Discount</td><td>Standard pricing</td><td><i class="fas fa-check check"></i> 20% off</td></tr>
-                <tr><td>Service Queue Priority</td><td>Standard</td><td><i class="fas fa-check check"></i> Priority</td></tr>
-                <tr><td>Same-Day Service</td><td>When available</td><td><i class="fas fa-check check"></i> Guaranteed priority</td></tr>
-                <tr><td>Shipping Priority</td><td>Standard</td><td><i class="fas fa-check check"></i> Priority</td></tr>
-                <tr><td>Monthly Cost</td><td>—</td><td>$19.99</td></tr>
-              </tbody>
-            </table>
-          </div>
+        <p class="eyebrow" style="margin-top: var(--space-12);">ATR One FAQ</p>
+        <h3 class="section-title" style="font-size: var(--text-xl);">Membership Questions</h3>
 
-          <p class="eyebrow" style="margin-top: var(--space-12);">ATR One FAQ</p>
-          <h3 class="section-title" style="font-size: var(--text-xl);">Membership Questions</h3>
-
-          <div class="faq-list" style="max-width: 800px; margin: 0 auto; text-align: left;">
-            <div class="faq-item" style="border-bottom: 1px solid #eee; margin-bottom: 15px; transition: all 0.3s ease;">
-              <button class="faq-question" type="button" style="width: 100%; text-align: left; background: none; border: none; padding: 15px 0; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
-                Can I cancel anytime? <i class="fas fa-chevron-down" style="transition: transform 0.3s ease;"></i>
-              </button>
-              <div class="faq-answer" style="max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.4s ease; padding: 0 15px;">
-                <div class="faq-answer-inner" style="padding-bottom: 15px;">
-                  Yes. ATR One is a month-to-month subscription with no long-term contract. Cancel anytime and your benefits continue until the end of your billing period.
-                </div>
+        <div class="faq-list" style="max-width: 800px; margin: 0 auto; text-align: left;">
+          <div class="faq-item" style="border-bottom: 1px solid #eee; margin-bottom: 15px; transition: all 0.3s ease;">
+            <button class="faq-question" type="button" style="width: 100%; text-align: left; background: none; border: none; padding: 15px 0; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+              Can I cancel anytime? <i class="fas fa-chevron-down" style="transition: transform 0.3s ease;"></i>
+            </button>
+            <div class="faq-answer" style="max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.4s ease; padding: 0 15px;">
+              <div class="faq-answer-inner" style="padding-bottom: 15px;">
+                Yes. ATR One is a month-to-month subscription with no long-term contract. Cancel anytime and your benefits continue until the end of your billing period.
               </div>
             </div>
+          </div>
 
-            <div class="faq-item" style="border-bottom: 1px solid #eee; margin-bottom: 15px; transition: all 0.3s ease;">
-              <button class="faq-question" type="button" style="width: 100%; text-align: left; background: none; border: none; padding: 15px 0; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
-                Does the 20% discount apply to parts? <i class="fas fa-chevron-down" style="transition: transform 0.3s ease;"></i>
-              </button>
-              <div class="faq-answer" style="max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.4s ease; padding: 0 15px;">
-                <div class="faq-answer-inner" style="padding-bottom: 15px;">
-                  The 20% discount applies to hardware labor charges on eligible repairs. Parts costs are billed at standard pricing. We'll always provide a transparent quote before any work begins.
-                </div>
+          <div class="faq-item" style="border-bottom: 1px solid #eee; margin-bottom: 15px; transition: all 0.3s ease;">
+            <button class="faq-question" type="button" style="width: 100%; text-align: left; background: none; border: none; padding: 15px 0; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+              Does the 20% discount apply to parts? <i class="fas fa-chevron-down" style="transition: transform 0.3s ease;"></i>
+            </button>
+            <div class="faq-answer" style="max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.4s ease; padding: 0 15px;">
+              <div class="faq-answer-inner" style="padding-bottom: 15px;">
+                The 20% discount applies to hardware labor charges on eligible repairs. Parts costs are billed at standard pricing. We'll always provide a transparent quote before any work begins.
               </div>
             </div>
+          </div>
 
-            <div class="faq-item" style="border-bottom: 1px solid #eee; margin-bottom: 15px; transition: all 0.3s ease;">
-              <button class="faq-question" type="button" style="width: 100%; text-align: left; background: none; border: none; padding: 15px 0; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
-                Is this available for business customers? <i class="fas fa-chevron-down" style="transition: transform 0.3s ease;"></i>
-              </button>
-              <div class="faq-answer" style="max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.4s ease; padding: 0 15px;">
-                <div class="faq-answer-inner" style="padding-bottom: 15px;">
-                  Yes. B2B customers can enroll in ATR One for their business devices. For multi-device or fleet management, contact us about custom B2B plans.
-                </div>
+          <div class="faq-item" style="border-bottom: 1px solid #eee; margin-bottom: 15px; transition: all 0.3s ease;">
+            <button class="faq-question" type="button" style="width: 100%; text-align: left; background: none; border: none; padding: 15px 0; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+              Is this available for business customers? <i class="fas fa-chevron-down" style="transition: transform 0.3s ease;"></i>
+            </button>
+            <div class="faq-answer" style="max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.4s ease; padding: 0 15px;">
+              <div class="faq-answer-inner" style="padding-bottom: 15px;">
+                Yes. B2B customers can enroll in ATR One for their business devices. For multi-device or fleet management, contact us about custom B2B plans.
               </div>
             </div>
           </div>
         </div>
-      </center>
+      </div>
     </section>
 
     <!-- ===================== EMPLOYEE PORTAL ===================== -->
@@ -1000,10 +986,10 @@
 
               <section class="card col-6">
                 <h3><i class="fas fa-map-location-dot" style="color: var(--primary); margin-right: 0.5rem;"></i> Service Area Map</h3>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Mobile repair dispatch coverage across Xenia, Dayton, and Southeastern Ohio.</p>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Mobile repair dispatch coverage across Spring Valley, Dayton, and Southeastern Ohio.</p>
                 <div class="map-placeholder">
                   <iframe 
-                    title="Service Area - Xenia and Dayton Ohio"
+                    title="Service Area - Spring Valley and Dayton Ohio"
                     src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d196463.1557454228!2d-84.31422735!3d39.7390729!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x884080d5aeb87563%3A0x62804b4dcd695e1a!2sXenia%2C%20OH!5e0!3m2!1sen!2sus!4v1700000000000!5m2!1sen!2sus" 
                     width="100%" 
                     height="100%" 
@@ -1370,7 +1356,7 @@
                     <div class="portal-field"><label>Phone</label><input type="text" value="513-478-8077" readonly></div>
                     <div class="portal-field"><label>Est.</label><input type="text" value="2010" readonly></div>
                   </div>
-                  <div class="portal-field"><label>Location</label><input type="text" value="Xenia/Dayton, Ohio" readonly></div>
+                  <div class="portal-field"><label>Location</label><input type="text" value="Spring Valley / Dayton, Ohio" readonly></div>
                 </div>
               </div>
               <div class="card col-6">
@@ -1498,7 +1484,7 @@
         </div>
         <div class="footer-links-col">
           <span class="footer-col-title">Support Area</span>
-          <span class="footer-link">Xenia, Dayton & SE Ohio</span>
+          <span class="footer-link">Spring Valley & Dayton, OH</span>
           <span class="footer-link">Est. 2010</span>
           <span class="footer-link">Montgomery County</span>
           <span class="footer-link">Miami County</span>
@@ -1516,7 +1502,7 @@
           <div class="cart-drawer__header">
             <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); width: 100%;">
               <h2 style="font-size: var(--text-lg); font-weight: 800; margin: 0; font-family: var(--font-display);">Your Cart</h2>
-              <button id="cart-close" type="button" aria-label="Close cart" style="background: none; border: none; cursor: pointer; padding: 8px; font-size: 1.25rem; line-height: 1;">✕</button>
+              <button id="cart-drawer-close-btn" type="button" aria-label="Close cart" style="background: none; border: none; cursor: pointer; padding: 8px; font-size: 1.25rem; line-height: 1;">✕</button>
             </div>
           </div>
           <div class="cart-drawer__items" id="cart-drawer-items"></div>
@@ -1549,16 +1535,16 @@
         .policy-modal-panel { position: relative; background: #ffffff; color: #334155; width: 100%; max-width: 650px; max-height: 85vh; border-radius: 0.75rem; padding: 2rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; z-index: 2010; }
         .policy-close { position: absolute; top: 1rem; right: 1rem; background: #f1f5f9; border: none; width: 2.25rem; height: 2.25rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #0f172a; font-size: 1rem; }
         .policy-modal-title { font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-bottom: 1rem; padding-right: 2rem; }
-        .policy-modal-body { overflow-y: auto; font-size: 0.95rem; line-height: 1.6; color: #475569; display: flex; flex-direction: column; gap: 1rem; }
+        .policy-modal-body { overflow-y: auto; font-size: 0.95rem; line-height: 1.6; color: #475569; display: flex; flex-direction: column; gap: 1rem; white-space: pre-line; }
       </style>
 
       <script>
         const policyData = {
-          "privacy": { title: "Privacy Policy", content: `<p>PRIVACY POLICY — AUSTIN'S TECH REPAIR GROUP\n\nEffective Date: July 21, 2026\n\nAustin’s Tech Repair Group ("Company", "we", "us", or "our") respects your privacy and is committed to protecting the personal information you share with us. This Privacy Policy outlines how we collect, use, disclose, and safeguard your information when you visit our shop, utilize our website, or engage our device repair, diagnostic, and technical support services.\n\n1. INFORMATION WE COLLECT\nWe may collect personal and device-related information from you in various ways, including:\n- Personal Identification Information: Name, phone number, email address, billing address, and physical address when you drop off equipment, request an estimate, or create an account.\n- Device Information: Make, model, serial numbers, passcodes, PINs, or unlock patterns necessary to perform diagnostics, repairs, and quality testing on your equipment.\n- Transaction Data: Records of services performed, parts ordered, payments made, and repair history.\n\n2. HOW WE USE YOUR INFORMATION\nWe use the information we collect for the following purposes:\n- To provide, operate, and maintain our technical repair and diagnostic services.\n- To communicate with you regarding your device status, repair estimates, approval requests, and pickup notifications.\n- To process payments, issue invoices, and maintain business accounting records.\n- To honor warranty obligations and provide customer support.\n- To improve our internal operations, service workflows, and customer experience.\n\n3. DATA ACCESS & SECURITY PRECAUTIONS\n- Passcodes & Access: We request device passcodes solely for the purpose of testing hardware functionality (e.g., cameras, touchscreens, audio, cellular connectivity) before and after repairs.\n- Strict Confidentiality: Our technicians access customer data only when strictly necessary for diagnostic or repair validation. We do not inspect, copy, or browse personal files, photos, or documents unless explicitly requested by the Customer for data recovery or transfer services.\n- Safeguards: We implement reasonable physical, technical, and administrative security measures to protect your personal information and device data while in our custody.\n\n4. SHARING OF INFORMATION\nWe do not sell, trade, or rent your personal information to third parties. We may share your information only in the following limited circumstances:\n- Service Providers: Trusted third-party vendors who assist us in operating our business, processing payments, or delivering communications, provided they agree to keep this information confidential.\n- Legal Compliance: When required by law, subpoena, court order, or legal process, or to protect the rights, property, or safety of Austin’s Tech Repair Group, our customers, or others.\n\n5. DATA RETENTION & DEPOSAL\n- We retain customer contact records and repair histories for as long as necessary to fulfill warranty obligations, tax requirements, and internal business record-keeping.\n- Any temporary digital test files or cache data generated during repair procedures are securely wiped upon completion of service.\n\n6. CHANGES TO THIS PRIVACY POLICY\nWe reserve the right to update or modify this Privacy Policy at any time. Changes will be effective immediately upon posting or updating our notices. We encourage you to review this policy periodically.\n\n7. CONTACT US\nIf you have any questions, concerns, or requests regarding this Privacy Policy or our handling of your personal information, please contact us.</p>` },
-          "repair": { title: "Repair Service Agreement", content: `<p>REPAIR SERVICE AGREEMENT\nAustin's Tech Repair Group\nPlease read this agreement carefully. By scheduling an appointment, dropping off your equipment, or authorizing repair services, you agree to the following terms and conditions governing the service work performed by Austin’s Tech Repair Group.\n1. PARTIES & SCOPE OF SERVICE\nThis Repair Service Agreement ("Agreement") is between Austin’s Tech Repair Group ("Company", "we", "us", or "our") and the customer ("Customer", "you") identified below. We agree to provide component-level diagnostics, maintenance, upgrades, and repair services for consumer electronics, computers, mobile devices, and gaming consoles as requested and authorized.\n2. ESTIMATES, AUTHORIZATION & FEES\n- Dispatch & Appointment Fees: A $15.00 dispatch fee is required to secure your appointment, which covers travel costs. This fee is credited toward and included in the final price of your completed repair. Please note that this dispatch fee is non-refundable if the appointment is canceled less than one (1) hour prior to the scheduled appointment time.\n- Diagnostic Fees: An initial diagnostic fee may apply to evaluate your device. If you approve the recommended repair service, this fee may be credited toward the total repair cost.\n- Estimate Approval: We will provide a repair estimate before commencing work. If additional hidden damage, liquid corrosion, or underlying component failures are discovered during disassembly, we will notify you for approval before proceeding with revised costs.\n- Abandoned Devices: Equipment left unclaimed for more than sixty (60) days following notice of completion or diagnostic results will be considered abandoned and disposed of, recycled, or sold to cover costs in accordance with applicable laws.\n3. DATA & BACKUP WAIVER (CRITICAL)\n- You acknowledge that data loss, corruption, or erasure can occur during diagnostic procedures, component replacements, screen swaps, board-level repairs, or software updates.\n- You are solely responsible for backing up all data, files, and programs prior to service.\n- Austin’s Tech Repair Group accepts zero liability for any loss of data, personal files, photos, or software settings under any circumstances.\n4. LIQUID DAMAGE & PRE-EXISTING CONDITIONS\n- Devices with a history of liquid exposure, structural bending, corrosion, or prior third-party repair attempts are highly fragile and subject to catastrophic failure during handling or testing.\n- We are not responsible for devices that fail completely or stop working during or after intake for liquid damage mitigation or extreme repair procedures.\n5. WARRANTY ON PARTS & LABOR\n- All standard repairs performed by Austin’s Tech Repair Group include a ninety (90) day limited warranty covering the specific replacement parts installed and labor executed.\n- The warranty is void if the device shows evidence of subsequent physical damage, liquid exposure, customer tampering, or repair attempts by any party other than Austin’s Tech Repair Group.\n6. PAYMENT & PICKUP TERMS\nFull payment for parts, labor, and applicable taxes (minus any previously paid and applicable appointment credits) is due upon completion of services and prior to device release.</p>` },
-          "backup": { title: "Data Backup Waiver", content: `<p>DATA BACKUP & LOSS WAIVER — AUSTIN'S TECH REPAIR GROUP\n\nPlease read this document carefully before leaving your equipment, device, or storage media with Austin’s Tech Repair Group ("Company", "we", "us", or "our") for diagnostics, maintenance, upgrade, component-level repair, or data recovery services.\n\n1. ACKNOWLEDGMENT OF RISK\nRepair, diagnostic procedures, hardware replacement, and data recovery operations inherently carry risks. These risks include, but are not limited to, component failure, software corruption, unintended data loss, or complete failure of aging or compromised storage media.\n\n2. CUSTOMER DATA BACKUP RESPONSIBILITY\n- You ("Customer", "you") acknowledge and agree that you are solely responsible for backing up all existing files, data, photos, documents, operating systems, and software applications stored on your device prior to submitting it to Austin’s Tech Repair Group.\n- We strongly recommend that you maintain an independent backup of all critical data at all times.\n\n3. LIMITATION OF LIABILITY FOR DATA LOSS\n- Austin’s Tech Repair Group accepts NO liability whatsoever for any lost, corrupted, deleted, or altered data, files, programs, or operating systems that may occur during or as a result of any service performed on your device.\n- Under no circumstances will Austin’s Tech Repair Group be held liable for any direct, indirect, incidental, or consequential damages arising from the loss of data or the inability to retrieve data from any device or storage media.</p>` },
-          "warranty-policy": { title: "1-Year Warranty Policy", content: `<p>1-YEAR LIMITED WARRANTY POLICY — AUSTIN'S TECH REPAIR GROUP\n\nEffective Date: July 21, 2026\n\nAustin’s Tech Repair Group ("Company", "we", "us", or "our") proudly stands by the quality of our component-level diagnostics, technical repairs, and replacement parts. We offer a 1-Year Limited Warranty on qualifying repairs subject to the terms, conditions, and exclusions outlined below.\n\n1. SCOPE OF COVERAGE\nThis 1-Year Limited Warranty covers:\n- Replacement parts installed by Austin’s Tech Repair Group against manufacturer defects in materials and workmanship.\n- The specific labor and technical craftsmanship performed by our technicians for the authorized repair.\n\n2. WARRANTY PERIOD\n- The coverage period begins on the date the repaired device is picked up or shipped back to the Customer.\n- This warranty remains in effect for exactly three hundred sixty-five (365) days from the date of service completion.\n\n3. EXCLUSIONS & VOID CONDITIONS\nThis 1-Year Limited Warranty does NOT cover, and shall be rendered immediately null and void in the event of:\n- Physical Damage: Subsequent drops, impacts, pressure cracks, bent frames, or structural damage.\n- Liquid / Moisture Damage: Any exposure to water, humidity, steam, or other liquids following the service.\n- Customer or Third-Party Tampering: Devices opened or serviced by any party other than Austin’s Tech Repair Group.</p>` },
-          "website-terms": { title: "Website Terms of Use", content: `<p>WEBSITE TERMS OF USE — AUSTIN'S TECH REPAIR GROUP\n\nEffective Date: July 21, 2026\n\nWelcome to the website of Austin’s Tech Repair Group ("Company", "we", "us", or "our"). By accessing, browsing, or using our website, you ("User", "you") agree to comply with and be bound by the following Website Terms of Use. If you do not agree to these terms, please do not use our website.\n\n1. ACCEPTANCE OF TERMS\nBy accessing our website, you confirm that you have read, understood, and accept these Terms of Use and our Privacy Policy. We reserve the right to modify these terms at any time without prior notice.</p>` }
+          "privacy": { title: "Privacy Policy", content: `PRIVACY POLICY — AUSTIN'S TECH REPAIR GROUP\n\nEffective Date: July 21, 2026\n\nAustin’s Tech Repair Group ("Company", "we", "us", or "our") respects your privacy and is committed to protecting the personal information you share with us. This Privacy Policy outlines how we collect, use, disclose, and safeguard your information when you visit our shop, utilize our website, or engage our device repair, diagnostic, and technical support services.\n\n1. INFORMATION WE COLLECT\nWe may collect personal and device-related information from you in various ways, including:\n- Personal Identification Information: Name, phone number, email address, billing address, and physical address when you drop off equipment, request an estimate, or create an account.\n- Device Information: Make, model, serial numbers, passcodes, PINs, or unlock patterns necessary to perform diagnostics, repairs, and quality testing on your equipment.\n- Transaction Data: Records of services performed, parts ordered, payments made, and repair history.\n\n2. HOW WE USE YOUR INFORMATION\nWe use the information we collect for the following purposes:\n- To provide, operate, and maintain our technical repair and diagnostic services.\n- To communicate with you regarding your device status, repair estimates, approval requests, and pickup notifications.\n- To process payments, issue invoices, and maintain business accounting records.\n- To honor warranty obligations and provide customer support.\n- To improve our internal operations, service workflows, and customer experience.\n\n3. DATA ACCESS & SECURITY PRECAUTIONS\n- Passcodes & Access: We request device passcodes solely for the purpose of testing hardware functionality (e.g., cameras, touchscreens, audio, cellular connectivity) before and after repairs.\n- Strict Confidentiality: Our technicians access customer data only when strictly necessary for diagnostic or repair validation. We do not inspect, copy, or browse personal files, photos, or documents unless explicitly requested by the Customer for data recovery or transfer services.\n- Safeguards: We implement reasonable physical, technical, and administrative security measures to protect your personal information and device data while in our custody.\n\n4. SHARING OF INFORMATION\nWe do not sell, trade, or rent your personal information to third parties. We may share your information only in the following limited circumstances:\n- Service Providers: Trusted third-party vendors who assist us in operating our business, processing payments, or delivering communications, provided they agree to keep this information confidential.\n- Legal Compliance: When required by law, subpoena, court order, or legal process, or to protect the rights, property, or safety of Austin’s Tech Repair Group, our customers, or others.\n\n5. DATA RETENTION & DISPOSAL\n- We retain customer contact records and repair histories for as long as necessary to fulfill warranty obligations, tax requirements, and internal business record-keeping.\n- Any temporary digital test files or cache data generated during repair procedures are securely wiped upon completion of service.\n\n6. CHANGES TO THIS PRIVACY POLICY\nWe reserve the right to update or modify this Privacy Policy at any time. Changes will be effective immediately upon posting or updating our notices. We encourage you to review this policy periodically.\n\n7. CONTACT US\nIf you have any questions, concerns, or requests regarding this Privacy Policy or our handling of your personal information, please contact us.` },
+          "repair": { title: "Repair Service Agreement", content: `REPAIR SERVICE AGREEMENT\nAustin's Tech Repair Group\nPlease read this agreement carefully. By scheduling an appointment, dropping off your equipment, or authorizing repair services, you agree to the following terms and conditions governing the service work performed by Austin’s Tech Repair Group.\n1. PARTIES & SCOPE OF SERVICE\nThis Repair Service Agreement ("Agreement") is between Austin’s Tech Repair Group ("Company", "we", "us", or "our") and the customer ("Customer", "you") identified below. We agree to provide component-level diagnostics, maintenance, upgrades, and repair services for consumer electronics, computers, mobile devices, and gaming consoles as requested and authorized.\n2. ESTIMATES, AUTHORIZATION & FEES\n- Dispatch & Appointment Fees: A $15.00 dispatch fee is required to secure your appointment, which covers travel costs. This fee is credited toward and included in the final price of your completed repair. Please note that this dispatch fee is non-refundable if the appointment is canceled less than one (1) hour prior to the scheduled appointment time.\n- Diagnostic Fees: An initial diagnostic fee may apply to evaluate your device. If you approve the recommended repair service, this fee may be credited toward the total repair cost.\n- Estimate Approval: We will provide a repair estimate before commencing work. If additional hidden damage, liquid corrosion, or underlying component failures are discovered during disassembly, we will notify you for approval before proceeding with revised costs.\n- Abandoned Devices: Equipment left unclaimed for more than sixty (60) days following notice of completion or diagnostic results will be considered abandoned and disposed of, recycled, or sold to cover costs in accordance with applicable laws.\n3. DATA & BACKUP WAIVER (CRITICAL)\n- You acknowledge that data loss, corruption, or erasure can occur during diagnostic procedures, component replacements, screen swaps, board-level repairs, or software updates.\n- You are solely responsible for backing up all data, files, and programs prior to service.\n- Austin’s Tech Repair Group accepts zero liability for any loss of data, personal files, photos, or software settings under any circumstances.\n4. LIQUID DAMAGE & PRE-EXISTING CONDITIONS\n- Devices with a history of liquid exposure, structural bending, corrosion, or prior third-party repair attempts are highly fragile and subject to catastrophic failure during handling or testing.\n- We are not responsible for devices that fail completely or stop working during or after intake for liquid damage mitigation or extreme repair procedures.\n5. WARRANTY ON PARTS & LABOR\n- All standard repairs performed by Austin’s Tech Repair Group include a ninety (90) day limited warranty covering the specific replacement parts installed and labor executed.\n- The warranty is void if the device shows evidence of subsequent physical damage, liquid exposure, customer tampering, or repair attempts by any party other than Austin’s Tech Repair Group.\n6. PAYMENT & PICKUP TERMS\nFull payment for parts, labor, and applicable taxes (minus any previously paid and applicable appointment credits) is due upon completion of services and prior to device release.` },
+          "backup": { title: "Data Backup Waiver", content: `DATA BACKUP & LOSS WAIVER — AUSTIN'S TECH REPAIR GROUP\n\nPlease read this document carefully before leaving your equipment, device, or storage media with Austin’s Tech Repair Group ("Company", "we", "us", or "our") for diagnostics, maintenance, upgrade, component-level repair, or data recovery services.\n\n1. ACKNOWLEDGMENT OF RISK\nRepair, diagnostic procedures, hardware replacement, and data recovery operations inherently carry risks. These risks include, but are not limited to, component failure, software corruption, unintended data loss, or complete failure of aging or compromised storage media.\n\n2. CUSTOMER DATA BACKUP RESPONSIBILITY\n- You ("Customer", "you") acknowledge and agree that you are solely responsible for backing up all existing files, data, photos, documents, operating systems, and software applications stored on your device prior to submitting it to Austin’s Tech Repair Group.\n- We strongly recommend that you maintain an independent backup of all critical data at all times.\n\n3. LIMITATION OF LIABILITY FOR DATA LOSS\n- Austin’s Tech Repair Group accepts NO liability whatsoever for any lost, corrupted, deleted, or altered data, files, programs, or operating systems that may occur during or as a result of any service performed on your device.\n- Under no circumstances will Austin’s Tech Repair Group be held liable for any direct, indirect, incidental, or consequential damages arising from the loss of data or the inability to retrieve data from any device or storage media.` },
+          "warranty-policy": { title: "1-Year Warranty Policy", content: `1-YEAR LIMITED WARRANTY POLICY — AUSTIN'S TECH REPAIR GROUP\n\nEffective Date: July 21, 2026\n\nAustin’s Tech Repair Group ("Company", "we", "us", or "our") proudly stands by the quality of our component-level diagnostics, technical repairs, and replacement parts. We offer a 1-Year Limited Warranty on qualifying repairs subject to the terms, conditions, and exclusions outlined below.\n\n1. SCOPE OF COVERAGE\nThis 1-Year Limited Warranty covers:\n- Replacement parts installed by Austin’s Tech Repair Group against manufacturer defects in materials and workmanship.\n- The specific labor and technical craftsmanship performed by our technicians for the authorized repair.\n\n2. WARRANTY PERIOD\n- The coverage period begins on the date the repaired device is picked up or shipped back to the Customer.\n- This warranty remains in effect for exactly three hundred sixty-five (365) days from the date of service completion.\n\n3. EXCLUSIONS & VOID CONDITIONS\nThis 1-Year Limited Warranty does NOT cover, and shall be rendered immediately null and void in the event of:\n- Physical Damage: Subsequent drops, impacts, pressure cracks, bent frames, or structural damage.\n- Liquid / Moisture Damage: Any exposure to water, humidity, steam, or other liquids following the service.\n- Customer or Third-Party Tampering: Devices opened or serviced by any party other than Austin’s Tech Repair Group.` },
+          "website-terms": { title: "Website Terms of Use", content: `WEBSITE TERMS OF USE — AUSTIN'S TECH REPAIR GROUP\n\nEffective Date: July 21, 2026\n\nWelcome to the website of Austin’s Tech Repair Group ("Company", "we", "us", or "our"). By accessing, browsing, or using our website, you ("User", "you") agree to comply with and be bound by the following Website Terms of Use. If you do not agree to these terms, please do not use our website.\n\n1. ACCEPTANCE OF TERMS\nBy accessing our website, you confirm that you have read, understood, and accept these Terms of Use and our Privacy Policy. We reserve the right to modify these terms at any time without prior notice.` }
         };
 
         const modal = document.getElementById('policy-modal');
@@ -1572,7 +1558,7 @@
           const data = policyData[policyKey];
           if (data) {
             modalTitle.textContent = data.title;
-            modalContent.innerHTML = data.content;
+            modalContent.textContent = data.content;
             modal.classList.add('active');
             modal.setAttribute('aria-hidden', 'false');
             document.body.style.overflow = 'hidden';
@@ -1596,13 +1582,11 @@
         modalBackdrop.addEventListener('click', closePolicy);
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.classList.contains('active')) closePolicy(); });
       </script>
-      
-      <center>
-        <div style="margin-top: var(--space-4); margin-bottom: var(--space-6);">
-          <a class="footer-link" href="https://maps.app.goo.gl/JDzEADFMWRfU4DKB6" target="_blank" rel="noopener" style="margin-right: var(--space-4);"><i class="fab fa-google"></i> Google Review</a>
-          <a class="footer-link" href="https://www.yelp.com/biz/austin-s-tech-repair-group-dayton-3" target="_blank" rel="noopener"><i class="fab fa-yelp"></i> Yelp Review</a>
-        </div>
-      </center>
+
+      <div style="margin-top: var(--space-4); margin-bottom: var(--space-6); text-align: center;">
+        <a class="footer-link" href="https://maps.app.goo.gl/JDzEADFMWRfU4DKB6" target="_blank" rel="noopener" style="margin-right: var(--space-4);"><i class="fab fa-google"></i> Google Review</a>
+        <a class="footer-link" href="https://www.yelp.com/biz/austin-s-tech-repair-group-dayton-3" target="_blank" rel="noopener"><i class="fab fa-yelp"></i> Yelp Review</a>
+      </div>
 
       <footer class="site-footer">
         <div class="footer-container">
