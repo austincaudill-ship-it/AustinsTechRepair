@@ -124,6 +124,38 @@
   <!-- Favicon -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230057ff'/><text x='50' y='68' font-size='48' font-weight='bold' fill='white' text-anchor='middle' font-family='Arial'>A</text></svg>" />
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+
+  <style>
+    /* Cart Badge Pulse & Indicator Styles */
+    .cart-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      background-color: var(--primary, #0057ff);
+      border-radius: 9px;
+      position: absolute;
+      top: -4px;
+      right: -6px;
+      transition: transform 0.2s ease, background-color 0.2s ease;
+    }
+    .cart-badge:not(:empty):not([data-count="0"]) {
+      animation: badgePulse 2s infinite;
+    }
+    @keyframes badgePulse {
+      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 87, 255, 0.4); }
+      70% { transform: scale(1.05); box-shadow: 0 0 0 6px rgba(0, 87, 255, 0); }
+      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 87, 255, 0); }
+    }
+    .icon-btn {
+      position: relative;
+    }
+  </style>
 </head>
 <body>
 
@@ -156,7 +188,7 @@
           <circle cx="19" cy="21" r="1"></circle>
           <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
         </svg>
-        <span id="cart-badge" class="cart-badge">0</span>
+        <span id="cart-badge" class="cart-badge" data-count="0">0</span>
       </button>
     </div>
   </header>
@@ -1562,7 +1594,7 @@
         });
       }
 
-      // 2. Shopping Cart Logic
+      // 2. Shopping Cart Logic with Item Indicator Update
       let cart = [];
       const cartBadge = document.getElementById('cart-badge');
       const cartDrawer = document.getElementById('cart-drawer');
@@ -1579,6 +1611,16 @@
       if (cartCloseBtn) cartCloseBtn.addEventListener('click', closeCart);
       if (cartBackdrop) cartBackdrop.addEventListener('click', closeCart);
 
+      function updateCartBadge() {
+        if (cartBadge) {
+          const count = cart.length;
+          cartBadge.innerText = count;
+          cartBadge.setAttribute('data-count', count);
+          cartBadge.style.transform = 'scale(1.2)';
+          setTimeout(() => cartBadge.style.transform = 'scale(1)', 200);
+        }
+      }
+
       // Listen for "Add to Cart" clicks
       document.querySelectorAll('[data-add-cart]').forEach(button => {
         button.addEventListener('click', function(e) {
@@ -1587,11 +1629,7 @@
           const productData = JSON.parse(this.getAttribute('data-add-cart'));
           cart.push(productData);
           
-          if (cartBadge) {
-            cartBadge.innerText = cart.length;
-            cartBadge.style.transform = 'scale(1.2)';
-            setTimeout(() => cartBadge.style.transform = 'scale(1)', 200);
-          }
+          updateCartBadge();
           
           if (cartItemsContainer) {
             cartItemsContainer.innerHTML += `
@@ -1618,7 +1656,7 @@
       if (clearCartBtn) {
         clearCartBtn.addEventListener('click', () => {
           cart = [];
-          if (cartBadge) cartBadge.innerText = '0';
+          updateCartBadge();
           if (cartItemsContainer) cartItemsContainer.innerHTML = '';
           if (cartTotal) cartTotal.innerText = '$0.00';
         });
