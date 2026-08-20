@@ -1893,7 +1893,19 @@
     if (accountCloseBtn) accountCloseBtn.addEventListener('click', closeAccount);
     if (accountBackdrop) accountBackdrop.addEventListener('click', closeAccount);
     if (accountCloseAction) accountCloseAction.addEventListener('click', closeAccount);
-  });
+      });
+    }
+      // --- STEVE AI AGENT FLOATING WIDGET LOGIC ---
+    const steveWidget = document.getElementById('steve-widget');
+    const steveToggle = document.getElementById('steve-toggle');
+    const steveCloseBtn = document.getElementById('steve-close-btn');
+
+    const openSteve = () => { if (steveWidget) steveWidget.setAttribute('aria-hidden', 'false'); };
+    const closeSteve = () => { if (steveWidget) steveWidget.setAttribute('aria-hidden', 'true'); };
+
+    if (steveToggle) steveToggle.addEventListener('click', openSteve);
+    if (steveCloseBtn) steveCloseBtn.addEventListener('click', closeSteve);
+});
 </script>
 
 
