@@ -230,7 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
       dot.addEventListener('click', () => {
         currentSlide = index;
         showSlide(currentSlide);
+      });
     });
   }
-      });
-  }
+});
