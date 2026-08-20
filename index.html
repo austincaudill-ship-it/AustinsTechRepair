@@ -1842,8 +1842,30 @@
           modal.setAttribute('aria-hidden', 'false');
         }
       });
+  
+    document.addEventListener('DOMContentLoaded', () => {
+      // 1. Mobile Menu Drawer Logic ...
+      // 2. Shopping Cart Logic ...
+
+      // 3. Account Drawer Logic (PASTE HERE)
+      const accountDrawer = document.getElementById('account-drawer');
+      const accountToggle = document.getElementById('account-toggle');
+      const accountCloseBtn = document.getElementById('account-drawer-close-btn');
+      const accountBackdrop = document.getElementById('account-drawer-close');
+      const accountCloseAction = document.getElementById('account-drawer-close-action');
+
+      const openAccount = () => { if (accountDrawer) accountDrawer.setAttribute('aria-hidden', 'false'); };
+      const closeAccount = () => { if (accountDrawer) accountDrawer.setAttribute('aria-hidden', 'true'); };
+
+      if (accountToggle) accountToggle.addEventListener('click', openAccount);
+      if (accountCloseBtn) accountCloseBtn.addEventListener('click', closeAccount);
+      if (accountBackdrop) accountBackdrop.addEventListener('click', closeAccount);
+      if (accountCloseAction) accountCloseAction.addEventListener('click', closeAccount);
     });
-  });
+});
+});
+});
+
 </script>
 
 
