@@ -255,72 +255,82 @@
     </div>
 
 
-      <!-- Service Categories -->
-      <div class="container">
-        <div class="section-header reveal"> 
-          <p class="eyebrow">Examples of devices We Fix</p>
-          <h2 class="section-title">Expert Repair for Every Device</h2>
-          <p class="section-copy">From cracked screens to complex motherboard diagnostics, we handle it all. Tap any card to see what we cover.</p>
-        </div>
-        <div class="service-grid">
-          <button class="service-card flip-card reveal" type="button" data-device="Phones">
-            <div class="flip-card-inner">
-              <div class="flip-card-face flip-card-front">
-                <h4>Phones</h4>
-              </div>
-              <p>Cracked screens, battery swaps, charging port repair, camera issues, speaker/mic fixes, water damage recovery, software troubleshooting, and fast data transfer.</p>
-            </div>
-          </button>
-          <button class="service-card flip-card reveal reveal-delay-1" type="button" data-device="Tablets">
-            <div class="flip-card-inner">
-              <div class="flip-card-face flip-card-front">
-                <h4>Tablets</h4>
-              </div>
-              <p>Display replacement, charging port repair, touch troubleshooting, battery service, camera fixes, and full software setup support.</p>
-            </div>
-          </button>
-          <button class="service-card flip-card reveal reveal-delay-2" type="button" data-device="Computers">
-            <div class="flip-card-inner">
-              <div class="flip-card-face flip-card-front">
-                <h4>Computers</h4>
-              </div>
-              <p>SSD upgrades, RAM installs, virus cleanup, display repair, power issues, DC jack repair, software recovery, and data rescue.</p>
-            </div>
-          </button>
-          <button class="service-card flip-card reveal reveal-delay-3" type="button" data-device="Gaming">
-            <div class="flip-card-inner">   
-              <div class="flip-card-face flip-card-front">
-                <h4>Gaming</h4>
-              </div>
-              <p>Console HDMI port repair, cooling fan replacement, storage upgrades, power fault diagnostics, controller fixes, and overheating solutions.</p>
-            </div>
-          </button>
-          <button class="service-card flip-card reveal" type="button" data-device="Smart Watches">
-            <div class="flip-card-inner">
-              <div class="flip-card-face flip-card-front">
-                <h4>Smart Watches</h4>
-              </div>
-              <p>Battery service, display replacement, charging issues, pairing fixes, syncing support, and button or crown repairs.</p>
-            </div>
-          </button>
-          <button class="service-card flip-card reveal" type="button" data-device="Accessories">
-            <div class="flip-card-inner">
-              <div class="flip-card-face flip-card-front">
-                <h4>Shop Accessories & ATR One</h4>
-              </div>
-              <p>Shop Parts & Accessories: Cases, screen protectors, chargers, and gear — checkout with Square or Shopify. Subscribe to ATR One Here.</p>
-            </div>
-          </button>
-          <button class="service-card flip-card reveal" type="button" data-device="Business Services">
-            <div class="flip-card-inner">
-              <div class="flip-card-face flip-card-front">
-                <h4>Business Services</h4>
-              </div>
-              <p>Printers, setup, remote support, mass imaging, schools, offices, battery service, display replacement, charging issues, pairing fixes, syncing support, and hardware maintenance.</p>
-            </div>
-          </button>
-        </div>
+    <!-- ===================== SERVICE CATEGORIES ===================== -->
+    <div class="container" style="padding: var(--space-12) var(--space-5);">
+      <div class="section-header reveal text-center" style="margin-bottom: var(--space-8);"> 
+        <p class="eyebrow" style="justify-content: center;">Examples of Devices We Fix</p>
+        <h2 class="section-title">Expert Repair for Every Device</h2>
+        <p class="section-copy" style="max-width: 600px; margin: 0 auto;">From cracked screens to complex motherboard diagnostics, we handle it all right at your location.</p>
       </div>
+      
+      <div class="service-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-6);">
+        
+        <!-- Phones -->
+        <div class="service-card reveal" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: var(--space-6); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: var(--space-3);">
+          <div style="width: 44px; height: 44px; background: rgba(0, 87, 255, 0.1); border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.25rem;">
+            <i class="fas fa-mobile-screen"></i>
+          </div>
+          <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; margin: 0;">Phones</h3>
+          <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin: 0;">Cracked screens, battery swaps, charging port repair, camera issues, speaker/mic fixes, water damage recovery, software troubleshooting, and fast data transfer.</p>
+        </div>
+
+        <!-- Tablets -->
+        <div class="service-card reveal reveal-delay-1" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: var(--space-6); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: var(--space-3);">
+          <div style="width: 44px; height: 44px; background: rgba(0, 87, 255, 0.1); border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.25rem;">
+            <i class="fas fa-tablet-alt"></i>
+          </div>
+          <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; margin: 0;">Tablets</h3>
+          <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin: 0;">Display replacement, charging port repair, touch troubleshooting, battery service, camera fixes, and full software setup support.</p>
+        </div>
+
+        <!-- Computers -->
+        <div class="service-card reveal reveal-delay-2" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: var(--space-6); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: var(--space-3);">
+          <div style="width: 44px; height: 44px; background: rgba(0, 87, 255, 0.1); border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.25rem;">
+            <i class="fas fa-laptop"></i>
+          </div>
+          <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; margin: 0;">Computers</h3>
+          <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin: 0;">SSD upgrades, RAM installs, virus cleanup, display repair, power issues, DC jack repair, software recovery, and data rescue.</p>
+        </div>
+
+        <!-- Gaming -->
+        <div class="service-card reveal reveal-delay-3" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: var(--space-6); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: var(--space-3);">
+          <div style="width: 44px; height: 44px; background: rgba(0, 87, 255, 0.1); border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.25rem;">
+            <i class="fas fa-gamepad"></i>
+          </div>
+          <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; margin: 0;">Gaming Consoles</h3>
+          <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin: 0;">Console HDMI port repair, cooling fan replacement, storage upgrades, power fault diagnostics, controller fixes, and overheating solutions.</p>
+        </div>
+
+        <!-- Smart Watches -->
+        <div class="service-card reveal" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: var(--space-6); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: var(--space-3);">
+          <div style="width: 44px; height: 44px; background: rgba(0, 87, 255, 0.1); border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.25rem;">
+            <i class="fas fa-clock"></i>
+          </div>
+          <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; margin: 0;">Smart Watches</h3>
+          <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin: 0;">Battery service, display replacement, charging issues, pairing fixes, syncing support, and button or crown repairs.</p>
+        </div>
+
+        <!-- Accessories & ATR One -->
+        <div class="service-card reveal" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: var(--space-6); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: var(--space-3);">
+          <div style="width: 44px; height: 44px; background: rgba(0, 87, 255, 0.1); border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.25rem;">
+            <i class="fas fa-store"></i>
+          </div>
+          <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; margin: 0;">Accessories & ATR One</h3>
+          <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin: 0;">Cases, screen protectors, chargers, and gear at wholesale cost. Join ATR One for 20% off labor and free member benefits.</p>
+        </div>
+
+        <!-- Business Services -->
+        <div class="service-card reveal" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: var(--space-6); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: var(--space-3);">
+          <div style="width: 44px; height: 44px; background: rgba(0, 87, 255, 0.1); border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.25rem;">
+            <i class="fas fa-briefcase"></i>
+          </div>
+          <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; margin: 0;">Business Services</h3>
+          <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin: 0;">Printer maintenance, office IT support, mass imaging, school technology contracts, and commercial hardware care.</p>
+        </div>
+
+      </div>
+    </div>
+
 
       <!-- How It Works -->
       <div class="process-section" style="padding: var(--space-16) var(--space-5);">
