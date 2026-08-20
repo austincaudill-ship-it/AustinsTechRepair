@@ -1234,7 +1234,7 @@ button {
 }
 
 /* ==========================================================================
-   Footer & Cart Drawer
+   Footer & Cart / Account Drawers
    ========================================================================== */
 .footer {
   background: var(--surface);
@@ -1392,6 +1392,64 @@ button {
   font-family: var(--font-display);
 }
 
+/* Account Drawer (Mirrors .cart-drawer) */
+.account-drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  justify-content: flex-end;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition);
+}
+.account-drawer[aria-hidden="false"] {
+  opacity: 1;
+  pointer-events: auto;
+}
+.account-drawer__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.account-drawer__panel {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  height: 100%;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-lg);
+  transform: translateX(100%);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.account-drawer[aria-hidden="false"] .account-drawer__panel {
+  transform: translateX(0);
+}
+.account-drawer__header {
+  padding: var(--space-6);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.account-drawer__body {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.account-drawer__footer {
+  padding: var(--space-6);
+  border-top: 1px solid var(--border);
+  background: var(--surface-alt);
+}
+
 /* ==========================================================================
    Contact Form — full-width variant of .repair-card
    ========================================================================== */
@@ -1404,7 +1462,7 @@ button {
   .repair-card.contact-form-card {
     padding: var(--space-5);
   }
-} /* <--- FIXED: Added missing closing brace here */
+}
 
 /* ==========================================================================
    Apple-Style Alternating Sections
@@ -1423,7 +1481,7 @@ button {
 .apple-section.reverse {
   flex-direction: row-reverse;
   background: var(--surface-alt);
-  max-width: 100%; /* Spreads background edge-to-edge */
+  max-width: 100%;
   padding-left: calc(50vw - (var(--content-wide) / 2) + 10%);
   padding-right: calc(50vw - (var(--content-wide) / 2) + 10%);
 }
