@@ -54,61 +54,6 @@
   }
   </script>
 
-  <!-- Complete SPA Hash Router & Section Navigation -->
-  <script>
-    function handleRoute() {
-      let hash = window.location.hash.substring(1);
-      if (!hash) hash = 'home'; 
-
-      const targetSection = document.getElementById(hash);
-      
-      if (targetSection && targetSection.classList.contains('page')) {
-        document.querySelectorAll('main > .page').forEach(section => {
-          section.classList.remove('active');
-          section.style.display = 'none';
-        });
-
-        targetSection.classList.add('active');
-        targetSection.style.display = 'block';
-
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-
-        document.querySelectorAll('[data-page]').forEach(link => {
-          if (link.getAttribute('data-page') === hash) {
-            link.classList.add('active');
-          } else {
-            link.classList.remove('active');
-          }
-        });
-      }
-    }
-
-    window.addEventListener('DOMContentLoaded', handleRoute);
-    window.addEventListener('hashchange', handleRoute);
-
-    document.addEventListener('click', function(e) {
-      const link = e.target.closest('a[href*="#"]');
-      if (link) {
-        const href = link.getAttribute('href');
-        const hashIndex = href.indexOf('#');
-        if (hashIndex !== -1) {
-          const hash = href.substring(hashIndex);
-          const target = document.querySelector(hash);
-          if (target && target.classList.contains('page')) {
-            e.preventDefault();
-            window.location.hash = hash;
-            handleRoute();
-
-            // Auto close mobile menu if open
-            const mobileMenu = document.getElementById('mobile-menu');
-            if (mobileMenu && mobileMenu.getAttribute('aria-hidden') === 'false') {
-              mobileMenu.setAttribute('aria-hidden', 'true');
-            }
-          }
-        }
-      }
-    });
-  </script>
 
   <!-- Fonts & Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
