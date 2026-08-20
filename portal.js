@@ -1,11 +1,11 @@
 /* ============================================================
-   AUSTIN'S TECH REPAIR GROUP — Employee Portal
+   AUSTIN'S TECH REPAIR GROUP — Employee Portal (Enhanced)
    ============================================================ */
 
 (function () {
   'use strict';
 
-  /* ---- Demo Data ---- */
+  /* ---- Demo & Persistent Database Data ---- */
   function seedData() {
     return {
       tickets: [
@@ -61,7 +61,23 @@
     };
   }
 
-  let db = seedData();
+  // Load database from localStorage or fallback to initial seed data
+  let db;
+  try {
+    const savedDb = localStorage.getItem('atr_persistent_portal_db');
+    db = savedDb ? JSON.parse(savedDb) : seedData();
+  } catch (err) {
+    db = seedData();
+  }
+
+  function saveDb() {
+    try {
+      localStorage.setItem('atr_persistent_portal_db', JSON.stringify(db));
+    } catch (err) {
+      console.error('Failed to save portal state to localStorage:', err);
+    }
+  }
+
   let charts = {};
   let editingId = null;
   let pendingDelete = null;
@@ -70,13 +86,13 @@
   const USERS = { 'admin': { passcode: 'admin123', name: 'Austin Reed', role: 'Owner' }, 'demo': { passcode: 'demo', name: 'Demo User', role: 'Technician' } };
 
   window.login = function () {
-    const username = document.getElementById('username').value.trim();
-    const passcode = document.getElementById('passcode').value;
+    const username = document.getElementById('username')?.value.trim();
+    const passcode = document.getElementById('passcode')?.value;
     const msg = document.getElementById('loginMsg');
     const user = USERS[username];
     if (user && user.passcode === passcode) {
-      document.getElementById('loginView').classList.add('hidden');
-      document.getElementById('portalView').classList.remove('hidden');
+      document.getElementById('loginView')?.classList.add('hidden');
+      document.getElementById('portalView')?.classList.remove('hidden');
       document.getElementById('portal-username').textContent = user.name;
       document.getElementById('portal-role').textContent = user.role;
       document.getElementById('portal-avatar').textContent = user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
@@ -87,10 +103,12 @@
   };
 
   window.logout = function () {
-    document.getElementById('portalView').classList.add('hidden');
-    document.getElementById('loginView').classList.remove('hidden');
-    document.getElementById('username').value = '';
-    document.getElementById('passcode').value = '';
+    document.getElementById('portalView')?.classList.add('hidden');
+    document.getElementById('loginView')?.classList.remove('hidden');
+    const uInput = document.getElementById('username');
+    const pInput = document.getElementById('passcode');
+    if (uInput) uInput.value = '';
+    if (pInput) pInput.value = '';
   };
 
   /* ---- Portal Section Navigation ---- */
@@ -102,7 +120,6 @@
       document.querySelectorAll('.portal-nav button').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
     }
-    // Refresh section data
     if (sectionId === 'portal-dashboard') renderDashboard();
     if (sectionId === 'portal-tickets') renderTickets();
     if (sectionId === 'portal-queue') renderKanban();
@@ -119,12 +136,12 @@
   /* ---- Modal Helpers ---- */
   window.closeModal = function (id) {
     const modal = document.getElementById(id);
-    if (modal) modal.close();
+    if (modal && typeof modal.close === 'function') modal.close();
   };
 
   function openModal(id) {
     const modal = document.getElementById(id);
-    if (modal) modal.showModal();
+    if (modal && typeof modal.showModal === 'function') modal.showModal();
   }
 
   /* ---- Dashboard ---- */
@@ -144,7 +161,6 @@
       <div class="stat-card"><div class="stat-icon red"><i class="fas fa-triangle-exclamation"></i></div><div class="stat-info"><div class="stat-label">Low Stock Items</div><div class="stat-value">${lowStock}</div></div></div>
     `;
 
-    // Activity feed
     const feed = document.getElementById('activity-feed');
     if (feed) {
       const activities = [
@@ -157,7 +173,6 @@
       feed.innerHTML = activities.map(a => `<div class="activity-item"><div class="activity-dot"></div><div><div class="activity-text">${a.text}</div><div class="activity-time">${a.time}</div></div></div>`).join('');
     }
 
-    // Charts
     setTimeout(() => {
       drawRevenueChart();
       drawStatusChart();
@@ -222,7 +237,7 @@
     const priorityFilter = document.getElementById('ticket-filter-priority')?.value || '';
     const search = document.getElementById('ticket-search')?.value.toLowerCase() || '';
 
-    let tickets = db.tickets.filter(t => {
+    const tickets = db.tickets.filter(t => {
       if (statusFilter && t.status !== statusFilter) return false;
       if (priorityFilter && t.priority !== priorityFilter) return false;
       if (search && !(`${t.id} ${t.customer} ${t.device} ${t.issue}`.toLowerCase().includes(search))) return false;
@@ -342,6 +357,7 @@
       const newId = 'T' + (1043 + db.tickets.length);
       db.tickets.unshift({ id: newId, status: 'Pending', ...ticket });
     }
+    saveDb();
     closeModal('ticketModal');
     renderTickets();
     renderKanban();
@@ -349,7 +365,8 @@
 
   window.deleteTicket = function (id) {
     pendingDelete = { type: 'ticket', id };
-    document.getElementById('confirmMessage').textContent = `Delete ticket ${id}? This cannot be undone.`;
+    const confirmMsg = document.getElementById('confirmMessage');
+    if (confirmMsg) confirmMsg.textContent = `Delete ticket ${id}? This cannot be undone.`;
     openModal('confirmModal');
   };
 
@@ -389,6 +406,7 @@
     const idx = statuses.indexOf(t.status);
     const newIdx = Math.max(0, Math.min(statuses.length - 1, idx + direction));
     t.status = statuses[newIdx];
+    saveDb();
     renderKanban();
     renderTickets();
   };
@@ -398,7 +416,7 @@
     const tbody = document.getElementById('customers-tbody');
     if (!tbody) return;
     const search = document.getElementById('customer-search')?.value.toLowerCase() || '';
-    let customers = db.customers.filter(c => !search || `${c.name} ${c.phone} ${c.email}`.toLowerCase().includes(search));
+    const customers = db.customers.filter(c => !search || `${c.name} ${c.phone} ${c.email}`.toLowerCase().includes(search));
 
     tbody.innerHTML = customers.length === 0 ? '<tr><td colspan="8" style="text-align:center;padding:var(--space-6);color:var(--text-muted);">No customers found</td></tr>' :
       customers.map(c => `
@@ -457,13 +475,15 @@
       const newId = 'C' + (206 + db.customers.length);
       db.customers.push({ id: newId, repairs: 0, totalSpent: 0, ...data });
     }
+    saveDb();
     closeModal('customerModal');
     renderCustomers();
   };
 
   window.deleteCustomer = function (id) {
     pendingDelete = { type: 'customer', id };
-    document.getElementById('confirmMessage').textContent = `Delete customer ${id}? This cannot be undone.`;
+    const confirmMsg = document.getElementById('confirmMessage');
+    if (confirmMsg) confirmMsg.textContent = `Delete customer ${id}? This cannot be undone.`;
     openModal('confirmModal');
   };
 
@@ -473,7 +493,7 @@
     if (!tbody) return;
     const filter = document.getElementById('inventory-filter')?.value || '';
     const search = document.getElementById('inventory-search')?.value.toLowerCase() || '';
-    let items = db.inventory.filter(i => {
+    const items = db.inventory.filter(i => {
       if (filter && i.category !== filter) return false;
       if (search && !(`${i.sku} ${i.name} ${i.supplier}`.toLowerCase().includes(search))) return false;
       return true;
@@ -548,13 +568,15 @@
     } else {
       db.inventory.push(data);
     }
+    saveDb();
     closeModal('partModal');
     renderInventory();
   };
 
   window.deletePart = function (sku) {
     pendingDelete = { type: 'part', id: sku };
-    document.getElementById('confirmMessage').textContent = `Delete part ${sku}? This cannot be undone.`;
+    const confirmMsg = document.getElementById('confirmMessage');
+    if (confirmMsg) confirmMsg.textContent = `Delete part ${sku}? This cannot be undone.`;
     openModal('confirmModal');
   };
 
@@ -571,7 +593,7 @@
   function renderOrders() {
     const tbody = document.getElementById('orders-tbody');
     if (!tbody) return;
-    let orders = currentOrderTab === 'all' ? db.orders : db.orders.filter(o => o.platform === currentOrderTab);
+    const orders = currentOrderTab === 'all' ? db.orders : db.orders.filter(o => o.platform === currentOrderTab);
 
     const navCount = document.getElementById('nav-order-count');
     if (navCount) navCount.textContent = db.orders.filter(o => o.status === 'Pending' || o.status === 'Shipped').length;
@@ -639,13 +661,15 @@
     } else {
       db.orders.unshift(data);
     }
+    saveDb();
     closeModal('orderModal');
     renderOrders();
   };
 
   window.deleteOrder = function (id) {
     pendingDelete = { type: 'order', id };
-    document.getElementById('confirmMessage').textContent = `Delete order ${id}? This cannot be undone.`;
+    const confirmMsg = document.getElementById('confirmMessage');
+    if (confirmMsg) confirmMsg.textContent = `Delete order ${id}? This cannot be undone.`;
     openModal('confirmModal');
   };
 
@@ -666,7 +690,6 @@
       <div class="stat-card"><div class="stat-icon orange"><i class="fas fa-receipt"></i></div><div class="stat-info"><div class="stat-label">Transactions</div><div class="stat-value">${db.transactions.length}</div></div></div>
     `;
 
-    // Transactions table
     const tbody = document.getElementById('transactions-tbody');
     if (tbody) {
       tbody.innerHTML = db.transactions.slice().reverse().map(t => `
@@ -756,7 +779,8 @@
 
   window.openTransactionModal = function () {
     ['txn-amount', 'txn-cost'].forEach(id => { const el = document.getElementById(id); if (el) el.value = 0; });
-    document.getElementById('txn-ticket').value = '';
+    const txnTicket = document.getElementById('txn-ticket');
+    if (txnTicket) txnTicket.value = '';
     openModal('transactionModal');
   };
 
@@ -770,6 +794,7 @@
       date: new Date().toISOString().split('T')[0],
     };
     db.transactions.push(txn);
+    saveDb();
     closeModal('transactionModal');
     renderFinancials();
   };
@@ -809,8 +834,12 @@
 
   window.clockIn = function () {
     db.clockStatus = { clockedIn: true, clockInTime: new Date().toTimeString().slice(0, 5) };
-    document.getElementById('shift-status').innerHTML = '<i class="fas fa-circle" style="font-size:6px"></i> Clocked In';
-    document.getElementById('shift-status').className = 'pill success';
+    const shiftStatus = document.getElementById('shift-status');
+    if (shiftStatus) {
+      shiftStatus.innerHTML = '<i class="fas fa-circle" style="font-size:6px"></i> Clocked In';
+      shiftStatus.className = 'pill success';
+    }
+    saveDb();
     renderTimeClock();
   };
 
@@ -819,8 +848,12 @@
     const hours = ((new Date().getHours() + new Date().getMinutes() / 60) - 8).toFixed(1);
     db.timesheet.unshift({ date: today, clockIn: db.clockStatus.clockInTime, clockOut: new Date().toTimeString().slice(0, 5), hours: parseFloat(hours), status: 'Completed' });
     db.clockStatus = { clockedIn: false, clockInTime: null };
-    document.getElementById('shift-status').innerHTML = '<i class="fas fa-circle" style="font-size:6px"></i> Clocked Out';
-    document.getElementById('shift-status').className = 'pill';
+    const shiftStatus = document.getElementById('shift-status');
+    if (shiftStatus) {
+      shiftStatus.innerHTML = '<i class="fas fa-circle" style="font-size:6px"></i> Clocked Out';
+      shiftStatus.className = 'pill';
+    }
+    saveDb();
     renderTimeClock();
   };
 
@@ -882,13 +915,15 @@
     } else {
       db.employees.push({ id: 'E' + (3 + db.employees.length).toString().padStart(2, '0'), repairs: 0, ...data });
     }
+    saveDb();
     closeModal('employeeModal');
     renderEmployees();
   };
 
   window.deleteEmployee = function (id) {
     pendingDelete = { type: 'employee', id };
-    document.getElementById('confirmMessage').textContent = `Delete employee ${id}? This cannot be undone.`;
+    const confirmMsg = document.getElementById('confirmMessage');
+    if (confirmMsg) confirmMsg.textContent = `Delete employee ${id}? This cannot be undone.`;
     openModal('confirmModal');
   };
 
@@ -899,9 +934,13 @@
     const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
     const avgTicket = total > 0 ? (db.tickets.reduce((s, t) => s + t.price, 0) / total).toFixed(2) : 0;
 
-    document.getElementById('completion-rate').innerHTML = `<div style="font-size:var(--text-2xl);font-weight:900;font-family:var(--font-display);color:var(--success);">${completionRate}%</div>`;
-    document.getElementById('avg-ticket').innerHTML = `<div style="font-size:var(--text-2xl);font-weight:900;font-family:var(--font-display);color:var(--primary);">$${avgTicket}</div>`;
-    document.getElementById('avg-repair-time').innerHTML = `<div style="font-size:var(--text-2xl);font-weight:900;font-family:var(--font-display);color:var(--accent-blue);">1.5 days</div>`;
+    const compRateEl = document.getElementById('completion-rate');
+    const avgTicketEl = document.getElementById('avg-ticket');
+    const avgTimeEl = document.getElementById('avg-repair-time');
+
+    if (compRateEl) compRateEl.innerHTML = `<div style="font-size:var(--text-2xl);font-weight:900;font-family:var(--font-display);color:var(--success);">${completionRate}%</div>`;
+    if (avgTicketEl) avgTicketEl.innerHTML = `<div style="font-size:var(--text-2xl);font-weight:900;font-family:var(--font-display);color:var(--primary);">$${avgTicket}</div>`;
+    if (avgTimeEl) avgTimeEl.innerHTML = `<div style="font-size:var(--text-2xl);font-weight:900;font-family:var(--font-display);color:var(--accent-blue);">1.5 days</div>`;
 
     setTimeout(() => {
       drawDeviceTypeChart();
@@ -1008,6 +1047,7 @@
     else if (type === 'part') { db.inventory = db.inventory.filter(p => p.sku !== id); renderInventory(); }
     else if (type === 'order') { db.orders = db.orders.filter(o => o.id !== id); renderOrders(); }
     else if (type === 'employee') { db.employees = db.employees.filter(e => e.id !== id); renderEmployees(); }
+    saveDb();
     pendingDelete = null;
     closeModal('confirmModal');
   });
@@ -1030,6 +1070,7 @@
     reader.onload = (e) => {
       try {
         db = JSON.parse(e.target.result);
+        saveDb();
         alert('Data imported successfully.');
         renderDashboard();
       } catch (err) { alert('Invalid JSON file.'); }
@@ -1039,12 +1080,14 @@
 
   window.reseedData = function () {
     db = seedData();
+    saveDb();
     alert('Demo data restored.');
     renderDashboard();
   };
 
   window.clearAllData = function () {
     db = { tickets: [], customers: [], inventory: [], orders: [], transactions: [], employees: [], timesheet: [], clockStatus: { clockedIn: false, clockInTime: null } };
+    saveDb();
     alert('All data cleared.');
     renderDashboard();
   };
@@ -1057,19 +1100,18 @@
 
   /* ---- Import Repair Requests from localStorage ---- */
   function importRepairRequests() {
+    let requests = [];
     try {
-      var requests = JSON.parse(localStorage.getItem('atr_repair_requests') || '[]');
+      requests = JSON.parse(localStorage.getItem('atr_repair_requests') || '[]');
     } catch (e) { requests = []; }
     if (!requests.length) return;
 
-    var newCount = 0;
+    let newCount = 0;
     requests.forEach(function (req) {
-      // Check if this request was already imported
-      var exists = db.tickets.find(function (t) { return t.id === req.ticketId; });
+      const exists = db.tickets.find(function (t) { return t.id === req.ticketId; });
       if (exists) return;
 
-      // Convert repair request to portal ticket format
-      var ticket = {
+      const ticket = {
         id: req.ticketId,
         customer: req.customer.name,
         phone: req.customer.phone,
@@ -1093,8 +1135,7 @@
       };
       db.tickets.unshift(ticket);
 
-      // Also add customer to customers list if not exists
-      var custExists = db.customers.find(function (c) { return c.email === req.customer.email; });
+      const custExists = db.customers.find(function (c) { return c.email === req.customer.email; });
       if (!custExists && req.customer.email) {
         db.customers.unshift({
           id: 'C' + (200 + db.customers.length + 1),
@@ -1111,8 +1152,8 @@
       newCount++;
     });
 
-    // Clear the imported requests so they don't get re-imported
     localStorage.setItem('atr_repair_requests', JSON.stringify([]));
+    saveDb();
 
     if (newCount > 0) {
       showPortalToast(newCount + ' new repair request' + (newCount > 1 ? 's' : '') + ' imported from the website', 'success');
@@ -1121,19 +1162,19 @@
 
   /* ---- Portal Toast Notification ---- */
   function showPortalToast(message, type) {
-    var existing = document.getElementById('portal-toast');
+    const existing = document.getElementById('portal-toast');
     if (existing) existing.remove();
-    var toast = document.createElement('div');
+    const toast = document.createElement('div');
     toast.id = 'portal-toast';
     toast.style.cssText = 'position:fixed;top:20px;right:20px;background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--primary);border-radius:var(--radius-lg);padding:var(--space-4) var(--space-5);box-shadow:var(--shadow-xl);z-index:2000;display:flex;align-items:center;gap:var(--space-3);max-width:360px;animation:chatIn 300ms ease;';
-    var icon = type === 'success' ? 'fa-circle-check' : 'fa-circle-info';
-    var color = type === 'success' ? 'var(--success)' : 'var(--primary)';
-    toast.innerHTML = '<i class="fas ' + icon + '" style="color:' + color + ';font-size:1.25rem;"></i><span style="font-size:var(--text-sm);color:var(--text);">' + message + '</span>';
+    const icon = type === 'success' ? 'fa-circle-check' : 'fa-circle-info';
+    const color = type === 'success' ? 'var(--success)' : 'var(--primary)';
+    toast.innerHTML = `<i class="fas ${icon}" style="color:${color};font-size:1.25rem;"></i><span style="font-size:var(--text-sm);color:var(--text);">${message}</span>`;
     document.body.appendChild(toast);
-    setTimeout(function () {
+    setTimeout(() => {
       toast.style.opacity = '0';
       toast.style.transition = 'opacity 300ms ease';
-      setTimeout(function () { toast.remove(); }, 300);
+      setTimeout(() => { toast.remove(); }, 300);
     }, 5000);
   }
 
@@ -1181,12 +1222,10 @@
 
   /* ---- Listen for new repair requests in real-time ---- */
   window.addEventListener('atr:new-repair-request', function () {
-    // Only auto-import if portal is open (user is logged in)
-    var portalView = document.getElementById('portalView');
+    const portalView = document.getElementById('portalView');
     if (portalView && !portalView.classList.contains('hidden')) {
       importRepairRequests();
-      // Re-render current section if it's tickets or dashboard
-      var activeSection = document.querySelector('.portal-section.active');
+      const activeSection = document.querySelector('.portal-section.active');
       if (activeSection) {
         if (activeSection.id === 'portal-tickets') renderTickets();
         if (activeSection.id === 'portal-dashboard') renderDashboard();
@@ -1199,10 +1238,10 @@
   /* ---- Also listen for storage events (cross-tab) ---- */
   window.addEventListener('storage', function (e) {
     if (e.key === 'atr_repair_requests' && e.newValue && e.newValue !== '[]') {
-      var portalView = document.getElementById('portalView');
+      const portalView = document.getElementById('portalView');
       if (portalView && !portalView.classList.contains('hidden')) {
         importRepairRequests();
-        var activeSection = document.querySelector('.portal-section.active');
+        const activeSection = document.querySelector('.portal-section.active');
         if (activeSection) {
           if (activeSection.id === 'portal-tickets') renderTickets();
           if (activeSection.id === 'portal-dashboard') renderDashboard();
