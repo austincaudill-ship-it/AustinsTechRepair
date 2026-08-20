@@ -1491,43 +1491,56 @@
     }
   };
 
-  const modal = document.getElementById('policy-modal');
-  const modalBackdrop = document.getElementById('policy-backdrop');
-  const modalClose = document.getElementById('policy-close');
-  const modalTitle = document.getElementById('policy-title');
-  const modalContent = document.getElementById('policy-content');
-  const triggers = document.querySelectorAll('.policy-trigger');
-
   function openPolicy(policyKey) {
+    const modal = document.getElementById('policy-modal');
+    const modalTitle = document.getElementById('policy-title');
+    const modalContent = document.getElementById('policy-content');
+    
     const data = policyData[policyKey];
-    if (data) {
-      modalTitle.textContent = data.title;
-      modalContent.textContent = data.content;
+    if (data && modal) {
+      if (modalTitle) modalTitle.textContent = data.title;
+      if (modalContent) modalContent.textContent = data.content;
       modal.classList.add('active');
       modal.setAttribute('aria-hidden', 'false');
       document.body.style.overflow = 'hidden';
+    } else {
+      console.warn("Policy not found for key:", policyKey);
     }
   }
 
-  // Expose globally so cookie banner script can invoke it directly
+  // Globally expose function so cookie banner links trigger it instantly
   window.openPolicyModal = openPolicy;
 
   function closePolicy() {
-    modal.classList.remove('active');
-    modal.setAttribute('aria-hidden', 'true');
-    document.body.style.overflow = '';
+    const modal = document.getElementById('policy-modal');
+    if (modal) {
+      modal.classList.remove('active');
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
   }
 
-  triggers.forEach(trigger => {
-    trigger.addEventListener('click', (e) => {
-      e.preventDefault();
-      openPolicy(trigger.getAttribute('data-policy'));
+  document.addEventListener('DOMContentLoaded', () => {
+    const triggers = document.querySelectorAll('.policy-trigger');
+    const modalBackdrop = document.getElementById('policy-backdrop');
+    const modalClose = document.getElementById('policy-close');
+
+    triggers.forEach(trigger => {
+      trigger.addEventListener('click', (e) => {
+        e.preventDefault();
+        const policyKey = trigger.getAttribute('data-policy');
+        if (policyKey) {
+          openPolicy(policyKey);
+        }
+      });
+    });
+
+    if (modalClose) modalClose.addEventListener('click', closePolicy);
+    if (modalBackdrop) modalBackdrop.addEventListener('click', closePolicy);
+    document.addEventListener('keydown', (e) => { 
+      if (e.key === 'Escape') closePolicy(); 
     });
   });
-
-  if (modalClose) modalClose.addEventListener('click', closePolicy);
-  if (modalBackdrop) modalBackdrop.addEventListener('click', closePolicy);
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal && modal.classList.contains('active')) closePolicy(); });
 </script>
 
 
