@@ -1531,8 +1531,12 @@ button {
   .apple-text {
     max-width: 100%;
   }
-  }
-/* Floating Steve AI Widget Styles */
+} 
+/* <-- FIXED: Media query properly closed here! */
+
+/* ==========================================================================
+   Floating Steve AI Widget Styles
+   ========================================================================== */
 .steve-toggle-btn {
   position: fixed;
   bottom: 85px; /* Sits comfortably above mobile bottom nav */
@@ -1609,4 +1613,3 @@ button {
   .steve-toggle-btn { bottom: 20px; }
   .steve-widget { bottom: 80px; }
 }
-
