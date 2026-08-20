@@ -1531,4 +1531,81 @@ button {
   .apple-text {
     max-width: 100%;
   }
+/* Floating Steve AI Widget Styles */
+.steve-toggle-btn {
+  position: fixed;
+  bottom: 85px; /* Sits comfortably above mobile bottom nav */
+  right: 20px;
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--primary);
+  color: white;
+  padding: 12px 18px;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  font-size: 0.9rem;
+  box-shadow: var(--shadow-lg);
+  border: none;
+  cursor: pointer;
+  transition: transform var(--transition), background var(--transition);
 }
+.steve-toggle-btn:hover {
+  background: var(--primary-hover);
+  transform: translateY(-2px);
+}
+
+.steve-widget {
+  position: fixed;
+  bottom: 85px;
+  right: 20px;
+  z-index: 500;
+  width: calc(100% - 40px);
+  max-width: 380px;
+  height: 520px;
+  max-height: 75vh;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(20px) scale(0.95);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.steve-widget[aria-hidden="false"] {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+.steve-panel {
+  width: 100%;
+  height: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.steve-header {
+  padding: 12px 16px;
+  background: var(--surface-alt);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.steve-body {
+  flex-grow: 1;
+  background: var(--bg);
+}
+
+/* Adjust positioning for desktop screens without a mobile bottom bar */
+@media (min-width: 1024px) {
+  .steve-toggle-btn { bottom: 20px; }
+  .steve-widget { bottom: 80px; }
+}
+
