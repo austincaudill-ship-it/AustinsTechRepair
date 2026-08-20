@@ -4,7 +4,7 @@
 
 document.addEventListener('DOMContentLoaded', () => {
   // Navigation & Page Elements
-  const bottomNavItems = document.querySelectorAll('.mobile-bottom-nav .bottom-nav-item');
+  const bottomNavItems = document.querySelectorAll('.mobile-bottom-nav .bottom-nav-item, .mobile-menu .menu-link');
   const desktopNavLinks = document.querySelectorAll('.nav-link, .menu-link');
   const pages = document.querySelectorAll('.page');
   const mobileMenu = document.querySelector('.mobile-menu');
@@ -28,8 +28,10 @@ document.addEventListener('DOMContentLoaded', () => {
     pages.forEach(page => {
       if (page.id === targetPageId) {
         page.classList.add('active');
+        page.style.display = 'block';
       } else {
         page.classList.remove('active');
+        page.style.display = 'none';
       }
     });
 
@@ -54,7 +56,23 @@ document.addEventListener('DOMContentLoaded', () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  // Bottom Thumb Nav Clicks
+  // Check URL hash on initial page load
+  const initialHash = window.location.hash.replace('#', '');
+  if (initialHash && document.getElementById(initialHash)) {
+    navigateToPage(initialHash);
+  } else {
+    navigateToPage('home');
+  }
+
+  // Handle hash changes if users use back/forward buttons
+  window.addEventListener('hashchange', () => {
+    const hash = window.location.hash.replace('#', '');
+    if (hash && document.getElementById(hash)) {
+      navigateToPage(hash);
+    }
+  });
+
+  // Bottom Thumb Nav & Mobile Menu Links Clicks
   bottomNavItems.forEach(item => {
     item.addEventListener('click', function (e) {
       if (this.id === 'bottom-menu-toggle') {
@@ -74,8 +92,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const target = this.getAttribute('data-page') || href.replace('#', '');
-      if (target) {
+      if (target && document.getElementById(target)) {
         e.preventDefault();
+        history.pushState(null, '', `#${target}`);
         navigateToPage(target);
         if (mobileMenu) mobileMenu.setAttribute('aria-hidden', 'true');
       }
@@ -95,6 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const target = this.getAttribute('data-page') || href.replace('#', '');
       if (target && document.getElementById(target)) {
         e.preventDefault();
+        history.pushState(null, '', `#${target}`);
         navigateToPage(target);
         if (mobileMenu) mobileMenu.setAttribute('aria-hidden', 'true');
       }
