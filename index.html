@@ -1273,12 +1273,19 @@
         .mobile-portal-bar { display: flex !important; }
         #portalSidebarClose { display: block !important; }
         
+        /* Collapse desktop grid layout on mobile to prevent left-side white gap */
+        .app {
+          display: block !important;
+          position: relative !important;
+          width: 100% !important;
+        }
+
         /* Full-screen vertical drop-down overlay */
         .app .sidebar {
           position: fixed;
           top: 0;
           left: 0;
-          width: 100%;
+          width: 100% !important;
           height: 100vh;
           z-index: 1000;
           transform: translateY(-100%);
