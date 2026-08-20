@@ -82,6 +82,12 @@
   let editingId = null;
   let pendingDelete = null;
 
+  /* ---- Mobile Sidebar Toggle ---- */
+  window.toggleSidebar = function () {
+    const sidebar = document.querySelector('.sidebar');
+    if (sidebar) sidebar.classList.toggle('open');
+  };
+
   /* ---- Login ---- */
   const USERS = { 'admin': { passcode: 'admin123', name: 'Austin Reed', role: 'Owner' }, 'demo': { passcode: 'demo', name: 'Demo User', role: 'Technician' } };
 
@@ -120,6 +126,11 @@
       document.querySelectorAll('.portal-nav button').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
     }
+    
+    // Auto-close mobile sidebar when navigating
+    const sidebar = document.querySelector('.sidebar');
+    if (sidebar) sidebar.classList.remove('open');
+
     if (sectionId === 'portal-dashboard') renderDashboard();
     if (sectionId === 'portal-tickets') renderTickets();
     if (sectionId === 'portal-queue') renderKanban();
