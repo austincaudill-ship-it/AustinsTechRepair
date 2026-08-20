@@ -67,7 +67,13 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      const target = this.getAttribute('data-page') || this.getAttribute('href')?.replace('#', '');
+      const href = this.getAttribute('href') || '';
+      // Safely ignore external links (like Jotform) so they open naturally
+      if (href.startsWith('http') || href.includes('://')) {
+        return; 
+      }
+
+      const target = this.getAttribute('data-page') || href.replace('#', '');
       if (target) {
         e.preventDefault();
         navigateToPage(target);
@@ -79,7 +85,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // Desktop & Drawer Nav Clicks
   desktopNavLinks.forEach(link => {
     link.addEventListener('click', function (e) {
-      const target = this.getAttribute('data-page') || this.getAttribute('href')?.replace('#', '');
+      const href = this.getAttribute('href') || '';
+      // Safely ignore external links (like Jotform) so they open naturally
+      if (href.startsWith('http') || href.includes('://')) {
+        if (mobileMenu) mobileMenu.setAttribute('aria-hidden', 'true');
+        return; 
+      }
+
+      const target = this.getAttribute('data-page') || href.replace('#', '');
       if (target && document.getElementById(target)) {
         e.preventDefault();
         navigateToPage(target);
