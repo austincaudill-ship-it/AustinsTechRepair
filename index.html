@@ -818,20 +818,28 @@
           <h1>Employee Portal</h1>
           <p>Sign in to access repair operations, parts, orders, and internal tools.</p>
           <form onsubmit="event.preventDefault(); login();">
-            <div class="field" style="margin-bottom: var(--space-4);"><label for="username">Username</label><input id="username" type="text" autocomplete="username" placeholder="Enter username" class="form-field" /></div>
-            <div class="field" style="margin-bottom: var(--space-4);"><label for="passcode">Passcode</label><input id="passcode" type="password" autocomplete="current-password" placeholder="Enter passcode" class="form-field" /></div>
+            <div class="field" style="margin-bottom: var(--space-4);">
+              <label for="username">Username</label>
+              <input id="username" type="text" autocomplete="username" placeholder="Enter username" class="form-field" required />
+            </div>
+            <div class="field" style="margin-bottom: var(--space-4);">
+              <label for="passcode">Passcode</label>
+              <input id="passcode" type="password" autocomplete="current-password" placeholder="Enter passcode" class="form-field" required />
+            </div>
             <button type="submit" class="btn btn-primary btn-block">Login</button>
           </form>
           <p id="loginMsg" style="color: var(--danger); margin-top: var(--space-3); font-size: var(--text-sm);"></p>
         </div>
       </div>
+
       <div id="portalView" class="app hidden">
+        <!-- SIDEBAR NAVIGATION -->
         <aside class="sidebar">
           <div class="brand-portal">
-            <div class="title">Austin's Tech Repair Group</div>
-            <div class="sub">Employee Portal</div>
+            <div class="title">Austin's Tech Repair</div>
+            <div class="sub">Operations Dashboard</div>
           </div>
-          <div class="portal-nav">
+          <nav class="portal-nav" aria-label="Portal Navigation">
             <button class="active" onclick="showPortalSection('portal-dashboard', this)"><i class="fas fa-gauge"></i> Dashboard</button>
             <button onclick="showPortalSection('portal-tickets', this)"><i class="fas fa-ticket"></i> Repair Tickets</button>
             <button onclick="showPortalSection('portal-queue', this)"><i class="fas fa-list-check"></i> Repair Queue</button>
@@ -847,16 +855,20 @@
             <button onclick="showPortalSection('portal-hud', this)"><i class="fas fa-calculator"></i> RepairShopr HUD</button>
             <button onclick="showPortalSection('portal-settings', this)"><i class="fas fa-gear"></i> Settings</button>
             <button class="logout" onclick="logout()"><i class="fas fa-right-from-bracket"></i> Logout</button>
-          </div>
+          </nav>
         </aside>
 
+        <!-- MAIN CONTENT AREA -->
         <main class="portal-main">
           <header class="topbar">
             <div class="userbox">
               <div class="avatar" id="portal-avatar">AT</div>
               <div class="usertext"><strong id="portal-username">Demo User</strong><span id="portal-role">Technician</span></div>
             </div>
-            <div class="search-box"><input type="text" id="portal-search" placeholder="Search tickets, customers, parts..." oninput="portalSearch(this.value)"></div>
+            <div class="search-box">
+              <i class="fas fa-search" style="position: absolute; left: 14px; top: 50% transform: translateY(-50%) opacity: 0.4;"></i>
+              <input type="text" id="portal-search" placeholder="Universal lookup (Ticket #, Customer, SKU)..." oninput="portalSearch(this.value)">
+            </div>
             <div class="iconset">
               <span class="pill success" id="shift-status"><i class="fas fa-circle" style="font-size:6px"></i> Clocked In</span>
               <button class="pbtn pbtn-light pbtn-sm" onclick="showPortalSection('portal-timeclock', document.querySelector('.portal-nav button:nth-child(8)'))"><i class="fas fa-clock"></i> Clock</button>
@@ -865,41 +877,36 @@
 
           <!-- DASHBOARD -->
           <section id="portal-dashboard" class="portal-section active">
-            <div class="search-header" style="margin-bottom: var(--space-6);">
-              <div class="search-main-bar">
-                <i class="fas fa-search" style="opacity: 0.4; margin-right: 0.5rem;"></i>
-                <input type="text" id="mainSearchInput" placeholder="Quick Search customer tickets, orders, or SKUs..." autocomplete="off">
-              </div>
-              <div class="search-devices-bar">
-                <i class="fas fa-laptop-medical" style="opacity: 0.4; margin-right: 0.5rem;"></i>
-                <input type="text" id="deviceSearchInput" placeholder="Quick Search devices (iPhone 13, PS5, Dell XPS)..." autocomplete="off">
-              </div>
-            </div>
-
             <div class="portal-section-header">
-              <div><h2>Dashboard</h2><p>Business overview for today</p></div>
+              <div>
+                <h2>Dashboard Overview</h2>
+                <p>Real-time metrics, pipeline status, and bench tools</p>
+              </div>
               <button class="pbtn pbtn-primary" onclick="openTicketModal()"><i class="fas fa-plus"></i> New Repair Ticket</button>
             </div>
             
             <div class="stats-grid" id="dashboard-stats"></div>
 
             <div class="content-grid">
-              <section class="card collapsible-card col-12" id="chat-assistant-card">
-                <div class="card-header" onclick="toggleCard(this)" role="button" tabindex="0" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
-                  <h3 style="margin: 0;"><i class="fas fa-robot" style="color: var(--primary); margin-right: 0.5rem;"></i> AI Diagnostic Assistant</h3>
-                  <span class="collapse-icon"><i class="fas fa-chevron-down"></i></span>
+              <!-- Quick Bench Barcode / Universal Scan Bar -->
+              <section class="card col-12" style="background: var(--surface-alt); border-color: var(--primary);">
+                <div style="display: flex; gap: var(--space-3); align-items: center;">
+                  <div style="font-size: 1.5rem; color: var(--primary); padding-left: var(--space-2);"><i class="fas fa-barcode"></i></div>
+                  <div style="flex-grow: 1;">
+                    <h3 style="margin-bottom: 2px; font-size: 1rem;">Bench Quick Scan & Lookup</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">Scan part barcode or type serial/IMEI for immediate database match.</p>
+                  </div>
+                  <div style="width: 50%;">
+                    <input type="text" id="dashboardQuickScan" placeholder="Scan SKU or serial..." oninput="barcodeLookup(this.value)" style="width: 100%; padding: 0.5rem 1rem; border-radius: var(--radius-lg); border: 1px solid var(--border); background: var(--surface);">
+                  </div>
                 </div>
-                <div class="card-body" style="margin-top: 1rem;">
-                  <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Instant schematic lookup, component voltage guides, and customer ticket summarization.</p>
-                  <button class="action-btn" id="chatHoverBtn" style="background: var(--primary); color: white; border: none; padding: 0.6rem 1.2rem; border-radius: var(--radius-lg); font-weight: 600; cursor: pointer;">
-                    <i class="fas fa-comment-dots"></i> Launch Assistant
-                  </button>
-                </div>
+                <div id="barcode-result" style="margin-top: var(--space-3);"></div>
               </section>
 
+              <!-- Shop & Repair Status Tiles -->
               <section class="card col-6">
-                <h3><i class="fas fa-store" style="color: var(--primary); margin-right: 0.5rem;"></i> Shop Overview</h3>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Parts inventory and retail accessories.</p>
+                <h3><i class="fas fa-store" style="color: var(--primary); margin-right: 0.5rem;"></i> Parts Inventory Status</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Core stock levels and POS connectivity.</p>
                 <div class="grid-tiles">
                   <div class="tile">
                     <span style="display: block; font-size: 1.25rem; font-weight: 800; color: var(--text);">24</span>
@@ -910,15 +917,15 @@
                     <span style="font-size: 0.75rem; color: var(--text-muted);">Batteries</span>
                   </div>
                   <div class="tile">
-                    <span style="display: block; font-size: 1.25rem; font-weight: 800; color: var(--primary);">Active</span>
-                    <span style="font-size: 0.75rem; color: var(--text-muted);">Shopify Sync</span>
+                    <span style="display: block; font-size: 1.25rem; font-weight: 800; color: var(--success);">Connected</span>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">Square POS</span>
                   </div>
                 </div>
               </section>
 
               <section class="card col-6">
-                <h3><i class="fas fa-screwdriver-wrench" style="color: var(--primary); margin-right: 0.5rem;"></i> Repair Status</h3>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Current active bench pipeline.</p>
+                <h3><i class="fas fa-screwdriver-wrench" style="color: var(--primary); margin-right: 0.5rem;"></i> Active Bench Pipeline</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Current devices in workflow.</p>
                 <div class="grid-tiles">
                   <div class="tile">
                     <span style="display: block; font-size: 1.25rem; font-weight: 800; color: var(--warning);">6</span>
@@ -935,73 +942,24 @@
                 </div>
               </section>
 
-              <section class="card col-6">
-                <h3><i class="fas fa-map-location-dot" style="color: var(--primary); margin-right: 0.5rem;"></i> Service Area Map</h3>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Mobile repair dispatch coverage across Spring Valley, Dayton, and Southeastern Ohio.</p>
-                <div class="map-placeholder">
-                  <iframe 
-                    title="Service Area - Spring Valley and Dayton Ohio"
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d196463.1557454228!2d-84.31422735!3d39.7390729!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x884080d5aeb87563%3A0x62804b4dcd695e1a!2sXenia%2C%20OH!5e0!3m2!1sen!2sus!4v1700000000000!5m2!1sen!2sus" 
-                    width="100%" 
-                    height="100%" 
-                    style="border:0;" 
-                    allowfullscreen="" 
-                    loading="lazy" 
-                    referrerpolicy="no-referrer-when-downgrade">
-                  </iframe>
-                </div>
-              </section>
-
-              <section class="card col-6 comparison-section">
-                <h3><i class="fas fa-star" style="color: var(--warning); margin-right: 0.5rem;"></i> Service Tier Comparison</h3>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Customer perks and savings overview.</p>
-                <table class="comparison-table">
-                  <thead>
-                    <tr>
-                      <th>Benefit</th>
-                      <th>Standard Client</th>
-                      <th style="color: var(--primary);">ATR One ($19.99/mo)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td style="font-weight: 600;">Hardware Labor Discount</td>
-                      <td>Standard Rate</td>
-                      <td style="font-weight: 700; color: var(--success);">20% Off</td>
-                    </tr>
-                    <tr>
-                      <td style="font-weight: 600;">Screen Protectors</td>
-                      <td>$14.99 Retail</td>
-                      <td style="font-weight: 700; color: var(--success);">Included Free</td>
-                    </tr>
-                    <tr>
-                      <td style="font-weight: 600;">Turnaround Priority</td>
-                      <td>Standard Queue</td>
-                      <td style="font-weight: 700; color: var(--primary);">Front of Queue</td>
-                    </tr>
-                    <tr>
-                      <td style="font-weight: 600;">Device Deep Clean</td>
-                      <td>Add-On Fee</td>
-                      <td style="font-weight: 700; color: var(--success);">Included Free</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </section>
-
+              <!-- Charts -->
               <div class="card col-8">
                 <h3><i class="fas fa-chart-line"></i> Revenue — Last 7 Days</h3>
                 <div class="chart-container"><canvas id="revenueChart"></canvas></div>
               </div>
               <div class="card col-4">
-                <h3><i class="fas fa-circle-half-stroke"></i> Repair Status</h3>
+                <h3><i class="fas fa-circle-half-stroke"></i> Repair Status Breakdown</h3>
                 <div class="chart-container-sm"><canvas id="statusChart"></canvas></div>
               </div>
-              <div class="card col-6">
-                <h3><i class="fas fa-bolt"></i> Recent Activity</h3>
+
+              <!-- Activity & Quick Actions -->
+              <section class="card col-6">
+                <h3><i class="fas fa-bolt"></i> Recent Activity Log</h3>
                 <div class="activity-feed" id="activity-feed"></div>
-              </div>
-              <div class="card col-6">
-                <h3><i class="fas fa-tools"></i> Quick Actions</h3>
+              </section>
+
+              <section class="card col-6">
+                <h3><i class="fas fa-tools"></i> Shop Shortcuts</h3>
                 <div class="quick-actions-grid">
                   <div class="quick-action" onclick="openTicketModal()"><i class="fas fa-plus-circle"></i><span>New Ticket</span></div>
                   <div class="quick-action" onclick="showPortalSection('portal-queue', document.querySelector('.portal-nav button:nth-child(3)'))"><i class="fas fa-list-check"></i><span>Repair Queue</span></div>
@@ -1012,17 +970,8 @@
                   <div class="quick-action" onclick="showPortalSection('portal-hud', document.querySelector('.portal-nav button:nth-child(12)'))"><i class="fas fa-calculator"></i><span>Markup Calc</span></div>
                   <div class="quick-action" onclick="showPortalSection('portal-reports', document.querySelector('.portal-nav button:nth-child(10)'))"><i class="fas fa-file-chart-column"></i><span>Reports</span></div>
                 </div>
-              </div>
+              </section>
             </div>
-
-            <footer class="bottom-action-panel">
-              <button class="action-btn secondary" id="resetBtn">
-                <i class="fas fa-rotate-left"></i> Reset Views
-              </button>
-              <button class="action-btn" id="saveBtn">
-                <i class="fas fa-save"></i> Save Changes
-              </button>
-            </footer>
           </section>
 
           <!-- REPAIR TICKETS -->
@@ -1124,8 +1073,6 @@
               <button class="tab-btn" onclick="switchOrderTab(this, 'MobileSentrix')">MobileSentrix</button>
               <button class="tab-btn" onclick="switchOrderTab(this, 'Shopify')">Shopify</button>
               <button class="tab-btn" onclick="switchOrderTab(this, 'Square')">Square</button>
-              <button class="tab-btn" onclick="switchOrderTab(this, 'Distro')">Distro</button>
-              <button class="tab-btn" onclick="switchOrderTab(this, 'Shirts & Tools')">Shirts & Tools</button>
             </div>
             <div class="portal-table-wrap">
               <table class="portal-table">
@@ -1265,12 +1212,11 @@
                 </div>
               </div>
               <div class="card col-4">
-                <h3><i class="fas fa-barcode"></i> Barcode / SKU Lookup</h3>
+                <h3><i class="fas fa-barcode"></i> SKU & Part Lookup</h3>
                 <div class="portal-field" style="margin-bottom: var(--space-3);">
-                  <label>Enter SKU or scan barcode</label>
-                  <input type="text" id="barcode-input" placeholder="e.g. IP13-OLED" oninput="barcodeLookup(this.value)">
+                  <label>Search Inventory SKU</label>
+                  <input type="text" placeholder="e.g. IP13-OLED" oninput="barcodeLookup(this.value)">
                 </div>
-                <div id="barcode-result"></div>
               </div>
               <div class="card col-4">
                 <h3><i class="fas fa-bolt"></i> Quick Actions</h3>
@@ -1305,7 +1251,6 @@
                   <div class="portal-field"><label>Business Name</label><input type="text" value="Austin's Tech Repair Group" readonly></div>
                   <div class="portal-form-row">
                     <div class="portal-field"><label>Phone</label><input type="text" value="513-478-8077" readonly></div>
-                    <div class="portal-field"><label>Est.</label><input type="text" value="2010" readonly></div>
                   </div>
                   <div class="portal-field"><label>Location</label><input type="text" value="Spring Valley / Dayton, Ohio" readonly></div>
                 </div>
@@ -1320,28 +1265,12 @@
                   <button class="pbtn pbtn-danger" onclick="clearAllData()"><i class="fas fa-trash"></i> Clear All Data</button>
                 </div>
               </div>
-              <div class="card col-12">
-                <h3><i class="fas fa-link"></i> Integrations</h3>
-                <div class="portal-table-wrap" style="border:none">
-                  <table class="portal-table">
-                    <thead><tr><th>Service</th><th>Purpose</th><th>Status</th><th>Action</th></tr></thead>
-                    <tbody>
-                      <tr><td>Square</td><td>Payment processing & POS</td><td><span class="badge orange">Configured</span></td><td><a href="https://squareup.com" target="_blank" class="pbtn pbtn-light pbtn-sm">Open</a></td></tr>
-                      <tr><td>Shopify</td><td>Product store & checkout</td><td><span class="badge orange">Configured</span></td><td><a href="https://austinstechedgerepair.myshopify.com" target="_blank" class="pbtn pbtn-light pbtn-sm">Open</a></td></tr>
-                      <tr><td>JotForm</td><td>Contact forms & agent</td><td><span class="badge green">Active</span></td><td><a href="https://www.jotform.com" target="_blank" class="pbtn pbtn-light pbtn-sm">Open</a></td></tr>
-                      <tr><td>Amazon</td><td>Parts ordering</td><td><span class="badge gray">Manual</span></td><td><a href="https://sellercentral.amazon.com" target="_blank" class="pbtn pbtn-light pbtn-sm">Open</a></td></tr>
-                      <tr><td>eBay</td><td>Parts ordering</td><td><span class="badge gray">Manual</span></td><td><a href="https://www.ebay.com/sh/landing" target="_blank" class="pbtn pbtn-light pbtn-sm">Open</a></td></tr>
-                      <tr><td>MobileSentrix</td><td>Parts supplier</td><td><span class="badge gray">Manual</span></td><td><a href="https://www.mobilesentrix.com" target="_blank" class="pbtn pbtn-light pbtn-sm">Open</a></td></tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
             </div>
           </section>
         </main>
       </div>
     </section>
-  </main>
+
 
   <!-- ============================================ APPLE-STYLE SHOWCASE CAROUSEL ============================================ -->
 <section class="apple-showcase">
