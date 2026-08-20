@@ -1658,6 +1658,189 @@
     </div>
   </dialog>
 
+  <!-- Ticket Detail Modal -->
+  <dialog id="ticketDetailModal">
+    <div class="modal-head">
+      <h3>Ticket Details</h3>
+      <button class="modal-close" onclick="closeModal('ticketDetailModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" id="ticketDetailBody"></div>
+    <div class="modal-footer">
+      <button class="pbtn pbtn-light" onclick="closeModal('ticketDetailModal')">Close</button>
+      <button class="pbtn pbtn-primary" id="ticketDetailEdit"><i class="fas fa-edit"></i> Edit Ticket</button>
+    </div>
+  </dialog>
+
+  <!-- Customer Modal -->
+  <dialog id="customerModal">
+    <div class="modal-head">
+      <h3 id="customerModalTitle">Add Customer</h3>
+      <button class="modal-close" onclick="closeModal('customerModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="customer-edit-id">
+      <div class="portal-form-grid">
+        <div class="portal-field"><label>Customer Name *</label><input type="text" id="customer-name" placeholder="e.g. John Doe"></div>
+        <div class="portal-field"><label>Phone</label><input type="text" id="customer-phone" placeholder="(513) 555-0100"></div>
+        <div class="portal-field"><label>Email</label><input type="email" id="customer-email" placeholder="john@email.com"></div>
+        <div class="portal-field"><label>Address / Location</label><input type="text" id="customer-address" placeholder="Dayton, OH"></div>
+        <div class="portal-field"><label>ATR One Member</label>
+          <select id="customer-member">
+            <option value="false">No</option>
+            <option value="true">Yes</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="pbtn pbtn-light" onclick="closeModal('customerModal')">Cancel</button>
+      <button class="pbtn pbtn-primary" onclick="saveCustomer()"><i class="fas fa-save"></i> Save Customer</button>
+    </div>
+  </dialog>
+
+  <!-- Part Modal -->
+  <dialog id="partModal">
+    <div class="modal-head">
+      <h3 id="partModalTitle">Add Part</h3>
+      <button class="modal-close" onclick="closeModal('partModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="part-edit-id">
+      <div class="portal-form-grid">
+        <div class="portal-field"><label>Part Name *</label><input type="text" id="part-name" placeholder="e.g. iPhone OLED Screen"></div>
+        <div class="portal-field"><label>SKU *</label><input type="text" id="part-sku" placeholder="e.g. IP13-OLED"></div>
+        <div class="portal-field"><label>Category</label>
+          <select id="part-category">
+            <option value="Screens">Screens</option><option value="Batteries">Batteries</option><option value="Ports">Ports</option><option value="Cameras">Cameras</option><option value="Tools">Tools</option><option value="Accessories">Accessories</option>
+          </select>
+        </div>
+        <div class="portal-form-row">
+          <div class="portal-field"><label>Stock Qty</label><input type="number" id="part-qty" value="1" min="0"></div>
+          <div class="portal-field"><label>Reorder Threshold</label><input type="number" id="part-reorder" value="3" min="0"></div>
+        </div>
+        <div class="portal-form-row">
+          <div class="portal-field"><label>Cost ($)</label><input type="number" id="part-cost" value="0" min="0" step="0.01"></div>
+          <div class="portal-field"><label>Retail Price ($)</label><input type="number" id="part-retail" value="0" min="0" step="0.01"></div>
+        </div>
+        <div class="portal-form-row">
+          <div class="portal-field"><label>Supplier</label><input type="text" id="part-supplier" placeholder="e.g. MobileSentrix"></div>
+          <div class="portal-field"><label>Location</label><input type="text" id="part-location" placeholder="e.g. Shelf A-1"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="pbtn pbtn-light" onclick="closeModal('partModal')">Cancel</button>
+      <button class="pbtn pbtn-primary" onclick="savePart()"><i class="fas fa-save"></i> Save Part</button>
+    </div>
+  </dialog>
+
+  <!-- Order Modal -->
+  <dialog id="orderModal">
+    <div class="modal-head">
+      <h3 id="orderModalTitle">New Order</h3>
+      <button class="modal-close" onclick="closeModal('orderModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="order-edit-id">
+      <div class="portal-form-grid">
+        <div class="portal-field"><label>Platform</label>
+          <select id="order-platform">
+            <option value="Amazon">Amazon</option><option value="eBay">eBay</option><option value="MobileSentrix">MobileSentrix</option><option value="Shopify">Shopify</option><option value="Square">Square</option>
+          </select>
+        </div>
+        <div class="portal-field"><label>Order # *</label><input type="text" id="order-number" placeholder="e.g. AMZ-8842"></div>
+        <div class="portal-field"><label>Items Description</label><input type="text" id="order-items" placeholder="5x OLED Screens"></div>
+        <div class="portal-form-row">
+          <div class="portal-field"><label>Total Cost ($)</label><input type="number" id="order-cost" value="0" min="0" step="0.01"></div>
+          <div class="portal-field"><label>Status</label>
+            <select id="order-status">
+              <option value="Pending">Pending</option><option value="Shipped">Shipped</option><option value="Received">Received</option><option value="Cancelled">Cancelled</option>
+            </select>
+          </div>
+        </div>
+        <div class="portal-form-row">
+          <div class="portal-field"><label>Expected Date</label><input type="date" id="order-expected"></div>
+          <div class="portal-field"><label>Tracking #</label><input type="text" id="order-tracking" placeholder="Optional tracking"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="pbtn pbtn-light" onclick="closeModal('orderModal')">Cancel</button>
+      <button class="pbtn pbtn-primary" onclick="saveOrder()"><i class="fas fa-save"></i> Save Order</button>
+    </div>
+  </dialog>
+
+  <!-- Transaction Modal -->
+  <dialog id="transactionModal">
+    <div class="modal-head">
+      <h3>Add Transaction</h3>
+      <button class="modal-close" onclick="closeModal('transactionModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="portal-form-grid">
+        <div class="portal-field"><label>Type</label>
+          <select id="txn-type">
+            <option value="Repair">Repair</option><option value="Product Sale">Product Sale</option><option value="Subscription">Subscription</option><option value="B2B Service">B2B Service</option>
+          </select>
+        </div>
+        <div class="portal-form-row">
+          <div class="portal-field"><label>Amount ($)</label><input type="number" id="txn-amount" value="0" min="0" step="0.01"></div>
+          <div class="portal-field"><label>Cost ($)</label><input type="number" id="txn-cost" value="0" min="0" step="0.01"></div>
+        </div>
+        <div class="portal-field"><label>Payment Method</label>
+          <select id="txn-method">
+            <option value="Square">Square</option><option value="Cash">Cash</option><option value="Card">Card</option><option value="PayPal">PayPal</option><option value="Shopify">Shopify</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="pbtn pbtn-light" onclick="closeModal('transactionModal')">Cancel</button>
+      <button class="pbtn pbtn-primary" onclick="saveTransaction()"><i class="fas fa-save"></i> Save Transaction</button>
+    </div>
+  </dialog>
+
+  <!-- Employee Modal -->
+  <dialog id="employeeModal">
+    <div class="modal-head">
+      <h3 id="employeeModalTitle">Add Employee</h3>
+      <button class="modal-close" onclick="closeModal('employeeModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="employee-edit-id">
+      <div class="portal-form-grid">
+        <div class="portal-field"><label>Full Name *</label><input type="text" id="employee-name" placeholder="e.g. Jane Doe"></div>
+        <div class="portal-form-row">
+          <div class="portal-field"><label>Role</label><input type="text" id="employee-role" placeholder="Technician"></div>
+          <div class="portal-field"><label>Status</label>
+            <select id="employee-status"><option value="Active">Active</option><option value="Inactive">Inactive</option></select>
+          </div>
+        </div>
+        <div class="portal-field"><label>Email</label><input type="email" id="employee-email" placeholder="jane@atr.com"></div>
+        <div class="portal-field"><label>Phone</label><input type="text" id="employee-phone" placeholder="(513) 555-0100"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="pbtn pbtn-light" onclick="closeModal('employeeModal')">Cancel</button>
+      <button class="pbtn pbtn-primary" onclick="saveEmployee()"><i class="fas fa-save"></i> Save Employee</button>
+    </div>
+  </dialog>
+
+  <!-- Confirmation Modal -->
+  <dialog id="confirmModal">
+    <div class="modal-head">
+      <h3>Confirm Action</h3>
+      <button class="modal-close" onclick="closeModal('confirmModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <p id="confirmMessage" style="font-size: var(--text-sm); color: var(--text);">Are you sure you want to proceed?</p>
+    </div>
+    <div class="modal-footer">
+      <button class="pbtn pbtn-light" onclick="closeModal('confirmModal')">Cancel</button>
+      <button class="pbtn pbtn-danger" id="confirmDeleteBtn">Delete</button>
+    </div>
+  </dialog>
+
   <!-- SCRIPTS -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
