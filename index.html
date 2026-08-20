@@ -1669,7 +1669,7 @@
     <button class="bottom-nav-item" id="bottom-menu-toggle" type="button"><i class="fa-solid fa-bars"></i><span>Menu</span></button>
   </nav>
 
-<!-- Cookie Preference Banner & Script -->
+<!-- ============================================ COOKIE PREFERENCE BANNER ============================================ -->
 <div class="cookie-banner" id="cookie-banner" aria-hidden="true">
   <div class="cookie-banner-content">
     <p>We use essential cookies for our booking system and analytics to improve your experience. Read our <a href="#cookies" class="policy-trigger" data-policy="cookies">Cookie Preference Policy</a>.</p>
@@ -1754,7 +1754,7 @@
     const cookieBanner = document.getElementById('cookie-banner');
     const acceptBtn = document.getElementById('cookie-accept');
     const declineBtn = document.getElementById('cookie-decline');
-    const policyLink = cookieBanner.querySelector('.policy-trigger');
+    const policyLinks = document.querySelectorAll('.policy-trigger');
     const STORAGE_KEY = 'atr_cookie_preference';
 
     // Show banner if preference isn't set yet
@@ -1777,13 +1777,24 @@
       cookieBanner.setAttribute('aria-hidden', 'true');
     });
 
-    // Wire up policy link to trigger your site's global modal/popup handler
-    if (policyLink) {
-      policyLink.addEventListener('click', (e) => {
-        // If your site uses a global event listener for .policy-trigger or data-policy, 
-        // this click will naturally fire it. If you need to manually invoke a modal function, add it here.
+    // Wire up policy links to launch the modal popup without jumping the page
+    policyLinks.forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const policyType = link.getAttribute('data-policy');
+        
+        if (typeof window.openPolicyModal === 'function') {
+          window.openPolicyModal(policyType);
+          return;
+        }
+
+        const modal = document.getElementById('policy-modal') || document.querySelector('.policy-modal');
+        if (modal) {
+          modal.classList.add('active');
+          modal.setAttribute('aria-hidden', 'false');
+        }
       });
-    }
+    });
   });
 </script>
 
