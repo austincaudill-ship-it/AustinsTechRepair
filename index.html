@@ -405,71 +405,64 @@
       </div>
     </section>
 
-    <!-- ===================== SHOP PAGE ===================== -->
+        <!-- ===================== SHOP PAGE ===================== -->
     <section id="shop" class="page">
-      <div class="container">
-        <div class="section-header reveal">
-          <p class="eyebrow">Shop</p>
-          <h2 class="section-title">Parts, Accessories & Gear</h2>
-          <p class="section-copy">Cases, screen protectors, chargers, audio devices, and everyday repair-ready accessories. Checkout securely with Square or Shopify.</p>
+      <div class="container" style="padding-top: var(--space-12); padding-bottom: var(--space-16);">
+        
+        <!-- Header -->
+        <div class="section-header reveal text-center" style="max-width: 700px; margin: 0 auto var(--space-10);">
+          <div style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; background: rgba(0, 87, 255, 0.1); border: 1px solid var(--primary); border-radius: 99px; margin-bottom: var(--space-4);">
+            <span style="width: 8px; height: 8px; background: var(--primary); border-radius: 50%; display: inline-block; animation: badgePulse 2s infinite;"></span>
+            <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--primary);">Retail Portal Launching Soon</span>
+          </div>
+          <h2 class="section-title" style="font-size: clamp(2rem, 4vw, 3rem); font-family: var(--font-display);">Next-Gen Accessories & Gear.</h2>
+          <p class="section-copy" style="font-size: 1.05rem; color: var(--text-muted); line-height: 1.6;">We are engineering our upcoming retail storefront to bring you precision-fit screen protectors, high-output charging gear, custom cases, and audio accessories. Quality tested for the devices you rely on every day.</p>
         </div>
 
-        <!-- Category Filters -->
-        <div class="shop-filters reveal">
-          <button class="filter-btn active" type="button" data-filter="all">All</button>
-          <button class="filter-btn" type="button" data-filter="Accessory">Accessories</button>
-          <button class="filter-btn" type="button" data-filter="Audio">Audio</button>
-          <button class="filter-btn" type="button" data-filter="Case">Cases</button>
-          <button class="filter-btn" type="button" data-filter="Power">Power</button>
-          <button class="filter-btn" type="button" data-filter="Gaming">Gaming</button>
-          <button class="filter-btn" type="button" data-filter="Smart Watch">Smart Watch</button>
+        <!-- High-Tech Coming Soon Spotlight Card -->
+        <div class="reveal" style="max-width: 900px; margin: 0 auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); overflow: hidden; box-shadow: var(--shadow-xl); display: grid; grid-template-columns: 1fr 1fr; align-items: center;">
+          
+          <!-- Left Content -->
+          <div style="padding: var(--space-8);">
+            <p class="eyebrow" style="color: var(--accent-blue); margin-bottom: var(--space-2);">Inventory Pipeline</p>
+            <h3 style="font-size: 1.5rem; font-weight: 800; font-family: var(--font-display); margin-bottom: var(--space-3);">What's In Development</h3>
+            
+            <ul style="list-style: none; padding: 0; margin: 0 0 var(--space-6) 0; display: flex; flex-direction: column; gap: var(--space-3);">
+              <li style="display: flex; align-items: center; gap: 10px; font-size: 0.9rem; color: var(--text);">
+                <i class="fas fa-check-circle" style="color: var(--primary);"><span>Tempered Glass Screen Protectors</span></i>
+              </li>
+              <li style="display: flex; align-items: center; gap: 10px; font-size: 0.9rem; color: var(--text);">
+                <i class="fas fa-check-circle" style="color: var(--primary);"><span>GaN Fast Chargers & Heavy-Duty Cables</span></i>
+              </li>
+              <li style="display: flex; align-items: center; gap: 10px; font-size: 0.9rem; color: var(--text);">
+                <i class="fas fa-check-circle" style="color: var(--primary);"><span>Rugged Tablet & Laptop Protective Cases</span></i>
+              </li>
+              <li style="display: flex; align-items: center; gap: 10px; font-size: 0.9rem; color: var(--text);">
+                <i class="fas fa-check-circle" style="color: var(--primary);"><span>Wireless Audio Gear & Watch Bands</span></i>
+              </li>
+            </ul>
+
+            <div style="display: flex; flex-wrap: wrap; gap: var(--space-3);">
+              <a class="btn btn-primary" href="https://austinstechedgerepair.myshopify.com" target="_blank" rel="noopener"><i class="fab fa-shopify"></i> Visit Shopify Store</a>
+              <a class="btn btn-light" href="#repair"><i class="fas fa-wrench"></i> Need a Repair?</a>
+            </div>
+          </div>
+
+          <!-- Right Image Showcase with Tech Overlay -->
+          <div style="position: relative; height: 100%; min-height: 350px; background: #000; overflow: hidden;">
+            <img src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=900&q=80" alt="High-tech accessories development workspace" loading="lazy" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.75;" />
+            <div style="position: absolute; inset: 0; background: linear-gradient(135deg, rgba(0,87,255,0.2) 0%, transparent 100%);"></div>
+            <div style="position: absolute; bottom: 20px; left: 20px; right: 20px; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(10px); padding: 12px 16px; border-radius: var(--radius-lg); border: 1px solid rgba(255,255,255,0.1);">
+              <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0 0 2px 0; text-transform: uppercase; letter-spacing: 0.5px;">Status Update</p>
+              <p style="font-size: 0.85rem; font-weight: 700; color: #fff; margin: 0;">Catalog synchronization in progress...</p>
+            </div>
+          </div>
+
         </div>
 
-        <!-- Product Grid -->
-        <div class="product-grid reveal" id="product-grid">
-          <article class="product-card" data-category="Accessory">
-            <div class="product-img"><img src="https://images.unsplash.com/photo-1585802542015-05c0b6f2b1fb?auto=format&fit=crop&w=900&q=80" alt="Screen protector" loading="lazy" /></div>
-            <div class="product-info"><p class="product-tag">Accessory</p><h3 class="product-name">Screen Protector</h3><p class="product-desc">Tempered glass protection for phones and tablets.</p><div class="product-footer"><span class="product-price">$14.99</span><button class="buy-btn" type="button" data-add-cart='{"id":"sp-01","name":"Screen Protector","price":14.99,"category":"Accessory","image":"https://images.unsplash.com/photo-1585802542015-05c0b6f2b1fb?auto=format&fit=crop&w=900&q=80"}'>Add to Cart</button></div></div>
-          </article>
-          <article class="product-card" data-category="Audio">
-            <div class="product-img"><img src="https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=900&q=80" alt="Headphones" loading="lazy" /></div>
-            <div class="product-info"><p class="product-tag">Audio</p><h3 class="product-name">Headphones</h3><p class="product-desc">Great for calls, gaming, and music.</p><div class="product-footer"><span class="product-price">$29.99</span><button class="buy-btn" type="button" data-add-cart='{"id":"hp-01","name":"Headphones","price":29.99,"category":"Audio","image":"https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=900&q=80"}'>Add to Cart</button></div></div>
-          </article>
-          <article class="product-card" data-category="Case">
-            <div class="product-img"><img src="https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=900&q=80" alt="Tablet case" loading="lazy" /></div>
-            <div class="product-info"><p class="product-tag">Case</p><h3 class="product-name">Tablet Case</h3><p class="product-desc">Protection for everyday tablet use.</p><div class="product-footer"><span class="product-price">$19.99</span><button class="buy-btn" type="button" data-add-cart='{"id":"tc-01","name":"Tablet Case","price":19.99,"category":"Case","image":"https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=900&q=80"}'>Add to Cart</button></div></div>
-          </article>
-          <article class="product-card" data-category="Case">
-            <div class="product-img"><img src="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=900&q=80" alt="Laptop case" loading="lazy" /></div>
-            <div class="product-info"><p class="product-tag">Case</p><h3 class="product-name">Laptop Case</h3><p class="product-desc">Slim protection for laptops and notebooks.</p><div class="product-footer"><span class="product-price">$24.99</span><button class="buy-btn" type="button" data-add-cart='{"id":"lc-01","name":"Laptop Case","price":24.99,"category":"Case","image":"https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=900&q=80"}'>Add to Cart</button></div></div>
-          </article>
-          <article class="product-card" data-category="Gaming">
-            <div class="product-img"><img src="https://images.unsplash.com/photo-1484704849700-f032a568e944?auto=format&fit=crop&w=900&q=80" alt="Gaming accessory" loading="lazy" /></div>
-            <div class="product-info"><p class="product-tag">Gaming</p><h3 class="product-name">Console Accessory</h3><p class="product-desc">Useful add-on for gaming systems.</p><div class="product-footer"><span class="product-price">$34.99</span><button class="buy-btn" type="button" data-add-cart='{"id":"gc-01","name":"Console Accessory","price":34.99,"category":"Gaming","image":"https://images.unsplash.com/photo-1484704849700-f032a568e944?auto=format&fit=crop&w=900&q=80"}'>Add to Cart</button></div></div>
-          </article>
-          <article class="product-card" data-category="Smart Watch">
-            <div class="product-img"><img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=80" alt="Smart watch band" loading="lazy" /></div>
-            <div class="product-info"><p class="product-tag">Smart Watch</p><h3 class="product-name">Watch Band</h3><p class="product-desc">Comfortable everyday replacement band.</p><div class="product-footer"><span class="product-price">$17.99</span><button class="buy-btn" type="button" data-add-cart='{"id":"sw-01","name":"Watch Band","price":17.99,"category":"Smart Watch","image":"https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=80"}'>Add to Cart</button></div></div>
-          </article>
-          <article class="product-card" data-category="Accessory">
-            <div class="product-img"><img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80" alt="USB cable" loading="lazy" /></div>
-            <div class="product-info"><p class="product-tag">Accessory</p><h3 class="product-name">USB-C Cable</h3><p class="product-desc">Reliable charging and data cable.</p><div class="product-footer"><span class="product-price">$9.99</span><button class="buy-btn" type="button" data-add-cart='{"id":"usb-01","name":"USB-C Cable","price":9.99,"category":"Accessory","image":"https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80"}'>Add to Cart</button></div></div>
-          </article>
-          <article class="product-card" data-category="Power">
-            <div class="product-img"><img src="https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=900&q=80" alt="Phone charger" loading="lazy" /></div>
-            <div class="product-info"><p class="product-tag">Power</p><h3 class="product-name">Fast Charger</h3><p class="product-desc">Quick charge adapter for everyday use.</p><div class="product-footer"><span class="product-price">$24.99</span><button class="buy-btn" type="button" data-add-cart='{"id":"chg-01","name":"Fast Charger","price":24.99,"category":"Power","image":"https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=900&q=80"}'>Add to Cart</button></div></div>
-          </article>
-        </div>
-
-        <!-- Shopify Integration Notice -->
-        <div class="reveal" style="margin-top: var(--space-8); padding: var(--space-6); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); text-align: center;">
-          <p class="eyebrow" style="justify-content: center;">Shopify Integration</p>
-          <h3 style="font-size: var(--text-lg); font-weight: 800; margin-bottom: var(--space-2);">Full Store Powered by Shopify</h3>
-          <p style="color: var(--text-muted); margin-bottom: var(--space-4); max-width: 560px; margin-left: auto; margin-right: auto;">For our complete catalog with secure checkout, inventory, and order tracking, visit our Shopify store. Products above can also be added to cart and checked out via Square.</p>
-          <a class="btn btn-dark" id="shopify-store-link" href="https://austinstechedgerepair.myshopify.com" target="_blank" rel="noopener"><i class="fab fa-shopify"></i> Visit Shopify Store</a>
-        </div>
       </div>
     </section>
+
 
     <!-- ===================== REPAIR PAGE ===================== -->
     <section id="repair" class="page">
