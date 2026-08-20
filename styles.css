@@ -1404,6 +1404,8 @@ button {
   .repair-card.contact-form-card {
     padding: var(--space-5);
   }
+} /* <--- FIXED: Added missing closing brace here */
+
 /* ==========================================================================
    Apple-Style Alternating Sections
    ========================================================================== */
@@ -1472,5 +1474,3 @@ button {
     max-width: 100%;
   }
 }
-
- 
