@@ -727,15 +727,15 @@
 
     <!-- ===================== ATR ONE PAGE ===================== -->
     <section id="atr-one" class="page">
-      <div class="atr-one-hero text-center" style="padding: var(--space-12) var(--space-5); background: var(--surface-alt);">
+      <div class="atr-one-hero text-center" style="padding: var(--space-16) var(--space-5); background: var(--surface-alt);">
         <p class="eyebrow" style="justify-content: center;">ATR One Membership</p>
-        <h1 class="hero-headline" style="font-size: var(--text-3xl); margin-bottom: var(--space-4);"><em>Member.</em> Perks.</h1>
-        <p class="hero-sub" style="margin: 0 auto var(--space-8);">Your $19.99/month membership with priority benefits, discounted hardware service, and member-only support extras.</p>
+        <h1 class="hero-headline" style="font-size: clamp(2.5rem, 5vw, 3.5rem); margin-bottom: var(--space-4);"><em>Member.</em> Perks.</h1>
+        <p class="hero-sub" style="margin: 0 auto var(--space-8); max-width: 650px;">Your $19.99/month membership packed with elite perks, deep hardware discounts, remote IT support, and member-only support extras.</p>
 
-        <div class="atr-one-card reveal" style="max-width: 400px; margin: 0 auto; background: var(--surface); padding: var(--space-8); border-radius: var(--radius-2xl); box-shadow: var(--shadow-lg); border: 1px solid var(--border);">
+        <div class="atr-one-card reveal" style="max-width: 420px; margin: 0 auto var(--space-12); background: var(--surface); padding: var(--space-8); border-radius: var(--radius-2xl); box-shadow: var(--shadow-lg); border: 1px solid var(--border);">
           <p class="eyebrow" style="color: var(--accent-blue); justify-content: center;">Monthly Plan</p>
           <p class="atr-one-price" style="font-size: 3rem; font-weight: 900; font-family: var(--font-display);">$19.99 <span style="font-size: 1rem; color: var(--text-muted); font-weight: 500;">/mo</span></p>
-          <p style="color: var(--text-muted); margin-bottom: var(--space-5); font-size: var(--text-sm);">Cancel anytime online. No emails required.</p>
+          <p style="color: var(--text-muted); margin-bottom: var(--space-5); font-size: 0.85rem;">Cancel anytime online through Square. No emails required.</p>
           
           <!-- DIRECT SQUARE CHECKOUT LINK -->
           <a href="https://square.link/u/xZA5tqxw" target="_blank" class="btn btn-primary btn-lg btn-block" style="width: 100%;"><i class="fab fa-square"></i> Subscribe via Square</a>
@@ -745,19 +745,87 @@
         </div>
       </div>
 
-      <div class="container">
+      <!-- Side-by-Side Comparison Section -->
+      <div class="container" style="padding-top: var(--space-12); padding-bottom: var(--space-12);">
         <div class="section-header reveal">
-          <p class="eyebrow">Member Benefits</p>
-          <h2 class="section-title">Everything Included</h2>
+          <p class="eyebrow">Value Comparison</p>
+          <h2 class="section-title">Basic Rewards vs. ATR One</h2>
+          <p class="section-copy">See how quickly your membership pays for itself with everyday device maintenance and repair savings.</p>
         </div>
-        <div class="service-grid" style="margin-bottom: var(--space-8);">
-          <div class="service-card dark feature reveal"><div class="service-icon"><i class="fas fa-shield-heart"></i></div><p class="service-label">Free Screen Protectors</p><p class="service-sub">Included on all repaired devices for active members</p></div>
-          <div class="service-card dark feature reveal"><div class="service-icon"><i class="fas fa-broom"></i></div><p class="service-label">Free Device Cleaning</p><p class="service-sub">Cleaning and basic refresh on any visit</p></div>
-          <div class="service-card dark feature reveal"><div class="service-icon"><i class="fas fa-bolt"></i></div><p class="service-label">Priority Service</p><p class="service-sub">Skip the queue, get serviced first</p></div>
-          <div class="service-card dark feature reveal"><div class="service-icon"><i class="fas fa-tags"></i></div><p class="service-label">20% Off Hardware</p><p class="service-sub">Savings on eligible hardware labor</p></div>
+
+        <div class="reveal" style="max-width: 960px; margin: 0 auto var(--space-16); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); overflow: hidden; box-shadow: var(--shadow-md);">
+          <table class="comparison-table" style="width: 100%; border-collapse: collapse; text-align: left;">
+            <thead>
+              <tr style="background: var(--surface-alt);">
+                <th style="padding: var(--space-4) var(--space-6); font-family: var(--font-display); font-size: 1rem;">Feature / Perk</th>
+                <th style="padding: var(--space-4) var(--space-6); font-family: var(--font-display); font-size: 1rem; color: var(--text-muted);">Basic Rewards</th>
+                <th style="padding: var(--space-4) var(--space-6); font-family: var(--font-display); font-size: 1rem; color: var(--primary);">ATR One ($19.99/mo)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="padding: var(--space-4) var(--space-6); font-weight: 600;">Hardware Repair Discount</td>
+                <td style="padding: var(--space-4) var(--space-6); color: var(--text-muted);">Standard Rate</td>
+                <td style="padding: var(--space-4) var(--space-6); font-weight: 700; color: var(--success);"><i class="fas fa-check" style="margin-right: 6px;"></i> 20% Off Labor & Parts</td>
+              </tr>
+              <tr>
+                <td style="padding: var(--space-4) var(--space-6); font-weight: 600;">Accessory Discount</td>
+                <td style="padding: var(--space-4) var(--space-6); color: var(--text-muted);">Standard Retail</td>
+                <td style="padding: var(--space-4) var(--space-6); font-weight: 700; color: var(--success);"><i class="fas fa-check" style="margin-right: 6px;"></i> 25% Off Storewide</td>
+              </tr>
+              <tr>
+                <td style="padding: var(--space-4) var(--space-6); font-weight: 600;">Remote Technical Support</td>
+                <td style="padding: var(--space-4) var(--space-6); color: var(--text-muted);">Not Included</td>
+                <td style="padding: var(--space-4) var(--space-6); font-weight: 700; color: var(--primary);"><i class="fas fa-check" style="margin-right: 6px;"></i> Included Free Sessions</td>
+              </tr>
+              <tr>
+                <td style="padding: var(--space-4) var(--space-6); font-weight: 600;">Loyalty Points Earned</td>
+                <td style="padding: var(--space-4) var(--space-6); color: var(--text-muted);">5 Points per $1 Spent</td>
+                <td style="padding: var(--space-4) var(--space-6); font-weight: 700; color: var(--primary);"><i class="fas fa-check" style="margin-right: 6px;"></i> 10 Points per $1 Spent</td>
+              </tr>
+              <tr>
+                <td style="padding: var(--space-4) var(--space-6); font-weight: 600;">Screen Protector</td>
+                <td style="padding: var(--space-4) var(--space-6); color: var(--text-muted);">Standard Retail Price</td>
+                <td style="padding: var(--space-4) var(--space-6); font-weight: 700; color: var(--success);"><i class="fas fa-check" style="margin-right: 6px;"></i> Free After Repair</td>
+              </tr>
+              <tr>
+                <td style="padding: var(--space-4) var(--space-6); font-weight: 600;">Device Tune-Up</td>
+                <td style="padding: var(--space-4) var(--space-6); color: var(--text-muted);">Standard Service Fee</td>
+                <td style="padding: var(--space-4) var(--space-6); font-weight: 700; color: var(--success);"><i class="fas fa-check" style="margin-right: 6px;"></i> Free Tune-Up Included</td>
+              </tr>
+              <tr>
+                <td style="padding: var(--space-4) var(--space-6); font-weight: 600;">Service Queue Priority</td>
+                <td style="padding: var(--space-4) var(--space-6); color: var(--text-muted);">Standard Queue</td>
+                <td style="padding: var(--space-4) var(--space-6); font-weight: 700; color: var(--primary);"><i class="fas fa-bolt" style="margin-right: 6px;"></i> Front of Queue Priority</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
+
+        <!-- Membership FAQ Section -->
+        <div class="section-header reveal" style="margin-bottom: var(--space-6);">
+          <p class="eyebrow">Common Questions</p>
+          <h2 class="section-title" style="font-size: 1.75rem;">Everything You Need to Know</h2>
+        </div>
+
+        <div class="reveal" style="max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-4);">
+          <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: var(--space-5);">
+            <h4 style="font-family: var(--font-display); font-size: 1.05rem; margin-bottom: 6px; font-weight: 700;">How does remote support work?</h4>
+            <p style="font-size: 0.925rem; color: var(--text-muted); margin: 0; line-height: 1.5;">As an ATR One member, you can connect directly with our bench technicians for remote software troubleshooting, virus cleanup, and system diagnostics without needing to drop off your computer.</p>
+          </div>
+          <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: var(--space-5);">
+            <h4 style="font-family: var(--font-display); font-size: 1.05rem; margin-bottom: 6px; font-weight: 700;">Can I cancel my membership anytime?</h4>
+            <p style="font-size: 0.925rem; color: var(--text-muted); margin: 0; line-height: 1.5;">Yes! You can manage, update, or cancel your subscription instantly online through your customer portal link at zero penalty.</p>
+          </div>
+          <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: var(--space-5);">
+            <h4 style="font-family: var(--font-display); font-size: 1.05rem; margin-bottom: 6px; font-weight: 700;">When do my discounts and free screen protectors apply?</h4>
+            <p style="font-size: 0.925rem; color: var(--text-muted); margin: 0; line-height: 1.5;">Your 20% hardware repair discount and free screen protector benefits apply immediately upon active subscription verification during your next service ticket.</p>
+          </div>
+        </div>
+
       </div>
     </section>
+
 
     <!-- ===================== EMPLOYEE PORTAL ===================== -->
     <section id="employee" class="page">
