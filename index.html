@@ -811,465 +811,539 @@
 
 
     <!-- ===================== EMPLOYEE PORTAL ===================== -->
-    <section id="employee" class="page">
-      <div id="loginView" class="login-wrap">
-        <div class="login-card">
-          <div class="eyebrow">Austin's Tech Repair Group</div>
-          <h1>Employee Portal</h1>
-          <p>Sign in to access repair operations, parts, orders, and internal tools.</p>
-          <form onsubmit="event.preventDefault(); login();">
-            <div class="field" style="margin-bottom: var(--space-4);">
-              <label for="username">Username</label>
-              <input id="username" type="text" autocomplete="username" placeholder="Enter username" class="form-field" required />
-            </div>
-            <div class="field" style="margin-bottom: var(--space-4);">
-              <label for="passcode">Passcode</label>
-              <input id="passcode" type="password" autocomplete="current-password" placeholder="Enter passcode" class="form-field" required />
-            </div>
-            <button type="submit" class="btn btn-primary btn-block">Login</button>
-          </form>
-          <p id="loginMsg" style="color: var(--danger); margin-top: var(--space-3); font-size: var(--text-sm);"></p>
+<section id="employee" class="page">
+  <div id="loginView" class="login-wrap">
+    <div class="login-card">
+      <div class="eyebrow">Austin's Tech Repair Group</div>
+      <h1>Employee Portal</h1>
+      <p>Sign in to access repair operations, parts, orders, and internal tools.</p>
+      <form onsubmit="event.preventDefault(); login();">
+        <div class="field" style="margin-bottom: var(--space-4);">
+          <label for="username">Username</label>
+          <input id="username" type="text" autocomplete="username" placeholder="Enter username" class="form-field" required />
         </div>
+        <div class="field" style="margin-bottom: var(--space-4);">
+          <label for="passcode">Passcode</label>
+          <input id="passcode" type="password" autocomplete="current-password" placeholder="Enter passcode" class="form-field" required />
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Login</button>
+      </form>
+      <p id="loginMsg" style="color: var(--danger); margin-top: var(--space-3); font-size: var(--text-sm);"></p>
+      <div style="margin-top: var(--space-4); text-align: center;">
+        <a href="index.html" style="font-size: var(--text-xs); color: var(--text-muted); text-decoration: underline;"><i class="fas fa-arrow-left"></i> Return to Public Website</a>
+      </div>
+    </div>
+  </div>
+
+  <div id="portalView" class="app hidden">
+    
+    <!-- MOBILE / TABLET PORTAL HEADER (Visible on smaller screens) -->
+    <div class="mobile-portal-bar" style="display: none; align-items: center; justify-content: space-between; padding: var(--space-3) var(--space-4); background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100;">
+      <button id="portalNavToggle" type="button" class="pbtn pbtn-light" style="font-size: 1.1rem; padding: 0.5rem 0.75rem;"><i class="fas fa-bars"></i> Menu</button>
+      <span style="font-family: var(--font-display); font-weight: 700; font-size: 0.95rem;">ATR Operations</span>
+      <a href="index.html" class="pbtn pbtn-light" style="font-size: 0.85rem; padding: 0.4rem 0.6rem;"><i class="fas fa-home"></i> Exit</a>
+    </div>
+
+    <!-- SIDEBAR NAVIGATION -->
+    <aside class="sidebar" id="portalSidebar">
+      <div class="brand-portal" style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <div class="title">Austin's Tech Repair</div>
+          <div class="sub">Operations Dashboard</div>
+        </div>
+        <!-- Close button for mobile drawer -->
+        <button id="portalSidebarClose" type="button" style="display: none; background: none; border: none; font-size: 1.25rem; color: var(--text); cursor: pointer;"><i class="fas fa-times"></i></button>
       </div>
 
-      <div id="portalView" class="app hidden">
-        <!-- SIDEBAR NAVIGATION -->
-        <aside class="sidebar">
-          <div class="brand-portal">
-            <div class="title">Austin's Tech Repair</div>
-            <div class="sub">Operations Dashboard</div>
+      <!-- Quick Back to Main Site Sub-Nav Link -->
+      <div style="padding: 0 var(--space-4) var(--space-2) var(--space-4);">
+        <a href="index.html" style="display: flex; align-items: center; gap: 8px; padding: 0.5rem 0.75rem; background: rgba(0,87,255,0.08); color: var(--primary); border-radius: var(--radius-lg); font-size: 0.85rem; font-weight: 600; text-decoration: none;">
+          <i class="fas fa-arrow-left"></i> Back to Main Website
+        </a>
+      </div>
+
+      <nav class="portal-nav" aria-label="Portal Navigation">
+        <button class="active" onclick="showPortalSection('portal-dashboard', this); closePortalMobileMenu();"><i class="fas fa-gauge"></i> Dashboard</button>
+        <button onclick="showPortalSection('portal-tickets', this); closePortalMobileMenu();"><i class="fas fa-ticket"></i> Repair Tickets</button>
+        <button onclick="showPortalSection('portal-queue', this); closePortalMobileMenu();"><i class="fas fa-list-check"></i> Repair Queue</button>
+        <button onclick="showPortalSection('portal-customers', this); closePortalMobileMenu();"><i class="fas fa-users"></i> Customers</button>
+        <button onclick="showPortalSection('portal-inventory', this); closePortalMobileMenu();"><i class="fas fa-boxes-stacked"></i> Inventory</button>
+        <div class="nav-divider"></div>
+        <button onclick="showPortalSection('portal-orders', this); closePortalMobileMenu();"><i class="fas fa-truck-fast"></i> Orders <span class="nav-badge" id="nav-order-count">0</span></button>
+        <button onclick="showPortalSection('portal-financials', this); closePortalMobileMenu();"><i class="fas fa-chart-line"></i> Financials</button>
+        <button onclick="showPortalSection('portal-timeclock', this); closePortalMobileMenu();"><i class="fas fa-clock"></i> Time Clock</button>
+        <button onclick="showPortalSection('portal-employees', this); closePortalMobileMenu();"><i class="fas fa-id-badge"></i> Employees</button>
+        <button onclick="showPortalSection('portal-reports', this); closePortalMobileMenu();"><i class="fas fa-file-chart-column"></i> Reports</button>
+        <div class="nav-divider"></div>
+        <button onclick="showPortalSection('portal-hud', this); closePortalMobileMenu();"><i class="fas fa-calculator"></i> RepairShopr HUD</button>
+        <button onclick="showPortalSection('portal-settings', this); closePortalMobileMenu();"><i class="fas fa-gear"></i> Settings</button>
+        <button class="logout" onclick="logout()"><i class="fas fa-right-from-bracket"></i> Logout</button>
+      </nav>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="portal-main">
+      <header class="topbar">
+        <div class="userbox">
+          <div class="avatar" id="portal-avatar">AT</div>
+          <div class="usertext"><strong id="portal-username">Demo User</strong><span id="portal-role">Technician</span></div>
+        </div>
+        <div class="search-box">
+          <i class="fas fa-search" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); opacity: 0.4;"></i>
+          <input type="text" id="portal-search" placeholder="Universal lookup (Ticket #, Customer, SKU)..." oninput="portalSearch(this.value)">
+        </div>
+        <div class="iconset">
+          <span class="pill success" id="shift-status"><i class="fas fa-circle" style="font-size:6px"></i> Clocked In</span>
+          <button class="pbtn pbtn-light pbtn-sm" onclick="showPortalSection('portal-timeclock', document.querySelector('.portal-nav button:nth-child(8)'))"><i class="fas fa-clock"></i> Clock</button>
+        </div>
+      </header>
+
+      <!-- DASHBOARD -->
+      <section id="portal-dashboard" class="portal-section active">
+        <div class="portal-section-header">
+          <div>
+            <h2>Dashboard Overview</h2>
+            <p>Real-time metrics, pipeline status, and bench tools</p>
           </div>
-          <nav class="portal-nav" aria-label="Portal Navigation">
-            <button class="active" onclick="showPortalSection('portal-dashboard', this)"><i class="fas fa-gauge"></i> Dashboard</button>
-            <button onclick="showPortalSection('portal-tickets', this)"><i class="fas fa-ticket"></i> Repair Tickets</button>
-            <button onclick="showPortalSection('portal-queue', this)"><i class="fas fa-list-check"></i> Repair Queue</button>
-            <button onclick="showPortalSection('portal-customers', this)"><i class="fas fa-users"></i> Customers</button>
-            <button onclick="showPortalSection('portal-inventory', this)"><i class="fas fa-boxes-stacked"></i> Inventory</button>
-            <div class="nav-divider"></div>
-            <button onclick="showPortalSection('portal-orders', this)"><i class="fas fa-truck-fast"></i> Orders <span class="nav-badge" id="nav-order-count">0</span></button>
-            <button onclick="showPortalSection('portal-financials', this)"><i class="fas fa-chart-line"></i> Financials</button>
-            <button onclick="showPortalSection('portal-timeclock', this)"><i class="fas fa-clock"></i> Time Clock</button>
-            <button onclick="showPortalSection('portal-employees', this)"><i class="fas fa-id-badge"></i> Employees</button>
-            <button onclick="showPortalSection('portal-reports', this)"><i class="fas fa-file-chart-column"></i> Reports</button>
-            <div class="nav-divider"></div>
-            <button onclick="showPortalSection('portal-hud', this)"><i class="fas fa-calculator"></i> RepairShopr HUD</button>
-            <button onclick="showPortalSection('portal-settings', this)"><i class="fas fa-gear"></i> Settings</button>
-            <button class="logout" onclick="logout()"><i class="fas fa-right-from-bracket"></i> Logout</button>
-          </nav>
-        </aside>
+          <button class="pbtn pbtn-primary" onclick="openTicketModal()"><i class="fas fa-plus"></i> New Repair Ticket</button>
+        </div>
+        
+        <div class="stats-grid" id="dashboard-stats"></div>
 
-        <!-- MAIN CONTENT AREA -->
-        <main class="portal-main">
-          <header class="topbar">
-            <div class="userbox">
-              <div class="avatar" id="portal-avatar">AT</div>
-              <div class="usertext"><strong id="portal-username">Demo User</strong><span id="portal-role">Technician</span></div>
-            </div>
-            <div class="search-box">
-              <i class="fas fa-search" style="position: absolute; left: 14px; top: 50% transform: translateY(-50%) opacity: 0.4;"></i>
-              <input type="text" id="portal-search" placeholder="Universal lookup (Ticket #, Customer, SKU)..." oninput="portalSearch(this.value)">
-            </div>
-            <div class="iconset">
-              <span class="pill success" id="shift-status"><i class="fas fa-circle" style="font-size:6px"></i> Clocked In</span>
-              <button class="pbtn pbtn-light pbtn-sm" onclick="showPortalSection('portal-timeclock', document.querySelector('.portal-nav button:nth-child(8)'))"><i class="fas fa-clock"></i> Clock</button>
-            </div>
-          </header>
-
-          <!-- DASHBOARD -->
-          <section id="portal-dashboard" class="portal-section active">
-            <div class="portal-section-header">
-              <div>
-                <h2>Dashboard Overview</h2>
-                <p>Real-time metrics, pipeline status, and bench tools</p>
+        <div class="content-grid">
+          <!-- Quick Bench Barcode / Universal Scan Bar -->
+          <section class="card col-12" style="background: var(--surface-alt); border-color: var(--primary);">
+            <div style="display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap;">
+              <div style="font-size: 1.5rem; color: var(--primary); padding-left: var(--space-2);"><i class="fas fa-barcode"></i></div>
+              <div style="flex-grow: 1; min-width: 200px;">
+                <h3 style="margin-bottom: 2px; font-size: 1rem;">Bench Quick Scan & Lookup</h3>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">Scan part barcode or type serial/IMEI for immediate database match.</p>
               </div>
-              <button class="pbtn pbtn-primary" onclick="openTicketModal()"><i class="fas fa-plus"></i> New Repair Ticket</button>
+              <div style="flex: 1; min-width: 220px;">
+                <input type="text" id="dashboardQuickScan" placeholder="Scan SKU or serial..." oninput="barcodeLookup(this.value)" style="width: 100%; padding: 0.5rem 1rem; border-radius: var(--radius-lg); border: 1px solid var(--border); background: var(--surface);">
+              </div>
             </div>
-            
-            <div class="stats-grid" id="dashboard-stats"></div>
+            <div id="barcode-result" style="margin-top: var(--space-3);"></div>
+          </section>
 
-            <div class="content-grid">
-              <!-- Quick Bench Barcode / Universal Scan Bar -->
-              <section class="card col-12" style="background: var(--surface-alt); border-color: var(--primary);">
-                <div style="display: flex; gap: var(--space-3); align-items: center;">
-                  <div style="font-size: 1.5rem; color: var(--primary); padding-left: var(--space-2);"><i class="fas fa-barcode"></i></div>
-                  <div style="flex-grow: 1;">
-                    <h3 style="margin-bottom: 2px; font-size: 1rem;">Bench Quick Scan & Lookup</h3>
-                    <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">Scan part barcode or type serial/IMEI for immediate database match.</p>
-                  </div>
-                  <div style="width: 50%;">
-                    <input type="text" id="dashboardQuickScan" placeholder="Scan SKU or serial..." oninput="barcodeLookup(this.value)" style="width: 100%; padding: 0.5rem 1rem; border-radius: var(--radius-lg); border: 1px solid var(--border); background: var(--surface);">
-                  </div>
-                </div>
-                <div id="barcode-result" style="margin-top: var(--space-3);"></div>
-              </section>
-
-              <!-- Shop & Repair Status Tiles -->
-              <section class="card col-6">
-                <h3><i class="fas fa-store" style="color: var(--primary); margin-right: 0.5rem;"></i> Parts Inventory Status</h3>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Core stock levels and POS connectivity.</p>
-                <div class="grid-tiles">
-                  <div class="tile">
-                    <span style="display: block; font-size: 1.25rem; font-weight: 800; color: var(--text);">24</span>
-                    <span style="font-size: 0.75rem; color: var(--text-muted);">OLED Screens</span>
-                  </div>
-                  <div class="tile">
-                    <span style="display: block; font-size: 1.25rem; font-weight: 800; color: var(--text);">18</span>
-                    <span style="font-size: 0.75rem; color: var(--text-muted);">Batteries</span>
-                  </div>
-                  <div class="tile">
-                    <span style="display: block; font-size: 1.25rem; font-weight: 800; color: var(--success);">Connected</span>
-                    <span style="font-size: 0.75rem; color: var(--text-muted);">Square POS</span>
-                  </div>
-                </div>
-              </section>
-
-              <section class="card col-6">
-                <h3><i class="fas fa-screwdriver-wrench" style="color: var(--primary); margin-right: 0.5rem;"></i> Active Bench Pipeline</h3>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Current devices in workflow.</p>
-                <div class="grid-tiles">
-                  <div class="tile">
-                    <span style="display: block; font-size: 1.25rem; font-weight: 800; color: var(--warning);">6</span>
-                    <span style="font-size: 0.75rem; color: var(--text-muted);">In Queue</span>
-                  </div>
-                  <div class="tile">
-                    <span style="display: block; font-size: 1.25rem; font-weight: 800; color: var(--primary);">3</span>
-                    <span style="font-size: 0.75rem; color: var(--text-muted);">Diagnostics</span>
-                  </div>
-                  <div class="tile">
-                    <span style="display: block; font-size: 1.25rem; font-weight: 800; color: var(--success);">4</span>
-                    <span style="font-size: 0.75rem; color: var(--text-muted);">Ready for Pickup</span>
-                  </div>
-                </div>
-              </section>
-
-              <!-- Charts -->
-              <div class="card col-8">
-                <h3><i class="fas fa-chart-line"></i> Revenue — Last 7 Days</h3>
-                <div class="chart-container"><canvas id="revenueChart"></canvas></div>
+          <!-- Shop & Repair Status Tiles -->
+          <section class="card col-6">
+            <h3><i class="fas fa-store" style="color: var(--primary); margin-right: 0.5rem;"></i> Parts Inventory Status</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Core stock levels and POS connectivity.</p>
+            <div class="grid-tiles">
+              <div class="tile">
+                <span style="display: block; font-size: 1.25rem; font-weight: 800; color: var(--text);">24</span>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">OLED Screens</span>
               </div>
-              <div class="card col-4">
-                <h3><i class="fas fa-circle-half-stroke"></i> Repair Status Breakdown</h3>
-                <div class="chart-container-sm"><canvas id="statusChart"></canvas></div>
+              <div class="tile">
+                <span style="display: block; font-size: 1.25rem; font-weight: 800; color: var(--text);">18</span>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">Batteries</span>
               </div>
-
-              <!-- Activity & Quick Actions -->
-              <section class="card col-6">
-                <h3><i class="fas fa-bolt"></i> Recent Activity Log</h3>
-                <div class="activity-feed" id="activity-feed"></div>
-              </section>
-
-              <section class="card col-6">
-                <h3><i class="fas fa-tools"></i> Shop Shortcuts</h3>
-                <div class="quick-actions-grid">
-                  <div class="quick-action" onclick="openTicketModal()"><i class="fas fa-plus-circle"></i><span>New Ticket</span></div>
-                  <div class="quick-action" onclick="showPortalSection('portal-queue', document.querySelector('.portal-nav button:nth-child(3)'))"><i class="fas fa-list-check"></i><span>Repair Queue</span></div>
-                  <div class="quick-action" onclick="showPortalSection('portal-inventory', document.querySelector('.portal-nav button:nth-child(5)'))"><i class="fas fa-boxes-stacked"></i><span>Inventory</span></div>
-                  <div class="quick-action" onclick="showPortalSection('portal-financials', document.querySelector('.portal-nav button:nth-child(7)'))"><i class="fas fa-dollar-sign"></i><span>Financials</span></div>
-                  <div class="quick-action" onclick="openOrderModal()"><i class="fas fa-truck-fast"></i><span>New Order</span></div>
-                  <div class="quick-action" onclick="showPortalSection('portal-timeclock', document.querySelector('.portal-nav button:nth-child(8)'))"><i class="fas fa-clock"></i><span>Time Clock</span></div>
-                  <div class="quick-action" onclick="showPortalSection('portal-hud', document.querySelector('.portal-nav button:nth-child(12)'))"><i class="fas fa-calculator"></i><span>Markup Calc</span></div>
-                  <div class="quick-action" onclick="showPortalSection('portal-reports', document.querySelector('.portal-nav button:nth-child(10)'))"><i class="fas fa-file-chart-column"></i><span>Reports</span></div>
-                </div>
-              </section>
+              <div class="tile">
+                <span style="display: block; font-size: 1.25rem; font-weight: 800; color: var(--success);">Connected</span>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">Square POS</span>
+              </div>
             </div>
           </section>
 
-          <!-- REPAIR TICKETS -->
-          <section id="portal-tickets" class="portal-section">
-            <div class="portal-section-header">
-              <div><h2>Repair Tickets</h2><p>Create, track, and manage all repair tickets</p></div>
-              <button class="pbtn pbtn-primary" onclick="openTicketModal()"><i class="fas fa-plus"></i> New Ticket</button>
+          <section class="card col-6">
+            <h3><i class="fas fa-screwdriver-wrench" style="color: var(--primary); margin-right: 0.5rem;"></i> Active Bench Pipeline</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Current devices in workflow.</p>
+            <div class="grid-tiles">
+              <div class="tile">
+                <span style="display: block; font-size: 1.25rem; font-weight: 800; color: var(--warning);">6</span>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">In Queue</span>
+              </div>
+              <div class="tile">
+                <span style="display: block; font-size: 1.25rem; font-weight: 800; color: var(--primary);">3</span>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">Diagnostics</span>
+              </div>
+              <div class="tile">
+                <span style="display: block; font-size: 1.25rem; font-weight: 800; color: var(--success);">4</span>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">Ready for Pickup</span>
+              </div>
             </div>
-            <div class="filter-bar">
-              <select id="ticket-filter-status" onchange="renderTickets()">
-                <option value="">All Statuses</option>
-                <option value="Pending">Pending</option>
-                <option value="Diagnosed">Diagnosed</option>
-                <option value="Parts Ordered">Parts Ordered</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Ready">Ready</option>
-                <option value="Completed">Completed</option>
-                <option value="Cancelled">Cancelled</option>
-              </select>
-              <select id="ticket-filter-priority" onchange="renderTickets()">
-                <option value="">All Priorities</option>
-                <option value="Urgent">Urgent</option>
-                <option value="High">High</option>
-                <option value="Normal">Normal</option>
-                <option value="Low">Low</option>
-              </select>
-              <input type="text" id="ticket-search" placeholder="Search by ticket #, customer, device..." oninput="renderTickets()">
+          </section>
+
+          <!-- Charts -->
+          <div class="card col-8">
+            <h3><i class="fas fa-chart-line"></i> Revenue — Last 7 Days</h3>
+            <div class="chart-container"><canvas id="revenueChart"></canvas></div>
+          </div>
+          <div class="card col-4">
+            <h3><i class="fas fa-circle-half-stroke"></i> Repair Status Breakdown</h3>
+            <div class="chart-container-sm"><canvas id="statusChart"></canvas></div>
+          </div>
+
+          <!-- Activity & Quick Actions -->
+          <section class="card col-6">
+            <h3><i class="fas fa-bolt"></i> Recent Activity Log</h3>
+            <div class="activity-feed" id="activity-feed"></div>
+          </section>
+
+          <section class="card col-6">
+            <h3><i class="fas fa-tools"></i> Shop Shortcuts</h3>
+            <div class="quick-actions-grid">
+              <div class="quick-action" onclick="openTicketModal()"><i class="fas fa-plus-circle"></i><span>New Ticket</span></div>
+              <div class="quick-action" onclick="showPortalSection('portal-queue', document.querySelector('.portal-nav button:nth-child(3)'))"><i class="fas fa-list-check"></i><span>Repair Queue</span></div>
+              <div class="quick-action" onclick="showPortalSection('portal-inventory', document.querySelector('.portal-nav button:nth-child(5)'))"><i class="fas fa-boxes-stacked"></i><span>Inventory</span></div>
+              <div class="quick-action" onclick="showPortalSection('portal-financials', document.querySelector('.portal-nav button:nth-child(7)'))"><i class="fas fa-dollar-sign"></i><span>Financials</span></div>
+              <div class="quick-action" onclick="openOrderModal()"><i class="fas fa-truck-fast"></i><span>New Order</span></div>
+              <div class="quick-action" onclick="showPortalSection('portal-timeclock', document.querySelector('.portal-nav button:nth-child(8)'))"><i class="fas fa-clock"></i><span>Time Clock</span></div>
+              <div class="quick-action" onclick="showPortalSection('portal-hud', document.querySelector('.portal-nav button:nth-child(12)'))"><i class="fas fa-calculator"></i><span>Markup Calc</span></div>
+              <div class="quick-action" onclick="showPortalSection('portal-reports', document.querySelector('.portal-nav button:nth-child(10)'))"><i class="fas fa-file-chart-column"></i><span>Reports</span></div>
             </div>
-            <div class="portal-table-wrap">
+          </section>
+        </div>
+      </section>
+
+      <!-- REPAIR TICKETS -->
+      <section id="portal-tickets" class="portal-section">
+        <div class="portal-section-header">
+          <div><h2>Repair Tickets</h2><p>Create, track, and manage all repair tickets</p></div>
+          <button class="pbtn pbtn-primary" onclick="openTicketModal()"><i class="fas fa-plus"></i> New Ticket</button>
+        </div>
+        <div class="filter-bar">
+          <select id="ticket-filter-status" onchange="renderTickets()">
+            <option value="">All Statuses</option>
+            <option value="Pending">Pending</option>
+            <option value="Diagnosed">Diagnosed</option>
+            <option value="Parts Ordered">Parts Ordered</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Ready">Ready</option>
+            <option value="Completed">Completed</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+          <select id="ticket-filter-priority" onchange="renderTickets()">
+            <option value="">All Priorities</option>
+            <option value="Urgent">Urgent</option>
+            <option value="High">High</option>
+            <option value="Normal">Normal</option>
+            <option value="Low">Low</option>
+          </select>
+          <input type="text" id="ticket-search" placeholder="Search by ticket #, customer, device..." oninput="renderTickets()">
+        </div>
+        <div class="portal-table-wrap">
+          <table class="portal-table">
+            <thead><tr><th>Ticket #</th><th>Customer</th><th>Device</th><th>Issue</th><th>Status</th><th>Priority</th><th>Assigned</th><th>Due</th><th>Actions</th></tr></thead>
+            <tbody id="tickets-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- REPAIR QUEUE -->
+      <section id="portal-queue" class="portal-section">
+        <div class="portal-section-header">
+          <div><h2>Repair Queue</h2><p>Click status arrows to move tickets through the pipeline</p></div>
+          <button class="pbtn pbtn-primary" onclick="openTicketModal()"><i class="fas fa-plus"></i> New Ticket</button>
+        </div>
+        <div class="kanban-board" id="kanban-board"></div>
+      </section>
+
+      <!-- CUSTOMERS -->
+      <section id="portal-customers" class="portal-section">
+        <div class="portal-section-header">
+          <div><h2>Customers</h2><p>Customer database with repair history and spending</p></div>
+          <button class="pbtn pbtn-primary" onclick="openCustomerModal()"><i class="fas fa-plus"></i> Add Customer</button>
+        </div>
+        <div class="filter-bar">
+          <input type="text" id="customer-search" placeholder="Search customers..." oninput="renderCustomers()">
+        </div>
+        <div class="portal-table-wrap">
+          <table class="portal-table">
+            <thead><tr><th>ID</th><th>Name</th><th>Phone</th><th>Email</th><th>Repairs</th><th>Total Spent</th><th>Member</th><th>Actions</th></tr></thead>
+            <tbody id="customers-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- INVENTORY -->
+      <section id="portal-inventory" class="portal-section">
+        <div class="portal-section-header">
+          <div><h2>Parts Inventory</h2><p>Track stock levels, costs, and reorder points</p></div>
+          <button class="pbtn pbtn-primary" onclick="openPartModal()"><i class="fas fa-plus"></i> Add Part</button>
+        </div>
+        <div class="filter-bar">
+          <select id="inventory-filter" onchange="renderInventory()">
+            <option value="">All Categories</option>
+            <option value="Screens">Screens</option>
+            <option value="Batteries">Batteries</option>
+            <option value="Ports">Ports</option>
+            <option value="Cameras">Cameras</option>
+            <option value="Tools">Tools</option>
+            <option value="Accessories">Accessories</option>
+          </select>
+          <input type="text" id="inventory-search" placeholder="Search parts..." oninput="renderInventory()">
+        </div>
+        <div class="portal-table-wrap">
+          <table class="portal-table">
+            <thead><tr><th>SKU</th><th>Part Name</th><th>Category</th><th>Stock</th><th>Cost</th><th>Retail</th><th>Supplier</th><th>Location</th><th>Actions</th></tr></thead>
+            <tbody id="inventory-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ORDERS -->
+      <section id="portal-orders" class="portal-section">
+        <div class="portal-section-header">
+          <div><h2>Order Management</h2><p>Multi-platform order tracking</p></div>
+          <button class="pbtn pbtn-primary" onclick="openOrderModal()"><i class="fas fa-plus"></i> New Order</button>
+        </div>
+        <div class="tabs">
+          <button class="tab-btn active" onclick="switchOrderTab(this, 'all')">All Orders</button>
+          <button class="tab-btn" onclick="switchOrderTab(this, 'Amazon')">Amazon</button>
+          <button class="tab-btn" onclick="switchOrderTab(this, 'eBay')">eBay</button>
+          <button class="tab-btn" onclick="switchOrderTab(this, 'MobileSentrix')">MobileSentrix</button>
+          <button class="tab-btn" onclick="switchOrderTab(this, 'Shopify')">Shopify</button>
+          <button class="tab-btn" onclick="switchOrderTab(this, 'Square')">Square</button>
+        </div>
+        <div class="portal-table-wrap">
+          <table class="portal-table">
+            <thead><tr><th>Order #</th><th>Platform</th><th>Items</th><th>Total Cost</th><th>Status</th><th>Order Date</th><th>Expected</th><th>Tracking</th><th>Actions</th></tr></thead>
+            <tbody id="orders-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- FINANCIALS -->
+      <section id="portal-financials" class="portal-section">
+        <div class="portal-section-header">
+          <div><h2>Financial Dashboard</h2><p>Revenue, profit, expenses, and payment breakdowns</p></div>
+          <button class="pbtn pbtn-primary" onclick="openTransactionModal()"><i class="fas fa-plus"></i> Add Transaction</button>
+        </div>
+        <div class="stats-grid" id="financial-stats"></div>
+        <div class="content-grid">
+          <div class="card col-8">
+            <h3><i class="fas fa-chart-line"></i> Revenue vs Profit — Last 30 Days</h3>
+            <div class="chart-container"><canvas id="profitChart"></canvas></div>
+          </div>
+          <div class="card col-4">
+            <h3><i class="fas fa-credit-card"></i> Payment Methods</h3>
+            <div class="chart-container-sm"><canvas id="paymentChart"></canvas></div>
+          </div>
+          <div class="card col-6">
+            <h3><i class="fas fa-tags"></i> Revenue by Type</h3>
+            <div class="chart-container-sm"><canvas id="revenueTypeChart"></canvas></div>
+          </div>
+          <div class="card col-6">
+            <h3><i class="fas fa-list"></i> Recent Transactions</h3>
+            <div class="portal-table-wrap" style="border:none">
               <table class="portal-table">
-                <thead><tr><th>Ticket #</th><th>Customer</th><th>Device</th><th>Issue</th><th>Status</th><th>Priority</th><th>Assigned</th><th>Due</th><th>Actions</th></tr></thead>
-                <tbody id="tickets-tbody"></tbody>
+                <thead><tr><th>ID</th><th>Type</th><th>Amount</th><th>Profit</th><th>Method</th><th>Date</th></tr></thead>
+                <tbody id="transactions-tbody"></tbody>
               </table>
             </div>
-          </section>
+          </div>
+        </div>
+      </section>
 
-          <!-- REPAIR QUEUE -->
-          <section id="portal-queue" class="portal-section">
-            <div class="portal-section-header">
-              <div><h2>Repair Queue</h2><p>Click status arrows to move tickets through the pipeline</p></div>
-              <button class="pbtn pbtn-primary" onclick="openTicketModal()"><i class="fas fa-plus"></i> New Ticket</button>
-            </div>
-            <div class="kanban-board" id="kanban-board"></div>
-          </section>
-
-          <!-- CUSTOMERS -->
-          <section id="portal-customers" class="portal-section">
-            <div class="portal-section-header">
-              <div><h2>Customers</h2><p>Customer database with repair history and spending</p></div>
-              <button class="pbtn pbtn-primary" onclick="openCustomerModal()"><i class="fas fa-plus"></i> Add Customer</button>
-            </div>
-            <div class="filter-bar">
-              <input type="text" id="customer-search" placeholder="Search customers..." oninput="renderCustomers()">
-            </div>
+      <!-- TIME CLOCK -->
+      <section id="portal-timeclock" class="portal-section">
+        <div class="portal-section-header">
+          <div><h2>Time Clock</h2><p>Clock in/out, track hours, and view timesheets</p></div>
+        </div>
+        <div class="content-grid">
+          <div class="card col-4">
+            <h3><i class="fas fa-clock"></i> Clock Status</h3>
+            <div id="clock-status-display" style="text-align:center; padding: var(--space-4);"></div>
+          </div>
+          <div class="card col-8">
+            <h3><i class="fas fa-calendar-week"></i> This Week's Timesheet</h3>
             <div class="portal-table-wrap">
               <table class="portal-table">
-                <thead><tr><th>ID</th><th>Name</th><th>Phone</th><th>Email</th><th>Repairs</th><th>Total Spent</th><th>Member</th><th>Actions</th></tr></thead>
-                <tbody id="customers-tbody"></tbody>
+                <thead><tr><th>Date</th><th>Clock In</th><th>Clock Out</th><th>Hours</th><th>Status</th></tr></thead>
+                <tbody id="timesheet-tbody"></tbody>
               </table>
             </div>
-          </section>
+          </div>
+        </div>
+      </section>
 
-          <!-- INVENTORY -->
-          <section id="portal-inventory" class="portal-section">
-            <div class="portal-section-header">
-              <div><h2>Parts Inventory</h2><p>Track stock levels, costs, and reorder points</p></div>
-              <button class="pbtn pbtn-primary" onclick="openPartModal()"><i class="fas fa-plus"></i> Add Part</button>
+      <!-- EMPLOYEES -->
+      <section id="portal-employees" class="portal-section">
+        <div class="portal-section-header">
+          <div><h2>Employees</h2><p>Team roster, roles, and performance</p></div>
+          <button class="pbtn pbtn-primary" onclick="openEmployeeModal()"><i class="fas fa-plus"></i> Add Employee</button>
+        </div>
+        <div class="portal-table-wrap">
+          <table class="portal-table">
+            <thead><tr><th>Name</th><th>Role</th><th>Email</th><th>Phone</th><th>Repairs Assigned</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="employees-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- REPORTS -->
+      <section id="portal-reports" class="portal-section">
+        <div class="portal-section-header">
+          <div><h2>Reports & Analytics</h2><p>Business intelligence and performance metrics</p></div>
+          <button class="pbtn pbtn-light" onclick="exportData()"><i class="fas fa-download"></i> Export Data (JSON)</button>
+        </div>
+        <div class="content-grid">
+          <div class="card col-6">
+            <h3><i class="fas fa-mobile-screen"></i> Repairs by Device Type</h3>
+            <div class="chart-container-sm"><canvas id="deviceTypeChart"></canvas></div>
+          </div>
+          <div class="card col-6">
+            <h3><i class="fas fa-wrench"></i> Repairs by Issue Type</h3>
+            <div class="chart-container-sm"><canvas id="issueTypeChart"></canvas></div>
+          </div>
+          <div class="card col-12">
+            <h3><i class="fas fa-trophy"></i> Top Customers by Revenue</h3>
+            <div class="chart-container-sm"><canvas id="topCustomersChart"></canvas></div>
+          </div>
+          <div class="card col-4">
+            <h3><i class="fas fa-check-circle"></i> Completion Rate</h3>
+            <div id="completion-rate" style="text-align:center; padding: var(--space-4);"></div>
+          </div>
+          <div class="card col-4">
+            <h3><i class="fas fa-dollar-sign"></i> Avg Ticket Value</h3>
+            <div id="avg-ticket" style="text-align:center; padding: var(--space-4);"></div>
+          </div>
+          <div class="card col-4">
+            <h3><i class="fas fa-clock"></i> Avg Repair Time</h3>
+            <div id="avg-repair-time" style="text-align:center; padding: var(--space-4);"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- REPAIRSHOPR HUD -->
+      <section id="portal-hud" class="portal-section">
+        <div class="portal-section-header">
+          <div><h2>RepairShopr HUD</h2><p>CRM tools, markup calculator, and quick ticket actions</p></div>
+        </div>
+        <div class="content-grid">
+          <div class="card col-4">
+            <h3><i class="fas fa-calculator"></i> Markup Calculator</h3>
+            <div class="markup-calculator">
+              <div class="portal-field" style="margin-bottom: var(--space-3);">
+                <label>Part Cost ($)</label>
+                <input type="number" id="markup-cost" value="45" oninput="calcMarkup()">
+              </div>
+              <div class="portal-field" style="margin-bottom: var(--space-3);">
+                <label>Markup %</label>
+                <input type="number" id="markup-percent" value="200" oninput="calcMarkup()">
+              </div>
+              <div class="portal-field" style="margin-bottom: var(--space-3);">
+                <label>Labor ($)</label>
+                <input type="number" id="markup-labor" value="60" oninput="calcMarkup()">
+              </div>
+              <div class="markup-result">
+                <div class="price" id="markup-price">$180.00</div>
+                <div class="profit" id="markup-profit">Profit: $135.00</div>
+              </div>
             </div>
-            <div class="filter-bar">
-              <select id="inventory-filter" onchange="renderInventory()">
-                <option value="">All Categories</option>
-                <option value="Screens">Screens</option>
-                <option value="Batteries">Batteries</option>
-                <option value="Ports">Ports</option>
-                <option value="Cameras">Cameras</option>
-                <option value="Tools">Tools</option>
-                <option value="Accessories">Accessories</option>
-              </select>
-              <input type="text" id="inventory-search" placeholder="Search parts..." oninput="renderInventory()">
+          </div>
+          <div class="card col-4">
+            <h3><i class="fas fa-barcode"></i> SKU & Part Lookup</h3>
+            <div class="portal-field" style="margin-bottom: var(--space-3);">
+              <label>Search Inventory SKU</label>
+              <input type="text" placeholder="e.g. IP13-OLED" oninput="barcodeLookup(this.value)">
             </div>
-            <div class="portal-table-wrap">
+          </div>
+          <div class="card col-4">
+            <h3><i class="fas fa-bolt"></i> Quick Actions</h3>
+            <div class="quick-actions-grid">
+              <div class="quick-action" onclick="openTicketModal()"><i class="fas fa-plus-circle"></i><span>New Intake</span></div>
+              <div class="quick-action" onclick="showPortalSection('portal-queue', document.querySelector('.portal-nav button:nth-child(3)'))"><i class="fas fa-list-check"></i><span>View Queue</span></div>
+              <div class="quick-action" onclick="showPortalSection('portal-customers', document.querySelector('.portal-nav button:nth-child(4)'))"><i class="fas fa-users"></i><span>Customers</span></div>
+              <div class="quick-action" onclick="showPortalSection('portal-inventory', document.querySelector('.portal-nav button:nth-child(5)'))"><i class="fas fa-boxes-stacked"></i><span>Parts</span></div>
+            </div>
+          </div>
+          <div class="card col-12">
+            <h3><i class="fas fa-ticket"></i> Active Tickets Overview</h3>
+            <div class="portal-table-wrap" style="border:none">
               <table class="portal-table">
-                <thead><tr><th>SKU</th><th>Part Name</th><th>Category</th><th>Stock</th><th>Cost</th><th>Retail</th><th>Supplier</th><th>Location</th><th>Actions</th></tr></thead>
-                <tbody id="inventory-tbody"></tbody>
+                <thead><tr><th>Ticket #</th><th>Customer</th><th>Device</th><th>Issue</th><th>Status</th><th>Price</th><th>Profit</th><th>Actions</th></tr></thead>
+                <tbody id="hud-tickets-tbody"></tbody>
               </table>
             </div>
-          </section>
+          </div>
+        </div>
+      </section>
 
-          <!-- ORDERS -->
-          <section id="portal-orders" class="portal-section">
-            <div class="portal-section-header">
-              <div><h2>Order Management</h2><p>Multi-platform order tracking</p></div>
-              <button class="pbtn pbtn-primary" onclick="openOrderModal()"><i class="fas fa-plus"></i> New Order</button>
+      <!-- SETTINGS -->
+      <section id="portal-settings" class="portal-section">
+        <div class="portal-section-header">
+          <div><h2>Settings</h2><p>Business configuration and data management</p></div>
+        </div>
+        <div class="content-grid">
+          <div class="card col-6">
+            <h3><i class="fas fa-store"></i> Business Info</h3>
+            <div class="portal-form-grid">
+              <div class="portal-field"><label>Business Name</label><input type="text" value="Austin's Tech Repair Group" readonly></div>
+              <div class="portal-form-row">
+                <div class="portal-field"><label>Phone</label><input type="text" value="513-478-8077" readonly></div>
+              </div>
+              <div class="portal-field"><label>Location</label><input type="text" value="Spring Valley / Dayton, Ohio" readonly></div>
             </div>
-            <div class="tabs">
-              <button class="tab-btn active" onclick="switchOrderTab(this, 'all')">All Orders</button>
-              <button class="tab-btn" onclick="switchOrderTab(this, 'Amazon')">Amazon</button>
-              <button class="tab-btn" onclick="switchOrderTab(this, 'eBay')">eBay</button>
-              <button class="tab-btn" onclick="switchOrderTab(this, 'MobileSentrix')">MobileSentrix</button>
-              <button class="tab-btn" onclick="switchOrderTab(this, 'Shopify')">Shopify</button>
-              <button class="tab-btn" onclick="switchOrderTab(this, 'Square')">Square</button>
+          </div>
+          <div class="card col-6">
+            <h3><i class="fas fa-database"></i> Data Management</h3>
+            <div style="display:flex; flex-direction:column; gap: var(--space-3);">
+              <button class="pbtn pbtn-success" onclick="exportData()"><i class="fas fa-download"></i> Export All Data (JSON)</button>
+              <button class="pbtn pbtn-light" onclick="document.getElementById('import-file').click()"><i class="fas fa-upload"></i> Import Data (JSON)</button>
+              <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+              <button class="pbtn pbtn-light" onclick="reseedData()"><i class="fas fa-rotate"></i> Reset to Demo Data</button>
+              <button class="pbtn pbtn-danger" onclick="clearAllData()"><i class="fas fa-trash"></i> Clear All Data</button>
             </div>
-            <div class="portal-table-wrap">
-              <table class="portal-table">
-                <thead><tr><th>Order #</th><th>Platform</th><th>Items</th><th>Total Cost</th><th>Status</th><th>Order Date</th><th>Expected</th><th>Tracking</th><th>Actions</th></tr></thead>
-                <tbody id="orders-tbody"></tbody>
-              </table>
-            </div>
-          </section>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</section>
 
-          <!-- FINANCIALS -->
-          <section id="portal-financials" class="portal-section">
-            <div class="portal-section-header">
-              <div><h2>Financial Dashboard</h2><p>Revenue, profit, expenses, and payment breakdowns</p></div>
-              <button class="pbtn pbtn-primary" onclick="openTransactionModal()"><i class="fas fa-plus"></i> Add Transaction</button>
-            </div>
-            <div class="stats-grid" id="financial-stats"></div>
-            <div class="content-grid">
-              <div class="card col-8">
-                <h3><i class="fas fa-chart-line"></i> Revenue vs Profit — Last 30 Days</h3>
-                <div class="chart-container"><canvas id="profitChart"></canvas></div>
-              </div>
-              <div class="card col-4">
-                <h3><i class="fas fa-credit-card"></i> Payment Methods</h3>
-                <div class="chart-container-sm"><canvas id="paymentChart"></canvas></div>
-              </div>
-              <div class="card col-6">
-                <h3><i class="fas fa-tags"></i> Revenue by Type</h3>
-                <div class="chart-container-sm"><canvas id="revenueTypeChart"></canvas></div>
-              </div>
-              <div class="card col-6">
-                <h3><i class="fas fa-list"></i> Recent Transactions</h3>
-                <div class="portal-table-wrap" style="border:none">
-                  <table class="portal-table">
-                    <thead><tr><th>ID</th><th>Type</th><th>Amount</th><th>Profit</th><th>Method</th><th>Date</th></tr></thead>
-                    <tbody id="transactions-tbody"></tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </section>
+<!-- Mobile Drawer and Touch Styling Styles -->
+<style>
+  @media (max-width: 1024px) {
+    .mobile-portal-bar { display: flex !important; }
+    #portalSidebarClose { display: block !important; }
+    .app .sidebar {
+      position: fixed;
+      left: -280px;
+      top: 0;
+      bottom: 0;
+      width: 280px;
+      z-index: 1000;
+      transition: left 0.3s ease;
+      box-shadow: 5px 0 25px rgba(0,0,0,0.2);
+    }
+    .app.mobile-nav-open .sidebar {
+      left: 0;
+    }
+    .portal-main {
+      padding: var(--space-4);
+    }
+  }
+</style>
 
-          <!-- TIME CLOCK -->
-          <section id="portal-timeclock" class="portal-section">
-            <div class="portal-section-header">
-              <div><h2>Time Clock</h2><p>Clock in/out, track hours, and view timesheets</p></div>
-            </div>
-            <div class="content-grid">
-              <div class="card col-4">
-                <h3><i class="fas fa-clock"></i> Clock Status</h3>
-                <div id="clock-status-display" style="text-align:center; padding: var(--space-4);"></div>
-              </div>
-              <div class="card col-8">
-                <h3><i class="fas fa-calendar-week"></i> This Week's Timesheet</h3>
-                <div class="portal-table-wrap">
-                  <table class="portal-table">
-                    <thead><tr><th>Date</th><th>Clock In</th><th>Clock Out</th><th>Hours</th><th>Status</th></tr></thead>
-                    <tbody id="timesheet-tbody"></tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </section>
+<!-- Mobile Navigation Script Handler -->
+<script>
+  function closePortalMobileMenu() {
+    const appEl = document.getElementById('portalView');
+    if (appEl) appEl.classList.remove('mobile-nav-open');
+  }
 
-          <!-- EMPLOYEES -->
-          <section id="portal-employees" class="portal-section">
-            <div class="portal-section-header">
-              <div><h2>Employees</h2><p>Team roster, roles, and performance</p></div>
-              <button class="pbtn pbtn-primary" onclick="openEmployeeModal()"><i class="fas fa-plus"></i> Add Employee</button>
-            </div>
-            <div class="portal-table-wrap">
-              <table class="portal-table">
-                <thead><tr><th>Name</th><th>Role</th><th>Email</th><th>Phone</th><th>Repairs Assigned</th><th>Status</th><th>Actions</th></tr></thead>
-                <tbody id="employees-tbody"></tbody>
-              </table>
-            </div>
-          </section>
+  document.addEventListener('DOMContentLoaded', () => {
+    const toggleBtn = document.getElementById('portalNavToggle');
+    const closeBtn = document.getElementById('portalSidebarClose');
+    const appEl = document.getElementById('portalView');
 
-          <!-- REPORTS -->
-          <section id="portal-reports" class="portal-section">
-            <div class="portal-section-header">
-              <div><h2>Reports & Analytics</h2><p>Business intelligence and performance metrics</p></div>
-              <button class="pbtn pbtn-light" onclick="exportData()"><i class="fas fa-download"></i> Export Data (JSON)</button>
-            </div>
-            <div class="content-grid">
-              <div class="card col-6">
-                <h3><i class="fas fa-mobile-screen"></i> Repairs by Device Type</h3>
-                <div class="chart-container-sm"><canvas id="deviceTypeChart"></canvas></div>
-              </div>
-              <div class="card col-6">
-                <h3><i class="fas fa-wrench"></i> Repairs by Issue Type</h3>
-                <div class="chart-container-sm"><canvas id="issueTypeChart"></canvas></div>
-              </div>
-              <div class="card col-12">
-                <h3><i class="fas fa-trophy"></i> Top Customers by Revenue</h3>
-                <div class="chart-container-sm"><canvas id="topCustomersChart"></canvas></div>
-              </div>
-              <div class="card col-4">
-                <h3><i class="fas fa-check-circle"></i> Completion Rate</h3>
-                <div id="completion-rate" style="text-align:center; padding: var(--space-4);"></div>
-              </div>
-              <div class="card col-4">
-                <h3><i class="fas fa-dollar-sign"></i> Avg Ticket Value</h3>
-                <div id="avg-ticket" style="text-align:center; padding: var(--space-4);"></div>
-              </div>
-              <div class="card col-4">
-                <h3><i class="fas fa-clock"></i> Avg Repair Time</h3>
-                <div id="avg-repair-time" style="text-align:center; padding: var(--space-4);"></div>
-              </div>
-            </div>
-          </section>
+    if (toggleBtn && appEl) {
+      toggleBtn.addEventListener('click', () => {
+        appEl.classList.toggle('mobile-nav-open');
+      });
+    }
 
-          <!-- REPAIRSHOPR HUD -->
-          <section id="portal-hud" class="portal-section">
-            <div class="portal-section-header">
-              <div><h2>RepairShopr HUD</h2><p>CRM tools, markup calculator, and quick ticket actions</p></div>
-            </div>
-            <div class="content-grid">
-              <div class="card col-4">
-                <h3><i class="fas fa-calculator"></i> Markup Calculator</h3>
-                <div class="markup-calculator">
-                  <div class="portal-field" style="margin-bottom: var(--space-3);">
-                    <label>Part Cost ($)</label>
-                    <input type="number" id="markup-cost" value="45" oninput="calcMarkup()">
-                  </div>
-                  <div class="portal-field" style="margin-bottom: var(--space-3);">
-                    <label>Markup %</label>
-                    <input type="number" id="markup-percent" value="200" oninput="calcMarkup()">
-                  </div>
-                  <div class="portal-field" style="margin-bottom: var(--space-3);">
-                    <label>Labor ($)</label>
-                    <input type="number" id="markup-labor" value="60" oninput="calcMarkup()">
-                  </div>
-                  <div class="markup-result">
-                    <div class="price" id="markup-price">$180.00</div>
-                    <div class="profit" id="markup-profit">Profit: $135.00</div>
-                  </div>
-                </div>
-              </div>
-              <div class="card col-4">
-                <h3><i class="fas fa-barcode"></i> SKU & Part Lookup</h3>
-                <div class="portal-field" style="margin-bottom: var(--space-3);">
-                  <label>Search Inventory SKU</label>
-                  <input type="text" placeholder="e.g. IP13-OLED" oninput="barcodeLookup(this.value)">
-                </div>
-              </div>
-              <div class="card col-4">
-                <h3><i class="fas fa-bolt"></i> Quick Actions</h3>
-                <div class="quick-actions-grid">
-                  <div class="quick-action" onclick="openTicketModal()"><i class="fas fa-plus-circle"></i><span>New Intake</span></div>
-                  <div class="quick-action" onclick="showPortalSection('portal-queue', document.querySelector('.portal-nav button:nth-child(3)'))"><i class="fas fa-list-check"></i><span>View Queue</span></div>
-                  <div class="quick-action" onclick="showPortalSection('portal-customers', document.querySelector('.portal-nav button:nth-child(4)'))"><i class="fas fa-users"></i><span>Customers</span></div>
-                  <div class="quick-action" onclick="showPortalSection('portal-inventory', document.querySelector('.portal-nav button:nth-child(5)'))"><i class="fas fa-boxes-stacked"></i><span>Parts</span></div>
-                </div>
-              </div>
-              <div class="card col-12">
-                <h3><i class="fas fa-ticket"></i> Active Tickets Overview</h3>
-                <div class="portal-table-wrap" style="border:none">
-                  <table class="portal-table">
-                    <thead><tr><th>Ticket #</th><th>Customer</th><th>Device</th><th>Issue</th><th>Status</th><th>Price</th><th>Profit</th><th>Actions</th></tr></thead>
-                    <tbody id="hud-tickets-tbody"></tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </section>
+    if (closeBtn && appEl) {
+      closeBtn.addEventListener('click', () => {
+        appEl.classList.remove('mobile-nav-open');
+      });
+    }
+  });
+</script>
 
-          <!-- SETTINGS -->
-          <section id="portal-settings" class="portal-section">
-            <div class="portal-section-header">
-              <div><h2>Settings</h2><p>Business configuration and data management</p></div>
-            </div>
-            <div class="content-grid">
-              <div class="card col-6">
-                <h3><i class="fas fa-store"></i> Business Info</h3>
-                <div class="portal-form-grid">
-                  <div class="portal-field"><label>Business Name</label><input type="text" value="Austin's Tech Repair Group" readonly></div>
-                  <div class="portal-form-row">
-                    <div class="portal-field"><label>Phone</label><input type="text" value="513-478-8077" readonly></div>
-                  </div>
-                  <div class="portal-field"><label>Location</label><input type="text" value="Spring Valley / Dayton, Ohio" readonly></div>
-                </div>
-              </div>
-              <div class="card col-6">
-                <h3><i class="fas fa-database"></i> Data Management</h3>
-                <div style="display:flex; flex-direction:column; gap: var(--space-3);">
-                  <button class="pbtn pbtn-success" onclick="exportData()"><i class="fas fa-download"></i> Export All Data (JSON)</button>
-                  <button class="pbtn pbtn-light" onclick="document.getElementById('import-file').click()"><i class="fas fa-upload"></i> Import Data (JSON)</button>
-                  <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
-                  <button class="pbtn pbtn-light" onclick="reseedData()"><i class="fas fa-rotate"></i> Reset to Demo Data</button>
-                  <button class="pbtn pbtn-danger" onclick="clearAllData()"><i class="fas fa-trash"></i> Clear All Data</button>
-                </div>
-              </div>
-            </div>
-          </section>
-        </main>
-      </div>
-    </section>
 
 
   <!-- ============================================ APPLE-STYLE SHOWCASE CAROUSEL ============================================ -->
