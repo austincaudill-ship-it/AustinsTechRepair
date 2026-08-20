@@ -850,6 +850,36 @@ button {
 }
 
 /* ==========================================================================
+   Service Grid & Cards (Device Categories Fixed)
+   ========================================================================== */
+.service-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-6);
+  margin-bottom: var(--space-8);
+}
+
+.service-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-2xl);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  transition: all var(--transition);
+  text-align: left;
+  width: 100%;
+}
+
+.service-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ==========================================================================
    Repair Request Wizard & Interactive Option Buttons
    ========================================================================== */
 .repair-card {
@@ -1532,14 +1562,13 @@ button {
     max-width: 100%;
   }
 } 
-/* <-- FIXED: Media query properly closed here! */
 
 /* ==========================================================================
    Floating Steve AI Widget Styles
    ========================================================================== */
 .steve-toggle-btn {
   position: fixed;
-  bottom: 85px; /* Sits comfortably above mobile bottom nav */
+  bottom: 85px;
   right: 20px;
   z-index: 400;
   display: flex;
@@ -1608,7 +1637,6 @@ button {
   background: var(--bg);
 }
 
-/* Adjust positioning for desktop screens without a mobile bottom bar */
 @media (min-width: 1024px) {
   .steve-toggle-btn { bottom: 20px; }
   .steve-widget { bottom: 80px; }
