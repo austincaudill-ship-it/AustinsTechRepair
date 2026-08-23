@@ -1520,14 +1520,14 @@ body:has(#employee.page.active) {
 
 .contact-wrapper > div {
     flex: 1;
-    min-width: 0; /* Prevents flex items from overflowing or squishing */
+    min-width: 0;
 }
 
 .contact-form-card {
     background: transparent;
     border: none;
     padding: 0;
-    overflow: hidden;
+    overflow: visible; /* Allows the scroll area to behave properly */
 }
 
 /* Mobile & Tablet Responsiveness */
@@ -1543,3 +1543,4 @@ body:has(#employee.page.active) {
         max-width: 100% !important;
     }
 }
+
