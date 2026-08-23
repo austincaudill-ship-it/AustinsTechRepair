@@ -1503,3 +1503,43 @@ body:has(#employee.page.active) {
     padding-top: var(--space-6);
   }
 }
+
+/* ==========================================================================
+   Contact Section & JotForm Responsive Fixes
+   ========================================================================== */
+.contact-wrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 3rem;
+    width: 100%;
+    max-width: var(--content-wide);
+    margin: 0 auto;
+    box-sizing: border-box;
+}
+
+.contact-wrapper > div {
+    flex: 1;
+    min-width: 0; /* Prevents flex items from overflowing or squishing */
+}
+
+.contact-form-card {
+    background: transparent;
+    border: none;
+    padding: 0;
+    overflow: hidden;
+}
+
+/* Mobile & Tablet Responsiveness */
+@media (max-width: 900px) {
+    .contact-wrapper {
+        flex-direction: column !important;
+        padding: 2rem 5% !important;
+        gap: 2rem;
+    }
+    
+    .contact-wrapper > div {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+}
