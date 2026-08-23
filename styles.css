@@ -1525,5 +1525,19 @@ body:has(#employee.page.active) {
     }
 }
 
+/* Isolate Jotform and protect global buttons/drawers */
+.jotform-container iframe,
+.jotform-container form {
+    max-width: 100%;
+}
+
+/* Ensure header buttons keep their proper shape and positioning */
+.header-actions .icon-btn, 
+.header-actions .theme-toggle,
+.header-actions .cart-badge {
+    box-sizing: border-box !important;
+}
+
+
 
 
