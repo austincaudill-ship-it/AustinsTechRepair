@@ -1,4 +1,4 @@
-i<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -70,6 +70,11 @@ i<!DOCTYPE html>
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 
   <style>
+    /* Utility & Portal Hidden Class Fix */
+    .hidden {
+      display: none !important;
+    }
+
     /* Cart Badge Pulse & Indicator Styles */
     .cart-badge {
       display: inline-flex;
@@ -119,6 +124,7 @@ i<!DOCTYPE html>
       <a class="nav-link" href="https://form.jotform.com/262308779420057" data-page="repair">Repair</a>
       <a class="nav-link" href="#about" data-page="about">About</a>
       <a class="nav-link" href="#contact" data-page="contact">Contact</a>
+      <a class="nav-link" href="#prices" data-page="prices">Prices</a>
       <a class="nav-link" href="#b2b" data-page="b2b">B2B</a>
       <a class="nav-link" href="#atr-one" data-page="atr-one">ATR One</a>
       <a class="nav-link" href="#employee" data-page="employee">Portal</a>
@@ -153,8 +159,10 @@ i<!DOCTYPE html>
       <p id="menu-title" class="eyebrow">Navigation</p>
       <div class="menu-links">
         <a class="menu-link active" href="#home" data-page="home">Home</a>
+        <a class="menu-link" href="#shop" data-page="shop">Shop</a>
         <a class="menu-link" href="#about" data-page="about">About</a>
         <a class="menu-link" href="#contact" data-page="contact">Contact</a>
+        <a class="menu-link" href="#prices" data-page="prices">Prices</a>
         <a class="menu-link" href="https://form.jotform.com/262308779420057" target="_blank" rel="noopener">Services</a>
         <a class="menu-link" href="#atr-one" data-page="atr-one">ATR One Membership</a>
         <a class="menu-link" href="#employee" data-page="employee">Employee Portal</a>
@@ -185,7 +193,7 @@ i<!DOCTYPE html>
         </div>
       </div>
 
-           <!-- Trust Bar -->
+      <!-- Trust Bar -->
       <div class="trust-bar" style="display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-3); margin: var(--space-6) auto; padding: var(--space-4) var(--space-5); max-width: 1000px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); box-shadow: var(--shadow-sm);">
         <div class="trust-item" style="display: flex; align-items: center; gap: 8px; font-size: 0.875rem; font-weight: 600; padding: var(--space-2) var(--space-3);"><i class="fas fa-shield-halved" style="color: var(--primary);"></i> 1-Year Warranty</div>
         <div class="trust-item" style="display: flex; align-items: center; gap: 8px; font-size: 0.875rem; font-weight: 600; padding: var(--space-2) var(--space-3);"><i class="fas fa-bolt" style="color: var(--accent-blue);"></i> Same-Day Service</div>
@@ -194,7 +202,6 @@ i<!DOCTYPE html>
         <div class="trust-item" style="display: flex; align-items: center; gap: 8px; font-size: 0.875rem; font-weight: 600; padding: var(--space-2) var(--space-3);"><i class="fas fa-user-gear" style="color: var(--primary);"></i> Certified Computer & Network Technician</div>
         <div class="trust-item" style="display: flex; align-items: center; gap: 8px; font-size: 0.875rem; font-weight: 600; padding: var(--space-2) var(--space-3);"><i class="fas fa-screwdriver-wrench" style="color: var(--success);"></i> In-Depth Diagnostics ($15, Credited to Repair)</div>
       </div>
-
 
       <!-- SERVICE CATEGORIES -->
       <div class="container" style="padding: var(--space-12) var(--space-5);">
@@ -205,106 +212,46 @@ i<!DOCTYPE html>
         </div>
         
         <div class="service-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-6);">
-          <!-- Phones -->
           <div class="service-card reveal" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: var(--space-6); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: var(--space-3);">
-            <div style="width: 44px; height: 44px; background: rgba(0, 87, 255, 0.1); border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.25rem;">
-              <i class="fas fa-mobile-screen"></i>
-            </div>
+            <div style="width: 44px; height: 44px; background: rgba(0, 87, 255, 0.1); border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.25rem;"><i class="fas fa-mobile-screen"></i></div>
             <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; margin: 0;">Phones</h3>
             <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin: 0;">Cracked screens, battery swaps, charging port repair, camera issues, speaker/mic fixes, water damage recovery, software troubleshooting, and fast data transfer.</p>
           </div>
 
-          <!-- Tablets -->
           <div class="service-card reveal reveal-delay-1" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: var(--space-6); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: var(--space-3);">
-            <div style="width: 44px; height: 44px; background: rgba(0, 87, 255, 0.1); border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.25rem;">
-              <i class="fas fa-tablet-alt"></i>
-            </div>
+            <div style="width: 44px; height: 44px; background: rgba(0, 87, 255, 0.1); border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.25rem;"><i class="fas fa-tablet-alt"></i></div>
             <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; margin: 0;">Tablets</h3>
             <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin: 0;">Display replacement, charging port repair, touch troubleshooting, battery service, camera fixes, and full software setup support.</p>
           </div>
 
-          <!-- Computers -->
           <div class="service-card reveal reveal-delay-2" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: var(--space-6); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: var(--space-3);">
-            <div style="width: 44px; height: 44px; background: rgba(0, 87, 255, 0.1); border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.25rem;">
-              <i class="fas fa-laptop"></i>
-            </div>
+            <div style="width: 44px; height: 44px; background: rgba(0, 87, 255, 0.1); border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.25rem;"><i class="fas fa-laptop"></i></div>
             <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; margin: 0;">Computers</h3>
             <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin: 0;">SSD upgrades, RAM installs, virus cleanup, display repair, power issues, DC jack repair, software recovery, and data rescue.</p>
           </div>
 
-          <!-- Gaming -->
           <div class="service-card reveal reveal-delay-3" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: var(--space-6); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: var(--space-3);">
-            <div style="width: 44px; height: 44px; background: rgba(0, 87, 255, 0.1); border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.25rem;">
-              <i class="fas fa-gamepad"></i>
-            </div>
+            <div style="width: 44px; height: 44px; background: rgba(0, 87, 255, 0.1); border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.25rem;"><i class="fas fa-gamepad"></i></div>
             <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; margin: 0;">Gaming Consoles</h3>
             <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin: 0;">Console HDMI port repair, cooling fan replacement, storage upgrades, power fault diagnostics, controller fixes, and overheating solutions.</p>
           </div>
 
-          <!-- Smart Watches -->
           <div class="service-card reveal" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: var(--space-6); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: var(--space-3);">
-            <div style="width: 44px; height: 44px; background: rgba(0, 87, 255, 0.1); border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.25rem;">
-              <i class="fas fa-clock"></i>
-            </div>
+            <div style="width: 44px; height: 44px; background: rgba(0, 87, 255, 0.1); border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.25rem;"><i class="fas fa-clock"></i></div>
             <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; margin: 0;">Smart Watches</h3>
             <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin: 0;">Battery service, display replacement, charging issues, pairing fixes, syncing support, and button or crown repairs.</p>
           </div>
 
-          <!-- Accessories & ATR One -->
           <div class="service-card reveal" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: var(--space-6); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: var(--space-3);">
-            <div style="width: 44px; height: 44px; background: rgba(0, 87, 255, 0.1); border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.25rem;">
-              <i class="fas fa-store"></i>
-            </div>
+            <div style="width: 44px; height: 44px; background: rgba(0, 87, 255, 0.1); border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.25rem;"><i class="fas fa-store"></i></div>
             <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; margin: 0;">Accessories & ATR One</h3>
             <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin: 0;">Cases, screen protectors, chargers, and gear at wholesale cost. Join ATR One for 20% off labor and free member benefits.</p>
           </div>
 
-          <!-- Business Services -->
           <div class="service-card reveal" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: var(--space-6); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: var(--space-3);">
-            <div style="width: 44px; height: 44px; background: rgba(0, 87, 255, 0.1); border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.25rem;">
-              <i class="fas fa-briefcase"></i>
-            </div>
+            <div style="width: 44px; height: 44px; background: rgba(0, 87, 255, 0.1); border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.25rem;"><i class="fas fa-briefcase"></i></div>
             <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; margin: 0;">Business Services</h3>
             <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin: 0;">Printer maintenance, office IT support, mass imaging, school technology contracts, and commercial hardware care.</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- HOW IT WORKS -->
-      <div class="container" style="padding: var(--space-12) var(--space-5);">
-        <div class="section-header reveal text-center" style="margin-bottom: var(--space-8);"> 
-          <p class="eyebrow" style="justify-content: center;">Simple, Fast, Transparent</p>
-          <h2 class="section-title">How On-Site Service Works</h2>
-          <p class="section-copy" style="max-width: 600px; margin: 0 auto;">No driving to a storefront, no waiting in line. We bring the repair shop directly to your door.</p>
-        </div>
-        
-        <div class="service-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--space-6);">
-          <!-- Step 1 -->
-          <div class="service-card reveal" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: var(--space-6); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: var(--space-3); position: relative;">
-            <div style="font-family: var(--font-mono); font-size: 0.85rem; font-weight: 700; color: var(--primary);">01</div>
-            <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; margin: 0;">Book & Describe</h3>
-            <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin: 0;">Submit your details through our quick intake form or give us a call to let us know what's going on.</p>
-          </div>
-
-          <!-- Step 2 -->
-          <div class="service-card reveal reveal-delay-1" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: var(--space-6); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: var(--space-3); position: relative;">
-            <div style="font-family: var(--font-mono); font-size: 0.85rem; font-weight: 700; color: var(--primary);">02</div>
-            <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; margin: 0;">We Come To You</h3>
-            <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin: 0;">We arrive at your home or office across the Miami Valley equipped with professional tools and parts.</p>
-          </div>
-
-          <!-- Step 3 -->
-          <div class="service-card reveal reveal-delay-2" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: var(--space-6); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: var(--space-3); position: relative;">
-            <div style="font-family: var(--font-mono); font-size: 0.85rem; font-weight: 700; color: var(--primary);">03</div>
-            <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; margin: 0;">On-Site Repair</h3>
-            <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin: 0;">We perform diagnostics and complete the repair right on the spot with transparent, upfront pricing.</p>
-          </div>
-
-          <!-- Step 4 -->
-          <div class="service-card reveal reveal-delay-3" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: var(--space-6); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: var(--space-3); position: relative;">
-            <div style="font-family: var(--font-mono); font-size: 0.85rem; font-weight: 700; color: var(--primary);">04</div>
-            <h3 style="font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; margin: 0;">Back in Action</h3>
-            <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin: 0;">Test your device immediately, process payment securely, and enjoy peace of mind with our 1-year warranty.</p>
           </div>
         </div>
       </div>
@@ -317,7 +264,6 @@ i<!DOCTYPE html>
           <p class="section-copy">Real feedback from real customers across the Miami Valley.</p>
         </div>
         <div class="testimonials-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-6);">
-          <!-- Tiant P. -->
           <div class="testimonial-card reveal">
             <div class="testimonial-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
             <p class="testimonial-text">"Austin was extremely professional from start to finish. I asked him to fix my Xbox One X, which was not reading discs, and he took the time to properly repair it while also explaining everything along the way. He was very transparent about his pricing, honest in his work, and reliable throughout the entire process."</p>
@@ -327,7 +273,6 @@ i<!DOCTYPE html>
             </div>
           </div>
 
-          <!-- Annie -->
           <div class="testimonial-card reveal reveal-delay-1">
             <div class="testimonial-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
             <p class="testimonial-text">"Excellent service. Took care of all my printer needs. Repaired old printer and set up new. Very friendly and informed on IT issues. Would highly recommend Austin."</p>
@@ -337,7 +282,6 @@ i<!DOCTYPE html>
             </div>
           </div>
 
-          <!-- Kristy -->
           <div class="testimonial-card reveal reveal-delay-2">
             <div class="testimonial-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
             <p class="testimonial-text">"Austin hooked up my Bluetooth on my stereo system, TV, even hooked up my printer, iPad and all of my technology back to the network after my modem got reset."</p>
@@ -347,7 +291,6 @@ i<!DOCTYPE html>
             </div>
           </div>
 
-          <!-- Jessica B. -->
           <div class="testimonial-card reveal">
             <div class="testimonial-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
             <p class="testimonial-text">"Austin provides great services! It's always a relief to find a reliable and skilled technician for mobile repairs. Thanks again Austin!"</p>
@@ -378,7 +321,6 @@ i<!DOCTYPE html>
     <!-- ===================== SHOP PAGE ===================== -->
     <section id="shop" class="page">
       <div class="container" style="padding-top: var(--space-12); padding-bottom: var(--space-16);">
-        <!-- Header -->
         <div class="section-header reveal text-center" style="max-width: 700px; margin: 0 auto var(--space-10);">
           <div style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; background: rgba(0, 87, 255, 0.1); border: 1px solid var(--primary); border-radius: 99px; margin-bottom: var(--space-4);">
             <span style="width: 8px; height: 8px; background: var(--primary); border-radius: 50%; display: inline-block; animation: badgePulse 2s infinite;"></span>
@@ -388,9 +330,7 @@ i<!DOCTYPE html>
           <p class="section-copy" style="font-size: 1.05rem; color: var(--text-muted); line-height: 1.6;">We are engineering our upcoming retail storefront to bring you precision-fit screen protectors, high-output charging gear, custom cases, and audio accessories. Quality tested for the devices you rely on every day.</p>
         </div>
 
-        <!-- High-Tech Coming Soon Spotlight Card -->
         <div class="reveal" style="max-width: 900px; margin: 0 auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); overflow: hidden; box-shadow: var(--shadow-xl); display: grid; grid-template-columns: 1fr 1fr; align-items: center;">
-          <!-- Left Content -->
           <div style="padding: var(--space-8);">
             <p class="eyebrow" style="color: var(--accent-blue); margin-bottom: var(--space-2);">Inventory Pipeline</p>
             <h3 style="font-size: 1.5rem; font-weight: 800; font-family: var(--font-display); margin-bottom: var(--space-3);">What's In Development</h3>
@@ -416,7 +356,6 @@ i<!DOCTYPE html>
             </div>
           </div>
 
-          <!-- Right Image Showcase with Tech Overlay -->
           <div style="position: relative; height: 100%; min-height: 350px; background: #000; overflow: hidden;">
             <img src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=900&q=80" alt="High-tech accessories development workspace" loading="lazy" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.75;" />
             <div style="position: absolute; inset: 0; background: linear-gradient(135deg, rgba(0,87,255,0.2) 0%, transparent 100%);"></div>
@@ -439,7 +378,6 @@ i<!DOCTYPE html>
         </div>
 
         <div class="repair-card reveal">
-          <!-- Progress Indicator -->
           <div class="repair-progress">
             <div class="progress-step active" id="progress-1">
               <div class="progress-dot">1</div>
@@ -461,7 +399,6 @@ i<!DOCTYPE html>
             </div>
           </div>
 
-          <!-- Step 1: Device -->
           <div class="repair-step active" id="step-device">
             <p class="eyebrow">Step 01</p>
             <h3 class="step-title">Select Device Type</h3>
@@ -475,7 +412,6 @@ i<!DOCTYPE html>
             </div>
           </div>
 
-          <!-- Step 2: Brand & Issue -->
           <div class="repair-step" id="step-issue">
             <p class="eyebrow">Step 02</p>
             <h3 class="step-title" id="issue-title">Select Brand & Issue</h3>
@@ -486,7 +422,6 @@ i<!DOCTYPE html>
             <button class="back-btn" type="button" data-back="device"><i class="fas fa-arrow-left"></i> Back</button>
           </div>
 
-          <!-- Step 3: Estimate -->
           <div class="repair-step" id="step-estimate">
             <p class="eyebrow">Step 03</p>
             <h3 class="step-title">Your Estimate</h3>
@@ -502,13 +437,11 @@ i<!DOCTYPE html>
             </div>
           </div>
 
-          <!-- Step 4: Photos & Contact -->
           <div class="repair-step" id="step-contact">
             <p class="eyebrow">Step 04</p>
             <h3 class="step-title">Send Photos & Contact Info</h3>
             <p style="color: var(--text-muted); margin-bottom: var(--space-5); font-size: var(--text-sm);">Upload photos of your device damage so we can prepare an accurate quote. Then fill in your details and we'll reach out within 24 hours.</p>
 
-            <!-- File Upload Form -->
             <form id="repair-contact-form" class="form-grid" enctype="multipart/form-data">
               <div style="border: 2px dashed var(--border); border-radius: var(--radius-xl); padding: var(--space-6); text-align: center; margin-bottom: var(--space-4); transition: all var(--transition);" id="file-drop-zone">
                 <i class="fas fa-cloud-arrow-up" style="font-size: 2.5rem; color: var(--primary); margin-bottom: var(--space-3);"></i>
@@ -583,7 +516,6 @@ i<!DOCTYPE html>
         <h2 class="section-title">Built to keep tech simple.</h2>
       </div>
 
-      <!-- Apple Style Section 1: Meet Austin & Sole Proprietorship Disclosure -->
       <div class="apple-section reveal">
         <div class="apple-text">
           <h2>Meet Austin.</h2>
@@ -595,7 +527,6 @@ i<!DOCTYPE html>
         </div>
       </div>
 
-      <!-- Apple Style Section 2: Technical Expertise -->
       <div class="apple-section reverse reveal">
         <div class="apple-text">
           <h2>Beyond the screen replacement.</h2>
@@ -608,44 +539,40 @@ i<!DOCTYPE html>
       </div>
     </section>
 
-<!-- ===================== CONTACT PAGE ===================== -->
-<section id="contact" class="page">
-    <div class="apple-section reveal contact-wrapper">
+    <!-- ===================== CONTACT PAGE ===================== -->
+    <section id="contact" class="page">
+      <div class="apple-section reveal contact-wrapper">
         <div class="apple-text">
-            <p class="eyebrow" style="color: var(--primary);">Get in Touch</p>
-            <h2>We come to you.</h2>
-            <p>Our mobile team serves the <strong>Miami Valley</strong>, including Hamilton, Miamitownship, Montgomery County, Reading, and beyond. Need a dispatch or a quote? Give us a call or send us a message.</p>
-            
-            <!-- Phone & Hours Cards -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-6);">
-                <a class="card" href="tel:9372806243" style="text-align: center; text-decoration: none; padding: var(--space-3);">
-                    <i class="fas fa-phone" style="font-size: 1.25rem; color: var(--primary); margin-bottom: 8px;"></i>
-                    <h4 style="margin:0;">Call Us</h4>
-                    <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">937-280-6243</p>
-                </a>
-                <div class="card" style="text-align: center; padding: var(--space-3);">
-                    <i class="fas fa-clock" style="font-size: 1.25rem; color: var(--primary); margin-bottom: 8px;"></i>
-                    <h4 style="margin:0;">Hours</h4>
-                    <p style="font-size: 0.7rem; color: var(--text-muted); line-height: 1.3; margin: 0;">Mon–Fri: 5:30am–10pm<br>Sat: 8:30am–10pm | Sun: 9am–5pm</p>
-                </div>
+          <p class="eyebrow" style="color: var(--primary);">Get in Touch</p>
+          <h2>We come to you.</h2>
+          <p>Our mobile team serves the <strong>Miami Valley</strong>, including Hamilton, Miamitownship, Montgomery County, Reading, and beyond. Need a dispatch or a quote? Give us a call or send us a message.</p>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-6);">
+            <a class="card" href="tel:9372806243" style="text-align: center; text-decoration: none; padding: var(--space-3);">
+              <i class="fas fa-phone" style="font-size: 1.25rem; color: var(--primary); margin-bottom: 8px;"></i>
+              <h4 style="margin:0;">Call Us</h4>
+              <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">937-280-6243</p>
+            </a>
+            <div class="card" style="text-align: center; padding: var(--space-3);">
+              <i class="fas fa-clock" style="font-size: 1.25rem; color: var(--primary); margin-bottom: 8px;"></i>
+              <h4 style="margin:0;">Hours</h4>
+              <p style="font-size: 0.7rem; color: var(--text-muted); line-height: 1.3; margin: 0;">Mon–Fri: 5:30am–10pm<br>Sat: 8:30am–10pm | Sun: 9am–5pm</p>
             </div>
+          </div>
 
-            <!-- Service Area Map -->
-            <div style="margin-top: var(--space-6); border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--border);">
-                <iframe 
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d196417.8920153835!2d-84.34110041285496!3d39.75736199434446!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x884081561492b451%3A0x633519c748443916!2sMiami%20Valley%2C%20OH!5e0!3m2!1sen!2sus!4v1692700000000!5m2!1sen!2sus" 
-                    width="100%" height="300" style="border:0;" allowfullscreen="" loading="lazy">
-                </iframe>
-            </div>
+          <div style="margin-top: var(--space-6); border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--border);">
+            <iframe 
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d196417.8920153835!2d-84.34110041285496!3d39.75736199434446!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x884081561492b451%3A0x633519c748443916!2sMiami%20Valley%2C%20OH!5e0!3m2!1sen!2sus!4v1692700000000!5m2!1sen!2sus" 
+              width="100%" height="300" style="border:0;" allowfullscreen="" loading="lazy">
+            </iframe>
+          </div>
         </div>
         
-        <!-- JotForm Script Embed Container -->
         <div class="jotform-container">
-            <script type="text/javascript" src="https://form.jotform.com/jsform/261955946010055"></script>
+          <script type="text/javascript" src="https://form.jotform.com/jsform/261955946010055"></script>
         </div>
-    </div>
-</section>
-
+      </div>
+    </section>
 
     <!-- ===================== PRICES PAGE ===================== -->
     <section id="prices" class="page">
@@ -657,10 +584,8 @@ i<!DOCTYPE html>
         </p>
       </div>
 
-      <!-- Pricing Cards Grid -->
       <div class="pricing-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; max-width: 1000px; margin: 3rem auto; padding: 0 1rem;">
         
-        <!-- Dispatch & Diagnostic Fee -->
         <div class="pricing-card apple-section reveal" style="display: flex; flex-direction: column; justify-content: space-between; background: var(--bg-card, #ffffff); border: 1px solid var(--border-color, #eaeaea); border-radius: 12px; padding: 2rem;">
           <div>
             <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Dispatch & Diagnostic</h3>
@@ -674,7 +599,6 @@ i<!DOCTYPE html>
           </div>
         </div>
 
-        <!-- Hourly Labor Rate -->
         <div class="pricing-card apple-section reveal" style="display: flex; flex-direction: column; justify-content: space-between; background: var(--bg-card, #ffffff); border: 1px solid var(--border-color, #eaeaea); border-radius: 12px; padding: 2rem;">
           <div>
             <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Hourly Labor Rate</h3>
@@ -688,7 +612,6 @@ i<!DOCTYPE html>
           </div>
         </div>
 
-        <!-- In-Depth Diagnosis Fee -->
         <div class="pricing-card apple-section reveal" style="display: flex; flex-direction: column; justify-content: space-between; background: var(--bg-card, #ffffff); border: 1px solid var(--border-color, #eaeaea); border-radius: 12px; padding: 2rem;">
           <div>
             <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">In-Depth Bench Diagnosis</h3>
@@ -704,7 +627,6 @@ i<!DOCTYPE html>
 
       </div>
 
-      <!-- Parts Policy & Fine Print -->
       <div class="apple-section reveal" style="max-width: 1000px; margin: 0 auto 4rem; background: var(--bg-card, #ffffff); border: 1px solid var(--border-color, #eaeaea); border-radius: 12px; padding: 2rem;">
         <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Parts Policy & Ordering Terms</h3>
         <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5; margin-bottom: 1rem;">
@@ -722,52 +644,44 @@ i<!DOCTYPE html>
       </div>
     </section>
 
-
-
-
-<!-- ===================== B2B PAGE ===================== -->
-<section id="b2b" class="page">
-    <div class="b2b-hero text-center" style="padding-top: var(--space-12);">
+    <!-- ===================== B2B PAGE ===================== -->
+    <section id="b2b" class="page">
+      <div class="b2b-hero text-center" style="padding-top: var(--space-12);">
         <p class="eyebrow" style="color: var(--primary);">Business & Institutional Solutions</p>
         <h2 class="section-title">B2B & Commercial Tech Services</h2>
         <p class="section-subtitle" style="max-width: 800px; margin: var(--space-3) auto 0; color: var(--text-muted);">
-            From server racks, custom sound systems, and networking to POS and delivery integrations, we support organizations of any size—including schools, churches, and libraries.
+          From server racks, custom sound systems, and networking to POS and delivery integrations, we support organizations of any size—including schools, churches, and libraries.
         </p>
-    </div>
+      </div>
 
-    <!-- Networking, Infrastructure & POS -->
-    <div class="apple-section reveal" style="margin-top: var(--space-8);">
+      <div class="apple-section reveal" style="margin-top: var(--space-8);">
         <div class="apple-text">
-            <h2>Networking, Server Racks & POS.</h2>
-            <p>We provide complete technology infrastructure for businesses of any size. From building clean server racks and running structured cabling to setting up robust Wi-Fi and modern Point-of-Sale (POS) systems.</p>
-            <p>We help shops integrate <strong>mobile delivery services</strong> directly into their workflow so you can reach customers anywhere.</p>
-            <a class="btn btn-primary" href="#contact"><i class="fas fa-envelope"></i> Request a Consultation</a>
+          <h2>Networking, Server Racks & POS.</h2>
+          <p>We provide complete technology infrastructure for businesses of any size. From building clean server racks and running structured cabling to setting up robust Wi-Fi and modern Point-of-Sale (POS) systems.</p>
+          <p>We help shops integrate <strong>mobile delivery services</strong> directly into their workflow so you can reach customers anywhere.</p>
+          <a class="btn btn-primary" href="#contact"><i class="fas fa-envelope"></i> Request a Consultation</a>
         </div>
         <div class="apple-image">
-            <img src="https://encrypted-tbn2.gstatic.com/licensed-image?q=tbn:ANd9GcQMGMMaovMUFm_crbX8VJaKDvTgHQWCGelfQNIQJQ1g4MI0JmvUNh0Xpd0w5U6iBEjBgNz4qXB9Saw9yV8" alt="Enterprise server rack">
+          <img src="https://encrypted-tbn2.gstatic.com/licensed-image?q=tbn:ANd9GcQMGMMaovMUFm_crbX8VJaKDvTgHQWCGelfQNIQJQ1g4MI0JmvUNh0Xpd0w5U6iBEjBgNz4qXB9Saw9yV8" alt="Enterprise server rack">
         </div>
-    </div>
+      </div>
 
-    <!-- Sound Installs, Security & Institutional Contracts -->
-    <div class="apple-section reveal" style="flex-direction: row-reverse; margin-top: var(--space-10);">
+      <div class="apple-section reveal" style="flex-direction: row-reverse; margin-top: var(--space-10);">
         <div class="apple-text">
-            <h2>Sound Installs, Security & Institutional Support.</h2>
-            <p>If it plugs in, powers up, or broadcasts sound, we can handle it. We specialize in professional sound system installs, security cameras, and TV mounting for commercial spaces.</p>
-            <p>We offer <strong>reliable service contracts</strong> specifically tailored for <strong>schools, churches, libraries, and local institutions</strong> to keep your tech running smoothly.</p>
-            <div style="display: flex; gap: var(--space-2); flex-wrap: wrap; margin-top: var(--space-4);">
-                <span class="badge" style="background: var(--surface); border: 1px solid var(--border); padding: 6px 12px; border-radius: var(--radius-md); font-size: 0.8rem;">Sound Systems</span>
-                <span class="badge" style="background: var(--surface); border: 1px solid var(--border); padding: 6px 12px; border-radius: var(--radius-md); font-size: 0.8rem;">Security & CCTV</span>
-                <span class="badge" style="background: var(--surface); border: 1px solid var(--border); padding: 6px 12px; border-radius: var(--radius-md); font-size: 0.8rem;">School/Church Contracts</span>
-            </div>
+          <h2>Sound Installs, Security & Institutional Support.</h2>
+          <p>If it plugs in, powers up, or broadcasts sound, we can handle it. We specialize in professional sound system installs, security cameras, and TV mounting for commercial spaces.</p>
+          <p>We offer <strong>reliable service contracts</strong> specifically tailored for <strong>schools, churches, libraries, and local institutions</strong> to keep your tech running smoothly.</p>
+          <div style="display: flex; gap: var(--space-2); flex-wrap: wrap; margin-top: var(--space-4);">
+            <span class="badge" style="background: var(--surface); border: 1px solid var(--border); padding: 6px 12px; border-radius: var(--radius-md); font-size: 0.8rem;">Sound Systems</span>
+            <span class="badge" style="background: var(--surface); border: 1px solid var(--border); padding: 6px 12px; border-radius: var(--radius-md); font-size: 0.8rem;">Security & CCTV</span>
+            <span class="badge" style="background: var(--surface); border: 1px solid var(--border); padding: 6px 12px; border-radius: var(--radius-md); font-size: 0.8rem;">School/Church Contracts</span>
+          </div>
         </div>
         <div class="apple-image">
-            <img src="https://images.unsplash.com/photo-1557597774-9d273605dfa9" alt="Commercial electronics installation">
+          <img src="https://images.unsplash.com/photo-1557597774-9d273605dfa9" alt="Commercial electronics installation">
         </div>
-    </div>
-</section>
-
-
-
+      </div>
+    </section>
 
     <!-- ===================== ATR ONE PAGE ===================== -->
     <section id="atr-one" class="page">
@@ -781,7 +695,6 @@ i<!DOCTYPE html>
           <p class="atr-one-price" style="font-size: 3rem; font-weight: 900; font-family: var(--font-display);">$19.99 <span style="font-size: 1rem; color: var(--text-muted); font-weight: 500;">/mo</span></p>
           <p style="color: var(--text-muted); margin-bottom: var(--space-5); font-size: 0.85rem;">Cancel anytime online through Square. No emails required.</p>
           
-          <!-- Instant Perks Callout List -->
           <ul style="text-align: left; font-size: 0.85rem; color: var(--text-muted); margin-bottom: var(--space-6); display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: var(--space-4) 0;">
             <li style="display: flex; align-items: center; gap: 8px;"><i class="fas fa-envelope-circle-check" style="color: var(--primary);"></i> Instant email confirmation upon signup</li>
             <li style="display: flex; align-items: center; gap: 8px;"><i class="fas fa-wallet" style="color: var(--primary);"></i> Add membership pass to Apple / Google Wallet</li>
@@ -791,15 +704,11 @@ i<!DOCTYPE html>
             <li style="display: flex; align-items: center; gap: 8px;"><i class="fas fa-laptop-medical" style="color: var(--primary);"></i> Free remote IT troubleshooting sessions</li>
           </ul>
 
-          <!-- DIRECT SQUARE CHECKOUT LINK -->
           <a href="https://square.link/u/xZA5tqxw" target="_blank" class="btn btn-primary btn-lg btn-block" style="width: 100%;"><i class="fab fa-square"></i> Subscribe via Square</a>
-          
-          <!-- SQUARE CUSTOMER PORTAL FOR SELF-MANAGEMENT -->
           <a href="https://square.link/u/xZA5tqxw" target="_blank" class="btn btn-light btn-block" style="width: 100%; margin-top: var(--space-3);"><i class="fas fa-user-circle"></i> Manage Membership</a>
         </div>
       </div>
 
-      <!-- Side-by-Side Comparison Section -->
       <div class="container" style="padding-top: var(--space-12); padding-bottom: var(--space-12);">
         <div class="section-header reveal">
           <p class="eyebrow">Value Comparison</p>
@@ -856,7 +765,6 @@ i<!DOCTYPE html>
           </table>
         </div>
 
-        <!-- Membership FAQ Section -->
         <div class="section-header reveal" style="margin-bottom: var(--space-6);">
           <p class="eyebrow">Common Questions</p>
           <h2 class="section-title" style="font-size: 1.75rem;">Everything You Need to Know</h2>
@@ -881,6 +789,7 @@ i<!DOCTYPE html>
 
     <!-- ===================== EMPLOYEE PORTAL ===================== -->
     <section id="employee" class="page">
+      <!-- Login View (Visible by default) -->
       <div id="loginView" class="login-wrap">
         <div class="login-card">
           <div class="eyebrow">Austin's Tech Repair Group</div>
@@ -899,41 +808,30 @@ i<!DOCTYPE html>
           </form>
           <p id="loginMsg" style="color: var(--danger); margin-top: var(--space-3); font-size: var(--text-sm);"></p>
           <div style="margin-top: var(--space-4); text-align: center;">
-            <a href="index.html" style="font-size: var(--text-xs); color: var(--text-muted); text-decoration: underline;"><i class="fas fa-arrow-left"></i> Return to Public Website</a>
+            <a href="#home" data-page="home" style="font-size: var(--text-xs); color: var(--text-muted); text-decoration: underline;"><i class="fas fa-arrow-left"></i> Return to Public Website</a>
           </div>
         </div>
       </div>
 
+      <!-- Main Portal View (Hidden by default using the .hidden class) -->
       <div id="portalView" class="app hidden">
-        <!-- MOBILE / TABLET PORTAL HEADER (Visible on smaller screens) -->
         <div class="mobile-portal-bar" style="display: none; align-items: center; justify-content: space-between; padding: var(--space-3) var(--space-4); background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100;">
           <button id="portalNavToggle" type="button" class="pbtn pbtn-light" style="font-size: 1.1rem; padding: 0.5rem 0.75rem;"><i class="fas fa-bars"></i> Menu</button>
           <span style="font-family: var(--font-display); font-weight: 700; font-size: 0.95rem;">ATR Operations</span>
-          <a href="index.html" class="pbtn pbtn-light" style="font-size: 0.85rem; padding: 0.4rem 0.6rem;"><i class="fas fa-home"></i> Exit</a>
+          <button type="button" class="pbtn pbtn-light" onclick="logout()" style="font-size: 0.85rem; padding: 0.4rem 0.6rem;"><i class="fas fa-right-from-bracket"></i> Exit</button>
         </div>
 
-               <!-- SIDEBAR NAVIGATION -->
         <aside class="sidebar" id="portalSidebar">
           <div class="brand-portal" style="display: flex; justify-content: space-between; align-items: center;">
             <div>
               <div class="title">Austin's Tech Repair Group</div>
               <div class="sub">Operations Dashboard</div>
             </div>
-            <!-- Close button for mobile dropdown -->
             <button id="portalSidebarClose" type="button" style="display: none; background: none; border: none; font-size: 1.25rem; color: var(--text); cursor: pointer;"><i class="fas fa-times"></i></button>
           </div>
-          
-          <!-- Navigation Links -->
-          <ul class="sidebar-nav" style="list-style: none; padding: 1rem 0; margin: 0;">
-            <li style="padding: 0.5rem 1.5rem;"><a href="#about" style="text-decoration: none; color: inherit;">About</a></li>
-            <li style="padding: 0.5rem 1.5rem;"><a href="#prices" style="text-decoration: none; color: inherit;">Prices & Rates</a></li>
-            <!-- Add your other navigation links here -->
-          </ul>
-        </aside>
 
-          <!-- Quick Back to Main Site Sub-Nav Link -->
           <div style="padding: 0 var(--space-4) var(--space-2) var(--space-4);">
-            <a href="index.html" style="display: flex; align-items: center; gap: 8px; padding: 0.5rem 0.75rem; background: rgba(0,87,255,0.08); color: var(--primary); border-radius: var(--radius-lg); font-size: 0.85rem; font-weight: 600; text-decoration: none;">
+            <a href="#home" data-page="home" onclick="logout()" style="display: flex; align-items: center; gap: 8px; padding: 0.5rem 0.75rem; background: rgba(0,87,255,0.08); color: var(--primary); border-radius: var(--radius-lg); font-size: 0.85rem; font-weight: 600; text-decoration: none;">
               <i class="fas fa-arrow-left"></i> Back to Main Website
             </a>
           </div>
@@ -957,7 +855,6 @@ i<!DOCTYPE html>
           </nav>
         </aside>
 
-        <!-- MAIN CONTENT AREA -->
         <main class="portal-main">
           <header class="topbar">
             <div class="userbox">
@@ -974,7 +871,6 @@ i<!DOCTYPE html>
             </div>
           </header>
 
-          <!-- DASHBOARD -->
           <section id="portal-dashboard" class="portal-section active">
             <div class="portal-section-header">
               <div>
@@ -987,7 +883,6 @@ i<!DOCTYPE html>
             <div class="stats-grid" id="dashboard-stats"></div>
 
             <div class="content-grid">
-              <!-- Quick Bench Barcode / Universal Scan Bar -->
               <section class="card col-12" style="background: var(--surface-alt); border-color: var(--primary);">
                 <div style="display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap;">
                   <div style="font-size: 1.5rem; color: var(--primary); padding-left: var(--space-2);"><i class="fas fa-barcode"></i></div>
@@ -1002,7 +897,6 @@ i<!DOCTYPE html>
                 <div id="barcode-result" style="margin-top: var(--space-3);"></div>
               </section>
 
-              <!-- Shop & Repair Status Tiles -->
               <section class="card col-6">
                 <h3><i class="fas fa-store" style="color: var(--primary); margin-right: 0.5rem;"></i> Parts Inventory Status</h3>
                 <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Core stock levels and POS connectivity.</p>
@@ -1041,7 +935,6 @@ i<!DOCTYPE html>
                 </div>
               </section>
 
-              <!-- Charts -->
               <div class="card col-8">
                 <h3><i class="fas fa-chart-line"></i> Revenue — Last 7 Days</h3>
                 <div class="chart-container"><canvas id="revenueChart"></canvas></div>
@@ -1051,7 +944,6 @@ i<!DOCTYPE html>
                 <div class="chart-container-sm"><canvas id="statusChart"></canvas></div>
               </div>
 
-              <!-- Activity & Quick Actions -->
               <section class="card col-6">
                 <h3><i class="fas fa-bolt"></i> Recent Activity Log</h3>
                 <div class="activity-feed" id="activity-feed"></div>
@@ -1073,7 +965,6 @@ i<!DOCTYPE html>
             </div>
           </section>
 
-          <!-- REPAIR TICKETS -->
           <section id="portal-tickets" class="portal-section">
             <div class="portal-section-header">
               <div><h2>Repair Tickets</h2><p>Create, track, and manage all repair tickets</p></div>
@@ -1107,7 +998,6 @@ i<!DOCTYPE html>
             </div>
           </section>
 
-          <!-- REPAIR QUEUE -->
           <section id="portal-queue" class="portal-section">
             <div class="portal-section-header">
               <div><h2>Repair Queue</h2><p>Click status arrows to move tickets through the pipeline</p></div>
@@ -1116,7 +1006,6 @@ i<!DOCTYPE html>
             <div class="kanban-board" id="kanban-board"></div>
           </section>
 
-          <!-- CUSTOMERS -->
           <section id="portal-customers" class="portal-section">
             <div class="portal-section-header">
               <div><h2>Customers</h2><p>Customer database with repair history and spending</p></div>
@@ -1133,7 +1022,6 @@ i<!DOCTYPE html>
             </div>
           </section>
 
-          <!-- INVENTORY -->
           <section id="portal-inventory" class="portal-section">
             <div class="portal-section-header">
               <div><h2>Parts Inventory</h2><p>Track stock levels, costs, and reorder points</p></div>
@@ -1159,7 +1047,6 @@ i<!DOCTYPE html>
             </div>
           </section>
 
-          <!-- ORDERS -->
           <section id="portal-orders" class="portal-section">
             <div class="portal-section-header">
               <div><h2>Order Management</h2><p>Multi-platform order tracking</p></div>
@@ -1181,7 +1068,6 @@ i<!DOCTYPE html>
             </div>
           </section>
 
-          <!-- FINANCIALS -->
           <section id="portal-financials" class="portal-section">
             <div class="portal-section-header">
               <div><h2>Financial Dashboard</h2><p>Revenue, profit, expenses, and payment breakdowns</p></div>
@@ -1213,7 +1099,6 @@ i<!DOCTYPE html>
             </div>
           </section>
 
-          <!-- TIME CLOCK -->
           <section id="portal-timeclock" class="portal-section">
             <div class="portal-section-header">
               <div><h2>Time Clock</h2><p>Clock in/out, track hours, and view timesheets</p></div>
@@ -1235,7 +1120,6 @@ i<!DOCTYPE html>
             </div>
           </section>
 
-          <!-- EMPLOYEES -->
           <section id="portal-employees" class="portal-section">
             <div class="portal-section-header">
               <div><h2>Employees</h2><p>Team roster, roles, and performance</p></div>
@@ -1249,7 +1133,6 @@ i<!DOCTYPE html>
             </div>
           </section>
 
-          <!-- REPORTS -->
           <section id="portal-reports" class="portal-section">
             <div class="portal-section-header">
               <div><h2>Reports & Analytics</h2><p>Business intelligence and performance metrics</p></div>
@@ -1283,7 +1166,6 @@ i<!DOCTYPE html>
             </div>
           </section>
 
-          <!-- REPAIRSHOPR HUD -->
           <section id="portal-hud" class="portal-section">
             <div class="portal-section-header">
               <div><h2>RepairShopr HUD</h2><p>CRM tools, markup calculator, and quick ticket actions</p></div>
@@ -1338,7 +1220,6 @@ i<!DOCTYPE html>
             </div>
           </section>
 
-          <!-- SETTINGS -->
           <section id="portal-settings" class="portal-section">
             <div class="portal-section-header">
               <div><h2>Settings</h2><p>Business configuration and data management</p></div>
@@ -1370,20 +1251,17 @@ i<!DOCTYPE html>
       </div>
     </section>
 
-    <!-- UPDATED MOBILE DROPDOWN OVERLAY STYLES -->
     <style>
       @media (max-width: 1024px) {
         .mobile-portal-bar { display: flex !important; }
         #portalSidebarClose { display: block !important; }
         
-        /* Collapse desktop grid layout on mobile to prevent left-side white gap */
         .app {
           display: block !important;
           position: relative !important;
           width: 100% !important;
         }
 
-        /* Full-screen vertical drop-down overlay */
         .app .sidebar {
           position: fixed;
           top: 0;
@@ -1412,11 +1290,29 @@ i<!DOCTYPE html>
       }
     </style>
 
-    <!-- Mobile Navigation Script Handler -->
     <script>
       function closePortalMobileMenu() {
         const appEl = document.getElementById('portalView');
         if (appEl) appEl.classList.remove('mobile-nav-open');
+      }
+
+      function login() {
+        const user = document.getElementById('username').value;
+        const pass = document.getElementById('passcode').value;
+        if (user && pass) {
+          document.getElementById('loginView').classList.add('hidden');
+          document.getElementById('portalView').classList.remove('hidden');
+          document.getElementById('loginMsg').textContent = '';
+        } else {
+          document.getElementById('loginMsg').textContent = 'Please enter username and passcode.';
+        }
+      }
+
+      function logout() {
+        document.getElementById('portalView').classList.add('hidden');
+        document.getElementById('loginView').classList.remove('hidden');
+        document.getElementById('username').value = '';
+        document.getElementById('passcode').value = '';
       }
 
       document.addEventListener('DOMContentLoaded', () => {
@@ -1486,7 +1382,6 @@ i<!DOCTYPE html>
   <!-- ============================================ FOOTER ============================================ -->
   <footer class="footer">
     <div style="max-width: var(--content-wide); margin: 0 auto; padding: 0 var(--space-5);">
-      <!-- Slideshow -->
       <div class="slideshow" aria-label="Service slideshow">
         <div class="slide active" style="background-image:url('https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1600&q=80')"></div>
         <div class="slide" style="background-image:url('https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1600&q=80')"></div>
@@ -1503,7 +1398,6 @@ i<!DOCTYPE html>
 
       <div style="height: var(--space-6);"></div>
 
-      <!-- Footer Section -->
       <div class="footer-top">
         <div class="footer-links-col">
           <span class="footer-col-title">Navigate</span>
@@ -1512,6 +1406,7 @@ i<!DOCTYPE html>
           <a class="footer-link" href="https://form.jotform.com/262308779420057" data-page="repair">Repair</a>
           <a class="footer-link" href="#about" data-page="about">About</a>
           <a class="footer-link" href="#contact" data-page="contact">Contact</a>
+          <a class="footer-link" href="#prices" data-page="prices">Prices</a>
         </div>
         <div class="footer-links-col">
           <span class="footer-col-title">Services</span>
@@ -1577,7 +1472,6 @@ i<!DOCTYPE html>
 
           <div class="account-drawer__body" id="account-drawer-body" style="padding: var(--space-4); overflow-y: auto; flex: 1;">
             <div style="text-align: center; padding: var(--space-6) 0;">
-              <!-- Person Icon Graphic -->
               <div style="width: 64px; height: 64px; border-radius: 50%; background: var(--surface-secondary, #f8f9fa); display: inline-flex; align-items: center; justify-content: center; margin-bottom: var(--space-3); color: var(--text-main, #333);">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -1596,7 +1490,7 @@ i<!DOCTYPE html>
         </aside>
       </section>
 
-      <!-- Policy Modal Overlay & Pop-up Window -->
+      <!-- Policy Modal Overlay -->
       <div class="policy-modal" id="policy-modal" aria-hidden="true">
         <div class="policy-modal-backdrop" id="policy-backdrop"></div>
         <div class="policy-modal-panel" role="dialog" aria-modal="true" aria-labelledby="policy-title">
@@ -1620,23 +1514,19 @@ i<!DOCTYPE html>
 
       <script>
         const policyData = {
-          "privacy": { title: "Privacy Policy", content: `PRIVACY POLICY — AUSTIN'S TECH REPAIR GROUP\n\nEffective Date: July 21, 2026\n\nAustin’s Tech Repair Group ("Company", "we", "us", or "our") respects your privacy and is committed to protecting the personal information you share with us. This Privacy Policy outlines how we collect, use, disclose, and safeguard your information when you visit our shop, utilize our website, or engage our device repair, diagnostic, and technical support services.\n\n1. INFORMATION WE COLLECT\nWe may collect personal and device-related information from you in various ways, including:\n- Personal Identification Information: Name, phone number, email address, billing address, and physical address when you drop off equipment, request an estimate, or create an account.\n- Device Information: Make, model, serial numbers, passcodes, PINs, or unlock patterns necessary to perform diagnostics, repairs, and quality testing on your equipment.\n- Transaction Data: Records of services performed, parts ordered, payments made, and repair history.\n\n2. HOW WE USE YOUR INFORMATION\nWe use the information we collect for the following purposes:\n- To provide, operate, and maintain our technical repair and diagnostic services.\n- To communicate with you regarding your device status, repair estimates, approval requests, and pickup notifications.\n- To process payments, issue invoices, and maintain business accounting records.\n- To honor warranty obligations and provide customer support.\n- To improve our internal operations, service workflows, and customer experience.\n\n3. DATA ACCESS & SECURITY PRECAUTIONS\n- Passcodes & Access: We request device passcodes solely for the purpose of testing hardware functionality (e.g., cameras, touchscreens, audio, cellular connectivity) before and after repairs.\n- Strict Confidentiality: Our technicians access customer data only when strictly necessary for diagnostic or repair validation. We do not inspect, copy, or browse personal files, photos, or documents unless explicitly requested by the Customer for data recovery or transfer services.\n- Safeguards: We implement reasonable physical, technical, and administrative security measures to protect your personal information and device data while in our custody.\n\n4. SHARING OF INFORMATION\nWe do not sell, trade, or rent your personal information to third parties. We may share your information only in the following limited circumstances:\n- Service Providers: Trusted third-party vendors who assist us in operating our business, processing payments, or delivering communications, provided they agree to keep this information confidential.\n- Legal Compliance: When required by law, subpoena, court order, or legal process, or to protect the rights, property, or safety of Austin’s Tech Repair Group, our customers, or others.\n\n5. DATA RETENTION & DISPOSAL\n- We retain customer contact records and repair histories for as long as necessary to fulfill warranty obligations, tax requirements, and internal business record-keeping.\n- Any temporary digital test files or cache data generated during repair procedures are securely wiped upon completion of service.\n\n6. CHANGES TO THIS PRIVACY POLICY\nWe reserve the right to update or modify this Privacy Policy at any time. Changes will be effective immediately upon posting or updating our notices. We encourage you to review this policy periodically.\n\n7. CONTACT US\nIf you have any questions, concerns, or requests regarding this Privacy Policy or our handling of your personal information, please contact us.` },
-          "repair": { title: "Repair Service Agreement", content: `REPAIR SERVICE AGREEMENT\nAustin's Tech Repair Group\nPlease read this agreement carefully. By scheduling an appointment, dropping off your equipment, or authorizing repair services, you agree to the following terms and conditions governing the service work performed by Austin’s Tech Repair Group.\n1. PARTIES & SCOPE OF SERVICE\nThis Repair Service Agreement ("Agreement") is between Austin’s Tech Repair Group ("Company", "we", "us", or "our") and the customer ("Customer", "you") identified below. We agree to provide component-level diagnostics, maintenance, upgrades, and repair services for consumer electronics, computers, mobile devices, and gaming consoles as requested and authorized.\n2. ESTIMATES, AUTHORIZATION & FEES\n- Dispatch & Appointment Fees: A $15.00 dispatch fee is required to secure your appointment, which covers travel costs. This fee is credited toward and included in the final price of your completed repair. Please note that this dispatch fee is non-refundable if the appointment is canceled less than one (1) hour prior to the scheduled appointment time.\n- Diagnostic Fees: An initial diagnostic fee may apply to evaluate your device. If you approve the recommended repair service, this fee may be credited toward the total repair cost.\n- Estimate Approval: We will provide a repair estimate before commencing work. If additional hidden damage, liquid corrosion, or underlying component failures are discovered during disassembly, we will notify you for approval before proceeding with revised costs.\n- Abandoned Devices: Equipment left unclaimed for more than sixty (60) days following notice of completion or diagnostic results will be considered abandoned and disposed of, recycled, or sold to cover costs in accordance with applicable laws.\n3. DATA & BACKUP WAIVER (CRITICAL)\n- You acknowledge that data loss, corruption, or erasure can occur during diagnostic procedures, component replacements, screen swaps, board-level repairs, or software updates.\n- You are solely responsible for backing up all data, files, and programs prior to service.\n- Austin’s Tech Repair Group accepts zero liability for any loss of data, personal files, photos, or software settings under any circumstances.\n4. LIQUID DAMAGE & PRE-EXISTING CONDITIONS\n- Devices with a history of liquid exposure, structural bending, corrosion, or prior third-party repair attempts are highly fragile and subject to catastrophic failure during handling or testing.\n- We are not responsible for devices that fail completely or stop working during or after intake for liquid damage mitigation or extreme repair procedures.\n5. WARRANTY ON PARTS & LABOR\n- All standard repairs performed by Austin’s Tech Repair Group include a One Year (1) Year limited warranty covering the specific replacement parts installed and labor executed.\n- The warranty is void if the device shows evidence of subsequent physical damage, liquid exposure, customer tampering, or repair attempts by any party other than Austin’s Tech Repair Group.\n6. PAYMENT & PICKUP TERMS\nFull payment for parts, labor, and applicable taxes (minus any previously paid and applicable appointment credits) is due upon completion of services and prior to device release.` },
-          "backup": { title: "Data Backup Waiver", content: `DATA BACKUP & LOSS WAIVER — AUSTIN'S TECH REPAIR GROUP\n\nPlease read this document carefully before leaving your equipment, device, or storage media with Austin’s Tech Repair Group ("Company", "we", "us", or "our") for diagnostics, maintenance, upgrade, component-level repair, or data recovery services.\n\n1. ACKNOWLEDGMENT OF RISK\nRepair, diagnostic procedures, hardware replacement, and data recovery operations inherently carry risks. These risks include, but are not limited to, component failure, software corruption, unintended data loss, or complete failure of aging or compromised storage media.\n\n2. CUSTOMER DATA BACKUP RESPONSIBILITY\n- You ("Customer", "you") acknowledge and agree that you are solely responsible for backing up all existing files, data, photos, documents, operating systems, and software applications stored on your device prior to submitting it to Austin’s Tech Repair Group.\n- We strongly recommend that you maintain an independent backup of all critical data at all times.\n\n3. LIMITATION OF LIABILITY FOR DATA LOSS\n- Austin’s Tech Repair Group accepts NO liability whatsoever for any lost, corrupted, deleted, or altered data, files, programs, or operating systems that may occur during or as a result of any service performed on your device.\n- Under no circumstances will Austin’s Tech Repair Group be held liable for any direct, indirect, incidental, or consequential damages arising from the loss of data or the inability to retrieve data from any device or storage media.` },
-          "warranty-policy": { title: "1-Year Warranty Policy", content: `1-YEAR LIMITED WARRANTY POLICY — AUSTIN'S TECH REPAIR GROUP\n\nEffective Date: July 21, 2026\n\nAustin’s Tech Repair Group ("Company", "we", "us", or "our") proudly stands by the quality of our component-level diagnostics, technical repairs, and replacement parts. We offer a 1-Year Limited Warranty on qualifying repairs subject to the terms, conditions, and exclusions outlined below.\n\n1. SCOPE OF COVERAGE\nThis 1-Year Limited Warranty covers:\n- Replacement parts installed by Austin’s Tech Repair Group against manufacturer defects in materials and workmanship.\n- The specific labor and technical craftsmanship performed by our technicians for the authorized repair.\n\n2. WARRANTY PERIOD\n- The coverage period begins on the date the repaired device is picked up or shipped back to the Customer.\n- This warranty remains in effect for exactly three hundred sixty-five (365) days from the date of service completion.\n\n3. EXCLUSIONS & VOID CONDITIONS\nThis 1-Year Limited Warranty does NOT cover, and shall be rendered immediately null and void in the event of:\n- Physical Damage: Subsequent drops, impacts, pressure cracks, bent frames, or structural damage.\n- Liquid / Moisture Damage: Any exposure to water, humidity, steam, or other liquids following the service.\n- Customer or Third-Party Tampering: Devices opened or serviced by any party other than Austin’s Tech Repair Group.` },
-          "website-terms": { title: "Website Terms of Use", content: `WEBSITE TERMS OF USE — AUSTIN'S TECH REPAIR GROUP\n\nEffective Date: July 21, 2026\n\nWelcome to the website of Austin’s Tech Repair Group ("Company", "we", "us", or "our"). By accessing, browsing, or using our website, you ("User", "you") agree to comply with and be bound by the following Website Terms of Use. If you do not agree to these terms, please do not use our website.\n\n1. ACCEPTANCE OF TERMS\nBy accessing our website, you confirm that you have read, understood, and accept these Terms of Use and our Privacy Policy. We reserve the right to modify these terms at any time without prior notice.` },
-          "terms": { title: "Terms & Conditions", content: `Austin’s Tech Repair Group SP — Terms & Conditions\n\nLast Updated: August 14, 2026\n\nWelcome to the terms and conditions ("Terms") for Austin’s Tech Repair Group SP. These Terms are between you and Austin’s Tech Repair Group ("Austin’s Tech Repair Group," "We," or "Us") and govern our respective rights and obligations regarding your membership, subscription plans, and professional repair services.\n\nPlease note that your use of our website, repair portal, and service plans are also governed by the policies listed below, as well as all other applicable terms, conditions, limitations, and requirements on our website, all of which (as changed over time) are incorporated into these Terms.\n\nApplicable Policies & Agreements\n- Austin’s Tech Repair Group Conditions of Use\n- Privacy Notice\n- Device Diagnostics & Component-Level Repair Service Terms\n- Data Security & Privacy Policy\n- Warranty & Guarantee Guidelines\n\nService Plans and Promotional Trials\nWe may offer various specialized membership or service plans (including component-level repair protection, priority diagnostic queues, maintenance plans, and business partner tiers).\n- Plan Benefits & Fees: Benefits and recurring fees vary by membership plan.\n- Eligibility: You may enroll and maintain a plan if you meet the eligibility requirements described on the applicable plan's enrollment page or promotional offer.\n- Plan Transitions: If you are no longer eligible for a specific plan, we may transition your membership to an equivalent or alternative plan. We will notify you in advance of any upcoming plan transition prior to your next renewal. You may cancel at any time before the change takes effect.\n\nMembership & Plan Cancellation\nIf you signed up for your service or maintenance plan directly through us, you may cancel at any time before your renewal date via your account dashboard or by contacting our support team to avoid the next charge.\n- Trial & Initial Signup Refunds: If you cancel within 3 business days of signing up or converting from a trial to a paid plan, we will refund your full fee, provided that we may charge you (or withhold from your refund) the standard retail value of any discounted diagnostics, parts, or repair benefits used during this 3-business day period.\n- Standard Cancellation: If you cancel at any other time, we will refund your full fee only if you and your account did not make any eligible service requests, hardware redemptions, or take advantage of plan benefits since your latest billing charge.\n- Third-Party Signups: If you signed up through a third-party partner, you must contact that third party directly to manage your cancellation or request refunds under their applicable policies.\n\nPlan Benefits & Scope of Service\nService and repair plan benefits depend upon parts inventory availability, diagnostic queue backlogs, device condition, and selected service tiers.\n- Eligible Hardware: Benefits are limited to consumer electronics (smartphones, tablets, computers, and gaming consoles) serviced by Austin’s Tech Repair Group.\n- Special Conditions: Devices with severe physical damage, liquid damage, or third-party tampering may require specialized diagnostic handling or incur separate evaluation fees.\n- Logistics: Changing device models, shipping addresses, or repair tiers may affect turnaround times and service eligibility. Certain oversized or legacy hardware may only be eligible for standard depot repair services.\n\nOther Limitations\n- Right to Refuse: We reserve the right to accept or refuse membership or repair services at our discretion.\n- Communications: We may send you transactional and operational emails and text notifications related to your device repair status, service plan, and account (regardless of general marketing preferences).\n- Non-Transferable: You may not transfer or assign your plan, repair warranty, or plan benefits to any other party.\n- Commercial Use Restrictions: Members are not permitted to use consumer-tier service plans for commercial device fleet management, rental refurbishment, or bulk third-party resale repairs without a designated commercial agreement.\n- Modifications: We may, in our sole discretion, add, remove, or modify plan benefits and eligibility requirements from time to time.\n\nFees and Renewal\nThe membership or plan fee is stated on our pricing and enrollment pages. Fees are non-refundable except as expressly set forth in these Terms. Applicable local and state taxes will be added to service fees where required by law.\n- Billing & Payment Failures: If all eligible payment methods on file are declined, you must provide a new eligible payment method promptly, or your plan will be suspended or canceled. If a new payment method is successfully charged, your new billing period will anchor to your original renewal date rather than the payment date.\n- Auto-Renewal Authorization:\nUNLESS YOU NOTIFY US BEFORE A CHARGE THAT YOU WANT TO CANCEL, YOU UNDERSTAND YOUR PLAN WILL AUTOMATICALLY CONTINUE AND YOU AUTHORIZE US (WITHOUT NOTICE, UNLESS REQUIRED BY LAW) TO COLLECT THE THEN-APPLICABLE FEE AND TAXES USING ANY ELIGIBLE PAYMENT METHOD ON RECORD. IF FEES INCREASE, WE WILL NOTIFY YOU IN ADVANCE OF RENEWAL.\n\nAgreement Changes\nWe may, in our discretion, change these Terms or any aspect of our service plans without direct notice to you. Continued membership and use of our services after changes are posted constitutes your binding acceptance of those changes. If you do not agree to any modifications, you must cancel your plan immediately.\n\nTermination by Us\nWe may terminate your service plan at our discretion without prior notice. If we do so, we will issue a prorated refund based on the number of full unused months remaining in your billing cycle.\n\nHowever, no refund will be issued if termination is due to conduct that we determine violates these Terms, involves fraud, hardware misuse, safety violations, or is harmful to our technicians or business interests. Failure to enforce strict compliance with these Terms does not constitute a waiver of our rights.\n\nLimitation of Liability\nIN ADDITION TO OTHER LIMITATIONS AND EXCLUSIONS IN OUR CONDITIONS OF USE, OUR TOTAL LIABILITY FOR ANY SERVICE CLAIM, WHETHER IN CONTRACT, WARRANTY, TORT (INCLUDING NEGLIGENCE), OR OTHERWISE, WILL NOT EXCEED THE LAST SERVICE OR PLAN FEE YOU PAID TO US. THIS LIMITATION APPLIES TO THE FULLEST EXTENT PERMITTED BY LAW AND SURVIVES PLAN CANCELLATION OR TERMINATION.\n\nDisputes\nAny dispute or claim relating in any way to these Terms, your service plan, or device repairs shall be governed by the laws of the operating jurisdiction of Austin’s Tech Repair Group, without regard to conflict of law principles, and will be subject to our standard dispute resolution procedures, disclaimers, and liability caps.` },
-          "cookies": { 
-            title: "Cookie Preference Policy", 
-            content: `COOKIE PREFERENCE POLICY — AUSTIN'S TECH REPAIR GROUP\n\nEffective Date: July 21, 2026\n\nAustin’s Tech Repair Group ("Company", "we", "us", or "our") uses cookies and similar tracking technologies on our website to enhance your browsing experience, analyze site traffic, and personalize functionality. This Cookie Preference Policy outlines our standards and your choices across ten key areas:\n\n1. INTRODUCTION & SCOPE\nThis policy governs how cookies and local storage tokens are deployed across our website, mobile interface, appointment portals, and client dashboards.\n\n2. WHAT ARE COOKIES?\nCookies are small text files downloaded to your browser or storage drive when visiting our web pages, assisting with session integrity and preferences.\n\n3. STRICTLY NECESSARY COOKIES\nEssential for core site navigation, security features, scheduling forms, and secure checkout processing through Square and Shopify. These cannot be disabled.\n\n4. PERFORMANCE & ANALYTICS COOKIES\nUsed to collect anonymous aggregate data regarding site traffic and page navigation speeds, helping us optimize our digital repair workflows.\n\n5. FUNCTIONALITY & PREFERENCE COOKIES\nRemember your specific device settings, regional location preferences, and customized selections to ensure a seamless browsing experience.\n\n6. THIRD-PARTY INTEGRATION COOKIES\nEmbedded tools such as Jotform intake forms and third-party infrastructure components may deploy auxiliary session tokens outside our direct control.\n\n7. LOCAL STORAGE & BROWSER TOKENS\nWe utilize HTML5 local storage to remember your cookie preference consent choice on your specific device, preventing repetitive banner prompts.\n\n8. MANAGING & DISABLING COOKIES\nYou retain full authority to configure your browser to block or delete cookies at any time, though certain secure features may require them to function properly.\n\n9. POLICY UPDATES\nWe reserve the right to amend this Cookie Preference Policy as our technical services and legal requirements evolve over time.\n\n10. CONTACT US\nIf you have any questions or concerns regarding our cookie practices, please contact us directly through our website or call us at 513-478-8077.` 
-          }
+          "privacy": { title: "Privacy Policy", content: `PRIVACY POLICY — AUSTIN'S TECH REPAIR GROUP\n\nEffective Date: July 21, 2026\n\nAustin’s Tech Repair Group ("Company", "we", "us", or "our") respects your privacy and is committed to protecting the personal information you share with us.` },
+          "repair": { title: "Repair Service Agreement", content: `REPAIR SERVICE AGREEMENT\nAustin's Tech Repair Group\nBy scheduling an appointment, dropping off your equipment, or authorizing repair services, you agree to these terms.` },
+          "backup": { title: "Data Backup Waiver", content: `DATA BACKUP & LOSS WAIVER — AUSTIN'S TECH REPAIR GROUP\nYou are solely responsible for backing up all existing files, data, photos, documents, and programs prior to service.` },
+          "warranty-policy": { title: "1-Year Warranty Policy", content: `1-YEAR LIMITED WARRANTY POLICY — AUSTIN'S TECH REPAIR GROUP\nCovers replacement parts installed by Austin’s Tech Repair Group against manufacturer defects for 365 days.` },
+          "website-terms": { title: "Website Terms of Use", content: `WEBSITE TERMS OF USE — AUSTIN'S TECH REPAIR GROUP\nBy accessing our website, you agree to comply with and be bound by these Terms of Use.` },
+          "terms": { title: "Terms & Conditions", content: `Austin’s Tech Repair Group SP — Terms & Conditions\nGoverns membership, subscription plans, and professional repair services.` },
+          "cookies": { title: "Cookie Preference Policy", content: `COOKIE PREFERENCE POLICY — AUSTIN'S TECH REPAIR GROUP\nWe use essential cookies for our booking system and analytics.` }
         };
 
         function openPolicy(policyKey) {
           const modal = document.getElementById('policy-modal');
           const modalTitle = document.getElementById('policy-title');
           const modalContent = document.getElementById('policy-content');
-          
           const data = policyData[policyKey];
           if (data && modal) {
             if (modalTitle) modalTitle.textContent = data.title;
@@ -1646,7 +1536,6 @@ i<!DOCTYPE html>
             document.body.style.overflow = 'hidden';
           }
         }
-
         window.openPolicyModal = openPolicy;
 
         function closePolicy() {
@@ -1687,40 +1576,16 @@ i<!DOCTYPE html>
           <div class="footer-legal">
             <div class="legal-block">
               <p class="legal-heading" style="font-size: 0.85rem;">Payment Methods</p>
-<div class="footer-payment-icons" style="display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 16px; margin: 20px 0; opacity: 0.85;">
-  
-  <!-- Cash Icon / Text -->
-  <span style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.5px;">CASH</span>
-
-  <!-- Visa -->
-  <svg height="18" viewBox="0 0 48 16" fill="currentColor"><path d="M18.8 1.1L12.9 15h-3.8L6.4 3.7C6 2.3 5.7 2 4.6 1.4 3.2.7 1.3.2 0 0l.1.5c1.5.4 3.1 1.1 4.1 1.6 1 .5 1.3 1 1.7 2.2l2.6 9.3h4l5.9-12.5h-3.6zM39.6 15h3.9l-3.4-12.5h-3.8L35 15h4.6zm-10.8-9c-.1-1-.9-1.7-2.3-1.7-1.2 0-4.1.6-4.1 3.5 0 1.5 1.4 2.3 2.5 2.8 1.1.5 2.2 1 2.2 1.8 0 1-.9 1.5-2.2 1.5-1.5 0-3-.6-4.1-1.4l-.6.7c1.3 1 3.2 1.6 4.8 1.6 2.7 0 4.3-1.3 4.3-3.4 0-1.2-.8-2.2-2.5-3-1-.5-2.2-1-2.2-1.7 0-.6.7-1.1 2.1-1.1 1.1 0 2.2.4 3 1l.4-.7zM31.5 3.3l-2.4 11.7h3.7l2.4-11.7h-3.7z"/></svg>
-
-  <!-- Mastercard -->
-  <svg height="18" viewBox="0 0 32 20" fill="currentColor"><circle cx="10" cy="10" r="10" fill="#eb001b"/><circle cx="22" cy="10" r="10" fill="#f79e1b" fill-opacity="0.8"/></svg>
-
-  <!-- Apple Pay -->
-  <svg height="16" viewBox="0 0 55 24" fill="currentColor"><path d="M18.7 7.3c-.8 0-1.7.4-2.2 1-.5.6-.9 1.5-.8 2.4.9 0 1.7-.4 2.2-1 .5-.6.9-1.5.8-2.4zm-1.8 4.3c-1.1 0-2 .6-2.5 1.5-.6 1-.6 2.3 0 3.3.5.9 1.4 1.5 2.5 1.5 1.1 0 2-.6 2.5-1.5.6-1 .6-2.3 0-3.3-.5-.9-1.4-1.5-2.5-1.5zm8.9-5.1h-2.1v9.8h2.1v-9.8zm0-3.1h-2.1v2.1h2.1V3.4zm8.5 7.6c-.9 0-1.7.4-2.1 1.1V3.4h-2.1v12.8h2v-1.1c.5.8 1.3 1.2 2.2 1.2 1.7 0 2.9-1.4 2.9-3.4 0-2-1.2-3.4-2.9-3.4zm-.4 5.3c-1 0-1.8-.8-1.8-1.9s.8-1.9 1.8-1.9 1.8.8 1.8 1.9-.8 1.9-1.8 1.9zm13.1-5.3c-.9 0-1.7.4-2.1 1.1V3.4h-2.1v12.8h2v-1.1c.5.8 1.3 1.2 2.2 1.2 1.7 0 2.9-1.4 2.9-3.4 0-2-1.2-3.4-2.9-3.4zm-.4 5.3c-1 0-1.8-.8-1.8-1.9s.8-1.9 1.8-1.9 1.8.8 1.8 1.9-.8 1.9-1.8 1.9z"/></svg>
-
-  <!-- Google Pay -->
-  <svg height="16" viewBox="0 0 54 24" fill="currentColor"><path d="M22.5 10.2h-3.9v3.8h3.9c1 0 1.9-.4 2.6-1.1.7-.7 1.1-1.6 1.1-2.7 0-1.1-.4-2-1.1-2.7-.7-.7-1.6-1.1-2.6-1.1h-5.9V18h2v-4.1h3.9c.7 0 1.4.3 1.9.8.5.5.8 1.2.8 1.9 0 .7-.3 1.4-.8 1.9-.5.5-1.2.8-1.9.8H18.6V20h3.9c1.5 0 2.9-.6 4-1.6 1.1-1.1 1.6-2.5 1.6-4s-.5-2.9-1.6-4c-1.1-1-2.5-1.6-4-1.6z"/></svg>
-
-  <!-- PayPal -->
-  <svg height="16" viewBox="0 0 50 16" fill="currentColor"><path d="M11.4 2c-1.1-.5-2.6-.8-4.4-.8H1.6C1.2 1.2.9 1.5.8 1.9L0 14.5c0 .2.2.4.4.4h3.1l.6-3.8h2.6c3.4 0 6.1-1.4 6.8-5.1.4-1.9 0-3.3-1.1-3.7zm-2.4 4c-.4 2.1-2.4 2.1-4.4 2.1H3.6l.7-4.4h1.1c2 0 3.7 0 4.1 1.3.1.4.1.7-.1 1z"/></svg>
-
-  <!-- Square -->
-  <span style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.5px;">SQUARE</span>
-
-  <!-- Shopify -->
-  <span style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.5px;">SHOPIFY</span>
-
-</div>
- </div>
-             <div class="legal-block" style="margin-top: 12px;">
+              <div class="footer-payment-icons" style="display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 16px; margin: 20px 0; opacity: 0.85;">
+                <span style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.5px;">CASH</span>
+                <span style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.5px;">SQUARE</span>
+                <span style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.5px;">SHOPIFY</span>
+              </div>
+            </div>
+            <div class="legal-block" style="margin-top: 12px;">
               <p class="legal-heading red" style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Independent Repair Provider & Trademark Notice</p>
               <p style="font-size: 0.70rem; line-height: 1.4; max-width: 800px; color: #888;">
-                Austin's Tech Repair Group is an independent consumer electronics and computer repair service. We are not affiliated with, authorized by, endorsed by, licensed by, or in any way officially connected with Apple Inc., Samsung Electronics, Sony Group Corporation, Microsoft Corporation, Nintendo Co., Ltd., Google LLC, HP Inc., Dell Inc., ASUSTeK Computer Inc., Lenovo Group Ltd., or any other device manufacturer or trademark holder. 
-                <br><br>
-                All brand names, logos, product names, and trademarks remain the sole property of their respective owners and are used strictly for identification and compatibility purposes only. Use of third-party parts or independent repair services may impact or void manufacturer warranties; however, all repairs performed by Austin's Tech Repair Group are backed by our own independent 1-Year Limited Warranty. We operate solely as an independent third-party repair provider.
+                Austin's Tech Repair Group is an independent consumer electronics and computer repair service. We are not affiliated with, authorized by, endorsed by, licensed by, or in any way officially connected with Apple Inc., Samsung Electronics, Sony Group Corporation, Microsoft Corporation, Nintendo Co., Ltd., Google LLC, HP Inc., Dell Inc., ASUSTeK Computer Inc., Lenovo Group Ltd., or any other device manufacturer or trademark holder. All brand names, logos, product names, and trademarks remain the sole property of their respective owners and are used strictly for identification and compatibility purposes only.
               </p>
             </div>
           </div>
@@ -1728,244 +1593,20 @@ i<!DOCTYPE html>
             <span class="footer-copy">Copyright 2026 © <strong>Austin's Tech Repair Group Sole Proprietorship</strong></span>
             <span class="footer-wordmark">ATR Group</span>
           </div>
- </div>
         </div>
       </footer>
     </div>
   </footer>
 
-  <!-- ============================================ PORTAL CRUD MODALS ============================================ -->
-  <dialog id="ticketModal">
-    <div class="modal-head">
-      <h3 id="ticketModalTitle">New Repair Ticket</h3>
-      <button class="modal-close" onclick="closeModal('ticketModal')"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="modal-body">
-      <input type="hidden" id="ticket-edit-id">
-      <div class="portal-form-grid">
-        <div class="portal-form-row">
-          <div class="portal-field"><label>Customer Name *</label><input type="text" id="ticket-customer" placeholder="e.g. Sarah Mitchell"></div>
-          <div class="portal-field"><label>Phone *</label><input type="text" id="ticket-phone" placeholder="(513) 555-0100"></div>
-        </div>
-        <div class="portal-form-row">
-          <div class="portal-field"><label>Email</label><input type="email" id="ticket-email" placeholder="customer@email.com"></div>
-          <div class="portal-field"><label>Device Type *</label>
-            <select id="ticket-device-type">
-              <option value="Phone">Phone</option><option value="Tablet">Tablet</option><option value="Laptop">Laptop</option><option value="Desktop">Desktop</option><option value="Console">Console</option><option value="Smartwatch">Smartwatch</option><option value="Other">Other</option>
-            </select>
-          </div>
-        </div>
-        <div class="portal-form-row">
-          <div class="portal-field"><label>Brand *</label><input type="text" id="ticket-brand" placeholder="e.g. Apple, Samsung, Dell"></div>
-          <div class="portal-field"><label>Device Model *</label><input type="text" id="ticket-device" placeholder="e.g. iPhone 13 Pro"></div>
-        </div>
-        <div class="portal-form-row">
-          <div class="portal-field"><label>Issue *</label><input type="text" id="ticket-issue" placeholder="e.g. Screen replacement"></div>
-          <div class="portal-field"><label>Priority</label>
-            <select id="ticket-priority"><option value="Normal">Normal</option><option value="Low">Low</option><option value="High">High</option><option value="Urgent">Urgent</option></select>
-          </div>
-        </div>
-        <div class="portal-form-row">
-          <div class="portal-field"><label>Parts Cost ($)</label><input type="number" id="ticket-parts-cost" value="0" min="0" step="0.01"></div>
-          <div class="portal-field"><label>Labor Cost ($)</label><input type="number" id="ticket-labor-cost" value="0" min="0" step="0.01"></div>
-        </div>
-        <div class="portal-form-row">
-          <div class="portal-field"><label>Retail Price ($)</label><input type="number" id="ticket-price" value="0" min="0" step="0.01"></div>
-          <div class="portal-field"><label>Assigned To</label>
-            <select id="ticket-assigned"><option value="Demo User">Demo User</option><option value="Unassigned">Unassigned</option></select>
-          </div>
-        </div>
-        <div class="portal-field"><label>Notes</label><textarea id="ticket-notes" rows="3" placeholder="Repair notes..."></textarea></div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="pbtn pbtn-light" onclick="closeModal('ticketModal')">Cancel</button>
-      <button class="pbtn pbtn-primary" onclick="saveTicket()"><i class="fas fa-save"></i> Save Ticket</button>
-    </div>
-  </dialog>
-
-  <!-- Ticket Detail Modal -->
-  <dialog id="ticketDetailModal">
-    <div class="modal-head">
-      <h3>Ticket Details</h3>
-      <button class="modal-close" onclick="closeModal('ticketDetailModal')"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="modal-body" id="ticketDetailBody"></div>
-    <div class="modal-footer">
-      <button class="pbtn pbtn-light" onclick="closeModal('ticketDetailModal')">Close</button>
-      <button class="pbtn pbtn-primary" id="ticketDetailEdit"><i class="fas fa-edit"></i> Edit Ticket</button>
-    </div>
-  </dialog>
-
-  <!-- Customer Modal -->
-  <dialog id="customerModal">
-    <div class="modal-head">
-      <h3 id="customerModalTitle">Add Customer</h3>
-      <button class="modal-close" onclick="closeModal('customerModal')"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="modal-body">
-      <input type="hidden" id="customer-edit-id">
-      <div class="portal-form-grid">
-        <div class="portal-field"><label>Customer Name *</label><input type="text" id="customer-name" placeholder="e.g. John Doe"></div>
-        <div class="portal-field"><label>Phone</label><input type="text" id="customer-phone" placeholder="(513) 555-0100"></div>
-        <div class="portal-field"><label>Email</label><input type="email" id="customer-email" placeholder="john@email.com"></div>
-        <div class="portal-field"><label>Address / Location</label><input type="text" id="customer-address" placeholder="Dayton, OH"></div>
-        <div class="portal-field"><label>ATR One Member</label>
-          <select id="customer-member">
-            <option value="false">No</option>
-            <option value="true">Yes</option>
-          </select>
-        </div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="pbtn pbtn-light" onclick="closeModal('customerModal')">Cancel</button>
-      <button class="pbtn pbtn-primary" onclick="saveCustomer()"><i class="fas fa-save"></i> Save Customer</button>
-    </div>
-  </dialog>
-
-  <!-- Part Modal -->
-  <dialog id="partModal">
-    <div class="modal-head">
-      <h3 id="partModalTitle">Add Part</h3>
-      <button class="modal-close" onclick="closeModal('partModal')"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="modal-body">
-      <input type="hidden" id="part-edit-id">
-      <div class="portal-form-grid">
-        <div class="portal-field"><label>Part Name *</label><input type="text" id="part-name" placeholder="e.g. iPhone OLED Screen"></div>
-        <div class="portal-field"><label>SKU *</label><input type="text" id="part-sku" placeholder="e.g. IP13-OLED"></div>
-        <div class="portal-field"><label>Category</label>
-          <select id="part-category">
-            <option value="Screens">Screens</option><option value="Batteries">Batteries</option><option value="Ports">Ports</option><option value="Cameras">Cameras</option><option value="Tools">Tools</option><option value="Accessories">Accessories</option>
-          </select>
-        </div>
-        <div class="portal-form-row">
-          <div class="portal-field"><label>Stock Qty</label><input type="number" id="part-qty" value="1" min="0"></div>
-          <div class="portal-field"><label>Reorder Threshold</label><input type="number" id="part-reorder" value="3" min="0"></div>
-        </div>
-        <div class="portal-form-row">
-          <div class="portal-field"><label>Cost ($)</label><input type="number" id="part-cost" value="0" min="0" step="0.01"></div>
-          <div class="portal-field"><label>Retail Price ($)</label><input type="number" id="part-retail" value="0" min="0" step="0.01"></div>
-        </div>
-        <div class="portal-form-row">
-          <div class="portal-field"><label>Supplier</label><input type="text" id="part-supplier" placeholder="e.g. MobileSentrix"></div>
-          <div class="portal-field"><label>Location</label><input type="text" id="part-location" placeholder="e.g. Shelf A-1"></div>
-        </div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="pbtn pbtn-light" onclick="closeModal('partModal')">Cancel</button>
-      <button class="pbtn pbtn-primary" onclick="savePart()"><i class="fas fa-save"></i> Save Part</button>
-    </div>
-  </dialog>
-
-  <!-- Order Modal -->
-  <dialog id="orderModal">
-    <div class="modal-head">
-      <h3 id="orderModalTitle">New Order</h3>
-      <button class="modal-close" onclick="closeModal('orderModal')"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="modal-body">
-      <input type="hidden" id="order-edit-id">
-      <div class="portal-form-grid">
-        <div class="portal-field"><label>Platform</label>
-          <select id="order-platform">
-            <option value="Amazon">Amazon</option><option value="eBay">eBay</option><option value="MobileSentrix">MobileSentrix</option><option value="Shopify">Shopify</option><option value="Square">Square</option>
-          </select>
-        </div>
-        <div class="portal-field"><label>Order # *</label><input type="text" id="order-number" placeholder="e.g. AMZ-8842"></div>
-        <div class="portal-field"><label>Items Description</label><input type="text" id="order-items" placeholder="5x OLED Screens"></div>
-        <div class="portal-form-row">
-          <div class="portal-field"><label>Total Cost ($)</label><input type="number" id="order-cost" value="0" min="0" step="0.01"></div>
-          <div class="portal-field"><label>Status</label>
-            <select id="order-status">
-              <option value="Pending">Pending</option><option value="Shipped">Shipped</option><option value="Received">Received</option><option value="Cancelled">Cancelled</option>
-            </select>
-          </div>
-        </div>
-        <div class="portal-form-row">
-          <div class="portal-field"><label>Expected Date</label><input type="date" id="order-expected"></div>
-          <div class="portal-field"><label>Tracking #</label><input type="text" id="order-tracking" placeholder="Optional tracking"></div>
-        </div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="pbtn pbtn-light" onclick="closeModal('orderModal')">Cancel</button>
-      <button class="pbtn pbtn-primary" onclick="saveOrder()"><i class="fas fa-save"></i> Save Order</button>
-    </div>
-  </dialog>
-
-  <!-- Transaction Modal -->
-  <dialog id="transactionModal">
-    <div class="modal-head">
-      <h3>Add Transaction</h3>
-      <button class="modal-close" onclick="closeModal('transactionModal')"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="modal-body">
-      <div class="portal-form-grid">
-        <div class="portal-field"><label>Type</label>
-          <select id="txn-type">
-            <option value="Repair">Repair</option><option value="Product Sale">Product Sale</option><option value="Subscription">Subscription</option><option value="B2B Service">B2B Service</option>
-          </select>
-        </div>
-        <div class="portal-form-row">
-          <div class="portal-field"><label>Amount ($)</label><input type="number" id="txn-amount" value="0" min="0" step="0.01"></div>
-          <div class="portal-field"><label>Cost ($)</label><input type="number" id="txn-cost" value="0" min="0" step="0.01"></div>
-        </div>
-        <div class="portal-field"><label>Payment Method</label>
-          <select id="txn-method">
-            <option value="Square">Square</option><option value="Cash">Cash</option><option value="Card">Card</option><option value="PayPal">PayPal</option><option value="Shopify">Shopify</option>
-          </select>
-        </div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="pbtn pbtn-light" onclick="closeModal('transactionModal')">Cancel</button>
-      <button class="pbtn pbtn-primary" onclick="saveTransaction()"><i class="fas fa-save"></i> Save Transaction</button>
-    </div>
-  </dialog>
-
-  <!-- Employee Modal -->
-  <dialog id="employeeModal">
-    <div class="modal-head">
-      <h3 id="employeeModalTitle">Add Employee</h3>
-      <button class="modal-close" onclick="closeModal('employeeModal')"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="modal-body">
-      <input type="hidden" id="employee-edit-id">
-      <div class="portal-form-grid">
-        <div class="portal-field"><label>Full Name *</label><input type="text" id="employee-name" placeholder="e.g. Jane Doe"></div>
-        <div class="portal-form-row">
-          <div class="portal-field"><label>Role</label><input type="text" id="employee-role" placeholder="Technician"></div>
-          <div class="portal-field"><label>Status</label>
-            <select id="employee-status"><option value="Active">Active</option><option value="Inactive">Inactive</option></select>
-          </div>
-        </div>
-        <div class="portal-field"><label>Email</label><input type="email" id="employee-email" placeholder="jane@atr.com"></div>
-        <div class="portal-field"><label>Phone</label><input type="text" id="employee-phone" placeholder="(513) 555-0100"></div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="pbtn pbtn-light" onclick="closeModal('employeeModal')">Cancel</button>
-      <button class="pbtn pbtn-primary" onclick="saveEmployee()"><i class="fas fa-save"></i> Save Employee</button>
-    </div>
-  </dialog>
-
-  <!-- Confirmation Modal -->
-  <dialog id="confirmModal">
-    <div class="modal-head">
-      <h3>Confirm Action</h3>
-      <button class="modal-close" onclick="closeModal('confirmModal')"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="modal-body">
-      <p id="confirmMessage" style="font-size: var(--text-sm); color: var(--text);">Are you sure you want to proceed?</p>
-    </div>
-    <div class="modal-footer">
-      <button class="pbtn pbtn-light" onclick="closeModal('confirmModal')">Cancel</button>
-      <button class="pbtn pbtn-danger" id="confirmDeleteBtn">Delete</button>
-    </div>
-  </dialog>
+  <!-- Modal Dialogs for Portal -->
+  <dialog id="ticketModal">...</dialog>
+  <dialog id="ticketDetailModal">...</dialog>
+  <dialog id="customerModal">...</dialog>
+  <dialog id="partModal">...</dialog>
+  <dialog id="orderModal">...</dialog>
+  <dialog id="transactionModal">...</dialog>
+  <dialog id="employeeModal">...</dialog>
+  <dialog id="confirmModal">...</dialog>
 
   <!-- SCRIPTS -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -1975,96 +1616,21 @@ i<!DOCTYPE html>
   <script src="repair.js"></script>
   <script src="chat.js"></script>
 
-  <!-- Interactive UI Script for Cart and Mobile Menu Drawer -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // 1. Mobile Menu Drawer Logic
       const bottomMenuToggle = document.getElementById('bottom-menu-toggle');
       const mobileMenu = document.getElementById('mobile-menu');
       const menuClose = document.getElementById('menu-close');
 
       if (bottomMenuToggle && mobileMenu) {
-        bottomMenuToggle.addEventListener('click', () => {
-          mobileMenu.setAttribute('aria-hidden', 'false');
-        });
+        bottomMenuToggle.addEventListener('click', () => mobileMenu.setAttribute('aria-hidden', 'false'));
       }
       if (menuClose && mobileMenu) {
-        menuClose.addEventListener('click', () => {
-          mobileMenu.setAttribute('aria-hidden', 'true');
-        });
-      }
-
-      // 2. Shopping Cart Logic with Item Indicator Update
-      let cart = [];
-      const cartBadge = document.getElementById('cart-badge');
-      const cartDrawer = document.getElementById('cart-drawer');
-      const cartToggle = document.getElementById('cart-toggle');
-      const cartCloseBtn = document.getElementById('cart-drawer-close-btn');
-      const cartBackdrop = document.getElementById('cart-drawer-close');
-      const cartItemsContainer = document.getElementById('cart-drawer-items');
-      const cartTotal = document.getElementById('cart-drawer-total');
-
-      const openCart = () => cartDrawer.setAttribute('aria-hidden', 'false');
-      const closeCart = () => cartDrawer.setAttribute('aria-hidden', 'true');
-
-      if (cartToggle) cartToggle.addEventListener('click', openCart);
-      if (cartCloseBtn) cartCloseBtn.addEventListener('click', closeCart);
-      if (cartBackdrop) cartBackdrop.addEventListener('click', closeCart);
-
-      function updateCartBadge() {
-        if (cartBadge) {
-          const count = cart.length;
-          cartBadge.innerText = count;
-          cartBadge.setAttribute('data-count', count);
-          cartBadge.style.transform = 'scale(1.2)';
-          setTimeout(() => cartBadge.style.transform = 'scale(1)', 200);
-        }
-      }
-
-      // Listen for "Add to Cart" clicks
-      document.querySelectorAll('[data-add-cart]').forEach(button => {
-        button.addEventListener('click', function(e) {
-          e.preventDefault();
-          
-          const productData = JSON.parse(this.getAttribute('data-add-cart'));
-          cart.push(productData);
-          
-          updateCartBadge();
-          
-          if (cartItemsContainer) {
-            cartItemsContainer.innerHTML += `
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3); padding-bottom: var(--space-3); border-bottom: 1px solid var(--border);">
-                <div>
-                  <p style="font-weight: 700; font-size: 0.9rem; margin: 0;">${productData.name}</p>
-                  <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0;">${productData.category}</p>
-                </div>
-                <p style="font-weight: 700; color: var(--primary); margin: 0;">$${productData.price.toFixed(2)}</p>
-              </div>
-            `;
-          }
-          
-          if (cartTotal) {
-            const total = cart.reduce((sum, item) => sum + item.price, 0);
-            cartTotal.innerText = '$' + total.toFixed(2);
-          }
-          
-          openCart();
-        });
-      });
-
-      const clearCartBtn = document.getElementById('cart-clear');
-      if (clearCartBtn) {
-        clearCartBtn.addEventListener('click', () => {
-          cart = [];
-          updateCartBadge();
-          if (cartItemsContainer) cartItemsContainer.innerHTML = '';
-          if (cartTotal) cartTotal.innerText = '$0.00';
-        });
+        menuClose.addEventListener('click', () => mobileMenu.setAttribute('aria-hidden', 'true'));
       }
     });
   </script>
 
-  <!-- Mobile Thumb-Friendly Bottom Navigation Bar -->
   <nav class="mobile-bottom-nav" aria-label="Mobile Bottom Navigation">
     <a href="#home" class="bottom-nav-item active" data-page="home"><i class="fa-solid fa-house"></i><span>Home</span></a>
     <a href="#shop" class="bottom-nav-item" data-page="shop"><i class="fa-solid fa-store"></i><span>Shop</span></a>
@@ -2073,7 +1639,6 @@ i<!DOCTYPE html>
     <button class="bottom-nav-item" id="bottom-menu-toggle" type="button"><i class="fa-solid fa-bars"></i><span>Menu</span></button>
   </nav>
 
-  <!-- ============================================ COOKIE PREFERENCE BANNER ============================================ -->
   <div class="cookie-banner" id="cookie-banner" aria-hidden="true">
     <div class="cookie-banner-content">
       <p>We use essential cookies for our booking system and analytics to improve your experience. Read our <a href="#cookies" class="policy-trigger" data-policy="cookies">Cookie Preference Policy</a>.</p>
@@ -2084,7 +1649,6 @@ i<!DOCTYPE html>
     </div>
   </div>
 
-  <!-- Floating Jotform AI Agent "Steve" Widget -->
   <div class="steve-widget" id="steve-widget" aria-hidden="true">
     <div class="steve-panel">
       <div class="steve-header">
@@ -2107,88 +1671,16 @@ i<!DOCTYPE html>
     </div>
   </div>
 
-  <!-- Floating Chat Bubble Trigger Button -->
   <button class="steve-toggle-btn" id="steve-toggle" type="button" aria-label="Open AI Assistant">
     <i class="fas fa-robot"></i>
     <span>Ask Steve</span>
   </button>
 
-  <style>
-    .cookie-banner {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: var(--surface);
-      color: var(--text);
-      padding: var(--space-4) var(--space-6);
-      z-index: 2500;
-      border-top: 1px solid var(--border);
-      box-shadow: var(--shadow-lg);
-      transform: translateY(100%);
-      opacity: 0;
-      visibility: hidden;
-      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, visibility 0.3s ease;
-    }
-    .cookie-banner.active {
-      transform: translateY(0);
-      opacity: 1;
-      visibility: visible;
-    }
-    .cookie-banner-content {
-      max-width: var(--content-wide);
-      margin: 0 auto;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: center;
-      gap: var(--space-4);
-      font-size: 0.9rem;
-      line-height: 1.5;
-    }
-    .cookie-banner-content p {
-      margin: 0;
-      color: var(--text-muted);
-    }
-    .cookie-banner-content a {
-      color: var(--primary);
-      text-decoration: underline;
-      font-weight: 600;
-    }
-    .cookie-banner-content a:hover {
-      color: var(--primary-hover);
-    }
-    .cookie-banner-actions {
-      display: flex;
-      gap: var(--space-3);
-      align-items: center;
-      flex-shrink: 0;
-    }
-    .cookie-banner .cookie-btn {
-      padding: var(--space-2) var(--space-4);
-      font-size: 0.85rem;
-      border-radius: var(--radius-lg);
-      font-weight: 600;
-    }
-    @media (max-width: 768px) {
-      .cookie-banner-content {
-        flex-direction: column;
-        align-items: stretch;
-        text-align: left;
-      }
-      .cookie-banner-actions {
-        justify-content: flex-end;
-      }
-    }
-  </style>
-
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // 1. Cookie Banner Logic
       const cookieBanner = document.getElementById('cookie-banner');
       const acceptBtn = document.getElementById('cookie-accept');
       const declineBtn = document.getElementById('cookie-decline');
-      const policyLinks = document.querySelectorAll('.policy-trigger');
       const STORAGE_KEY = 'atr_cookie_preference';
 
       if (!localStorage.getItem(STORAGE_KEY)) {
@@ -2214,47 +1706,12 @@ i<!DOCTYPE html>
         });
       }
 
-      policyLinks.forEach(link => {
-        link.addEventListener('click', (e) => {
-          e.preventDefault();
-          const policyType = link.getAttribute('data-policy');
-          if (typeof window.openPolicyModal === 'function') {
-            window.openPolicyModal(policyType);
-            return;
-          }
-          const modal = document.getElementById('policy-modal') || document.querySelector('.policy-modal');
-          if (modal) {
-            modal.classList.add('active');
-            modal.setAttribute('aria-hidden', 'false');
-          }
-        });
-      });
-
-      // 2. Account Drawer Toggle Logic
-      const accountDrawer = document.getElementById('account-drawer');
-      const accountToggle = document.getElementById('account-toggle');
-      const accountCloseBtn = document.getElementById('account-drawer-close-btn');
-      const accountBackdrop = document.getElementById('account-drawer-close');
-      const accountCloseAction = document.getElementById('account-drawer-close-action');
-
-      const openAccount = () => { if (accountDrawer) accountDrawer.setAttribute('aria-hidden', 'false'); };
-      const closeAccount = () => { if (accountDrawer) accountDrawer.setAttribute('aria-hidden', 'true'); };
-
-      if (accountToggle) accountToggle.addEventListener('click', openAccount);
-      if (accountCloseBtn) accountCloseBtn.addEventListener('click', closeAccount);
-      if (accountBackdrop) accountBackdrop.addEventListener('click', closeAccount);
-      if (accountCloseAction) accountCloseAction.addEventListener('click', closeAccount);
-
-      // 3. Steve AI Agent Floating Widget Logic
       const steveWidget = document.getElementById('steve-widget');
       const steveToggle = document.getElementById('steve-toggle');
       const steveCloseBtn = document.getElementById('steve-close-btn');
 
-      const openSteve = () => { if (steveWidget) steveWidget.setAttribute('aria-hidden', 'false'); };
-      const closeSteve = () => { if (steveWidget) steveWidget.setAttribute('aria-hidden', 'true'); };
-
-      if (steveToggle) steveToggle.addEventListener('click', openSteve);
-      if (steveCloseBtn) steveCloseBtn.addEventListener('click', closeSteve);
+      if (steveToggle) steveToggle.addEventListener('click', () => steveWidget.setAttribute('aria-hidden', 'false'));
+      if (steveCloseBtn) steveCloseBtn.addEventListener('click', () => steveWidget.setAttribute('aria-hidden', 'true'));
     });
   </script>
 </body>
