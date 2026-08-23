@@ -1,4 +1,4 @@
-/* ==========================================================================
+i/* ==========================================================================
    Austin's Tech Repair Group LLC — Apple-Inspired Master Stylesheet
    ========================================================================== */
 
@@ -1505,42 +1505,32 @@ body:has(#employee.page.active) {
 }
 
 /* ==========================================================================
-   Contact Section & JotForm Responsive Fixes
+   JotForm Contact Embed Fixes
    ========================================================================== */
-.contact-wrapper {
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    gap: 3rem;
-    width: 100%;
-    max-width: var(--content-wide);
-    margin: 0 auto;
-    box-sizing: border-box;
-}
-
-.contact-wrapper > div {
+.jotform-container {
     flex: 1;
-    min-width: 0;
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-2xl);
+    padding: var(--space-4);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
 }
 
-.contact-form-card {
+.jotform-container iframe {
+    width: 100% !important;
+    max-width: 100% !important;
     background: transparent;
-    border: none;
-    padding: 0;
-    overflow: visible; /* Allows the scroll area to behave properly */
 }
 
-/* Mobile & Tablet Responsiveness */
 @media (max-width: 900px) {
-    .contact-wrapper {
-        flex-direction: column !important;
-        padding: 2rem 5% !important;
-        gap: 2rem;
-    }
-    
-    .contact-wrapper > div {
-        width: 100% !important;
-        max-width: 100% !important;
+    .jotform-container {
+        padding: var(--space-2);
+        border: none;
+        background: transparent;
+        box-shadow: none;
     }
 }
+
 
