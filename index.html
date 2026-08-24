@@ -1297,89 +1297,6 @@
       </div>
     </section>
 
-    <style>
-      @media (max-width: 1024px) {
-        .mobile-portal-bar { display: flex !important; }
-        #portalSidebarClose { display: block !important; }
-        
-        .app {
-          display: block !important;
-          position: relative !important;
-          width: 100% !important;
-        }
-
-        .app .sidebar {
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100% !important;
-          height: 100vh;
-          z-index: 1000;
-          transform: translateY(-100%);
-          transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-          display: flex;
-          flex-direction: column;
-          box-shadow: none;
-          overflow-y: auto;
-        }
-        
-        .app.mobile-nav-open .sidebar {
-          transform: translateY(0);
-        }
-        
-        .portal-main {
-          width: 100% !important;
-          margin-left: 0 !important;
-          padding: var(--space-4) !important;
-          max-width: 100% !important;
-        }
-      }
-    </style>
-
-    <script>
-      function closePortalMobileMenu() {
-        const appEl = document.getElementById('portalView');
-        if (appEl) appEl.classList.remove('mobile-nav-open');
-      }
-
-      function login() {
-        const user = document.getElementById('username').value;
-        const pass = document.getElementById('passcode').value;
-        if (user && pass) {
-          document.getElementById('loginView').classList.add('hidden');
-          document.getElementById('portalView').classList.remove('hidden');
-          document.getElementById('loginMsg').textContent = '';
-        } else {
-          document.getElementById('loginMsg').textContent = 'Please enter username and passcode.';
-        }
-      }
-
-      function logout() {
-        document.getElementById('portalView').classList.add('hidden');
-        document.getElementById('loginView').classList.remove('hidden');
-        document.getElementById('username').value = '';
-        document.getElementById('passcode').value = '';
-      }
-
-      document.addEventListener('DOMContentLoaded', () => {
-        const toggleBtn = document.getElementById('portalNavToggle');
-        const closeBtn = document.getElementById('portalSidebarClose');
-        const appEl = document.getElementById('portalView');
-
-        if (toggleBtn && appEl) {
-          toggleBtn.addEventListener('click', () => {
-            appEl.classList.toggle('mobile-nav-open');
-          });
-        }
-
-        if (closeBtn && appEl) {
-          closeBtn.addEventListener('click', () => {
-            appEl.classList.remove('mobile-nav-open');
-          });
-        }
-      });
-    </script>
-
     <!-- ============================================ APPLE-STYLE SHOWCASE CAROUSEL ============================================ -->
     <section class="apple-showcase">
       <div class="showcase-container">
@@ -1646,14 +1563,17 @@
   </footer>
 
   <!-- Modal Dialogs for Portal -->
-  <dialog id="ticketModal">...</dialog>
-  <dialog id="ticketDetailModal">...</dialog>
-  <dialog id="customerModal">...</dialog>
-  <dialog id="partModal">...</dialog>
-  <dialog id="orderModal">...</dialog>
-  <dialog id="transactionModal">...</dialog>
-  <dialog id="employeeModal">...</dialog>
-  <dialog id="confirmModal">...</dialog>
+  <dialog id="ticketModal">
+    <div class="modal-head"><h3>New Repair Ticket</h3><button class="modal-close" onclick="document.getElementById('ticketModal').close()">✕</button></div>
+    <div class="modal-body"><form id="ticketForm" class="portal-form-grid">...</form></div>
+  </dialog>
+  <dialog id="ticketDetailModal"><div class="modal-head"><h3>Ticket Details</h3><button class="modal-close" onclick="document.getElementById('ticketDetailModal').close()">✕</button></div><div class="modal-body"></div></dialog>
+  <dialog id="customerModal"><div class="modal-head"><h3>Add Customer</h3><button class="modal-close" onclick="document.getElementById('customerModal').close()">✕</button></div><div class="modal-body"></div></dialog>
+  <dialog id="partModal"><div class="modal-head"><h3>Add Part</h3><button class="modal-close" onclick="document.getElementById('partModal').close()">✕</button></div><div class="modal-body"></div></dialog>
+  <dialog id="orderModal"><div class="modal-head"><h3>New Order</h3><button class="modal-close" onclick="document.getElementById('orderModal').close()">✕</button></div><div class="modal-body"></div></dialog>
+  <dialog id="transactionModal"><div class="modal-head"><h3>Add Transaction</h3><button class="modal-close" onclick="document.getElementById('transactionModal').close()">✕</button></div><div class="modal-body"></div></dialog>
+  <dialog id="employeeModal"><div class="modal-head"><h3>Add Employee</h3><button class="modal-close" onclick="document.getElementById('employeeModal').close()">✕</button></div><div class="modal-body"></div></dialog>
+  <dialog id="confirmModal"><div class="modal-head"><h3>Confirm Action</h3><button class="modal-close" onclick="document.getElementById('confirmModal').close()">✕</button></div><div class="modal-body"></div></dialog>
 
   <!-- SCRIPTS -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -1793,3 +1713,4 @@
   </script>
 </body>
 </html>
+
