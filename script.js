@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Austin's Tech Repair Group LLC — Main JavaScript
+   Austin's Tech Repair Group SP — Master JavaScript
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -25,15 +25,19 @@ document.addEventListener('DOMContentLoaded', () => {
   function navigateToPage(targetPageId) {
     if (!targetPageId) return;
 
+    let targetFound = false;
     pages.forEach(page => {
       if (page.id === targetPageId) {
         page.classList.add('active');
         page.style.display = 'block';
+        targetFound = true;
       } else {
         page.classList.remove('active');
         page.style.display = 'none';
       }
     });
+
+    if (!targetFound) return;
 
     desktopNavLinks.forEach(link => {
       const linkTarget = link.getAttribute('data-page') || link.getAttribute('href')?.replace('#', '');
@@ -72,6 +76,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // Helper to handle link routing actions safely
+  function handleNavClick(e, element) {
+    const href = element.getAttribute('href') || '';
+    
+    // Safely ignore external links or targets without hashes
+    if (href.startsWith('http') || href.includes('://') || !href.startsWith('#')) {
+      if (mobileMenu) mobileMenu.setAttribute('aria-hidden', 'true');
+      return; 
+    }
+
+    const target = element.getAttribute('data-page') || href.replace('#', '');
+    if (target && document.getElementById(target)) {
+      e.preventDefault();
+      history.pushState(null, '', `#${target}`);
+      navigateToPage(target);
+      if (mobileMenu) mobileMenu.setAttribute('aria-hidden', 'true');
+    }
+  }
+
   // Bottom Thumb Nav & Mobile Menu Links Clicks
   bottomNavItems.forEach(item => {
     item.addEventListener('click', function (e) {
@@ -84,40 +107,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         return;
       }
-
-      const href = this.getAttribute('href') || '';
-      // Safely ignore external links (like Jotform) so they open naturally
-      if (href.startsWith('http') || href.includes('://')) {
-        return; 
-      }
-
-      const target = this.getAttribute('data-page') || href.replace('#', '');
-      if (target && document.getElementById(target)) {
-        e.preventDefault();
-        history.pushState(null, '', `#${target}`);
-        navigateToPage(target);
-        if (mobileMenu) mobileMenu.setAttribute('aria-hidden', 'true');
-      }
+      handleNavClick(e, this);
     });
   });
 
   // Desktop & Drawer Nav Clicks
   desktopNavLinks.forEach(link => {
     link.addEventListener('click', function (e) {
-      const href = this.getAttribute('href') || '';
-      // Safely ignore external links (like Jotform) so they open naturally
-      if (href.startsWith('http') || href.includes('://')) {
-        if (mobileMenu) mobileMenu.setAttribute('aria-hidden', 'true');
-        return; 
-      }
-
-      const target = this.getAttribute('data-page') || href.replace('#', '');
-      if (target && document.getElementById(target)) {
-        e.preventDefault();
-        history.pushState(null, '', `#${target}`);
-        navigateToPage(target);
-        if (mobileMenu) mobileMenu.setAttribute('aria-hidden', 'true');
-      }
+      handleNavClick(e, this);
     });
   });
 
@@ -226,7 +223,6 @@ document.addEventListener('DOMContentLoaded', () => {
         img = addToCartBtn.getAttribute('data-img') || img;
       }
 
-      // Check if item already exists in cart
       const existingItem = cart.find(item => item.name === name);
       if (existingItem) {
         existingItem.quantity += 1;
