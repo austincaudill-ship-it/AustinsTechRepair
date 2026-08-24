@@ -1,5 +1,5 @@
-i/* ==========================================================================
-   Austin's Tech Repair Group LLC — Apple-Inspired Master Stylesheet
+/* ==========================================================================
+   Austin's Tech Repair Group SP — Apple-Inspired Master Stylesheet
    ========================================================================== */
 
 :root {
@@ -163,6 +163,15 @@ body:has(#employee.page.active) {
   width: 100%;
 }
 
+/* Fix portal section visibility stacking on employee view */
+#portalView .portal-section {
+  display: none !important;
+}
+
+#portalView .portal-section.active {
+  display: block !important;
+}
+
 /* ==========================================================================
    Header & Navigation (Glassmorphic)
    ========================================================================== */
@@ -307,7 +316,7 @@ body:has(#employee.page.active) {
    Mobile Menu & Folding 'X' Animation
    ========================================================================== */
 .mobile-menu-toggle {
-  display: flex;
+  display: none;
   flex-direction: column;
   justify-content: space-between;
   width: 28px;
@@ -319,9 +328,9 @@ body:has(#employee.page.active) {
   z-index: 250;
 }
 
-@media (min-width: 1024px) {
+@media (max-width: 1024px) {
   .mobile-menu-toggle {
-    display: none;
+    display: flex !important;
   }
 }
 
@@ -354,6 +363,8 @@ body:has(#employee.page.active) {
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s ease-in-out;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .mobile-menu[aria-hidden="false"] {
@@ -377,6 +388,9 @@ body:has(#employee.page.active) {
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   pointer-events: auto;
   z-index: 1001;
+  overflow-y: auto;
+  max-height: 100vh;
+  padding-bottom: 4rem;
 }
 
 .mobile-menu[aria-hidden="false"] .menu-panel {
@@ -1503,6 +1517,7 @@ body:has(#employee.page.active) {
     padding-top: var(--space-6);
   }
 }
+
 /* ==========================================================================
    JotForm Script Embed Responsive Fixes
    ========================================================================== */
@@ -1537,7 +1552,3 @@ body:has(#employee.page.active) {
 .header-actions .cart-badge {
     box-sizing: border-box !important;
 }
-
-
-
-
