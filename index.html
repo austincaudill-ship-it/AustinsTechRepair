@@ -36,10 +36,29 @@
     "@type": "LocalBusiness",
     "name": "Austin's Tech Repair Group",
     "description": "Professional mobile tech repair for phones, tablets, computers, gaming consoles, and smart watches. We come directly to your location with B2B IT support.",
-    "telephone": "+1-513-478-8077",
+    "telephone": "+1-937-280-6243",
     "areaServed": "Xenia, Dayton, and Southeastern Ohio",
     "priceRange": "$$",
-    "openingHours": "Mo-Sa 08:00-17:00",
+    "openingHoursSpecification": [
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "opens": "05:30",
+        "closes": "22:00"
+      },
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": "Saturday",
+        "opens": "08:30",
+        "closes": "22:00"
+      },
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": "Sunday",
+        "opens": "09:00",
+        "closes": "17:00"
+      }
+    ],
     "url": "https://austinstechrepairgroup.com/",
     "sameAs": [
       "https://maps.app.goo.gl/JDzEADFMWRfU4DKB6",
@@ -64,45 +83,25 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 
   <style>
-    /* Utility & Portal Hidden Class Fix */
-    .hidden {
-      display: none !important;
-    }
-
-    /* Cart Badge Pulse & Indicator Styles */
+    .hidden { display: none !important; }
     .cart-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 18px;
-      height: 18px;
-      padding: 0 5px;
-      font-size: 11px;
-      font-weight: 700;
-      color: #fff;
-      background-color: var(--primary, #0057ff);
-      border-radius: 9px;
-      position: absolute;
-      top: -4px;
-      right: -6px;
-      transition: transform 0.2s ease, background-color 0.2s ease;
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 18px; height: 18px; padding: 0 5px; font-size: 11px; font-weight: 700;
+      color: #fff; background-color: var(--primary, #0057ff); border-radius: 9px;
+      position: absolute; top: -4px; right: -6px; transition: transform 0.2s ease, background-color 0.2s ease;
     }
-    .cart-badge:not(:empty):not([data-count="0"]) {
-      animation: badgePulse 2s infinite;
-    }
+    .cart-badge:not(:empty):not([data-count="0"]) { animation: badgePulse 2s infinite; }
     @keyframes badgePulse {
       0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 87, 255, 0.4); }
       70% { transform: scale(1.05); box-shadow: 0 0 0 6px rgba(0, 87, 255, 0); }
       100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 87, 255, 0); }
     }
-    .icon-btn {
-      position: relative;
-    }
+    .icon-btn { position: relative; }
   </style>
 </head>
 <body>
 
-  <!-- ============================================ HEADER ============================================ -->
+  <!-- HEADER -->
   <header class="header">
     <a href="#home" class="brand" data-page="home" aria-label="Go to home page">
       <div class="brand-mark"><i class="fas fa-screwdriver-wrench" aria-hidden="true"></i></div>
@@ -125,9 +124,7 @@
       <a class="nav-link" href="#employee" data-page="employee">Portal</a>
     </nav>
 
-    <!-- Header Actions & Buttons -->
     <div class="header-actions">
-      <!-- Account Button -->
       <button class="icon-btn" id="account-toggle" type="button" aria-label="Customer account" aria-haspopup="dialog" aria-expanded="false">
         <svg class="account-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -135,7 +132,6 @@
         </svg>
       </button>
 
-      <!-- Cart Button -->
       <button class="icon-btn" id="cart-toggle" type="button" aria-label="Shopping cart" aria-haspopup="dialog" aria-expanded="false">
         <svg class="cart-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <circle cx="8" cy="21" r="1"></circle>
@@ -147,7 +143,7 @@
     </div>
   </header>
 
-  <!-- ============================================ MOBILE MENU ============================================ -->
+  <!-- MOBILE MENU -->
   <nav class="mobile-menu" id="mobile-menu" aria-hidden="true">
     <div class="menu-panel" role="dialog" aria-modal="true" aria-labelledby="menu-title">
       <button class="menu-close" id="menu-close" type="button" aria-label="Close menu"><i class="fas fa-times"></i></button>
@@ -164,16 +160,15 @@
         <a class="menu-link" href="#employee" data-page="employee">Employee Portal</a>
       </div>
       <div class="menu-footer">
-        <a class="menu-phone" href="tel:5134788077"><i class="fas fa-phone"></i> 513-478-8077</a>
+        <a class="menu-phone" href="tel:9372806243"><i class="fas fa-phone"></i> 937-280-6243</a>
         <span class="menu-tag">Mobile Service across Dayton & Miami Valley</span>
       </div>
     </div>
   </nav>
 
   <main>
-    <!-- ===================== HOME PAGE ===================== -->
+    <!-- HOME PAGE -->
     <section id="home" class="page active">
-      <!-- Hero -->
       <div class="hero">
         <div class="hero-bg" aria-hidden="true"></div>
         <div class="hero-mesh" aria-hidden="true"></div>
@@ -318,12 +313,12 @@
         <p>Start your repair request online or call us directly to schedule a mobile dispatch to your location in the Miami Valley.</p>
         <div class="hero-cta-group" style="margin-bottom: 0;">
           <a class="btn btn-primary btn-lg" href="javascript:void(window.open('https://form.jotform.com/262308779420057', 'blank', 'scrollbars=yes, toolbar=no, width=700, height=500'))"><i class="fas fa-wrench"></i> Start a Repair</a>
-          <a class="btn btn-light btn-lg" href="tel:5134788077"><i class="fas fa-phone"></i> 513-478-8077</a>
+          <a class="btn btn-light btn-lg" href="tel:9372806243"><i class="fas fa-phone"></i> 937-280-6243</a>
         </div>
       </div>
     </section>
 
-    <!-- ===================== SHOP PAGE ===================== -->
+    <!-- SHOP PAGE -->
     <section id="shop" class="page">
       <div class="container" style="padding-top: var(--space-12); padding-bottom: var(--space-16);">
         <div class="section-header reveal text-center" style="max-width: 700px; margin: 0 auto var(--space-10);">
@@ -373,7 +368,7 @@
       </div>
     </section>
 
-    <!-- ===================== REPAIR PAGE ===================== -->
+    <!-- REPAIR PAGE -->
     <section id="repair" class="page">
       <div class="container">
         <div class="section-header reveal">
@@ -468,7 +463,7 @@
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
                 <div class="field">
                   <label for="phone-number">Phone Number <span style="color: var(--danger);">*</span></label>
-                  <input id="phone-number" class="form-field" type="tel" name="customer_phone" required placeholder="(513) 555-0100" />
+                  <input id="phone-number" class="form-field" type="tel" name="customer_phone" required placeholder="(937) 555-0100" />
                 </div>
                 <div class="field">
                   <label for="email-address">Email Address <span style="color: var(--danger);">*</span></label>
@@ -484,9 +479,9 @@
                   <label for="preferred-time">Preferred Dispatch Time</label>
                   <select id="preferred-time" class="form-field" name="preferred_time">
                     <option value="anytime">Anytime</option>
-                    <option value="morning">Morning (8AM-12PM)</option>
+                    <option value="morning">Morning (5:30AM-12PM)</option>
                     <option value="afternoon">Afternoon (12PM-5PM)</option>
-                    <option value="evening">Evening (5PM-8PM)</option>
+                    <option value="evening">Evening (5PM-10PM)</option>
                   </select>
                 </div>
               </div>
@@ -514,7 +509,7 @@
       </div>
     </section>
 
-    <!-- ===================== ABOUT PAGE ===================== -->
+    <!-- ABOUT PAGE -->
     <section id="about" class="page">
       <div class="about-hero text-center" style="padding-top: var(--space-12);">
         <p class="eyebrow text-accent-blue">About Us</p>
@@ -544,7 +539,7 @@
       </div>
     </section>
 
-    <!-- ===================== CONTACT PAGE ===================== -->
+    <!-- CONTACT PAGE -->
     <section id="contact" class="page">
       <div class="apple-section reveal contact-wrapper">
         <div class="apple-text">
@@ -553,15 +548,15 @@
           <p>We are a <strong>strictly mobile service</strong> serving the Miami Valley, including Dayton, Xenia, Spring Valley, Montgomery County, and surrounding areas. We do not maintain a walk-in storefront—we bring our bench directly to your home or business.</p>
           
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-6);">
-            <a class="card" href="tel:5134788077" style="text-align: center; text-decoration: none; padding: var(--space-3);">
+            <a class="card" href="tel:9372806243" style="text-align: center; text-decoration: none; padding: var(--space-3);">
               <i class="fas fa-phone" style="font-size: 1.25rem; color: var(--primary); margin-bottom: 8px;"></i>
               <h4 style="margin:0;">Call Us</h4>
-              <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">513-478-8077</p>
+              <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">937-280-6243</p>
             </a>
             <div class="card" style="text-align: center; padding: var(--space-3);">
               <i class="fas fa-clock" style="font-size: 1.25rem; color: var(--primary); margin-bottom: 8px;"></i>
               <h4 style="margin:0;">Hours</h4>
-              <p style="font-size: 0.7rem; color: var(--text-muted); line-height: 1.3; margin: 0;">Mon–Sat: 8:00am–5:00pm</p>
+              <p style="font-size: 0.65rem; color: var(--text-muted); line-height: 1.3; margin: 0;">Mon–Fri: 5:30am–10:00pm<br>Sat: 8:30am–10:00pm<br>Sun: 9:00am–5:00pm</p>
             </div>
           </div>
 
@@ -579,7 +574,7 @@
       </div>
     </section>
 
-    <!-- ===================== PRICES PAGE ===================== -->
+    <!-- PRICES PAGE -->
     <section id="prices" class="page">
       <div class="prices-hero text-center" style="padding-top: var(--space-12);">
         <p class="eyebrow text-accent-blue">Transparent Pricing</p>
@@ -649,7 +644,7 @@
       </div>
     </section>
 
-    <!-- ===================== B2B PAGE ===================== -->
+    <!-- B2B PAGE -->
     <section id="b2b" class="page">
       <div class="b2b-hero text-center" style="padding-top: var(--space-12);">
         <p class="eyebrow" style="color: var(--primary);">Business & Institutional Solutions</p>
@@ -688,7 +683,7 @@
       </div>
     </section>
 
-    <!-- ===================== ATR ONE PAGE ===================== -->
+    <!-- ATR ONE PAGE -->
     <section id="atr-one" class="page">
       <div class="atr-one-hero text-center" style="padding: var(--space-16) var(--space-5); background: var(--surface-alt);">
         <p class="eyebrow" style="justify-content: center;">ATR One Membership</p>
@@ -792,7 +787,7 @@
       </div>
     </section>
 
-    <!-- ===================== CAREERS PAGE ===================== -->
+    <!-- CAREERS PAGE -->
     <section id="careers" class="page">
       <div class="container" style="padding-top: var(--space-12); padding-bottom: var(--space-16);">
         <div class="section-header reveal text-center" style="max-width: 700px; margin: 0 auto var(--space-10);">
@@ -833,9 +828,8 @@
       </div>
     </section>
 
-    <!-- ===================== EMPLOYEE PORTAL ===================== -->
+    <!-- EMPLOYEE PORTAL -->
     <section id="employee" class="page">
-      <!-- Login View (Visible by default) -->
       <div id="loginView" class="login-wrap">
         <div class="login-card">
           <div class="eyebrow">Austin's Tech Repair Group</div>
@@ -859,7 +853,6 @@
         </div>
       </div>
 
-      <!-- Main Portal View (Hidden by default using the .hidden class) -->
       <div id="portalView" class="app hidden">
         <div class="mobile-portal-bar" style="display: none; align-items: center; justify-content: space-between; padding: var(--space-3) var(--space-4); background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100;">
           <button id="portalNavToggle" type="button" class="pbtn pbtn-light" style="font-size: 1.1rem; padding: 0.5rem 0.75rem;"><i class="fas fa-bars"></i> Menu</button>
@@ -1276,7 +1269,7 @@
                 <div class="portal-form-grid">
                   <div class="portal-field"><label>Business Name</label><input type="text" value="Austin's Tech Repair Group" readonly></div>
                   <div class="portal-form-row">
-                    <div class="portal-field"><label>Phone</label><input type="text" value="513-478-8077" readonly></div>
+                    <div class="portal-field"><label>Phone</label><input type="text" value="937-280-6243" readonly></div>
                   </div>
                   <div class="portal-field"><label>Service Model</label><input type="text" value="Mobile Service (We Come To You)" readonly></div>
                 </div>
@@ -1297,7 +1290,7 @@
       </div>
     </section>
 
-    <!-- ============================================ APPLE-STYLE SHOWCASE CAROUSEL ============================================ -->
+    <!-- SHOWCASE CAROUSEL -->
     <section class="apple-showcase">
       <div class="showcase-container">
         <div class="showcase-slide active">
@@ -1342,7 +1335,7 @@
     </section>
   </main>
 
-  <!-- ============================================ FOOTER ============================================ -->
+  <!-- FOOTER -->
   <footer class="footer">
     <div style="max-width: var(--content-wide); margin: 0 auto; padding: 0 var(--space-5);">
       <div class="slideshow" aria-label="Service slideshow">
@@ -1377,7 +1370,7 @@
           <a class="footer-link" href="#atr-one" data-page="atr-one">ATR One Membership</a>
           <a class="footer-link" href="#careers" data-page="careers">Careers</a>
           <a class="footer-link" href="#employee" data-page="employee">Employee Portal</a>
-          <a class="footer-link" href="tel:5134788077">513-478-8077</a>
+          <a class="footer-link" href="tel:9372806243">937-280-6243</a>
         </div>
         <div class="footer-links-col">
           <span class="footer-col-title">Policies</span>
@@ -1713,4 +1706,3 @@
   </script>
 </body>
 </html>
-
