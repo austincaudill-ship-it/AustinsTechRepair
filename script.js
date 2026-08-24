@@ -12,7 +12,6 @@ document.addEventListener('DOMContentLoaded', () => {
   function switchPage(targetPageId) {
     if (!targetPageId) return;
     
-    // Remove hash symbol if present
     const cleanId = targetPageId.replace('#', '');
     const targetElement = document.getElementById(cleanId);
     
@@ -42,14 +41,12 @@ document.addEventListener('DOMContentLoaded', () => {
         switchPage(pageId);
         window.location.hash = pageId;
 
-        // Close mobile menu if open
         const mobileMenu = document.getElementById('mobile-menu');
         if (mobileMenu) mobileMenu.setAttribute('aria-hidden', 'true');
       }
     });
   });
 
-  // Handle initial page load hash
   if (window.location.hash) {
     switchPage(window.location.hash.substring(1));
   }
@@ -74,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // -------------------------------------------------------------------------
-  // COOKIE CONSENT & PREFERENCE CENTER LOGIC
+  // 3. COOKIE CONSENT & PREFERENCE CENTER LOGIC
   // -------------------------------------------------------------------------
   const cookieBanner = document.getElementById('cookie-banner');
   const acceptBtn = document.getElementById('cookie-accept');
@@ -91,7 +88,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const COOKIE_STORAGE_KEY = 'atr_cookie_preference';
   const COOKIE_DETAILS_KEY = 'atr_cookie_details';
 
-  // Show banner on first load if no preference is saved
   if (cookieBanner && !localStorage.getItem(COOKIE_STORAGE_KEY)) {
     setTimeout(() => {
       cookieBanner.classList.add('active');
@@ -99,7 +95,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 600);
   }
 
-  // Accept All
   if (acceptBtn) {
     acceptBtn.addEventListener('click', () => {
       localStorage.setItem(COOKIE_STORAGE_KEY, 'all');
@@ -108,7 +103,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Necessary Only
   if (declineBtn) {
     declineBtn.addEventListener('click', () => {
       localStorage.setItem(COOKIE_STORAGE_KEY, 'necessary');
@@ -117,14 +111,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Open Preference Center Modal
   if (prefsOpenBtn) {
     prefsOpenBtn.addEventListener('click', () => {
       openPrefsModal();
     });
   }
 
-  // Close Preference Center Modal
   function closePrefsModal() {
     if (prefsModal) {
       prefsModal.classList.remove('active');
@@ -134,7 +126,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function openPrefsModal() {
     if (prefsModal) {
-      // Pre-check toggles based on previous saves if any
       const savedDetails = JSON.parse(localStorage.getItem(COOKIE_DETAILS_KEY));
       if (savedDetails) {
         if (prefAnalytics) prefAnalytics.checked = savedDetails.analytics;
@@ -149,7 +140,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (prefsCancel) prefsCancel.addEventListener('click', closePrefsModal);
   if (prefsBackdrop) prefsBackdrop.addEventListener('click', closePrefsModal);
 
-  // Save Custom Preferences
   if (prefsSave) {
     prefsSave.addEventListener('click', () => {
       const details = {
@@ -170,7 +160,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-
   // -------------------------------------------------------------------------
   // 4. FOOTER SLIDESHOW COMPONENT
   // -------------------------------------------------------------------------
@@ -179,7 +168,6 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentSlide = 0;
 
   if (slides.length > 0 && dotsContainer) {
-    // Generate dots
     slides.forEach((_, index) => {
       const dot = document.createElement('span');
       dot.classList.add('slide-dot');
