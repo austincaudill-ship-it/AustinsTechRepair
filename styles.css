@@ -118,7 +118,8 @@ body {
 .menu-tag { font-size: 0.75rem; color: var(--text-muted); }
 
 @media (max-width: 900px) {
-  .nav-desktop, .header-actions { display: none; }
+  .nav-desktop { display: none; }
+  .header-actions { display: flex; } /* Keeps cart and account buttons visible on mobile */
   .mobile-bottom-nav { display: flex; }
   body { padding-bottom: 64px; }
 }
