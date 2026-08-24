@@ -1,265 +1,170 @@
 /* ==========================================================================
-   Austin's Tech Repair Group SP — Master JavaScript
+   AUSTIN'S TECH REPAIR GROUP — MASTER JAVASCRIPT
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Navigation & Page Elements
-  const bottomNavItems = document.querySelectorAll('.mobile-bottom-nav .bottom-nav-item, .mobile-menu .menu-link');
-  const desktopNavLinks = document.querySelectorAll('.nav-link, .menu-link');
+  // -------------------------------------------------------------------------
+  // 1. PAGE NAVIGATION ROUTING & TABS
+  // -------------------------------------------------------------------------
+  const navLinks = document.querySelectorAll('.nav-link, .menu-link, .footer-link, [data-page]');
   const pages = document.querySelectorAll('.page');
-  const mobileMenu = document.querySelector('.mobile-menu');
-  const menuCloseBtn = document.querySelector('.menu-close');
 
-  // Cart State & Elements
-  let cart = [];
-  const cartDrawer = document.getElementById('cart-drawer');
-  const cartTrigger = document.getElementById('cart-toggle'); 
-  const cartBackdrop = document.querySelector('.cart-drawer__backdrop');
-  const cartCloseBtn = document.getElementById('cart-drawer-close-btn');
-  const cartClearBtn = document.getElementById('cart-clear');
-  const cartItemsContainer = document.getElementById('cart-drawer-items');
-  const cartTotalPriceElem = document.getElementById('cart-drawer-total');
-  const cartBadge = document.getElementById('cart-badge');
-
-  // --- 1. PAGE NAVIGATION SYSTEM ---
-  function navigateToPage(targetPageId) {
+  function switchPage(targetPageId) {
     if (!targetPageId) return;
-
-    let targetFound = false;
-    pages.forEach(page => {
-      if (page.id === targetPageId) {
-        page.classList.add('active');
-        page.style.display = 'block';
-        targetFound = true;
-      } else {
-        page.classList.remove('active');
-        page.style.display = 'none';
-      }
-    });
-
-    if (!targetFound) return;
-
-    desktopNavLinks.forEach(link => {
-      const linkTarget = link.getAttribute('data-page') || link.getAttribute('href')?.replace('#', '');
-      if (linkTarget === targetPageId) {
-        link.classList.add('active');
-      } else {
-        link.classList.remove('active');
-      }
-    });
-
-    bottomNavItems.forEach(item => {
-      const itemTarget = item.getAttribute('data-page') || item.getAttribute('href')?.replace('#', '');
-      if (itemTarget === targetPageId) {
-        item.classList.add('active');
-      } else {
-        item.classList.remove('active');
-      }
-    });
-
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
-  // Check URL hash on initial page load
-  const initialHash = window.location.hash.replace('#', '');
-  if (initialHash && document.getElementById(initialHash)) {
-    navigateToPage(initialHash);
-  } else {
-    navigateToPage('home');
-  }
-
-  // Handle hash changes if users use back/forward buttons
-  window.addEventListener('hashchange', () => {
-    const hash = window.location.hash.replace('#', '');
-    if (hash && document.getElementById(hash)) {
-      navigateToPage(hash);
-    }
-  });
-
-  // Helper to handle link routing actions safely
-  function handleNavClick(e, element) {
-    const href = element.getAttribute('href') || '';
     
-    // Safely ignore external links or targets without hashes
-    if (href.startsWith('http') || href.includes('://') || !href.startsWith('#')) {
-      if (mobileMenu) mobileMenu.setAttribute('aria-hidden', 'true');
-      return; 
-    }
+    // Remove hash symbol if present
+    const cleanId = targetPageId.replace('#', '');
+    const targetElement = document.getElementById(cleanId);
+    
+    if (targetElement && targetElement.classList.contains('page')) {
+      pages.forEach(p => p.classList.remove('active'));
+      targetElement.classList.add('active');
 
-    const target = element.getAttribute('data-page') || href.replace('#', '');
-    if (target && document.getElementById(target)) {
-      e.preventDefault();
-      history.pushState(null, '', `#${target}`);
-      navigateToPage(target);
-      if (mobileMenu) mobileMenu.setAttribute('aria-hidden', 'true');
+      navLinks.forEach(l => {
+        const pageAttr = l.getAttribute('data-page') || l.getAttribute('href');
+        if (pageAttr && pageAttr.includes(cleanId)) {
+          l.classList.add('active');
+        } else {
+          l.classList.remove('active');
+        }
+      });
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }
 
-  // Bottom Thumb Nav & Mobile Menu Links Clicks
-  bottomNavItems.forEach(item => {
-    item.addEventListener('click', function (e) {
-      if (this.id === 'bottom-menu-toggle') {
+  navLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+      const href = link.getAttribute('href');
+      if (href && href.startsWith('#') && href.length > 1) {
         e.preventDefault();
-        if (mobileMenu) {
-          const isOpen = mobileMenu.getAttribute('aria-hidden') === 'false';
-          mobileMenu.setAttribute('aria-hidden', isOpen ? 'true' : 'false');
-          this.classList.toggle('active', !isOpen);
-        }
-        return;
+        const pageId = href.substring(1);
+        switchPage(pageId);
+        window.location.hash = pageId;
+
+        // Close mobile menu if open
+        const mobileMenu = document.getElementById('mobile-menu');
+        if (mobileMenu) mobileMenu.setAttribute('aria-hidden', 'true');
       }
-      handleNavClick(e, this);
     });
   });
 
-  // Desktop & Drawer Nav Clicks
-  desktopNavLinks.forEach(link => {
-    link.addEventListener('click', function (e) {
-      handleNavClick(e, this);
-    });
-  });
+  // Handle initial page load hash
+  if (window.location.hash) {
+    switchPage(window.location.hash.substring(1));
+  }
 
-  // Mobile Menu Controls
-  if (menuCloseBtn && mobileMenu) {
-    menuCloseBtn.addEventListener('click', () => {
+  // -------------------------------------------------------------------------
+  // 2. MOBILE MENU DRAWER
+  // -------------------------------------------------------------------------
+  const mobileMenu = document.getElementById('mobile-menu');
+  const bottomMenuToggle = document.getElementById('bottom-menu-toggle');
+  const menuClose = document.getElementById('menu-close');
+
+  if (bottomMenuToggle && mobileMenu) {
+    bottomMenuToggle.addEventListener('click', () => {
+      mobileMenu.setAttribute('aria-hidden', 'false');
+    });
+  }
+
+  if (menuClose && mobileMenu) {
+    menuClose.addEventListener('click', () => {
       mobileMenu.setAttribute('aria-hidden', 'true');
     });
   }
 
-  if (mobileMenu) {
-    mobileMenu.addEventListener('click', (e) => {
-      if (e.target === mobileMenu) {
-        mobileMenu.setAttribute('aria-hidden', 'true');
-      }
+  // -------------------------------------------------------------------------
+  // 3. COOKIE CONSENT BANNER LOGIC
+  // -------------------------------------------------------------------------
+  const cookieBanner = document.getElementById('cookie-banner');
+  const acceptBtn = document.getElementById('cookie-accept');
+  const declineBtn = document.getElementById('cookie-decline');
+  const COOKIE_STORAGE_KEY = 'atr_cookie_preference';
+
+  if (cookieBanner && !localStorage.getItem(COOKIE_STORAGE_KEY)) {
+    setTimeout(() => {
+      cookieBanner.classList.add('active');
+      cookieBanner.setAttribute('aria-hidden', 'false');
+    }, 600);
+  }
+
+  if (acceptBtn) {
+    acceptBtn.addEventListener('click', () => {
+      localStorage.setItem(COOKIE_STORAGE_KEY, 'all');
+      cookieBanner.classList.remove('active');
+      cookieBanner.setAttribute('aria-hidden', 'true');
     });
   }
 
-  // --- 2. SHOPPING CART SYSTEM ---
-  function updateCartUI() {
-    if (!cartItemsContainer || !cartTotalPriceElem || !cartBadge) return;
-
-    cartItemsContainer.innerHTML = '';
-    let total = 0;
-    let totalCount = 0;
-
-    if (cart.length === 0) {
-      cartItemsContainer.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: var(--space-6);">Your cart is empty.</p>';
-    } else {
-      cart.forEach((item, index) => {
-        total += item.price * item.quantity;
-        totalCount += item.quantity;
-
-        const cartItemElem = document.createElement('div');
-        cartItemElem.className = 'cart-item';
-        cartItemElem.innerHTML = `
-          <img src="${item.img || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=200&q=80'}" alt="${item.name}">
-          <div class="cart-item-info">
-            <div class="cart-item-title">${item.name}</div>
-            <div class="cart-item-price">$${item.price.toFixed(2)} x ${item.quantity}</div>
-          </div>
-          <button class="cart-item-remove" data-index="${index}" style="color: var(--danger); font-size: 0.9rem; padding: 4px; cursor: pointer;"><i class="fa-solid fa-trash"></i></button>
-        `;
-        cartItemsContainer.appendChild(cartItemElem);
-      });
-    }
-
-    cartTotalPriceElem.textContent = `$${total.toFixed(2)}`;
-    cartBadge.textContent = totalCount;
-    cartBadge.style.display = totalCount > 0 ? 'flex' : 'none';
-
-    // Attach remove listeners
-    document.querySelectorAll('.cart-item-remove').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const idx = parseInt(e.currentTarget.getAttribute('data-index'));
-        cart.splice(idx, 1);
-        updateCartUI();
-      });
+  if (declineBtn) {
+    declineBtn.addEventListener('click', () => {
+      localStorage.setItem(COOKIE_STORAGE_KEY, 'necessary');
+      cookieBanner.classList.remove('active');
+      cookieBanner.setAttribute('aria-hidden', 'true');
     });
   }
 
-  // Open/Close Cart Drawer
-  function toggleCartDrawer(open) {
-    if (!cartDrawer) return;
-    cartDrawer.setAttribute('aria-hidden', open ? 'false' : 'true');
-  }
-
-  if (cartTrigger) {
-    cartTrigger.addEventListener('click', () => toggleCartDrawer(true));
-  }
-  if (cartBackdrop) {
-    cartBackdrop.addEventListener('click', () => toggleCartDrawer(false));
-  }
-  if (cartCloseBtn) {
-    cartCloseBtn.addEventListener('click', () => toggleCartDrawer(false));
-  }
-  if (cartClearBtn) {
-    cartClearBtn.addEventListener('click', () => {
-      cart = [];
-      updateCartUI();
-    });
-  }
-
-  // Add to Cart Event Delegation (Properly parses JSON data-add-cart attribute)
-  document.addEventListener('click', (e) => {
-    const addToCartBtn = e.target.closest('.buy-btn, [data-add-cart]');
-    if (addToCartBtn) {
-      e.preventDefault();
-      let name = 'Repair Service / Part';
-      let price = 99.00;
-      let img = '';
-
-      const dataAttr = addToCartBtn.getAttribute('data-add-cart');
-      if (dataAttr && dataAttr.startsWith('{')) {
-        try {
-          const parsed = JSON.parse(dataAttr);
-          name = parsed.name || name;
-          price = parsed.price !== undefined ? parseFloat(parsed.price) : price;
-          img = parsed.image || parsed.img || img;
-        } catch (err) {
-          console.error("Error parsing cart item JSON:", err);
-        }
-      } else {
-        name = addToCartBtn.getAttribute('data-name') || name;
-        price = parseFloat(addToCartBtn.getAttribute('data-price')) || price;
-        img = addToCartBtn.getAttribute('data-img') || img;
-      }
-
-      const existingItem = cart.find(item => item.name === name);
-      if (existingItem) {
-        existingItem.quantity += 1;
-      } else {
-        cart.push({ name, price, img, quantity: 1 });
-      }
-
-      updateCartUI();
-      toggleCartDrawer(true);
-    }
-  });
-
-  // --- 3. APPLE-STYLE IMAGE CAROUSEL / SHOWCASE ---
-  const slides = document.querySelectorAll('.showcase-slide');
-  const dots = document.querySelectorAll('.showcase-dot');
+  // -------------------------------------------------------------------------
+  // 4. FOOTER SLIDESHOW COMPONENT
+  // -------------------------------------------------------------------------
+  const slides = document.querySelectorAll('.slideshow .slide');
+  const dotsContainer = document.getElementById('slide-dots');
   let currentSlide = 0;
 
-  function showSlide(index) {
-    slides.forEach((slide, i) => {
-      slide.classList.toggle('active', i === index);
+  if (slides.length > 0 && dotsContainer) {
+    // Generate dots
+    slides.forEach((_, index) => {
+      const dot = document.createElement('span');
+      dot.classList.add('slide-dot');
+      if (index === 0) dot.classList.add('active');
+      dot.addEventListener('click', () => goToSlide(index));
+      dotsContainer.appendChild(dot);
     });
-    dots.forEach((dot, i) => {
-      dot.classList.toggle('active', i === index);
-    });
-  }
 
-  if (slides.length > 0) {
+    const dots = dotsContainer.querySelectorAll('.slide-dot');
+
+    function goToSlide(n) {
+      slides[currentSlide].classList.remove('active');
+      dots[currentSlide].classList.remove('active');
+      currentSlide = (n + slides.length) % slides.length;
+      slides[currentSlide].classList.add('active');
+      dots[currentSlide].classList.add('active');
+    }
+
     setInterval(() => {
-      currentSlide = (currentSlide + 1) % slides.length;
-      showSlide(currentSlide);
+      goToSlide(currentSlide + 1);
     }, 5000);
-
-    dots.forEach((dot, index) => {
-      dot.addEventListener('click', () => {
-        currentSlide = index;
-        showSlide(currentSlide);
-      });
-    });
   }
+
+  // -------------------------------------------------------------------------
+  // 5. SHOPPING CART & DRAWERS
+  // -------------------------------------------------------------------------
+  const cartToggle = document.getElementById('cart-toggle');
+  const cartDrawer = document.getElementById('cart-drawer');
+  const cartCloseBtn = document.getElementById('cart-drawer-close-btn');
+  const cartBackdrop = document.getElementById('cart-drawer-close');
+
+  function toggleCart(open) {
+    if (cartDrawer) {
+      cartDrawer.setAttribute('aria-hidden', open ? 'false' : 'true');
+      document.body.style.overflow = open ? 'hidden' : '';
+    }
+  }
+
+  if (cartToggle) cartToggle.addEventListener('click', () => toggleCart(true));
+  if (cartCloseBtn) cartCloseBtn.addEventListener('click', () => toggleCart(false));
+  if (cartBackdrop) cartBackdrop.addEventListener('click', () => toggleCart(false));
+
+  // Scroll Reveal Animation Observer
+  const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
+  const observer = new IntersectionObserver((entries, obs) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('revealed');
+        obs.unobserve(entry.target);
+      }
+    });
+  }, observerOptions);
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 });
