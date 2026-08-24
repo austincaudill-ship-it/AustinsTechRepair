@@ -74,13 +74,24 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // -------------------------------------------------------------------------
-  // 3. COOKIE CONSENT BANNER LOGIC
+  // COOKIE CONSENT & PREFERENCE CENTER LOGIC
   // -------------------------------------------------------------------------
   const cookieBanner = document.getElementById('cookie-banner');
   const acceptBtn = document.getElementById('cookie-accept');
   const declineBtn = document.getElementById('cookie-decline');
+  const prefsOpenBtn = document.getElementById('cookie-prefs-open');
+  const prefsModal = document.getElementById('cookie-prefs-modal');
+  const prefsClose = document.getElementById('cookie-prefs-close');
+  const prefsCancel = document.getElementById('cookie-prefs-cancel');
+  const prefsBackdrop = document.getElementById('cookie-prefs-backdrop');
+  const prefsSave = document.getElementById('cookie-prefs-save');
+  const prefAnalytics = document.getElementById('pref-analytics');
+  const prefMarketing = document.getElementById('pref-marketing');
+  
   const COOKIE_STORAGE_KEY = 'atr_cookie_preference';
+  const COOKIE_DETAILS_KEY = 'atr_cookie_details';
 
+  // Show banner on first load if no preference is saved
   if (cookieBanner && !localStorage.getItem(COOKIE_STORAGE_KEY)) {
     setTimeout(() => {
       cookieBanner.classList.add('active');
@@ -88,21 +99,77 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 600);
   }
 
+  // Accept All
   if (acceptBtn) {
     acceptBtn.addEventListener('click', () => {
       localStorage.setItem(COOKIE_STORAGE_KEY, 'all');
-      cookieBanner.classList.remove('active');
-      cookieBanner.setAttribute('aria-hidden', 'true');
+      localStorage.setItem(COOKIE_DETAILS_KEY, JSON.stringify({ analytics: true, marketing: true }));
+      closeBanner();
     });
   }
 
+  // Necessary Only
   if (declineBtn) {
     declineBtn.addEventListener('click', () => {
       localStorage.setItem(COOKIE_STORAGE_KEY, 'necessary');
-      cookieBanner.classList.remove('active');
-      cookieBanner.setAttribute('aria-hidden', 'true');
+      localStorage.setItem(COOKIE_DETAILS_KEY, JSON.stringify({ analytics: false, marketing: false }));
+      closeBanner();
     });
   }
+
+  // Open Preference Center Modal
+  if (prefsOpenBtn) {
+    prefsOpenBtn.addEventListener('click', () => {
+      openPrefsModal();
+    });
+  }
+
+  // Close Preference Center Modal
+  function closePrefsModal() {
+    if (prefsModal) {
+      prefsModal.classList.remove('active');
+      prefsModal.setAttribute('aria-hidden', 'true');
+    }
+  }
+
+  function openPrefsModal() {
+    if (prefsModal) {
+      // Pre-check toggles based on previous saves if any
+      const savedDetails = JSON.parse(localStorage.getItem(COOKIE_DETAILS_KEY));
+      if (savedDetails) {
+        if (prefAnalytics) prefAnalytics.checked = savedDetails.analytics;
+        if (prefMarketing) prefMarketing.checked = savedDetails.marketing;
+      }
+      prefsModal.classList.add('active');
+      prefsModal.setAttribute('aria-hidden', 'false');
+    }
+  }
+
+  if (prefsClose) prefsClose.addEventListener('click', closePrefsModal);
+  if (prefsCancel) prefsCancel.addEventListener('click', closePrefsModal);
+  if (prefsBackdrop) prefsBackdrop.addEventListener('click', closePrefsModal);
+
+  // Save Custom Preferences
+  if (prefsSave) {
+    prefsSave.addEventListener('click', () => {
+      const details = {
+        analytics: prefAnalytics ? prefAnalytics.checked : false,
+        marketing: prefMarketing ? prefMarketing.checked : false
+      };
+      localStorage.setItem(COOKIE_STORAGE_KEY, 'custom');
+      localStorage.setItem(COOKIE_DETAILS_KEY, JSON.stringify(details));
+      closePrefsModal();
+      closeBanner();
+    });
+  }
+
+  function closeBanner() {
+    if (cookieBanner) {
+      cookieBanner.classList.remove('active');
+      cookieBanner.setAttribute('aria-hidden', 'true');
+    }
+  }
+
 
   // -------------------------------------------------------------------------
   // 4. FOOTER SLIDESHOW COMPONENT
