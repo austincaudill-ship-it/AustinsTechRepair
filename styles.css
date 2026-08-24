@@ -182,6 +182,115 @@ body {
   .apple-section.reverse .apple-image { order: 2; }
 }
 
+/* --- Apple-Style Showcase Slideshow --- */
+.apple-showcase {
+  max-width: var(--content-wide);
+  margin: 5rem auto;
+  padding: 0 2rem;
+}
+.showcase-container {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-2xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+}
+.showcase-slide {
+  display: none;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+}
+.showcase-slide.active {
+  display: grid;
+  opacity: 1;
+}
+.showcase-slide.reverse {
+  grid-template-columns: 1fr 1fr;
+}
+.showcase-slide.reverse .showcase-content {
+  order: 2;
+}
+.showcase-slide.reverse .showcase-image {
+  order: 1;
+}
+.showcase-content {
+  padding: 4rem;
+}
+.showcase-tag {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--accent-blue);
+  margin-bottom: 1rem;
+  display: block;
+}
+.showcase-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  font-weight: 800;
+  line-height: 1.2;
+  margin-bottom: 1rem;
+  color: var(--text);
+}
+.showcase-desc {
+  color: var(--text-muted);
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+.showcase-image {
+  height: 100%;
+  min-height: 380px;
+  background: #000;
+  overflow: hidden;
+}
+.showcase-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.showcase-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 1.5rem;
+}
+.showcase-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.showcase-dot.active {
+  background: var(--primary);
+  width: 24px;
+  border-radius: 4px;
+}
+
+@media (max-width: 768px) {
+  .showcase-slide, .showcase-slide.reverse {
+    grid-template-columns: 1fr;
+  }
+  .showcase-slide.reverse .showcase-content {
+    order: 1;
+  }
+  .showcase-slide.reverse .showcase-image {
+    order: 2;
+  }
+  .showcase-content {
+    padding: 2rem 1.5rem;
+  }
+  .showcase-image {
+    min-height: 260px;
+  }
+}
+
 /* Testimonials */
 .testimonials-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 2rem; }
 .testimonial-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: 2rem; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; justify-content: space-between; }
@@ -254,7 +363,7 @@ body {
   .mobile-bottom-nav { display: flex; }
 }
 
-/* Footer Styles & Slideshow Mobile Overflow Fix */
+/* Footer Styles */
 .footer { background: #0f172a; color: #94a3b8; padding: 4rem 0 2rem; font-size: 0.875rem; overflow-x: hidden; }
 .footer-top { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 3rem; margin-bottom: 3rem; }
 .footer-col-title { font-family: var(--font-display); font-weight: 700; color: #fff; font-size: 1rem; margin-bottom: 1rem; display: block; }
@@ -266,25 +375,8 @@ body {
 .footer-bottom { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
 .footer-wordmark { font-family: var(--font-display); font-weight: 800; color: #fff; font-size: 1.1rem; }
 
-/* Slideshow Component in Footer */
-.slideshow { position: relative; width: 100%; max-width: 100%; height: 260px; border-radius: var(--radius-2xl); overflow: hidden; }
-.slide { position: absolute; inset: 0; background-size: cover; background-position: center; opacity: 0; transition: opacity 1s ease-in-out; }
-.slide.active { opacity: 1; }
-.slide-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15,23,42,0.2) 0%, rgba(15,23,42,0.85) 100%); }
-.slide-caption { position: absolute; bottom: 24px; left: 24px; right: 24px; z-index: 2; color: #fff; }
-.slide-caption h3 { font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; margin-bottom: 4px; }
-.slide-caption p { font-size: 0.85rem; color: #cbd5e1; max-width: 600px; line-height: 1.4; }
-.slide-dots { position: absolute; bottom: 16px; right: 24px; z-index: 3; display: flex; gap: 6px; }
-.slide-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.4); cursor: pointer; transition: background var(--transition); }
-.slide-dot.active { background: #fff; width: 20px; border-radius: 4px; }
-
 /* --- Mobile Fixes & Safe Overrides --- */
 @media (max-width: 768px) {
-  .slideshow { height: 220px; }
-  .slide-caption { bottom: 16px; left: 16px; right: 16px; }
-  .slide-caption h3 { font-size: 1.1rem; }
-  .slide-caption p { font-size: 0.8rem; max-height: 2.8em; overflow: hidden; }
   .footer-bottom { flex-direction: column; text-align: center; }
   .container, .apple-section { padding-left: 1rem; padding-right: 1rem; }
-}
 }
