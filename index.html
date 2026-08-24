@@ -828,13 +828,7 @@
           <h3 style="margin-top: var(--space-6);">Submit Your Application</h3>
           <p style="color: var(--text-muted); line-height: 1.6; margin-top: var(--space-2); margin-bottom: var(--space-4);">Ready to take the next step in your technical career? Please complete the application form below.</p>
           
-          <iframe 
-              id="JotFormIFrame" 
-              title="Job Application Form" 
-              src="https://form.jotform.com/262308779420057" 
-              style="width: 100%; height: 750px; border: none; border-radius: var(--radius-lg);" 
-              scrolling="yes">
-          </iframe>
+          <script type="text/javascript" src="https://form.jotform.com/jsform/262347488023056"></script>
         </div>
       </div>
     </section>
@@ -1669,8 +1663,38 @@
   <script src="repair.js"></script>
   <script src="chat.js"></script>
 
+  <!-- Account Drawer Toggle Script -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      const accountToggle = document.getElementById('account-toggle');
+      const accountDrawer = document.getElementById('account-drawer');
+      const accountCloseBtn = document.getElementById('account-drawer-close-btn');
+      const accountCloseAction = document.getElementById('account-drawer-close-action');
+      const accountBackdrop = document.querySelector('.account-drawer__backdrop');
+
+      function openAccountDrawer() {
+        if (accountDrawer) {
+          accountDrawer.setAttribute('aria-hidden', 'false');
+          document.body.style.overflow = 'hidden';
+        }
+      }
+
+      function closeAccountDrawer() {
+        if (accountDrawer) {
+          accountDrawer.setAttribute('aria-hidden', 'true');
+          document.body.style.overflow = '';
+        }
+      }
+
+      if (accountToggle) accountToggle.addEventListener('click', openAccountDrawer);
+      if (accountCloseBtn) accountCloseBtn.addEventListener('click', closeAccountDrawer);
+      if (accountCloseAction) accountCloseAction.addEventListener('click', closeAccountDrawer);
+      if (accountBackdrop) accountBackdrop.addEventListener('click', closeAccountDrawer);
+      
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeAccountDrawer();
+      });
+
       const bottomMenuToggle = document.getElementById('bottom-menu-toggle');
       const mobileMenu = document.getElementById('mobile-menu');
       const menuClose = document.getElementById('menu-close');
