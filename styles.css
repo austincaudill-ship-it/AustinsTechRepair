@@ -188,26 +188,35 @@ body {
   max-width: var(--content-wide);
   margin: 5rem auto;
   padding: 0 2rem;
-}
-.showcase-container {
+}.showcase-container {
   position: relative;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-2xl);
   overflow: hidden;
   box-shadow: var(--shadow-lg);
+  /* Ensures stacked slides occupy the same container space */
+  display: grid; 
 }
+
 .showcase-slide {
-  display: none;
+  grid-column: 1 / -1;
+  grid-row: 1 / -1;
+  display: grid;
   grid-template-columns: 1fr 1fr;
   align-items: center;
   opacity: 0;
-  transition: opacity 0.5s ease-in-out;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out;
 }
+
 .showcase-slide.active {
-  display: grid;
   opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
 }
+
 .showcase-slide.reverse {
   grid-template-columns: 1fr 1fr;
 }
