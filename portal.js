@@ -61,7 +61,6 @@
     };
   }
 
-  // Load database from localStorage or fallback to initial seed data
   let db;
   try {
     const savedDb = localStorage.getItem('atr_persistent_portal_db');
@@ -81,6 +80,7 @@
   let charts = {};
   let editingId = null;
   let pendingDelete = null;
+  let currentOrderTab = 'all';
 
   /* ---- Mobile Sidebar Toggle ---- */
   window.toggleSidebar = function () {
@@ -88,8 +88,11 @@
     if (sidebar) sidebar.classList.toggle('open');
   };
 
-  /* ---- Login ---- */
-  const USERS = { 'admin': { passcode: 'admin123', name: 'Austin Reed', role: 'Owner' }, 'demo': { passcode: 'demo', name: 'Demo User', role: 'Technician' } };
+  /* ---- Authentication ---- */
+  const USERS = { 
+    'admin': { passcode: 'admin123', name: 'Austin Reed', role: 'Owner' }, 
+    'demo': { passcode: 'demo', name: 'Demo User', role: 'Technician' } 
+  };
 
   window.login = function () {
     const username = document.getElementById('username')?.value.trim();
@@ -127,7 +130,6 @@
       btn.classList.add('active');
     }
     
-    // Auto-close mobile sidebar when navigating
     const sidebar = document.querySelector('.sidebar');
     if (sidebar) sidebar.classList.remove('open');
 
@@ -155,7 +157,7 @@
     if (modal && typeof modal.showModal === 'function') modal.showModal();
   }
 
-  /* ---- Dashboard ---- */
+  /* ---- Dashboard Rendering & Charts ---- */
   function renderDashboard() {
     const stats = document.getElementById('dashboard-stats');
     if (!stats) return;
@@ -240,7 +242,7 @@
     });
   }
 
-  /* ---- Tickets ---- */
+  /* ---- Ticket Management ---- */
   function renderTickets() {
     const tbody = document.getElementById('tickets-tbody');
     if (!tbody) return;
@@ -381,7 +383,7 @@
     openModal('confirmModal');
   };
 
-  /* ---- Kanban ---- */
+  /* ---- Kanban Board ---- */
   function renderKanban() {
     const board = document.getElementById('kanban-board');
     if (!board) return;
@@ -422,7 +424,7 @@
     renderTickets();
   };
 
-  /* ---- Customers ---- */
+  /* ---- Customer Management ---- */
   function renderCustomers() {
     const tbody = document.getElementById('customers-tbody');
     if (!tbody) return;
@@ -498,7 +500,7 @@
     openModal('confirmModal');
   };
 
-  /* ---- Inventory ---- */
+  /* ---- Inventory Management ---- */
   function renderInventory() {
     const tbody = document.getElementById('inventory-tbody');
     if (!tbody) return;
@@ -591,9 +593,7 @@
     openModal('confirmModal');
   };
 
-  /* ---- Orders ---- */
-  let currentOrderTab = 'all';
-
+  /* ---- Order Management ---- */
   window.switchOrderTab = function (btn, tab) {
     currentOrderTab = tab;
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -684,7 +684,7 @@
     openModal('confirmModal');
   };
 
-  /* ---- Financials ---- */
+  /* ---- Financials & Transactions ---- */
   function renderFinancials() {
     const stats = document.getElementById('financial-stats');
     if (!stats) return;
@@ -868,7 +868,7 @@
     renderTimeClock();
   };
 
-  /* ---- Employees ---- */
+  /* ---- Employee Management ---- */
   function renderEmployees() {
     const tbody = document.getElementById('employees-tbody');
     if (!tbody) return;
@@ -938,7 +938,7 @@
     openModal('confirmModal');
   };
 
-  /* ---- Reports ---- */
+  /* ---- Reports & Analytics ---- */
   function renderReports() {
     const completed = db.tickets.filter(t => t.status === 'Completed').length;
     const total = db.tickets.length;
@@ -1037,7 +1037,7 @@
     }
   };
 
-  /* ---- Portal Search ---- */
+  /* ---- Portal Global Search ---- */
   window.portalSearch = function (value) {
     if (!value.trim()) return;
     const q = value.toLowerCase();
@@ -1049,7 +1049,7 @@
     if (partMatch) { showPortalSection('portal-inventory', document.querySelector('.portal-nav button:nth-child(5)')); return; }
   };
 
-  /* ---- Confirm Delete ---- */
+  /* ---- Modal Delete Confirmation Listener ---- */
   document.getElementById('confirmDeleteBtn')?.addEventListener('click', () => {
     if (!pendingDelete) return;
     const { type, id } = pendingDelete;
@@ -1063,7 +1063,7 @@
     closeModal('confirmModal');
   });
 
-  /* ---- Data Management ---- */
+  /* ---- Data Management Utilities ---- */
   window.exportData = function () {
     const blob = new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -1103,13 +1103,12 @@
     renderDashboard();
   };
 
-  /* ---- Init Portal ---- */
+  /* ---- Initialization & Sync ---- */
   function initPortal() {
     importRepairRequests();
     renderDashboard();
   }
 
-  /* ---- Import Repair Requests from localStorage ---- */
   function importRepairRequests() {
     let requests = [];
     try {
@@ -1171,7 +1170,6 @@
     }
   }
 
-  /* ---- Portal Toast Notification ---- */
   function showPortalToast(message, type) {
     const existing = document.getElementById('portal-toast');
     if (existing) existing.remove();
@@ -1189,7 +1187,7 @@
     }, 5000);
   }
 
-  /* ---- Utility Functions ---- */
+  /* ---- Utility Helpers ---- */
   function getCSSVar(name) {
     return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#0057ff';
   }
@@ -1226,12 +1224,11 @@
     return map[status] || 'gray';
   }
 
-  /* ---- Enter key on login ---- */
+  /* ---- Event Bindings ---- */
   document.getElementById('passcode')?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') login();
   });
 
-  /* ---- Listen for new repair requests in real-time ---- */
   window.addEventListener('atr:new-repair-request', function () {
     const portalView = document.getElementById('portalView');
     if (portalView && !portalView.classList.contains('hidden')) {
@@ -1246,7 +1243,6 @@
     }
   });
 
-  /* ---- Also listen for storage events (cross-tab) ---- */
   window.addEventListener('storage', function (e) {
     if (e.key === 'atr_repair_requests' && e.newValue && e.newValue !== '[]') {
       const portalView = document.getElementById('portalView');
