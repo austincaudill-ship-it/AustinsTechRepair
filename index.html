@@ -597,27 +597,29 @@
         </p>
       </div>
 
-      <div class="pricing-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; max-width: 1000px; margin: 3rem auto; padding: 0 1rem;">
+      <div class="pricing-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; max-width: 1100px; margin: 3rem auto; padding: 0 1rem;">
         
-        <div class="pricing-card apple-section reveal" style="display: flex; flex-direction: column; justify-content: space-between; background: var(--bg-card, #ffffff); border: 1px solid var(--border-color, #eaeaea); border-radius: 12px; padding: 2rem;">
+        <!-- Mobile Dispatch Fee -->
+        <div class="pricing-card apple-section reveal" style="display: flex; flex-direction: column; justify-content: space-between; background: var(--bg-card, #ffffff); border: 1px solid var(--border-color, #eaeaea); border-radius: 12px; padding: 1.75rem;">
           <div>
-            <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Dispatch & Diagnostic</h3>
+            <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Mobile Dispatch Fee</h3>
             <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 1rem; color: var(--accent-blue, #0071e3);">$15</div>
             <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5;">
-              Collected upfront upon appointment scheduling. This secures your slot and gets our mobile repair service on the way to your location.
+              Collected upfront upon appointment scheduling. This fee covers fuel, travel time, and secures your mobile repair appointment slot.
             </p>
           </div>
           <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color, #eaeaea);">
-            <p style="font-size: 0.85rem; color: var(--text-secondary);">*Deducted directly from your final repair price.</p>
+            <p style="font-size: 0.85rem; color: var(--text-secondary);">*Non-refundable. Charged separately from repair labor and diagnostic fees.</p>
           </div>
         </div>
 
-        <div class="pricing-card apple-section reveal" style="display: flex; flex-direction: column; justify-content: space-between; background: var(--bg-card, #ffffff); border: 1px solid var(--border-color, #eaeaea); border-radius: 12px; padding: 2rem;">
+        <!-- Hourly Labor Rate -->
+        <div class="pricing-card apple-section reveal" style="display: flex; flex-direction: column; justify-content: space-between; background: var(--bg-card, #ffffff); border: 1px solid var(--border-color, #eaeaea); border-radius: 12px; padding: 1.75rem;">
           <div>
             <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Hourly Labor Rate</h3>
             <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 1rem; color: var(--accent-blue, #0071e3);">$25<span style="font-size: 1rem; font-weight: normal; color: var(--text-secondary);">/hr</span></div>
             <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5;">
-              Professional, expert labor for on-site diagnostics, hardware swaps, and component-level repairs.
+              Professional labor for standard on-site hardware swaps, assembly, and component repairs.
             </p>
           </div>
           <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color, #eaeaea);">
@@ -625,22 +627,37 @@
           </div>
         </div>
 
-        <div class="pricing-card apple-section reveal" style="display: flex; flex-direction: column; justify-content: space-between; background: var(--bg-card, #ffffff); border: 1px solid var(--border-color, #eaeaea); border-radius: 12px; padding: 2rem;">
+        <!-- In-Depth Bench Diagnosis -->
+        <div class="pricing-card apple-section reveal" style="display: flex; flex-direction: column; justify-content: space-between; background: var(--bg-card, #ffffff); border: 1px solid var(--border-color, #eaeaea); border-radius: 12px; padding: 1.75rem;">
           <div>
-            <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">In-Depth Bench Diagnosis</h3>
+            <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Bench Diagnosis</h3>
             <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 1rem; color: var(--accent-blue, #0071e3);">$29.99</div>
             <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5;">
-              For complex logic board issues, multi-point hardware failures, or advanced bench work requiring multimeters and hot air rework stations.
+              For complex logic board issues, multi-point hardware failures, or bench work requiring multimeters and microscope rework stations.
             </p>
           </div>
           <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color, #eaeaea);">
-            <p style="font-size: 0.85rem; color: var(--text-secondary);">Covers deep technical teardowns and testing.</p>
+            <p style="font-size: 0.85rem; color: var(--text-secondary);">Covers technical electrical testing and component tracing.</p>
+          </div>
+        </div>
+
+        <!-- Teardown Diagnostic Fee -->
+        <div class="pricing-card apple-section reveal" style="display: flex; flex-direction: column; justify-content: space-between; background: var(--bg-card, #ffffff); border: 1px solid var(--border-color, #eaeaea); border-radius: 12px; padding: 1.75rem;">
+          <div>
+            <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Teardown Diagnostic</h3>
+            <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 1rem; color: var(--accent-blue, #0071e3);">$35</div>
+            <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5;">
+              Required when extensive physical disassembly is necessary to access internal components, modules, or hidden sub-assemblies.
+            </p>
+          </div>
+          <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color, #eaeaea);">
+            <p style="font-size: 0.85rem; color: var(--text-secondary);">Covers full tear-down, inspection, and reassembly labor.</p>
           </div>
         </div>
 
       </div>
 
-      <div class="apple-section reveal" style="max-width: 1000px; margin: 0 auto 4rem; background: var(--bg-card, #ffffff); border: 1px solid var(--border-color, #eaeaea); border-radius: 12px; padding: 2rem;">
+      <div class="apple-section reveal" style="max-width: 1100px; margin: 0 auto 4rem; background: var(--bg-card, #ffffff); border: 1px solid var(--border-color, #eaeaea); border-radius: 12px; padding: 2rem;">
         <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Parts Policy & Ordering Terms</h3>
         <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5; margin-bottom: 1rem;">
           All necessary replacement parts are paid for by the customer upon a spoken or written agreement to move forward with the repair. 
@@ -656,6 +673,7 @@
         </p>
       </div>
     </section>
+
 
     <!-- B2B PAGE -->
     <section id="b2b" class="page">
