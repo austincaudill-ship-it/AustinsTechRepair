@@ -15,20 +15,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const cleanId = targetPageId.replace('#', '');
     const targetElement = document.getElementById(cleanId);
     
-    if (targetElement && targetElement.classList.contains('page')) {
-      pages.forEach(p => p.classList.remove('active'));
-      targetElement.classList.add('active');
+    // Check if target element exists
+    if (targetElement) {
+      // CASE A: The element is a top-level .page container
+      if (targetElement.classList.contains('page')) {
+        pages.forEach(p => p.classList.remove('active'));
+        targetElement.classList.add('active');
 
-      navLinks.forEach(l => {
-        const pageAttr = l.getAttribute('data-page') || l.getAttribute('href');
-        if (pageAttr && pageAttr.includes(cleanId)) {
-          l.classList.add('active');
-        } else {
-          l.classList.remove('active');
+        navLinks.forEach(l => {
+          const pageAttr = l.getAttribute('data-page') || l.getAttribute('href');
+          if (pageAttr && pageAttr.includes(cleanId)) {
+            l.classList.add('active');
+          } else {
+            l.classList.remove('active');
+          }
+        });
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } 
+      // CASE B: The element is an in-page section (e.g., #atr-one inside an active page)
+      else {
+        const parentPage = targetElement.closest('.page');
+        if (parentPage) {
+          pages.forEach(p => p.classList.remove('active'));
+          parentPage.classList.add('active');
         }
-      });
-
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+        targetElement.scrollIntoView({ behavior: 'smooth' });
+      }
     }
   }
 
