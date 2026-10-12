@@ -192,7 +192,47 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // -------------------------------------------------------------------------
-  // 5. SHOPPING CART & DRAWERS
+  // 5. APPLE-STYLE SHOWCASE CAROUSEL
+  // -------------------------------------------------------------------------
+  const showcaseSlides = document.querySelectorAll('.apple-showcase .showcase-slide');
+  const showcaseDots = document.querySelectorAll('.apple-showcase .showcase-dot');
+  let currentShowcaseIndex = 0;
+  let showcaseInterval;
+
+  if (showcaseSlides.length > 0 && showcaseDots.length > 0) {
+    function goToImageSlide(n) {
+      showcaseSlides[currentShowcaseIndex].classList.remove('active');
+      showcaseDots[currentShowcaseIndex].classList.remove('active');
+      
+      currentShowcaseIndex = (n + showcaseSlides.length) % showcaseSlides.length;
+      
+      showcaseSlides[currentShowcaseIndex].classList.add('active');
+      showcaseDots[currentShowcaseIndex].classList.add('active');
+    }
+
+    showcaseDots.forEach((dot, index) => {
+      dot.addEventListener('click', () => {
+        goToImageSlide(index);
+        resetShowcaseTimer();
+      });
+    });
+
+    function startShowcaseTimer() {
+      showcaseInterval = setInterval(() => {
+        goToImageSlide(currentShowcaseIndex + 1);
+      }, 6000);
+    }
+
+    function resetShowcaseTimer() {
+      clearInterval(showcaseInterval);
+      startShowcaseTimer();
+    }
+
+    startShowcaseTimer();
+  }
+
+  // -------------------------------------------------------------------------
+  // 6. SHOPPING CART & DRAWERS
   // -------------------------------------------------------------------------
   const cartToggle = document.getElementById('cart-toggle');
   const cartDrawer = document.getElementById('cart-drawer');
