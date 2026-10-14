@@ -194,7 +194,7 @@ body {
 .section-copy { color: var(--text-muted); font-size: 1.1rem; }
 
 /* ==========================================================================
-   PRICE MATCH GUARANTEE COMPONENT (Cyberpunk Vibe)
+   PRICE MATCH GUARANTEE COMPONENT
    ========================================================================== */
 .price-match-container {
   max-width: 680px;
@@ -282,27 +282,33 @@ body {
   box-shadow: 0 0 0 3px var(--primary-glow), inset 0 0 10px rgba(0, 255, 102, 0.1);
 }
 
+/* HIGH-VISIBILITY BUTTON FIX */
 .price-match-container button[type="submit"] {
-  width: 100%;
-  margin-top: 0.75rem;
-  padding: 1.1rem 1.5rem;
-  background: linear-gradient(135deg, var(--accent), #ff3399);
-  color: #ffffff;
-  border: none;
-  border-radius: var(--radius-lg);
-  font-family: var(--font-body);
-  font-size: 1.05rem;
-  font-weight: 900;
-  cursor: pointer;
-  box-shadow: 0 4px 20px var(--accent-glow);
-  transition: all var(--transition);
-  letter-spacing: 0.5px;
+  width: 100% !important;
+  margin-top: 0.75rem !important;
+  padding: 1.1rem 1.5rem !important;
+  background: #ff007f !important;           /* Hot Pink Background */
+  color: #ffffff !important;                 /* Solid White Text */
+  border: none !important;
+  border-radius: var(--radius-lg) !important;
+  font-family: var(--font-body) !important;
+  font-size: 1.05rem !important;
+  font-weight: 900 !important;
+  cursor: pointer !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  box-shadow: 0 4px 20px var(--accent-glow) !important;
+  transition: all var(--transition) !important;
+  letter-spacing: 0.5px !important;
+  -webkit-appearance: none;
 }
 
-.price-match-container button[type="submit"]:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 25px rgba(255, 0, 127, 0.6);
-  filter: brightness(1.1);
+.price-match-container button[type="submit"]:hover,
+.price-match-container button[type="submit"]:active {
+  background: #e00070 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 25px rgba(255, 0, 127, 0.6) !important;
 }
 
 #result {
