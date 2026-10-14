@@ -1,3 +1,5 @@
+Here is your updated master stylesheet with a dedicated, beautifully styled Price Match Guarantee section included.
+The styling uses modern UI techniques like subtle glassmorphism, glowing micro-interactions, clean input styling, and clear status messaging for the calculation result.
 /* ==========================================================================
    AUSTIN'S TECH REPAIR GROUP — MASTER STYLESHEET
    ========================================================================== */
@@ -119,7 +121,7 @@ body {
 
 @media (max-width: 900px) {
   .nav-desktop { display: none; }
-  .header-actions { display: flex; } /* Keeps cart and account buttons visible on mobile */
+  .header-actions { display: flex; }
   .mobile-bottom-nav { display: flex; }
   body { padding-bottom: 64px; }
 }
@@ -164,6 +166,143 @@ body {
 .section-title { font-family: var(--font-display); font-size: clamp(2rem, 3.5vw, 2.75rem); font-weight: 800; margin-bottom: 0.75rem; }
 .section-copy { color: var(--text-muted); font-size: 1.05rem; }
 
+/* ==========================================================================
+   PRICE MATCH GUARANTEE COMPONENT
+   ========================================================================== */
+.price-match-container {
+  max-width: 680px;
+  margin: 3.5rem auto;
+  padding: 2.25rem 2rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  overflow: hidden;
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.price-match-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 50%, var(--accent-blue) 100%);
+}
+
+.price-match-container:hover {
+  box-shadow: var(--shadow-xl);
+}
+
+.price-match-container h3 {
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 2.5vw, 1.65rem);
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 1.5rem;
+  text-align: center;
+  letter-spacing: -0.02em;
+}
+
+.price-match-container form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.price-match-container label {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+  display: block;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.price-match-container input {
+  width: 100%;
+  padding: 0.85rem 1.15rem;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  font-size: 1.05rem;
+  font-family: var(--font-body);
+  font-weight: 600;
+  color: var(--text);
+  outline: none;
+  transition: all var(--transition);
+}
+
+.price-match-container input[readonly] {
+  background: var(--border);
+  color: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
+.price-match-container input:not([readonly]):focus {
+  background: var(--surface);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(0, 87, 255, 0.12);
+}
+
+.price-match-container button[type="submit"] {
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 1rem 1.5rem;
+  background: var(--primary);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-lg);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 87, 255, 0.25);
+  transition: all var(--transition);
+}
+
+.price-match-container button[type="submit"]:hover {
+  background: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 87, 255, 0.35);
+}
+
+.price-match-container button[type="submit"]:active {
+  transform: translateY(0);
+}
+
+#result {
+  margin-top: 1.25rem;
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius-lg);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  text-align: center;
+  transition: all var(--transition);
+}
+
+#result:not(:empty) {
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 600px) {
+  .price-match-container {
+    padding: 1.5rem 1.25rem;
+    margin: 2rem 1rem;
+  }
+}
+
 /* Apple-Style Sections */
 .apple-section {
   display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;
@@ -183,7 +322,7 @@ body {
   .apple-section.reverse .apple-image { order: 2; }
 }
 
-/* --- Apple-Style Showcase Slideshow --- */
+/* Apple-Style Showcase Slideshow */
 .apple-showcase {
   max-width: var(--content-wide, 1200px);
   margin: 5rem auto;
@@ -216,7 +355,7 @@ body {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
-  position: relative; /* Brings active slide into document flow */
+  position: relative;
 }
 
 .showcase-slide.reverse .showcase-content {
@@ -319,7 +458,6 @@ body {
   }
 }
 
-
 /* Testimonials */
 .testimonials-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 2rem; }
 .testimonial-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: 2rem; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; justify-content: space-between; }
@@ -404,8 +542,9 @@ body {
 .footer-bottom { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
 .footer-wordmark { font-family: var(--font-display); font-weight: 800; color: #fff; font-size: 1.1rem; }
 
-/* --- Mobile Fixes & Safe Overrides --- */
+/* Mobile Fixes & Safe Overrides */
 @media (max-width: 768px) {
   .footer-bottom { flex-direction: column; text-align: center; }
   .container, .apple-section { padding-left: 1rem; padding-right: 1rem; }
 }
+
