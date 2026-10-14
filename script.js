@@ -263,56 +263,25 @@ document.addEventListener('DOMContentLoaded', () => {
   if (cartCloseBtn) cartCloseBtn.addEventListener('click', () => toggleCart(false));
   if (cartBackdrop) cartBackdrop.addEventListener('click', () => toggleCart(false));
 
-  // Scroll Reveal Animation Observer
-  const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
-  const observer = new IntersectionObserver((entries, obs) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('revealed');
-        obs.unobserve(entry.target);
-      }
-    });
-  }, observerOptions);
-
-  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
-});
-
-// -------------------------------------------------------------------------
-  // Price match 
   // -------------------------------------------------------------------------
-document.getElementById('priceMatchForm').addEventListener('submit', function(event) {
-  event.preventDefault();
+  // 7. COMPETITOR PRICE MATCH CALCULATOR
+  // -------------------------------------------------------------------------
+  const priceMatchForm = document.getElementById('priceMatchForm');
+  if (priceMatchForm) {
+    priceMatchForm.addEventListener('submit', function(event) {
+      event.preventDefault();
 
-  // Get the values from the inputs
-  const ourPrice = parseFloat(document.getElementById('ourPrice').value);
-  const competitorPrice = parseFloat(document.getElementById('competitorPrice').value);
-  const resultDiv = document.getElementById('result');
+      const ourPrice = parseFloat(document.getElementById('ourPrice').value);
+      const competitorPrice = parseFloat(document.getElementById('competitorPrice').value);
+      const resultDiv = document.getElementById('result');
 
-  // Validation: Ensure competitor price is a valid number
-  if (isNaN(competitorprice) || competitorPrice <= 0) {
-    resultDiv.style.color = 'red';
-    resultDiv.textContent = 'Please enter a valid competitor price.';
-    return;
-  }
+      // Validation: Ensure competitor price is a valid number (Fixed variable name case)
+      if (isNaN(competitorPrice) || competitorPrice <= 0) {
+        resultDiv.style.color = 'red';
+        resultDiv.textContent = 'Please enter a valid competitor price.';
+        return;
+      }
 
-  // Check if competitor is actually cheaper
-  if (competitorPrice >= ourPrice) {
-    resultDiv.style.color = 'orange';
-    resultDiv.textContent = `Our current price ($${ourPrice.toFixed(2)}) is already lower than or equal to the competitor's price!`;
-    return;
-  }
-
-  // Calculate the new price: competitor price minus $10
-  let matchedPrice = competitorPrice - 10.00;
-
-  // Optional business rule: Ensure you don't go below your minimum cost/floor price (e.g., $20)
-  const minimumFloorPrice = 20.00; 
-  if (matchedPrice < minimumFloorPrice) {
-    matchedPrice = minimumFloorPrice;
-  }
-
-  // Display the result to the customer
-  resultDiv.style.color = 'green';
-  resultDiv.innerHTML = `Price Match Approved!<br>Your new price is: <strong>$${matchedPrice.toFixed(2)}</strong> (Competitor: $${competitorPrice.toFixed(2)} minus $10 beat discount)`;
-});
-
+      // Check if competitor is actually cheaper
+      if (competitorPrice >= ourPrice) {
+        resultDiv
