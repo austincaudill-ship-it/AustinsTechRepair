@@ -38,6 +38,7 @@
   --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 16px 32px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.6);
   --shadow-glow: 0 0 20px var(--primary-glow);
   --shadow-pink-glow: 0 0 20px var(--accent-glow);
 
@@ -271,9 +272,4 @@ body {
 .stat-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 800; margin-bottom: 2px; }
 .stat-value { font-family: var(--font-display); font-size: 1.6rem; font-weight: 900; color: #fff; }
 .portal-table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); overflow-x: auto; width: 100%; margin-top: 1rem; }
-.portal-table { width: 100%; min-width: 650px; border-collapse: collapse; text-align: left; font-size: 0.875rem; }
-.portal-table th { background: var(--surface-alt); padding: 1rem; font-weight: 800; color: var(--text-muted); border-bottom: 1px solid var(--border); font-size: 0.75rem; text-transform: uppercase; }
-.portal-table td { padding: 1rem; border-bottom: 1px solid var(--border); color: var(--text); }
-.pbtn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0.7rem 1.25rem; border-radius: var(--radius-lg); font-size: 0.875rem; font-weight: 800; cursor: pointer; border: none; transition: var(--transition); text-decoration: none; }
-.pbtn-light { background: var(--surface-alt); color: var(--text); border: 1px solid var(--border); }
-.pbtn-sm { padding: 0.4rem 0.75rem; font-size: 0.75rem; }
+.portal-table { width: 100%; min-width: 650px; border-collapse: collapse; text-align: left; font-size: 
