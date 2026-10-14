@@ -264,18 +264,20 @@ document.addEventListener('DOMContentLoaded', () => {
   if (cartBackdrop) cartBackdrop.addEventListener('click', () => toggleCart(false));
 
 
-  // -------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
   // 7. COMPETITOR PRICE MATCH CALCULATOR
   // -------------------------------------------------------------------------
-  const priceMatchForm = document.getElementById('priceMatchForm');
-  
-  if (priceMatchForm) {
-    priceMatchForm.addEventListener('submit', function(event) {
+  document.addEventListener('submit', function(event) {
+    // Check if the submitted form is our price match form
+    if (event.target && event.target.id === 'priceMatchForm') {
+      // PREVENT DEFAULT PAGE REFRESH
       event.preventDefault();
 
       const ourPriceInput = document.getElementById('ourPrice');
       const competitorPriceInput = document.getElementById('competitorPrice');
       const resultDiv = document.getElementById('result');
+
+      if (!ourPriceInput || !competitorPriceInput || !resultDiv) return;
 
       const ourPrice = parseFloat(ourPriceInput.value);
       const competitorPrice = parseFloat(competitorPriceInput.value);
@@ -300,10 +302,9 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // Calculate new guaranteed price: Competitor price minus $10
+      // Calculate guaranteed price: Competitor price minus $10
       let matchedPrice = competitorPrice - 10.00;
 
-      // Ensure price doesn't go below $0 (or set a minimum labor threshold if desired)
       if (matchedPrice < 0) {
         matchedPrice = 0;
       }
@@ -313,8 +314,10 @@ document.addEventListener('DOMContentLoaded', () => {
       resultDiv.innerHTML = `
         🎉 <strong>Price Match Approved!</strong><br>
         Competitor Price: $${competitorPrice.toFixed(2)}<br>
-        <strong>Your New Guaranteed Rate: $${matchedPrice.toFixed(2)}</strong> (Competitor price minus $10)
+        <strong>Your New Guaranteed Rate: $${matchedPrice.toFixed(2)}</strong> ($10 off competitor price)
       `;
-    });
+    }
+  });
+
   }
 
