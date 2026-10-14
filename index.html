@@ -757,10 +757,11 @@
         </div>
       </div>
 
-      <div id="portalView" class="app hidden">
-        <div class="mobile-portal-bar" style="display:none;">
-          <button id="portalNavToggle" type="button" class="mobile-menu-btn"><i class="fas fa-bars"></i></button>
-          <span class="mobile-portal-brand">ATR <span>Operations</span></span>
+          <div id="portalView" class="app hidden">
+        <!-- Mobile Header Bar for Portal -->
+        <div class="mobile-portal-bar" id="mobilePortalBar" style="display: none; align-items: center; justify-content: space-between; background: var(--surface); padding: 1rem; border-bottom: 1px solid var(--border); width: 100%;">
+          <button id="portalNavToggle" type="button" class="pbtn pbtn-light pbtn-sm"><i class="fas fa-bars"></i> Menu</button>
+          <span style="font-weight: 800; font-family: var(--font-display); color: #fff;">ATR <span style="color: var(--primary);">Operations</span></span>
           <button type="button" class="pbtn pbtn-light pbtn-sm" onclick="logout()"><i class="fas fa-right-from-bracket"></i></button>
         </div>
 
@@ -770,9 +771,10 @@
               <div class="title">Austin's Tech Repair <span>Group</span></div>
               <div class="sub">Operations Dashboard</div>
             </div>
-            <button id="portalSidebarClose" type="button" class="sidebar-close-btn"><i class="fas fa-times"></i></button>
+            <!-- Close Button for Mobile Sidebar -->
+            <button id="portalSidebarClose" type="button" class="sidebar-close-btn" style="background: var(--surface-alt); border: 1px solid var(--border); width: 36px; height: 36px; border-radius: 50%; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center;"><i class="fas fa-times"></i></button>
           </div>
-          <nav class="portal-nav">
+          <nav class="portal-nav" id="portalNavLinks">
             <button class="active" onclick="showPortalSection('portal-dashboard', this);"><i class="fas fa-gauge"></i> Dashboard</button>
             <button onclick="showPortalSection('portal-tickets', this);"><i class="fas fa-ticket"></i> Tickets</button>
             <button onclick="showPortalSection('portal-queue', this);"><i class="fas fa-list-check"></i> Queue</button>
@@ -785,6 +787,7 @@
             <button class="logout" onclick="logout()"><i class="fas fa-right-from-bracket"></i> Logout</button>
           </nav>
         </aside>
+
 
         <main class="portal-main">
           <header class="topbar">
