@@ -263,14 +263,12 @@ document.addEventListener('DOMContentLoaded', () => {
   if (cartCloseBtn) cartCloseBtn.addEventListener('click', () => toggleCart(false));
   if (cartBackdrop) cartBackdrop.addEventListener('click', () => toggleCart(false));
 
-
-    // -------------------------------------------------------------------------
+  // -------------------------------------------------------------------------
   // 7. COMPETITOR PRICE MATCH CALCULATOR
   // -------------------------------------------------------------------------
-  document.addEventListener('submit', function(event) {
-    // Check if the submitted form is our price match form
-    if (event.target && event.target.id === 'priceMatchForm') {
-      // PREVENT DEFAULT PAGE REFRESH
+  const priceMatchForm = document.getElementById('priceMatchForm');
+  if (priceMatchForm) {
+    priceMatchForm.addEventListener('submit', function(event) {
       event.preventDefault();
 
       const ourPriceInput = document.getElementById('ourPrice');
@@ -316,8 +314,19 @@ document.addEventListener('DOMContentLoaded', () => {
         Competitor Price: $${competitorPrice.toFixed(2)}<br>
         <strong>Your New Guaranteed Rate: $${matchedPrice.toFixed(2)}</strong> ($10 off competitor price)
       `;
-    }
-  });
-
+    });
   }
 
+  // Scroll Reveal Animation Observer
+  const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
+  const observer = new IntersectionObserver((entries, obs) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('revealed');
+        obs.unobserve(entry.target);
+      }
+    });
+  }, observerOptions);
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+});
