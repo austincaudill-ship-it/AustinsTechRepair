@@ -400,7 +400,6 @@
         </div>
       </div>
     </section>
-
     <!-- REPAIR PAGE -->
     <section id="repair" class="page">
       <div class="container">
@@ -448,23 +447,23 @@
           <div class="repair-step" id="step-issue">
             <p class="eyebrow">Step 02</p>
             <h3 class="step-title" id="issue-title">Select Brand & Issue</h3>
-            <p style="font-size: var(--text-sm); color: var(--text-muted); margin-bottom: var(--space-3);">First, pick your device brand:</p>
-            <div class="option-grid" id="make-grid" style="margin-bottom: var(--space-5);"></div>
-            <p style="font-size: var(--text-sm); color: var(--text-muted); margin-bottom: var(--space-3);">Now select the issue:</p>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">First, pick your device brand:</p>
+            <div class="option-grid" id="make-grid" style="margin-bottom: 1.25rem;"></div>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">Now select the issue:</p>
             <div class="issue-list" id="issue-list"></div>
-            <button class="back-btn" type="button" data-back="device"><i class="fas fa-arrow-left"></i> Back</button>
+            <button class="back-btn" type="button" data-back="device" style="margin-top: 1rem;"><i class="fas fa-arrow-left"></i> Back</button>
           </div>
 
           <div class="repair-step" id="step-estimate">
             <p class="eyebrow">Step 03</p>
             <h3 class="step-title">Your Estimate</h3>
-            <div id="estimate-summary" style="margin-bottom: var(--space-5); display: flex; flex-wrap: wrap; gap: var(--space-3);"></div>
+            <div id="estimate-summary" style="margin-bottom: 1.25rem; display: flex; flex-wrap: wrap; gap: 0.75rem;"></div>
             <div class="estimate-box">
               <p class="label">Estimated Price Range</p>
               <p class="price" id="estimate-price">$50 — $150</p>
               <p class="note">Final pricing confirmed after diagnostic*. Parts availability may affect timeline. ($15 dispatch fee collected upfront is credited toward final price).</p>
             </div>
-            <div style="display: flex; gap: var(--space-3); margin-top: var(--space-5); flex-wrap: wrap;">
+            <div style="display: flex; gap: 0.75rem; margin-top: 1.25rem; flex-wrap: wrap;">
               <button class="btn btn-primary" type="button" data-action="continue-contact"><i class="fas fa-arrow-right"></i> Continue to Photos</button>
               <button class="back-btn" type="button" data-back="issue"><i class="fas fa-arrow-left"></i> Back</button>
             </div>
@@ -473,44 +472,47 @@
           <div class="repair-step" id="step-contact">
             <p class="eyebrow">Step 04</p>
             <h3 class="step-title">Send Photos & Contact Info</h3>
-            <p style="color: var(--text-muted); margin-bottom: var(--space-5); font-size: var(--text-sm);">Upload photos of your device damage so we can prepare an accurate quote. Then fill in your details and we'll reach out within 24 hours.</p>
+            <p style="color: var(--text-muted); margin-bottom: 1.25rem; font-size: 0.9rem;">Upload photos of your device damage so we can prepare an accurate quote. Then fill in your details and we'll reach out within 24 hours.</p>
 
-            <form id="repair-contact-form" class="form-grid" enctype="multipart/form-data">
-              <div style="border: 2px dashed var(--border); border-radius: var(--radius-xl); padding: var(--space-6); text-align: center; margin-bottom: var(--space-4); transition: all var(--transition);" id="file-drop-zone">
-                <i class="fas fa-cloud-arrow-up" style="font-size: 2.5rem; color: var(--primary); margin-bottom: var(--space-3);"></i>
-                <p style="font-weight: 800; margin-bottom: var(--space-2);">Drop photos here or click to browse</p>
-                <p style="font-size: var(--text-xs); color: var(--text-muted); margin-bottom: var(--space-4);">JPG, PNG, HEIC, PDF · Max 5 files · 10MB each</p>
+            <!-- Form configured to redirect to your Jotform on submit -->
+            <form id="repair-contact-form" class="form-grid" onsubmit="event.preventDefault(); window.location.href='https://form.jotform.com/261955946010055';">
+              <div style="border: 2px dashed var(--border); border-radius: var(--radius-xl); padding: 1.5rem; text-align: center; margin-bottom: 1rem;" id="file-drop-zone">
+                <i class="fas fa-cloud-arrow-up" style="font-size: 2.5rem; color: var(--primary); margin-bottom: 0.75rem;"></i>
+                <p style="font-weight: 800; margin-bottom: 0.5rem;">Drop photos here or click to browse</p>
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 1rem;">JPG, PNG, HEIC, PDF · Max 5 files · 10MB each</p>
                 <input type="file" id="file-upload" name="device-photos" multiple accept="image/*,.pdf" style="display: none;" />
                 <button class="btn btn-light" type="button" id="file-browse-btn"><i class="fas fa-folder-open"></i> Browse Files</button>
-                <div id="file-preview-list" style="display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-4); justify-content: center;"></div>
+                <div id="file-preview-list" style="display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1rem; justify-content: center;"></div>
               </div>
 
               <input type="hidden" id="repair-device-hidden" name="device_type" value="" />
               <input type="hidden" id="repair-make-hidden" name="device_brand" value="" />
               <input type="hidden" id="repair-issue-hidden" name="issue_type" value="" />
 
-              <div class="field">
-                <label for="full-name">Full Name <span style="color: var(--danger);">*</span></label>
-                <input id="full-name" class="form-field" type="text" name="customer_name" required placeholder="John Smith" />
+              <div class="field" style="margin-bottom: 1rem;">
+                <label for="full-name" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--accent); margin-bottom: 0.4rem;">Full Name <span style="color: var(--danger);">*</span></label>
+                <input id="full-name" class="form-field" type="text" name="customer_name" required placeholder="John Smith" style="width: 100%; padding: 0.85rem 1rem; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); color: #fff; outline: none;" />
               </div>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                 <div class="field">
-                  <label for="phone-number">Phone Number <span style="color: var(--danger);">*</span></label>
-                  <input id="phone-number" class="form-field" type="tel" name="customer_phone" required placeholder="(937) 555-0100" />
+                  <label for="phone-number" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--accent); margin-bottom: 0.4rem;">Phone Number <span style="color: var(--danger);">*</span></label>
+                  <input id="phone-number" class="form-field" type="tel" name="customer_phone" required placeholder="(937) 555-0100" style="width: 100%; padding: 0.85rem 1rem; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); color: #fff; outline: none;" />
                 </div>
                 <div class="field">
-                  <label for="email-address">Email Address <span style="color: var(--danger);">*</span></label>
-                  <input id="email-address" class="form-field" type="email" name="customer_email" required placeholder="john@example.com" />
+                  <label for="email-address" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--accent); margin-bottom: 0.4rem;">Email Address <span style="color: var(--danger);">*</span></label>
+                  <input id="email-address" class="form-field" type="email" name="customer_email" required placeholder="john@example.com" style="width: 100%; padding: 0.85rem 1rem; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); color: #fff; outline: none;" />
                 </div>
               </div>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                 <div class="field">
-                  <label for="city-zip">Service Address / Location <span style="color: var(--danger);">*</span></label>
-                  <input id="city-zip" class="form-field" type="text" name="customer_location" required placeholder="Street Address, City, OH" />
+                  <label for="city-zip" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--accent); margin-bottom: 0.4rem;">Service Address / Location <span style="color: var(--danger);">*</span></label>
+                  <input id="city-zip" class="form-field" type="text" name="customer_location" required placeholder="Street Address, City, OH" style="width: 100%; padding: 0.85rem 1rem; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); color: #fff; outline: none;" />
                 </div>
                 <div class="field">
-                  <label for="preferred-time">Preferred Dispatch Time</label>
-                  <select id="preferred-time" class="form-field" name="preferred_time">
+                  <label for="preferred-time" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--accent); margin-bottom: 0.4rem;">Preferred Dispatch Time</label>
+                  <select id="preferred-time" class="form-field" name="preferred_time" style="width: 100%; padding: 0.85rem 1rem; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); color: #fff; outline: none;">
                     <option value="anytime">Anytime</option>
                     <option value="morning">Morning (5:30AM-12PM)</option>
                     <option value="afternoon">Afternoon (12PM-5PM)</option>
@@ -518,29 +520,24 @@
                   </select>
                 </div>
               </div>
-              <div class="field">
-                <label for="device-model">Device Model (optional)</label>
-                <input id="device-model" class="form-field" type="text" name="device_model" placeholder="e.g., iPhone 13 Pro, Dell XPS 15" />
-              </div>
-              <div class="field">
-                <label for="additional-details">Additional Details (optional)</label>
-                <textarea id="additional-details" class="form-field" name="additional_details" rows="3" placeholder="Describe what happened, when the issue started, any troubleshooting you've tried..."></textarea>
+
+              <div class="field" style="margin-bottom: 1rem;">
+                <label for="device-model" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--accent); margin-bottom: 0.4rem;">Device Model (optional)</label>
+                <input id="device-model" class="form-field" type="text" name="device_model" placeholder="e.g., iPhone 13 Pro, Dell XPS 15" style="width: 100%; padding: 0.85rem 1rem; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); color: #fff; outline: none;" />
               </div>
 
-              <div class="field" style="flex-direction: row; align-items: flex-start; gap: var(--space-3);">
+              <div class="field" style="margin-bottom: 1rem;">
+                <label for="additional-details" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--accent); margin-bottom: 0.4rem;">Additional Details (optional)</label>
+                <textarea id="additional-details" class="form-field" name="additional_details" rows="3" placeholder="Describe what happened, when the issue started..." style="width: 100%; padding: 0.85rem 1rem; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); color: #fff; outline: none;"></textarea>
+              </div>
+
+              <div class="field" style="display: flex; align-items: flex-start; gap: 0.75rem; margin-bottom: 1.25rem;">
                 <input type="checkbox" id="consent-check" name="consent" required style="margin-top: 4px; width: 18px; height: 18px; accent-color: var(--primary);" />
-                <label for="consent-check" style="font-size: var(--text-xs); color: var(--text-muted); text-transform: none; letter-spacing: 0; font-family: var(--font-body);">I authorize Austin's Tech Repair Group to dispatch mobile service to my location. I understand that submitting photos does not constitute a binding repair agreement. Final pricing is confirmed after diagnostic.</label>
+                <label for="consent-check" style="font-size: 0.75rem; color: var(--text-muted); text-transform: none; font-family: var(--font-body); line-height: 1.4;">I authorize Austin's Tech Repair Group to dispatch mobile service to my location. Final pricing is confirmed after diagnostic.</label>
               </div>
 
-              <button class="cta-primary" type="submit"><i class="fas fa-paper-plane"></i> Submit Mobile Dispatch Request</button>
-            </form>
+              <button class="btn btn-primary btn-block" type="submit" style="width: 100%; background: var(--primary); color: #070a14; padding: 1rem; font-weight: 900; border-radius: var(--radius-lg); border: none; cursor: pointer;"><i class="fas fa
 
-            <p id="repair-thanks" class="form-thanks" hidden><i class="fas fa-circle-check"></i> Thank you. Your repair request has been received. We'll contact you within 24 hours.</p>
-            <button class="back-btn" type="button" data-back="estimate"><i class="fas fa-arrow-left"></i> Back to Estimate</button>
-          </div>
-        </div>
-      </div>
-    </section>
 
     <!-- ABOUT PAGE -->
     <section id="about" class="page">
