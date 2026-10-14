@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-title" content="Austin's Tech Repair Group" />
 
   <title>Austin's Tech Repair Group | Mobile Phone, Computer & Device Repair in Ohio</title>
-  <meta name="description" content="Professional mobile tech repair for phones, tablets, computers, gaming consoles, and smart watches. We come to your location! Serving Xenia, Dayton, and Southeastern Ohio." />
+  <meta name="description" content="Professional mobile tech repair for phones, tablets, computers, gaming consoles, and business electronics. We come directly to your location! Serving Xenia, Dayton, and the Miami Valley." />
   
   <link rel="canonical" href="https://austinstechrepairgroup.com/" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -16,7 +16,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
-  <!-- Original Separate Stylesheets -->
+  <!-- Master Stylesheet -->
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="portal.css" />
 
@@ -38,6 +38,9 @@
     .faq-icon { transition: transform 0.3s ease; color: var(--primary); }
     .faq-item[open] .faq-icon { transform: rotate(180deg); }
     .faq-answer { padding: 0 1.5rem 1.25rem 1.5rem; color: var(--text-muted); font-size: 0.925rem; line-height: 1.6; }
+    .scope-banner { background: rgba(255, 0, 127, 0.08); border: 1px solid rgba(255, 0, 127, 0.25); border-radius: var(--radius-xl); padding: 1.5rem 2rem; margin: 3rem auto; max-width: 900px; text-align: center; }
+    .scope-banner h3 { color: var(--accent); font-family: var(--font-display); font-weight: 800; margin-bottom: 0.5rem; font-size: 1.1rem; }
+    .scope-banner p { color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; }
   </style>
 </head>
 <body>
@@ -48,18 +51,18 @@
       <div class="brand-mark"><i class="fas fa-screwdriver-wrench"></i></div>
       <div class="brand-info">
         <span class="brand-name">Austin's Tech Repair Group</span>
-        <span class="brand-sub">Mobile Service Sole Proprietorship</span>
+        <span class="brand-sub">Mobile Local Tech Support</span>
       </div>
     </a>
 
     <nav class="nav-desktop">
       <a class="nav-link active" href="#home" data-page="home">Home</a>
       <a class="nav-link" href="#shop" data-page="shop">Shop</a>
-      <a class="nav-link" href="https://form.jotform.com/262308779420057" data-page="repair">Repair</a>
+      <a class="nav-link" href="#repair" data-page="repair">Repair Wizard</a>
       <a class="nav-link" href="#about" data-page="about">About</a>
       <a class="nav-link" href="#contact" data-page="contact">Contact</a>
       <a class="nav-link" href="#prices" data-page="prices">Prices</a>
-      <a class="nav-link" href="#b2b" data-page="b2b">B2B</a>
+      <a class="nav-link" href="#b2b" data-page="b2b">B2B & Commercial</a>
       <a class="nav-link" href="#atr-one" data-page="atr-one">ATR One</a>
       <a class="nav-link" href="#careers" data-page="careers">Careers</a>
       <a class="nav-link" href="#investors" data-page="investors">Investors</a>
@@ -83,9 +86,11 @@
       <div class="menu-links">
         <a class="menu-link active" href="#home" data-page="home">Home</a>
         <a class="menu-link" href="#shop" data-page="shop">Shop</a>
+        <a class="menu-link" href="#repair" data-page="repair">Repair Wizard</a>
         <a class="menu-link" href="#about" data-page="about">About</a>
         <a class="menu-link" href="#contact" data-page="contact">Contact</a>
         <a class="menu-link" href="#prices" data-page="prices">Prices</a>
+        <a class="menu-link" href="#b2b" data-page="b2b">B2B & Commercial</a>
         <a class="menu-link" href="#atr-one" data-page="atr-one">ATR One Membership</a>
         <a class="menu-link" href="#careers" data-page="careers">Careers</a>
         <a class="menu-link" href="#investors" data-page="investors">Investors</a>
@@ -93,7 +98,7 @@
       </div>
       <div class="menu-footer">
         <a class="menu-phone" href="tel:9372806243"><i class="fas fa-phone"></i> 937-280-6243</a>
-        <span class="menu-tag">Mobile Service across Dayton & Miami Valley</span>
+        <span class="menu-tag">Mobile Dispatch across Xenia & Dayton</span>
       </div>
     </div>
   </nav>
@@ -103,14 +108,22 @@
     <section id="home" class="page active">
       <div class="hero">
         <div class="hero-content">
-          <p class="eyebrow">Austin's Tech Repair Group</p>
-          <h1 class="hero-headline">We Bring The Service <em>To You.</em> Local Mobile Repair & Support.</h1>
-          <p class="hero-sub">Professional mobile repairs, tuneups, setups, B2B IT support, and services brought directly to your preferred location — backed by a 1-year warranty.</p>
+          <p class="eyebrow">Austin Tyler Caudill • Independent Local Tech Support</p>
+          <h1 class="hero-headline">We Bring The Repair Shop <em>To Your Door.</em></h1>
+          <p class="hero-sub">Specialized local component-level repair for phones, tablets, computers, gaming consoles, and business electronics. Fast, honest turnaround with zero hassle.</p>
           <div class="hero-cta-group">
-            <a class="btn btn-primary btn-lg" href="https://form.jotform.com/261955946010055"><i class="fas fa-wrench"></i> Schedule Mobile Dispatch</a>
-            <a class="btn btn-dark btn-lg" href="tel:+19372806243"><i class="fas fa-phone"></i> Call Now</a>
-            <a class="btn btn-light btn-lg" href="#atr-one"><i class="fas fa-star"></i> ATR One</a>
+            <a class="btn btn-primary btn-lg" href="#repair"><i class="fas fa-screwdriver-wrench"></i> Start Repair Wizard</a>
+            <a class="btn btn-dark btn-lg" href="tel:+19372806243"><i class="fas fa-phone"></i> Call 937-280-6243</a>
+            <a class="btn btn-light btn-lg" href="#atr-one"><i class="fas fa-star"></i> ATR One Perks</a>
           </div>
+        </div>
+      </div>
+
+      <!-- Scope of Service Notice -->
+      <div class="container">
+        <div class="scope-banner">
+          <h3><i class="fas fa-triangle-exclamation"></i> Focused Expertise Notice</h3>
+          <p>We specialize exclusively in <strong>consumer electronics and business tech</strong> (smartphones, computers, tablets, gaming consoles). To maintain peak precision and fast turnarounds, <strong>we do not work on vintage audio equipment, automobiles, appliances, or non-electronic goods</strong>.</p>
         </div>
       </div>
 
@@ -132,25 +145,25 @@
         <div id="result"></div>
       </div>
 
-      <!-- FREQUENTLY ASKED QUESTIONS -->
+      <!-- FAQ SECTION -->
       <div class="container" style="padding: 4rem 2rem;">
         <div class="section-header text-center">
           <p class="eyebrow">Got Questions?</p>
           <h2 class="section-title">Frequently Asked Questions</h2>
-          <p class="section-copy">Everything you need to know about our mobile service dispatch and warranty.</p>
+          <p class="section-copy">Everything you need to know about our mobile service dispatch.</p>
         </div>
         <div class="faq-accordion">
           <details class="faq-item">
             <summary class="faq-question"><span>How does mobile on-site repair work?</span> <i class="fas fa-chevron-down faq-icon"></i></summary>
-            <div class="faq-answer">We bring our fully equipped mobile workbench directly to your home, office, or preferred local meeting place. Most standard phone and tablet repairs take under 45 minutes on-site!</div>
+            <div class="faq-answer">Austin comes directly to your home, office, or preferred meeting place across Xenia, Dayton, and the Miami Valley with professional diagnostic tools. Most standard phone and computer repairs are completed right on the spot!</div>
           </details>
           <details class="faq-item">
-            <summary class="faq-question"><span>What is covered under your 1-Year Warranty?</span> <i class="fas fa-chevron-down faq-icon"></i></summary>
-            <div class="faq-answer">All parts installed by Austin's Tech Repair Group are covered against defects in materials and craftsmanship for 1 full year. Accidental physical damage or liquid damage post-repair is excluded.</div>
+            <summary class="faq-question"><span>What electronics do you service?</span> <i class="fas fa-chevron-down faq-icon"></i></summary>
+            <div class="faq-answer">We focus strictly on modern consumer and business electronics: smartphones, tablets, laptops, desktop computers, gaming consoles (PlayStation, Xbox, Nintendo, Steam Deck), and business IT systems.</div>
           </details>
           <details class="faq-item">
-            <summary class="faq-question"><span>What areas do you service in Ohio?</span> <i class="fas fa-chevron-down faq-icon"></i></summary>
-            <div class="faq-answer">We actively provide mobile technician dispatch across Xenia, Dayton, Beavercreek, Kettering, Fairborn, Centerville, and surrounding Miami Valley communities.</div>
+            <summary class="faq-question"><span>What types of items do you NOT service?</span> <i class="fas fa-chevron-down faq-icon"></i></summary>
+            <div class="faq-answer">To ensure high-quality, dedicated focus on electronics, we strictly do not accept vintage audio equipment, cassette decks, record players, car stereos, automotive electronics, or household appliances.</div>
           </details>
         </div>
       </div>
@@ -163,6 +176,65 @@
           <p class="eyebrow">Retail Pipeline</p>
           <h2 class="section-title">Next-Gen Accessories & Gear</h2>
           <p class="section-copy">High-durability screen protectors, GaN fast chargers, heavy-duty cables, and protective cases designed for everyday mobile reliability.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- REPAIR WIZARD PAGE -->
+    <section id="repair" class="page">
+      <div class="container" style="padding: 4rem 2rem; max-width: 900px;">
+        <div class="section-header text-center">
+          <p class="eyebrow">Instant Quote & Dispatch</p>
+          <h2 class="section-title">Repair Wizard</h2>
+          <p class="section-copy">Select your device and issue to get an instant transparent price estimate.</p>
+        </div>
+
+        <div id="step-device" class="repair-step active">
+          <h3 style="margin-bottom: 1.5rem; text-align: center; font-family: var(--font-display);">What device needs repair?</h3>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
+            <button class="btn btn-light" type="button" data-device="Phones" style="padding: 1.5rem; justify-content: flex-start; gap: 12px;"><i class="fas fa-mobile-screen fa-lg" style="color:var(--primary)"></i> Smartphones</button>
+            <button class="btn btn-light" type="button" data-device="Tablets" style="padding: 1.5rem; justify-content: flex-start; gap: 12px;"><i class="fas fa-tablet-screen-button fa-lg" style="color:var(--primary)"></i> Tablets</button>
+            <button class="btn btn-light" type="button" data-device="Computers" style="padding: 1.5rem; justify-content: flex-start; gap: 12px;"><i class="fas fa-laptop fa-lg" style="color:var(--primary)"></i> Computers & Laptops</button>
+            <button class="btn btn-light" type="button" data-device="Gaming" style="padding: 1.5rem; justify-content: flex-start; gap: 12px;"><i class="fas fa-gamepad fa-lg" style="color:var(--primary)"></i> Gaming Consoles</button>
+            <button class="btn btn-light" type="button" data-device="Smart Watches" style="padding: 1.5rem; justify-content: flex-start; gap: 12px;"><i class="fas fa-clock fa-lg" style="color:var(--primary)"></i> Smart Watches</button>
+            <button class="btn btn-light" type="button" data-device="Business" style="padding: 1.5rem; justify-content: flex-start; gap: 12px;"><i class="fas fa-briefcase fa-lg" style="color:var(--primary)"></i> Business Electronics</button>
+          </div>
+        </div>
+
+        <div id="step-issue" class="repair-step hidden" style="margin-top: 2rem;">
+          <button class="btn btn-light btn-sm" type="button" data-back="device" style="margin-bottom: 1.5rem;"><i class="fas fa-arrow-left"></i> Back to Devices</button>
+          <h3 id="issue-title" style="margin-bottom: 1rem; font-family: var(--font-display);">Select Brand & Issue</h3>
+          <div id="make-grid" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1.5rem;"></div>
+          <div id="issue-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
+        </div>
+
+        <div id="step-estimate" class="repair-step hidden" style="margin-top: 2rem; background: var(--surface); padding: 2.5rem; border-radius: var(--radius-2xl); border: 1px solid var(--border); text-align: center;">
+          <p class="eyebrow">Estimated Pricing</p>
+          <h3 style="font-family: var(--font-display); font-size: 2rem; margin: 1rem 0; color: var(--primary);" id="estimate-price">$0 — $0</h3>
+          <div id="estimate-summary" style="margin-bottom: 2rem;"></div>
+          <div style="display: flex; gap: 1rem; justify-content: center;">
+            <button class="btn btn-light" type="button" data-back="issue">Back</button>
+            <button class="btn btn-primary" type="button" data-action="continue-contact">Schedule Mobile Dispatch</button>
+          </div>
+        </div>
+
+        <div id="step-contact" class="repair-step hidden" style="margin-top: 2rem; background: var(--surface); padding: 2.5rem; border-radius: var(--radius-2xl); border: 1px solid var(--border);">
+          <h3 style="margin-bottom: 1.5rem; font-family: var(--font-display);">Dispatch Details</h3>
+          <form id="repair-contact-form" style="display: flex; flex-direction: column; gap: 1.25rem;">
+            <input type="hidden" id="repair-device-hidden">
+            <input type="hidden" id="repair-make-hidden">
+            <input type="hidden" id="repair-issue-hidden">
+            <div><label style="font-size:0.8rem;font-weight:800;color:var(--accent);display:block;margin-bottom:4px;">FULL NAME</label><input type="text" id="full-name" required style="width:100%;padding:0.8rem;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);color:#fff;"></div>
+            <div><label style="font-size:0.8rem;font-weight:800;color:var(--accent);display:block;margin-bottom:4px;">PHONE NUMBER</label><input type="tel" id="phone-number" required style="width:100%;padding:0.8rem;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);color:#fff;"></div>
+            <div><label style="font-size:0.8rem;font-weight:800;color:var(--accent);display:block;margin-bottom:4px;">EMAIL ADDRESS</label><input type="email" id="email-address" required style="width:100%;padding:0.8rem;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);color:#fff;"></div>
+            <div><label style="font-size:0.8rem;font-weight:800;color:var(--accent);display:block;margin-bottom:4px;">LOCATION / ZIP CODE</label><input type="text" id="city-zip" required placeholder="e.g. Xenia, OH 45385" style="width:100%;padding:0.8rem;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);color:#fff;"></div>
+            <button type="submit" class="btn btn-primary btn-block" style="margin-top: 1rem;">Confirm & Submit Request</button>
+          </form>
+          <div id="repair-thanks" hidden style="text-align: center; padding: 2rem;">
+            <i class="fas fa-check-circle fa-3x" style="color:var(--primary); margin-bottom: 1rem;"></i>
+            <h3>Dispatch Request Received!</h3>
+            <p style="color:var(--text-muted); margin-top: 0.5rem;">Austin will review your repair details and reach out shortly to confirm your mobile appointment.</p>
+          </div>
         </div>
       </div>
     </section>
@@ -229,11 +301,11 @@
       <div class="apple-section">
         <div class="apple-text">
           <h2>Meet Austin Tyler Caudill.</h2>
-          <p>Austin Tyler Caudill founded Austin's Tech Repair Group to completely redefine consumer electronics repair in Ohio. Operating as a registered sole proprietorship, every service call is handled personally by Austin with deep technical acumen and meticulous precision.</p>
-          <p>Whether performing micro-soldering component replacements or servicing business networks, Austin brings expert technical solutions directly to your door.</p>
+          <p>Austin Tyler Caudill founded Austin's Tech Repair Group to provide reliable, highly skilled mobile electronics repair across Ohio. Operating as an independent freelance tech service, every repair is handled personally with meticulous precision and transparent pricing.</p>
+          <p>Whether you need a smartphone screen replaced at your office or a gaming console fixed at home, we bring professional workshop expertise directly to you.</p>
         </div>
         <div class="apple-image">
-          <img src="image.png" alt="Austin Tyler Caudill Owner">
+          <img src="image.png" alt="Austin Tyler Caudill">
         </div>
       </div>
     </section>
@@ -244,7 +316,7 @@
         <div class="section-header text-center">
           <p class="eyebrow">Get in Touch</p>
           <h2 class="section-title">We come to you across the Miami Valley.</h2>
-          <p class="section-copy">Fill out our contact dispatch form below or give us a direct call at 937-280-6243.</p>
+          <p class="section-copy">Fill out our contact form below or call us directly at 937-280-6243.</p>
         </div>
         <div class="apple-section" style="max-width: 900px; margin: 0 auto;">
           <script type="text/javascript" src="https://form.jotform.com/jsform/261955946010055"></script>
@@ -256,11 +328,11 @@
     <section id="b2b" class="page">
       <div class="apple-section">
         <div class="apple-text">
-          <h2>Commercial & Institutional IT Solutions.</h2>
-          <p>From structured cabling and server rack setups to sound system installation and school district technology maintenance contracts, we keep local enterprise infrastructure connected and operational.</p>
+          <h2>Commercial & Business IT Solutions.</h2>
+          <p>From workstation repair and network setup to retail POS terminal support and institutional technology maintenance, we keep local businesses fully operational.</p>
         </div>
         <div class="apple-image">
-          <img src="https://images.unsplash.com/photo-1557597774-9d273605dfa9" alt="Commercial IT Support">
+          <img src="https://images.unsplash.com/photo-1557597774-9d273605dfa9" alt="Commercial IT">
         </div>
       </div>
     </section>
@@ -281,7 +353,6 @@
         <div class="section-header text-center">
           <p class="eyebrow">Careers</p>
           <h2 class="section-title">Join Our Technical Team</h2>
-          <p class="section-copy">Submit your details below to apply for technical and mobile repair roles.</p>
         </div>
         <script type="text/javascript" src="https://form.jotform.com/jsform/262347488023056"></script>
       </div>
@@ -292,8 +363,7 @@
       <div class="container" style="padding: 4rem 2rem; max-width: 900px;">
         <div class="section-header text-center">
           <p class="eyebrow">Investors</p>
-          <h2 class="section-title">Investor Relations & Growth</h2>
-          <p class="section-copy">Inquire about investment opportunities and regional service expansion.</p>
+          <h2 class="section-title">Investor Relations</h2>
         </div>
         <script type="text/javascript" src="https://form.jotform.com/jsform/262354967610058"></script>
       </div>
@@ -381,11 +451,11 @@
             <div id="kanban-board" style="display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 1rem;"></div>
           </section>
 
-          <section id="portal-customers" class="portal-section"><div class="portal-section-header"><h2>Customers</h2></div><p style="color:var(--text-muted)">Customer records database.</p></section>
-          <section id="portal-inventory" class="portal-section"><div class="portal-section-header"><h2>Inventory</h2></div><p style="color:var(--text-muted)">Parts and stock control.</p></section>
-          <section id="portal-orders" class="portal-section"><div class="portal-section-header"><h2>Orders</h2></div><p style="color:var(--text-muted)">Supplier orders and tracking.</p></section>
-          <section id="portal-financials" class="portal-section"><div class="portal-section-header"><h2>Financials</h2></div><p style="color:var(--text-muted)">Revenue and expenses.</p></section>
-          <section id="portal-timeclock" class="portal-section"><div class="portal-section-header"><h2>Time Clock</h2></div><p style="color:var(--text-muted)">Shift tracking.</p></section>
+          <section id="portal-customers" class="portal-section"><div class="portal-section-header"><h2>Customers</h2></div></section>
+          <section id="portal-inventory" class="portal-section"><div class="portal-section-header"><h2>Inventory</h2></div></section>
+          <section id="portal-orders" class="portal-section"><div class="portal-section-header"><h2>Orders</h2></div></section>
+          <section id="portal-financials" class="portal-section"><div class="portal-section-header"><h2>Financials</h2></div></section>
+          <section id="portal-timeclock" class="portal-section"><div class="portal-section-header"><h2>Time Clock</h2></div></section>
         </main>
       </div>
     </section>
@@ -406,7 +476,7 @@
     </section>
   </main>
 
-  <!-- EXPANDED FOOTER WITH FULL LEGAL DISCLAIMER -->
+  <!-- FOOTER -->
   <footer class="footer">
     <div class="footer-container">
       <div class="footer-top">
@@ -414,7 +484,7 @@
           <span class="footer-col-title">Navigate</span>
           <a class="footer-link" href="#home" data-page="home">Home</a>
           <a class="footer-link" href="#shop" data-page="shop">Shop</a>
-          <a class="footer-link" href="#contact" data-page="contact">Contact</a>
+          <a class="footer-link" href="#repair" data-page="repair">Repair Wizard</a>
           <a class="footer-link" href="#prices" data-page="prices">Prices</a>
         </div>
         <div class="footer-links-col">
@@ -427,17 +497,17 @@
         </div>
         <div class="footer-links-col">
           <span class="footer-col-title">Contact & Area</span>
-          <p style="margin-bottom: 0.5rem; color: var(--text-muted);">Mobile Service across Xenia, Dayton, Beavercreek, and Miami Valley.</p>
+          <p style="margin-bottom: 0.5rem; color: var(--text-muted);">Mobile dispatch across Xenia, Dayton, and Miami Valley.</p>
           <a class="footer-link" href="tel:9372806243" style="font-weight: 800; color: var(--primary);"><i class="fas fa-phone"></i> 937-280-6243</a>
         </div>
       </div>
 
       <div class="site-footer" style="margin-top: 2rem; border-top: 1px solid var(--border); padding-top: 2rem;">
         <p style="font-size: 0.75rem; color: var(--text-faint); line-height: 1.6; margin-bottom: 1.5rem;">
-          <strong class="legal-heading red">DISCLAIMER & LEGAL NOTICE:</strong> Austin's Tech Repair Group is an independent mobile electronics repair provider operating as a sole proprietorship in the state of Ohio. Apple, iPhone, iPad, Mac, Dell, HP, Samsung, Sony, PlayStation, Xbox, Nintendo, and other product names or trademarks are the property of their respective owners. Mention of third-party products or brand names does not imply affiliation or endorsement.
+          <strong class="legal-heading red">DISCLAIMER & SCOPE OF SERVICE:</strong> Austin's Tech Repair Group is an independent mobile electronics service operated by Austin Tyler Caudill. We specialize exclusively in consumer and business electronics (phones, computers, tablets, gaming consoles, IT systems). We do NOT work on vintage audio equipment, automobiles, or non-electronic items.
         </p>
         <div class="footer-bottom">
-          <span class="footer-copy">Copyright 2026 © <strong>Austin's Tech Repair Group Sole Proprietorship</strong>. All rights reserved.</span>
+          <span class="footer-copy">Copyright 2026 © <strong>Austin's Tech Repair Group</strong>. All rights reserved.</span>
           <span class="footer-wordmark">ATR Group</span>
         </div>
       </div>
@@ -448,12 +518,12 @@
   <nav class="mobile-bottom-nav" aria-label="Mobile Bottom Navigation">
     <a href="#home" class="bottom-nav-item active" data-page="home"><i class="fa-solid fa-house"></i><span>Home</span></a>
     <a href="#shop" class="bottom-nav-item" data-page="shop"><i class="fa-solid fa-store"></i><span>Shop</span></a>
-    <a href="https://form.jotform.com/262308779420057" class="bottom-nav-item" data-page="repair"><i class="fa-solid fa-screwdriver-wrench"></i><span>Repair</span></a>
+    <a href="#repair" class="bottom-nav-item" data-page="repair"><i class="fa-solid fa-screwdriver-wrench"></i><span>Repair</span></a>
     <a href="#b2b" class="bottom-nav-item" data-page="b2b"><i class="fa-solid fa-briefcase"></i><span>B2B</span></a>
     <button class="bottom-nav-item" id="bottom-menu-toggle" type="button"><i class="fa-solid fa-bars"></i><span>Menu</span></button>
   </nav>
 
-  <!-- Original Separate JavaScript Files -->
+  <!-- JavaScript Files -->
   <script src="script.js"></script>
   <script src="portal.js"></script>
   <script src="repair.js"></script>
@@ -502,3 +572,4 @@
   </script>
 </body>
 </html>
+
