@@ -1,5 +1,5 @@
 /* ============================================================
-   AUSTIN'S TECH REPAIR GROUP — Employee Portal (Enhanced)
+   AUSTIN'S TECH REPAIR GROUP — Employee Portal (Enhanced & Fixed)
    ============================================================ */
 
 (function () {
@@ -82,10 +82,16 @@
   let pendingDelete = null;
   let currentOrderTab = 'all';
 
-  /* ---- Mobile Sidebar Toggle ---- */
+  /* ---- Mobile Sidebar Toggle Fix ---- */
   window.toggleSidebar = function () {
+    const appContainer = document.querySelector('.app');
+    if (appContainer) {
+      appContainer.classList.toggle('mobile-nav-open');
+    }
     const sidebar = document.querySelector('.sidebar');
-    if (sidebar) sidebar.classList.toggle('open');
+    if (sidebar) {
+      sidebar.classList.toggle('open');
+    }
   };
 
   /* ---- Authentication ---- */
@@ -130,6 +136,8 @@
       btn.classList.add('active');
     }
     
+    const appContainer = document.querySelector('.app');
+    if (appContainer) appContainer.classList.remove('mobile-nav-open');
     const sidebar = document.querySelector('.sidebar');
     if (sidebar) sidebar.classList.remove('open');
 
@@ -216,7 +224,7 @@
           pointRadius: 4,
         }]
       },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: getCSSVar('--divider') } }, x: { grid: { display: false } } } }
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: getCSSVar('--border') } }, x: { grid: { display: false } } } }
     });
   }
 
@@ -234,7 +242,7 @@
         labels: statuses,
         datasets: [{
           data: counts,
-          backgroundColor: ['#f59e0b', '#3b82f6', '#a78bfa', '#0057ff', '#10b981', '#6b7280'],
+          backgroundColor: ['#f59e0b', '#3b82f6', '#a78bfa', '#2563eb', '#059669', '#64748b'],
           borderWidth: 0,
         }]
       },
@@ -243,7 +251,7 @@
   }
 
   /* ---- Ticket Management ---- */
-  function renderTickets() {
+  window.renderTickets = function () {
     const tbody = document.getElementById('tickets-tbody');
     if (!tbody) return;
     const statusFilter = document.getElementById('ticket-filter-status')?.value || '';
@@ -275,7 +283,7 @@
           </div></td>
         </tr>
       `).join('');
-  }
+  };
 
   window.viewTicket = function (id) {
     const t = db.tickets.find(x => x.id === id);
@@ -283,27 +291,24 @@
     const body = document.getElementById('ticketDetailBody');
     if (body) {
       body.innerHTML = `
-        <div class="detail-grid">
-          <div class="detail-item"><span class="detail-label">Ticket #</span><span class="detail-value">${t.id}</span></div>
-          <div class="detail-item"><span class="detail-label">Status</span><span class="detail-value"><span class="badge ${statusBadgeClass(t.status)}">${t.status}</span></span></div>
-          <div class="detail-item"><span class="detail-label">Customer</span><span class="detail-value">${t.customer}</span></div>
-          <div class="detail-item"><span class="detail-label">Phone</span><span class="detail-value">${t.phone}</span></div>
-          <div class="detail-item"><span class="detail-label">Email</span><span class="detail-value">${t.email || '—'}</span></div>
-          <div class="detail-item"><span class="detail-label">Priority</span><span class="detail-value">${t.priority}</span></div>
-          <div class="detail-item"><span class="detail-label">Device</span><span class="detail-value">${t.brand} ${t.device}</span></div>
-          <div class="detail-item"><span class="detail-label">Issue</span><span class="detail-value">${t.issue}</span></div>
-          <div class="detail-item"><span class="detail-label">Assigned To</span><span class="detail-value">${t.assigned}</span></div>
-          <div class="detail-item"><span class="detail-label">Due Date</span><span class="detail-value">${formatDate(t.due)}</span></div>
-          <div class="detail-item"><span class="detail-label">Parts Cost</span><span class="detail-value">$${t.partsCost.toFixed(2)}</span></div>
-          <div class="detail-item"><span class="detail-label">Labor Cost</span><span class="detail-value">$${t.laborCost.toFixed(2)}</span></div>
-          <div class="detail-item"><span class="detail-label">Retail Price</span><span class="detail-value">$${t.price.toFixed(2)}</span></div>
-          <div class="detail-item"><span class="detail-label">Profit</span><span class="detail-value" style="color:var(--success)">$${(t.price - t.partsCost - t.laborCost).toFixed(2)}</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div><strong>Ticket #:</strong> ${t.id}</div>
+          <div><strong>Status:</strong> <span class="badge ${statusBadgeClass(t.status)}">${t.status}</span></div>
+          <div><strong>Customer:</strong> ${t.customer}</div>
+          <div><strong>Phone:</strong> ${t.phone}</div>
+          <div><strong>Email:</strong> ${t.email || '—'}</div>
+          <div><strong>Priority:</strong> ${t.priority}</div>
+          <div><strong>Device:</strong> ${t.brand} ${t.device}</div>
+          <div><strong>Issue:</strong> ${t.issue}</div>
+          <div><strong>Assigned To:</strong> ${t.assigned}</div>
+          <div><strong>Due Date:</strong> ${formatDate(t.due)}</div>
+          <div><strong>Parts Cost:</strong> $${(t.partsCost || 0).toFixed(2)}</div>
+          <div><strong>Labor Cost:</strong> $${(t.laborCost || 0).toFixed(2)}</div>
+          <div><strong>Retail Price:</strong> $${(t.price || 0).toFixed(2)}</div>
         </div>
-        ${t.notes ? `<div style="margin-top:var(--space-4);"><span class="detail-label">Notes</span><p style="margin-top:var(--space-2);font-size:var(--text-sm);color:var(--text-muted);">${t.notes}</p></div>` : ''}
+        ${t.notes ? `<div style="margin-top:12px;"><strong>Notes:</strong><p style="color:var(--text-muted);margin-top:4px;">${t.notes}</p></div>` : ''}
       `;
     }
-    const editBtn = document.getElementById('ticketDetailEdit');
-    if (editBtn) editBtn.onclick = () => { closeModal('ticketDetailModal'); editTicket(id); };
     openModal('ticketDetailModal');
   };
 
@@ -316,14 +321,14 @@
     document.getElementById('ticket-customer').value = t.customer;
     document.getElementById('ticket-phone').value = t.phone;
     document.getElementById('ticket-email').value = t.email || '';
-    document.getElementById('ticket-device-type').value = t.deviceType;
+    document.getElementById('ticket-device-type').value = t.deviceType || 'Phone';
     document.getElementById('ticket-brand').value = t.brand;
     document.getElementById('ticket-device').value = t.device;
     document.getElementById('ticket-issue').value = t.issue;
     document.getElementById('ticket-priority').value = t.priority;
-    document.getElementById('ticket-parts-cost').value = t.partsCost;
-    document.getElementById('ticket-labor-cost').value = t.laborCost;
-    document.getElementById('ticket-price').value = t.price;
+    document.getElementById('ticket-parts-cost').value = t.partsCost || 0;
+    document.getElementById('ticket-labor-cost').value = t.laborCost || 0;
+    document.getElementById('ticket-price').value = t.price || 0;
     document.getElementById('ticket-assigned').value = t.assigned;
     document.getElementById('ticket-notes').value = t.notes || '';
     openModal('ticketModal');
@@ -397,7 +402,7 @@
             <div class="kanban-card">
               <div class="kc-ticket">${t.id}</div>
               <div class="kc-customer">${t.customer}</div>
-              <div class="kc-device">${t.brand} ${t.device} — ${t.issue}</div>
+              <div class="kc-device">${t.brand} ${t.device} —${t.issue}</div>
               <div class="kc-footer">
                 <span class="badge ${priorityBadgeClass(t.priority)}">${t.priority}</span>
                 <div class="kanban-arrows">
@@ -406,7 +411,7 @@
                 </div>
               </div>
             </div>
-          `).join('') || '<p style="color:var(--text-faint);font-size:var(--text-xs);text-align:center;padding:var(--space-3);">No tickets</p>'}
+          `).join('') || '<p style="color:var(--text-faint);font-size:0.75rem;text-align:center;padding:12px;">No tickets</p>'}
         </div>
       `;
     }).join('');
@@ -425,7 +430,7 @@
   };
 
   /* ---- Customer Management ---- */
-  function renderCustomers() {
+  window.renderCustomers = function () {
     const tbody = document.getElementById('customers-tbody');
     if (!tbody) return;
     const search = document.getElementById('customer-search')?.value.toLowerCase() || '';
@@ -447,7 +452,7 @@
           </div></td>
         </tr>
       `).join('');
-  }
+  };
 
   window.openCustomerModal = function () {
     editingId = null;
@@ -501,7 +506,7 @@
   };
 
   /* ---- Inventory Management ---- */
-  function renderInventory() {
+  window.renderInventory = function () {
     const tbody = document.getElementById('inventory-tbody');
     if (!tbody) return;
     const filter = document.getElementById('inventory-filter')?.value || '';
@@ -529,7 +534,7 @@
           </div></td>
         </tr>
       `).join('');
-  }
+  };
 
   window.openPartModal = function () {
     editingId = null;
@@ -601,7 +606,7 @@
     renderOrders();
   };
 
-  function renderOrders() {
+  window.renderOrders = function () {
     const tbody = document.getElementById('orders-tbody');
     if (!tbody) return;
     const orders = currentOrderTab === 'all' ? db.orders : db.orders.filter(o => o.platform === currentOrderTab);
@@ -619,14 +624,14 @@
           <td><span class="badge ${orderStatusBadge(o.status)}">${o.status}</span></td>
           <td>${formatDate(o.date)}</td>
           <td>${formatDate(o.expected)}</td>
-          <td>${o.tracking ? `<span style="font-family:var(--font-mono);font-size:var(--text-xs);">${o.tracking}</span>` : '—'}</td>
+          <td>${o.tracking ? `<span style="font-family:var(--font-mono);font-size:0.75rem;">${o.tracking}</span>` : '—'}</td>
           <td><div class="action-btns">
             <button class="action-btn" onclick="editOrder('${o.id}')" title="Edit"><i class="fas fa-edit"></i></button>
             <button class="action-btn danger" onclick="deleteOrder('${o.id}')" title="Delete"><i class="fas fa-trash"></i></button>
           </div></td>
         </tr>
       `).join('');
-  }
+  };
 
   window.openOrderModal = function () {
     editingId = null;
@@ -685,7 +690,7 @@
   };
 
   /* ---- Financials & Transactions ---- */
-  function renderFinancials() {
+  window.renderFinancials = function () {
     const stats = document.getElementById('financial-stats');
     if (!stats) return;
 
@@ -720,7 +725,7 @@
       drawPaymentChart();
       drawRevenueTypeChart();
     }, 100);
-  }
+  };
 
   function drawProfitChart() {
     const canvas = document.getElementById('profitChart');
@@ -748,7 +753,7 @@
           { label: 'Profit', data: prof, backgroundColor: hexToRgba(getCSSVar('--success'), 0.6), borderRadius: 4 },
         ]
       },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { font: { size: 11 } } } }, scales: { y: { beginAtZero: true, grid: { color: getCSSVar('--divider') } }, x: { grid: { display: false }, ticks: { maxTicksLimit: 10, font: { size: 9 } } } } }
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { font: { size: 11 } } } }, scales: { y: { beginAtZero: true, grid: { color: getCSSVar('--border') } }, x: { grid: { display: false }, ticks: { maxTicksLimit: 10, font: { size: 9 } } } } }
     });
   }
 
@@ -764,7 +769,7 @@
       type: 'doughnut',
       data: {
         labels: Object.keys(methods),
-        datasets: [{ data: Object.values(methods), backgroundColor: ['#0057ff', '#10b981', '#f59e0b', '#a78bfa', '#f97316'], borderWidth: 0 }]
+        datasets: [{ data: Object.values(methods), backgroundColor: ['#2563eb', '#059669', '#d97706', '#7c3aed', '#f97316'], borderWidth: 0 }]
       },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 8 } } } }
     });
@@ -782,7 +787,7 @@
       type: 'doughnut',
       data: {
         labels: Object.keys(types),
-        datasets: [{ data: Object.values(types), backgroundColor: ['#0057ff', '#10b981', '#a78bfa', '#f59e0b'], borderWidth: 0 }]
+        datasets: [{ data: Object.values(types), backgroundColor: ['#2563eb', '#059669', '#7c3aed', '#d97706'], borderWidth: 0 }]
       },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 8 } } } }
     });
@@ -811,20 +816,20 @@
   };
 
   /* ---- Time Clock ---- */
-  function renderTimeClock() {
+  window.renderTimeClock = function () {
     const display = document.getElementById('clock-status-display');
     if (display) {
       if (db.clockStatus.clockedIn) {
         display.innerHTML = `
-          <div class="clock-display" style="color:var(--success);"><i class="fas fa-circle" style="font-size:0.5rem;"></i> Clocked In</div>
-          <p style="color:var(--text-muted);margin-bottom:var(--space-3);">Since ${db.clockStatus.clockInTime} today</p>
-          <button class="clock-btn out" onclick="clockOut()"><i class="fas fa-clock"></i> Clock Out</button>
+          <div style="color:var(--success);font-weight:700;margin-bottom:8px;"><i class="fas fa-circle" style="font-size:0.5rem;"></i> Clocked In</div>
+          <p style="color:var(--text-muted);margin-bottom:12px;">Since ${db.clockStatus.clockInTime} today</p>
+          <button class="pbtn pbtn-danger" onclick="clockOut()"><i class="fas fa-clock"></i> Clock Out</button>
         `;
       } else {
         display.innerHTML = `
-          <div class="clock-display" style="color:var(--text-muted);"><i class="fas fa-circle" style="font-size:0.5rem;"></i> Clocked Out</div>
-          <p style="color:var(--text-muted);margin-bottom:var(--space-3);">Not currently clocked in</p>
-          <button class="clock-btn in" onclick="clockIn()"><i class="fas fa-clock"></i> Clock In</button>
+          <div style="color:var(--text-muted);font-weight:700;margin-bottom:8px;"><i class="fas fa-circle" style="font-size:0.5rem;"></i> Clocked Out</div>
+          <p style="color:var(--text-muted);margin-bottom:12px;">Not currently clocked in</p>
+          <button class="pbtn pbtn-success" onclick="clockIn()"><i class="fas fa-clock"></i> Clock In</button>
         `;
       }
     }
@@ -841,15 +846,10 @@
         </tr>
       `).join('');
     }
-  }
+  };
 
   window.clockIn = function () {
     db.clockStatus = { clockedIn: true, clockInTime: new Date().toTimeString().slice(0, 5) };
-    const shiftStatus = document.getElementById('shift-status');
-    if (shiftStatus) {
-      shiftStatus.innerHTML = '<i class="fas fa-circle" style="font-size:6px"></i> Clocked In';
-      shiftStatus.className = 'pill success';
-    }
     saveDb();
     renderTimeClock();
   };
@@ -859,17 +859,12 @@
     const hours = ((new Date().getHours() + new Date().getMinutes() / 60) - 8).toFixed(1);
     db.timesheet.unshift({ date: today, clockIn: db.clockStatus.clockInTime, clockOut: new Date().toTimeString().slice(0, 5), hours: parseFloat(hours), status: 'Completed' });
     db.clockStatus = { clockedIn: false, clockInTime: null };
-    const shiftStatus = document.getElementById('shift-status');
-    if (shiftStatus) {
-      shiftStatus.innerHTML = '<i class="fas fa-circle" style="font-size:6px"></i> Clocked Out';
-      shiftStatus.className = 'pill';
-    }
     saveDb();
     renderTimeClock();
   };
 
   /* ---- Employee Management ---- */
-  function renderEmployees() {
+  window.renderEmployees = function () {
     const tbody = document.getElementById('employees-tbody');
     if (!tbody) return;
     tbody.innerHTML = db.employees.map(e => `
@@ -886,7 +881,7 @@
         </div></td>
       </tr>
     `).join('');
-  }
+  };
 
   window.openEmployeeModal = function () {
     editingId = null;
@@ -939,7 +934,7 @@
   };
 
   /* ---- Reports & Analytics ---- */
-  function renderReports() {
+  window.renderReports = function () {
     const completed = db.tickets.filter(t => t.status === 'Completed').length;
     const total = db.tickets.length;
     const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
@@ -949,16 +944,16 @@
     const avgTicketEl = document.getElementById('avg-ticket');
     const avgTimeEl = document.getElementById('avg-repair-time');
 
-    if (compRateEl) compRateEl.innerHTML = `<div style="font-size:var(--text-2xl);font-weight:900;font-family:var(--font-display);color:var(--success);">${completionRate}%</div>`;
-    if (avgTicketEl) avgTicketEl.innerHTML = `<div style="font-size:var(--text-2xl);font-weight:900;font-family:var(--font-display);color:var(--primary);">$${avgTicket}</div>`;
-    if (avgTimeEl) avgTimeEl.innerHTML = `<div style="font-size:var(--text-2xl);font-weight:900;font-family:var(--font-display);color:var(--accent-blue);">1.5 days</div>`;
+    if (compRateEl) compRateEl.innerHTML = `<div style="font-size:1.5rem;font-weight:900;font-family:var(--font-display);color:var(--success);">${completionRate}%</div>`;
+    if (avgTicketEl) avgTicketEl.innerHTML = `<div style="font-size:1.5rem;font-weight:900;font-family:var(--font-display);color:var(--primary);">$${avgTicket}</div>`;
+    if (avgTimeEl) avgTimeEl.innerHTML = `<div style="font-size:1.5rem;font-weight:900;font-family:var(--font-display);color:var(--purple);">1.5 days</div>`;
 
     setTimeout(() => {
       drawDeviceTypeChart();
       drawIssueTypeChart();
       drawTopCustomersChart();
     }, 100);
-  }
+  };
 
   function drawDeviceTypeChart() {
     const canvas = document.getElementById('deviceTypeChart');
@@ -966,7 +961,7 @@
     if (charts.deviceType) charts.deviceType.destroy();
     const types = {};
     db.tickets.forEach(t => { types[t.deviceType] = (types[t.deviceType] || 0) + 1; });
-    charts.deviceType = new Chart(canvas, { type: 'doughnut', data: { labels: Object.keys(types), datasets: [{ data: Object.values(types), backgroundColor: ['#0057ff', '#10b981', '#f59e0b', '#a78bfa', '#f97316', '#ef4444'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 8 } } } } });
+    charts.deviceType = new Chart(canvas, { type: 'doughnut', data: { labels: Object.keys(types), datasets: [{ data: Object.values(types), backgroundColor: ['#2563eb', '#059669', '#d97706', '#7c3aed', '#f97316', '#dc2626'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 8 } } } } });
   }
 
   function drawIssueTypeChart() {
@@ -975,7 +970,7 @@
     if (charts.issueType) charts.issueType.destroy();
     const types = {};
     db.tickets.forEach(t => { types[t.issue] = (types[t.issue] || 0) + 1; });
-    charts.issueType = new Chart(canvas, { type: 'bar', data: { labels: Object.keys(types), datasets: [{ data: Object.values(types), backgroundColor: hexToRgba(getCSSVar('--primary'), 0.6), borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, grid: { color: getCSSVar('--divider') } }, y: { grid: { display: false } } } } });
+    charts.issueType = new Chart(canvas, { type: 'bar', data: { labels: Object.keys(types), datasets: [{ data: Object.values(types), backgroundColor: hexToRgba(getCSSVar('--primary'), 0.6), borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, grid: { color: getCSSVar('--border') } }, y: { grid: { display: false } } } } });
   }
 
   function drawTopCustomersChart() {
@@ -983,11 +978,11 @@
     if (!canvas || typeof Chart === 'undefined') return;
     if (charts.topCustomers) charts.topCustomers.destroy();
     const top = db.customers.slice().sort((a, b) => b.totalSpent - a.totalSpent).slice(0, 5);
-    charts.topCustomers = new Chart(canvas, { type: 'bar', data: { labels: top.map(c => c.name), datasets: [{ label: 'Total Spent', data: top.map(c => c.totalSpent), backgroundColor: hexToRgba(getCSSVar('--primary'), 0.6), borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: getCSSVar('--divider') } }, x: { grid: { display: false } } } } });
+    charts.topCustomers = new Chart(canvas, { type: 'bar', data: { labels: top.map(c => c.name), datasets: [{ label: 'Total Spent', data: top.map(c => c.totalSpent), backgroundColor: hexToRgba(getCSSVar('--primary'), 0.6), borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: getCSSVar('--border') } }, x: { grid: { display: false } } } } });
   }
 
   /* ---- RepairShopr HUD ---- */
-  function renderHUD() {
+  window.renderHUD = function () {
     const tbody = document.getElementById('hud-tickets-tbody');
     if (!tbody) return;
     const active = db.tickets.filter(t => t.status !== 'Completed' && t.status !== 'Cancelled');
@@ -1008,7 +1003,7 @@
         </tr>
       `).join('');
     calcMarkup();
-  }
+  };
 
   /* ---- Markup Calculator ---- */
   window.calcMarkup = function () {
@@ -1031,9 +1026,9 @@
     if (!value.trim()) { result.innerHTML = ''; return; }
     const item = db.inventory.find(i => i.sku.toLowerCase().includes(value.toLowerCase()) || i.name.toLowerCase().includes(value.toLowerCase()));
     if (item) {
-      result.innerHTML = `<div class="barcode-result-item"><div class="name">${item.name}</div><div class="details">SKU: ${item.sku} · Stock: ${item.qty} · Cost: $${item.cost.toFixed(2)} · Retail: $${item.retail.toFixed(2)} · Location: ${item.location}</div></div>`;
+      result.innerHTML = `<div style="background:var(--surface-alt);padding:12px;border-radius:var(--radius-lg);border:1px solid var(--border);"><div style="font-weight:700;">${item.name}</div><div style="font-size:0.8rem;color:var(--text-muted);">SKU: ${item.sku} · Stock: ${item.qty} · Cost: $${item.cost.toFixed(2)} · Retail: $${item.retail.toFixed(2)} · Location: ${item.location}</div></div>`;
     } else {
-      result.innerHTML = '<p style="color:var(--text-muted);font-size:var(--text-sm);">No matching part found.</p>';
+      result.innerHTML = '<p style="color:var(--text-muted);font-size:0.875rem;">No matching part found.</p>';
     }
   };
 
@@ -1175,10 +1170,10 @@
     if (existing) existing.remove();
     const toast = document.createElement('div');
     toast.id = 'portal-toast';
-    toast.style.cssText = 'position:fixed;top:20px;right:20px;background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--primary);border-radius:var(--radius-lg);padding:var(--space-4) var(--space-5);box-shadow:var(--shadow-xl);z-index:2000;display:flex;align-items:center;gap:var(--space-3);max-width:360px;animation:chatIn 300ms ease;';
+    toast.style.cssText = 'position:fixed;top:20px;right:20px;background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--primary);border-radius:var(--radius-lg);padding:1rem 1.25rem;box-shadow:var(--shadow-xl);z-index:2000;display:flex;align-items:center;gap:12px;max-width:360px;animation:fadeIn 300ms ease;';
     const icon = type === 'success' ? 'fa-circle-check' : 'fa-circle-info';
     const color = type === 'success' ? 'var(--success)' : 'var(--primary)';
-    toast.innerHTML = `<i class="fas ${icon}" style="color:${color};font-size:1.25rem;"></i><span style="font-size:var(--text-sm);color:var(--text);">${message}</span>`;
+    toast.innerHTML = `<i class="fas ${icon}" style="color:${color};font-size:1.25rem;"></i><span style="font-size:0.875rem;color:var(--text);">${message}</span>`;
     document.body.appendChild(toast);
     setTimeout(() => {
       toast.style.opacity = '0';
@@ -1189,7 +1184,7 @@
 
   /* ---- Utility Helpers ---- */
   function getCSSVar(name) {
-    return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#0057ff';
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#2563eb';
   }
 
   function hexToRgba(hex, alpha) {
@@ -1260,3 +1255,4 @@
   });
 
 })();
+
