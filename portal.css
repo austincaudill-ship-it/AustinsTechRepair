@@ -1,6 +1,8 @@
+Here is the updated Employee Portal CSS file.
+This overhaul resolves layout clipping, broken mobile viewports, unclickable sidebar navigation on phones, overlapping cards, unstackable form grids, and squeezed tables. It turns the portal into an app-like, fully touch-friendly mobile interface.
 /* ============================================================
    AUSTIN'S TECH REPAIR GROUP — Employee Portal CSS (Master)
-   Refined Design System & UI Overhaul (Revamped)
+   Refined Design System & Fully Responsive Mobile UI
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap');
@@ -52,7 +54,7 @@
   --radius-2xl: 1.25rem;
   --radius-full: 9999px;
 
-  /* Soft Shadows (Modern Elevation) */
+  /* Soft Shadows */
   --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.03);
   --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.04), 0 2px 4px -2px rgba(15, 23, 42, 0.03);
   --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.06), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
@@ -66,6 +68,11 @@
   box-sizing: border-box;
 }
 
+html, body {
+  width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   font-family: var(--font-body);
   color: var(--text);
@@ -74,6 +81,20 @@ body {
   -moz-osx-font-smoothing: grayscale;
   margin: 0;
   padding: 0;
+}
+
+/* Mobile Portal Header Bar */
+.mobile-portal-bar {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 900;
+  box-shadow: var(--shadow-sm);
 }
 
 /* Portal Login View */
@@ -130,6 +151,7 @@ body {
   min-height: 100vh;
   background: var(--surface-alt);
   position: relative;
+  width: 100%;
 }
 
 .hidden {
@@ -147,10 +169,11 @@ body {
   top: 0;
   bottom: 0;
   left: 0;
-  z-index: 100;
+  z-index: 1000;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .brand-portal {
@@ -199,11 +222,14 @@ body {
   cursor: pointer;
   text-align: left;
   transition: all var(--transition);
+  -webkit-tap-highlight-color: transparent;
 }
 
-.portal-nav button:hover {
+.portal-nav button:hover,
+.portal-nav button:focus-visible {
   background: var(--surface-hover);
   color: var(--text);
+  outline: none;
 }
 
 .portal-nav button.active {
@@ -244,6 +270,7 @@ body {
   margin-left: 280px;
   padding: var(--space-8);
   max-width: calc(100% - 280px);
+  width: 100%;
 }
 
 /* Topbar */
@@ -278,6 +305,7 @@ body {
   font-weight: 800;
   font-size: 0.875rem;
   box-shadow: var(--shadow-sm);
+  flex-shrink: 0;
 }
 
 .usertext {
@@ -324,11 +352,13 @@ body {
   display: flex;
   align-items: center;
   gap: var(--space-3);
+  flex-wrap: wrap;
 }
 
 /* Sections & Cards */
 .portal-section {
   display: none;
+  width: 100%;
 }
 
 .portal-section.active {
@@ -346,6 +376,8 @@ body {
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: var(--space-6);
+  gap: var(--space-4);
+  flex-wrap: wrap;
 }
 
 .portal-section-header h2 {
@@ -368,6 +400,7 @@ body {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: var(--space-5);
   margin-bottom: var(--space-8);
+  width: 100%;
 }
 
 .stat-card {
@@ -430,6 +463,7 @@ body {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
   gap: var(--space-6);
+  width: 100%;
 }
 
 .card {
@@ -438,6 +472,7 @@ body {
   border-radius: var(--radius-xl);
   padding: var(--space-6);
   box-shadow: var(--shadow-sm);
+  width: 100%;
 }
 
 .card h3 {
@@ -464,17 +499,20 @@ body {
   gap: var(--space-3);
   margin-bottom: var(--space-5);
   flex-wrap: wrap;
+  width: 100%;
 }
 
 .filter-bar input, 
 .filter-bar select {
-  padding: 0.5rem 1rem;
+  padding: 0.625rem 1rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface);
   font-size: 0.875rem;
   color: var(--text);
   transition: all var(--transition);
+  flex: 1;
+  min-width: 160px;
 }
 
 .filter-bar input:focus, 
@@ -489,11 +527,14 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   box-shadow: var(--shadow-sm);
+  width: 100%;
 }
 
 .portal-table {
   width: 100%;
+  min-width: 600px;
   border-collapse: collapse;
   text-align: left;
   font-size: 0.875rem;
@@ -508,12 +549,14 @@ body {
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  white-space: nowrap;
 }
 
 .portal-table td {
   padding: var(--space-4);
   border-bottom: 1px solid var(--border);
   color: var(--text);
+  white-space: nowrap;
 }
 
 .portal-table tr:last-child td {
@@ -549,8 +592,9 @@ body {
 .pbtn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 0.6rem 1.25rem;
+  padding: 0.625rem 1.25rem;
   border-radius: var(--radius-lg);
   font-family: var(--font-body);
   font-size: 0.875rem;
@@ -560,6 +604,7 @@ body {
   transition: all var(--transition);
   text-decoration: none;
   box-shadow: var(--shadow-sm);
+  -webkit-tap-highlight-color: transparent;
 }
 
 .pbtn-primary { background: var(--primary); color: #fff; }
@@ -600,12 +645,13 @@ body {
 
 /* Kanban Board */
 .kanban-board {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  display: flex;
   gap: var(--space-4);
-  align-items: start;
+  align-items: flex-start;
   overflow-x: auto;
   padding-bottom: var(--space-4);
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
 }
 
 .kanban-column {
@@ -613,7 +659,10 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
   padding: var(--space-4);
-  min-height: 500px;
+  min-width: 280px;
+  width: 280px;
+  flex-shrink: 0;
+  min-height: 450px;
 }
 
 .kanban-column-header {
@@ -678,15 +727,15 @@ body {
 .kanban-arrows { display: flex; gap: 4px; }
 
 .kanban-arrow { 
-  width: 26px; 
-  height: 26px; 
+  width: 28px; 
+  height: 28px; 
   border-radius: var(--radius-sm); 
   background: var(--surface-alt); 
   border: 1px solid var(--border); 
   display: flex; 
   align-items: center; 
   justify-content: center; 
-  font-size: 0.65rem; 
+  font-size: 0.75rem; 
   cursor: pointer; 
   color: var(--text-muted); 
   transition: all var(--transition);
@@ -700,10 +749,11 @@ dialog {
   border: 1px solid var(--border);
   border-radius: var(--radius-2xl);
   padding: 0;
-  width: 100%;
+  width: calc(100% - 2rem);
   max-width: 600px;
   box-shadow: var(--shadow-xl);
   animation: modalScale 0.2s ease-out;
+  margin: auto;
 }
 
 @keyframes modalScale {
@@ -717,7 +767,7 @@ dialog::backdrop {
 }
 
 .modal-head {
-  padding: var(--space-6);
+  padding: var(--space-5) var(--space-6);
   border-bottom: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
@@ -812,6 +862,7 @@ dialog::backdrop {
   cursor: pointer; 
   transition: all var(--transition); 
   text-align: center; 
+  -webkit-tap-highlight-color: transparent;
 }
 
 .quick-action:hover { background: var(--primary-light); border-color: var(--primary); color: var(--primary); transform: translateY(-2px); }
@@ -819,12 +870,15 @@ dialog::backdrop {
 .quick-action span { font-size: 0.75rem; font-weight: 700; color: var(--text); }
 
 /* ============================================================
-   MOBILE RESPONSIVENESS & SIDEBAR OVERLAY FIX
+   RESPONSIVE & MOBILE OVERRIDES
    ============================================================ */
+
+/* Tablet Optimization (<= 1024px) */
 @media (max-width: 1024px) {
   .mobile-portal-bar {
     display: flex !important;
   }
+
   #portalSidebarClose {
     display: block !important;
   }
@@ -837,11 +891,7 @@ dialog::backdrop {
     height: 100vh;
     z-index: 1000;
     transform: translateX(-100%);
-    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    display: flex;
-    flex-direction: column;
     box-shadow: var(--shadow-xl);
-    overflow-y: auto;
   }
   
   .app.mobile-nav-open .sidebar {
@@ -859,13 +909,80 @@ dialog::backdrop {
     flex-direction: column;
     align-items: stretch;
     gap: var(--space-3);
+    padding: var(--space-4);
+  }
+
+  .userbox {
+    justify-content: space-between;
   }
   
   .search-box {
     max-width: 100%;
   }
 
+  .col-12, .col-8, .col-6, .col-4 {
+    grid-column: span 12 !important;
+  }
+
   .quick-actions-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+  
+  .grid-tiles {
+    grid-template-columns: 1fr;
+  }
 }
+
+/* Phone Optimization (<= 640px) */
+@media (max-width: 640px) {
+  .login-card {
+    padding: var(--space-6);
+  }
+
+  .portal-section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
+
+  .portal-section-header h2 {
+    font-size: 1.4rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
+
+  .card {
+    padding: var(--space-4);
+  }
+
+  .portal-form-row {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
+
+  .filter-bar {
+    flex-direction: column;
+  }
+
+  .filter-bar input, 
+  .filter-bar select {
+    width: 100%;
+  }
+
+  .modal-body {
+    padding: var(--space-4);
+  }
+
+  .modal-footer {
+    padding: var(--space-4);
+    flex-direction: column;
+  }
+
+  .modal-footer button {
+    width: 100%;
+  }
+}
+
