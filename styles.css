@@ -194,6 +194,37 @@ body {
 .section-copy { color: var(--text-muted); font-size: 1.1rem; }
 
 /* ==========================================================================
+   PRICING PAGE FIXES & GRID
+   ========================================================================== */
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.5rem;
+  max-width: 1100px;
+  margin: 3rem auto;
+  padding: 0 1rem;
+}
+
+.pricing-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-2xl);
+  padding: 2rem;
+  box-shadow: var(--shadow-sm);
+  height: auto;
+  transition: transform var(--transition), border-color var(--transition), box-shadow var(--transition);
+}
+
+.pricing-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(0, 255, 102, 0.3);
+  box-shadow: var(--shadow-md);
+}
+
+/* ==========================================================================
    PRICE MATCH GUARANTEE COMPONENT
    ========================================================================== */
 .price-match-container {
