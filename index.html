@@ -71,33 +71,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700;1,800;1,900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
-  <link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@400,500,700,800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
   <!-- Styles -->
   <link rel="stylesheet" href="styles.css" />
-  
 
   <!-- Favicon -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230057ff'/><text x='50' y='68' font-size='48' font-weight='bold' fill='white' text-anchor='middle' font-family='Arial'>A</text></svg>" />
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-
-  <style>
-    .hidden { display: none !important; }
-    .cart-badge {
-      display: inline-flex; align-items: center; justify-content: center;
-      min-width: 18px; height: 18px; padding: 0 5px; font-size: 11px; font-weight: 700;
-      color: #fff; background-color: var(--primary, #0057ff); border-radius: 9px;
-      position: absolute; top: -4px; right: -6px; transition: transform 0.2s ease, background-color 0.2s ease;
-    }
-    .cart-badge:not(:empty):not([data-count="0"]) { animation: badgePulse 2s infinite; }
-    @keyframes badgePulse {
-      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 87, 255, 0.4); }
-      70% { transform: scale(1.05); box-shadow: 0 0 0 6px rgba(0, 87, 255, 0); }
-      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 87, 255, 0); }
-    }
-    .icon-btn { position: relative; }
-  </style>
 </head>
 <body>
 
@@ -126,20 +106,20 @@
     </nav>
 
     <div class="header-actions">
-      <button class="icon-btn" id="account-toggle" type="button" aria-label="Customer account" aria-haspopup="dialog" aria-expanded="false">
-        <svg class="account-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <button class="icon-btn" id="account-toggle" type="button" aria-label="Customer account">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
           <circle cx="12" cy="7" r="4"></circle>
         </svg>
       </button>
 
-      <button class="icon-btn" id="cart-toggle" type="button" aria-label="Shopping cart" aria-haspopup="dialog" aria-expanded="false">
-        <svg class="cart-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <button class="icon-btn" id="cart-toggle" type="button" aria-label="Shopping cart">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <circle cx="8" cy="21" r="1"></circle>
           <circle cx="19" cy="21" r="1"></circle>
           <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
         </svg>
-        <span id="cart-badge" class="cart-badge" data-count="0">0</span>
+        <span id="cart-badge" class="pill" style="position: absolute; top: -4px; right: -6px; min-width: 18px; height: 18px; padding: 0 4px; font-size: 10px;">0</span>
       </button>
     </div>
   </header>
@@ -172,13 +152,11 @@
     <!-- HOME PAGE -->
     <section id="home" class="page active">
       <div class="hero">
-        <div class="hero-bg" aria-hidden="true"></div>
-        <div class="hero-mesh" aria-hidden="true"></div>
         <div class="hero-content">
           <p class="eyebrow">Austin's Tech Repair Group</p>
           <h1 class="hero-headline">We Bring The Service <em>To You.</em> Local Mobile Repair & Support.</h1>
 
-          <div class="trust-item" style="display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.95rem; font-weight: 600; padding: var(--space-2) var(--space-3); margin-bottom: var(--space-4);">
+          <div style="display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.95rem; font-weight: 600; margin-bottom: 1.5rem;">
             <i class="fas fa-bolt" style="color: var(--accent);"></i>
             <div>
               <strong>Austin's Tech Repair Group</strong><br>
@@ -186,32 +164,30 @@
             </div>
           </div>
           
-     <div style="text-align: center; padding: 2rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl);">
-  <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 800; color: #fff; margin-bottom: 0.5rem;">Need Fast Service?</h3>
-  <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.25rem;">Lock in a direct 30-minute window on our live calendar right now.</p>
-  <a href="https://calendly.com/service-austinstechrepairgroup/30min" target="_blank" rel="noopener" class="btn btn-primary">
-    <i class="fas fa-calendar-check"></i> Open Calendly Schedule
-  </a>
-</div>
-
+          <div style="text-align: center; padding: 2rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); margin-bottom: 2rem; max-width: 600px; margin-left: auto; margin-right: auto;">
+            <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 800; color: #fff; margin-bottom: 0.5rem;">Need Fast Service?</h3>
+            <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.25rem;">Lock in a direct 30-minute window on our live calendar right now.</p>
+            <a href="https://calendly.com/service-austinstechrepairgroup/30min" target="_blank" rel="noopener" class="btn btn-primary">
+              <i class="fas fa-calendar-check"></i> Open Calendly Schedule
+            </a>
+          </div>
 
           <p class="hero-sub">Professional mobile repairs, tuneups, setups, B2B IT support, and services brought directly to your preferred location — backed by a 1-year warranty.</p>
           <div class="hero-cta-group">
-            <a class="btn btn-primary btn-lg" href="#repair" role="button"><i class="fas fa-wrench"></i> Schedule Mobile Dispatch</a>
+            <a class="btn btn-primary btn-lg" href="#repair" role="button" data-page="repair"><i class="fas fa-wrench"></i> Schedule Mobile Dispatch</a>
             <a class="btn btn-dark btn-lg" href="tel:+19372806243"><i class="fas fa-phone"></i> Call Now</a>
-            <a class="btn btn-light btn-lg" href="#atr-one" role="button"><i class="fas fa-star"></i> ATR One</a>
+            <a class="btn btn-light btn-lg" href="#atr-one" role="button" data-page="atr-one"><i class="fas fa-star"></i> ATR One</a>
           </div>
         </div>
       </div>
 
       <!-- Trust Bar -->
-      <div class="trust-bar" style="display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-3); margin: var(--space-6) auto; padding: var(--space-4) var(--space-5); max-width: 1000px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); box-shadow: var(--shadow-sm);">
-        <div class="trust-item" style="display: flex; align-items: center; gap: 8px; font-size: 0.875rem; font-weight: 600; padding: var(--space-2) var(--space-3);"><i class="fas fa-shield-halved" style="color: var(--primary);"></i> 1-Year Warranty</div>
-        <div class="trust-item" style="display: flex; align-items: center; gap: 8px; font-size: 0.875rem; font-weight: 600; padding: var(--space-2) var(--space-3);"><i class="fas fa-bolt" style="color: var(--accent-blue);"></i> Same-Day Service</div>
-        <div class="trust-item" style="display: flex; align-items: center; gap: 8px; font-size: 0.875rem; font-weight: 600; padding: var(--space-2) var(--space-3);"><i class="fas fa-truck" style="color: var(--primary);"></i> We Come To You</div>
-        <div class="trust-item" style="display: flex; align-items: center; gap: 8px; font-size: 0.875rem; font-weight: 600; padding: var(--space-2) var(--space-3);"><i class="fas fa-star" style="color: #f59e0b;"></i> 10+ Years Industry Experience</div>
-        <div class="trust-item" style="display: flex; align-items: center; gap: 8px; font-size: 0.875rem; font-weight: 600; padding: var(--space-2) var(--space-3);"><i class="fas fa-user-gear" style="color: var(--primary);"></i> Computer & Network Service Technician</div>
-        <div class="trust-item" style="display: flex; align-items: center; gap: 8px; font-size: 0.875rem; font-weight: 600; padding: var(--space-2) var(--space-3);"><i class="fas fa-screwdriver-wrench" style="color: var(--success);"></i> In-Depth Diagnostics</div>
+      <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; margin: 3rem auto; padding: 1.25rem; max-width: 1000px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); box-shadow: var(--shadow-sm);">
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 0.875rem; font-weight: 600;"><i class="fas fa-shield-halved" style="color: var(--primary);"></i> 1-Year Warranty</div>
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 0.875rem; font-weight: 600;"><i class="fas fa-bolt" style="color: var(--accent-cyan);"></i> Same-Day Service</div>
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 0.875rem; font-weight: 600;"><i class="fas fa-truck" style="color: var(--primary);"></i> We Come To You</div>
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 0.875rem; font-weight: 600;"><i class="fas fa-star" style="color: #f59e0b;"></i> 10+ Years Experience</div>
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 0.875rem; font-weight: 600;"><i class="fas fa-screwdriver-wrench" style="color: var(--success);"></i> In-Depth Diagnostics</div>
       </div>
 
       <!-- Price Match Guarantee Calculator -->
@@ -237,111 +213,78 @@
       </div>
 
       <!-- SERVICE CATEGORIES -->
-      <div class="container" style="padding: var(--space-12) var(--space-5);">
-        <div class="section-header reveal text-center" style="margin-bottom: var(--space-8);"> 
+      <div class="container" style="padding: 4rem 2rem;">
+        <div class="section-header text-center" style="margin-bottom: 2.5rem;"> 
           <p class="eyebrow" style="justify-content: center;">Examples of Devices We Fix</p>
           <h2 class="section-title">Expert Mobile Repair for Every Device</h2>
           <p class="section-copy" style="max-width: 600px; margin: 0 auto;">From cracked screens to complex motherboard diagnostics, we handle it all right at your home or business.</p>
         </div>
         
-        <div class="service-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-6);">
-          <div class="service-card reveal" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: var(--space-6); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: var(--space-3);">
-            <div style="width: 44px; height: 44px; background: rgba(0, 87, 255, 0.1); border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.25rem;"><i class="fas fa-mobile-screen"></i></div>
-            <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; margin: 0;">Phones</h3>
-            <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin: 0;">Cracked screens, battery swaps, charging port repair, camera issues, speaker/mic fixes, water damage recovery, software troubleshooting, and fast data transfer.</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+          <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: 1.5rem; box-shadow: var(--shadow-sm);">
+            <div style="width: 44px; height: 44px; background: rgba(0, 255, 102, 0.1); border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.25rem; margin-bottom: 1rem;"><i class="fas fa-mobile-screen"></i></div>
+            <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">Phones</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Cracked screens, battery swaps, charging port repair, camera issues, and water damage recovery.</p>
           </div>
 
-          <div class="service-card reveal reveal-delay-1" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: var(--space-6); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: var(--space-3);">
-            <div style="width: 44px; height: 44px; background: rgba(0, 87, 255, 0.1); border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.25rem;"><i class="fas fa-tablet-alt"></i></div>
-            <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; margin: 0;">Tablets</h3>
-            <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin: 0;">Display replacement, charging port repair, touch troubleshooting, battery service, camera fixes, and full software setup support.</p>
+          <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: 1.5rem; box-shadow: var(--shadow-sm);">
+            <div style="width: 44px; height: 44px; background: rgba(0, 255, 102, 0.1); border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.25rem; margin-bottom: 1rem;"><i class="fas fa-tablet-alt"></i></div>
+            <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">Tablets</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Display replacement, charging port repair, touch troubleshooting, and battery service.</p>
           </div>
 
-          <div class="service-card reveal reveal-delay-2" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: var(--space-6); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: var(--space-3);">
-            <div style="width: 44px; height: 44px; background: rgba(0, 87, 255, 0.1); border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.25rem;"><i class="fas fa-laptop"></i></div>
-            <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; margin: 0;">Computers</h3>
-            <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin: 0;">SSD upgrades, RAM installs, virus cleanup, display repair, power issues, DC jack repair, software recovery, and data rescue.</p>
+          <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: 1.5rem; box-shadow: var(--shadow-sm);">
+            <div style="width: 44px; height: 44px; background: rgba(0, 255, 102, 0.1); border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.25rem; margin-bottom: 1rem;"><i class="fas fa-laptop"></i></div>
+            <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">Computers</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">SSD upgrades, RAM installs, virus cleanup, display repair, power issues, and data rescue.</p>
           </div>
 
-          <div class="service-card reveal reveal-delay-3" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: var(--space-6); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: var(--space-3);">
-            <div style="width: 44px; height: 44px; background: rgba(0, 87, 255, 0.1); border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.25rem;"><i class="fas fa-gamepad"></i></div>
-            <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; margin: 0;">Gaming Consoles</h3>
-            <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin: 0;">Console HDMI port repair, cooling fan replacement, storage upgrades, power fault diagnostics, controller fixes, and overheating solutions.</p>
-          </div>
-
-          <div class="service-card reveal" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: var(--space-6); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: var(--space-3);">
-            <div style="width: 44px; height: 44px; background: rgba(0, 87, 255, 0.1); border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.25rem;"><i class="fas fa-clock"></i></div>
-            <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; margin: 0;">Smart Watches</h3>
-            <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin: 0;">Battery service, display replacement, charging issues, pairing fixes, syncing support, and button or crown repairs.</p>
-          </div>
-
-          <div class="service-card reveal" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: var(--space-6); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: var(--space-3);">
-            <div style="width: 44px; height: 44px; background: rgba(0, 87, 255, 0.1); border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.25rem;"><i class="fas fa-store"></i></div>
-            <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; margin: 0;">Accessories & ATR One</h3>
-            <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin: 0;">Cases, screen protectors, chargers, and gear at wholesale cost. Join ATR One for 20% off labor and free member benefits.</p>
-          </div>
-
-          <div class="service-card reveal" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: var(--space-6); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: var(--space-3);">
-            <div style="width: 44px; height: 44px; background: rgba(0, 87, 255, 0.1); border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.25rem;"><i class="fas fa-briefcase"></i></div>
-            <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; margin: 0;">Business Services</h3>
-            <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin: 0;">Printer maintenance, office IT support, mass imaging, school technology contracts, and commercial hardware care.</p>
+          <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: 1.5rem; box-shadow: var(--shadow-sm);">
+            <div style="width: 44px; height: 44px; background: rgba(0, 255, 102, 0.1); border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.25rem; margin-bottom: 1rem;"><i class="fas fa-gamepad"></i></div>
+            <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">Gaming Consoles</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Console HDMI port repair, cooling fan replacement, storage upgrades, and overheating solutions.</p>
           </div>
         </div>
       </div>
 
       <!-- Testimonials -->
-      <div class="container">
-        <div class="section-header reveal">
-          <p class="eyebrow">Customer Reviews</p>
+      <div class="container" style="margin-bottom: 4rem;">
+        <div class="section-header text-center">
+          <p class="eyebrow" style="justify-content: center;">Customer Reviews</p>
           <h2 class="section-title">What Local Clients Are Saying</h2>
-          <p class="section-copy">Real feedback from real customers across the Miami Valley.</p>
         </div>
-        <div class="testimonials-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-6);">
-          <div class="testimonial-card reveal">
+        <div class="testimonials-grid">
+          <div class="testimonial-card">
             <div class="testimonial-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
-            <p class="testimonial-text">"Austin was extremely professional from start to finish. I asked him to fix my Xbox One X, which was not reading discs, and he took the time to properly repair it while also explaining everything along the way. He was very transparent about his pricing, honest in his work, and reliable throughout the entire process."</p>
+            <p class="testimonial-text">"Austin was extremely professional from start to finish. I asked him to fix my Xbox One X, and he took the time to properly repair it while explaining everything along the way."</p>
             <div class="testimonial-author">
               <div class="testimonial-avatar">TP</div>
               <div><div class="testimonial-name">Tiant P.</div><div class="testimonial-role">Console Repair Client</div></div>
             </div>
           </div>
 
-          <div class="testimonial-card reveal reveal-delay-1">
+          <div class="testimonial-card">
             <div class="testimonial-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
-            <p class="testimonial-text">"Excellent service. Took care of all my printer needs. Repaired old printer and set up new. Very friendly and informed on IT issues. Would highly recommend Austin."</p>
+            <p class="testimonial-text">"Excellent service. Took care of all my printer needs. Repaired old printer and set up new. Very friendly and informed on IT issues."</p>
             <div class="testimonial-author">
               <div class="testimonial-avatar">A</div>
               <div><div class="testimonial-name">Annie</div><div class="testimonial-role">IT & Peripheral Client</div></div>
             </div>
           </div>
 
-          <div class="testimonial-card reveal reveal-delay-2">
+          <div class="testimonial-card">
             <div class="testimonial-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
-            <p class="testimonial-text">"Austin hooked up my Bluetooth on my stereo system, TV, even hooked up my printer, iPad and all of my technology back to the network after my modem got reset."</p>
+            <p class="testimonial-text">"Austin hooked up my Bluetooth on my stereo system, TV, even hooked up my printer, iPad and all of my technology back to the network."</p>
             <div class="testimonial-author">
               <div class="testimonial-avatar">K</div>
               <div><div class="testimonial-name">Kristy</div><div class="testimonial-role">Home Network Client</div></div>
             </div>
           </div>
-
-          <div class="testimonial-card reveal">
-            <div class="testimonial-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
-            <p class="testimonial-text">"Austin provides great services! It's always a relief to find a reliable and skilled technician for mobile repairs. Thanks again Austin!"</p>
-            <div class="testimonial-author">
-              <div class="testimonial-avatar">JB</div>
-              <div><div class="testimonial-name">Jessica B.</div><div class="testimonial-role">Mobile Repair Client</div></div>
-            </div>
-          </div>
-        </div>
-
-        <div style="text-align: center; margin-top: var(--space-8);" class="reveal">
-          <a class="btn btn-light" href="https://maps.app.goo.gl/JDzEADFMWRfU4DKB6" target="_blank" rel="noopener"><i class="fab fa-google"></i> Read Google Reviews</a>
-          <a class="btn btn-light" href="https://www.yelp.com/biz/austin-s-tech-repair-group-dayton-3" target="_blank" rel="noopener" style="margin-left: var(--space-2);"><i class="fab fa-yelp"></i> Read Yelp Reviews</a>
         </div>
       </div>
 
       <!-- CTA Section -->
-      <div class="cta-section reveal">
+      <div class="cta-section">
         <h2>Ready to Get Started?</h2>
         <p>Start your repair request online or call us directly to schedule a mobile dispatch to your location in the Miami Valley.</p>
         <div class="hero-cta-group" style="margin-bottom: 0;">
@@ -353,73 +296,35 @@
 
     <!-- SHOP PAGE -->
     <section id="shop" class="page">
-      <div class="container" style="padding-top: var(--space-12); padding-bottom: var(--space-16);">
-        <div class="section-header reveal text-center" style="max-width: 700px; margin: 0 auto var(--space-10);">
-          <div style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; background: rgba(0, 87, 255, 0.1); border: 1px solid var(--primary); border-radius: 99px; margin-bottom: var(--space-4);">
-            <span style="width: 8px; height: 8px; background: var(--primary); border-radius: 50%; display: inline-block; animation: badgePulse 2s infinite;"></span>
-            <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--primary);">Retail Portal Launching Soon</span>
-          </div>
-          <h2 class="section-title" style="font-size: clamp(2rem, 4vw, 3rem); font-family: var(--font-display);">Next-Gen Accessories & Gear.</h2>
-          <p class="section-copy" style="font-size: 1.05rem; color: var(--text-muted); line-height: 1.6;">We are engineering our upcoming retail storefront to bring you precision-fit screen protectors, high-output charging gear, custom cases, and audio accessories. Quality tested for the devices you rely on every day.</p>
+      <div class="container" style="padding-top: 4rem; padding-bottom: 4rem;">
+        <div class="section-header text-center" style="max-width: 700px; margin: 0 auto 2.5rem;">
+          <h2 class="section-title">Next-Gen Accessories & Gear</h2>
+          <p class="section-copy">We are engineering our upcoming retail storefront to bring you precision-fit screen protectors, high-output charging gear, and custom cases.</p>
         </div>
-
-        <div class="reveal" style="max-width: 900px; margin: 0 auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); overflow: hidden; box-shadow: var(--shadow-xl); display: grid; grid-template-columns: 1fr 1fr; align-items: center;">
-          <div style="padding: var(--space-8);">
-            <p class="eyebrow" style="color: var(--accent-blue); margin-bottom: var(--space-2);">Inventory Pipeline</p>
-            <h3 style="font-size: 1.5rem; font-weight: 800; font-family: var(--font-display); margin-bottom: var(--space-3);">What's In Development</h3>
-            
-            <ul style="list-style: none; padding: 0; margin: 0 0 var(--space-6) 0; display: flex; flex-direction: column; gap: var(--space-3);">
-              <li style="display: flex; align-items: center; gap: 10px; font-size: 0.9rem; color: var(--text);">
-                <i class="fas fa-check-circle" style="color: var(--primary);"></i><span>Tempered Glass Screen Protectors</span>
-              </li>
-              <li style="display: flex; align-items: center; gap: 10px; font-size: 0.9rem; color: var(--text);">
-                <i class="fas fa-check-circle" style="color: var(--primary);"></i><span>GaN Fast Chargers & Heavy-Duty Cables</span>
-              </li>
-              <li style="display: flex; align-items: center; gap: 10px; font-size: 0.9rem; color: var(--text);">
-                <i class="fas fa-check-circle" style="color: var(--primary);"></i><span>Rugged Tablet & Laptop Protective Cases</span>
-              </li>
-              <li style="display: flex; align-items: center; gap: 10px; font-size: 0.9rem; color: var(--text);">
-                <i class="fas fa-check-circle" style="color: var(--primary);"></i><span>Wireless Audio Gear & Watch Bands</span>
-              </li>
-            </ul>
-
-            <div style="display: flex; flex-wrap: wrap; gap: var(--space-3);">
-              <a class="btn btn-primary" href="https://atr-shop-6668.myshopify.com/products/atr-one" target="_blank" rel="noopener"><i class="fab fa-shopify"></i> Visit Shopify Store</a>
-              <a class="btn btn-light" href="#repair" data-page="repair"><i class="fas fa-wrench"></i> Need a Repair?</a>
-            </div>
-          </div>
-
-          <div style="position: relative; height: 100%; min-height: 350px; background: #000; overflow: hidden;">
-            <img src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=900&q=80" alt="High-tech accessories development workspace" loading="lazy" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.75;" />
-            <div style="position: absolute; inset: 0; background: linear-gradient(135deg, rgba(0,87,255,0.2) 0%, transparent 100%);"></div>
-            <div style="position: absolute; bottom: 20px; left: 20px; right: 20px; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(10px); padding: 12px 16px; border-radius: var(--radius-lg); border: 1px solid rgba(255,255,255,0.1);">
-              <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0 0 2px 0; text-transform: uppercase; letter-spacing: 0.5px;">Status Update</p>
-              <p style="font-size: 0.85rem; font-weight: 700; color: #fff; margin: 0;">Catalog synchronization in progress...</p>
-            </div>
-          </div>
+        <div style="text-align: center;">
+          <a class="btn btn-primary btn-lg" href="https://atr-shop-6668.myshopify.com/products/atr-one" target="_blank" rel="noopener"><i class="fab fa-shopify"></i> Visit Shopify Store</a>
         </div>
       </div>
     </section>
+
     <!-- REPAIR PAGE -->
     <section id="repair" class="page">
-      <div class="container">
-        <div class="section-header reveal">
-          <p class="eyebrow">Repair Request</p>
+      <div class="container" style="padding-top: 3rem; padding-bottom: 4rem;">
+        <div class="section-header text-center">
+          <p class="eyebrow" style="justify-content: center;">Repair Request</p>
           <h2 class="section-title">Start Your Repair</h2>
-          <p class="section-copy">Pick your device, select the issue, and get an instant estimate. Then send us photos and your contact info — we'll bring the service directly to you.</p>
+          <p class="section-copy">Pick your device, select the issue, and get an instant estimate.</p>
         </div>
 
-        <div class="repair-card reveal">
+        <div class="repair-card">
           <div class="repair-progress">
             <div class="progress-step active" id="progress-1">
               <div class="progress-dot">1</div>
               <span class="progress-label">Device</span>
-              <div class="progress-line"></div>
             </div>
             <div class="progress-step" id="progress-2">
               <div class="progress-dot">2</div>
               <span class="progress-label">Brand & Issue</span>
-              <div class="progress-line"></div>
             </div>
             <div class="progress-step" id="progress-3">
               <div class="progress-dot">3</div>
@@ -433,7 +338,7 @@
 
           <div class="repair-step active" id="step-device">
             <p class="eyebrow">Step 01</p>
-            <h3 class="step-title">Select Device Type</h3>
+            <h3 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; margin-bottom: 1rem;">Select Device Type</h3>
             <div class="option-grid">
               <button class="option-btn" type="button" data-device="Phones"><i class="fas fa-mobile-screen-button"></i> Phone</button>
               <button class="option-btn" type="button" data-device="Tablets"><i class="fas fa-tablet-screen-button"></i> Tablet</button>
@@ -446,24 +351,24 @@
 
           <div class="repair-step" id="step-issue">
             <p class="eyebrow">Step 02</p>
-            <h3 class="step-title" id="issue-title">Select Brand & Issue</h3>
-            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">First, pick your device brand:</p>
-            <div class="option-grid" id="make-grid" style="margin-bottom: 1.25rem;"></div>
-            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">Now select the issue:</p>
+            <h3 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; margin-bottom: 1rem;">Select Brand & Issue</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">Pick your device brand:</p>
+            <div class="option-grid" id="make-grid" style="margin-bottom: 1rem;"></div>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">Select the issue:</p>
             <div class="issue-list" id="issue-list"></div>
             <button class="back-btn" type="button" data-back="device" style="margin-top: 1rem;"><i class="fas fa-arrow-left"></i> Back</button>
           </div>
 
           <div class="repair-step" id="step-estimate">
             <p class="eyebrow">Step 03</p>
-            <h3 class="step-title">Your Estimate</h3>
-            <div id="estimate-summary" style="margin-bottom: 1.25rem; display: flex; flex-wrap: wrap; gap: 0.75rem;"></div>
+            <h3 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; margin-bottom: 1rem;">Your Estimate</h3>
+            <div id="estimate-summary" style="margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.75rem;"></div>
             <div class="estimate-box">
               <p class="label">Estimated Price Range</p>
               <p class="price" id="estimate-price">$50 — $150</p>
-              <p class="note">Final pricing confirmed after diagnostic*. Parts availability may affect timeline. ($15 dispatch fee collected upfront is credited toward final price).</p>
+              <p class="note">Final pricing confirmed after diagnostic*. $15 dispatch fee collected upfront is credited toward final price.</p>
             </div>
-            <div style="display: flex; gap: 0.75rem; margin-top: 1.25rem; flex-wrap: wrap;">
+            <div style="display: flex; gap: 0.75rem; margin-top: 1.25rem;">
               <button class="btn btn-primary" type="button" data-action="continue-contact"><i class="fas fa-arrow-right"></i> Continue to Photos</button>
               <button class="back-btn" type="button" data-back="issue"><i class="fas fa-arrow-left"></i> Back</button>
             </div>
@@ -471,15 +376,11 @@
 
           <div class="repair-step" id="step-contact">
             <p class="eyebrow">Step 04</p>
-            <h3 class="step-title">Send Photos & Contact Info</h3>
-            <p style="color: var(--text-muted); margin-bottom: 1.25rem; font-size: 0.9rem;">Upload photos of your device damage so we can prepare an accurate quote. Then fill in your details and we'll reach out within 24 hours.</p>
-
-            <!-- Form configured to redirect to your Jotform on submit -->
-            <form id="repair-contact-form" class="form-grid" onsubmit="event.preventDefault(); window.location.href='https://form.jotform.com/261955946010055';">
+            <h3 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; margin-bottom: 1rem;">Send Photos & Contact Info</h3>
+            <form id="repair-contact-form" onsubmit="event.preventDefault(); window.location.href='https://form.jotform.com/261955946010055';">
               <div style="border: 2px dashed var(--border); border-radius: var(--radius-xl); padding: 1.5rem; text-align: center; margin-bottom: 1rem;" id="file-drop-zone">
                 <i class="fas fa-cloud-arrow-up" style="font-size: 2.5rem; color: var(--primary); margin-bottom: 0.75rem;"></i>
                 <p style="font-weight: 800; margin-bottom: 0.5rem;">Drop photos here or click to browse</p>
-                <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 1rem;">JPG, PNG, HEIC, PDF · Max 5 files · 10MB each</p>
                 <input type="file" id="file-upload" name="device-photos" multiple accept="image/*,.pdf" style="display: none;" />
                 <button class="btn btn-light" type="button" id="file-browse-btn"><i class="fas fa-folder-open"></i> Browse Files</button>
                 <div id="file-preview-list" style="display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1rem; justify-content: center;"></div>
@@ -489,238 +390,113 @@
               <input type="hidden" id="repair-make-hidden" name="device_brand" value="" />
               <input type="hidden" id="repair-issue-hidden" name="issue_type" value="" />
 
-              <div class="field" style="margin-bottom: 1rem;">
-                <label for="full-name" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--accent); margin-bottom: 0.4rem;">Full Name <span style="color: var(--danger);">*</span></label>
-                <input id="full-name" class="form-field" type="text" name="customer_name" required placeholder="John Smith" style="width: 100%; padding: 0.85rem 1rem; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); color: #fff; outline: none;" />
+              <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--accent); margin-bottom: 0.4rem;">Full Name *</label>
+                <input class="form-field" type="text" name="customer_name" required placeholder="John Smith" style="width: 100%; padding: 0.85rem; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); color: #fff; outline: none;" />
               </div>
 
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                <div class="field">
-                  <label for="phone-number" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--accent); margin-bottom: 0.4rem;">Phone Number <span style="color: var(--danger);">*</span></label>
-                  <input id="phone-number" class="form-field" type="tel" name="customer_phone" required placeholder="(937) 555-0100" style="width: 100%; padding: 0.85rem 1rem; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); color: #fff; outline: none;" />
+                <div>
+                  <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--accent); margin-bottom: 0.4rem;">Phone Number *</label>
+                  <input class="form-field" type="tel" name="customer_phone" required placeholder="(937) 555-0100" style="width: 100%; padding: 0.85rem; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); color: #fff; outline: none;" />
                 </div>
-                <div class="field">
-                  <label for="email-address" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--accent); margin-bottom: 0.4rem;">Email Address <span style="color: var(--danger);">*</span></label>
-                  <input id="email-address" class="form-field" type="email" name="customer_email" required placeholder="john@example.com" style="width: 100%; padding: 0.85rem 1rem; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); color: #fff; outline: none;" />
-                </div>
-              </div>
-
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                <div class="field">
-                  <label for="city-zip" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--accent); margin-bottom: 0.4rem;">Service Address / Location <span style="color: var(--danger);">*</span></label>
-                  <input id="city-zip" class="form-field" type="text" name="customer_location" required placeholder="Street Address, City, OH" style="width: 100%; padding: 0.85rem 1rem; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); color: #fff; outline: none;" />
-                </div>
-                <div class="field">
-                  <label for="preferred-time" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--accent); margin-bottom: 0.4rem;">Preferred Dispatch Time</label>
-                  <select id="preferred-time" class="form-field" name="preferred_time" style="width: 100%; padding: 0.85rem 1rem; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); color: #fff; outline: none;">
-                    <option value="anytime">Anytime</option>
-                    <option value="morning">Morning (5:30AM-12PM)</option>
-                    <option value="afternoon">Afternoon (12PM-5PM)</option>
-                    <option value="evening">Evening (5PM-10PM)</option>
-                  </select>
+                <div>
+                  <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--accent); margin-bottom: 0.4rem;">Email Address *</label>
+                  <input class="form-field" type="email" name="customer_email" required placeholder="john@example.com" style="width: 100%; padding: 0.85rem; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); color: #fff; outline: none;" />
                 </div>
               </div>
 
-              <div class="field" style="margin-bottom: 1rem;">
-                <label for="device-model" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--accent); margin-bottom: 0.4rem;">Device Model (optional)</label>
-                <input id="device-model" class="form-field" type="text" name="device_model" placeholder="e.g., iPhone 13 Pro, Dell XPS 15" style="width: 100%; padding: 0.85rem 1rem; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); color: #fff; outline: none;" />
-              </div>
-
-              <div class="field" style="margin-bottom: 1rem;">
-                <label for="additional-details" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--accent); margin-bottom: 0.4rem;">Additional Details (optional)</label>
-                <textarea id="additional-details" class="form-field" name="additional_details" rows="3" placeholder="Describe what happened, when the issue started..." style="width: 100%; padding: 0.85rem 1rem; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); color: #fff; outline: none;"></textarea>
-              </div>
-
-              <div class="field" style="display: flex; align-items: flex-start; gap: 0.75rem; margin-bottom: 1.25rem;">
-                <input type="checkbox" id="consent-check" name="consent" required style="margin-top: 4px; width: 18px; height: 18px; accent-color: var(--primary);" />
-                <label for="consent-check" style="font-size: 0.75rem; color: var(--text-muted); text-transform: none; font-family: var(--font-body); line-height: 1.4;">I authorize Austin's Tech Repair Group to dispatch mobile service to my location. Final pricing is confirmed after diagnostic.</label>
-              </div>
-
-              <button class="btn btn-primary btn-block" type="submit" style="width: 100%; background: var(--primary); color: #070a14; padding: 1rem; font-weight: 900; border-radius: var(--radius-lg); border: none; cursor: pointer;"><i class="fas fa
-
+              <button class="btn btn-primary btn-block" type="submit" style="width: 100%; background: var(--primary); color: #070a14; padding: 1rem; font-weight: 900; border-radius: var(--radius-lg); border: none; cursor: pointer; margin-top: 1rem;">
+                <i class="fas fa-paper-plane"></i> Submit Request
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <!-- ABOUT PAGE -->
     <section id="about" class="page">
-      <div class="about-hero text-center" style="padding-top: var(--space-12);">
-        <p class="eyebrow text-accent-blue">About Austin's Tech Repair Group</p>
-        <h2 class="section-title">Built to bring enterprise-grade service directly to your door.</h2>
-      </div>
-
-      <div class="apple-section reveal" style="background: var(--surface-secondary, rgba(255,255,255,0.03)); border: 1px solid var(--border-color, rgba(255,255,255,0.08)); border-radius: 1.5rem; padding: 2.5rem; margin-bottom: 3rem;">
-        <div class="apple-text" style="max-width: 100%;">
-          <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-accent-blue" style="color: var(--accent-blue, #2997ff);"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 11 14 15 10"></polyline></svg>
-            <span style="font-weight: 600; font-size: 1.1rem; letter-spacing: -0.01em;">Verified & Background-Checked Professional</span>
+      <div class="container" style="padding-top: 3rem;">
+        <div class="section-header text-center">
+          <p class="eyebrow" style="justify-content: center;">About Austin's Tech Repair Group</p>
+          <h2 class="section-title">Built to bring enterprise-grade service directly to your door.</h2>
+        </div>
+        <div class="apple-section">
+          <div class="apple-text">
+            <h2>Meet Austin.</h2>
+            <p>Austin Tyler Caudill founded Austin's Tech Repair Group to completely redefine consumer electronics repair in Ohio. Operating as a registered sole proprietorship, every single service call is handled personally by Austin.</p>
           </div>
-          <p>Your safety, security, and privacy are foundational. Technicians are rigorously background checked, screened, and vetted, ensuring total peace of mind when welcoming a mobile technician into your home, office, or workspace.</p>
-        </div>
-      </div>
-
-      <div class="apple-section reveal">
-        <div class="apple-text">
-          <h2>Meet Austin.</h2>
-          <p>Austin Tyler Caudill founded Austin's Tech Repair Group to completely redefine consumer electronics repair in Ohio. Moving away from impersonal storefronts and delayed turnaround times, Austin built a fully mobile operation grounded in absolute trust, transparent communication, and peerless craftsmanship.</p>
-          <p>Operating as a registered sole proprietorship under Austin Tyler Caudill, every single service call is handled personally by Austin. When you book a repair, you aren't handed off to a third-party subcontractor or a junior tech—you get direct accountability, deep technical acumen, and meticulous attention to detail from the founder himself.</p>
-        </div>
-        <div class="apple-image">
-          <img src="image.png" alt="Austin Tyler Caudill, Owner and Sole Proprietor of Austin's Tech Repair Group">
-        </div>
-      </div>
-
-      <div class="apple-section reverse reveal">
-        <div class="apple-text">
-          <h2>Beyond surface-level swaps. True component engineering.</h2>
-          <p>Most commercial repair shops treat electronics as modular blocks, throwing away entire logic boards or assemblies for minor failures. We operate at the absolute micro-level.</p>
-          <p>Equipped with laboratory-grade optical microscopes, precision hot air rework stations, and advanced digital multimeters, we diagnose and resolve complex faults down to individual surface-mount components (SMD). Whether it's mapping a shorted power rail on a liquid-damaged smartphone motherboard, replacing blown integrated circuits on a game console, or recovering data from a dead computer logic board, we bring dead hardware back to life with dealership-level precision.</p>
-        </div>
-        <div class="apple-image">
-          <img src="https://encrypted-tbn2.gstatic.com/licensed-image?q=tbn:ANd9GcTJOhzNITpgGkdWPSSgL_IW-OnPm-IbucmSOpg40xjh7vrQOMGj1q6HVF9bmzYpdWycMVCNoZ0qHk9OWuk" alt="Micro-soldering microscope for advanced logic board repair">
+          <div class="apple-image">
+            <img src="image.png" alt="Austin Tyler Caudill">
+          </div>
         </div>
       </div>
     </section>
 
     <!-- CONTACT PAGE -->
     <section id="contact" class="page">
-      <div class="container" style="padding-top: var(--space-12); padding-bottom: var(--space-16);">
-        <div class="section-header reveal text-center" style="max-width: 700px; margin: 0 auto var(--space-10);">
-          <p class="eyebrow" style="color: var(--primary);">Get in Touch</p>
+      <div class="container" style="padding-top: 3rem; padding-bottom: 4rem;">
+        <div class="section-header text-center">
+          <p class="eyebrow" style="justify-content: center;">Get in Touch</p>
           <h2 class="section-title">We come to you.</h2>
-          <p class="section-copy" style="font-size: 1.05rem; color: var(--text-muted); line-height: 1.6;">We are a strictly mobile service serving the Miami Valley, including Dayton, Xenia, Spring Valley, Montgomery County, and surrounding areas. Send us a message below or call us directly.</p>
         </div>
-
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-6); max-width: 900px; margin: 0 auto var(--space-8);">
-          <a class="card" href="tel:9372806243" style="text-align: center; text-decoration: none; padding: var(--space-5); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl);">
-            <i class="fas fa-phone" style="font-size: 1.5rem; color: var(--primary); margin-bottom: 12px;"></i>
-            <h4 style="margin:0 0 4px 0; font-family: var(--font-display);">Call Us</h4>
-            <p style="font-size: 0.95rem; font-weight: 700; color: var(--text); margin: 0;">937-280-6243</p>
-          </a>
-          <div class="card" style="text-align: center; padding: var(--space-5); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl);">
-            <i class="fas fa-clock" style="font-size: 1.5rem; color: var(--primary); margin-bottom: 12px;"></i>
-            <h4 style="margin:0 0 4px 0; font-family: var(--font-display);">Hours</h4>
-            <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; margin: 0;">Mon–Fri: 5:30am–10:00pm<br>Sat: 8:30am–10:00pm<br>Sun: 9:00am–5:00pm</p>
-          </div>
-        </div>
-
-        <div class="apple-section reveal" style="max-width: 900px; margin: 0 auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: var(--space-8); box-shadow: var(--shadow-sm);">
+        <div style="max-width: 800px; margin: 0 auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: 2rem;">
           <script type="text/javascript" src="https://form.jotform.com/jsform/261955946010055"></script>
-        </div>
-
-        <div style="max-width: 900px; margin: var(--space-8) auto 0; border-radius: var(--radius-2xl); overflow: hidden; border: 1px solid var(--border);">
-          <iframe 
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d196417.8920153835!2d-84.34110041285496!3d39.75736199434446!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x884081561492b451%3A0x633519c748443916!2sMiami%20Valley%2C%20OH!5e0!3m2!1sen!2sus!4v1692700000000!5m2!1sen!2sus" 
-            width="100%" height="300" style="border:0;" allowfullscreen="" loading="lazy">
-          </iframe>
         </div>
       </div>
     </section>
 
     <!-- PRICES PAGE -->
     <section id="prices" class="page">
-      <div class="prices-hero text-center" style="padding-top: var(--space-12);">
-        <p class="eyebrow text-accent-blue">Transparent Pricing</p>
-        <h2 class="section-title">Straightforward rates. No hidden fees.</h2>
-        <p class="section-subtitle" style="max-width: 600px; margin: 1rem auto 0; color: var(--text-secondary);">
-          We charge what we charge because we stand by the quality of our work. No surprise bills, no corporate gimmicks—just honest, component-level repair brought right to your door.
-        </p>
-      </div>
-
-      <div class="pricing-grid">
-        <div class="pricing-card">
-          <div>
-            <h3>Mobile Dispatch Fee</h3>
-            <div style="font-size: 2.5rem; font-weight: 900; color: var(--primary); margin: 0.5rem 0 1rem;">$15</div>
-            <p style="color: var(--text-muted); font-size: 0.95rem;">Covers fuel, travel time, and secures your mobile appointment slot anywhere in our core service area.</p>
+      <div class="container" style="padding-top: 3rem;">
+        <div class="section-header text-center">
+          <p class="eyebrow" style="justify-content: center;">Transparent Pricing</p>
+          <h2 class="section-title">Straightforward rates. No hidden fees.</h2>
+        </div>
+        <div class="pricing-grid">
+          <div class="pricing-card">
+            <div>
+              <h3>Mobile Dispatch Fee</h3>
+              <div style="font-size: 2.5rem; font-weight: 900; color: var(--primary); margin: 0.5rem 0 1rem;">$15</div>
+              <p style="color: var(--text-muted); font-size: 0.95rem;">Covers fuel, travel time, and secures your mobile appointment slot anywhere in our core service area.</p>
+            </div>
           </div>
-          <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border);">
-            <p style="font-size: 0.8rem; color: var(--text-faint);">*Non-refundable travel fee. Fully credited toward your final repair cost upon job completion.</p>
+          <div class="pricing-card">
+            <div>
+              <h3>Hourly Labor Rate</h3>
+              <div style="font-size: 2.5rem; font-weight: 900; color: var(--primary); margin: 0.5rem 0 1rem;">$25<span style="font-size: 1rem; color: var(--text-muted);">/hr</span></div>
+              <p style="color: var(--text-muted); font-size: 0.95rem;">Professional labor for hardware swaps, assembly, software configuration, and diagnostics.</p>
+            </div>
           </div>
         </div>
-
-        <div class="pricing-card">
-          <div>
-            <h3>Hourly Labor Rate</h3>
-            <div style="font-size: 2.5rem; font-weight: 900; color: var(--primary); margin: 0.5rem 0 1rem;">$25<span style="font-size: 1rem; color: var(--text-muted);">/hr</span></div>
-            <p style="color: var(--text-muted); font-size: 0.95rem;">Professional labor for hardware swaps, assembly, software configuration, and hands-on diagnostics.</p>
-          </div>
-          <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border);">
-            <p style="font-size: 0.8rem; color: var(--text-faint);">Billing begins upon arrival at your location. Billed in straightforward 30-minute increments.</p>
-          </div>
-        </div>
-
-        <div class="pricing-card">
-          <div>
-            <h3>Bench Diagnosis</h3>
-            <div style="font-size: 2.5rem; font-weight: 900; color: var(--primary); margin: 0.5rem 0 1rem;">$29.99</div>
-            <p style="color: var(--text-muted); font-size: 0.95rem;">For complex logic board issues, microscope electrical testing, and deep-level hardware fault finding.</p>
-          </div>
-          <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border);">
-            <p style="font-size: 0.8rem; color: var(--text-faint);">Covers advanced multi-point hardware tracing and diagnostic reporting.</p>
-          </div>
-        </div>
-
-        <div class="pricing-card">
-          <div>
-            <h3>Teardown Diagnostic</h3>
-            <div style="font-size: 2.5rem; font-weight: 900; color: var(--primary); margin: 0.5rem 0 1rem;">$35</div>
-            <p style="color: var(--text-muted); font-size: 0.95rem;">Required when extensive physical disassembly is necessary to isolate hidden liquid or board damage.</p>
-          </div>
-          <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border);">
-            <p style="font-size: 0.8rem; color: var(--text-faint);">Includes complete teardown inspection, component evaluation, and full reassembly labor.</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="container" style="max-width: 1100px; margin: 3rem auto 4rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2xl); padding: 2.5rem;">
-        <h3 style="font-family: var(--font-display); font-size: 1.25rem; font-weight: 800; color: #fff; margin-bottom: 0.75rem;">Parts Policy & Ordering Terms</h3>
-        <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin-bottom: 1rem;">
-          All necessary replacement parts are paid for by the customer upon a spoken or written agreement to move forward with the repair. We collect payment for the parts and then order them on your behalf, or the customer can pay for the part directly. Unless otherwise stated, we choose the parts supplier.
-        </p>
-        <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6;">
-          <strong>Customer-Supplied Parts:</strong> While customers are welcome to supply components like hard drives and RAM, <strong>we do not accept displays or small internal components</strong> unless sourced through our trusted supplier network.
-        </p>
       </div>
     </section>
 
     <!-- B2B PAGE -->
     <section id="b2b" class="page">
-      <div class="b2b-hero text-center" style="padding-top: var(--space-12);">
-        <p class="eyebrow" style="color: var(--primary);">Business & Institutional Solutions</p>
-        <h2 class="section-title">B2B & Commercial Tech Services</h2>
-        <p class="section-subtitle" style="max-width: 800px; margin: var(--space-3) auto 0; color: var(--text-muted);">
-          From server racks, custom sound systems, and networking to POS and delivery integrations, we support organizations of any size—including schools, churches, and libraries.
-        </p>
-      </div>
-
-      <div class="apple-section reveal" style="margin-top: var(--space-8);">
-        <div class="apple-text">
-          <h2>Networking, Server Racks & POS.</h2>
-          <p>We provide complete technology infrastructure for businesses of any size. From building clean server racks and running structured cabling to setting up robust Wi-Fi and modern Point-of-Sale (POS) systems.</p>
-          <p>We help shops integrate <strong>mobile delivery services</strong> directly into their workflow so you can reach customers anywhere.</p>
-          <a class="btn btn-primary" href="#contact" data-page="contact"><i class="fas fa-envelope"></i> Request a Consultation</a>
-        </div>
-        <div class="apple-image">
-          <img src="https://encrypted-tbn2.gstatic.com/licensed-image?q=tbn:ANd9GcQMGMMaovMUFm_crbX8VJaKDvTgHQWCGelfQNIQJQ1g4MI0JmvUNh0Xpd0w5U6iBEjBgNz4qXB9Saw9yV8" alt="Enterprise server rack">
+      <div class="container" style="padding-top: 3rem;">
+        <div class="section-header text-center">
+          <p class="eyebrow" style="justify-content: center;">Commercial Solutions</p>
+          <h2 class="section-title">B2B & Commercial Tech Services</h2>
         </div>
       </div>
     </section>
 
     <!-- ATR ONE PAGE -->
     <section id="atr-one" class="page">
-      <div class="atr-one-hero text-center" style="padding: var(--space-16) var(--space-5); background: var(--surface-alt);">
+      <div class="container" style="padding-top: 3rem; text-align: center;">
         <p class="eyebrow" style="justify-content: center;">ATR One Membership</p>
-        <h1 class="hero-headline" style="font-size: clamp(2.5rem, 5vw, 3.5rem); margin-bottom: var(--space-4);"><em>Member.</em> Perks.</h1>
-        <p class="hero-sub" style="margin: 0 auto var(--space-8); max-width: 650px;">Your $19.99/month membership packed with elite perks, deep hardware discounts, remote IT support, and member-only support extras.</p>
-        <a href="https://square.link/u/xZA5tqxw" target="_blank" class="btn btn-primary btn-lg"><i class="fab fa-square"></i> Subscribe via Square</a>
+        <h2 class="section-title">Member Perks & Support</h2>
+        <a href="https://square.link/u/xZA5tqxw" target="_blank" class="btn btn-primary btn-lg" style="margin-top: 2rem;"><i class="fab fa-square"></i> Subscribe via Square</a>
       </div>
     </section>
 
     <!-- CAREERS PAGE -->
     <section id="careers" class="page">
-      <div class="container" style="padding-top: var(--space-12); padding-bottom: var(--space-16);">
-        <div class="section-header reveal text-center" style="max-width: 700px; margin: 0 auto var(--space-10);">
-          <p class="eyebrow" style="color: var(--primary);">Join Our Team</p>
+      <div class="container" style="padding-top: 3rem;">
+        <div class="section-header text-center">
           <h2 class="section-title">Careers at Austin's Tech Repair Group</h2>
-          <p class="section-copy" style="font-size: 1.05rem; color: var(--text-muted);">Submit your details below to apply for technical and mobile repair roles.</p>
         </div>
         <script type="text/javascript" src="https://form.jotform.com/jsform/262347488023056"></script>
       </div>
@@ -728,11 +504,9 @@
 
     <!-- INVESTORS PAGE -->
     <section id="investors" class="page">
-      <div class="container" style="padding-top: var(--space-12); padding-bottom: var(--space-16);">
-        <div class="section-header reveal text-center" style="max-width: 700px; margin: 0 auto var(--space-10);">
-          <p class="eyebrow">————— INVESTORS —————</p>
-          <h2 class="section-title">Investor Relations at Austin's Tech Repair Group</h2>
-          <p class="section-copy">Inquire about investment opportunities and regional service expansion.</p>
+      <div class="container" style="padding-top: 3rem;">
+        <div class="section-header text-center">
+          <h2 class="section-title">Investor Relations</h2>
         </div>
         <script type="text/javascript" src="https://form.jotform.com/jsform/262354967610058"></script>
       </div>
@@ -754,8 +528,7 @@
         </div>
       </div>
 
-          <div id="portalView" class="app hidden">
-        <!-- Mobile Header Bar for Portal -->
+      <div id="portalView" class="app hidden">
         <div class="mobile-portal-bar" id="mobilePortalBar" style="display: none; align-items: center; justify-content: space-between; background: var(--surface); padding: 1rem; border-bottom: 1px solid var(--border); width: 100%;">
           <button id="portalNavToggle" type="button" class="pbtn pbtn-light pbtn-sm"><i class="fas fa-bars"></i> Menu</button>
           <span style="font-weight: 800; font-family: var(--font-display); color: #fff;">ATR <span style="color: var(--primary);">Operations</span></span>
@@ -768,8 +541,7 @@
               <div class="title">Austin's Tech Repair <span>Group</span></div>
               <div class="sub">Operations Dashboard</div>
             </div>
-            <!-- Close Button for Mobile Sidebar -->
-            <button id="portalSidebarClose" type="button" class="sidebar-close-btn" style="background: var(--surface-alt); border: 1px solid var(--border); width: 36px; height: 36px; border-radius: 50%; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center;"><i class="fas fa-times"></i></button>
+            <button id="portalSidebarClose" type="button" class="sidebar-close-btn"><i class="fas fa-times"></i></button>
           </div>
           <nav class="portal-nav" id="portalNavLinks">
             <button class="active" onclick="showPortalSection('portal-dashboard', this);"><i class="fas fa-gauge"></i> Dashboard</button>
@@ -785,7 +557,6 @@
           </nav>
         </aside>
 
-
         <main class="portal-main">
           <header class="topbar">
             <div class="userbox">
@@ -796,7 +567,7 @@
               <i class="fas fa-search"></i>
               <input type="text" id="portal-search" placeholder="Lookup ticket, customer..." oninput="portalSearch(this.value)">
             </div>
-            <div class="iconset">
+            <div>
               <span class="pill success"><i class="fas fa-circle" style="font-size:6px"></i> Clocked In</span>
             </div>
           </header>
@@ -837,31 +608,29 @@
   <footer class="footer">
     <div class="footer-container">
       <div class="footer-top">
-        <div class="footer-links-col">
+        <div>
           <span class="footer-col-title">Navigate</span>
           <a class="footer-link" href="#home" data-page="home">Home</a>
           <a class="footer-link" href="#shop" data-page="shop">Shop</a>
           <a class="footer-link" href="#contact" data-page="contact">Contact</a>
           <a class="footer-link" href="#prices" data-page="prices">Prices</a>
         </div>
-        <div class="footer-links-col">
-          <span class="footer-col-title">Services & Links</span>
+        <div>
+          <span class="footer-col-title">Services</span>
           <a class="footer-link" href="#b2b" data-page="b2b">B2B & Commercial IT</a>
           <a class="footer-link" href="#atr-one" data-page="atr-one">ATR One Membership</a>
-          <a class="footer-link" href="#careers" data-page="careers">Careers</a>
-          <a class="footer-link" href="#investors" data-page="investors">Investors</a>
           <a class="footer-link" href="#employee" data-page="employee">Employee Portal</a>
         </div>
-        <div class="footer-links-col">
+        <div>
           <span class="footer-col-title">Contact & Area</span>
           <p style="margin-bottom: 0.5rem; color: var(--text-muted);">Mobile Service across Xenia, Dayton, Beavercreek, and Miami Valley.</p>
           <a class="footer-link" href="tel:9372806243" style="font-weight: 800; color: var(--primary);"><i class="fas fa-phone"></i> 937-280-6243</a>
         </div>
       </div>
 
-      <div class="site-footer" style="margin-top: 2rem; border-top: 1px solid var(--border); padding-top: 2rem;">
+      <div class="site-footer">
         <p style="font-size: 0.75rem; color: var(--text-faint); line-height: 1.6; margin-bottom: 1.5rem;">
-          <strong class="legal-heading red">DISCLAIMER & LEGAL NOTICE:</strong> Austin's Tech Repair Group is an independent mobile electronics repair provider operating as a sole proprietorship in the state of Ohio. Apple, iPhone, iPad, Mac, Dell, HP, Samsung, Sony, PlayStation, Xbox, Nintendo, and other product names or trademarks are the property of their respective owners. Mention of third-party products or brand names does not imply affiliation or endorsement.
+          <strong class="legal-heading red">DISCLAIMER & LEGAL NOTICE:</strong> Austin's Tech Repair Group is an independent mobile electronics repair provider. Apple, Samsung, PlayStation, Xbox, and other brand names are the property of their respective owners.
         </p>
         <div class="footer-bottom">
           <span class="footer-copy">Copyright 2026 © <strong>Austin's Tech Repair Group Sole Proprietorship</strong>. All rights reserved.</span>
@@ -885,4 +654,3 @@
 
 </body>
 </html>
-
