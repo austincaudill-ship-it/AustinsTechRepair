@@ -205,20 +205,28 @@
         <div class="trust-item" style="display: flex; align-items: center; gap: 8px; font-size: 0.875rem; font-weight: 600; padding: var(--space-2) var(--space-3);"><i class="fas fa-screwdriver-wrench" style="color: var(--success);"></i> In-Depth Diagnostics</div>
       </div>
             <!-- Price Match -->
-      <div class="price-match-container">
-  <h3>Found a lower price? We'll beat it by $10!</h3>
+ <!-- Price Match Guarantee Calculator -->
+<div class="price-match-container">
+  <h3>Found a lower quote? We'll beat it by $10!</h3>
+  <p class="price-match-sub">Enter our estimated quote (parts + labor) and the competitor's price below.</p>
+  
   <form id="priceMatchForm">
-    <label for="ourPrice">Our Regular Price ($):</label>
-    <input type="number" id="ourPrice" value="99.99" step="0.01" readonly>
+    <div class="price-match-field">
+      <label for="ourPrice">Our Quote / Estimated Price ($):</label>
+      <input type="number" id="ourPrice" placeholder="e.g. 120.00" step="0.01" min="0" required>
+    </div>
 
-    <label for="competitorPrice">Competitor's Price ($):</label>
-    <input type="number" id="competitorPrice" placeholder="Enter competitor price" step="0.01" required>
+    <div class="price-match-field">
+      <label for="competitorPrice">Competitor's Quoted Price ($):</label>
+      <input type="number" id="competitorPrice" placeholder="e.g. 100.00" step="0.01" min="0" required>
+    </div>
 
-    <button type="submit">Calculate Match Price</button>
+    <button type="submit">Calculate Our Guaranteed Price</button>
   </form>
 
-  <div id="result" style="margin-top: 15px; font-weight: bold;"></div>
+  <div id="result"></div>
 </div>
+
 
 
       <!-- SERVICE CATEGORIES -->
