@@ -263,25 +263,58 @@ document.addEventListener('DOMContentLoaded', () => {
   if (cartCloseBtn) cartCloseBtn.addEventListener('click', () => toggleCart(false));
   if (cartBackdrop) cartBackdrop.addEventListener('click', () => toggleCart(false));
 
+
   // -------------------------------------------------------------------------
   // 7. COMPETITOR PRICE MATCH CALCULATOR
   // -------------------------------------------------------------------------
   const priceMatchForm = document.getElementById('priceMatchForm');
+  
   if (priceMatchForm) {
     priceMatchForm.addEventListener('submit', function(event) {
       event.preventDefault();
 
-      const ourPrice = parseFloat(document.getElementById('ourPrice').value);
-      const competitorPrice = parseFloat(document.getElementById('competitorPrice').value);
+      const ourPriceInput = document.getElementById('ourPrice');
+      const competitorPriceInput = document.getElementById('competitorPrice');
       const resultDiv = document.getElementById('result');
 
-      // Validation: Ensure competitor price is a valid number (Fixed variable name case)
+      const ourPrice = parseFloat(ourPriceInput.value);
+      const competitorPrice = parseFloat(competitorPriceInput.value);
+
+      // Validate input values
+      if (isNaN(ourPrice) || ourPrice <= 0) {
+        resultDiv.style.color = 'var(--danger)';
+        resultDiv.textContent = 'Please enter a valid amount for our quote.';
+        return;
+      }
+
       if (isNaN(competitorPrice) || competitorPrice <= 0) {
-        resultDiv.style.color = 'red';
+        resultDiv.style.color = 'var(--danger)';
         resultDiv.textContent = 'Please enter a valid competitor price.';
         return;
       }
 
-      // Check if competitor is actually cheaper
+      // Check if competitor price is actually cheaper
       if (competitorPrice >= ourPrice) {
-        resultDiv
+        resultDiv.style.color = 'var(--warning)';
+        resultDiv.innerHTML = `Our quote of <strong>$${ourPrice.toFixed(2)}</strong> is already lower than or equal to the competitor's price ($${competitorPrice.toFixed(2)})!`;
+        return;
+      }
+
+      // Calculate new guaranteed price: Competitor price minus $10
+      let matchedPrice = competitorPrice - 10.00;
+
+      // Ensure price doesn't go below $0 (or set a minimum labor threshold if desired)
+      if (matchedPrice < 0) {
+        matchedPrice = 0;
+      }
+
+      // Display approved price match
+      resultDiv.style.color = 'var(--success)';
+      resultDiv.innerHTML = `
+        🎉 <strong>Price Match Approved!</strong><br>
+        Competitor Price: $${competitorPrice.toFixed(2)}<br>
+        <strong>Your New Guaranteed Rate: $${matchedPrice.toFixed(2)}</strong> (Competitor price minus $10)
+      `;
+    });
+  }
+
