@@ -102,7 +102,7 @@
       <a class="nav-link" href="#atr-one" data-page="atr-one">ATR One</a>
       <a class="nav-link" href="#careers" data-page="careers">Careers</a>
       <a class="nav-link" href="#investors" data-page="investors">Investors</a>
-      <a class="nav-link" href="#employee" data-page="employee">Portal</a>
+      
     </nav>
 
     <div class="header-actions">
@@ -139,7 +139,7 @@
         <a class="menu-link" href="#atr-one" data-page="atr-one">ATR One Membership</a>
         <a class="menu-link" href="#careers" data-page="careers">Careers</a>
         <a class="menu-link" href="#investors" data-page="investors">Investors</a>
-        <a class="menu-link" href="#employee" data-page="employee">Employee Portal</a>
+        
       </div>
       <div class="menu-footer">
         <a class="menu-phone" href="tel:9372806243"><i class="fas fa-phone"></i> 937-280-6243</a>
@@ -512,99 +512,7 @@
       </div>
     </section>
 
-    <!-- EMPLOYEE PORTAL -->
-    <section id="employee" class="page">
-      <div id="loginView" class="login-wrap">
-        <div class="login-card">
-          <div class="eyebrow">Austin's Tech Repair Group</div>
-          <h1>Employee Portal</h1>
-          <p>Sign in to access operations, tickets, inventory, and tools.</p>
-          <form onsubmit="event.preventDefault(); login();">
-            <div class="field"><label for="username">Username</label><input id="username" type="text" required /></div>
-            <div class="field"><label for="passcode">Passcode</label><input id="passcode" type="password" required /></div>
-            <button type="submit" class="btn btn-primary btn-block" style="margin-top: 1rem;">Login</button>
-          </form>
-          <p id="loginMsg" style="color: var(--danger); margin-top: 1rem; font-size: 0.85rem;"></p>
-        </div>
-      </div>
-
-      <div id="portalView" class="app hidden">
-        <div class="mobile-portal-bar" id="mobilePortalBar" style="display: none; align-items: center; justify-content: space-between; background: var(--surface); padding: 1rem; border-bottom: 1px solid var(--border); width: 100%;">
-          <button id="portalNavToggle" type="button" class="pbtn pbtn-light pbtn-sm"><i class="fas fa-bars"></i> Menu</button>
-          <span style="font-weight: 800; font-family: var(--font-display); color: #fff;">ATR <span style="color: var(--primary);">Operations</span></span>
-          <button type="button" class="pbtn pbtn-light pbtn-sm" onclick="logout()"><i class="fas fa-right-from-bracket"></i></button>
-        </div>
-
-        <aside class="sidebar" id="portalSidebar">
-          <div class="brand-portal">
-            <div>
-              <div class="title">Austin's Tech Repair <span>Group</span></div>
-              <div class="sub">Operations Dashboard</div>
-            </div>
-            <button id="portalSidebarClose" type="button" class="sidebar-close-btn"><i class="fas fa-times"></i></button>
-          </div>
-          <nav class="portal-nav" id="portalNavLinks">
-            <button class="active" onclick="showPortalSection('portal-dashboard', this);"><i class="fas fa-gauge"></i> Dashboard</button>
-            <button onclick="showPortalSection('portal-tickets', this);"><i class="fas fa-ticket"></i> Tickets</button>
-            <button onclick="showPortalSection('portal-queue', this);"><i class="fas fa-list-check"></i> Queue</button>
-            <button onclick="showPortalSection('portal-customers', this);"><i class="fas fa-users"></i> Customers</button>
-            <button onclick="showPortalSection('portal-inventory', this);"><i class="fas fa-boxes-stacked"></i> Inventory</button>
-            <div class="nav-divider"></div>
-            <button onclick="showPortalSection('portal-orders', this);"><i class="fas fa-truck-fast"></i> Orders</button>
-            <button onclick="showPortalSection('portal-financials', this);"><i class="fas fa-chart-line"></i> Financials</button>
-            <button onclick="showPortalSection('portal-timeclock', this);"><i class="fas fa-clock"></i> Time Clock</button>
-            <button class="logout" onclick="logout()"><i class="fas fa-right-from-bracket"></i> Logout</button>
-          </nav>
-        </aside>
-
-        <main class="portal-main">
-          <header class="topbar">
-            <div class="userbox">
-              <div class="avatar" id="portal-avatar">AT</div>
-              <div class="usertext"><strong id="portal-username">Austin Caudill</strong><span id="portal-role">Owner / Lead Tech</span></div>
-            </div>
-            <div class="search-box">
-              <i class="fas fa-search"></i>
-              <input type="text" id="portal-search" placeholder="Lookup ticket, customer..." oninput="portalSearch(this.value)">
-            </div>
-            <div>
-              <span class="pill success"><i class="fas fa-circle" style="font-size:6px"></i> Clocked In</span>
-            </div>
-          </header>
-
-          <section id="portal-dashboard" class="portal-section active">
-            <div class="portal-section-header"><div><h2>Dashboard</h2><p>Overview of shop operations and active service tickets.</p></div></div>
-            <div id="dashboard-stats" class="stats-grid"></div>
-          </section>
-
-          <section id="portal-tickets" class="portal-section">
-            <div class="portal-section-header"><h2>Repair Tickets</h2></div>
-            <div class="portal-table-wrap">
-              <table class="portal-table">
-                <thead>
-                  <tr><th>Ticket #</th><th>Customer</th><th>Device</th><th>Issue</th><th>Status</th><th>Priority</th><th>Assigned</th><th>Due Date</th><th>Actions</th></tr>
-                </thead>
-                <tbody id="tickets-tbody"></tbody>
-              </table>
-            </div>
-          </section>
-
-          <section id="portal-queue" class="portal-section">
-            <div class="portal-section-header"><h2>Repair Queue Kanban</h2></div>
-            <div id="kanban-board" style="display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 1rem;"></div>
-          </section>
-
-          <section id="portal-customers" class="portal-section"><div class="portal-section-header"><h2>Customers</h2></div><p style="color:var(--text-muted)">Customer records database.</p></section>
-          <section id="portal-inventory" class="portal-section"><div class="portal-section-header"><h2>Inventory</h2></div><p style="color:var(--text-muted)">Parts and stock control.</p></section>
-          <section id="portal-orders" class="portal-section"><div class="portal-section-header"><h2>Orders</h2></div><p style="color:var(--text-muted)">Supplier orders and tracking.</p></section>
-          <section id="portal-financials" class="portal-section"><div class="portal-section-header"><h2>Financials</h2></div><p style="color:var(--text-muted)">Revenue and expenses.</p></section>
-          <section id="portal-timeclock" class="portal-section"><div class="portal-section-header"><h2>Time Clock</h2></div><p style="color:var(--text-muted)">Shift tracking.</p></section>
-        </main>
-      </div>
-    </section>
-  </main>
-
-  <!-- FOOTER -->
+    <!-- FOOTER -->
   <footer class="footer">
     <div class="footer-container">
       <div class="footer-top">
@@ -619,7 +527,7 @@
           <span class="footer-col-title">Services</span>
           <a class="footer-link" href="#b2b" data-page="b2b">B2B & Commercial IT</a>
           <a class="footer-link" href="#atr-one" data-page="atr-one">ATR One Membership</a>
-          <a class="footer-link" href="#employee" data-page="employee">Employee Portal</a>
+          
         </div>
         <div>
           <span class="footer-col-title">Contact & Area</span>
