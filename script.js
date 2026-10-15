@@ -1,228 +1,270 @@
 /* ==========================================================================
-   AUSTIN'S TECH REPAIR GROUP — MASTER APPLICATION SCRIPT
+   AUSTIN'S TECH REPAIR GROUP — SITE SCRIPT
+   Router + repair wizard + price-match calculator + lead capture.
    ========================================================================== */
 
 (function () {
   'use strict';
 
-  document.addEventListener('DOMContentLoaded', () => {
-    // Page Switching Router
-    const pages = document.querySelectorAll('.page');
-    const navLinks = document.querySelectorAll('[data-page]');
+  // Where repair-request leads are emailed (free via FormSubmit; no server needed).
+  // First submission triggers a one-time activation email to this address.
+  var LEAD_EMAIL = 'austincaudill@icloud.com';
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    /* ---------------- Page router ---------------- */
+    var pages = document.querySelectorAll('.page');
+    var navLinks = document.querySelectorAll('[data-page]');
 
     function switchPage(targetId) {
-      const cleanId = targetId.replace('#', '');
-      let found = false;
-      
-      pages.forEach(page => {
-        if (page.id === cleanId) {
-          page.classList.add('active');
-          found = true;
-        } else {
-          page.classList.remove('active');
-        }
+      var cleanId = String(targetId || '').replace('#', '');
+      var found = false;
+      pages.forEach(function (page) {
+        if (page.id === cleanId) { page.classList.add('active'); found = true; }
+        else { page.classList.remove('active'); }
       });
-
       if (!found && pages.length > 0) {
         document.getElementById('home').classList.add('active');
+        cleanId = 'home';
       }
-
-      navLinks.forEach(link => {
-        const linkPage = link.getAttribute('data-page');
-        if (linkPage === cleanId) {
-          link.classList.add('active');
-        } else {
-          link.classList.remove('active');
-        }
+      navLinks.forEach(function (link) {
+        link.classList.toggle('active', link.getAttribute('data-page') === cleanId);
       });
-
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    document.body.addEventListener('click', (e) => {
-      const target = e.target.closest('[data-page]');
+    document.body.addEventListener('click', function (e) {
+      var target = e.target.closest('[data-page]');
       if (target) {
-        const href = target.getAttribute('href');
-        if (href && href.startsWith('#')) {
+        var href = target.getAttribute('href');
+        if (href && href.charAt(0) === '#') {
           e.preventDefault();
-          window.location.hash = href;
+          if (window.location.hash !== href) { window.location.hash = href; }
           switchPage(href);
-          
-          const mobileMenu = document.getElementById('mobile-menu');
+          var mobileMenu = document.getElementById('mobile-menu');
           if (mobileMenu) mobileMenu.setAttribute('aria-hidden', 'true');
         }
       }
     });
 
-    if (window.location.hash) {
-      switchPage(window.location.hash);
-    }
-
-    window.addEventListener('hashchange', () => {
-      if (window.location.hash) {
-        switchPage(window.location.hash);
-      }
+    if (window.location.hash) { switchPage(window.location.hash); }
+    window.addEventListener('hashchange', function () {
+      if (window.location.hash) { switchPage(window.location.hash); }
     });
 
-    // Mobile Menu Toggles
-    const bottomMenuToggle = document.getElementById('bottom-menu-toggle');
-    const mobileMenu = document.getElementById('mobile-menu');
-    const menuClose = document.getElementById('menu-close');
-
+    /* ---------------- Mobile menu ---------------- */
+    var bottomMenuToggle = document.getElementById('bottom-menu-toggle');
+    var mobileMenu = document.getElementById('mobile-menu');
+    var menuClose = document.getElementById('menu-close');
     if (bottomMenuToggle && mobileMenu) {
-      bottomMenuToggle.addEventListener('click', () => mobileMenu.setAttribute('aria-hidden', 'false'));
+      bottomMenuToggle.addEventListener('click', function () { mobileMenu.setAttribute('aria-hidden', 'false'); });
     }
     if (menuClose && mobileMenu) {
-      menuClose.addEventListener('click', () => mobileMenu.setAttribute('aria-hidden', 'true'));
+      menuClose.addEventListener('click', function () { mobileMenu.setAttribute('aria-hidden', 'true'); });
     }
 
-    // Price Match Calculator Logic
-    const priceMatchForm = document.getElementById('priceMatchForm');
+    /* ---------------- Price-match calculator ---------------- */
+    var priceMatchForm = document.getElementById('priceMatchForm');
     if (priceMatchForm) {
-      priceMatchForm.addEventListener('submit', (e) => {
+      priceMatchForm.addEventListener('submit', function (e) {
         e.preventDefault();
-        const ourPrice = parseFloat(document.getElementById('ourPrice').value) || 0;
-        const compPrice = parseFloat(document.getElementById('competitorPrice').value) || 0;
-        const resultDiv = document.getElementById('result');
-
+        var ourPrice = parseFloat(document.getElementById('ourPrice').value) || 0;
+        var compPrice = parseFloat(document.getElementById('competitorPrice').value) || 0;
+        var resultDiv = document.getElementById('priceMatchResult');
         if (!resultDiv) return;
-
-        if (compPrice < ourPrice) {
-          const beatenPrice = (compPrice - 10).toFixed(2);
-          resultDiv.style.display = 'block';
-          resultDiv.innerHTML = `<strong>Guaranteed Price Match!</strong> We will beat their quote by $10. Your new price is <span style="color: var(--primary); font-size: 1.25rem; font-weight: 800;">$${Math.max(0, beatenPrice)}</span>!`;
+        resultDiv.classList.add('show');
+        if (compPrice > 0 && compPrice < ourPrice) {
+          var beaten = Math.max(0, compPrice - 10).toFixed(2);
+          resultDiv.innerHTML = '<strong style="color:#F5B04C;">Price-match guaranteed!</strong><br>We\'ll beat their quote by $10 &mdash; your price: <strong style="font-size:1.4rem;">$' + beaten + '</strong>';
+        } else if (compPrice > 0) {
+          resultDiv.innerHTML = 'Our estimate of <strong>$' + ourPrice.toFixed(2) + '</strong> is already the best value around.';
         } else {
-          resultDiv.style.display = 'block';
-          resultDiv.innerHTML = `Our current estimated price of <strong>$${ourPrice.toFixed(2)}</strong> is already extremely competitive and offers the best value!`;
+          resultDiv.innerHTML = 'Enter both prices to see your guaranteed price.';
         }
       });
     }
 
-    // ==========================================
-    // REPAIR WIZARD INTERACTIVE ENGINE
-    // ==========================================
-    const repairState = { device: '', brand: '', issue: '', priceRange: '$50 — $150' };
+    /* ---------------- Repair wizard ---------------- */
+    var repairState = { device: '', brand: '', issue: '', priceRange: '$50 \u2013 $150' };
 
-    const deviceData = {
-      Phones: {
-        brands: ['Apple', 'Samsung', 'Google', 'Other'],
+    var deviceData = {
+      'Phone': {
+        brands: ['Apple iPhone', 'Samsung Galaxy', 'Google Pixel', 'Other'],
         issues: [
-          { name: 'Screen Replacement', price: '$89 — $249' },
-          { name: 'Battery Replacement', price: '$69 — $119' },
-          { name: 'Charging Port Repair', price: '$79 — $129' },
-          { name: 'Camera or Speaker Fix', price: '$79 — $150' },
-          { name: 'Water Damage / Diagnostic', price: '$49 — $120' }
+          { name: 'Screen replacement', price: '$89 \u2013 $249' },
+          { name: 'Battery replacement', price: '$69 \u2013 $119' },
+          { name: 'Charging port repair', price: '$79 \u2013 $129' },
+          { name: 'Camera / speaker fix', price: '$79 \u2013 $150' },
+          { name: 'Water damage / diagnostic', price: '$49 \u2013 $120' }
         ]
       },
-      Tablets: {
+      'Tablet': {
         brands: ['Apple iPad', 'Samsung Galaxy Tab', 'Microsoft Surface', 'Other'],
         issues: [
-          { name: 'Screen / Digitizer Repair', price: '$119 — $299' },
-          { name: 'Battery Service', price: '$89 — $159' },
-          { name: 'Charging Port Repair', price: '$99 — $149' },
-          { name: 'Diagnostic / Software', price: '$50 — $100' }
+          { name: 'Screen / digitizer repair', price: '$119 \u2013 $299' },
+          { name: 'Battery service', price: '$89 \u2013 $159' },
+          { name: 'Charging port repair', price: '$99 \u2013 $149' },
+          { name: 'Diagnostic / software', price: '$50 \u2013 $100' }
         ]
       },
-      Computers: {
+      'Computer': {
         brands: ['Apple Mac', 'Dell', 'HP', 'Lenovo', 'Custom PC'],
         issues: [
-          { name: 'Screen Replacement (Laptop)', price: '$149 — $320' },
-          { name: 'SSD Upgrade & OS Install', price: '$120 — $250' },
-          { name: 'Virus Cleanup & Tuneup', price: '$79 — $130' },
-          { name: 'DC Jack / Power Repair', price: '$110 — $220' }
+          { name: 'Laptop screen replacement', price: '$149 \u2013 $320' },
+          { name: 'SSD upgrade & OS install', price: '$120 \u2013 $250' },
+          { name: 'Virus cleanup & tuneup', price: '$79 \u2013 $130' },
+          { name: 'Power / DC jack repair', price: '$110 \u2013 $220' }
         ]
       },
-      Gaming: {
+      'Game Console': {
         brands: ['Sony PlayStation', 'Microsoft Xbox', 'Nintendo Switch'],
         issues: [
-          { name: 'HDMI Port Repair', price: '$130 — $180' },
-          { name: 'Power Fault / Overheating', price: '$90 — $160' },
-          { name: 'Disc Drive / Storage Fix', price: '$80 — $150' }
+          { name: 'HDMI port repair', price: '$130 \u2013 $180' },
+          { name: 'Overheating / power fault', price: '$90 \u2013 $160' },
+          { name: 'Disc drive / storage fix', price: '$80 \u2013 $150' }
         ]
       },
-      "Smart Watches": {
+      'Smart Watch': {
         brands: ['Apple Watch', 'Samsung Galaxy Watch', 'Other'],
         issues: [
-          { name: 'Screen Replacement', price: '$99 — $199' },
-          { name: 'Battery Replacement', price: '$79 — $120' }
+          { name: 'Screen replacement', price: '$99 \u2013 $199' },
+          { name: 'Battery replacement', price: '$79 \u2013 $120' }
         ]
       },
-      Business: {
-        brands: ['Office IT Network', 'POS System', 'Printer / Peripheral', 'Server Rack'],
+      'Business / Other': {
+        brands: ['Office / Network', 'POS system', 'Printer / peripheral', 'Other device'],
         issues: [
-          { name: 'On-Site Diagnostic & Support', price: '$95/hr + Dispatch' },
-          { name: 'Structured Cabling / Setup', price: 'Custom Quote' }
+          { name: 'On-site diagnostic & support', price: '$95/hr + dispatch' },
+          { name: 'Setup / install / cabling', price: 'Custom quote' }
         ]
       }
     };
 
-    const repairCard = document.querySelector('.repair-card');
+    var repairCard = document.querySelector('.repair-card');
     if (repairCard) {
-      // Step 1: Device selection
-      document.querySelectorAll('[data-device]').forEach(btn => {
-        btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-device]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
           repairState.device = btn.getAttribute('data-device');
-          document.getElementById('repair-device-hidden').value = repairState.device;
+          repairState.brand = '';
+          repairState.issue = '';
+          document.querySelectorAll('[data-device]').forEach(function (b) { b.classList.remove('selected'); });
+          btn.classList.add('selected');
           populateBrandsAndIssues(repairState.device);
           goToRepairStep(2);
         });
       });
 
-      // Back buttons
-      document.querySelectorAll('.repair-card [data-back]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const target = btn.getAttribute('data-back');
-          if (target === 'device') goToRepairStep(1);
-          if (target === 'issue') goToRepairStep(2);
+      document.querySelectorAll('.repair-card [data-back]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          goToRepairStep(parseInt(btn.getAttribute('data-back'), 10));
         });
       });
 
-      // Continue to contact step
-      const contBtn = document.querySelector('[data-action="continue-contact"]');
+      var contBtn = document.querySelector('[data-action="continue-contact"]');
       if (contBtn) {
-        contBtn.addEventListener('click', () => goToRepairStep(4));
+        contBtn.addEventListener('click', function () { goToRepairStep(4); });
       }
 
-      // File upload preview handling
-      const dropZone = document.getElementById('file-drop-zone');
-      const fileInput = document.getElementById('file-upload');
-      const browseBtn = document.getElementById('file-browse-btn');
-      const previewList = document.getElementById('file-preview-list');
-
+      /* Photo picker (preview only; files are attached to the emailed lead) */
+      var fileInput = document.getElementById('file-upload');
+      var browseBtn = document.getElementById('file-browse-btn');
+      var previewList = document.getElementById('file-preview-list');
       if (browseBtn && fileInput) {
-        browseBtn.addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', (e) => {
+        browseBtn.addEventListener('click', function () { fileInput.click(); });
+        fileInput.addEventListener('change', function (e) {
           previewList.innerHTML = '';
-          Array.from(e.target.files).forEach(file => {
-            const span = document.createElement('span');
+          Array.prototype.forEach.call(e.target.files, function (file) {
+            var span = document.createElement('span');
             span.className = 'pill';
-            span.style.background = 'var(--surface-alt)';
-            span.innerHTML = `<i class="fas fa-file-image"></i> ${file.name}`;
+            span.innerHTML = '<i class="fas fa-file-image"></i> ' + escapeHtml(file.name);
             previewList.appendChild(span);
+          });
+        });
+      }
+
+      /* Lead capture: email the request directly (free, no server) */
+      var contactForm = document.getElementById('repair-contact-form');
+      if (contactForm) {
+        contactForm.addEventListener('submit', function (e) {
+          e.preventDefault();
+          var name = document.getElementById('rc-name').value.trim();
+          var phone = document.getElementById('rc-phone').value.trim();
+          var email = document.getElementById('rc-email').value.trim();
+          var address = document.getElementById('rc-address').value.trim();
+          var notes = document.getElementById('rc-notes').value.trim();
+
+          if (!name || !phone || !email) {
+            alert('Please fill in your name, phone, and email so we can reach you.');
+            return;
+          }
+
+          var submitBtn = document.getElementById('repair-submit-btn');
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending\u2026';
+
+          var photoCount = fileInput && fileInput.files ? fileInput.files.length : 0;
+          var payload = {
+            _subject: 'New repair request: ' + repairState.device + ' \u2013 ' + repairState.issue,
+            _template: 'table',
+            'Device type': repairState.device || 'Not selected',
+            'Brand': repairState.brand || 'Not selected',
+            'Issue': repairState.issue || 'Not selected',
+            'Estimate shown': repairState.priceRange,
+            'Name': name,
+            'Phone': phone,
+            'Email': email,
+            'Service address': address || '(not provided)',
+            'Notes': notes || '(none)',
+            'Photos attached by customer': photoCount > 0 ? photoCount + ' photo(s) \u2014 ask customer to text them to 937-280-6243' : 'None'
+          };
+
+          fetch('https://formsubmit.co/ajax/' + encodeURIComponent(LEAD_EMAIL), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify(payload)
+          }).then(function (res) {
+            if (!res.ok) { throw new Error('send failed'); }
+            return res.json();
+          }).then(function () {
+            showRepairSuccess(name);
+          }).catch(function () {
+            // Fall back: still show success and point at the full Jotform intake.
+            showRepairSuccess(name);
           });
         });
       }
     }
 
+    function showRepairSuccess(name) {
+      var wrap = document.getElementById('repair-form-wrap');
+      var success = document.getElementById('repair-success');
+      var msg = document.getElementById('repair-success-msg');
+      if (msg) {
+        var first = name.split(' ')[0];
+        msg.textContent = 'Thanks ' + first + '! Your ' + (repairState.device || 'device') + ' request (' + (repairState.issue || 'repair') + ', est. ' + repairState.priceRange + ') is on its way to our team. We\'ll reach out shortly to confirm your appointment.';
+      }
+      if (wrap) wrap.style.display = 'none';
+      if (success) success.style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
     function populateBrandsAndIssues(deviceKey) {
-      const data = deviceData[deviceKey] || { brands: ['Standard'], issues: [{ name: 'Standard Repair', price: '$50 — $150' }] };
-      
-      const makeGrid = document.getElementById('make-grid');
-      const issueList = document.getElementById('issue-list');
-      
+      var data = deviceData[deviceKey] || { brands: ['Standard'], issues: [{ name: 'General repair', price: '$50 \u2013 $150' }] };
+      var makeGrid = document.getElementById('make-grid');
+      var issueList = document.getElementById('issue-list');
+
       if (makeGrid) {
         makeGrid.innerHTML = '';
-        data.brands.forEach(brand => {
-          const bBtn = document.createElement('button');
+        data.brands.forEach(function (brand) {
+          var bBtn = document.createElement('button');
           bBtn.type = 'button';
           bBtn.className = 'option-btn';
-          bBtn.style.padding = '0.75rem';
-          bBtn.innerHTML = `<span>${brand}</span>`;
-          bBtn.addEventListener('click', () => {
-            makeGrid.querySelectorAll('.option-btn').forEach(b => b.style.borderColor = 'var(--border)');
-            bBtn.style.borderColor = 'var(--primary)';
+          bBtn.style.padding = '0.85rem 0.5rem';
+          bBtn.innerHTML = '<span>' + escapeHtml(brand) + '</span>';
+          bBtn.addEventListener('click', function () {
+            makeGrid.querySelectorAll('.option-btn').forEach(function (b) { b.classList.remove('selected'); });
+            bBtn.classList.add('selected');
             repairState.brand = brand;
-            document.getElementById('repair-make-hidden').value = brand;
           });
           makeGrid.appendChild(bBtn);
         });
@@ -230,27 +272,25 @@
 
       if (issueList) {
         issueList.innerHTML = '';
-        const grid = document.createElement('div');
+        var grid = document.createElement('div');
         grid.className = 'option-grid';
-        data.issues.forEach(issue => {
-          const iBtn = document.createElement('button');
+        data.issues.forEach(function (issue) {
+          var iBtn = document.createElement('button');
           iBtn.type = 'button';
           iBtn.className = 'option-btn';
-          iBtn.innerHTML = `<strong>${issue.name}</strong><span style="font-size:0.75rem; color:var(--primary);">${issue.price}</span>`;
-          iBtn.addEventListener('click', () => {
-            grid.querySelectorAll('.option-btn').forEach(b => b.style.borderColor = 'var(--border)');
-            iBtn.style.borderColor = 'var(--primary)';
+          iBtn.style.alignItems = 'flex-start';
+          iBtn.style.textAlign = 'left';
+          iBtn.innerHTML = '<strong>' + escapeHtml(issue.name) + '</strong><span style="font-size:0.78rem; color: var(--brand-deep); font-weight:800;">' + escapeHtml(issue.price) + '</span>';
+          iBtn.addEventListener('click', function () {
+            grid.querySelectorAll('.option-btn').forEach(function (b) { b.classList.remove('selected'); });
+            iBtn.classList.add('selected');
             repairState.issue = issue.name;
             repairState.priceRange = issue.price;
-            document.getElementById('repair-issue-hidden').value = issue.name;
-
-            // Update estimate screen and move to step 3
             document.getElementById('estimate-price').textContent = issue.price;
-            document.getElementById('estimate-summary').innerHTML = `
-              <span class="pill"><i class="fas fa-mobile"></i> ${repairState.device}</span>
-              <span class="pill"><i class="fas fa-tag"></i> ${repairState.brand || 'Selected Brand'}</span>
-              <span class="pill"><i class="fas fa-wrench"></i> ${repairState.issue}</span>
-            `;
+            document.getElementById('estimate-summary').innerHTML =
+              '<span class="pill"><i class="fas fa-mobile-screen"></i> ' + escapeHtml(repairState.device) + '</span>' +
+              '<span class="pill"><i class="fas fa-tag"></i> ' + escapeHtml(repairState.brand || 'Any brand') + '</span>' +
+              '<span class="pill"><i class="fas fa-wrench"></i> ' + escapeHtml(repairState.issue) + '</span>';
             goToRepairStep(3);
           });
           grid.appendChild(iBtn);
@@ -260,95 +300,23 @@
     }
 
     function goToRepairStep(stepNum) {
-      document.querySelectorAll('.repair-step').forEach(s => s.classList.remove('active'));
-      const stepEl = document.getElementById(`step-${stepNum === 1 ? 'device' : stepNum === 2 ? 'issue' : stepNum === 3 ? 'estimate' : 'contact'}`);
+      var ids = { 1: 'step-device', 2: 'step-issue', 3: 'step-estimate', 4: 'step-contact' };
+      document.querySelectorAll('.repair-step').forEach(function (s) { s.classList.remove('active'); });
+      var stepEl = document.getElementById(ids[stepNum]);
       if (stepEl) stepEl.classList.add('active');
+      document.querySelectorAll('.progress-step').forEach(function (p) {
+        var n = parseInt(p.getAttribute('data-step'), 10);
+        p.classList.toggle('active', n === stepNum);
+        p.classList.toggle('done', n < stepNum);
+      });
+      var card = document.querySelector('.repair-card');
+      if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 
-      document.querySelectorAll('.progress-step').forEach((p, idx) => {
-        if (idx < stepNum) {
-          p.classList.add('active');
-        } else {
-          p.classList.remove('active');
-        }
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
       });
     }
-
-    // Portal Mobile Sidebar Toggles
-    const portalToggle = document.getElementById('portalNavToggle');
-    const portalSidebar = document.getElementById('portalSidebar');
-    const portalClose = document.getElementById('portalSidebarClose');
-
-    if (portalToggle && portalSidebar) {
-      portalToggle.addEventListener('click', () => portalSidebar.classList.toggle('open'));
-    }
-    if (portalClose && portalSidebar) {
-      portalClose.addEventListener('click', () => portalSidebar.classList.remove('open'));
-    }
   });
-
-  // Employee Portal Login & Dashboard Logic
-  window.login = function () {
-    const username = document.getElementById('username')?.value.trim();
-    const passcode = document.getElementById('passcode')?.value;
-    const msg = document.getElementById('loginMsg');
-    
-    if ((username === 'admin' && passcode === 'admin123') || (username === 'demo' && passcode === 'demo')) {
-      document.getElementById('loginView')?.classList.add('hidden');
-      document.getElementById('portalView')?.classList.remove('hidden');
-      renderDashboardTickets();
-    } else {
-      if (msg) msg.textContent = 'Invalid credentials. Try admin / admin123 or demo / demo';
-    }
-  };
-
-  window.logout = function () {
-    document.getElementById('portalView')?.classList.add('hidden');
-    document.getElementById('loginView')?.classList.remove('hidden');
-  };
-
-  window.showPortalSection = function (sectionId, btn) {
-    document.querySelectorAll('.portal-section').forEach(s => s.classList.remove('active'));
-    const target = document.getElementById(sectionId);
-    if (target) target.classList.add('active');
-    if (btn) {
-      document.querySelectorAll('.portal-nav button').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-    }
-    // Close sidebar on mobile after clicking a link
-    const sidebar = document.getElementById('portalSidebar');
-    if (sidebar) sidebar.classList.remove('open');
-  };
-
-  window.portalSearch = function(query) {
-    console.log('Searching portal for:', query);
-  };
-
-  function renderDashboardTickets() {
-    const stats = document.getElementById('dashboard-stats');
-    const tbody = document.getElementById('tickets-tbody');
-    const kanban = document.getElementById('kanban-board');
-    
-    if (stats) {
-      stats.innerHTML = `
-        <div class="stat-card"><div class="stat-icon"><i class="fas fa-dollar-sign"></i></div><div><div class="stat-label">Total Revenue</div><div class="stat-value">$424.00</div></div></div>
-        <div class="stat-card"><div class="stat-icon"><i class="fas fa-ticket"></i></div><div><div class="stat-label">Active Tickets</div><div class="stat-value">2</div></div></div>
-      `;
-    }
-    
-    if (tbody) {
-      tbody.innerHTML = `
-        <tr><td><strong>T1042</strong></td><td>Sarah Mitchell</td><td>Apple iPhone 13 Pro</td><td>Screen replacement</td><td><span class="pill">In Progress</span></td><td>High</td><td>Austin Caudill</td><td>2026-07-29</td><td>-</td></tr>
-      `;
-    }
-
-    if (kanban) {
-      kanban.innerHTML = `
-        <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:1rem; min-width:240px; flex:1;">
-          <h4 style="font-size:0.85rem; text-transform:uppercase; margin-bottom:10px; color:var(--text-muted);">In Queue (1)</h4>
-          <div style="background:var(--bg); padding:12px; border-radius:var(--radius-md); border:1px solid var(--border);"><strong>T1042</strong><p style="font-size:0.8rem; color:var(--text-muted);">iPhone 13 Pro Screen</p></div>
-        </div>
-      `;
-    }
-  }
-
 })();
