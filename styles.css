@@ -458,3 +458,10 @@ a { color: var(--brand); }
   .section { padding: 3rem 0; }
   .progress-label { display: none; }
 }
+
+/* Real work gallery */
+.work-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.2rem; }
+.work-card { border-radius: var(--radius-lg); overflow: hidden; background: var(--surface); border: 1px solid var(--line-soft); box-shadow: var(--shadow-sm); }
+.work-card img { width: 100%; height: 220px; object-fit: cover; display: block; }
+.work-caption { padding: 0.9rem 1.1rem; font-size: 0.9rem; color: var(--ink); }
+.work-caption strong { display: block; font-family: var(--font-display); margin-bottom: 0.25rem; }
