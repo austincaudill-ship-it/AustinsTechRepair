@@ -77,6 +77,10 @@
       <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark/light mode">
         <i class="fas fa-moon" id="theme-icon"></i>
       </button>
+      <button class="account-btn" id="account-open-btn" aria-label="Your account" title="Account & rewards">
+        <i class="fas fa-user-circle"></i>
+        <span class="account-label" id="account-label">Account</span>
+      </button>
       <a class="btn btn-primary header-cta" href="#repair" data-page="repair"><i class="fas fa-wrench"></i> Book a Repair</a>
     </div>
   </header>
@@ -643,6 +647,66 @@
       </div>
     </aside>
 
+    <!-- ACCOUNT MODAL -->
+    <div class="acct-overlay" id="acct-overlay" hidden></div>
+    <div class="acct-modal" id="acct-modal" role="dialog" aria-modal="true" aria-label="Your account" hidden>
+      <div class="acct-card">
+        <button class="acct-close" id="acct-close" aria-label="Close account"><i class="fas fa-times"></i></button>
+
+        <!-- Login / signup view -->
+        <div id="acct-auth-view">
+          <h3><i class="fas fa-user-circle"></i> Your Account</h3>
+          <p class="acct-sub">Log in with your email to track repairs and earn reward points.</p>
+
+          <div class="acct-tabs">
+            <button class="acct-tab active" id="acct-tab-login" type="button">Log In</button>
+            <button class="acct-tab" id="acct-tab-signup" type="button">Sign Up</button>
+          </div>
+
+          <form id="acct-login-form" novalidate>
+            <label class="acct-field">
+              <span>Email address</span>
+              <input type="email" id="acct-login-email" placeholder="you@example.com" autocomplete="email" required>
+            </label>
+            <p class="acct-error" id="acct-login-error" hidden></p>
+            <button class="btn btn-primary btn-lg acct-submit" type="submit">Log In <i class="fas fa-arrow-right"></i></button>
+          </form>
+
+          <form id="acct-signup-form" novalidate hidden>
+            <label class="acct-field">
+              <span>Full name</span>
+              <input type="text" id="acct-signup-name" placeholder="Jane Smith" autocomplete="name" required>
+            </label>
+            <label class="acct-field">
+              <span>Email address</span>
+              <input type="email" id="acct-signup-email" placeholder="you@example.com" autocomplete="email" required>
+            </label>
+            <label class="acct-field">
+              <span>Phone (optional)</span>
+              <input type="tel" id="acct-signup-phone" placeholder="(937) 555-1234" autocomplete="tel">
+            </label>
+            <p class="acct-error" id="acct-signup-error" hidden></p>
+            <button class="btn btn-primary btn-lg acct-submit" type="submit">Create Account <i class="fas fa-arrow-right"></i></button>
+          </form>
+        </div>
+
+        <!-- Logged-in view -->
+        <div id="acct-dash-view" hidden>
+          <h3><i class="fas fa-user-circle"></i> <span id="acct-dash-name">Hi there</span></h3>
+          <div class="acct-points">
+            <div class="acct-points-num" id="acct-points-num">0</div>
+            <div class="acct-points-label">reward points</div>
+          </div>
+          <div class="acct-earn">
+            <p><i class="fas fa-gift"></i> <strong>How to earn:</strong> 1 point for every $1 you spend on repairs.</p>
+            <p><i class="fas fa-tag"></i> <strong>Redeem:</strong> every 100 points = $5 off your next repair. Just mention your points when you book.</p>
+          </div>
+          <p class="acct-error" id="acct-dash-error" hidden></p>
+          <button class="btn btn-outline btn-sm acct-logout" id="acct-logout" type="button"><i class="fas fa-sign-out-alt"></i> Log Out</button>
+        </div>
+      </div>
+    </div>
+
     <!-- ==================== B2B ==================== -->
     <section id="b2b" class="page">
       <div class="section">
@@ -1098,6 +1162,7 @@
     <button class="bottom-nav-item" id="bottom-menu-toggle" type="button"><i class="fa-solid fa-bars"></i><span>Menu</span></button>
   </nav>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="script.js"></script>
 
   <!-- COOKIE CONSENT -->
