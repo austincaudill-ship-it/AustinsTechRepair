@@ -697,6 +697,66 @@
             <div class="acct-points-num" id="acct-points-num">0</div>
             <div class="acct-points-label">reward points</div>
           </div>
+
+          <!-- My Repairs -->
+          <div class="acct-repairs" id="acct-repairs">
+            <div class="acct-repairs-head">
+              <h4><i class="fas fa-tools"></i> My Repairs</h4>
+              <button class="btn btn-primary btn-sm" id="acct-new-ticket-btn" type="button"><i class="fas fa-plus"></i> New Request</button>
+            </div>
+            <div id="acct-ticket-list"><p class="acct-muted">Loading your repairs…</p></div>
+          </div>
+
+          <!-- Ticket thread view -->
+          <div class="acct-thread" id="acct-thread" hidden>
+            <button class="btn btn-outline btn-sm" id="acct-thread-back" type="button"><i class="fas fa-arrow-left"></i> Back to repairs</button>
+            <div class="acct-thread-info" id="acct-thread-info"></div>
+            <div class="acct-messages" id="acct-messages"></div>
+            <form id="acct-msg-form" novalidate>
+              <div class="acct-msg-row">
+                <input type="text" id="acct-msg-input" placeholder="Write a message…" autocomplete="off" maxlength="1000">
+                <button class="btn btn-primary btn-sm" type="submit" aria-label="Send message"><i class="fas fa-paper-plane"></i></button>
+              </div>
+              <p class="acct-error" id="acct-msg-error" hidden></p>
+            </form>
+          </div>
+
+          <!-- New ticket form -->
+          <div class="acct-newticket" id="acct-newticket" hidden>
+            <button class="btn btn-outline btn-sm" id="acct-newticket-back" type="button"><i class="fas fa-arrow-left"></i> Back to repairs</button>
+            <h4><i class="fas fa-plus-circle"></i> New Repair Request</h4>
+            <form id="acct-ticket-form" novalidate>
+              <label class="acct-field">
+                <span>Device type</span>
+                <select id="acct-t-device" required>
+                  <option value="Phone">Phone</option>
+                  <option value="Tablet">Tablet</option>
+                  <option value="Laptop">Laptop</option>
+                  <option value="Desktop">Desktop</option>
+                  <option value="Game Console">Game Console</option>
+                  <option value="Smartwatch">Smartwatch</option>
+                  <option value="Other">Other</option>
+                </select>
+              </label>
+              <div class="acct-row2">
+                <label class="acct-field">
+                  <span>Brand</span>
+                  <input type="text" id="acct-t-brand" placeholder="e.g. Apple" autocomplete="off">
+                </label>
+                <label class="acct-field">
+                  <span>Model</span>
+                  <input type="text" id="acct-t-model" placeholder="e.g. iPhone 13" autocomplete="off">
+                </label>
+              </div>
+              <label class="acct-field">
+                <span>What's wrong?</span>
+                <textarea id="acct-t-issue" placeholder="Describe the problem…" rows="3" required></textarea>
+              </label>
+              <p class="acct-error" id="acct-ticket-error" hidden></p>
+              <button class="btn btn-primary btn-lg acct-submit" type="submit">Submit Request <i class="fas fa-arrow-right"></i></button>
+            </form>
+          </div>
+
           <div class="acct-earn">
             <p><i class="fas fa-gift"></i> <strong>How to earn:</strong> 1 point for every $1 you spend on repairs.</p>
             <p><i class="fas fa-tag"></i> <strong>Redeem:</strong> every 100 points = $5 off your next repair. Just mention your points when you book.</p>

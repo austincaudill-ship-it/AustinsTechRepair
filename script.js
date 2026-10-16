@@ -921,3 +921,280 @@
     renderHeader();
   });
 })();
+
+/* ==================== ATR MY REPAIRS: TICKETS & MESSAGING ==================== */
+(function () {
+  'use strict';
+
+  var SUPABASE_URL = 'https://lyujxpuicarblpkdzuuc.supabase.co';
+  var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
+  var SESSION_KEY = 'atr-account';
+
+  var STATUSES = ['Waiting', 'In Progress', 'Waiting for Parts', 'Ready for Pickup', 'Completed'];
+  var STATUS_CLASS = {
+    'Waiting': 'acct-st-waiting',
+    'In Progress': 'acct-st-progress',
+    'Waiting for Parts': 'acct-st-parts',
+    'Ready for Pickup': 'acct-st-ready',
+    'Completed': 'acct-st-done'
+  };
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    var repairsSection = document.getElementById('acct-repairs');
+    var ticketList = document.getElementById('acct-ticket-list');
+    var newTicketBtn = document.getElementById('acct-new-ticket-btn');
+    var threadView = document.getElementById('acct-thread');
+    var threadBack = document.getElementById('acct-thread-back');
+    var threadInfo = document.getElementById('acct-thread-info');
+    var messagesBox = document.getElementById('acct-messages');
+    var msgForm = document.getElementById('acct-msg-form');
+    var msgInput = document.getElementById('acct-msg-input');
+    var msgError = document.getElementById('acct-msg-error');
+    var newTicketView = document.getElementById('acct-newticket');
+    var newTicketBack = document.getElementById('acct-newticket-back');
+    var ticketForm = document.getElementById('acct-ticket-form');
+    var ticketError = document.getElementById('acct-ticket-error');
+
+    if (!repairsSection) return; // repairs UI not present
+
+    var sb = null;
+    if (window.supabase && window.supabase.createClient) {
+      try { sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); }
+      catch (e) { sb = null; }
+    }
+
+    var currentTicketId = null;
+    var pollTimer = null;
+
+    function getSession() {
+      try { return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); }
+      catch (e) { return null; }
+    }
+    function showError(el, msg) {
+      if (!el) return;
+      el.textContent = msg;
+      el.hidden = !msg;
+    }
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+    function fmtDate(iso) {
+      try {
+        var d = new Date(iso);
+        return d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' +
+               d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+      } catch (e) { return ''; }
+    }
+
+    /* ---------- views ---------- */
+    function showRepairsList() {
+      stopPolling();
+      currentTicketId = null;
+      repairsSection.hidden = false;
+      threadView.hidden = true;
+      newTicketView.hidden = true;
+      loadTickets();
+    }
+    function showThread() {
+      repairsSection.hidden = true;
+      newTicketView.hidden = true;
+      threadView.hidden = false;
+    }
+    function showNewTicket() {
+      stopPolling();
+      repairsSection.hidden = true;
+      threadView.hidden = true;
+      newTicketView.hidden = false;
+      showError(ticketError, '');
+    }
+
+    /* ---------- ticket list ---------- */
+    function loadTickets() {
+      var s = getSession();
+      if (!s || !s.id) {
+        ticketList.innerHTML = '<p class="acct-muted">Log in to see your repairs.</p>';
+        return;
+      }
+      if (!sb) {
+        ticketList.innerHTML = '<p class="acct-muted">Repair tracking is unavailable right now.</p>';
+        return;
+      }
+      ticketList.innerHTML = '<p class="acct-muted">Loading your repairs…</p>';
+      sb.from('tickets').select('id, device_type, brand, model, issue, status, created_at')
+        .eq('customer_id', s.id).order('created_at', { ascending: false })
+        .then(function (res) {
+          if (res.error) throw res.error;
+          var tickets = res.data || [];
+          if (!tickets.length) {
+            ticketList.innerHTML = '<p class="acct-muted">No repairs yet. Tap <strong>New Request</strong> to book one.</p>';
+            return;
+          }
+          ticketList.innerHTML = tickets.map(function (t) {
+            var dev = [t.device_type, t.brand, t.model].filter(Boolean).join(' ');
+            var cls = STATUS_CLASS[t.status] || 'acct-st-waiting';
+            return '<div class="acct-ticket" data-ticket-id="' + t.id + '">' +
+              '<div class="acct-ticket-top"><strong>' + esc(dev || 'Repair') + '</strong>' +
+              '<span class="acct-status ' + cls + '">' + esc(t.status) + '</span></div>' +
+              '<div class="acct-ticket-meta">' + esc(String(t.issue).slice(0, 90)) +
+              (String(t.issue).length > 90 ? '…' : '') + '<br>Opened ' + fmtDate(t.created_at) + '</div>' +
+              '</div>';
+          }).join('');
+        })
+        .catch(function () {
+          ticketList.innerHTML = '<p class="acct-muted">Could not load repairs. Please try again.</p>';
+        });
+    }
+
+    ticketList.addEventListener('click', function (e) {
+      var card = e.target.closest ? e.target.closest('[data-ticket-id]') : null;
+      if (!card) return;
+      openThread(card.getAttribute('data-ticket-id'));
+    });
+
+    /* ---------- thread ---------- */
+    function openThread(ticketId) {
+      currentTicketId = ticketId;
+      showError(msgError, '');
+      msgInput.value = '';
+      if (!sb) return;
+      sb.from('tickets').select('id, device_type, brand, model, issue, status, created_at')
+        .eq('id', ticketId).limit(1).single()
+        .then(function (res) {
+          if (res.error) throw res.error;
+          var t = res.data;
+          var dev = [t.device_type, t.brand, t.model].filter(Boolean).join(' ');
+          var cls = STATUS_CLASS[t.status] || 'acct-st-waiting';
+          threadInfo.innerHTML = '<strong>' + esc(dev || 'Repair') + '</strong> ' +
+            '<span class="acct-status ' + cls + '">' + esc(t.status) + '</span><br>' +
+            esc(t.issue) + '<br><span style="color:var(--muted)">Opened ' + fmtDate(t.created_at) + '</span>';
+          showThread();
+          loadMessages();
+          startPolling();
+        })
+        .catch(function () {
+          showError(msgError, 'Could not open this repair. Please try again.');
+        });
+    }
+
+    function loadMessages() {
+      if (!sb || !currentTicketId) return;
+      sb.from('messages').select('sender, message, created_at')
+        .eq('ticket_id', currentTicketId).order('created_at', { ascending: true })
+        .then(function (res) {
+          if (res.error) throw res.error;
+          var msgs = res.data || [];
+          if (!msgs.length) {
+            messagesBox.innerHTML = '<p class="acct-muted">No messages yet. Say hello — Austin will reply here.</p>';
+            return;
+          }
+          messagesBox.innerHTML = msgs.map(function (m) {
+            var who = m.sender === 'tech' ? 'acct-msg-tech' : 'acct-msg-customer';
+            return '<div class="acct-msg ' + who + '">' + esc(m.message) +
+              '<span class="acct-msg-time">' + fmtDate(m.created_at) + '</span></div>';
+          }).join('');
+          messagesBox.scrollTop = messagesBox.scrollHeight;
+        })
+        .catch(function () { /* keep existing messages on poll failure */ });
+    }
+
+    function startPolling() {
+      stopPolling();
+      pollTimer = setInterval(loadMessages, 8000);
+    }
+    function stopPolling() {
+      if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    }
+
+    if (threadBack) threadBack.addEventListener('click', showRepairsList);
+    if (newTicketBack) newTicketBack.addEventListener('click', showRepairsList);
+    if (newTicketBtn) newTicketBtn.addEventListener('click', showNewTicket);
+
+    /* ---------- send message ---------- */
+    if (msgForm) msgForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      showError(msgError, '');
+      var s = getSession();
+      var text = String(msgInput.value || '').trim();
+      if (!text) return;
+      if (!s || !currentTicketId || !sb) {
+        showError(msgError, 'Could not send. Please try again.');
+        return;
+      }
+      var btn = msgForm.querySelector('button[type="submit"]');
+      if (btn) btn.disabled = true;
+      sb.from('messages').insert({ ticket_id: currentTicketId, sender: 'customer', message: text })
+        .then(function (res) {
+          if (btn) btn.disabled = false;
+          if (res.error) throw res.error;
+          msgInput.value = '';
+          loadMessages();
+        })
+        .catch(function () {
+          if (btn) btn.disabled = false;
+          showError(msgError, 'Message failed to send. Please try again.');
+        });
+    });
+
+    /* ---------- new ticket ---------- */
+    if (ticketForm) ticketForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      showError(ticketError, '');
+      var s = getSession();
+      var deviceType = document.getElementById('acct-t-device').value;
+      var brand = String(document.getElementById('acct-t-brand').value || '').trim();
+      var model = String(document.getElementById('acct-t-model').value || '').trim();
+      var issue = String(document.getElementById('acct-t-issue').value || '').trim();
+      if (!issue) { showError(ticketError, 'Please describe the problem.'); return; }
+      if (!s || !s.id || !sb) { showError(ticketError, 'Please log in again, then try.'); return; }
+
+      var btn = ticketForm.querySelector('button[type="submit"]');
+      if (btn) { btn.disabled = true; btn.innerHTML = 'Submitting…'; }
+
+      sb.from('tickets').insert({
+        customer_id: s.id,
+        customer_name: s.name || null,
+        customer_phone: s.phone || null,
+        device_type: deviceType,
+        brand: brand || null,
+        model: model || null,
+        issue: issue,
+        status: 'Waiting'
+      }).select('id').single()
+        .then(function (res) {
+          if (btn) { btn.disabled = false; btn.innerHTML = 'Submit Request <i class="fas fa-arrow-right"></i>'; }
+          if (res.error) throw res.error;
+          // Reset form and open the new ticket thread
+          document.getElementById('acct-t-brand').value = '';
+          document.getElementById('acct-t-model').value = '';
+          document.getElementById('acct-t-issue').value = '';
+          openThread(res.data.id);
+        })
+        .catch(function () {
+          if (btn) { btn.disabled = false; btn.innerHTML = 'Submit Request <i class="fas fa-arrow-right"></i>'; }
+          showError(ticketError, 'Could not submit. Please try again.');
+        });
+    });
+
+    /* ---------- refresh ticket list whenever dashboard opens ---------- */
+    // Hook into the account modal: when it opens and user is logged in, load tickets.
+    var openBtn = document.getElementById('account-open-btn');
+    if (openBtn) openBtn.addEventListener('click', function () {
+      setTimeout(function () {
+        var s = getSession();
+        var dashView = document.getElementById('acct-dash-view');
+        if (s && dashView && !dashView.hidden) {
+          showRepairsList();
+        }
+      }, 50);
+    });
+
+    // If modal closes, stop polling
+    var closeBtn = document.getElementById('acct-close');
+    var overlay = document.getElementById('acct-overlay');
+    if (closeBtn) closeBtn.addEventListener('click', stopPolling);
+    if (overlay) overlay.addEventListener('click', stopPolling);
+  });
+})();

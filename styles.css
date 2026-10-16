@@ -684,6 +684,70 @@ html[data-theme="dark"] {
 .acct-earn i { color: var(--brand); margin-right: 0.35rem; }
 .acct-logout { width: 100%; margin-top: 0.75rem; }
 
+.acct-logout { width: 100%; margin-top: 0.75rem; }
+
+/* ---------- My Repairs ---------- */
+.acct-repairs { margin: 1.25rem 0; border-top: 1px solid var(--line); padding-top: 1.25rem; }
+.acct-repairs-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.9rem; }
+.acct-repairs-head h4 { font-family: var(--font-display); font-size: 1.15rem; color: var(--ink); margin: 0; }
+.acct-repairs-head h4 i { color: var(--brand); margin-right: 0.35rem; }
+.acct-muted { color: var(--muted); font-size: 0.9rem; text-align: center; padding: 1rem 0; }
+.acct-ticket {
+  border: 1px solid var(--line); border-radius: var(--radius-md);
+  padding: 0.85rem 1rem; margin-bottom: 0.7rem; cursor: pointer;
+  background: var(--bg); transition: var(--transition);
+}
+.acct-ticket:hover { border-color: var(--brand); }
+.acct-ticket-top { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; }
+.acct-ticket-top strong { font-size: 0.95rem; color: var(--ink); }
+.acct-ticket-meta { font-size: 0.82rem; color: var(--muted); margin-top: 0.35rem; line-height: 1.45; }
+.acct-status {
+  display: inline-block; font-size: 0.68rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.05em; padding: 0.28rem 0.65rem; border-radius: 999px; white-space: nowrap;
+}
+.acct-st-waiting { background: #E8EAF0; color: #5B6472; }
+.acct-st-progress { background: #DCE9FD; color: #1A56DB; }
+.acct-st-parts { background: #FBEFD4; color: #9A6B0F; }
+.acct-st-ready { background: #D9F2E2; color: #1E7E34; }
+.acct-st-done { background: #E4DFFB; color: #5B3DF0; }
+
+/* ---------- Thread / messages ---------- */
+.acct-thread, .acct-newticket { margin: 1.25rem 0; border-top: 1px solid var(--line); padding-top: 1.25rem; }
+.acct-thread .btn, .acct-newticket .btn { margin-bottom: 0.9rem; }
+.acct-newticket h4 { font-family: var(--font-display); font-size: 1.15rem; color: var(--ink); margin-bottom: 1rem; }
+.acct-newticket h4 i { color: var(--brand); margin-right: 0.35rem; }
+.acct-row2 { display: flex; gap: 0.75rem; }
+.acct-row2 .acct-field { flex: 1; }
+.acct-field select, .acct-field textarea {
+  width: 100%; padding: 0.85rem 1rem; border: 2px solid var(--line);
+  border-radius: var(--radius-sm); background: var(--bg); color: var(--ink);
+  font-size: 0.95rem; font-family: var(--font-body);
+}
+.acct-field select:focus, .acct-field textarea:focus { outline: none; border-color: var(--brand); }
+.acct-field textarea { resize: vertical; }
+.acct-thread-info {
+  background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius-md);
+  padding: 0.85rem 1rem; margin-bottom: 0.9rem; font-size: 0.88rem; color: var(--ink-soft);
+}
+.acct-thread-info strong { color: var(--ink); }
+.acct-messages {
+  max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.55rem;
+  padding: 0.25rem 0.1rem; margin-bottom: 0.9rem;
+}
+.acct-msg {
+  max-width: 85%; padding: 0.6rem 0.85rem; border-radius: 1rem; font-size: 0.9rem; line-height: 1.45;
+}
+.acct-msg .acct-msg-time { display: block; font-size: 0.68rem; opacity: 0.65; margin-top: 0.25rem; }
+.acct-msg-tech { align-self: flex-start; background: var(--brand-soft); color: var(--ink); border: 1px solid var(--line); border-bottom-left-radius: 0.25rem; }
+.acct-msg-customer { align-self: flex-end; background: var(--brand); color: #fff; border-bottom-right-radius: 0.25rem; }
+.acct-msg-row { display: flex; gap: 0.5rem; }
+.acct-msg-row input {
+  flex: 1; padding: 0.75rem 1rem; border: 2px solid var(--line); border-radius: 999px;
+  background: var(--bg); color: var(--ink); font-size: 0.92rem; font-family: var(--font-body);
+}
+.acct-msg-row input:focus { outline: none; border-color: var(--brand); }
+.acct-msg-row .btn { margin-bottom: 0; flex: none; border-radius: 999px; padding: 0.75rem 1rem; }
+
 @media (max-width: 600px) {
   .account-label { display: none; }
   .account-btn { padding: 0.55rem 0.7rem; }
