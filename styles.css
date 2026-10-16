@@ -552,7 +552,9 @@ html[data-theme="dark"] {
 
 /* ==================== CART DRAWER ==================== */
 .cart-overlay { position: fixed; inset: 0; background: rgba(20, 14, 8, 0.55); z-index: 9998; }
+.cart-overlay[hidden] { display: none; }
 .cart-drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(420px, 94vw); background: var(--surface); z-index: 9999; display: flex; flex-direction: column; box-shadow: -12px 0 40px rgba(0,0,0,0.25); border-left: 1px solid var(--line); }
+.cart-drawer[hidden] { display: none; }
 .cart-header { display: flex; align-items: center; justify-content: space-between; padding: 1.1rem 1.25rem; border-bottom: 2px solid var(--line); }
 .cart-header h3 { font-family: var(--font-display); font-size: 1.2rem; margin: 0; }
 .cart-header h3 i { color: var(--brand); margin-right: 0.4rem; }
