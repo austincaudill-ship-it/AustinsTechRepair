@@ -612,3 +612,80 @@ html[data-theme="dark"] {
   .price-lookup { padding: 1.25rem; }
   .price-result-amount { font-size: 2.4rem; }
 }
+
+/* ==================== ACCOUNT ==================== */
+.account-btn {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  background: transparent; border: 2px solid var(--line);
+  color: var(--ink); font-family: var(--font-body); font-weight: 700; font-size: 0.88rem;
+  padding: 0.55rem 0.95rem; border-radius: var(--radius-md); cursor: pointer;
+  transition: var(--transition); white-space: nowrap;
+}
+.account-btn:hover { border-color: var(--brand); color: var(--brand); }
+.account-btn i { font-size: 1.05rem; }
+.account-btn.logged-in { border-color: var(--teal); color: var(--teal); }
+.account-btn.logged-in:hover { border-color: var(--teal); color: var(--teal); opacity: 0.85; }
+
+.acct-overlay {
+  position: fixed; inset: 0; background: rgba(20, 14, 8, 0.55); z-index: 9998;
+}
+.acct-overlay[hidden] { display: none; }
+.acct-modal {
+  position: fixed; inset: 0; z-index: 9999;
+  display: flex; align-items: center; justify-content: center; padding: 1rem;
+}
+.acct-modal[hidden] { display: none; }
+.acct-card {
+  position: relative; width: min(440px, 100%);
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
+  padding: 2rem 1.75rem; max-height: 92vh; overflow-y: auto;
+}
+.acct-close {
+  position: absolute; top: 0.9rem; right: 0.9rem;
+  background: transparent; border: none; color: var(--muted);
+  font-size: 1.2rem; cursor: pointer; padding: 0.4rem; line-height: 1;
+}
+.acct-close:hover { color: var(--ink); }
+.acct-card h3 { font-family: var(--font-display); font-size: 1.5rem; margin-bottom: 0.4rem; color: var(--ink); }
+.acct-card h3 i { color: var(--brand); margin-right: 0.35rem; }
+.acct-sub { color: var(--muted); font-size: 0.92rem; margin-bottom: 1.2rem; }
+
+.acct-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.25rem; }
+.acct-tab {
+  flex: 1; padding: 0.65rem; border: 2px solid var(--line); border-radius: var(--radius-sm);
+  background: transparent; color: var(--muted); font-weight: 700; font-size: 0.9rem;
+  font-family: var(--font-body); cursor: pointer; transition: var(--transition);
+}
+.acct-tab.active { border-color: var(--brand); color: var(--brand); background: var(--brand-soft); }
+
+.acct-field { display: block; margin-bottom: 1rem; }
+.acct-field span { display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.4rem; color: var(--ink); }
+.acct-field input {
+  width: 100%; padding: 0.85rem 1rem; border: 2px solid var(--line);
+  border-radius: var(--radius-sm); background: var(--bg); color: var(--ink);
+  font-size: 0.95rem; font-family: var(--font-body);
+}
+.acct-field input:focus { outline: none; border-color: var(--brand); }
+.acct-submit { width: 100%; margin-top: 0.25rem; }
+.acct-error {
+  color: #B3261E; background: #FDECEA; border: 1px solid #F5C6C0;
+  border-radius: var(--radius-sm); padding: 0.6rem 0.85rem; font-size: 0.88rem; margin-bottom: 1rem;
+}
+.acct-error[hidden] { display: none; }
+
+.acct-points {
+  text-align: center; background: var(--gold-soft); border: 1px solid var(--line);
+  border-radius: var(--radius-md); padding: 1.25rem; margin: 1rem 0 1.25rem;
+}
+.acct-points-num { font-family: var(--font-display); font-size: 2.75rem; font-weight: 800; color: var(--gold); line-height: 1; }
+.acct-points-label { font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-top: 0.25rem; }
+.acct-earn p { font-size: 0.9rem; color: var(--ink-soft); margin-bottom: 0.6rem; }
+.acct-earn i { color: var(--brand); margin-right: 0.35rem; }
+.acct-logout { width: 100%; margin-top: 0.75rem; }
+
+@media (max-width: 600px) {
+  .account-label { display: none; }
+  .account-btn { padding: 0.55rem 0.7rem; }
+  .acct-card { padding: 1.6rem 1.25rem; }
+}
