@@ -74,6 +74,9 @@
     </nav>
 
     <div class="header-actions">
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark/light mode">
+        <i class="fas fa-moon" id="theme-icon"></i>
+      </button>
       <a class="btn btn-primary header-cta" href="#repair" data-page="repair"><i class="fas fa-wrench"></i> Book a Repair</a>
     </div>
   </header>
@@ -473,9 +476,46 @@
         <div class="container">
           <div class="section-header center">
             <p class="eyebrow">Transparent pricing</p>
-            <h2 class="section-title">Straightforward rates. No hidden fees.</h2>
-            <p class="section-copy">Every quote is confirmed up front. The dispatch fee is credited toward your repair.</p>
+            <h2 class="section-title">Flat-rate repairs. No surprises.</h2>
+            <p class="section-copy">Pick your device and repair below for an instant quote. The $15 dispatch fee is credited toward your repair.</p>
           </div>
+
+          <!-- PRICE LOOKUP TOOL -->
+          <div class="price-lookup">
+            <div class="price-steps">
+              <div class="price-step">
+                <label for="pl-brand">1. Brand</label>
+                <select id="pl-brand">
+                  <option value="">Select brand...</option>
+                  <option value="iphone">iPhone</option>
+                  <option value="ipad">iPad</option>
+                  <option value="watch">Apple Watch</option>
+                  <option value="samsung-budget">Samsung (A / M / F series)</option>
+                  <option value="samsung-mid">Samsung (S series)</option>
+                  <option value="samsung-premium">Samsung (Fold / Flip)</option>
+                  <option value="pixel">Google Pixel</option>
+                  <option value="motorola">Motorola</option>
+                </select>
+              </div>
+              <div class="price-step">
+                <label for="pl-repair">2. Repair</label>
+                <select id="pl-repair" disabled>
+                  <option value="">Select repair...</option>
+                  <option value="screen">Screen Replacement</option>
+                  <option value="battery">Battery Replacement</option>
+                  <option value="backglass">Back Glass</option>
+                  <option value="chargeport">Charging Port</option>
+                </select>
+              </div>
+            </div>
+            <div class="price-result" id="pl-result" hidden>
+              <div class="price-result-label">Your flat-rate quote</div>
+              <div class="price-result-amount" id="pl-amount">$0</div>
+              <p class="price-result-note" id="pl-note"></p>
+              <a class="btn btn-primary" href="#repair" data-page="repair" id="pl-book">Book This Repair <i class="fas fa-arrow-right"></i></a>
+            </div>
+          </div>
+
           <div class="pricing-grid">
             <div class="pricing-card">
               <h3>Mobile Dispatch</h3>
@@ -483,19 +523,19 @@
               <p>Covers travel and secures your appointment anywhere in our service area &mdash; credited toward your repair.</p>
             </div>
             <div class="pricing-card">
-              <h3>Labor Rate</h3>
-              <div class="amount">$25<small style="font-size:1rem; color: var(--muted);">/hr</small></div>
-              <p>Professional labor for hardware work, assembly, software setup, and in-depth diagnostics.</p>
+              <h3>Flat-Rate Repairs</h3>
+              <div class="amount">Fixed</div>
+              <p>Common repairs (screens, batteries, charge ports) have one flat price &mdash; parts and labor included. Use the lookup above.</p>
+            </div>
+            <div class="pricing-card">
+              <h3>Custom Repairs</h3>
+              <div class="amount">Part + $50</div>
+              <p>Don't see your device? We look up the part cost and add a flat $50 labor &mdash; quoted upfront, no surprises.</p>
             </div>
             <div class="pricing-card">
               <h3>Diagnostics</h3>
               <div class="amount">Free</div>
               <p>We identify the problem and quote the fix before any work begins. No surprises, ever.</p>
-            </div>
-            <div class="pricing-card">
-              <h3>Parts</h3>
-              <div class="amount">At cost</div>
-              <p>Parts are ordered per job — you pay for the part upfront, we order it, and we complete the repair once it arrives.</p>
             </div>
           </div>
           <div class="text-center mt-2">
@@ -547,14 +587,61 @@
           <div class="section-header center">
             <p class="eyebrow">ATR Shop</p>
             <h2 class="section-title">Accessories &amp; gear</h2>
-            <p class="section-copy">Precision-fit screen protectors, high-output charging gear, and custom cases &mdash; in our online store.</p>
+            <p class="section-copy">Genuine Mobile Sentrix accessories, delivered to you during your repair visit. Add items to your cart, then check out &mdash; we'll bring everything when we fix your device.</p>
           </div>
-          <div class="shop-cta">
-            <a class="btn btn-primary btn-lg" href="https://atr-shop-6668.myshopify.com/products/atr-one" target="_blank" rel="noopener"><i class="fab fa-shopify"></i> Visit the ATR Shop</a>
+
+          <div class="shop-wip">
+            <p><i class="fas fa-hard-hat"></i> <strong>Shop is a work in progress!</strong> Online checkout is coming soon. For now, add what you want to your cart and check out through your repair request &mdash; or just let us know what you need.</p>
+          </div>
+
+          <div class="shop-toolbar">
+            <div class="shop-filters" id="shop-filters">
+              <button class="filter-chip active" data-filter="all">All</button>
+              <button class="filter-chip" data-filter="Screen Protectors">Screen Protectors</button>
+              <button class="filter-chip" data-filter="Phone Cases">Cases</button>
+              <button class="filter-chip" data-filter="Charging Cables">Cables</button>
+              <button class="filter-chip" data-filter="Wall Chargers">Wall Chargers</button>
+              <button class="filter-chip" data-filter="Car Chargers">Car Chargers</button>
+              <button class="filter-chip" data-filter="Wireless Chargers">Wireless</button>
+            </div>
+            <button class="btn btn-primary" id="cart-open-btn"><i class="fas fa-shopping-cart"></i> Cart <span class="cart-count" id="cart-count">0</span></button>
+          </div>
+
+          <div class="product-table-wrap">
+            <table class="product-table" id="product-table">
+              <thead>
+                <tr><th>Product</th><th>Category</th><th>Price</th><th></th></tr>
+              </thead>
+              <tbody id="product-tbody"></tbody>
+            </table>
+          </div>
+          <p class="shop-note"><i class="fas fa-truck"></i> No shipping fees &mdash; we hand-deliver your accessories during your repair appointment.</p>
+
+          <div class="shop-sourcing">
+            <h3>More than accessories</h3>
+            <p>We also sell <strong>pre-owned and refurbished devices</strong> &mdash; phones, tablets, laptops, and consoles, tested and backed by our 1-year warranty. Ask us what's in stock.</p>
+            <p class="sourcing-detail">We source quality parts from Amazon, eBay, and Mobile Sentrix, and accessories from Alibaba &mdash; so you get reliable gear at fair prices.</p>
+            <p>Looking for something specific? <a href="#contact" data-page="contact">Contact us</a> and we'll find it for you.</p>
           </div>
         </div>
       </div>
     </section>
+
+    <!-- CART DRAWER -->
+    <div class="cart-overlay" id="cart-overlay" hidden></div>
+    <aside class="cart-drawer" id="cart-drawer" aria-label="Shopping cart" hidden>
+      <div class="cart-header">
+        <h3><i class="fas fa-shopping-cart"></i> Your Cart</h3>
+        <button class="cart-close" id="cart-close" aria-label="Close cart"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="cart-items" id="cart-items"></div>
+      <div class="cart-footer">
+        <div class="cart-total"><span>Subtotal</span><strong id="cart-total">$0.00</strong></div>
+        <p class="cart-hint">Checkout fills out your repair request automatically &mdash; just add your info and submit.</p>
+        <button class="btn btn-primary btn-lg cart-checkout" id="cart-checkout">Checkout &amp; Book Repair <i class="fas fa-arrow-right"></i></button>
+        <button class="cart-clear" id="cart-clear">Clear cart</button>
+      </div>
+    </aside>
 
     <!-- ==================== B2B ==================== -->
     <section id="b2b" class="page">
@@ -880,32 +967,64 @@
         <div class="container">
           <div class="legal-doc">
             <p class="eyebrow">Legal</p>
-            <h2>Repair Service Agreement</h2>
-            <p class="legal-updated">Austin's Tech Repair Group &mdash; State of Ohio, USA</p>
-            <p>Please read this agreement carefully. By scheduling an appointment, dropping off your equipment, or authorizing repair services, you agree to the following terms and conditions governing the service work performed by Austin's Tech Repair Group.</p>
+            <h2>Repair Service Agreement, Liability Waiver &amp; Authorization</h2>
+            <p class="legal-updated">Austin's Tech Repair Group &mdash; State of Ohio, USA &mdash; Last updated October 2026</p>
+            <p><strong>PLEASE READ THIS DOCUMENT CAREFULLY.</strong> By scheduling an appointment, submitting a repair request, dropping off your equipment, or otherwise authorizing repair services, you ("Customer," "you") agree to all terms and conditions below governing services performed by Austin's Tech Repair Group ("Company," "we," "us," "our"), a sole proprietorship operating in the State of Ohio.</p>
+
             <h3>1. Parties &amp; Scope of Service</h3>
-            <p>This Repair Service Agreement ("Agreement") is between Austin's Tech Repair Group ("Company," "we," "us," or "our"), operating as a sole proprietorship in the State of Ohio, and the customer ("Customer," "you"). We agree to provide component-level diagnostics, maintenance, upgrades, and repair services for consumer electronics, computers, mobile devices, smartwatches, and gaming consoles as requested and authorized.</p>
-            <p><strong>Strictly Mobile / On-Site Service Policy:</strong> Austin's Tech Repair Group operates exclusively as a mobile, "we-come-to-you" service business. We do not provide our home address or maintain a public storefront for customer visits or drop-offs. If we are unable to travel to or service your device at your location, or if you require a physical walk-in facility, we are unable to service your device.</p>
-            <h3>2. Estimates, Authorization &amp; Fees</h3>
+            <p>This Agreement covers component-level diagnostics, maintenance, upgrades, and repair services for consumer electronics, including smartphones, tablets, computers, laptops, smartwatches, and gaming consoles, as requested and authorized by you.</p>
+            <p><strong>Mobile / On-Site Service Only:</strong> We operate exclusively as a mobile, "we-come-to-you" service. We do not maintain a public storefront or accept walk-in visits. If we cannot service your device at your location, we are unable to accept the repair.</p>
+
+            <h3>2. Authorization to Perform Services</h3>
+            <p>By submitting a repair request or signing below, you authorize Austin's Tech Repair Group to:</p>
             <ul>
-              <li><strong>Dispatch &amp; Appointment Fees:</strong> A $15.00 dispatch fee is required upfront to secure your mobile or on-site appointment, which covers travel costs. This fee is credited toward and included in the final price of your completed repair. Please note that this dispatch fee is non-refundable if the appointment is canceled less than one (1) hour prior to the scheduled appointment time.</li>
-              <li><strong>Diagnostic Fees:</strong> An initial diagnostic fee may apply to evaluate your device. If you approve the recommended repair service, this fee may be credited toward the total repair cost.</li>
-              <li><strong>Estimate Approval:</strong> We will provide a repair estimate before commencing work. If additional hidden damage, liquid corrosion, or underlying component failures are discovered during disassembly, we will notify you for approval before proceeding with revised costs.</li>
-              <li><strong>Abandoned Devices:</strong> Equipment left unclaimed for more than sixty (60) days following notice of completion or diagnostic results will be considered abandoned and disposed of, recycled, or sold to cover costs in accordance with applicable laws.</li>
+              <li>Receive, handle, disassemble, diagnose, test, and repair your device;</li>
+              <li>Order and install replacement parts as approved;</li>
+              <li>Perform software diagnostics, updates, or data-transfer procedures as needed to complete the repair.</li>
             </ul>
-            <h3>3. Data &amp; Backup Waiver (Critical)</h3>
-            <p>You acknowledge that data loss, corruption, or erasure can occur during diagnostic procedures, component replacements, screen swaps, board-level micro-soldering repairs, or software updates. You are solely responsible for backing up all data, files, and programs prior to service. Austin's Tech Repair Group accepts zero liability for any loss of data, personal files, photos, or software settings under any circumstances.</p>
-            <h3>4. Liquid Damage &amp; Pre-Existing Conditions</h3>
-            <p>Devices with a history of liquid exposure, structural bending, corrosion, or prior third-party repair attempts are highly fragile and subject to catastrophic failure during handling, disassembly, or testing. We are not responsible for devices that fail completely or stop working during or after intake for liquid damage mitigation or extreme repair procedures.</p>
-            <h3>5. Warranty on Parts &amp; Labor</h3>
+            <p>You represent that you are the lawful owner of the device or have the owner's express permission to authorize these services.</p>
+
+            <h3>3. Estimates, Fees &amp; Payment</h3>
             <ul>
-              <li><strong>One-Year Warranty:</strong> All standard repairs performed by Austin's Tech Repair Group include a one (1) year limited warranty covering the specific replacement parts installed and labor executed.</li>
-              <li><strong>Exclusions &amp; Void Conditions:</strong> The warranty is void if the device shows evidence of subsequent physical damage, liquid exposure, customer tampering, or repair attempts by any party other than Austin's Tech Repair Group.</li>
+              <li><strong>Dispatch / Diagnostic Fee:</strong> A $15.00 non-refundable fee is required to secure your appointment. This covers travel, diagnostics, and the initial repair quote.</li>
+              <li><strong>Labor:</strong> Billed at $25.00 per hour.</li>
+              <li><strong>Parts:</strong> Charged at cost. You pay for parts upfront before we order them.</li>
+              <li><strong>Estimate Approval:</strong> We provide a repair estimate before beginning work. If hidden damage, liquid corrosion, or additional component failures are discovered during disassembly, we will notify you and obtain approval before proceeding.</li>
+              <li><strong>Payment Due:</strong> Full payment for parts, labor, and applicable taxes is due upon completion and prior to device release.</li>
+              <li><strong>Cancellation:</strong> The dispatch fee is non-refundable if you cancel less than one (1) hour before your scheduled appointment.</li>
+              <li><strong>Abandoned Devices:</strong> Equipment left unclaimed for more than sixty (60) days after notice of completion will be considered abandoned and may be disposed of, recycled, or sold to recover costs, in accordance with applicable law.</li>
             </ul>
-            <h3>6. Payment &amp; Pickup Terms</h3>
-            <p>Full payment for parts, labor, and applicable taxes (minus any previously paid and applicable appointment/dispatch credits) is due upon completion of services and prior to device release.</p>
-            <p style="margin-top:1.5rem;"><strong>Customer Acknowledgment:</strong> By scheduling service with us, you acknowledge that you have read, understood, and agree to all terms and conditions outlined in this Repair Service Agreement, including the mobile service policy.</p>
-            <p style="margin-top:1rem;">Austin's Tech Repair Group<br>Founder &amp; Owner: Austin Tyler Caudill<br>State of Ohio, USA</p>
+
+            <h3>4. Liability Waiver &amp; Assumption of Risk</h3>
+            <p><strong>YOU HEREBY WAIVE AND RELEASE</strong> Austin's Tech Repair Group, its owner, agents, and representatives from any and all liability, claims, damages, or causes of action arising from or related to the repair services, except in cases of gross negligence or willful misconduct.</p>
+            <ul>
+              <li><strong>Data Loss:</strong> Data loss, corruption, or erasure may occur during diagnostics, disassembly, component replacement, or software procedures. <strong>You are solely responsible for backing up all data</strong> prior to service. We accept no liability for lost data, files, photos, or software settings under any circumstances.</li>
+              <li><strong>Pre-Existing Conditions:</strong> Devices with prior liquid exposure, structural damage, corrosion, or third-party repair attempts are fragile and may fail during handling. We are not responsible for devices that cease functioning during or after service under these conditions.</li>
+              <li><strong>Cosmetic Condition:</strong> Minor cosmetic changes (scratches, marks) may occur during disassembly and reassembly. These are an inherent risk of repair work.</li>
+            </ul>
+
+            <h3>5. Limited Warranty</h3>
+            <ul>
+              <li>All standard repairs include a <strong>one (1) year limited warranty</strong> covering the specific replacement parts installed and labor performed.</li>
+              <li>The warranty is <strong>void</strong> if the device shows subsequent physical damage, liquid exposure, unauthorized tampering, or repair by any other party.</li>
+              <li>Warranty service requires presentation of the original repair receipt.</li>
+            </ul>
+
+            <h3>6. Governing Law &amp; Disputes</h3>
+            <p>This Agreement is governed by the laws of the State of Ohio. Any disputes shall first be addressed through good-faith negotiation; if unresolved, they shall be submitted to binding arbitration or a court of competent jurisdiction in Greene County, Ohio.</p>
+
+            <h3>7. Entire Agreement</h3>
+            <p>This document constitutes the entire agreement between you and Austin's Tech Repair Group regarding repair services and supersedes all prior representations. If any provision is found unenforceable, the remaining provisions remain in full effect.</p>
+
+            <p style="margin-top:2rem; padding-top:1.5rem; border-top: 1px solid var(--line);"><strong>Customer Acknowledgment &amp; Signature:</strong></p>
+            <p>By signing below, I confirm that I have read, understood, and agree to all terms above, including the liability waiver and authorization to perform services.</p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1rem;">
+              <div><p style="border-bottom: 1px solid #999; min-height: 2.5rem; margin-bottom: 0.25rem;"></p><p style="font-size: 0.8rem; color: var(--muted);">Customer Signature</p></div>
+              <div><p style="border-bottom: 1px solid #999; min-height: 2.5rem; margin-bottom: 0.25rem;"></p><p style="font-size: 0.8rem; color: var(--muted);">Date</p></div>
+              <div><p style="border-bottom: 1px solid #999; min-height: 2.5rem; margin-bottom: 0.25rem;"></p><p style="font-size: 0.8rem; color: var(--muted);">Printed Name</p></div>
+              <div><p style="border-bottom: 1px solid #999; min-height: 2.5rem; margin-bottom: 0.25rem;"></p><p style="font-size: 0.8rem; color: var(--muted);">Device / Repair Ticket #</p></div>
+            </div>
+            <p style="margin-top:2rem;">Austin's Tech Repair Group<br>Austin Tyler Caudill, Founder &amp; Owner<br>State of Ohio, USA &mdash; (937) 280-6243</p>
           </div>
         </div>
       </div>
@@ -941,9 +1060,7 @@
           <a class="footer-link" href="#privacy" data-page="privacy">Privacy Policy</a>
           <a class="footer-link" href="#terms" data-page="terms">Terms of Use</a>
           <a class="footer-link" href="#warranty" data-page="warranty">1-Year Warranty</a>
-          <a class="footer-link" href="#service-agreement" data-page="service-agreement">Service Agreement</a>
-          <a class="footer-link" href="General_Repair_Waiver_V4.pdf" target="_blank" rel="noopener"><i class="fas fa-file-pdf"></i> Liability Waiver (PDF)</a>
-          <a class="footer-link" href="repair_agreement.pdf" target="_blank" rel="noopener"><i class="fas fa-file-pdf"></i> Repair Authorization (PDF)</a>
+          <a class="footer-link" href="#service-agreement" data-page="service-agreement">Service Agreement &amp; Waiver</a>
         </div>
         <div>
           <span class="footer-col-title">Find Us Online</span>
@@ -982,5 +1099,24 @@
   </nav>
 
   <script src="script.js"></script>
+
+  <!-- COOKIE CONSENT -->
+  <div class="cookie-banner" id="cookie-banner" role="dialog" aria-label="Cookie consent" hidden>
+    <div class="cookie-content">
+      <p class="cookie-title"><i class="fas fa-cookie-bite"></i> We use cookies</p>
+      <p class="cookie-text">We use cookies to improve your browsing experience, remember your preferences (like dark mode), and analyze site traffic. You can accept all cookies, reject non-essential ones, or customize your choices below.</p>
+      <div class="cookie-prefs" id="cookie-prefs" hidden>
+        <label class="cookie-pref"><input type="checkbox" checked disabled> <span><strong>Essential</strong> &mdash; required for the site to work (always on)</span></label>
+        <label class="cookie-pref"><input type="checkbox" id="cookie-pref-functional"> <span><strong>Functional</strong> &mdash; remembers your preferences like theme</span></label>
+        <label class="cookie-pref"><input type="checkbox" id="cookie-pref-analytics"> <span><strong>Analytics</strong> &mdash; helps us understand how visitors use the site</span></label>
+      </div>
+      <div class="cookie-actions">
+        <button class="btn btn-primary btn-sm" id="cookie-accept">Accept All</button>
+        <button class="btn btn-sm" id="cookie-reject">Reject Non-Essential</button>
+        <button class="cookie-link" id="cookie-customize">Customize</button>
+      </div>
+      <p class="cookie-disclosure">Read our <a href="#privacy" data-page="privacy">Privacy Policy</a> and <a href="#terms" data-page="terms">Terms of Use</a> for details on how we handle your data.</p>
+    </div>
+  </div>
 </body>
 </html>
