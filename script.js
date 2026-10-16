@@ -670,3 +670,254 @@
     }
   });
 })();
+
+/* ==================== ATR CUSTOMER ACCOUNTS & REWARDS ==================== */
+(function () {
+  'use strict';
+
+  var SUPABASE_URL = 'https://lyujxpuicarblpkdzuuc.supabase.co';
+  var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
+  var SESSION_KEY = 'atr-account';
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    var overlay = document.getElementById('acct-overlay');
+    var modal = document.getElementById('acct-modal');
+    var openBtn = document.getElementById('account-open-btn');
+    var closeBtn = document.getElementById('acct-close');
+    var acctLabel = document.getElementById('account-label');
+
+    var authView = document.getElementById('acct-auth-view');
+    var dashView = document.getElementById('acct-dash-view');
+    var tabLogin = document.getElementById('acct-tab-login');
+    var tabSignup = document.getElementById('acct-tab-signup');
+    var loginForm = document.getElementById('acct-login-form');
+    var signupForm = document.getElementById('acct-signup-form');
+    var loginEmail = document.getElementById('acct-login-email');
+    var signupName = document.getElementById('acct-signup-name');
+    var signupEmail = document.getElementById('acct-signup-email');
+    var signupPhone = document.getElementById('acct-signup-phone');
+    var loginError = document.getElementById('acct-login-error');
+    var signupError = document.getElementById('acct-signup-error');
+    var dashError = document.getElementById('acct-dash-error');
+    var dashName = document.getElementById('acct-dash-name');
+    var pointsNum = document.getElementById('acct-points-num');
+    var logoutBtn = document.getElementById('acct-logout');
+
+    if (!overlay || !modal) return; // account UI not present
+
+    var sb = null;
+    if (window.supabase && window.supabase.createClient) {
+      try { sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); }
+      catch (e) { sb = null; }
+    }
+
+    /* ---------- session helpers ---------- */
+    function getSession() {
+      try { return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); }
+      catch (e) { return null; }
+    }
+    function setSession(s) {
+      try {
+        if (s) localStorage.setItem(SESSION_KEY, JSON.stringify(s));
+        else localStorage.removeItem(SESSION_KEY);
+      } catch (e) {}
+    }
+    function showError(el, msg) {
+      if (!el) return;
+      el.textContent = msg;
+      el.hidden = !msg;
+    }
+
+    /* ---------- header state ---------- */
+    function firstName(full) {
+      return String(full || '').trim().split(/\s+/)[0] || 'there';
+    }
+    function renderHeader() {
+      var s = getSession();
+      if (s && acctLabel) {
+        var pts = (typeof s.points === 'number') ? s.points : 0;
+        acctLabel.textContent = firstName(s.name) + ' · ' + pts + ' pts';
+        if (openBtn) openBtn.classList.add('logged-in');
+      } else if (acctLabel) {
+        acctLabel.textContent = 'Account';
+        if (openBtn) openBtn.classList.remove('logged-in');
+      }
+    }
+
+    /* ---------- modal open/close ---------- */
+    function openModal() {
+      var s = getSession();
+      if (s) { showDashboard(s); }
+      else { showAuth(); }
+      overlay.hidden = false;
+      modal.hidden = false;
+      document.body.style.overflow = 'hidden';
+    }
+    function closeModal() {
+      overlay.hidden = true;
+      modal.hidden = true;
+      document.body.style.overflow = '';
+      showError(loginError, '');
+      showError(signupError, '');
+      showError(dashError, '');
+    }
+
+    function showAuth() {
+      authView.hidden = false;
+      dashView.hidden = true;
+    }
+    function showDashboard(s) {
+      authView.hidden = true;
+      dashView.hidden = false;
+      dashName.textContent = 'Hi, ' + firstName(s.name) + '!';
+      pointsNum.textContent = (typeof s.points === 'number') ? s.points : 0;
+    }
+
+    if (openBtn) openBtn.addEventListener('click', openModal);
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    if (overlay) overlay.addEventListener('click', closeModal);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !modal.hidden) closeModal();
+    });
+
+    /* ---------- tabs ---------- */
+    function selectTab(which) {
+      var isLogin = which === 'login';
+      tabLogin.classList.toggle('active', isLogin);
+      tabSignup.classList.toggle('active', !isLogin);
+      loginForm.hidden = !isLogin;
+      signupForm.hidden = isLogin;
+      showError(loginError, '');
+      showError(signupError, '');
+    }
+    if (tabLogin) tabLogin.addEventListener('click', function () { selectTab('login'); });
+    if (tabSignup) tabSignup.addEventListener('click', function () { selectTab('signup'); });
+
+    /* ---------- supabase helpers ---------- */
+    function validEmail(v) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v || '').trim());
+    }
+
+    function fetchPoints(customerId, cb) {
+      if (!sb) { cb(0); return; }
+      sb.from('rewards').select('points').eq('customer_id', customerId).limit(1)
+        .then(function (res) {
+          var pts = 0;
+          if (res.data && res.data.length > 0) pts = res.data[0].points || 0;
+          cb(pts);
+        })
+        .catch(function () { cb(0); });
+    }
+
+    function finishLogin(customer) {
+      fetchPoints(customer.id, function (pts) {
+        var session = {
+          id: customer.id,
+          name: customer.name,
+          email: customer.email,
+          phone: customer.phone || '',
+          points: pts
+        };
+        setSession(session);
+        renderHeader();
+        showDashboard(session);
+      });
+    }
+
+    /* ---------- login ---------- */
+    if (loginForm) loginForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      showError(loginError, '');
+      var email = String(loginEmail.value || '').trim().toLowerCase();
+      if (!validEmail(email)) { showError(loginError, 'Please enter a valid email address.'); return; }
+      if (!sb) { showError(loginError, 'Account service is unavailable right now. Please try again later.'); return; }
+
+      var btn = loginForm.querySelector('button[type="submit"]');
+      if (btn) { btn.disabled = true; btn.innerHTML = 'Looking you up…'; }
+
+      sb.from('customers').select('id, name, email, phone').eq('email', email).limit(1)
+        .then(function (res) {
+          if (btn) { btn.disabled = false; btn.innerHTML = 'Log In <i class="fas fa-arrow-right"></i>'; }
+          if (res.error) throw res.error;
+          if (!res.data || res.data.length === 0) {
+            showError(loginError, 'No account found for that email. Try signing up instead.');
+            return;
+          }
+          finishLogin(res.data[0]);
+        })
+        .catch(function (err) {
+          if (btn) { btn.disabled = false; btn.innerHTML = 'Log In <i class="fas fa-arrow-right"></i>'; }
+          showError(loginError, 'Something went wrong. Please try again.');
+        });
+    });
+
+    /* ---------- signup ---------- */
+    if (signupForm) signupForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      showError(signupError, '');
+      var name = String(signupName.value || '').trim();
+      var email = String(signupEmail.value || '').trim().toLowerCase();
+      var phone = String(signupPhone.value || '').trim();
+      if (!name) { showError(signupError, 'Please enter your name.'); return; }
+      if (!validEmail(email)) { showError(signupError, 'Please enter a valid email address.'); return; }
+      if (!sb) { showError(signupError, 'Account service is unavailable right now. Please try again later.'); return; }
+
+      var btn = signupForm.querySelector('button[type="submit"]');
+      if (btn) { btn.disabled = true; btn.innerHTML = 'Creating account…'; }
+
+      // Check for existing account first
+      sb.from('customers').select('id').eq('email', email).limit(1)
+        .then(function (check) {
+          if (check.data && check.data.length > 0) {
+            throw new Error('exists');
+          }
+          return sb.from('customers').insert({ name: name, email: email, phone: phone || null }).select('id, name, email, phone').single();
+        })
+        .then(function (res) {
+          if (res.error) throw res.error;
+          var customer = res.data;
+          // Create rewards row with 0 points
+          return sb.from('rewards').insert({ customer_id: customer.id, points: 0 })
+            .then(function () { return customer; });
+        })
+        .then(function (customer) {
+          if (btn) { btn.disabled = false; btn.innerHTML = 'Create Account <i class="fas fa-arrow-right"></i>'; }
+          finishLogin(customer);
+        })
+        .catch(function (err) {
+          if (btn) { btn.disabled = false; btn.innerHTML = 'Create Account <i class="fas fa-arrow-right"></i>'; }
+          if (err && err.message === 'exists') {
+            showError(signupError, 'An account already exists for that email. Try logging in instead.');
+          } else {
+            showError(signupError, 'Something went wrong. Please try again.');
+          }
+        });
+    });
+
+    /* ---------- logout ---------- */
+    if (logoutBtn) logoutBtn.addEventListener('click', function () {
+      setSession(null);
+      renderHeader();
+      selectTab('login');
+      showAuth();
+      closeModal();
+    });
+
+    /* ---------- refresh points for existing session ---------- */
+    (function refreshSessionPoints() {
+      var s = getSession();
+      if (s && s.id && sb) {
+        fetchPoints(s.id, function (pts) {
+          s.points = pts;
+          setSession(s);
+          renderHeader();
+        });
+      } else {
+        renderHeader();
+      }
+    })();
+
+    renderHeader();
+  });
+})();
