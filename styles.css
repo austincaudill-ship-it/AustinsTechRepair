@@ -420,7 +420,7 @@ a { color: var(--brand); }
 .footer-legal-links { display: flex; gap: 1.4rem; }
 .footer-legal-links a { font-size: 0.8rem; color: #B9A98F; text-decoration: none; }
 .footer-legal-links a:hover { color: var(--gold); }
-.footer-wordmark { font-family: var(--font-display); font-weight: 700; color: #FAF6EE; font-size: 1.15rem; }
+.footer-wordmark { font-family: var(--font-display); font-weight: 700; color: #FAF6EE; font-size: 1.15rem; } /* ---------- Payment badges ---------- */ .footer-payments { display: flex; align-items: center; flex-wrap: wrap; gap: 0.6rem; margin: 0 0 1.8rem; } .footer-payments-label { font-size: 0.8rem; color: #8d7d66; margin-right: 0.4rem; text-transform: uppercase; letter-spacing: 0.08em; } .pay-badge { display: inline-flex; align-items: center; justify-content: center; background: #fff; border-radius: 6px; padding: 0.35rem 0.6rem; font-size: 1.35rem; color: #1a1f71; line-height: 1; min-height: 2rem; } .pay-badge .fa-cc-mastercard { color: #eb001b; } .pay-badge .fa-cc-apple-pay { color: #000; } .pay-badge .fa-google-pay { color: #3c4043; } .pay-badge .fa-money-bill-wave { color: #2e7d32; font-size: 1rem; margin-right: 0.3rem; } .pay-badge.pay-text { font-size: 0.72rem; font-weight: 700; color: #1428a0; letter-spacing: 0.02em; } .pay-badge.pay-text:last-child { color: #2e7d32; }
 
 /* ---------- Misc ---------- */
 .text-center { text-align: center; }
