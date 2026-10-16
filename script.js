@@ -320,3 +320,353 @@
     }
   });
 })();
+
+/* ==================== THEME TOGGLE & COOKIE CONSENT ==================== */
+(function () {
+  document.addEventListener('DOMContentLoaded', function () {
+
+    // ---- Dark/Light mode ----
+    var root = document.documentElement;
+    var toggle = document.getElementById('theme-toggle');
+    var icon = document.getElementById('theme-icon');
+
+    function applyTheme(theme) {
+      root.setAttribute('data-theme', theme);
+      if (icon) {
+        icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+      }
+      try { localStorage.setItem('atr-theme', theme); } catch (e) {}
+    }
+
+    // Load saved preference, or default to light
+    var saved = null;
+    try { saved = localStorage.getItem('atr-theme'); } catch (e) {}
+    if (saved === 'dark' || saved === 'light') {
+      applyTheme(saved);
+    } else {
+      applyTheme('light');
+    }
+
+    if (toggle) {
+      toggle.addEventListener('click', function () {
+        var current = root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+        applyTheme(current === 'dark' ? 'light' : 'dark');
+      });
+    }
+
+    // ---- Cookie consent ----
+    var banner = document.getElementById('cookie-banner');
+    var prefs = document.getElementById('cookie-prefs');
+    var acceptBtn = document.getElementById('cookie-accept');
+    var rejectBtn = document.getElementById('cookie-reject');
+    var customizeBtn = document.getElementById('cookie-customize');
+    var functionalBox = document.getElementById('cookie-pref-functional');
+    var analyticsBox = document.getElementById('cookie-pref-analytics');
+
+    function getConsent() {
+      try {
+        var raw = localStorage.getItem('atr-cookie-consent');
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) { return null; }
+    }
+
+    function saveConsent(consent) {
+      try {
+        localStorage.setItem('atr-cookie-consent', JSON.stringify(consent));
+      } catch (e) {}
+      if (banner) banner.hidden = true;
+    }
+
+    // Show banner only if no consent recorded
+    if (banner && !getConsent()) {
+      banner.hidden = false;
+    }
+
+    if (customizeBtn && prefs) {
+      customizeBtn.addEventListener('click', function () {
+        var isHidden = prefs.hidden;
+        prefs.hidden = !isHidden;
+        customizeBtn.textContent = isHidden ? 'Save Choices' : 'Customize';
+        if (!isHidden) {
+          // Save the customized choices
+          saveConsent({
+            essential: true,
+            functional: !!(functionalBox && functionalBox.checked),
+            analytics: !!(analyticsBox && analyticsBox.checked),
+            at: new Date().toISOString()
+          });
+        }
+      });
+    }
+
+    if (acceptBtn) {
+      acceptBtn.addEventListener('click', function () {
+        saveConsent({ essential: true, functional: true, analytics: true, at: new Date().toISOString() });
+      });
+    }
+
+    if (rejectBtn) {
+      rejectBtn.addEventListener('click', function () {
+        saveConsent({ essential: true, functional: false, analytics: false, at: new Date().toISOString() });
+      });
+    }
+  });
+})();
+
+/* ==================== ATR SHOP: PRODUCTS & CART ==================== */
+(function () {
+  document.addEventListener('DOMContentLoaded', function () {
+
+    var PRODUCTS = [
+      { id: 'casper-iphone', name: 'Casper Snap AR Clear Tempered Glass — iPhone', cat: 'Screen Protectors', price: 14.99 },
+      { id: 'casper-samsung', name: 'Casper Snap AR Clear Tempered Glass — Samsung Galaxy', cat: 'Screen Protectors', price: 14.99 },
+      { id: 'casper-privacy', name: 'Casper Snap Privacy Tempered Glass — iPhone', cat: 'Screen Protectors', price: 19.99 },
+      { id: 'amp-case-clear-ip', name: 'AMPsentrix Clear TPU Case — iPhone', cat: 'Phone Cases', price: 14.99 },
+      { id: 'amp-case-rugged', name: 'AMPsentrix Shockproof Rugged Case — iPhone', cat: 'Phone Cases', price: 24.99 },
+      { id: 'amp-case-clear-sam', name: 'AMPsentrix Clear TPU Case — Samsung Galaxy', cat: 'Phone Cases', price: 14.99 },
+      { id: 'amp-cable-lightning-c', name: 'AMPsentrix Lightning to USB-C Cable 1.2m (MFi)', cat: 'Charging Cables', price: 14.99 },
+      { id: 'amp-cable-lightning-a', name: 'AMPsentrix Lightning to USB-A Cable 1.2m (MFi)', cat: 'Charging Cables', price: 12.99 },
+      { id: 'amp-cable-c-c', name: 'AMPsentrix USB-C to USB-C 60W Fast Charge 1m', cat: 'Charging Cables', price: 12.99 },
+      { id: 'amp-wall-20w-dual', name: 'AMPsentrix 20W Dual-Port Wall Adapter (USB-C + USB-A)', cat: 'Wall Chargers', price: 19.99 },
+      { id: 'amp-wall-20w-pd', name: 'AMPsentrix 20W USB-C PD Fast Wall Charger', cat: 'Wall Chargers', price: 17.99 },
+      { id: 'amp-car-dual', name: 'AMPsentrix Dual USB Car Charger (Fast Charge)', cat: 'Car Chargers', price: 14.99 },
+      { id: 'amp-magsafe-pad', name: 'AMPsentrix MagSafe Wireless Charging Pad (15W)', cat: 'Wireless Chargers', price: 29.99 },
+      { id: 'amp-wireless-3in1', name: 'AMPsentrix 3-in-1 Wireless Charging Station', cat: 'Wireless Chargers', price: 44.99 }
+    ];
+
+    var tbody = document.getElementById('product-tbody');
+    var cartCount = document.getElementById('cart-count');
+    var cartItems = document.getElementById('cart-items');
+    var cartTotal = document.getElementById('cart-total');
+    var drawer = document.getElementById('cart-drawer');
+    var overlay = document.getElementById('cart-overlay');
+
+    function money(n) { return '$' + n.toFixed(2); }
+
+    function getCart() {
+      try { return JSON.parse(localStorage.getItem('atr-cart') || '{}'); }
+      catch (e) { return {}; }
+    }
+    function saveCart(cart) {
+      try { localStorage.setItem('atr-cart', JSON.stringify(cart)); } catch (e) {}
+      renderCart();
+    }
+
+    function renderProducts(filter) {
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      PRODUCTS.filter(function (p) {
+        return !filter || filter === 'all' || p.cat === filter;
+      }).forEach(function (p) {
+        var tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td><span class="product-name">' + p.name + '</span></td>' +
+          '<td><span class="product-cat">' + p.cat + '</span></td>' +
+          '<td class="product-price">' + money(p.price) + '</td>' +
+          '<td><button class="add-btn" data-id="' + p.id + '"><i class="fas fa-plus"></i> Add</button></td>';
+        tbody.appendChild(tr);
+      });
+      tbody.querySelectorAll('.add-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var cart = getCart();
+          var id = btn.getAttribute('data-id');
+          cart[id] = (cart[id] || 0) + 1;
+          saveCart(cart);
+          btn.classList.add('added');
+          btn.innerHTML = '<i class="fas fa-check"></i> Added';
+          setTimeout(function () {
+            btn.classList.remove('added');
+            btn.innerHTML = '<i class="fas fa-plus"></i> Add';
+          }, 900);
+        });
+      });
+    }
+
+    function cartQty() {
+      var cart = getCart();
+      return Object.keys(cart).reduce(function (s, k) { return s + cart[k]; }, 0);
+    }
+
+    function cartSum() {
+      var cart = getCart();
+      return Object.keys(cart).reduce(function (s, k) {
+        var p = PRODUCTS.find(function (x) { return x.id === k; });
+        return s + (p ? p.price * cart[k] : 0);
+      }, 0);
+    }
+
+    function renderCart() {
+      var cart = getCart();
+      var ids = Object.keys(cart);
+      if (cartCount) cartCount.textContent = cartQty();
+      if (cartTotal) cartTotal.textContent = money(cartSum());
+      if (!cartItems) return;
+      if (!ids.length) {
+        cartItems.innerHTML = '<p class="cart-empty">Your cart is empty.<br>Add some accessories to get started.</p>';
+        return;
+      }
+      cartItems.innerHTML = '';
+      ids.forEach(function (id) {
+        var p = PRODUCTS.find(function (x) { return x.id === id; });
+        if (!p) return;
+        var div = document.createElement('div');
+        div.className = 'cart-item';
+        div.innerHTML =
+          '<div class="cart-item-info">' +
+            '<div class="cart-item-name">' + p.name + '</div>' +
+            '<div class="cart-item-price">' + money(p.price) + ' each</div>' +
+          '</div>' +
+          '<div class="cart-qty">' +
+            '<button class="qty-btn" data-act="dec" data-id="' + id + '">&minus;</button>' +
+            '<span class="qty-num">' + cart[id] + '</span>' +
+            '<button class="qty-btn" data-act="inc" data-id="' + id + '">+</button>' +
+          '</div>' +
+          '<button class="cart-remove" data-id="' + id + '" aria-label="Remove"><i class="fas fa-trash"></i></button>';
+        cartItems.appendChild(div);
+      });
+      cartItems.querySelectorAll('.qty-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var c = getCart();
+          var id = btn.getAttribute('data-id');
+          if (btn.getAttribute('data-act') === 'inc') c[id]++;
+          else { c[id]--; if (c[id] <= 0) delete c[id]; }
+          saveCart(c);
+        });
+      });
+      cartItems.querySelectorAll('.cart-remove').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var c = getCart();
+          delete c[btn.getAttribute('data-id')];
+          saveCart(c);
+        });
+      });
+    }
+
+    function openCart() {
+      if (drawer) drawer.hidden = false;
+      if (overlay) overlay.hidden = false;
+      document.body.style.overflow = 'hidden';
+    }
+    function closeCart() {
+      if (drawer) drawer.hidden = true;
+      if (overlay) overlay.hidden = true;
+      document.body.style.overflow = '';
+    }
+
+    var openBtn = document.getElementById('cart-open-btn');
+    var closeBtn = document.getElementById('cart-close');
+    if (openBtn) openBtn.addEventListener('click', openCart);
+    if (closeBtn) closeBtn.addEventListener('click', closeCart);
+    if (overlay) overlay.addEventListener('click', closeCart);
+
+    var clearBtn = document.getElementById('cart-clear');
+    if (clearBtn) clearBtn.addEventListener('click', function () { saveCart({}); });
+
+    var filters = document.getElementById('shop-filters');
+    if (filters) {
+      filters.querySelectorAll('.filter-chip').forEach(function (chip) {
+        chip.addEventListener('click', function () {
+          filters.querySelectorAll('.filter-chip').forEach(function (c) { c.classList.remove('active'); });
+          chip.classList.add('active');
+          renderProducts(chip.getAttribute('data-filter'));
+        });
+      });
+    }
+
+    // Checkout: pre-fill the repair request form with the cart contents
+    var checkoutBtn = document.getElementById('cart-checkout');
+    if (checkoutBtn) {
+      checkoutBtn.addEventListener('click', function () {
+        var cart = getCart();
+        var ids = Object.keys(cart);
+        if (!ids.length) return;
+        var lines = ids.map(function (id) {
+          var p = PRODUCTS.find(function (x) { return x.id === id; });
+          return p ? (cart[id] + 'x ' + p.name + ' (' + money(p.price * cart[id]) + ')') : '';
+        }).filter(Boolean);
+        var summary = 'ACCESSORY ORDER (deliver during repair visit):\n' + lines.join('\n') + '\nSubtotal: ' + money(cartSum());
+        // Store for the repair form to pick up, then go to the repair page
+        try { sessionStorage.setItem('atr-accessory-order', summary); } catch (e) {}
+        closeCart();
+        // Navigate to repair page
+        var repairLink = document.querySelector('[data-page="repair"]');
+        if (repairLink) repairLink.click();
+        else window.location.hash = '#repair';
+      });
+    }
+
+    renderProducts('all');
+    renderCart();
+  });
+})();
+
+/* ==================== PRICE LOOKUP TOOL ==================== */
+(function () {
+  document.addEventListener('DOMContentLoaded', function () {
+    // Flat-rate pricing from ATRG Master Repair List
+    var PRICES = {
+      'iphone':           { screen: 99, battery: 24, backglass: 24, chargeport: 24, label: 'iPhone' },
+      'ipad':             { screen: 99, battery: 24, backglass: 24, chargeport: 24, label: 'iPad' },
+      'watch':            { screen: 99, battery: 24, backglass: 24, chargeport: 24, label: 'Apple Watch' },
+      'samsung-budget':   { screen: 130, battery: 69, backglass: 80, chargeport: 60, label: 'Samsung Galaxy (A / M / F series)' },
+      'samsung-mid':      { screen: 250, battery: 89, backglass: 150, chargeport: 100, label: 'Samsung Galaxy (S series)' },
+      'samsung-premium':  { screen: 450, battery: 99, backglass: 150, chargeport: 120, label: 'Samsung Galaxy (Fold / Flip)' },
+      'pixel':            { screen: 99, battery: 49, backglass: 49, chargeport: 49, label: 'Google Pixel' },
+      'motorola':         { screen: 95, battery: 68, backglass: 65, chargeport: 65, label: 'Motorola' }
+    };
+    var REPAIR_LABELS = {
+      screen: 'Screen Replacement',
+      battery: 'Battery Replacement',
+      backglass: 'Back Glass Replacement',
+      chargeport: 'Charging Port Repair'
+    };
+
+    var brandSel = document.getElementById('pl-brand');
+    var repairSel = document.getElementById('pl-repair');
+    var result = document.getElementById('pl-result');
+    var amount = document.getElementById('pl-amount');
+    var note = document.getElementById('pl-note');
+    var bookBtn = document.getElementById('pl-book');
+
+    if (!brandSel || !repairSel) return;
+
+    brandSel.addEventListener('change', function () {
+      repairSel.disabled = !brandSel.value;
+      if (!brandSel.value) {
+        repairSel.value = '';
+        if (result) result.hidden = true;
+      }
+      updateQuote();
+    });
+
+    repairSel.addEventListener('change', updateQuote);
+
+    function updateQuote() {
+      var brand = brandSel.value;
+      var repair = repairSel.value;
+      if (!brand || !repair || !PRICES[brand]) {
+        if (result) result.hidden = true;
+        return;
+      }
+      var price = PRICES[brand][repair];
+      if (amount) amount.textContent = '$' + price;
+      if (note) note.textContent = REPAIR_LABELS[repair] + ' for ' + PRICES[brand].label + ' — flat rate, parts and labor included. $15 dispatch fee credited toward this price.';
+      if (result) result.hidden = false;
+      // Store the quote for the repair form
+      try {
+        sessionStorage.setItem('atr-quote', JSON.stringify({
+          device: PRICES[brand].label,
+          repair: REPAIR_LABELS[repair],
+          price: price
+        }));
+      } catch (e) {}
+    }
+
+    // If user clicks "Book This Repair", the repair page can pick up the quote
+    if (bookBtn) {
+      bookBtn.addEventListener('click', function () {
+        // The data-page handler will navigate; quote is in sessionStorage
+      });
+    }
+  });
+})();
