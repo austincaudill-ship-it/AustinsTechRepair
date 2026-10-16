@@ -667,7 +667,7 @@
           <form id="acct-login-form" novalidate>
             <label class="acct-field">
               <span>Email address</span>
-              <input type="email" id="acct-login-email" placeholder="you@example.com" autocomplete="email" required>
+              <input type="email" id="acct-login-email" placeholder="you@example.com" autocomplete="email" aria-label="Email address" required>
             </label>
             <p class="acct-error" id="acct-login-error" hidden></p>
             <button class="btn btn-primary btn-lg acct-submit" type="submit">Log In <i class="fas fa-arrow-right"></i></button>
@@ -676,15 +676,15 @@
           <form id="acct-signup-form" novalidate hidden>
             <label class="acct-field">
               <span>Full name</span>
-              <input type="text" id="acct-signup-name" placeholder="Jane Smith" autocomplete="name" required>
+              <input type="text" id="acct-signup-name" placeholder="Jane Smith" autocomplete="name" aria-label="Full name" required>
             </label>
             <label class="acct-field">
               <span>Email address</span>
-              <input type="email" id="acct-signup-email" placeholder="you@example.com" autocomplete="email" required>
+              <input type="email" id="acct-signup-email" placeholder="you@example.com" autocomplete="email" aria-label="Email address" required>
             </label>
             <label class="acct-field">
               <span>Phone (optional)</span>
-              <input type="tel" id="acct-signup-phone" placeholder="(937) 555-1234" autocomplete="tel">
+              <input type="tel" id="acct-signup-phone" placeholder="(937) 555-1234" autocomplete="tel" aria-label="Phone number">
             </label>
             <p class="acct-error" id="acct-signup-error" hidden></p>
             <button class="btn btn-primary btn-lg acct-submit" type="submit">Create Account <i class="fas fa-arrow-right"></i></button>
@@ -715,7 +715,7 @@
             <div class="acct-messages" id="acct-messages"></div>
             <form id="acct-msg-form" novalidate>
               <div class="acct-msg-row">
-                <input type="text" id="acct-msg-input" placeholder="Write a message…" autocomplete="off" maxlength="1000">
+                <input type="text" id="acct-msg-input" placeholder="Write a message…" autocomplete="off" maxlength="1000" aria-label="Write a message">
                 <button class="btn btn-primary btn-sm" type="submit" aria-label="Send message"><i class="fas fa-paper-plane"></i></button>
               </div>
               <p class="acct-error" id="acct-msg-error" hidden></p>
@@ -779,11 +779,11 @@
           <form id="emp-login-form" novalidate>
             <label class="acct-field">
               <span>Work email</span>
-              <input type="email" id="emp-login-email" placeholder="you@austinstechrepairgroup.com" autocomplete="email" required>
+              <input type="email" id="emp-login-email" placeholder="you@austinstechrepairgroup.com" autocomplete="email" aria-label="Employee email" required>
             </label>
             <label class="acct-field">
               <span>Password</span>
-              <input type="password" id="emp-login-password" placeholder="••••••••" autocomplete="current-password" required>
+              <input type="password" id="emp-login-password" placeholder="••••••••" autocomplete="current-password" aria-label="Password" required>
             </label>
             <p class="acct-error" id="emp-login-error" hidden></p>
             <button class="btn btn-primary btn-lg acct-submit" type="submit">Log In <i class="fas fa-arrow-right"></i></button>
@@ -1228,7 +1228,7 @@
               <div class="emp-messages" id="emp-messages"></div>
               <form id="emp-msg-form" novalidate>
                 <div class="emp-msg-row">
-                  <input type="text" id="emp-msg-input" placeholder="Reply to customer…" autocomplete="off" maxlength="1000">
+                  <input type="text" id="emp-msg-input" placeholder="Reply to customer…" autocomplete="off" maxlength="1000" aria-label="Reply to customer">
                   <button class="btn btn-primary btn-sm" type="submit" aria-label="Send reply"><i class="fas fa-paper-plane"></i></button>
                 </div>
                 <p class="emp-error" id="emp-msg-error" hidden></p>
