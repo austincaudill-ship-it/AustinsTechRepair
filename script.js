@@ -634,7 +634,7 @@
       repairSel.disabled = !brandSel.value;
       if (!brandSel.value) {
         repairSel.value = '';
-        if (result) result.hidden = true;
+        if (result) { result.hidden = true; result.classList.remove('show'); }
       }
       updateQuote();
     });
@@ -645,13 +645,13 @@
       var brand = brandSel.value;
       var repair = repairSel.value;
       if (!brand || !repair || !PRICES[brand]) {
-        if (result) result.hidden = true;
+        if (result) { result.hidden = true; result.classList.remove('show'); }
         return;
       }
       var price = PRICES[brand][repair];
       if (amount) amount.textContent = '$' + price;
       if (note) note.textContent = REPAIR_LABELS[repair] + ' for ' + PRICES[brand].label + ' — flat rate, parts and labor included. $15 dispatch fee credited toward this price.';
-      if (result) result.hidden = false;
+      if (result) { result.hidden = false; result.classList.add('show'); }
       // Store the quote for the repair form
       try {
         sessionStorage.setItem('atr-quote', JSON.stringify({
