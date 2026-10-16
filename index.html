@@ -81,6 +81,7 @@
         <i class="fas fa-user-circle"></i>
         <span class="account-label" id="account-label">Account</span>
       </button>
+      <a class="btn btn-outline btn-sm emp-dash-link" id="emp-dash-link" href="#employee-dashboard" data-page="employee-dashboard" hidden><i class="fas fa-briefcase"></i> <span class="account-label">Hub</span></a>
       <a class="btn btn-primary header-cta" href="#repair" data-page="repair"><i class="fas fa-wrench"></i> Book a Repair</a>
     </div>
   </header>
@@ -767,6 +768,30 @@
       </div>
     </div>
 
+    <!-- EMPLOYEE LOGIN MODAL -->
+    <div class="acct-overlay" id="emp-overlay" hidden></div>
+    <div class="acct-modal" id="emp-modal" role="dialog" aria-modal="true" aria-label="Employee login" hidden>
+      <div class="acct-card">
+        <button class="acct-close" id="emp-close" aria-label="Close employee login"><i class="fas fa-times"></i></button>
+        <div id="emp-login-view">
+          <h3><i class="fas fa-id-badge"></i> Employee Login</h3>
+          <p class="acct-sub">Staff access only. Your login is secured with encrypted password authentication.</p>
+          <form id="emp-login-form" novalidate>
+            <label class="acct-field">
+              <span>Work email</span>
+              <input type="email" id="emp-login-email" placeholder="you@austinstechrepairgroup.com" autocomplete="email" required>
+            </label>
+            <label class="acct-field">
+              <span>Password</span>
+              <input type="password" id="emp-login-password" placeholder="••••••••" autocomplete="current-password" required>
+            </label>
+            <p class="acct-error" id="emp-login-error" hidden></p>
+            <button class="btn btn-primary btn-lg acct-submit" type="submit">Log In <i class="fas fa-arrow-right"></i></button>
+          </form>
+        </div>
+      </div>
+    </div>
+
     <!-- ==================== B2B ==================== -->
     <section id="b2b" class="page">
       <div class="section">
@@ -1153,6 +1178,112 @@
         </div>
       </div>
     </section>
+
+    <!-- ==================== EMPLOYEE DASHBOARD (staff only) ==================== -->
+    <section id="employee-dashboard" class="page">
+      <div class="page-container">
+        <div class="emp-dash-head">
+          <div>
+            <p class="eyebrow">Staff only</p>
+            <h2><i class="fas fa-briefcase"></i> Operations Hub</h2>
+            <p class="emp-dash-sub">Welcome back, <span id="emp-dash-name">technician</span>.</p>
+          </div>
+          <button class="btn btn-outline btn-sm" id="emp-logout" type="button"><i class="fas fa-sign-out-alt"></i> Log Out</button>
+        </div>
+
+        <div class="emp-tabs" role="tablist" aria-label="Operations sections">
+          <button class="emp-tab active" id="emp-tab-tickets" type="button" role="tab"><i class="fas fa-tools"></i> Tickets <span class="emp-count" id="emp-count-tickets" hidden></span></button>
+          <button class="emp-tab" id="emp-tab-messages" type="button" role="tab"><i class="fas fa-comments"></i> Messages</button>
+          <button class="emp-tab" id="emp-tab-orders" type="button" role="tab"><i class="fas fa-shopping-bag"></i> Orders <span class="emp-count" id="emp-count-orders" hidden></span></button>
+          <button class="emp-tab" id="emp-tab-inventory" type="button" role="tab"><i class="fas fa-boxes"></i> Inventory <span class="emp-count emp-count-warn" id="emp-count-lowstock" hidden></span></button>
+          <button class="emp-tab" id="emp-tab-customers" type="button" role="tab"><i class="fas fa-users"></i> Customers</button>
+        </div>
+
+        <p class="emp-error" id="emp-dash-error" hidden></p>
+
+        <!-- TICKETS -->
+        <div class="emp-panel" id="emp-panel-tickets" role="tabpanel">
+          <div class="emp-panel-head">
+            <h3>Repair Tickets</h3>
+            <select id="emp-ticket-filter" aria-label="Filter tickets by status">
+              <option value="all">All statuses</option>
+              <option value="Waiting">Waiting</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Waiting for Parts">Waiting for Parts</option>
+              <option value="Ready for Pickup">Ready for Pickup</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
+          <div id="emp-ticket-list"><p class="emp-muted">Loading tickets…</p></div>
+        </div>
+
+        <!-- MESSAGES -->
+        <div class="emp-panel" id="emp-panel-messages" role="tabpanel" hidden>
+          <div class="emp-panel-head"><h3>Customer Messages</h3></div>
+          <div class="emp-msg-layout">
+            <div class="emp-msg-threads" id="emp-msg-threads"><p class="emp-muted">Loading…</p></div>
+            <div class="emp-msg-thread" id="emp-msg-thread" hidden>
+              <button class="btn btn-outline btn-sm" id="emp-msg-back" type="button"><i class="fas fa-arrow-left"></i> All threads</button>
+              <div class="emp-thread-info" id="emp-msg-info"></div>
+              <div class="emp-messages" id="emp-messages"></div>
+              <form id="emp-msg-form" novalidate>
+                <div class="emp-msg-row">
+                  <input type="text" id="emp-msg-input" placeholder="Reply to customer…" autocomplete="off" maxlength="1000">
+                  <button class="btn btn-primary btn-sm" type="submit" aria-label="Send reply"><i class="fas fa-paper-plane"></i></button>
+                </div>
+                <p class="emp-error" id="emp-msg-error" hidden></p>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- ORDERS -->
+        <div class="emp-panel" id="emp-panel-orders" role="tabpanel" hidden>
+          <div class="emp-panel-head">
+            <h3>Shop Orders</h3>
+            <select id="emp-order-filter" aria-label="Filter orders by status">
+              <option value="all">All statuses</option>
+              <option value="New">New</option>
+              <option value="Processing">Processing</option>
+              <option value="Shipped/Ready">Shipped/Ready</option>
+              <option value="Completed">Completed</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+          </div>
+          <div id="emp-order-list"><p class="emp-muted">Loading orders…</p></div>
+        </div>
+
+        <!-- INVENTORY -->
+        <div class="emp-panel" id="emp-panel-inventory" role="tabpanel" hidden>
+          <div class="emp-panel-head">
+            <h3>Inventory</h3>
+            <div class="emp-inv-actions">
+              <button class="btn btn-outline btn-sm" id="emp-po-btn" type="button"><i class="fas fa-file-invoice"></i> Purchase Orders</button>
+              <button class="btn btn-primary btn-sm" id="emp-add-product-btn" type="button"><i class="fas fa-plus"></i> Add Product</button>
+            </div>
+          </div>
+          <div class="emp-lowstock" id="emp-lowstock" hidden></div>
+          <div id="emp-inv-list"><p class="emp-muted">Loading inventory…</p></div>
+
+          <!-- Purchase orders sub-view -->
+          <div id="emp-po-view" hidden>
+            <button class="btn btn-outline btn-sm" id="emp-po-back" type="button"><i class="fas fa-arrow-left"></i> Back to inventory</button>
+            <h4 style="margin:1rem 0 0.5rem;">Purchase Orders</h4>
+            <button class="btn btn-primary btn-sm" id="emp-new-po-btn" type="button" style="margin-bottom:1rem;"><i class="fas fa-plus"></i> New Purchase Order</button>
+            <div id="emp-po-list"><p class="emp-muted">Loading…</p></div>
+          </div>
+        </div>
+
+        <!-- CUSTOMERS -->
+        <div class="emp-panel" id="emp-panel-customers" role="tabpanel" hidden>
+          <div class="emp-panel-head">
+            <h3>Customers</h3>
+            <input type="search" id="emp-cust-search" placeholder="Search name or email…" aria-label="Search customers">
+          </div>
+          <div id="emp-cust-list"><p class="emp-muted">Loading customers…</p></div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <!-- ==================== FOOTER ==================== -->
@@ -1207,6 +1338,7 @@
         <div class="footer-legal-links">
           <a href="#privacy" data-page="privacy">Privacy</a>
           <a href="#terms" data-page="terms">Terms</a>
+          <a href="#" id="emp-login-link">Employee Login</a>
         </div>
         <span class="footer-wordmark">ATR Group</span>
       </div>

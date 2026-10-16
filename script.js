@@ -1198,3 +1198,1142 @@
     if (overlay) overlay.addEventListener('click', stopPolling);
   });
 })();
+
+/* ==================== ATR EMPLOYEE OPERATIONS HUB ====================
+ * Secure employee login via Supabase Auth (NOT a hardcoded demo).
+ * - Login uses supabase.auth.signInWithPassword() — passwords are
+ *   bcrypt-hashed server-side by Supabase. No password ever lives
+ *   in this file or in the browser beyond the Auth session token.
+ * - Dashboard data loads ONLY after verifying the signed-in user
+ *   has a row in employee_profiles. RLS enforces this server-side.
+ * - The anon key below is the public client key (standard pattern);
+ *   RLS policies decide what it can touch.
+ */
+(function () {
+  'use strict';
+
+  var SUPABASE_URL = 'https://lyujxpuicarblpkdzuuc.supabase.co';
+  var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
+  var CUSTOMER_SESSION_KEY = 'atr-account';
+
+  /* Shop product catalog (mirrors the website shop; used to build order records) */
+  var PRODUCTS = [
+    { id: 'casper-iphone', name: 'Casper Snap AR Clear Tempered Glass — iPhone', price: 14.99 },
+    { id: 'casper-samsung', name: 'Casper Snap AR Clear Tempered Glass — Samsung Galaxy', price: 14.99 },
+    { id: 'casper-privacy', name: 'Casper Snap Privacy Tempered Glass — iPhone', price: 19.99 },
+    { id: 'amp-case-clear-ip', name: 'AMPsentrix Clear TPU Case — iPhone', price: 14.99 },
+    { id: 'amp-case-rugged', name: 'AMPsentrix Shockproof Rugged Case — iPhone', price: 24.99 },
+    { id: 'amp-case-clear-sam', name: 'AMPsentrix Clear TPU Case — Samsung Galaxy', price: 14.99 },
+    { id: 'amp-cable-lightning-c', name: 'AMPsentrix Lightning to USB-C Cable 1.2m (MFi)', price: 14.99 },
+    { id: 'amp-cable-lightning-a', name: 'AMPsentrix Lightning to USB-A Cable 1.2m (MFi)', price: 12.99 },
+    { id: 'amp-cable-c-c', name: 'AMPsentrix USB-C to USB-C 60W Fast Charge 1m', price: 12.99 },
+    { id: 'amp-wall-20w-dual', name: 'AMPsentrix 20W Dual-Port Wall Adapter (USB-C + USB-A)', price: 19.99 },
+    { id: 'amp-wall-20w-pd', name: 'AMPsentrix 20W USB-C PD Fast Wall Charger', price: 17.99 },
+    { id: 'amp-car-dual', name: 'AMPsentrix Dual USB Car Charger (Fast Charge)', price: 14.99 },
+    { id: 'amp-magsafe-pad', name: 'AMPsentrix MagSafe Wireless Charging Pad (15W)', price: 29.99 },
+    { id: 'amp-wireless-3in1', name: 'AMPsentrix 3-in-1 Wireless Charging Station', price: 44.99 }
+  ];
+
+  var TICKET_STATUSES = ['Waiting', 'In Progress', 'Waiting for Parts', 'Ready for Pickup', 'Completed'];
+  var ORDER_STATUSES = ['New', 'Processing', 'Shipped/Ready', 'Completed', 'Cancelled'];
+  var PO_STATUSES = ['Draft', 'Ordered', 'Received', 'Cancelled'];
+
+  var sb = null;
+
+  function getSb() {
+    if (sb) return sb;
+    if (window.supabase && window.supabase.createClient) {
+      try { sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); }
+      catch (e) { sb = null; }
+    }
+    return sb;
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function money(n) {
+    n = Number(n) || 0;
+    return '$' + n.toFixed(2);
+  }
+  function fmtDate(iso) {
+    try {
+      var d = new Date(iso);
+      return d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' +
+             d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    } catch (e) { return ''; }
+  }
+  function getCustomerSession() {
+    try { return JSON.parse(localStorage.getItem(CUSTOMER_SESSION_KEY) || 'null'); }
+    catch (e) { return null; }
+  }
+  function showError(el, msg) {
+    if (!el) return;
+    el.textContent = msg || '';
+    el.hidden = !msg;
+  }
+
+  /* ============================================================
+   * PART 1: Cart checkout -> Supabase orders table
+   * Fires alongside the existing checkout handler (which still
+   * pre-fills the repair form). Never blocks the customer flow.
+   * ============================================================ */
+  function wireCartCheckout() {
+    var btn = document.getElementById('cart-checkout');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      try {
+        var cart = JSON.parse(localStorage.getItem('atr-cart') || '{}');
+        var ids = Object.keys(cart).filter(function (id) { return cart[id] > 0; });
+        if (!ids.length) return;
+        var items = [];
+        var total = 0;
+        ids.forEach(function (id) {
+          var p = null;
+          for (var i = 0; i < PRODUCTS.length; i++) {
+            if (PRODUCTS[i].id === id) { p = PRODUCTS[i]; break; }
+          }
+          if (!p) return;
+          var qty = cart[id];
+          items.push({ id: id, name: p.name, price: p.price, qty: qty });
+          total += p.price * qty;
+        });
+        if (!items.length) return;
+        var cs = getCustomerSession();
+        var order = {
+          customer_id: cs && cs.id ? cs.id : null,
+          customer_name: cs && cs.name ? cs.name : null,
+          customer_email: cs && cs.email ? cs.email : null,
+          items: items,
+          total: Math.round(total * 100) / 100,
+          status: 'New'
+        };
+        var client = getSb();
+        if (!client) return;
+        // Fire-and-forget: do not block checkout UX on the insert.
+        client.from('orders').insert(order).then(function (res) {
+          if (res.error) {
+            try { console.warn('ATR order save failed:', res.error.message); } catch (e) {}
+          }
+        });
+      } catch (e) { /* never break checkout */ }
+    });
+  }
+
+  /* ============================================================
+   * PART 2: Employee auth + dashboard
+   * ============================================================ */
+  var empUser = null;      // supabase auth user
+  var empProfile = null;   // employee_profiles row
+  var authChecked = false;
+
+  function isEmployee() { return !!(empUser && empProfile); }
+
+  function setHubLinkVisible(visible) {
+    var link = document.getElementById('emp-dash-link');
+    if (link) link.hidden = !visible;
+  }
+
+  function guardDashboardPage() {
+    if (window.location.hash === '#employee-dashboard' && authChecked && !isEmployee()) {
+      window.location.hash = '#home';
+    }
+  }
+
+  function checkAuth() {
+    var client = getSb();
+    if (!client) { authChecked = true; return Promise.resolve(); }
+    return client.auth.getSession().then(function (res) {
+      var session = res && res.data && res.data.session;
+      if (session && session.user) {
+        return verifyEmployee(session.user);
+      }
+      empUser = null; empProfile = null;
+      authChecked = true;
+      setHubLinkVisible(false);
+      guardDashboardPage();
+    }).catch(function () {
+      authChecked = true;
+      setHubLinkVisible(false);
+    });
+  }
+
+  function verifyEmployee(user) {
+    var client = getSb();
+    return client.from('employee_profiles')
+      .select('id, name, role')
+      .eq('id', user.id)
+      .maybeSingle()
+      .then(function (res) {
+        authChecked = true;
+        if (res.error || !res.data) {
+          // Signed in, but NOT an employee (or profile missing).
+          empUser = null; empProfile = null;
+          setHubLinkVisible(false);
+        } else {
+          empUser = user;
+          empProfile = res.data;
+          setHubLinkVisible(true);
+          var nameEl = document.getElementById('emp-dash-name');
+          if (nameEl) nameEl.textContent = res.data.name || 'technician';
+        }
+        guardDashboardPage();
+      });
+  }
+
+  /* ---------- login modal ---------- */
+  function openEmpModal() {
+    var overlay = document.getElementById('emp-overlay');
+    var modal = document.getElementById('emp-modal');
+    if (overlay) overlay.hidden = false;
+    if (modal) modal.hidden = false;
+    document.body.style.overflow = 'hidden';
+    var email = document.getElementById('emp-login-email');
+    if (email) setTimeout(function () { email.focus(); }, 50);
+  }
+  function closeEmpModal() {
+    var overlay = document.getElementById('emp-overlay');
+    var modal = document.getElementById('emp-modal');
+    if (overlay) overlay.hidden = true;
+    if (modal) modal.hidden = true;
+    document.body.style.overflow = '';
+  }
+
+  function wireLogin() {
+    var loginLink = document.getElementById('emp-login-link');
+    var overlay = document.getElementById('emp-overlay');
+    var closeBtn = document.getElementById('emp-close');
+    var form = document.getElementById('emp-login-form');
+
+    if (loginLink) loginLink.addEventListener('click', function (e) {
+      e.preventDefault();
+      if (isEmployee()) {
+        window.location.hash = '#employee-dashboard';
+      } else {
+        openEmpModal();
+      }
+    });
+    if (closeBtn) closeBtn.addEventListener('click', closeEmpModal);
+    if (overlay) overlay.addEventListener('click', closeEmpModal);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeEmpModal();
+    });
+
+    if (form) form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var emailEl = document.getElementById('emp-login-email');
+      var passEl = document.getElementById('emp-login-password');
+      var errEl = document.getElementById('emp-login-error');
+      var email = (emailEl.value || '').trim();
+      var password = passEl.value || '';
+      showError(errEl, '');
+      if (!email || !password) {
+        showError(errEl, 'Enter your work email and password.');
+        return;
+      }
+      var client = getSb();
+      if (!client) {
+        showError(errEl, 'Login service unavailable. Check your connection and try again.');
+        return;
+      }
+      var submitBtn = form.querySelector('button[type="submit"]');
+      if (submitBtn) submitBtn.disabled = true;
+      // REAL Supabase Auth — password is bcrypt-hashed server-side.
+      client.auth.signInWithPassword({ email: email, password: password })
+        .then(function (res) {
+          if (submitBtn) submitBtn.disabled = false;
+          if (res.error) {
+            showError(errEl, res.error.message || 'Login failed. Check your email and password.');
+            return;
+          }
+          var user = res.data && res.data.user;
+          if (!user) {
+            showError(errEl, 'Login failed. Please try again.');
+            return;
+          }
+          // Must have an employee profile — customers can't get in here.
+          return verifyEmployee(user).then(function () {
+            if (!isEmployee()) {
+              // Signed in as a non-employee: sign right back out.
+              client.auth.signOut();
+              showError(errEl, 'This login is for staff only.');
+              return;
+            }
+            passEl.value = '';
+            closeEmpModal();
+            window.location.hash = '#employee-dashboard';
+            loadDashboard();
+          });
+        })
+        .catch(function (err) {
+          if (submitBtn) submitBtn.disabled = false;
+          showError(errEl, (err && err.message) || 'Login failed. Please try again.');
+        });
+    });
+
+    var logoutBtn = document.getElementById('emp-logout');
+    if (logoutBtn) logoutBtn.addEventListener('click', function () {
+      var client = getSb();
+      var done = function () {
+        empUser = null; empProfile = null;
+        setHubLinkVisible(false);
+        window.location.hash = '#home';
+      };
+      if (client) client.auth.signOut().then(done, done);
+      else done();
+    });
+  }
+
+  /* ---------- dashboard tabs ---------- */
+  var TABS = ['tickets', 'messages', 'orders', 'inventory', 'customers'];
+  var loadedTabs = {};
+
+  function wireTabs() {
+    TABS.forEach(function (t) {
+      var btn = document.getElementById('emp-tab-' + t);
+      if (btn) btn.addEventListener('click', function () { showTab(t); });
+    });
+  }
+  function showTab(t) {
+    TABS.forEach(function (x) {
+      var btn = document.getElementById('emp-tab-' + x);
+      var panel = document.getElementById('emp-panel-' + x);
+      if (btn) btn.classList.toggle('active', x === t);
+      if (panel) panel.hidden = (x !== t);
+    });
+    if (!loadedTabs[t]) {
+      loadedTabs[t] = true;
+      loadTab(t);
+    }
+  }
+
+  function loadDashboard() {
+    if (!isEmployee()) return;
+    loadedTabs = {};
+    showTab('tickets');
+    refreshBadges();
+  }
+
+  function loadTab(t) {
+    if (t === 'tickets') loadTickets();
+    else if (t === 'messages') loadThreads();
+    else if (t === 'orders') loadOrders();
+    else if (t === 'inventory') loadInventory();
+    else if (t === 'customers') loadCustomers();
+  }
+
+  function refreshBadges() {
+    var client = getSb();
+    if (!client || !isEmployee()) return;
+    client.from('tickets').select('id', { count: 'exact', head: true })
+      .neq('status', 'Completed').neq('status', 'Cancelled')
+      .then(function (res) {
+        var el = document.getElementById('emp-count-tickets');
+        if (el) {
+          if (res.count > 0) { el.textContent = res.count; el.hidden = false; }
+          else el.hidden = true;
+        }
+      });
+    client.from('orders').select('id', { count: 'exact', head: true })
+      .eq('status', 'New')
+      .then(function (res) {
+        var el = document.getElementById('emp-count-orders');
+        if (el) {
+          if (res.count > 0) { el.textContent = res.count; el.hidden = false; }
+          else el.hidden = true;
+        }
+      });
+    client.from('inventory').select('id', { count: 'exact', head: true })
+      .then(function () {
+        // Low-stock count needs row data; compute in loadInventory.
+      });
+  }
+
+  function dashError(msg) {
+    showError(document.getElementById('emp-dash-error'), msg);
+  }
+
+  /* ---------- TICKETS ---------- */
+  function statusBadge(status) {
+    var cls = 'emp-st-waiting';
+    if (status === 'In Progress') cls = 'emp-st-progress';
+    else if (status === 'Waiting for Parts') cls = 'emp-st-parts';
+    else if (status === 'Ready for Pickup') cls = 'emp-st-ready';
+    else if (status === 'Completed') cls = 'emp-st-done';
+    return '<span class="emp-badge ' + cls + '">' + esc(status) + '</span>';
+  }
+
+  function loadTickets() {
+    var list = document.getElementById('emp-ticket-list');
+    var filterEl = document.getElementById('emp-ticket-filter');
+    var client = getSb();
+    if (!client || !isEmployee()) { dashError('Not signed in as staff.'); return; }
+    dashError('');
+    if (list) list.innerHTML = '<p class="emp-muted">Loading tickets…</p>';
+
+    var filter = filterEl ? filterEl.value : 'all';
+    var q = client.from('tickets').select('*').order('created_at', { ascending: false }).limit(200);
+    if (filter && filter !== 'all') q = q.eq('status', filter);
+
+    q.then(function (res) {
+      if (res.error) { dashError('Could not load tickets: ' + res.error.message); return; }
+      var rows = res.data || [];
+      if (!rows.length) {
+        list.innerHTML = '<p class="emp-muted">No tickets found.</p>';
+        return;
+      }
+      list.innerHTML = '';
+      rows.forEach(function (t) {
+        var div = document.createElement('div');
+        div.className = 'emp-card';
+        var opts = TICKET_STATUSES.map(function (s) {
+          return '<option value="' + s + '"' + (t.status === s ? ' selected' : '') + '>' + s + '</option>';
+        }).join('');
+        div.innerHTML =
+          '<div class="emp-card-top">' +
+            '<div>' +
+              '<p class="emp-card-title">' + esc(t.device_type || 'Device') +
+                (t.brand ? ' — ' + esc(t.brand) : '') + (t.model ? ' ' + esc(t.model) : '') + '</p>' +
+              '<p class="emp-card-meta"><i class="fas fa-user"></i> ' + esc(t.customer_name || 'Walk-in') +
+                (t.customer_phone ? ' · ' + esc(t.customer_phone) : '') + '</p>' +
+              '<p class="emp-card-meta"><i class="fas fa-clock"></i> ' + fmtDate(t.created_at) + ' · #' + esc(String(t.id).slice(0, 8)) + '</p>' +
+              '<p class="emp-card-meta"><i class="fas fa-wrench"></i> ' + esc(t.issue || '') + '</p>' +
+            '</div>' +
+            '<div>' + statusBadge(t.status) + '</div>' +
+          '</div>' +
+          '<div class="emp-card-actions">' +
+            '<label style="font-size:0.82rem;color:var(--muted);">Status:</label>' +
+            '<select data-ticket-status data-id="' + t.id + '">' + opts + '</select>' +
+            '<button class="btn btn-outline btn-sm" data-ticket-msg data-id="' + t.id + '" type="button"><i class="fas fa-comments"></i> Messages</button>' +
+          '</div>';
+        list.appendChild(div);
+      });
+      list.querySelectorAll('[data-ticket-status]').forEach(function (sel) {
+        sel.addEventListener('change', function () {
+          updateTicketStatus(sel.getAttribute('data-id'), sel.value, sel);
+        });
+      });
+      list.querySelectorAll('[data-ticket-msg]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          showTab('messages');
+          setTimeout(function () { openThread(btn.getAttribute('data-id')); }, 100);
+        });
+      });
+    });
+
+    if (filterEl && !filterEl.dataset.wired) {
+      filterEl.dataset.wired = '1';
+      filterEl.addEventListener('change', loadTickets);
+    }
+  }
+
+  function updateTicketStatus(ticketId, status, sel) {
+    var client = getSb();
+    if (sel) sel.disabled = true;
+    client.from('tickets').update({ status: status }).eq('id', ticketId)
+      .then(function (res) {
+        if (sel) sel.disabled = false;
+        if (res.error) {
+          dashError('Could not update ticket: ' + res.error.message);
+          loadTickets();
+        } else {
+          refreshBadges();
+        }
+      });
+  }
+
+  /* ---------- MESSAGES ---------- */
+  var msgTicketId = null;
+  var msgPoll = null;
+
+  function loadThreads() {
+    var wrap = document.getElementById('emp-msg-threads');
+    var threadView = document.getElementById('emp-msg-thread');
+    var client = getSb();
+    if (!client || !isEmployee()) return;
+    if (threadView) threadView.hidden = true;
+    stopMsgPoll();
+    if (wrap) wrap.innerHTML = '<p class="emp-muted">Loading…</p>';
+
+    client.from('tickets').select('id, device_type, brand, model, customer_name, status, created_at')
+      .order('created_at', { ascending: false }).limit(100)
+      .then(function (res) {
+        if (res.error || !wrap) return;
+        var rows = res.data || [];
+        if (!rows.length) { wrap.innerHTML = '<p class="emp-muted">No tickets yet.</p>'; return; }
+        // Get message counts per ticket
+        client.from('messages').select('ticket_id').then(function (mres) {
+          var counts = {};
+          (mres.data || []).forEach(function (m) {
+            counts[m.ticket_id] = (counts[m.ticket_id] || 0) + 1;
+          });
+          wrap.innerHTML = '';
+          rows.forEach(function (t) {
+            var b = document.createElement('button');
+            b.className = 'emp-thread-btn' + (msgTicketId === t.id ? ' active' : '');
+            b.type = 'button';
+            b.innerHTML =
+              '<p class="emp-card-title">' + esc(t.customer_name || 'Walk-in') + ' — ' +
+                esc(t.device_type || 'Device') + (t.model ? ' ' + esc(t.model) : '') + '</p>' +
+              '<p class="emp-card-meta">' + (counts[t.id] || 0) + ' messages · ' + esc(t.status) + '</p>';
+            b.addEventListener('click', function () { openThread(t.id); });
+            wrap.appendChild(b);
+          });
+        });
+      });
+  }
+
+  function openThread(ticketId) {
+    msgTicketId = ticketId;
+    var threadView = document.getElementById('emp-msg-thread');
+    var info = document.getElementById('emp-msg-info');
+    var box = document.getElementById('emp-messages');
+    var client = getSb();
+    if (!client || !threadView) return;
+    threadView.hidden = false;
+    document.querySelectorAll('.emp-thread-btn').forEach(function (b) { b.classList.remove('active'); });
+
+    client.from('tickets').select('*').eq('id', ticketId).maybeSingle()
+      .then(function (res) {
+        var t = res.data;
+        if (info && t) {
+          info.innerHTML =
+            '<p class="emp-card-title">' + esc(t.device_type || 'Device') +
+              (t.brand ? ' — ' + esc(t.brand) : '') + (t.model ? ' ' + esc(t.model) : '') + '</p>' +
+            '<p class="emp-card-meta">' + esc(t.customer_name || 'Walk-in') +
+              (t.customer_phone ? ' · ' + esc(t.customer_phone) : '') + ' · ' + esc(t.status) + '</p>' +
+            '<p class="emp-card-meta">' + esc(t.issue || '') + '</p>';
+        }
+        loadEmpMessages();
+        stopMsgPoll();
+        msgPoll = setInterval(loadEmpMessages, 8000);
+      });
+  }
+
+  function loadEmpMessages() {
+    if (!msgTicketId) return;
+    var box = document.getElementById('emp-messages');
+    var client = getSb();
+    if (!client || !box) return;
+    client.from('messages').select('*').eq('ticket_id', msgTicketId)
+      .order('created_at', { ascending: true }).limit(200)
+      .then(function (res) {
+        if (res.error) return;
+        var rows = res.data || [];
+        if (!rows.length) {
+          box.innerHTML = '<p class="emp-muted">No messages yet. Say hi to the customer!</p>';
+          return;
+        }
+        box.innerHTML = '';
+        rows.forEach(function (m) {
+          var d = document.createElement('div');
+          d.className = 'emp-msg ' + (m.sender === 'tech' ? 'emp-msg-tech' : 'emp-msg-customer');
+          d.innerHTML = esc(m.message) +
+            '<span class="emp-msg-meta">' + (m.sender === 'tech' ? 'You' : 'Customer') + ' · ' + fmtDate(m.created_at) + '</span>';
+          box.appendChild(d);
+        });
+        box.scrollTop = box.scrollHeight;
+      });
+  }
+
+  function stopMsgPoll() {
+    if (msgPoll) { clearInterval(msgPoll); msgPoll = null; }
+  }
+
+  function wireEmpMsgForm() {
+    var form = document.getElementById('emp-msg-form');
+    var back = document.getElementById('emp-msg-back');
+    if (back) back.addEventListener('click', function () {
+      var threadView = document.getElementById('emp-msg-thread');
+      if (threadView) threadView.hidden = true;
+      stopMsgPoll();
+      msgTicketId = null;
+      loadThreads();
+    });
+    if (form) form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var input = document.getElementById('emp-msg-input');
+      var errEl = document.getElementById('emp-msg-error');
+      var text = (input.value || '').trim();
+      showError(errEl, '');
+      if (!text || !msgTicketId) return;
+      var client = getSb();
+      if (!client) { showError(errEl, 'Service unavailable.'); return; }
+      client.from('messages').insert({ ticket_id: msgTicketId, sender: 'tech', message: text })
+        .then(function (res) {
+          if (res.error) showError(errEl, res.error.message);
+          else { input.value = ''; loadEmpMessages(); }
+        });
+    });
+  }
+
+  /* ---------- ORDERS ---------- */
+  function orderBadge(status) {
+    var cls = 'emp-st-New';
+    if (status === 'Processing') cls = 'emp-st-Processing';
+    else if (status === 'Shipped/Ready') cls = 'emp-st-Shipped/Ready';
+    else if (status === 'Completed') cls = 'emp-st-Completed';
+    else if (status === 'Cancelled') cls = 'emp-st-Cancelled';
+    return '<span class="emp-badge ' + cls + '">' + esc(status) + '</span>';
+  }
+
+  function loadOrders() {
+    var list = document.getElementById('emp-order-list');
+    var filterEl = document.getElementById('emp-order-filter');
+    var client = getSb();
+    if (!client || !isEmployee()) return;
+    if (list) list.innerHTML = '<p class="emp-muted">Loading orders…</p>';
+
+    var filter = filterEl ? filterEl.value : 'all';
+    var q = client.from('orders').select('*').order('created_at', { ascending: false }).limit(200);
+    if (filter && filter !== 'all') q = q.eq('status', filter);
+
+    q.then(function (res) {
+      if (res.error) { dashError('Could not load orders: ' + res.error.message); return; }
+      dashError('');
+      var rows = res.data || [];
+      if (!rows.length) { list.innerHTML = '<p class="emp-muted">No orders found.</p>'; return; }
+      list.innerHTML = '';
+      rows.forEach(function (o) {
+        var items = o.items || [];
+        var itemsHtml = items.map(function (it) {
+          return '<li>' + (it.qty || 1) + '× ' + esc(it.name || it.id) + ' — ' + money((it.price || 0) * (it.qty || 1)) + '</li>';
+        }).join('');
+        var div = document.createElement('div');
+        div.className = 'emp-card';
+        var opts = ORDER_STATUSES.map(function (s) {
+          return '<option value="' + s + '"' + (o.status === s ? ' selected' : '') + '>' + s + '</option>';
+        }).join('');
+        div.innerHTML =
+          '<div class="emp-card-top">' +
+            '<div>' +
+              '<p class="emp-card-title">Order #' + esc(String(o.id).slice(0, 8)) + ' — ' + money(o.total) + '</p>' +
+              '<p class="emp-card-meta"><i class="fas fa-user"></i> ' + esc(o.customer_name || 'Guest') +
+                (o.customer_email ? ' · ' + esc(o.customer_email) : '') + '</p>' +
+              '<p class="emp-card-meta"><i class="fas fa-clock"></i> ' + fmtDate(o.created_at) + '</p>' +
+              '<ul class="emp-items">' + itemsHtml + '</ul>' +
+            '</div>' +
+            '<div>' + orderBadge(o.status) + '</div>' +
+          '</div>' +
+          '<div class="emp-card-actions">' +
+            '<label style="font-size:0.82rem;color:var(--muted);">Status:</label>' +
+            '<select data-order-status data-id="' + o.id + '">' + opts + '</select>' +
+          '</div>';
+        list.appendChild(div);
+      });
+      list.querySelectorAll('[data-order-status]').forEach(function (sel) {
+        sel.addEventListener('change', function () {
+          var id = sel.getAttribute('data-id');
+          sel.disabled = true;
+          client.from('orders').update({ status: sel.value }).eq('id', id)
+            .then(function (res2) {
+              sel.disabled = false;
+              if (res2.error) { dashError('Could not update order: ' + res2.error.message); loadOrders(); }
+              else refreshBadges();
+            });
+        });
+      });
+    });
+
+    if (filterEl && !filterEl.dataset.wired) {
+      filterEl.dataset.wired = '1';
+      filterEl.addEventListener('change', loadOrders);
+    }
+  }
+
+  /* ---------- INVENTORY ---------- */
+  var invProducts = [];
+
+  function loadInventory() {
+    var list = document.getElementById('emp-inv-list');
+    var lowBox = document.getElementById('emp-lowstock');
+    var client = getSb();
+    if (!client || !isEmployee()) return;
+    if (list) list.innerHTML = '<p class="emp-muted">Loading inventory…</p>';
+
+    client.from('inventory').select('*').order('product_name').limit(500)
+      .then(function (res) {
+        if (res.error) { dashError('Could not load inventory: ' + res.error.message); return; }
+        dashError('');
+        invProducts = res.data || [];
+        var low = invProducts.filter(function (p) { return (p.stock_qty || 0) <= (p.reorder_point || 0); });
+
+        var badge = document.getElementById('emp-count-lowstock');
+        if (badge) {
+          if (low.length) { badge.textContent = low.length + ' low'; badge.hidden = false; }
+          else badge.hidden = true;
+        }
+        if (lowBox) {
+          if (low.length) {
+            lowBox.hidden = false;
+            lowBox.innerHTML = '<strong><i class="fas fa-exclamation-triangle"></i> Low stock (' + low.length + '):</strong> ' +
+              low.map(function (p) { return esc(p.product_name) + ' (' + p.stock_qty + ')'; }).join(', ') +
+              ' <button class="btn btn-primary btn-sm" id="emp-restock-low" type="button" style="margin-left:0.5rem;"><i class="fas fa-file-invoice"></i> Create restock PO</button>';
+            var rsBtn = document.getElementById('emp-restock-low');
+            if (rsBtn) rsBtn.addEventListener('click', function () { openNewPO(low); });
+          } else lowBox.hidden = true;
+        }
+
+        if (!invProducts.length) {
+          list.innerHTML = '<p class="emp-muted">No products yet. Add your first product above.</p>';
+          return;
+        }
+        var html = '<div style="overflow-x:auto;"><table class="emp-inv-table"><thead><tr>' +
+          '<th>Product</th><th>Supplier</th><th>Cost</th><th>Retail</th><th>Stock</th><th></th>' +
+          '</tr></thead><tbody>';
+        invProducts.forEach(function (p) {
+          var isLow = (p.stock_qty || 0) <= (p.reorder_point || 0);
+          html += '<tr>' +
+            '<td><strong>' + esc(p.product_name) + '</strong><br><span style="color:var(--muted);font-size:0.8rem;">' + esc(p.category || '') + (p.supplier_sku ? ' · ' + esc(p.supplier_sku) : '') + '</span></td>' +
+            '<td>' + esc(p.supplier || '—') + '</td>' +
+            '<td>' + money(p.cost) + '</td>' +
+            '<td>' + money(p.retail_price) + '</td>' +
+            '<td><span class="emp-qty-ctl">' +
+              '<button data-inv-dec="' + p.id + '" aria-label="Decrease stock">−</button>' +
+              '<span class="' + (isLow ? 'emp-stock-low' : 'emp-stock-ok') + '">' + p.stock_qty + '</span>' +
+              '<button data-inv-inc="' + p.id + '" aria-label="Increase stock">+</button>' +
+            '</span></td>' +
+            '<td><button class="btn btn-outline btn-sm" data-inv-edit="' + p.id + '" type="button"><i class="fas fa-pen"></i></button></td>' +
+            '</tr>';
+        });
+        list.innerHTML = html + '</tbody></table></div>';
+
+        list.querySelectorAll('[data-inv-inc]').forEach(function (b) {
+          b.addEventListener('click', function () { adjustStock(b.getAttribute('data-inv-inc'), 1); });
+        });
+        list.querySelectorAll('[data-inv-dec]').forEach(function (b) {
+          b.addEventListener('click', function () { adjustStock(b.getAttribute('data-inv-dec'), -1); });
+        });
+        list.querySelectorAll('[data-inv-edit]').forEach(function (b) {
+          b.addEventListener('click', function () { openProductForm(b.getAttribute('data-inv-edit')); });
+        });
+      });
+  }
+
+  function adjustStock(id, delta) {
+    var client = getSb();
+    var p = null;
+    for (var i = 0; i < invProducts.length; i++) {
+      if (invProducts[i].id === id) { p = invProducts[i]; break; }
+    }
+    if (!p) return;
+    var next = Math.max(0, (p.stock_qty || 0) + delta);
+    client.from('inventory').update({ stock_qty: next }).eq('id', id)
+      .then(function (res) {
+        if (res.error) dashError('Could not update stock: ' + res.error.message);
+        else loadInventory();
+      });
+  }
+
+  function openProductForm(id) {
+    closePOForm();
+    var existing = null;
+    if (id) {
+      for (var i = 0; i < invProducts.length; i++) {
+        if (invProducts[i].id === id) { existing = invProducts[i]; break; }
+      }
+    }
+    var panel = document.getElementById('emp-panel-inventory');
+    var old = document.getElementById('emp-product-form');
+    if (old) old.remove();
+    var div = document.createElement('div');
+    div.className = 'emp-form';
+    div.id = 'emp-product-form';
+    div.innerHTML =
+      '<h4>' + (existing ? 'Edit Product' : 'Add Product') + '</h4>' +
+      '<div class="emp-form-grid">' +
+        '<div class="full"><label>Product name</label><input id="epf-name" value="' + esc(existing ? existing.product_name : '') + '" placeholder="e.g. iPhone 13 Screen — Aftermarket"></div>' +
+        '<div><label>Category</label><input id="epf-cat" value="' + esc(existing ? existing.category : '') + '" placeholder="e.g. Screens"></div>' +
+        '<div><label>Supplier</label><input id="epf-supplier" value="' + esc(existing ? existing.supplier : '') + '" placeholder="e.g. Mobile Sentrix"></div>' +
+        '<div><label>Supplier SKU</label><input id="epf-sku" value="' + esc(existing ? existing.supplier_sku : '') + '"></div>' +
+        '<div><label>Cost ($)</label><input id="epf-cost" type="number" step="0.01" min="0" value="' + (existing ? existing.cost : '') + '"></div>' +
+        '<div><label>Retail price ($)</label><input id="epf-retail" type="number" step="0.01" min="0" value="' + (existing ? existing.retail_price : '') + '"></div>' +
+        '<div><label>Stock qty</label><input id="epf-qty" type="number" step="1" min="0" value="' + (existing ? existing.stock_qty : '0') + '"></div>' +
+        '<div><label>Reorder point</label><input id="epf-reorder" type="number" step="1" min="0" value="' + (existing ? existing.reorder_point : '5') + '"></div>' +
+      '</div>' +
+      '<p class="emp-error" id="epf-error" hidden></p>' +
+      '<div class="emp-form-actions">' +
+        '<button class="btn btn-primary btn-sm" id="epf-save" type="button"><i class="fas fa-check"></i> Save</button>' +
+        '<button class="btn btn-outline btn-sm" id="epf-cancel" type="button">Cancel</button>' +
+      '</div>';
+    panel.insertBefore(div, panel.querySelector('#emp-inv-list'));
+    div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    document.getElementById('epf-cancel').addEventListener('click', function () { div.remove(); });
+    document.getElementById('epf-save').addEventListener('click', function () {
+      var errEl = document.getElementById('epf-error');
+      var name = document.getElementById('epf-name').value.trim();
+      if (!name) { showError(errEl, 'Product name is required.'); return; }
+      var row = {
+        product_name: name,
+        category: document.getElementById('epf-cat').value.trim() || null,
+        supplier: document.getElementById('epf-supplier').value.trim() || null,
+        supplier_sku: document.getElementById('epf-sku').value.trim() || null,
+        cost: parseFloat(document.getElementById('epf-cost').value) || 0,
+        retail_price: parseFloat(document.getElementById('epf-retail').value) || 0,
+        stock_qty: parseInt(document.getElementById('epf-qty').value, 10) || 0,
+        reorder_point: parseInt(document.getElementById('epf-reorder').value, 10) || 0
+      };
+      var client = getSb();
+      var q = existing
+        ? client.from('inventory').update(row).eq('id', existing.id)
+        : client.from('inventory').insert(row);
+      q.then(function (res) {
+        if (res.error) showError(errEl, res.error.message);
+        else { div.remove(); loadInventory(); }
+      });
+    });
+  }
+
+  function wireInventoryButtons() {
+    var addBtn = document.getElementById('emp-add-product-btn');
+    if (addBtn) addBtn.addEventListener('click', function () { openProductForm(null); });
+    var poBtn = document.getElementById('emp-po-btn');
+    if (poBtn) poBtn.addEventListener('click', function () {
+      document.getElementById('emp-po-view').hidden = false;
+      document.getElementById('emp-inv-list').hidden = true;
+      var lowBox = document.getElementById('emp-lowstock');
+      if (lowBox) lowBox.hidden = true;
+      loadPOs();
+    });
+    var poBack = document.getElementById('emp-po-back');
+    if (poBack) poBack.addEventListener('click', function () {
+      document.getElementById('emp-po-view').hidden = true;
+      document.getElementById('emp-inv-list').hidden = false;
+      closePOForm();
+      loadInventory();
+    });
+    var newPo = document.getElementById('emp-new-po-btn');
+    if (newPo) newPo.addEventListener('click', function () { openNewPO(null); });
+  }
+
+  /* ---------- PURCHASE ORDERS ---------- */
+  function closePOForm() {
+    var old = document.getElementById('emp-po-form');
+    if (old) old.remove();
+  }
+
+  function poBadge(status) {
+    var cls = 'emp-st-draft';
+    if (status === 'Ordered') cls = 'emp-st-ordered';
+    else if (status === 'Received') cls = 'emp-st-Received';
+    else if (status === 'Cancelled') cls = 'emp-st-Cancelled';
+    return '<span class="emp-badge ' + cls + '">' + esc(status) + '</span>';
+  }
+
+  function loadPOs() {
+    var list = document.getElementById('emp-po-list');
+    var client = getSb();
+    if (!client || !isEmployee()) return;
+    if (list) list.innerHTML = '<p class="emp-muted">Loading…</p>';
+    client.from('purchase_orders').select('*').order('created_at', { ascending: false }).limit(100)
+      .then(function (res) {
+        if (res.error) { dashError('Could not load purchase orders: ' + res.error.message); return; }
+        dashError('');
+        var rows = res.data || [];
+        if (!rows.length) { list.innerHTML = '<p class="emp-muted">No purchase orders yet.</p>'; return; }
+        list.innerHTML = '';
+        rows.forEach(function (po) {
+          var items = po.items || [];
+          var itemsHtml = items.map(function (it) {
+            return '<li>' + (it.qty || 0) + '× ' + esc(it.name || '') + ' @ ' + money(it.unit_cost || 0) + '</li>';
+          }).join('');
+          var div = document.createElement('div');
+          div.className = 'emp-card';
+          var opts = PO_STATUSES.map(function (s) {
+            return '<option value="' + s + '"' + (po.status === s ? ' selected' : '') + '>' + s + '</option>';
+          }).join('');
+          div.innerHTML =
+            '<div class="emp-card-top">' +
+              '<div>' +
+                '<p class="emp-card-title">' + esc(po.supplier) + ' — ' + money(po.total_cost) + '</p>' +
+                '<p class="emp-card-meta"><i class="fas fa-clock"></i> ' + fmtDate(po.created_at) +
+                  (po.ordered_at ? ' · Ordered ' + fmtDate(po.ordered_at) : '') +
+                  (po.received_at ? ' · Received ' + fmtDate(po.received_at) : '') + '</p>' +
+                (po.notes ? '<p class="emp-card-meta">' + esc(po.notes) + '</p>' : '') +
+                '<ul class="emp-items">' + itemsHtml + '</ul>' +
+              '</div>' +
+              '<div>' + poBadge(po.status) + '</div>' +
+            '</div>' +
+            '<div class="emp-card-actions">' +
+              '<label style="font-size:0.82rem;color:var(--muted);">Status:</label>' +
+              '<select data-po-status data-id="' + po.id + '">' + opts + '</select>' +
+              (po.status === 'Received'
+                ? '<button class="btn btn-outline btn-sm" data-po-receive data-id="' + po.id + '" type="button"><i class="fas fa-box-open"></i> Add to stock</button>'
+                : '') +
+            '</div>';
+          list.appendChild(div);
+        });
+        list.querySelectorAll('[data-po-status]').forEach(function (sel) {
+          sel.addEventListener('change', function () {
+            var id = sel.getAttribute('data-id');
+            var patch = { status: sel.value };
+            if (sel.value === 'Ordered') patch.ordered_at = new Date().toISOString();
+            if (sel.value === 'Received') patch.received_at = new Date().toISOString();
+            sel.disabled = true;
+            client.from('purchase_orders').update(patch).eq('id', id)
+              .then(function (res2) {
+                sel.disabled = false;
+                if (res2.error) dashError('Could not update PO: ' + res2.error.message);
+                loadPOs();
+              });
+          });
+        });
+        list.querySelectorAll('[data-po-receive]').forEach(function (btn) {
+          btn.addEventListener('click', function () { receivePO(btn.getAttribute('data-po-receive')); });
+        });
+      });
+  }
+
+  function receivePO(poId) {
+    var client = getSb();
+    client.from('purchase_orders').select('*').eq('id', poId).maybeSingle()
+      .then(function (res) {
+        var po = res.data;
+        if (!po || !po.items || !po.items.length) return;
+        // Match PO lines to inventory by product id when present, else by name.
+        var updates = po.items.map(function (it) {
+          var match = null;
+          for (var i = 0; i < invProducts.length; i++) {
+            if ((it.inventory_id && invProducts[i].id === it.inventory_id) ||
+                (it.name && invProducts[i].product_name === it.name)) {
+              match = invProducts[i]; break;
+            }
+          }
+          if (!match) return Promise.resolve();
+          var next = (match.stock_qty || 0) + (it.qty || 0);
+          return client.from('inventory').update({ stock_qty: next }).eq('id', match.id);
+        });
+        Promise.all(updates).then(function () {
+          loadPOs();
+          dashError('');
+        });
+      });
+  }
+
+  function openNewPO(prefillLow) {
+    closePOForm();
+    var panel = document.getElementById('emp-panel-inventory');
+    var div = document.createElement('div');
+    div.className = 'emp-form';
+    div.id = 'emp-po-form';
+    var prodOpts = invProducts.map(function (p) {
+      return '<option value="' + p.id + '">' + esc(p.product_name) + ' (' + p.stock_qty + ' in stock)</option>';
+    }).join('');
+    div.innerHTML =
+      '<h4>New Purchase Order</h4>' +
+      '<div class="emp-form-grid">' +
+        '<div class="full"><label>Supplier</label><input id="pof-supplier" placeholder="e.g. Mobile Sentrix"></div>' +
+        '<div class="full"><label>Notes (optional)</label><input id="pof-notes" placeholder="e.g. Restock for next week"></div>' +
+      '</div>' +
+      '<div id="pof-lines" style="margin-top:0.75rem;"></div>' +
+      '<button class="btn btn-outline btn-sm" id="pof-addline" type="button" style="margin-top:0.5rem;"><i class="fas fa-plus"></i> Add line</button>' +
+      '<p style="margin-top:0.75rem;"><strong>Estimated total: <span id="pof-total">$0.00</span></strong></p>' +
+      '<p class="emp-error" id="pof-error" hidden></p>' +
+      '<div class="emp-form-actions">' +
+        '<button class="btn btn-primary btn-sm" id="pof-save" type="button"><i class="fas fa-check"></i> Save PO</button>' +
+        '<button class="btn btn-outline btn-sm" id="pof-cancel" type="button">Cancel</button>' +
+      '</div>';
+    // Insert before the PO list if in PO view, else before inventory list.
+    var poView = document.getElementById('emp-po-view');
+    if (poView && !poView.hidden) poView.insertBefore(div, document.getElementById('emp-po-list'));
+    else panel.insertBefore(div, document.getElementById('emp-inv-list'));
+    div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    function addLine(prefill) {
+      var wrap = document.getElementById('pof-lines');
+      var row = document.createElement('div');
+      row.className = 'pof-line';
+      row.style.cssText = 'display:grid;grid-template-columns:1fr 70px 90px 32px;gap:0.5rem;margin-bottom:0.5rem;align-items:center;';
+      row.innerHTML =
+        '<select class="pof-prod">' + prodOpts + '</select>' +
+        '<input class="pof-qty" type="number" min="1" value="' + (prefill ? prefill.qty : 1) + '" aria-label="Quantity">' +
+        '<input class="pof-cost" type="number" min="0" step="0.01" value="' + (prefill ? prefill.unit_cost : '') + '" placeholder="$ cost" aria-label="Unit cost">' +
+        '<button class="pof-rm btn btn-outline btn-sm" type="button" aria-label="Remove line"><i class="fas fa-times"></i></button>';
+      wrap.appendChild(row);
+      if (prefill && prefill.id) {
+        var sel = row.querySelector('.pof-prod');
+        sel.value = prefill.id;
+      }
+      // Auto-fill cost from inventory when product changes
+      var prodSel = row.querySelector('.pof-prod');
+      var costInput = row.querySelector('.pof-cost');
+      prodSel.addEventListener('change', function () {
+        for (var i = 0; i < invProducts.length; i++) {
+          if (invProducts[i].id === prodSel.value) {
+            costInput.value = invProducts[i].cost || '';
+            break;
+          }
+        }
+        updateTotal();
+      });
+      row.querySelector('.pof-rm').addEventListener('click', function () { row.remove(); updateTotal(); });
+      row.querySelector('.pof-qty').addEventListener('input', updateTotal);
+      costInput.addEventListener('input', updateTotal);
+      // Trigger initial cost fill
+      prodSel.dispatchEvent(new Event('change'));
+    }
+
+    function updateTotal() {
+      var total = 0;
+      document.querySelectorAll('#pof-lines .pof-line').forEach(function (row) {
+        var qty = parseInt(row.querySelector('.pof-qty').value, 10) || 0;
+        var cost = parseFloat(row.querySelector('.pof-cost').value) || 0;
+        total += qty * cost;
+      });
+      document.getElementById('pof-total').textContent = money(total);
+    }
+
+    document.getElementById('pof-addline').addEventListener('click', function () { addLine(null); });
+    document.getElementById('pof-cancel').addEventListener('click', function () { div.remove(); });
+
+    // Pre-fill low-stock items if requested
+    if (prefillLow && prefillLow.length) {
+      // Make sure we're in the PO view
+      document.getElementById('emp-po-view').hidden = false;
+      document.getElementById('emp-inv-list').hidden = true;
+      var lowBox = document.getElementById('emp-lowstock');
+      if (lowBox) lowBox.hidden = true;
+      loadPOs();
+      prefillLow.forEach(function (p) {
+        var need = Math.max((p.reorder_point || 5) * 2 - (p.stock_qty || 0), 1);
+        addLine({ id: p.id, qty: need, unit_cost: p.cost || '' });
+      });
+    } else {
+      addLine(null);
+    }
+
+    document.getElementById('pof-save').addEventListener('click', function () {
+      var errEl = document.getElementById('pof-error');
+      var supplier = document.getElementById('pof-supplier').value.trim();
+      if (!supplier) { showError(errEl, 'Supplier is required.'); return; }
+      var items = [];
+      var total = 0;
+      document.querySelectorAll('#pof-lines .pof-line').forEach(function (row) {
+        var pid = row.querySelector('.pof-prod').value;
+        var qty = parseInt(row.querySelector('.pof-qty').value, 10) || 0;
+        var unitCost = parseFloat(row.querySelector('.pof-cost').value) || 0;
+        if (!qty) return;
+        var name = '';
+        for (var i = 0; i < invProducts.length; i++) {
+          if (invProducts[i].id === pid) { name = invProducts[i].product_name; break; }
+        }
+        items.push({ inventory_id: pid, name: name, qty: qty, unit_cost: unitCost });
+        total += qty * unitCost;
+      });
+      if (!items.length) { showError(errEl, 'Add at least one line item.'); return; }
+      var client = getSb();
+      client.from('purchase_orders').insert({
+        supplier: supplier,
+        items: items,
+        total_cost: Math.round(total * 100) / 100,
+        status: 'Draft',
+        notes: document.getElementById('pof-notes').value.trim() || null
+      }).then(function (res) {
+        if (res.error) showError(errEl, res.error.message);
+        else {
+          div.remove();
+          document.getElementById('emp-po-view').hidden = false;
+          document.getElementById('emp-inv-list').hidden = true;
+          loadPOs();
+        }
+      });
+    });
+  }
+
+  /* ---------- CUSTOMERS ---------- */
+  function loadCustomers() {
+    var list = document.getElementById('emp-cust-list');
+    var searchEl = document.getElementById('emp-cust-search');
+    var client = getSb();
+    if (!client || !isEmployee()) return;
+    if (list) list.innerHTML = '<p class="emp-muted">Loading customers…</p>';
+
+    function render(rows, rewardsMap) {
+      var q = searchEl ? searchEl.value.trim().toLowerCase() : '';
+      var filtered = rows.filter(function (c) {
+        if (!q) return true;
+        return (c.name || '').toLowerCase().indexOf(q) !== -1 ||
+               (c.email || '').toLowerCase().indexOf(q) !== -1;
+      });
+      if (!filtered.length) { list.innerHTML = '<p class="emp-muted">No customers found.</p>'; return; }
+      list.innerHTML = '';
+      filtered.slice(0, 200).forEach(function (c) {
+        var pts = rewardsMap[c.id] || 0;
+        var div = document.createElement('div');
+        div.className = 'emp-card';
+        div.innerHTML =
+          '<div class="emp-card-top">' +
+            '<div>' +
+              '<p class="emp-card-title">' + esc(c.name || 'Unnamed') + '</p>' +
+              '<p class="emp-card-meta"><i class="fas fa-envelope"></i> ' + esc(c.email || '—') +
+                (c.phone ? ' · <i class="fas fa-phone"></i> ' + esc(c.phone) : '') + '</p>' +
+              '<p class="emp-card-meta"><i class="fas fa-clock"></i> Customer since ' + fmtDate(c.created_at) + '</p>' +
+            '</div>' +
+            '<div><span class="emp-badge emp-st-ready">' + pts + ' pts</span></div>' +
+          '</div>';
+        list.appendChild(div);
+      });
+    }
+
+    client.from('customers').select('*').order('created_at', { ascending: false }).limit(500)
+      .then(function (res) {
+        if (res.error) { dashError('Could not load customers: ' + res.error.message); return; }
+        dashError('');
+        var rows = res.data || [];
+        client.from('rewards').select('customer_id, points').then(function (rres) {
+          var map = {};
+          (rres.data || []).forEach(function (r) { map[r.customer_id] = r.points; });
+          render(rows, map);
+          if (searchEl && !searchEl.dataset.wired) {
+            searchEl.dataset.wired = '1';
+            searchEl.addEventListener('input', function () { render(rows, map); });
+          }
+        });
+      });
+  }
+
+  /* ============================================================
+   * INIT
+   * ============================================================ */
+  document.addEventListener('DOMContentLoaded', function () {
+    wireCartCheckout();
+    wireLogin();
+    wireTabs();
+    wireEmpMsgForm();
+    wireInventoryButtons();
+
+    // Keep Supabase Auth session in sync (e.g. token refresh).
+    var client = getSb();
+    if (client) {
+      client.auth.onAuthStateChange(function (event, session) {
+        if (event === 'SIGNED_OUT') {
+          empUser = null; empProfile = null;
+          setHubLinkVisible(false);
+          guardDashboardPage();
+        } else if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session && session.user) {
+          verifyEmployee(session.user);
+        }
+      });
+    }
+
+    checkAuth().then(function () {
+      // If landing directly on the dashboard hash as an employee, load it.
+      if (window.location.hash === '#employee-dashboard' && isEmployee()) {
+        loadDashboard();
+      }
+    });
+
+    window.addEventListener('hashchange', function () {
+      guardDashboardPage();
+      if (window.location.hash === '#employee-dashboard' && isEmployee()) {
+        loadDashboard();
+      }
+      if (window.location.hash !== '#employee-dashboard') {
+        stopMsgPoll();
+      }
+    });
+  });
+})();
