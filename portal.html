@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Employee Portal | Austin's Tech Repair Group</title>
+  <meta name="description" content="Staff-only operations portal for Austin's Tech Repair Group: tickets, job applications, investors, feedback, customers, inventory." />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <link rel="stylesheet" href="portal.css" />
+</head>
+<body class="portal-body">
+
+  <header class="portal-topbar">
+    <div class="portal-topbar-inner">
+      <span class="portal-brand"><i class="fas fa-screwdriver-wrench"></i> Austin's Tech Repair Group</span>
+      <span class="portal-topbar-tag">Employee Portal</span>
+    </div>
+  </header>
+
+  <main class="portal-main">
+    <noscript><p class="portal-error">This portal needs JavaScript turned on to work.</p></noscript>
+
+    <!-- ==================== LOGIN VIEW ==================== -->
+    <section id="portal-login-view" class="portal-login-wrap">
+      <div class="portal-login-card">
+        <p class="portal-eyebrow">Staff only</p>
+        <h1 class="portal-h1"><i class="fas fa-id-badge"></i> Employee Login</h1>
+        <p class="portal-muted">Sign in with your employee email and password. This area is
+          for Austin's Tech Repair Group staff only — customers can't see anything here.</p>
+
+        <form id="portal-login-form" novalidate>
+          <div class="portal-field">
+            <label for="portal-login-email">Email</label>
+            <input type="email" id="portal-login-email" autocomplete="username"
+                   placeholder="you@austinstechrepairgroup.com" required />
+          </div>
+          <div class="portal-field">
+            <label for="portal-login-password">Password</label>
+            <input type="password" id="portal-login-password" autocomplete="current-password"
+                   placeholder="Your password" required />
+          </div>
+          <p class="portal-error" id="portal-login-error" hidden></p>
+          <button class="portal-btn portal-btn-primary portal-btn-block" id="portal-login-btn" type="submit">
+            <i class="fas fa-right-to-bracket"></i> Sign In
+          </button>
+        </form>
+        <p class="portal-muted portal-small">Forgot your password? Ask Austin to reset it in the
+          Supabase dashboard (Authentication &rarr; Users).</p>
+      </div>
+    </section>
+
+    <!-- ==================== DASHBOARD VIEW ==================== -->
+    <section id="portal-dash-view" hidden>
+      <div class="portal-dash-head">
+        <div>
+          <p class="portal-eyebrow">Operations Hub</p>
+          <h1 class="portal-h1"><i class="fas fa-briefcase"></i> Employee Portal</h1>
+          <p class="portal-muted portal-dash-sub">Welcome back, <span id="portal-emp-name">teammate</span>
+            <span class="portal-badge portal-badge-role" id="portal-emp-role"></span></p>
+        </div>
+        <button class="portal-btn portal-btn-outline" id="portal-logout" type="button">
+          <i class="fas fa-sign-out-alt"></i> Log Out
+        </button>
+      </div>
+
+      <p class="portal-error" id="portal-dash-error" hidden></p>
+
+      <div class="portal-tabs" role="tablist" aria-label="Portal sections">
+        <button class="portal-tab active" id="portal-tab-tickets" type="button" role="tab" data-tab="tickets">
+          <i class="fas fa-tools"></i> Tickets <span class="portal-count" id="portal-count-tickets" hidden></span>
+        </button>
+        <button class="portal-tab" id="portal-tab-applications" type="button" role="tab" data-tab="applications">
+          <i class="fas fa-file-lines"></i> Job Applications <span class="portal-count" id="portal-count-applications" hidden></span>
+        </button>
+        <button class="portal-tab" id="portal-tab-investors" type="button" role="tab" data-tab="investors">
+          <i class="fas fa-handshake"></i> Investors <span class="portal-count" id="portal-count-investors" hidden></span>
+        </button>
+        <button class="portal-tab" id="portal-tab-feedback" type="button" role="tab" data-tab="feedback">
+          <i class="fas fa-star"></i> Feedback
+        </button>
+        <button class="portal-tab" id="portal-tab-customers" type="button" role="tab" data-tab="customers">
+          <i class="fas fa-users"></i> Customers
+        </button>
+        <button class="portal-tab" id="portal-tab-inventory" type="button" role="tab" data-tab="inventory">
+          <i class="fas fa-boxes"></i> Inventory &amp; Orders
+        </button>
+      </div>
+
+      <!-- TICKETS -->
+      <div class="portal-panel" id="portal-panel-tickets" role="tabpanel">
+        <div class="portal-panel-head">
+          <h2 class="portal-h2">Service Requests &amp; Tickets</h2>
+          <div class="portal-panel-tools">
+            <select id="portal-ticket-filter" aria-label="Filter tickets by status">
+              <option value="all">All statuses</option>
+              <option value="Waiting">Waiting</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Waiting for Parts">Waiting for Parts</option>
+              <option value="Ready for Pickup">Ready for Pickup</option>
+              <option value="Completed">Completed</option>
+            </select>
+            <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="tickets">
+              <i class="fas fa-rotate-right"></i> Refresh
+            </button>
+          </div>
+        </div>
+        <div id="portal-ticket-list"><p class="portal-muted">Loading tickets&hellip;</p></div>
+      </div>
+
+      <!-- JOB APPLICATIONS -->
+      <div class="portal-panel" id="portal-panel-applications" role="tabpanel" hidden>
+        <div class="portal-panel-head">
+          <h2 class="portal-h2">Job Applications</h2>
+          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="applications">
+            <i class="fas fa-rotate-right"></i> Refresh
+          </button>
+        </div>
+        <div id="portal-application-list"><p class="portal-muted">Loading applications&hellip;</p></div>
+      </div>
+
+      <!-- INVESTORS -->
+      <div class="portal-panel" id="portal-panel-investors" role="tabpanel" hidden>
+        <div class="portal-panel-head">
+          <h2 class="portal-h2">Investor Inquiries</h2>
+          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="investors">
+            <i class="fas fa-rotate-right"></i> Refresh
+          </button>
+        </div>
+        <div id="portal-investor-list"><p class="portal-muted">Loading investor inquiries&hellip;</p></div>
+      </div>
+
+      <!-- FEEDBACK -->
+      <div class="portal-panel" id="portal-panel-feedback" role="tabpanel" hidden>
+        <div class="portal-panel-head">
+          <h2 class="portal-h2">&ldquo;How Did We Do&rdquo; Feedback</h2>
+          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="feedback">
+            <i class="fas fa-rotate-right"></i> Refresh
+          </button>
+        </div>
+        <div id="portal-feedback-list"><p class="portal-muted">Loading feedback&hellip;</p></div>
+      </div>
+
+      <!-- CUSTOMERS -->
+      <div class="portal-panel" id="portal-panel-customers" role="tabpanel" hidden>
+        <div class="portal-panel-head">
+          <h2 class="portal-h2">Customers</h2>
+          <input type="search" id="portal-cust-search" placeholder="Search name or email&hellip;" aria-label="Search customers" />
+        </div>
+        <div id="portal-customer-list"><p class="portal-muted">Loading customers&hellip;</p></div>
+      </div>
+
+      <!-- INVENTORY + PURCHASE ORDERS (read-only, phase 2 editable) -->
+      <div class="portal-panel" id="portal-panel-inventory" role="tabpanel" hidden>
+        <div class="portal-panel-head">
+          <h2 class="portal-h2">Inventory</h2>
+          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="inventory">
+            <i class="fas fa-rotate-right"></i> Refresh
+          </button>
+        </div>
+        <p class="portal-muted portal-small">Read-only for now — editing stock lands in phase 2.</p>
+        <div id="portal-inventory-list"><p class="portal-muted">Loading inventory&hellip;</p></div>
+
+        <div class="portal-panel-head portal-subhead">
+          <h2 class="portal-h2">Purchase Orders <span class="portal-muted portal-small">(restock orders, not ticket part orders)</span></h2>
+        </div>
+        <div id="portal-po-list"><p class="portal-muted">Loading purchase orders&hellip;</p></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ==================== DETAIL DRAWER ==================== -->
+  <div class="portal-drawer-overlay" id="portal-drawer-overlay" hidden></div>
+  <aside class="portal-drawer" id="portal-drawer" aria-hidden="true" aria-label="Record details">
+    <div class="portal-drawer-head">
+      <h2 class="portal-h2" id="portal-drawer-title">Details</h2>
+      <button class="portal-drawer-close" id="portal-drawer-close" type="button" aria-label="Close details">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="portal-drawer-body" id="portal-drawer-body">
+      <p class="portal-muted">Loading&hellip;</p>
+    </div>
+  </aside>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="portal.js"></script>
+</body>
+</html>
