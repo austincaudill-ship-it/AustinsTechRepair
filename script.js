@@ -605,14 +605,14 @@
   document.addEventListener('DOMContentLoaded', function () {
     // Flat-rate pricing from ATRG Master Repair List
     var PRICES = {
-      'iphone':           { screen: 99, battery: 24, backglass: 24, chargeport: 24, label: 'iPhone' },
-      'ipad':             { screen: 99, battery: 24, backglass: 24, chargeport: 24, label: 'iPad' },
-      'watch':            { screen: 99, battery: 24, backglass: 24, chargeport: 24, label: 'Apple Watch' },
-      'samsung-budget':   { screen: 130, battery: 69, backglass: 80, chargeport: 60, label: 'Samsung Galaxy (A / M / F series)' },
-      'samsung-mid':      { screen: 250, battery: 89, backglass: 150, chargeport: 100, label: 'Samsung Galaxy (S series)' },
-      'samsung-premium':  { screen: 450, battery: 99, backglass: 150, chargeport: 120, label: 'Samsung Galaxy (Fold / Flip)' },
-      'pixel':            { screen: 99, battery: 49, backglass: 49, chargeport: 49, label: 'Google Pixel' },
-      'motorola':         { screen: 95, battery: 68, backglass: 65, chargeport: 65, label: 'Motorola' }
+      'iphone':           { screen: 55, battery: 39, backglass: 49, chargeport: 59, label: 'iPhone' },
+      'ipad':             { screen: 99, battery: 79, backglass: 99, chargeport: 89, label: 'iPad' },
+      'watch':            { screen: 119, battery: 49, backglass: 119, chargeport: 89, label: 'Apple Watch' },
+      'samsung-budget':   { screen: 65, battery: 39, backglass: 45, chargeport: 49, label: 'Samsung Galaxy (A / M / F series)' },
+      'samsung-mid':      { screen: 139, battery: 39, backglass: 49, chargeport: 59, label: 'Samsung Galaxy (S series)' },
+      'samsung-premium':  { screen: 349, battery: 59, backglass: 59, chargeport: 69, label: 'Samsung Galaxy (Fold / Flip)' },
+      'pixel':            { screen: 89, battery: 39, backglass: 49, chargeport: 59, label: 'Google Pixel' },
+      'motorola':         { screen: 69, battery: 39, backglass: 45, chargeport: 49, label: 'Motorola' }
     };
     var REPAIR_LABELS = {
       screen: 'Screen Replacement',
@@ -649,8 +649,8 @@
         return;
       }
       var price = PRICES[brand][repair];
-      if (amount) amount.textContent = '$' + price;
-      if (note) note.textContent = REPAIR_LABELS[repair] + ' for ' + PRICES[brand].label + ' — flat rate, parts and labor included. $15 dispatch fee credited toward this price.';
+      if (amount) amount.textContent = 'From $' + price;
+      if (note) note.textContent = REPAIR_LABELS[repair] + ' for ' + PRICES[brand].label + ' — starting price, parts and labor included. Your final flat price is confirmed for your exact model before booking. A separate $15 non-refundable dispatch fee applies to the visit.';
       if (result) { result.hidden = false; result.classList.add('show'); }
       // Store the quote for the repair form
       try {
