@@ -8,7 +8,7 @@
 
   // Where repair-request leads are emailed (free via FormSubmit; no server needed).
   // First submission triggers a one-time activation email to this address.
-  var LEAD_EMAIL = 'austincaudill@icloud.com';
+  var LEAD_EMAIL = 'service@austinstechrepairgroup.com';
 
   document.addEventListener('DOMContentLoaded', function () {
 
