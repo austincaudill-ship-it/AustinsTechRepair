@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<!--
+  =====================================================================
+  ATR native form snippets — STAGING FILE, NOT A LIVE PAGE.
+  =====================================================================
+  Each BEGIN/END block below is a self-contained snippet to paste into
+  the live index.html (see README.md for exactly where each one goes).
+  The forms are driven by atr-forms.js (binds on form[data-form]) and
+  styled by styles.css (.form-field / .field-label / .form-success /
+  .btn) plus atr-forms.css (.atr-* helpers). This page links those
+  assets only so the snippets can be previewed standalone.
+  =====================================================================
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ATR native form snippets (staging)</title>
+<link rel="stylesheet" href="atr-forms.css">
+</head>
+<body>
+
+<!-- ================================================================
+     SNIPPET 1 — SERVICE REQUEST
+     Replaces: JotForm jsform 261955946010055 embed in the Contact
+     section's .form-embed div (and the post-wizard "full intake form"
+     link should point here instead of form.jotform.com).
+     ================================================================ -->
+<!-- BEGIN SNIPPET: service-request -->
+<div class="atr-form-wrap" data-form-wrap="service-request">
+  <form class="atr-form" data-form="service-request" novalidate>
+    <div class="atr-form-error" role="alert" hidden></div>
+
+    <div class="atr-row">
+      <div class="atr-field">
+        <label class="field-label" for="sr-first-name">First name *</label>
+        <input class="form-field" type="text" id="sr-first-name" name="first_name" required autocomplete="given-name" placeholder="John">
+        <span class="atr-field-error" data-error-for="first_name"></span>
+      </div>
+      <div class="atr-field">
+        <label class="field-label" for="sr-last-name">Last name *</label>
+        <input class="form-field" type="text" id="sr-last-name" name="last_name" required autocomplete="family-name" placeholder="Smith">
+        <span class="atr-field-error" data-error-for="last_name"></span>
+      </div>
+    </div>
+
+    <div class="atr-row">
+      <div class="atr-field">
+        <label class="field-label" for="sr-phone">Phone *</label>
+        <input class="form-field" type="tel" id="sr-phone" name="phone" required autocomplete="tel" placeholder="(937) 555-0100">
+        <span class="atr-field-error" data-error-for="phone"></span>
+      </div>
+      <div class="atr-field">
+        <label class="field-label" for="sr-email">Email *</label>
+        <input class="form-field" type="email" id="sr-email" name="email" required autocomplete="email" placeholder="john@example.com">
+        <span class="atr-field-error" data-error-for="email"></span>
+      </div>
+    </div>
+
+    <div class="atr-field">
+      <label class="field-label" for="sr-address-street">Preferred service address <span class="atr-optional">(where we come to you)</span></label>
+      <input class="form-field" type="text" id="sr-address-street" name="address_street" autocomplete="street-address" placeholder="Street address">
+    </div>
+    <div class="atr-field">
+      <input class="form-field" type="text" id="sr-address-line2" name="address_line2" autocomplete="address-line2" placeholder="Apt, suite, lot (optional)" aria-label="Address line 2">
+    </div>
+    <div class="atr-row-3">
+      <div class="atr-field">
+        <input class="form-field" type="text" id="sr-address-city" name="address_city" autocomplete="address-level2" placeholder="City" aria-label="City">
+      </div>
+      <div class="atr-field">
+        <input class="form-field" type="text" id="sr-address-state" name="address_state" autocomplete="address-level1" placeholder="State" aria-label="State">
+      </div>
+      <div class="atr-field">
+        <input class="form-field" type="text" id="sr-address-zip" name="address_zip" autocomplete="postal-code" placeholder="ZIP" aria-label="ZIP code">
+      </div>
+    </div>
+
+    <div class="atr-row">
+      <div class="atr-field">
+        <label class="field-label" for="sr-contact-method">Preferred contact method</label>
+        <select class="form-field" id="sr-contact-method" name="contact_method">
+          <option value="">No preference</option>
+          <option value="Call">Call</option>
+          <option value="Text message">Text message</option>
+          <option value="Email">Email</option>
+        </select>
+      </div>
+      <div class="atr-field">
+        <label class="field-label" for="sr-appointment">Appointment scheduling <span class="atr-optional">(pick a time to talk)</span></label>
+        <input class="form-field" type="datetime-local" id="sr-appointment" name="appointment_at">
+      </div>
+    </div>
+
+    <div class="atr-row">
+      <div class="atr-field">
+        <label class="field-label" for="sr-device-type">Device category *</label>
+        <select class="form-field" id="sr-device-type" name="device_type" required>
+          <option value="">Choose one…</option>
+          <option value="Phone">Phone</option>
+          <option value="Tablet">Tablet</option>
+          <option value="Computer">Computer</option>
+          <option value="Game Console">Game Console</option>
+          <option value="Smart Watch">Smart Watch</option>
+          <option value="Business / Other">Business / Other</option>
+        </select>
+        <span class="atr-field-error" data-error-for="device_type"></span>
+      </div>
+      <div class="atr-field">
+        <label class="field-label" for="sr-device-info">Device information</label>
+        <input class="form-field" type="text" id="sr-device-info" name="device_info" placeholder="Exact model, e.g. iPhone 13 Pro Max">
+        <p class="atr-help">Enter the exact model of your phone, computer, tablet, smart watch, or other device.</p>
+      </div>
+    </div>
+
+    <div class="atr-field">
+      <label class="field-label" for="sr-repair-needed">Repair needed</label>
+      <select class="form-field" id="sr-repair-needed" name="repair_needed">
+        <option value="">Choose one…</option>
+        <option value="Screen replacement">Screen replacement</option>
+        <option value="Battery replacement">Battery replacement</option>
+        <option value="Charging port repair">Charging port repair</option>
+        <option value="Camera / speaker fix">Camera / speaker fix</option>
+        <option value="Water damage / diagnostic">Water damage / diagnostic</option>
+        <option value="Laptop screen replacement">Laptop screen replacement</option>
+        <option value="SSD upgrade &amp; OS install">SSD upgrade &amp; OS install</option>
+        <option value="Virus cleanup &amp; tuneup">Virus cleanup &amp; tuneup</option>
+        <option value="HDMI port repair">HDMI port repair</option>
+        <option value="Overheating / power fault">Overheating / power fault</option>
+        <option value="Other / not sure">Other / not sure</option>
+      </select>
+    </div>
+
+    <div class="atr-row">
+      <div class="atr-field">
+        <label class="field-label" for="sr-power-on">Does it power on?</label>
+        <select class="form-field" id="sr-power-on" name="power_on">
+          <option value="">Choose one…</option>
+          <option value="Yes">Yes</option>
+          <option value="No">No</option>
+          <option value="Not sure">Not sure</option>
+        </select>
+      </div>
+      <div class="atr-field">
+        <label class="field-label" for="sr-backed-up">Is it backed up?</label>
+        <select class="form-field" id="sr-backed-up" name="backed_up">
+          <option value="">Choose one…</option>
+          <option value="Yes">Yes</option>
+          <option value="No">No</option>
+          <option value="Not sure">Not sure</option>
+        </select>
+      </div>
+    </div>
+    <div class="atr-row">
+      <div class="atr-field">
+        <label class="field-label" for="sr-prior-repair">Has it been repaired before?</label>
+        <select class="form-field" id="sr-prior-repair" name="prior_repair">
+          <option value="">Choose one…</option>
+          <option value="Yes">Yes</option>
+          <option value="No">No</option>
+          <option value="Not sure">Not sure</option>
+        </select>
+      </div>
+      <div class="atr-field">
+        <label class="field-label" for="sr-warranty">Is the device under manufacturer warranty?</label>
+        <select class="form-field" id="sr-warranty" name="warranty_status">
+          <option value="">Choose one…</option>
+          <option value="Yes">Yes</option>
+          <option value="No">No</option>
+          <option value="Not sure">Not sure</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="atr-field">
+      <label class="field-label" for="sr-problem">Describe the problem *</label>
+      <textarea class="form-field" id="sr-problem" name="problem" rows="4" required placeholder="What happened, and what is the device doing (or not doing)?"></textarea>
+      <span class="atr-field-error" data-error-for="problem"></span>
+    </div>
+
+    <div class="atr-field">
+      <label class="field-label" for="sr-serial">Serial number / IMEI <span class="atr-optional">(optional — speeds up parts ordering)</span></label>
+      <input class="form-field" type="text" id="sr-serial" name="serial_imei" placeholder="Found in Settings or on the device">
+    </div>
+
+    <label class="atr-check">
+      <input type="checkbox" name="marketing_opt_in" value="yes">
+      <span>Email me occasional offers and repair tips. <em>(Optional — no spam, ever.)</em></span>
+    </label>
+
+    <label class="atr-check">
+      <input type="checkbox" name="terms_accepted" value="yes" required>
+      <span>I agree to the <strong>Terms and Conditions</strong> of service. *</span>
+    </label>
+    <span class="atr-field-error" data-error-for="terms_accepted"></span>
+
+    <label class="atr-check">
+      <input type="checkbox" name="dispatch_acknowledged" value="yes" required>
+      <span>I understand the <strong>$15 dispatch fee</strong> covers the trip to me plus the on-site diagnostic, and that this fee is <strong>non-refundable</strong>. *</span>
+    </label>
+    <span class="atr-field-error" data-error-for="dispatch_acknowledged"></span>
+
+    <label class="atr-check">
+      <input type="checkbox" name="work_auth_accepted" value="yes" required>
+      <span>I <strong>authorize</strong> Austin&rsquo;s Tech Repair Group to perform the requested diagnostic and repair work on my device. *</span>
+    </label>
+    <span class="atr-field-error" data-error-for="work_auth_accepted"></span>
+
+    <div class="atr-honeypot" aria-hidden="true">
+      <label>Leave this field empty<input type="text" name="_honey" tabindex="-1" autocomplete="off"></label>
+    </div>
+
+    <button class="btn btn-primary btn-block btn-lg" type="submit">
+      <i class="fas fa-paper-plane"></i> Send Service Request
+    </button>
+    <p class="atr-help" style="text-align:center;">Sends your request directly to our team — no account needed.</p>
+  </form>
+  <div class="form-success atr-success" hidden>
+    <h3><i class="fas fa-circle-check"></i> Request received!</h3>
+    <p data-success-msg>Thanks! Your service request is in. We&rsquo;ll reach out shortly to confirm your appointment.</p>
+  </div>
+</div>
+<!-- END SNIPPET: service-request -->
+
+<!-- ================================================================
+     SNIPPET 2 — CONTACT (quick message)
+     New native form (the Contact section previously embedded the
+     full Service Request JotForm). Suggested placement: Contact
+     section, as the quick-message option alongside the full
+     Service Request form — see README.md placement note.
+     Submissions land in tickets with source='contact'.
+     ================================================================ -->
+<!-- BEGIN SNIPPET: contact -->
+<div class="atr-form-wrap" data-form-wrap="contact">
+  <form class="atr-form" data-form="contact" novalidate>
+    <div class="atr-form-error" role="alert" hidden></div>
+
+    <div class="atr-field">
+      <label class="field-label" for="ct-name">Your name *</label>
+      <input class="form-field" type="text" id="ct-name" name="name" required autocomplete="name" placeholder="John Smith">
+      <span class="atr-field-error" data-error-for="name"></span>
+    </div>
+    <div class="atr-row">
+      <div class="atr-field">
+        <label class="field-label" for="ct-phone">Phone</label>
+        <input class="form-field" type="tel" id="ct-phone" name="phone" autocomplete="tel" placeholder="(937) 555-0100">
+        <span class="atr-field-error" data-error-for="phone"></span>
+      </div>
+      <div class="atr-field">
+        <label class="field-label" for="ct-email">Email</label>
+        <input class="form-field" type="email" id="ct-email" name="email" autocomplete="email" placeholder="john@example.com">
+        <span class="atr-field-error" data-error-for="email"></span>
+      </div>
+    </div>
+    <p class="atr-help">Give us a phone number or an email so we can reply.</p>
+
+    <div class="atr-field">
+      <label class="field-label" for="ct-message">Message *</label>
+      <textarea class="form-field" id="ct-message" name="message" rows="4" required placeholder="How can we help?"></textarea>
+      <span class="atr-field-error" data-error-for="message"></span>
+    </div>
+
+    <div class="atr-honeypot" aria-hidden="true">
+      <label>Leave this field empty<input type="text" name="_honey" tabindex="-1" autocomplete="off"></label>
+    </div>
+
+    <button class="btn btn-primary btn-block btn-lg" type="submit">
+      <i class="fas fa-paper-plane"></i> Send Message
+    </button>
+  </form>
+  <div class="form-success atr-success" hidden>
+    <h3><i class="fas fa-circle-check"></i> Message sent!</h3>
+    <p data-success-msg>Thanks! Your message is in — we typically reply within the hour during business hours.</p>
+  </div>
+</div>
+<!-- END SNIPPET: contact -->
+
+<!-- ================================================================
+     SNIPPET 3 — JOB APPLICATION
+     Replaces: JotForm jsform 262347488023056 embed in the Careers
+     section's .form-embed div.
+     ================================================================ -->
+<!-- BEGIN SNIPPET: job-application -->
+<div class="atr-form-wrap" data-form-wrap="job-application">
+  <form class="atr-form" data-form="job-application" novalidate>
+    <div class="atr-form-error" role="alert" hidden></div>
+
+    <div class="atr-row">
+      <div class="atr-field">
+        <label class="field-label" for="ja-first-name">First name *</label>
+        <input class="form-field" type="text" id="ja-first-name" name="first_name" required autocomplete="given-name" placeholder="Jane">
+        <span class="atr-field-error" data-error-for="first_name"></span>
+      </div>
+      <div class="atr-field">
+        <label class="field-label" for="ja-last-name">Last name *</label>
+        <input class="form-field" type="text" id="ja-last-name" name="last_name" required autocomplete="family-name" placeholder="Smith">
+        <span class="atr-field-error" data-error-for="last_name"></span>
+      </div>
+    </div>
+
+    <div class="atr-row">
+      <div class="atr-field">
+        <label class="field-label" for="ja-email">Email address *</label>
+        <input class="form-field" type="email" id="ja-email" name="email" required autocomplete="email" placeholder="jane@example.com">
+        <span class="atr-field-error" data-error-for="email"></span>
+      </div>
+      <div class="atr-field">
+        <label class="field-label" for="ja-phone">Phone number</label>
+        <input class="form-field" type="tel" id="ja-phone" name="phone" autocomplete="tel" placeholder="(937) 555-0100">
+        <span class="atr-field-error" data-error-for="phone"></span>
+      </div>
+    </div>
+
+    <div class="atr-field">
+      <label class="field-label" for="ja-address-street">Current address</label>
+      <input class="form-field" type="text" id="ja-address-street" name="address_street" autocomplete="street-address" placeholder="Street address">
+    </div>
+    <div class="atr-field">
+      <input class="form-field" type="text" id="ja-address-line2" name="address_line2" autocomplete="address-line2" placeholder="Apt, suite, lot (optional)" aria-label="Address line 2">
+    </div>
+    <div class="atr-row-3">
+      <div class="atr-field">
+        <input class="form-field" type="text" id="ja-address-city" name="address_city" autocomplete="address-level2" placeholder="City" aria-label="City">
+      </div>
+      <div class="atr-field">
+        <input class="form-field" type="text" id="ja-address-state" name="address_state" autocomplete="address-level1" placeholder="State" aria-label="State">
+      </div>
+      <div class="atr-field">
+        <input class="form-field" type="text" id="ja-address-zip" name="address_zip" autocomplete="postal-code" placeholder="ZIP" aria-label="ZIP code">
+      </div>
+    </div>
+
+    <div class="atr-field">
+      <label class="field-label" for="ja-position">Position you are applying for *</label>
+      <select class="form-field" id="ja-position" name="position" required>
+        <option value="">Choose one…</option>
+        <option value="Repair Technician">Repair Technician</option>
+        <option value="Lead Repair Technician">Lead Repair Technician</option>
+        <option value="Customer Service Representative">Customer Service Representative</option>
+        <option value="Sales Associate">Sales Associate</option>
+        <option value="Intern / Apprentice">Intern / Apprentice</option>
+        <option value="Other">Other</option>
+      </select>
+      <span class="atr-field-error" data-error-for="position"></span>
+    </div>
+
+    <div class="atr-row">
+      <div class="atr-field">
+        <label class="field-label" for="ja-education">Highest level of education</label>
+        <select class="form-field" id="ja-education" name="education">
+          <option value="">Choose one…</option>
+          <option value="High school / GED">High school / GED</option>
+          <option value="Some college">Some college</option>
+          <option value="Trade / vocational certification">Trade / vocational certification</option>
+          <option value="Associate degree">Associate degree</option>
+          <option value="Bachelor's degree">Bachelor&rsquo;s degree</option>
+          <option value="Master's degree or higher">Master&rsquo;s degree or higher</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="atr-field">
+        <label class="field-label" for="ja-field-of-study">Field of study</label>
+        <input class="form-field" type="text" id="ja-field-of-study" name="field_of_study" placeholder="e.g. Electronics, IT, Business">
+      </div>
+    </div>
+
+    <div class="atr-row">
+      <div class="atr-field">
+        <label class="field-label" for="ja-employer">Most recent employer</label>
+        <input class="form-field" type="text" id="ja-employer" name="recent_employer" placeholder="Company name">
+      </div>
+      <div class="atr-field">
+        <label class="field-label" for="ja-job-title">Job title at most recent employer</label>
+        <input class="form-field" type="text" id="ja-job-title" name="job_title" placeholder="Your job title there">
+      </div>
+    </div>
+
+    <div class="atr-field">
+      <label class="field-label" for="ja-employment-dates">Employment dates (start – end)</label>
+      <input class="form-field" type="text" id="ja-employment-dates" name="employment_dates" placeholder="e.g. Mar 2022 – Present">
+    </div>
+
+    <div class="atr-field">
+      <label class="field-label" for="ja-experience">Briefly describe your relevant experience</label>
+      <textarea class="form-field" id="ja-experience" name="experience" rows="4" placeholder="Devices you've repaired, tools you've used, relevant jobs or training…"></textarea>
+    </div>
+
+    <div class="atr-row">
+      <div class="atr-field">
+        <label class="field-label" for="ja-reference-name">Reference name</label>
+        <input class="form-field" type="text" id="ja-reference-name" name="reference_name" placeholder="Full name">
+      </div>
+      <div class="atr-field">
+        <label class="field-label" for="ja-reference-contact">Reference contact information</label>
+        <input class="form-field" type="text" id="ja-reference-contact" name="reference_contact" placeholder="Phone or email">
+      </div>
+    </div>
+
+    <div class="atr-field">
+      <label class="field-label" for="ja-resume">Upload your resume</label>
+      <input class="atr-file" type="file" id="ja-resume" name="resume" accept=".pdf,.doc,.docx,.txt">
+      <p class="atr-help">PDF, Word, or text — 10 MB max.</p>
+      <span class="atr-field-error" data-error-for="resume"></span>
+    </div>
+
+    <div class="atr-field">
+      <label class="field-label" for="ja-cover">Cover letter or additional information</label>
+      <textarea class="form-field" id="ja-cover" name="cover_notes" rows="4" placeholder="Anything else you'd like us to know?"></textarea>
+    </div>
+
+    <div class="atr-honeypot" aria-hidden="true">
+      <label>Leave this field empty<input type="text" name="_honey" tabindex="-1" autocomplete="off"></label>
+    </div>
+
+    <button class="btn btn-primary btn-block btn-lg" type="submit">
+      <i class="fas fa-paper-plane"></i> Submit Application
+    </button>
+  </form>
+  <div class="form-success atr-success" hidden>
+    <h3><i class="fas fa-circle-check"></i> Application received!</h3>
+    <p data-success-msg>Thanks for your interest in joining Austin&rsquo;s Tech Repair Group. We&rsquo;ll review your application and reach out if it&rsquo;s a fit.</p>
+  </div>
+</div>
+<!-- END SNIPPET: job-application -->
+
+<!-- ================================================================
+     SNIPPET 4 — INVESTORS
+     Replaces: JotForm jsform 262354967610058 embed in the Investors
+     section's .form-embed div.
+     ================================================================ -->
+<!-- BEGIN SNIPPET: investors -->
+<div class="atr-form-wrap" data-form-wrap="investors">
+  <form class="atr-form" data-form="investors" novalidate>
+    <div class="atr-form-error" role="alert" hidden></div>
+
+    <div class="atr-row">
+      <div class="atr-field">
+        <label class="field-label" for="inv-first-name">First name *</label>
+        <input class="form-field" type="text" id="inv-first-name" name="first_name" required autocomplete="given-name" placeholder="Alex">
+        <span class="atr-field-error" data-error-for="first_name"></span>
+      </div>
+      <div class="atr-field">
+        <label class="field-label" for="inv-last-name">Last name *</label>
+        <input class="form-field" type="text" id="inv-last-name" name="last_name" required autocomplete="family-name" placeholder="Johnson">
+        <span class="atr-field-error" data-error-for="last_name"></span>
+      </div>
+    </div>
+
+    <div class="atr-field">
+      <label class="field-label" for="inv-company">Company name</label>
+      <input class="form-field" type="text" id="inv-company" name="company" autocomplete="organization" placeholder="Company or fund (if any)">
+    </div>
+
+    <div class="atr-row">
+      <div class="atr-field">
+        <label class="field-label" for="inv-type">Investor type</label>
+        <select class="form-field" id="inv-type" name="investor_type">
+          <option value="">Choose one…</option>
+          <option value="Individual investor">Individual investor</option>
+          <option value="Angel investor">Angel investor</option>
+          <option value="Small business owner">Small business owner</option>
+          <option value="Investment firm / fund">Investment firm / fund</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="atr-field">
+        <label class="field-label" for="inv-amount">Amount willing to invest (USD)</label>
+        <input class="form-field" type="number" id="inv-amount" name="amount_usd" min="0" step="any" placeholder="e.g. 5000">
+      </div>
+    </div>
+
+    <div class="atr-field">
+      <label class="field-label" for="inv-email">Email address *</label>
+      <input class="form-field" type="email" id="inv-email" name="email" required autocomplete="email" placeholder="alex@example.com">
+      <span class="atr-field-error" data-error-for="email"></span>
+    </div>
+
+    <div class="atr-field">
+      <label class="field-label" for="inv-focus">Investment focus / interest</label>
+      <input class="form-field" type="text" id="inv-focus" name="focus" placeholder="e.g. Growth capital, equipment, a second location">
+    </div>
+
+    <div class="atr-field">
+      <label class="field-label" for="inv-message">Message / background</label>
+      <textarea class="form-field" id="inv-message" name="message" rows="4" placeholder="Tell us a little about yourself and what you're looking for."></textarea>
+    </div>
+
+    <label class="atr-check">
+      <input type="checkbox" name="connect_opt_in" value="yes" required>
+      <span><strong>Connect me</strong> with Austin&rsquo;s Tech Repair Group — I&rsquo;d like to talk about investing. *</span>
+    </label>
+    <span class="atr-field-error" data-error-for="connect_opt_in"></span>
+
+    <div class="atr-honeypot" aria-hidden="true">
+      <label>Leave this field empty<input type="text" name="_honey" tabindex="-1" autocomplete="off"></label>
+    </div>
+
+    <button class="btn btn-primary btn-block btn-lg" type="submit">
+      <i class="fas fa-paper-plane"></i> Send Inquiry
+    </button>
+  </form>
+  <div class="form-success atr-success" hidden>
+    <h3><i class="fas fa-circle-check"></i> Inquiry received!</h3>
+    <p data-success-msg>Thanks for reaching out. Your inquiry is in — Austin will follow up with you personally.</p>
+  </div>
+</div>
+<!-- END SNIPPET: investors -->
+
+<!-- ================================================================
+     SNIPPET 5 — FEEDBACK ("HOW DID WE DO")
+     Native replacement for the JotForm "How Did We Do Today?" form
+     (never embedded on the site). Primary use: the link target of
+     the Google-review request email (Austin's 2026-10-20 request).
+     Can also be placed in its own section on the site.
+     ================================================================ -->
+<!-- BEGIN SNIPPET: feedback -->
+<div class="atr-form-wrap" data-form-wrap="feedback">
+  <form class="atr-form" data-form="feedback" novalidate>
+    <div class="atr-form-error" role="alert" hidden></div>
+
+    <div class="atr-field">
+      <span class="field-label" id="fb-rating-label">How would you rate your repair? *</span>
+      <div class="atr-rating" role="radiogroup" aria-labelledby="fb-rating-label">
+        <input type="radio" id="fb-rating-5" name="rating" value="5"><label for="fb-rating-5" title="5 — Excellent">★</label>
+        <input type="radio" id="fb-rating-4" name="rating" value="4"><label for="fb-rating-4" title="4 — Good">★</label>
+        <input type="radio" id="fb-rating-3" name="rating" value="3"><label for="fb-rating-3" title="3 — Okay">★</label>
+        <input type="radio" id="fb-rating-2" name="rating" value="2"><label for="fb-rating-2" title="2 — Poor">★</label>
+        <input type="radio" id="fb-rating-1" name="rating" value="1"><label for="fb-rating-1" title="1 — Bad">★</label>
+      </div>
+      <span class="atr-field-error" data-error-for="rating"></span>
+    </div>
+
+    <div class="atr-field">
+      <label class="field-label" for="fb-experience">How was your experience overall?</label>
+      <select class="form-field" id="fb-experience" name="experience">
+        <option value="">Choose one…</option>
+        <option value="Excellent">Excellent</option>
+        <option value="Good">Good</option>
+        <option value="Okay">Okay</option>
+        <option value="Could be better">Could be better</option>
+        <option value="Poor">Poor</option>
+      </select>
+    </div>
+
+    <div class="atr-field">
+      <span class="field-label">Would you recommend us to a friend? *</span>
+      <div class="atr-choice-group">
+        <label class="atr-choice"><input type="radio" name="would_recommend" value="Yes"> Yes</label>
+        <label class="atr-choice"><input type="radio" name="would_recommend" value="No"> No</label>
+      </div>
+      <span class="atr-field-error" data-error-for="would_recommend"></span>
+    </div>
+
+    <div class="atr-field">
+      <label class="field-label" for="fb-comments">Anything else you want to tell us?</label>
+      <textarea class="form-field" id="fb-comments" name="comments" rows="4" placeholder="What went great — or what could we do better?"></textarea>
+    </div>
+
+    <div class="atr-row">
+      <div class="atr-field">
+        <label class="field-label" for="fb-name">Your name <span class="atr-optional">(optional)</span></label>
+        <input class="form-field" type="text" id="fb-name" name="customer_name" autocomplete="name" placeholder="John Smith">
+      </div>
+      <div class="atr-field">
+        <label class="field-label" for="fb-email">Email <span class="atr-optional">(optional)</span></label>
+        <input class="form-field" type="email" id="fb-email" name="customer_email" autocomplete="email" placeholder="john@example.com">
+        <span class="atr-field-error" data-error-for="customer_email"></span>
+      </div>
+    </div>
+
+    <div class="atr-honeypot" aria-hidden="true">
+      <label>Leave this field empty<input type="text" name="_honey" tabindex="-1" autocomplete="off"></label>
+    </div>
+
+    <button class="btn btn-primary btn-block btn-lg" type="submit">
+      <i class="fas fa-paper-plane"></i> Send Feedback
+    </button>
+  </form>
+  <div class="form-success atr-success" hidden>
+    <h3><i class="fas fa-circle-check"></i> Thank you!</h3>
+    <p data-success-msg>Thanks for telling us how we did — feedback like yours helps local folks find us.</p>
+    <p style="margin-bottom:0.6rem;">Happy with your repair? A quick Google review helps even more:</p>
+    <a class="btn btn-primary" href="https://www.google.com/maps/search/?api=1&query=Austin%27s+Tech.+Repair+Group+Xenia+OH" target="_blank" rel="noopener">
+      <i class="fab fa-google"></i> Review us on Google
+    </a>
+  </div>
+</div>
+<!-- END SNIPPET: feedback -->
+
+<!-- Staging preview only: on live pages these load as described in README.md -->
+<script src="atr-forms.js"></script>
+</body>
+</html>
