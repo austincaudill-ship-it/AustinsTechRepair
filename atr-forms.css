@@ -1,0 +1,92 @@
+/* =====================================================================
+ * ATR Forms — supplemental styles for the native Supabase forms
+ * (atr-forms.js / forms.html snippets).
+ *
+ * The site's styles.css already provides: .form-field, .field-label,
+ * .form-success, .form-embed, .btn / .btn-primary / .btn-block / .btn-lg.
+ * This file adds ONLY what those classes do not cover: form layout,
+ * checkbox/agreement rows, inline validation errors, the star-rating
+ * control and the honeypot. Everything is atr- prefixed to avoid
+ * collisions when merged into the live stylesheet.
+ * ===================================================================== */
+
+.atr-form { text-align: left; }
+.atr-form .form-field { margin-bottom: 0; }
+.atr-form textarea.form-field { resize: vertical; min-height: 6rem; }
+
+.atr-field { margin-bottom: 1rem; }
+.atr-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.atr-row-3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1rem; }
+@media (max-width: 640px) {
+  .atr-row, .atr-row-3 { grid-template-columns: 1fr; }
+}
+
+.atr-help { font-size: 0.8rem; color: var(--muted); margin-top: 0.35rem; }
+.atr-optional { text-transform: none; font-weight: 600; color: var(--muted); }
+
+/* Inline validation */
+.atr-field-error {
+  display: block; font-size: 0.82rem; font-weight: 700; color: #B3261E;
+  margin-top: 0.35rem; min-height: 0; /* slots exist in markup; JS fills text */
+}
+.atr-field-invalid { border-color: #B3261E !important; }
+
+/* Form-level error box (mirrors the account modal's .acct-error look) */
+.atr-form-error {
+  color: #B3261E; background: #FDECEA; border: 1px solid #F5C6C0;
+  border-radius: var(--radius-sm); padding: 0.75rem 0.95rem;
+  font-size: 0.9rem; margin-bottom: 1rem;
+}
+.atr-form-error[hidden] { display: none; }
+.atr-form-error a { color: #B3261E; font-weight: 800; }
+
+/* Agreement / opt-in checkbox rows */
+.atr-check {
+  display: flex; gap: 0.65rem; align-items: flex-start;
+  margin-bottom: 0.9rem; font-size: 0.9rem; color: var(--ink-soft);
+  line-height: 1.45; cursor: pointer;
+}
+.atr-check input[type="checkbox"] {
+  flex: 0 0 auto; width: 1.15rem; height: 1.15rem; margin-top: 0.15rem;
+  accent-color: var(--brand);
+}
+.atr-check strong { color: var(--ink); }
+
+/* Yes/No + rating radio groups */
+.atr-choice-group { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.atr-choice {
+  display: inline-flex; align-items: center; gap: 0.45rem;
+  border: 2px solid var(--line); border-radius: 999px;
+  padding: 0.5rem 0.95rem; font-weight: 700; font-size: 0.9rem;
+  color: var(--ink-soft); background: var(--bg); cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+}
+.atr-choice input { accent-color: var(--brand); }
+.atr-choice:has(input:checked) { border-color: var(--brand); background: var(--brand-soft); color: var(--brand-deep); }
+
+/* Star rating (feedback form) */
+.atr-rating { display: flex; gap: 0.4rem; flex-direction: row-reverse; justify-content: flex-end; }
+.atr-rating input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.atr-rating label {
+  font-size: 2rem; line-height: 1; color: var(--line); cursor: pointer;
+  transition: color var(--transition), transform var(--transition);
+}
+.atr-rating label:hover { transform: translateY(-2px); }
+.atr-rating input:checked ~ label,
+.atr-rating label:hover ~ label,
+.atr-rating label:hover { color: var(--gold, #E3A008); }
+
+/* File input (resume upload) */
+.atr-file {
+  width: 100%; padding: 0.8rem 1rem; background: var(--bg);
+  border: 2px dashed var(--line); border-radius: var(--radius-sm);
+  color: var(--ink-soft); font-size: 0.9rem; font-family: var(--font-body);
+}
+.atr-file:focus { border-color: var(--brand); outline: none; }
+
+/* Honeypot — invisible to people, tempting to bots */
+.atr-honeypot { position: absolute !important; left: -9999px !important; width: 1px; height: 1px; overflow: hidden; }
+
+/* Success panels reuse .form-success from styles.css; keep them hidden
+ * until atr-forms.js reveals them. */
+.atr-success[hidden] { display: none; }
