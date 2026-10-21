@@ -492,6 +492,9 @@ html[data-theme="dark"] {
   --shadow-md: 0 8px 28px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 18px 50px rgba(0, 0, 0, 0.5);
 }
+html[data-theme="dark"] .header {
+  background: rgba(20, 16, 11, 0.92);
+}
 
 .theme-toggle {
   display: inline-flex; align-items: center; justify-content: center;

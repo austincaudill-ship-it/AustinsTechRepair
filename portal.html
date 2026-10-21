@@ -518,5 +518,57 @@
     .portal-nh-check input[type="checkbox"] { width: 1.15rem; height: 1.15rem; margin: 0; flex: none; }
     #portal-newhire-form .portal-btn-primary { margin-top: 0.25rem; }
   </style>
+  <div id="portal-print-area" hidden></div>
+  <style>
+    /* ===== Portal Phase 2: charges, parts, receipt, labels ===== */
+    .p2-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+    .p2-btn-danger { background: #b3382e; color: #fff; border: 2px solid #b3382e; }
+    .p2-btn-danger:hover { background: #93291f; }
+    .p2-form { display: flex; flex-direction: column; gap: 0.55rem; margin-top: 0.9rem; }
+    .p2-form input[type="text"], .p2-form input[type="number"], .p2-form select {
+      width: 100%; padding: 0.6rem 0.7rem; border: 2px solid var(--line, #d8cbb6); border-radius: 8px;
+      background: var(--bg, #fff); color: var(--ink, #2c231a); font-size: 0.95rem; font-family: inherit;
+    }
+    .p2-form-row { display: flex; gap: 0.55rem; }
+    .p2-form-row > * { flex: 1; min-width: 0; }
+    .p2-check { display: flex; gap: 0.5rem; align-items: center; font-size: 0.9rem; cursor: pointer; }
+    .p2-check input { width: 1.1rem; height: 1.1rem; margin: 0; flex: none; }
+    .p2-line { display: flex; gap: 0.6rem; align-items: center; padding: 0.55rem 0; border-bottom: 1px solid var(--line-soft, #e7dcc8); }
+    .p2-line-main { flex: 1; min-width: 0; }
+    .p2-kind { display: inline-block; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+      background: var(--surface-warm, #f7f0e1); border: 1px solid var(--line, #d8cbb6); border-radius: 999px; padding: 0.1rem 0.5rem; margin-right: 0.35rem; }
+    .p2-line-amt { font-weight: 700; white-space: nowrap; }
+    .p2-x { background: none; border: none; color: #b3382e; font-size: 1.25rem; line-height: 1; cursor: pointer; padding: 0.2rem 0.4rem; flex: none; }
+    .p2-part-status { padding: 0.4rem; border: 2px solid var(--line, #d8cbb6); border-radius: 8px; background: var(--bg, #fff); color: var(--ink, #2c231a); flex: none; }
+    .p2-totals { margin-top: 0.8rem; }
+    .p2-totals > div { display: flex; justify-content: space-between; padding: 0.25rem 0; }
+    .p2-grand { border-top: 2px solid var(--line, #d8cbb6); font-weight: 800; font-size: 1.05rem; margin-top: 0.3rem; padding-top: 0.5rem !important; }
+    /* ===== Print: receipt + Zebra label ===== */
+    #portal-print-area { display: none; }
+    @page atr-receipt { size: letter; margin: 0.6in; }
+    @page atr-label { size: 2.25in 1.25in; margin: 0; }
+    #portal-print-area.receipt { page: atr-receipt; }
+    #portal-print-area.label { page: atr-label; }
+    @media print {
+      body.portal-printing > *:not(#portal-print-area) { display: none !important; }
+      body.portal-printing #portal-print-area { display: block !important; }
+    }
+    .rc { color: #000; font-family: Arial, Helvetica, sans-serif; max-width: 560px; margin: 0 auto; }
+    .rc h1 { font-size: 20pt; margin: 0 0 2pt; }
+    .rc-sub { font-size: 10pt; color: #333; margin: 0 0 10pt; }
+    .rc-meta { font-size: 10.5pt; margin: 0 0 10pt; line-height: 1.45; }
+    .rc-table { width: 100%; border-collapse: collapse; font-size: 10.5pt; margin-bottom: 10pt; }
+    .rc-table th, .rc-table td { border-bottom: 1px solid #bbb; padding: 4pt 2pt; text-align: left; }
+    .rc-num { text-align: right !important; white-space: nowrap; }
+    .rc-totals td { border-bottom: none; }
+    .rc-grand td { border-top: 2px solid #000; font-weight: 800; font-size: 12pt; }
+    .rc-paid { font-weight: 800; font-size: 13pt; text-align: center; border: 2px solid #000; padding: 6pt; margin: 10pt 0; }
+    .rc-foot { font-size: 9pt; color: #333; margin-top: 14pt; line-height: 1.5; }
+    .lbl { width: 2.25in; height: 1.25in; padding: 0.09in 0.1in; box-sizing: border-box; overflow: hidden;
+      color: #000; font-family: Arial, Helvetica, sans-serif; }
+    .lbl-biz { font-size: 6.5pt; font-weight: 700; letter-spacing: 0.08em; }
+    .lbl-part { font-size: 12.5pt; font-weight: 800; line-height: 1.15; margin: 2pt 0; }
+    .lbl-meta { font-size: 7.5pt; line-height: 1.3; }
+  </style>
 </body>
 </html>

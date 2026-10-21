@@ -460,6 +460,34 @@
             ['Received', esc(fmtDateTime(t.created_at))],
             ['Last updated', esc(fmtDateTime(t.updated_at))]
           ]) +
+          '<div class="portal-drawer-section p2-actions"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-receipt-btn"><i class="fas fa-receipt"></i> Print receipt</button>' +
+          '<button class="portal-btn p2-btn-danger portal-btn-sm" type="button" id="p2-delete-btn"><i class="fas fa-trash"></i> Delete ticket</button>' +
+          '<span class="portal-muted portal-small" id="p2-action-msg"></span>' +
+          '<div id="p2-delete-confirm" hidden><p class="portal-error">Permanently delete this ticket? Its charges and messages go with it. Part orders stay on file but detach from the ticket. This cannot be undone.</p>' +
+          '<button class="portal-btn p2-btn-danger portal-btn-sm" type="button" id="p2-delete-yes">Yes, delete it</button> ' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-delete-no">Keep ticket</button></div></div>' +
+          '<div class="portal-drawer-section"><h3>Charges</h3>' +
+          '<div id="p2-charges"><p class="portal-muted">Loading charges&hellip;</p></div>' +
+          '<form id="p2-charge-form" class="p2-form">' +
+          '<select id="p2-charge-kind" aria-label="Charge type"><option value="part">Part</option><option value="labor">Labor</option><option value="one_off">Other charge</option><option value="dispatch">Dispatch fee</option><option value="deposit_credit">Deposit received (credit)</option></select>' +
+          '<input id="p2-charge-desc" type="text" placeholder="Description" maxlength="200" aria-label="Charge description" />' +
+          '<div class="p2-form-row"><input id="p2-charge-qty" type="number" step="0.5" min="0" value="1" aria-label="Quantity" />' +
+          '<input id="p2-charge-price" type="number" step="0.01" min="0" placeholder="Price $" aria-label="Unit price" />' +
+          '<input id="p2-charge-cost" type="number" step="0.01" min="0" placeholder="Our cost $ (optional)" aria-label="Unit cost" /></div>' +
+          '<button class="portal-btn portal-btn-primary portal-btn-sm" type="submit">Add charge</button>' +
+          '<p class="portal-error" id="p2-charge-error" hidden></p></form></div>' +
+          '<div class="portal-drawer-section"><h3>Parts on this ticket</h3>' +
+          '<div id="p2-parts"><p class="portal-muted">Loading parts&hellip;</p></div>' +
+          '<form id="p2-part-form" class="p2-form">' +
+          '<input id="p2-part-desc" type="text" placeholder="Part description (e.g. iPhone 13 Pro Max battery — OEM)" maxlength="200" aria-label="Part description" />' +
+          '<div class="p2-form-row"><input id="p2-part-supplier" type="text" placeholder="Supplier" maxlength="80" aria-label="Supplier" />' +
+          '<input id="p2-part-sku" type="text" placeholder="Supplier SKU" maxlength="80" aria-label="Supplier SKU" /></div>' +
+          '<div class="p2-form-row"><input id="p2-part-cost" type="number" step="0.01" min="0" placeholder="Our cost $" aria-label="Our cost" />' +
+          '<input id="p2-part-retail" type="number" step="0.01" min="0" placeholder="Customer price $" aria-label="Customer price" />' +
+          '<input id="p2-part-qty" type="number" step="1" min="1" value="1" aria-label="Quantity" /></div>' +
+          '<label class="p2-check"><input type="checkbox" id="p2-part-addcharge" checked /> Add the customer price to Charges as a part line</label>' +
+          '<button class="portal-btn portal-btn-primary portal-btn-sm" type="submit">Add part order</button>' +
+          '<p class="portal-error" id="p2-part-error" hidden></p></form></div>' +
           '<div class="portal-drawer-section"><h3>Status</h3>' +
           '<div class="portal-status-row"><select id="portal-ticket-status" aria-label="Ticket status">' +
           statusOptions(TICKET_STATUSES, t.status) + '</select>' +
@@ -475,6 +503,9 @@
 
         $('portal-drawer-body').innerHTML = body;
         loadTicketThread(client, t.id);
+        loadCharges(client, t);
+        loadParts(client, t);
+        wireTicketActions(client, t);
 
         $('portal-ticket-status-save').addEventListener('click', function () {
           var next = $('portal-ticket-status').value;
@@ -503,6 +534,257 @@
       }).catch(function () {
         $('portal-drawer-body').innerHTML = '<p class="portal-error">Couldn&rsquo;t load that ticket.</p>';
       });
+    });
+  }
+
+  /* ================= PHASE 2: CHARGES, PARTS, RECEIPT, LABELS ================= */
+  function shortCode(t) { return String(t.id || '').slice(0, 8).toUpperCase(); }
+
+  function chargeTotals(rows) {
+    var subtotal = 0, deposits = 0;
+    rows.forEach(function (c) {
+      var amt = Number(c.qty || 0) * Number(c.unit_price || 0);
+      if (c.kind === 'deposit_credit') deposits += amt; else subtotal += amt;
+    });
+    return { subtotal: subtotal, deposits: deposits, balance: subtotal - deposits };
+  }
+
+  function renderCharges(t, rows) {
+    var box = $('p2-charges');
+    if (!box) return;
+    if (!rows.length) {
+      box.innerHTML = '<p class="portal-muted">No charges yet. Add the repair price, parts, and the dispatch fee here — the receipt is built from these lines.</p>';
+    } else {
+      var tot = chargeTotals(rows);
+      var html = rows.map(function (c) {
+        var amt = Number(c.qty || 0) * Number(c.unit_price || 0);
+        var kindLabel = { part: 'Part', labor: 'Labor', one_off: 'Other', dispatch: 'Dispatch fee', deposit_credit: 'Deposit' }[c.kind] || c.kind;
+        var sign = c.kind === 'deposit_credit' ? '&minus;' : '';
+        return '<div class="p2-line"><div class="p2-line-main"><span class="p2-kind">' + esc(kindLabel) + '</span> ' + esc(c.description) +
+          '<span class="portal-muted portal-small"> &times;' + esc(c.qty) + ' @ ' + fmtMoney(c.unit_price) +
+          (c.unit_cost != null ? ' (our cost ' + fmtMoney(c.unit_cost) + ')' : '') + '</span></div>' +
+          '<div class="p2-line-amt">' + sign + fmtMoney(Math.abs(amt)) + '</div>' +
+          '<button class="p2-x" type="button" data-charge-del="' + esc(c.id) + '" aria-label="Remove charge">&times;</button></div>';
+      }).join('');
+      html += '<div class="p2-totals">' +
+        '<div><span>Subtotal</span><span>' + fmtMoney(tot.subtotal) + '</span></div>' +
+        (tot.deposits ? '<div><span>Deposits received</span><span>&minus;' + fmtMoney(tot.deposits) + '</span></div>' : '') +
+        '<div class="p2-grand"><span>Balance due</span><span>' + fmtMoney(tot.balance) + '</span></div></div>';
+      box.innerHTML = html;
+    }
+    box.querySelectorAll('[data-charge-del]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        withClient(function (client) {
+          client.from('ticket_charges').delete().eq('id', btn.getAttribute('data-charge-del')).then(function (res) {
+            if (!res.error) loadCharges(client, t);
+          });
+        });
+      });
+    });
+  }
+
+  function loadCharges(client, t) {
+    client.from('ticket_charges').select('*').eq('ticket_id', t.id).order('created_at', { ascending: true }).then(function (res) {
+      if (res.error) { var b = $('p2-charges'); if (b) b.innerHTML = '<p class="portal-error">Couldn&rsquo;t load charges.</p>'; return; }
+      t._charges = res.data || [];
+      renderCharges(t, t._charges);
+    }).catch(function () {});
+  }
+
+  function renderParts(t, rows) {
+    var box = $('p2-parts');
+    if (!box) return;
+    if (!rows.length) {
+      box.innerHTML = '<p class="portal-muted">No parts ordered for this ticket yet.</p>';
+      return;
+    }
+    box.innerHTML = rows.map(function (p) {
+      var statusOpts = ['Ordered', 'Received', 'Cancelled'].map(function (s) {
+        return '<option value="' + s + '"' + (p.status === s ? ' selected' : '') + '>' + s + '</option>';
+      }).join('');
+      return '<div class="p2-line p2-part"><div class="p2-line-main">' + esc(p.description) +
+        '<span class="portal-muted portal-small">' +
+        (p.supplier ? ' · ' + esc(p.supplier) : '') + (p.supplier_sku ? ' · SKU ' + esc(p.supplier_sku) : '') +
+        ' &times;' + esc(p.qty) +
+        (p.our_cost != null ? ' · our cost ' + fmtMoney(p.our_cost) : '') +
+        (p.retail_price != null ? ' · customer ' + fmtMoney(p.retail_price) : '') +
+        (p.received_at ? ' · received ' + esc(fmtDate(p.received_at)) : '') + '</span></div>' +
+        '<select class="p2-part-status" data-part-id="' + esc(p.id) + '" aria-label="Part status">' + statusOpts + '</select>' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-part-label="' + esc(p.id) + '"><i class="fas fa-tag"></i> Label</button>' +
+        '<button class="p2-x" type="button" data-part-del="' + esc(p.id) + '" aria-label="Remove part order">&times;</button></div>';
+    }).join('');
+    box.querySelectorAll('.p2-part-status').forEach(function (sel) {
+      sel.addEventListener('change', function () {
+        withClient(function (client) {
+          var patch = { status: sel.value };
+          if (sel.value === 'Received') patch.received_at = new Date().toISOString();
+          client.from('part_orders').update(patch).eq('id', sel.getAttribute('data-part-id')).then(function (res) {
+            if (!res.error) loadParts(client, t);
+          });
+        });
+      });
+    });
+    box.querySelectorAll('[data-part-del]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        withClient(function (client) {
+          client.from('part_orders').delete().eq('id', btn.getAttribute('data-part-del')).then(function (res) {
+            if (!res.error) loadParts(client, t);
+          });
+        });
+      });
+    });
+    box.querySelectorAll('[data-part-label]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var part = null;
+        rows.forEach(function (r) { if (r.id === btn.getAttribute('data-part-label')) part = r; });
+        if (part) printPartLabel(t, part);
+      });
+    });
+  }
+
+  function loadParts(client, t) {
+    client.from('part_orders').select('*').eq('ticket_id', t.id).order('created_at', { ascending: true }).then(function (res) {
+      if (res.error) { var b = $('p2-parts'); if (b) b.innerHTML = '<p class="portal-error">Couldn&rsquo;t load parts.</p>'; return; }
+      t._parts = res.data || [];
+      renderParts(t, t._parts);
+    }).catch(function () {});
+  }
+
+  function printArea(html, cls) {
+    var area = $('portal-print-area');
+    if (!area) { window.print(); return; }
+    area.className = cls;
+    area.innerHTML = html;
+    area.hidden = false;
+    document.body.classList.add('portal-printing');
+    setTimeout(function () {
+      window.print();
+      setTimeout(function () {
+        document.body.classList.remove('portal-printing');
+        area.hidden = true;
+        area.innerHTML = '';
+      }, 400);
+    }, 60);
+  }
+
+  function printReceipt(t) {
+    var rows = t._charges || [];
+    var tot = chargeTotals(rows);
+    var lines = rows.map(function (c) {
+      var amt = Number(c.qty || 0) * Number(c.unit_price || 0);
+      var label = c.kind === 'deposit_credit' ? esc(c.description) + ' (deposit)' : esc(c.description);
+      var sign = c.kind === 'deposit_credit' ? '&minus;' : '';
+      return '<tr><td>' + label + '</td><td class="rc-num">' + esc(c.qty) + '</td><td class="rc-num">' + sign + fmtMoney(Math.abs(amt)) + '</td></tr>';
+    }).join('');
+    if (!rows.length) lines = '<tr><td colspan="3">No charges recorded.</td></tr>';
+    var html = '<div class="rc">' +
+      '<h1>Austin&rsquo;s Tech Repair Group</h1>' +
+      '<p class="rc-sub">Mobile Repair — Ohio · (937) 280-6243<br/>austinstechrepairgroup.com</p>' +
+      '<p class="rc-meta">Receipt · Ticket #' + shortCode(t) + '<br/>' + esc(fmtDateTime(t.created_at)) + '</p>' +
+      '<p class="rc-meta"><strong>' + esc(t.customer_name || '') + '</strong><br/>' + esc(deviceLabel(t)) + '<br/>' + esc(t.issue || '') + '</p>' +
+      '<table class="rc-table"><thead><tr><th>Description</th><th class="rc-num">Qty</th><th class="rc-num">Amount</th></tr></thead><tbody>' + lines + '</tbody></table>' +
+      '<table class="rc-table rc-totals"><tbody>' +
+      '<tr><td>Subtotal</td><td class="rc-num">' + fmtMoney(tot.subtotal) + '</td></tr>' +
+      (tot.deposits ? '<tr><td>Deposits received</td><td class="rc-num">&minus;' + fmtMoney(tot.deposits) + '</td></tr>' : '') +
+      '<tr class="rc-grand"><td>Balance due</td><td class="rc-num">' + fmtMoney(tot.balance) + '</td></tr>' +
+      '</tbody></table>' +
+      (tot.balance <= 0 && tot.subtotal > 0 ? '<p class="rc-paid">PAID IN FULL — thank you!</p>' : '') +
+      '<p class="rc-foot">Repairs are backed by our 1-Year Limited Warranty (parts &amp; labor). The $15 dispatch fee is non-refundable. Thank you for your business!</p>' +
+      '</div>';
+    printArea(html, 'receipt');
+  }
+
+  function printPartLabel(t, p) {
+    var html = '<div class="lbl">' +
+      '<div class="lbl-biz">AUSTIN&rsquo;S TECH REPAIR GROUP</div>' +
+      '<div class="lbl-part">' + esc(p.description) + '</div>' +
+      '<div class="lbl-meta">Ticket #' + shortCode(t) + ' · ' + esc(t.customer_name || '') + '</div>' +
+      '<div class="lbl-meta">' + esc(deviceLabel(t)) + ' · ' + esc(fmtDate(p.ordered_at || p.created_at)) + '</div>' +
+      '</div>';
+    printArea(html, 'label');
+  }
+
+  function wireTicketActions(client, t) {
+    var receiptBtn = $('p2-receipt-btn');
+    if (receiptBtn) receiptBtn.addEventListener('click', function () { printReceipt(t); });
+
+    var delBtn = $('p2-delete-btn'), confirmBox = $('p2-delete-confirm');
+    if (delBtn && confirmBox) {
+      delBtn.addEventListener('click', function () { confirmBox.hidden = false; delBtn.hidden = true; });
+      $('p2-delete-no').addEventListener('click', function () { confirmBox.hidden = true; delBtn.hidden = false; });
+      $('p2-delete-yes').addEventListener('click', function () {
+        client.from('tickets').delete().eq('id', t.id).then(function (res) {
+          if (res.error) { $('p2-action-msg').textContent = 'Couldn&rsquo;t delete — try again.'; return; }
+          closeDrawer();
+          state.loaded.tickets = false;
+          loadTickets(true);
+        }).catch(function () { $('p2-action-msg').textContent = 'Couldn&rsquo;t delete — try again.'; });
+      });
+    }
+
+    var kindSel = $('p2-charge-kind');
+    if (kindSel) kindSel.addEventListener('change', function () {
+      if (kindSel.value === 'dispatch') {
+        if (!$('p2-charge-desc').value) $('p2-charge-desc').value = 'Dispatch fee (non-refundable)';
+        if (!$('p2-charge-price').value) $('p2-charge-price').value = '15';
+      }
+      if (kindSel.value === 'deposit_credit' && !$('p2-charge-desc').value) {
+        $('p2-charge-desc').value = 'Parts deposit received';
+      }
+    });
+
+    var chargeForm = $('p2-charge-form');
+    if (chargeForm) chargeForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var err = $('p2-charge-error'); err.hidden = true;
+      var desc = trim($('p2-charge-desc').value);
+      var price = parseFloat($('p2-charge-price').value);
+      if (!desc || isNaN(price)) { err.textContent = 'Give the charge a description and a price.'; err.hidden = false; return; }
+      var costRaw = $('p2-charge-cost').value;
+      client.from('ticket_charges').insert({
+        ticket_id: t.id,
+        kind: kindSel.value,
+        description: desc,
+        qty: parseFloat($('p2-charge-qty').value) || 1,
+        unit_price: price,
+        unit_cost: costRaw === '' ? null : parseFloat(costRaw)
+      }).then(function (res) {
+        if (res.error) { err.textContent = 'Couldn&rsquo;t add that charge. Try again.'; err.hidden = false; return; }
+        chargeForm.reset(); $('p2-charge-qty').value = '1';
+        loadCharges(client, t);
+      }).catch(function () { err.textContent = 'Couldn&rsquo;t add that charge. Try again.'; err.hidden = false; });
+    });
+
+    var partForm = $('p2-part-form');
+    if (partForm) partForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var err = $('p2-part-error'); err.hidden = true;
+      var desc = trim($('p2-part-desc').value);
+      if (!desc) { err.textContent = 'Describe the part first.'; err.hidden = false; return; }
+      var costRaw = $('p2-part-cost').value, retailRaw = $('p2-part-retail').value;
+      var qty = parseInt($('p2-part-qty').value, 10) || 1;
+      var part = {
+        ticket_id: t.id,
+        description: desc,
+        supplier: trim($('p2-part-supplier').value) || null,
+        supplier_sku: trim($('p2-part-sku').value) || null,
+        our_cost: costRaw === '' ? null : parseFloat(costRaw),
+        retail_price: retailRaw === '' ? null : parseFloat(retailRaw),
+        qty: qty,
+        status: 'Ordered'
+      };
+      client.from('part_orders').insert(part).then(function (res) {
+        if (res.error) { err.textContent = 'Couldn&rsquo;t add that part. Try again.'; err.hidden = false; return; }
+        var addCharge = $('p2-part-addcharge').checked && part.retail_price != null && part.retail_price > 0;
+        partForm.reset(); $('p2-part-qty').value = '1'; $('p2-part-addcharge').checked = true;
+        loadParts(client, t);
+        if (addCharge) {
+          client.from('ticket_charges').insert({
+            ticket_id: t.id, kind: 'part', description: desc, qty: qty,
+            unit_cost: part.our_cost, unit_price: part.retail_price
+          }).then(function () { loadCharges(client, t); });
+        }
+      }).catch(function () { err.textContent = 'Couldn&rsquo;t add that part. Try again.'; err.hidden = false; });
     });
   }
 
