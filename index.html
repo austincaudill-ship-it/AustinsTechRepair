@@ -2316,5 +2316,194 @@
 </script>
 <!-- ==================== /ATR CHAT AGENT ==================== -->
 
+<!-- ==================== SELF-SERVICE PASSWORD RESET ==================== -->
+<style>
+  .atr-reset-overlay{position:fixed;inset:0;background:rgba(20,14,8,.55);z-index:2000;display:none;align-items:center;justify-content:center;padding:16px}
+  .atr-reset-overlay.open{display:flex}
+  .atr-reset-card{background:var(--surface,#fffaf2);border:1px solid var(--line,#e5d9c8);border-radius:16px;max-width:400px;width:100%;padding:24px;box-shadow:0 24px 60px rgba(30,20,10,.4);font-family:var(--font-body,system-ui,sans-serif);color:#2b2118}
+  .atr-reset-card h3{font-family:var(--font-display,Georgia,serif);margin:0 0 6px;font-size:1.25rem}
+  .atr-reset-card p{font-size:.92rem;line-height:1.5;margin:0 0 12px}
+  .atr-reset-card label{display:block;font-size:.82rem;font-weight:700;margin:12px 0 5px}
+  .atr-reset-card input{width:100%;box-sizing:border-box;border:1px solid var(--line,#e5d9c8);border-radius:10px;padding:11px 13px;font-size:.95rem;font-family:inherit;background:#fff;color:#2b2118}
+  .atr-reset-btn{width:100%;margin-top:16px;background:var(--brand,#b4551f);color:#fff;border:none;border-radius:999px;padding:12px;font-size:.95rem;font-weight:700;cursor:pointer;font-family:inherit}
+  .atr-reset-btn[disabled]{opacity:.6;cursor:wait}
+  .atr-reset-alt{width:100%;margin-top:9px;background:none;border:none;color:var(--brand,#b4551f);font-size:.88rem;font-weight:700;cursor:pointer;font-family:inherit}
+  .atr-reset-err{background:#fdeceb;border:1px solid #f2b8b0;color:#7c241a;border-radius:10px;padding:9px 12px;font-size:.88rem;margin-top:12px}
+  .atr-reset-ok{background:#e9f7ee;border:1px solid #a9d9ba;color:#14532d;border-radius:10px;padding:9px 12px;font-size:.88rem;margin-top:12px}
+  .atr-reset-x{float:right;background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--muted,#8a7a68)}
+</style>
+<div class="atr-reset-overlay" id="atr-reset-overlay" role="dialog" aria-modal="true" aria-label="Reset your password">
+  <div class="atr-reset-card">
+    <button class="atr-reset-x" id="atr-reset-close" aria-label="Close"><i class="fas fa-xmark"></i></button>
+    <h3>Reset your password</h3>
+
+    <div id="atr-reset-step-request">
+      <p>Enter your email and we'll send you a code. Type the code here with your new password — no need to click anything in the email.</p>
+      <label for="atr-reset-email">Email</label>
+      <input id="atr-reset-email" type="email" autocomplete="email" placeholder="you@example.com" />
+      <button class="atr-reset-btn" id="atr-reset-send" type="button">Email me a code</button>
+      <div class="atr-reset-err" id="atr-reset-req-err" hidden></div>
+    </div>
+
+    <div id="atr-reset-step-code" hidden>
+      <p id="atr-reset-code-note">Check your email for the code, then set your new password below.</p>
+      <label for="atr-reset-code">Code from the email</label>
+      <input id="atr-reset-code" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="Enter code" />
+      <label for="atr-reset-pass">New password</label>
+      <input id="atr-reset-pass" type="password" autocomplete="new-password" placeholder="At least 8 characters" />
+      <label for="atr-reset-pass2">New password again</label>
+      <input id="atr-reset-pass2" type="password" autocomplete="new-password" placeholder="Repeat it" />
+      <button class="atr-reset-btn" id="atr-reset-verify" type="button">Set my new password</button>
+      <button class="atr-reset-alt" id="atr-reset-resend" type="button">Email me a new code</button>
+      <div class="atr-reset-err" id="atr-reset-code-err" hidden></div>
+      <div class="atr-reset-ok" id="atr-reset-done" hidden></div>
+    </div>
+
+    <div id="atr-reset-step-link" hidden>
+      <p>You're securely signed in from your reset link. Set your new password below.</p>
+      <label for="atr-reset-lpass">New password</label>
+      <input id="atr-reset-lpass" type="password" autocomplete="new-password" placeholder="At least 8 characters" />
+      <label for="atr-reset-lpass2">New password again</label>
+      <input id="atr-reset-lpass2" type="password" autocomplete="new-password" placeholder="Repeat it" />
+      <button class="atr-reset-btn" id="atr-reset-link-set" type="button">Set my new password</button>
+      <div class="atr-reset-err" id="atr-reset-link-err" hidden></div>
+      <div class="atr-reset-ok" id="atr-reset-link-done" hidden></div>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  'use strict';
+  var SUPABASE_URL = 'https://lyujxpuicarblpkdzuuc.supabase.co';
+  var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
+  var sb = null;
+  var recoveryMode = false; // true when a recovery session (link) is active
+
+  function el(id) { return document.getElementById(id); }
+  function showErr(id, msg) { var e = el(id); if (!e) return; e.textContent = msg; e.hidden = !msg; }
+  function getClient() {
+    if (sb) return sb;
+    if (window.supabase && window.supabase.createClient) {
+      try { sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch (e) { sb = null; }
+    }
+    return sb;
+  }
+  function open() { el('atr-reset-overlay').classList.add('open'); }
+  function close() { el('atr-reset-overlay').classList.remove('open'); }
+  function showStep(which) {
+    el('atr-reset-step-request').hidden = which !== 'request';
+    el('atr-reset-step-code').hidden = which !== 'code';
+    el('atr-reset-step-link').hidden = which !== 'link';
+  }
+  function validPass(p1, p2, errId) {
+    if (!p1 || p1.length < 8) { showErr(errId, 'Please use a password of at least 8 characters.'); return false; }
+    if (p1 !== p2) { showErr(errId, "Those two passwords don't match — try again."); return false; }
+    showErr(errId, '');
+    return true;
+  }
+  function finish(doneId, btn) {
+    var d = el(doneId);
+    d.textContent = "Done — your password is set. You can now sign in with your email and your new password, here and on the employee portal.";
+    d.hidden = false;
+    if (btn) { btn.disabled = false; btn.textContent = 'Set my new password'; }
+    if (recoveryMode && sb) { sb.auth.signOut().catch(function () {}); }
+  }
+
+  function sendCode() {
+    var email = el('atr-reset-email').value.trim();
+    var btn = el('atr-reset-send');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showErr('atr-reset-req-err', 'Please enter a valid email address.'); return; }
+    var client = getClient();
+    if (!client) { showErr('atr-reset-req-err', 'Could not start the reset. Please try again in a moment.'); return; }
+    btn.disabled = true; btn.textContent = 'Sending…';
+    client.auth.resetPasswordForEmail(email).then(function (res) {
+      btn.disabled = false; btn.textContent = 'Email me a code';
+      if (res.error) { showErr('atr-reset-req-err', 'We could not send that code. Double-check the email and try again.'); return; }
+      showErr('atr-reset-req-err', '');
+      showStep('code');
+    }).catch(function () {
+      btn.disabled = false; btn.textContent = 'Email me a code';
+      showErr('atr-reset-req-err', 'We could not send that code. Please try again.');
+    });
+  }
+
+  function verifyAndSet() {
+    var email = el('atr-reset-email').value.trim();
+    var code = el('atr-reset-code').value.trim();
+    var p1 = el('atr-reset-pass').value, p2 = el('atr-reset-pass2').value;
+    var btn = el('atr-reset-verify');
+    if (!code) { showErr('atr-reset-code-err', 'Enter the code from the email.'); return; }
+    if (!validPass(p1, p2, 'atr-reset-code-err')) return;
+    var client = getClient();
+    if (!client) { showErr('atr-reset-code-err', 'Something went wrong. Please reload and try again.'); return; }
+    btn.disabled = true; btn.textContent = 'Working…';
+    client.auth.verifyOtp({ email: email, token: code, type: 'recovery' }).then(function (res) {
+      if (res.error) { btn.disabled = false; btn.textContent = 'Set my new password'; showErr('atr-reset-code-err', 'That code did not work — it may have expired. Tap "Email me a new code" and try the fresh one.'); return; }
+      return client.auth.updateUser({ password: p1 }).then(function (res2) {
+        if (res2.error) { btn.disabled = false; btn.textContent = 'Set my new password'; showErr('atr-reset-code-err', 'The code worked, but the new password was not accepted. Try again.'); return; }
+        finish('atr-reset-done', btn);
+      });
+    }).catch(function () {
+      btn.disabled = false; btn.textContent = 'Set my new password';
+      showErr('atr-reset-code-err', 'Something went wrong. Please try again.');
+    });
+  }
+
+  function linkSet() {
+    var p1 = el('atr-reset-lpass').value, p2 = el('atr-reset-lpass2').value;
+    var btn = el('atr-reset-link-set');
+    if (!validPass(p1, p2, 'atr-reset-link-err')) return;
+    var client = getClient();
+    if (!client) { showErr('atr-reset-link-err', 'Something went wrong. Please reload and try again.'); return; }
+    btn.disabled = true; btn.textContent = 'Working…';
+    client.auth.updateUser({ password: p1 }).then(function (res) {
+      if (res.error) { btn.disabled = false; btn.textContent = 'Set my new password'; showErr('atr-reset-link-err', 'That password was not accepted. Try again.'); return; }
+      finish('atr-reset-link-done', btn);
+    }).catch(function () {
+      btn.disabled = false; btn.textContent = 'Set my new password';
+      showErr('atr-reset-link-err', 'Something went wrong. Please try again.');
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    el('atr-reset-close').addEventListener('click', close);
+    el('atr-reset-send').addEventListener('click', sendCode);
+    el('atr-reset-resend').addEventListener('click', function () { showStep('request'); showErr('atr-reset-code-err', ''); });
+    el('atr-reset-verify').addEventListener('click', verifyAndSet);
+    el('atr-reset-link-set').addEventListener('click', linkSet);
+
+    // Expose for the account modal's "Forgot password" button and other pages.
+    window.atrOpenReset = function () { showStep('request'); open(); };
+
+    var client = getClient();
+    // Recovery links that arrive dead (expired/invalid) land back here with an
+    // error in the URL — turn that dead end into the working code flow.
+    if (window.location.hash && window.location.hash.indexOf('error_code=otp_expired') > -1) {
+      showStep('request');
+      showErr('atr-reset-req-err', 'That reset link had expired. No problem — request a fresh code here and set your password on this page.');
+      open();
+    }
+    if (client) {
+      client.auth.onAuthStateChange(function (event) {
+        if (event === 'PASSWORD_RECOVERY') {
+          recoveryMode = true;
+          showStep('link');
+          open();
+        }
+      });
+      // If the page loaded with a live recovery token in the URL, the client
+      // exchanges it and fires PASSWORD_RECOVERY above. Also catch the case
+      // where a session already exists from the link on a fresh load:
+      if (window.location.hash && window.location.hash.indexOf('type=recovery') > -1) {
+        client.auth.getSession().then(function (res) {
+          if (res.data && res.data.session) { recoveryMode = true; showStep('link'); open(); }
+        }).catch(function () {});
+      }
+    }
+  });
+})();
+</script>
+<!-- ==================== /SELF-SERVICE PASSWORD RESET ==================== -->
+
 </body>
 </html>
