@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Employee Portal | Austin's Tech Repair Group</title>
-  <meta name="description" content="Staff-only operations portal for Austin's Tech Repair Group: tickets, job applications, investors, feedback, customers, inventory." />
+  <meta name="description" content="Staff-only operations portal for Austin's Tech Repair Group: tickets, job applications, investors, feedback, customers, inventory, new hires." />
   <meta name="robots" content="noindex, nofollow" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
   <link rel="stylesheet" href="portal.css" />
@@ -84,6 +84,9 @@
         </button>
         <button class="portal-tab" id="portal-tab-inventory" type="button" role="tab" data-tab="inventory">
           <i class="fas fa-boxes"></i> Inventory &amp; Orders
+        </button>
+        <button class="portal-tab" id="portal-tab-newhires" type="button" role="tab" data-tab="newhires">
+          <i class="fas fa-user-plus"></i> New Hire
         </button>
       </div>
 
@@ -166,6 +169,97 @@
         </div>
         <div id="portal-po-list"><p class="portal-muted">Loading purchase orders&hellip;</p></div>
       </div>
+
+      <!-- NEW HIRES (1099 INDEPENDENT CONTRACTORS) -->
+      <div class="portal-panel" id="portal-panel-newhires" role="tabpanel" hidden>
+        <div class="portal-panel-head">
+          <h2 class="portal-h2">New Hire <span class="portal-badge portal-badge-role">Independent Contractor (1099)</span></h2>
+          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="newhires">
+            <i class="fas fa-rotate-right"></i> Refresh
+          </button>
+        </div>
+        <p class="portal-muted portal-small">Onboard 1099 independent contractors. Austin collects each contractor&rsquo;s W-9 directly &mdash; no Social Security or tax ID numbers are stored here.</p>
+        <form id="portal-newhire-form" novalidate>
+          <div class="portal-nh-grid">
+            <div class="portal-field">
+              <label for="portal-nh-name">Full name <span aria-hidden="true">*</span></label>
+              <input type="text" id="portal-nh-name" placeholder="Contractor's full legal name" required />
+            </div>
+            <div class="portal-field">
+              <label for="portal-nh-business">Business name (optional)</label>
+              <input type="text" id="portal-nh-business" placeholder="If they contract under a business name" />
+            </div>
+            <div class="portal-field">
+              <label for="portal-nh-email">Email</label>
+              <input type="email" id="portal-nh-email" placeholder="contractor@example.com" />
+            </div>
+            <div class="portal-field">
+              <label for="portal-nh-phone">Phone</label>
+              <input type="tel" id="portal-nh-phone" placeholder="(555) 123-4567" />
+            </div>
+            <div class="portal-field">
+              <label for="portal-nh-role">Role / title</label>
+              <input type="text" id="portal-nh-role" placeholder="e.g. Repair Technician" />
+            </div>
+            <div class="portal-field">
+              <label for="portal-nh-start">Start date</label>
+              <input type="date" id="portal-nh-start" />
+            </div>
+            <div class="portal-field">
+              <label for="portal-nh-paytype">Pay type</label>
+              <select id="portal-nh-paytype">
+                <option value="per_job" selected>Per job</option>
+                <option value="hourly">Hourly</option>
+                <option value="flat_rate">Flat rate</option>
+              </select>
+            </div>
+            <div class="portal-field">
+              <label for="portal-nh-rate">Pay rate</label>
+              <input type="number" id="portal-nh-rate" min="0" step="0.01" placeholder="e.g. 85.00" />
+            </div>
+            <div class="portal-field portal-nh-check">
+              <label for="portal-nh-w9"><input type="checkbox" id="portal-nh-w9" /> W-9 on file</label>
+            </div>
+            <div class="portal-field portal-nh-check">
+              <label for="portal-nh-agreement"><input type="checkbox" id="portal-nh-agreement" /> Contractor agreement signed</label>
+            </div>
+            <div class="portal-field portal-nh-wide">
+              <label for="portal-nh-address">Address</label>
+              <input type="text" id="portal-nh-address" placeholder="Street, city, state, ZIP" />
+            </div>
+            <div class="portal-field">
+              <label for="portal-nh-ecname">Emergency contact name</label>
+              <input type="text" id="portal-nh-ecname" />
+            </div>
+            <div class="portal-field">
+              <label for="portal-nh-ecphone">Emergency contact phone</label>
+              <input type="tel" id="portal-nh-ecphone" />
+            </div>
+            <div class="portal-field">
+              <label for="portal-nh-status">Status</label>
+              <select id="portal-nh-status">
+                <option value="Onboarding" selected>Onboarding</option>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+            </div>
+            <div class="portal-field portal-nh-wide">
+              <label for="portal-nh-notes">Notes</label>
+              <textarea id="portal-nh-notes" rows="3" placeholder="Anything else about this contractor&hellip;"></textarea>
+            </div>
+          </div>
+          <p class="portal-error" id="portal-nh-error" hidden></p>
+          <p class="portal-muted" id="portal-nh-success" hidden><i class="fas fa-circle-check"></i> New hire saved &mdash; they now appear in the list below.</p>
+          <button class="portal-btn portal-btn-primary" id="portal-nh-submit" type="submit">
+            <i class="fas fa-user-plus"></i> Add new hire
+          </button>
+        </form>
+
+        <div class="portal-panel-head portal-subhead">
+          <h2 class="portal-h2">Current Hires</h2>
+        </div>
+        <div id="portal-nh-list"><p class="portal-muted">Loading hires&hellip;</p></div>
+      </div>
     </section>
   </main>
 
@@ -185,5 +279,244 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="portal.js"></script>
+  <script>
+  /* ================= NEW HIRES (1099 contractors) =================
+   * Section logic for the "New Hire" tab. Mirrors portal.js conventions
+   * (ES5, escaped output, same Supabase project). Bound after portal.js:
+   * the portal's own tab handler only knows its built-in panels, so this
+   * section manages its own panel and data without touching them. */
+  (function () {
+    'use strict';
+
+    var SUPABASE_URL = 'https://lyujxpuicarblpkdzuuc.supabase.co';
+    var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
+
+    var loaded = false;
+
+    function $(id) { return document.getElementById(id); }
+
+    function esc(v) {
+      return String(v == null ? '' : v)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function trim(v) { return String(v == null ? '' : v).trim(); }
+
+    function fmtDate(iso) {
+      if (!iso) return '\u2014';
+      var d = new Date(iso.length === 10 ? iso + 'T12:00:00' : iso);
+      if (isNaN(d.getTime())) return '\u2014';
+      return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+
+    function fmtMoney(v) {
+      if (v == null || v === '' || isNaN(Number(v))) return '\u2014';
+      return '$' + Number(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function fmtYesNo(v) {
+      if (v === true) return '<span class="portal-check"><i class="fas fa-circle-check"></i> Yes</span>';
+      if (v === false) return '<span class="portal-check no"><i class="fas fa-circle-xmark"></i> No</span>';
+      return '\u2014';
+    }
+
+    function nhBadgeClass(status) {
+      var s = String(status || '').toLowerCase();
+      if (s === 'onboarding') return 'portal-st-new';
+      if (s === 'active') return 'portal-st-ready';
+      if (s === 'inactive') return 'portal-st-cancelled';
+      return '';
+    }
+
+    function nhBadge(status) {
+      return '<span class="portal-badge ' + nhBadgeClass(status) + '">' + esc(status || '\u2014') + '</span>';
+    }
+
+    function payTypeLabel(v) {
+      if (v === 'per_job') return 'Per job';
+      if (v === 'hourly') return 'Hourly';
+      if (v === 'flat_rate') return 'Flat rate';
+      return v || '\u2014';
+    }
+
+    function getClient() {
+      if (window.supabase && window.supabase.createClient) {
+        try { return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); }
+        catch (e) { return null; }
+      }
+      return null;
+    }
+
+    function listError(el) {
+      el.innerHTML = '<p class="portal-error">Couldn&rsquo;t load hires. Check your connection and hit Refresh.</p>';
+    }
+
+    function emptyState(el, text) {
+      el.innerHTML = '<div class="portal-empty">' + esc(text) + '</div>';
+    }
+
+    function renderNewHires(rows) {
+      var list = $('portal-nh-list');
+      if (!rows.length) { emptyState(list, 'No hires yet. Add the first 1099 contractor with the form above.'); return; }
+      list.innerHTML = rows.map(function (h) {
+        var bits = [];
+        if (h.role) bits.push(esc(h.role));
+        if (h.business_name) bits.push(esc(h.business_name));
+        if (h.phone) bits.push(esc(h.phone));
+        var pay = esc(payTypeLabel(h.pay_type));
+        if (h.pay_rate != null && h.pay_rate !== '') pay += ' \u00b7 ' + esc(fmtMoney(h.pay_rate));
+        return '<article class="portal-card">' +
+          '<div class="portal-card-top"><p class="portal-card-title">' + esc(h.full_name || 'Hire') + '</p>' + nhBadge(h.status) + '</div>' +
+          (bits.length ? '<p class="portal-card-meta">' + bits.join(' \u00b7 ') + '</p>' : '') +
+          '<p class="portal-card-meta"><i class="fas fa-calendar"></i> Start: ' + esc(fmtDate(h.start_date)) +
+          ' \u00b7 Pay: ' + pay + '</p>' +
+          '<p class="portal-card-meta">W-9 on file: ' + fmtYesNo(h.w9_on_file) +
+          ' \u00b7 Agreement signed: ' + fmtYesNo(h.agreement_signed) + '</p>' +
+          '</article>';
+      }).join('');
+    }
+
+    function loadNewHires(force) {
+      var list = $('portal-nh-list');
+      if (!list) return;
+      if (!force) list.innerHTML = '<p class="portal-muted">Loading hires&hellip;</p>';
+      var client = getClient();
+      if (!client) { listError(list); return; }
+      client.from('new_hires').select('*').order('created_at', { ascending: false }).limit(200)
+        .then(function (res) {
+          if (res.error) { listError(list); return; }
+          loaded = true;
+          renderNewHires(res.data || []);
+        })
+        .catch(function () { listError(list); });
+    }
+
+    function closeDrawerInline() {
+      var o = $('portal-drawer-overlay');
+      var d = $('portal-drawer');
+      if (o) o.hidden = true;
+      if (d) { d.classList.remove('open'); d.setAttribute('aria-hidden', 'true'); }
+    }
+
+    function showNewHires() {
+      var tabs = document.querySelectorAll('.portal-tab');
+      var i;
+      for (i = 0; i < tabs.length; i++) {
+        tabs[i].classList.toggle('active', tabs[i].getAttribute('data-tab') === 'newhires');
+      }
+      var panels = document.querySelectorAll('.portal-panel');
+      for (i = 0; i < panels.length; i++) { panels[i].hidden = true; }
+      $('portal-panel-newhires').hidden = false;
+      closeDrawerInline();
+      if (!loaded) loadNewHires(false);
+    }
+
+    function initNewHireForm() {
+      var form = $('portal-newhire-form');
+      if (!form) return;
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var err = $('portal-nh-error');
+        var ok = $('portal-nh-success');
+        err.hidden = true; err.textContent = '';
+        ok.hidden = true;
+        var fullName = trim($('portal-nh-name').value);
+        if (!fullName) {
+          err.textContent = 'Full name is required.';
+          err.hidden = false;
+          return;
+        }
+        var rateRaw = trim($('portal-nh-rate').value);
+        var row = {
+          full_name: fullName,
+          business_name: trim($('portal-nh-business').value) || null,
+          email: trim($('portal-nh-email').value) || null,
+          phone: trim($('portal-nh-phone').value) || null,
+          role: trim($('portal-nh-role').value) || null,
+          start_date: $('portal-nh-start').value || null,
+          pay_type: $('portal-nh-paytype').value,
+          pay_rate: rateRaw === '' ? null : Number(rateRaw),
+          w9_on_file: $('portal-nh-w9').checked,
+          agreement_signed: $('portal-nh-agreement').checked,
+          address: trim($('portal-nh-address').value) || null,
+          emergency_contact_name: trim($('portal-nh-ecname').value) || null,
+          emergency_contact_phone: trim($('portal-nh-ecphone').value) || null,
+          status: $('portal-nh-status').value,
+          notes: trim($('portal-nh-notes').value) || null
+        };
+        var btn = $('portal-nh-submit');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving&hellip;';
+        var client = getClient();
+        if (!client) {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fas fa-user-plus"></i> Add new hire';
+          err.textContent = 'Couldn\u2019t reach the database. Check your connection and try again.';
+          err.hidden = false;
+          return;
+        }
+        client.from('new_hires').insert(row).then(function (res) {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fas fa-user-plus"></i> Add new hire';
+          if (res.error) {
+            err.textContent = 'Couldn\u2019t save that hire: ' + res.error.message;
+            err.hidden = false;
+            return;
+          }
+          form.reset();
+          ok.hidden = false;
+          loaded = false;
+          loadNewHires(true);
+        }).catch(function () {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fas fa-user-plus"></i> Add new hire';
+          err.textContent = 'Couldn\u2019t save that hire. Try again.';
+          err.hidden = false;
+        });
+      });
+    }
+
+    function init() {
+      var tab = $('portal-tab-newhires');
+      if (tab) tab.addEventListener('click', showNewHires);
+      document.addEventListener('click', function (e) {
+        var t = e.target;
+        while (t && t !== document) {
+          if (t.getAttribute && t.getAttribute('data-tab')) {
+            if (t.getAttribute('data-tab') !== 'newhires') {
+              var p = $('portal-panel-newhires');
+              if (p) p.hidden = true;
+            }
+            return;
+          }
+          t = t.parentNode;
+        }
+      });
+      var refresh = document.querySelector('[data-refresh="newhires"]');
+      if (refresh) refresh.addEventListener('click', function () { loaded = false; loadNewHires(true); });
+      initNewHireForm();
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  })();
+  </script>
+  <style>
+    .portal-nh-grid { display: grid; grid-template-columns: 1fr; gap: 0 1rem; }
+    @media (min-width: 720px) {
+      .portal-nh-grid { grid-template-columns: 1fr 1fr; }
+      .portal-nh-grid .portal-nh-wide { grid-column: 1 / -1; }
+    }
+    .portal-nh-check label { display: flex; align-items: center; gap: 0.55rem; margin-bottom: 0; cursor: pointer; }
+    .portal-nh-check input[type="checkbox"] { width: 1.15rem; height: 1.15rem; margin: 0; flex: none; }
+    #portal-newhire-form .portal-btn-primary { margin-top: 0.25rem; }
+  </style>
 </body>
 </html>
