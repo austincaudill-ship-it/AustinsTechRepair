@@ -2403,10 +2403,11 @@
   }
   function finish(doneId, btn) {
     var d = el(doneId);
-    d.textContent = "Done — your password is set. You can now sign in with your email and your new password, here and on the employee portal.";
+    d.textContent = "Done — your password is set. Taking you to sign in…";
     d.hidden = false;
     if (btn) { btn.disabled = false; btn.textContent = 'Set my new password'; }
     if (recoveryMode && sb) { sb.auth.signOut().catch(function () {}); }
+    setTimeout(function () { close(); window.location.href = '/portal.html'; }, 1800);
   }
 
   function sendCode() {
