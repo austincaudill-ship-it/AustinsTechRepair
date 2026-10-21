@@ -906,3 +906,26 @@ html[data-theme="dark"] .header {
   .emp-tabs { gap: 0.35rem; }
   .emp-tab { padding: 0.5rem 0.75rem; font-size: 0.85rem; }
 }
+
+/* ===== Logo color picker ===== */
+.logo-picker { display: inline-flex; align-items: center; gap: 0.35rem; margin-right: 0.15rem; }
+.logo-swatch { width: 20px; height: 20px; border-radius: 50%; border: 2px solid rgba(127, 150, 175, 0.45); padding: 0; cursor: pointer; flex: none; }
+.logo-swatch.sw-original { background: conic-gradient(#1b6ec2 0 40%, #0f7a84 40% 70%, #d96c27 70% 100%); }
+.logo-swatch.sw-teal { background: #0f7a84; }
+.logo-swatch.sw-orange { background: #d96c27; }
+.logo-swatch.sw-violet { background: #6d28a8; }
+.logo-swatch.is-active { border-color: var(--ink, #14202e); box-shadow: 0 0 0 2px rgba(27, 110, 194, 0.35); }
+@media (max-width: 560px) { .logo-picker { gap: 0.25rem; } .logo-swatch { width: 17px; height: 17px; } }
+
+/* ===== Mobile header + iOS input fixes (QA 2026-10-21) ===== */
+@media (max-width: 768px) {
+  input[type="text"], input[type="email"], input[type="tel"], input[type="number"],
+  input[type="search"], input[type="password"], input[type="url"], input[type="date"],
+  select, textarea { font-size: 16px !important; }
+}
+@media (max-width: 560px) {
+  .brand-sub { display: none; }
+  .brand-name { font-size: 0.92rem; }
+  .account-label { display: none; }
+  .brand-mark img { width: 36px !important; height: 36px !important; }
+}

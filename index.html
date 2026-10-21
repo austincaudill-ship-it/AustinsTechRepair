@@ -57,12 +57,13 @@
   <!-- HEADER -->
   <header class="header">
     <a href="#home" class="brand" data-page="home" aria-label="Go to home page">
-      <div class="brand-mark"><img src="images/atr-logo.png" alt="ATR logo" style="width:44px;height:44px;border-radius:14px;object-fit:cover;"></div>
+      <div class="brand-mark"><img id="brand-logo-img" src="images/atr-logo.png" alt="ATR logo" style="width:44px;height:44px;border-radius:14px;object-fit:cover;"></div>
       <div class="brand-info">
         <span class="brand-name">Austin's Tech Repair Group</span>
         <span class="brand-sub">Mobile Repair &mdash; Ohio</span>
       </div>
     </a>
+    <script>(function(){try{var v=localStorage.getItem('atr-logo-variant');if(v&&v!=='original'){var m={teal:'images/atr-logo-teal.png',orange:'images/atr-logo-orange.png',violet:'images/atr-logo-violet.png'};var img=document.getElementById('brand-logo-img');if(img&&m[v]){img.src=m[v];}}}catch(e){}})();</script>
 
     <nav class="nav-desktop" aria-label="Main navigation">
       <a class="nav-link active" href="#home" data-page="home">Home</a>
@@ -75,6 +76,12 @@
     </nav>
 
     <div class="header-actions">
+      <div class="logo-picker" role="group" aria-label="Choose logo color" title="Logo color">
+        <button type="button" class="logo-swatch sw-original is-active" data-logo-variant="original" aria-label="Original logo colors" title="Original"></button>
+        <button type="button" class="logo-swatch sw-teal" data-logo-variant="teal" aria-label="Teal logo" title="Teal"></button>
+        <button type="button" class="logo-swatch sw-orange" data-logo-variant="orange" aria-label="Orange logo" title="Orange"></button>
+        <button type="button" class="logo-swatch sw-violet" data-logo-variant="violet" aria-label="Violet logo" title="Violet"></button>
+      </div>
       <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark/light mode">
         <i class="fas fa-moon" id="theme-icon"></i>
       </button>
@@ -216,7 +223,7 @@
               <p>Routers, switches, and Wi-Fi access points hooked up and configured &mdash; verified working end to end at your home or office.</p>
             </div>
             <div class="service-card">
-              <div class="service-icon"><i class="fas fa-ethernet-port"></i></div>
+              <div class="service-icon"><i class="fas fa-plug"></i></div>
               <h3>Internet Cabling</h3>
               <p>Clean, reliable Ethernet runs for homes and small businesses &mdash; finished, tested, and working before we leave.</p>
             </div>

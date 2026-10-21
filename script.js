@@ -2337,3 +2337,44 @@
     });
   });
 })();
+
+/* ===== Logo color picker ===== */
+(function () {
+  'use strict';
+  var VARIANTS = {
+    original: { img: 'images/atr-logo.png', fav: 'favicon-32x32.png' },
+    teal: { img: 'images/atr-logo-teal.png', fav: 'images/atr-logo-teal-64.png' },
+    orange: { img: 'images/atr-logo-orange.png', fav: 'images/atr-logo-orange-64.png' },
+    violet: { img: 'images/atr-logo-violet.png', fav: 'images/atr-logo-violet-64.png' }
+  };
+  var KEY = 'atr-logo-variant';
+  function applyVariant(name) {
+    var v = VARIANTS[name] || VARIANTS.original;
+    var img = document.getElementById('brand-logo-img');
+    if (img) img.src = v.img;
+    var links = document.querySelectorAll('link[rel="icon"]');
+    for (var i = 0; i < links.length; i++) links[i].href = v.fav;
+    var sw = document.querySelectorAll('.logo-swatch');
+    for (var j = 0; j < sw.length; j++) {
+      sw[j].classList.toggle('is-active', sw[j].getAttribute('data-logo-variant') === name);
+    }
+    try { localStorage.setItem(KEY, name); } catch (e) {}
+  }
+  function initLogoPicker() {
+    var saved = 'original';
+    try { saved = localStorage.getItem(KEY) || 'original'; } catch (e) {}
+    if (!VARIANTS[saved]) saved = 'original';
+    applyVariant(saved);
+    var sw = document.querySelectorAll('.logo-swatch');
+    for (var i = 0; i < sw.length; i++) {
+      sw[i].addEventListener('click', function () {
+        applyVariant(this.getAttribute('data-logo-variant'));
+      });
+    }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initLogoPicker);
+  } else {
+    initLogoPicker();
+  }
+})();
