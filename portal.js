@@ -226,7 +226,7 @@
       if (!profile) {
         client.auth.signOut().then(function () {
           state.user = null; state.profile = null;
-          showLogin('That account isn&rsquo;t an employee account. This portal is employee access only — customers, please use the customer area on the main site instead.');
+          showLogin('That account isn’t an employee account. This portal is employee access only — customers, please use the customer area on the main site instead.');
         });
         return;
       }
@@ -238,7 +238,7 @@
 
   function initAuth() {
     withClient(function (client) {
-      if (!client) { showLogin('Couldn&rsquo;t reach the sign-in service. Check your connection and reload the page.'); return; }
+      if (!client) { showLogin('Couldn’t reach the sign-in service. Check your connection and reload the page.'); return; }
 
       client.auth.getSession().then(function (res) {
         var session = res.data && res.data.session;
