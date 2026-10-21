@@ -88,6 +88,9 @@
         <button class="portal-tab" id="portal-tab-newhires" type="button" role="tab" data-tab="newhires">
           <i class="fas fa-user-plus"></i> New Hire
         </button>
+        <button class="portal-tab" id="portal-tab-guides" type="button" role="tab" data-tab="guides">
+          <i class="fas fa-book-open"></i> Guides
+        </button>
       </div>
 
       <!-- TICKETS -->
@@ -276,6 +279,97 @@
       <p class="portal-muted">Loading&hellip;</p>
     </div>
   </aside>
+
+
+      <!-- GUIDES -->
+      <div class="portal-panel" id="portal-panel-guides" role="tabpanel" hidden>
+        <div class="portal-panel-head">
+          <h2 class="portal-h2">Repair Guides &amp; How-Tos</h2>
+          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="guides">
+            <i class="fas fa-rotate-right"></i> Refresh
+          </button>
+        </div>
+        <p class="portal-muted portal-small">Search the shop&rsquo;s how-to database: iFixit guides, internal procedures, and videos. Type a device, repair, or tag (try &ldquo;iPhone 13 battery&rdquo;).</p>
+        <div class="portal-guide-tools">
+          <div class="portal-field">
+            <label for="portal-guide-search">Search guides</label>
+            <input type="search" id="portal-guide-search" placeholder="Search title, device, tags, notes&hellip;" />
+          </div>
+          <div class="portal-field">
+            <label for="portal-guide-category-filter">Category</label>
+            <select id="portal-guide-category-filter">
+              <option value="all" selected>All categories</option>
+              <option value="Screen">Screen</option>
+              <option value="Battery">Battery</option>
+              <option value="Charge Port">Charge Port</option>
+              <option value="Board-Level">Board-Level</option>
+              <option value="Data Recovery">Data Recovery</option>
+              <option value="Console">Console</option>
+              <option value="Computer">Computer</option>
+              <option value="General">General</option>
+              <option value="Business">Business</option>
+            </select>
+          </div>
+        </div>
+        <p class="portal-muted portal-small" id="portal-guides-count"></p>
+        <div id="portal-guides-list"><p class="portal-muted">Loading guides&hellip;</p></div>
+
+        <div class="portal-panel-head portal-subhead">
+          <h3 class="portal-h3">Add a guide</h3>
+        </div>
+        <form id="portal-guide-form" novalidate>
+          <div class="portal-nh-grid">
+            <div class="portal-field">
+              <label for="portal-guide-title">Title <span aria-hidden="true">*</span></label>
+              <input type="text" id="portal-guide-title" placeholder="e.g. iPhone 13 Battery Replacement" required />
+            </div>
+            <div class="portal-field">
+              <label for="portal-guide-device">Device</label>
+              <input type="text" id="portal-guide-device" placeholder="e.g. iPhone 13, Galaxy S23, Pixel 8" />
+            </div>
+            <div class="portal-field">
+              <label for="portal-guide-category">Category</label>
+              <select id="portal-guide-category">
+                <option value="Screen">Screen</option>
+                <option value="Battery" selected>Battery</option>
+                <option value="Charge Port">Charge Port</option>
+                <option value="Board-Level">Board-Level</option>
+                <option value="Data Recovery">Data Recovery</option>
+                <option value="Console">Console</option>
+                <option value="Computer">Computer</option>
+                <option value="General">General</option>
+                <option value="Business">Business</option>
+              </select>
+            </div>
+            <div class="portal-field">
+              <label for="portal-guide-kind">Type</label>
+              <select id="portal-guide-kind">
+                <option value="ifixit" selected>iFixit guide</option>
+                <option value="internal">Internal how-to</option>
+                <option value="video">Video</option>
+                <option value="other">Other link</option>
+              </select>
+            </div>
+            <div class="portal-field portal-nh-wide">
+              <label for="portal-guide-url">Link (URL)</label>
+              <input type="url" id="portal-guide-url" placeholder="https://www.ifixit.com/Guide/&hellip;" />
+            </div>
+            <div class="portal-field portal-nh-wide">
+              <label for="portal-guide-tags">Tags (comma-separated)</label>
+              <input type="text" id="portal-guide-tags" placeholder="e.g. battery, adhesive, calibration" />
+            </div>
+            <div class="portal-field portal-nh-wide">
+              <label for="portal-guide-notes">Notes / internal steps</label>
+              <textarea id="portal-guide-notes" rows="3" placeholder="Shop notes, gotchas, or the steps for an internal how-to"></textarea>
+            </div>
+          </div>
+          <p class="portal-error" id="portal-guide-error" hidden></p>
+          <p class="portal-success" id="portal-guide-success" hidden>Guide saved.</p>
+          <button class="portal-btn portal-btn-primary" id="portal-guide-submit" type="submit">
+            <i class="fas fa-plus"></i> Add guide
+          </button>
+        </form>
+      </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="portal.js"></script>
@@ -508,6 +602,238 @@
     }
   })();
   </script>
+  <script>
+  /* ================= GUIDES (how-to database) =================
+   * "Guides" tab: searchable knowledge base of iFixit links, internal
+   * how-tos and videos, backed by public.guides. Mirrors the New Hire
+   * section's pattern (self-contained, own panel management). */
+  (function () {
+    'use strict';
+
+    var SUPABASE_URL = 'https://lyujxpuicarblpkdzuuc.supabase.co';
+    var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
+
+    var loaded = false;
+    var allGuides = [];
+    var confirmDeleteId = null;
+
+    function $(id) { return document.getElementById(id); }
+
+    function esc(v) {
+      return String(v == null ? '' : v)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function trim(v) { return String(v == null ? '' : v).trim(); }
+
+    function getClient() {
+      if (window.supabase && window.supabase.createClient) {
+        try { return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); }
+        catch (e) { return null; }
+      }
+      return null;
+    }
+
+    function kindLabel(v) {
+      if (v === 'ifixit') return 'iFixit';
+      if (v === 'internal') return 'Internal';
+      if (v === 'video') return 'Video';
+      return 'Link';
+    }
+
+    function safeUrl(u) {
+      var s = trim(u);
+      if (/^https:\/\//i.test(s) || /^http:\/\//i.test(s)) return s;
+      return '';
+    }
+
+    function renderGuides() {
+      var list = $('portal-guides-list');
+      var count = $('portal-guides-count');
+      if (!list) return;
+      var q = trim($('portal-guide-search').value).toLowerCase();
+      var cat = $('portal-guide-category-filter').value;
+      var rows = allGuides.filter(function (g) {
+        if (cat !== 'all' && g.category !== cat) return false;
+        if (!q) return true;
+        var hay = [g.title, g.device, g.category, g.tags, g.notes].join(' ').toLowerCase();
+        return q.split(/\s+/).every(function (w) { return hay.indexOf(w) !== -1; });
+      });
+      if (count) count.textContent = rows.length + (rows.length === 1 ? ' guide' : ' guides') + (q || cat !== 'all' ? ' match your search.' : ' in the database.');
+      if (!rows.length) {
+        list.innerHTML = '<div class="portal-empty">' + (allGuides.length ? 'No guides match that search yet.' : 'No guides yet. Add the first one with the form below.') + '</div>';
+        return;
+      }
+      list.innerHTML = rows.map(function (g) {
+        var url = safeUrl(g.url);
+        var confirming = confirmDeleteId === g.id;
+        return '<article class="portal-card">' +
+          '<div class="portal-card-top"><p class="portal-card-title">' + esc(g.title) + '</p>' +
+          '<span class="portal-badge">' + esc(kindLabel(g.kind)) + '</span></div>' +
+          '<p class="portal-card-meta">' +
+            (g.device ? esc(g.device) + ' \u00b7 ' : '') + esc(g.category || 'General') +
+            (g.tags ? ' \u00b7 ' + esc(g.tags) : '') + '</p>' +
+          (g.notes ? '<p class="portal-card-meta">' + esc(g.notes) + '</p>' : '') +
+          '<p class="portal-card-meta portal-guide-actions">' +
+            (url ? '<a href="' + esc(url) + '" target="_blank" rel="noopener"><i class="fas fa-arrow-up-right-from-square"></i> Open guide</a>' : '<span class="portal-muted">Internal how-to</span>') +
+            '<button type="button" class="portal-guide-del' + (confirming ? ' confirming' : '') + '" data-guide-del="' + esc(g.id) + '">' +
+            (confirming ? 'Confirm delete?' : 'Delete') + '</button>' +
+          '</p></article>';
+      }).join('');
+    }
+
+    function loadGuides(force) {
+      var list = $('portal-guides-list');
+      if (!list) return;
+      if (!force) list.innerHTML = '<p class="portal-muted">Loading guides&hellip;</p>';
+      var client = getClient();
+      if (!client) { list.innerHTML = '<p class="portal-error">Couldn&rsquo;t load guides. Check your connection and hit Refresh.</p>'; return; }
+      client.from('guides').select('*').order('created_at', { ascending: false }).limit(500)
+        .then(function (res) {
+          if (res.error) { list.innerHTML = '<p class="portal-error">Couldn&rsquo;t load guides: ' + esc(res.error.message) + '</p>'; return; }
+          loaded = true;
+          allGuides = res.data || [];
+          renderGuides();
+        })
+        .catch(function () { list.innerHTML = '<p class="portal-error">Couldn&rsquo;t load guides. Check your connection and hit Refresh.</p>'; });
+    }
+
+    function closeDrawerInline() {
+      var o = $('portal-drawer-overlay');
+      var d = $('portal-drawer');
+      if (o) o.hidden = true;
+      if (d) { d.classList.remove('open'); d.setAttribute('aria-hidden', 'true'); }
+    }
+
+    function showGuides() {
+      var tabs = document.querySelectorAll('.portal-tab');
+      var i;
+      for (i = 0; i < tabs.length; i++) {
+        tabs[i].classList.toggle('active', tabs[i].getAttribute('data-tab') === 'guides');
+      }
+      var panels = document.querySelectorAll('.portal-panel');
+      for (i = 0; i < panels.length; i++) { panels[i].hidden = true; }
+      $('portal-panel-guides').hidden = false;
+      closeDrawerInline();
+      if (!loaded) loadGuides(false);
+    }
+
+    function initGuideForm() {
+      var form = $('portal-guide-form');
+      if (!form) return;
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var err = $('portal-guide-error');
+        var ok = $('portal-guide-success');
+        err.hidden = true; err.textContent = '';
+        ok.hidden = true;
+        var title = trim($('portal-guide-title').value);
+        if (!title) { err.textContent = 'Title is required.'; err.hidden = false; return; }
+        var kind = $('portal-guide-kind').value;
+        var url = trim($('portal-guide-url').value);
+        if (kind !== 'internal' && !url) { err.textContent = 'Add a link, or switch the type to Internal how-to.'; err.hidden = false; return; }
+        if (url && !safeUrl(url)) { err.textContent = 'That link doesn&rsquo;t look right — links must start with https://'; err.hidden = false; return; }
+        var row = {
+          title: title,
+          device: trim($('portal-guide-device').value) || null,
+          category: $('portal-guide-category').value,
+          kind: kind,
+          url: url || null,
+          tags: trim($('portal-guide-tags').value) || null,
+          notes: trim($('portal-guide-notes').value) || null
+        };
+        var btn = $('portal-guide-submit');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving&hellip;';
+        var client = getClient();
+        if (!client) {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fas fa-plus"></i> Add guide';
+          err.textContent = 'Couldn&rsquo;t reach the database. Check your connection and try again.';
+          err.hidden = false;
+          return;
+        }
+        client.from('guides').insert(row).then(function (res) {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fas fa-plus"></i> Add guide';
+          if (res.error) { err.textContent = 'Couldn&rsquo;t save that guide: ' + res.error.message; err.hidden = false; return; }
+          form.reset();
+          $('portal-guide-category').value = 'Battery';
+          $('portal-guide-kind').value = 'ifixit';
+          ok.hidden = false;
+          loaded = false;
+          loadGuides(true);
+        }).catch(function () {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fas fa-plus"></i> Add guide';
+          err.textContent = 'Couldn&rsquo;t save that guide. Try again.';
+          err.hidden = false;
+        });
+      });
+    }
+
+    function initGuides() {
+      var tab = $('portal-tab-guides');
+      if (tab) tab.addEventListener('click', showGuides);
+      document.addEventListener('click', function (e) {
+        var t = e.target;
+        while (t && t !== document) {
+          if (t.getAttribute && t.getAttribute('data-tab')) {
+            if (t.getAttribute('data-tab') !== 'guides') {
+              var p = $('portal-panel-guides');
+              if (p) p.hidden = true;
+            }
+            return;
+          }
+          t = t.parentNode;
+        }
+      });
+      var refresh = document.querySelector('[data-refresh="guides"]');
+      if (refresh) refresh.addEventListener('click', function () { loaded = false; loadGuides(true); });
+      var search = $('portal-guide-search');
+      if (search) search.addEventListener('input', renderGuides);
+      var catFilter = $('portal-guide-category-filter');
+      if (catFilter) catFilter.addEventListener('change', renderGuides);
+      var list = $('portal-guides-list');
+      if (list) list.addEventListener('click', function (e) {
+        var btn = e.target.closest ? e.target.closest('[data-guide-del]') : null;
+        if (!btn) return;
+        var id = btn.getAttribute('data-guide-del');
+        if (confirmDeleteId !== id) { confirmDeleteId = id; renderGuides(); return; }
+        confirmDeleteId = null;
+        btn.disabled = true;
+        btn.textContent = 'Deleting\u2026';
+        var client = getClient();
+        if (!client) { renderGuides(); return; }
+        client.from('guides').delete().eq('id', id).then(function (res) {
+          if (res.error) { renderGuides(); return; }
+          loaded = false;
+          loadGuides(true);
+        }).catch(function () { renderGuides(); });
+      });
+      initGuideForm();
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initGuides);
+    } else {
+      initGuides();
+    }
+  })();
+  </script>
+  <style>
+    .portal-guide-tools { display: grid; grid-template-columns: 1fr; gap: 0 1rem; margin-bottom: 0.4rem; }
+    @media (min-width: 720px) { .portal-guide-tools { grid-template-columns: 2fr 1fr; } }
+    .portal-guide-actions { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+    .portal-guide-del { background: none; border: none; color: #b3382e; cursor: pointer; font: inherit; font-size: 0.85rem; padding: 0; }
+    .portal-guide-del.confirming { font-weight: 700; text-decoration: underline; }
+    #portal-guide-form textarea { width: 100%; padding: 0.6rem 0.7rem; border: 2px solid var(--line, #d8cbb6); border-radius: 8px; background: var(--bg, #fff); color: var(--ink, #2c231a); font-size: 0.95rem; font-family: inherit; }
+    #portal-guide-form .portal-btn-primary { margin-top: 0.25rem; }
+  </style>
   <style>
     .portal-nh-grid { display: grid; grid-template-columns: 1fr; gap: 0 1rem; }
     @media (min-width: 720px) {
