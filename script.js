@@ -2452,3 +2452,10 @@
     if (isIOS) setTimeout(show, 5000);
   });
 })();
+
+/* Service worker registration (enables Add to Home Screen / install) */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("/sw.js").catch(function () {});
+  });
+}
