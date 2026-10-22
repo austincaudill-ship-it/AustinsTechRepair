@@ -853,6 +853,16 @@
             </form>
           </div>
 
+          <!-- My birthday (optional) -->
+          <div class="acct-birthday" id="acct-birthday-wrap" hidden>
+            <label class="acct-field">
+              <span><i class="fas fa-cake-candles"></i> My birthday (optional)</span>
+              <input type="date" id="acct-birthday" aria-label="Your birthday">
+            </label>
+            <p class="acct-muted">Add it and we&rsquo;ll have a little something for you on your day &mdash; 10% off your next service. Totally optional.</p>
+            <button class="btn btn-outline btn-sm" id="acct-birthday-save" type="button"><i class="fas fa-save"></i> Save birthday</button>
+            <span class="acct-muted" id="acct-birthday-msg"></span>
+          </div>
           <div class="acct-earn">
             <p><i class="fas fa-gift"></i> <strong>How to earn:</strong> 1 point for every $1 you spend on repairs.</p>
             <p><i class="fas fa-tag"></i> <strong>Redeem:</strong> every 100 points = $5 off your next repair. Just mention your points when you book.</p>
@@ -2556,5 +2566,76 @@
 </script>
 <!-- ==================== /SELF-SERVICE PASSWORD RESET ==================== -->
 
+<script>
+/* ===== ATRG Phase 3: customer birthday (self-service) ===== */
+(function () {
+  'use strict';
+
+  var SUPABASE_URL = 'https://lyujxpuicarblpkdzuuc.supabase.co';
+  var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
+
+  function $(id) { return document.getElementById(id); }
+
+  function getClient() {
+    if (window.supabase && window.supabase.createClient) {
+      try { return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); }
+      catch (e) { return null; }
+    }
+    return null;
+  }
+
+  var client = getClient();
+  if (!client) return;
+  var currentUserId = null;
+
+  function loadBirthday() {
+    var wrap = $('acct-birthday-wrap');
+    if (!wrap || !currentUserId) return;
+    client.from('customers').select('birthday').eq('id', currentUserId).maybeSingle()
+      .then(function (res) {
+        if (res.error || !res.data) { wrap.hidden = true; return; }
+        wrap.hidden = false;
+        var input = $('acct-birthday');
+        if (input && res.data.birthday) input.value = res.data.birthday;
+      })
+      .catch(function () {});
+  }
+
+  function init() {
+    var saveBtn = $('acct-birthday-save');
+    if (saveBtn) saveBtn.addEventListener('click', function () {
+      var input = $('acct-birthday');
+      var msg = $('acct-birthday-msg');
+      if (!input || !currentUserId) return;
+      var val = input.value || null;
+      if (msg) msg.textContent = 'Saving\u2026';
+      client.from('customers').update({ birthday: val }).eq('id', currentUserId)
+        .then(function (res) {
+          if (!msg) return;
+          if (res.error) { msg.textContent = 'Couldn\u2019t save \u2014 please try again.'; return; }
+          msg.textContent = val ? 'Saved. We\u2019ll have a little something for you on your day.' : 'Birthday cleared.';
+        })
+        .catch(function () { if (msg) msg.textContent = 'Couldn\u2019t save \u2014 please try again.'; });
+    });
+
+    client.auth.getSession().then(function (res) {
+      var session = res && res.data ? res.data.session : null;
+      currentUserId = session && session.user ? session.user.id : null;
+      loadBirthday();
+    }).catch(function () {});
+
+    client.auth.onAuthStateChange(function (event, session) {
+      currentUserId = session && session.user ? session.user.id : null;
+      loadBirthday();
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
 </body>
 </html>
