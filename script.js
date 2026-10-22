@@ -573,25 +573,37 @@
       });
     }
 
-    // Checkout: pre-fill the repair request form with the cart contents
+    // Checkout: real payment via the Square checkout function (prices are
+    // set server-side; the browser only sends product ids + quantities).
+    var SQ_CHECKOUT_URL = 'https://lyujxpuicarblpkdzuuc.supabase.co/functions/v1/square-checkout';
+    var SQ_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
     var checkoutBtn = document.getElementById('cart-checkout');
     if (checkoutBtn) {
       checkoutBtn.addEventListener('click', function () {
         var cart = getCart();
-        var ids = Object.keys(cart);
-        if (!ids.length) return;
-        var lines = ids.map(function (id) {
-          var p = PRODUCTS.find(function (x) { return x.id === id; });
-          return p ? (cart[id] + 'x ' + p.name + ' (' + money(p.price * cart[id]) + ')') : '';
-        }).filter(Boolean);
-        var summary = 'ACCESSORY ORDER (deliver during repair visit):\n' + lines.join('\n') + '\nSubtotal: ' + money(cartSum());
-        // Store for the repair form to pick up, then go to the repair page
-        try { sessionStorage.setItem('atr-accessory-order', summary); } catch (e) {}
-        closeCart();
-        // Navigate to repair page
-        var repairLink = document.querySelector('[data-page="repair"]');
-        if (repairLink) repairLink.click();
-        else window.location.hash = '#repair';
+        var items = Object.keys(cart).map(function (id) {
+          return { id: id, qty: cart[id] };
+        }).filter(function (x) { return x.qty > 0; });
+        if (!items.length) return;
+        var original = checkoutBtn.innerHTML;
+        checkoutBtn.disabled = true;
+        checkoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Taking you to secure checkout&hellip;';
+        fetch(SQ_CHECKOUT_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + SQ_ANON_KEY,
+            'apikey': SQ_ANON_KEY
+          },
+          body: JSON.stringify({ items: items })
+        }).then(function (r) { return r.json(); }).then(function (d) {
+          if (d && d.url) { window.location.href = d.url; return; }
+          throw new Error('no checkout url');
+        }).catch(function () {
+          checkoutBtn.disabled = false;
+          checkoutBtn.innerHTML = original;
+          alert('Checkout hit a snag — please try again, or text us at (937) 280-6243 and we will take your order.');
+        });
       });
     }
 
@@ -2377,4 +2389,66 @@
   } else {
     initLogoPicker();
   }
+})();
+
+/* ===== Add to Home Screen prompt ===== */
+(function () {
+  'use strict';
+  var DISMISS_KEY = 'atr-install-dismissed';
+  var deferredPrompt = null;
+
+  function isStandalone() {
+    return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+      window.navigator.standalone === true;
+  }
+  function isDismissed() {
+    try { return !!localStorage.getItem(DISMISS_KEY); } catch (e) { return false; }
+  }
+  function dismiss() {
+    try { localStorage.setItem(DISMISS_KEY, String(Date.now())); } catch (e) {}
+  }
+  function show() {
+    if (isStandalone() || isDismissed()) return;
+    var el = document.getElementById('install-prompt');
+    if (el) el.hidden = false;
+  }
+  function hide() {
+    var el = document.getElementById('install-prompt');
+    if (el) el.hidden = true;
+  }
+
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    deferredPrompt = e;
+    show();
+  });
+  window.addEventListener('appinstalled', function () { dismiss(); hide(); });
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var closeBtn = document.getElementById('install-close');
+    var actionBtn = document.getElementById('install-action');
+    var steps = document.getElementById('install-steps');
+    if (!document.getElementById('install-prompt')) return;
+
+    var ua = navigator.userAgent || '';
+    var isIOS = /iphone|ipad|ipod/i.test(ua);
+
+    if (closeBtn) closeBtn.addEventListener('click', function () { dismiss(); hide(); });
+    if (actionBtn) {
+      if (isIOS && !deferredPrompt) actionBtn.textContent = 'Show me how';
+      actionBtn.addEventListener('click', function () {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then(function () { deferredPrompt = null; hide(); });
+        } else if (steps) {
+          steps.hidden = !steps.hidden;
+          actionBtn.textContent = steps.hidden ? (isIOS ? 'Show me how' : 'Add') : 'Hide steps';
+        }
+      });
+    }
+
+    // iOS has no beforeinstallprompt event — offer the steps version instead.
+    // (Covers Safari and iOS in-app browsers, where the steps start with Safari.)
+    if (isIOS) setTimeout(show, 5000);
+  });
 })();

@@ -929,3 +929,34 @@ html[data-theme="dark"] .header {
   .account-label { display: none; }
   .brand-mark img { width: 36px !important; height: 36px !important; }
 }
+
+/* ===== Add to Home Screen prompt ===== */
+.install-prompt { position: fixed; left: 12px; right: 84px; bottom: calc(76px + env(safe-area-inset-bottom)); z-index: 65;
+  display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
+  background: var(--card, #ffffff); color: var(--ink, #14202e);
+  border: 1px solid rgba(127, 150, 175, 0.35); border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(4, 12, 24, 0.28); padding: 0.65rem 0.75rem; }
+.install-prompt[hidden] { display: none; }
+.install-icon { border-radius: 10px; flex: none; }
+.install-main { display: flex; flex-direction: column; flex: 1 1 150px; min-width: 0; }
+.install-main strong { font-size: 0.92rem; line-height: 1.2; }
+.install-main span { font-size: 0.78rem; opacity: 0.82; line-height: 1.25; }
+.install-action { flex: none; }
+.install-close { position: absolute; top: 2px; right: 8px; background: none; border: none; font-size: 1.25rem; line-height: 1;
+  color: inherit; opacity: 0.6; cursor: pointer; padding: 2px 4px; }
+.install-steps { flex: 1 1 100%; font-size: 0.82rem; line-height: 1.45; border-top: 1px solid rgba(127, 150, 175, 0.3); padding-top: 0.5rem; }
+.install-steps ol { margin: 0.3rem 0 0.3rem 1.1rem; padding: 0; }
+.install-steps li { margin-bottom: 0.3rem; }
+.install-note { opacity: 0.8; margin: 0.35rem 0 0; }
+@media (min-width: 769px) {
+  .install-prompt { left: 20px; right: auto; bottom: 20px; width: 356px; }
+}
+
+/* Apple Pay mark — official Apple artwork, unaltered; sized to match the other payment badges */
+.apple-pay-mark { height: 2rem; width: auto; display: inline-block; border-radius: 6px; }
+
+/* Payment names shown as plain text (no recreated brand artwork);
+   wallet marks use each network's official artwork, unaltered */
+.pay-badge.pay-name { color: #263238; }
+.pay-badge.pay-mark-wrap { padding: 0.45rem 0.7rem; }
+.google-pay-mark { height: 1.15rem; width: auto; display: block; }

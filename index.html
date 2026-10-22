@@ -50,6 +50,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png" />
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+  <link rel="manifest" href="manifest.webmanifest" />
   <meta name="theme-color" content="#0a1628" />
 </head>
 <body>
@@ -697,7 +698,7 @@
           </div>
 
           <div class="shop-wip">
-            <p><i class="fas fa-hard-hat"></i> <strong>Shop is a work in progress!</strong> Online checkout is coming soon. For now, add what you want to your cart and check out through your repair request &mdash; or just let us know what you need.</p>
+            <p><i class="fas fa-lock"></i> <strong>Secure online checkout is here.</strong> Add items to your cart and pay safely with Square &mdash; we&rsquo;ll bring everything at your repair visit, or coordinate pickup or delivery with you after checkout.</p>
           </div>
 
           <div class="shop-toolbar">
@@ -743,8 +744,8 @@
       <div class="cart-items" id="cart-items"></div>
       <div class="cart-footer">
         <div class="cart-total"><span>Subtotal</span><strong id="cart-total">$0.00</strong></div>
-        <p class="cart-hint">Checkout fills out your repair request automatically &mdash; just add your info and submit.</p>
-        <button class="btn btn-primary btn-lg cart-checkout" id="cart-checkout">Checkout &amp; Book Repair <i class="fas fa-arrow-right"></i></button>
+        <p class="cart-hint">Secure checkout by Square &mdash; tax calculated at checkout.</p>
+        <button class="btn btn-primary btn-lg cart-checkout" id="cart-checkout"><i class="fas fa-lock"></i> Secure Checkout &mdash; Square</button>
         <button class="cart-clear" id="cart-clear">Clear cart</button>
       </div>
     </aside>
@@ -1583,7 +1584,7 @@
               <li><strong>Parts at cost:</strong> Replacement parts are charged at our supplier cost &mdash; no markup games.</li>
               <li><strong>Parts are paid upfront:</strong> Because parts are ordered for your specific job, the parts cost is due before we order. Parts ordered for your repair belong to you; if you cancel after parts are ordered, the parts cost is not refundable, but the parts are yours to keep.</li>
               <li><strong>Balance due:</strong> The remaining balance (labor) is due upon completion of the repair, before the device is released back to you.</li>
-              <li><strong>Accepted payments:</strong> Visa, Mastercard, Apple Pay, Google Pay, Samsung Pay, and cash. We do not accept personal or business checks.</li>
+              <li><strong>Accepted payments:</strong> Visa, Mastercard, American Express, Discover, Apple Pay, Google Pay, Samsung Pay, Cash App Pay, Afterpay, and cash. We do not accept personal or business checks.</li>
             </ul>
 
             <h3>5. Cancellations</h3>
@@ -1706,7 +1707,7 @@
               <li><strong>Custom repairs:</strong> Repairs outside the standard list are quoted individually &mdash; parts at cost plus labor &mdash; and begin only with your approval.</li>
               <li><strong>Parts:</strong> Charged at cost. Because parts are ordered for your specific job, the parts cost is paid upfront before we order. If you cancel after parts are ordered, the parts cost is not refundable, but the parts are yours.</li>
               <li><strong>Estimate approval:</strong> We confirm your price before beginning work. If hidden damage, corrosion, or additional failures are found during disassembly, we notify you and obtain your approval before proceeding with any extra work.</li>
-              <li><strong>Payment due:</strong> The balance is due upon completion, before the device is released. We accept Visa, Mastercard, Apple Pay, Google Pay, Samsung Pay, and cash. We do not accept personal or business checks.</li>
+              <li><strong>Payment due:</strong> The balance is due upon completion, before the device is released. We accept Visa, Mastercard, American Express, Discover, Apple Pay, Google Pay, Samsung Pay, Cash App Pay, Afterpay, and cash. We do not accept personal or business checks.</li>
             </ul>
 
             <h3>3. Repair Risks You Accept</h3>
@@ -1895,8 +1896,8 @@
         </div>
       </div>
 
-      <div class="footer-payments"><span class="footer-payments-label">We accept</span><span class="pay-badge" title="Visa"><i class="fab fa-cc-visa"></i></span><span class="pay-badge" title="Mastercard"><i class="fab fa-cc-mastercard"></i></span><span class="pay-badge" title="Apple Pay"><i class="fab fa-cc-apple-pay"></i></span><span class="pay-badge" title="Google Pay"><i class="fab fa-google-pay"></i></span><span class="pay-badge pay-text" title="Samsung Pay">Samsung&nbsp;Pay</span><span class="pay-badge pay-text" title="Cash"><i class="fas fa-money-bill-wave"></i> Cash</span></div><p class="footer-disclaimer">
-        <strong>Disclaimer:</strong> Austin's Tech Repair Group is an independent mobile electronics repair provider operating as a sole proprietorship in Ohio. Apple, Samsung, Google, PlayStation, Xbox, Nintendo, and other brand names are the property of their respective owners; we are not affiliated with or endorsed by these companies. Estimates shown on this site are approximate and confirmed after a free diagnostic. 1-year warranty covers parts and labor for the serviced issue; see Terms of Service for full details.
+      <div class="footer-payments"><span class="footer-payments-label">We accept</span><span class="pay-badge pay-text pay-name" title="Visa">Visa</span><span class="pay-badge pay-text pay-name" title="Mastercard">Mastercard</span><span class="pay-badge pay-text pay-name" title="American Express">American&nbsp;Express</span><span class="pay-badge pay-text pay-name" title="Discover">Discover</span><img class="apple-pay-mark" src="images/apple-pay-mark.svg" alt="Apple Pay" title="Apple Pay" /><span class="pay-badge pay-mark-wrap" title="Google Pay"><img class="google-pay-mark" src="images/google-pay-mark.svg" alt="Google Pay" /></span><span class="pay-badge pay-text pay-name" title="Samsung Pay">Samsung&nbsp;Pay</span><span class="pay-badge pay-text pay-name" title="Cash App Pay">Cash&nbsp;App&nbsp;Pay</span><span class="pay-badge pay-text pay-name" title="Afterpay">Afterpay</span><span class="pay-badge pay-text" title="Cash"><i class="fas fa-money-bill-wave"></i> Cash</span></div><p class="footer-disclaimer">
+        <strong>Disclaimer:</strong> Austin's Tech Repair Group is an <strong>independent repair provider</strong> operating as a sole proprietorship in Ohio. We are <strong>not</strong> an authorized service provider for any manufacturer, and we are <strong>not affiliated with, sponsored by, or endorsed by</strong> Apple, Samsung, Google, Microsoft, Sony, Nintendo, Motorola, or any other company or brand named on this site. All trademarks, service marks, logos, and brand names are the property of their respective owners, and all rights in them are reserved by those owners. Apple, the Apple logo, Apple Pay, Apple Watch, Face ID, iPad, iPhone, and Touch ID are trademarks of Apple Inc., registered in the U.S. and other countries and regions. Samsung, Galaxy, and Samsung Pay are trademarks of Samsung Electronics Co., Ltd. Google, Pixel, Google Pay, and Android are trademarks of Google LLC. Microsoft, Windows, and Xbox are trademarks of the Microsoft group of companies. PlayStation is a trademark of Sony Interactive Entertainment Inc. Nintendo is a trademark of Nintendo Co., Ltd. Motorola is a trademark of Motorola Trademark Holdings, LLC. Visa is a trademark of Visa Inc. Mastercard is a trademark of Mastercard International Incorporated. Estimates shown on this site are approximate and confirmed after a free diagnostic. 1-year warranty covers parts and labor for the serviced issue; see Terms of Service for full details.
       </p>
 
       <p class="footer-disclaimer" style="margin-top:0.75rem;">
@@ -1925,6 +1926,29 @@
   </nav>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- ADD TO HOME SCREEN PROMPT -->
+  <div class="install-prompt" id="install-prompt" hidden>
+    <button class="install-close" id="install-close" type="button" aria-label="Not now">&times;</button>
+    <img class="install-icon" src="images/atr-logo.png" alt="" width="44" height="44" />
+    <div class="install-main">
+      <strong>Add ATRG to your Home Screen</strong>
+      <span>One tap to book repairs, check prices, and reach us fast &mdash; like an app, no download.</span>
+    </div>
+    <button class="btn btn-primary btn-sm install-action" id="install-action" type="button">Add</button>
+    <div class="install-steps" id="install-steps" hidden>
+      <p><strong>On iPhone (Safari):</strong></p>
+      <ol>
+        <li>Open this website in the <strong>Safari app</strong> on your iPhone.</li>
+        <li>Tap the <strong>Page Menu</strong> button, then tap <strong>Share</strong>. If your Tabs layout is Bottom or Top, tap the <strong>Share</strong> button.</li>
+        <li>Scroll down the list of options, then tap <strong>Add to Home Screen</strong>. If you don&rsquo;t see Add to Home Screen, scroll down to the bottom of the list, tap <strong>Edit Actions</strong>, then tap <strong>Add to Home Screen</strong>.</li>
+        <li>Turn on <strong>Open as Web App</strong>.</li>
+        <li>Tap <strong>Add</strong>.</li>
+      </ol>
+      <p class="install-note">Tip: once it&rsquo;s on your Home Screen, your iPhone can tint the icon with your other apps &mdash; press and hold the Home Screen, tap Edit, then Customize.</p>
+    </div>
+  </div>
+
   <script src="script.js"></script>
   <script src="atr-forms.js"></script>
 
