@@ -418,23 +418,23 @@
   document.addEventListener('DOMContentLoaded', function () {
 
     var PRODUCTS = [
-      { id: 'casper-iphone', name: 'Casper Snap AR Clear Tempered Glass — iPhone', cat: 'Screen Protectors', price: 14.99 },
-      { id: 'casper-samsung', name: 'Casper Snap AR Clear Tempered Glass — Samsung Galaxy', cat: 'Screen Protectors', price: 14.99 },
-      { id: 'casper-privacy', name: 'Casper Snap Privacy Tempered Glass — iPhone', cat: 'Screen Protectors', price: 19.99 },
-      { id: 'amp-case-clear-ip', name: 'AMPsentrix Clear TPU Case — iPhone', cat: 'Phone Cases', price: 14.99 },
-      { id: 'amp-case-rugged', name: 'AMPsentrix Shockproof Rugged Case — iPhone', cat: 'Phone Cases', price: 24.99 },
-      { id: 'amp-case-clear-sam', name: 'AMPsentrix Clear TPU Case — Samsung Galaxy', cat: 'Phone Cases', price: 14.99 },
-      { id: 'amp-cable-lightning-c', name: 'AMPsentrix Lightning to USB-C Cable 1.2m (MFi)', cat: 'Charging Cables', price: 14.99 },
-      { id: 'amp-cable-lightning-a', name: 'AMPsentrix Lightning to USB-A Cable 1.2m (MFi)', cat: 'Charging Cables', price: 12.99 },
-      { id: 'amp-cable-c-c', name: 'AMPsentrix USB-C to USB-C 60W Fast Charge 1m', cat: 'Charging Cables', price: 12.99 },
-      { id: 'amp-wall-20w-dual', name: 'AMPsentrix 20W Dual-Port Wall Adapter (USB-C + USB-A)', cat: 'Wall Chargers', price: 19.99 },
-      { id: 'amp-wall-20w-pd', name: 'AMPsentrix 20W USB-C PD Fast Wall Charger', cat: 'Wall Chargers', price: 17.99 },
-      { id: 'amp-car-dual', name: 'AMPsentrix Dual USB Car Charger (Fast Charge)', cat: 'Car Chargers', price: 14.99 },
-      { id: 'amp-magsafe-pad', name: 'AMPsentrix MagSafe Wireless Charging Pad (15W)', cat: 'Wireless Chargers', price: 29.99 },
-      { id: 'amp-wireless-3in1', name: 'AMPsentrix 3-in-1 Wireless Charging Station', cat: 'Wireless Chargers', price: 44.99 }
+      { id: 'glass-iphone', name: 'Tempered Glass Screen Protector — iPhone', cat: 'Screen Protectors', price: 14.99 },
+      { id: 'glass-samsung', name: 'Tempered Glass Screen Protector — Samsung Galaxy', cat: 'Screen Protectors', price: 14.99 },
+      { id: 'glass-privacy', name: 'Privacy Tempered Glass Screen Protector — iPhone', cat: 'Screen Protectors', price: 19.99 },
+      { id: 'case-clear-iphone', name: 'Clear TPU Case — iPhone', cat: 'Phone Cases', price: 14.99 },
+      { id: 'case-rugged-iphone', name: 'Shockproof Rugged Case — iPhone', cat: 'Phone Cases', price: 24.99 },
+      { id: 'case-clear-samsung', name: 'Clear TPU Case — Samsung Galaxy', cat: 'Phone Cases', price: 14.99 },
+      { id: 'cable-lightning-usbc', name: 'Lightning to USB-C Charging Cable 1.2m', cat: 'Charging Cables', price: 14.99 },
+      { id: 'cable-lightning-usba', name: 'Lightning to USB-A Charging Cable 1.2m', cat: 'Charging Cables', price: 12.99 },
+      { id: 'cable-usbc-usbc', name: 'USB-C to USB-C 60W Fast-Charge Cable 1m', cat: 'Charging Cables', price: 12.99 },
+      { id: 'wall-dual-20w', name: '20W Dual-Port Wall Charger (USB-C + USB-A)', cat: 'Wall Chargers', price: 19.99 },
+      { id: 'wall-pd-20w', name: '20W USB-C Fast Wall Charger', cat: 'Wall Chargers', price: 17.99 },
+      { id: 'car-dual-usb', name: 'Dual USB Car Charger (Fast Charge)', cat: 'Car Chargers', price: 14.99 },
+      { id: 'mag-pad-15w', name: 'Magnetic Wireless Charging Pad 15W', cat: 'Wireless Chargers', price: 29.99 },
+      { id: 'station-3in1', name: '3-in-1 Wireless Charging Station', cat: 'Wireless Chargers', price: 44.99 }
     ];
 
-    var tbody = document.getElementById('product-tbody');
+    var grid = document.getElementById('product-grid');
     var cartCount = document.getElementById('cart-count');
     var cartItems = document.getElementById('cart-items');
     var cartTotal = document.getElementById('cart-total');
@@ -453,20 +453,26 @@
     }
 
     function renderProducts(filter) {
-      if (!tbody) return;
-      tbody.innerHTML = '';
+      if (!grid) return;
+      grid.innerHTML = '';
       PRODUCTS.filter(function (p) {
         return !filter || filter === 'all' || p.cat === filter;
       }).forEach(function (p) {
-        var tr = document.createElement('tr');
-        tr.innerHTML =
-          '<td><span class="product-name">' + p.name + '</span></td>' +
-          '<td><span class="product-cat">' + p.cat + '</span></td>' +
-          '<td class="product-price">' + money(p.price) + '</td>' +
-          '<td><button class="add-btn" data-id="' + p.id + '"><i class="fas fa-plus"></i> Add</button></td>';
-        tbody.appendChild(tr);
+        var card = document.createElement('article');
+        card.className = 'product-card';
+        card.innerHTML =
+          '<div class="product-media"><img src="images/products/' + p.id + '.jpg" alt="' + p.name + '" loading="lazy"></div>' +
+          '<div class="product-body">' +
+            '<span class="product-cat">' + p.cat + '</span>' +
+            '<h3 class="product-name">' + p.name + '</h3>' +
+            '<div class="product-foot">' +
+              '<span class="product-price">' + money(p.price) + '</span>' +
+              '<button class="add-btn" data-id="' + p.id + '"><i class="fas fa-plus"></i> Add</button>' +
+            '</div>' +
+          '</div>';
+        grid.appendChild(card);
       });
-      tbody.querySelectorAll('.add-btn').forEach(function (btn) {
+      grid.querySelectorAll('.add-btn').forEach(function (btn) {
         btn.addEventListener('click', function () {
           var cart = getCart();
           var id = btn.getAttribute('data-id');
@@ -1230,20 +1236,20 @@
 
   /* Shop product catalog (mirrors the website shop; used to build order records) */
   var PRODUCTS = [
-    { id: 'casper-iphone', name: 'Casper Snap AR Clear Tempered Glass — iPhone', price: 14.99 },
-    { id: 'casper-samsung', name: 'Casper Snap AR Clear Tempered Glass — Samsung Galaxy', price: 14.99 },
-    { id: 'casper-privacy', name: 'Casper Snap Privacy Tempered Glass — iPhone', price: 19.99 },
-    { id: 'amp-case-clear-ip', name: 'AMPsentrix Clear TPU Case — iPhone', price: 14.99 },
-    { id: 'amp-case-rugged', name: 'AMPsentrix Shockproof Rugged Case — iPhone', price: 24.99 },
-    { id: 'amp-case-clear-sam', name: 'AMPsentrix Clear TPU Case — Samsung Galaxy', price: 14.99 },
-    { id: 'amp-cable-lightning-c', name: 'AMPsentrix Lightning to USB-C Cable 1.2m (MFi)', price: 14.99 },
-    { id: 'amp-cable-lightning-a', name: 'AMPsentrix Lightning to USB-A Cable 1.2m (MFi)', price: 12.99 },
-    { id: 'amp-cable-c-c', name: 'AMPsentrix USB-C to USB-C 60W Fast Charge 1m', price: 12.99 },
-    { id: 'amp-wall-20w-dual', name: 'AMPsentrix 20W Dual-Port Wall Adapter (USB-C + USB-A)', price: 19.99 },
-    { id: 'amp-wall-20w-pd', name: 'AMPsentrix 20W USB-C PD Fast Wall Charger', price: 17.99 },
-    { id: 'amp-car-dual', name: 'AMPsentrix Dual USB Car Charger (Fast Charge)', price: 14.99 },
-    { id: 'amp-magsafe-pad', name: 'AMPsentrix MagSafe Wireless Charging Pad (15W)', price: 29.99 },
-    { id: 'amp-wireless-3in1', name: 'AMPsentrix 3-in-1 Wireless Charging Station', price: 44.99 }
+    { id: 'glass-iphone', name: 'Tempered Glass Screen Protector — iPhone', price: 14.99 },
+    { id: 'glass-samsung', name: 'Tempered Glass Screen Protector — Samsung Galaxy', price: 14.99 },
+    { id: 'glass-privacy', name: 'Privacy Tempered Glass Screen Protector — iPhone', price: 19.99 },
+    { id: 'case-clear-iphone', name: 'Clear TPU Case — iPhone', price: 14.99 },
+    { id: 'case-rugged-iphone', name: 'Shockproof Rugged Case — iPhone', price: 24.99 },
+    { id: 'case-clear-samsung', name: 'Clear TPU Case — Samsung Galaxy', price: 14.99 },
+    { id: 'cable-lightning-usbc', name: 'Lightning to USB-C Charging Cable 1.2m', price: 14.99 },
+    { id: 'cable-lightning-usba', name: 'Lightning to USB-A Charging Cable 1.2m', price: 12.99 },
+    { id: 'cable-usbc-usbc', name: 'USB-C to USB-C 60W Fast-Charge Cable 1m', price: 12.99 },
+    { id: 'wall-dual-20w', name: '20W Dual-Port Wall Charger (USB-C + USB-A)', price: 19.99 },
+    { id: 'wall-pd-20w', name: '20W USB-C Fast Wall Charger', price: 17.99 },
+    { id: 'car-dual-usb', name: 'Dual USB Car Charger (Fast Charge)', price: 14.99 },
+    { id: 'mag-pad-15w', name: 'Magnetic Wireless Charging Pad 15W', price: 29.99 },
+    { id: 'station-3in1', name: '3-in-1 Wireless Charging Station', price: 44.99 }
   ];
 
   var TICKET_STATUSES = ['Waiting', 'In Progress', 'Waiting for Parts', 'Ready for Pickup', 'Completed'];
