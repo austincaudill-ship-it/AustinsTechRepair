@@ -752,38 +752,52 @@
         <!-- Login / signup view -->
         <div id="acct-auth-view">
           <h3><i class="fas fa-user-circle"></i> Your Account</h3>
-          <p class="acct-sub">Log in with your email to track repairs and earn reward points.</p>
+          <p class="acct-sub">Log in to track repairs, earn reward points, and manage your profile.</p>
+
+          <button class="authx-google" id="authx-google-btn" type="button"><i class="fab fa-google"></i> Continue with Google</button>
+          <div class="authx-divider"><span>or with your email</span></div>
 
           <div class="acct-tabs">
-            <button class="acct-tab active" id="acct-tab-login" type="button">Log In</button>
-            <button class="acct-tab" id="acct-tab-signup" type="button">Sign Up</button>
+            <button class="acct-tab active" id="authx-tab-login" type="button">Log In</button>
+            <button class="acct-tab" id="authx-tab-signup" type="button">Sign Up</button>
           </div>
 
-          <form id="acct-login-form" novalidate>
+          <form id="authx-login-form" novalidate>
             <label class="acct-field">
               <span>Email address</span>
-              <input type="email" id="acct-login-email" placeholder="you@example.com" autocomplete="email" aria-label="Email address" required>
+              <input type="email" id="authx-login-email" placeholder="you@example.com" autocomplete="email" aria-label="Email address" required>
             </label>
-            <p class="acct-error" id="acct-login-error" hidden></p>
+            <label class="acct-field">
+              <span>Password</span>
+              <input type="password" id="authx-login-password" placeholder="••••••••" autocomplete="current-password" aria-label="Password" required>
+            </label>
+            <p class="acct-error" id="authx-login-error" hidden></p>
             <button class="btn btn-primary btn-lg acct-submit" type="submit">Log In <i class="fas fa-arrow-right"></i></button>
+            <button class="authx-forgot" id="authx-forgot-btn" type="button">Forgot your password?</button>
           </form>
 
-          <form id="acct-signup-form" novalidate hidden>
+          <form id="authx-signup-form" novalidate hidden>
             <label class="acct-field">
               <span>Full name</span>
-              <input type="text" id="acct-signup-name" placeholder="Jane Smith" autocomplete="name" aria-label="Full name" required>
+              <input type="text" id="authx-signup-name" placeholder="Jane Smith" autocomplete="name" aria-label="Full name" required>
             </label>
             <label class="acct-field">
               <span>Email address</span>
-              <input type="email" id="acct-signup-email" placeholder="you@example.com" autocomplete="email" aria-label="Email address" required>
+              <input type="email" id="authx-signup-email" placeholder="you@example.com" autocomplete="email" aria-label="Email address" required>
             </label>
             <label class="acct-field">
               <span>Phone (optional)</span>
-              <input type="tel" id="acct-signup-phone" placeholder="(937) 555-1234" autocomplete="tel" aria-label="Phone number">
+              <input type="tel" id="authx-signup-phone" placeholder="(937) 555-1234" autocomplete="tel" aria-label="Phone number">
             </label>
-            <p class="acct-error" id="acct-signup-error" hidden></p>
+            <label class="acct-field">
+              <span>Password</span>
+              <input type="password" id="authx-signup-password" placeholder="At least 8 characters" autocomplete="new-password" aria-label="Password" required>
+            </label>
+            <p class="acct-error" id="authx-signup-error" hidden></p>
+            <p class="acct-muted" id="authx-signup-note" hidden></p>
             <button class="btn btn-primary btn-lg acct-submit" type="submit">Create Account <i class="fas fa-arrow-right"></i></button>
           </form>
+
         </div>
 
         <!-- Logged-in view -->
@@ -853,6 +867,23 @@
             </form>
           </div>
 
+          <!-- My profile -->
+          <div class="acct-profile" id="authx-profile">
+            <h4><i class="fas fa-id-card"></i> My Profile</h4>
+            <p class="acct-profile-line"><strong id="authx-profile-name"></strong><br>
+            <span class="acct-muted" id="authx-profile-email"></span></p>
+            <label class="acct-field">
+              <span>Phone</span>
+              <input type="tel" id="authx-profile-phone" placeholder="(937) 555-1234" autocomplete="tel" aria-label="Phone number">
+            </label>
+            <label class="acct-field">
+              <span>Service address</span>
+              <input type="text" id="authx-profile-address" placeholder="Street, City, OH ZIP" autocomplete="street-address" aria-label="Service address">
+            </label>
+            <button class="btn btn-outline btn-sm" id="authx-profile-save" type="button"><i class="fas fa-save"></i> Save profile</button>
+            <span class="acct-muted" id="authx-profile-msg"></span>
+          </div>
+
           <!-- My birthday (optional) -->
           <div class="acct-birthday" id="acct-birthday-wrap" hidden>
             <label class="acct-field">
@@ -868,7 +899,7 @@
             <p><i class="fas fa-tag"></i> <strong>Redeem:</strong> every 100 points = $5 off your next repair. Just mention your points when you book.</p>
           </div>
           <p class="acct-error" id="acct-dash-error" hidden></p>
-          <button class="btn btn-outline btn-sm acct-logout" id="acct-logout" type="button"><i class="fas fa-sign-out-alt"></i> Log Out</button>
+          <button class="btn btn-outline btn-sm acct-logout" id="authx-logout" type="button"><i class="fas fa-sign-out-alt"></i> Log Out</button>
         </div>
       </div>
     </div>
@@ -2000,12 +2031,12 @@
     .atr-chat-panel{right:8px;left:8px;width:auto;bottom:calc(84px + env(safe-area-inset-bottom));height:min(520px,68vh)}
   }
 </style>
-<button class="atr-chat-btn" id="atr-chat-btn" aria-label="Chat with ATR Assistant"><i class="fas fa-comments"></i><span>Chat with us</span></button>
-<div class="atr-chat-panel" id="atr-chat-panel" role="dialog" aria-label="Chat with ATR Assistant">
+<button class="atr-chat-btn" id="atr-chat-btn" aria-label="Chat with ATR Chat"><i class="fas fa-comments"></i><span>Chat with us</span></button>
+<div class="atr-chat-panel" id="atr-chat-panel" role="dialog" aria-label="Chat with ATR Chat">
   <div class="atr-chat-head">
     <i class="fas fa-screwdriver-wrench" aria-hidden="true"></i>
     <div>
-      <div class="atr-chat-title">ATR Assistant</div>
+      <div class="atr-chat-title">ATR Chat</div>
       <div class="atr-chat-sub">Austin's Tech Repair Group · answers from our real prices &amp; policies</div>
     </div>
     <button class="atr-chat-close" id="atr-chat-close" aria-label="Close chat"><i class="fas fa-xmark"></i></button>
@@ -2094,7 +2125,7 @@
     ]);
   }
   function greet() {
-    bot("Hi! I'm the ATR Assistant for Austin's Tech Repair Group — the mobile repair shop that comes to you. I can check a price, set up a repair, or answer questions about fees and warranty. What do you need?");
+    bot("Hi! This is the ATR chat for Austin's Tech Repair Group — the mobile repair shop that comes to you. I can check a price, set up a repair, or answer questions about fees and warranty. What do you need?");
     mainChips();
   }
 
@@ -2635,6 +2666,330 @@
   } else {
     init();
   }
+})();
+</script>
+<style>
+  /* ===== Account rebuild: sign-in + profile ===== */
+  .authx-google{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;box-sizing:border-box;background:#fff;border:1px solid var(--line,#e5d9c8);border-radius:999px;padding:12px;font-size:.95rem;font-weight:700;color:#2b2118;cursor:pointer;font-family:inherit;margin:0}
+  .authx-google:hover{border-color:var(--brand,#b4551f)}
+  .authx-google[disabled]{opacity:.6;cursor:wait}
+  .authx-google .fa-google{color:#4285F4;font-size:1.05rem}
+  .authx-divider{display:flex;align-items:center;gap:10px;margin:14px 0 6px;color:var(--muted,#8a7a68);font-size:.75rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+  .authx-divider:before,.authx-divider:after{content:'';flex:1;height:1px;background:var(--line,#e5d9c8)}
+  .authx-forgot{display:block;margin:10px auto 0;background:none;border:none;color:var(--brand,#b4551f);font-size:.88rem;font-weight:700;cursor:pointer;font-family:inherit}
+  .acct-profile{border-top:1px solid var(--line,#e5d9c8);margin-top:18px;padding-top:14px}
+  .acct-profile h4{margin:0 0 8px}
+  .acct-profile-line{margin:0 0 10px}
+</style>
+<script>
+/* ===== ATRG Account Rebuild: real sign-in + legacy link + profile =====
+   Replaces the old email-lookup "login". Sign-in is real Supabase Auth:
+   Google OAuth or email + password (the same Email provider the employee
+   portal uses; "Forgot your password?" opens the self-service reset flow
+   already on this page). On the first signed-in session,
+   public.link_customer_account() connects the auth user to their
+   customers row — a legacy (pre-Auth) row is re-keyed to the auth uid by
+   verified email, a new customer gets a fresh row — and this module
+   mirrors the result into the localStorage 'atr-account' shape the
+   existing My Repairs / rewards modules in script.js already read, so
+   those modules keep working unchanged. */
+(function () {
+  'use strict';
+
+  var SUPABASE_URL = 'https://lyujxpuicarblpkdzuuc.supabase.co';
+  var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
+
+  function $(id) { return document.getElementById(id); }
+  function showErr(el, msg) { if (!el) return; el.textContent = msg; el.hidden = !msg; }
+  function firstName(full) { return String(full || '').trim().split(/\s+/)[0] || 'there'; }
+  function validEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v || '').trim()); }
+
+  var sb = null;
+  function getClient() {
+    if (sb) return sb;
+    if (window.supabase && window.supabase.createClient) {
+      try { sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch (e) { sb = null; }
+    }
+    return sb;
+  }
+
+  var pendingName = '', pendingPhone = '';
+  var linkInFlightFor = null, linkedUid = null, currentCustomer = null;
+
+  /* ---------- local session bridge (shape read by the script.js modules) ---------- */
+  function writeLocalSession(cust, pts) {
+    try {
+      localStorage.setItem('atr-account', JSON.stringify({
+        id: cust.id, name: cust.name, email: cust.email,
+        phone: cust.phone || '', points: (typeof pts === 'number' ? pts : 0)
+      }));
+    } catch (e) {}
+  }
+  function clearLocalSession() { try { localStorage.removeItem('atr-account'); } catch (e) {} }
+  function patchLocalSessionPhone(phone) {
+    try {
+      var s = JSON.parse(localStorage.getItem('atr-account') || 'null');
+      if (s) { s.phone = phone || ''; localStorage.setItem('atr-account', JSON.stringify(s)); }
+    } catch (e) {}
+  }
+
+  /* ---------- view helpers ---------- */
+  function showAuth() { var a = $('acct-auth-view'), d = $('acct-dash-view'); if (a) a.hidden = false; if (d) d.hidden = true; }
+  function showDash() { var a = $('acct-auth-view'), d = $('acct-dash-view'); if (a) a.hidden = true; if (d) d.hidden = false; }
+  function renderHeader(cust, pts) {
+    var label = $('account-label'), btn = $('account-open-btn');
+    if (cust) {
+      if (label) label.textContent = firstName(cust.name) + ' · ' + (pts || 0) + ' pts';
+      if (btn) btn.classList.add('logged-in');
+    } else {
+      if (label) label.textContent = 'Account';
+      if (btn) btn.classList.remove('logged-in');
+    }
+  }
+  function renderDash(cust, pts) {
+    var nameEl = $('acct-dash-name'), ptsEl = $('acct-points-num');
+    if (nameEl) nameEl.textContent = 'Hi, ' + firstName(cust.name) + '!';
+    if (ptsEl) ptsEl.textContent = pts || 0;
+    renderHeader(cust, pts);
+    showDash();
+  }
+  function fillProfile(cust) {
+    var n = $('authx-profile-name'), e = $('authx-profile-email'),
+        p = $('authx-profile-phone'), a = $('authx-profile-address');
+    if (n) n.textContent = cust.name || '';
+    if (e) e.textContent = cust.email || '';
+    if (p) p.value = cust.phone || '';
+    if (a) a.value = cust.address || '';
+    /* The Phase 3 birthday block keys off customers.id = auth uid, which
+       the link step guarantees — fill it from the same row so a saved
+       birthday shows immediately (the birthday block also loads it on
+       its own auth cycle; both write the same value). */
+    if (cust.birthday) {
+      var wrap = $('acct-birthday-wrap'), input = $('acct-birthday');
+      if (input) input.value = cust.birthday;
+      if (wrap) wrap.hidden = false;
+    }
+  }
+
+  function fetchPoints(customerId, cb) {
+    if (!sb) { cb(0); return; }
+    sb.from('rewards').select('points').eq('customer_id', customerId).limit(1)
+      .then(function (res) {
+        var pts = 0;
+        if (res.data && res.data.length > 0) pts = res.data[0].points || 0;
+        cb(pts);
+      })
+      .catch(function () { cb(0); });
+  }
+
+  /* ---------- the link step ---------- */
+  function enterAccount(session) {
+    if (!session || !session.user || !sb) return;
+    var uid = session.user.id;
+    if (linkedUid === uid || linkInFlightFor === uid) return;
+    linkInFlightFor = uid;
+    sb.rpc('link_customer_account', { p_name: pendingName || null, p_phone: pendingPhone || null })
+      .then(function (res) {
+        linkInFlightFor = null;
+        if (res.error) throw res.error;
+        var data = res.data || {};
+        if (data.status === 'email_unconfirmed') {
+          selectTab('login');
+          showErr($('authx-login-error'), 'Please confirm your email first — tap the link in the email we sent you, then log in.');
+          sb.auth.signOut().catch(function () {});
+          return;
+        }
+        if (data.status === 'conflict' || !data.customer) {
+          selectTab('login');
+          showErr($('authx-login-error'), 'We found an older account with this email that needs a hand from us to link. Call or text (937) 280-6243 and we will sort it out.');
+          sb.auth.signOut().catch(function () {});
+          return;
+        }
+        linkedUid = uid;
+        currentCustomer = data.customer;
+        var cust = data.customer;
+        fetchPoints(cust.id, function (pts) {
+          writeLocalSession(cust, pts);
+          renderDash(cust, pts);
+          fillProfile(cust);
+          /* If the account modal is already open, nudge the legacy
+             script.js open-hook so My Repairs loads right away. */
+          var modal = $('acct-modal');
+          if (modal && !modal.hidden) {
+            var openBtn = $('account-open-btn');
+            if (openBtn) { try { openBtn.click(); } catch (e) {} }
+          }
+        });
+      })
+      .catch(function () {
+        linkInFlightFor = null;
+        showErr($('authx-login-error'), 'You are signed in, but we could not load your account. Please try again in a moment.');
+      });
+  }
+
+  function exitAccount() {
+    linkedUid = null;
+    currentCustomer = null;
+    clearLocalSession();
+    renderHeader(null, 0);
+    showAuth();
+  }
+
+  /* ---------- tabs ---------- */
+  function selectTab(which) {
+    var isLogin = which === 'login';
+    var tl = $('authx-tab-login'), ts = $('authx-tab-signup'),
+        lf = $('authx-login-form'), sf = $('authx-signup-form');
+    if (tl) tl.classList.toggle('active', isLogin);
+    if (ts) ts.classList.toggle('active', !isLogin);
+    if (lf) lf.hidden = !isLogin;
+    if (sf) sf.hidden = isLogin;
+    showErr($('authx-login-error'), '');
+    showErr($('authx-signup-error'), '');
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    sb = getClient();
+    if (!sb) return;
+
+    var googleBtn = $('authx-google-btn');
+    if (googleBtn) googleBtn.addEventListener('click', function () {
+      showErr($('authx-login-error'), '');
+      googleBtn.disabled = true;
+      sb.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin + window.location.pathname }
+      }).then(function (res) {
+        if (res.error) {
+          googleBtn.disabled = false;
+          showErr($('authx-login-error'), 'Google sign-in did not start. Please try again, or use your email below.');
+        }
+      }).catch(function () {
+        googleBtn.disabled = false;
+        showErr($('authx-login-error'), 'Google sign-in did not start. Please try again, or use your email below.');
+      });
+    });
+
+    var tl = $('authx-tab-login'), ts = $('authx-tab-signup');
+    if (tl) tl.addEventListener('click', function () { selectTab('login'); });
+    if (ts) ts.addEventListener('click', function () { selectTab('signup'); });
+
+    var forgot = $('authx-forgot-btn');
+    if (forgot) forgot.addEventListener('click', function () {
+      if (window.atrOpenReset) window.atrOpenReset();
+    });
+
+    var loginForm = $('authx-login-form');
+    if (loginForm) loginForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      showErr($('authx-login-error'), '');
+      var email = String($('authx-login-email').value || '').trim().toLowerCase();
+      var pass = $('authx-login-password').value || '';
+      if (!validEmail(email)) { showErr($('authx-login-error'), 'Please enter a valid email address.'); return; }
+      if (!pass) { showErr($('authx-login-error'), 'Please enter your password.'); return; }
+      var btn = loginForm.querySelector('button[type="submit"]');
+      if (btn) { btn.disabled = true; btn.innerHTML = 'Logging in…'; }
+      sb.auth.signInWithPassword({ email: email, password: pass }).then(function (res) {
+        if (btn) { btn.disabled = false; btn.innerHTML = 'Log In <i class="fas fa-arrow-right"></i>'; }
+        if (res.error) {
+          showErr($('authx-login-error'), 'That email and password did not match. New here? Tap Sign Up — or use "Forgot your password?" below.');
+          return;
+        }
+        if (res.data && res.data.session) enterAccount(res.data.session);
+      }).catch(function () {
+        if (btn) { btn.disabled = false; btn.innerHTML = 'Log In <i class="fas fa-arrow-right"></i>'; }
+        showErr($('authx-login-error'), 'Something went wrong. Please try again.');
+      });
+    });
+
+    var signupForm = $('authx-signup-form');
+    if (signupForm) signupForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      showErr($('authx-signup-error'), '');
+      var name = String($('authx-signup-name').value || '').trim();
+      var email = String($('authx-signup-email').value || '').trim().toLowerCase();
+      var phone = String($('authx-signup-phone').value || '').trim();
+      var pass = $('authx-signup-password').value || '';
+      if (!name) { showErr($('authx-signup-error'), 'Please enter your name.'); return; }
+      if (!validEmail(email)) { showErr($('authx-signup-error'), 'Please enter a valid email address.'); return; }
+      if (!pass || pass.length < 8) { showErr($('authx-signup-error'), 'Please use a password of at least 8 characters.'); return; }
+      pendingName = name; pendingPhone = phone;
+      var btn = signupForm.querySelector('button[type="submit"]');
+      if (btn) { btn.disabled = true; btn.innerHTML = 'Creating account…'; }
+      sb.auth.signUp({
+        email: email, password: pass,
+        options: { data: { full_name: name }, emailRedirectTo: window.location.origin + window.location.pathname }
+      }).then(function (res) {
+        if (btn) { btn.disabled = false; btn.innerHTML = 'Create Account <i class="fas fa-arrow-right"></i>'; }
+        if (res.error) {
+          showErr($('authx-signup-error'), /already/i.test(res.error.message || '')
+            ? 'An account already exists for that email. Tap Log In instead.'
+            : 'We could not create that account. Please try again.');
+          return;
+        }
+        if (res.data && res.data.session) { enterAccount(res.data.session); return; }
+        /* No session yet: the project requires email confirmation first. */
+        var note = $('authx-signup-note');
+        if (note) { note.textContent = 'Account created — check your email for a confirmation link, then come back and log in.'; note.hidden = false; }
+        var le = $('authx-login-email'); if (le) le.value = email;
+        selectTab('login');
+      }).catch(function () {
+        if (btn) { btn.disabled = false; btn.innerHTML = 'Create Account <i class="fas fa-arrow-right"></i>'; }
+        showErr($('authx-signup-error'), 'Something went wrong. Please try again.');
+      });
+    });
+
+    var logoutBtn = $('authx-logout');
+    if (logoutBtn) logoutBtn.addEventListener('click', function () {
+      sb.auth.signOut().catch(function () {});
+      exitAccount();
+      var closeBtn = $('acct-close');
+      if (closeBtn) { try { closeBtn.click(); } catch (e) {} }
+    });
+
+    var profileSave = $('authx-profile-save');
+    if (profileSave) profileSave.addEventListener('click', function () {
+      var msg = $('authx-profile-msg');
+      if (!currentCustomer) return;
+      var phone = String($('authx-profile-phone').value || '').trim();
+      var address = String($('authx-profile-address').value || '').trim();
+      if (msg) msg.textContent = 'Saving…';
+      sb.from('customers').update({ phone: phone || null, address: address || null }).eq('id', currentCustomer.id)
+        .then(function (res) {
+          if (!msg) return;
+          if (res.error) { msg.textContent = 'Couldn’t save — please try again.'; return; }
+          currentCustomer.phone = phone || null;
+          currentCustomer.address = address || null;
+          patchLocalSessionPhone(phone);
+          msg.textContent = 'Saved.';
+        })
+        .catch(function () { if (msg) msg.textContent = 'Couldn’t save — please try again.'; });
+    });
+
+    /* ---------- session restore + auth changes ---------- */
+    sb.auth.getSession().then(function (res) {
+      var s = res.data && res.data.session;
+      if (s) { enterAccount(s); }
+      else { clearLocalSession(); renderHeader(null, 0); }
+    }).catch(function () {});
+
+    sb.auth.onAuthStateChange(function (event, session) {
+      if (event === 'SIGNED_IN' && session) enterAccount(session);
+      if (event === 'SIGNED_OUT') exitAccount();
+    });
+  });
+})();
+</script>
+<script>
+/* ===== ATRG: reload once when a new service worker takes over ===== */
+(function () {
+  if (!('serviceWorker' in navigator)) return;
+  var reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', function () {
+    if (reloaded) return;
+    reloaded = true;
+    window.location.reload();
+  });
 })();
 </script>
 </body>
