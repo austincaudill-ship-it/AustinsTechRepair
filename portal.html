@@ -410,6 +410,7 @@
                 <option value="ifixit" selected>iFixit guide</option>
                 <option value="internal">Internal how-to</option>
                 <option value="video">Video</option>
+                <option value="manufacturer">Manufacturer</option>
                 <option value="other">Other link</option>
               </select>
             </div>
@@ -752,6 +753,7 @@
       if (v === 'ifixit') return 'iFixit';
       if (v === 'internal') return 'Internal';
       if (v === 'video') return 'Video';
+      if (v === 'manufacturer') return 'Manufacturer';
       return 'Link';
     }
 
@@ -1547,5 +1549,337 @@
     .lbl-part { font-size: 12.5pt; font-weight: 800; line-height: 1.15; margin: 2pt 0; }
     .lbl-meta { font-size: 7.5pt; line-height: 1.3; }
   </style>
+<style>
+  /* ===== Portal Phase 3.1: manuals inside the ticket ===== */
+  .p31-tools { display: flex; gap: 0.55rem; align-items: center; flex-wrap: wrap; margin-bottom: 0.7rem; }
+  .p31-tools input[type="search"] {
+    flex: 1; min-width: 10rem; box-sizing: border-box; padding: 0.55rem 0.75rem;
+    border: 1px solid var(--line, #E6D9C0); border-radius: 8px;
+    background: var(--surface, #FFFDF8); color: var(--ink, #2C231A);
+    font-family: inherit; font-size: 0.92rem;
+  }
+  .p31-card { margin-bottom: 0.6rem; }
+  .p31-src { background: #f3f4f6; color: #4b5563; }
+  .p31-src-manufacturer { background: var(--teal-soft, #DFF0EA); color: #0b5a4d; }
+  .p31-src-ifixit { background: var(--brand-soft, #FBEADB); color: var(--brand-deep, #A63E06); }
+  .p31-src-internal { background: var(--gold-soft, #FBF3DF); color: #7c5a06; }
+  .p31-more { margin-top: 0.4rem; }
+</style>
+<script>
+/* ================= MANUALS FOR THIS DEVICE (ticket drawer) =================
+ * Phase 3.1: when a ticket drawer opens, surface the guides/manuals that
+ * match the ticket's device — iFixit AND manufacturer manuals alike —
+ * without leaving the work order. Self-contained: own client, own
+ * rendering, no portal.js changes.
+ *
+ * Matching (kept simple and explainable): the drawer title line is the
+ * ticket's device label (device_type · brand · model). It is tokenized
+ * (plus a small brand-family expansion: iPhone→Apple, Galaxy→Samsung,
+ * Pixel→Google, PlayStation/Xbox/Switch→console brands). Each guide is
+ * scored by token hits — device field ×3, title ×2, tags/category ×1.
+ * Guides scoring 3+ are listed, best score first; ties put
+ * Manufacturer sources first, then iFixit, then Internal/Video.
+ * No matches (or no device on the ticket) still shows the section with
+ * a filter box and a "Search all guides" button that jumps to the
+ * Guides tab with the device text pre-filled — no dead ends. */
+(function () {
+  'use strict';
+
+  var SUPABASE_URL = 'https://lyujxpuicarblpkdzuuc.supabase.co';
+  var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
+
+  var MIN_SCORE = 3;
+  var MAX_ROWS = 8;
+
+  var allGuides = null;      // null = not loaded yet; [] = loaded empty
+  var loadFailed = false;
+  var currentKey = '';       // device key currently rendered in the drawer
+  var currentMatches = [];   // scored matches for the current device
+  var debounce = null;
+
+  function $(id) { return document.getElementById(id); }
+
+  function esc(v) {
+    return String(v == null ? '' : v)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function trim(v) { return String(v == null ? '' : v).trim(); }
+
+  function getClient() {
+    if (window.supabase && window.supabase.createClient) {
+      try { return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); }
+      catch (e) { return null; }
+    }
+    return null;
+  }
+
+  function safeUrl(u) {
+    var s = trim(u);
+    if (/^https:\/\//i.test(s) || /^http:\/\//i.test(s)) return s;
+    return '';
+  }
+
+  /* kind -> display label. 'manufacturer' rows come from the Phase 3.1
+   * seed (manufacturer-hubs-seed.sql); the guides table's kind column
+   * has no check constraint, so the value stores fine. */
+  function sourceLabel(kind) {
+    if (kind === 'ifixit') return 'iFixit';
+    if (kind === 'manufacturer') return 'Manufacturer';
+    if (kind === 'internal') return 'Internal';
+    if (kind === 'video') return 'Video';
+    return 'Link';
+  }
+
+  function sourceRank(kind) {
+    if (kind === 'manufacturer') return 0;
+    if (kind === 'ifixit') return 1;
+    if (kind === 'internal') return 2;
+    if (kind === 'video') return 3;
+    return 4;
+  }
+
+  function tokenize(text) {
+    var raw = String(text || '').toLowerCase().split(/[^a-z0-9]+/);
+    var out = [];
+    for (var i = 0; i < raw.length; i++) {
+      var w = raw[i];
+      if (w.length < 2) continue;
+      /* Generic device-type words are dropped: they appear on nearly
+       * every ticket and substring-match everything ("phone" alone
+       * would hit "iPhone" and "Galaxy Phone" alike). Brand and model
+       * tokens do the real matching. */
+      if (w === 'the' || w === 'and' || w === 'for' || w === 'with' ||
+          w === 'phone' || w === 'smartphone' || w === 'tablet' || w === 'device') continue;
+      if (out.indexOf(w) === -1) out.push(w);
+    }
+    return out;
+  }
+
+  /* Brand-family expansion so a hub row filed under the brand still
+   * matches a ticket filed under the product line (and vice versa). */
+  function expandTokens(tokens) {
+    var set = {};
+    tokens.forEach(function (t) { set[t] = true; });
+    function has(t) { return !!set[t]; }
+    var extra = [];
+    function add(t) { if (!set[t]) { set[t] = true; extra.push(t); } }
+    if (has('iphone') || has('ipad') || has('macbook')) { add('apple'); }
+    if (has('apple')) { add('iphone'); add('ipad'); add('mac'); }
+    if (has('galaxy')) { add('samsung'); }
+    if (has('samsung')) { add('galaxy'); }
+    if (has('pixel')) { add('google'); }
+    if (has('google')) { add('pixel'); }
+    if (has('playstation') || has('ps5') || has('ps4')) {
+      add('playstation'); add('ps5'); add('ps4'); add('sony'); add('console');
+    }
+    if (has('sony')) { add('playstation'); }
+    if (has('xbox')) { add('xbox'); add('microsoft'); add('console'); }
+    if (has('switch') || has('nintendo')) { add('nintendo'); add('switch'); add('console'); }
+    return tokens.concat(extra);
+  }
+
+  function scoreGuide(g, tokens) {
+    var device = String(g.device || '').toLowerCase();
+    var title = String(g.title || '').toLowerCase();
+    var tags = String(g.tags || '').toLowerCase();
+    var cat = String(g.category || '').toLowerCase();
+    var score = 0;
+    tokens.forEach(function (t) {
+      if (device.indexOf(t) !== -1) score += 3;
+      if (title.indexOf(t) !== -1) score += 2;
+      if (tags.indexOf(t) !== -1) score += 1;
+      if (cat.indexOf(t) !== -1) score += 1;
+    });
+    return score;
+  }
+
+  function matchGuides(deviceText) {
+    var tokens = expandTokens(tokenize(deviceText));
+    if (!tokens.length || !allGuides) return [];
+    var scored = [];
+    allGuides.forEach(function (g) {
+      var s = scoreGuide(g, tokens);
+      if (s >= MIN_SCORE) scored.push({ g: g, s: s });
+    });
+    scored.sort(function (a, b) {
+      if (b.s !== a.s) return b.s - a.s;
+      var r = sourceRank(a.g.kind) - sourceRank(b.g.kind);
+      if (r !== 0) return r;
+      return String(a.g.title).localeCompare(String(b.g.title));
+    });
+    return scored;
+  }
+
+  function rowHtml(g) {
+    var url = safeUrl(g.url);
+    var notes = trim(g.notes);
+    if (notes.length > 160) notes = notes.slice(0, 160) + '\u2026';
+    return '<article class="portal-card p31-card">' +
+      '<div class="portal-card-top"><p class="portal-card-title">' + esc(g.title) + '</p>' +
+      '<span class="portal-badge p31-src p31-src-' + esc(g.kind || 'link') + '">' + esc(sourceLabel(g.kind)) + '</span></div>' +
+      '<p class="portal-card-meta">' +
+        (g.device ? esc(g.device) + ' \u00b7 ' : '') + esc(g.category || 'General') +
+        (g.tags ? ' \u00b7 ' + esc(g.tags) : '') + '</p>' +
+      (notes ? '<p class="portal-card-meta">' + esc(notes) + '</p>' : '') +
+      '<p class="portal-card-meta">' +
+        (url ? '<a href="' + esc(url) + '" target="_blank" rel="noopener"><i class="fas fa-arrow-up-right-from-square"></i> Open manual / guide</a>'
+            : '<span class="portal-muted">Internal how-to — see notes</span>') +
+      '</p></article>';
+  }
+
+  function renderList() {
+    var list = $('p31-list');
+    if (!list) return;
+    var q = trim(($('p31-search') || {}).value).toLowerCase();
+    var rows = currentMatches;
+    if (q) {
+      var words = q.split(/\s+/);
+      rows = rows.filter(function (m) {
+        var hay = [m.g.title, m.g.device, m.g.category, m.g.tags, m.g.notes].join(' ').toLowerCase();
+        return words.every(function (w) { return hay.indexOf(w) !== -1; });
+      });
+    }
+    if (loadFailed) {
+      list.innerHTML = '<p class="portal-error">Couldn&rsquo;t load the guide library. Use &ldquo;Search all guides&rdquo; below, or open the Guides tab.</p>';
+      return;
+    }
+    if (!allGuides) {
+      list.innerHTML = '<p class="portal-muted">Loading manuals&hellip;</p>';
+      return;
+    }
+    if (!currentMatches.length) {
+      list.innerHTML = '<div class="portal-empty">No manuals matched this device yet. Filter above, or search the full guide library.</div>';
+      return;
+    }
+    if (!rows.length) {
+      list.innerHTML = '<div class="portal-empty">Nothing here matches that filter. Clear it, or search all guides.</div>';
+      return;
+    }
+    var html = rows.slice(0, MAX_ROWS).map(function (m) { return rowHtml(m.g); }).join('');
+    if (rows.length > MAX_ROWS) {
+      html += '<p class="portal-muted portal-small p31-more">+ ' + (rows.length - MAX_ROWS) +
+        ' more match' + (rows.length - MAX_ROWS === 1 ? '' : 'es') + ' — use &ldquo;Search all guides&rdquo; to browse them.</p>';
+    }
+    list.innerHTML = html;
+  }
+
+  /* Jump to the Guides tab with the device pre-filled as the search.
+   * Clicking the tab button is exactly what a user click does: it runs
+   * portal.js's tab switch AND the Guides script's showGuides() (which
+   * closes this drawer and lazy-loads the library). The search value is
+   * set after the click; the Guides render reads the input on every
+   * render, including when its data finishes loading. */
+  function searchAllGuides(deviceText) {
+    var tab = $('portal-tab-guides');
+    if (tab) tab.click();
+    window.setTimeout(function () {
+      var s = $('portal-guide-search');
+      if (!s) return;
+      s.value = deviceText || '';
+      var ev;
+      try { ev = new window.Event('input', { bubbles: true }); }
+      catch (e) { ev = document.createEvent('Event'); ev.initEvent('input', true, false); }
+      s.dispatchEvent(ev);
+    }, 60);
+  }
+
+  function loadGuidesOnce() {
+    if (allGuides || loadFailed) { renderList(); return; }
+    var client = getClient();
+    if (!client) { loadFailed = true; renderList(); return; }
+    client.from('guides').select('*').order('created_at', { ascending: false }).limit(500)
+      .then(function (res) {
+        if (res.error) { loadFailed = true; renderList(); return; }
+        allGuides = res.data || [];
+        currentMatches = matchGuides(currentKey);
+        renderList();
+      })
+      .catch(function () { loadFailed = true; renderList(); });
+  }
+
+  /* ============ SECTION TEMPLATE (the drawer markup, injected) ============ */
+  function sectionHtml(deviceText, hasDevice) {
+    return '<h3><i class="fas fa-book-open"></i> Manuals for this device</h3>' +
+      (hasDevice
+        ? '<p class="portal-muted portal-small">For: ' + esc(deviceText) + ' — manufacturer manuals and iFixit guides from the shop library.</p>'
+        : '<p class="portal-muted portal-small">No device on this ticket — filter the shop library, or search all guides.</p>') +
+      '<div class="p31-tools">' +
+        '<input type="search" id="p31-search" placeholder="Filter these manuals&hellip;" aria-label="Filter manuals for this device" />' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p31-all-btn">' +
+          '<i class="fas fa-magnifying-glass"></i> Search all guides</button>' +
+      '</div>' +
+      '<div id="p31-list"><p class="portal-muted">Loading manuals&hellip;</p></div>';
+  }
+
+  function wireSection(section, deviceText) {
+    var search = section.querySelector('#p31-search');
+    if (search) search.addEventListener('input', renderList);
+    var btn = section.querySelector('#p31-all-btn');
+    if (btn) btn.addEventListener('click', function () { searchAllGuides(deviceText); });
+  }
+
+  /* Detect a rendered ticket drawer and (re)build the section.
+   * Ticket drawers are the only drawers containing #p2-charges. */
+  function checkDrawer() {
+    var body = $('portal-drawer-body');
+    if (!body) return;
+    if (!body.querySelector('#p2-charges')) { currentKey = ''; return; }
+    var titleEl = body.querySelector('.portal-card-title');
+    var deviceText = titleEl ? trim(titleEl.textContent) : '';
+    var hasDevice = !!deviceText && deviceText !== 'Device not specified';
+    var key = hasDevice ? deviceText : '';
+    var existing = body.querySelector('#p31-manuals');
+    if (existing && existing.getAttribute('data-device') === key) return;
+
+    var section = document.createElement('div');
+    section.className = 'portal-drawer-section';
+    section.id = 'p31-manuals';
+    section.setAttribute('data-device', key);
+    section.innerHTML = sectionHtml(deviceText, hasDevice);
+
+    /* Anchor: the "Parts on this ticket" section (portal.js openTicket). */
+    var anchor = null;
+    var heads = body.querySelectorAll('.portal-drawer-section h3');
+    for (var i = 0; i < heads.length; i++) {
+      if (trim(heads[i].textContent) === 'Parts on this ticket') {
+        anchor = heads[i].closest ? heads[i].closest('.portal-drawer-section') : heads[i].parentNode;
+        break;
+      }
+    }
+    if (anchor && anchor.parentNode === body) body.insertBefore(section, anchor);
+    else body.appendChild(section);
+
+    currentKey = key;
+    currentMatches = allGuides ? matchGuides(key) : [];
+    wireSection(section, hasDevice ? deviceText : '');
+    if (allGuides || loadFailed) renderList();
+    else loadGuidesOnce();
+  }
+
+  function scheduleCheck() {
+    if (debounce) window.clearTimeout(debounce);
+    debounce = window.setTimeout(checkDrawer, 120);
+  }
+
+  function init() {
+    var body = $('portal-drawer-body');
+    if (!body || !window.MutationObserver) return;
+    var obs = new window.MutationObserver(scheduleCheck);
+    obs.observe(body, { childList: true, subtree: true });
+    scheduleCheck();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
 </body>
 </html>
