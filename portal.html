@@ -91,6 +91,9 @@
         <button class="portal-tab" id="portal-tab-guides" type="button" role="tab" data-tab="guides">
           <i class="fas fa-book-open"></i> Guides
         </button>
+        <button class="portal-tab" id="portal-tab-requests" type="button" role="tab" data-tab="requests">
+          <i class="fas fa-clipboard-list"></i> Requests <span class="portal-count" id="portal-count-requests" hidden></span>
+        </button>
       </div>
 
       <!-- TICKETS -->
@@ -153,19 +156,79 @@
           <h2 class="portal-h2">Customers</h2>
           <input type="search" id="portal-cust-search" placeholder="Search name or email&hellip;" aria-label="Search customers" />
         </div>
+        <div id="portal-celebrations"></div>
         <div id="portal-customer-list"><p class="portal-muted">Loading customers&hellip;</p></div>
       </div>
 
-      <!-- INVENTORY + PURCHASE ORDERS (read-only, phase 2 editable) -->
+      <!-- INVENTORY + PURCHASE ORDERS (Phase 3: editable van/shop stock) -->
       <div class="portal-panel" id="portal-panel-inventory" role="tabpanel" hidden>
         <div class="portal-panel-head">
           <h2 class="portal-h2">Inventory</h2>
-          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="inventory">
-            <i class="fas fa-rotate-right"></i> Refresh
-          </button>
+          <div class="portal-panel-tools">
+            <select id="portal-inv-filter" aria-label="Filter stock by location">
+              <option value="all">All locations</option>
+              <option value="van">Van</option>
+              <option value="shop">Shop</option>
+            </select>
+            <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="inventory">
+              <i class="fas fa-rotate-right"></i> Refresh
+            </button>
+          </div>
         </div>
-        <p class="portal-muted portal-small">Read-only for now — editing stock lands in phase 2.</p>
+        <p class="portal-muted portal-small">Van + shop stock. Use +/&minus; to adjust counts, Edit to change an item, and the form below to add stock. Parts pulled from stock onto a ticket come off the count automatically &mdash; and go back on if the part is removed.</p>
         <div id="portal-inventory-list"><p class="portal-muted">Loading inventory&hellip;</p></div>
+
+        <div class="portal-panel-head portal-subhead">
+          <h2 class="portal-h2">Add / edit stock item</h2>
+        </div>
+        <form id="portal-inv-form" novalidate>
+          <input type="hidden" id="portal-inv-id" />
+          <div class="portal-nh-grid">
+            <div class="portal-field">
+              <label for="portal-inv-name">Product <span aria-hidden="true">*</span></label>
+              <input type="text" id="portal-inv-name" placeholder="e.g. iPhone 13 screen" required />
+            </div>
+            <div class="portal-field">
+              <label for="portal-inv-category">Category</label>
+              <input type="text" id="portal-inv-category" placeholder="Screen, Battery, Tool&hellip;" />
+            </div>
+            <div class="portal-field">
+              <label for="portal-inv-supplier">Supplier</label>
+              <input type="text" id="portal-inv-supplier" placeholder="Mobile Sentrix" />
+            </div>
+            <div class="portal-field">
+              <label for="portal-inv-sku">Supplier SKU</label>
+              <input type="text" id="portal-inv-sku" placeholder="SKU" />
+            </div>
+            <div class="portal-field">
+              <label for="portal-inv-cost">Cost ($)</label>
+              <input type="number" id="portal-inv-cost" min="0" step="0.01" placeholder="0.00" />
+            </div>
+            <div class="portal-field">
+              <label for="portal-inv-retail">Retail ($)</label>
+              <input type="number" id="portal-inv-retail" min="0" step="0.01" placeholder="0.00" />
+            </div>
+            <div class="portal-field">
+              <label for="portal-inv-qty">Quantity on hand</label>
+              <input type="number" id="portal-inv-qty" min="0" step="1" value="0" />
+            </div>
+            <div class="portal-field">
+              <label for="portal-inv-reorder">Low-stock warning at</label>
+              <input type="number" id="portal-inv-reorder" min="0" step="1" value="5" />
+            </div>
+            <div class="portal-field">
+              <label for="portal-inv-location">Location</label>
+              <select id="portal-inv-location">
+                <option value="van" selected>Van</option>
+                <option value="shop">Shop</option>
+              </select>
+            </div>
+          </div>
+          <p class="portal-error" id="portal-inv-error" hidden></p>
+          <p class="portal-muted" id="portal-inv-success" hidden><i class="fas fa-circle-check"></i> Stock item saved.</p>
+          <button class="portal-btn portal-btn-primary" id="portal-inv-submit" type="submit"><i class="fas fa-plus"></i> Add stock item</button>
+          <button class="portal-btn portal-btn-outline" id="portal-inv-cancel" type="button" hidden>Cancel edit</button>
+        </form>
 
         <div class="portal-panel-head portal-subhead">
           <h2 class="portal-h2">Purchase Orders <span class="portal-muted portal-small">(restock orders, not ticket part orders)</span></h2>
@@ -371,7 +434,54 @@
         </form>
       </div>
 
+      <!-- REQUESTS (tech request queue) -->
+      <div class="portal-panel" id="portal-panel-requests" role="tabpanel" hidden>
+        <div class="portal-panel-head">
+          <h2 class="portal-h2">Requests</h2>
+          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="requests">
+            <i class="fas fa-rotate-right"></i> Refresh
+          </button>
+        </div>
+        <p class="portal-muted portal-small">The shop&rsquo;s ask-for-it queue: swag &amp; merch, tools, and parts the team needs &mdash; separate from per-ticket part orders. New requests land at the top; move them to Ordered, Done, or Denied as they&rsquo;re handled.</p>
+        <div id="portal-request-list"><p class="portal-muted">Loading requests&hellip;</p></div>
+
+        <div class="portal-panel-head portal-subhead">
+          <h3 class="portal-h3">New request</h3>
+        </div>
+        <form id="portal-request-form" novalidate>
+          <div class="portal-nh-grid">
+            <div class="portal-field">
+              <label for="portal-req-kind">Kind</label>
+              <select id="portal-req-kind">
+                <option value="swag">Swag / merch</option>
+                <option value="tool">Tool</option>
+                <option value="part">Part</option>
+                <option value="other" selected>Other</option>
+              </select>
+            </div>
+            <div class="portal-field">
+              <label for="portal-req-item">Item <span aria-hidden="true">*</span></label>
+              <input type="text" id="portal-req-item" placeholder="e.g. ATRG hoodies (black, L)" required />
+            </div>
+            <div class="portal-field">
+              <label for="portal-req-qty">Quantity</label>
+              <input type="number" id="portal-req-qty" min="1" step="1" value="1" />
+            </div>
+            <div class="portal-field portal-nh-wide">
+              <label for="portal-req-note">Reason / notes</label>
+              <textarea id="portal-req-note" rows="2" placeholder="Why we need it, a link, sizes, deadline&hellip;"></textarea>
+            </div>
+          </div>
+          <p class="portal-error" id="portal-req-error" hidden></p>
+          <p class="portal-muted" id="portal-req-success" hidden><i class="fas fa-circle-check"></i> Request added to the queue.</p>
+          <button class="portal-btn portal-btn-primary" id="portal-req-submit" type="submit">
+            <i class="fas fa-plus"></i> Add request
+          </button>
+        </form>
+      </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="portal.js"></script>
   <script>
   /* ================= NEW HIRES (1099 contractors) =================
@@ -843,6 +953,547 @@
     .portal-nh-check label { display: flex; align-items: center; gap: 0.55rem; margin-bottom: 0; cursor: pointer; }
     .portal-nh-check input[type="checkbox"] { width: 1.15rem; height: 1.15rem; margin: 0; flex: none; }
     #portal-newhire-form .portal-btn-primary { margin-top: 0.25rem; }
+  </style>
+  <script>
+  /* ================= REQUESTS (tech request queue) =================
+   * Phase 3: the shop's ask-for-it queue — swag/merch, tools, parts and
+   * anything else the team needs, backed by public.tech_requests.
+   * Self-contained like the Guides/New Hire sections: own client, own
+   * panel management. Employee-only via RLS (any employee_profiles
+   * member, owner or technician — no single-user assumptions). */
+  (function () {
+    'use strict';
+
+    var SUPABASE_URL = 'https://lyujxpuicarblpkdzuuc.supabase.co';
+    var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
+
+    var loaded = false;
+    var allRequests = [];
+    var confirmDeleteId = null;
+    var STATUSES = ['New', 'Ordered', 'Done', 'Denied'];
+    var KIND_LABELS = { swag: 'Swag / merch', tool: 'Tool', part: 'Part', other: 'Other' };
+
+    function $(id) { return document.getElementById(id); }
+
+    function esc(v) {
+      return String(v == null ? '' : v)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function trim(v) { return String(v == null ? '' : v).trim(); }
+
+    function getClient() {
+      if (window.supabase && window.supabase.createClient) {
+        try { return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); }
+        catch (e) { return null; }
+      }
+      return null;
+    }
+
+    function fmtDate(iso) {
+      if (!iso) return '';
+      var d = new Date(iso);
+      if (isNaN(d.getTime())) return '';
+      return d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function badgeFor(status) {
+      var cls = status === 'New' ? 'portal-st-new'
+        : status === 'Ordered' ? 'portal-st-ordered'
+        : status === 'Done' ? 'portal-st-done' : 'portal-st-rejected';
+      return '<span class="portal-badge ' + cls + '">' + esc(status) + '</span>';
+    }
+
+    function setReqCount() {
+      var el = $('portal-count-requests');
+      if (!el) return;
+      var n = 0;
+      allRequests.forEach(function (r) { if (r.status === 'New') n++; });
+      el.textContent = n ? String(n) : '';
+      el.hidden = !n;
+    }
+
+    function renderRequests() {
+      var list = $('portal-request-list');
+      if (!list) return;
+      setReqCount();
+      if (!allRequests.length) {
+        list.innerHTML = '<div class="portal-empty">No requests yet. When a tech needs swag, a tool, or a part for the shop, it goes here.</div>';
+        return;
+      }
+      list.innerHTML = allRequests.map(function (r) {
+        var opts = STATUSES.map(function (s) {
+          return '<option value="' + s + '"' + (r.status === s ? ' selected' : '') + '>' + s + '</option>';
+        }).join('');
+        var meta = ['Qty ' + esc(r.qty == null ? 1 : r.qty)];
+        if (r.requested_by) meta.push('by ' + esc(r.requested_by));
+        if (r.created_at) meta.push(esc(fmtDate(r.created_at)));
+        return '<article class="portal-card">' +
+          '<div class="portal-card-top"><p class="portal-card-title">' + esc(r.item) + '</p>' + badgeFor(r.status) + '</div>' +
+          '<p class="portal-card-meta">' + esc(KIND_LABELS[r.kind] || 'Other') + ' &middot; ' + meta.join(' &middot; ') + '</p>' +
+          (r.note ? '<p class="portal-card-meta">' + esc(r.note) + '</p>' : '') +
+          '<div class="p3-req-actions"><label class="portal-muted portal-small">Status ' +
+          '<select class="p3-mini-select" data-req-status="' + esc(r.id) + '" aria-label="Request status">' + opts + '</select></label>' +
+          '<button class="portal-guide-del' + (confirmDeleteId === r.id ? ' confirming' : '') + '" type="button" data-req-del="' + esc(r.id) + '">' +
+          (confirmDeleteId === r.id ? 'Confirm delete?' : 'Delete') + '</button></div>' +
+          '</article>';
+      }).join('');
+    }
+
+    function loadRequests(force) {
+      var list = $('portal-request-list');
+      if (!list) return;
+      if (!force) list.innerHTML = '<p class="portal-muted">Loading requests&hellip;</p>';
+      var client = getClient();
+      if (!client) { list.innerHTML = '<p class="portal-error">Couldn&rsquo;t reach the database.</p>'; return; }
+      client.from('tech_requests').select('*').order('created_at', { ascending: false }).limit(300)
+        .then(function (res) {
+          if (res.error) { list.innerHTML = '<p class="portal-error">Couldn&rsquo;t load requests: ' + esc(res.error.message) + '</p>'; return; }
+          allRequests = res.data || [];
+          loaded = true;
+          renderRequests();
+        })
+        .catch(function () { list.innerHTML = '<p class="portal-error">Couldn&rsquo;t load requests. Check your connection and hit Refresh.</p>'; });
+    }
+
+    function preloadCount() {
+      var client = getClient();
+      if (!client) return;
+      client.from('tech_requests').select('id').eq('status', 'New').limit(200).then(function (res) {
+        if (res.error) return;
+        var el = $('portal-count-requests');
+        if (el) {
+          var n = (res.data || []).length;
+          el.textContent = n ? String(n) : '';
+          el.hidden = !n;
+        }
+      }).catch(function () {});
+    }
+
+    function closeDrawerInline() {
+      var o = $('portal-drawer-overlay');
+      var d = $('portal-drawer');
+      if (o) o.hidden = true;
+      if (d) { d.classList.remove('open'); d.setAttribute('aria-hidden', 'true'); }
+    }
+
+    function showRequests() {
+      var tabs = document.querySelectorAll('.portal-tab');
+      var i;
+      for (i = 0; i < tabs.length; i++) {
+        tabs[i].classList.toggle('active', tabs[i].getAttribute('data-tab') === 'requests');
+      }
+      var panels = document.querySelectorAll('.portal-panel');
+      for (i = 0; i < panels.length; i++) { panels[i].hidden = true; }
+      $('portal-panel-requests').hidden = false;
+      closeDrawerInline();
+      if (!loaded) loadRequests(false);
+    }
+
+    function initRequestForm() {
+      var form = $('portal-request-form');
+      if (!form) return;
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var err = $('portal-req-error');
+        var ok = $('portal-req-success');
+        err.hidden = true; err.textContent = '';
+        ok.hidden = true;
+        var item = trim($('portal-req-item').value);
+        if (!item) { err.textContent = 'Name the item first.'; err.hidden = false; return; }
+        var qty = parseInt($('portal-req-qty').value, 10);
+        if (isNaN(qty) || qty < 1) qty = 1;
+        var kind = $('portal-req-kind').value;
+        var note = trim($('portal-req-note').value);
+        var btn = $('portal-req-submit');
+        var client = getClient();
+        if (!client) { err.textContent = 'Couldn\u2019t reach the database. Check your connection and try again.'; err.hidden = false; return; }
+        btn.disabled = true;
+        client.auth.getSession().then(function (sres) {
+          var user = sres && sres.data && sres.data.session ? sres.data.session.user : null;
+          var row = {
+            kind: kind,
+            item: item,
+            qty: qty,
+            note: note || null,
+            requested_by: user && user.email ? user.email : null
+          };
+          return client.from('tech_requests').insert(row);
+        }).then(function (res) {
+          btn.disabled = false;
+          if (res.error) { err.textContent = 'Couldn\u2019t save that request: ' + res.error.message; err.hidden = false; return; }
+          form.reset();
+          ok.hidden = false;
+          loaded = false;
+          loadRequests(true);
+        }).catch(function () {
+          btn.disabled = false;
+          err.textContent = 'Couldn\u2019t save that request. Try again.';
+          err.hidden = false;
+        });
+      });
+    }
+
+    function initRequests() {
+      var tab = $('portal-tab-requests');
+      if (tab) tab.addEventListener('click', showRequests);
+      document.addEventListener('click', function (e) {
+        var t = e.target;
+        while (t && t !== document) {
+          if (t.getAttribute && t.getAttribute('data-tab')) {
+            if (t.getAttribute('data-tab') !== 'requests') {
+              var p = $('portal-panel-requests');
+              if (p) p.hidden = true;
+            }
+            return;
+          }
+          t = t.parentNode;
+        }
+      });
+      var refresh = document.querySelector('[data-refresh="requests"]');
+      if (refresh) refresh.addEventListener('click', function () { loaded = false; loadRequests(true); });
+      var list = $('portal-request-list');
+      if (list) {
+        list.addEventListener('change', function (e) {
+          var sel = e.target.closest ? e.target.closest('[data-req-status]') : null;
+          if (!sel) return;
+          var id = sel.getAttribute('data-req-status');
+          var client = getClient();
+          if (!client) return;
+          client.from('tech_requests').update({ status: sel.value }).eq('id', id).then(function (res) {
+            if (res.error) { loadRequests(true); return; }
+            allRequests.forEach(function (r) { if (r.id === id) r.status = sel.value; });
+            renderRequests();
+          }).catch(function () { loadRequests(true); });
+        });
+        list.addEventListener('click', function (e) {
+          var btn = e.target.closest ? e.target.closest('[data-req-del]') : null;
+          if (!btn) return;
+          var id = btn.getAttribute('data-req-del');
+          if (confirmDeleteId !== id) { confirmDeleteId = id; renderRequests(); return; }
+          confirmDeleteId = null;
+          btn.disabled = true;
+          btn.textContent = 'Deleting\u2026';
+          var client = getClient();
+          if (!client) { renderRequests(); return; }
+          client.from('tech_requests').delete().eq('id', id).then(function (res) {
+            if (res.error) { renderRequests(); return; }
+            loaded = false;
+            loadRequests(true);
+          }).catch(function () { renderRequests(); });
+        });
+      }
+      initRequestForm();
+      preloadCount();
+      window.setTimeout(preloadCount, 2500);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initRequests);
+    } else {
+      initRequests();
+    }
+  })();
+  </script>
+  <script>
+  /* ================= CELEBRATIONS (customer birthdays) =================
+   * Phase 3 foundation for the customer-love touches: at the top of the
+   * Customers tab, lists customers whose birthday falls in the next 30
+   * days so the team can reach out. Read-only. The automated birthday /
+   * holiday email sends are staged — they turn on once the shop email
+   * sender is wired up as a Supabase secret (see the Phase 3 notes).
+   * Birthdays are set by staff on each customer card, or by the
+   * customer themselves from their account page on the website. */
+  (function () {
+    'use strict';
+
+    var SUPABASE_URL = 'https://lyujxpuicarblpkdzuuc.supabase.co';
+    var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
+
+    function $(id) { return document.getElementById(id); }
+
+    function esc(v) {
+      return String(v == null ? '' : v)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function getClient() {
+      if (window.supabase && window.supabase.createClient) {
+        try { return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); }
+        catch (e) { return null; }
+      }
+      return null;
+    }
+
+    function nextBirthday(bday, today) {
+      var parts = String(bday || '').split('-');
+      if (parts.length !== 3) return null;
+      var y = parseInt(parts[0], 10);
+      var m = parseInt(parts[1], 10) - 1;
+      var d = parseInt(parts[2], 10);
+      if (isNaN(y) || isNaN(m) || isNaN(d)) return null;
+      var t = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      var next = new Date(t.getFullYear(), m, d);
+      if (next < t) next = new Date(t.getFullYear() + 1, m, d);
+      return {
+        date: next,
+        days: Math.round((next - t) / 86400000),
+        turning: y > 1900 ? next.getFullYear() - y : null
+      };
+    }
+
+    function fmtDay(d) { return d.toLocaleDateString([], { month: 'short', day: 'numeric' }); }
+
+    function renderCelebrations() {
+      var box = $('portal-celebrations');
+      if (!box) return;
+      var client = getClient();
+      if (!client) { box.innerHTML = ''; return; }
+      client.from('customers').select('id, name, email, phone, birthday').not('birthday', 'is', null).limit(500)
+        .then(function (res) {
+          if (res.error) { box.innerHTML = ''; return; }
+          var today = new Date();
+          var ups = [];
+          (res.data || []).forEach(function (c) {
+            var u = nextBirthday(c.birthday, today);
+            if (u && u.days <= 30) ups.push({ c: c, u: u });
+          });
+          ups.sort(function (a, b) { return a.u.days - b.u.days; });
+          var head = '<div class="portal-card p3-celeb"><p class="portal-card-title"><i class="fas fa-cake-candles"></i> Celebrations &mdash; birthdays in the next 30 days</p>';
+          if (!ups.length) {
+            box.innerHTML = head + '<p class="portal-card-meta">No customer birthdays coming up. Birthdays are added on each customer card below &mdash; or by the customer from their account page on the website.</p></div>';
+            return;
+          }
+          var rows = ups.map(function (x) {
+            var when = x.u.days === 0 ? '<strong>Today!</strong>' : x.u.days === 1 ? 'Tomorrow' : 'in ' + x.u.days + ' days';
+            var bits = [esc(fmtDay(x.u.date))];
+            if (x.u.turning) bits.push('turning ' + x.u.turning);
+            if (x.c.phone) bits.push(esc(x.c.phone));
+            if (x.c.email) bits.push(esc(x.c.email));
+            return '<p class="portal-card-meta p3-celeb-row"><strong>' + esc(x.c.name || 'Customer') + '</strong> &mdash; ' + when + ' &middot; ' + bits.join(' &middot; ') + '</p>';
+          }).join('');
+          box.innerHTML = head + rows +
+            '<p class="portal-muted portal-small">Birthday customers get a &ldquo;10% off your next service&rdquo; shout-out. Automated birthday &amp; holiday emails turn on once the shop email sending is wired up.</p></div>';
+        })
+        .catch(function () {});
+    }
+
+    function initCelebrations() {
+      renderCelebrations();
+      document.addEventListener('click', function (e) {
+        var t = e.target;
+        while (t && t !== document) {
+          if (t.getAttribute) {
+            if (t.getAttribute('data-tab') === 'customers') { renderCelebrations(); return; }
+            if (t.getAttribute('data-bday-save')) { window.setTimeout(renderCelebrations, 900); return; }
+          }
+          t = t.parentNode;
+        }
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initCelebrations);
+    } else {
+      initCelebrations();
+    }
+  })();
+  </script>
+  <script>
+  /* ================= SCAN-TO-ATTACH (part label QR links) =================
+   * Phase 3: part Zebra labels carry a QR code encoding
+   * portal.html?part=<part_orders id>. A phone camera opens the link;
+   * once an employee is signed in, this banner offers the open-ticket
+   * picker and attaches the part to the chosen ticket. Pulling a
+   * stock-linked part onto its first ticket decrements the stock count
+   * (same rule as attaching from the ticket drawer). */
+  (function () {
+    'use strict';
+
+    var SUPABASE_URL = 'https://lyujxpuicarblpkdzuuc.supabase.co';
+    var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
+
+    function $(id) { return document.getElementById(id); }
+
+    function esc(v) {
+      return String(v == null ? '' : v)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function getClient() {
+      if (window.supabase && window.supabase.createClient) {
+        try { return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); }
+        catch (e) { return null; }
+      }
+      return null;
+    }
+
+    var partId = null;
+    try { partId = new window.URLSearchParams(window.location.search).get('part'); } catch (e) { partId = null; }
+    if (!partId || !/^[0-9a-fA-F-]{36}$/.test(partId)) return;
+
+    function deviceLabel(t) {
+      return [t.device_type, t.brand, t.model].map(function (p) { return String(p == null ? '' : p).trim(); })
+        .filter(function (p) { return p !== ''; }).join(' ');
+    }
+
+    function ticketLabel(t) {
+      var dev = deviceLabel(t);
+      return '#' + String(t.id).slice(0, 8).toUpperCase() + ' \u00b7 ' + (t.customer_name || 'No name') +
+        (dev ? ' \u00b7 ' + dev : '') + ' \u00b7 ' + (t.status || '');
+    }
+
+    function adjustStock(client, inventoryId, delta) {
+      if (!inventoryId || !delta) return;
+      client.from('inventory').select('stock_qty').eq('id', inventoryId).maybeSingle().then(function (res) {
+        if (res.error || !res.data) return;
+        var next = Math.max(0, (Number(res.data.stock_qty) || 0) + delta);
+        client.from('inventory').update({ stock_qty: next }).eq('id', inventoryId).then(function () {});
+      }).catch(function () {});
+    }
+
+    function dismissBanner() {
+      var b = $('p3-scan-banner');
+      if (b && b.parentNode) b.parentNode.removeChild(b);
+    }
+
+    function dismissAll() {
+      dismissBanner();
+      try { window.history.replaceState(null, '', window.location.pathname); } catch (e) {}
+    }
+
+    function banner(html) {
+      var dash = $('portal-dash-view');
+      if (!dash) return;
+      dismissBanner();
+      var div = document.createElement('div');
+      div.id = 'p3-scan-banner';
+      div.className = 'portal-card p3-scan-banner';
+      div.innerHTML = html;
+      dash.insertBefore(div, dash.firstChild);
+      var x = div.querySelector('[data-scan-dismiss]');
+      if (x) x.addEventListener('click', dismissAll);
+    }
+
+    function doAttach(client, part) {
+      var sel = $('p3-scan-select');
+      var msg = $('p3-scan-msg');
+      if (!sel || !sel.value) { if (msg) msg.textContent = 'Pick a ticket first.'; return; }
+      var btn = $('p3-scan-attach');
+      if (btn) btn.disabled = true;
+      client.from('part_orders').update({ ticket_id: sel.value }).eq('id', part.id).then(function (res) {
+        if (res.error) {
+          if (btn) btn.disabled = false;
+          if (msg) msg.textContent = 'Couldn\u2019t attach that part. Try again.';
+          return;
+        }
+        if (part.inventory_id && !part.ticket_id) {
+          adjustStock(client, part.inventory_id, -(Number(part.qty) || 1));
+        }
+        start();
+      }).catch(function () {
+        if (btn) btn.disabled = false;
+        if (msg) msg.textContent = 'Couldn\u2019t attach that part. Try again.';
+      });
+    }
+
+    function renderBanner(client, part, current, openTickets) {
+      var bits = [];
+      if (part.supplier) bits.push(esc(part.supplier));
+      if (part.supplier_sku) bits.push('SKU ' + esc(part.supplier_sku));
+      bits.push('Qty ' + esc(part.qty == null ? 1 : part.qty));
+      if (part.status) bits.push(esc(part.status));
+      var currentLine = current
+        ? 'Currently on ticket <strong>' + esc(ticketLabel(current)) + '</strong>. Pick another open ticket below to move it.'
+        : 'Not attached to a ticket yet.';
+      var options = openTickets.filter(function (t) { return !current || t.id !== current.id; })
+        .map(function (t) { return '<option value="' + esc(t.id) + '">' + esc(ticketLabel(t)) + '</option>'; }).join('');
+      var html = '<div class="portal-card-top"><p class="portal-card-title"><i class="fas fa-qrcode"></i> Scanned part</p>' +
+        '<button class="portal-guide-del" type="button" data-scan-dismiss>Dismiss</button></div>' +
+        '<p class="portal-card-title">' + esc(part.description) + '</p>' +
+        (bits.length ? '<p class="portal-card-meta">' + bits.join(' &middot; ') + '</p>' : '') +
+        '<p class="portal-card-meta">' + currentLine + '</p>';
+      if (options) {
+        html += '<div class="p3-scan-actions"><select class="p3-mini-select" id="p3-scan-select" aria-label="Attach to ticket">' + options + '</select>' +
+          '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p3-scan-attach">' + (current ? 'Move to ticket' : 'Attach to ticket') + '</button>' +
+          '<span class="portal-muted portal-small" id="p3-scan-msg"></span></div>';
+      } else {
+        html += '<p class="portal-card-meta">No open tickets to attach to right now.</p>';
+      }
+      banner(html);
+      var attachBtn = $('p3-scan-attach');
+      if (attachBtn) attachBtn.addEventListener('click', function () { doAttach(client, part); });
+    }
+
+    function start() {
+      var client = getClient();
+      if (!client) return;
+      client.from('part_orders').select('*').eq('id', partId).maybeSingle().then(function (res) {
+        if (res.error || !res.data) {
+          banner('<p class="portal-error">That part tag didn&rsquo;t match a part order &mdash; it may have been deleted, or this account can&rsquo;t see it.</p>');
+          return;
+        }
+        var part = res.data;
+        var currentJob = part.ticket_id
+          ? client.from('tickets').select('id, customer_name, device_type, brand, model, status').eq('id', part.ticket_id).maybeSingle()
+              .then(function (tr) { return tr.data || null; })
+          : Promise.resolve(null);
+        var openJob = client.from('tickets').select('id, customer_name, device_type, brand, model, status')
+          .neq('status', 'Completed').order('created_at', { ascending: false }).limit(100)
+          .then(function (tr) { return tr.data || []; });
+        Promise.all([currentJob, openJob]).then(function (out) {
+          renderBanner(client, part, out[0], out[1]);
+        }).catch(function () {
+          banner('<p class="portal-error">Couldn&rsquo;t load ticket options for that part.</p>');
+        });
+      }).catch(function () {
+        banner('<p class="portal-error">Couldn&rsquo;t load that part. Check your connection.</p>');
+      });
+    }
+
+    var tries = 0;
+    var timer = window.setInterval(function () {
+      tries++;
+      var dash = $('portal-dash-view');
+      if (dash && !dash.hidden) {
+        window.clearInterval(timer);
+        start();
+      } else if (tries > 150) {
+        window.clearInterval(timer);
+      }
+    }, 400);
+  })();
+  </script>
+  <style>
+    /* ===== Portal Phase 3: requests, celebrations, scan banner, labels, inventory ===== */
+    .portal-field select { width: 100%; box-sizing: border-box; padding: 0.65rem 0.8rem; border: 1px solid var(--line, #E6D9C0); border-radius: 8px; background: var(--bg, #FAF6EE); color: var(--ink, #2C231A); font-family: inherit; font-size: 0.95rem; }
+    .p3-mini-select { padding: 0.3rem 0.4rem; border: 1px solid var(--line, #E6D9C0); border-radius: 8px; background: var(--bg, #FAF6EE); color: var(--ink, #2C231A); font-size: 0.9rem; font-family: inherit; }
+    .p3-qty-btn { width: 1.6rem; height: 1.6rem; border-radius: 999px; border: 1px solid var(--line, #E6D9C0); background: var(--bg, #FAF6EE); color: var(--ink, #2C231A); cursor: pointer; font-weight: 700; line-height: 1; padding: 0; }
+    .p3-inv-actions { white-space: nowrap; }
+    .p3-bday-input { padding: 0.25rem 0.4rem; border: 1px solid var(--line, #E6D9C0); border-radius: 8px; background: var(--bg, #FAF6EE); color: var(--ink, #2C231A); font-size: 0.9rem; font-family: inherit; }
+    #portal-request-form textarea { width: 100%; box-sizing: border-box; padding: 0.6rem 0.7rem; border: 1px solid var(--line, #E6D9C0); border-radius: 8px; background: var(--bg, #FAF6EE); color: var(--ink, #2C231A); font-size: 0.95rem; font-family: inherit; }
+    #portal-request-form .portal-btn-primary, #portal-inv-form .portal-btn-primary { margin-top: 0.25rem; }
+    .p3-req-actions { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin-top: 0.35rem; }
+    .p3-celeb { border-color: var(--brand, #E07B2A); }
+    .p3-celeb-row { margin: 0.2rem 0; }
+    .p3-scan-banner { border: 2px solid var(--brand, #E07B2A); margin-bottom: 1rem; }
+    .p3-scan-actions { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; margin-top: 0.5rem; }
+    .lbl-flex { display: flex; gap: 6pt; align-items: flex-start; }
+    .lbl-text { flex: 1; min-width: 0; }
+    .lbl-qr { flex: none; width: 0.62in; height: 0.62in; }
+    .lbl-qr img, .lbl-qr canvas, .lbl-qr table { width: 0.62in !important; height: 0.62in !important; }
   </style>
   <div id="portal-print-area" hidden></div>
   <style>

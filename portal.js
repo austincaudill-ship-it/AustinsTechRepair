@@ -180,7 +180,7 @@
     user: null,
     profile: null,
     loaded: { tickets: false, applications: false, investors: false, feedback: false, customers: false, inventory: false },
-    customersCache: []
+    customersCache: [], inventoryCache: []
   };
 
   function setCount(id, n) {
@@ -476,9 +476,15 @@
           '<input id="p2-charge-cost" type="number" step="0.01" min="0" placeholder="Our cost $ (optional)" aria-label="Unit cost" /></div>' +
           '<button class="portal-btn portal-btn-primary portal-btn-sm" type="submit">Add charge</button>' +
           '<p class="portal-error" id="p2-charge-error" hidden></p></form></div>' +
+          '<div class="portal-drawer-section"><h3>Payment</h3>' +
+          '<div class="p2-actions"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p3-checkout-btn"><i class="fas fa-credit-card"></i> Charge / Check out</button>' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p3-cash-btn"><i class="fas fa-money-bill-wave"></i> Mark paid — cash</button>' +
+          '<span class="portal-muted portal-small" id="p3-pay-msg"></span></div>' +
+          '<div id="p3-checkout-link" hidden></div></div>' +
           '<div class="portal-drawer-section"><h3>Parts on this ticket</h3>' +
           '<div id="p2-parts"><p class="portal-muted">Loading parts&hellip;</p></div>' +
           '<form id="p2-part-form" class="p2-form">' +
+          '<select id="p2-part-stock" aria-label="Pull a part from stock"><option value="">Loading stock\u2026</option></select>' +
           '<input id="p2-part-desc" type="text" placeholder="Part description (e.g. iPhone 13 Pro Max battery — OEM)" maxlength="200" aria-label="Part description" />' +
           '<div class="p2-form-row"><input id="p2-part-supplier" type="text" placeholder="Supplier" maxlength="80" aria-label="Supplier" />' +
           '<input id="p2-part-sku" type="text" placeholder="Supplier SKU" maxlength="80" aria-label="Supplier SKU" /></div>' +
@@ -505,7 +511,9 @@
         loadTicketThread(client, t.id);
         loadCharges(client, t);
         loadParts(client, t);
+        loadStockItems(client, t);
         wireTicketActions(client, t);
+        wirePaymentActions(client, t);
 
         $('portal-ticket-status-save').addEventListener('click', function () {
           var next = $('portal-ticket-status').value;
@@ -626,9 +634,14 @@
     });
     box.querySelectorAll('[data-part-del]').forEach(function (btn) {
       btn.addEventListener('click', function () {
+        var part = null;
+        rows.forEach(function (r) { if (r.id === btn.getAttribute('data-part-del')) part = r; });
         withClient(function (client) {
           client.from('part_orders').delete().eq('id', btn.getAttribute('data-part-del')).then(function (res) {
-            if (!res.error) loadParts(client, t);
+            if (!res.error) {
+              if (part && part.inventory_id) adjustStock(client, part.inventory_id, Number(part.qty) || 1);
+              loadParts(client, t);
+            }
           });
         });
       });
@@ -695,13 +708,20 @@
   }
 
   function printPartLabel(t, p) {
-    var html = '<div class="lbl">' +
+    var partUrl = 'https://austinstechrepairgroup.com/portal.html?part=' + p.id;
+    var html = '<div class="lbl"><div class="lbl-flex"><div class="lbl-text">' +
       '<div class="lbl-biz">AUSTIN&rsquo;S TECH REPAIR GROUP</div>' +
       '<div class="lbl-part">' + esc(p.description) + '</div>' +
-      '<div class="lbl-meta">Ticket #' + shortCode(t) + ' · ' + esc(t.customer_name || '') + '</div>' +
-      '<div class="lbl-meta">' + esc(deviceLabel(t)) + ' · ' + esc(fmtDate(p.ordered_at || p.created_at)) + '</div>' +
-      '</div>';
+      '<div class="lbl-meta">Ticket #' + shortCode(t) + ' \u00b7 ' + esc(t.customer_name || '') + '</div>' +
+      '<div class="lbl-meta">' + esc(deviceLabel(t)) + ' \u00b7 ' + esc(fmtDate(p.ordered_at || p.created_at)) + '</div>' +
+      '</div><div class="lbl-qr" id="p3-label-qr"></div></div></div>';
     printArea(html, 'label');
+    var qrBox = document.getElementById('p3-label-qr');
+    if (qrBox && window.QRCode) {
+      try {
+        new window.QRCode(qrBox, { text: partUrl, width: 72, height: 72, correctLevel: window.QRCode.CorrectLevel.M });
+      } catch (e) { /* the label still prints its text if the QR library is unavailable */ }
+    }
   }
 
   function wireTicketActions(client, t) {
@@ -755,16 +775,38 @@
       }).catch(function () { err.textContent = 'Couldn&rsquo;t add that charge. Try again.'; err.hidden = false; });
     });
 
+    var stockSelEl = $('p2-part-stock');
+    if (stockSelEl) stockSelEl.addEventListener('change', function () {
+      var it = null;
+      (t._stockItems || []).forEach(function (r) { if (r.id === stockSelEl.value) it = r; });
+      if (!it) return;
+      if (!$('p2-part-desc').value) $('p2-part-desc').value = it.product_name || '';
+      if (!$('p2-part-supplier').value && it.supplier) $('p2-part-supplier').value = it.supplier;
+      if (!$('p2-part-sku').value && it.supplier_sku) $('p2-part-sku').value = it.supplier_sku;
+      if (!$('p2-part-cost').value && it.cost != null) $('p2-part-cost').value = it.cost;
+      if (!$('p2-part-retail').value && it.retail_price != null) $('p2-part-retail').value = it.retail_price;
+    });
+
     var partForm = $('p2-part-form');
     if (partForm) partForm.addEventListener('submit', function (e) {
       e.preventDefault();
       var err = $('p2-part-error'); err.hidden = true;
+      var stockSel = $('p2-part-stock');
+      var stockId = stockSel && stockSel.value ? stockSel.value : null;
+      var stockItem = null;
+      if (stockId && t._stockItems) t._stockItems.forEach(function (it) { if (it.id === stockId) stockItem = it; });
       var desc = trim($('p2-part-desc').value);
+      if (!desc && stockItem) desc = stockItem.product_name;
       if (!desc) { err.textContent = 'Describe the part first.'; err.hidden = false; return; }
+      var qtyWanted = parseInt($('p2-part-qty').value, 10) || 1;
+      if (stockItem && qtyWanted > (Number(stockItem.stock_qty) || 0)) {
+        err.textContent = 'Only ' + stockItem.stock_qty + ' of that part in stock.'; err.hidden = false; return;
+      }
       var costRaw = $('p2-part-cost').value, retailRaw = $('p2-part-retail').value;
       var qty = parseInt($('p2-part-qty').value, 10) || 1;
       var part = {
         ticket_id: t.id,
+        inventory_id: stockItem ? stockItem.id : null,
         description: desc,
         supplier: trim($('p2-part-supplier').value) || null,
         supplier_sku: trim($('p2-part-sku').value) || null,
@@ -775,6 +817,7 @@
       };
       client.from('part_orders').insert(part).then(function (res) {
         if (res.error) { err.textContent = 'Couldn&rsquo;t add that part. Try again.'; err.hidden = false; return; }
+        if (stockItem) { adjustStock(client, stockItem.id, -qty); loadStockItems(client, t); }
         var addCharge = $('p2-part-addcharge').checked && part.retail_price != null && part.retail_price > 0;
         partForm.reset(); $('p2-part-qty').value = '1'; $('p2-part-addcharge').checked = true;
         loadParts(client, t);
@@ -785,6 +828,91 @@
           }).then(function () { loadCharges(client, t); });
         }
       }).catch(function () { err.textContent = 'Couldn&rsquo;t add that part. Try again.'; err.hidden = false; });
+    });
+  }
+
+  /* ================= PHASE 3: STOCK + TICKET PAYMENTS ================= */
+  /* Read-modify-write on stock_qty: fine for a small shop's volume,
+   * and every path funnels through here so counts stay consistent. */
+  function adjustStock(client, inventoryId, delta) {
+    if (!inventoryId || !delta) return;
+    client.from('inventory').select('stock_qty').eq('id', inventoryId).maybeSingle().then(function (res) {
+      if (res.error || !res.data) return;
+      var next = Math.max(0, (Number(res.data.stock_qty) || 0) + delta);
+      client.from('inventory').update({ stock_qty: next }).eq('id', inventoryId).then(function () {});
+    }).catch(function () {});
+  }
+
+  function loadStockItems(client, t) {
+    var sel = $('p2-part-stock');
+    if (!sel) return;
+    client.from('inventory').select('*').gt('stock_qty', 0).order('product_name', { ascending: true }).then(function (res) {
+      if (res.error) return;
+      t._stockItems = res.data || [];
+      sel.innerHTML = '<option value="">\u2014 New part order (not from stock) \u2014</option>' + t._stockItems.map(function (it) {
+        return '<option value="' + esc(it.id) + '">' + esc(it.product_name) + ' \u2014 ' + esc(it.stock_qty) + ' in stock (' + esc(it.location || 'van') + ')</option>';
+      }).join('');
+    }).catch(function () {});
+  }
+
+  function wirePaymentActions(client, t) {
+    var checkoutBtn = $('p3-checkout-btn');
+    var cashBtn = $('p3-cash-btn');
+    var msg = $('p3-pay-msg');
+    var linkBox = $('p3-checkout-link');
+    if (checkoutBtn) checkoutBtn.addEventListener('click', function () {
+      checkoutBtn.disabled = true;
+      msg.textContent = 'Creating Square payment link\u2026';
+      if (linkBox) { linkBox.hidden = true; linkBox.innerHTML = ''; }
+      client.auth.getSession().then(function (sres) {
+        var token = sres && sres.data && sres.data.session ? sres.data.session.access_token : '';
+        if (!token) { checkoutBtn.disabled = false; msg.textContent = 'Session expired \u2014 sign in again.'; return; }
+        fetch(SUPABASE_URL + '/functions/v1/square-ticket-checkout', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'apikey': SUPABASE_ANON_KEY,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ ticket_id: t.id })
+        }).then(function (r) { return r.json().then(function (data) { return { ok: r.ok, data: data }; }); })
+          .then(function (out2) {
+            checkoutBtn.disabled = false;
+            if (!out2.ok || !out2.data || !out2.data.url) {
+              msg.textContent = (out2.data && out2.data.error) ? out2.data.error : 'Couldn\u2019t create the payment link.';
+              return;
+            }
+            msg.textContent = 'Payment link ready \u2014 ' + fmtMoney(out2.data.amount_cents / 100) + '.';
+            if (linkBox) {
+              linkBox.innerHTML = '<p class="portal-card-meta"><a href="' + esc(out2.data.url) + '" target="_blank" rel="noopener">' + esc(out2.data.url) + '</a></p>' +
+                '<p class="portal-muted portal-small">Send this link to the customer. When Square shows the payment completed, record it in Charges above as a \u201cDeposit received (credit)\u201d line so the balance zeroes out.</p>';
+              linkBox.hidden = false;
+            }
+          }).catch(function () { checkoutBtn.disabled = false; msg.textContent = 'Couldn\u2019t create the payment link. Check your connection.'; });
+      }).catch(function () { checkoutBtn.disabled = false; msg.textContent = 'Session expired \u2014 sign in again.'; });
+    });
+
+    if (cashBtn) cashBtn.addEventListener('click', function () {
+      if (cashBtn.getAttribute('data-confirm') !== '1') {
+        cashBtn.setAttribute('data-confirm', '1');
+        cashBtn.innerHTML = '<i class="fas fa-money-bill-wave"></i> Confirm \u2014 paid in cash?';
+        return;
+      }
+      cashBtn.removeAttribute('data-confirm');
+      cashBtn.innerHTML = '<i class="fas fa-money-bill-wave"></i> Mark paid \u2014 cash';
+      var tot = chargeTotals(t._charges || []);
+      if (tot.balance <= 0) { msg.textContent = 'Nothing due on this ticket.'; return; }
+      cashBtn.disabled = true;
+      msg.textContent = 'Recording cash payment\u2026';
+      client.from('ticket_charges').insert({
+        ticket_id: t.id, kind: 'deposit_credit', description: 'Paid in cash',
+        qty: 1, unit_price: Math.round(tot.balance * 100) / 100
+      }).then(function (res) {
+        cashBtn.disabled = false;
+        if (res.error) { msg.textContent = 'Couldn\u2019t record that payment. Try again.'; return; }
+        msg.textContent = 'Marked paid \u2014 cash. Balance is now $0.00.';
+        loadCharges(client, t);
+      }).catch(function () { cashBtn.disabled = false; msg.textContent = 'Couldn\u2019t record that payment. Try again.'; });
     });
   }
 
@@ -1020,6 +1148,10 @@
         '<span class="portal-badge portal-st-reviewed"><i class="fas fa-coins"></i> ' + esc(String(c.points)) + ' pts</span></div>' +
         '<p class="portal-card-meta"><i class="fas fa-envelope"></i> ' + esc(c.email || '—') +
         (c.phone ? ' · <i class="fas fa-phone"></i> ' + esc(c.phone) : '') + '</p>' +
+        '<p class="portal-card-meta"><i class="fas fa-cake-candles"></i> Birthday: ' +
+        '<input type="date" class="p3-bday-input" data-bday-input="' + esc(c.id) + '" value="' + esc(c.birthday || '') + '" aria-label="Customer birthday" /> ' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-bday-save="' + esc(c.id) + '">Save</button> ' +
+        '<span class="portal-muted portal-small" data-bday-msg="' + esc(c.id) + '"></span></p>' +
         '<p class="portal-card-meta">' + esc(String(c.orderCount)) + ' shop order' + (c.orderCount === 1 ? '' : 's') +
         ' · Customer since ' + esc(fmtDate(c.created_at)) + '</p>' +
         '</article>';
@@ -1043,7 +1175,7 @@
             if (pending > 0) return;
             var rows = customers.map(function (c) {
               return {
-                id: c.id, name: c.name, email: c.email, phone: c.phone, created_at: c.created_at,
+                id: c.id, name: c.name, email: c.email, phone: c.phone, created_at: c.created_at, birthday: c.birthday,
                 points: pointsByCustomer[c.id] || 0,
                 orderCount: ordersByCustomer[c.id] || 0
               };
@@ -1076,7 +1208,23 @@
     renderCustomers(rows);
   }
 
-  /* ================= INVENTORY + PURCHASE ORDERS (read-only) ================= */
+  function saveBirthday(customerId) {
+    var input = document.querySelector('[data-bday-input="' + customerId + '"]');
+    var msg = document.querySelector('[data-bday-msg="' + customerId + '"]');
+    if (!input) return;
+    var val = input.value || null;
+    if (msg) msg.textContent = 'Saving\u2026';
+    withClient(function (client) {
+      if (!client) { if (msg) msg.textContent = 'No connection.'; return; }
+      client.from('customers').update({ birthday: val }).eq('id', customerId).then(function (res) {
+        if (res.error) { if (msg) msg.textContent = 'Couldn\u2019t save.'; return; }
+        if (msg) msg.textContent = 'Saved.';
+        state.customersCache.forEach(function (c) { if (c.id === customerId) c.birthday = val; });
+      }).catch(function () { if (msg) msg.textContent = 'Couldn\u2019t save.'; });
+    });
+  }
+
+  /* ================= INVENTORY (Phase 3: editable van/shop stock) ================= */
   function itemLines(items) {
     if (!items) return '—';
     var arr = items;
@@ -1098,19 +1246,158 @@
 
   function renderInventory(rows) {
     var list = $('portal-inventory-list');
-    if (!rows.length) { emptyState(list, 'No inventory products yet.'); return; }
+    if (!list) return;
+    var filterEl = $('portal-inv-filter');
+    var filter = filterEl ? filterEl.value : 'all';
+    var shown = (rows || []).filter(function (p) { return filter === 'all' || (p.location || 'van') === filter; });
+    if (!shown.length) {
+      emptyState(list, (rows && rows.length) ? 'No stock in that location yet.' : 'No inventory products yet. Add the first one with the form below.');
+      return;
+    }
     var html = '<div class="portal-table-wrap"><table class="portal-table"><thead><tr>' +
-      '<th>Product</th><th>Category</th><th>Supplier</th><th>SKU</th><th>Cost</th><th>Retail</th><th>Stock</th>' +
+      '<th>Product</th><th>Category</th><th>Supplier</th><th>SKU</th><th>Cost</th><th>Retail</th><th>Location</th><th>Stock</th><th></th>' +
       '</tr></thead><tbody>';
-    html += rows.map(function (p) {
+    html += shown.map(function (p) {
       var threshold = (typeof p.reorder_point === 'number') ? p.reorder_point : 5;
       var low = typeof p.stock_qty === 'number' && p.stock_qty <= threshold;
+      var locOpts = ['van', 'shop'].map(function (loc) {
+        return '<option value="' + loc + '"' + ((p.location || 'van') === loc ? ' selected' : '') + '>' + (loc === 'van' ? 'Van' : 'Shop') + '</option>';
+      }).join('');
       return '<tr><td>' + esc(p.product_name || '—') + '</td><td>' + esc(p.category || '—') + '</td><td>' +
         esc(p.supplier || '—') + '</td><td>' + esc(p.supplier_sku || '—') + '</td><td>' + esc(fmtMoney(p.cost)) +
-        '</td><td>' + esc(fmtMoney(p.retail_price)) + '</td><td class="' + (low ? 'portal-stock-low' : 'portal-stock-ok') + '">' +
-        esc(String(p.stock_qty == null ? '—' : p.stock_qty)) + (low ? ' (low)' : '') + '</td></tr>';
+        '</td><td>' + esc(fmtMoney(p.retail_price)) + '</td>' +
+        '<td><select class="p3-mini-select" data-inv-loc="' + esc(p.id) + '" aria-label="Stock location">' + locOpts + '</select></td>' +
+        '<td class="' + (low ? 'portal-stock-low' : 'portal-stock-ok') + '">' +
+        '<button class="p3-qty-btn" type="button" data-inv-dec="' + esc(p.id) + '" aria-label="Decrease stock">&minus;</button> ' +
+        esc(String(p.stock_qty == null ? '—' : p.stock_qty)) + (low ? ' (low)' : '') +
+        ' <button class="p3-qty-btn" type="button" data-inv-inc="' + esc(p.id) + '" aria-label="Increase stock">+</button></td>' +
+        '<td class="p3-inv-actions"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-inv-edit="' + esc(p.id) + '">Edit</button> ' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-inv-del="' + esc(p.id) + '">Delete</button></td></tr>';
     }).join('');
     list.innerHTML = html + '</tbody></table></div>';
+    wireInventoryRows(list);
+  }
+
+  function invRow(id) {
+    var found = null;
+    state.inventoryCache.forEach(function (p) { if (p.id === id) found = p; });
+    return found;
+  }
+
+  function updateInventoryRow(id, patch) {
+    withClient(function (client) {
+      if (!client) return;
+      client.from('inventory').update(patch).eq('id', id).then(function (res) {
+        if (!res.error) { state.loaded.inventory = false; loadInventory(true); }
+      }).catch(function () {});
+    });
+  }
+
+  function wireInventoryRows(list) {
+    list.querySelectorAll('[data-inv-inc]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var p = invRow(btn.getAttribute('data-inv-inc'));
+        if (p) updateInventoryRow(p.id, { stock_qty: (Number(p.stock_qty) || 0) + 1 });
+      });
+    });
+    list.querySelectorAll('[data-inv-dec]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var p = invRow(btn.getAttribute('data-inv-dec'));
+        if (p) updateInventoryRow(p.id, { stock_qty: Math.max(0, (Number(p.stock_qty) || 0) - 1) });
+      });
+    });
+    list.querySelectorAll('[data-inv-loc]').forEach(function (sel) {
+      sel.addEventListener('change', function () {
+        updateInventoryRow(sel.getAttribute('data-inv-loc'), { location: sel.value });
+      });
+    });
+    list.querySelectorAll('[data-inv-edit]').forEach(function (btn) {
+      btn.addEventListener('click', function () { fillInventoryForm(invRow(btn.getAttribute('data-inv-edit'))); });
+    });
+    list.querySelectorAll('[data-inv-del]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = btn.getAttribute('data-inv-del');
+        if (btn.getAttribute('data-confirm') !== '1') {
+          btn.setAttribute('data-confirm', '1');
+          btn.textContent = 'Confirm delete?';
+          return;
+        }
+        withClient(function (client) {
+          if (!client) return;
+          client.from('inventory').delete().eq('id', id).then(function (res) {
+            if (res.error) { btn.textContent = 'In use — can’t delete'; return; }
+            state.loaded.inventory = false;
+            loadInventory(true);
+          }).catch(function () { btn.textContent = 'Try again'; });
+        });
+      });
+    });
+  }
+
+  function fillInventoryForm(p) {
+    if (!p) return;
+    $('portal-inv-id').value = p.id;
+    $('portal-inv-name').value = p.product_name || '';
+    $('portal-inv-category').value = p.category || '';
+    $('portal-inv-supplier').value = p.supplier || '';
+    $('portal-inv-sku').value = p.supplier_sku || '';
+    $('portal-inv-cost').value = p.cost != null ? p.cost : '';
+    $('portal-inv-retail').value = p.retail_price != null ? p.retail_price : '';
+    $('portal-inv-qty').value = p.stock_qty != null ? p.stock_qty : 0;
+    $('portal-inv-reorder').value = p.reorder_point != null ? p.reorder_point : 5;
+    $('portal-inv-location').value = p.location || 'van';
+    $('portal-inv-submit').innerHTML = '<i class="fas fa-save"></i> Save changes';
+    var cancel = $('portal-inv-cancel'); if (cancel) cancel.hidden = false;
+    var form = $('portal-inv-form');
+    if (form && form.scrollIntoView) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function resetInventoryForm() {
+    var form = $('portal-inv-form');
+    if (!form) return;
+    form.reset();
+    $('portal-inv-id').value = '';
+    $('portal-inv-location').value = 'van';
+    $('portal-inv-submit').innerHTML = '<i class="fas fa-plus"></i> Add stock item';
+    var cancel = $('portal-inv-cancel'); if (cancel) cancel.hidden = true;
+  }
+
+  function saveInventoryItem(e) {
+    e.preventDefault();
+    var err = $('portal-inv-error');
+    var ok = $('portal-inv-success');
+    err.hidden = true; err.textContent = '';
+    ok.hidden = true;
+    var name = trim($('portal-inv-name').value);
+    if (!name) { err.textContent = 'Product name is required.'; err.hidden = false; return; }
+    function num(id) { var v = $(id).value; return v === '' ? null : parseFloat(v); }
+    var row = {
+      product_name: name,
+      category: trim($('portal-inv-category').value) || null,
+      supplier: trim($('portal-inv-supplier').value) || null,
+      supplier_sku: trim($('portal-inv-sku').value) || null,
+      cost: num('portal-inv-cost'),
+      retail_price: num('portal-inv-retail'),
+      stock_qty: parseInt($('portal-inv-qty').value, 10) || 0,
+      reorder_point: parseInt($('portal-inv-reorder').value, 10),
+      location: $('portal-inv-location').value
+    };
+    if (isNaN(row.reorder_point)) row.reorder_point = 5;
+    var id = $('portal-inv-id').value;
+    var btn = $('portal-inv-submit');
+    btn.disabled = true;
+    withClient(function (client) {
+      if (!client) { btn.disabled = false; err.textContent = 'Couldn’t reach the database.'; err.hidden = false; return; }
+      var q = id ? client.from('inventory').update(row).eq('id', id) : client.from('inventory').insert(row);
+      q.then(function (res) {
+        btn.disabled = false;
+        if (res.error) { err.textContent = 'Couldn’t save that item: ' + res.error.message; err.hidden = false; return; }
+        resetInventoryForm();
+        ok.hidden = false;
+        state.loaded.inventory = false;
+        loadInventory(true);
+      }).catch(function () { btn.disabled = false; err.textContent = 'Couldn’t save that item. Try again.'; err.hidden = false; });
+    });
   }
 
   function renderPurchaseOrders(rows) {
@@ -1136,7 +1423,8 @@
         .then(function (res) {
           if (res.error) { listError(list, 'inventory'); return; }
           state.loaded.inventory = true;
-          renderInventory(res.data || []);
+          state.inventoryCache = res.data || [];
+          renderInventory(state.inventoryCache);
         })
         .catch(function () { listError(list, 'inventory'); });
       client.from('purchase_orders').select('*').order('created_at', { ascending: false }).limit(100)
@@ -1160,6 +1448,8 @@
           if (aid) { openApplication(aid); return; }
           var iid = t.getAttribute('data-view-investor');
           if (iid) { openInvestor(iid); return; }
+          var bid = t.getAttribute('data-bday-save');
+          if (bid) { saveBirthday(bid); return; }
         }
         t = t.parentNode;
       }
@@ -1170,6 +1460,12 @@
       loadTickets(true);
     });
     $('portal-cust-search').addEventListener('input', applyCustomerSearch);
+    var invFilterEl = $('portal-inv-filter');
+    if (invFilterEl) invFilterEl.addEventListener('change', function () { renderInventory(state.inventoryCache); });
+    var invFormEl = $('portal-inv-form');
+    if (invFormEl) invFormEl.addEventListener('submit', saveInventoryItem);
+    var invCancelEl = $('portal-inv-cancel');
+    if (invCancelEl) invCancelEl.addEventListener('click', resetInventoryForm);
   }
 
   /* ================= INIT ================= */
