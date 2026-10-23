@@ -469,7 +469,7 @@
           '<div class="portal-drawer-section"><h3>Charges</h3>' +
           '<div id="p2-charges"><p class="portal-muted">Loading charges&hellip;</p></div>' +
           '<form id="p2-charge-form" class="p2-form">' +
-          '<select id="p2-charge-kind" aria-label="Charge type"><option value="part">Part</option><option value="labor">Labor</option><option value="one_off">Other charge</option><option value="dispatch">Dispatch fee</option><option value="deposit_credit">Deposit received (credit)</option></select>' +
+          '<select id="p2-charge-kind" aria-label="Charge type"><option value="part">Part</option><option value="labor">Labor</option><option value="one_off">Other charge</option><option value="dispatch">House-call fee</option><option value="deposit_credit">Deposit received (credit)</option></select>' +
           '<input id="p2-charge-desc" type="text" placeholder="Description" maxlength="200" aria-label="Charge description" />' +
           '<div class="p2-form-row"><input id="p2-charge-qty" type="number" step="0.5" min="0" value="1" aria-label="Quantity" />' +
           '<input id="p2-charge-price" type="number" step="0.01" min="0" placeholder="Price $" aria-label="Unit price" />' +
@@ -561,12 +561,12 @@
     var box = $('p2-charges');
     if (!box) return;
     if (!rows.length) {
-      box.innerHTML = '<p class="portal-muted">No charges yet. Add the repair price, parts, and the dispatch fee here — the receipt is built from these lines.</p>';
+      box.innerHTML = '<p class="portal-muted">No charges yet. Add the repair price, parts, and the house-call fee here — the receipt is built from these lines.</p>';
     } else {
       var tot = chargeTotals(rows);
       var html = rows.map(function (c) {
         var amt = Number(c.qty || 0) * Number(c.unit_price || 0);
-        var kindLabel = { part: 'Part', labor: 'Labor', one_off: 'Other', dispatch: 'Dispatch fee', deposit_credit: 'Deposit' }[c.kind] || c.kind;
+        var kindLabel = { part: 'Part', labor: 'Labor', one_off: 'Other', dispatch: 'House-call fee', deposit_credit: 'Deposit' }[c.kind] || c.kind;
         var sign = c.kind === 'deposit_credit' ? '&minus;' : '';
         return '<div class="p2-line"><div class="p2-line-main"><span class="p2-kind">' + esc(kindLabel) + '</span> ' + esc(c.description) +
           '<span class="portal-muted portal-small"> &times;' + esc(c.qty) + ' @ ' + fmtMoney(c.unit_price) +
@@ -702,7 +702,7 @@
       '<tr class="rc-grand"><td>Balance due</td><td class="rc-num">' + fmtMoney(tot.balance) + '</td></tr>' +
       '</tbody></table>' +
       (tot.balance <= 0 && tot.subtotal > 0 ? '<p class="rc-paid">PAID IN FULL — thank you!</p>' : '') +
-      '<p class="rc-foot">Repairs are backed by our 1-Year Limited Warranty (parts &amp; labor). The $15 dispatch fee is non-refundable. Thank you for your business!</p>' +
+      '<p class="rc-foot">Repairs are backed by our 1-Year Limited Warranty (parts &amp; labor). The $35 house-call fee is non-refundable. Thank you for your business!</p>' +
       '</div>';
     printArea(html, 'receipt');
   }
@@ -745,8 +745,8 @@
     var kindSel = $('p2-charge-kind');
     if (kindSel) kindSel.addEventListener('change', function () {
       if (kindSel.value === 'dispatch') {
-        if (!$('p2-charge-desc').value) $('p2-charge-desc').value = 'Dispatch fee (non-refundable)';
-        if (!$('p2-charge-price').value) $('p2-charge-price').value = '15';
+        if (!$('p2-charge-desc').value) $('p2-charge-desc').value = 'House-call fee (non-refundable)';
+        if (!$('p2-charge-price').value) $('p2-charge-price').value = '35';
       }
       if (kindSel.value === 'deposit_credit' && !$('p2-charge-desc').value) {
         $('p2-charge-desc').value = 'Parts deposit received';
