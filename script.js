@@ -134,7 +134,7 @@
       'Business / Other': {
         brands: ['Office / Network', 'POS system', 'Printer / peripheral', 'Other device'],
         issues: [
-          { name: 'On-site diagnostic & support', price: '$95/hr + dispatch' },
+          { name: 'On-site diagnostic & support', price: '$95/hr + house call' },
           { name: 'Setup / install / cabling', price: 'Custom quote' }
         ]
       }
@@ -681,7 +681,7 @@
       }
       var price = PRICES[brand][repair];
       if (amount) amount.textContent = 'From $' + price;
-      if (note) note.textContent = REPAIR_LABELS[repair] + ' for ' + PRICES[brand].label + ' — starting price, parts and labor included. Your final flat price is confirmed for your exact model before booking. A separate $15 non-refundable dispatch fee applies to the visit.';
+      if (note) note.textContent = REPAIR_LABELS[repair] + ' for ' + PRICES[brand].label + ' — starting price, parts and labor included. Your final flat price is confirmed for your exact model before booking. A separate $35 house-call fee applies to the visit — due at booking, non-refundable, and it covers travel and a full diagnosis.';
       if (result) { result.hidden = false; result.classList.add('show'); }
       // Store the quote for the repair form
       try {
