@@ -420,7 +420,7 @@ a { color: var(--brand); }
 .footer-legal-links { display: flex; gap: 1.4rem; }
 .footer-legal-links a { font-size: 0.8rem; color: #B9A98F; text-decoration: none; }
 .footer-legal-links a:hover { color: var(--gold); }
-.footer-wordmark { font-family: var(--font-display); font-weight: 700; color: #FAF6EE; font-size: 1.15rem; } /* ---------- Payment badges ---------- */ .footer-payments { display: flex; align-items: center; flex-wrap: wrap; gap: 0.6rem; margin: 0 0 1.8rem; } .footer-payments-label { font-size: 0.8rem; color: #8d7d66; margin-right: 0.4rem; text-transform: uppercase; letter-spacing: 0.08em; } .pay-badge { display: inline-flex; align-items: center; justify-content: center; background: #fff; border-radius: 6px; padding: 0.35rem 0.6rem; font-size: 1.35rem; color: #1a1f71; line-height: 1; min-height: 2rem; } .pay-badge .fa-cc-mastercard { color: #eb001b; } .pay-badge .fa-cc-apple-pay { color: #000; } .pay-badge .fa-google-pay { color: #3c4043; } .pay-badge .fa-money-bill-wave { color: #2e7d32; font-size: 1rem; margin-right: 0.3rem; } .pay-badge.pay-text { font-size: 0.72rem; font-weight: 700; color: #1428a0; letter-spacing: 0.02em; } .pay-badge.pay-text:last-child { color: #2e7d32; }
+.footer-wordmark { font-family: var(--font-display); font-weight: 700; color: #FAF6EE; font-size: 1.15rem; } /* ---------- Payment badges ---------- */ .footer-payments { display: flex; align-items: center; flex-wrap: wrap; gap: 0.6rem; margin: 0 0 1.8rem; } .footer-payments-label { font-size: 0.8rem; color: #c9bba6; margin-right: 0.4rem; text-transform: uppercase; letter-spacing: 0.08em; } .pay-badge { display: inline-flex; align-items: center; justify-content: center; background: #fff; border-radius: 6px; padding: 0.35rem 0.6rem; font-size: 1.35rem; color: #1a1f71; line-height: 1; min-height: 2rem; } .pay-badge .fa-cc-mastercard { color: #eb001b; } .pay-badge .fa-cc-apple-pay { color: #000; } .pay-badge .fa-google-pay { color: #3c4043; } .pay-badge .fa-money-bill-wave { color: #2e7d32; font-size: 1rem; margin-right: 0.3rem; } .pay-badge.pay-text { font-size: 0.72rem; font-weight: 700; color: #1428a0; letter-spacing: 0.02em; } .pay-badge.pay-text:last-child { color: #2e7d32; }
 
 /* ---------- Misc ---------- */
 .text-center { text-align: center; }
@@ -986,3 +986,21 @@ html[data-theme="dark"] .header {
   .emp-tab { flex: none; white-space: nowrap; }
   .emp-dash-head { flex-direction: column; align-items: stretch; }
 }
+
+/* ===== Accessibility menu (2026-10-23) ===== */
+.a11y-btn{position:fixed;left:20px;bottom:20px;z-index:1250;width:52px;height:52px;border-radius:50%;border:none;background:var(--brand,#b4551f);color:#fff;font-size:1.45rem;cursor:pointer;box-shadow:0 10px 28px rgba(30,20,10,.35);display:flex;align-items:center;justify-content:center}
+.a11y-btn:hover{filter:brightness(1.07)}
+.a11y-panel{position:fixed;left:20px;bottom:84px;z-index:1600;width:min(320px,92vw);background:var(--surface,#fffaf2);color:var(--text,#2b2118);border:1px solid var(--line,#e5d9c8);border-radius:16px;box-shadow:0 24px 60px rgba(30,20,10,.35);padding:16px 18px;font-family:var(--font-body,system-ui,sans-serif)}
+.a11y-panel[hidden]{display:none}
+.a11y-title{font-weight:800;font-size:1.05rem;margin:0 0 4px}
+.a11y-promise{font-size:.9rem;color:var(--muted,#6f6152);margin:0 0 12px}
+.a11y-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-top:1px solid var(--line,#e5d9c8);font-size:.98rem;cursor:pointer}
+.a11y-row input{width:22px;height:22px;flex:none;accent-color:var(--brand,#b4551f);cursor:pointer}
+.a11y-reset{margin-top:12px;width:100%;padding:9px;border-radius:999px;border:1.5px solid var(--brand,#b4551f);background:transparent;color:var(--brand,#b4551f);font-weight:700;cursor:pointer;font-family:inherit}
+@media (max-width:768px){.a11y-btn{left:16px;bottom:calc(84px + env(safe-area-inset-bottom))}.a11y-panel{left:8px;bottom:calc(148px + env(safe-area-inset-bottom))}}
+html.a11y-bigtext{font-size:112.5%}
+html.a11y-motion *,html.a11y-motion *::before,html.a11y-motion *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+html.a11y-links a{text-decoration:underline!important}
+html.a11y-contrast{--text:#14100c;--muted:#3d362e}
+html[data-theme="dark"].a11y-contrast{--text:#ffffff;--muted:#e6e0d4}
+html.a11y-contrast body{font-weight:500}

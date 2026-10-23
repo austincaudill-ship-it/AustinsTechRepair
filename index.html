@@ -53,6 +53,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="theme-color" content="#0a1628" />
+  <script>(function(){try{var s=localStorage.getItem('atr-theme');var t=(s==='dark'||s==='light')?s:((window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
 </head>
 <body>
 
@@ -2064,6 +2065,18 @@
       </ol>
       <p class="install-note">Tip: once it&rsquo;s on your Home Screen, your iPhone can tint the icon with your other apps &mdash; press and hold the Home Screen, tap Edit, then Customize.</p>
     </div>
+  </div>
+
+  <!-- ACCESSIBILITY -->
+  <button id="a11y-btn" class="a11y-btn" type="button" aria-label="Accessibility options" aria-haspopup="true" aria-expanded="false"><i class="fas fa-universal-access"></i></button>
+  <div id="a11y-panel" class="a11y-panel" hidden role="dialog" aria-label="Accessibility options">
+    <p class="a11y-title"><i class="fas fa-universal-access"></i> Accessibility</p>
+    <p class="a11y-promise">No matter your difficulty, you can use our website.</p>
+    <label class="a11y-row"><span>Bigger text</span><input type="checkbox" id="a11y-text"></label>
+    <label class="a11y-row"><span>High contrast</span><input type="checkbox" id="a11y-contrast"></label>
+    <label class="a11y-row"><span>Reduce motion</span><input type="checkbox" id="a11y-motion"></label>
+    <label class="a11y-row"><span>Underline links</span><input type="checkbox" id="a11y-links"></label>
+    <button class="a11y-reset" id="a11y-reset" type="button">Reset all</button>
   </div>
 
   <script src="script.js"></script>

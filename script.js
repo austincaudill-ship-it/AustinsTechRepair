@@ -332,21 +332,34 @@
     var toggle = document.getElementById('theme-toggle');
     var icon = document.getElementById('theme-icon');
 
-    function applyTheme(theme) {
+    function setTheme(theme) {
       root.setAttribute('data-theme', theme);
       if (icon) {
         icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
       }
+    }
+    function applyTheme(theme) {
+      setTheme(theme);
       try { localStorage.setItem('atr-theme', theme); } catch (e) {}
     }
 
-    // Load saved preference, or default to light
+    // Saved choice wins. Otherwise follow the device's own dark/light
+    // setting — and keep following it live until the visitor picks manually.
+    var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+    function systemTheme() { return mq && mq.matches ? 'dark' : 'light'; }
     var saved = null;
     try { saved = localStorage.getItem('atr-theme'); } catch (e) {}
     if (saved === 'dark' || saved === 'light') {
-      applyTheme(saved);
+      setTheme(saved);
     } else {
-      applyTheme('light');
+      setTheme(systemTheme());
+    }
+    if (mq && mq.addEventListener) {
+      mq.addEventListener('change', function () {
+        var s2 = null;
+        try { s2 = localStorage.getItem('atr-theme'); } catch (e) {}
+        if (s2 !== 'dark' && s2 !== 'light') setTheme(systemTheme());
+      });
     }
 
     if (toggle) {
@@ -2478,3 +2491,53 @@ if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/sw.js").catch(function () {});
   });
 }
+
+/* ==================== ACCESSIBILITY MENU ==================== */
+(function () {
+  var KEY = 'atr-a11y';
+  var prefs = { text: false, contrast: false, motion: false, links: false };
+  try {
+    var raw = localStorage.getItem(KEY);
+    if (raw) prefs = JSON.parse(raw) || prefs;
+    else if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) prefs.motion = true;
+  } catch (e) {}
+  function apply() {
+    var r = document.documentElement;
+    r.classList.toggle('a11y-bigtext', !!prefs.text);
+    r.classList.toggle('a11y-contrast', !!prefs.contrast);
+    r.classList.toggle('a11y-motion', !!prefs.motion);
+    r.classList.toggle('a11y-links', !!prefs.links);
+    try { localStorage.setItem(KEY, JSON.stringify(prefs)); } catch (e) {}
+    var map = { 'a11y-text': 'text', 'a11y-contrast': 'contrast', 'a11y-motion': 'motion', 'a11y-links': 'links' };
+    Object.keys(map).forEach(function (id) { var el = document.getElementById(id); if (el) el.checked = !!prefs[map[id]]; });
+  }
+  document.addEventListener('DOMContentLoaded', function () {
+    var btn = document.getElementById('a11y-btn');
+    var panel = document.getElementById('a11y-panel');
+    if (!btn || !panel) return;
+    apply();
+    btn.addEventListener('click', function () {
+      var open = panel.hidden;
+      panel.hidden = !open;
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    document.addEventListener('click', function (e) {
+      if (!panel.hidden && !panel.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
+        panel.hidden = true; btn.setAttribute('aria-expanded', 'false');
+      }
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !panel.hidden) { panel.hidden = true; btn.setAttribute('aria-expanded', 'false'); btn.focus(); }
+    });
+    ['text', 'contrast', 'motion', 'links'].forEach(function (k) {
+      var el = document.getElementById('a11y-' + k);
+      if (el) el.addEventListener('change', function () { prefs[k] = el.checked; apply(); });
+    });
+    var reset = document.getElementById('a11y-reset');
+    if (reset) reset.addEventListener('click', function () {
+      prefs = { text: false, contrast: false, motion: false, links: false };
+      try { localStorage.removeItem(KEY); } catch (e) {}
+      apply();
+    });
+  });
+})();
