@@ -47,6 +47,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="atr-forms.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png" />
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
@@ -538,15 +539,9 @@
                       <input class="form-field" type="email" id="rc-email" name="email" required placeholder="john@example.com" autocomplete="email" />
                     </div>
                   </div>
-                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                    <div>
-                      <label class="field-label" for="rc-model">Exact model</label>
-                      <input class="form-field" type="text" id="rc-model" name="model" placeholder="e.g. iPhone 13 Pro Max" />
-                    </div>
-                    <div>
-                      <label class="field-label" for="rc-serial">Serial number / IMEI <span style="text-transform:none; font-weight:600;">(optional)</span></label>
-                      <input class="form-field" type="text" id="rc-serial" name="serial" placeholder="Found in Settings or on the device" />
-                    </div>
+                  <div style="margin-bottom: 1rem;">
+                    <label class="field-label" for="rc-serial">Serial number / IMEI <span style="text-transform:none; font-weight:600;">(optional &mdash; confirms your exact device so we order the right part)</span></label>
+                    <input class="form-field" type="text" id="rc-serial" name="serial" placeholder="Found in Settings or on the device" />
                   </div>
                   <div style="margin-bottom: 1.2rem;">
                     <label class="field-label" for="rc-address">Service address <span style="text-transform:none; font-weight:600;">(where we come to you)</span></label>
@@ -1565,6 +1560,19 @@
             </div>
             <p style="text-align:center; color:var(--muted); margin-bottom:0.4rem;"><strong>Hours:</strong> Mon&ndash;Fri 5:30 AM&ndash;10:00 PM &middot; Sat 8:30 AM&ndash;9:00 PM &middot; Sun 9:00 AM&ndash;5:00 PM</p>
             <p style="text-align:center; color:var(--muted); margin-bottom:1.6rem;">Got a repair? <a href="#repair" data-page="repair" style="font-weight:700;">Start your repair request</a> &mdash; that form gets us every detail we need for your estimate.</p>
+            <div class="section-header center" style="margin-top:2rem;">
+            <p class="eyebrow">Coverage map</p>
+            <h3 class="section-title" style="font-size:1.7rem;">See if we cover your area</h3>
+            <p class="section-copy">We&rsquo;re a mobile shop &mdash; this map shows where we travel. Type in your address and we&rsquo;ll tell you right away if you&rsquo;re in our area and what the trip costs: the $15 dispatch fee covers the first 15 miles from Spring Valley, then it&rsquo;s $1 per extra mile.</p>
+          </div>
+          <div id="service-map" style="height:340px; border-radius:14px; overflow:hidden; margin-bottom:1rem; background:#e8e2d6;"></div>
+          <div style="display:flex; gap:0.6rem; flex-wrap:wrap; margin-bottom:0.8rem;">
+            <input class="form-field" type="text" id="sa-address" placeholder="Your address &mdash; street, city, ZIP" style="flex:1 1 260px;" autocomplete="street-address">
+            <button class="btn btn-primary" type="button" id="sa-check"><i class="fas fa-location-dot"></i> Check My Address</button>
+            <button class="btn btn-outline" type="button" id="sa-locate"><i class="fas fa-crosshairs"></i> Use My Location</button>
+          </div>
+          <div id="sa-result" style="display:none; border-radius:12px; padding:1rem 1.1rem; margin-bottom:0.5rem; line-height:1.5;"></div>
+          <p style="font-size:0.82rem; color:var(--muted);">Distances are road miles measured from Spring Valley, OH. Your exact travel fee is always confirmed before you book &mdash; no surprises.</p>
             <div class="section-header center" style="margin-bottom:1rem;">
               <h3 style="font-size:1.3rem;">Send a quick message</h3>
               <p class="section-copy">Just a question, not a repair? Send it here.</p>
@@ -3059,6 +3067,101 @@
     if (reloaded) return;
     reloaded = true;
     window.location.reload();
+  });
+})();
+</script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+/* ===== ATRG: service-area map + travel fee checker (Contact page) ===== */
+(function () {
+  var ORIGIN = [39.6099, -84.0082]; // Spring Valley, OH
+  var INCLUDED_MILES = 15, BASE_FEE = 15, PER_MILE = 1;
+  var map = null, routeLayer = null, custMarker = null;
+  function $(id) { return document.getElementById(id); }
+  function ensureMap() {
+    var el = $('service-map');
+    if (!el || typeof L === 'undefined') return;
+    if (!map) {
+      map = L.map('service-map').setView(ORIGIN, 9);
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 18, attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+      L.circle(ORIGIN, { radius: INCLUDED_MILES * 1609.344, color: '#c2510a', weight: 2, fillColor: '#e8641c', fillOpacity: 0.10 }).addTo(map);
+      L.marker(ORIGIN).addTo(map).bindPopup('<strong>Austin\'s Tech Repair Group</strong><br>Spring Valley, OH \u2014 we come to you.');
+    }
+    setTimeout(function () { map.invalidateSize(); }, 60);
+    setTimeout(function () { map.invalidateSize(); }, 450);
+  }
+  function showResult(html, ok) {
+    var box = $('sa-result');
+    if (!box) return;
+    box.style.display = 'block';
+    box.style.background = ok ? '#eef7ee' : '#fdf1e7';
+    box.style.border = '1px solid ' + (ok ? '#bfe3bf' : '#f3cf9f');
+    box.innerHTML = html;
+  }
+  function feeFor(miles) {
+    var extra = Math.max(0, Math.ceil(miles) - INCLUDED_MILES);
+    return { extra: extra, total: BASE_FEE + extra * PER_MILE };
+  }
+  function present(miles, label) {
+    var f = feeFor(miles);
+    var milesTxt = (Math.round(miles * 10) / 10).toFixed(1);
+    if (f.extra === 0) {
+      showResult('<strong>You\'re in our radius.</strong> ' + label + ' is about <strong>' + milesTxt + ' miles</strong> from us \u2014 inside the 15 miles covered by the $15 dispatch fee. Your travel cost: <strong>$15</strong>.', true);
+    } else {
+      showResult('<strong>' + label + '</strong> is about <strong>' + milesTxt + ' road miles</strong> from us. Travel: $15 dispatch (first 15 miles) + ' + f.extra + ' extra miles \u00d7 $1 = <strong>$' + f.total + ' total</strong>. We confirm the exact fee before you book.', true);
+    }
+  }
+  function routeTo(lat, lng, label) {
+    ensureMap();
+    fetch('https://router.project-osrm.org/route/v1/driving/' + ORIGIN[1] + ',' + ORIGIN[0] + ';' + lng + ',' + lat + '?overview=full&geometries=geojson')
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d || !d.routes || !d.routes.length) throw new Error('no route');
+        var route = d.routes[0];
+        var miles = route.distance / 1609.344;
+        if (custMarker) { map.removeLayer(custMarker); }
+        custMarker = L.marker([lat, lng]).addTo(map).bindPopup(label);
+        if (routeLayer) { map.removeLayer(routeLayer); }
+        routeLayer = L.geoJSON(route.geometry, { style: { color: '#c2510a', weight: 4 } }).addTo(map);
+        map.fitBounds(routeLayer.getBounds().pad(0.15));
+        custMarker.openPopup();
+        present(miles, label);
+      })
+      .catch(function () {
+        var R = 3958.8, dLat = (lat - ORIGIN[0]) * Math.PI / 180, dLng = (lng - ORIGIN[1]) * Math.PI / 180;
+        var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(ORIGIN[0] * Math.PI / 180) * Math.cos(lat * Math.PI / 180) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        var miles = 2 * R * Math.asin(Math.sqrt(a)) * 1.25;
+        present(miles, label + ' (estimate)');
+      });
+  }
+  function checkAddress() {
+    var q = $('sa-address').value.trim();
+    if (!q) { showResult('Type your address above and tap <strong>Check My Address</strong>.', false); return; }
+    showResult('Looking up your address\u2026', true);
+    fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(q))
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d || !d.length) { showResult('We couldn\'t find that address. Check the spelling, or call/text <strong>937-280-6243</strong> and we\'ll figure it out with you.', false); return; }
+        routeTo(parseFloat(d[0].lat), parseFloat(d[0].lon), d[0].display_name.split(',').slice(0, 2).join(','));
+      })
+      .catch(function () { showResult('The lookup hiccuped \u2014 call or text <strong>937-280-6243</strong> and we\'ll check your distance for you.', false); });
+  }
+  document.addEventListener('DOMContentLoaded', function () {
+    var btn = $('sa-check'), loc = $('sa-locate'), input = $('sa-address');
+    if (btn) btn.addEventListener('click', checkAddress);
+    if (input) input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); checkAddress(); } });
+    if (loc) loc.addEventListener('click', function () {
+      if (!navigator.geolocation) { showResult('Your browser doesn\'t share location \u2014 type your address instead.', false); return; }
+      navigator.geolocation.getCurrentPosition(function (pos) {
+        routeTo(pos.coords.latitude, pos.coords.longitude, 'Your location');
+      }, function () { showResult('We couldn\'t get your location. Type your address instead \u2014 same result.', false); });
+    });
+    if (window.location.hash === '#contact') ensureMap();
+  });
+  window.addEventListener('hashchange', function () {
+    if (window.location.hash === '#contact') ensureMap();
   });
 })();
 </script>

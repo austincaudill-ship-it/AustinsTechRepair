@@ -192,7 +192,6 @@
           var email = document.getElementById('rc-email').value.trim();
           var address = document.getElementById('rc-address').value.trim();
           var notes = document.getElementById('rc-notes').value.trim();
-          var model = document.getElementById('rc-model').value.trim();
           var serial = document.getElementById('rc-serial').value.trim();
 
           if (!name || !phone || !email) {
@@ -211,7 +210,6 @@
             'Device type': repairState.device || 'Not selected',
             'Brand': repairState.brand || 'Not selected',
             'Issue': repairState.issue || 'Not selected',
-            'Exact model': model || '(not provided)',
             'Serial / IMEI': serial || '(not provided)',
             'Estimate shown': repairState.priceRange,
             'Name': name,
