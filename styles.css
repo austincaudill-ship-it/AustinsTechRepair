@@ -1004,3 +1004,24 @@ html.a11y-links a{text-decoration:underline!important}
 html.a11y-contrast{--text:#14100c;--muted:#3d362e}
 html[data-theme="dark"].a11y-contrast{--text:#ffffff;--muted:#e6e0d4}
 html.a11y-contrast body{font-weight:500}
+
+/* ===== My Repairs: ticket cards + thread (2026-10-23) ===== */
+.acct-ticket-card{display:block;width:100%;text-align:left;background:var(--surface,#fff);border:1px solid var(--line,#e5d9c8);border-radius:14px;padding:14px 16px;margin:0 0 10px;cursor:pointer;font-family:inherit;color:var(--text,#2b2118)}
+.acct-ticket-card:hover{border-color:var(--brand,#b4551f)}
+.acct-ticket-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px}
+.acct-ticket-issue{display:block;font-size:.95rem;margin-bottom:4px}
+.acct-ticket-meta{display:block;font-size:.85rem;color:var(--muted,#6f6152)}
+.acct-ticket-cta{display:block;margin-top:8px;font-size:.85rem;font-weight:700;color:var(--brand,#b4551f)}
+.acct-status{flex:none;font-size:.72rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;border-radius:999px;padding:4px 10px;background:#eee;color:#444}
+.acct-status-waiting{background:#fdf0e2;color:#9a5a13}
+.acct-status-inprogress{background:#e3ecfd;color:#1d4ed8}
+.acct-status-waitingforparts{background:#f3e8fd;color:#7c3aed}
+.acct-status-readyforpickup{background:#e2f7e3;color:#15803d}
+.acct-status-completed{background:#e8e8e8;color:#555}
+.acct-messages{display:flex;flex-direction:column;gap:8px;max-height:340px;overflow-y:auto;padding:6px 2px}
+.acct-msg{max-width:85%;padding:9px 12px;border-radius:14px;font-size:.92rem;line-height:1.45;white-space:pre-wrap;word-wrap:break-word}
+.acct-msg-who{display:block;font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;opacity:.75;margin-bottom:2px}
+.acct-msg-shop{background:var(--surface,#fffaf2);border:1px solid var(--line,#e5d9c8);align-self:flex-start}
+.acct-msg-me{background:var(--brand,#b4551f);color:#fff;align-self:flex-end}
+
+.pay-badge img.pay-mark-img { height: 1.3rem; width: auto; display: block; }

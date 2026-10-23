@@ -2014,7 +2014,7 @@
         </div>
       </div>
 
-      <div class="footer-payments"><span class="footer-payments-label">We accept</span><span class="pay-badge pay-text pay-name" title="Visa">Visa</span><span class="pay-badge pay-text pay-name" title="Mastercard">Mastercard</span><span class="pay-badge pay-text pay-name" title="American Express">American&nbsp;Express</span><span class="pay-badge pay-text pay-name" title="Discover">Discover</span><img class="apple-pay-mark" src="images/apple-pay-mark.svg" alt="Apple Pay" title="Apple Pay" /><span class="pay-badge pay-mark-wrap" title="Google Pay"><img class="google-pay-mark" src="images/google-pay-mark.svg" alt="Google Pay" /></span><span class="pay-badge pay-text pay-name" title="Samsung Pay">Samsung&nbsp;Pay</span><span class="pay-badge pay-text pay-name" title="Cash App Pay">Cash&nbsp;App&nbsp;Pay</span><span class="pay-badge pay-text pay-name" title="Afterpay">Afterpay</span><span class="pay-badge pay-text" title="Cash"><i class="fas fa-money-bill-wave"></i> Cash</span></div><p class="footer-disclaimer">
+      <div class="footer-payments"><span class="footer-payments-label">We accept</span><span class="pay-badge pay-text pay-name" title="Visa">Visa</span><span class="pay-badge pay-mark-wrap" title="Mastercard"><img class="pay-mark-img" src="images/mastercard-symbol.svg" alt="Mastercard" /></span><span class="pay-badge pay-mark-wrap" title="American Express"><img class="pay-mark-img" src="images/amex-mark.svg" alt="American Express" /></span><span class="pay-badge pay-mark-wrap" title="Discover"><img class="pay-mark-img" src="images/discover-mark.png" alt="Discover" /></span><img class="apple-pay-mark" src="images/apple-pay-mark.svg" alt="Apple Pay" title="Apple Pay" /><span class="pay-badge pay-mark-wrap" title="Google Pay"><img class="google-pay-mark" src="images/google-pay-mark.svg" alt="Google Pay" /></span><span class="pay-badge pay-text pay-name" title="Samsung Pay">Samsung&nbsp;Pay</span><span class="pay-badge pay-mark-wrap" title="Cash App Pay"><img class="pay-mark-img" src="images/cash-app-pay.svg" alt="Cash App Pay" /></span><span class="pay-badge pay-mark-wrap" title="Afterpay"><img class="pay-mark-img" src="images/afterpay-mark.png" alt="Afterpay" /></span><span class="pay-badge pay-text" title="Cash"><i class="fas fa-money-bill-wave"></i> Cash</span></div><p class="footer-disclaimer">
         <strong>Disclaimer:</strong> Austin's Tech Repair Group is an <strong>independent repair provider</strong> operating as a sole proprietorship in Ohio. We are <strong>not</strong> an authorized service provider for any manufacturer, and we are <strong>not affiliated with, sponsored by, or endorsed by</strong> Apple, Samsung, Google, Microsoft, Sony, Nintendo, Motorola, or any other company or brand named on this site. All trademarks, service marks, logos, and brand names are the property of their respective owners, and all rights in them are reserved by those owners. Apple, the Apple logo, Apple Pay, Apple Watch, Face ID, iPad, iPhone, and Touch ID are trademarks of Apple Inc., registered in the U.S. and other countries and regions. Samsung, Galaxy, and Samsung Pay are trademarks of Samsung Electronics Co., Ltd. Google, Pixel, Google Pay, and Android are trademarks of Google LLC. Microsoft, Windows, and Xbox are trademarks of the Microsoft group of companies. PlayStation is a trademark of Sony Interactive Entertainment Inc. Nintendo is a trademark of Nintendo Co., Ltd. Motorola is a trademark of Motorola Trademark Holdings, LLC. Visa is a trademark of Visa Inc. Mastercard is a trademark of Mastercard International Incorporated. Estimates shown on this site are approximate and confirmed after inspection. 1-year warranty covers parts and labor for the serviced issue; see Terms of Service for full details.
       </p>
 
@@ -2848,6 +2848,9 @@
     if (ptsEl) ptsEl.textContent = pts || 0;
     renderHeader(cust, pts);
     showDash();
+    currentCust = cust;
+    wireRepairs();
+    loadMyRepairs(cust);
   }
   function fillProfile(cust) {
     var n = $('authx-profile-name'), e = $('authx-profile-email'),
@@ -2876,6 +2879,136 @@
         cb(pts);
       })
       .catch(function () { cb(0); });
+  }
+
+  /* ---------- My Repairs: customer status view + messages ---------- */
+  var currentCust = null, repairsWired = false, openTicket = null;
+  var STATUS_COPY = {
+    'Waiting':           { label: 'Request received', note: "We've got your request \u2014 we'll text you to confirm your appointment window." },
+    'In Progress':       { label: 'In progress', note: 'Your repair is underway. We\'ll update this page and text you as it moves.' },
+    'Waiting for Parts': { label: 'Waiting for parts', note: 'Your part is ordered and on its way to us. We\'ll text you when it\'s in.' },
+    'Ready for Pickup':  { label: 'Ready!', note: 'Your repair is complete. We\'ll text you to arrange getting your device back to you.' },
+    'Completed':         { label: 'Completed', note: 'All done \u2014 thanks for trusting us! This repair is covered by our 1-Year Limited Warranty.' }
+  };
+  function escX(x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function ticketDevice(t) { return [t.device_type, t.brand, t.model].filter(function (p) { return p && String(p).trim() !== ''; }).join(' ') || 'Your device'; }
+  function ticketDate(t) { try { return new Date(t.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }); } catch (e) { return ''; } }
+  function statusPill(st) {
+    var c = STATUS_COPY[st] || { label: st || 'Received' };
+    var cls = String(st || '').toLowerCase().replace(/[^a-z]/g, '');
+    return '<span class="acct-status acct-status-' + cls + '">' + escX(c.label) + '</span>';
+  }
+  function showRepairsView() {
+    var r = $('acct-repairs'), th = $('acct-thread'), nt = $('acct-newticket');
+    if (r) r.hidden = false; if (th) th.hidden = true; if (nt) nt.hidden = true;
+  }
+  function loadMyRepairs(cust) {
+    var list = $('acct-ticket-list');
+    if (!list || !sb || !cust) return;
+    list.innerHTML = '<p class="acct-muted">Loading your repairs\u2026</p>';
+    sb.from('tickets').select('id, created_at, device_type, brand, model, issue, status')
+      .eq('customer_id', cust.id).order('created_at', { ascending: false }).limit(50)
+      .then(function (res) {
+        if (res.error) throw res.error;
+        var rows = res.data || [];
+        if (!rows.length) {
+          list.innerHTML = '<p class="acct-muted">No repairs yet \u2014 when you book a repair, you\'ll see its progress here, step by step.</p>';
+          return;
+        }
+        list.innerHTML = rows.map(function (t) {
+          var c = STATUS_COPY[t.status] || { note: '' };
+          return '<button type="button" class="acct-ticket-card" data-ticket="' + t.id + '">' +
+            '<span class="acct-ticket-top"><strong>' + escX(ticketDevice(t)) + '</strong>' + statusPill(t.status) + '</span>' +
+            '<span class="acct-ticket-issue">' + escX(t.issue || '') + '</span>' +
+            '<span class="acct-ticket-meta">' + escX(ticketDate(t)) + ' \u00b7 ' + escX(c.note) + '</span>' +
+            '<span class="acct-ticket-cta">View messages <i class="fas fa-arrow-right"></i></span>' +
+          '</button>';
+        }).join('');
+        Array.prototype.forEach.call(list.querySelectorAll('[data-ticket]'), function (btn) {
+          btn.addEventListener('click', function () {
+            var t = rows.filter(function (r) { return String(r.id) === btn.getAttribute('data-ticket'); })[0];
+            if (t) openThread(t);
+          });
+        });
+      })
+      .catch(function () {
+        list.innerHTML = '<p class="acct-muted">We couldn\'t load your repairs just now \u2014 pull this page up again in a moment, or call or text (937) 280-6243.</p>';
+      });
+  }
+  function openThread(t) {
+    openTicket = t;
+    var r = $('acct-repairs'), th = $('acct-thread'), nt = $('acct-newticket');
+    if (r) r.hidden = true; if (nt) nt.hidden = true; if (th) th.hidden = false;
+    var info = $('acct-thread-info');
+    if (info) info.innerHTML = '<strong>' + escX(ticketDevice(t)) + '</strong> ' + statusPill(t.status) + '<br><span class="acct-muted">' + escX(t.issue || '') + '</span>';
+    loadThreadMessages(t);
+  }
+  function loadThreadMessages(t) {
+    var box = $('acct-messages');
+    if (!box || !sb) return;
+    box.innerHTML = '<p class="acct-muted">Loading messages\u2026</p>';
+    sb.from('messages').select('id, sender, message, created_at').eq('ticket_id', t.id).order('created_at', { ascending: true }).limit(200)
+      .then(function (res) {
+        if (res.error) throw res.error;
+        var rows = res.data || [];
+        if (!rows.length) { box.innerHTML = '<p class="acct-muted">No messages yet \u2014 write us here any time about this repair.</p>'; return; }
+        box.innerHTML = rows.map(function (m) {
+          var mine = m.sender === 'customer';
+          return '<div class="acct-msg ' + (mine ? 'acct-msg-me' : 'acct-msg-shop') + '"><span class="acct-msg-who">' + (mine ? 'You' : "Austin's Tech Repair Group") + '</span>' + escX(m.message || '') + '</div>';
+        }).join('');
+        box.scrollTop = box.scrollHeight;
+      })
+      .catch(function () { box.innerHTML = '<p class="acct-muted">Messages couldn\'t load \u2014 try again in a moment.</p>'; });
+  }
+  function wireRepairs() {
+    if (repairsWired) return; repairsWired = true;
+    var back = $('acct-thread-back'); if (back) back.addEventListener('click', showRepairsView);
+    var ntBack = $('acct-newticket-back'); if (ntBack) ntBack.addEventListener('click', showRepairsView);
+    var ntBtn = $('acct-new-ticket-btn'); if (ntBtn) ntBtn.addEventListener('click', function () {
+      var r = $('acct-repairs'), th = $('acct-thread'), nt = $('acct-newticket');
+      if (r) r.hidden = true; if (th) th.hidden = true; if (nt) nt.hidden = false;
+    });
+    var msgForm = $('acct-msg-form');
+    if (msgForm) msgForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var input = $('acct-msg-input'), err = $('acct-msg-error');
+      var text = (input.value || '').trim();
+      if (!text || !openTicket || !sb) return;
+      err.hidden = true;
+      sb.from('messages').insert({ ticket_id: openTicket.id, sender: 'customer', message: text }).then(function (res) {
+        if (res.error) { err.textContent = 'Couldn\'t send \u2014 try again.'; err.hidden = false; return; }
+        input.value = '';
+        loadThreadMessages(openTicket);
+      }).catch(function () { err.textContent = 'Couldn\'t send \u2014 try again.'; err.hidden = false; });
+    });
+    var tForm = $('acct-ticket-form');
+    if (tForm) tForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var err = $('acct-ticket-error'); err.hidden = true;
+      if (!currentCust || !sb) { err.textContent = 'Please sign in again, then submit.'; err.hidden = false; return; }
+      var row = {
+        customer_id: currentCust.id,
+        customer_name: currentCust.name || null,
+        customer_phone: currentCust.phone || null,
+        customer_email: currentCust.email || null,
+        device_type: $('acct-t-device').value,
+        brand: $('acct-t-brand').value.trim() || null,
+        model: $('acct-t-model').value.trim() || null,
+        issue: $('acct-t-issue').value.trim(),
+        source: 'website-account',
+        terms_accepted: true,
+        dispatch_acknowledged: true,
+        work_auth_accepted: false,
+        marketing_opt_in: false
+      };
+      if (!row.issue) { err.textContent = 'Tell us what\'s wrong with the device.'; err.hidden = false; return; }
+      sb.from('tickets').insert(row).then(function (res) {
+        if (res.error) { err.textContent = 'Couldn\'t submit \u2014 try again, or call or text (937) 280-6243.'; err.hidden = false; return; }
+        tForm.reset();
+        showRepairsView();
+        loadMyRepairs(currentCust);
+      }).catch(function () { err.textContent = 'Couldn\'t submit \u2014 try again.'; err.hidden = false; });
+    });
   }
 
   /* ---------- the link step ---------- */

@@ -522,6 +522,14 @@
           client.from('tickets').update({ status: next }).eq('id', t.id).then(function (res2) {
             if (res2.error) { msg.textContent = 'Couldn&rsquo;t save — try again.'; return; }
             msg.textContent = 'Saved.';
+            if (next === 'Ready for Pickup' && trim(t.customer_phone)) {
+              var digits = String(t.customer_phone).replace(/\D/g, '');
+              if (digits.length === 10) digits = '1' + digits;
+              var first = trim(t.customer_name || '').split(' ')[0] || 'there';
+              var dev = [t.device_type, t.brand, t.model].map(trim).filter(function (x) { return x !== ''; }).join(' ') || 'device';
+              var body = 'Hi ' + first + ', great news from Austin\'s Tech Repair Group — your ' + dev + ' repair is complete and ready! We\'ll arrange getting it back to you. Reply here or call (937) 280-6243. Thank you!';
+              msg.innerHTML = 'Saved. <a class="portal-btn portal-btn-primary portal-btn-sm" style="margin-left:0.5rem;text-decoration:none" href="sms:+' + digits + '?&body=' + encodeURIComponent(body) + '">Text ' + esc(first) + ' it\'s ready</a>';
+            }
             state.loaded.tickets = false;
             loadTickets(true);
           }).catch(function () { msg.textContent = 'Couldn&rsquo;t save — try again.'; });
