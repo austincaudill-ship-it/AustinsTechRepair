@@ -1576,6 +1576,7 @@
             if (status) status.textContent = 'You are off the clock.';
             if (btn) btn.textContent = 'Clock In';
           }
+          loadBirthdays(client);
           if (isManager()) loadTimeAdmin(client);
         });
     });
@@ -1697,4 +1698,39 @@
         }).catch(function () { btn.disabled = false; err.textContent = 'Could not create the ticket — try again.'; err.hidden = false; });
       });
     });
+  }
+
+  /* ================= BIRTHDAYS (team) ================= */
+  function loadBirthdays(client) {
+    var box = $('tc-birthdays'); if (!box) return;
+    client.from('employee_profiles').select('id, name, birthday').then(function (res) {
+      if (res.error || !res.data) { box.innerHTML = '<p class="portal-muted">Birthdays are not set up yet.</p>'; return; }
+      var mine = res.data.filter(function (x) { return state.user && x.id === state.user.id; })[0];
+      var input = $('tc-birthday');
+      if (mine && input && mine.birthday) input.value = mine.birthday;
+      var now = new Date(); now.setHours(0, 0, 0, 0);
+      var ups = res.data.filter(function (x) { return x.birthday; }).map(function (x) {
+        var parts = String(x.birthday).split('-');
+        var d = new Date(now.getFullYear(), Number(parts[1]) - 1, Number(parts[2]));
+        if (d < now) d.setFullYear(now.getFullYear() + 1);
+        return { name: x.name || 'Teammate', date: d, days: Math.round((d - now) / 86400000) };
+      }).filter(function (x) { return x.days <= 60; }).sort(function (a, b) { return a.days - b.days; });
+      box.innerHTML = ups.length ? ups.map(function (x) {
+        return '<div class="tc-row"><span><i class="fas fa-cake-candles"></i> <strong>' + esc(x.name) + '</strong></span><span>' + esc(x.date.toLocaleDateString([], { month: 'long', day: 'numeric' })) + (x.days === 0 ? ' &mdash; <strong>today!</strong>' : ' &middot; in ' + x.days + ' day' + (x.days === 1 ? '' : 's')) + '</span></div>';
+      }).join('') : '<p class="portal-muted">No team birthdays in the next 60 days.</p>';
+    });
+    var save = $('tc-birthday-save');
+    if (save && !save.getAttribute('data-wired')) {
+      save.setAttribute('data-wired', '1');
+      save.addEventListener('click', function () {
+        var val = $('tc-birthday').value || null;
+        var msg = $('tc-birthday-msg');
+        if (msg) msg.textContent = 'Saving\u2026';
+        client.from('employee_profiles').update({ birthday: val }).eq('id', state.user.id).then(function (res2) {
+          if (!msg) return;
+          msg.textContent = res2.error ? 'Couldn\'t save \u2014 try again.' : 'Saved. Your day is on the board.';
+          if (!res2.error) loadBirthdays(client);
+        });
+      });
+    }
   }

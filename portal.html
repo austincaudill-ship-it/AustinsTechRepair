@@ -527,6 +527,11 @@
         </div>
         <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">My time this week</h3></div>
         <div id="tc-my-list"><p class="portal-muted">Loading&hellip;</p></div>
+        <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">My birthday</h3></div>
+        <p class="portal-muted portal-small">Birthdays are a big deal here &mdash; we honor our team&rsquo;s and our customers&rsquo;. Add yours:</p>
+        <p class="tc-bday-row"><input type="date" id="tc-birthday" aria-label="Your birthday" /> <button class="portal-btn portal-btn-outline portal-btn-sm" id="tc-birthday-save" type="button">Save birthday</button> <span class="portal-muted portal-small" id="tc-birthday-msg"></span></p>
+        <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Team birthdays coming up</h3></div>
+        <div id="tc-birthdays"><p class="portal-muted">Loading&hellip;</p></div>
         <div id="tc-admin-wrap" hidden>
           <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Team &mdash; approve hours</h3></div>
           <div id="tc-admin-list"><p class="portal-muted">Loading&hellip;</p></div>
@@ -1414,7 +1419,7 @@
             return '<p class="portal-card-meta p3-celeb-row"><strong>' + esc(x.c.name || 'Customer') + '</strong> &mdash; ' + when + ' &middot; ' + bits.join(' &middot; ') + '</p>';
           }).join('');
           box.innerHTML = head + rows +
-            '<p class="portal-muted portal-small">Birthday customers get a &ldquo;10% off your next service&rdquo; shout-out. Automated birthday &amp; holiday emails turn on once the shop email sending is wired up.</p></div>';
+            '<p class="portal-muted portal-small">Birthday customers get 15% off their next repair. Automated birthday &amp; holiday emails turn on once the shop email sending is wired up.</p></div>';
         })
         .catch(function () {});
     }

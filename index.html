@@ -1096,7 +1096,7 @@
               <span><i class="fas fa-cake-candles"></i> My birthday (optional)</span>
               <input type="date" id="acct-birthday" aria-label="Your birthday">
             </label>
-            <p class="acct-muted">Add it and we&rsquo;ll have a little something for you on your day &mdash; 10% off your next service. Totally optional.</p>
+            <p class="acct-muted">Add it and we&rsquo;ll have a little something for you on your day &mdash; 15% off your next repair. Totally optional.</p>
             <button class="btn btn-outline btn-sm" id="acct-birthday-save" type="button"><i class="fas fa-save"></i> Save birthday</button>
             <span class="acct-muted" id="acct-birthday-msg"></span>
           </div>
@@ -2014,7 +2014,7 @@
         </div>
       </div>
 
-      <div class="footer-payments"><span class="footer-payments-label">We accept</span><span class="pay-badge pay-text pay-name" title="Visa">Visa</span><span class="pay-badge pay-mark-wrap" title="Mastercard"><img class="pay-mark-img" src="images/mastercard-symbol.svg" alt="Mastercard" /></span><span class="pay-badge pay-mark-wrap" title="American Express"><img class="pay-mark-img" src="images/amex-mark.svg" alt="American Express" /></span><span class="pay-badge pay-mark-wrap" title="Discover"><img class="pay-mark-img" src="images/discover-mark.png" alt="Discover" /></span><img class="apple-pay-mark" src="images/apple-pay-mark.svg" alt="Apple Pay" title="Apple Pay" /><span class="pay-badge pay-mark-wrap" title="Google Pay"><img class="google-pay-mark" src="images/google-pay-mark.svg" alt="Google Pay" /></span><span class="pay-badge pay-mark-wrap" title="Samsung Pay"><img class="pay-mark-img" src="images/samsung-pay-mark.png" alt="Samsung Pay" /></span><span class="pay-badge pay-mark-wrap" title="Cash App Pay"><img class="pay-mark-img" src="images/cash-app-pay.svg" alt="Cash App Pay" /></span><span class="pay-badge pay-mark-wrap" title="Afterpay"><img class="pay-mark-img" src="images/afterpay-mark.png" alt="Afterpay" /></span><span class="pay-badge pay-text" title="Cash"><i class="fas fa-money-bill-wave"></i> Cash</span></div><p class="footer-disclaimer">
+      <div class="footer-payments"><span class="footer-payments-label">We accept</span><span class="pay-badge pay-mark-wrap" title="Visa"><img class="pay-mark-img" src="images/visa-mark.png" alt="Visa" /></span><span class="pay-badge pay-mark-wrap" title="Mastercard"><img class="pay-mark-img" src="images/mastercard-symbol.svg" alt="Mastercard" /></span><span class="pay-badge pay-mark-wrap" title="American Express"><img class="pay-mark-img" src="images/amex-mark.svg" alt="American Express" /></span><span class="pay-badge pay-mark-wrap" title="Discover"><img class="pay-mark-img" src="images/discover-mark.png" alt="Discover" /></span><img class="apple-pay-mark" src="images/apple-pay-mark.svg" alt="Apple Pay" title="Apple Pay" /><span class="pay-badge pay-mark-wrap" title="Google Pay"><img class="google-pay-mark" src="images/google-pay-mark.svg" alt="Google Pay" /></span><span class="pay-badge pay-mark-wrap" title="Samsung Pay"><img class="pay-mark-img" src="images/samsung-pay-mark.png" alt="Samsung Pay" /></span><span class="pay-badge pay-mark-wrap" title="Cash App Pay"><img class="pay-mark-img" src="images/cash-app-pay.svg" alt="Cash App Pay" /></span><span class="pay-badge pay-mark-wrap" title="Afterpay"><img class="pay-mark-img" src="images/afterpay-mark.png" alt="Afterpay" /></span><span class="pay-badge pay-text" title="Cash"><i class="fas fa-money-bill-wave"></i> Cash</span></div><p class="footer-disclaimer">
         <strong>Disclaimer:</strong> Austin's Tech Repair Group is an <strong>independent repair provider</strong> operating as a sole proprietorship in Ohio. We are <strong>not</strong> an authorized service provider for any manufacturer, and we are <strong>not affiliated with, sponsored by, or endorsed by</strong> Apple, Samsung, Google, Microsoft, Sony, Nintendo, Motorola, or any other company or brand named on this site. All trademarks, service marks, logos, and brand names are the property of their respective owners, and all rights in them are reserved by those owners. Apple, the Apple logo, Apple Pay, Apple Watch, Face ID, iPad, iPhone, and Touch ID are trademarks of Apple Inc., registered in the U.S. and other countries and regions. Samsung, Galaxy, and Samsung Pay are trademarks of Samsung Electronics Co., Ltd. Google, Pixel, Google Pay, and Android are trademarks of Google LLC. Microsoft, Windows, and Xbox are trademarks of the Microsoft group of companies. PlayStation is a trademark of Sony Interactive Entertainment Inc. Nintendo is a trademark of Nintendo Co., Ltd. Motorola is a trademark of Motorola Trademark Holdings, LLC. Visa is a trademark of Visa Inc. Mastercard is a trademark of Mastercard International Incorporated. Estimates shown on this site are approximate and confirmed after inspection. 1-year warranty covers parts and labor for the serviced issue; see Terms of Service for full details.
       </p>
 
@@ -2720,7 +2720,7 @@
     if (!wrap || !currentUserId) return;
     client.from('customers').select('birthday').eq('id', currentUserId).maybeSingle()
       .then(function (res) {
-        if (res.error || !res.data) { wrap.hidden = true; return; }
+        if (res.error || !res.data) { return; }
         wrap.hidden = false;
         var input = $('acct-birthday');
         if (input && res.data.birthday) input.value = res.data.birthday;
@@ -2863,11 +2863,10 @@
        the link step guarantees — fill it from the same row so a saved
        birthday shows immediately (the birthday block also loads it on
        its own auth cycle; both write the same value). */
-    if (cust.birthday) {
-      var wrap = $('acct-birthday-wrap'), input = $('acct-birthday');
-      if (input) input.value = cust.birthday;
-      if (wrap) wrap.hidden = false;
-    }
+    var bwrap = $('acct-birthday-wrap'), binput = $('acct-birthday');
+    if (bwrap) bwrap.hidden = false;
+    if (binput && cust.birthday) binput.value = cust.birthday;
+    wireBirthdaySave(cust);
   }
 
   function fetchPoints(customerId, cb) {
@@ -3009,6 +3008,25 @@
         showRepairsView();
         loadMyRepairs(currentCust);
       }).catch(function () { err.textContent = 'Couldn\'t submit \u2014 try again.'; err.hidden = false; });
+    });
+  }
+
+  var birthdayWired = false;
+  function wireBirthdaySave(cust) {
+    if (birthdayWired) return;
+    var btn = $('acct-birthday-save');
+    if (!btn || !cust) return;
+    birthdayWired = true;
+    btn.addEventListener('click', function () {
+      var input = $('acct-birthday'), msg = $('acct-birthday-msg');
+      if (!input || !sb) return;
+      var val = input.value || null;
+      if (msg) msg.textContent = 'Saving\u2026';
+      sb.from('customers').update({ birthday: val }).eq('id', cust.id).then(function (res) {
+        if (!msg) return;
+        if (res.error) { msg.textContent = 'Couldn\'t save \u2014 please try again.'; return; }
+        msg.textContent = val ? 'Saved. We\'ll have a little something for you on your day.' : 'Birthday cleared.';
+      }).catch(function () { if (msg) msg.textContent = 'Couldn\'t save \u2014 please try again.'; });
     });
   }
 

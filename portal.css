@@ -297,3 +297,6 @@
 .ci-result{display:flex;flex-direction:column;align-items:flex-start;gap:1px;width:100%;text-align:left;border:1px solid var(--line,#e5d9c8);background:var(--surface,#fff);border-radius:10px;padding:9px 12px;margin-top:6px;cursor:pointer;font-family:inherit;color:var(--text,#2b2118)}
 .ci-result span{font-size:.85rem;color:var(--muted,#6f6152)}
 #ci-form textarea{width:100%;border:1px solid var(--line,#e5d9c8);border-radius:10px;padding:10px;font-family:inherit;font-size:16px}
+
+.tc-bday-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tc-bday-row input{padding:8px 10px;border:1px solid var(--line,#e5d9c8);border-radius:9px;font-size:16px;font-family:inherit}
