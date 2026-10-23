@@ -56,56 +56,77 @@
         <div>
           <p class="portal-eyebrow">Operations Hub</p>
           <h1 class="portal-h1"><i class="fas fa-briefcase"></i> Employee Portal</h1>
-          <p class="portal-muted portal-dash-sub">Welcome back, <span id="portal-emp-name">teammate</span>
+          <p class="portal-muted portal-dash-sub"><span id="portal-greeting">Welcome back</span>, <span id="portal-emp-name">teammate</span>
             <span class="portal-badge portal-badge-role" id="portal-emp-role"></span></p>
+          <p class="portal-clock-line"><i class="far fa-clock"></i> <span id="portal-clock"></span> &middot; <span id="portal-date"></span></p>
         </div>
-        <button class="portal-btn portal-btn-outline" id="portal-logout" type="button">
-          <i class="fas fa-sign-out-alt"></i> Log Out
-        </button>
+        <div class="portal-head-actions">
+          <button class="portal-btn portal-btn-outline" id="portal-nav-toggle" type="button" aria-label="Open menu"><i class="fas fa-bars"></i> Menu</button>
+          <button class="portal-btn portal-btn-outline" id="portal-logout" type="button">
+            <i class="fas fa-sign-out-alt"></i> Log Out
+          </button>
+        </div>
       </div>
 
       <p class="portal-error" id="portal-dash-error" hidden></p>
 
-      <div class="portal-tabs" role="tablist" aria-label="Portal sections">
+      <nav class="portal-tabs" id="portal-nav" role="tablist" aria-label="Portal sections">
+        <div class="portal-nav-group">Work</div>
+        <button class="portal-tab" id="portal-tab-checkin" type="button" role="tab" data-tab="checkin">
+          <i class="fas fa-clipboard-check"></i> Check-In
+        </button>
         <button class="portal-tab active" id="portal-tab-tickets" type="button" role="tab" data-tab="tickets">
-          <i class="fas fa-tools"></i> Tickets <span class="portal-count" id="portal-count-tickets" hidden></span>
-        </button>
-        <button class="portal-tab" id="portal-tab-applications" type="button" role="tab" data-tab="applications">
-          <i class="fas fa-file-lines"></i> Job Applications <span class="portal-count" id="portal-count-applications" hidden></span>
-        </button>
-        <button class="portal-tab" id="portal-tab-investors" type="button" role="tab" data-tab="investors">
-          <i class="fas fa-handshake"></i> Investors <span class="portal-count" id="portal-count-investors" hidden></span>
-        </button>
-        <button class="portal-tab" id="portal-tab-feedback" type="button" role="tab" data-tab="feedback">
-          <i class="fas fa-star"></i> Feedback
+          <i class="fas fa-list-ol"></i> Repair Queue <span class="portal-count" id="portal-count-tickets" hidden></span>
         </button>
         <button class="portal-tab" id="portal-tab-customers" type="button" role="tab" data-tab="customers">
           <i class="fas fa-users"></i> Customers
         </button>
+        <button class="portal-tab" id="portal-tab-requests" type="button" role="tab" data-tab="requests">
+          <i class="fas fa-clipboard-list"></i> Requests <span class="portal-count" id="portal-count-requests" hidden></span>
+        </button>
+        <div class="portal-nav-group">Parts &amp; Tools</div>
         <button class="portal-tab" id="portal-tab-inventory" type="button" role="tab" data-tab="inventory">
           <i class="fas fa-boxes"></i> Inventory &amp; Orders
         </button>
-        <button class="portal-tab" id="portal-tab-newhires" type="button" role="tab" data-tab="newhires">
-          <i class="fas fa-user-plus"></i> New Hire
+        <button class="portal-tab" id="portal-tab-links" type="button" role="tab" data-tab="links">
+          <i class="fas fa-link"></i> Tools &amp; Links
         </button>
         <button class="portal-tab" id="portal-tab-guides" type="button" role="tab" data-tab="guides">
           <i class="fas fa-book-open"></i> Guides
         </button>
-        <button class="portal-tab" id="portal-tab-requests" type="button" role="tab" data-tab="requests">
-          <i class="fas fa-clipboard-list"></i> Requests <span class="portal-count" id="portal-count-requests" hidden></span>
+        <div class="portal-nav-group">Team</div>
+        <button class="portal-tab" id="portal-tab-timeclock" type="button" role="tab" data-tab="timeclock">
+          <i class="fas fa-clock"></i> Time Clock
         </button>
-      </div>
+        <button class="portal-tab" id="portal-tab-newhires" type="button" role="tab" data-tab="newhires">
+          <i class="fas fa-user-plus"></i> New Hire
+        </button>
+        <button class="portal-tab" id="portal-tab-applications" type="button" role="tab" data-tab="applications">
+          <i class="fas fa-file-lines"></i> Job Applications <span class="portal-count" id="portal-count-applications" hidden></span>
+        </button>
+        <div class="portal-nav-group">Admin</div>
+        <button class="portal-tab" id="portal-tab-investors" type="button" role="tab" data-tab="investors">
+          <i class="fas fa-handshake"></i> Investors <span class="portal-count" id="portal-count-applications2" hidden></span>
+        </button>
+        <button class="portal-tab" id="portal-tab-feedback" type="button" role="tab" data-tab="feedback">
+          <i class="fas fa-star"></i> Feedback
+        </button>
+        <button class="portal-tab" id="portal-tab-square" type="button" role="tab" data-tab="square">
+          <i class="fas fa-square"></i> Square &amp; ATR One
+        </button>
+      </nav>
 
       <!-- TICKETS -->
       <div class="portal-panel" id="portal-panel-tickets" role="tabpanel">
         <div class="portal-panel-head">
-          <h2 class="portal-h2">Service Requests &amp; Tickets</h2>
+          <h2 class="portal-h2">Repair Queue</h2>
           <div class="portal-panel-tools">
             <select id="portal-ticket-filter" aria-label="Filter tickets by status">
               <option value="all">All statuses</option>
               <option value="Waiting">Waiting</option>
               <option value="In Progress">In Progress</option>
               <option value="Waiting for Parts">Waiting for Parts</option>
+              <option value="Quality Check">Quality Check</option>
               <option value="Ready for Pickup">Ready for Pickup</option>
               <option value="Completed">Completed</option>
             </select>
@@ -114,6 +135,7 @@
             </button>
           </div>
         </div>
+        <p class="q-legend"><span><i class="q-dot q-red"></i> Needs diagnostics</span><span><i class="q-dot q-orange"></i> Waiting on parts</span><span><i class="q-dot q-yellow"></i> In progress</span><span><i class="q-dot q-lime"></i> Quality check</span><span><i class="q-dot q-green"></i> Ready</span></p>
         <div id="portal-ticket-list"><p class="portal-muted">Loading tickets&hellip;</p></div>
       </div>
 
@@ -436,6 +458,115 @@
       </div>
 
       <!-- REQUESTS (tech request queue) -->
+      
+      <!-- TIME CLOCK -->
+      
+      <!-- CHECK-IN / TRIAGE -->
+      <div class="portal-panel" id="portal-panel-checkin" role="tabpanel" hidden>
+        <div class="portal-panel-head"><h2 class="portal-h2">Check-In &mdash; Triage</h2></div>
+        <p class="portal-muted portal-small">Walk-in and phone check-ins. Find the customer (or add them), pick the device and the reason, run the power test, and the ticket lands straight in the Repair Queue. Confirm the $35 house-call fee with the customer before submitting.</p>
+        <form id="ci-form" novalidate>
+          <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Customer</h3></div>
+          <div class="portal-field">
+            <label for="ci-search">Find existing customer</label>
+            <input type="search" id="ci-search" placeholder="Start typing a name&hellip;" autocomplete="off" />
+            <div id="ci-results"></div>
+          </div>
+          <div class="portal-nh-grid">
+            <div class="portal-field"><label for="ci-name">Name *</label><input type="text" id="ci-name" required /></div>
+            <div class="portal-field"><label for="ci-phone">Phone *</label><input type="tel" id="ci-phone" required /></div>
+            <div class="portal-field"><label for="ci-email">Email</label><input type="email" id="ci-email" /></div>
+          </div>
+          <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Device</h3></div>
+          <div class="portal-nh-grid">
+            <div class="portal-field"><label for="ci-type">Device type</label>
+              <select id="ci-type"><option>Phone</option><option>Tablet</option><option>Laptop</option><option>Desktop</option><option>Game Console</option><option>Smartwatch</option><option>Earbuds / Hearable</option><option>Other</option></select></div>
+            <div class="portal-field"><label for="ci-brand">Brand</label><input type="text" id="ci-brand" placeholder="e.g. Samsung" /></div>
+            <div class="portal-field"><label for="ci-model">Model</label><input type="text" id="ci-model" placeholder="e.g. Galaxy Buds2 Pro" /></div>
+            <div class="portal-field"><label for="ci-serial">Serial / IMEI</label><input type="text" id="ci-serial" /></div>
+          </div>
+          <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Reason for check-in</h3></div>
+          <div class="ci-chips" id="ci-reasons">
+            <button type="button" class="ci-chip">Cracked / damaged</button>
+            <button type="button" class="ci-chip">Dead battery</button>
+            <button type="button" class="ci-chip">Won&rsquo;t turn on</button>
+            <button type="button" class="ci-chip">Water damage</button>
+            <button type="button" class="ci-chip">Charging issue</button>
+            <button type="button" class="ci-chip">Sound issue</button>
+            <button type="button" class="ci-chip">Software issue</button>
+            <button type="button" class="ci-chip">Other</button>
+          </div>
+          <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Power test &amp; condition</h3></div>
+          <div class="portal-nh-grid">
+            <div class="portal-field"><label for="ci-volts">Voltage at power source (V)</label><input type="text" id="ci-volts" inputmode="decimal" placeholder="e.g. 5.1" /></div>
+            <div class="portal-field"><label for="ci-amps">Draw (A)</label><input type="text" id="ci-amps" inputmode="decimal" placeholder="e.g. 0.8" /></div>
+            <div class="portal-field"><label for="ci-power">Powers on?</label>
+              <select id="ci-power"><option value="">Not checked</option><option>Yes</option><option>No</option></select></div>
+            <div class="portal-field"><label for="ci-backup">Backed up?</label>
+              <select id="ci-backup"><option value="">Unknown</option><option>Yes</option><option>No</option></select></div>
+            <div class="portal-field"><label for="ci-prior">Repaired before?</label>
+              <select id="ci-prior"><option value="">Unknown</option><option>Yes</option><option>No</option></select></div>
+            <div class="portal-field"><label for="ci-warranty">Under manufacturer warranty?</label>
+              <select id="ci-warranty"><option value="">Unknown</option><option>Yes &mdash; customer told our work may void it</option><option>No</option></select></div>
+          </div>
+          <div class="portal-field">
+            <label for="ci-notes">Check-in notes &mdash; the symptom, and how you verified it *</label>
+            <textarea id="ci-notes" rows="3" placeholder="e.g. Left bud silent; swapped buds in case, fault follows the bud. Case charges fine." required></textarea>
+          </div>
+          <p class="portal-error" id="ci-error" hidden></p>
+          <button class="portal-btn portal-btn-primary" id="ci-submit" type="submit"><i class="fas fa-arrow-right"></i> Create ticket &amp; add to queue</button>
+        </form>
+      </div>
+
+      <div class="portal-panel" id="portal-panel-timeclock" role="tabpanel" hidden>
+        <div class="portal-panel-head"><h2 class="portal-h2">Time Clock</h2></div>
+        <div class="tc-now">
+          <p class="tc-status" id="tc-status">Loading&hellip;</p>
+          <button class="portal-btn portal-btn-primary tc-bigbtn" id="tc-action" type="button">Clock In</button>
+          <p class="portal-muted portal-small">Your whole shift counts &mdash; clock in when you head out the door, clock out when the work is done.</p>
+        </div>
+        <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">My time this week</h3></div>
+        <div id="tc-my-list"><p class="portal-muted">Loading&hellip;</p></div>
+        <div id="tc-admin-wrap" hidden>
+          <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Team &mdash; approve hours</h3></div>
+          <div id="tc-admin-list"><p class="portal-muted">Loading&hellip;</p></div>
+        </div>
+      </div>
+
+      <!-- TOOLS & LINKS -->
+      <div class="portal-panel" id="portal-panel-links" role="tabpanel" hidden>
+        <div class="portal-panel-head"><h2 class="portal-h2">Tools &amp; Links</h2></div>
+        <p class="portal-muted portal-small">Parts suppliers, our price sheet, and printer tools &mdash; everything a tech needs, one tap away.</p>
+        <div class="link-grid">
+          <a class="link-card" href="https://www.mobilesentrix.com" target="_blank" rel="noopener"><i class="fas fa-mobile-screen"></i><strong>Mobile Sentrix</strong><span>Primary parts supplier</span></a>
+          <a class="link-card" href="https://www.amazon.com/business" target="_blank" rel="noopener"><i class="fab fa-amazon"></i><strong>Amazon Business</strong><span>Accessories &amp; general</span></a>
+          <a class="link-card" href="https://www.ebay.com" target="_blank" rel="noopener"><i class="fab fa-ebay"></i><strong>eBay</strong><span>Computer parts</span></a>
+          <a class="link-card" href="https://www.ifixit.com" target="_blank" rel="noopener"><i class="fas fa-screwdriver-wrench"></i><strong>iFixit</strong><span>Guides &amp; genuine Pixel parts</span></a>
+          <a class="link-card" href="https://austinstechrepairgroup.com" target="_blank" rel="noopener"><i class="fas fa-tags"></i><strong>Our Price Sheet</strong><span>Website price wizard</span></a>
+          <a class="link-card" href="https://support.apple.com/iphone/repair" target="_blank" rel="noopener"><i class="fab fa-apple"></i><strong>Apple&rsquo;s Prices</strong><span>Official repair price anchor</span></a>
+        </div>
+        <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Printers</h3></div>
+        <p class="portal-muted portal-small">Receipts and Zebra part labels print through your device&rsquo;s printer list &mdash; Bluetooth, USB, or Wi-Fi printers your phone, tablet, or computer can already see. Pick the printer in the print dialog.</p>
+        <p>
+          <button class="portal-btn portal-btn-outline" id="tc-test-receipt" type="button"><i class="fas fa-print"></i> Print test receipt</button>
+          <button class="portal-btn portal-btn-outline" id="tc-test-label" type="button"><i class="fas fa-tag"></i> Print test label</button>
+        </p>
+      </div>
+
+      <!-- SQUARE & ATR ONE -->
+      <div class="portal-panel" id="portal-panel-square" role="tabpanel" hidden>
+        <div class="portal-panel-head"><h2 class="portal-h2">Square &amp; ATR One</h2></div>
+        <p class="portal-muted portal-small">Ticket checkout is built into every ticket (open one &rarr; Payment &rarr; Charge / Check out). These are the quick doors:</p>
+        <div class="link-grid">
+          <a class="link-card" href="https://squareup.com/dashboard" target="_blank" rel="noopener"><i class="fas fa-square"></i><strong>Square Dashboard</strong><span>Sales, payouts, settings</span></a>
+          <a class="link-card" href="https://austinstechrepairgroup.com" target="_blank" rel="noopener"><i class="fas fa-store"></i><strong>Website Shop</strong><span>Accessories storefront</span></a>
+          <a class="link-card" href="https://square.link/u/eFKxDvyo" target="_blank" rel="noopener"><i class="fas fa-user"></i><strong>ATR One &mdash; Single</strong><span>$9.99/mo signup link</span></a>
+          <a class="link-card" href="https://square.link/u/ZA7502vD" target="_blank" rel="noopener"><i class="fas fa-users"></i><strong>ATR One &mdash; Family</strong><span>$19.99/mo signup link</span></a>
+          <a class="link-card" href="https://square.link/u/HtnQBIG1" target="_blank" rel="noopener"><i class="fas fa-briefcase"></i><strong>ATR One &mdash; Business Plus</strong><span>$39.99/mo signup link</span></a>
+          <a class="link-card" href="https://square.link/u/V8WCkjbW" target="_blank" rel="noopener"><i class="fas fa-building"></i><strong>ATR One &mdash; Business Pro</strong><span>$49.99/mo signup link</span></a>
+        </div>
+      </div>
+
       <div class="portal-panel" id="portal-panel-requests" role="tabpanel" hidden>
         <div class="portal-panel-head">
           <h2 class="portal-h2">Requests</h2>

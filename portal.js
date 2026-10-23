@@ -30,7 +30,7 @@
   /* Ticket statuses: EXACT values from the tickets.status check
    * constraint (supabase-phase2-tickets.sql). Do not add values here
    * without updating the database constraint first. */
-  var TICKET_STATUSES = ['Waiting', 'In Progress', 'Waiting for Parts', 'Ready for Pickup', 'Completed'];
+  var TICKET_STATUSES = ['Waiting', 'In Progress', 'Waiting for Parts', 'Quality Check', 'Ready for Pickup', 'Completed'];
   var APPLICATION_STATUSES = ['New', 'Reviewed', 'Contacted', 'Rejected'];
   var INVESTOR_STATUSES = ['New', 'Reviewed', 'Contacted', 'Closed'];
 
@@ -203,6 +203,8 @@
     $('portal-login-view').hidden = true;
     $('portal-dash-view').hidden = false;
     $('portal-emp-name').textContent = state.profile.name || state.user.email || 'teammate';
+    tickClock();
+    if (!state.clockTimer) state.clockTimer = setInterval(tickClock, 30000);
     var roleEl = $('portal-emp-role');
     roleEl.textContent = state.profile.role || '';
     roleEl.style.display = state.profile.role ? '' : 'none';
@@ -302,7 +304,7 @@
   function activateTab(name) {
     var tabs = document.querySelectorAll('.portal-tab');
     tabs.forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === name); });
-    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'inventory'].forEach(function (n) {
+    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'inventory', 'timeclock', 'links', 'square', 'checkin'].forEach(function (n) {
       $('portal-panel-' + n).hidden = n !== name;
     });
     closeDrawer();
@@ -363,18 +365,22 @@
     return parts.length ? parts.join(' · ') : 'Device not specified';
   }
 
+  var QCLASS = { 'Waiting': 'q-red', 'Waiting for Parts': 'q-orange', 'In Progress': 'q-yellow', 'Quality Check': 'q-lime', 'Ready for Pickup': 'q-green', 'Completed': 'q-done' };
   function renderTickets(rows) {
     var list = $('portal-ticket-list');
     if (!rows.length) { emptyState(list, 'No tickets match. New service requests from the website will show up here.'); return; }
+    var posMap = {}, n = 0;
+    for (var i = rows.length - 1; i >= 0; i--) { if (rows[i].status !== 'Completed') { n++; posMap[rows[i].id] = n; } }
     list.innerHTML = rows.map(function (t) {
+      var qchip = posMap[t.id] ? '<span class="q-chip">Queue #' + posMap[t.id] + '</span>' : '';
       var appt = t.appointment_at ? '<p class="portal-card-meta"><i class="fas fa-calendar-check"></i> Appointment: ' + esc(fmtDateTime(t.appointment_at)) + '</p>' : '';
       var src = t.source ? ' <span class="portal-badge portal-badge-source">' + esc(t.source) + '</span>' : '';
       var phone = trim(t.customer_phone);
       var phoneHtml = phone ? ' · <a href="tel:' + esc(phone.replace(/[^0-9+]/g, '')) + '">' + esc(phone) + '</a>' : '';
       var email = trim(t.customer_email);
       var emailHtml = email ? '<p class="portal-card-meta"><i class="fas fa-envelope"></i> ' + esc(email) + '</p>' : '';
-      return '<article class="portal-card">' +
-        '<div class="portal-card-top"><p class="portal-card-title">' + esc(deviceLabel(t)) + '</p>' + badge(t.status) + '</div>' +
+      return '<article class="portal-card ' + (QCLASS[t.status] || '') + '" data-view-ticket="' + esc(t.id) + '" style="cursor:pointer">' +
+        '<div class="portal-card-top"><p class="portal-card-title">' + esc(deviceLabel(t)) + '</p><span class="portal-card-topright">' + qchip + badge(t.status) + '</span></div>' +
         '<p class="portal-card-meta"><i class="fas fa-user"></i> ' + esc(t.customer_name || 'No name given') + phoneHtml + src + '</p>' +
         emailHtml + appt +
         '<p class="portal-card-issue">' + esc(t.issue || '') + '</p>' +
@@ -436,7 +442,10 @@
           return;
         }
         var t = res.data;
-        var body =
+        var gateBanner = t.status === 'Waiting for Parts'
+          ? '<div class="portal-gate"><i class="fas fa-triangle-exclamation"></i> <strong>Parts not on hand yet.</strong> Don&rsquo;t start this repair until the part is in and scanned to the ticket.</div>'
+          : '';
+        var body = gateBanner +
           '<div class="portal-card-top"><p class="portal-card-title">' + esc(deviceLabel(t)) + '</p>' + badge(t.status) + '</div>' +
           kvRows([
             ['Customer', valOrDash(t.customer_name)],
@@ -447,6 +456,8 @@
             ['Service address', valOrDash(t.service_address)],
             ['Preferred contact', valOrDash(t.contact_method)],
             ['Serial / IMEI', valOrDash(t.serial_imei)],
+            ['Reason', valOrDash(t.issue_reason)],
+            ['Power test', (t.triage_volts || t.triage_amps) ? esc([t.triage_volts ? t.triage_volts + ' V' : '', t.triage_amps ? t.triage_amps + ' A' : ''].filter(Boolean).join(' / ')) : '—'],
             ['Powers on?', valOrDash(t.power_on)],
             ['Backed up?', valOrDash(t.backed_up)],
             ['Repaired before?', valOrDash(t.prior_repair)],
@@ -1479,6 +1490,7 @@
   /* ================= INIT ================= */
   function init() {
     initTabs();
+    initExtraTabs();
     initDrawer();
     initDelegation();
     initAuth();
@@ -1490,3 +1502,199 @@
     init();
   }
 })();
+
+  /* ================= GREETING + CLOCK ================= */
+  function tickClock() {
+    var g = $('portal-greeting'), c = $('portal-clock'), d = $('portal-date');
+    var now = new Date(), hr = now.getHours();
+    var word = hr >= 5 && hr < 12 ? 'Good morning' : hr >= 12 && hr < 17 ? 'Good afternoon' : hr >= 17 && hr < 22 ? 'Good evening' : 'Good night';
+    if (g) g.textContent = word;
+    if (c) c.textContent = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    if (d) d.textContent = now.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
+  }
+
+  /* ================= EXTRA TABS (timeclock / links / square) ================= */
+  var EXTRA_LOADERS = { timeclock: loadTimeClock, checkin: loadCheckinCustomers };
+  var extraLoaded = {};
+  function showExtraPanel(name) {
+    document.querySelectorAll('.portal-panel').forEach(function (pn) { pn.hidden = true; });
+    var panel = $('portal-panel-' + name);
+    if (panel) panel.hidden = false;
+    document.querySelectorAll('.portal-tab').forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === name); });
+    closeDrawer();
+    var nav = $('portal-nav'); if (nav) nav.classList.remove('open');
+    if (!extraLoaded[name] && EXTRA_LOADERS[name]) { extraLoaded[name] = true; EXTRA_LOADERS[name](false); }
+  }
+  function initExtraTabs() {
+    ['timeclock', 'links', 'square', 'checkin'].forEach(function (name) {
+      var tab = $('portal-tab-' + name);
+      if (tab) tab.addEventListener('click', function () { showExtraPanel(name); });
+    });
+    var toggle = $('portal-nav-toggle');
+    if (toggle) toggle.addEventListener('click', function () { var nav = $('portal-nav'); if (nav) nav.classList.toggle('open'); });
+    initCheckin();
+    var rb = $('tc-test-receipt'); if (rb) rb.addEventListener('click', function () { printTest(false); });
+    var lb = $('tc-test-label'); if (lb) lb.addEventListener('click', function () { printTest(true); });
+    var act = $('tc-action'); if (act) act.addEventListener('click', toggleClock);
+  }
+  function printTest(isLabel) {
+    var w = window.open('', '_blank', 'width=420,height=560');
+    if (!w) return;
+    var inner = isLabel
+      ? '<div style="font-family:monospace;width:2.25in;height:1.25in;border:1px solid #000;padding:4px;font-size:10px">ATRG TEST LABEL<br>Part: TEST-000<br>Not a real part</div>'
+      : '<div style="font-family:monospace;width:3in;padding:8px"><h3 style="margin:0">Austin\'s Tech Repair Group</h3><p>TEST RECEIPT &mdash; not a real sale<br>(937) 280-6243<br>austinstechrepairgroup.com</p><p>Printer connection OK &#10003;</p></div>';
+    w.document.write('<html><head><title>Test print</title></head><body>' + inner + '<script>window.print();<\/script></body></html>');
+    w.document.close();
+  }
+
+  /* ================= TIME CLOCK ================= */
+  var tcOpenEntry = null;
+  function isManager() { return /owner|admin|manager/i.test((state.profile && state.profile.role) || ''); }
+  function fmtHours(ms) { return (ms / 3600000).toFixed(2) + ' hrs'; }
+  function weekStart() { var d = new Date(); d.setHours(0, 0, 0, 0); var day = (d.getDay() + 6) % 7; d.setDate(d.getDate() - day); return d; }
+  function loadTimeClock() {
+    withClient(function (client) {
+      if (!client || !state.user) return;
+      client.from('time_entries').select('*').eq('employee_id', state.user.id).order('clock_in', { ascending: false }).limit(60)
+        .then(function (res) {
+          var status = $('tc-status'), btn = $('tc-action'), list = $('tc-my-list');
+          if (res.error) { if (status) status.textContent = 'Time clock is not set up yet.'; if (list) list.innerHTML = ''; return; }
+          var rows = res.data || [];
+          tcOpenEntry = null;
+          rows.forEach(function (r) { if (!r.clock_out) tcOpenEntry = r; });
+          var ws = weekStart(), total = 0;
+          var html = rows.filter(function (r) { return new Date(r.clock_in) >= ws; }).map(function (r) {
+            var ci = new Date(r.clock_in), co = r.clock_out ? new Date(r.clock_out) : null;
+            if (co) total += (co - ci);
+            return '<div class="tc-row"><span>' + esc(ci.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })) + ' &middot; ' + esc(ci.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })) + ' &rarr; ' + (co ? esc(co.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })) + ' (' + fmtHours(co - ci) + ')' : '<strong>on the clock</strong>') + '</span>' + (r.approved ? '<span class="tc-badge">Approved</span>' : '<span class="tc-badge tc-badge-pending">Pending</span>') + '</div>';
+          }).join('');
+          if (list) list.innerHTML = (html || '<p class="portal-muted">No time logged this week yet.</p>') + '<p class="tc-total">Closed time this week: <strong>' + fmtHours(total) + '</strong></p>';
+          if (tcOpenEntry) {
+            if (status) status.innerHTML = 'You are <strong>on the clock</strong> since ' + esc(new Date(tcOpenEntry.clock_in).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })) + '.';
+            if (btn) btn.textContent = 'Clock Out';
+          } else {
+            if (status) status.textContent = 'You are off the clock.';
+            if (btn) btn.textContent = 'Clock In';
+          }
+          if (isManager()) loadTimeAdmin(client);
+        });
+    });
+  }
+  function loadTimeAdmin(client) {
+    var wrap = $('tc-admin-wrap'), list = $('tc-admin-list');
+    if (!wrap || !list) return;
+    wrap.hidden = false;
+    client.from('time_entries').select('*').order('clock_in', { ascending: false }).limit(100).then(function (res) {
+      if (res.error) { list.innerHTML = '<p class="portal-muted">Team time unavailable.</p>'; return; }
+      var rows = res.data || [];
+      var onNow = rows.filter(function (r) { return !r.clock_out; });
+      var pending = rows.filter(function (r) { return r.clock_out && !r.approved; });
+      var html = '';
+      html += '<p class="tc-sub">On the clock now: ' + (onNow.length ? onNow.map(function (r) { return esc(r.employee_name || 'Tech'); }).join(', ') : 'nobody') + '</p>';
+      if (!pending.length) html += '<p class="portal-muted">No hours waiting for approval.</p>';
+      html += pending.map(function (r) {
+        var ci = new Date(r.clock_in), co = new Date(r.clock_out);
+        return '<div class="tc-row"><span><strong>' + esc(r.employee_name || 'Tech') + '</strong> &middot; ' + esc(ci.toLocaleDateString([], { month: 'short', day: 'numeric' })) + ' &middot; ' + fmtHours(co - ci) + '</span><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-approve="' + r.id + '">Approve</button></div>';
+      }).join('');
+      list.innerHTML = html;
+      list.querySelectorAll('[data-approve]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          client.from('time_entries').update({ approved: true }).eq('id', b.getAttribute('data-approve')).then(function () { loadTimeAdmin(client); loadTimeClock(); });
+        });
+      });
+    });
+  }
+  function toggleClock() {
+    withClient(function (client) {
+      if (!client || !state.user) return;
+      var btn = $('tc-action'); if (btn) btn.disabled = true;
+      var done = function () { if (btn) btn.disabled = false; extraLoaded.timeclock = true; loadTimeClock(); };
+      if (tcOpenEntry) {
+        client.from('time_entries').update({ clock_out: new Date().toISOString() }).eq('id', tcOpenEntry.id).then(done).catch(done);
+      } else {
+        client.from('time_entries').insert({ employee_id: state.user.id, employee_name: (state.profile && state.profile.name) || state.user.email }).then(done).catch(done);
+      }
+    });
+  }
+
+  /* ================= CHECK-IN / TRIAGE ================= */
+  var ciCustomerId = null, ciCustomersCache = null;
+  function loadCheckinCustomers() {
+    withClient(function (client) {
+      if (!client) return;
+      client.from('customers').select('id, name, email, phone').order('name', { ascending: true }).limit(500)
+        .then(function (res) { if (!res.error) ciCustomersCache = res.data || []; });
+    });
+  }
+  function initCheckin() {
+    var search = $('ci-search');
+    if (!search || search.getAttribute('data-wired')) return;
+    search.setAttribute('data-wired', '1');
+    search.addEventListener('input', function () {
+      var box = $('ci-results'); if (!box) return;
+      var term = search.value.trim().toLowerCase();
+      if (!term || !ciCustomersCache) { box.innerHTML = ''; return; }
+      var hits = ciCustomersCache.filter(function (cu) { return (cu.name || '').toLowerCase().indexOf(term) !== -1; }).slice(0, 6);
+      box.innerHTML = hits.map(function (cu) {
+        return '<button type="button" class="ci-result" data-ci-pick="' + cu.id + '"><strong>' + esc(cu.name || '') + '</strong><span>' + esc(cu.phone || '') + (cu.email ? ' &middot; ' + esc(cu.email) : '') + '</span></button>';
+      }).join('');
+      box.querySelectorAll('[data-ci-pick]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          var cu = ciCustomersCache.filter(function (x) { return String(x.id) === b.getAttribute('data-ci-pick'); })[0];
+          if (!cu) return;
+          ciCustomerId = cu.id;
+          $('ci-name').value = cu.name || ''; $('ci-phone').value = cu.phone || ''; $('ci-email').value = cu.email || '';
+          box.innerHTML = '<p class="portal-muted portal-small">Customer linked &mdash; their account will see this repair.</p>';
+        });
+      });
+    });
+    document.querySelectorAll('#ci-reasons .ci-chip').forEach(function (chip) {
+      chip.addEventListener('click', function () { chip.classList.toggle('on'); });
+    });
+    $('ci-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var err = $('ci-error'); err.hidden = true;
+      var reasons = Array.prototype.map.call(document.querySelectorAll('#ci-reasons .ci-chip.on'), function (c) { return c.textContent.trim(); }).join(', ');
+      var row = {
+        customer_id: ciCustomerId || null,
+        customer_name: $('ci-name').value.trim(),
+        customer_phone: $('ci-phone').value.trim(),
+        customer_email: $('ci-email').value.trim() || null,
+        device_type: $('ci-type').value,
+        brand: $('ci-brand').value.trim() || null,
+        model: $('ci-model').value.trim() || null,
+        serial_imei: $('ci-serial').value.trim() || null,
+        issue_reason: reasons || null,
+        issue: $('ci-notes').value.trim(),
+        triage_volts: $('ci-volts').value.trim() || null,
+        triage_amps: $('ci-amps').value.trim() || null,
+        power_on: $('ci-power').value || null,
+        backed_up: $('ci-backup').value || null,
+        prior_repair: $('ci-prior').value || null,
+        warranty_status: $('ci-warranty').value || null,
+        source: 'check-in',
+        status: 'Waiting',
+        terms_accepted: true,
+        dispatch_acknowledged: true,
+        work_auth_accepted: false,
+        marketing_opt_in: false
+      };
+      if (!row.customer_name || !row.customer_phone || !row.issue) {
+        err.textContent = 'Name, phone, and check-in notes are required.'; err.hidden = false; return;
+      }
+      var btn = $('ci-submit'); btn.disabled = true;
+      withClient(function (client) {
+        if (!client) { btn.disabled = false; return; }
+        client.from('tickets').insert(row).select('id').single().then(function (res) {
+          btn.disabled = false;
+          if (res.error) { err.textContent = 'Could not create the ticket — try again.'; err.hidden = false; return; }
+          $('ci-form').reset(); ciCustomerId = null;
+          document.querySelectorAll('#ci-reasons .ci-chip.on').forEach(function (c) { c.classList.remove('on'); });
+          state.loaded.tickets = false;
+          activateTab('tickets');
+          loadTickets(true);
+          if (res.data && res.data.id) setTimeout(function () { openTicket(res.data.id); }, 450);
+        }).catch(function () { btn.disabled = false; err.textContent = 'Could not create the ticket — try again.'; err.hidden = false; });
+      });
+    });
+  }

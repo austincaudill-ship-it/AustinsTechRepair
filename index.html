@@ -2887,6 +2887,7 @@
     'Waiting':           { label: 'Request received', note: "We've got your request \u2014 we'll text you to confirm your appointment window." },
     'In Progress':       { label: 'In progress', note: 'Your repair is underway. We\'ll update this page and text you as it moves.' },
     'Waiting for Parts': { label: 'Waiting for parts', note: 'Your part is ordered and on its way to us. We\'ll text you when it\'s in.' },
+    'Quality Check':     { label: 'Quality check', note: 'Your repair is done and being tested before it comes back to you.' },
     'Ready for Pickup':  { label: 'Ready!', note: 'Your repair is complete. We\'ll text you to arrange getting your device back to you.' },
     'Completed':         { label: 'Completed', note: 'All done \u2014 thanks for trusting us! This repair is covered by our 1-Year Limited Warranty.' }
   };
@@ -3314,6 +3315,16 @@
   window.addEventListener('hashchange', function () {
     if (window.location.hash === '#contact') ensureMap();
   });
+})();
+</script>
+<script>
+(function () {
+  function wire(overlayId, closeId) {
+    var o = document.getElementById(overlayId), b = document.getElementById(closeId);
+    if (o && b) o.addEventListener('click', function () { b.click(); });
+  }
+  wire('acct-overlay', 'acct-close');
+  wire('emp-overlay', 'emp-close');
 })();
 </script>
 </body>
