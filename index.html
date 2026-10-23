@@ -558,7 +558,7 @@
               <div id="repair-success" class="form-success" style="display: none;">
                 <h3><i class="fas fa-circle-check"></i> Request received!</h3>
                 <p id="repair-success-msg">Thanks! We'll reach out shortly to confirm your appointment.</p>
-                <a class="btn btn-primary" href="#contact">
+                <a class="btn btn-primary" href="#repair" onclick="document.getElementById('full-intake').scrollIntoView({behavior:'smooth'});return false;">
                   <i class="fas fa-clipboard-list"></i> Or complete the full intake form
                 </a>
               </div>
@@ -572,6 +572,206 @@
               <i class="fas fa-calendar-check"></i> Open Scheduling Calendar
             </a>
           </div>
+          <div class="section-header center" style="margin-top:3rem;">
+            <p class="eyebrow">Full intake form</p>
+            <h3 class="section-title" style="font-size:1.7rem;">Rather write it all out?</h3>
+            <p class="section-copy">Skip the steps and give us every detail up front &mdash; exact model, what happened, the works. One form, nothing skipped.</p>
+          </div>
+          <!-- BEGIN SNIPPET: service-request -->
+<div class="atr-form-wrap" id="full-intake" data-form-wrap="service-request">
+  <form class="atr-form" data-form="service-request" novalidate>
+    <div class="atr-form-error" role="alert" hidden></div>
+
+    <div class="atr-row">
+      <div class="atr-field">
+        <label class="field-label" for="sr-first-name">First name *</label>
+        <input class="form-field" type="text" id="sr-first-name" name="first_name" required autocomplete="given-name" placeholder="John">
+        <span class="atr-field-error" data-error-for="first_name"></span>
+      </div>
+      <div class="atr-field">
+        <label class="field-label" for="sr-last-name">Last name *</label>
+        <input class="form-field" type="text" id="sr-last-name" name="last_name" required autocomplete="family-name" placeholder="Smith">
+        <span class="atr-field-error" data-error-for="last_name"></span>
+      </div>
+    </div>
+
+    <div class="atr-row">
+      <div class="atr-field">
+        <label class="field-label" for="sr-phone">Phone *</label>
+        <input class="form-field" type="tel" id="sr-phone" name="phone" required autocomplete="tel" placeholder="(937) 555-0100">
+        <span class="atr-field-error" data-error-for="phone"></span>
+      </div>
+      <div class="atr-field">
+        <label class="field-label" for="sr-email">Email *</label>
+        <input class="form-field" type="email" id="sr-email" name="email" required autocomplete="email" placeholder="john@example.com">
+        <span class="atr-field-error" data-error-for="email"></span>
+      </div>
+    </div>
+
+    <div class="atr-field">
+      <label class="field-label" for="sr-address-street">Preferred service address <span class="atr-optional">(where we come to you)</span></label>
+      <input class="form-field" type="text" id="sr-address-street" name="address_street" autocomplete="street-address" placeholder="Street address">
+    </div>
+    <div class="atr-field">
+      <input class="form-field" type="text" id="sr-address-line2" name="address_line2" autocomplete="address-line2" placeholder="Apt, suite, lot (optional)" aria-label="Address line 2">
+    </div>
+    <div class="atr-row-3">
+      <div class="atr-field">
+        <input class="form-field" type="text" id="sr-address-city" name="address_city" autocomplete="address-level2" placeholder="City" aria-label="City">
+      </div>
+      <div class="atr-field">
+        <input class="form-field" type="text" id="sr-address-state" name="address_state" autocomplete="address-level1" placeholder="State" aria-label="State">
+      </div>
+      <div class="atr-field">
+        <input class="form-field" type="text" id="sr-address-zip" name="address_zip" autocomplete="postal-code" placeholder="ZIP" aria-label="ZIP code">
+      </div>
+    </div>
+
+    <div class="atr-row">
+      <div class="atr-field">
+        <label class="field-label" for="sr-contact-method">Preferred contact method</label>
+        <select class="form-field" id="sr-contact-method" name="contact_method">
+          <option value="">No preference</option>
+          <option value="Call">Call</option>
+          <option value="Text message">Text message</option>
+          <option value="Email">Email</option>
+        </select>
+      </div>
+      <div class="atr-field">
+        <label class="field-label" for="sr-appointment">Appointment scheduling <span class="atr-optional">(pick a time to talk)</span></label>
+        <input class="form-field" type="datetime-local" id="sr-appointment" name="appointment_at">
+      </div>
+    </div>
+
+    <div class="atr-row">
+      <div class="atr-field">
+        <label class="field-label" for="sr-device-type">Device category *</label>
+        <select class="form-field" id="sr-device-type" name="device_type" required>
+          <option value="">Choose one…</option>
+          <option value="Phone">Phone</option>
+          <option value="Tablet">Tablet</option>
+          <option value="Computer">Computer</option>
+          <option value="Game Console">Game Console</option>
+          <option value="Smart Watch">Smart Watch</option>
+          <option value="Business / Other">Business / Other</option>
+        </select>
+        <span class="atr-field-error" data-error-for="device_type"></span>
+      </div>
+      <div class="atr-field">
+        <label class="field-label" for="sr-device-info">Device information</label>
+        <input class="form-field" type="text" id="sr-device-info" name="device_info" placeholder="Exact model, e.g. iPhone 13 Pro Max">
+        <p class="atr-help">Enter the exact model of your phone, computer, tablet, smart watch, or other device.</p>
+      </div>
+    </div>
+
+    <div class="atr-field">
+      <label class="field-label" for="sr-repair-needed">Repair needed</label>
+      <select class="form-field" id="sr-repair-needed" name="repair_needed">
+        <option value="">Choose one…</option>
+        <option value="Screen replacement">Screen replacement</option>
+        <option value="Battery replacement">Battery replacement</option>
+        <option value="Charging port repair">Charging port repair</option>
+        <option value="Camera / speaker fix">Camera / speaker fix</option>
+        <option value="Water damage / diagnostic">Water damage / diagnostic</option>
+        <option value="Laptop screen replacement">Laptop screen replacement</option>
+        <option value="SSD upgrade &amp; OS install">SSD upgrade &amp; OS install</option>
+        <option value="Virus cleanup &amp; tuneup">Virus cleanup &amp; tuneup</option>
+        <option value="HDMI port repair">HDMI port repair</option>
+        <option value="Overheating / power fault">Overheating / power fault</option>
+        <option value="Other / not sure">Other / not sure</option>
+      </select>
+    </div>
+
+    <div class="atr-row">
+      <div class="atr-field">
+        <label class="field-label" for="sr-power-on">Does it power on?</label>
+        <select class="form-field" id="sr-power-on" name="power_on">
+          <option value="">Choose one…</option>
+          <option value="Yes">Yes</option>
+          <option value="No">No</option>
+          <option value="Not sure">Not sure</option>
+        </select>
+      </div>
+      <div class="atr-field">
+        <label class="field-label" for="sr-backed-up">Is it backed up?</label>
+        <select class="form-field" id="sr-backed-up" name="backed_up">
+          <option value="">Choose one…</option>
+          <option value="Yes">Yes</option>
+          <option value="No">No</option>
+          <option value="Not sure">Not sure</option>
+        </select>
+      </div>
+    </div>
+    <div class="atr-row">
+      <div class="atr-field">
+        <label class="field-label" for="sr-prior-repair">Has it been repaired before?</label>
+        <select class="form-field" id="sr-prior-repair" name="prior_repair">
+          <option value="">Choose one…</option>
+          <option value="Yes">Yes</option>
+          <option value="No">No</option>
+          <option value="Not sure">Not sure</option>
+        </select>
+      </div>
+      <div class="atr-field">
+        <label class="field-label" for="sr-warranty">Is the device under manufacturer warranty?</label>
+        <select class="form-field" id="sr-warranty" name="warranty_status">
+          <option value="">Choose one…</option>
+          <option value="Yes">Yes</option>
+          <option value="No">No</option>
+          <option value="Not sure">Not sure</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="atr-field">
+      <label class="field-label" for="sr-problem">Describe the problem *</label>
+      <textarea class="form-field" id="sr-problem" name="problem" rows="4" required placeholder="What happened, and what is the device doing (or not doing)?"></textarea>
+      <span class="atr-field-error" data-error-for="problem"></span>
+    </div>
+
+    <div class="atr-field">
+      <label class="field-label" for="sr-serial">Serial number / IMEI <span class="atr-optional">(optional — speeds up parts ordering)</span></label>
+      <input class="form-field" type="text" id="sr-serial" name="serial_imei" placeholder="Found in Settings or on the device">
+    </div>
+
+    <label class="atr-check">
+      <input type="checkbox" name="marketing_opt_in" value="yes">
+      <span>Email me occasional offers and repair tips. <em>(Optional — no spam, ever.)</em></span>
+    </label>
+
+    <label class="atr-check">
+      <input type="checkbox" name="terms_accepted" value="yes" required>
+      <span>I agree to the <strong>Terms and Conditions</strong> of service. *</span>
+    </label>
+    <span class="atr-field-error" data-error-for="terms_accepted"></span>
+
+    <label class="atr-check">
+      <input type="checkbox" name="dispatch_acknowledged" value="yes" required>
+      <span>I understand the <strong>$15 dispatch fee</strong> covers the trip to me plus the on-site diagnostic, and that this fee is <strong>non-refundable</strong>. *</span>
+    </label>
+    <span class="atr-field-error" data-error-for="dispatch_acknowledged"></span>
+
+    <label class="atr-check">
+      <input type="checkbox" name="work_auth_accepted" value="yes" required>
+      <span>I <strong>authorize</strong> Austin&rsquo;s Tech Repair Group to perform the requested diagnostic and repair work on my device. *</span>
+    </label>
+    <span class="atr-field-error" data-error-for="work_auth_accepted"></span>
+
+    <div class="atr-honeypot" aria-hidden="true">
+      <label>Leave this field empty<input type="text" name="_honey" tabindex="-1" autocomplete="off"></label>
+    </div>
+
+    <button class="btn btn-primary btn-block btn-lg" type="submit">
+      <i class="fas fa-paper-plane"></i> Send Service Request
+    </button>
+    <p class="atr-help" style="text-align:center;">Sends your request directly to our team — no account needed.</p>
+  </form>
+  <div class="form-success atr-success" hidden>
+    <h3><i class="fas fa-circle-check"></i> Request received!</h3>
+    <p data-success-msg>Thanks! Your service request is in. We&rsquo;ll reach out shortly to confirm your appointment.</p>
+  </div>
+</div>
+<!-- END SNIPPET: service-request -->
         </div>
       </div>
     </section>
@@ -1348,201 +1548,61 @@
             <p class="section-copy">Call <a href="tel:9372806243" style="font-weight:800;">937-280-6243</a> or send a message below &mdash; we typically reply within the hour during business hours.</p>
           </div>
           <div class="form-embed">
-            <!-- BEGIN SNIPPET: service-request -->
-<div class="atr-form-wrap" data-form-wrap="service-request">
-  <form class="atr-form" data-form="service-request" novalidate>
+            <div style="display:flex; gap:0.8rem; flex-wrap:wrap; justify-content:center; margin-bottom:1.2rem;">
+              <a class="btn btn-primary btn-lg" href="tel:9372806243"><i class="fas fa-phone"></i> Call 937-280-6243</a>
+              <a class="btn btn-dark btn-lg" href="sms:9372806243"><i class="fas fa-comment-sms"></i> Text Us</a>
+              <a class="btn btn-outline btn-lg" href="mailto:austin.caudill@austinstechrepairgroup.com"><i class="fas fa-envelope"></i> Email</a>
+            </div>
+            <p style="text-align:center; color:var(--muted); margin-bottom:0.4rem;"><strong>Hours:</strong> Mon&ndash;Fri 5:30 AM&ndash;10:00 PM &middot; Sat 8:30 AM&ndash;9:00 PM &middot; Sun 9:00 AM&ndash;5:00 PM</p>
+            <p style="text-align:center; color:var(--muted); margin-bottom:1.6rem;">Got a repair? <a href="#repair" data-page="repair" style="font-weight:700;">Start your repair request</a> &mdash; that form gets us every detail we need for your estimate.</p>
+            <div class="section-header center" style="margin-bottom:1rem;">
+              <h3 style="font-size:1.3rem;">Send a quick message</h3>
+              <p class="section-copy">Just a question, not a repair? Send it here.</p>
+            </div>
+<!-- BEGIN SNIPPET: contact -->
+<div class="atr-form-wrap" data-form-wrap="contact">
+  <form class="atr-form" data-form="contact" novalidate>
     <div class="atr-form-error" role="alert" hidden></div>
 
-    <div class="atr-row">
-      <div class="atr-field">
-        <label class="field-label" for="sr-first-name">First name *</label>
-        <input class="form-field" type="text" id="sr-first-name" name="first_name" required autocomplete="given-name" placeholder="John">
-        <span class="atr-field-error" data-error-for="first_name"></span>
-      </div>
-      <div class="atr-field">
-        <label class="field-label" for="sr-last-name">Last name *</label>
-        <input class="form-field" type="text" id="sr-last-name" name="last_name" required autocomplete="family-name" placeholder="Smith">
-        <span class="atr-field-error" data-error-for="last_name"></span>
-      </div>
+    <div class="atr-field">
+      <label class="field-label" for="ct-name">Your name *</label>
+      <input class="form-field" type="text" id="ct-name" name="name" required autocomplete="name" placeholder="John Smith">
+      <span class="atr-field-error" data-error-for="name"></span>
     </div>
-
     <div class="atr-row">
       <div class="atr-field">
-        <label class="field-label" for="sr-phone">Phone *</label>
-        <input class="form-field" type="tel" id="sr-phone" name="phone" required autocomplete="tel" placeholder="(937) 555-0100">
+        <label class="field-label" for="ct-phone">Phone</label>
+        <input class="form-field" type="tel" id="ct-phone" name="phone" autocomplete="tel" placeholder="(937) 555-0100">
         <span class="atr-field-error" data-error-for="phone"></span>
       </div>
       <div class="atr-field">
-        <label class="field-label" for="sr-email">Email *</label>
-        <input class="form-field" type="email" id="sr-email" name="email" required autocomplete="email" placeholder="john@example.com">
+        <label class="field-label" for="ct-email">Email</label>
+        <input class="form-field" type="email" id="ct-email" name="email" autocomplete="email" placeholder="john@example.com">
         <span class="atr-field-error" data-error-for="email"></span>
       </div>
     </div>
+    <p class="atr-help">Give us a phone number or an email so we can reply.</p>
 
     <div class="atr-field">
-      <label class="field-label" for="sr-address-street">Preferred service address <span class="atr-optional">(where we come to you)</span></label>
-      <input class="form-field" type="text" id="sr-address-street" name="address_street" autocomplete="street-address" placeholder="Street address">
+      <label class="field-label" for="ct-message">Message *</label>
+      <textarea class="form-field" id="ct-message" name="message" rows="4" required placeholder="How can we help?"></textarea>
+      <span class="atr-field-error" data-error-for="message"></span>
     </div>
-    <div class="atr-field">
-      <input class="form-field" type="text" id="sr-address-line2" name="address_line2" autocomplete="address-line2" placeholder="Apt, suite, lot (optional)" aria-label="Address line 2">
-    </div>
-    <div class="atr-row-3">
-      <div class="atr-field">
-        <input class="form-field" type="text" id="sr-address-city" name="address_city" autocomplete="address-level2" placeholder="City" aria-label="City">
-      </div>
-      <div class="atr-field">
-        <input class="form-field" type="text" id="sr-address-state" name="address_state" autocomplete="address-level1" placeholder="State" aria-label="State">
-      </div>
-      <div class="atr-field">
-        <input class="form-field" type="text" id="sr-address-zip" name="address_zip" autocomplete="postal-code" placeholder="ZIP" aria-label="ZIP code">
-      </div>
-    </div>
-
-    <div class="atr-row">
-      <div class="atr-field">
-        <label class="field-label" for="sr-contact-method">Preferred contact method</label>
-        <select class="form-field" id="sr-contact-method" name="contact_method">
-          <option value="">No preference</option>
-          <option value="Call">Call</option>
-          <option value="Text message">Text message</option>
-          <option value="Email">Email</option>
-        </select>
-      </div>
-      <div class="atr-field">
-        <label class="field-label" for="sr-appointment">Appointment scheduling <span class="atr-optional">(pick a time to talk)</span></label>
-        <input class="form-field" type="datetime-local" id="sr-appointment" name="appointment_at">
-      </div>
-    </div>
-
-    <div class="atr-row">
-      <div class="atr-field">
-        <label class="field-label" for="sr-device-type">Device category *</label>
-        <select class="form-field" id="sr-device-type" name="device_type" required>
-          <option value="">Choose one…</option>
-          <option value="Phone">Phone</option>
-          <option value="Tablet">Tablet</option>
-          <option value="Computer">Computer</option>
-          <option value="Game Console">Game Console</option>
-          <option value="Smart Watch">Smart Watch</option>
-          <option value="Business / Other">Business / Other</option>
-        </select>
-        <span class="atr-field-error" data-error-for="device_type"></span>
-      </div>
-      <div class="atr-field">
-        <label class="field-label" for="sr-device-info">Device information</label>
-        <input class="form-field" type="text" id="sr-device-info" name="device_info" placeholder="Exact model, e.g. iPhone 13 Pro Max">
-        <p class="atr-help">Enter the exact model of your phone, computer, tablet, smart watch, or other device.</p>
-      </div>
-    </div>
-
-    <div class="atr-field">
-      <label class="field-label" for="sr-repair-needed">Repair needed</label>
-      <select class="form-field" id="sr-repair-needed" name="repair_needed">
-        <option value="">Choose one…</option>
-        <option value="Screen replacement">Screen replacement</option>
-        <option value="Battery replacement">Battery replacement</option>
-        <option value="Charging port repair">Charging port repair</option>
-        <option value="Camera / speaker fix">Camera / speaker fix</option>
-        <option value="Water damage / diagnostic">Water damage / diagnostic</option>
-        <option value="Laptop screen replacement">Laptop screen replacement</option>
-        <option value="SSD upgrade &amp; OS install">SSD upgrade &amp; OS install</option>
-        <option value="Virus cleanup &amp; tuneup">Virus cleanup &amp; tuneup</option>
-        <option value="HDMI port repair">HDMI port repair</option>
-        <option value="Overheating / power fault">Overheating / power fault</option>
-        <option value="Other / not sure">Other / not sure</option>
-      </select>
-    </div>
-
-    <div class="atr-row">
-      <div class="atr-field">
-        <label class="field-label" for="sr-power-on">Does it power on?</label>
-        <select class="form-field" id="sr-power-on" name="power_on">
-          <option value="">Choose one…</option>
-          <option value="Yes">Yes</option>
-          <option value="No">No</option>
-          <option value="Not sure">Not sure</option>
-        </select>
-      </div>
-      <div class="atr-field">
-        <label class="field-label" for="sr-backed-up">Is it backed up?</label>
-        <select class="form-field" id="sr-backed-up" name="backed_up">
-          <option value="">Choose one…</option>
-          <option value="Yes">Yes</option>
-          <option value="No">No</option>
-          <option value="Not sure">Not sure</option>
-        </select>
-      </div>
-    </div>
-    <div class="atr-row">
-      <div class="atr-field">
-        <label class="field-label" for="sr-prior-repair">Has it been repaired before?</label>
-        <select class="form-field" id="sr-prior-repair" name="prior_repair">
-          <option value="">Choose one…</option>
-          <option value="Yes">Yes</option>
-          <option value="No">No</option>
-          <option value="Not sure">Not sure</option>
-        </select>
-      </div>
-      <div class="atr-field">
-        <label class="field-label" for="sr-warranty">Is the device under manufacturer warranty?</label>
-        <select class="form-field" id="sr-warranty" name="warranty_status">
-          <option value="">Choose one…</option>
-          <option value="Yes">Yes</option>
-          <option value="No">No</option>
-          <option value="Not sure">Not sure</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="atr-field">
-      <label class="field-label" for="sr-problem">Describe the problem *</label>
-      <textarea class="form-field" id="sr-problem" name="problem" rows="4" required placeholder="What happened, and what is the device doing (or not doing)?"></textarea>
-      <span class="atr-field-error" data-error-for="problem"></span>
-    </div>
-
-    <div class="atr-field">
-      <label class="field-label" for="sr-serial">Serial number / IMEI <span class="atr-optional">(optional — speeds up parts ordering)</span></label>
-      <input class="form-field" type="text" id="sr-serial" name="serial_imei" placeholder="Found in Settings or on the device">
-    </div>
-
-    <label class="atr-check">
-      <input type="checkbox" name="marketing_opt_in" value="yes">
-      <span>Email me occasional offers and repair tips. <em>(Optional — no spam, ever.)</em></span>
-    </label>
-
-    <label class="atr-check">
-      <input type="checkbox" name="terms_accepted" value="yes" required>
-      <span>I agree to the <strong>Terms and Conditions</strong> of service. *</span>
-    </label>
-    <span class="atr-field-error" data-error-for="terms_accepted"></span>
-
-    <label class="atr-check">
-      <input type="checkbox" name="dispatch_acknowledged" value="yes" required>
-      <span>I understand the <strong>$15 dispatch fee</strong> covers the trip to me plus the on-site diagnostic, and that this fee is <strong>non-refundable</strong>. *</span>
-    </label>
-    <span class="atr-field-error" data-error-for="dispatch_acknowledged"></span>
-
-    <label class="atr-check">
-      <input type="checkbox" name="work_auth_accepted" value="yes" required>
-      <span>I <strong>authorize</strong> Austin&rsquo;s Tech Repair Group to perform the requested diagnostic and repair work on my device. *</span>
-    </label>
-    <span class="atr-field-error" data-error-for="work_auth_accepted"></span>
 
     <div class="atr-honeypot" aria-hidden="true">
       <label>Leave this field empty<input type="text" name="_honey" tabindex="-1" autocomplete="off"></label>
     </div>
 
     <button class="btn btn-primary btn-block btn-lg" type="submit">
-      <i class="fas fa-paper-plane"></i> Send Service Request
+      <i class="fas fa-paper-plane"></i> Send Message
     </button>
-    <p class="atr-help" style="text-align:center;">Sends your request directly to our team — no account needed.</p>
   </form>
   <div class="form-success atr-success" hidden>
-    <h3><i class="fas fa-circle-check"></i> Request received!</h3>
-    <p data-success-msg>Thanks! Your service request is in. We&rsquo;ll reach out shortly to confirm your appointment.</p>
+    <h3><i class="fas fa-circle-check"></i> Message sent!</h3>
+    <p data-success-msg>Thanks! Your message is in — we typically reply within the hour during business hours.</p>
   </div>
 </div>
-<!-- END SNIPPET: service-request -->
+<!-- END SNIPPET: contact -->
           </div>
         </div>
       </div>
@@ -2078,7 +2138,7 @@
     howlong: 'Most common repairs (screens, batteries, charge ports) are finished in a single visit once your part is in. If a job needs bench or board-level work, we will tell you the timeline upfront before you commit.',
     membership: 'ATR One membership: $9.99/mo for a single device, $19.99/mo Family (5 devices), $39.99/mo Business Plus, $49.99/mo Business Pro. Members get 20% off repairs, 25% off accessories, a free screen protector installed with every repair, free priority shipping on parts, priority scheduling, same-day repairs, and free remote support.',
     services: 'We repair phones, tablets, computers & laptops, game consoles, and smartwatches — including board-level diagnostics most shops will not touch. We also build websites for local businesses, install home and small-business networks and Wi-Fi equipment, and run internet cabling. We do not repair automotive electronics, vintage radios, home stereo systems, or major appliances, and we are not an internet service provider (though we can recommend one and help you get set up).',
-    hours: 'We book by appointment — send a request here or through the Contact page and we will confirm your time. For anything urgent, call or text ' + PHONE_DISPLAY + '.',
+    hours: 'We book by appointment — send a request here or through the Repair page and we will confirm your time. For anything urgent, call or text ' + PHONE_DISPLAY + '.',
     human: 'No problem — you can call or text Austin directly at ' + PHONE_DISPLAY + '. Or tap "Book a repair" and leave your number here, and he will reach out to you.'
   };
 
@@ -2264,7 +2324,7 @@
   }
   function leadFailed() {
     state = 'idle';
-    bot("That didn't go through — sorry about that. Please try the full Service Request form on our Contact page, or call/text " + PHONE_DISPLAY + " and we'll take it from there.");
+    bot("That didn't go through — sorry about that. Please try the full Service Request form on our Repair page, or call/text " + PHONE_DISPLAY + " and we'll take it from there.");
     mainChips();
   }
 
@@ -2337,7 +2397,7 @@
         lead.name = t; leadPhone(); return;
       case 'lead_phone':
         if (!validPhone(t)) {
-          if (lead.phoneRetry) { bot("That still doesn't look like a full number. No worries — call or text us at " + PHONE_DISPLAY + " instead, or use the Contact page form and we'll take it from there."); state = 'idle'; mainChips(); return; }
+          if (lead.phoneRetry) { bot("That still doesn't look like a full number. No worries — call or text us at " + PHONE_DISPLAY + " instead, or use the Repair page form and we'll take it from there."); state = 'idle'; mainChips(); return; }
           lead.phoneRetry = true;
           bot('Hmm, that doesn\'t look like a full phone number — mind checking it? Example format: (937) 555-0100.');
           return;
@@ -2369,7 +2429,7 @@
         miss++;
         if (miss >= 2) {
           miss = 0;
-          bot("I don't want to guess wrong on that one. Best bet is a person: call or text " + PHONE_DISPLAY + ", or use the full Service Request form on the Contact page. Meanwhile, here's what I can do:");
+          bot("I don't want to guess wrong on that one. Best bet is a person: call or text " + PHONE_DISPLAY + ", or use the full Service Request form on our Repair page. Meanwhile, here's what I can do:");
           mainChips();
         } else {
           bot("Let me make sure I point you the right way — here's what I can help with:");
