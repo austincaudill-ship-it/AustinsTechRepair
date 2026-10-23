@@ -538,6 +538,16 @@
                       <input class="form-field" type="email" id="rc-email" name="email" required placeholder="john@example.com" autocomplete="email" />
                     </div>
                   </div>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div>
+                      <label class="field-label" for="rc-model">Exact model</label>
+                      <input class="form-field" type="text" id="rc-model" name="model" placeholder="e.g. iPhone 13 Pro Max" />
+                    </div>
+                    <div>
+                      <label class="field-label" for="rc-serial">Serial number / IMEI <span style="text-transform:none; font-weight:600;">(optional)</span></label>
+                      <input class="form-field" type="text" id="rc-serial" name="serial" placeholder="Found in Settings or on the device" />
+                    </div>
+                  </div>
                   <div style="margin-bottom: 1.2rem;">
                     <label class="field-label" for="rc-address">Service address <span style="text-transform:none; font-weight:600;">(where we come to you)</span></label>
                     <input class="form-field" type="text" id="rc-address" name="address" placeholder="Street, City, ZIP" autocomplete="street-address" />

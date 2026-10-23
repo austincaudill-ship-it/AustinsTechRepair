@@ -192,6 +192,8 @@
           var email = document.getElementById('rc-email').value.trim();
           var address = document.getElementById('rc-address').value.trim();
           var notes = document.getElementById('rc-notes').value.trim();
+          var model = document.getElementById('rc-model').value.trim();
+          var serial = document.getElementById('rc-serial').value.trim();
 
           if (!name || !phone || !email) {
             alert('Please fill in your name, phone, and email so we can reach you.');
@@ -209,6 +211,8 @@
             'Device type': repairState.device || 'Not selected',
             'Brand': repairState.brand || 'Not selected',
             'Issue': repairState.issue || 'Not selected',
+            'Exact model': model || '(not provided)',
+            'Serial / IMEI': serial || '(not provided)',
             'Estimate shown': repairState.priceRange,
             'Name': name,
             'Phone': phone,
@@ -444,8 +448,19 @@
     function money(n) { return '$' + n.toFixed(2); }
 
     function getCart() {
-      try { return JSON.parse(localStorage.getItem('atr-cart') || '{}'); }
+      var cart;
+      try { cart = JSON.parse(localStorage.getItem('atr-cart') || '{}'); }
       catch (e) { return {}; }
+      // Prune entries the current catalog no longer sells (e.g. left in
+      // storage from an older catalog): they inflate the cart count, hide
+      // from the drawer, and make checkout fail on an unknown item.
+      var changed = false;
+      Object.keys(cart).forEach(function (k) {
+        var known = PRODUCTS.some(function (p) { return p.id === k; });
+        if (!known || !(cart[k] > 0)) { delete cart[k]; changed = true; }
+      });
+      if (changed) { try { localStorage.setItem('atr-cart', JSON.stringify(cart)); } catch (e) {} }
+      return cart;
     }
     function saveCart(cart) {
       try { localStorage.setItem('atr-cart', JSON.stringify(cart)); } catch (e) {}
@@ -589,7 +604,7 @@
         var cart = getCart();
         var items = Object.keys(cart).map(function (id) {
           return { id: id, qty: cart[id] };
-        }).filter(function (x) { return x.qty > 0; });
+        }).filter(function (x) { return x.qty > 0 && PRODUCTS.some(function (p) { return p.id === x.id; }); });
         if (!items.length) return;
         var original = checkoutBtn.innerHTML;
         checkoutBtn.disabled = true;
