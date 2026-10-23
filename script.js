@@ -636,13 +636,13 @@
   document.addEventListener('DOMContentLoaded', function () {
     // Flat-rate pricing from ATRG Master Repair List
     var PRICES = {
-      'iphone':           { screen: 55, battery: 39, backglass: 49, chargeport: 59, label: 'iPhone' },
+      'iphone':           { screen: 67, battery: 68, backglass: 49, chargeport: 59, label: 'iPhone' },
       'ipad':             { screen: 99, battery: 79, backglass: 99, chargeport: 89, label: 'iPad' },
       'watch':            { screen: 119, battery: 49, backglass: 119, chargeport: 89, label: 'Apple Watch' },
-      'samsung-budget':   { screen: 65, battery: 39, backglass: 45, chargeport: 49, label: 'Samsung Galaxy (A / M / F series)' },
-      'samsung-mid':      { screen: 139, battery: 39, backglass: 49, chargeport: 59, label: 'Samsung Galaxy (S series)' },
+      'samsung-budget':   { screen: 67, battery: 39, backglass: 45, chargeport: 49, label: 'Samsung Galaxy (A / M / F series)' },
+      'samsung-mid':      { screen: 176, battery: 67, backglass: 49, chargeport: 59, label: 'Samsung Galaxy (S series)' },
       'samsung-premium':  { screen: 349, battery: 59, backglass: 59, chargeport: 69, label: 'Samsung Galaxy (Fold / Flip)' },
-      'pixel':            { screen: 89, battery: 39, backglass: 49, chargeport: 59, label: 'Google Pixel' },
+      'pixel':            { screen: 100, battery: 39, backglass: 49, chargeport: 59, label: 'Google Pixel' },
       'motorola':         { screen: 69, battery: 39, backglass: 45, chargeport: 49, label: 'Motorola' }
     };
     var REPAIR_LABELS = {
