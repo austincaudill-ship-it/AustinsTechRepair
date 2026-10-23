@@ -3087,7 +3087,7 @@
     var el = $('service-map');
     if (!el || typeof L === 'undefined') return;
     if (!map) {
-      map = L.map('service-map').setView(ORIGIN, 9);
+      map = L.map('service-map').setView(ORIGIN, 9); if (map.attributionControl) map.attributionControl.setPrefix(false);
       L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 18, attribution: '&copy; OpenStreetMap contributors'
       }).addTo(map);
