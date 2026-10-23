@@ -230,3 +230,12 @@
   border: 1px solid var(--line, #E6D9C0); border-radius: 8px;
   background: var(--surface, #FFFDF8); color: var(--ink, #2C231A); font-family: inherit; font-size: 0.92rem;
 }
+
+/* ===== Portal fixes 2026-10-23: hidden views must actually hide; mobile tab strip contained ===== */
+#portal-login-view[hidden], #portal-dash-view[hidden] { display: none !important; }
+.portal-main { overflow-x: clip; }
+@media (max-width: 640px) {
+  .portal-tabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; scrollbar-width: none; }
+  .portal-tabs::-webkit-scrollbar { display: none; }
+  .portal-tab { flex: none; white-space: nowrap; }
+}

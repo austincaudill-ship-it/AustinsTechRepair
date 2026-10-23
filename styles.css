@@ -976,3 +976,13 @@ html[data-theme="dark"] .header {
   .product-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 0.9rem; }
   .product-body { padding: 0.8rem; }
 }
+
+/* ===== Logged-in hub: mobile containment 2026-10-23 ===== */
+#employee-dashboard { max-width: 100%; overflow-x: clip; }
+#employee-dashboard table { max-width: 100%; }
+@media (max-width: 640px) {
+  .emp-tabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; scrollbar-width: none; }
+  .emp-tabs::-webkit-scrollbar { display: none; }
+  .emp-tab { flex: none; white-space: nowrap; }
+  .emp-dash-head { flex-direction: column; align-items: stretch; }
+}
