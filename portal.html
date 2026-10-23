@@ -84,6 +84,9 @@
         <button class="portal-tab" id="portal-tab-requests" type="button" role="tab" data-tab="requests">
           <i class="fas fa-clipboard-list"></i> Requests <span class="portal-count" id="portal-count-requests" hidden></span>
         </button>
+        <button class="portal-tab" id="portal-tab-workbench" type="button" role="tab" data-tab="workbench">
+          <i class="fas fa-comments"></i> Workbench
+        </button>
         <div class="portal-nav-group">Parts &amp; Tools</div>
         <button class="portal-tab" id="portal-tab-inventory" type="button" role="tab" data-tab="inventory">
           <i class="fas fa-boxes"></i> Inventory &amp; Orders
@@ -183,6 +186,15 @@
       </div>
 
       <!-- INVENTORY + PURCHASE ORDERS (Phase 3: editable van/shop stock) -->
+      <div class="portal-panel" id="portal-panel-workbench" role="tabpanel" hidden>
+        <div class="portal-panel-head">
+          <h2 class="portal-h2">The Workbench &mdash; moderation</h2>
+          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="workbench"><i class="fas fa-rotate"></i> Refresh</button>
+        </div>
+        <p class="portal-muted portal-small">The public community board on the website. Deleting a topic removes its replies too. Pinning is a database toggle for now &mdash; ask Alfred.</p>
+        <div id="wb-admin-list"><p class="portal-muted">Loading the board&hellip;</p></div>
+      </div>
+
       <div class="portal-panel" id="portal-panel-inventory" role="tabpanel" hidden>
         <div class="portal-panel-head">
           <h2 class="portal-h2">Inventory</h2>

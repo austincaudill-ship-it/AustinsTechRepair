@@ -298,13 +298,14 @@
   /* ================= TABS ================= */
   var LOADERS = {
     tickets: loadTickets, applications: loadApplications, investors: loadInvestors,
-    feedback: loadFeedback, customers: loadCustomers, inventory: loadInventory
+    feedback: loadFeedback, customers: loadCustomers, inventory: loadInventory,
+    workbench: loadWorkbenchAdmin
   };
 
   function activateTab(name) {
     var tabs = document.querySelectorAll('.portal-tab');
     tabs.forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === name); });
-    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'inventory', 'timeclock', 'links', 'square', 'checkin'].forEach(function (n) {
+    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'workbench', 'requests'].forEach(function (n) {
       $('portal-panel-' + n).hidden = n !== name;
     });
     closeDrawer();
@@ -1733,4 +1734,27 @@
         });
       });
     }
+  }
+
+  /* ================= WORKBENCH MODERATION ================= */
+  function loadWorkbenchAdmin() {
+    var box = $('wb-admin-list'); if (!box) return;
+    var client = getClient(); if (!client) { box.innerHTML = '<p class="portal-muted">Not connected.</p>'; return; }
+    state.loaded.workbench = true;
+    client.from('community_posts').select('id, title, body, author_name, created_at, pinned').order('created_at', { ascending: false }).limit(50).then(function (res) {
+      if (res.error) { box.innerHTML = '<p class="portal-muted">Could not load the board (it may not be set up yet).</p>'; return; }
+      if (!res.data.length) { box.innerHTML = '<p class="portal-muted">No topics yet.</p>'; return; }
+      box.innerHTML = res.data.map(function (post) {
+        return '<div class="portal-card"><div class="portal-row-between"><strong>' + (post.pinned ? '<i class="fas fa-thumbtack"></i> ' : '') + esc(post.title) + '</strong>' +
+          '<button class="portal-btn portal-btn-danger portal-btn-sm" type="button" data-wb-del="' + post.id + '"><i class="fas fa-trash"></i> Delete</button></div>' +
+          '<p class="portal-muted portal-small">' + esc(post.author_name) + ' &middot; ' + esc(new Date(post.created_at).toLocaleString()) + '</p>' +
+          '<p class="portal-small" style="white-space:pre-wrap">' + esc(post.body) + '</p></div>';
+      }).join('');
+      box.querySelectorAll('[data-wb-del]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          if (!window.confirm('Delete this topic and all its replies?')) return;
+          client.from('community_posts').delete().eq('id', btn.getAttribute('data-wb-del')).then(function () { loadWorkbenchAdmin(); });
+        });
+      });
+    });
   }
