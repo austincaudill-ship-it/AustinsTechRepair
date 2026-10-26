@@ -1436,3 +1436,15 @@ html[data-theme="dark"] .wb-form textarea,
 html[data-theme="dark"] .wb-form input {
   color: #2C231A;
 }
+
+/* --- A11y panel labels, dark mode (follow-up fix, Oct 26) -------------------
+   Was: .a11y-panel { color: var(--text, #2b2118); } -- --text is defined
+   nowhere except under the high-contrast toggle, so the fallback dark
+   brown #2b2118 always applied. In dark mode the panel background flips
+   to dark surface #221B14 while the text stays dark brown = faint labels.
+   Fix (dark only): light cream inherited text for the title and the four
+   option labels. The promise line (var(--muted), already light in dark
+   mode) and the orange Reset button are untouched. Light mode unchanged. */
+html[data-theme="dark"] .a11y-panel {
+  color: #F0E8DA;
+}
