@@ -1448,3 +1448,14 @@ html[data-theme="dark"] .wb-form input {
 html[data-theme="dark"] .a11y-panel {
   color: #F0E8DA;
 }
+
+/* --- Floating buttons above the bottom nav (Oct 26) -------------------------
+   The bottom nav appears at max-width:920px and is ~70px tall, but the
+   floating buttons only lifted above it at max-width:768px, so on tablets
+   (769-920px) the accessibility button sat on Home and the chat pill sat
+   on the nav. This lifts both above the nav at every width where the nav
+   shows. Chat rules live in the inline <style> block in index.html. */
+@media (max-width:920px){
+  .a11y-btn{left:16px;bottom:calc(86px + env(safe-area-inset-bottom))}
+  .a11y-panel{left:8px;bottom:calc(150px + env(safe-area-inset-bottom))}
+}

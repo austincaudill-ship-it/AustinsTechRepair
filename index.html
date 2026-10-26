@@ -230,6 +230,11 @@
               <h3>Internet Cabling</h3>
               <p>Clean, reliable Ethernet runs for homes and small businesses &mdash; finished, tested, and working before we leave.</p>
             </div>
+            <div class="service-card">
+              <div class="service-icon"><i class="fas fa-clock"></i></div>
+              <h3>Smartwatches</h3>
+              <p>Screen and battery service for Apple Watch, Samsung, and more.</p>
+            </div>
           </div>
           <p class="section-copy" style="text-align:center; margin:1.6rem auto 0;">One honest note: we&rsquo;re not an internet service provider. But we can recommend a provider and plan, help you get set up, and make everything on your side of the connection work.</p>
         </div>
@@ -2109,6 +2114,10 @@
   .atr-chat-btn{position:fixed;right:20px;bottom:20px;z-index:1200;display:flex;align-items:center;gap:8px;background:var(--brand,#b4551f);color:#fff;border:none;border-radius:999px;padding:13px 20px;font-family:var(--font-body,system-ui,sans-serif);font-size:.95rem;font-weight:700;cursor:pointer;box-shadow:0 10px 28px rgba(30,20,10,.35)}
   .atr-chat-btn:hover{filter:brightness(1.07)}
   .atr-chat-btn i{font-size:1.05rem}
+  @media (max-width:920px){
+    .atr-chat-btn{right:16px;bottom:calc(86px + env(safe-area-inset-bottom))}
+    .atr-chat-panel{right:8px;bottom:calc(86px + env(safe-area-inset-bottom))}
+  }
   .atr-chat-panel{position:fixed;right:20px;bottom:20px;z-index:1600;width:min(380px,94vw);height:min(560px,76vh);background:var(--surface,#fffaf2);border:1px solid var(--line,#e5d9c8);border-radius:18px;box-shadow:0 24px 60px rgba(30,20,10,.35);display:none;flex-direction:column;overflow:hidden;font-family:var(--font-body,system-ui,sans-serif)}
   .atr-chat-panel.open{display:flex}
   .atr-chat-head{background:var(--brand,#b4551f);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px}

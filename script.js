@@ -2546,7 +2546,7 @@ if ("serviceWorker" in navigator) {
 (function () {
   'use strict';
   var WB_URL = 'https://lyujxpuicarblpkdzuuc.supabase.co';
-  var WB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA0NjQyNTUsImV4cCI6MjA3NjA0MDI1NX0.mJJqS6LzzLYS-Zky1iakXCK8PbNQfhHIJhmExLmMoNs';
+  var WB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
   function $(id) { return document.getElementById(id); }
   function wbEsc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   var wbc = null;
