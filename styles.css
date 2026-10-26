@@ -1025,3 +1025,414 @@ html.a11y-contrast body{font-weight:500}
 .acct-msg-me{background:var(--brand,#b4551f);color:#fff;align-self:flex-end}
 
 .pay-badge img.pay-mark-img { height: 1.3rem; width: auto; display: block; }
+
+/* ================= PART 1 — REPORTED SPOTS ================= */
+
+/* --- R1 — Spot 1: Footer (dark mode) --------------------------------------
+   Was: .footer { background: var(--ink); } — in dark mode --ink flips to
+   cream #F0E8DA while the children stay cream: titles/wordmark
+   #FAF6EE on cream = 1.13:1, links #B9A98F = 1.89:1. Pin the background
+   to its designed dark color; every child returns to its light-mode
+   pairing with no child changes. After: titles 14.30:1, links 6.70:1.
+   The footer disclaimer is deliberately untouched (see README). */
+html[data-theme="dark"] .footer {
+  background: #2C231A;
+}
+
+/* --- R2 — Spot 2: Workbench "House rules" card (dark mode) ----------------
+   Was: .wb-rules { background: #FFF3E2; ... } with NO color, in an inline
+   <style> block in index.html, so the text inherits body var(--ink).
+   Dark mode: cream text #F0E8DA on pale peach #FFF3E2 = 1.11:1.
+   Fix: dark theme surface + border + ink text (12.97:1). The
+   html[data-theme="dark"] prefix (0,2,1) beats the inline-block original
+   (0,1,0), so no index.html change and no class hook is required. */
+html[data-theme="dark"] .wb-rules {
+  background: var(--surface-warm);
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+/* --- R3 — Spot 3: Price-beat calculator card (dark mode) -------------------
+   Was: .price-match { background: var(--ink); color: #FAF6EE; } — same
+   flip as the footer: heading #FAF6EE on cream = 1.13:1. Pin the card
+   background; heading 14.30:1, .sub 9.63:1. Labels (gold, 5.23:1),
+   inputs, button, and the dark-mode result box are already correct on
+   a dark card and are unchanged here (the LIGHT-mode result box is a
+   separate sweep fix, S1–S2 below). */
+html[data-theme="dark"] .price-match {
+  background: #2C231A;
+}
+
+/* --- R4 — Spot 4: "Add to Home Screen" install prompt (dark mode) ---------
+   Was: .install-prompt { background: var(--card, #ffffff);
+   color: var(--ink, #14202e); }. --card is defined nowhere, so the
+   background is always white; in dark mode the text flips to cream
+   while the background stays white = 1.22:1. This is the mirror image
+   of R1/R3: here the TEXT flips, not the background. Fix: dark theme
+   surface behind the inherited cream text = 12.97:1. The Add / Show me
+   how / Hide steps button, close button, steps divider, and note are
+   unchanged. No index.html change, no class hook. */
+html[data-theme="dark"] .install-prompt {
+  background: var(--surface-warm);
+}
+
+/* --- R5 — Spot 5: Review buttons, light mode -------------------------------
+   Was: .btn-ghostlight { background: transparent; color: #FFF8EC;
+   border: 2px solid rgba(255,248,236,0.6); } — a light-text ghost style
+   designed for dark backgrounds (it is CORRECT on the orange CTA band,
+   line ~452, and must keep working there). On the light testimonials
+   section (surface #FFFDF8) the near-white text on cream is about
+   1.04:1 in light mode. Fix is scoped to the two review button IDs
+   ONLY — never a bare .btn-ghostlight override, which would break the
+   CTA-band phone button. Light mode: dark brand-deep text + brand
+   border on the light section = 6.24:1. Dark mode: untouched (cream
+   ghost text on the dark section surface reads fine). */
+html:not([data-theme="dark"]) #yelp-review-btn.btn-ghostlight,
+html:not([data-theme="dark"]) #google-review-btn.btn-ghostlight {
+  color: var(--brand-deep);
+  border-color: var(--brand);
+}
+html:not([data-theme="dark"]) #yelp-review-btn.btn-ghostlight:hover,
+html:not([data-theme="dark"]) #google-review-btn.btn-ghostlight:hover {
+  color: var(--brand-deep);
+  border-color: var(--brand-deep);
+  background: var(--brand-soft);
+}
+
+/* --- R6 — Spot 5: "Had a great experience?" intro line, light mode --------
+   Was: <p style="color:#B9A98F; ..."> above the review buttons, on the
+   light testimonials section = 2.26:1 in light mode. Dark mode is fine
+   (7.40:1 on the dark section surface) and is untouched. The color is
+   an inline style, so a stylesheet rule can only override it with
+   !important. The #home scope isolates this <p> from the footer intro
+   <p>, which shares the same inline color but sits outside #home on
+   the dark footer where #B9A98F is correct. After: ink-soft on light
+   surface = 10.32:1. Cleaner long-term cleanup (optional, not
+   required): delete the inline style attribute so the line inherits
+   section text color. */
+html:not([data-theme="dark"]) #home p[style*="B9A98F"] {
+  color: var(--ink-soft) !important;
+}
+
+/* --- R7 — Spot 5: Feedback star rating, unselected stars (both modes) -----
+   Was: .atr-rating label { color: var(--line); } — the five ★ radio
+   labels in the "How would you rate your repair?" control. Unselected
+   stars measure 1.37:1 in light mode (#E6D9C0 on #FFFDF8) and 1.31:1 in
+   dark mode (#3A2F24 on #221B14): the control is nearly invisible
+   before anyone taps it. This is NOT just the intended "unselected =
+   muted" look — muted must still be perceivable, and at ~1.3:1 it is
+   not. Fix: theme-aware var(--muted) — 4.96:1 light, 6.05:1 dark —
+   still visibly muted next to the gold selected stars.
+   Specificity note: div.atr-rating label is (0,1,2). It beats the base
+   rule (0,1,1) regardless of file order (this patch may be appended to
+   styles.css, which loads BEFORE atr-forms.css), and it loses to the
+   checked rule (0,2,2) and the hover rules (0,2,1), so selected stars
+   and the hover preview stay gold. The testimonial stars (filled gold
+   glyphs, a different system) are NOT this control — see README. */
+div.atr-rating label {
+  color: var(--muted);
+}
+
+/* ================= PART 2 — SWEEP ADDITIONS ================= */
+/* Every rule below was found by sweeping the whole main site (all pages
+   in index.html, styles.css, atr-forms.css, the three inline <style>
+   blocks, inline styles, and JS-rendered components). Each one names
+   its before/after ratio in the README. */
+
+/* --- S1 — Price-beat result box, light mode --------------------------------
+   Was: .price-result { background: var(--surface); } with NO color, so
+   it inherits the card's cream #FAF6EE. In dark mode that is correct
+   (cream on dark surface = 15.78:1). In LIGHT mode the box is light
+   surface #FFFDF8 with cream text = 1.06:1 — the calculated result is
+   invisible after the visitor taps "Calculate Guaranteed Price".
+   Fix (light only): dark ink text on the light box = 15.16:1. Scoped
+   to .price-match so the price-lookup section's own .price-result
+   (which already inherits ink) is untouched. */
+html:not([data-theme="dark"]) .price-match .price-result {
+  color: var(--ink);
+}
+
+/* --- S2 — Price-beat "Price-match guaranteed!" headline, light mode --------
+   The success line is rendered by script.js with an inline
+   <strong style="color:#F5B04C;"> — light gold-orange. On the light
+   result box that is 1.84:1 in light mode (fine in dark mode,
+   9.07:1 on the dark box, untouched). Inline style, so !important is
+   required. After: brand-deep on the light box = 6.24:1. Cleaner
+   long-term cleanup (optional, not required): change the inline color
+   in script.js to var(--brand-deep) or a class. */
+html:not([data-theme="dark"]) .price-match .price-result strong[style*="F5B04C"] {
+  color: var(--brand-deep) !important;
+}
+
+/* --- S3 — Dark buttons (Calendly + "Text Us"), dark mode -------------------
+   Was: .btn-dark { background: var(--ink); color: #FAF6EE; } — the same
+   flip as R1/R3, used by the Calendly button and the contact page's
+   "Text Us" button. Dark mode: cream on cream = 1.13:1. Pin the
+   background to #2C231A (14.30:1); the hover darkening (#1d1610) is
+   restated so the higher-specificity resting rule cannot swallow it. */
+html[data-theme="dark"] .btn-dark {
+  background: #2C231A;
+}
+html[data-theme="dark"] .btn-dark:hover {
+  background: #1d1610;
+}
+
+/* --- S4 — Comparison table header row, dark mode ---------------------------
+   Was: .compare-table thead th { background: var(--ink);
+   color: #FAF6EE; } — same flip: cream on cream = 1.13:1 in dark mode.
+   Pin the header background (14.30:1). The highlighted header cell
+   (background: var(--brand-deep), cream text = 5.88:1) is unchanged. */
+html[data-theme="dark"] .compare-table thead th {
+  background: #2C231A;
+}
+
+/* --- S5 — Comparison highlight-column cells, dark mode ---------------------
+   Was: .compare-table td.compare-hl { background: #FDF3E3; } — hardcoded
+   light peach with inherited ink text. Dark mode: cream text on light
+   peach = 1.11:1. Fix: dark theme warm surface = 12.97:1, still slightly
+   distinct from the neighboring #221B14 cells. */
+html[data-theme="dark"] .compare-table td.compare-hl {
+  background: var(--surface-warm);
+}
+
+/* --- S6 — Comparison "Yes" cells, dark mode --------------------------------
+   Was: .compare-table td.yes { color: var(--brand-deep); } on the
+   surface card. Light mode is fine (6.24:1); dark mode: brand-deep on
+   #221B14 = 2.68:1. Fix (dark only): pale brand-soft text = 14.49:1. */
+html[data-theme="dark"] .compare-table td.yes {
+  color: #FBEADB;
+}
+
+/* --- S7 — Comparison x / minus icons (both modes) --------------------------
+   Was: .compare-table .fa-xmark, .fa-minus { color: #b0a58e; }.
+   Light mode: 2.40:1 on the light surface — and one "no" cell contains
+   ONLY the x icon, so the icon carries the meaning there. Dark mode is
+   fine (6.98:1). Fix: theme-aware muted — 4.96:1 light, ~6.05:1 dark.
+   The tbody scope (0,2,2) beats the base rule (0,2,1) regardless of
+   file order. Check icons are untouched: they sit next to "yes" text
+   in every yes cell and pass the icon bar (light 4.66:1, dark 3.32:1). */
+.compare-table tbody .fa-xmark,
+.compare-table tbody .fa-minus {
+  color: var(--muted);
+}
+
+/* --- S8 — Featured ATR One perk card, dark mode -----------------------------
+   Was: .perk-featured { background: linear-gradient(160deg, #FFF8EC,
+   #FBEEDB); } — a hardcoded light gradient with inherited ink text.
+   Dark mode: cream text on light gradient = 1.06:1. Fix: flat dark
+   theme warm surface = 12.97:1 (the gradient colors are light-only;
+   the 2px brand border is unchanged). */
+html[data-theme="dark"] .perk-featured {
+  background: var(--surface-warm);
+}
+
+/* --- S9 — Section eyebrow pills, dark mode ----------------------------------
+   Was: .eyebrow { color: var(--brand-deep);
+   background: var(--brand-soft); } — the small uppercase pill above
+   section headings site-wide. Light mode is fine (5.40:1); dark mode:
+   brand-deep on dark brand-soft = 2.35:1. Fix (dark only): pale
+   brand-soft text = 12.72:1. The light peach border is unchanged. */
+html[data-theme="dark"] .eyebrow {
+  color: #FBEADB;
+}
+
+/* --- S10 — Service-card icons, dark mode -------------------------------------
+   Was: .service-icon { background: var(--brand-soft);
+   color: var(--brand-deep); }, with teal-soft/teal and gold-soft/gold
+   variants on every 2nd/3rd card. Light mode: brand 5.40:1, teal
+   4.32:1, gold 2.66:1 (gold is marginal but the icon is redundant with
+   the service-name heading next to it, so it is noted, not changed —
+   see README). Dark mode: brand 2.35:1 and teal 2.67:1 fail the 3:1
+   icon bar, so those two variants get pale text (12.72:1 / 11.55:1).
+   Gold dark (4.51:1) passes and is untouched. */
+html[data-theme="dark"] .service-icon {
+  color: #FBEADB;
+}
+html[data-theme="dark"] .service-card:nth-child(2n) .service-icon {
+  color: #DFF0EA;
+}
+
+/* --- S11 — Testimonial avatar initials, dark mode ------------------------------
+   Was: .testimonial-avatar { background: var(--teal-soft);
+   color: var(--teal); } — the initials circle next to each reviewer.
+   Light mode is fine (4.32:1); dark mode: teal on dark teal-soft =
+   2.67:1. Fix (dark only): pale teal-soft text = 11.55:1. */
+html[data-theme="dark"] .testimonial-avatar {
+  color: #DFF0EA;
+}
+
+/* --- S12 — Legal-page subheadings, dark mode ------------------------------------
+   Was: .legal-doc h3 { color: var(--brand-deep); } on the page
+   background — Privacy, Terms, Warranty, and Service Agreement pages.
+   Light mode is fine (5.88:1); dark mode: brand-deep on #14100B =
+   2.99:1. Fix (dark only): pale brand-soft text = 16.14:1. Body text
+   (ink-soft) already flips correctly and is untouched. */
+html[data-theme="dark"] .legal-doc h3 {
+  color: #FBEADB;
+}
+
+/* --- S13 — Pricing-page amounts, dark mode (large text) -------------------------
+   Was: .pricing-card .amount { color: var(--brand-deep); } on the
+   surface card — the big plan prices. Light mode is fine (6.24:1);
+   dark mode: brand-deep on #221B14 = 2.68:1. Fix (dark only): brand
+   orange = 4.23:1, which passes the 3:1 bar for large display text
+   (2.8rem) while keeping the prices orange. */
+html[data-theme="dark"] .pricing-card .amount {
+  color: var(--brand);
+}
+
+/* --- S14 — Repair-wizard estimate price, dark mode (large text) -------------------
+   Was: .estimate-box .price { color: var(--brand-deep); } on the
+   bg-deep box — the headline estimate number. Light mode is fine
+   (5.26:1); dark mode: brand-deep on #1D1712 = 2.80:1. Fix (dark only):
+   brand orange = 4.41:1, passing the 3:1 large-text bar (2.6rem) while
+   keeping the price orange. */
+html[data-theme="dark"] .estimate-box .price {
+  color: var(--brand);
+}
+
+/* --- S15 — Repair-wizard active step label, dark mode ------------------------------
+   Was: .progress-step.active .progress-label { color: var(--brand-deep); }
+   on the page background — the "current step" label. Light mode is fine
+   (5.88:1); dark mode: brand-deep on #14100B = 2.99:1. Fix (dark only):
+   gold = 6.43:1, keeping a warm "active" highlight distinct from the
+   muted inactive labels. */
+html[data-theme="dark"] .progress-step.active .progress-label {
+  color: var(--gold);
+}
+
+/* --- S16 — Form success-panel heading, dark mode -----------------------------------
+   Was: .form-success h3 { color: var(--teal); } on the teal-soft panel
+   shown after a form submits. Light mode passes the large-text bar
+   (4.32:1 at 1.5rem bold); dark mode: teal on dark teal-soft = 2.67:1.
+   Fix (dark only): pale teal-soft text = 11.55:1. The panel body
+   (ink-soft) already flips correctly. */
+html[data-theme="dark"] .form-success h3 {
+  color: #DFF0EA;
+}
+
+/* --- S17 — Feedback "Would you recommend" checked pill, dark mode -------------------
+   Was: .atr-choice:has(input:checked) { border-color: var(--brand);
+   background: var(--brand-soft); color: var(--brand-deep); } — the
+   Yes/No radio pills in the feedback form. Light mode is fine
+   (5.40:1); dark mode: brand-deep on dark brand-soft = 2.35:1. Fix
+   (dark only): pale brand-soft text = 12.72:1. Unchecked pills
+   (ink-soft on bg) already flip correctly. Note: :has() needs a modern
+   browser (Safari 15.4+, Chrome 105+, Firefox 121+); on anything older
+   this rule is dropped and the pill falls back to its dark-mode
+   2.35:1 — it degrades to the old look, it does not break. */
+html[data-theme="dark"] .atr-choice:has(input:checked) {
+  color: #FBEADB;
+}
+
+/* --- S18 — Nav / outline-button / back-button hover + active text, dark mode --------
+   Was: .nav-link:hover, .nav-link.active, .btn-outline:hover, and
+   .back-btn:hover all set color: var(--brand-deep). On a light page
+   that is 5.88:1 and fine; on a dark page it is 2.99:1 — hovering the
+   header nav, the hero "call" button, or the wizard back button turns
+   the text nearly invisible. Fix (dark only): pale brand-soft text =
+   16.14:1. Hover/active feedback is preserved: the nav underline bar
+   and the outline button's brand border still change on hover, and
+   the text brightens from muted/ink-soft to pale cream. */
+html[data-theme="dark"] .nav-link:hover,
+html[data-theme="dark"] .nav-link.active,
+html[data-theme="dark"] .btn-outline:hover,
+html[data-theme="dark"] .back-btn:hover {
+  color: #FBEADB;
+}
+
+/* --- S19 — Faint small text that must still be readable (both modes) -------------------
+   Was: .cookie-disclosure, .cart-remove, and .cart-clear all use
+   color: var(--faint) — 2.77:1 in light mode, ~2.6–3.76:1 in dark mode.
+   Faint is fine for placeholder hints (labels carry those fields), but
+   these three are real content and real controls: the cookie fine
+   print with its Privacy/Terms links, the cart item remove (×)
+   buttons, and the "Clear cart" link. Fix: theme-aware muted —
+   4.96:1 light, 6.74:1 dark on the banner/drawer backgrounds — still
+   quieter than body text, but actually readable. The remove button's
+   red hover (#c0392b) is restated so the resting rule cannot swallow
+   it. */
+.cookie-banner .cookie-disclosure,
+.cart-drawer .cart-remove,
+.cart-drawer .cart-clear {
+  color: var(--muted);
+}
+.cart-drawer .cart-remove:hover {
+  color: #c0392b;
+}
+
+/* --- S20 — Account-modal active tab, light + dark -------------------------------------
+   Was: .acct-tab.active { border-color: var(--brand);
+   color: var(--brand); background: var(--brand-soft); } — the Log In /
+   Sign Up tabs. Active-tab text fails in BOTH modes: 3.43:1 light,
+   3.71:1 dark. Fix: light mode gets darker brand-deep text (5.40:1,
+   still orange); dark mode gets pale brand-soft text (12.72:1). The
+   brand border still signals "active" in both modes. The .acct-tabs
+   scope (0,3,0) beats the base rule (0,2,0) regardless of file order. */
+.acct-tabs .acct-tab.active {
+  color: var(--brand-deep);
+}
+html[data-theme="dark"] .acct-tab.active {
+  color: #FBEADB;
+}
+
+/* --- S21 — Header "logged in" account button, dark mode --------------------------------
+   Was: .account-btn.logged-in { border-color: var(--teal);
+   color: var(--teal); } — the header account button once signed in.
+   Light mode is fine (5.02:1); dark mode: teal on #221B14 = 3.33:1.
+   Fix (dark only, including its hover, which otherwise keeps the teal):
+   pale teal-soft text = 14.41:1. The teal border is unchanged, so the
+   logged-in signal survives. */
+html[data-theme="dark"] .account-btn.logged-in,
+html[data-theme="dark"] .account-btn.logged-in:hover {
+  color: #DFF0EA;
+}
+
+/* --- S22 — Shop product-category labels, dark mode ---------------------------------------
+   Was: .product-card .product-cat { color: var(--teal); } — the small
+   uppercase category line on JS-rendered shop cards. Light mode is
+   fine (5.02:1); dark mode: teal on #221B14 = 3.33:1. Fix (dark only):
+   pale teal-soft text = 14.41:1. */
+html[data-theme="dark"] .product-card .product-cat {
+  color: #DFF0EA;
+}
+
+/* --- S23 — Shop "Added" button, both modes ------------------------------------------------
+   Was: .add-btn.added { background: var(--gold); } with inherited
+   #fff text from .add-btn — gold does not flip with the theme, so this
+   fails in BOTH modes: white on gold = 2.95:1. Fix: dark ink text on
+   gold = 5.23:1, in both modes. The .product-foot scope (0,3,0) beats
+   the base rule (0,2,0) regardless of file order. */
+.product-foot .add-btn.added {
+  color: #2C231A;
+}
+
+/* --- S24 — Staff-dashboard stock quantities, dark mode --------------------------------------
+   Was: .emp-stock-low { color: #b45309; } and .emp-stock-ok
+   { color: #166534; } — the inventory quantities on the staff-only
+   employee dashboard page in index.html. Light mode is fine (low
+   4.94:1, ok 7.01:1); dark mode both fail (low 3.39:1, ok 2.38:1). Fix
+   (dark only): low goes gold (5.77:1, same amber family), ok goes pale
+   mint (14.41:1) — the low/ok color distinction is preserved, just
+   lightened for dark brown. No mid-green token passes on #221B14, so
+   ok uses the pale mint token rather than inventing a new green. */
+html[data-theme="dark"] .emp-stock-low {
+  color: var(--gold);
+}
+html[data-theme="dark"] .emp-stock-ok {
+  color: #DFF0EA;
+}
+
+/* --- S25 — Workbench compose / reply inputs, dark mode (signed-in only) ----------------------
+   Was: .wb-form textarea, .wb-form input { background: #fff; } with NO
+   color, in an inline <style> block — the reverse of R2. The compose
+   and reply forms are JS-rendered for signed-in users only. Light
+   mode is fine (dark ink inherited on white); dark mode: cream ink
+   inherited on white = 1.22:1. Fix (dark only): dark ink text on the
+   white inputs = 15.41:1. The html[data-theme="dark"] prefix (0,2,2)
+   beats the inline-block original (0,1,1), so no index.html change is
+   required. Live verification of this one needs a signed-in session. */
+html[data-theme="dark"] .wb-form textarea,
+html[data-theme="dark"] .wb-form input {
+  color: #2C231A;
+}
