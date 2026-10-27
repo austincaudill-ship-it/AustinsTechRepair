@@ -191,9 +191,11 @@
   }
 
   /* ================= AUTH ================= */
-  function showLogin(errorMsg) {
+  var resetSuccessMessage = null; function isRecoveryHash() { var h = window.location.hash || ""; var q = window.location.search || ""; return h.indexOf("type=recovery") !== -1 || q.indexOf("type=recovery") !== -1; } function showResetView(msg) { var dv = $("portal-dash-view"); if (dv) { dv.hidden = true; } var lv = $("portal-login-view"); if (lv) { lv.hidden = false; } var rf = $("portal-login-form"); if (rf) { rf.hidden = true; } var rv = $("portal-reset-view"); if (rv) { rv.hidden = false; } var re = $("portal-reset-error"); if (re) { if (msg) { re.textContent = msg; re.hidden = false; } else { re.hidden = true; re.textContent = ""; } } var fm2 = $("portal-forgot-msg"); if (fm2) { fm2.hidden = true; } } function initPasswordReset() { withClient(function (client) { if (!client) { return; } var fb = $("portal-forgot-btn"); if (fb) { fb.addEventListener("click", function () { var em = $("portal-login-email"); var email = em ? trim(em.value) : ""; var mg = $("portal-forgot-msg"); if (!email) { if (mg) { mg.textContent = "Enter your employee email first"; mg.hidden = false; } return; } client.auth.resetPasswordForEmail(email, { redirectTo: "https://austinstechrepairgroup.com/portal.html" }).then(function (res) { if (mg) { if (res.error) { mg.textContent = res.error.message || "Could not send the reset email. Try again."; } else { mg.textContent = "Check your email for a password reset link"; } mg.hidden = false; } }).catch(function (err) { if (mg) { mg.textContent = (err && err.message) || "Could not send the reset email. Try again."; mg.hidden = false; } }); }); } var rb = $("portal-reset-btn"); if (rb) { rb.addEventListener("click", function () { var pwEl = $("portal-reset-password"); var cfEl = $("portal-reset-confirm"); var er = $("portal-reset-error"); var pw = pwEl ? pwEl.value : ""; var cf = cfEl ? cfEl.value : ""; if (er) { er.hidden = true; er.textContent = ""; } if (pw !== cf) { if (er) { er.textContent = "Passwords do not match"; er.hidden = false; } return; } if (pw.length < 8) { if (er) { er.textContent = "Password must be at least 8 characters"; er.hidden = false; } return; } client.auth.updateUser({ password: pw }).then(function (res) { if (res.error) { if (er) { er.textContent = res.error.message || "Could not update the password. Try again."; er.hidden = false; } return; } var doneMsg = "Password updated. Sign in with your new password."; resetSuccessMessage = doneMsg; client.auth.signOut().then(function () { showLogin(doneMsg); }); }).catch(function (err) { if (er) { er.textContent = (err && err.message) || "Could not update the password. Try again."; er.hidden = false; } }); }); } }); } function showLogin(errorMsg) {
     $('portal-dash-view').hidden = true;
     $('portal-login-view').hidden = false;
+    var _rf = $("portal-login-form"); if (_rf) { _rf.hidden = false; }
+    var _rv = $("portal-reset-view"); if (_rv) { _rv.hidden = true; }
     var err = $('portal-login-error');
     if (errorMsg) { err.textContent = errorMsg; err.hidden = false; }
     else { err.hidden = true; err.textContent = ''; }
@@ -242,18 +244,20 @@
     withClient(function (client) {
       if (!client) { showLogin('Couldn’t reach the sign-in service. Check your connection and reload the page.'); return; }
 
-      client.auth.getSession().then(function (res) {
+      var _lv = $("portal-login-view"); if (_lv) { _lv.hidden = true; }
+    client.auth.getSession().then(function (res) {
         var session = res.data && res.data.session;
-        if (session && session.user) { enterIfEmployee(client, session.user); }
+        if (session && session.user && isRecoveryHash()) { showResetView(null); } else if (session && session.user) { enterIfEmployee(client, session.user); }
         else { showLogin(null); }
       }).catch(function () { showLogin(null); });
 
-      client.auth.onAuthStateChange(function (event) {
-        if (event === 'SIGNED_OUT') {
-          state.user = null; state.profile = null;
-          showLogin(null);
-        }
-      });
+          client.auth.onAuthStateChange(function (event) {
+      if (event === 'PASSWORD_RECOVERY') { showResetView(null); return; }
+      if (event === 'SIGNED_OUT') {
+        state.user = null; state.profile = null;
+        if (resetSuccessMessage) { showLogin(resetSuccessMessage); resetSuccessMessage = null; } else { showLogin(null); }
+      }
+    });
 
       $('portal-login-form').addEventListener('submit', function (e) {
         e.preventDefault();
@@ -432,7 +436,7 @@
       .catch(function () { renderTicketThread([]); });
   }
 
-  function openTicket(id) {
+  function renderRepairLog(notes) { var box = $("portal-repair-log-list"); if (!box) { return; } if (!notes || !notes.length) { box.innerHTML = "<p class=\"portal-muted\">No repair log updates yet.</p>"; return; } box.innerHTML = notes.map(function (n) { return "<div class=\"portal-msg portal-msg-tech\"><span class=\"portal-msg-meta\">" + esc(n.author || "Tech") + " · " + esc(fmtDateTime(n.created_at)) + "</span>" + esc(n.note) + "</div>"; }).join(""); } function loadRepairLog(client, ticketId) { client.from("ticket_notes").select("*").eq("ticket_id", ticketId).order("created_at", { ascending: true }).then(function (res) { renderRepairLog(res.error ? [] : (res.data || [])); }).catch(function () { renderRepairLog([]); }); } function openTicket(id) {
     drawerLoading('Ticket details');
     withClient(function (client) {
       if (!client) { $('portal-drawer-body').innerHTML = '<p class="portal-error">Couldn&rsquo;t reach the database.</p>'; return; }
@@ -518,8 +522,8 @@
           '<p class="portal-muted portal-small">Notes are saved to this ticket&rsquo;s message thread as Tech.</p>' +
           '<p class="portal-error" id="portal-note-error" hidden></p></form></div>';
 
-        $('portal-drawer-body').innerHTML = body;
-        loadTicketThread(client, t.id);
+        body += "<div class=\"portal-drawer-section\"><h3>Repair log</h3><p class=\"portal-muted portal-small\">Internal tech documentation for this repair, not shown to the customer.</p>" + (t.status === "In Progress" ? "<p class=\"portal-muted\"><strong>This repair is in progress. Please log what is happening here.</strong></p>" : "") + "<div class=\"portal-thread\" id=\"portal-repair-log-list\"><p class=\"portal-muted\">Loading repair log&hellip;</p></div><form id=\"portal-repair-log-form\"><div class=\"portal-field\"><label for=\"portal-repair-log-input\">What is happening with this repair?</label></div><div class=\"portal-note-row\"><textarea id=\"portal-repair-log-input\" placeholder=\"What is happening with this repair?\" maxlength=\"2000\" aria-label=\"What is happening with this repair?\"></textarea><button class=\"portal-btn portal-btn-primary\" type=\"submit\">Save update</button></div><p class=\"portal-error\" id=\"portal-repair-log-error\" hidden></p></form></div>"; $('portal-drawer-body').innerHTML = body;
+        loadTicketThread(client, t.id); loadRepairLog(client, t.id); var repairForm = $("portal-repair-log-form"); if (repairForm) { repairForm.addEventListener("submit", function (e) { e.preventDefault(); var input = $("portal-repair-log-input"); var err = $("portal-repair-log-error"); if (err) { err.hidden = true; err.textContent = ""; } var text = input ? trim(input.value) : ""; if (!text) { return; } client.from("ticket_notes").insert({ ticket_id: t.id, author: (state.profile && state.profile.name) || null, note: text }).then(function (res2) { if (res2.error) { if (err) { err.textContent = "Could not save that update. Try again."; err.hidden = false; } return; } if (input) { input.value = ""; } loadRepairLog(client, t.id); }).catch(function () { if (err) { err.textContent = "Could not save that update. Try again."; err.hidden = false; } }); }); } 
         loadCharges(client, t);
         loadParts(client, t);
         loadStockItems(client, t);
@@ -1493,7 +1497,7 @@
     initExtraTabs();
     initDrawer();
     initDelegation();
-    initAuth();
+    initAuth(); initPasswordReset();
   }
 
   if (document.readyState === 'loading') {
