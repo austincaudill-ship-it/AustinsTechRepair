@@ -60,15 +60,13 @@
   <!-- HEADER -->
   <header class="header">
     <a href="#home" class="brand" data-page="home" aria-label="Go to home page">
-      <div class="brand-mark"><img id="brand-logo-img" src="images/atr-logo.png" alt="ATR logo" style="width:44px;height:44px;border-radius:14px;object-fit:cover;"></div>
+      <div class="brand-mark"><img id="brand-logo-img" src="images/atr-logo.png" alt="ATR logo" style="width:64px;height:64px;border-radius:14px;object-fit:cover;"></div>
       <div class="brand-info">
         <span class="brand-name">Austin's Tech Repair Group</span>
         <span class="brand-sub">Mobile Repair &mdash; Ohio</span>
       </div>
     </a>
-    <script>(function(){try{var v=localStorage.getItem('atr-logo-variant');if(v&&v!=='original'){var m={teal:'images/atr-logo-teal.png',orange:'images/atr-logo-orange.png',violet:'images/atr-logo-violet.png'};var img=document.getElementById('brand-logo-img');if(img&&m[v]){img.src=m[v];}}}catch(e){}})();</script>
-
-    <nav class="nav-desktop" aria-label="Main navigation">
+        <nav class="nav-desktop" aria-label="Main navigation">
       <a class="nav-link active" href="#home" data-page="home">Home</a>
       <a class="nav-link" href="#repair" data-page="repair">Repair</a>
       <a class="nav-link" href="#prices" data-page="prices">Prices</a>
@@ -79,12 +77,6 @@
     </nav>
 
     <div class="header-actions">
-      <div class="logo-picker" role="group" aria-label="Choose logo color" title="Logo color">
-        <button type="button" class="logo-swatch sw-original is-active" data-logo-variant="original" aria-label="Original logo colors" title="Original"></button>
-        <button type="button" class="logo-swatch sw-teal" data-logo-variant="teal" aria-label="Teal logo" title="Teal"></button>
-        <button type="button" class="logo-swatch sw-orange" data-logo-variant="orange" aria-label="Orange logo" title="Orange"></button>
-        <button type="button" class="logo-swatch sw-violet" data-logo-variant="violet" aria-label="Violet logo" title="Violet"></button>
-      </div>
       <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark/light mode">
         <i class="fas fa-moon" id="theme-icon"></i>
       </button>
@@ -966,7 +958,7 @@
           <p class="acct-sub">Log in to track repairs, earn reward points, and manage your profile.</p>
 
           <button class="authx-google" id="authx-google-btn" type="button"><svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" style="display: block;" width="18" height="18" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path><path fill="none" d="M0 0h48v48H0z"></path></svg> Continue with Google</button>
-          <div class="authx-divider"><span>or with your email</span></div>
+          <button class="authx-google" id="authx-passkey-btn" type="button"><i class="fas fa-fingerprint"></i> Sign in with passkey - Face ID / Touch ID</button><div class="authx-divider"><span>or with your email</span></div>
 
           <div class="acct-tabs">
             <button class="acct-tab active" id="authx-tab-login" type="button">Log In</button>
@@ -1092,7 +1084,7 @@
               <input type="text" id="authx-profile-address" placeholder="Street, City, OH ZIP" autocomplete="street-address" aria-label="Service address">
             </label>
             <button class="btn btn-outline btn-sm" id="authx-profile-save" type="button"><i class="fas fa-save"></i> Save profile</button>
-            <span class="acct-muted" id="authx-profile-msg"></span>
+            <button class="btn btn-outline btn-sm" id="authx-passkey-setup-btn" type="button"><i class="fas fa-fingerprint"></i> Set up a passkey</button><span class="acct-muted" id="authx-profile-msg"></span><div id="authx-passkey-list"></div>
           </div>
 
           <!-- My birthday (optional) -->
@@ -3119,7 +3111,7 @@
   }
 
   document.addEventListener('DOMContentLoaded', function () {
-    sb = getClient();
+    sb = getClient(); try{ if(window.supabase&&window.supabase.createClient){ var pkc=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{experimental:{passkey:true}}}); if(pkc) sb=pkc; } }catch(e){}
     if (!sb) return;
 
     var googleBtn = $('authx-google-btn');
@@ -3144,7 +3136,7 @@
     if (tl) tl.addEventListener('click', function () { selectTab('login'); });
     if (ts) ts.addEventListener('click', function () { selectTab('signup'); });
 
-    var forgot = $('authx-forgot-btn');
+    var pkBtn=$('authx-passkey-btn'); if(pkBtn)pkBtn.addEventListener('click',function(){ showErr($('authx-login-error'),''); var em=$('authx-login-email'); var email=em?em.value.trim():''; if(!email){ showErr($('authx-login-error'),'Enter your email first'); return; } if(!sb||!sb.auth||!sb.auth.signInWithPasskey){ showErr($('authx-login-error'),'Passkeys are not available in this browser.'); return; } pkBtn.disabled=true; sb.auth.signInWithPasskey().then(function(res){ pkBtn.disabled=false; if(res.error){ showErr($('authx-login-error'),res.error.message||'No passkey found for this account. Sign in another way, then set up a passkey in your profile.'); return; } if(res.data&&res.data.session){ enterAccount(res.data.session); } else { window.location.reload(); } }).catch(function(err){ pkBtn.disabled=false; showErr($('authx-login-error'),(err&&err.message)||'Passkey sign-in was cancelled or failed.'); }); }); var forgot = $('authx-forgot-btn');
     if (forgot) forgot.addEventListener('click', function () {
       if (window.atrOpenReset) window.atrOpenReset();
     });
@@ -3217,7 +3209,7 @@
       if (closeBtn) { try { closeBtn.click(); } catch (e) {} }
     });
 
-    var profileSave = $('authx-profile-save');
+    function refreshPasskeys(){ var list=$('authx-passkey-list'); if(!list) return; if(!sb||!sb.auth||!sb.auth.passkey||!sb.auth.passkey.list) return; sb.auth.passkey.list().then(function(res){ if(res.error) return; var arr=(res.data&&res.data.passkeys)||res.data||[]; list.textContent=''; if(!arr.length){ var em=document.createElement('p'); em.className='acct-muted'; em.textContent='No passkeys yet.'; list.appendChild(em); return; } arr.forEach(function(pk){ var row=document.createElement('div'); var nm=document.createElement('span'); nm.textContent=pk.friendly_name||pk.friendlyName||'Passkey'; row.appendChild(nm); var rm=document.createElement('button'); rm.type='button'; rm.className='btn btn-outline btn-sm'; rm.textContent='Remove'; rm.addEventListener('click',function(){ sb.auth.passkey.delete({passkeyId:pk.id}).then(function(){ refreshPasskeys(); }).catch(function(){}); }); row.appendChild(rm); list.appendChild(row); }); }).catch(function(){}); } var pkSetup=$('authx-passkey-setup-btn'); if(pkSetup)pkSetup.addEventListener('click',function(){ var msg=$('authx-profile-msg'); if(!sb||!sb.auth||!sb.auth.registerPasskey){ if(msg)msg.textContent='Passkeys are not available in this browser.'; return; } sb.auth.registerPasskey().then(function(res){ if(msg)msg.textContent=res.error?(res.error.message||'Could not set up a passkey.'):'Passkey set up.'; if(!res.error) refreshPasskeys(); }).catch(function(err){ if(msg)msg.textContent=(err&&err.message)||'Passkey setup was cancelled or failed.'; }); }); refreshPasskeys(); var profileSave = $('authx-profile-save');
     if (profileSave) profileSave.addEventListener('click', function () {
       var msg = $('authx-profile-msg');
       if (!currentCustomer) return;
