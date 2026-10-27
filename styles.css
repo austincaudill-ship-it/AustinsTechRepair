@@ -65,9 +65,9 @@ a { color: var(--brand); }
   backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--line);
 }
-.brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--ink); }
+.brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--ink); flex: none; }
 .brand-mark {
-  width: 44px; height: 44px; border-radius: 14px;
+  width: 64px; height: 64px; flex: none; border-radius: 14px;
   background: linear-gradient(135deg, var(--brand), var(--brand-deep));
   color: #FFF7EA; display: flex; align-items: center; justify-content: center;
   font-size: 1.2rem; box-shadow: var(--shadow-sm);
@@ -88,7 +88,7 @@ a { color: var(--brand); }
 .nav-link:hover::after, .nav-link.active::after { width: 100%; }
 .nav-link:hover, .nav-link.active { color: var(--brand-deep); }
 
-.header-actions { display: flex; gap: 10px; align-items: center; }
+.header-actions { display: flex; gap: 10px; align-items: center; flex: none; } @media (max-width: 1100px) { .header { padding: 0.9rem 1rem; gap: 1rem; } .nav-desktop { gap: 0.85rem; } .nav-link { font-size: 0.85rem; } .header-actions { gap: 8px; } .brand-name { font-size: 0.95rem; } }
 .header-cta { white-space: nowrap; }
 
 /* ---------- Buttons ---------- */
@@ -908,7 +908,7 @@ html[data-theme="dark"] .header {
 }
 
 /* ===== Logo color picker ===== */
-.logo-picker { display: inline-flex; align-items: center; gap: 0.35rem; margin-right: 0.15rem; }
+.logo-picker { display: none; }
 .logo-swatch { width: 20px; height: 20px; border-radius: 50%; border: 2px solid rgba(127, 150, 175, 0.45); padding: 0; cursor: pointer; flex: none; }
 .logo-swatch.sw-original { background: conic-gradient(#1b6ec2 0 40%, #0f7a84 40% 70%, #d96c27 70% 100%); }
 .logo-swatch.sw-teal { background: #0f7a84; }
@@ -927,7 +927,7 @@ html[data-theme="dark"] .header {
   .brand-sub { display: none; }
   .brand-name { font-size: 0.92rem; }
   .account-label { display: none; }
-  .brand-mark img { width: 36px !important; height: 36px !important; }
+  .brand-mark { width: 44px; height: 44px; } .brand-mark img { width: 36px !important; height: 36px !important; }
 }
 
 /* ===== Add to Home Screen prompt ===== */
