@@ -1506,3 +1506,5 @@ html[data-theme="dark"] .a11y-panel {
   .a11y-btn{left:16px;bottom:calc(86px + env(safe-area-inset-bottom))}
   .a11y-panel{left:8px;bottom:calc(150px + env(safe-area-inset-bottom))}
 }
+
+a.service-card { text-decoration: none; color: inherit; display: block; }
