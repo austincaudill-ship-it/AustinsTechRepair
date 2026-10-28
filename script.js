@@ -392,12 +392,30 @@
         localStorage.setItem('atr-cookie-consent', JSON.stringify(consent));
       } catch (e) {}
       if (banner) banner.hidden = true;
+      if (consent && consent.analytics) loadAnalytics();
     }
 
-    // Show banner only if no consent recorded
-    if (banner && !getConsent()) {
+    // Google Analytics, loaded ONLY when the visitor allows Analytics.
+    // No ads, no other tracker. Measurement ID G-HHV6TS3M5J.
+    function loadAnalytics() {
+      if (window.__atrGaLoaded) return;
+      window.__atrGaLoaded = true;
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = function () { window.dataLayer.push(arguments); };
+      window.gtag('js', new Date());
+      window.gtag('config', 'G-HHV6TS3M5J');
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-HHV6TS3M5J';
+      document.head.appendChild(s);
+    }
+
+    // Show banner only if no consent recorded; honor a past Analytics yes
+    var storedConsent = getConsent();
+    if (banner && !storedConsent) {
       banner.hidden = false;
     }
+    if (storedConsent && storedConsent.analytics) loadAnalytics();
 
     if (customizeBtn && prefs) {
       customizeBtn.addEventListener('click', function () {
