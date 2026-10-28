@@ -346,82 +346,7 @@
               <a class="btn btn-ghostlight" href="https://www.google.com/maps/search/?api=1&query=Austin%27s+Tech.+Repair+Group+Xenia+OH" id="google-review-btn" target="_blank" rel="noopener"><i class="fab fa-google"></i> Review us on Google</a>
             </div>
           </div>
-        <!-- HOW DID WE DO (native feedback form; writes to Supabase) -->
-        <div id="feedback">
-<!-- BEGIN SNIPPET: feedback -->
-<div class="atr-form-wrap" data-form-wrap="feedback">
-  <form class="atr-form" data-form="feedback" novalidate>
-    <div class="atr-form-error" role="alert" hidden></div>
 
-    <div class="atr-field">
-      <span class="field-label" id="fb-rating-label">How would you rate your repair? *</span>
-      <div class="atr-rating" role="radiogroup" aria-labelledby="fb-rating-label">
-        <input type="radio" id="fb-rating-5" name="rating" value="5"><label for="fb-rating-5" title="5 — Excellent">★</label>
-        <input type="radio" id="fb-rating-4" name="rating" value="4"><label for="fb-rating-4" title="4 — Good">★</label>
-        <input type="radio" id="fb-rating-3" name="rating" value="3"><label for="fb-rating-3" title="3 — Okay">★</label>
-        <input type="radio" id="fb-rating-2" name="rating" value="2"><label for="fb-rating-2" title="2 — Poor">★</label>
-        <input type="radio" id="fb-rating-1" name="rating" value="1"><label for="fb-rating-1" title="1 — Bad">★</label>
-      </div>
-      <span class="atr-field-error" data-error-for="rating"></span>
-    </div>
-
-    <div class="atr-field">
-      <label class="field-label" for="fb-experience">How was your experience overall?</label>
-      <select class="form-field" id="fb-experience" name="experience">
-        <option value="">Choose one…</option>
-        <option value="Excellent">Excellent</option>
-        <option value="Good">Good</option>
-        <option value="Okay">Okay</option>
-        <option value="Could be better">Could be better</option>
-        <option value="Poor">Poor</option>
-      </select>
-    </div>
-
-    <div class="atr-field">
-      <span class="field-label">Would you recommend us to a friend? *</span>
-      <div class="atr-choice-group">
-        <label class="atr-choice"><input type="radio" name="would_recommend" value="Yes"> Yes</label>
-        <label class="atr-choice"><input type="radio" name="would_recommend" value="No"> No</label>
-      </div>
-      <span class="atr-field-error" data-error-for="would_recommend"></span>
-    </div>
-
-    <div class="atr-field">
-      <label class="field-label" for="fb-comments">Anything else you want to tell us?</label>
-      <textarea class="form-field" id="fb-comments" name="comments" rows="4" placeholder="What went great — or what could we do better?"></textarea>
-    </div>
-
-    <div class="atr-row">
-      <div class="atr-field">
-        <label class="field-label" for="fb-name">Your name <span class="atr-optional">(optional)</span></label>
-        <input class="form-field" type="text" id="fb-name" name="customer_name" autocomplete="name" placeholder="John Smith">
-      </div>
-      <div class="atr-field">
-        <label class="field-label" for="fb-email">Email <span class="atr-optional">(optional)</span></label>
-        <input class="form-field" type="email" id="fb-email" name="customer_email" autocomplete="email" placeholder="john@example.com">
-        <span class="atr-field-error" data-error-for="customer_email"></span>
-      </div>
-    </div>
-
-    <div class="atr-honeypot" aria-hidden="true">
-      <label>Leave this field empty<input type="text" name="_honey" tabindex="-1" autocomplete="off"></label>
-    </div>
-
-    <button class="btn btn-primary btn-block btn-lg" type="submit">
-      <i class="fas fa-paper-plane"></i> Send Feedback
-    </button>
-  </form>
-  <div class="form-success atr-success" hidden>
-    <h3><i class="fas fa-circle-check"></i> Thank you!</h3>
-    <p data-success-msg>Thanks for telling us how we did — feedback like yours helps local folks find us.</p>
-    <p style="margin-bottom:0.6rem;">Happy with your repair? A quick Google review helps even more:</p>
-    <a class="btn btn-primary" href="https://www.google.com/maps/search/?api=1&query=Austin%27s+Tech.+Repair+Group+Xenia+OH" target="_blank" rel="noopener">
-      <i class="fab fa-google"></i> Review us on Google
-    </a>
-  </div>
-</div>
-<!-- END SNIPPET: feedback -->
-        </div>
         </div>
       </div>
 
@@ -504,12 +429,93 @@
               <a class="btn btn-cream btn-lg" href="#repair" data-page="repair"><i class="fas fa-wrench"></i> Start a Repair</a>
               <a class="btn btn-ghostlight btn-lg" href="tel:9372806243"><i class="fas fa-phone"></i> 937-280-6243</a>
             </div>
-            <p style="margin-top:1.5rem; margin-bottom:1rem;">Had a great experience? Leave us a review &mdash; it helps local folks find us.</p>
-            <div class="hero-cta-group" style="justify-content:center;">
-              <a class="btn btn-ghostlight" href="https://yelp.to/5bG7BILs72" target="_blank" rel="noopener"><i class="fab fa-yelp"></i> Review us on Yelp</a>
-              <a class="btn btn-ghostlight" href="https://www.google.com/maps/search/?api=1&query=Austin%27s+Tech.+Repair+Group+Xenia+OH" target="_blank" rel="noopener"><i class="fab fa-google"></i> Review us on Google</a>
-            </div>
           </div>
+        </div>
+      </div>
+
+      <!-- Feedback at the bottom of the page -->
+      <div class="section">
+        <div class="container">
+          <div class="section-header center">
+            <p class="eyebrow">Feedback</p>
+            <h2 class="section-title">Had a great experience? Leave us a review</h2>
+          </div>
+        <!-- HOW DID WE DO (native feedback form; writes to Supabase) -->
+        <div id="feedback">
+<!-- BEGIN SNIPPET: feedback -->
+<div class="atr-form-wrap" data-form-wrap="feedback">
+  <form class="atr-form" data-form="feedback" novalidate>
+    <div class="atr-form-error" role="alert" hidden></div>
+
+    <div class="atr-field">
+      <span class="field-label" id="fb-rating-label">How would you rate your repair? *</span>
+      <div class="atr-rating" role="radiogroup" aria-labelledby="fb-rating-label">
+        <input type="radio" id="fb-rating-5" name="rating" value="5"><label for="fb-rating-5" title="5 — Excellent">★</label>
+        <input type="radio" id="fb-rating-4" name="rating" value="4"><label for="fb-rating-4" title="4 — Good">★</label>
+        <input type="radio" id="fb-rating-3" name="rating" value="3"><label for="fb-rating-3" title="3 — Okay">★</label>
+        <input type="radio" id="fb-rating-2" name="rating" value="2"><label for="fb-rating-2" title="2 — Poor">★</label>
+        <input type="radio" id="fb-rating-1" name="rating" value="1"><label for="fb-rating-1" title="1 — Bad">★</label>
+      </div>
+      <span class="atr-field-error" data-error-for="rating"></span>
+    </div>
+
+    <div class="atr-field">
+      <label class="field-label" for="fb-experience">How was your experience overall?</label>
+      <select class="form-field" id="fb-experience" name="experience">
+        <option value="">Choose one…</option>
+        <option value="Excellent">Excellent</option>
+        <option value="Good">Good</option>
+        <option value="Okay">Okay</option>
+        <option value="Could be better">Could be better</option>
+        <option value="Poor">Poor</option>
+      </select>
+    </div>
+
+    <div class="atr-field">
+      <span class="field-label">Would you recommend us to a friend? *</span>
+      <div class="atr-choice-group">
+        <label class="atr-choice"><input type="radio" name="would_recommend" value="Yes"> Yes</label>
+        <label class="atr-choice"><input type="radio" name="would_recommend" value="No"> No</label>
+      </div>
+      <span class="atr-field-error" data-error-for="would_recommend"></span>
+    </div>
+
+    <div class="atr-field">
+      <label class="field-label" for="fb-comments">Anything else you want to tell us?</label>
+      <textarea class="form-field" id="fb-comments" name="comments" rows="4" placeholder="What went great — or what could we do better?"></textarea>
+    </div>
+
+    <div class="atr-row">
+      <div class="atr-field">
+        <label class="field-label" for="fb-name">Your name <span class="atr-optional">(optional)</span></label>
+        <input class="form-field" type="text" id="fb-name" name="customer_name" autocomplete="name" placeholder="John Smith">
+      </div>
+      <div class="atr-field">
+        <label class="field-label" for="fb-email">Email <span class="atr-optional">(optional)</span></label>
+        <input class="form-field" type="email" id="fb-email" name="customer_email" autocomplete="email" placeholder="john@example.com">
+        <span class="atr-field-error" data-error-for="customer_email"></span>
+      </div>
+    </div>
+
+    <div class="atr-honeypot" aria-hidden="true">
+      <label>Leave this field empty<input type="text" name="_honey" tabindex="-1" autocomplete="off"></label>
+    </div>
+
+    <button class="btn btn-primary btn-block btn-lg" type="submit">
+      <i class="fas fa-paper-plane"></i> Send Feedback
+    </button>
+  </form>
+  <div class="form-success atr-success" hidden>
+    <h3><i class="fas fa-circle-check"></i> Thank you!</h3>
+    <p data-success-msg>Thanks for telling us how we did — feedback like yours helps local folks find us.</p>
+    <p style="margin-bottom:0.6rem;">Happy with your repair? A quick Google review helps even more:</p>
+    <a class="btn btn-primary" href="https://www.google.com/maps/search/?api=1&query=Austin%27s+Tech.+Repair+Group+Xenia+OH" target="_blank" rel="noopener">
+      <i class="fab fa-google"></i> Review us on Google
+    </a>
+  </div>
+</div>
+<!-- END SNIPPET: feedback -->
+        </div>
         </div>
       </div>
     </section>
