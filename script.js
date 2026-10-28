@@ -2575,3 +2575,97 @@ if ("serviceWorker" in navigator) {
     });
   });
 })();
+
+/* ==================== HERO CAROUSEL, APPLE STYLE ==================== */
+/* One slide at a time, 7 seconds each, with a visible fill timer on the
+   active dot and a play/pause button. Pausing stops the timer exactly
+   where it is, so a reader can take as long as they need. Autoplay also
+   pauses on hover/focus and when the tab is hidden, and stays off when
+   the visitor prefers reduced motion. */
+(function () {
+  'use strict';
+  document.addEventListener('DOMContentLoaded', function () {
+    var slides = document.querySelectorAll('.hero-slide');
+    var dots = document.querySelectorAll('[data-hero-dot]');
+    var prevBtn = document.querySelector('[data-hero-prev]');
+    var nextBtn = document.querySelector('[data-hero-next]');
+    var playBtn = document.querySelector('[data-hero-playpause]');
+    var playIcon = document.querySelector('[data-hero-playpause-icon]');
+    var carousel = document.querySelector('.hero-carousel');
+    if (!slides.length || !dots.length) return;
+    var DURATION = 7000;
+    var current = 0;
+    var playing = true;
+    var startTime = 0;
+    var elapsed = 0;
+    var rafId = null;
+    var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion) playing = false;
+    function fillFor(i) {
+      var dot = dots[i];
+      return dot ? dot.querySelector('.hero-dot-fill') : null;
+    }
+    function show(index) {
+      current = (index + slides.length) % slides.length;
+      slides.forEach(function (s, i) { s.classList.toggle('is-active', i === current); });
+      dots.forEach(function (d, i) {
+        d.classList.toggle('is-active', i === current);
+        var f = d.querySelector('.hero-dot-fill');
+        if (f) f.style.width = i < current ? '100%' : '0%';
+      });
+      elapsed = 0;
+      startTime = performance.now();
+    }
+    function tick(now) {
+      if (!playing) return;
+      var fill = fillFor(current);
+      var pct = Math.min(100, ((elapsed + (now - startTime)) / DURATION) * 100);
+      if (fill) fill.style.width = pct + '%';
+      if (pct >= 100) { show(current + 1); }
+      rafId = requestAnimationFrame(tick);
+    }
+    function start() {
+      cancelAnimationFrame(rafId);
+      startTime = performance.now();
+      rafId = requestAnimationFrame(tick);
+    }
+    function pauseTimer() {
+      if (!playing) return;
+      elapsed += performance.now() - startTime;
+      playing = false;
+      cancelAnimationFrame(rafId);
+      if (playBtn) { playBtn.setAttribute('aria-label', 'Play slideshow'); playBtn.setAttribute('aria-pressed', 'true'); }
+      if (playIcon) playIcon.textContent = '\u25B6';
+    }
+    function playTimer() {
+      if (playing) return;
+      playing = true;
+      startTime = performance.now();
+      if (playBtn) { playBtn.setAttribute('aria-label', 'Pause slideshow'); playBtn.setAttribute('aria-pressed', 'false'); }
+      if (playIcon) playIcon.textContent = '\u275A\u275A';
+      rafId = requestAnimationFrame(tick);
+    }
+    dots.forEach(function (d) {
+      d.addEventListener('click', function () {
+        show(parseInt(d.getAttribute('data-hero-dot'), 10) || 0);
+        if (playing) start();
+      });
+    });
+    if (prevBtn) prevBtn.addEventListener('click', function () { show(current - 1); if (playing) start(); });
+    if (nextBtn) nextBtn.addEventListener('click', function () { show(current + 1); if (playing) start(); });
+    if (playBtn) playBtn.addEventListener('click', function () { if (playing) pauseTimer(); else playTimer(); });
+    if (carousel) {
+      carousel.addEventListener('mouseenter', function () { if (playing) { elapsed += performance.now() - startTime; cancelAnimationFrame(rafId); } });
+      carousel.addEventListener('mouseleave', function () { if (playing) startTime = performance.now(), rafId = requestAnimationFrame(tick); });
+      carousel.addEventListener('focusin', function () { if (playing) { elapsed += performance.now() - startTime; cancelAnimationFrame(rafId); } });
+      carousel.addEventListener('focusout', function () { if (playing) startTime = performance.now(), rafId = requestAnimationFrame(tick); });
+    }
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden && playing) { elapsed += performance.now() - startTime; cancelAnimationFrame(rafId); }
+      else if (!document.hidden && playing) { startTime = performance.now(); rafId = requestAnimationFrame(tick); }
+    });
+    show(0);
+    if (playing) start();
+    else if (playBtn) { playBtn.setAttribute('aria-label', 'Play slideshow'); playBtn.setAttribute('aria-pressed', 'true'); if (playIcon) playIcon.textContent = '\u25B6'; }
+  });
+})();

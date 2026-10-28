@@ -190,6 +190,34 @@ a { color: var(--brand); }
 }
 .hero-photo img { width: 100%; height: clamp(220px, 38vw, 420px); object-fit: cover; display: block; }
 
+/* ---------- Hero carousel, Apple style ---------- */
+.hero-slide { display: none; }
+.hero-slide.is-active { display: block; animation: heroSlideIn 0.4s ease; }
+@keyframes heroSlideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.hero-controls { display: flex; align-items: center; justify-content: center; gap: 0.9rem; margin-top: 1.8rem; flex-wrap: wrap; }
+.hero-arrow {
+  width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--line);
+  background: var(--surface); color: var(--ink); font-size: 1.5rem; line-height: 1;
+  cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+}
+.hero-arrow:hover { border-color: var(--brand); color: var(--brand-deep); }
+.hero-dots { display: flex; gap: 0.55rem; align-items: center; }
+.hero-dot {
+  width: 34px; height: 6px; border-radius: 999px; border: none; padding: 0;
+  background: var(--line); cursor: pointer; overflow: hidden; position: relative;
+}
+.hero-dot-fill { display: block; height: 100%; width: 0%; background: var(--brand); border-radius: 999px; }
+.hero-dot.is-active { background: var(--line); }
+.hero-playpause {
+  width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--line);
+  background: var(--surface); color: var(--ink); font-size: 0.85rem; line-height: 1;
+  cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+}
+.hero-playpause:hover { border-color: var(--brand); color: var(--brand-deep); }
+@media (prefers-reduced-motion: reduce) {
+  .hero-slide.is-active { animation: none; }
+}
+
 /* ---------- Trust bar ---------- */
 .trustbar {
   display: flex; flex-wrap: wrap; justify-content: center; gap: 0.8rem 2rem;
