@@ -789,6 +789,7 @@
       var panels = document.querySelectorAll('.portal-panel');
       for (i = 0; i < panels.length; i++) { panels[i].hidden = true; }
       $('portal-panel-newhires').hidden = false;
+      var nnav = $('portal-nav'); if (nnav) nnav.classList.remove('open');
       closeDrawerInline();
       if (!loaded) loadNewHires(false);
     }
@@ -1003,6 +1004,7 @@
       var panels = document.querySelectorAll('.portal-panel');
       for (i = 0; i < panels.length; i++) { panels[i].hidden = true; }
       $('portal-panel-guides').hidden = false;
+      var gnav = $('portal-nav'); if (gnav) gnav.classList.remove('open');
       closeDrawerInline();
       if (!loaded) loadGuides(false);
     }

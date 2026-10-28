@@ -310,6 +310,7 @@
   };
 
   function activateTab(name) {
+    var nav = $('portal-nav'); if (nav) nav.classList.remove('open');
     var tabs = document.querySelectorAll('.portal-tab');
     tabs.forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === name); });
     ['tickets', 'applications', 'investors', 'feedback', 'customers', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices'].forEach(function (n) {
@@ -322,6 +323,13 @@
   function initTabs() {
     document.querySelectorAll('.portal-tab').forEach(function (t) {
       t.addEventListener('click', function () { activateTab(t.getAttribute('data-tab')); });
+    });
+    document.addEventListener('click', function (e) {
+      var el = e.target;
+      while (el && el !== document) {
+        if (el.classList && el.classList.contains('portal-tab')) { var nv = $('portal-nav'); if (nv) nv.classList.remove('open'); return; }
+        el = el.parentNode;
+      }
     });
     document.querySelectorAll('[data-refresh]').forEach(function (btn) {
       btn.addEventListener('click', function () {
