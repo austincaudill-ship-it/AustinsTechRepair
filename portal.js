@@ -1374,6 +1374,8 @@ function loadTicketThread(client, ticketId) {
         '<span class="portal-muted portal-small" data-bday-msg="' + esc(c.id) + '"></span></p>' +
         '<p class="portal-card-meta">' + esc(String(c.orderCount)) + ' shop order' + (c.orderCount === 1 ? '' : 's') +
         ' · Customer since ' + esc(fmtDate(c.created_at)) + '</p>' +
+        '<p><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-cust-delete="' + esc(c.id) + '">Delete customer</button> ' +
+        '<span class="portal-muted portal-small" data-cust-delete-msg="' + esc(c.id) + '"></span></p>' +
         '</article>';
     }).join('');
   }
@@ -1438,6 +1440,23 @@ function loadTicketThread(client, ticketId) {
     for (var d = 1; d <= 31; d++) { var v = d < 10 ? '0' + d : String(d); dy += '<option value="' + v + '"' + (v === dd ? ' selected' : '') + '>' + d + '</option>'; }
     return '<select data-bday-month="' + esc(c.id) + '" aria-label="Birth month"><option value="">Month</option>' + mo + '</select> ' +
       '<select data-bday-day="' + esc(c.id) + '" aria-label="Birth day"><option value="">Day</option>' + dy + '</select>';
+  }
+
+  function deleteCustomer(customerId) {
+    var row = null;
+    state.customersCache.forEach(function (c) { if (c.id === customerId) row = c; });
+    var name = row ? (row.name || 'this customer') : 'this customer';
+    if (!window.confirm('Delete ' + name + ' from Customers? This cannot be undone. If this customer has tickets or orders linked, the delete will be blocked.')) return;
+    var msg = document.querySelector('[data-cust-delete-msg="' + customerId + '"]');
+    if (msg) msg.textContent = 'Deleting\u2026';
+    withClient(function (client) {
+      if (!client) { if (msg) msg.textContent = 'Could not delete \u2014 try again.'; return; }
+      client.from('customers').delete().eq('id', customerId).then(function (res) {
+        if (res.error) { if (msg) msg.textContent = 'Could not delete \u2014 this customer may have tickets or orders linked.'; return; }
+        state.customersCache = state.customersCache.filter(function (c) { return c.id !== customerId; });
+        applyCustomerSearch();
+      }).catch(function () { if (msg) msg.textContent = 'Could not delete \u2014 try again.'; });
+    });
   }
 
   function saveBirthday(customerId) {
@@ -1683,6 +1702,8 @@ function loadTicketThread(client, ticketId) {
           if (iid) { openInvestor(iid); return; }
           var bid = t.getAttribute('data-bday-save');
           if (bid) { saveBirthday(bid); return; }
+          var del = t.getAttribute('data-cust-delete');
+          if (del) { deleteCustomer(del); return; }
         }
         t = t.parentNode;
       }
