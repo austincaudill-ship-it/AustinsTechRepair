@@ -416,7 +416,8 @@ a { color: var(--brand); }
 .footer-disclaimer { font-size: 0.76rem; color: #8d7d66; line-height: 1.65; margin-bottom: 1.8rem; border-top: 1px solid #3d3226; padding-top: 2rem; }
 .footer-disclaimer strong { color: #c9a86a; }
 .footer-bottom { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; border-top: 1px solid #3d3226; padding-top: 1.6rem; }
-.footer-copy { font-size: 0.8rem; color: #8d7d66; }
+.footer-copy { font-size: 0.8rem; color: #8d7d66; flex: 1; text-align: center; }
+.footer-wordmark { flex: none; }
 .footer-legal-links { display: flex; gap: 1.4rem; }
 .footer-legal-links a { font-size: 0.8rem; color: #B9A98F; text-decoration: none; }
 .footer-legal-links a:hover { color: var(--gold); }
