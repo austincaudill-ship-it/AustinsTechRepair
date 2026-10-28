@@ -442,7 +442,7 @@
     var totalEl = $('portal-timer-total'), listEl = $('portal-timer-list'), btn = $('portal-timer-btn');
     if (!totalEl || !listEl) return;
     client.from('job_timers').select('*').eq('ticket_id', ticketId).order('started_at', { ascending: true }).then(function (res) {
-      var rows = res.error ? [] : (res.data || []);
+      if (res.error) { totalEl.textContent = 'Time on this job is unavailable right now.'; return; } var rows = res.data || [];
       var now = Date.now(), total = 0, running = null;
       rows.forEach(function (r) {
         var s = new Date(r.started_at).getTime();
@@ -507,6 +507,20 @@ function loadTicketThread(client, ticketId) {
             ['Received', esc(fmtDateTime(t.created_at))],
             ['Last updated', esc(fmtDateTime(t.updated_at))]
           ]) +
+          '<div class="portal-drawer-section"><h3>Edit details</h3>' +
+          '<p class="portal-muted portal-small">Update the triage and job details here. Save, and the Ticket details above refresh.</p>' +
+          '<div class="portal-field"><label for="p2-edit-issue">Issue</label><textarea id="p2-edit-issue" rows="2">' + esc(t.issue || '') + '</textarea></div>' +
+          '<div class="portal-field"><label for="p2-edit-address">Service address</label><input type="text" id="p2-edit-address" value="' + esc(t.service_address || '') + '" /></div>' +
+          '<div class="portal-field"><label for="p2-edit-serial">Serial / IMEI</label><input type="text" id="p2-edit-serial" value="' + esc(t.serial_imei || '') + '" /></div>' +
+          '<div class="portal-field"><label for="p2-edit-reason">Reason</label><input type="text" id="p2-edit-reason" value="' + esc(t.issue_reason || '') + '" /></div>' +
+          '<div class="p2-form-row"><div class="portal-field"><label for="p2-edit-volts">Voltage (V)</label><input type="text" id="p2-edit-volts" value="' + esc(t.triage_volts || '') + '" /></div>' +
+          '<div class="portal-field"><label for="p2-edit-amps">Draw (A)</label><input type="text" id="p2-edit-amps" value="' + esc(t.triage_amps || '') + '" /></div></div>' +
+          '<div class="p2-form-row"><div class="portal-field"><label for="p2-edit-power">Powers on?</label><select id="p2-edit-power"><option value="">Not checked</option><option value="Yes"' + (t.power_on === 'Yes' ? ' selected' : '') + '>Yes</option><option value="No"' + (t.power_on === 'No' ? ' selected' : '') + '>No</option></select></div>' +
+          '<div class="portal-field"><label for="p2-edit-backup">Backed up?</label><select id="p2-edit-backup"><option value="">Unknown</option><option value="Yes"' + (t.backed_up === 'Yes' ? ' selected' : '') + '>Yes</option><option value="No"' + (t.backed_up === 'No' ? ' selected' : '') + '>No</option></select></div>' +
+          '<div class="portal-field"><label for="p2-edit-prior">Repaired before?</label><select id="p2-edit-prior"><option value="">Unknown</option><option value="Yes"' + (t.prior_repair === 'Yes' ? ' selected' : '') + '>Yes</option><option value="No"' + (t.prior_repair === 'No' ? ' selected' : '') + '>No</option></select></div></div>' +
+          '<div class="portal-field"><label for="p2-edit-warranty">Under manufacturer warranty?</label><select id="p2-edit-warranty"><option value="">Unknown</option><option value="Yes &mdash; customer told our work may void it"' + (t.warranty_status && t.warranty_status.indexOf('Yes') === 0 ? ' selected' : '') + '>Yes &mdash; customer told our work may void it</option><option value="No"' + (t.warranty_status === 'No' ? ' selected' : '') + '>No</option></select></div>' +
+          '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-edit-save">Save details</button> ' +
+          '<span class="portal-muted portal-small" id="p2-edit-msg"></span></div>' +
           '<div class="portal-drawer-section p2-actions"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-receipt-btn"><i class="fas fa-receipt"></i> Print receipt</button>' +
           '<button class="portal-btn p2-btn-danger portal-btn-sm" type="button" id="p2-delete-btn"><i class="fas fa-trash"></i> Delete ticket</button>' +
           '<span class="portal-muted portal-small" id="p2-action-msg"></span>' +
@@ -572,12 +586,34 @@ function loadTicketThread(client, ticketId) {
           if (running) {
             client.from('job_timers').update({ stopped_at: new Date().toISOString() }).eq('id', running).then(function () { loadJobTimers(client, t); }).catch(function () { if (msg) msg.textContent = 'Could not stop the timer. Try again.'; });
           } else {
-            client.from('job_timers').insert({ ticket_id: t.id, employee_name: (state.profile && state.profile.name) || null, started_at: new Date().toISOString() }).then(function (res) { if (res.error) { if (msg) msg.textContent = 'Could not start the timer. Try again.'; return; } loadJobTimers(client, t); }).catch(function () { if (msg) msg.textContent = 'Could not start the timer. Try again.'; });
+            timerBtn.disabled = true;
+            client.from('job_timers').insert({ ticket_id: t.id, employee_name: (state.profile && state.profile.name) || null, started_at: new Date().toISOString() }).select().then(function (res) { timerBtn.disabled = false; if (res.error) { if (msg) msg.textContent = 'Could not start the timer. Try again.'; return; } var nid = res.data && res.data[0] ? res.data[0].id : null; if (nid) { timerBtn.textContent = 'Stop timer'; timerBtn.setAttribute('data-running', nid); var tot = $('portal-timer-total'); if (tot) tot.textContent = 'Time on this job: 0m (timer running)'; } loadJobTimers(client, t); }).catch(function () { timerBtn.disabled = false; if (msg) msg.textContent = 'Could not start the timer. Try again.'; });
           }
         });
         wireTicketActions(client, t);
         wirePaymentActions(client, t);
 
+        var editSave = $('p2-edit-save');
+        if (editSave) editSave.addEventListener('click', function () {
+          var msg = $('p2-edit-msg');
+          if (msg) msg.textContent = 'Saving\u2026';
+          var patch = {
+            issue: $('p2-edit-issue').value.trim() || null,
+            service_address: $('p2-edit-address').value.trim() || null,
+            serial_imei: $('p2-edit-serial').value.trim() || null,
+            issue_reason: $('p2-edit-reason').value.trim() || null,
+            triage_volts: $('p2-edit-volts').value.trim() || null,
+            triage_amps: $('p2-edit-amps').value.trim() || null,
+            power_on: $('p2-edit-power').value || null,
+            backed_up: $('p2-edit-backup').value || null,
+            prior_repair: $('p2-edit-prior').value || null,
+            warranty_status: $('p2-edit-warranty').value || null
+          };
+          client.from('tickets').update(patch).eq('id', t.id).then(function (res2) {
+            if (res2.error) { if (msg) msg.textContent = 'Couldn\u2019t save \u2014 try again.'; return; }
+            openTicket(t.id);
+          }).catch(function () { if (msg) msg.textContent = 'Couldn\u2019t save \u2014 try again.'; });
+        });
         $('portal-ticket-status-save').addEventListener('click', function () {
           var next = $('portal-ticket-status').value;
           var msg = $('portal-ticket-status-msg');
