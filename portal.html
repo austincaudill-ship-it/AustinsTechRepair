@@ -93,6 +93,9 @@
         <button class="portal-tab" id="portal-tab-guides" type="button" role="tab" data-tab="guides">
           <i class="fas fa-book-open"></i> Guides
         </button>
+        <button class="portal-tab" id="portal-tab-sops" type="button" role="tab" data-tab="sops">
+          <i class="fas fa-screwdriver-wrench"></i> SOPs
+        </button>
         <div class="portal-nav-group">Team</div>
         <button class="portal-tab" id="portal-tab-timeclock" type="button" role="tab" data-tab="timeclock">
           <i class="fas fa-clock"></i> Time Clock
@@ -454,6 +457,50 @@
             <i class="fas fa-plus"></i> Add guide
           </button>
         </form>
+      </div>
+
+      <div class="portal-panel" id="portal-panel-sops" role="tabpanel" hidden>
+        <div class="portal-panel-head">
+          <h2 class="portal-h2">Standard Operating Procedures</h2>
+        </div>
+        <p class="portal-muted portal-small">Internal, staff only. This page is not shown to customers, it is not a price list, and it is not a promise of a finish time. Use it to do the job the same way every time.</p>
+        <div class="portal-panel-head portal-subhead">
+          <h3 class="portal-h3">Shop rules that apply to every job</h3>
+        </div>
+        <p class="portal-muted">House calls only, customers do not come to Austin's house. The line to customers is "I come to you." ATRG has no van, Austin drives his personal 2017 Ford Fusion. Appointments are booked in 2-hour arrival windows. Free estimates over the phone or virtual, always. House call is $35 flat, one time per job, due at scheduling, non-refundable, never credited, and $35 regardless. Internal labor tiers, never shown to customers as tiers: $30 basic installs and fitment, $50 standard swaps, $100 soldering and board work. The customer sees one flat price: tier labor plus parts at cost times 1.5. Parts are paid upfront to ATRG, ordered by ATRG, and shipped to Austin's house, never the customer's. The 1-year warranty covers ATRG-supplied parts only, plus our labor. Same-day diagnostics only, never same-day repairs, because parts have to be ordered on everything.</p>
+        <p class="portal-muted">Privacy, zero tolerance: never browse a customer's galleries or files, and never move private customer data to an external drive. Before any disassembly, ESD wrist straps are grounded and tested, and the mat is clipped to a grounded point.</p>
+        <div class="portal-panel-head portal-subhead">
+          <h3 class="portal-h3">Intake: issue to SOP</h3>
+        </div>
+        <p class="portal-muted">Screen or display damage goes to SOP-DISP-01. Battery or charging goes to SOP-BATT-02. Component failure goes to SOP-BOARD-03. Liquid exposure goes to SOP-BOARD-03. Software or performance goes to SOP-SFT-01.</p>
+        <div class="portal-panel-head portal-subhead">
+          <h3 class="portal-h3">SOP-DISP-01: Screen and display replacement</h3>
+        </div>
+        <p class="portal-muted">Bench: grounded ESD wrist strap, mat clipped to a grounded point. Tools: precision driver set, heating pad at 80 degrees Celsius, 99% isopropyl alcohol clean. Steps: check touch digitizer and display panel, tape cracked glass first, heat edge by edge and keep the heat moving. iPhone: screen-only is fine. Android: always full frame assembly, screens are glued. iPad: digitizer glass is a fused layer, an iPad screen job takes about 3 hours, use pre-cut adhesive strips if the part has no pre-applied adhesive, do not use B-7000 as a substitute, and the iPad 5 home button is not Touch ID, so no transfer is needed when the part has it pre-installed.</p>
+        <div class="portal-panel-head portal-subhead">
+          <h3 class="portal-h3">SOP-BATT-02: Battery and power system swap</h3>
+        </div>
+        <p class="portal-muted">Bench: ESD-safe anti-static tweezers, battery isolation probe. Tools: isopropyl alcohol adhesive solvent, battery pull-tab replacement. Steps: isolate power first, measure voltage, check cycle count and the DC jack, replace adhesive and pull tabs, and verify the device powers and charges before closing it up.</p>
+        <div class="portal-panel-head portal-subhead">
+          <h3 class="portal-h3">SOP-BOARD-03: Logic board micro-soldering</h3>
+        </div>
+        <p class="portal-muted">Bench: ESD-safe workstation, fume extractor, grounded microscope. Tools: hot air rework station, micro-soldering iron, liquid flux, 99% isopropyl alcohol wash. Steps: isolate power first, inspect ribbon ports, keys, and buttons, and for liquid exposure do an isopropyl alcohol wash and ultrasonic clean. Board work is the $100 internal labor tier. Never claim manufacturer authorization, ATRG is independent and diagnoses in-house.</p>
+        <div class="portal-panel-head portal-subhead">
+          <h3 class="portal-h3">SOP-CLEAN-04: General cleaning and thermal</h3>
+        </div>
+        <p class="portal-muted">Bench: anti-static brush, compressed air, ESD mat. Tools: thermal paste application using the 5-point method, 99% isopropyl alcohol contact wiping. Steps: clean dust and old paste, apply new paste, verify temperatures and fans before returning the device.</p>
+        <div class="portal-panel-head portal-subhead">
+          <h3 class="portal-h3">SOP-SFT-01: Software restore and data</h3>
+        </div>
+        <p class="portal-muted">Steps: diagnostic boot, malware scan, operating system restore, and data handling under the privacy rule above. Never browse customer files beyond what the repair itself requires, and never copy private data to an external drive.</p>
+        <div class="portal-panel-head portal-subhead">
+          <h3 class="portal-h3">SOP-RESET-05: Shift end, Reset to Zero</h3>
+        </div>
+        <p class="portal-muted">Before clocking out: shadow board tool audit, all screwdrivers returned, microscopes and soldering equipment off, workstation power isolated, and a 99% isopropyl alcohol surface wipe. Do not leave a bench set up for the next shift to clean up.</p>
+        <div class="portal-panel-head portal-subhead">
+          <h3 class="portal-h3">Device notes</h3>
+        </div>
+        <p class="portal-muted">Common vulnerabilities to check, not a complete catalog: iPhone OLED flex cables, rear back glass adhesives, and battery degradation. Samsung AMOLED ribbon cables and USB-C charge port board fractures. iPad and Galaxy Tab digitizer glass and high-capacity battery adhesive. MacBook USB-C power ICs and liquid contact pin corrosion. Dell, HP, and Lenovo thermal paste burnout, DC jack strain, and NVMe drive failures. PlayStation, Xbox, and Switch HDMI port pin deformation, liquid metal leakage, and controller drift potentiometers. Older devices are still served, this list does not limit what ATRG takes in. No medical devices, ever.</p>
       </div>
 
       <!-- REQUESTS (tech request queue) -->
@@ -1069,6 +1116,50 @@
       document.addEventListener('DOMContentLoaded', initGuides);
     } else {
       initGuides();
+    }
+  })();
+  </script>
+  <script>
+  /* ================= SOPs (internal standard operating procedures) =================
+   * Static staff-only page, same tab pattern as Guides: portal.js already
+   * toggles the tab active state, this script shows the SOP panel and
+   * hides it again when any other tab is clicked. No database, no pricing
+   * changes, no customer-facing content. */
+  (function () {
+    'use strict';
+    function $(id) { return document.getElementById(id); }
+    function showSops() {
+      var tabs = document.querySelectorAll('.portal-tab');
+      var i;
+      for (i = 0; i < tabs.length; i++) {
+        tabs[i].classList.toggle('active', tabs[i].getAttribute('data-tab') === 'sops');
+      }
+      var panels = document.querySelectorAll('.portal-panel');
+      for (i = 0; i < panels.length; i++) { panels[i].hidden = true; }
+      var p = $('portal-panel-sops');
+      if (p) p.hidden = false;
+    }
+    function initSops() {
+      var tab = $('portal-tab-sops');
+      if (tab) tab.addEventListener('click', showSops);
+      document.addEventListener('click', function (e) {
+        var t = e.target;
+        while (t && t !== document) {
+          if (t.getAttribute && t.getAttribute('data-tab')) {
+            if (t.getAttribute('data-tab') !== 'sops') {
+              var p = $('portal-panel-sops');
+              if (p) p.hidden = true;
+            }
+            return;
+          }
+          t = t.parentNode;
+        }
+      });
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initSops);
+    } else {
+      initSops();
     }
   })();
   </script>
