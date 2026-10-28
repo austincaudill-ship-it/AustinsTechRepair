@@ -544,6 +544,13 @@ function loadTicketThread(client, ticketId) {
           '<div id="p3-checkout-link" hidden></div></div>' +
           '<div class="portal-drawer-section"><h3>Parts on this ticket</h3>' +
           '<div id="p2-parts"><p class="portal-muted">Loading parts&hellip;</p></div>' +
+          '<div class="p2-actions"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-scan-btn"><i class="fas fa-barcode"></i> Scan barcode</button>' +
+          '<span class="portal-muted portal-small" id="p2-scan-msg"></span></div>' +
+          '<div id="p2-scan-box" hidden><video id="p2-scan-video" playsinline muted style="width:100%;max-width:420px;border-radius:12px;background:#000"></video>' +
+          '<div class="p2-actions"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-scan-stop">Stop camera</button>' +
+          '<input id="p2-scan-manual" type="text" placeholder="Or type the code" aria-label="Barcode code" />' +
+          '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-scan-use">Use code</button></div>' +
+          '<p class="portal-muted portal-small" id="p2-scan-status">Point the camera at the barcode on the Sentrix packaging. If the camera cannot read it, type the code instead.</p></div>' +
           '<form id="p2-part-form" class="p2-form">' +
           '<select id="p2-part-stock" aria-label="Pull a part from stock"><option value="">Loading stock\u2026</option></select>' +
           '<input id="p2-part-desc" type="text" placeholder="Part description (e.g. iPhone 13 Pro Max battery — OEM)" maxlength="200" aria-label="Part description" />' +
@@ -892,6 +899,104 @@ function loadTicketThread(client, ticketId) {
       if (!$('p2-part-sku').value && it.supplier_sku) $('p2-part-sku').value = it.supplier_sku;
       if (!$('p2-part-cost').value && it.cost != null) $('p2-part-cost').value = it.cost;
       if (!$('p2-part-retail').value && it.retail_price != null) $('p2-part-retail').value = it.retail_price;
+    });
+
+    /* ---------- Barcode scan: attach a part from its packaging code ---------- */
+    var scanStream = null, scanTimer = null, scanReader = null;
+    function stopScan() {
+      if (scanTimer) { clearInterval(scanTimer); scanTimer = null; }
+      if (scanReader && scanReader.reset) { try { scanReader.reset(); } catch (e) {} scanReader = null; }
+      if (scanStream) { scanStream.getTracks().forEach(function (tr) { tr.stop(); }); scanStream = null; }
+      var v = $('p2-scan-video'); if (v) v.srcObject = null;
+      var box = $('p2-scan-box'); if (box) box.hidden = true;
+    }
+    function applyScannedCode(code, client) {
+      code = String(code || '').trim();
+      if (!code) return;
+      stopScan();
+      var msg = $('p2-scan-msg'); if (msg) msg.textContent = 'Scanned: ' + code + ' — looking it up…';
+      $('p2-part-sku').value = code;
+      if (!$('p2-part-supplier').value) $('p2-part-supplier').value = 'Mobile Sentrix';
+      /* Match order: stock first, then a part already ordered on another ticket. */
+      client.from('inventory').select('*').eq('supplier_sku', code).maybeSingle().then(function (res) {
+        if (res.data) {
+          var it = res.data;
+          if (!$('p2-part-desc').value) $('p2-part-desc').value = it.product_name || '';
+          if (it.cost != null) $('p2-part-cost').value = it.cost;
+          if (it.retail_price != null) $('p2-part-retail').value = it.retail_price;
+          if (msg) msg.textContent = 'Matched stock: ' + (it.product_name || code) + ' — tap Add part order to attach it.';
+          return;
+        }
+        return client.from('part_orders').select('*').eq('supplier_sku', code).order('created_at', { ascending: false }).limit(1).maybeSingle();
+      }).then(function (res) {
+        if (res && res.data) {
+          var po = res.data;
+          if (!$('p2-part-desc').value) $('p2-part-desc').value = po.description || '';
+          if (po.supplier) $('p2-part-supplier').value = po.supplier;
+          if (po.our_cost != null) $('p2-part-cost').value = po.our_cost;
+          if (po.retail_price != null) $('p2-part-retail').value = po.retail_price;
+          if (msg) msg.textContent = 'Matched an earlier part order: ' + (po.description || code) + ' — tap Add part order to attach it.';
+        } else if (msg && msg.textContent.indexOf('Matched') !== 0) {
+          msg.textContent = 'No match on file for ' + code + ' — code and supplier are filled in, add the description and price, then tap Add part order. It will match next time.';
+        }
+      }).catch(function () {
+        if (msg) msg.textContent = 'Code filled in as ' + code + ' — add the description and price, then tap Add part order.';
+      });
+    }
+    var scanBtn = $('p2-scan-btn');
+    if (scanBtn) scanBtn.addEventListener('click', function () {
+      var box = $('p2-scan-box'); if (!box) return;
+      box.hidden = false;
+      var status = $('p2-scan-status');
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        if (status) status.textContent = 'This device cannot open the camera here — type the code below instead.';
+        return;
+      }
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }).then(function (stream) {
+        scanStream = stream;
+        var v = $('p2-scan-video'); v.srcObject = stream; v.play();
+        if (status) status.textContent = 'Point the camera at the barcode…';
+        if (window.BarcodeDetector) {
+          var det = new BarcodeDetector({ formats: ['upc_a', 'upc_e', 'ean_13', 'ean_8', 'code_128', 'code_39', 'qr_code'] });
+          scanTimer = setInterval(function () {
+            det.detect(v).then(function (codes) {
+              if (codes && codes.length) applyScannedCode(codes[0].rawValue, client);
+            }).catch(function () {});
+          }, 500);
+        } else if (window.ZXing) {
+          try {
+            scanReader = new ZXing.BrowserMultiFormatReader();
+            scanReader.decodeFromVideoDevice(null, v, function (result) {
+              if (result) applyScannedCode(result.getText(), client);
+            });
+          } catch (e) {
+            if (status) status.textContent = 'Camera opened but barcode reading is not available here — type the code below instead.';
+          }
+        } else {
+          var s = document.createElement('script');
+          s.src = 'https://unpkg.com/@zxing/browser@0.1.5/umd/index.min.js';
+          s.onload = function () {
+            if (!window.ZXing) { if (status) status.textContent = 'Barcode reading could not load — type the code below instead.'; return; }
+            try {
+              scanReader = new ZXing.BrowserMultiFormatReader();
+              scanReader.decodeFromVideoDevice(null, v, function (result) {
+                if (result) applyScannedCode(result.getText(), client);
+              });
+            } catch (e) {}
+          };
+          s.onerror = function () { if (status) status.textContent = 'Barcode reading could not load — type the code below instead.'; };
+          document.head.appendChild(s);
+        }
+      }).catch(function () {
+        if (status) status.textContent = 'Camera permission was denied — type the code below instead.';
+      });
+    });
+    var scanStop = $('p2-scan-stop');
+    if (scanStop) scanStop.addEventListener('click', stopScan);
+    var scanUse = $('p2-scan-use');
+    if (scanUse) scanUse.addEventListener('click', function () {
+      var code = $('p2-scan-manual') ? $('p2-scan-manual').value : '';
+      applyScannedCode(code, client);
     });
 
     var partForm = $('p2-part-form');
