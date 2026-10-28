@@ -974,13 +974,17 @@
   var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
   var SESSION_KEY = 'atr-account';
 
-  var STATUSES = ['Waiting', 'In Progress', 'Waiting for Parts', 'Ready for Pickup', 'Completed'];
+  var STATUSES = ['Awaiting Diagnostics', 'Awaiting Estimate', 'Awaiting Customer Response', 'Awaiting Parts', 'En Route to Customer', 'In Progress', 'Quality Control', 'Ready', 'Job Complete'];
   var STATUS_CLASS = {
-    'Waiting': 'acct-st-waiting',
+    'Awaiting Diagnostics': 'acct-st-waiting',
+    'Awaiting Estimate': 'acct-st-waiting',
+    'Awaiting Customer Response': 'acct-st-progress',
+    'Awaiting Parts': 'acct-st-parts',
+    'En Route to Customer': 'acct-st-progress',
     'In Progress': 'acct-st-progress',
-    'Waiting for Parts': 'acct-st-parts',
-    'Ready for Pickup': 'acct-st-ready',
-    'Completed': 'acct-st-done'
+    'Quality Control': 'acct-st-progress',
+    'Ready': 'acct-st-ready',
+    'Job Complete': 'acct-st-done'
   };
 
   document.addEventListener('DOMContentLoaded', function () {
@@ -1205,7 +1209,7 @@
         brand: brand || null,
         model: model || null,
         issue: issue,
-        status: 'Waiting'
+        status: 'Awaiting Diagnostics'
       }).select('id').single()
         .then(function (res) {
           if (btn) { btn.disabled = false; btn.innerHTML = 'Submit Request <i class="fas fa-arrow-right"></i>'; }
@@ -1278,7 +1282,7 @@
     { id: 'station-3in1', name: '3-in-1 Wireless Charging Station', price: 44.99 }
   ];
 
-  var TICKET_STATUSES = ['Waiting', 'In Progress', 'Waiting for Parts', 'Ready for Pickup', 'Completed'];
+  var TICKET_STATUSES = ['Awaiting Diagnostics', 'Awaiting Estimate', 'Awaiting Customer Response', 'Awaiting Parts', 'En Route to Customer', 'In Progress', 'Quality Control', 'Ready', 'Job Complete'];
   var ORDER_STATUSES = ['New', 'Processing', 'Shipped/Ready', 'Completed', 'Cancelled'];
   var PO_STATUSES = ['Draft', 'Ordered', 'Received', 'Cancelled'];
 
@@ -1636,10 +1640,10 @@
   /* ---------- TICKETS ---------- */
   function statusBadge(status) {
     var cls = 'emp-st-waiting';
-    if (status === 'In Progress') cls = 'emp-st-progress';
-    else if (status === 'Waiting for Parts') cls = 'emp-st-parts';
-    else if (status === 'Ready for Pickup') cls = 'emp-st-ready';
-    else if (status === 'Completed') cls = 'emp-st-done';
+    if (status === 'In Progress' || status === 'En Route to Customer' || status === 'Awaiting Customer Response' || status === 'Quality Control') cls = 'emp-st-progress';
+    else if (status === 'Awaiting Parts') cls = 'emp-st-parts';
+    else if (status === 'Ready') cls = 'emp-st-ready';
+    else if (status === 'Job Complete') cls = 'emp-st-done';
     return '<span class="emp-badge ' + cls + '">' + esc(status) + '</span>';
   }
 
@@ -2667,5 +2671,45 @@ if ("serviceWorker" in navigator) {
     show(0);
     if (playing) start();
     else if (playBtn) { playBtn.setAttribute('aria-label', 'Play slideshow'); playBtn.setAttribute('aria-pressed', 'true'); if (playIcon) playIcon.textContent = '\u25B6'; }
+  });
+})();
+
+/* ==================== MY ACCOUNT MENU ==================== */
+/* The logged-in account modal is one My Account tab with a menu:
+   Repairs, Account Settings, Sign Out. Repairs shows the repair list,
+   thread, and new-request views; Account Settings shows profile,
+   birthday, and password. Sign Out is the existing logout button,
+   moved into the menu, so its wiring is unchanged. */
+(function () {
+  'use strict';
+  document.addEventListener('DOMContentLoaded', function () {
+    var menuItems = document.querySelectorAll('[data-acct-menu]');
+    var repairsView = document.getElementById('acct-view-repairs');
+    var settingsView = document.getElementById('acct-view-settings');
+    if (!menuItems.length || !repairsView || !settingsView) return;
+    function show(view) {
+      repairsView.hidden = view !== 'repairs';
+      settingsView.hidden = view !== 'settings';
+      menuItems.forEach(function (btn) {
+        btn.classList.toggle('is-active', btn.getAttribute('data-acct-menu') === view);
+      });
+      if (view === 'repairs') {
+        var r = document.getElementById('acct-repairs');
+        var th = document.getElementById('acct-thread');
+        var nt = document.getElementById('acct-newticket');
+        if (r) r.hidden = false;
+        if (th) th.hidden = true;
+        if (nt) nt.hidden = true;
+      }
+    }
+    menuItems.forEach(function (btn) {
+      btn.addEventListener('click', function () { show(btn.getAttribute('data-acct-menu')); });
+    });
+    var pwBtn = document.getElementById('acct-change-password');
+    if (pwBtn) pwBtn.addEventListener('click', function () {
+      var msg = document.getElementById('acct-password-msg');
+      if (window.atrOpenReset) { window.atrOpenReset(); return; }
+      if (msg) msg.textContent = 'Use Forgot your password on the sign in screen to change it by email.';
+    });
   });
 })();

@@ -82,9 +82,9 @@
       </button>
       <button class="account-btn" id="account-open-btn" aria-label="Your account" title="Account & rewards">
         <i class="fas fa-user-circle"></i>
-        <span class="account-label" id="account-label">Account</span>
+        <span class="account-label" id="account-label">My Account</span>
       </button>
-      <a class="btn btn-outline btn-sm emp-dash-link" id="emp-dash-link" href="#employee-dashboard" data-page="employee-dashboard" hidden><i class="fas fa-briefcase"></i> <span class="account-label">Portal</span></a>
+      <a class="btn btn-outline btn-sm emp-dash-link" id="emp-dash-link" href="portal.html" data-page="employee-dashboard" hidden><i class="fas fa-briefcase"></i> <span class="account-label">Portal</span></a>
       <a class="btn btn-primary header-cta" href="#repair" data-page="repair"><i class="fas fa-wrench"></i> Book a Repair</a>
     </div>
   </header>
@@ -495,6 +495,11 @@
             <div class="hero-cta-group">
               <a class="btn btn-cream btn-lg" href="#repair" data-page="repair"><i class="fas fa-wrench"></i> Start a Repair</a>
               <a class="btn btn-ghostlight btn-lg" href="tel:9372806243"><i class="fas fa-phone"></i> 937-280-6243</a>
+            </div>
+            <p style="margin-top:1.5rem; margin-bottom:1rem;">Had a great experience? Leave us a review &mdash; it helps local folks find us.</p>
+            <div class="hero-cta-group" style="justify-content:center;">
+              <a class="btn btn-ghostlight" href="https://yelp.to/5bG7BILs72" target="_blank" rel="noopener"><i class="fab fa-yelp"></i> Review us on Yelp</a>
+              <a class="btn btn-ghostlight" href="https://www.google.com/maps/search/?api=1&query=Austin%27s+Tech.+Repair+Group+Xenia+OH" target="_blank" rel="noopener"><i class="fab fa-google"></i> Review us on Google</a>
             </div>
           </div>
         </div>
@@ -1002,7 +1007,7 @@
 
         <!-- Login / signup view -->
         <div id="acct-auth-view">
-          <h3><i class="fas fa-user-circle"></i> Your Account</h3>
+          <h3><i class="fas fa-user-circle"></i> My Account</h3>
           <p class="acct-sub">Log in to track repairs, earn reward points, and manage your profile.</p>
 
           <button class="authx-google" id="authx-google-btn" type="button"><svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" style="display: block;" width="18" height="18" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path><path fill="none" d="M0 0h48v48H0z"></path></svg> Continue with Google</button>
@@ -1059,6 +1064,14 @@
             <div class="acct-points-label">reward points</div>
           </div>
 
+          <!-- My Account menu: Repairs, Account Settings, Sign Out -->
+          <div class="acct-menu" role="group" aria-label="My Account">
+            <button class="acct-menu-item is-active" type="button" data-acct-menu="repairs"><i class="fas fa-tools"></i> Repairs</button>
+            <button class="acct-menu-item" type="button" data-acct-menu="settings"><i class="fas fa-gear"></i> Account Settings</button>
+            <button class="acct-menu-item" type="button" id="authx-logout"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+          </div>
+
+          <div id="acct-view-repairs">
           <!-- My Repairs -->
           <div class="acct-repairs" id="acct-repairs">
             <div class="acct-repairs-head">
@@ -1118,6 +1131,9 @@
             </form>
           </div>
 
+          </div>
+
+          <div id="acct-view-settings" hidden>
           <!-- My profile -->
           <div class="acct-profile" id="authx-profile">
             <h4><i class="fas fa-id-card"></i> My Profile</h4>
@@ -1137,20 +1153,77 @@
 
           <!-- My birthday (optional) -->
           <div class="acct-birthday" id="acct-birthday-wrap" hidden>
-            <label class="acct-field">
-              <span><i class="fas fa-cake-candles"></i> My birthday (optional)</span>
-              <input type="date" id="acct-birthday" aria-label="Your birthday">
-            </label>
+            <div class="acct-field">
+              <span><i class="fas fa-cake-candles"></i> My birthday (optional) &mdash; month and day only, no year</span>
+              <div class="acct-row2">
+                <select id="acct-birthday-month" aria-label="Birth month">
+                  <option value="">Month</option>
+                  <option value="01">January</option>
+                  <option value="02">February</option>
+                  <option value="03">March</option>
+                  <option value="04">April</option>
+                  <option value="05">May</option>
+                  <option value="06">June</option>
+                  <option value="07">July</option>
+                  <option value="08">August</option>
+                  <option value="09">September</option>
+                  <option value="10">October</option>
+                  <option value="11">November</option>
+                  <option value="12">December</option>
+                </select>
+                <select id="acct-birthday-day" aria-label="Birth day">
+                  <option value="">Day</option>
+                  <option value="01">1</option>
+                  <option value="02">2</option>
+                  <option value="03">3</option>
+                  <option value="04">4</option>
+                  <option value="05">5</option>
+                  <option value="06">6</option>
+                  <option value="07">7</option>
+                  <option value="08">8</option>
+                  <option value="09">9</option>
+                  <option value="10">10</option>
+                  <option value="11">11</option>
+                  <option value="12">12</option>
+                  <option value="13">13</option>
+                  <option value="14">14</option>
+                  <option value="15">15</option>
+                  <option value="16">16</option>
+                  <option value="17">17</option>
+                  <option value="18">18</option>
+                  <option value="19">19</option>
+                  <option value="20">20</option>
+                  <option value="21">21</option>
+                  <option value="22">22</option>
+                  <option value="23">23</option>
+                  <option value="24">24</option>
+                  <option value="25">25</option>
+                  <option value="26">26</option>
+                  <option value="27">27</option>
+                  <option value="28">28</option>
+                  <option value="29">29</option>
+                  <option value="30">30</option>
+                  <option value="31">31</option>
+                </select>
+              </div>
+            </div>
             <p class="acct-muted">Add it and we&rsquo;ll have a little something for you on your day &mdash; 15% off your next repair. Totally optional.</p>
             <button class="btn btn-outline btn-sm" id="acct-birthday-save" type="button"><i class="fas fa-save"></i> Save birthday</button>
             <span class="acct-muted" id="acct-birthday-msg"></span>
+          </div>
+          <!-- Password -->
+          <div class="acct-password">
+            <h4><i class="fas fa-lock"></i> Password</h4>
+            <p class="acct-muted">Change your password by email.</p>
+            <button class="btn btn-outline btn-sm" id="acct-change-password" type="button">Change password</button>
+            <span class="acct-muted" id="acct-password-msg"></span>
           </div>
           <div class="acct-earn">
             <p><i class="fas fa-gift"></i> <strong>How to earn:</strong> 1 point for every $1 you spend on repairs.</p>
             <p><i class="fas fa-tag"></i> <strong>Redeem:</strong> every 100 points = $5 off your next repair. Just mention your points when you book.</p>
           </div>
+          </div>
           <p class="acct-error" id="acct-dash-error" hidden></p>
-          <button class="btn btn-outline btn-sm acct-logout" id="authx-logout" type="button"><i class="fas fa-sign-out-alt"></i> Log Out</button>
         </div>
       </div>
     </div>
@@ -1934,11 +2007,15 @@
             <h3>Repair Tickets</h3>
             <select id="emp-ticket-filter" aria-label="Filter tickets by status">
               <option value="all">All statuses</option>
-              <option value="Waiting">Waiting</option>
+              <option value="Awaiting Diagnostics">Awaiting Diagnostics</option>
+              <option value="Awaiting Estimate">Awaiting Estimate</option>
+              <option value="Awaiting Customer Response">Awaiting Customer Response</option>
+              <option value="Awaiting Parts">Awaiting Parts</option>
+              <option value="En Route to Customer">En Route to Customer</option>
               <option value="In Progress">In Progress</option>
-              <option value="Waiting for Parts">Waiting for Parts</option>
-              <option value="Ready for Pickup">Ready for Pickup</option>
-              <option value="Completed">Completed</option>
+              <option value="Quality Control">Quality Control</option>
+              <option value="Ready">Ready</option>
+              <option value="Job Complete">Job Complete</option>
             </select>
           </div>
           <div id="emp-ticket-list"><p class="emp-muted">Loading tickets…</p></div>
@@ -2780,8 +2857,13 @@
       .then(function (res) {
         if (res.error || !res.data) { return; }
         wrap.hidden = false;
-        var input = $('acct-birthday');
-        if (input && res.data.birthday) input.value = res.data.birthday;
+        var bday = String(res.data.birthday || '');
+        var parts = bday.split('-');
+        var mm = parts.length === 3 ? parts[1] : parts[0];
+        var dd = parts.length === 3 ? parts[2] : parts[1];
+        var mo = $('acct-birthday-month'), dy = $('acct-birthday-day');
+        if (mo && mm) mo.value = mm;
+        if (dy && dd) dy.value = dd;
       })
       .catch(function () {});
   }
@@ -2789,10 +2871,10 @@
   function init() {
     var saveBtn = $('acct-birthday-save');
     if (saveBtn) saveBtn.addEventListener('click', function () {
-      var input = $('acct-birthday');
+      var mo = $('acct-birthday-month'), dy = $('acct-birthday-day');
       var msg = $('acct-birthday-msg');
-      if (!input || !currentUserId) return;
-      var val = input.value || null;
+      if (!mo || !dy || !currentUserId) return;
+      var val = (mo.value && dy.value) ? (mo.value + '-' + dy.value) : null;
       if (msg) msg.textContent = 'Saving\u2026';
       client.from('customers').update({ birthday: val }).eq('id', currentUserId)
         .then(function (res) {
@@ -2896,7 +2978,7 @@
       if (label) label.textContent = firstName(cust.name) + ' · ' + (pts || 0) + ' pts';
       if (btn) btn.classList.add('logged-in');
     } else {
-      if (label) label.textContent = 'Account';
+      if (label) label.textContent = 'My Account';
       if (btn) btn.classList.remove('logged-in');
     }
   }
@@ -2921,9 +3003,14 @@
        the link step guarantees — fill it from the same row so a saved
        birthday shows immediately (the birthday block also loads it on
        its own auth cycle; both write the same value). */
-    var bwrap = $('acct-birthday-wrap'), binput = $('acct-birthday');
+    var bwrap = $('acct-birthday-wrap');
     if (bwrap) bwrap.hidden = false;
-    if (binput && cust.birthday) binput.value = cust.birthday;
+    if (cust.birthday) {
+      var bp = String(cust.birthday).split('-');
+      var bmo = $('acct-birthday-month'), bdy = $('acct-birthday-day');
+      if (bmo) bmo.value = bp.length === 3 ? bp[1] : bp[0];
+      if (bdy) bdy.value = bp.length === 3 ? bp[2] : bp[1];
+    }
     wireBirthdaySave(cust);
   }
 
@@ -2942,12 +3029,15 @@
   var currentCust = null, repairsWired = false, openTicket = null;
   window.atrCustomer = function () { return currentCust; };
   var STATUS_COPY = {
-    'Waiting':           { label: 'Request received', note: "We've got your request \u2014 we'll text you to confirm your appointment window." },
-    'In Progress':       { label: 'In progress', note: 'Your repair is underway. We\'ll update this page and text you as it moves.' },
-    'Waiting for Parts': { label: 'Waiting for parts', note: 'Your part is ordered and on its way to us. We\'ll text you when it\'s in.' },
-    'Quality Check':     { label: 'Quality check', note: 'Your repair is done and being tested before it comes back to you.' },
-    'Ready for Pickup':  { label: 'Ready!', note: 'Your repair is complete. We\'ll text you to arrange getting your device back to you.' },
-    'Completed':         { label: 'Completed', note: 'All done \u2014 thanks for trusting us! This repair is covered by our 1-Year Limited Warranty.' }
+    'Awaiting Diagnostics': { label: 'Awaiting diagnostics', note: "We've got your request \u2014 we'll diagnose it and text you to confirm your appointment window." },
+    'Awaiting Estimate': { label: 'Awaiting estimate', note: 'Diagnosis is done. We are working out your flat price and will text it to you.' },
+    'Awaiting Customer Response': { label: 'Awaiting your response', note: 'We sent you an estimate. Reply to it and we will get your repair moving.' },
+    'Awaiting Parts': { label: 'Awaiting parts', note: 'Your part is ordered and on its way to us. We\'ll text you when it\'s in.' },
+    'En Route to Customer': { label: 'On the way to you', note: 'Your technician is on the way to your home or office.' },
+    'In Progress': { label: 'In progress', note: 'Your repair is underway at your place. We\'ll update this page and text you as it moves.' },
+    'Quality Control': { label: 'Quality control', note: 'Your repair is done and being tested before it comes back to you.' },
+    'Ready': { label: 'Ready!', note: 'Your repair is complete. We\'ll text you to arrange getting your device back to you.' },
+    'Job Complete': { label: 'Job complete', note: 'All done \u2014 thanks for trusting us! This repair is covered by our 1-Year Limited Warranty.' }
   };
   function escX(x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function ticketDevice(t) { return [t.device_type, t.brand, t.model].filter(function (p) { return p && String(p).trim() !== ''; }).join(' ') || 'Your device'; }
@@ -3077,9 +3167,9 @@
     if (!btn || !cust) return;
     birthdayWired = true;
     btn.addEventListener('click', function () {
-      var input = $('acct-birthday'), msg = $('acct-birthday-msg');
-      if (!input || !sb) return;
-      var val = input.value || null;
+      var mo = $('acct-birthday-month'), dy = $('acct-birthday-day'), msg = $('acct-birthday-msg');
+      if (!mo || !dy || !sb) return;
+      var val = (mo.value && dy.value) ? (mo.value + '-' + dy.value) : null;
       if (msg) msg.textContent = 'Saving\u2026';
       sb.from('customers').update({ birthday: val }).eq('id', cust.id).then(function (res) {
         if (!msg) return;
