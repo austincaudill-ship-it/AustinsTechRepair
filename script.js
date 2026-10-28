@@ -1461,6 +1461,40 @@
     });
     if (closeBtn) closeBtn.addEventListener('click', closeEmpModal);
     if (overlay) overlay.addEventListener('click', closeEmpModal);
+    /* Forgot password for the employee modal, same as the portal login:
+       send a Supabase reset link to the typed work email. The link goes
+       to portal.html, which has the set-new-password view. Sends nothing
+       when the email field is empty. */
+    var forgotBtn = document.getElementById('emp-forgot-btn');
+    if (forgotBtn) forgotBtn.addEventListener('click', function () {
+      var emailEl = document.getElementById('emp-login-email');
+      var msgEl = document.getElementById('emp-forgot-msg');
+      var email = emailEl ? (emailEl.value || '').trim() : '';
+      if (!msgEl) return;
+      if (!email) {
+        msgEl.textContent = 'Enter your work email first';
+        msgEl.hidden = false;
+        return;
+      }
+      var client = getSb();
+      if (!client) {
+        msgEl.textContent = 'Login service unavailable. Check your connection and try again.';
+        msgEl.hidden = false;
+        return;
+      }
+      forgotBtn.disabled = true;
+      client.auth.resetPasswordForEmail(email, { redirectTo: 'https://austinstechrepairgroup.com/portal.html' })
+        .then(function (res) {
+          forgotBtn.disabled = false;
+          msgEl.textContent = res.error ? (res.error.message || 'Could not send the reset email. Try again.') : 'Check your email for a password reset link';
+          msgEl.hidden = false;
+        })
+        .catch(function (err) {
+          forgotBtn.disabled = false;
+          msgEl.textContent = (err && err.message) || 'Could not send the reset email. Try again.';
+          msgEl.hidden = false;
+        });
+    });
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') closeEmpModal();
     });
