@@ -42,7 +42,7 @@
           if (window.location.hash !== href) { window.location.hash = href; }
           switchPage(href);
           var guideId = target.getAttribute('data-guide');
-          if (guideId) { setTimeout(function () { var el = document.getElementById(guideId); if (el) el.scrollIntoView({ behavior: 'smooth' }); }, 100); }
+          if (guideId) { setTimeout(function () { var el = document.getElementById(guideId); if (el) el.scrollIntoView({ behavior: 'auto', block: 'start' }); }, 800); }
           var mobileMenu = document.getElementById('mobile-menu');
           if (mobileMenu) mobileMenu.setAttribute('aria-hidden', 'true');
         }
