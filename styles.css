@@ -441,7 +441,7 @@ a { color: var(--brand); }
 .footer-col-title { font-family: var(--font-display); font-weight: 700; color: #FAF6EE; font-size: 1.05rem; margin-bottom: 1.1rem; display: block; }
 .footer-link { display: block; color: #B9A98F; text-decoration: none; margin-bottom: 0.7rem; transition: color var(--transition); font-size: 0.9rem; }
 .footer-link:hover { color: var(--gold); }
-.footer-disclaimer { font-size: 0.76rem; color: #8d7d66; line-height: 1.65; margin-bottom: 1.8rem; border-top: 1px solid #3d3226; padding-top: 2rem; }
+.footer-disclaimer { font-size: 0.60rem; color: #8d7d66; line-height: 1.65; margin-bottom: 1.8rem; border-top: 1px solid #3d3226; padding-top: 2rem; }
 .footer-disclaimer strong { color: #c9a86a; }
 .footer-bottom { position: relative; display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 1rem; border-top: 1px solid #3d3226; padding-top: 1.6rem; }
 .footer-copy { font-size: 0.8rem; color: #8d7d66; flex: none; text-align: center; }
