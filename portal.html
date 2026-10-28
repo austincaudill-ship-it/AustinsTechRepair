@@ -93,9 +93,6 @@
         <button class="portal-tab" id="portal-tab-guides" type="button" role="tab" data-tab="guides">
           <i class="fas fa-book-open"></i> Guides
         </button>
-        <button class="portal-tab" id="portal-tab-sops" type="button" role="tab" data-tab="sops">
-          <i class="fas fa-screwdriver-wrench"></i> SOPs
-        </button>
         <div class="portal-nav-group">Team</div>
         <button class="portal-tab" id="portal-tab-timeclock" type="button" role="tab" data-tab="timeclock">
           <i class="fas fa-clock"></i> Time Clock
@@ -125,12 +122,15 @@
           <div class="portal-panel-tools">
             <select id="portal-ticket-filter" aria-label="Filter tickets by status">
               <option value="all">All statuses</option>
-              <option value="Waiting">Waiting</option>
+              <option value="Awaiting Diagnostics">Awaiting Diagnostics</option>
+              <option value="Awaiting Estimate">Awaiting Estimate</option>
+              <option value="Awaiting Customer Response">Awaiting Customer Response</option>
+              <option value="Awaiting Parts">Awaiting Parts</option>
+              <option value="En Route to Customer">En Route to Customer</option>
               <option value="In Progress">In Progress</option>
-              <option value="Waiting for Parts">Waiting for Parts</option>
-              <option value="Quality Check">Quality Check</option>
-              <option value="Ready for Pickup">Ready for Pickup</option>
-              <option value="Completed">Completed</option>
+              <option value="Quality Control">Quality Control</option>
+              <option value="Ready">Ready</option>
+              <option value="Job Complete">Job Complete</option>
             </select>
             <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="tickets">
               <i class="fas fa-rotate-right"></i> Refresh
@@ -459,50 +459,6 @@
         </form>
       </div>
 
-      <div class="portal-panel" id="portal-panel-sops" role="tabpanel" hidden>
-        <div class="portal-panel-head">
-          <h2 class="portal-h2">Standard Operating Procedures</h2>
-        </div>
-        <p class="portal-muted portal-small">Internal, staff only. This page is not shown to customers, it is not a price list, and it is not a promise of a finish time. Use it to do the job the same way every time.</p>
-        <div class="portal-panel-head portal-subhead">
-          <h3 class="portal-h3">Shop rules that apply to every job</h3>
-        </div>
-        <p class="portal-muted">House calls only, customers do not come to Austin's house. The line to customers is "I come to you." ATRG has no van, Austin drives his personal 2017 Ford Fusion. Appointments are booked in 2-hour arrival windows. Free estimates over the phone or virtual, always. House call is $35 flat, one time per job, due at scheduling, non-refundable, never credited, and $35 regardless. Internal labor tiers, never shown to customers as tiers: $30 basic installs and fitment, $50 standard swaps, $100 soldering and board work. The customer sees one flat price: tier labor plus parts at cost times 1.5. Parts are paid upfront to ATRG, ordered by ATRG, and shipped to Austin's house, never the customer's. The 1-year warranty covers ATRG-supplied parts only, plus our labor. Same-day diagnostics only, never same-day repairs, because parts have to be ordered on everything.</p>
-        <p class="portal-muted">Privacy, zero tolerance: never browse a customer's galleries or files, and never move private customer data to an external drive. Before any disassembly, ESD wrist straps are grounded and tested, and the mat is clipped to a grounded point.</p>
-        <div class="portal-panel-head portal-subhead">
-          <h3 class="portal-h3">Intake: issue to SOP</h3>
-        </div>
-        <p class="portal-muted">Screen or display damage goes to SOP-DISP-01. Battery or charging goes to SOP-BATT-02. Component failure goes to SOP-BOARD-03. Liquid exposure goes to SOP-BOARD-03. Software or performance goes to SOP-SFT-01.</p>
-        <div class="portal-panel-head portal-subhead">
-          <h3 class="portal-h3">SOP-DISP-01: Screen and display replacement</h3>
-        </div>
-        <p class="portal-muted">Bench: grounded ESD wrist strap, mat clipped to a grounded point. Tools: precision driver set, heating pad at 80 degrees Celsius, 99% isopropyl alcohol clean. Steps: check touch digitizer and display panel, tape cracked glass first, heat edge by edge and keep the heat moving. iPhone: screen-only is fine. Android: always full frame assembly, screens are glued. iPad: digitizer glass is a fused layer, an iPad screen job takes about 3 hours, use pre-cut adhesive strips if the part has no pre-applied adhesive, do not use B-7000 as a substitute, and the iPad 5 home button is not Touch ID, so no transfer is needed when the part has it pre-installed.</p>
-        <div class="portal-panel-head portal-subhead">
-          <h3 class="portal-h3">SOP-BATT-02: Battery and power system swap</h3>
-        </div>
-        <p class="portal-muted">Bench: ESD-safe anti-static tweezers, battery isolation probe. Tools: isopropyl alcohol adhesive solvent, battery pull-tab replacement. Steps: isolate power first, measure voltage, check cycle count and the DC jack, replace adhesive and pull tabs, and verify the device powers and charges before closing it up.</p>
-        <div class="portal-panel-head portal-subhead">
-          <h3 class="portal-h3">SOP-BOARD-03: Logic board micro-soldering</h3>
-        </div>
-        <p class="portal-muted">Bench: ESD-safe workstation, fume extractor, grounded microscope. Tools: hot air rework station, micro-soldering iron, liquid flux, 99% isopropyl alcohol wash. Steps: isolate power first, inspect ribbon ports, keys, and buttons, and for liquid exposure do an isopropyl alcohol wash and ultrasonic clean. Board work is the $100 internal labor tier. Never claim manufacturer authorization, ATRG is independent and diagnoses in-house.</p>
-        <div class="portal-panel-head portal-subhead">
-          <h3 class="portal-h3">SOP-CLEAN-04: General cleaning and thermal</h3>
-        </div>
-        <p class="portal-muted">Bench: anti-static brush, compressed air, ESD mat. Tools: thermal paste application using the 5-point method, 99% isopropyl alcohol contact wiping. Steps: clean dust and old paste, apply new paste, verify temperatures and fans before returning the device.</p>
-        <div class="portal-panel-head portal-subhead">
-          <h3 class="portal-h3">SOP-SFT-01: Software restore and data</h3>
-        </div>
-        <p class="portal-muted">Steps: diagnostic boot, malware scan, operating system restore, and data handling under the privacy rule above. Never browse customer files beyond what the repair itself requires, and never copy private data to an external drive.</p>
-        <div class="portal-panel-head portal-subhead">
-          <h3 class="portal-h3">SOP-RESET-05: Shift end, Reset to Zero</h3>
-        </div>
-        <p class="portal-muted">Before clocking out: shadow board tool audit, all screwdrivers returned, microscopes and soldering equipment off, workstation power isolated, and a 99% isopropyl alcohol surface wipe. Do not leave a bench set up for the next shift to clean up.</p>
-        <div class="portal-panel-head portal-subhead">
-          <h3 class="portal-h3">Device notes</h3>
-        </div>
-        <p class="portal-muted">Common vulnerabilities to check, not a complete catalog: iPhone OLED flex cables, rear back glass adhesives, and battery degradation. Samsung AMOLED ribbon cables and USB-C charge port board fractures. iPad and Galaxy Tab digitizer glass and high-capacity battery adhesive. MacBook USB-C power ICs and liquid contact pin corrosion. Dell, HP, and Lenovo thermal paste burnout, DC jack strain, and NVMe drive failures. PlayStation, Xbox, and Switch HDMI port pin deformation, liquid metal leakage, and controller drift potentiometers. Older devices are still served, this list does not limit what ATRG takes in. No medical devices, ever.</p>
-      </div>
-
       <!-- REQUESTS (tech request queue) -->
       
       <!-- TIME CLOCK -->
@@ -522,6 +478,24 @@
             <div class="portal-field"><label for="ci-name">Name *</label><input type="text" id="ci-name" required /></div>
             <div class="portal-field"><label for="ci-phone">Phone *</label><input type="tel" id="ci-phone" required /></div>
             <div class="portal-field"><label for="ci-email">Email</label><input type="email" id="ci-email" /></div>
+          </div>
+          <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">ATR One</h3></div>
+          <div class="portal-field">
+            <label for="ci-atrone">Is this customer an ATR One member?</label>
+            <select id="ci-atrone">
+              <option value="">Not an ATR One member</option>
+              <option value="member">Yes &mdash; ATR One member</option>
+              <option value="signup">Wants to sign up for ATR One</option>
+            </select>
+          </div>
+          <div id="ci-atrone-signup" hidden>
+            <p class="portal-muted portal-small">Internal signup &mdash; use these links to sign the customer up on the spot, same signup links as the Square &amp; ATR One panel.</p>
+            <div class="link-grid">
+              <a class="link-card" href="https://square.link/u/eFKxDvyo" target="_blank" rel="noopener"><i class="fas fa-user"></i><strong>ATR One &mdash; Single</strong><span>$9.99/mo signup link</span></a>
+              <a class="link-card" href="https://square.link/u/ZA7502vD" target="_blank" rel="noopener"><i class="fas fa-users"></i><strong>ATR One &mdash; Family</strong><span>$19.99/mo signup link</span></a>
+              <a class="link-card" href="https://square.link/u/HtnQBIG1" target="_blank" rel="noopener"><i class="fas fa-briefcase"></i><strong>ATR One &mdash; Business Plus</strong><span>$39.99/mo signup link</span></a>
+              <a class="link-card" href="https://square.link/u/V8WCkjbW" target="_blank" rel="noopener"><i class="fas fa-building"></i><strong>ATR One &mdash; Business Pro</strong><span>$49.99/mo signup link</span></a>
+            </div>
           </div>
           <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Device</h3></div>
           <div class="portal-nh-grid">
@@ -1119,50 +1093,6 @@
     }
   })();
   </script>
-  <script>
-  /* ================= SOPs (internal standard operating procedures) =================
-   * Static staff-only page, same tab pattern as Guides: portal.js already
-   * toggles the tab active state, this script shows the SOP panel and
-   * hides it again when any other tab is clicked. No database, no pricing
-   * changes, no customer-facing content. */
-  (function () {
-    'use strict';
-    function $(id) { return document.getElementById(id); }
-    function showSops() {
-      var tabs = document.querySelectorAll('.portal-tab');
-      var i;
-      for (i = 0; i < tabs.length; i++) {
-        tabs[i].classList.toggle('active', tabs[i].getAttribute('data-tab') === 'sops');
-      }
-      var panels = document.querySelectorAll('.portal-panel');
-      for (i = 0; i < panels.length; i++) { panels[i].hidden = true; }
-      var p = $('portal-panel-sops');
-      if (p) p.hidden = false;
-    }
-    function initSops() {
-      var tab = $('portal-tab-sops');
-      if (tab) tab.addEventListener('click', showSops);
-      document.addEventListener('click', function (e) {
-        var t = e.target;
-        while (t && t !== document) {
-          if (t.getAttribute && t.getAttribute('data-tab')) {
-            if (t.getAttribute('data-tab') !== 'sops') {
-              var p = $('portal-panel-sops');
-              if (p) p.hidden = true;
-            }
-            return;
-          }
-          t = t.parentNode;
-        }
-      });
-    }
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initSops);
-    } else {
-      initSops();
-    }
-  })();
-  </script>
   <style>
     .portal-guide-tools { display: grid; grid-template-columns: 1fr; gap: 0 1rem; margin-bottom: 0.4rem; }
     @media (min-width: 720px) { .portal-guide-tools { grid-template-columns: 2fr 1fr; } }
@@ -1463,18 +1393,16 @@
 
     function nextBirthday(bday, today) {
       var parts = String(bday || '').split('-');
-      if (parts.length !== 3) return null;
-      var y = parseInt(parts[0], 10);
-      var m = parseInt(parts[1], 10) - 1;
-      var d = parseInt(parts[2], 10);
-      if (isNaN(y) || isNaN(m) || isNaN(d)) return null;
+      if (parts.length !== 2 && parts.length !== 3) return null;
+      var m = parseInt(parts.length === 3 ? parts[1] : parts[0], 10) - 1;
+      var d = parseInt(parts.length === 3 ? parts[2] : parts[1], 10);
+      if (isNaN(m) || isNaN(d)) return null;
       var t = new Date(today.getFullYear(), today.getMonth(), today.getDate());
       var next = new Date(t.getFullYear(), m, d);
       if (next < t) next = new Date(t.getFullYear() + 1, m, d);
       return {
         date: next,
-        days: Math.round((next - t) / 86400000),
-        turning: y > 1900 ? next.getFullYear() - y : null
+        days: Math.round((next - t) / 86400000)
       };
     }
 
@@ -1503,13 +1431,12 @@
           var rows = ups.map(function (x) {
             var when = x.u.days === 0 ? '<strong>Today!</strong>' : x.u.days === 1 ? 'Tomorrow' : 'in ' + x.u.days + ' days';
             var bits = [esc(fmtDay(x.u.date))];
-            if (x.u.turning) bits.push('turning ' + x.u.turning);
             if (x.c.phone) bits.push(esc(x.c.phone));
             if (x.c.email) bits.push(esc(x.c.email));
             return '<p class="portal-card-meta p3-celeb-row"><strong>' + esc(x.c.name || 'Customer') + '</strong> &mdash; ' + when + ' &middot; ' + bits.join(' &middot; ') + '</p>';
           }).join('');
           box.innerHTML = head + rows +
-            '<p class="portal-muted portal-small">Birthday customers get 15% off their next repair. Automated birthday &amp; holiday emails turn on once the shop email sending is wired up.</p></div>';
+            '<p class="portal-muted portal-small">Birthday customers get 15% off their next repair or accessories, and get an automatic birthday email on the day. Birthdays are month and day only, no year.</p></div>';
         })
         .catch(function () {});
     }

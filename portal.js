@@ -30,7 +30,7 @@
   /* Ticket statuses: EXACT values from the tickets.status check
    * constraint (supabase-phase2-tickets.sql). Do not add values here
    * without updating the database constraint first. */
-  var TICKET_STATUSES = ['Waiting', 'In Progress', 'Waiting for Parts', 'Quality Check', 'Ready for Pickup', 'Completed'];
+  var TICKET_STATUSES = ['Awaiting Diagnostics', 'Awaiting Estimate', 'Awaiting Customer Response', 'Awaiting Parts', 'En Route to Customer', 'In Progress', 'Quality Control', 'Ready', 'Job Complete'];
   var APPLICATION_STATUSES = ['New', 'Reviewed', 'Contacted', 'Rejected'];
   var INVESTOR_STATUSES = ['New', 'Reviewed', 'Contacted', 'Closed'];
 
@@ -127,6 +127,10 @@
       waiting: 'portal-st-waiting', new: 'portal-st-new',
       inprogress: 'portal-st-inprogress', processing: 'portal-st-inprogress',
       waitingforparts: 'portal-st-waitingparts',
+      awaitingdiagnostics: 'portal-st-waiting', awaitingestimate: 'portal-st-waiting',
+      awaitingcustomerresponse: 'portal-st-contacted', awaitingparts: 'portal-st-waitingparts',
+      enroutetocustomer: 'portal-st-inprogress', qualitycontrol: 'portal-st-reviewed',
+      ready: 'portal-st-ready', jobcomplete: 'portal-st-done',
       readyforpickup: 'portal-st-ready', shippedready: 'portal-st-ready',
       completed: 'portal-st-done', received: 'portal-st-done',
       reviewed: 'portal-st-reviewed', ordered: 'portal-st-reviewed',
@@ -369,12 +373,12 @@
     return parts.length ? parts.join(' · ') : 'Device not specified';
   }
 
-  var QCLASS = { 'Waiting': 'q-red', 'Waiting for Parts': 'q-orange', 'In Progress': 'q-yellow', 'Quality Check': 'q-lime', 'Ready for Pickup': 'q-green', 'Completed': 'q-done' };
+  var QCLASS = { 'Awaiting Diagnostics': 'q-red', 'Awaiting Estimate': 'q-red', 'Awaiting Customer Response': 'q-yellow', 'Awaiting Parts': 'q-orange', 'En Route to Customer': 'q-yellow', 'In Progress': 'q-yellow', 'Quality Control': 'q-lime', 'Ready': 'q-green', 'Job Complete': 'q-done' };
   function renderTickets(rows) {
     var list = $('portal-ticket-list');
     if (!rows.length) { emptyState(list, 'No tickets match. New service requests from the website will show up here.'); return; }
     var posMap = {}, n = 0;
-    for (var i = rows.length - 1; i >= 0; i--) { if (rows[i].status !== 'Completed') { n++; posMap[rows[i].id] = n; } }
+    for (var i = rows.length - 1; i >= 0; i--) { if (rows[i].status !== 'Job Complete') { n++; posMap[rows[i].id] = n; } }
     list.innerHTML = rows.map(function (t) {
       var qchip = posMap[t.id] ? '<span class="q-chip">Queue #' + posMap[t.id] + '</span>' : '';
       var appt = t.appointment_at ? '<p class="portal-card-meta"><i class="fas fa-calendar-check"></i> Appointment: ' + esc(fmtDateTime(t.appointment_at)) + '</p>' : '';
@@ -406,7 +410,7 @@
         if (res.error) { listError(list, 'tickets'); return; }
         state.loaded.tickets = true;
         renderTickets(res.data || []);
-        var open = (res.data || []).filter(function (t) { return t.status !== 'Completed'; }).length;
+        var open = (res.data || []).filter(function (t) { return t.status !== 'Job Complete'; }).length;
         setCount('portal-count-tickets', $('portal-ticket-filter').value === 'all' ? open : 0);
       }).catch(function () { listError(list, 'tickets'); });
     });
@@ -428,7 +432,35 @@
     box.scrollTop = box.scrollHeight;
   }
 
-  function loadTicketThread(client, ticketId) {
+    function fmtTimer(mins) {
+    var m = Math.round(mins);
+    var h = Math.floor(m / 60);
+    var r = m % 60;
+    return h ? (h + 'h ' + r + 'm') : (r + 'm');
+  }
+  function loadJobTimers(client, ticketId) {
+    var totalEl = $('portal-timer-total'), listEl = $('portal-timer-list'), btn = $('portal-timer-btn');
+    if (!totalEl || !listEl) return;
+    client.from('job_timers').select('*').eq('ticket_id', ticketId).order('started_at', { ascending: true }).then(function (res) {
+      var rows = res.error ? [] : (res.data || []);
+      var now = Date.now(), total = 0, running = null;
+      rows.forEach(function (r) {
+        var s = new Date(r.started_at).getTime();
+        var e = r.stopped_at ? new Date(r.stopped_at).getTime() : now;
+        total += Math.max(0, e - s) / 60000;
+        if (!r.stopped_at) running = r;
+      });
+      totalEl.textContent = rows.length ? ('Time on this job: ' + fmtTimer(total) + (running ? ' (timer running)' : '')) : 'No time logged on this job yet.';
+      if (btn) { btn.textContent = running ? 'Stop timer' : 'Start timer'; if (running) btn.setAttribute('data-running', running.id); else btn.removeAttribute('data-running'); }
+      listEl.innerHTML = rows.map(function (r) {
+        var s = new Date(r.started_at);
+        var e = r.stopped_at ? new Date(r.stopped_at) : null;
+        var mins = e ? Math.max(0, (e.getTime() - s.getTime()) / 60000) : Math.max(0, (now - s.getTime()) / 60000);
+        return '<p class="portal-muted portal-small">' + esc(r.employee_name || 'Tech') + ' &middot; ' + esc(s.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })) + ' &rarr; ' + (e ? esc(e.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })) + ' (' + fmtTimer(mins) + ')' : '<strong>running</strong>') + '</p>';
+      }).join('');
+    }).catch(function () { totalEl.textContent = 'Time on this job is unavailable right now.'; });
+  }
+function loadTicketThread(client, ticketId) {
     client.from('messages').select('*').eq('ticket_id', ticketId).order('created_at', { ascending: true })
       .then(function (res) {
         renderTicketThread(res.error ? [] : (res.data || []));
@@ -446,7 +478,7 @@
           return;
         }
         var t = res.data;
-        var gateBanner = t.status === 'Waiting for Parts'
+        var gateBanner = t.status === 'Awaiting Parts'
           ? '<div class="portal-gate"><i class="fas fa-triangle-exclamation"></i> <strong>Parts not on hand yet.</strong> Don&rsquo;t start this repair until the part is in and scanned to the ticket.</div>'
           : '';
         var body = gateBanner +
@@ -514,6 +546,11 @@
           statusOptions(TICKET_STATUSES, t.status) + '</select>' +
           '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="portal-ticket-status-save">Save status</button>' +
           '<span class="portal-muted portal-small" id="portal-ticket-status-msg"></span></div></div>' +
+          '<div class="portal-drawer-section"><h3>Job timer</h3>' +
+          '<p class="portal-muted" id="portal-timer-total">Loading time on this job&hellip;</p>' +
+          '<div class="portal-status-row"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="portal-timer-btn">Start timer</button>' +
+          '<span class="portal-muted portal-small" id="portal-timer-msg"></span></div>' +
+          '<div id="portal-timer-list"></div></div>' +
           '<div class="portal-drawer-section"><h3>Messages &amp; notes</h3>' +
           '<div class="portal-thread" id="portal-thread"><p class="portal-muted">Loading messages&hellip;</p></div>' +
           '<form id="portal-note-form"><div class="portal-note-row">' +
@@ -527,6 +564,17 @@
         loadCharges(client, t);
         loadParts(client, t);
         loadStockItems(client, t);
+        loadJobTimers(client, t);
+        var timerBtn = $('portal-timer-btn');
+        if (timerBtn) timerBtn.addEventListener('click', function () {
+          var msg = $('portal-timer-msg');
+          var running = timerBtn.getAttribute('data-running');
+          if (running) {
+            client.from('job_timers').update({ stopped_at: new Date().toISOString() }).eq('id', running).then(function () { loadJobTimers(client, t); }).catch(function () { if (msg) msg.textContent = 'Could not stop the timer. Try again.'; });
+          } else {
+            client.from('job_timers').insert({ ticket_id: t.id, employee_name: (state.profile && state.profile.name) || null, started_at: new Date().toISOString() }).then(function (res) { if (res.error) { if (msg) msg.textContent = 'Could not start the timer. Try again.'; return; } loadJobTimers(client, t); }).catch(function () { if (msg) msg.textContent = 'Could not start the timer. Try again.'; });
+          }
+        });
         wireTicketActions(client, t);
         wirePaymentActions(client, t);
 
@@ -537,7 +585,7 @@
           client.from('tickets').update({ status: next }).eq('id', t.id).then(function (res2) {
             if (res2.error) { msg.textContent = 'Couldn&rsquo;t save — try again.'; return; }
             msg.textContent = 'Saved.';
-            if (next === 'Ready for Pickup' && trim(t.customer_phone)) {
+            if (next === 'Ready' && trim(t.customer_phone)) {
               var digits = String(t.customer_phone).replace(/\D/g, '');
               if (digits.length === 10) digits = '1' + digits;
               var first = trim(t.customer_name || '').split(' ')[0] || 'there';
@@ -1171,8 +1219,8 @@
         '<span class="portal-badge portal-st-reviewed"><i class="fas fa-coins"></i> ' + esc(String(c.points)) + ' pts</span></div>' +
         '<p class="portal-card-meta"><i class="fas fa-envelope"></i> ' + esc(c.email || '—') +
         (c.phone ? ' · <i class="fas fa-phone"></i> ' + esc(c.phone) : '') + '</p>' +
-        '<p class="portal-card-meta"><i class="fas fa-cake-candles"></i> Birthday: ' +
-        '<input type="date" class="p3-bday-input" data-bday-input="' + esc(c.id) + '" value="' + esc(c.birthday || '') + '" aria-label="Customer birthday" /> ' +
+        '<p class="portal-card-meta"><i class="fas fa-cake-candles"></i> Birthday (month and day only): ' +
+        bdaySelects(c) + ' ' +
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-bday-save="' + esc(c.id) + '">Save</button> ' +
         '<span class="portal-muted portal-small" data-bday-msg="' + esc(c.id) + '"></span></p>' +
         '<p class="portal-card-meta">' + esc(String(c.orderCount)) + ' shop order' + (c.orderCount === 1 ? '' : 's') +
@@ -1231,11 +1279,24 @@
     renderCustomers(rows);
   }
 
+  function bdaySelects(c) {
+    var parts = String(c.birthday || '').split('-');
+    var mm = parts.length === 3 ? parts[1] : parts[0] || '';
+    var dd = parts.length === 3 ? parts[2] : parts[1] || '';
+    var months = ['01','02','03','04','05','06','07','08','09','10','11','12'];
+    var mo = months.map(function (m) { return '<option value="' + m + '"' + (m === mm ? ' selected' : '') + '>' + m + '</option>'; }).join('');
+    var dy = '';
+    for (var d = 1; d <= 31; d++) { var v = d < 10 ? '0' + d : String(d); dy += '<option value="' + v + '"' + (v === dd ? ' selected' : '') + '>' + d + '</option>'; }
+    return '<select data-bday-month="' + esc(c.id) + '" aria-label="Birth month"><option value="">Month</option>' + mo + '</select> ' +
+      '<select data-bday-day="' + esc(c.id) + '" aria-label="Birth day"><option value="">Day</option>' + dy + '</select>';
+  }
+
   function saveBirthday(customerId) {
-    var input = document.querySelector('[data-bday-input="' + customerId + '"]');
+    var mo = document.querySelector('[data-bday-month="' + customerId + '"]');
+    var dy = document.querySelector('[data-bday-day="' + customerId + '"]');
     var msg = document.querySelector('[data-bday-msg="' + customerId + '"]');
-    if (!input) return;
-    var val = input.value || null;
+    if (!mo || !dy) return;
+    var val = (mo.value && dy.value) ? (mo.value + '-' + dy.value) : null;
     if (msg) msg.textContent = 'Saving\u2026';
     withClient(function (client) {
       if (!client) { if (msg) msg.textContent = 'No connection.'; return; }
@@ -1652,6 +1713,14 @@
         });
       });
     });
+    var atrSel = $('ci-atrone');
+    if (atrSel && !atrSel.getAttribute('data-wired')) {
+      atrSel.setAttribute('data-wired', '1');
+      atrSel.addEventListener('change', function () {
+        var box = $('ci-atrone-signup');
+        if (box) box.hidden = atrSel.value !== 'signup';
+      });
+    }
     document.querySelectorAll('#ci-reasons .ci-chip').forEach(function (chip) {
       chip.addEventListener('click', function () { chip.classList.toggle('on'); });
     });
@@ -1669,7 +1738,13 @@
         model: $('ci-model').value.trim() || null,
         serial_imei: $('ci-serial').value.trim() || null,
         issue_reason: reasons || null,
-        issue: $('ci-notes').value.trim(),
+        issue: (function () {
+          var notes = $('ci-notes').value.trim();
+          var atr = $('ci-atrone') ? $('ci-atrone').value : '';
+          if (atr === 'member') return '[ATR One member] ' + notes;
+          if (atr === 'signup') return '[Wants ATR One signup] ' + notes;
+          return notes;
+        })(),
         triage_volts: $('ci-volts').value.trim() || null,
         triage_amps: $('ci-amps').value.trim() || null,
         power_on: $('ci-power').value || null,
@@ -1677,7 +1752,7 @@
         prior_repair: $('ci-prior').value || null,
         warranty_status: $('ci-warranty').value || null,
         source: 'check-in',
-        status: 'Waiting',
+        status: 'Awaiting Diagnostics',
         terms_accepted: true,
         dispatch_acknowledged: true,
         work_auth_accepted: false,
