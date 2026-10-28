@@ -976,7 +976,7 @@
   var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
   var SESSION_KEY = 'atr-account';
 
-  var STATUSES = ['Awaiting Diagnostics', 'Awaiting Estimate', 'Awaiting Customer Response', 'Awaiting Parts', 'En Route to Customer', 'In Progress', 'Quality Control', 'Ready', 'Job Complete'];
+  var STATUSES = ['Awaiting Estimate', 'Awaiting Diagnostics', 'Awaiting Customer Response', 'Awaiting Parts', 'En Route to Customer', 'In Progress', 'Quality Control', 'Ready', 'Job Complete'];
   var STATUS_CLASS = {
     'Awaiting Diagnostics': 'acct-st-waiting',
     'Awaiting Estimate': 'acct-st-waiting',
@@ -1284,7 +1284,7 @@
     { id: 'station-3in1', name: '3-in-1 Wireless Charging Station', price: 44.99 }
   ];
 
-  var TICKET_STATUSES = ['Awaiting Diagnostics', 'Awaiting Estimate', 'Awaiting Customer Response', 'Awaiting Parts', 'En Route to Customer', 'In Progress', 'Quality Control', 'Ready', 'Job Complete'];
+  var TICKET_STATUSES = ['Awaiting Estimate', 'Awaiting Diagnostics', 'Awaiting Customer Response', 'Awaiting Parts', 'En Route to Customer', 'In Progress', 'Quality Control', 'Ready', 'Job Complete'];
   var ORDER_STATUSES = ['New', 'Processing', 'Shipped/Ready', 'Completed', 'Cancelled'];
   var PO_STATUSES = ['Draft', 'Ordered', 'Received', 'Cancelled'];
 

@@ -1987,8 +1987,8 @@
             <h3>Repair Tickets</h3>
             <select id="emp-ticket-filter" aria-label="Filter tickets by status">
               <option value="all">All statuses</option>
-              <option value="Awaiting Diagnostics">Awaiting Diagnostics</option>
               <option value="Awaiting Estimate">Awaiting Estimate</option>
+              <option value="Awaiting Diagnostics">Awaiting Diagnostics</option>
               <option value="Awaiting Customer Response">Awaiting Customer Response</option>
               <option value="Awaiting Parts">Awaiting Parts</option>
               <option value="En Route to Customer">En Route to Customer</option>
@@ -3162,8 +3162,8 @@
   var currentCust = null, repairsWired = false, openTicket = null;
   window.atrCustomer = function () { return currentCust; };
   var STATUS_COPY = {
-    'Awaiting Diagnostics': { label: 'Awaiting diagnostics', note: "We've got your request \u2014 we'll diagnose it and text you to confirm your appointment window." },
-    'Awaiting Estimate': { label: 'Awaiting estimate', note: 'Diagnosis is done. We are working out your flat price and will text it to you.' },
+    'Awaiting Diagnostics': { label: 'Awaiting diagnostics', note: "We'll diagnose it and text you to confirm your appointment window." },
+    'Awaiting Estimate': { label: 'Awaiting estimate', note: 'We are working out your flat price and will text it to you.' },
     'Awaiting Customer Response': { label: 'Awaiting your response', note: 'We sent you an estimate. Reply to it and we will get your repair moving.' },
     'Awaiting Parts': { label: 'Awaiting parts', note: 'Your part is ordered and on its way to us. We\'ll text you when it\'s in.' },
     'En Route to Customer': { label: 'On the way to you', note: 'Your technician is on the way to your home or office.' },
