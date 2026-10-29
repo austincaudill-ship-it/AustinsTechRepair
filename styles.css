@@ -1529,3 +1529,7 @@ a.service-card { text-decoration: none; color: inherit; display: block; }
    dead center, inside the orange circle with a deeper orange ring. */
 .a11y-btn{width:52px;height:52px;min-width:52px;background:var(--brand);border:2px solid var(--brand-deep);color:#fff}
 .a11y-btn i{font-size:1.55rem;line-height:1;color:#fff}
+/* Icon v3 (Oct 29): the font glyph rendered off-center, so the button now
+   uses an inline SVG figure, grid-centered exactly in the circle. */
+.a11y-btn{display:grid;place-items:center}
+.a11y-btn .a11y-ico{display:block}
