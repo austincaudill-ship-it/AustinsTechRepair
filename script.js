@@ -1,6 +1,6 @@
 /* ==========================================================================
    AUSTIN'S TECH REPAIR GROUP — SITE SCRIPT
-   Router + repair wizard + price-match calculator + lead capture.
+   Router + repair wizard + lead capture.
    ========================================================================== */
 
 (function () {
@@ -63,27 +63,6 @@
     }
     if (menuClose && mobileMenu) {
       menuClose.addEventListener('click', function () { mobileMenu.setAttribute('aria-hidden', 'true'); });
-    }
-
-    /* ---------------- Price-match calculator ---------------- */
-    var priceMatchForm = document.getElementById('priceMatchForm');
-    if (priceMatchForm) {
-      priceMatchForm.addEventListener('submit', function (e) {
-        e.preventDefault();
-        var ourPrice = parseFloat(document.getElementById('ourPrice').value) || 0;
-        var compPrice = parseFloat(document.getElementById('competitorPrice').value) || 0;
-        var resultDiv = document.getElementById('priceMatchResult');
-        if (!resultDiv) return;
-        resultDiv.classList.add('show');
-        if (compPrice > 0 && compPrice < ourPrice) {
-          var beaten = Math.max(0, compPrice - 10).toFixed(2);
-          resultDiv.innerHTML = '<strong style="color:#F5B04C;">Price-match guaranteed!</strong><br>We\'ll beat their quote by $10 &mdash; your price: <strong style="font-size:1.4rem;">$' + beaten + '</strong>';
-        } else if (compPrice > 0) {
-          resultDiv.innerHTML = 'Our estimate of <strong>$' + ourPrice.toFixed(2) + '</strong> is already the best value around.';
-        } else {
-          resultDiv.innerHTML = 'Enter both prices to see your guaranteed price.';
-        }
-      });
     }
 
     /* ---------------- Repair wizard ---------------- */
