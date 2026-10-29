@@ -439,7 +439,7 @@ a { color: var(--brand); }
 .footer-container { max-width: var(--content-wide); margin: 0 auto; padding: 0 1.5rem; }
 .footer-top { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 2.5rem; margin-bottom: 3rem; }
 .footer-col-title { font-family: var(--font-display); font-weight: 700; color: #FAF6EE; font-size: 1.05rem; margin-bottom: 1.1rem; display: block; }
-.footer-link { display: block; color: #B9A98F; text-decoration: none; margin-bottom: 0.7rem; transition: color var(--transition); font-size: 0.9rem; }
+.footer-link { display: block; color: #B9A98F; text-decoration: none; margin-bottom: 0.7rem; transition: color var(--transition); font-size: 0.9rem; overflow-wrap: anywhere; }
 .footer-link:hover { color: var(--gold); }
 .footer-disclaimer { font-size: 0.60rem; color: #8d7d66; line-height: 1.65; margin-bottom: 1.8rem; border-top: 1px solid #3d3226; padding-top: 2rem; }
 .footer-disclaimer strong { color: #c9a86a; }
