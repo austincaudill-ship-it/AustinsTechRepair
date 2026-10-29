@@ -965,9 +965,19 @@
   });
 })();
 
-/* ==================== ATR MY REPAIRS: TICKETS & MESSAGING ==================== */
+/* ==================== ATR MY REPAIRS: TICKETS & MESSAGING ====================
+   DISABLED 2026-10-29: this legacy module duplicated the account module in
+   index.html — both rendered into the same containers (#acct-ticket-list,
+   #acct-thread, #acct-messages) with different presentation. The index.html
+   inline "ATRG Account Rebuild" module is now the single owner of the
+   customer Repairs view. The early return below keeps this IIFE inert: its
+   DOMContentLoaded listener is never registered. The module is fully
+   self-contained (closure-private, no exports), and nothing else in this
+   file calls into it — the separate account/rewards module above and the
+   employee hub below are untouched. */
 (function () {
   'use strict';
+  return; // disabled — see note above
 
   var SUPABASE_URL = 'https://lyujxpuicarblpkdzuuc.supabase.co';
   var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';

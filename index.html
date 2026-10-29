@@ -982,6 +982,8 @@
           <div class="acct-thread" id="acct-thread" hidden>
             <button class="btn btn-outline btn-sm" id="acct-thread-back" type="button"><i class="fas fa-arrow-left"></i> Back to repairs</button>
             <div class="acct-thread-info" id="acct-thread-info"></div>
+            <div id="acct-parts"></div>
+            <div id="acct-charges"></div>
             <div class="acct-messages" id="acct-messages"></div>
             <form id="acct-msg-form" novalidate>
               <div class="acct-msg-row">
@@ -2958,6 +2960,14 @@
   .acct-profile{border-top:1px solid var(--line,#e5d9c8);margin-top:18px;padding-top:14px}
   .acct-profile h4{margin:0 0 8px}
   .acct-profile-line{margin:0 0 10px}
+  .acct-detail-h{font-family:var(--font-display);font-size:1.05rem;color:var(--ink);margin:18px 0 6px}
+  .acct-detail-h i{color:var(--brand);margin-right:.35rem}
+  .acct-line{display:flex;gap:.75rem;align-items:flex-start;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid var(--line,#e5d9c8)}
+  .acct-line-main{display:flex;flex-direction:column;gap:.15rem;min-width:0}
+  .acct-line-meta{color:var(--muted,#8a7a68);font-size:.88rem}
+  .acct-line-meta a{color:var(--brand);font-weight:700}
+  .acct-line-amt{font-weight:700;white-space:nowrap}
+  .acct-total-row{border-bottom:none}
 </style>
 <script>
 /* ===== ATRG Account Rebuild: real sign-in + legacy link + profile =====
@@ -3132,7 +3142,76 @@
     if (r) r.hidden = true; if (nt) nt.hidden = true; if (th) th.hidden = false;
     var info = $('acct-thread-info');
     if (info) info.innerHTML = '<strong>' + escX(ticketDevice(t)) + '</strong> ' + statusPill(t.status) + '<br><span class="acct-muted">' + escX(t.issue || '') + '</span>';
+    loadTicketParts(t);
+    loadTicketCharges(t);
     loadThreadMessages(t);
+  }
+  function fmtMoneyX(n) { var v = Number(n); if (isNaN(v)) v = 0; return '$' + v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function fmtDayX(iso) { try { return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }); } catch (e) { return ''; } }
+  function trackUrlX(carrier, num) {
+    if (!num) return '';
+    var n = encodeURIComponent(String(num).trim());
+    if (carrier === 'FedEx') return 'https://www.fedex.com/fedextrack/?trknbr=' + n;
+    if (carrier === 'UPS') return 'https://www.ups.com/track?tracknum=' + n;
+    if (carrier === 'USPS') return 'https://tools.usps.com/go/TrackConfirmAction?tLabels=' + n;
+    return '';
+  }
+  var PART_STATUS_COPY = { 'Ordered': 'Ordered \u2014 on its way to us', 'Received': 'In hand', 'Cancelled': 'Cancelled' };
+  var CHARGE_KIND_COPY = { 'part': 'Part', 'labor': 'Labor', 'one_off': 'Other charge', 'dispatch': 'House-call fee', 'deposit_credit': 'Deposit received' };
+  function loadTicketParts(t) {
+    var box = $('acct-parts');
+    if (!box || !sb) return;
+    box.innerHTML = '';
+    sb.from('customer_part_orders').select('id, description, retail_price, qty, status, carrier, tracking_number, order_number, received_at, created_at')
+      .eq('ticket_id', t.id).order('created_at', { ascending: true })
+      .then(function (res) {
+        if (res.error) throw res.error;
+        var rows = res.data || [];
+        if (!rows.length) { box.innerHTML = ''; return; }
+        box.innerHTML = '<h4 class="acct-detail-h"><i class="fas fa-box-open"></i> Parts for this repair</h4>' + rows.map(function (p) {
+          var meta = escX(PART_STATUS_COPY[p.status] || p.status || '') + ' \u00b7 Qty ' + escX(p.qty == null ? 1 : p.qty) +
+            (p.order_number ? ' \u00b7 Order #' + escX(p.order_number) : '') +
+            (p.received_at ? ' \u00b7 Received ' + escX(fmtDayX(p.received_at)) : '');
+          var html = '<div class="acct-line"><div class="acct-line-main"><strong>' + escX(p.description || 'Part') + '</strong>' +
+            '<span class="acct-line-meta">' + meta + '</span>';
+          if (p.tracking_number && String(p.tracking_number).trim() !== '') {
+            var url = trackUrlX(p.carrier, p.tracking_number);
+            html += '<span class="acct-line-meta">' + (p.carrier ? escX(p.carrier) + ' tracking: ' : 'Tracking: ') + escX(p.tracking_number) +
+              (url ? ' \u00b7 <a href="' + url + '" target="_blank" rel="noopener">Track package</a>' : '') + '</span>';
+          }
+          html += '</div>' + (p.retail_price != null ? '<div class="acct-line-amt">' + fmtMoneyX(p.retail_price) + '</div>' : '') + '</div>';
+          return html;
+        }).join('');
+      })
+      .catch(function () { box.innerHTML = ''; });
+  }
+  function loadTicketCharges(t) {
+    var box = $('acct-charges');
+    if (!box || !sb) return;
+    box.innerHTML = '';
+    sb.from('customer_ticket_charges').select('id, kind, description, qty, unit_price, created_at')
+      .eq('ticket_id', t.id).order('created_at', { ascending: true })
+      .then(function (res) {
+        if (res.error) throw res.error;
+        var rows = res.data || [];
+        if (!rows.length) { box.innerHTML = ''; return; }
+        var subtotal = 0, deposits = 0;
+        var lines = rows.map(function (c) {
+          var qty = Number(c.qty || 0), price = Number(c.unit_price || 0), amt = qty * price;
+          var isDeposit = c.kind === 'deposit_credit';
+          if (isDeposit) deposits += amt; else subtotal += amt;
+          return '<div class="acct-line"><div class="acct-line-main"><strong>' + escX(CHARGE_KIND_COPY[c.kind] || 'Charge') + '</strong>' +
+            '<span class="acct-line-meta">' + escX(c.description || '') + ' \u00b7 ' + escX(qty) + ' \u00d7 ' + fmtMoneyX(price) + '</span></div>' +
+            '<div class="acct-line-amt">' + (isDeposit ? '\u2212' : '') + fmtMoneyX(amt) + '</div></div>';
+        }).join('');
+        var totals = '<div class="acct-line acct-total-row"><div class="acct-line-main"><strong>Subtotal</strong></div><div class="acct-line-amt">' + fmtMoneyX(subtotal) + '</div></div>';
+        if (deposits) {
+          totals += '<div class="acct-line"><div class="acct-line-main"><strong>Deposits received</strong></div><div class="acct-line-amt">\u2212' + fmtMoneyX(deposits) + '</div></div>' +
+            '<div class="acct-line acct-total-row"><div class="acct-line-main"><strong>Balance due</strong></div><div class="acct-line-amt">' + fmtMoneyX(subtotal - deposits) + '</div></div>';
+        }
+        box.innerHTML = '<h4 class="acct-detail-h"><i class="fas fa-receipt"></i> Charges</h4>' + lines + totals;
+      })
+      .catch(function () { box.innerHTML = ''; });
   }
   function loadThreadMessages(t) {
     var box = $('acct-messages');

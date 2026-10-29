@@ -567,6 +567,9 @@ function loadTicketThread(client, ticketId) {
           '<div class="p2-form-row"><input id="p2-part-cost" type="number" step="0.01" min="0" placeholder="Our cost $" aria-label="Our cost" />' +
           '<input id="p2-part-retail" type="number" step="0.01" min="0" placeholder="Customer price $" aria-label="Customer price" />' +
           '<input id="p2-part-qty" type="number" step="1" min="1" value="1" aria-label="Quantity" /></div>' +
+          '<div class="p2-form-row"><select id="p2-part-carrier" aria-label="Carrier"><option value="">Carrier</option><option value="FedEx">FedEx</option><option value="UPS">UPS</option><option value="USPS">USPS</option><option value="Other">Other</option></select>' +
+          '<input id="p2-part-tracking" type="text" placeholder="Tracking number" maxlength="80" aria-label="Tracking number" />' +
+          '<input id="p2-part-ordernum" type="text" placeholder="Order number" maxlength="80" aria-label="Order number" /></div>' +
           '<label class="p2-check"><input type="checkbox" id="p2-part-addcharge" checked /> Add the customer price to Charges as a part line</label>' +
           '<button class="portal-btn portal-btn-primary portal-btn-sm" type="submit">Add part order</button>' +
           '<p class="portal-error" id="p2-part-error" hidden></p></form></div>' +
@@ -580,7 +583,7 @@ function loadTicketThread(client, ticketId) {
           '<div class="portal-status-row"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="portal-timer-btn">Start timer</button>' +
           '<span class="portal-muted portal-small" id="portal-timer-msg"></span></div>' +
           '<div id="portal-timer-list"></div></div>' +
-          '<div class="portal-drawer-section"><h3>Messages &amp; notes</h3>' +
+          '<div class="portal-drawer-section"><h3>Message customer</h3>' +
           '<div class="portal-thread" id="portal-thread"><p class="portal-muted">Loading messages&hellip;</p></div>' +
           '<form id="portal-note-form"><div class="portal-note-row">' +
           '<textarea id="portal-note-input" placeholder="Add a note to this ticket&hellip;" maxlength="2000" aria-label="Add a note to this ticket"></textarea>' +
@@ -636,6 +639,7 @@ function loadTicketThread(client, ticketId) {
           client.from('tickets').update({ status: next }).eq('id', t.id).then(function (res2) {
             if (res2.error) { msg.textContent = 'Couldn&rsquo;t save — try again.'; return; }
             msg.textContent = 'Saved.';
+            if (next === 'Awaiting Parts') { showTrackingPopup(client, t); }
             if (next === 'Ready' && trim(t.customer_phone)) {
               var digits = String(t.customer_phone).replace(/\D/g, '');
               if (digits.length === 10) digits = '1' + digits;
@@ -721,6 +725,27 @@ function loadTicketThread(client, ticketId) {
     }).catch(function () {});
   }
 
+  var CARRIERS = ['FedEx', 'UPS', 'USPS', 'Other'];
+  function carrierOptions(sel) {
+    return '<option value="">Carrier</option>' + CARRIERS.map(function (c) {
+      return '<option value="' + c + '"' + (sel === c ? ' selected' : '') + '>' + c + '</option>';
+    }).join('');
+  }
+  function trackingUrl(carrier, num) {
+    if (!num) return null;
+    var n = encodeURIComponent(String(num).trim());
+    if (carrier === 'FedEx') return 'https://www.fedex.com/fedextrack/?trknbr=' + n;
+    if (carrier === 'UPS') return 'https://www.ups.com/track?tracknum=' + n;
+    if (carrier === 'USPS') return 'https://tools.usps.com/go/TrackConfirmAction?tLabels=' + n;
+    return null;
+  }
+  function trackingHtml(p) {
+    if (!p.tracking_number) return '';
+    var url = trackingUrl(p.carrier, p.tracking_number);
+    if (url) return ' <a href="' + url + '" target="_blank" rel="noopener">' + esc(p.tracking_number) + '</a>';
+    return ' <span class="portal-muted portal-small">' + esc(p.tracking_number) + '</span>';
+  }
+
   function renderParts(t, rows) {
     var box = $('p2-parts');
     if (!box) return;
@@ -738,10 +763,19 @@ function loadTicketThread(client, ticketId) {
         ' &times;' + esc(p.qty) +
         (p.our_cost != null ? ' · our cost ' + fmtMoney(p.our_cost) : '') +
         (p.retail_price != null ? ' · customer ' + fmtMoney(p.retail_price) : '') +
-        (p.received_at ? ' · received ' + esc(fmtDate(p.received_at)) : '') + '</span></div>' +
+        (p.carrier ? ' · ' + esc(p.carrier) : '') +
+        (p.order_number ? ' · order #' + esc(p.order_number) : '') +
+        (p.received_at ? ' · received ' + esc(fmtDate(p.received_at)) : '') + '</span>' + trackingHtml(p) + '</div>' +
         '<select class="p2-part-status" data-part-id="' + esc(p.id) + '" aria-label="Part status">' + statusOpts + '</select>' +
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-part-label="' + esc(p.id) + '"><i class="fas fa-tag"></i> Label</button>' +
-        '<button class="p2-x" type="button" data-part-del="' + esc(p.id) + '" aria-label="Remove part order">&times;</button></div>';
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-part-track="' + esc(p.id) + '"><i class="fas fa-truck"></i> Tracking</button>' +
+        '<button class="p2-x" type="button" data-part-del="' + esc(p.id) + '" aria-label="Remove part order">&times;</button></div>' +
+        '<div class="p2-track-edit" data-part-track-edit="' + esc(p.id) + '" hidden>' +
+        '<div class="p2-form-row"><select data-track-carrier aria-label="Carrier">' + carrierOptions(p.carrier) + '</select>' +
+        '<input type="text" data-track-number placeholder="Tracking number" maxlength="80" aria-label="Tracking number" value="' + esc(p.tracking_number || '') + '" />' +
+        '<input type="text" data-track-order placeholder="Order number" maxlength="80" aria-label="Order number" value="' + esc(p.order_number || '') + '" /></div>' +
+        '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-part-track-save="' + esc(p.id) + '">Save tracking</button> ' +
+        '<span class="portal-muted portal-small" data-track-msg></span></div>';
     }).join('');
     box.querySelectorAll('.p2-part-status').forEach(function (sel) {
       sel.addEventListener('change', function () {
@@ -775,6 +809,32 @@ function loadTicketThread(client, ticketId) {
         if (part) printPartLabel(t, part);
       });
     });
+    box.querySelectorAll('[data-part-track]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var ed = box.querySelector('[data-part-track-edit="' + btn.getAttribute('data-part-track') + '"]');
+        if (ed) ed.hidden = !ed.hidden;
+      });
+    });
+    box.querySelectorAll('[data-part-track-save]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = btn.getAttribute('data-part-track-save');
+        var ed = box.querySelector('[data-part-track-edit="' + id + '"]');
+        if (!ed) return;
+        var msg = ed.querySelector('[data-track-msg]');
+        if (msg) msg.textContent = 'Saving\u2026';
+        var patch = {
+          carrier: ed.querySelector('[data-track-carrier]').value || null,
+          tracking_number: trim(ed.querySelector('[data-track-number]').value) || null,
+          order_number: trim(ed.querySelector('[data-track-order]').value) || null
+        };
+        withClient(function (client) {
+          client.from('part_orders').update(patch).eq('id', id).then(function (res) {
+            if (res.error) { if (msg) msg.textContent = 'Couldn\u2019t save \u2014 try again.'; return; }
+            loadParts(client, t);
+          }).catch(function () { if (msg) msg.textContent = 'Couldn\u2019t save \u2014 try again.'; });
+        });
+      });
+    });
   }
 
   function loadParts(client, t) {
@@ -783,6 +843,60 @@ function loadTicketThread(client, ticketId) {
       t._parts = res.data || [];
       renderParts(t, t._parts);
     }).catch(function () {});
+  }
+
+  /* Awaiting Parts popup: when a ticket is set to Awaiting Parts, ask for the
+   * newest part's carrier / tracking number / order number right then.
+   * N.A. closes it saving nothing — tracking can be added later from the
+   * part's Tracking button. Never blocks the status change itself. */
+  function showTrackingPopup(client, t) {
+    client.from('part_orders').select('*').eq('ticket_id', t.id).order('created_at', { ascending: false }).limit(1).then(function (res) {
+      var part = (!res.error && res.data && res.data[0]) || null;
+      buildTrackingPopup(client, t, part);
+    }).catch(function () { buildTrackingPopup(client, t, null); });
+  }
+
+  function buildTrackingPopup(client, t, part) {
+    var old = document.getElementById('p2-track-popup');
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+    var wrap = document.createElement('div');
+    wrap.id = 'p2-track-popup';
+    wrap.setAttribute('style', 'position:fixed;inset:0;background:rgba(44,35,26,0.55);z-index:3000;display:flex;align-items:center;justify-content:center;padding:1rem;');
+    var card = '<div style="background:#FAF6EE;color:#2C231A;border-radius:14px;max-width:430px;width:100%;padding:1.25rem;box-shadow:0 18px 50px rgba(0,0,0,0.35);">' +
+      '<h3 style="margin:0 0 0.5rem;">Part tracking</h3>';
+    if (part) {
+      card += '<p class="portal-muted portal-small" style="margin:0 0 0.75rem;">This ticket is now Awaiting Parts. Add the shipping details for <strong>' + esc(part.description) + '</strong> and the customer can follow the package. No tracking yet? Tap N.A. and add it later from the part&rsquo;s Tracking button.</p>' +
+        '<div class="portal-field"><label for="p2-pop-carrier">Carrier</label><select id="p2-pop-carrier">' + carrierOptions(part.carrier) + '</select></div>' +
+        '<div class="portal-field"><label for="p2-pop-number">Tracking number</label><input type="text" id="p2-pop-number" maxlength="80" value="' + esc(part.tracking_number || '') + '" /></div>' +
+        '<div class="portal-field"><label for="p2-pop-order">Order number</label><input type="text" id="p2-pop-order" maxlength="80" value="' + esc(part.order_number || '') + '" /></div>';
+    } else {
+      card += '<p class="portal-muted portal-small" style="margin:0 0 0.75rem;">This ticket is now Awaiting Parts, but no part has been added to it yet. Add the part in the Parts section, then use its Tracking button to enter the carrier, tracking number, and order number when you have them.</p>';
+    }
+    card += '<div class="p2-actions" style="margin-top:0.75rem;">' +
+      (part ? '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-pop-save">Save tracking</button> ' : '') +
+      '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-pop-na">' + (part ? 'N.A.' : 'N.A. &mdash; add the part first') + '</button>' +
+      '<span class="portal-muted portal-small" id="p2-pop-msg"></span></div></div>';
+    wrap.innerHTML = card;
+    document.body.appendChild(wrap);
+    function close() { if (wrap.parentNode) wrap.parentNode.removeChild(wrap); }
+    wrap.addEventListener('click', function (e) { if (e.target === wrap) close(); });
+    var na = wrap.querySelector('#p2-pop-na');
+    if (na) na.addEventListener('click', close);
+    var save = wrap.querySelector('#p2-pop-save');
+    if (save && part) save.addEventListener('click', function () {
+      var msg = wrap.querySelector('#p2-pop-msg');
+      if (msg) msg.textContent = 'Saving\u2026';
+      var patch = {
+        carrier: wrap.querySelector('#p2-pop-carrier').value || null,
+        tracking_number: trim(wrap.querySelector('#p2-pop-number').value) || null,
+        order_number: trim(wrap.querySelector('#p2-pop-order').value) || null
+      };
+      client.from('part_orders').update(patch).eq('id', part.id).then(function (res) {
+        if (res.error) { if (msg) msg.textContent = 'Couldn\u2019t save \u2014 try again.'; return; }
+        close();
+        loadParts(client, t);
+      }).catch(function () { if (msg) msg.textContent = 'Couldn\u2019t save \u2014 try again.'; });
+    });
   }
 
   function printArea(html, cls) {
@@ -1033,6 +1147,9 @@ function loadTicketThread(client, ticketId) {
         our_cost: costRaw === '' ? null : parseFloat(costRaw),
         retail_price: retailRaw === '' ? null : parseFloat(retailRaw),
         qty: qty,
+        carrier: trim($('p2-part-carrier').value) || null,
+        tracking_number: trim($('p2-part-tracking').value) || null,
+        order_number: trim($('p2-part-ordernum').value) || null,
         status: 'Ordered'
       };
       client.from('part_orders').insert(part).then(function (res) {
