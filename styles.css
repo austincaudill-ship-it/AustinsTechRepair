@@ -1519,3 +1519,9 @@ a.service-card { text-decoration: none; color: inherit; display: block; }
 .a11y-btn{position:static;width:auto;height:auto;padding:10px 18px;border-radius:999px;font-size:.9rem;font-weight:700;gap:8px}
 .a11y-btn i{font-size:1rem}
 .footer-bottom{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+/* --- Accessibility button: icon-only circle, locked bottom-left of the
+   footer bottom row (Oct 29, Austin). The wide labelled pill overlapped
+   the ATR Group wordmark at tablet widths. Wording removed visually;
+   the aria-label still names it for screen readers. */
+.a11y-btn{position:absolute;left:0;top:50%;transform:translateY(-50%);width:44px;height:44px;min-width:44px;padding:0;border-radius:50%;font-size:0;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.a11y-btn i{font-size:1.2rem}
