@@ -352,6 +352,15 @@ a { color: var(--brand); }
 .progress-step.done .progress-dot { background: var(--teal); border-color: var(--teal); color: #fff; }
 .progress-label { font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
 .progress-step.active .progress-label { color: var(--brand-deep); }
+/* SITE_FORM_BACKNAV_2026_10_30: reached progress steps are tappable to
+   revisit (script.js toggles .nav-enabled); unreached steps stay inert.
+   Each .progress-step is flex:1, so the tap target spans its column on
+   phone widths even though the dot itself is 36px. */
+.progress-step.nav-enabled { cursor: pointer; }
+.progress-step.nav-enabled:hover .progress-dot { border-color: var(--brand); transform: translateY(-1px); }
+.progress-step.nav-enabled:not(.done):hover .progress-dot { color: var(--brand-deep); }
+.progress-step.nav-enabled:hover .progress-label { color: var(--brand-deep); }
+.progress-step.nav-enabled:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; border-radius: 10px; }
 .repair-step { display: none; }
 .repair-step.active { display: block; animation: pageIn 0.3s ease; }
 .repair-step h3 { font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; margin-bottom: 1.1rem; }

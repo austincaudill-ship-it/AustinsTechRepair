@@ -420,6 +420,9 @@
           </div>
 
           <div class="repair-card">
+            <!-- SITE_FORM_BACKNAV_2026_10_30: these progress steps are
+                 tappable to revisit any step already reached (script.js
+                 toggles .nav-enabled); unreached steps stay inert. -->
             <div class="repair-progress">
               <div class="progress-step active" data-step="1"><div class="progress-dot">1</div><span class="progress-label">Device</span></div>
               <div class="progress-step" data-step="2"><div class="progress-dot">2</div><span class="progress-label">Issue</span></div>
@@ -690,6 +693,11 @@
   </div>
 </div>
 <!-- END SNIPPET: service-request -->
+              <!-- SITE_FORM_BACKNAV_2026_10_30: step 4 gets the same Back
+                   button steps 2-3 already had (data-back wiring lives in
+                   script.js); type="button" and outside the form, so it
+                   can never submit the intake. -->
+              <button class="back-btn" type="button" data-back="3" style="margin-top: 1rem;"><i class="fas fa-arrow-left"></i> Back</button>
             </div>
           </div>
 

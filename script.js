@@ -66,6 +66,15 @@
     /* ---------------- Repair wizard ---------------- */
     var repairState = { device: '', brand: '', issue: '', priceRange: '$50 \u2013 $150' };
 
+    /* SITE_FORM_BACKNAV_2026_10_30: step-navigation state. currentRepairStep
+       is the step on screen; furthestRepairStep is the furthest step the
+       customer has legitimately reached through the flow's own forward
+       path. The progress steps at the top can be tapped to revisit any
+       step up to furthestRepairStep, but never to skip ahead into a step
+       that has not been reached yet. */
+    var currentRepairStep = 1;
+    var furthestRepairStep = 1;
+
     var deviceData = {
       'Phone': {
         brands: ['Apple iPhone', 'Samsung Galaxy', 'Google Pixel', 'Other'],
@@ -129,6 +138,10 @@
           document.querySelectorAll('[data-device]').forEach(function (b) { b.classList.remove('selected'); });
           btn.classList.add('selected');
           populateBrandsAndIssues(repairState.device);
+          /* SITE_FORM_BACKNAV_2026_10_30: picking a device resets the
+             brand/issue picks, so steps 3\u20134 must be re-earned before
+             their progress steps become tappable again. */
+          furthestRepairStep = 2;
           goToRepairStep(2);
         });
       });
@@ -141,8 +154,29 @@
 
       var contBtn = document.querySelector('[data-action="continue-contact"]');
       if (contBtn) {
-        contBtn.addEventListener('click', function () { goToRepairStep(4); });
+        contBtn.addEventListener('click', function () {
+          /* SITE_FORM_BACKNAV_2026_10_30: reaching step 4 through Continue
+             is what makes its progress step tappable on later revisits. */
+          furthestRepairStep = 4;
+          goToRepairStep(4);
+        });
       }
+
+      /* SITE_FORM_BACKNAV_2026_10_30: tapping a progress step jumps to any
+         step the customer has already reached — backwards to fix a wrong
+         pick, or forwards again to a reached step. A step that has not
+         been reached yet is inert: the only way into a new step is the
+         flow's own forward path (device \u2192 issue \u2192 Continue). */
+      document.querySelectorAll('.progress-step').forEach(function (p) {
+        function jump() {
+          var n = parseInt(p.getAttribute('data-step'), 10);
+          if (n && n !== currentRepairStep && n <= furthestRepairStep) goToRepairStep(n);
+        }
+        p.addEventListener('click', jump);
+        p.addEventListener('keydown', function (ev) {
+          if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); jump(); }
+        });
+      });
 
       /* Lead source: the "How did you hear about us?" dropdown choice, plus
          automatic signals (external referrer hostname, utm_source param).
@@ -209,6 +243,7 @@
               '<span class="pill"><i class="fas fa-mobile-screen"></i> ' + escapeHtml(repairState.device) + '</span>' +
               '<span class="pill"><i class="fas fa-tag"></i> ' + escapeHtml(repairState.brand || 'Any brand') + '</span>' +
               '<span class="pill"><i class="fas fa-wrench"></i> ' + escapeHtml(repairState.issue) + '</span>';
+            furthestRepairStep = Math.max(furthestRepairStep, 3);
             goToRepairStep(3);
           });
           grid.appendChild(iBtn);
@@ -271,7 +306,15 @@
         var n = parseInt(p.getAttribute('data-step'), 10);
         p.classList.toggle('active', n === stepNum);
         p.classList.toggle('done', n < stepNum);
+        /* SITE_FORM_BACKNAV_2026_10_30: steps that can be tapped to
+           revisit (reached, not current) get the pointer affordance and
+           keyboard focus; unreached and current steps stay inert. */
+        var canNav = n !== stepNum && n <= furthestRepairStep;
+        p.classList.toggle('nav-enabled', canNav);
+        if (canNav) { p.setAttribute('tabindex', '0'); p.setAttribute('role', 'button'); }
+        else { p.removeAttribute('tabindex'); p.removeAttribute('role'); }
       });
+      currentRepairStep = stepNum;
       var card = document.querySelector('.repair-card');
       if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
       if (stepNum === 4) prefillIntakeFromGuided();
