@@ -1743,3 +1743,23 @@ a.acct-points:hover { border-color: var(--gold); }
   border-radius: var(--radius-sm); background: var(--bg); color: var(--ink);
   font-size: 0.95rem; font-family: var(--font-body);
 }
+
+/* ===== SITE_CARD_PHOTOS_2026_10_30 — every service slot now carries one of Austin's photos =====
+   The last icon tiles (Websites / Networking / Classes home cards; the Websites,
+   Network, Cabling, and Classes page banners) use his photos like every other
+   service. Networking differs in treatment only: his cable tester photo is a
+   138x138 original with no larger version, so it is CONTAINED and centered on a
+   backdrop sampled from the photo's own off-white surround (#EAE4DF) — a
+   deliberate product-shot look instead of a blurry full-width stretch.
+   The light backdrop is fixed in both themes on purpose: the photo's own
+   background is light, so a dark letterbox would frame it worse; the tile
+   reads as a product card in light and dark mode alike. */
+img.service-card-img.svc-media-contain { object-fit: contain; background: #EAE4DF; }
+.page-photo-contain { width: 100%; max-width: 720px; margin: 0 auto 1.5rem; border-radius: 12px; background: #EAE4DF; display: flex; align-items: center; justify-content: center; padding: 1.1rem 0; }
+.page-photo-contain img { display: block; height: 168px; width: auto; max-width: calc(100% - 2rem); border-radius: 6px; }
+
+/* ===== SITE_DECLUTTER_2026_10_30 — home declutter / What We Fix rename =====
+   No new rules needed: the home band uses the existing .btn styles, and the
+   full photo service cards that moved from home to the What We Fix page
+   (#whatwedo) reuse the global .card-grid / .service-card rules unchanged
+   (including the contain treatment above for the Networking tester photo). */

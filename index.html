@@ -76,7 +76,7 @@
       <a class="nav-link active" href="#home" data-page="home">Home</a>
       <a class="nav-link" href="#repair" data-page="repair">Repair</a>
       <a class="nav-link" href="#prices" data-page="prices">Prices</a>
-      <a class="nav-link" href="#whatwedo" data-page="whatwedo">What we do</a>
+      <a class="nav-link" href="#whatwedo" data-page="whatwedo">What We Fix</a>
       <a class="nav-link" href="#about" data-page="about">About</a>
       <a class="nav-link" href="#shop" data-page="shop">Shop</a>
       <a class="nav-link" href="#b2b" data-page="b2b">B2B</a>
@@ -105,7 +105,7 @@
         <a class="menu-link active" href="#home" data-page="home">Home</a>
         <a class="menu-link" href="#repair" data-page="repair">Repair</a>
         <a class="menu-link" href="#prices" data-page="prices">Prices</a>
-        <a class="menu-link" href="#whatwedo" data-page="whatwedo">What we do</a>
+        <a class="menu-link" href="#whatwedo" data-page="whatwedo">What We Fix</a>
         <a class="menu-link" href="#about" data-page="about">About</a>
         <a class="menu-link" href="#shop" data-page="shop">Shop</a>
         <a class="menu-link" href="#b2b" data-page="b2b">B2B</a>
@@ -243,17 +243,8 @@
             <h2 class="section-title">Expert repair for every device</h2>
             <p class="section-copy">From cracked screens to complex diagnostics &mdash; handled at your location.</p>
           </div>
-          <div class="card-grid">
-            <!-- SITE_REAL_PHOTOS_2026_10_30: every photo on this site is Austin's own; AI/stock images removed, icon treatment where no photo of his fits -->
-            <a class="service-card" href="#phones" data-page="phones"><img class="service-card-img" src="images/work/phone-repair.jpg" alt="Phone opened for screen repair on a bench" loading="lazy" /><div class="service-icon"><i class="fas fa-mobile-screen"></i></div><h3>Phones</h3><p>Cracked screens, battery swaps, charging ports, cameras, and water damage recovery.</p></a>
-            <a class="service-card" href="#tablets" data-page="tablets"><img class="service-card-img" src="images/work/tablet-teardown-real.webp" alt="Tablet opened for repair on a work mat" loading="lazy" /><div class="service-icon"><i class="fas fa-tablet-screen-button"></i></div><h3>Tablets</h3><p>Display replacement, charging port repair, touch issues, and battery service.</p></a>
-            <a class="service-card" href="#computers" data-page="computers"><img class="service-card-img" src="images/work/hp-laptop-board.jpg" alt="Laptop computer on a repair bench" loading="lazy" /><div class="service-icon"><i class="fas fa-laptop"></i></div><h3>Computers</h3><p>SSD upgrades, RAM installs, virus cleanup, display repair, and data rescue.</p></a>
-            <a class="service-card" href="#consoles" data-page="consoles"><img class="service-card-img" src="images/work/ps4-teardown.jpg" alt="Game console opened for teardown on a bench" loading="lazy" /><div class="service-icon"><i class="fas fa-gamepad"></i></div><h3>Game Consoles</h3><p>HDMI port repair, cooling fans, storage upgrades, and overheating fixes.</p></a>
-            <a class="service-card" href="#websites" data-page="websites"><div class="service-card-img service-card-icon" aria-hidden="true"><i class="fas fa-globe"></i></div><div class="service-icon"><i class="fas fa-globe"></i></div><h3>Websites for Businesses</h3><p>A professional website for your business, built and handled for you &mdash; design, setup, and launch, without the agency price tag.</p></a>
-            <a class="service-card" href="#network" data-page="network"><div class="service-card-img service-card-icon" aria-hidden="true"><i class="fas fa-network-wired"></i></div><div class="service-icon"><i class="fas fa-network-wired"></i></div><h3>Networking</h3><p>Routers, switches, and Wi-Fi access points hooked up and configured &mdash; verified working end to end at your home or office.</p></a>
-            <a class="service-card" href="#classes" data-page="classes"><div class="service-card-img service-card-icon" aria-hidden="true"><i class="fas fa-graduation-cap"></i></div><div class="service-icon"><i class="fas fa-graduation-cap"></i></div><h3>One-on-One Classes</h3><p>We teach you at your home &mdash; hands-on lessons on your own phone, tablet, or computer, at your pace.</p></a>
-            <a class="service-card" href="#smartwatches" data-page="smartwatches"><img class="service-card-img" src="images/work/smartwatch-real.webp" alt="Cracked smartwatch on a wrist" loading="lazy" /><div class="service-icon"><i class="fas fa-clock"></i></div><h3>Smartwatches</h3><p>Screen and battery service for smartwatches of all kinds.</p></a>
-          </div>
+          <!-- SITE_DECLUTTER_2026_10_30: home page decluttered per Austin — the services grid moved off home to the What We Fix page (#whatwedo), which now carries the full photo cards; home keeps one clear path to it -->
+          <p style="text-align:center; margin:0.4rem auto 0;"><a class="btn btn-primary btn-lg" href="#whatwedo" data-page="whatwedo">See What We Fix <i class="fas fa-arrow-right"></i></a></p>
           <p class="section-copy" style="text-align:center; margin:1.6rem auto 0;">One honest note: we&rsquo;re not an internet service provider. But we can recommend a provider and plan, help you get set up, and make everything on your side of the connection work.</p>
         </div>
       </div>
@@ -411,26 +402,27 @@
       </div>
     </section>
 
-    <!-- ==================== WHAT WE DO ==================== -->
-    <!-- SITE_WHATWEDO_PAGE_2026_10_30 + SITE_CLASSES_CARD_2026_10_30 (grid compacted to text tiles and one-on-one classes box added per Austin — no duplicate photo cards): dedicated What We Do page; the nav, mobile menu, and footer "What we do" links land here instead of jumping straight to Phones -->
+    <!-- ==================== WHAT WE FIX ==================== -->
+    <!-- SITE_WHATWEDO_PAGE_2026_10_30 + SITE_CLASSES_CARD_2026_10_30 (grid compacted to text tiles and one-on-one classes box added per Austin — no duplicate photo cards): dedicated What We Fix page; the nav, mobile menu, and footer "What We Fix" links land here instead of jumping straight to Phones. SITE_DECLUTTER_2026_10_30: the full photo service cards moved here from the home page (home grid removed) and this page was renamed from What We Do to What We Fix (section id unchanged) -->
     <section id="whatwedo" class="page">
       <div class="section">
         <div class="container">
           <div class="section-header center">
             <p class="eyebrow">Services</p>
-            <h1 class="section-title">What we do</h1>
+            <h1 class="section-title">What We Fix</h1>
             <p class="section-copy">Repairs and tech services handled at your home or office &mdash; free estimates, and appointments booked in 2-hour arrival windows.</p>
           </div>
           <div class="card-grid">
-            <a class="service-card" href="#phones" data-page="phones"><div class="service-icon"><i class="fas fa-mobile-screen"></i></div><h3>Phones</h3><p>Cracked screens, battery swaps, charging ports, cameras, and water damage recovery.</p></a>
-            <a class="service-card" href="#tablets" data-page="tablets"><div class="service-icon"><i class="fas fa-tablet-screen-button"></i></div><h3>Tablets</h3><p>Display replacement, charging port repair, touch issues, and battery service.</p></a>
-            <a class="service-card" href="#computers" data-page="computers"><div class="service-icon"><i class="fas fa-laptop"></i></div><h3>Computers</h3><p>SSD upgrades, RAM installs, virus cleanup, display repair, and data rescue.</p></a>
-            <a class="service-card" href="#consoles" data-page="consoles"><div class="service-icon"><i class="fas fa-gamepad"></i></div><h3>Game Consoles</h3><p>HDMI port repair, cooling fans, storage upgrades, and overheating fixes.</p></a>
-            <a class="service-card" href="#websites" data-page="websites"><div class="service-icon"><i class="fas fa-globe"></i></div><h3>Websites for Businesses</h3><p>A professional website for your business, built and handled for you &mdash; design, setup, and launch, without the agency price tag.</p></a>
-            <a class="service-card" href="#network" data-page="network"><div class="service-icon"><i class="fas fa-network-wired"></i></div><h3>Networking</h3><p>Routers, switches, and Wi-Fi access points hooked up and configured &mdash; verified working end to end at your home or office.</p></a>
-            <a class="service-card" href="#classes" data-page="classes"><div class="service-icon"><i class="fas fa-graduation-cap"></i></div><h3>One-on-One Classes</h3><p>We teach you at your home &mdash; hands-on lessons on your own devices, at your pace.</p></a>
-            <a class="service-card" href="#smartwatches" data-page="smartwatches"><div class="service-icon"><i class="fas fa-clock"></i></div><h3>Smartwatches</h3><p>Screen and battery service for smartwatches of all kinds.</p></a>
-
+            <!-- SITE_REAL_PHOTOS_2026_10_30: every photo on this site is Austin's own; AI/stock images removed, icon treatment where no photo of his fits -->
+            <!-- SITE_CARD_PHOTOS_2026_10_30: the last icon tiles are gone — the Websites, Networking, and Classes cards and the Websites / Network / Cabling / Classes page banners carry Austin's photos; the Networking cable tester shot is small (138px), so it is contained on a matching backdrop, never stretched -->
+            <a class="service-card" href="#phones" data-page="phones"><img class="service-card-img" src="images/work/phone-repair.jpg" alt="Phone opened for screen repair on a bench" loading="lazy" /><div class="service-icon"><i class="fas fa-mobile-screen"></i></div><h3>Phones</h3><p>Cracked screens, battery swaps, charging ports, cameras, and water damage recovery.</p></a>
+            <a class="service-card" href="#tablets" data-page="tablets"><img class="service-card-img" src="images/work/tablet-teardown-real.webp" alt="Tablet opened for repair on a work mat" loading="lazy" /><div class="service-icon"><i class="fas fa-tablet-screen-button"></i></div><h3>Tablets</h3><p>Display replacement, charging port repair, touch issues, and battery service.</p></a>
+            <a class="service-card" href="#computers" data-page="computers"><img class="service-card-img" src="images/work/hp-laptop-board.jpg" alt="Laptop computer on a repair bench" loading="lazy" /><div class="service-icon"><i class="fas fa-laptop"></i></div><h3>Computers</h3><p>SSD upgrades, RAM installs, virus cleanup, display repair, and data rescue.</p></a>
+            <a class="service-card" href="#consoles" data-page="consoles"><img class="service-card-img" src="images/work/ps4-teardown.jpg" alt="Game console opened for teardown on a bench" loading="lazy" /><div class="service-icon"><i class="fas fa-gamepad"></i></div><h3>Game Consoles</h3><p>HDMI port repair, cooling fans, storage upgrades, and overheating fixes.</p></a>
+            <a class="service-card" href="#websites" data-page="websites"><img class="service-card-img" src="images/values/values-hero-workbench.webp" alt="The workbench where websites are built and handled" loading="lazy" /><div class="service-icon"><i class="fas fa-globe"></i></div><h3>Websites for Businesses</h3><p>A professional website for your business, built and handled for you &mdash; design, setup, and launch, without the agency price tag.</p></a>
+            <a class="service-card" href="#network" data-page="network"><img class="service-card-img svc-media-contain" src="images/work/cable-tester.jpg" alt="Cable tester used to verify network wiring" loading="lazy" /><div class="service-icon"><i class="fas fa-network-wired"></i></div><h3>Networking</h3><p>Routers, switches, and Wi-Fi access points hooked up and configured &mdash; verified working end to end at your home or office.</p></a>
+            <a class="service-card" href="#classes" data-page="classes"><img class="service-card-img" src="images/values/values-education-code.webp" alt="Learning a repair from the printed guide at the bench" loading="lazy" /><div class="service-icon"><i class="fas fa-graduation-cap"></i></div><h3>One-on-One Classes</h3><p>We teach you at your home &mdash; hands-on lessons on your own phone, tablet, or computer, at your pace.</p></a>
+            <a class="service-card" href="#smartwatches" data-page="smartwatches"><img class="service-card-img" src="images/work/smartwatch-real.webp" alt="Cracked smartwatch on a wrist" loading="lazy" /><div class="service-icon"><i class="fas fa-clock"></i></div><h3>Smartwatches</h3><p>Screen and battery service for smartwatches of all kinds.</p></a>
           </div>
         </div>
       </div>
@@ -2088,12 +2080,12 @@
           </div>
           <img src="images/work/phone-repair.jpg" alt="Phone repair work" loading="lazy" style="width:100%; max-width:720px; border-radius:12px; display:block; margin:0 auto 1.5rem;" />
           <p>Phones are the device most people live on, so a phone repair is about getting you back to normal without losing your photos, your apps, or your day. We come to you, diagnose the phone in person, and tell you plainly what is wrong before any part is ordered. Most phone work is screens, batteries, and charging ports, but we also handle cameras, speakers, buttons, back glass, and board-level faults that a screen swap will not fix.</p>
-          <h3>What we do</h3>
+          <h3>What we fix</h3>
           <ul><li>Cracked and dead screens, including touch and display problems</li><li>Batteries that drain fast, shut off early, or swell</li><li>Charging ports that only work at an angle or not at all</li><li>Cameras, speakers, microphones, and buttons</li><li>Back glass and water damage checks</li><li>Board-level diagnosis when the fault is deeper than a part</li></ul>
           <h3>Why we should fix it</h3>
           <p>A phone is glued together, with thin cables and a battery that has to be handled right. A rushed home repair can tear a cable, damage a connector, or leave a phone that looks fixed but loses touch or Face ID calibration. We test the screen, touch, charging, camera, and speakers before we leave, and the repair carries a 1-year warranty on parts we supply and on our labor.</p>
           <a class="btn btn-primary" href="#repair" data-page="repair"><i class="fas fa-wrench"></i> Start a Repair</a>
-          <a class="btn btn-outline" href="#home" data-page="home" style="margin-left:0.5rem;">Back to all services</a>
+          <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to What We Fix</a>
         </div>
       </div>
     </section>
@@ -2107,12 +2099,12 @@
           </div>
           <img src="images/work/tablet-teardown-real.webp" alt="Tablet opened for repair on a work mat" loading="lazy" style="width:100%; max-width:720px; border-radius:12px; display:block; margin:0 auto 1.5rem;" />
           <p>Tablets get used hard at home, at school, and at work, and they break in a different way than phones. The glass is bigger, the adhesive holds more, and a tablet screen job takes real time, about 3 hours for a tablet screen. We tape cracked glass first so it does not spread, check whether the tablet powers on and is backed up, and confirm the fault before ordering anything.</p>
-          <h3>What we do</h3>
+          <h3>What we fix</h3>
           <ul><li>Cracked glass and digitizer replacement</li><li>Display replacement and touch problems</li><li>Batteries and charging port repair</li><li>Buttons and speakers</li><li>Diagnosis when a tablet will not power on or charge</li></ul>
           <h3>Why we should fix it</h3>
           <p>Big glass and strong adhesive are where home tablet repairs go wrong. Prying a tablet open without heat and patience cracks the display underneath, and a tablet that is not tested after the repair can leave you with dead touch in one corner. We take the time the job actually needs, test touch across the whole screen, and make sure it charges before we leave.</p>
           <a class="btn btn-primary" href="#repair" data-page="repair"><i class="fas fa-wrench"></i> Start a Repair</a>
-          <a class="btn btn-outline" href="#home" data-page="home" style="margin-left:0.5rem;">Back to all services</a>
+          <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to What We Fix</a>
         </div>
       </div>
     </section>
@@ -2126,12 +2118,12 @@
           </div>
           <img src="images/work/hp-laptop-board.jpg" alt="Laptop on a repair bench" loading="lazy" style="width:100%; max-width:720px; border-radius:12px; display:block; margin:0 auto 1.5rem;" />
           <p>Computers are where a slow machine, a dead screen, or a lost file turns into a work problem. We fix laptops and desktops of all kinds, at your place. We start by finding whether the fault is hardware, software, or both, because replacing a part will not fix a software problem, and reinstalling software will not fix a failing drive.</p>
-          <h3>What we do</h3>
+          <h3>What we fix</h3>
           <ul><li>Laptop and desktop screen replacement</li><li>SSD upgrades and RAM installs for slow machines</li><li>Battery and keyboard replacement</li><li>Virus cleanup and software problems</li><li>Data rescue when a drive is failing or a machine will not boot</li><li>Board-level work when the fault is on the board itself</li></ul>
           <h3>Why we should fix it</h3>
           <p>A computer repair is only worth doing if the machine is actually better when we leave. That means testing after the upgrade, checking that your files and programs are still there, and telling you honestly when a manufacturer repair is the better option for the same price. We do not guess at parts, and we do not leave a machine half working.</p>
           <a class="btn btn-primary" href="#repair" data-page="repair"><i class="fas fa-wrench"></i> Start a Repair</a>
-          <a class="btn btn-outline" href="#home" data-page="home" style="margin-left:0.5rem;">Back to all services</a>
+          <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to What We Fix</a>
         </div>
       </div>
     </section>
@@ -2145,12 +2137,12 @@
           </div>
           <img src="images/work/ps4-teardown.jpg" alt="Game console opened for service" loading="lazy" style="width:100%; max-width:720px; border-radius:12px; display:block; margin:0 auto 1.5rem;" />
           <p>Game consoles fail in ways that look like a software problem but are usually hardware: overheating, a disc drive that will not read, or an HDMI port that has been knocked loose. We diagnose the console properly first, because a console that overheats needs a fan and cleaning, not a new hard drive, and a console that will not read discs needs the drive checked, not a reset.</p>
-          <h3>What we do</h3>
+          <h3>What we fix</h3>
           <ul><li>HDMI port repair</li><li>Disc drive repair and replacement</li><li>Cooling fans, cleaning, and overheating fixes</li><li>Storage upgrades</li><li>Controller repair</li><li>Board-level diagnosis for consoles that will not power on</li></ul>
           <h3>Why we should fix it</h3>
           <p>Consoles are packed tight, with small connectors and heat that builds up fast. Opening one without the right tools can damage the board or the drive, and a console that is put back together without testing will fail again the first time it gets hot. We test the console under load before we leave, so it plays, reads discs, and stays cool.</p>
           <a class="btn btn-primary" href="#repair" data-page="repair"><i class="fas fa-wrench"></i> Start a Repair</a>
-          <a class="btn btn-outline" href="#home" data-page="home" style="margin-left:0.5rem;">Back to all services</a>
+          <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to What We Fix</a>
         </div>
       </div>
     </section>
@@ -2164,12 +2156,12 @@
           </div>
           <img src="images/work/smartwatch-real.webp" alt="Cracked smartwatch on a wrist" loading="lazy" style="width:100%; max-width:720px; border-radius:12px; display:block; margin:0 auto 1.5rem;" />
           <p>Smartwatches are small, and every repair on one is fiddly. Screens crack, batteries stop holding a charge, and charging stops working when the contacts wear. We handle smartwatches of all kinds, and we are honest up front when a watch is too small or too sealed to repair well, instead of taking it apart and hoping.</p>
-          <h3>What we do</h3>
+          <h3>What we fix</h3>
           <ul><li>Cracked watch screens</li><li>Batteries that will not hold a charge</li><li>Charging problems</li><li>Buttons and bands</li><li>Pairing and software checks</li></ul>
           <h3>Why we should fix it</h3>
           <p>The size is the whole problem with watches. Tiny screws, glued parts, and seals that are hard to restore once opened mean a home repair can easily lose a part or crack a small screen. We work on a bench with the right tools, test the screen, touch, charging, and pairing with your phone, and tell you before we start if the repair is not worth doing.</p>
           <a class="btn btn-primary" href="#repair" data-page="repair"><i class="fas fa-wrench"></i> Start a Repair</a>
-          <a class="btn btn-outline" href="#home" data-page="home" style="margin-left:0.5rem;">Back to all services</a>
+          <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to What We Fix</a>
         </div>
       </div>
     </section>
@@ -2181,14 +2173,14 @@
             <p class="eyebrow">Services</p>
             <h2 class="section-title">Websites for Businesses</h2>
           </div>
-          <div class="page-icon-banner" aria-hidden="true"><i class="fas fa-globe"></i></div>
+          <img src="images/values/values-hero-workbench.webp" alt="The workbench where websites are built and handled" loading="lazy" style="width:100%; max-width:720px; border-radius:12px; display:block; margin:0 auto 1.5rem;" />
           <p>A website for a business is not a brochure, it is how customers find you, call you, and book you. We build small business websites, from a simple site up to a site with booking and contact forms and an online store, and we handle design, setup, and launch for you. You do not have to learn a builder, chase a domain, or figure out why a form is not sending.</p>
-          <h3>What we do</h3>
+          <h3>What we fix</h3>
           <ul><li>Small business websites, up to 5 pages and up</li><li>Booking and contact forms that actually reach you</li><li>Online store setup</li><li>Fixes and updates to an existing site</li></ul>
           <h3>Why we should fix it</h3>
           <p>A half-finished website costs real customers, and a site with a broken form or a wrong phone number is worse than no site at all. We build it end to end, check that the phone number, the forms, and the booking all work, and show you how to update it. It is built for your business, not an agency template with an agency price tag.</p>
           <a class="btn btn-primary" href="#repair" data-page="repair"><i class="fas fa-wrench"></i> Start a Repair</a>
-          <a class="btn btn-outline" href="#home" data-page="home" style="margin-left:0.5rem;">Back to all services</a>
+          <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to What We Fix</a>
         </div>
       </div>
     </section>
@@ -2200,14 +2192,14 @@
             <p class="eyebrow">Services</p>
             <h2 class="section-title">Network Installs</h2>
           </div>
-          <div class="page-icon-banner" aria-hidden="true"><i class="fas fa-network-wired"></i></div>
+          <div class="page-photo-contain"><img src="images/work/cable-tester.jpg" alt="Cable tester used to verify network wiring" loading="lazy" /></div>
           <p>Network installs are about making Wi-Fi and wired internet work everywhere in a home or small business, not just next to the router. We hook up and configure routers, switches, and Wi-Fi access points, and we verify everything working end to end before we leave. If a room has no signal, a device keeps dropping, or a new office needs a full setup, that is the job.</p>
-          <h3>What we do</h3>
+          <h3>What we fix</h3>
           <ul><li>Routers, hooked up and configured</li><li>Switches, hooked up and configured</li><li>Wi-Fi access points, including whole-home Wi-Fi</li><li>Verification that every room and device works</li></ul>
           <h3>Why we should fix it</h3>
           <p>Network gear fights itself when it is guessed at. Two routers, a bad setting, or an access point in the wrong spot can leave one room dead while the rest works fine. We configure it as one system and test every room, so you are not left restarting a router every day. We are not an internet service provider, but we can recommend a provider and plan and make everything on your side of the connection work.</p>
           <a class="btn btn-primary" href="#repair" data-page="repair"><i class="fas fa-wrench"></i> Start a Repair</a>
-          <a class="btn btn-outline" href="#home" data-page="home" style="margin-left:0.5rem;">Back to all services</a>
+          <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to What We Fix</a>
         </div>
       </div>
     </section>
@@ -2219,14 +2211,14 @@
             <p class="eyebrow">Services</p>
             <h2 class="section-title">Internet Cabling</h2>
           </div>
-          <div class="page-icon-banner" aria-hidden="true"><i class="fas fa-plug"></i></div>
+          <img src="images/values/values-transparency-parts.webp" alt="Cables and parts organized on the shop wall" loading="lazy" style="width:100%; max-width:720px; border-radius:12px; display:block; margin:0 auto 1.5rem;" />
           <p>Internet cabling is the physical work behind a reliable connection: running Ethernet cable through a home or small business, terminating it properly, and testing it. Wired connections do not drop the way Wi-Fi does, which is why offices, gaming setups, and home offices still need them. We run clean, finished cable, not loose wire across a floor.</p>
-          <h3>What we do</h3>
+          <h3>What we fix</h3>
           <ul><li>Ethernet cable runs to a room, terminated and tested</li><li>Wall plates, installed and terminated</li><li>Attic and crawl space runs</li><li>Homes and small businesses</li></ul>
           <h3>Why we should fix it</h3>
           <p>Cabling fails quietly when it is not tested. A bad termination looks finished but drops the connection, and finding it later means opening walls again. We test every run before we leave, finish the wall plate, and confirm the connection works at the device, not just at the router.</p>
           <a class="btn btn-primary" href="#repair" data-page="repair"><i class="fas fa-wrench"></i> Start a Repair</a>
-          <a class="btn btn-outline" href="#home" data-page="home" style="margin-left:0.5rem;">Back to all services</a>
+          <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to What We Fix</a>
         </div>
       </div>
     </section>
@@ -2239,14 +2231,14 @@
             <p class="eyebrow">Services</p>
             <h2 class="section-title">One-on-One Classes</h2>
           </div>
-          <div class="page-icon-banner" aria-hidden="true"><i class="fas fa-graduation-cap"></i></div>
+          <img src="images/values/values-education-code.webp" alt="Learning a repair from the printed guide at the bench" loading="lazy" style="width:100%; max-width:720px; border-radius:12px; display:block; margin:0 auto 1.5rem;" />
           <p>Some technology does not need fixing &mdash; it needs explaining. Our one-on-one classes happen right at your home, on your own devices. We sit down with you, hands on, and show you how your tech works, one question at a time. We don&rsquo;t just fix &mdash; we are also a walking, talking user guide.</p>
           <h3>What we can help with</h3>
           <ul><li>Learning to code, step by step, at your pace</li><li>Making a website of your own</li><li>Using your phone &mdash; calls, apps, settings, and photos</li><li>Using your tablet</li><li>Using your computer</li><li>Using your game console</li><li>The tech questions you have been trying to learn on your own, with someone right there to help</li></ul>
           <h3>How a class works</h3>
           <p>A class is one on one, at your home, on the device you actually use every day &mdash; not a classroom and not a video call. You bring the questions you have been saving up, we work through them together until they make sense, and you practice while we are there so it sticks. Classes are booked like any other visit, in a 2-hour arrival window.</p>
           <a class="btn btn-primary" href="#contact" data-page="contact"><i class="fas fa-graduation-cap"></i> Ask About a Class</a>
-          <a class="btn btn-outline" href="#home" data-page="home" style="margin-left:0.5rem;">Back to all services</a>
+          <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to What We Fix</a>
         </div>
       </div>
     </section>
@@ -2269,7 +2261,7 @@
           <span class="footer-col-title">Services</span>
           <a class="footer-link" href="#repair" data-page="repair">Start a Repair</a>
           <a class="footer-link" href="#prices" data-page="prices">Pricing</a>
-          <a class="footer-link" href="#whatwedo" data-page="whatwedo">What we do</a>
+          <a class="footer-link" href="#whatwedo" data-page="whatwedo">What We Fix</a>
           <a class="footer-link" href="#b2b" data-page="b2b">B2B &amp; Commercial IT</a>
           <a class="footer-link" href="#atr-one" data-page="atr-one">ATR One Membership</a>
           <a class="footer-link" href="#shop" data-page="shop">Shop Accessories</a>
