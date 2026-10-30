@@ -217,7 +217,7 @@
   }
 
   /* ================= AUTH ================= */
-  var resetSuccessMessage = null; function isRecoveryHash() { var h = window.location.hash || ""; var q = window.location.search || ""; return h.indexOf("type=recovery") !== -1 || q.indexOf("type=recovery") !== -1; } function showResetView(msg) { var dv = $("portal-dash-view"); if (dv) { dv.hidden = true; } var lv = $("portal-login-view"); if (lv) { lv.hidden = false; } var rf = $("portal-login-form"); if (rf) { rf.hidden = true; } var rv = $("portal-reset-view"); if (rv) { rv.hidden = false; } var re = $("portal-reset-error"); if (re) { if (msg) { re.textContent = msg; re.hidden = false; } else { re.hidden = true; re.textContent = ""; } } var fm2 = $("portal-forgot-msg"); if (fm2) { fm2.hidden = true; } } function initPasswordReset() { withClient(function (client) { if (!client) { return; } var fb = $("portal-forgot-btn"); if (fb) { fb.addEventListener("click", function () { var em = $("portal-login-email"); var email = em ? trim(em.value) : ""; var mg = $("portal-forgot-msg"); if (!email) { if (mg) { mg.textContent = "Enter your employee email first"; mg.hidden = false; } return; } client.auth.resetPasswordForEmail(email, { redirectTo: "https://austinstechrepairgroup.com/portal.html" }).then(function (res) { if (mg) { if (res.error) { mg.textContent = res.error.message || "Could not send the reset email. Try again."; } else { mg.textContent = "Check your email for a password reset link"; } mg.hidden = false; } }).catch(function (err) { if (mg) { mg.textContent = (err && err.message) || "Could not send the reset email. Try again."; mg.hidden = false; } }); }); } var rb = $("portal-reset-btn"); if (rb) { rb.addEventListener("click", function () { var pwEl = $("portal-reset-password"); var cfEl = $("portal-reset-confirm"); var er = $("portal-reset-error"); var pw = pwEl ? pwEl.value : ""; var cf = cfEl ? cfEl.value : ""; if (er) { er.hidden = true; er.textContent = ""; } if (pw !== cf) { if (er) { er.textContent = "Passwords do not match"; er.hidden = false; } return; } if (pw.length < 8) { if (er) { er.textContent = "Password must be at least 8 characters"; er.hidden = false; } return; } client.auth.updateUser({ password: pw }).then(function (res) { if (res.error) { if (er) { er.textContent = res.error.message || "Could not update the password. Try again."; er.hidden = false; } return; } var doneMsg = "Password updated. Sign in with your new password."; resetSuccessMessage = doneMsg; client.auth.signOut().then(function () { showLogin(doneMsg); }); }).catch(function (err) { if (er) { er.textContent = (err && err.message) || "Could not update the password. Try again."; er.hidden = false; } }); }); } }); } function showLogin(errorMsg) {
+  var resetSuccessMessage = null; function isRecoveryHash() { var h = window.location.hash || ""; var q = window.location.search || ""; return h.indexOf("type=recovery") !== -1 || q.indexOf("type=recovery") !== -1; } function showResetView(msg) { var dv = $("portal-dash-view"); if (dv) { dv.hidden = true; } var lv = $("portal-login-view"); if (lv) { lv.hidden = false; } var rf = $("portal-login-form"); if (rf) { rf.hidden = true; } var rv = $("portal-reset-view"); if (rv) { rv.hidden = false; } var re = $("portal-reset-error"); if (re) { if (msg) { re.textContent = msg; re.hidden = false; } else { re.hidden = true; re.textContent = ""; } } var fm2 = $("portal-forgot-msg"); if (fm2) { fm2.hidden = true; } } function initPasswordReset() { withClient(function (client) { if (!client) { return; } var fb = $("portal-forgot-btn"); if (fb) { fb.addEventListener("click", function () { var em = $("portal-login-email"); var email = em ? trim(em.value) : ""; var mg = $("portal-forgot-msg"); if (!email) { if (mg) { mg.textContent = "Enter your employee email first"; mg.hidden = false; } return; } client.auth.resetPasswordForEmail(email, { redirectTo: "https://austinstechrepairgroup.com/portal.html" }).then(function (res) { if (mg) { if (res.error) { mg.textContent = res.error.message || "Could not send the reset email. Try again."; } else { mg.textContent = "Check your email for a password reset link"; } mg.hidden = false; } }).catch(function (err) { if (mg) { mg.textContent = (err && err.message) || "Could not send the reset email. Try again."; mg.hidden = false; } }); }); } /* PORTAL_DEADEND_2026_10_30: "Back to sign in" exits the recovery view and restores the normal sign-in form. */ var bb = $("portal-reset-back-btn"); if (bb) { bb.addEventListener("click", function () { showLogin(null); }); } var rb = $("portal-reset-btn"); if (rb) { rb.addEventListener("click", function () { var pwEl = $("portal-reset-password"); var cfEl = $("portal-reset-confirm"); var er = $("portal-reset-error"); var pw = pwEl ? pwEl.value : ""; var cf = cfEl ? cfEl.value : ""; if (er) { er.hidden = true; er.textContent = ""; } if (pw !== cf) { if (er) { er.textContent = "Passwords do not match"; er.hidden = false; } return; } if (pw.length < 8) { if (er) { er.textContent = "Password must be at least 8 characters"; er.hidden = false; } return; } client.auth.updateUser({ password: pw }).then(function (res) { if (res.error) { if (er) { er.textContent = res.error.message || "Could not update the password. Try again."; er.hidden = false; } return; } var doneMsg = "Password updated. Sign in with your new password."; resetSuccessMessage = doneMsg; client.auth.signOut().then(function () { showLogin(doneMsg); }); }).catch(function (err) { if (er) { er.textContent = (err && err.message) || "Could not update the password. Try again."; er.hidden = false; } }); }); } }); } function showLogin(errorMsg) {
     $('portal-dash-view').hidden = true;
     $('portal-login-view').hidden = false;
     var _rf = $("portal-login-form"); if (_rf) { _rf.hidden = false; }
@@ -1405,7 +1405,15 @@ function loadTicketThread(client, ticketId) {
       '<span class="portal-muted portal-small" id="p4-sign-msg"></span></div></div>';
     document.body.appendChild(wrap);
     function close() { if (wrap.parentNode) wrap.parentNode.removeChild(wrap); }
-    wrap.addEventListener('click', function (e) { if (e.target === wrap) close(); });
+    wrap.addEventListener('click', function (e) {
+      /* PORTAL_DEADEND_2026_10_30: a stray backdrop tap must not throw
+         away a drawn signature — confirm first when the pad has been
+         used; an untouched pad still closes instantly. The Cancel
+         button and Clear button keep their existing behavior. */
+      if (e.target !== wrap) return;
+      if (hasDrawn && !window.confirm('Discard this signature? It will be lost.')) return;
+      close();
+    });
     wrap.querySelector('#p4-sign-cancel').addEventListener('click', close);
 
     var canvas = wrap.querySelector('#p4-pad');
@@ -3476,6 +3484,46 @@ function loadTicketThread(client, ticketId) {
       });
     });
     wireCiConsent();
+    /* PORTAL_DEADEND_MINORS_2026_10_30: "Clear check-in" — abandon a
+     * half-finished check-in and start over without hand-clearing every
+     * field. Mirrors the post-submit reset below (form.reset, customer
+     * link, tiles off, consent reset) plus the search results box, the
+     * error line, and the ATR One signup reveal. Confirms first when
+     * anything has been entered; instant when the form is untouched
+     * (field state is compared against a snapshot taken at wire time,
+     * when the form is pristine). */
+    var ciPristine = ciFieldSnapshot();
+    function ciFieldSnapshot() {
+      var snap = [], fields = $('ci-form').elements;
+      for (var i = 0; i < fields.length; i++) {
+        var f = fields[i];
+        snap.push((f.type === 'checkbox' || f.type === 'radio') ? (f.checked ? '1' : '0') : (f.value || ''));
+      }
+      return snap.join('|');
+    }
+    function ciFormDirty() {
+      if (ciCustomerId || ciConsent) return true;
+      if (document.querySelector('#ci-reasons .ci-tile.on')) return true;
+      return ciFieldSnapshot() !== ciPristine;
+    }
+    function ciResetForm() {
+      $('ci-form').reset();
+      ciCustomerId = null;
+      document.querySelectorAll('#ci-reasons .ci-tile.on').forEach(function (c) { c.classList.remove('on'); c.setAttribute('aria-pressed', 'false'); });
+      var res = $('ci-results'); if (res) res.innerHTML = '';
+      var err = $('ci-error'); if (err) { err.textContent = ''; err.hidden = true; }
+      var signup = $('ci-atrone-signup'), atr = $('ci-atrone');
+      if (signup && atr) signup.hidden = atr.value !== 'signup';
+      ciConsentReset();
+    }
+    var ciClearBtn = $('ci-clear');
+    if (ciClearBtn && !ciClearBtn.getAttribute('data-wired')) {
+      ciClearBtn.setAttribute('data-wired', '1');
+      ciClearBtn.addEventListener('click', function () {
+        if (ciFormDirty() && !window.confirm('Clear this check-in and start over? Everything entered here will be discarded.')) return;
+        ciResetForm();
+      });
+    }
     $('ci-form').addEventListener('submit', function (e) {
       e.preventDefault();
       var err = $('ci-error'); err.hidden = true;

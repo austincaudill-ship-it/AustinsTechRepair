@@ -45,7 +45,7 @@
             <i class="fas fa-right-to-bracket"></i> Sign In
           </button>
         </form>
-        <button class="portal-btn portal-btn-outline portal-btn-block" id="portal-forgot-btn" type="button">Forgot your password?</button><p class="portal-muted portal-small" id="portal-forgot-msg" hidden></p><div id="portal-reset-view" hidden><div class="portal-field"><label for="portal-reset-password">New password</label><input type="password" id="portal-reset-password" autocomplete="new-password" placeholder="New password" /></div><div class="portal-field"><label for="portal-reset-confirm">Confirm new password</label><input type="password" id="portal-reset-confirm" autocomplete="new-password" placeholder="Confirm new password" /></div><p class="portal-error" id="portal-reset-error" hidden></p><button class="portal-btn portal-btn-primary portal-btn-block" id="portal-reset-btn" type="button">Set new password</button></div><p class="portal-muted portal-small"><a href="https://austinstechrepairgroup.com/">Back to site</a></p>
+        <button class="portal-btn portal-btn-outline portal-btn-block" id="portal-forgot-btn" type="button">Forgot your password?</button><p class="portal-muted portal-small" id="portal-forgot-msg" hidden></p><!-- PORTAL_DEADEND_2026_10_30: reset view gains a Back to sign in exit (button after Set new password). --><div id="portal-reset-view" hidden><div class="portal-field"><label for="portal-reset-password">New password</label><input type="password" id="portal-reset-password" autocomplete="new-password" placeholder="New password" /></div><div class="portal-field"><label for="portal-reset-confirm">Confirm new password</label><input type="password" id="portal-reset-confirm" autocomplete="new-password" placeholder="Confirm new password" /></div><p class="portal-error" id="portal-reset-error" hidden></p><button class="portal-btn portal-btn-primary portal-btn-block" id="portal-reset-btn" type="button">Set new password</button><button class="portal-btn portal-btn-outline portal-btn-block" id="portal-reset-back-btn" type="button">Back to sign in</button></div><p class="portal-muted portal-small"><a href="https://austinstechrepairgroup.com/">Back to site</a></p>
       </div>
     </section>
 
@@ -595,6 +595,10 @@
           <label class="ci-consent-verbal"><input type="checkbox" id="ci-verbal-check" /> <span>Verbal agreement by phone &mdash; I read the statement above to the customer and they verbally agreed</span></label>
           <p class="portal-muted portal-small" id="ci-consent-status">No agreement captured yet.</p><p class="portal-error" id="ci-error" hidden></p>
           <button class="portal-btn portal-btn-primary" id="ci-submit" type="submit"><i class="fas fa-arrow-right"></i> Create ticket &amp; add to queue</button>
+          <!-- PORTAL_DEADEND_MINORS_2026_10_30: whole-form start-over for a half-finished check-in (wired in portal.js, initCheckin) -->
+          <div class="p2-actions" style="margin-top:0.6rem;">
+            <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="ci-clear"><i class="fas fa-eraser"></i> Clear check-in</button>
+          </div>
         </form>
       </div>
 
@@ -949,7 +953,36 @@
       wrap.addEventListener('click', function (e) { if (e.target === wrap) nhCloseModal(id); });
       return wrap;
     }
+    /* PORTAL_DEADEND_2026_10_30: unsaved-changes guard for the onboarding
+     * form modals (I-9 / W-4 / W-9 / Ohio IT 4). wireFormSave snapshots the
+     * form exactly as opened (prefilled hire data and default values
+     * included); if anything differs when the modal is closed via Cancel
+     * or a backdrop tap, the user confirms the discard first. An untouched
+     * form still closes instantly, and a successful save clears the
+     * snapshot before closing so it never prompts. */
+    var nhFormSnapshot = null;
+    function nhFormState(wrap) {
+      var parts = [];
+      var els = wrap.querySelectorAll('input, select, textarea');
+      for (var i = 0; i < els.length; i++) {
+        var el = els[i];
+        if (el.type === 'checkbox' || el.type === 'radio') parts.push(el.checked ? '1' : '0');
+        else parts.push(el.value == null ? '' : String(el.value));
+      }
+      var cvs = wrap.querySelectorAll('canvas');
+      for (var j = 0; j < cvs.length; j++) {
+        try { parts.push(cvs[j].toDataURL()); } catch (e) { parts.push('canvas'); }
+      }
+      return parts.join('\u0001');
+    }
     function nhCloseModal(id) {
+      if (id === 'portal-nh-form-modal' && nhFormSnapshot != null) {
+        var fw = document.getElementById(id);
+        if (fw && nhFormState(fw) !== nhFormSnapshot) {
+          if (!window.confirm('Discard this form? Your entries will be lost.')) return;
+        }
+        nhFormSnapshot = null;
+      }
       var w = document.getElementById(id);
       if (w && w.parentNode) w.parentNode.removeChild(w);
     }
@@ -1322,6 +1355,9 @@
     }
 
     function wireFormSave(wrap, collect) {
+      /* PORTAL_DEADEND_2026_10_30: snapshot the form as opened so the
+       * close guard in nhCloseModal can tell edits from prefilled data. */
+      nhFormSnapshot = nhFormState(wrap);
       wrap.querySelector('#nhf-cancel').addEventListener('click', function () { nhCloseModal('portal-nh-form-modal'); });
       wrap.querySelector('#nhf-save').addEventListener('click', function () {
         nhFormMsg(wrap, '');
@@ -1335,6 +1371,7 @@
           btn.disabled = false;
           if (status) status.textContent = '';
           if (err) { nhFormMsg(wrap, err); return; }
+          nhFormSnapshot = null;
           nhCloseModal('portal-nh-form-modal');
           nhDocOk(NH_DOC_KIND_LABELS[out.kind] + ' filed for ' + (nhDocHire.full_name || 'this hire') + '.');
           loadHireDocs();

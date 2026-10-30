@@ -2631,6 +2631,8 @@
       <input id="atr-reset-pass2" type="password" autocomplete="new-password" placeholder="Repeat it" />
       <button class="atr-reset-btn" id="atr-reset-verify" type="button">Set my new password</button>
       <button class="atr-reset-alt" id="atr-reset-resend" type="button">Email me a new code</button>
+      <!-- SITE_DEADEND_MINORS_2026_10_30: wrong address no longer means closing the overlay and hunting for the flow again -->
+      <button class="atr-reset-alt" id="atr-reset-change-email" type="button">Use a different email</button>
       <div class="atr-reset-err" id="atr-reset-code-err" hidden></div>
       <div class="atr-reset-ok" id="atr-reset-done" hidden></div>
     </div>
@@ -2746,6 +2748,20 @@
     el('atr-reset-close').addEventListener('click', close);
     el('atr-reset-send').addEventListener('click', sendCode);
     el('atr-reset-resend').addEventListener('click', function () { showStep('request'); showErr('atr-reset-code-err', ''); });
+    /* SITE_DEADEND_MINORS_2026_10_30: "Use a different email" returns to
+     * the email step with the code-step state (code, new passwords,
+     * errors, done note, verify button) cleared; the email field itself
+     * is left as typed so the address can be edited, not retyped. */
+    el('atr-reset-change-email').addEventListener('click', function () {
+      el('atr-reset-code').value = '';
+      el('atr-reset-pass').value = '';
+      el('atr-reset-pass2').value = '';
+      showErr('atr-reset-code-err', '');
+      el('atr-reset-done').hidden = true;
+      var vbtn = el('atr-reset-verify');
+      vbtn.disabled = false; vbtn.textContent = 'Set my new password';
+      showStep('request');
+    });
     el('atr-reset-verify').addEventListener('click', verifyAndSet);
     el('atr-reset-link-set').addEventListener('click', linkSet);
 

@@ -224,6 +224,37 @@
       if (text) msg.innerHTML = text;
     }
     success.hidden = false;
+    /* SITE_DEADEND_MINORS_2026_10_30: the one-shot forms (Contact, Job
+     * Application, Investors, Feedback) get a "send another" action on
+     * the success panel that restores a fresh blank form in place — no
+     * page reload. Not the service-request panel: its success carries
+     * the Square payment step instead. All four forms use native
+     * controls only, so form.reset() returns them to their blank
+     * load state (star radios and the resume file input included). */
+    var againLabel = {
+      'contact': 'Send another message',
+      'job-application': 'Submit another application',
+      'investors': 'Send another inquiry',
+      'feedback': 'Send more feedback'
+    }[kind];
+    if (againLabel && !success.querySelector('[data-send-another]')) {
+      var againP = document.createElement('p');
+      againP.style.marginTop = '1rem';
+      var againBtn = document.createElement('button');
+      againBtn.type = 'button';
+      againBtn.className = 'btn btn-outline';
+      againBtn.setAttribute('data-send-another', '');
+      againBtn.textContent = againLabel;
+      againBtn.addEventListener('click', function () {
+        form.reset();
+        clearErrors(form);
+        success.hidden = true;
+        form.hidden = false;
+        form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+      againP.appendChild(againBtn);
+      success.appendChild(againP);
+    }
     success.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
@@ -465,7 +496,15 @@
       });
       document.getElementById('atr-sign-cancel').addEventListener('click', close);
       document.getElementById('atr-sign-close').addEventListener('click', close);
-      overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });
+      overlay.addEventListener('click', function (e) {
+        /* SITE_DEADEND_2026_10_30: a stray backdrop tap must not throw
+           away a drawn signature — confirm first when the pad has been
+           used; an untouched pad still closes instantly. The Cancel,
+           Close, and Clear buttons keep their existing behavior. */
+        if (e.target !== overlay) return;
+        if (hasDrawn && !window.confirm('Discard this signature? It will be lost.')) return;
+        close();
+      });
       document.getElementById('atr-sign-save').addEventListener('click', function () {
         var nameInput = document.getElementById('atr-sign-name');
         var name = trim(nameInput ? nameInput.value : '');

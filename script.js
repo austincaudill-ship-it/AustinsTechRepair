@@ -615,7 +615,13 @@
     if (overlay) overlay.addEventListener('click', closeCart);
 
     var clearBtn = document.getElementById('cart-clear');
-    if (clearBtn) clearBtn.addEventListener('click', function () { saveCart({}); });
+    if (clearBtn) clearBtn.addEventListener('click', function () {
+      /* SITE_DEADEND_MINORS_2026_10_30: confirm before emptying the
+       * whole cart (one stray tap used to remove every item with no
+       * undo); renderCart already paints the empty-cart state. */
+      if (!Object.keys(getCart()).length) return;
+      if (window.confirm('Remove everything from your cart?')) saveCart({});
+    });
 
     var filters = document.getElementById('shop-filters');
     if (filters) {
