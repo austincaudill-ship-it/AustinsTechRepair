@@ -183,7 +183,28 @@
         return parts.join(' | ');
       };
 
-      /* Lead capture: email the request directly (free, no server) */
+      /* Supabase (anon) client for filing quick-form requests as portal
+         tickets — same project and anon key as the account modules
+         below and atr-forms.js. index.html loads supabase-js v2 ahead
+         of this file, so window.supabase is available; if it is somehow
+         missing, leadClient() returns null and the submit handler
+         treats that as a filing error instead of faking success. */
+      var LEAD_SUPABASE_URL = 'https://lyujxpuicarblpkdzuuc.supabase.co';
+      var LEAD_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
+      var leadSb = null;
+      function leadClient() {
+        if (leadSb) return leadSb;
+        if (window.supabase && window.supabase.createClient) {
+          try { leadSb = window.supabase.createClient(LEAD_SUPABASE_URL, LEAD_SUPABASE_ANON_KEY); }
+          catch (err) { leadSb = null; }
+        }
+        return leadSb;
+      }
+
+      /* Lead capture: file the request as a ticket in the portal queue
+         (the Supabase insert is the system of record and the success
+         criterion); the FormSubmit email continues in parallel as a
+         fire-and-forget alert, mirroring atr-forms.js. */
       var contactForm = document.getElementById('repair-contact-form');
       if (contactForm) {
         contactForm.addEventListener('submit', function (e) {
@@ -202,6 +223,7 @@
           }
 
           var submitBtn = document.getElementById('repair-submit-btn');
+          var submitBtnHtml = submitBtn.innerHTML;
           submitBtn.disabled = true;
           submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending\u2026';
 
@@ -223,18 +245,58 @@
             'Photos attached by customer': photoCount > 0 ? photoCount + ' photo(s) \u2014 ask customer to text them to 937-280-6243' : 'None'
           };
 
+          // Alert email: fire-and-forget. The ticket insert below is
+          // what decides success now, so a failed alert never blocks
+          // (or fakes) the customer's confirmation.
           fetch('https://formsubmit.co/ajax/' + encodeURIComponent(LEAD_EMAIL), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify(payload)
-          }).then(function (res) {
-            if (!res.ok) { throw new Error('send failed'); }
-            return res.json();
-          }).then(function () {
+          }).catch(function () { /* alert email is best-effort */ });
+
+          // File the ticket in the portal queue. No .select(): the
+          // anon role is INSERT-only (return=minimal), so asking for
+          // the row back would fail the whole insert. customer_id is
+          // omitted on purpose — a guest ticket is claimed by verified
+          // email when the customer first signs in.
+          var issueText = repairState.issue || 'Repair request';
+          if (notes) issueText += ' \u2014 ' + notes;
+          issueText += ' (Estimate shown: ' + repairState.priceRange + ')';
+          var ticketRow = {
+            customer_name: name,
+            customer_phone: phone,
+            customer_email: email,
+            device_type: repairState.device || 'Business / Other',
+            brand: repairState.brand || null,
+            model: null,
+            issue: issueText,
+            service_address: address || null,
+            serial_imei: serial || null,
+            source: leadSource || 'website',
+            status: 'Awaiting Estimate'
+          };
+
+          function submitFailed() {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = submitBtnHtml;
+            var errEl = document.getElementById('repair-submit-error');
+            if (!errEl) {
+              errEl = document.createElement('p');
+              errEl.id = 'repair-submit-error';
+              errEl.style.cssText = 'color: #b03a2e; text-align: center; margin-top: 0.9rem;';
+              submitBtn.parentNode.insertBefore(errEl, submitBtn.nextSibling);
+            }
+            errEl.innerHTML = 'Something went wrong sending that. Please call or text us at ' +
+              '<a href="tel:9372806243">(937) 280-6243</a>' + " and we'll take it from there.";
+          }
+
+          var leadSbClient = leadClient();
+          if (!leadSbClient) { submitFailed(); return; }
+          leadSbClient.from('tickets').insert(ticketRow).then(function (res) {
+            if (res.error) { submitFailed(); return; }
             showRepairSuccess(name);
           }).catch(function () {
-            // Fall back: still show success and point at the full Jotform intake.
-            showRepairSuccess(name);
+            submitFailed();
           });
         });
       }
@@ -1240,7 +1302,7 @@
         brand: brand || null,
         model: model || null,
         issue: issue,
-        status: 'Awaiting Diagnostics',
+        status: 'Awaiting Estimate',
         source: (window.atrLeadSource ? window.atrLeadSource() : '') || 'website'
       }).select('id').single()
         .then(function (res) {

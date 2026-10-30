@@ -327,8 +327,8 @@
         dispatch_acknowledged: !!field(form, 'dispatch_acknowledged'),
         work_auth_accepted: !!field(form, 'work_auth_accepted'),
         marketing_opt_in: !!field(form, 'marketing_opt_in'),
-        source: leadSource(form) || 'website'
-        // status intentionally omitted: DB default 'Waiting' applies.
+        source: leadSource(form) || 'website',
+        status: 'Awaiting Estimate'
         // customer_id intentionally omitted: anonymous web submission.
       };
 
@@ -401,7 +401,8 @@
         customer_email: v.email || null,
         device_type: 'Contact message',
         issue: v.message,
-        source: 'contact'
+        source: 'contact',
+        status: 'Awaiting Estimate'
       };
 
       setBusy(form, true);
