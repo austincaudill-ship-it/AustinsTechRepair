@@ -533,7 +533,89 @@ function loadTicketThread(client, ticketId) {
       .catch(function () { renderTicketThread([]); });
   }
 
-  function renderRepairLog(notes) { var box = $("portal-repair-log-list"); if (!box) { return; } if (!notes || !notes.length) { box.innerHTML = "<p class=\"portal-muted\">No repair log updates yet.</p>"; return; } box.innerHTML = notes.map(function (n) { return "<div class=\"portal-msg portal-msg-tech\"><span class=\"portal-msg-meta\">" + esc(n.author || "Tech") + " · " + esc(fmtDateTime(n.created_at)) + "</span>" + esc(n.note) + "</div>"; }).join(""); } function loadRepairLog(client, ticketId) { client.from("ticket_notes").select("*").eq("ticket_id", ticketId).order("created_at", { ascending: true }).then(function (res) { renderRepairLog(res.error ? [] : (res.data || [])); }).catch(function () { renderRepairLog([]); }); } function openTicket(id) {
+  function renderRepairLog(notes) { var box = $("portal-repair-log-list"); if (!box) { return; } if (!notes || !notes.length) { box.innerHTML = "<p class=\"portal-muted\">No repair log updates yet.</p>"; return; } box.innerHTML = notes.map(function (n) { return "<div class=\"portal-msg portal-msg-tech\"><span class=\"portal-msg-meta\">" + esc(n.author || "Tech") + " · " + esc(fmtDateTime(n.created_at)) + "</span>" + esc(n.note) + "</div>"; }).join(""); } function loadRepairLog(client, ticketId) { client.from("ticket_notes").select("*").eq("ticket_id", ticketId).order("created_at", { ascending: true }).then(function (res) { renderRepairLog(res.error ? [] : (res.data || [])); }).catch(function () { renderRepairLog([]); }); }
+
+  /* PORTAL_DRAWER_DOCS_2026_10_30 (Austin, Oct 30, 2026): proof
+   * photos on the Repair Log. A proof photo is an ordinary
+   * ticket_documents row (doc_type 'other', the ticket-documents
+   * bucket, the same 15 MB limit and storage-path shape as the
+   * Documents attach flow) whose file_name starts with
+   * REPAIR_LOG_PHOTO_PREFIX ("Repair log photo \u2014 " + the time it
+   * was filed) \u2014 no schema change. It files on the ticket like
+   * any document, so it also shows in the ticket's Documents list;
+   * the Repair Log additionally renders a thumbnail strip of the
+   * ticket's proof photos (signed URLs; tap opens the full photo
+   * through viewDocument, same as a Documents View button). Upload
+   * and filing errors show inline in the log section, never
+   * silently. */
+  var REPAIR_LOG_PHOTO_PREFIX = 'Repair log photo \u2014 ';
+  function repairLogPhotoMsg(text) {
+    var e = $('portal-repair-log-photo-error');
+    if (!e) return;
+    if (text) { e.textContent = text; e.hidden = false; }
+    else { e.hidden = true; e.textContent = ''; }
+  }
+  function loadRepairLogPhotos(client, t) {
+    var box = $('portal-repair-log-photos');
+    if (!box) return;
+    client.from('ticket_documents').select('*').eq('ticket_id', t.id).order('created_at', { ascending: true }).then(function (res) {
+      if (res.error) { box.innerHTML = ''; return; }
+      var photos = (res.data || []).filter(function (d) { return d.file_name && d.file_name.indexOf(REPAIR_LOG_PHOTO_PREFIX) === 0; });
+      if (!photos.length) { box.innerHTML = ''; return; }
+      box.innerHTML = '<p class="portal-muted portal-small" style="margin:0.7rem 0 0.35rem;">Proof photos</p>' +
+        '<div style="display:flex;flex-wrap:wrap;gap:8px;">' + photos.map(function (d) {
+          return '<button class="portal-btn portal-btn-outline" type="button" data-rl-photo="' + esc(d.storage_path) + '" title="' + esc(d.file_name) + '" style="padding:3px;line-height:0;"><img alt="' + esc(d.file_name) + '" style="width:76px;height:76px;object-fit:cover;border-radius:8px;background:#eee;" /></button>';
+        }).join('') + '</div>';
+      var btns = box.querySelectorAll('[data-rl-photo]');
+      for (var i = 0; i < btns.length; i++) {
+        (function (btn) {
+          var path = btn.getAttribute('data-rl-photo');
+          client.storage.from(DOC_BUCKET).createSignedUrl(path, SIGNED_URL_SECONDS).then(function (r) {
+            if (r.error || !r.data || !r.data.signedUrl) return;
+            var img = btn.querySelector('img');
+            if (img) img.src = r.data.signedUrl;
+          }).catch(function () {});
+          btn.addEventListener('click', function () { viewDocument(client, path); });
+        })(btns[i]);
+      }
+    }).catch(function () { box.innerHTML = ''; });
+  }
+  function attachRepairLogPhoto(client, t, file) {
+    repairLogPhotoMsg('');
+    if (file.size > 15 * 1024 * 1024) { repairLogPhotoMsg('That file is over 15 MB \u2014 try a smaller photo.'); return; }
+    var btn = $('portal-repair-log-photo-btn');
+    var msg = $('portal-repair-log-photo-msg');
+    if (btn) btn.disabled = true;
+    if (msg) msg.textContent = 'Uploading photo\u2026';
+    var path = t.id + '/other-' + docStamp() + '-' + safeFileName(file.name);
+    client.storage.from(DOC_BUCKET).upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: false }).then(function (up) {
+      if (up.error) { if (btn) btn.disabled = false; if (msg) msg.textContent = ''; repairLogPhotoMsg('Upload failed \u2014 check the connection and try again.'); return; }
+      var row = {
+        ticket_id: t.id, doc_type: 'other', storage_path: path,
+        file_name: REPAIR_LOG_PHOTO_PREFIX + fmtDateTime(new Date().toISOString()),
+        signed_at: null
+      };
+      client.from('ticket_documents').insert(row).then(function (res) {
+        if (btn) btn.disabled = false;
+        if (msg) msg.textContent = '';
+        if (res.error) { repairLogPhotoMsg('The photo uploaded but could not be filed on the ticket \u2014 try again.'); return; }
+        loadRepairLogPhotos(client, t);
+        loadDocuments(client, t);
+      }).catch(function () { if (btn) btn.disabled = false; if (msg) msg.textContent = ''; repairLogPhotoMsg('The photo uploaded but could not be filed on the ticket \u2014 try again.'); });
+    }).catch(function () { if (btn) btn.disabled = false; if (msg) msg.textContent = ''; repairLogPhotoMsg('Upload failed \u2014 check the connection and try again.'); });
+  }
+  function wireRepairLogPhotos(client, t) {
+    var btn = $('portal-repair-log-photo-btn');
+    var input = $('portal-repair-log-photo-file');
+    if (btn && input) btn.addEventListener('click', function () { input.click(); });
+    if (input) input.addEventListener('change', function () {
+      var f = input.files && input.files[0];
+      input.value = '';
+      if (f) attachRepairLogPhoto(client, t, f);
+    });
+  }
+
+  function openTicket(id) {
     drawerLoading('Ticket details');
     withClient(function (client) {
       if (!client) { $('portal-drawer-body').innerHTML = '<p class="portal-error">Couldn&rsquo;t reach the database.</p>'; return; }
@@ -604,12 +686,29 @@ function loadTicketThread(client, ticketId) {
           '<select id="p4-attach-type" aria-label="Attach as document type" style="padding:0.4rem;border:2px solid var(--line, #d8cbb6);border-radius:8px;background:var(--bg, #fff);color:var(--ink, #2c231a);"><option value="receipt">Receipt</option><option value="repair_authorization">Signed authorization</option><option value="other">Other</option></select>' +
           '<input type="file" id="p4-attach-file" accept="image/*,application/pdf" hidden />' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p4-existing-btn"><i class="fas fa-link"></i> Attach an existing document</button></div>' +
-          '<div class="p2-form" id="p4-existing-picker" hidden><div class="p2-form-row">' +
-          '<select id="p4-existing-select" aria-label="Choose an unattached document" style="padding:0.4rem;border:2px solid var(--line, #d8cbb6);border-radius:8px;background:var(--bg, #fff);color:var(--ink, #2c231a);"><option value="">Loading documents&hellip;</option></select>' +
-          '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p4-existing-confirm">Attach to this ticket</button></div>' +
-          '<p class="portal-muted portal-small" id="p4-existing-msg" hidden></p></div>' +
+          '<div class="p2-form" id="p4-existing-picker" hidden>' +
+          '<div id="p4-existing-list"><p class="portal-muted portal-small">Loading documents&hellip;</p></div></div>' +
           '<p class="portal-muted portal-small">Documents file themselves on this ticket. Signing the repair authorization here, or attaching one as a signed authorization, also marks Terms accepted and Work authorized on the ticket.</p>' +
           '<p class="portal-error" id="p4-doc-msg" hidden></p></div>' +
+          /* PORTAL_DRAWER_DOCS_2026_10_30: the Repair Log section
+           * renders HERE, high in the drawer (right after Documents,
+           * before ATR One and Charges) — it used to be appended at
+           * the very bottom of the drawer. Log markup is unchanged;
+           * the proof-photo strip and Attach a photo control at the
+           * end of the section are new (same change). */
+          '<div class="portal-drawer-section"><h3>Repair log</h3>' +
+          '<p class="portal-muted portal-small">Internal tech documentation for this repair, not shown to the customer.</p>' +
+          (t.status === 'In Progress' ? '<p class="portal-muted"><strong>This repair is in progress. Please log what is happening here.</strong></p>' : '') +
+          '<div class="portal-thread" id="portal-repair-log-list"><p class="portal-muted">Loading repair log&hellip;</p></div>' +
+          '<form id="portal-repair-log-form"><div class="portal-field"><label for="portal-repair-log-input">What is happening with this repair?</label></div>' +
+          '<div class="portal-note-row"><textarea id="portal-repair-log-input" placeholder="What is happening with this repair?" maxlength="2000" aria-label="What is happening with this repair?"></textarea>' +
+          '<button class="portal-btn portal-btn-primary" type="submit">Save update</button></div>' +
+          '<p class="portal-error" id="portal-repair-log-error" hidden></p></form>' +
+          '<div id="portal-repair-log-photos"></div>' +
+          '<div class="p2-actions"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="portal-repair-log-photo-btn"><i class="fas fa-camera"></i> Attach a photo</button>' +
+          '<span class="portal-muted portal-small" id="portal-repair-log-photo-msg"></span></div>' +
+          '<input type="file" id="portal-repair-log-photo-file" accept="image/*" hidden />' +
+          '<p class="portal-error" id="portal-repair-log-photo-error" hidden></p></div>' +
           '<div class="portal-drawer-section"><h3>ATR One</h3>' +
           '<div id="p5-atrone"><p class="portal-muted">Loading membership&hellip;</p></div>' +
           '<p class="portal-error" id="p5-atr-msg" hidden></p></div>' +
@@ -669,8 +768,8 @@ function loadTicketThread(client, ticketId) {
           '<p class="portal-muted portal-small">Notes are saved to this ticket&rsquo;s message thread as Tech.</p>' +
           '<p class="portal-error" id="portal-note-error" hidden></p></form></div>';
 
-        body += "<div class=\"portal-drawer-section\"><h3>Repair log</h3><p class=\"portal-muted portal-small\">Internal tech documentation for this repair, not shown to the customer.</p>" + (t.status === "In Progress" ? "<p class=\"portal-muted\"><strong>This repair is in progress. Please log what is happening here.</strong></p>" : "") + "<div class=\"portal-thread\" id=\"portal-repair-log-list\"><p class=\"portal-muted\">Loading repair log&hellip;</p></div><form id=\"portal-repair-log-form\"><div class=\"portal-field\"><label for=\"portal-repair-log-input\">What is happening with this repair?</label></div><div class=\"portal-note-row\"><textarea id=\"portal-repair-log-input\" placeholder=\"What is happening with this repair?\" maxlength=\"2000\" aria-label=\"What is happening with this repair?\"></textarea><button class=\"portal-btn portal-btn-primary\" type=\"submit\">Save update</button></div><p class=\"portal-error\" id=\"portal-repair-log-error\" hidden></p></form></div>"; $('portal-drawer-body').innerHTML = body;
-        loadTicketThread(client, t.id); loadRepairLog(client, t.id); var repairForm = $("portal-repair-log-form"); if (repairForm) { repairForm.addEventListener("submit", function (e) { e.preventDefault(); var input = $("portal-repair-log-input"); var err = $("portal-repair-log-error"); if (err) { err.hidden = true; err.textContent = ""; } var text = input ? trim(input.value) : ""; if (!text) { return; } client.from("ticket_notes").insert({ ticket_id: t.id, author: (state.profile && state.profile.name) || null, note: text }).then(function (res2) { if (res2.error) { if (err) { err.textContent = "Could not save that update. Try again."; err.hidden = false; } return; } if (input) { input.value = ""; } loadRepairLog(client, t.id); }).catch(function () { if (err) { err.textContent = "Could not save that update. Try again."; err.hidden = false; } }); }); } 
+        $('portal-drawer-body').innerHTML = body;
+        loadTicketThread(client, t.id); loadRepairLog(client, t.id); loadRepairLogPhotos(client, t); wireRepairLogPhotos(client, t); var repairForm = $("portal-repair-log-form"); if (repairForm) { repairForm.addEventListener("submit", function (e) { e.preventDefault(); var input = $("portal-repair-log-input"); var err = $("portal-repair-log-error"); if (err) { err.hidden = true; err.textContent = ""; } var text = input ? trim(input.value) : ""; if (!text) { return; } client.from("ticket_notes").insert({ ticket_id: t.id, author: (state.profile && state.profile.name) || null, note: text }).then(function (res2) { if (res2.error) { if (err) { err.textContent = "Could not save that update. Try again."; err.hidden = false; } return; } if (input) { input.value = ""; } loadRepairLog(client, t.id); }).catch(function () { if (err) { err.textContent = "Could not save that update. Try again."; err.hidden = false; } }); }); } 
         loadCharges(client, t);
         loadParts(client, t);
         loadDocuments(client, t);
@@ -1018,9 +1117,7 @@ function loadTicketThread(client, ticketId) {
       if (f) attachDocument(client, t, f);
     });
     var existingBtn = $('p4-existing-btn');
-    if (existingBtn) existingBtn.addEventListener('click', function () { toggleExistingPicker(client); });
-    var existingConfirm = $('p4-existing-confirm');
-    if (existingConfirm) existingConfirm.addEventListener('click', function () { confirmExistingAttach(client, t); });
+    if (existingBtn) existingBtn.addEventListener('click', function () { toggleExistingPicker(client, t); });
   }
 
   function attachDocument(client, t, file) {
@@ -1057,55 +1154,68 @@ function loadTicketThread(client, ticketId) {
    * in the repair. The list is the unattached set (see
    * loadUnattachedDocuments); picking one sets its ticket_id through
    * fileExistingDocumentOnTicket, the shared attach — a move, never
-   * a copy. Nothing is uploaded and no consent flags change. */
-  function toggleExistingPicker(client) {
+   * a copy. Nothing is uploaded and no consent flags change.
+   * PORTAL_DRAWER_DOCS_2026_10_30 (Austin, Oct 30, 2026): the picker
+   * is NO LONGER a <select> dropdown — on Austin's iPad the dropdown
+   * sat on "Loading documents…" forever and read as broken. Tapping
+   * "Attach an existing document" now expands an inline list in
+   * place: a plain Loading line while it fetches, one row per
+   * unattached document (type, date, file name) with its own Attach
+   * button, the empty sentence when there is nothing to attach, and
+   * a plainly shown error with a Try again button when the load
+   * fails. A successful attach removes the row and refreshes the
+   * ticket's Documents list. */
+  function toggleExistingPicker(client, t) {
     var picker = $('p4-existing-picker');
     if (!picker) return;
     if (!picker.hidden) { picker.hidden = true; return; }
     picker.hidden = false;
-    var sel = $('p4-existing-select');
-    var msg = $('p4-existing-msg');
-    var confirmBtn = $('p4-existing-confirm');
-    if (msg) { msg.hidden = true; msg.textContent = ''; }
-    if (sel) { sel.disabled = false; sel.innerHTML = '<option value="">Loading documents&hellip;</option>'; }
-    if (confirmBtn) confirmBtn.disabled = false;
+    loadExistingList(client, t);
+  }
+
+  function loadExistingList(client, t) {
+    var list = $('p4-existing-list');
+    if (!list) return;
+    list.innerHTML = '<p class="portal-muted portal-small">Loading documents&hellip;</p>';
     loadUnattachedDocuments(client, function (rows) {
       if (!rows) {
-        if (sel) { sel.innerHTML = ''; sel.disabled = true; }
-        if (confirmBtn) confirmBtn.disabled = true;
-        if (msg) { msg.textContent = 'Documents could not be loaded — try again.'; msg.hidden = false; }
+        list.innerHTML = '<p class="portal-error">Documents could not be loaded \u2014 check the connection and try again.</p>' +
+          '<div class="p2-actions"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p4-existing-retry">Try again</button></div>';
+        var retry = $('p4-existing-retry');
+        if (retry) retry.addEventListener('click', function () { loadExistingList(client, t); });
         return;
       }
       if (!rows.length) {
-        if (sel) { sel.innerHTML = ''; sel.disabled = true; }
-        if (confirmBtn) confirmBtn.disabled = true;
-        if (msg) { msg.textContent = 'No unattached documents to attach. A document uploaded in the Documents tab before its ticket exists will show up here.'; msg.hidden = false; }
+        list.innerHTML = '<p class="portal-muted portal-small">No unattached documents to attach. A document uploaded in the Documents tab before its ticket exists will show up here.</p>';
         return;
       }
-      if (sel) {
-        sel.innerHTML = rows.map(function (d) {
-          var meta = fmtDateTime(d.signed_at || d.created_at);
-          if (d.signer_name) meta += ' · Signed by ' + d.signer_name;
-          else if (d.file_name) meta += ' · ' + d.file_name;
-          return '<option value="' + esc(d.id) + '">' + esc((DOC_TYPE_LABELS[d.doc_type] || 'Document') + ' · ' + meta) + '</option>';
-        }).join('');
+      list.innerHTML = rows.map(function (d) {
+        var meta = fmtDateTime(d.signed_at || d.created_at);
+        if (d.signer_name) meta += ' \u00b7 Signed by ' + d.signer_name;
+        if (d.file_name) meta += ' \u00b7 ' + d.file_name;
+        return '<div class="p2-line"><div class="p2-line-main"><span class="p2-kind">' + esc(DOC_TYPE_LABELS[d.doc_type] || 'Document') + '</span>' +
+          '<span class="portal-muted portal-small">' + esc(meta) + '</span></div>' +
+          '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-p4-attach-existing="' + esc(d.id) + '">Attach</button></div>';
+      }).join('');
+      var btns = list.querySelectorAll('[data-p4-attach-existing]');
+      for (var i = 0; i < btns.length; i++) {
+        btns[i].addEventListener('click', function () {
+          var btn = this;
+          var docId = btn.getAttribute('data-p4-attach-existing');
+          btn.disabled = true;
+          btn.textContent = 'Attaching\u2026';
+          fileExistingDocumentOnTicket(client, docId, t.id, function (errText) {
+            if (errText) { btn.disabled = false; btn.textContent = 'Attach'; docMsg(errText); return; }
+            docMsg('');
+            var row = btn.closest ? btn.closest('.p2-line') : null;
+            if (row && row.parentNode) row.parentNode.removeChild(row);
+            if (!list.querySelector('[data-p4-attach-existing]')) {
+              list.innerHTML = '<p class="portal-muted portal-small">No unattached documents to attach. A document uploaded in the Documents tab before its ticket exists will show up here.</p>';
+            }
+            loadDocuments(client, t);
+          });
+        });
       }
-    });
-  }
-
-  function confirmExistingAttach(client, t) {
-    var sel = $('p4-existing-select');
-    var docId = sel ? sel.value : '';
-    if (!docId) { docMsg('Pick a document to attach first.'); return; }
-    docMsg('');
-    var confirmBtn = $('p4-existing-confirm');
-    if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = 'Attaching…'; }
-    fileExistingDocumentOnTicket(client, docId, t.id, function (errText) {
-      if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = 'Attach to this ticket'; }
-      if (errText) { docMsg(errText); return; }
-      var picker = $('p4-existing-picker');
-      if (picker) picker.hidden = true;
-      loadDocuments(client, t);
     });
   }
 
@@ -1400,7 +1510,7 @@ function loadTicketThread(client, ticketId) {
    * existing, unattached document onto a ticket. This is the ONE
    * implementation of that move — the Documents tab picker
    * (confirmDocAttach, below) and the ticket drawer's "Attach an
-   * existing document" picker (confirmExistingAttach) both call it.
+   * existing document" list (loadExistingList) both call it.
    * It sets ONLY ticket_id: a move, never a copy, and it changes no
    * consent flags by itself — flag side-effects stay with the
    * calling flow (the tab's picker still marks a signed
