@@ -3312,14 +3312,18 @@ function loadTicketThread(client, ticketId) {
         if (box) box.hidden = atrSel.value !== 'signup';
       });
     }
-    document.querySelectorAll('#ci-reasons .ci-chip').forEach(function (chip) {
-      chip.addEventListener('click', function () { chip.classList.toggle('on'); });
+    /* PORTAL_ISSUE_TILES_2026_10_30: issue picker tiles toggle .on */
+    document.querySelectorAll('#ci-reasons .ci-tile').forEach(function (tile) {
+      tile.addEventListener('click', function () {
+        var on = tile.classList.toggle('on');
+        tile.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
     });
     wireCiConsent();
     $('ci-form').addEventListener('submit', function (e) {
       e.preventDefault();
       var err = $('ci-error'); err.hidden = true;
-      var reasons = Array.prototype.map.call(document.querySelectorAll('#ci-reasons .ci-chip.on'), function (c) { return c.textContent.trim(); }).join(', ');
+      var reasons = Array.prototype.map.call(document.querySelectorAll('#ci-reasons .ci-tile.on'), function (c) { return c.getAttribute('data-label') || c.textContent.trim(); }).join(', ');
       var row = {
         customer_id: ciCustomerId || null,
         customer_name: $('ci-name').value.trim(),
@@ -3331,11 +3335,16 @@ function loadTicketThread(client, ticketId) {
         serial_imei: $('ci-serial').value.trim() || null,
         issue_reason: reasons || null,
         issue: (function () {
+          /* PORTAL_ISSUE_TILES_2026_10_30: picked issue labels lead the
+           * issue text, followed by " — " + the notes when notes were
+           * typed; tiles only → just the labels; no tiles → the notes
+           * alone, exactly as before. ATR One prefixes still lead. */
           var notes = $('ci-notes').value.trim();
+          var text = reasons ? (notes ? reasons + ' — ' + notes : reasons) : notes;
           var atr = $('ci-atrone') ? $('ci-atrone').value : '';
-          if (atr === 'member') return '[ATR One member] ' + notes;
-          if (atr === 'signup') return '[Wants ATR One signup] ' + notes;
-          return notes;
+          if (atr === 'member') return '[ATR One member] ' + text;
+          if (atr === 'signup') return '[Wants ATR One signup] ' + text;
+          return text;
         })(),
         triage_volts: $('ci-volts').value.trim() || null,
         triage_amps: $('ci-amps').value.trim() || null,
@@ -3351,7 +3360,7 @@ function loadTicketThread(client, ticketId) {
         marketing_opt_in: false
       };
       if (!row.customer_name || !row.customer_phone || !row.issue) {
-        err.textContent = 'Name, phone, and check-in notes are required.'; err.hidden = false; return;
+        err.textContent = 'Name, phone, and an issue are required — tap an issue tile or write check-in notes.'; err.hidden = false; return;
       }
       var btn = $('ci-submit'); btn.disabled = true;
       var consent = ciConsent;
@@ -3363,7 +3372,7 @@ function loadTicketThread(client, ticketId) {
           var proceed = function (consentFailed) {
             btn.disabled = false;
             $('ci-form').reset(); ciCustomerId = null;
-            document.querySelectorAll('#ci-reasons .ci-chip.on').forEach(function (c) { c.classList.remove('on'); });
+            document.querySelectorAll('#ci-reasons .ci-tile.on').forEach(function (c) { c.classList.remove('on'); c.setAttribute('aria-pressed', 'false'); });
             ciConsentReset();
             state.loaded.tickets = false;
             activateTab('tickets');

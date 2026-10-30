@@ -549,16 +549,21 @@
             <div class="portal-field"><label for="ci-model">Model</label><input type="text" id="ci-model" placeholder="e.g. Galaxy Buds2 Pro" /></div>
             <div class="portal-field"><label for="ci-serial">Serial / IMEI</label><input type="text" id="ci-serial" /></div>
           </div>
-          <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Reason for check-in</h3></div>
-          <div class="ci-chips" id="ci-reasons">
-            <button type="button" class="ci-chip">Cracked / damaged</button>
-            <button type="button" class="ci-chip">Dead battery</button>
-            <button type="button" class="ci-chip">Won&rsquo;t turn on</button>
-            <button type="button" class="ci-chip">Water damage</button>
-            <button type="button" class="ci-chip">Charging issue</button>
-            <button type="button" class="ci-chip">Sound issue</button>
-            <button type="button" class="ci-chip">Software issue</button>
-            <button type="button" class="ci-chip">Other</button>
+          <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Issue &mdash; tap all that apply</h3></div>
+          <!-- PORTAL_ISSUE_TILES_2026_10_30: touch-friendly issue picker — big tappable tiles with icons replace the old text chips. Selected tile labels (data-label) feed issue_reason and lead the ticket's issue text; the check-in notes box below stays for detail (see portal.js check-in submit). -->
+          <div class="ci-tiles" id="ci-reasons" role="group" aria-label="Issue picker">
+            <button type="button" class="ci-tile" data-label="Cracked display" aria-pressed="false"><i class="fas fa-mobile-screen" aria-hidden="true"></i><span>Cracked display</span></button>
+            <button type="button" class="ci-tile" data-label="Battery" aria-pressed="false"><i class="fas fa-battery-half" aria-hidden="true"></i><span>Battery</span></button>
+            <button type="button" class="ci-tile" data-label="Charging port" aria-pressed="false"><i class="fas fa-bolt" aria-hidden="true"></i><span>Charging port</span></button>
+            <button type="button" class="ci-tile" data-label="Headphone jack" aria-pressed="false"><i class="fas fa-headphones" aria-hidden="true"></i><span>Headphone jack</span></button>
+            <button type="button" class="ci-tile" data-label="Camera" aria-pressed="false"><i class="fas fa-camera" aria-hidden="true"></i><span>Camera</span></button>
+            <button type="button" class="ci-tile" data-label="Speaker / sound" aria-pressed="false"><i class="fas fa-volume-high" aria-hidden="true"></i><span>Speaker / sound</span></button>
+            <button type="button" class="ci-tile" data-label="Water damage" aria-pressed="false"><i class="fas fa-droplet" aria-hidden="true"></i><span>Water damage</span></button>
+            <button type="button" class="ci-tile" data-label="Won&rsquo;t turn on" aria-pressed="false"><i class="fas fa-power-off" aria-hidden="true"></i><span>Won&rsquo;t turn on</span></button>
+            <button type="button" class="ci-tile" data-label="Back glass" aria-pressed="false"><i class="fas fa-mobile" aria-hidden="true"></i><span>Back glass</span></button>
+            <button type="button" class="ci-tile" data-label="Buttons" aria-pressed="false"><i class="fas fa-toggle-on" aria-hidden="true"></i><span>Buttons</span></button>
+            <button type="button" class="ci-tile" data-label="Software issue" aria-pressed="false"><i class="fas fa-bug" aria-hidden="true"></i><span>Software issue</span></button>
+            <button type="button" class="ci-tile" data-label="Other" aria-pressed="false"><i class="fas fa-ellipsis" aria-hidden="true"></i><span>Other</span></button>
           </div>
           <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Power test &amp; condition</h3></div>
           <div class="portal-nh-grid">
@@ -574,8 +579,8 @@
               <select id="ci-warranty"><option value="">Unknown</option><option>Yes &mdash; customer told our work may void it</option><option>No</option></select></div>
           </div>
           <div class="portal-field">
-            <label for="ci-notes">Check-in notes &mdash; the symptom, and how you verified it *</label>
-            <textarea id="ci-notes" rows="3" placeholder="e.g. Left bud silent; swapped buds in case, fault follows the bud. Case charges fine." required></textarea>
+            <label for="ci-notes">Check-in notes &mdash; the symptom, and how you verified it</label>
+            <textarea id="ci-notes" rows="3" placeholder="e.g. Left bud silent; swapped buds in case, fault follows the bud. Case charges fine."></textarea>
           </div>
           <!-- PORTAL_CHECKIN_CONSENT_2026_10_30: Agreements section (one contiguous block; wired in portal.js by wireCiConsent). The read-aloud script text itself lives in portal.js (CI_CONSENT_SCRIPT) so the filed verbal record quotes the same string the staff read. -->
           <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Agreements</h3></div>
