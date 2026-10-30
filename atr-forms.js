@@ -31,6 +31,12 @@
  * lives at step 4 of the repair wizard (one form, one insert path),
  * carries the guided selections in, and requires the customer's
  * signature on the Repair Authorization before it can send.
+ *
+ * SITE_PAYSTEP_2026_10_30: after a successful service-request submit,
+ * the success panel gains a payment step — the customer pays the
+ * $35 house-call fee through Square and the appointment counts as
+ * fully booked once the fee is paid. Display + link only; it runs
+ * after the ticket insert has already decided success.
  * ===================================================================== */
 (function () {
   'use strict';
@@ -42,6 +48,11 @@
   var BUSINESS_PHONE_DISPLAY = '937-280-6243';
   var BUSINESS_PHONE_TEL = 'tel:9372806243';
   var MAX_RESUME_BYTES = 10 * 1024 * 1024; // 10 MB client-side guard
+  /* SITE_PAYSTEP_2026_10_30: Square payment link for the house-call
+   * fee — "House-Call Fee" link in the business Square account.
+   * $36.32 total = $35.00 house-call fee + $1.32 card processing
+   * (Square online rate 2.9% + 30 cents). */
+  var SQUARE_HOUSECALL_LINK = 'https://square.link/u/GNUAO63Y';
 
   /* ---------------- Supabase client bootstrap ----------------
    * index.html already loads supabase-js v2 from the jsDelivr CDN, so
@@ -214,6 +225,27 @@
     }
     success.hidden = false;
     success.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  /* SITE_PAYSTEP_2026_10_30: fill and reveal the payment-step panel
+   * inside the service-request success block. Called only from the
+   * real success path of handleServiceRequest (after the ticket
+   * insert and the best-effort signature filing), never for the
+   * honeypot fake success. Display only — nothing here writes data. */
+  function showPayStep(form) {
+    var wrap = form.closest('[data-form-wrap]') || form.parentNode;
+    var panel = wrap.querySelector('[data-paystep]');
+    if (!panel) return;
+    panel.innerHTML =
+      '<h4>One last step to fully book your appointment</h4>' +
+      '<p>Your appointment is fully booked once the $35.00 house-call fee is paid. ' +
+      'The fee covers travel to you plus a full diagnosis of your device, and it is non-refundable. ' +
+      'Paying by card adds Square&rsquo;s processing fee of $1.32, so the total due now is $36.32.</p>' +
+      '<p><a class="btn btn-primary btn-lg" href="' + SQUARE_HOUSECALL_LINK + '" target="_blank" rel="noopener">' +
+      '<i class="fas fa-lock"></i> Pay $36.32 with Square</a></p>' +
+      '<p class="atr-paystep-note">If you close this page before paying, your request is still saved ' +
+      'and we will text you this payment link &mdash; your appointment is fully booked once the fee is paid.</p>';
+    panel.hidden = false;
   }
 
   /* Honeypot: a hidden field real people never fill. If it has a value,
@@ -517,6 +549,11 @@
              above is the record that decides success. */
           fileWebSignature(client, ticketId, function () {
             showSuccess(form, 'service-request', v);
+            /* SITE_PAYSTEP_2026_10_30: route the customer to Square
+               to pay the house-call fee. Runs whether the signature
+               filing above landed or not — filing is best-effort and
+               the ticket insert already decided success. */
+            showPayStep(form);
           });
         }).catch(function () {
           setBusy(form, false);

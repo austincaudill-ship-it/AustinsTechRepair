@@ -59,6 +59,7 @@
   <!-- SITE_AUDIT_FIXES_2026_10_30 -->
   <!-- SITE_CARDFEE_TERMS_2026_10_30 -->
   <!-- SITE_SQUARE_BADGE_2026_10_30 -->
+  <!-- SITE_PAYSTEP_2026_10_30 -->
 
   <!-- HEADER -->
   <header class="header">
@@ -681,6 +682,9 @@
   <div class="form-success atr-success" hidden>
     <h3><i class="fas fa-circle-check"></i> Request received!</h3>
     <p data-success-msg>Thanks! Your service request is in. We&rsquo;ll reach out shortly to confirm your appointment.</p>
+    <!-- SITE_PAYSTEP_2026_10_30: atr-forms.js fills this panel with the
+         Square house-call fee step after a successful submit. -->
+    <div class="atr-paystep" data-paystep hidden></div>
   </div>
 </div>
 <!-- END SNIPPET: service-request -->

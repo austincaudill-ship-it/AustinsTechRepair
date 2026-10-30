@@ -1570,3 +1570,15 @@ a.service-card { text-decoration: none; color: inherit; display: block; }
 @media (min-width: 921px) {
   .footer-bottom { padding-right: 190px; }
 }
+
+/* ---------- SITE_PAYSTEP_2026_10_30 (Oct 30, 2026) ----------
+   Payment step inside the service-request success panel: after a
+   successful submit, atr-forms.js fills .atr-paystep with the
+   house-call fee breakdown and the Square payment button. */
+.atr-paystep {
+  margin-top: 0.4rem; padding: 1.6rem 1.2rem; background: var(--surface);
+  border: 1px solid var(--line); border-radius: var(--radius-md);
+}
+.atr-paystep h4 { font-family: var(--font-display); color: var(--ink); font-size: 1.2rem; margin-bottom: 0.6rem; }
+.atr-paystep p { color: var(--ink-soft); margin-bottom: 1.1rem; }
+.atr-paystep .atr-paystep-note { font-size: 0.9rem; color: var(--muted); margin-bottom: 0; }
