@@ -699,13 +699,14 @@ function loadTicketThread(client, ticketId) {
           '<div class="portal-drawer-section"><h3>Documents</h3>' +
           '<div id="p4-docs"><p class="portal-muted">Loading documents&hellip;</p></div>' +
           '<div class="p2-actions"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p4-sign-btn"><i class="fas fa-pen-nib"></i> Sign repair authorization</button>' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p4-media-btn"><i class="fas fa-camera"></i> Sign media release</button>' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p4-attach-btn"><i class="fas fa-paperclip"></i> Attach document</button>' +
           '<select id="p4-attach-type" aria-label="Attach as document type" style="padding:0.4rem;border:2px solid var(--line, #d8cbb6);border-radius:8px;background:var(--bg, #fff);color:var(--ink, #2c231a);"><option value="receipt">Receipt</option><option value="repair_authorization">Signed authorization</option><option value="other">Other</option></select>' +
           '<input type="file" id="p4-attach-file" accept="image/*,application/pdf" hidden />' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p4-existing-btn"><i class="fas fa-link"></i> Attach an existing document</button></div>' +
           '<div class="p2-form" id="p4-existing-picker" hidden>' +
           '<div id="p4-existing-list"><p class="portal-muted portal-small">Loading documents&hellip;</p></div></div>' +
-          '<p class="portal-muted portal-small">Documents file themselves on this ticket. Signing the repair authorization here, or attaching one as a signed authorization, also marks Terms accepted and Work authorized on the ticket.</p>' +
+          '<p class="portal-muted portal-small">Documents file themselves on this ticket. Signing the repair authorization here, or attaching one as a signed authorization, also marks Terms accepted and Work authorized on the ticket. The media release is separate: sign it only when the customer agrees to photos or clips of the device and the repair work.</p>' +
           '<p class="portal-error" id="p4-doc-msg" hidden></p></div>' +
           /* PORTAL_DRAWER_DOCS_2026_10_30: the Repair Log section
            * renders HERE, high in the drawer (right after Documents,
@@ -1268,6 +1269,11 @@ function loadTicketThread(client, ticketId) {
   function wireDocuments(client, t) {
     var signBtn = $('p4-sign-btn');
     if (signBtn) signBtn.addEventListener('click', function () { openSignModal(client, t); });
+    /* PORTAL_MEDIA_RELEASE_2026_10_30: the media release signs from
+     * the same Documents section, on the spot, when photos are
+     * planned for this job. */
+    var mediaBtn = $('p4-media-btn');
+    if (mediaBtn) mediaBtn.addEventListener('click', function () { openMediaSignModal(client, t); });
     var fileInput = $('p4-attach-file');
     var attachBtn = $('p4-attach-btn');
     if (attachBtn && fileInput) attachBtn.addEventListener('click', function () { fileInput.click(); });
@@ -1469,21 +1475,32 @@ function loadTicketThread(client, ticketId) {
    * signerName, finish): the caller does whatever it needs with the
    * captured signature, then calls finish() to close the popup, or
    * finish(errText) to show the error and keep the popup open. */
-  function openSignatureCapture(initialName, onCapture) {
+  function openSignatureCapture(initialName, onCapture, opts) {
+    /* PORTAL_MEDIA_RELEASE_2026_10_30: the optional opts (title /
+     * intro / docText / saveLabel) let the Media Release reuse this
+     * one popup with its own document. Callers that pass no opts —
+     * the drawer authorization and check-in consent — get the Repair
+     * Authorization popup, unchanged in every detail, including the
+     * backdrop-tap protection below (PORTAL_DEADEND_2026_10_30). */
+    var sigOpts = opts || {};
+    var sigTitle = sigOpts.title || 'Repair Authorization & Service Agreement';
+    var sigIntro = sigOpts.intro || 'Read the agreement, type your name, and sign in the box. Signing files this document on the ticket and marks Terms accepted and Work authorized.';
+    var sigDocText = sigOpts.docText || AUTH_TERMS_TEXT;
+    var sigSaveLabel = sigOpts.saveLabel || 'Sign & save';
     var old = document.getElementById('p4-sign-modal');
     if (old && old.parentNode) old.parentNode.removeChild(old);
     var wrap = document.createElement('div');
     wrap.id = 'p4-sign-modal';
     wrap.setAttribute('style', 'position:fixed;inset:0;background:rgba(44,35,26,0.55);z-index:3000;display:flex;align-items:center;justify-content:center;padding:1rem;');
     wrap.innerHTML = '<div style="background:#FAF6EE;color:#2C231A;border-radius:14px;max-width:600px;width:100%;max-height:92vh;overflow:auto;padding:1.25rem;box-shadow:0 18px 50px rgba(0,0,0,0.35);">' +
-      '<h3 style="margin:0 0 0.5rem;">Repair Authorization &amp; Service Agreement</h3>' +
-      '<p class="portal-muted portal-small" style="margin:0 0 0.75rem;">Read the agreement, type your name, and sign in the box. Signing files this document on the ticket and marks Terms accepted and Work authorized.</p>' +
-      '<div style="max-height:36vh;overflow:auto;border:1px solid #E6D9C0;border-radius:8px;padding:0.75rem;background:#FFFDF8;white-space:pre-wrap;font-size:0.85rem;line-height:1.45;">' + esc(AUTH_TERMS_TEXT) + '</div>' +
+      '<h3 style="margin:0 0 0.5rem;">' + esc(sigTitle) + '</h3>' +
+      '<p class="portal-muted portal-small" style="margin:0 0 0.75rem;">' + esc(sigIntro) + '</p>' +
+      '<div style="max-height:36vh;overflow:auto;border:1px solid #E6D9C0;border-radius:8px;padding:0.75rem;background:#FFFDF8;white-space:pre-wrap;font-size:0.85rem;line-height:1.45;">' + esc(sigDocText) + '</div>' +
       '<div class="portal-field" style="margin-top:0.75rem;"><label for="p4-sign-name">Printed name</label><input type="text" id="p4-sign-name" maxlength="120" value="' + esc(initialName || '') + '" /></div>' +
       '<div class="portal-field"><label for="p4-pad">Signature</label>' +
       '<canvas id="p4-pad" width="560" height="200" style="width:100%;height:auto;display:block;background:#fff;border:2px solid #d8cbb6;border-radius:8px;touch-action:none;"></canvas></div>' +
       '<div class="p2-actions" style="margin-top:0.75rem;">' +
-      '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p4-sign-save">Sign &amp; save</button> ' +
+      '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p4-sign-save">' + esc(sigSaveLabel) + '</button> ' +
       '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p4-sign-clear">Clear</button> ' +
       '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p4-sign-cancel">Cancel</button>' +
       '<span class="portal-muted portal-small" id="p4-sign-msg"></span></div></div>';
@@ -1563,6 +1580,150 @@ function loadTicketThread(client, ticketId) {
     });
   }
 
+  /* ================= MEDIA RELEASE =================
+   * PORTAL_MEDIA_RELEASE_2026_10_30 (Austin, Oct 30, 2026): a
+   * standalone Media Release joins the portal's documents. It is NOT
+   * part of check-in and NOT part of the Repair Authorization: it is
+   * a document staff pull up on a job, only when Austin decides to
+   * take photos, and ask the customer to sign on the spot — ATRG
+   * never photographs inside a customer's home without this signed
+   * permission. The text is listed with the blank documents on the
+   * Documents tab (BLANK_DOCS) and signed through the SAME signature
+   * popup as the authorization (openSignatureCapture with opts, one
+   * implementation). A signed release composes as one self-contained
+   * HTML document in the signedAuthorizationHtml pattern and files on
+   * the ticket with doc_type 'other' (the ticket_documents check
+   * constraint allows only repair_authorization / receipt / other),
+   * so filed copies open through the same DOCVIEW overlay as every
+   * signed document. Signing a media release changes NO consent
+   * flags: it is not the repair authorization, so
+   * markAuthorizationAccepted is deliberately never called here. */
+  var MEDIA_RELEASE_TEXT = "Media Release\nAustin's Tech Repair Group \u2014 \u201CEvery technology, big or small \u2014 we tackle them all.\u201D\n\nI give Austin's Tech Repair Group permission to take photographs and short video clips of my device and of the repair work while it is being done.\n\nAustin's Tech Repair Group may use these photographs and clips on its website, its social media pages, and in its advertising and portfolio, to show the kind of work it does.\n\nPhotographs and clips focus on the device and the work area. Photographs of people are taken only with their own agreement.\n\nSigning is always the customer's choice. Service, pricing, and warranty are the same either way. A customer may take back this permission at any time with a written note or email, and Austin's Tech Repair Group will stop using the photographs and clips from that point on.\n\nThe customer signing below confirms they own the device, or are authorized by its owner, and agrees to the terms above.";
+  var MEDIA_SIGN_OPTS = {
+    title: 'Media Release',
+    intro: 'Read the release, type your name, and sign in the box. Signing files this media release on the ticket. It covers photos and short clips of the device and the repair work only.',
+    docText: MEDIA_RELEASE_TEXT,
+    saveLabel: 'Sign & save'
+  };
+
+  function signedMediaReleaseHtml(meta, signerName, signatureDataUrl, signedAtIso) {
+    var lines = [
+      ['Customer', meta.customerName],
+      ['Phone', meta.phone],
+      ['Device', meta.device]
+    ].filter(function (r) { return trim(r[1]) !== ''; }).map(function (r) {
+      return '<tr><th style="text-align:left;padding:0.3rem 0.9rem 0.3rem 0;color:#6B5B43;font-weight:600;vertical-align:top;">' + esc(r[0]) + '</th>' +
+        '<td style="padding:0.3rem 0;">' + esc(r[1]) + '</td></tr>';
+    }).join('');
+    return '<!DOCTYPE html>\n<html lang="en"><head><meta charset="utf-8">' +
+      '<meta name="viewport" content="width=device-width, initial-scale=1">' +
+      '<title>Media Release \u2014 Austin\u2019s Tech Repair Group</title></head>' +
+      '<body style="margin:0;background:#F3EDE0;color:#2C231A;font-family:Georgia,\'Times New Roman\',serif;">' +
+      '<div style="max-width:760px;margin:0 auto;padding:2rem 1.25rem 3rem;background:#FFFDF8;">' +
+      '<div style="text-align:center;border-bottom:3px solid #C96A1E;padding-bottom:1rem;margin-bottom:1.25rem;">' +
+      '<div style="font-size:1.55rem;font-weight:bold;letter-spacing:0.02em;">Austin\u2019s Tech Repair Group</div>' +
+      '<div style="margin-top:0.3rem;font-size:0.95rem;">(937) 280-6243</div></div>' +
+      '<h1 style="font-size:1.3rem;margin:0 0 1rem;">Media Release</h1>' +
+      (lines ? '<table style="border-collapse:collapse;margin-bottom:1.25rem;font-size:0.98rem;"><tbody>' + lines + '</tbody></table>' : '') +
+      '<div style="white-space:pre-wrap;font-size:0.92rem;line-height:1.5;border:1px solid #E6D9C0;border-radius:8px;padding:1rem;background:#FFFDF8;">' + esc(MEDIA_RELEASE_TEXT) + '</div>' +
+      '<h2 style="font-size:1.1rem;margin:1.75rem 0 0.5rem;">Signature</h2>' +
+      '<div style="border:1px solid #E6D9C0;border-radius:8px;padding:1rem;background:#fff;">' +
+      '<img alt="Customer signature" src="' + signatureDataUrl + '" style="display:block;max-width:100%;width:420px;height:auto;">' +
+      '<div style="border-top:2px solid #2C231A;margin-top:0.4rem;padding-top:0.5rem;font-size:0.95rem;">Signed by: ' + esc(signerName || '') + '</div>' +
+      '<div style="font-size:0.95rem;margin-top:0.25rem;">Date: ' + esc(fmtDateTime(signedAtIso)) + '</div>' +
+      '</div>' +
+      '<p style="font-size:0.8rem;color:#6B5B43;margin-top:1.5rem;">Signed electronically and filed on the customer\u2019s repair ticket by Austin\u2019s Tech Repair Group.</p>' +
+      '</div></body></html>';
+  }
+
+  /* Filing for a signed media release — the fileSignedAuthorization
+   * shape (compose, upload, file the ticket_documents row), with the
+   * two differences the document calls for: doc_type 'other', and no
+   * consent-flag side effects. If composition ever fails, the filing
+   * falls back to the bare PNG so a captured signature is never lost,
+   * exactly like the authorization flow. done(errText): errText is
+   * null on success. */
+  function fileSignedMediaRelease(client, ticketId, blob, signerName, done, meta) {
+    var signedAt = new Date().toISOString();
+    function fileArtifact(path, content, contentType, fileName) {
+      client.storage.from(DOC_BUCKET).upload(path, content, { contentType: contentType, upsert: false }).then(function (up) {
+        if (up.error) { done('Saving failed \u2014 check the connection and try again.'); return; }
+        var row = { ticket_id: ticketId, doc_type: 'other', storage_path: path, signer_name: signerName, signed_at: signedAt, note: 'Media release \u2014 permission for photos and clips of the device and the repair work' };
+        if (fileName) row.file_name = fileName;
+        client.from('ticket_documents').insert(row).then(function (res) {
+          if (res.error) { done('The signature saved but could not be filed \u2014 try again.'); return; }
+          done(null);
+        }).catch(function () { done('The signature saved but could not be filed \u2014 try again.'); });
+      }).catch(function () { done('Saving failed \u2014 check the connection and try again.'); });
+    }
+    function filePngFallback() {
+      fileArtifact(ticketId + '/media_release-' + docStamp() + '.png', blob, 'image/png', null);
+    }
+    blobToDataUrl(blob, function (dataUrl) {
+      if (!dataUrl) { filePngFallback(); return; }
+      var html = null;
+      try { html = signedMediaReleaseHtml(meta || {}, signerName, dataUrl, signedAt); } catch (e) { html = null; }
+      if (!html) { filePngFallback(); return; }
+      var fileName = 'Media Release \u2014 signed ' + fmtDate(signedAt) + '.html';
+      fileArtifact(ticketId + '/media_release-' + docStamp() + '.html', new Blob([html], { type: 'text/html' }), 'text/html', fileName);
+    });
+  }
+
+  function openMediaSignModal(client, t, after) {
+    openSignatureCapture(t.customer_name || '', function (blob, name, finish) {
+      fileSignedMediaRelease(client, t.id, blob, name, function (errText) {
+        if (errText) { finish(errText); return; }
+        finish();
+        if (after) after();
+        else openTicket(t.id);
+      }, { customerName: t.customer_name, phone: t.customer_phone, device: deviceLabel(t) });
+    }, MEDIA_SIGN_OPTS);
+  }
+
+  /* PORTAL_MEDIA_RELEASE_2026_10_30: the Documents tab entry point —
+   * pick the ticket the release belongs to, then the same signature
+   * popup as the drawer flow (openMediaSignModal). The signed
+   * release files on that ticket and the tab's list refreshes. */
+  function openMediaReleasePicker() {
+    withClient(function (client) {
+      if (!client) return;
+      var old = document.getElementById('p4-media-pick-modal');
+      if (old && old.parentNode) old.parentNode.removeChild(old);
+      var wrap = document.createElement('div');
+      wrap.id = 'p4-media-pick-modal';
+      wrap.setAttribute('style', 'position:fixed;inset:0;background:rgba(44,35,26,0.55);z-index:3000;display:flex;align-items:center;justify-content:center;padding:1rem;');
+      wrap.innerHTML = '<div style="background:#FAF6EE;color:#2C231A;border-radius:14px;max-width:520px;width:100%;max-height:92vh;overflow:auto;padding:1.25rem;box-shadow:0 18px 50px rgba(0,0,0,0.35);">' +
+        '<h3 style="margin:0 0 0.5rem;">Sign a media release</h3>' +
+        '<p class="portal-muted portal-small" style="margin:0 0 0.75rem;">Pick the repair this release belongs to. The customer signs on the next screen, and the signed release files itself on that ticket.</p>' +
+        '<div class="portal-field"><label for="p4-media-pick-select">Ticket</label><select id="p4-media-pick-select"><option value="">Loading tickets&hellip;</option></select></div>' +
+        '<div class="p2-actions" style="margin-top:0.75rem;">' +
+        '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p4-media-pick-go">Continue to signature</button> ' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p4-media-pick-cancel">Cancel</button>' +
+        '<span class="portal-muted portal-small" id="p4-media-pick-msg"></span></div></div>';
+      document.body.appendChild(wrap);
+      function close() { if (wrap.parentNode) wrap.parentNode.removeChild(wrap); }
+      wrap.addEventListener('click', function (e) { if (e.target === wrap) close(); });
+      wrap.querySelector('#p4-media-pick-cancel').addEventListener('click', close);
+      var tickets = [];
+      var sel = wrap.querySelector('#p4-media-pick-select');
+      client.from('tickets').select('id, customer_name, customer_phone, device_type, brand, model, status').order('created_at', { ascending: false }).limit(200).then(function (res) {
+        tickets = res.error ? [] : (res.data || []);
+        if (!tickets.length) { sel.innerHTML = '<option value="">No tickets found</option>'; return; }
+        sel.innerHTML = tickets.map(function (tk) {
+          return '<option value="' + esc(tk.id) + '">' + esc((tk.customer_name || 'No name') + ' \u00B7 ' + deviceLabel(tk) + ' \u00B7 ' + (tk.status || '')) + '</option>';
+        }).join('');
+      }).catch(function () { sel.innerHTML = '<option value="">Could not load tickets</option>'; });
+      wrap.querySelector('#p4-media-pick-go').addEventListener('click', function () {
+        var msg = wrap.querySelector('#p4-media-pick-msg');
+        var chosen = null;
+        tickets.forEach(function (tk) { if (tk.id === sel.value) chosen = tk; });
+        if (!chosen) { if (msg) msg.textContent = 'Pick a ticket first.'; return; }
+        close();
+        openMediaSignModal(client, chosen, function () { loadDocTabList(client); });
+      });
+    });
+  }
+
   /* ================= DOCUMENTS TAB =================
    * PORTAL_DOCUMENTS_TAB_2026_10_30 (Phase 3, Austin, Oct 30, 2026):
    * the top-level Documents tab is the home for every document.
@@ -1581,7 +1742,13 @@ function loadTicketThread(client, ticketId) {
   var BLANK_DOCS = [
     { title: 'Repair Authorization & Service Agreement', text: AUTH_TERMS_TEXT },
     { title: '1-Year Limited Warranty', text: WARRANTY_TEXT },
-    { title: 'Terms & Conditions of Service', text: TERMS_CONDITIONS_TEXT }
+    { title: 'Terms & Conditions of Service', text: TERMS_CONDITIONS_TEXT },
+    /* PORTAL_MEDIA_RELEASE_2026_10_30: the Media Release lists with
+     * the blank documents so it can be pulled up and read any time.
+     * The mediaRelease flag adds its Sign button (renderBlankDocs)
+     * and keeps it OUT of the check-in agreements popup
+     * (showAllAgreements) — it is signed on a job, never at check-in. */
+    { title: 'Media Release', text: MEDIA_RELEASE_TEXT, mediaRelease: true }
   ];
   var docTabRows = null, docTabWired = false, docTicketOptions = null;
 
@@ -1616,6 +1783,7 @@ function loadTicketThread(client, ticketId) {
     if (!box) return;
     box.innerHTML = BLANK_DOCS.map(function (d, i) {
       return '<div class="p2-line"><div class="p2-line-main"><span class="p2-line-amt">' + esc(d.title) + '</span></div>' +
+        (d.mediaRelease ? '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-blank-sign="' + i + '"><i class="fas fa-pen-nib"></i> Sign</button> ' : '') +
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-blank-doc="' + i + '"><i class="fas fa-eye"></i> View</button></div>';
     }).join('');
     var btns = box.querySelectorAll('[data-blank-doc]');
@@ -1624,6 +1792,10 @@ function loadTicketThread(client, ticketId) {
         var d = BLANK_DOCS[Number(this.getAttribute('data-blank-doc'))];
         if (d) showTextModal(d.title, d.text);
       });
+    }
+    var signBtns = box.querySelectorAll('[data-blank-sign]');
+    for (var s = 0; s < signBtns.length; s++) {
+      signBtns[s].addEventListener('click', function () { openMediaReleasePicker(); });
     }
   }
 
@@ -3417,7 +3589,11 @@ function loadTicketThread(client, ticketId) {
     var wrap = document.createElement('div');
     wrap.id = 'ci-terms-modal';
     wrap.setAttribute('style', 'position:fixed;inset:0;background:rgba(44,35,26,0.55);z-index:3000;display:flex;align-items:center;justify-content:center;padding:1rem;');
-    var docs = BLANK_DOCS.map(function (d) {
+    /* PORTAL_MEDIA_RELEASE_2026_10_30: the Media Release sits in
+     * BLANK_DOCS for the Documents tab, but it is NOT a check-in
+     * agreement — filter it out so this popup keeps showing exactly
+     * the three legal texts it always has. */
+    var docs = BLANK_DOCS.filter(function (d) { return !d.mediaRelease; }).map(function (d) {
       return '<h4 style="margin:1rem 0 0.4rem;">' + esc(d.title) + '</h4>' +
         '<div style="border:1px solid #E6D9C0;border-radius:8px;padding:0.75rem;background:#FFFDF8;white-space:pre-wrap;font-size:0.85rem;line-height:1.45;">' + esc(d.text) + '</div>';
     }).join('');
