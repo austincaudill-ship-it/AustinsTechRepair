@@ -1804,18 +1804,32 @@ if ("serviceWorker" in navigator) {
 
 /* ==================== MY ACCOUNT MENU ==================== */
 /* The logged-in account modal is one My Account tab with a menu:
-   Repairs, Account Settings, Sign Out. Repairs shows the repair list,
-   thread, and new-request views; Account Settings shows profile,
-   birthday, and password. Sign Out is the existing logout button,
-   moved into the menu, so its wiring is unchanged. */
+   Repairs, Rewards & Vouchers, Cart, Account Settings, Sign Out.
+   Repairs shows the repair list, thread, and new-request views;
+   Account Settings shows profile, birthday, and password. Sign Out
+   is the existing logout button, moved into the menu, so its wiring
+   is unchanged.
+   SITE_ACCT_FIX_2026_10_30 / SITE_CART_BADGE_2026_10_30: the wiring
+   now runs through wireAcctMenu() — idempotent, and it fires
+   immediately when the document is already parsed instead of only
+   on DOMContentLoaded — and it publishes window.__atrAcctMenuWired
+   so the account-box safety net in index.html can tell this module
+   is alive and stay out of its way. (On Austin's iPad the rows
+   rendered but did nothing: the device was running an older cached
+   script.js whose menu module predates the Rewards view and the
+   Cart row entirely.) */
 (function () {
   'use strict';
-  document.addEventListener('DOMContentLoaded', function () {
+  var acctMenuWired = false;
+  function wireAcctMenu() {
+    if (acctMenuWired) return;
     var menuItems = document.querySelectorAll('[data-acct-menu]');
     var repairsView = document.getElementById('acct-view-repairs');
     var settingsView = document.getElementById('acct-view-settings');
     var rewardsView = document.getElementById('acct-view-rewards');
     if (!menuItems.length || !repairsView || !settingsView) return;
+    acctMenuWired = true;
+    window.__atrAcctMenuWired = true;
     function show(view) {
       repairsView.hidden = view !== 'repairs';
       settingsView.hidden = view !== 'settings';
@@ -1842,7 +1856,12 @@ if ("serviceWorker" in navigator) {
       if (window.atrOpenReset) { window.atrOpenReset(); return; }
       if (msg) msg.textContent = 'Use Forgot your password on the sign in screen to change it by email.';
     });
-  });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', wireAcctMenu);
+  } else {
+    wireAcctMenu();
+  }
 })();
 
 /* ==================== POINTS SPENDING ====================

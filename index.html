@@ -2363,6 +2363,93 @@
   <script src="script.js"></script>
   <script src="atr-forms.js"></script>
 
+  <!-- SITE_ACCT_FIX_2026_10_30 / SITE_CART_BADGE_2026_10_30 — account-box
+       safety net. The account menu's view switching normally lives in
+       script.js (MY ACCOUNT MENU module), and the Cart row + orange
+       cart counter live in its points module (window.atrPoints). If a
+       device is holding an older cached script.js against this newer
+       page — the failure Austin hit on his iPad, where the Rewards &
+       Vouchers and Cart rows rendered but did nothing, because the old
+       file's menu module predates both — those handlers never attach
+       and the rows are dead. This net waits until script.js has had
+       its chance, checks whether the real wiring is live, and only
+       then wires the same behavior itself: menu view switching (when
+       the menu module's flag is absent), plus the Cart row and the
+       counter badge (when window.atrPoints is absent). When script.js
+       is current, it stays completely inert. -->
+  <script>
+  (function () {
+    'use strict';
+    function $(id) { return document.getElementById(id); }
+    function showAcctView(view) {
+      var r = $('acct-view-repairs'), s = $('acct-view-settings'), w = $('acct-view-rewards');
+      if (r) r.hidden = view !== 'repairs';
+      if (s) s.hidden = view !== 'settings';
+      if (w) w.hidden = view !== 'rewards';
+      document.querySelectorAll('[data-acct-menu]').forEach(function (b) {
+        b.classList.toggle('is-active', b.getAttribute('data-acct-menu') === view);
+      });
+      if (view === 'repairs') {
+        var list = $('acct-repairs'), th = $('acct-thread'), nt = $('acct-newticket');
+        if (list) list.hidden = false;
+        if (th) th.hidden = true;
+        if (nt) nt.hidden = true;
+      }
+    }
+    function paintBadge() {
+      var badge = $('acct-cart-count');
+      if (!badge) return;
+      var qty = 0;
+      try {
+        var cart = JSON.parse(localStorage.getItem('atr-cart') || '{}');
+        Object.keys(cart).forEach(function (k) { var n = Number(cart[k]); if (n > 0) qty += n; });
+      } catch (e) {}
+      badge.textContent = qty;
+      badge.hidden = !(qty > 0);
+    }
+    function openCartFromAccount() {
+      var close = $('acct-close');
+      if (close) close.click();
+      var link = document.querySelector('.nav-link[data-page="shop"], .menu-link[data-page="shop"]');
+      if (link) link.click();
+      else if (window.location.hash !== '#shop') window.location.hash = '#shop';
+      var tries = 0;
+      (function attempt() {
+        var drawer = $('cart-drawer');
+        if (drawer && !drawer.hidden) return;
+        var ob = $('cart-open-btn');
+        if (ob) ob.click();
+        if (++tries < 8) setTimeout(attempt, 200);
+      })();
+    }
+    function arm() {
+      setTimeout(function () {
+        if (!window.__atrAcctMenuWired) {
+          document.querySelectorAll('[data-acct-menu]').forEach(function (btn) {
+            btn.addEventListener('click', function () { showAcctView(btn.getAttribute('data-acct-menu')); });
+          });
+          var strip = $('acct-voucher-strip');
+          if (strip) strip.addEventListener('click', function () { showAcctView('rewards'); });
+        }
+        if (!window.atrPoints) {
+          var cartBtn = $('acct-menu-cart');
+          if (cartBtn) cartBtn.addEventListener('click', openCartFromAccount);
+          paintBadge();
+          document.addEventListener('click', function (e) {
+            var t = e.target;
+            if (t && t.closest && t.closest('#cart-drawer, #cart-open-btn, #account-open-btn, .product-grid')) {
+              setTimeout(paintBadge, 60);
+            }
+          });
+          window.addEventListener('storage', paintBadge);
+        }
+      }, 350);
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', arm);
+    else arm();
+  })();
+  </script>
+
   <!-- COOKIE CONSENT -->
   <div class="cookie-banner" id="cookie-banner" role="dialog" aria-label="Cookie consent" hidden>
     <div class="cookie-content">
