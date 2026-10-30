@@ -1646,3 +1646,15 @@ a.footer-value:hover strong { color: var(--gold); }
 .values-closing { margin-top: 3rem; text-align: center; }
 .values-closing .feature-media { max-width: 520px; margin: 0 auto 1.2rem; }
 .values-closing-line { max-width: 640px; margin: 0 auto; color: #B9A98F; font-size: 1rem; line-height: 1.6; }
+
+/* --- SITE_REAL_PHOTOS_2026_10_30 — icon treatment for service slots with no photo of Austin's ---
+   Websites / Network Installs / Internet Cabling cards and category pages carry a large
+   Font Awesome icon on the brand-soft tile instead of a picture, so every image on the
+   site is one of Austin's own photos. Colors mirror the existing .service-icon scheme. */
+.service-card-icon { display: flex; align-items: center; justify-content: center; background: var(--brand-soft); color: var(--brand-deep); font-size: 3rem; }
+.service-card:nth-child(2n) .service-card-icon { background: var(--teal-soft); color: var(--teal); }
+.service-card:nth-child(3n) .service-card-icon { background: var(--gold-soft); color: var(--gold); }
+html[data-theme="dark"] .service-card-icon { color: #FBEADB; }
+html[data-theme="dark"] .service-card:nth-child(2n) .service-card-icon { color: #DFF0EA; }
+.page-icon-banner { width: 100%; max-width: 720px; margin: 0 auto 1.5rem; border-radius: 12px; background: var(--brand-soft); color: var(--brand-deep); display: flex; align-items: center; justify-content: center; padding: 3.4rem 0; font-size: 4rem; }
+html[data-theme="dark"] .page-icon-banner { color: #FBEADB; }
