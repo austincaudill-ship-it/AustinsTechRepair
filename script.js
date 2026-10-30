@@ -2674,6 +2674,51 @@ if ("serviceWorker" in navigator) {
   });
 })();
 
+/* ==================== SHARE BUTTON (FOOTER) ==================== */
+(function () {
+  document.addEventListener('DOMContentLoaded', function () {
+    var btn = document.getElementById('share-btn');
+    if (!btn) return;
+    var shareData = {
+      title: document.title,
+      text: "Austin's Tech Repair Group \u2014 phone, tablet, computer, game console and smartwatch repair. We come to you.",
+      url: 'https://austinstechrepairgroup.com/'
+    };
+    function showCopied() {
+      var label = btn.querySelector('.share-label');
+      if (!label) return;
+      var orig = label.textContent;
+      label.textContent = 'Link copied';
+      btn.setAttribute('aria-label', 'Link copied');
+      setTimeout(function () {
+        label.textContent = orig;
+        btn.setAttribute('aria-label', 'Share this page');
+      }, 2000);
+    }
+    function fallbackCopy() {
+      var ta = document.createElement('textarea');
+      ta.value = shareData.url;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'absolute';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+      showCopied();
+    }
+    btn.addEventListener('click', function () {
+      if (navigator.share) {
+        navigator.share(shareData).catch(function () {});
+      } else if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(shareData.url).then(showCopied, fallbackCopy);
+      } else {
+        fallbackCopy();
+      }
+    });
+  });
+})();
+
 /* ==================== HERO CAROUSEL, APPLE STYLE ==================== */
 /* One slide at a time, 7 seconds each, with a visible fill timer on the
    active dot and a play/pause button. Pausing stops the timer exactly

@@ -1541,3 +1541,17 @@ a.service-card { text-decoration: none; color: inherit; display: block; }
    button is absolutely positioned in the footer bottom row, bottom auto,
    and cannot float over the bottom navigation. */
 .footer-bottom .a11y-btn{position:absolute;left:0;right:auto;top:50%;bottom:auto;transform:translateY(-50%);width:52px;height:52px;min-width:52px;padding:0;border-radius:50%;display:grid;place-items:center;z-index:auto}
+
+/* --- Footer utility buttons (Oct 30, Austin) -------------------------------
+   The accessibility trigger is an INLINE labelled pill in the footer bottom
+   row. Every earlier rule for it (floating fixed circle, then the absolute
+   circle pinned over the footer copy) is superseded here with a higher-
+   specificity selector, so it can never overlap page or footer text at any
+   scroll position or width. The options panel keeps its fixed pop-up
+   placement and behaviour, unchanged. The share button sits beside it in
+   the same row, same pill family, outline style. */
+.footer-bottom .a11y-btn{position:static;left:auto;right:auto;top:auto;bottom:auto;transform:none;width:auto;height:auto;min-width:0;padding:10px 18px;border-radius:999px;font-size:.9rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:8px;flex:none;background:var(--brand);border:2px solid var(--brand-deep);color:#fff;cursor:pointer}
+.footer-bottom .a11y-btn .a11y-ico{width:22px;height:22px;display:block}
+.footer-share-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:999px;border:1.5px solid var(--brand);background:transparent;color:#FAF6EE;font-size:.9rem;font-weight:700;cursor:pointer;font-family:inherit;flex:none}
+.footer-share-btn:hover{background:var(--brand);color:#fff}
+.footer-share-btn .share-ico{display:block}
