@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<!-- PORTAL_SIGNED_RECEIPT_2026_10_30 (Oct 30, 2026): viewer for
+     signed Repair Authorization documents. Supabase storage serves
+     the filed .html documents as raw text, so a storage signed URL
+     opened directly shows source code instead of the document.
+     Receipts therefore link here: view-doc.html?u=<url-encoded
+     signed URL>. This page fetches that URL as text and renders the
+     returned self-contained HTML as the page. Links are generated
+     by the portal's receipt flow with a one-year signed URL. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your Document — Austin’s Tech Repair Group</title>
+<style>
+  body { margin: 0; background: #F3EDE0; color: #2C231A; font-family: Georgia, 'Times New Roman', serif; }
+  .box { max-width: 560px; margin: 12vh auto 0; background: #FFFDF8; border: 1px solid #E6D9C0; border-radius: 10px; padding: 2rem 1.5rem; text-align: center; }
+  .biz { font-size: 1.3rem; font-weight: bold; border-bottom: 3px solid #C96A1E; padding-bottom: 0.8rem; margin-bottom: 1rem; }
+  p { line-height: 1.55; font-size: 1rem; }
+  a { color: #C96A1E; }
+</style>
+</head>
+<body>
+<div class="box" id="fallback" hidden>
+  <div class="biz">Austin’s Tech Repair Group</div>
+  <p><strong>We couldn’t open that document.</strong></p>
+  <p>The link may have expired or been copied incompletely. Call or text us at <a href="tel:+19372806243">(937) 280-6243</a> and we will send you a fresh copy of your signed Repair Authorization.</p>
+</div>
+<p id="loading" style="text-align:center;margin-top:12vh;">Loading your document…</p>
+<script>
+(function () {
+  function fail() {
+    var f = document.getElementById('fallback');
+    var l = document.getElementById('loading');
+    if (l) l.hidden = true;
+    if (f) f.hidden = false;
+  }
+  var u = null;
+  try { u = new URLSearchParams(window.location.search).get('u'); } catch (e) { u = null; }
+  if (!u) { fail(); return; }
+  var target = null;
+  try { target = new URL(u); } catch (e) { target = null; }
+  /* Only Supabase storage signed URLs are rendered — that is the
+   * only kind of link the receipt flow ever generates. */
+  if (!target || target.protocol !== 'https:' || !/\.supabase\.co$/.test(target.hostname)) { fail(); return; }
+  fetch(u).then(function (resp) {
+    if (!resp.ok) throw new Error('bad response');
+    return resp.text();
+  }).then(function (html) {
+    if (!html || html.indexOf('<') === -1) { fail(); return; }
+    document.open();
+    document.write(html);
+    document.close();
+  }).catch(function () { fail(); });
+})();
+</script>
+</body>
+</html>

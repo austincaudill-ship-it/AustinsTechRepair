@@ -26,6 +26,15 @@
   var SUPABASE_CDN = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
   var RESUME_BUCKET = 'resumes';
   var SIGNED_URL_SECONDS = 3600;
+  /* PORTAL_SIGNED_RECEIPT_2026_10_30: the receipt's "View your
+   * signed Repair Authorization" link uses a one-year signed URL so
+   * the link on a printed/emailed receipt keeps working long after
+   * the job is done. The link does NOT point at storage directly —
+   * Supabase serves these HTML documents as raw text, so the receipt
+   * links through the site's view-doc.html viewer page instead (see
+   * printReceipt and view-doc.html). */
+  var RECEIPT_AUTH_URL_SECONDS = 365 * 24 * 60 * 60;
+  var DOC_VIEWER_URL = 'https://austinstechrepairgroup.com/view-doc.html?u=';
 
   /* Ticket statuses: EXACT values from the tickets.status check
    * constraint (supabase-phase2-tickets.sql). Do not add values here
@@ -1084,21 +1093,88 @@ function loadTicketThread(client, ticketId) {
         if (d.note) meta += ' &middot; ' + esc(d.note);
         return '<div class="p2-line"><div class="p2-line-main"><span class="p2-kind">' + esc(DOC_TYPE_LABELS[d.doc_type] || 'Document') + '</span>' +
           '<span class="portal-muted portal-small">' + meta + '</span></div>' +
-          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-p4-view="' + esc(d.storage_path) + '"><i class="fas fa-eye"></i> View</button></div>';
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-p4-view="' + esc(d.storage_path) + '" data-p4-view-name="' + esc(d.file_name || '') + '"><i class="fas fa-eye"></i> View</button></div>';
       }).join('');
       var btns = box.querySelectorAll('[data-p4-view]');
       for (var i = 0; i < btns.length; i++) {
-        btns[i].addEventListener('click', function () { viewDocument(client, this.getAttribute('data-p4-view')); });
+        btns[i].addEventListener('click', function () { viewDocument(client, this.getAttribute('data-p4-view'), this.getAttribute('data-p4-view-name')); });
       }
     }).catch(function () { box.innerHTML = '<p class="portal-muted">Documents could not be loaded.</p>'; });
   }
 
-  function viewDocument(client, path) {
+  /* PORTAL_DOCVIEW_2026_10_30 (Austin, Oct 30, 2026): HTML documents
+   * (every signed Repair Authorization is filed as a self-contained
+   * .html file) opened as raw source when the storage signed URL was
+   * opened directly — the file came back unformatted, tags visible,
+   * on iPhone Safari and desktop alike. HTML documents now open in
+   * an in-portal preview: the file is fetched through the same
+   * signed URL and rendered in an iframe (srcdoc), with an
+   * Open-in-new-tab option (Blob URL, text/html) and a Close that
+   * returns to the ticket. Non-HTML documents (photos, PDF receipts)
+   * keep opening the signed URL directly, exactly as before. If the
+   * fetch fails, the preview closes and the signed URL opens
+   * directly — the old behavior — rather than dead-ending. */
+  function docNameIsHtml(name) {
+    var s = String(name || '').split('?')[0].split('#')[0];
+    return /\.html?$/i.test(s);
+  }
+  function docIsHtml(path, fileName) { return docNameIsHtml(path) || docNameIsHtml(fileName); }
+
+  function viewStoredDocument(client, path, fileName, fail) {
     if (!path) return;
     client.storage.from(DOC_BUCKET).createSignedUrl(path, SIGNED_URL_SECONDS).then(function (res) {
-      if (res.error || !res.data || !res.data.signedUrl) { docMsg('Could not open that document — try again.'); return; }
-      window.open(res.data.signedUrl, '_blank');
-    }).catch(function () { docMsg('Could not open that document — try again.'); });
+      if (res.error || !res.data || !res.data.signedUrl) { fail(); return; }
+      if (docIsHtml(path, fileName)) previewHtmlDocument(res.data.signedUrl);
+      else window.open(res.data.signedUrl, '_blank');
+    }).catch(fail);
+  }
+
+  function viewDocument(client, path, fileName) {
+    viewStoredDocument(client, path, fileName, function () { docMsg('Could not open that document — try again.'); });
+  }
+
+  function previewHtmlDocument(signedUrl) {
+    var old = document.getElementById('doc-preview-modal');
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+    var wrap = document.createElement('div');
+    wrap.id = 'doc-preview-modal';
+    wrap.setAttribute('style', 'position:fixed;inset:0;background:rgba(44,35,26,0.55);z-index:3000;display:flex;align-items:center;justify-content:center;padding:1rem;');
+    wrap.innerHTML = '<div style="background:#FAF6EE;color:#2C231A;border-radius:14px;max-width:860px;width:100%;height:92vh;display:flex;flex-direction:column;padding:1rem;box-shadow:0 18px 50px rgba(0,0,0,0.35);">' +
+      '<div class="p2-actions" style="margin:0 0 0.75rem;">' +
+      '<span class="p2-kind" style="margin-right:auto;">Document</span>' +
+      '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="doc-preview-open" disabled>Open in new tab</button> ' +
+      '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="doc-preview-close">Close</button></div>' +
+      '<div id="doc-preview-loading" class="portal-muted" style="flex:1;display:flex;align-items:center;justify-content:center;">Loading&hellip;</div>' +
+      '<iframe id="doc-preview-frame" title="Document preview" sandbox="" style="flex:1;width:100%;border:1px solid #E6D9C0;border-radius:8px;background:#fff;display:none;"></iframe>' +
+      '</div>';
+    document.body.appendChild(wrap);
+    function close() { if (wrap.parentNode) wrap.parentNode.removeChild(wrap); }
+    wrap.addEventListener('click', function (e) { if (e.target === wrap) close(); });
+    wrap.querySelector('#doc-preview-close').addEventListener('click', close);
+    var loadedHtml = null;
+    var openBtn = wrap.querySelector('#doc-preview-open');
+    openBtn.addEventListener('click', function () {
+      if (loadedHtml == null) return;
+      var url = URL.createObjectURL(new Blob([loadedHtml], { type: 'text/html' }));
+      window.open(url, '_blank');
+      setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+    });
+    fetch(signedUrl).then(function (r) {
+      if (!r.ok) throw new Error('document fetch failed');
+      return r.text();
+    }).then(function (html) {
+      if (!wrap.parentNode) return; /* closed while loading */
+      loadedHtml = html;
+      var loading = wrap.querySelector('#doc-preview-loading');
+      var frame = wrap.querySelector('#doc-preview-frame');
+      frame.srcdoc = html;
+      if (loading) loading.style.display = 'none';
+      frame.style.display = 'block';
+      openBtn.disabled = false;
+    }).catch(function () {
+      close();
+      window.open(signedUrl, '_blank');
+    });
   }
 
   function markAuthorizationAccepted(client, t) {
@@ -1507,7 +1583,7 @@ function loadTicketThread(client, ticketId) {
       if (d.file_name) meta += ' &middot; ' + esc(d.file_name);
       var html = '<div class="p2-line"><div class="p2-line-main"><span class="p2-kind">' + esc(DOC_TYPE_LABELS[d.doc_type] || 'Document') + '</span>' + head +
         '<br /><span class="portal-muted portal-small">' + meta + '</span></div>' +
-        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-doc-view="' + esc(d.storage_path) + '"><i class="fas fa-eye"></i> View</button>';
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-doc-view="' + esc(d.storage_path) + '" data-doc-view-name="' + esc(d.file_name || '') + '"><i class="fas fa-eye"></i> View</button>';
       if (!d.ticket_id) {
         html += ' <button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-doc-attach="' + esc(d.id) + '"><i class="fas fa-paperclip"></i> Attach</button>';
       }
@@ -1521,7 +1597,7 @@ function loadTicketThread(client, ticketId) {
     }).join('');
     var views = box.querySelectorAll('[data-doc-view]');
     for (var i = 0; i < views.length; i++) {
-      views[i].addEventListener('click', function () { viewDocTab(client, this.getAttribute('data-doc-view')); });
+      views[i].addEventListener('click', function () { viewDocTab(client, this.getAttribute('data-doc-view'), this.getAttribute('data-doc-view-name')); });
     }
     var attaches = box.querySelectorAll('[data-doc-attach]');
     for (var j = 0; j < attaches.length; j++) {
@@ -1533,13 +1609,10 @@ function loadTicketThread(client, ticketId) {
     }
   }
 
-  function viewDocTab(client, path) {
+  function viewDocTab(client, path, fileName) {
     if (!path) return;
     docTabListMsg('');
-    client.storage.from(DOC_BUCKET).createSignedUrl(path, SIGNED_URL_SECONDS).then(function (res) {
-      if (res.error || !res.data || !res.data.signedUrl) { docTabListMsg('Could not open that document — try again.'); return; }
-      window.open(res.data.signedUrl, '_blank');
-    }).catch(function () { docTabListMsg('Could not open that document — try again.'); });
+    viewStoredDocument(client, path, fileName, function () { docTabListMsg('Could not open that document — try again.'); });
   }
 
   function toggleDocPicker(client, docId) {
@@ -1717,31 +1790,114 @@ function loadTicketThread(client, ticketId) {
     }, 60);
   }
 
-  function printReceipt(t) {
-    var rows = t._charges || [];
-    var tot = chargeTotals(rows);
-    var lines = rows.map(function (c) {
-      var amt = Number(c.qty || 0) * Number(c.unit_price || 0);
-      var label = c.kind === 'deposit_credit' ? esc(c.description) + ' (deposit)' : esc(c.description);
-      var sign = c.kind === 'deposit_credit' ? '&minus;' : '';
-      return '<tr><td>' + label + '</td><td class="rc-num">' + esc(c.qty) + '</td><td class="rc-num">' + sign + fmtMoney(Math.abs(amt)) + '</td></tr>';
-    }).join('');
-    if (!rows.length) lines = '<tr><td colspan="3">No charges recorded.</td></tr>';
-    var html = '<div class="rc">' +
-      '<h1>Austin&rsquo;s Tech Repair Group</h1>' +
-      '<p class="rc-sub">Mobile Repair — Ohio · (937) 280-6243<br/>austinstechrepairgroup.com</p>' +
-      '<p class="rc-meta">Receipt · Ticket #' + shortCode(t) + '<br/>' + esc(fmtDateTime(t.created_at)) + '</p>' +
-      '<p class="rc-meta"><strong>' + esc(t.customer_name || '') + '</strong><br/>' + esc(deviceLabel(t)) + '<br/>' + esc(t.issue || '') + '</p>' +
-      '<table class="rc-table"><thead><tr><th>Description</th><th class="rc-num">Qty</th><th class="rc-num">Amount</th></tr></thead><tbody>' + lines + '</tbody></table>' +
-      '<table class="rc-table rc-totals"><tbody>' +
-      '<tr><td>Subtotal</td><td class="rc-num">' + fmtMoney(tot.subtotal) + '</td></tr>' +
-      (tot.deposits ? '<tr><td>Deposits received</td><td class="rc-num">&minus;' + fmtMoney(tot.deposits) + '</td></tr>' : '') +
-      '<tr class="rc-grand"><td>Balance due</td><td class="rc-num">' + fmtMoney(tot.balance) + '</td></tr>' +
-      '</tbody></table>' +
-      (tot.balance <= 0 && tot.subtotal > 0 ? '<p class="rc-paid">PAID IN FULL — thank you!</p>' : '') +
-      '<p class="rc-foot">Repairs are backed by our 1-Year Limited Warranty (parts &amp; labor). The $35 house-call fee is non-refundable. Thank you for your business!</p>' +
-      '</div>';
-    printArea(html, 'receipt');
+  /* PORTAL_SIGNED_RECEIPT_2026_10_30 (Austin, Oct 30, 2026): the
+   * uBreakiFix-style signed receipt. When the ticket has a signed
+   * Repair Authorization on file, the receipt prints the customer's
+   * signature itself, a link the customer can open to view the full
+   * signed document, and a short basic-terms summary (the "terms on
+   * the back of the receipt"). No signed authorization (verbal
+   * consent or none) — the receipt simply omits the signature and
+   * the link; the terms block always prints. Printing never waits
+   * on this lookup for long and never fails because of it: any
+   * error, or a 6-second timeout, prints the receipt without the
+   * signature extras.
+   *
+   * The signature comes out of the filed authorization document
+   * itself: for the normal .html filing, fetch the document text
+   * through a signed URL and pull the composited signature image
+   * (the data:image in the document's signature block). The PNG
+   * fallback filing IS the bare signature image, so its signed URL
+   * is printed directly (and there is no full document to link to,
+   * so no link). The view link expires after one year
+   * (RECEIPT_AUTH_URL_SECONDS) and goes through view-doc.html,
+   * because storage serves these HTML files as raw text — the
+   * viewer page fetches and renders the document properly. */
+  var RECEIPT_TERMS_SUMMARY = [
+    'Repairs include a 1-year limited warranty on parts installed and labor performed.',
+    'The $35 house-call fee is non-refundable.',
+    'Balance is due on completion, before the device is released.',
+    'Back up your device before service — we are not responsible for lost data.',
+    'Devices left unclaimed more than 60 days after completion notice may be treated as abandoned under Ohio law.',
+    'Card payments carry a processing fee at Square&rsquo;s actual rate.'
+  ];
+
+  function fetchReceiptAuthorization(client, t, cb) {
+    var settled = false;
+    var timer = setTimeout(function () { finish(null); }, 6000);
+    function finish(auth) {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      cb(auth);
+    }
+    try {
+      client.from('ticket_documents').select('*').eq('ticket_id', t.id).eq('doc_type', 'repair_authorization')
+        .order('created_at', { ascending: false }).limit(1).then(function (res) {
+          if (res.error || !res.data || !res.data.length) { finish(null); return; }
+          var row = res.data[0];
+          var auth = { signerName: row.signer_name || '', signedAt: row.signed_at || row.created_at || '', sigSrc: '', viewerUrl: '' };
+          client.storage.from(DOC_BUCKET).createSignedUrl(row.storage_path, RECEIPT_AUTH_URL_SECONDS).then(function (r) {
+            if (r.error || !r.data || !r.data.signedUrl) { finish(null); return; }
+            var url = r.data.signedUrl;
+            var path = String(row.storage_path || '');
+            if (/\.html?$/i.test(path)) {
+              auth.viewerUrl = DOC_VIEWER_URL + encodeURIComponent(url);
+              fetch(url).then(function (resp) { return resp.text(); }).then(function (text) {
+                var m = String(text || '').match(/alt="Customer signature"\s+src="(data:image\/[^"]+)"/);
+                if (m) auth.sigSrc = m[1];
+                finish(auth);
+              }).catch(function () { finish(auth); });
+            } else if (/\.(png|jpe?g)$/i.test(path)) {
+              auth.sigSrc = url;
+              finish(auth);
+            } else {
+              finish(null);
+            }
+          }).catch(function () { finish(null); });
+        }).catch(function () { finish(null); });
+    } catch (e) { finish(null); }
+  }
+
+  function printReceipt(client, t) {
+    fetchReceiptAuthorization(client, t, function (auth) {
+      var rows = t._charges || [];
+      var tot = chargeTotals(rows);
+      var lines = rows.map(function (c) {
+        var amt = Number(c.qty || 0) * Number(c.unit_price || 0);
+        var label = c.kind === 'deposit_credit' ? esc(c.description) + ' (deposit)' : esc(c.description);
+        var sign = c.kind === 'deposit_credit' ? '&minus;' : '';
+        return '<tr><td>' + label + '</td><td class="rc-num">' + esc(c.qty) + '</td><td class="rc-num">' + sign + fmtMoney(Math.abs(amt)) + '</td></tr>';
+      }).join('');
+      if (!rows.length) lines = '<tr><td colspan="3">No charges recorded.</td></tr>';
+      var sigHtml = '';
+      if (auth && (auth.sigSrc || auth.viewerUrl)) {
+        sigHtml = '<div class="rc-sig">' +
+          (auth.sigSrc ? '<p class="rc-sig-head">Customer signature</p><img class="rc-sig-img" src="' + esc(auth.sigSrc) + '" alt="Customer signature"/>' : '') +
+          (auth.signerName || auth.signedAt ? '<p class="rc-sig-cap">Signed by ' + esc(auth.signerName) + (auth.signedAt ? ' &middot; ' + esc(fmtDateTime(auth.signedAt)) : '') + '</p>' : '') +
+          (auth.viewerUrl ? '<p class="rc-auth"><a href="' + esc(auth.viewerUrl) + '">View your signed Repair Authorization</a><br/><span class="rc-auth-url">' + esc(auth.viewerUrl) + '</span></p>' : '') +
+          '</div>';
+      }
+      var termsHtml = '<div class="rc-terms"><p class="rc-terms-head">Basic terms</p><ul>' +
+        RECEIPT_TERMS_SUMMARY.map(function (line) { return '<li>' + line + '</li>'; }).join('') +
+        '</ul></div>';
+      var html = '<div class="rc">' +
+        '<h1>Austin&rsquo;s Tech Repair Group</h1>' +
+        '<p class="rc-sub">Mobile Repair — Ohio · (937) 280-6243<br/>austinstechrepairgroup.com</p>' +
+        '<p class="rc-meta">Receipt · Ticket #' + shortCode(t) + '<br/>' + esc(fmtDateTime(t.created_at)) + '</p>' +
+        '<p class="rc-meta"><strong>' + esc(t.customer_name || '') + '</strong><br/>' + esc(deviceLabel(t)) + '<br/>' + esc(t.issue || '') + '</p>' +
+        '<table class="rc-table"><thead><tr><th>Description</th><th class="rc-num">Qty</th><th class="rc-num">Amount</th></tr></thead><tbody>' + lines + '</tbody></table>' +
+        '<table class="rc-table rc-totals"><tbody>' +
+        '<tr><td>Subtotal</td><td class="rc-num">' + fmtMoney(tot.subtotal) + '</td></tr>' +
+        (tot.deposits ? '<tr><td>Deposits received</td><td class="rc-num">&minus;' + fmtMoney(tot.deposits) + '</td></tr>' : '') +
+        '<tr class="rc-grand"><td>Balance due</td><td class="rc-num">' + fmtMoney(tot.balance) + '</td></tr>' +
+        '</tbody></table>' +
+        (tot.balance <= 0 && tot.subtotal > 0 ? '<p class="rc-paid">PAID IN FULL — thank you!</p>' : '') +
+        sigHtml +
+        termsHtml +
+        '<p class="rc-foot">Repairs are backed by our 1-Year Limited Warranty (parts &amp; labor). The $35 house-call fee is non-refundable. Thank you for your business!</p>' +
+        '</div>';
+      printArea(html, 'receipt');
+    });
   }
 
   function printPartLabel(t, p) {
@@ -1763,7 +1919,7 @@ function loadTicketThread(client, ticketId) {
 
   function wireTicketActions(client, t) {
     var receiptBtn = $('p2-receipt-btn');
-    if (receiptBtn) receiptBtn.addEventListener('click', function () { printReceipt(t); });
+    if (receiptBtn) receiptBtn.addEventListener('click', function () { printReceipt(client, t); });
 
     var delBtn = $('p2-delete-btn'), confirmBox = $('p2-delete-confirm');
     if (delBtn && confirmBox) {
