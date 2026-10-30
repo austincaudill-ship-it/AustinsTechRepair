@@ -36,6 +36,14 @@
   var RECEIPT_AUTH_URL_SECONDS = 365 * 24 * 60 * 60;
   var DOC_VIEWER_URL = 'https://austinstechrepairgroup.com/view-doc.html?u=';
 
+  /* PORTAL_POINTS_EARN_2026_10_30: loyalty points earning rate —
+   * customers earn POINTS_PER_DOLLAR points per whole dollar of a
+   * ticket's total when the job is marked Job Complete (see
+   * awardPointsOnComplete). pointsMultiplierFor() below is the ATR One
+   * boost hook: it returns 1 today, and a member multiplier later is a
+   * one-line change inside that function only. */
+  var POINTS_PER_DOLLAR = 1;
+
   /* Ticket statuses: EXACT values from the tickets.status check
    * constraint (supabase-phase2-tickets.sql). Do not add values here
    * without updating the database constraint first. */
@@ -833,6 +841,16 @@ function loadTicketThread(client, ticketId) {
           client.from('tickets').update({ status: next }).eq('id', t.id).then(function (res2) {
             if (res2.error) { msg.textContent = 'Couldn&rsquo;t save — try again.'; return; }
             msg.textContent = 'Saved.';
+            if (next === 'Job Complete') {
+              /* PORTAL_POINTS_EARN_2026_10_30: credit the customer's
+               * loyalty points for this job (once per ticket — see
+               * awardPointsOnComplete) and note it next to the save
+               * confirmation when the credit lands. */
+              awardPointsOnComplete(client, t, function (pts) {
+                var m2 = $('portal-ticket-status-msg');
+                if (m2) m2.textContent = 'Saved. +' + pts + ' pts to ' + pointsNameLabel(t) + '.';
+              });
+            }
             if (next === 'Awaiting Parts') { showTrackingPopup(client, t); }
             if (next === 'Ready' && trim(t.customer_phone)) {
               var digits = String(t.customer_phone).replace(/\D/g, '');
@@ -875,6 +893,72 @@ function loadTicketThread(client, ticketId) {
       if (c.kind === 'deposit_credit') deposits += amt; else subtotal += amt;
     });
     return { subtotal: subtotal, deposits: deposits, balance: subtotal - deposits };
+  }
+
+  /* PORTAL_POINTS_EARN_2026_10_30: ATR One member-multiplier hook.
+   * Returns 1 for everyone today — no boost rate exists yet. It takes
+   * the ticket (which carries customer_id) so a future member lookup
+   * plugs in here and nowhere else. */
+  function pointsMultiplierFor(t) {
+    return 1;
+  }
+
+  /* Short display name for the points note: "Janae Saunders" -> "Janae S." */
+  function pointsNameLabel(t) {
+    var parts = trim(t.customer_name || '').split(/\s+/).filter(function (x) { return x !== ''; });
+    if (!parts.length) return 'the customer';
+    return parts.length > 1 ? parts[0] + ' ' + parts[1].charAt(0).toUpperCase() + '.' : parts[0];
+  }
+
+  /* PORTAL_POINTS_EARN_2026_10_30: award loyalty points when a ticket
+   * reaches Job Complete. Amount: floor(ticket total) x
+   * POINTS_PER_DOLLAR x pointsMultiplierFor(t), where the ticket total
+   * is the charges subtotal from chargeTotals() — the same figure the
+   * receipt is built from — read fresh from ticket_charges at
+   * completion time. Deposit credits are payments toward that subtotal,
+   * so they are not added on top of it.
+   * Exactly once per ticket: the award is claimed atomically by
+   * stamping tickets.points_awarded (added by
+   * award-points-migration.sql) only where it is still NULL. If the
+   * stamp errors or claims no row, nothing is credited — so toggling
+   * the status, reopening, or re-saving the drawer can never award
+   * twice. If the column does not exist yet (this code published
+   * before the SQL ran) the stamp errors and the award is skipped
+   * silently: no crash, no points. If the rewards credit itself fails
+   * after a successful claim, the claim is released (best effort) so a
+   * later completion can retry instead of losing the points.
+   * onAwarded(pts), when given, fires only after the credit lands. */
+  function awardPointsOnComplete(client, t, onAwarded) {
+    if (!t || !t.customer_id) return;
+    client.from('ticket_charges').select('*').eq('ticket_id', t.id).then(function (res) {
+      if (res.error) return;
+      var wholeDollars = Math.floor(chargeTotals(res.data || []).subtotal);
+      var pts = Math.floor(wholeDollars * POINTS_PER_DOLLAR * pointsMultiplierFor(t));
+      if (!(pts > 0)) return;
+      client.from('tickets').update({ points_awarded: pts }).eq('id', t.id).is('points_awarded', null).select('id').then(function (claim) {
+        if (claim.error || !claim.data || !claim.data.length) return;
+        t.points_awarded = pts;
+        function rollback() {
+          client.from('tickets').update({ points_awarded: null }).eq('id', t.id).eq('points_awarded', pts).then(function () {}).catch(function () {});
+        }
+        client.from('rewards').select('points').eq('customer_id', t.customer_id).limit(1).then(function (r) {
+          if (r.error) { rollback(); return; }
+          var rows = r.data || [];
+          if (rows.length) {
+            var next = (Number(rows[0].points) || 0) + pts;
+            client.from('rewards').update({ points: next }).eq('customer_id', t.customer_id).then(function (u) {
+              if (u.error) { rollback(); return; }
+              if (onAwarded) onAwarded(pts);
+            }).catch(function () { rollback(); });
+          } else {
+            client.from('rewards').insert({ customer_id: t.customer_id, points: pts }).then(function (ins) {
+              if (ins.error) { rollback(); return; }
+              if (onAwarded) onAwarded(pts);
+            }).catch(function () { rollback(); });
+          }
+        }).catch(function () { rollback(); });
+      }).catch(function () {});
+    }).catch(function () {});
   }
 
   function renderCharges(t, rows) {
