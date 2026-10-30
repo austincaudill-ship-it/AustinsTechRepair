@@ -72,7 +72,7 @@
       'Phone': {
         brands: ['Apple iPhone', 'Samsung Galaxy', 'Google Pixel', 'Other'],
         issues: [
-          { name: 'Screen replacement', price: '$89 \u2013 $249' },
+          { name: 'Screen replacement', price: '$89 \u2013 $450' },
           { name: 'Battery replacement', price: '$69 \u2013 $119' },
           { name: 'Charging port repair', price: '$79 \u2013 $129' },
           { name: 'Camera / speaker fix', price: '$79 \u2013 $150' },
@@ -732,7 +732,7 @@
   document.addEventListener('DOMContentLoaded', function () {
     // Flat-rate pricing from ATRG Master Repair List
     var PRICES = {
-      'iphone':           { screen: 67, battery: 68, backglass: 49, chargeport: 59, label: 'iPhone' },
+      'iphone':           { screen: 89, battery: 68, backglass: 49, chargeport: 59, label: 'iPhone' },
       'ipad':             { screen: 99, battery: 79, backglass: 99, chargeport: 89, label: 'iPad' },
       'watch':            { screen: 119, battery: 49, backglass: 119, chargeport: 89, label: 'Apple Watch' },
       'samsung-budget':   { screen: 67, battery: 39, backglass: 45, chargeport: 49, label: 'Samsung Galaxy (A / M / F series)' },
