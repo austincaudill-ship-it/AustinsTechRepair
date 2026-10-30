@@ -1692,6 +1692,9 @@
     .p2-line-amt { font-weight: 700; white-space: nowrap; }
     .p2-x { background: none; border: none; color: #b3382e; font-size: 1.25rem; line-height: 1; cursor: pointer; padding: 0.2rem 0.4rem; flex: none; }
     .p2-part-status { padding: 0.4rem; border: 2px solid var(--line, #d8cbb6); border-radius: 8px; background: var(--bg, #fff); color: var(--ink, #2c231a); flex: none; }
+    /* PORTAL_PARTS_WRAP_FIX_2026_10_29: part rows wrap so the description keeps readable width on phones */
+    .p2-part { flex-wrap: wrap; }
+    .p2-part .p2-line-main { flex: 1 1 220px; overflow-wrap: break-word; }
     .p2-totals { margin-top: 0.8rem; }
     .p2-totals > div { display: flex; justify-content: space-between; padding: 0.25rem 0; }
     .p2-grand { border-top: 2px solid var(--line, #d8cbb6); font-weight: 800; font-size: 1.05rem; margin-top: 0.3rem; padding-top: 0.5rem !important; }
