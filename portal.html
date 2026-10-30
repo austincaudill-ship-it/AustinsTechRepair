@@ -304,28 +304,28 @@
         <div id="portal-po-list"><p class="portal-muted">Loading purchase orders&hellip;</p></div>
       </div>
 
-      <!-- NEW HIRES (1099 INDEPENDENT CONTRACTORS) -->
+      <!-- NEW HIRES (EMPLOYEE ONBOARDING) — PORTAL_NEWHIRE_RELABEL_2026_10_30 -->
       <div class="portal-panel" id="portal-panel-newhires" role="tabpanel" hidden>
         <div class="portal-panel-head">
-          <h2 class="portal-h2">New Hire <span class="portal-badge portal-badge-role">Independent Contractor (1099)</span></h2>
+          <h2 class="portal-h2">Employee Onboarding <span class="portal-badge portal-badge-role">Employee (W-2)</span></h2>
           <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="newhires">
             <i class="fas fa-rotate-right"></i> Refresh
           </button>
         </div>
-        <p class="portal-muted portal-small">Onboard 1099 independent contractors. Austin collects each contractor&rsquo;s W-9 directly &mdash; no Social Security or tax ID numbers are stored here.</p>
+        <p class="portal-muted portal-small">Onboard new employees (W-2) here. Each employee completes their I-9 and W-4 under Documents on their card below &mdash; Social Security and tax ID numbers live only inside those filed documents, never in this list.</p>
         <form id="portal-newhire-form" novalidate>
           <div class="portal-nh-grid">
             <div class="portal-field">
               <label for="portal-nh-name">Full name <span aria-hidden="true">*</span></label>
-              <input type="text" id="portal-nh-name" placeholder="Contractor's full legal name" required />
+              <input type="text" id="portal-nh-name" placeholder="Employee's full legal name" required />
             </div>
             <div class="portal-field">
               <label for="portal-nh-business">Business name (optional)</label>
-              <input type="text" id="portal-nh-business" placeholder="If they contract under a business name" />
+              <input type="text" id="portal-nh-business" placeholder="If they have a business name too" />
             </div>
             <div class="portal-field">
               <label for="portal-nh-email">Email</label>
-              <input type="email" id="portal-nh-email" placeholder="contractor@example.com" />
+              <input type="email" id="portal-nh-email" placeholder="employee@example.com" />
             </div>
             <div class="portal-field">
               <label for="portal-nh-phone">Phone</label>
@@ -355,7 +355,7 @@
               <label for="portal-nh-w9"><input type="checkbox" id="portal-nh-w9" /> W-9 on file</label>
             </div>
             <div class="portal-field portal-nh-check">
-              <label for="portal-nh-agreement"><input type="checkbox" id="portal-nh-agreement" /> Contractor agreement signed</label>
+              <label for="portal-nh-agreement"><input type="checkbox" id="portal-nh-agreement" /> Employment agreement signed</label>
             </div>
             <div class="portal-field portal-nh-wide">
               <label for="portal-nh-address">Address</label>
@@ -379,7 +379,7 @@
             </div>
             <div class="portal-field portal-nh-wide">
               <label for="portal-nh-notes">Notes</label>
-              <textarea id="portal-nh-notes" rows="3" placeholder="Anything else about this contractor&hellip;"></textarea>
+              <textarea id="portal-nh-notes" rows="3" placeholder="Anything else about this employee&hellip;"></textarea>
             </div>
           </div>
           <p class="portal-error" id="portal-nh-error" hidden></p>
@@ -390,9 +390,9 @@
         </form>
 
         <div class="portal-panel-head portal-subhead">
-          <h2 class="portal-h2">Current Hires</h2>
+          <h2 class="portal-h2">Current Employees</h2>
         </div>
-        <div id="portal-nh-list"><p class="portal-muted">Loading hires&hellip;</p></div>
+        <div id="portal-nh-list"><p class="portal-muted">Loading employees&hellip;</p></div>
       </div>
     </section>
   </main>
@@ -729,11 +729,16 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="portal.js"></script>
   <script>
-  /* ================= NEW HIRES (1099 contractors) =================
+  /* ================= NEW HIRES (employee onboarding) =================
    * Section logic for the "New Hire" tab. Mirrors portal.js conventions
    * (ES5, escaped output, same Supabase project). Bound after portal.js:
    * the portal's own tab handler only knows its built-in panels, so this
    * section manages its own panel and data without touching them. */
+  /* PORTAL_NEWHIRE_RELABEL_2026_10_30 (Austin, Oct 30, 2026): section
+   * relabeled from 1099 independent-contractor framing to employee
+   * (W-2) onboarding — copy/framing only; no data, field names,
+   * or logic changed. W-9 stays as a document kind and data flag
+   * for the rare contractor case. */
   (function () {
     'use strict';
 
@@ -801,16 +806,20 @@
     }
 
     function listError(el) {
-      el.innerHTML = '<p class="portal-error">Couldn&rsquo;t load hires. Check your connection and hit Refresh.</p>';
+      el.innerHTML = '<p class="portal-error">Couldn&rsquo;t load employees. Check your connection and hit Refresh.</p>';
     }
 
     function emptyState(el, text) {
       el.innerHTML = '<div class="portal-empty">' + esc(text) + '</div>';
     }
 
+    var nhRowsById = {};
+
     function renderNewHires(rows) {
       var list = $('portal-nh-list');
-      if (!rows.length) { emptyState(list, 'No hires yet. Add the first 1099 contractor with the form above.'); return; }
+      nhRowsById = {};
+      for (var ri = 0; ri < rows.length; ri++) { nhRowsById[rows[ri].id] = rows[ri]; }
+      if (!rows.length) { emptyState(list, 'No employees yet. Add the first employee with the form above.'); return; }
       list.innerHTML = rows.map(function (h) {
         var bits = [];
         if (h.role) bits.push(esc(h.role));
@@ -819,7 +828,9 @@
         var pay = esc(payTypeLabel(h.pay_type));
         if (h.pay_rate != null && h.pay_rate !== '') pay += ' \u00b7 ' + esc(fmtMoney(h.pay_rate));
         return '<article class="portal-card">' +
-          '<div class="portal-card-top"><p class="portal-card-title">' + esc(h.full_name || 'Hire') + '</p>' + nhBadge(h.status) + '</div>' +
+          '<div class="portal-card-top"><p class="portal-card-title">' + esc(h.full_name || 'Employee') + '</p>' +
+          '<span style="display:inline-flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">' + nhBadge(h.status) +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-nh-docs="' + esc(h.id) + '"><i class="fas fa-folder-open"></i> Documents</button></span></div>' +
           (bits.length ? '<p class="portal-card-meta">' + bits.join(' \u00b7 ') + '</p>' : '') +
           '<p class="portal-card-meta"><i class="fas fa-calendar"></i> Start: ' + esc(fmtDate(h.start_date)) +
           ' \u00b7 Pay: ' + pay + '</p>' +
@@ -832,7 +843,7 @@
     function loadNewHires(force) {
       var list = $('portal-nh-list');
       if (!list) return;
-      if (!force) list.innerHTML = '<p class="portal-muted">Loading hires&hellip;</p>';
+      if (!force) list.innerHTML = '<p class="portal-muted">Loading employees&hellip;</p>';
       var client = getClient();
       if (!client) { listError(list); return; }
       client.from('new_hires').select('*').order('created_at', { ascending: false }).limit(200)
@@ -863,6 +874,994 @@
       var nnav = $('portal-nav'); if (nnav) nnav.classList.remove('open');
       closeDrawerInline();
       if (!loaded) loadNewHires(false);
+    }
+
+    /* ================= NEW HIRE DOCUMENTS =================
+     * PORTAL_NEWHIRE_DOCS_2026_10_30 (Austin, Oct 30, 2026): every
+     * hire gets a Documents button next to their status. It opens
+     * that person's documents (employee_documents table; files in
+     * the existing private 'ticket-documents' bucket under
+     * hire/<new_hire_id>/ — that bucket's storage policies are
+     * staff-only for the whole bucket, not keyed to ticket paths,
+     * so no storage changes were needed; see newhire-documents.sql),
+     * offers an Add document upload with a type picker (same 15 MB
+     * rule as ticket documents), and fillable onboarding forms —
+     * Form I-9, Form W-4, Form W-9 — the hire completes on the iPad
+     * and signs with the signature pad at the end of each form. A
+     * completed form is rendered to a single PNG record holding
+     * every entered field plus the signature ink, and filed through
+     * the same storage path — the same way the ticket sign flow
+     * files its signature PNG and the check-in consent flow files
+     * its generated record.
+     * PRIVACY: SSNs / TINs are never rendered in any list — they
+     * live only inside the filed document itself. */
+    /* PORTAL_NEWHIRE_FORMS_2026_10_30: the fillable forms were
+     * verified against the current official editions (USCIS Form
+     * I-9 ed. 01/20/25; IRS Form W-4 (2026); IRS Form W-9 Rev.
+     * March 2024) and the Ohio IT 4 (Rev. 12/20) was added as a
+     * fourth fillable form. See NOTES in portal-newhire-forms-
+     * 2026-10-30. */
+    var NH_DOC_BUCKET = 'ticket-documents';
+    var NH_DOC_KIND_LABELS = {
+      i9: 'Form I-9', w4: 'Form W-4', w9: 'Form W-9', ohio_it4: 'Ohio IT 4',
+      id_copy: 'ID copy', certification: 'Certification',
+      offer: 'Offer letter', other: 'Other document'
+    };
+    var nhDocHire = null;
+
+    function nhDocStamp() { return new Date().toISOString().replace(/[:.]/g, '-'); }
+    function nhSafeFileName(name) {
+      var s = String(name || 'document').replace(/[^A-Za-z0-9._-]+/g, '_').slice(-80);
+      return s || 'document';
+    }
+    function nhToday() {
+      var d = new Date();
+      var m = String(d.getMonth() + 1); if (m.length < 2) m = '0' + m;
+      var day = String(d.getDate()); if (day.length < 2) day = '0' + day;
+      return d.getFullYear() + '-' + m + '-' + day;
+    }
+    function nhDocMsg(text) {
+      var m = $('nhd-msg');
+      if (!m) return;
+      if (text) { m.textContent = text; m.hidden = false; }
+      else { m.hidden = true; m.textContent = ''; }
+    }
+    function nhDocOk(text) {
+      var m = $('nhd-ok');
+      if (!m) return;
+      if (text) { m.innerHTML = '<i class="fas fa-circle-check"></i> ' + esc(text); m.hidden = false; }
+      else { m.hidden = true; m.innerHTML = ''; }
+    }
+
+    function nhModal(id, innerHtml, maxWidth) {
+      var old = document.getElementById(id);
+      if (old && old.parentNode) old.parentNode.removeChild(old);
+      var wrap = document.createElement('div');
+      wrap.id = id;
+      wrap.setAttribute('style', 'position:fixed;inset:0;background:rgba(44,35,26,0.55);z-index:3000;display:flex;align-items:center;justify-content:center;padding:1rem;');
+      wrap.innerHTML = '<div style="background:#FAF6EE;color:#2C231A;border-radius:14px;max-width:' + (maxWidth || 600) + 'px;width:100%;max-height:92vh;overflow:auto;padding:1.25rem;box-shadow:0 18px 50px rgba(0,0,0,0.35);">' + innerHtml + '</div>';
+      document.body.appendChild(wrap);
+      wrap.addEventListener('click', function (e) { if (e.target === wrap) nhCloseModal(id); });
+      return wrap;
+    }
+    function nhCloseModal(id) {
+      var w = document.getElementById(id);
+      if (w && w.parentNode) w.parentNode.removeChild(w);
+    }
+
+    /* Signature pad — the same canvas pad the ticket sign flow uses
+     * (portal.js openSignModal): 560x200 canvas, pointer events,
+     * round strokes; re-implemented here because portal.js exposes
+     * no globals and this section is self-contained by design (the
+     * same reason it has its own esc/trim/getClient). */
+    function nhWirePad(canvas) {
+      var ctx = canvas.getContext('2d');
+      ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#2C231A';
+      var state = { hasDrawn: false };
+      var drawing = false, last = null;
+      function pos(e) {
+        var r = canvas.getBoundingClientRect();
+        return { x: (e.clientX - r.left) * (canvas.width / r.width), y: (e.clientY - r.top) * (canvas.height / r.height) };
+      }
+      canvas.addEventListener('pointerdown', function (e) {
+        drawing = true; state.hasDrawn = true; last = pos(e);
+        try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+        e.preventDefault();
+      });
+      canvas.addEventListener('pointermove', function (e) {
+        if (!drawing) return;
+        var p = pos(e);
+        ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+        last = p;
+      });
+      function endStroke() { drawing = false; }
+      canvas.addEventListener('pointerup', endStroke);
+      canvas.addEventListener('pointercancel', endStroke);
+      state.clear = function () { ctx.clearRect(0, 0, canvas.width, canvas.height); state.hasDrawn = false; };
+      return state;
+    }
+    function nhCanvasBlob(canvas, cb) {
+      if (canvas.toBlob) { canvas.toBlob(cb, 'image/png'); return; }
+      var parts = String(canvas.toDataURL('image/png')).split(',');
+      var bin = window.atob(parts[1]);
+      var arr = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      cb(new Blob([arr], { type: 'image/png' }));
+    }
+    function nhPadHtml(id, label) {
+      return '<div class="portal-field"><label for="' + id + '">' + esc(label) + '</label>' +
+        '<canvas id="' + id + '" width="560" height="200" style="width:100%;height:auto;display:block;background:#fff;border:2px solid #d8cbb6;border-radius:8px;touch-action:none;"></canvas>' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-nhpad-clear="' + id + '" style="margin-top:0.35rem;">Clear signature</button></div>';
+    }
+    function nhWirePadIn(wrap, id) {
+      var canvas = wrap.querySelector('#' + id);
+      var st = nhWirePad(canvas);
+      var clr = wrap.querySelector('[data-nhpad-clear="' + id + '"]');
+      if (clr) clr.addEventListener('click', function () { st.clear(); });
+      return st;
+    }
+
+    function nhCurrentUserId(client, cb) {
+      try {
+        client.auth.getUser().then(function (res) {
+          cb(res && res.data && res.data.user ? res.data.user.id : null);
+        }).catch(function () { cb(null); });
+      } catch (e) { cb(null); }
+    }
+    function fileHireDoc(client, row, done) {
+      nhCurrentUserId(client, function (uid) {
+        if (uid) row.uploaded_by = uid;
+        client.from('employee_documents').insert(row).then(function (res) {
+          done(res.error ? (res.error.message || 'insert failed') : null);
+        }).catch(function () { done('insert failed'); });
+      });
+    }
+    function syncW9Flag(client) {
+      if (!nhDocHire) return;
+      client.from('new_hires').update({ w9_on_file: true }).eq('id', nhDocHire.id)
+        .then(function () { loadNewHires(true); }).catch(function () {});
+    }
+
+    function openHireDocs(hire) {
+      nhDocHire = hire;
+      var kindOpts = '';
+      for (var k in NH_DOC_KIND_LABELS) {
+        if (Object.prototype.hasOwnProperty.call(NH_DOC_KIND_LABELS, k)) {
+          kindOpts += '<option value="' + k + '">' + esc(NH_DOC_KIND_LABELS[k]) + '</option>';
+        }
+      }
+      var wrap = nhModal('portal-nh-docs-modal',
+        '<h3 style="margin:0 0 0.25rem;">' + esc(hire.full_name || 'New hire') + ' &mdash; Documents</h3>' +
+        '<p class="portal-muted portal-small" style="margin:0 0 0.75rem;">Everything on file for this person. Tax ID numbers are never listed here &mdash; they live only inside the filed documents.</p>' +
+        '<div id="nhd-list"><p class="portal-muted">Loading documents&hellip;</p></div>' +
+        '<h4 style="margin:1.1rem 0 0.5rem;">Add a document</h4>' +
+        '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:flex-end;">' +
+        '<div class="portal-field" style="margin:0;"><label for="nhd-kind">Type</label><select id="nhd-kind">' + kindOpts + '</select></div>' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="nhd-add-btn"><i class="fas fa-upload"></i> Add document</button>' +
+        '<input type="file" id="nhd-file" accept="image/*,application/pdf" hidden /></div>' +
+        '<h4 style="margin:1.1rem 0 0.35rem;">Fill out a form</h4>' +
+        '<p class="portal-muted portal-small" style="margin:0 0 0.5rem;">The new hire completes these on this device and signs at the end. Saving files the completed form here.</p>' +
+        '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">' +
+        '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-nhd-form="i9">Form I-9</button>' +
+        '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-nhd-form="w4">Form W-4</button>' +
+        '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-nhd-form="ohio_it4">Ohio IT 4</button>' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-nhd-form="w9">Form W-9</button></div>' +
+        '<p class="portal-error" id="nhd-msg" hidden></p>' +
+        '<p class="portal-muted" id="nhd-ok" hidden></p>' +
+        '<div style="display:flex;gap:0.5rem;margin-top:1rem;"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="nhd-close">Close</button></div>',
+        660);
+      wrap.querySelector('#nhd-close').addEventListener('click', function () { nhCloseModal('portal-nh-docs-modal'); });
+      var fileInput = wrap.querySelector('#nhd-file');
+      var addBtn = wrap.querySelector('#nhd-add-btn');
+      if (addBtn && fileInput) addBtn.addEventListener('click', function () { fileInput.click(); });
+      if (fileInput) fileInput.addEventListener('change', function () {
+        var f = fileInput.files && fileInput.files[0];
+        fileInput.value = '';
+        if (f) addHireDocFile(f);
+      });
+      var formBtns = wrap.querySelectorAll('[data-nhd-form]');
+      for (var i = 0; i < formBtns.length; i++) {
+        formBtns[i].addEventListener('click', function () { openHireForm(this.getAttribute('data-nhd-form')); });
+      }
+      loadHireDocs();
+    }
+
+    function loadHireDocs() {
+      var box = $('nhd-list');
+      if (!box || !nhDocHire) return;
+      var client = getClient();
+      if (!client) { box.innerHTML = '<p class="portal-error">Couldn&rsquo;t reach the database.</p>'; return; }
+      client.from('employee_documents').select('*').eq('new_hire_id', nhDocHire.id).order('created_at', { ascending: false }).then(function (res) {
+        if (res.error) { box.innerHTML = '<p class="portal-muted">Documents are not set up for the portal yet.</p>'; return; }
+        var rows = res.data || [];
+        if (!rows.length) { box.innerHTML = '<p class="portal-muted">No documents on file yet. Add one below, or have them fill out a form.</p>'; return; }
+        box.innerHTML = rows.map(function (d) {
+          var meta = esc(fmtDate(d.created_at));
+          if (d.original_filename) meta += ' &middot; ' + esc(d.original_filename);
+          return '<div style="display:flex;justify-content:space-between;align-items:center;gap:0.75rem;padding:0.45rem 0;border-bottom:1px solid #E6D9C0;">' +
+            '<div><span style="font-weight:600;">' + esc(d.label || NH_DOC_KIND_LABELS[d.kind] || 'Document') + '</span><br />' +
+            '<span class="portal-muted portal-small">' + meta + '</span></div>' +
+            '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-nhd-view="' + esc(d.storage_path) + '"><i class="fas fa-eye"></i> View</button></div>';
+        }).join('');
+        var btns = box.querySelectorAll('[data-nhd-view]');
+        for (var i = 0; i < btns.length; i++) {
+          btns[i].addEventListener('click', function () { viewHireDoc(this.getAttribute('data-nhd-view')); });
+        }
+      }).catch(function () { box.innerHTML = '<p class="portal-muted">Documents could not be loaded.</p>'; });
+    }
+
+    function viewHireDoc(path) {
+      if (!path) return;
+      var client = getClient();
+      if (!client) return;
+      client.storage.from(NH_DOC_BUCKET).createSignedUrl(path, 3600).then(function (res) {
+        if (res.error || !res.data || !res.data.signedUrl) { nhDocMsg('Could not open that document — try again.'); return; }
+        window.open(res.data.signedUrl, '_blank');
+      }).catch(function () { nhDocMsg('Could not open that document — try again.'); });
+    }
+
+    function addHireDocFile(file) {
+      nhDocMsg(''); nhDocOk('');
+      var kindSel = $('nhd-kind');
+      var kind = kindSel ? kindSel.value : 'other';
+      if (NH_DOC_KIND_LABELS[kind] === undefined) kind = 'other';
+      if (file.size > 15 * 1024 * 1024) { nhDocMsg('That file is over 15 MB — try a smaller scan or photo.'); return; }
+      var client = getClient();
+      if (!client) { nhDocMsg('Couldn\u2019t reach the database. Check your connection and try again.'); return; }
+      var btn = $('nhd-add-btn');
+      function resetBtn() { if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-upload"></i> Add document'; } }
+      if (btn) { btn.disabled = true; btn.textContent = 'Adding…'; }
+      var path = 'hire/' + nhDocHire.id + '/' + kind + '-' + nhDocStamp() + '-' + nhSafeFileName(file.name);
+      client.storage.from(NH_DOC_BUCKET).upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: false }).then(function (up) {
+        if (up.error) { resetBtn(); nhDocMsg('Upload failed — check the connection and try again.'); return; }
+        var row = {
+          new_hire_id: nhDocHire.id, kind: kind, label: NH_DOC_KIND_LABELS[kind],
+          storage_path: path, original_filename: file.name,
+          mime_type: file.type || null, file_size: file.size
+        };
+        fileHireDoc(client, row, function (err) {
+          resetBtn();
+          if (err) { nhDocMsg('The file uploaded but could not be filed — try again.'); return; }
+          if (kind === 'w9') syncW9Flag(client);
+          nhDocOk(NH_DOC_KIND_LABELS[kind] + ' added to ' + (nhDocHire.full_name || 'this hire') + '.');
+          loadHireDocs();
+        });
+      }).catch(function () { resetBtn(); nhDocMsg('Upload failed — check the connection and try again.'); });
+    }
+
+    /* ---------- Fillable forms (I-9 / W-4 / W-9) ---------- */
+    function nhF(id, label, o) {
+      o = o || {};
+      var val = o.val == null ? '' : String(o.val);
+      var star = o.req ? ' <span aria-hidden="true">*</span>' : '';
+      var inner;
+      if (o.type === 'select') {
+        inner = '<select id="' + id + '">';
+        (o.options || []).forEach(function (op) {
+          inner += '<option value="' + esc(op[0]) + '"' + (String(op[0]) === val ? ' selected' : '') + '>' + esc(op[1]) + '</option>';
+        });
+        inner += '</select>';
+      } else {
+        inner = '<input type="' + (o.type || 'text') + '" id="' + id + '" value="' + esc(val) + '"' +
+          (o.ph ? ' placeholder="' + esc(o.ph) + '"' : '') +
+          (o.min != null ? ' min="' + o.min + '"' : '') +
+          (o.step ? ' step="' + o.step + '"' : '') +
+          (o.inputmode ? ' inputmode="' + o.inputmode + '"' : '') +
+          ' autocomplete="off" />';
+      }
+      return '<div class="portal-field"><label for="' + id + '">' + esc(label) + star + '</label>' + inner + '</div>';
+    }
+    function nhCheck(id, label) {
+      return '<div class="portal-field portal-nh-check"><label for="' + id + '"><input type="checkbox" id="' + id + '" /> ' + esc(label) + '</label></div>';
+    }
+    function nhV(wrap, id) { var el = wrap.querySelector('#' + id); return el ? trim(el.value) : ''; }
+    function nhChecked(wrap, id) { var el = wrap.querySelector('#' + id); return !!(el && el.checked); }
+    function nhMissing(wrap, pairs) {
+      for (var i = 0; i < pairs.length; i++) {
+        if (!nhV(wrap, pairs[i][0])) return pairs[i][1];
+      }
+      return '';
+    }
+    function nhFormShell(title, intro, bodyHtml) {
+      return '<h3 style="margin:0 0 0.25rem;">' + esc(title) + '</h3>' +
+        '<p class="portal-muted portal-small" style="margin:0 0 0.75rem;">' + intro + '</p>' +
+        bodyHtml +
+        '<p class="portal-error" id="nhf-msg" hidden></p>' +
+        '<div style="display:flex;gap:0.5rem;align-items:center;margin-top:0.75rem;flex-wrap:wrap;">' +
+        '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="nhf-save">Save &amp; file form</button>' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="nhf-cancel">Cancel</button>' +
+        '<span class="portal-muted portal-small" id="nhf-status"></span></div>';
+    }
+    function nhFormMsg(wrap, text) {
+      var m = wrap.querySelector('#nhf-msg');
+      if (m) { m.textContent = text || ''; m.hidden = !text; }
+    }
+    function nhNameParts(hire) {
+      var parts = trim(hire.full_name || '').split(/\s+/).filter(Boolean);
+      if (!parts.length) return { first: '', last: '' };
+      if (parts.length === 1) return { first: parts[0], last: '' };
+      return { first: parts[0], last: parts.slice(1).join(' ') };
+    }
+
+    /* Render a completed form to ONE readable PNG record: business
+     * header, form title, a "completed in the ATRG portal" line,
+     * every field as "Label: value", the attestation text, and each
+     * signature drawn into its box with printed name and date. */
+    function renderFormRecord(rec) {
+      var W = 1000, MX = 56, CW = W - MX * 2;
+      var F = {
+        biz: '700 30px Arial, sans-serif',
+        title: '700 34px Arial, sans-serif',
+        sub: '20px Arial, sans-serif',
+        sec: '700 25px Arial, sans-serif',
+        lbl: '700 23px Arial, sans-serif',
+        val: '23px Arial, sans-serif',
+        body: '22px Arial, sans-serif',
+        cap: '700 20px Arial, sans-serif'
+      };
+      var meas = document.createElement('canvas').getContext('2d');
+      function wrapText(text, font, firstW, restW) {
+        meas.font = font;
+        var words = String(text == null ? '' : text).split(/\s+/).filter(Boolean);
+        if (!words.length) return ['\u2014'];
+        var lines = [], cur = '', limit = firstW;
+        for (var i = 0; i < words.length; i++) {
+          var t = cur ? cur + ' ' + words[i] : words[i];
+          if (meas.measureText(t).width > limit && cur) { lines.push(cur); cur = words[i]; limit = restW; }
+          else cur = t;
+        }
+        if (cur) lines.push(cur);
+        return lines;
+      }
+      var ops = [], y = 0;
+      function addOp(kind, h, data) { ops.push({ kind: kind, y: y, h: h, data: data }); y += h; }
+      addOp('biz', 44, 'Austin\u2019s Tech Repair Group');
+      addOp('title', 46, rec.title);
+      addOp('sub', 30, rec.subtitle);
+      addOp('rule', 18, null);
+      (rec.sections || []).forEach(function (sec) {
+        addOp('gap', 14, null);
+        addOp('sec', 36, sec.title);
+        (sec.lines || []).forEach(function (pair) {
+          var label = pair[0] + ':';
+          meas.font = F.lbl;
+          var lw = meas.measureText(label + ' ').width;
+          var raw = (pair[1] === '' || pair[1] == null) ? '\u2014' : pair[1];
+          var vlines = wrapText(raw, F.val, CW - lw, CW - 24);
+          addOp('kv', vlines.length * 32 + 6, { label: label, lw: lw, vlines: vlines });
+        });
+        if (sec.text) {
+          var tlines = wrapText(sec.text, F.body, CW, CW);
+          addOp('text', tlines.length * 30 + 10, tlines);
+        }
+      });
+      (rec.sigs || []).forEach(function (sg) {
+        addOp('gap', 16, null);
+        addOp('sig', 232, sg);
+      });
+      var canvas = document.createElement('canvas');
+      canvas.width = W;
+      canvas.height = y + 90;
+      var ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#2C231A'; ctx.textBaseline = 'top';
+      ops.forEach(function (op) {
+        var yy = 44 + op.y, i, j;
+        if (op.kind === 'biz') { ctx.font = F.biz; ctx.fillStyle = '#A63E06'; ctx.fillText(op.data, MX, yy); ctx.fillStyle = '#2C231A'; }
+        else if (op.kind === 'title') { ctx.font = F.title; ctx.fillText(op.data, MX, yy); }
+        else if (op.kind === 'sub') { ctx.font = F.sub; ctx.fillStyle = '#7D6C5B'; ctx.fillText(op.data, MX, yy); ctx.fillStyle = '#2C231A'; }
+        else if (op.kind === 'rule') { ctx.fillStyle = '#A63E06'; ctx.fillRect(MX, yy + 4, CW, 3); ctx.fillStyle = '#2C231A'; }
+        else if (op.kind === 'sec') { ctx.font = F.sec; ctx.fillText(op.data, MX, yy); }
+        else if (op.kind === 'kv') {
+          ctx.font = F.lbl; ctx.fillText(op.data.label, MX, yy);
+          ctx.font = F.val;
+          for (i = 0; i < op.data.vlines.length; i++) {
+            ctx.fillText(op.data.vlines[i], MX + (i === 0 ? op.data.lw : 24), yy + i * 32);
+          }
+        }
+        else if (op.kind === 'text') {
+          ctx.font = F.body;
+          for (j = 0; j < op.data.length; j++) ctx.fillText(op.data[j], MX, yy + j * 30);
+        }
+        else if (op.kind === 'sig') {
+          var sg = op.data;
+          ctx.font = F.cap; ctx.fillText(sg.caption, MX, yy);
+          ctx.strokeStyle = '#B9A888'; ctx.lineWidth = 2;
+          ctx.strokeRect(MX, yy + 30, 460, 164);
+          if (sg.hasDrawn && sg.canvas) ctx.drawImage(sg.canvas, MX, yy + 30, 460, 164);
+          ctx.font = F.val;
+          ctx.fillText('Printed name: ' + sg.name, MX + 486, yy + 62);
+          ctx.fillText('Date: ' + sg.date, MX + 486, yy + 102);
+        }
+      });
+      return canvas;
+    }
+
+    /* Shared save pipeline for the three forms: render the record,
+     * upload it through the same storage path as every other hire
+     * document, then file the employee_documents row. */
+    function fileFormRecord(kind, sections, sigs, done) {
+      var client = getClient();
+      if (!client) { done('Couldn\u2019t reach the database. Check your connection and try again.'); return; }
+      var title = NH_DOC_KIND_LABELS[kind];
+      var subtitle = 'Completed in the ATRG portal \u2014 ' + new Date().toLocaleString() + ' \u2014 Employee: ' + (nhDocHire.full_name || '');
+      var recCanvas = renderFormRecord({ title: title, subtitle: subtitle, sections: sections, sigs: sigs });
+      nhCanvasBlob(recCanvas, function (blob) {
+        if (!blob) { done('Could not build the form record — try again.'); return; }
+        var stamp = nhDocStamp();
+        var path = 'hire/' + nhDocHire.id + '/' + kind + '-' + stamp + '.png';
+        var fileName = nhSafeFileName(title.replace(/\s+/g, '-') + '-' + stamp + '.png');
+        client.storage.from(NH_DOC_BUCKET).upload(path, blob, { contentType: 'image/png', upsert: false }).then(function (up) {
+          if (up.error) { done('Saving failed — check the connection and try again.'); return; }
+          var row = {
+            new_hire_id: nhDocHire.id, kind: kind,
+            label: title + ' — completed in portal',
+            storage_path: path, original_filename: fileName,
+            mime_type: 'image/png', file_size: blob.size
+          };
+          fileHireDoc(client, row, function (err) {
+            if (err) { done('The form record saved but could not be filed — try again.'); return; }
+            if (kind === 'w9') syncW9Flag(client);
+            done(null);
+          });
+        }).catch(function () { done('Saving failed — check the connection and try again.'); });
+      });
+    }
+
+    function openHireForm(kind) {
+      if (!nhDocHire) return;
+      if (kind === 'i9') openI9Form();
+      else if (kind === 'w4') openW4Form();
+      else if (kind === 'w9') openW9Form();
+      else if (kind === 'ohio_it4') openOhioIt4Form();
+    }
+
+    function wireFormSave(wrap, collect) {
+      wrap.querySelector('#nhf-cancel').addEventListener('click', function () { nhCloseModal('portal-nh-form-modal'); });
+      wrap.querySelector('#nhf-save').addEventListener('click', function () {
+        nhFormMsg(wrap, '');
+        var out = collect();
+        if (out.error) { nhFormMsg(wrap, out.error); return; }
+        var btn = wrap.querySelector('#nhf-save');
+        var status = wrap.querySelector('#nhf-status');
+        btn.disabled = true;
+        if (status) status.textContent = 'Saving…';
+        fileFormRecord(out.kind, out.sections, out.sigs, function (err) {
+          btn.disabled = false;
+          if (status) status.textContent = '';
+          if (err) { nhFormMsg(wrap, err); return; }
+          nhCloseModal('portal-nh-form-modal');
+          nhDocOk(NH_DOC_KIND_LABELS[out.kind] + ' filed for ' + (nhDocHire.full_name || 'this hire') + '.');
+          loadHireDocs();
+        });
+      });
+    }
+
+    /* ----- Form W-4 ----- */
+    function openW4Form() {
+      var hire = nhDocHire, np = nhNameParts(hire);
+      var body =
+        '<div class="portal-nh-grid">' +
+        nhF('nhf-w4-first', 'First name and middle initial', { req: true, val: np.first }) +
+        nhF('nhf-w4-last', 'Last name', { req: true, val: np.last }) +
+        nhF('nhf-w4-street', 'Street address', { req: true }) +
+        nhF('nhf-w4-city', 'City', { req: true }) +
+        nhF('nhf-w4-state', 'State', { req: true }) +
+        nhF('nhf-w4-zip', 'ZIP code', { req: true, inputmode: 'numeric' }) +
+        nhF('nhf-w4-ssn', 'Social Security number', { req: true, inputmode: 'numeric', ph: 'XXX-XX-XXXX' }) +
+        nhF('nhf-w4-status', 'Filing status', { req: true, type: 'select', options: [
+          ['single', 'Single or married filing separately'],
+          ['joint', 'Married filing jointly or qualifying surviving spouse'],
+          ['head', 'Head of household']
+        ] }) +
+        '</div>' +
+        '<div class="portal-nh-grid">' +
+        nhF('nhf-w4-step2', 'Step 2 \u2014 Multiple jobs or spouse works', { type: 'select', options: [
+          ['none', 'Does not apply \u2014 skip to Step 3'],
+          ['estimator', '(a) Used the IRS Tax Withholding Estimator'],
+          ['worksheet', '(b) Used the Multiple Jobs Worksheet (result entered in Step 4(c))'],
+          ['twojobs', '(c) Only two jobs total \u2014 box checked on both jobs\u2019 W-4s']
+        ] }) +
+        '</div>' +
+        '<h4 style="margin:0.9rem 0 0.4rem;">Step 3 — Dependents and other credits</h4>' +
+        '<div class="portal-nh-grid">' +
+        nhF('nhf-w4-children', 'Qualifying children under 17 (count \u2014 $2,200 each)', { type: 'number', min: '0', step: '1', val: '0' }) +
+        nhF('nhf-w4-others', 'Other dependents (count \u2014 $500 each)', { type: 'number', min: '0', step: '1', val: '0' }) +
+        nhF('nhf-w4-credits', 'Other credits amount ($)', { type: 'number', min: '0', step: '0.01' }) +
+        '</div>' +
+        '<h4 style="margin:0.9rem 0 0.4rem;">Step 4 — Other adjustments (optional)</h4>' +
+        '<div class="portal-nh-grid">' +
+        nhF('nhf-w4-income', 'Other income, not from jobs ($ per year)', { type: 'number', min: '0', step: '0.01' }) +
+        nhF('nhf-w4-deductions', 'Deductions above the standard amount ($ per year)', { type: 'number', min: '0', step: '0.01' }) +
+        nhF('nhf-w4-extra', 'Extra withholding ($ per pay period)', { type: 'number', min: '0', step: '0.01' }) +
+        '</div>' +
+        nhCheck('nhf-w4-exempt', 'Exempt from withholding \u2014 I claim exemption from withholding for 2026, and I certify that I meet both of the conditions for exemption for 2026. I understand I will need to submit a new Form W-4 for 2027.') +
+        '<p class="portal-muted portal-small">Under penalties of perjury, I declare that this certificate, to the best of my knowledge and belief, is true, correct, and complete.</p>' +
+        nhPadHtml('nhf-w4-pad', 'Employee signature') +
+        nhF('nhf-w4-date', 'Date signed', { type: 'date', req: true, val: nhToday() }) +
+        '<h4 style="margin:0.9rem 0 0.4rem;">Employers only</h4>' +
+        '<div class="portal-nh-grid">' +
+        nhF('nhf-w4-ername', 'Employer name', { req: true, val: 'Austin\u2019s Tech Repair Group' }) +
+        nhF('nhf-w4-eraddr', 'Employer address', { req: true, val: '1830 SR 725 Lot 115, Ranch Rd, Spring Valley, OH 45370' }) +
+        nhF('nhf-w4-erfirst', 'First date of employment', { type: 'date', val: hire.start_date || '' }) +
+        nhF('nhf-w4-erein', 'Employer identification number (EIN)', {}) +
+        '</div>';
+      var wrap = nhModal('portal-nh-form-modal', nhFormShell('Form W-4 — Employee\u2019s Withholding Certificate',
+        'Completed by the employee, using the current IRS Form W-4 (2026). This files ATRG\u2019s onboarding record of the federal Form W-4 data.', body), 680);
+      var pad = nhWirePadIn(wrap, 'nhf-w4-pad');
+      wireFormSave(wrap, function () {
+        var miss = nhMissing(wrap, [
+          ['nhf-w4-first', 'first name'], ['nhf-w4-last', 'last name'],
+          ['nhf-w4-street', 'street address'], ['nhf-w4-city', 'city'],
+          ['nhf-w4-state', 'state'], ['nhf-w4-zip', 'ZIP code'],
+          ['nhf-w4-ssn', 'Social Security number'], ['nhf-w4-date', 'date signed'],
+          ['nhf-w4-ername', 'employer name'], ['nhf-w4-eraddr', 'employer address']
+        ]);
+        if (miss) return { error: 'Missing: ' + miss + '.' };
+        if (!pad.hasDrawn) return { error: 'The employee signature is required — sign in the box.' };
+        var kids = parseInt(nhV(wrap, 'nhf-w4-children') || '0', 10) || 0;
+        var oth = parseInt(nhV(wrap, 'nhf-w4-others') || '0', 10) || 0;
+        var credits = parseFloat(nhV(wrap, 'nhf-w4-credits') || '0') || 0;
+        var statusSel = wrap.querySelector('#nhf-w4-status');
+        var statusText = statusSel.options[statusSel.selectedIndex].text;
+        var step2Sel = wrap.querySelector('#nhf-w4-step2');
+        var step2Text = step2Sel.options[step2Sel.selectedIndex].text;
+        var depTotal = kids * 2200 + oth * 500 + credits;
+        var sections = [{
+          title: 'Employee\u2019s Withholding Certificate (Form W-4)',
+          lines: [
+            ['First name and middle initial', nhV(wrap, 'nhf-w4-first')],
+            ['Last name', nhV(wrap, 'nhf-w4-last')],
+            ['Street address', nhV(wrap, 'nhf-w4-street')],
+            ['City', nhV(wrap, 'nhf-w4-city')],
+            ['State', nhV(wrap, 'nhf-w4-state')],
+            ['ZIP code', nhV(wrap, 'nhf-w4-zip')],
+            ['Social Security number', nhV(wrap, 'nhf-w4-ssn')],
+            ['Filing status', statusText],
+            ['Step 2 \u2014 multiple jobs or spouse works', step2Text],
+            ['Step 3 — qualifying children under 17 (count)', String(kids)],
+            ['Step 3 \u2014 qualifying children amount', '$' + (kids * 2200).toFixed(2)],
+            ['Step 3 — other dependents (count)', String(oth)],
+            ['Step 3 — other dependents amount', '$' + (oth * 500).toFixed(2)],
+            ['Step 3 — other credits', '$' + credits.toFixed(2)],
+            ['Step 3 — total dependents and credits', '$' + depTotal.toFixed(2)],
+            ['Step 4(a) — other income (per year)', nhV(wrap, 'nhf-w4-income') ? '$' + nhV(wrap, 'nhf-w4-income') : ''],
+            ['Step 4(b) — deductions (per year)', nhV(wrap, 'nhf-w4-deductions') ? '$' + nhV(wrap, 'nhf-w4-deductions') : ''],
+            ['Step 4(c) \u2014 extra withholding (per pay period)', nhV(wrap, 'nhf-w4-extra') ? '$' + nhV(wrap, 'nhf-w4-extra') : ''],
+            ['Exempt from withholding claimed for 2026', nhChecked(wrap, 'nhf-w4-exempt') ? 'Yes' : 'No'],
+            ['Employer name', nhV(wrap, 'nhf-w4-ername')],
+            ['Employer address', nhV(wrap, 'nhf-w4-eraddr')],
+            ['First date of employment', nhV(wrap, 'nhf-w4-erfirst')],
+            ['Employer identification number (EIN)', nhV(wrap, 'nhf-w4-erein')]
+          ],
+          text: 'Employee certification: Under penalties of perjury, I declare that this certificate, to the best of my knowledge and belief, is true, correct, and complete.'
+        }];
+        var sigs = [{
+          canvas: wrap.querySelector('#nhf-w4-pad'), hasDrawn: pad.hasDrawn,
+          caption: 'Employee signature',
+          name: nhV(wrap, 'nhf-w4-first') + ' ' + nhV(wrap, 'nhf-w4-last'),
+          date: nhV(wrap, 'nhf-w4-date')
+        }];
+        return { kind: 'w4', sections: sections, sigs: sigs };
+      });
+    }
+
+    /* ----- Form W-9 ----- */
+    function openW9Form() {
+      var hire = nhDocHire;
+      var body =
+        '<div class="portal-nh-grid">' +
+        nhF('nhf-w9-name', 'Name (as shown on your tax return)', { req: true, val: hire.full_name || '' }) +
+        nhF('nhf-w9-biz', 'Business name / disregarded entity (if different)', { val: hire.business_name || '' }) +
+        nhF('nhf-w9-class', 'Federal tax classification', { req: true, type: 'select', options: [
+          ['individual', 'Individual / sole proprietor or single-member LLC'],
+          ['ccorp', 'C Corporation'],
+          ['scorp', 'S Corporation'],
+          ['partnership', 'Partnership'],
+          ['trust', 'Trust / estate'],
+          ['llc', 'LLC — enter classification letter below'],
+          ['other', 'Other']
+        ] }) +
+        nhF('nhf-w9-llc', 'LLC classification letter (C, S, or P — only if LLC)', {}) +
+        nhF('nhf-w9-exemptpayee', 'Exempt payee code (if any)', {}) +
+        nhF('nhf-w9-fatca', 'Exemption from FATCA reporting code (if any)', {}) +
+        nhF('nhf-w9-street', 'Street address', { req: true }) +
+        nhF('nhf-w9-city', 'City', { req: true }) +
+        nhF('nhf-w9-state', 'State', { req: true }) +
+        nhF('nhf-w9-zip', 'ZIP code', { req: true, inputmode: 'numeric' }) +
+        nhF('nhf-w9-tin', 'Taxpayer Identification Number (SSN or EIN)', { req: true, inputmode: 'numeric' }) +
+        '</div>' +
+        '<p class="portal-muted portal-small">Certification: Under penalties of perjury, I certify that (1) the number shown on this form is my correct taxpayer identification number, (2) I am not subject to backup withholding, (3) I am a U.S. citizen or other U.S. person, and (4) the FATCA code(s) entered on this form (if any) indicating that I am exempt from FATCA reporting are correct.</p>' +
+        nhPadHtml('nhf-w9-pad', 'Signature') +
+        nhF('nhf-w9-date', 'Date signed', { type: 'date', req: true, val: nhToday() });
+      var wrap = nhModal('portal-nh-form-modal', nhFormShell('Form W-9 — Request for Taxpayer Identification Number and Certification',
+        'Current IRS Form W-9 (Rev. March 2024). This files ATRG\u2019s onboarding record of the federal Form W-9 data.', body), 680);
+      var pad = nhWirePadIn(wrap, 'nhf-w9-pad');
+      wireFormSave(wrap, function () {
+        var miss = nhMissing(wrap, [
+          ['nhf-w9-name', 'name'], ['nhf-w9-street', 'street address'],
+          ['nhf-w9-city', 'city'], ['nhf-w9-state', 'state'], ['nhf-w9-zip', 'ZIP code'],
+          ['nhf-w9-tin', 'Taxpayer Identification Number'], ['nhf-w9-date', 'date signed']
+        ]);
+        if (miss) return { error: 'Missing: ' + miss + '.' };
+        if (!pad.hasDrawn) return { error: 'A signature is required — sign in the box.' };
+        var classSel = wrap.querySelector('#nhf-w9-class');
+        var classText = classSel.options[classSel.selectedIndex].text;
+        if (classSel.value === 'llc' && nhV(wrap, 'nhf-w9-llc')) classText += ' — ' + nhV(wrap, 'nhf-w9-llc').toUpperCase();
+        var sections = [{
+          title: 'Request for Taxpayer Identification Number and Certification (Form W-9)',
+          lines: [
+            ['Name', nhV(wrap, 'nhf-w9-name')],
+            ['Business name / disregarded entity', nhV(wrap, 'nhf-w9-biz')],
+            ['Federal tax classification', classText],
+            ['Exempt payee code', nhV(wrap, 'nhf-w9-exemptpayee')],
+            ['Exemption from FATCA reporting code', nhV(wrap, 'nhf-w9-fatca')],
+            ['Street address', nhV(wrap, 'nhf-w9-street')],
+            ['City', nhV(wrap, 'nhf-w9-city')],
+            ['State', nhV(wrap, 'nhf-w9-state')],
+            ['ZIP code', nhV(wrap, 'nhf-w9-zip')],
+            ['Taxpayer Identification Number (SSN or EIN)', nhV(wrap, 'nhf-w9-tin')]
+          ],
+          text: 'Certification: Under penalties of perjury, I certify that (1) the number shown on this form is my correct taxpayer identification number, (2) I am not subject to backup withholding, (3) I am a U.S. citizen or other U.S. person, and (4) the FATCA code(s) entered on this form (if any) indicating that I am exempt from FATCA reporting are correct.'
+        }];
+        var sigs = [{
+          canvas: wrap.querySelector('#nhf-w9-pad'), hasDrawn: pad.hasDrawn,
+          caption: 'Signature of U.S. person',
+          name: nhV(wrap, 'nhf-w9-name'),
+          date: nhV(wrap, 'nhf-w9-date')
+        }];
+        return { kind: 'w9', sections: sections, sigs: sigs };
+      });
+    }
+
+    /* ----- Form I-9 ----- */
+    var NH_I9_STATUS_LABELS = {
+      citizen: 'A citizen of the United States',
+      national: 'A noncitizen national of the United States',
+      lpr: 'A lawful permanent resident',
+      alien: 'An alien authorized to work'
+    };
+    function openI9Form() {
+      var hire = nhDocHire, np = nhNameParts(hire);
+      var body =
+        '<h4 style="margin:0.25rem 0 0.4rem;">Section 1 — Employee information and attestation</h4>' +
+        '<div class="portal-nh-grid">' +
+        nhF('nhf-i9-last', 'Last name (family name)', { req: true, val: np.last }) +
+        nhF('nhf-i9-first', 'First name (given name)', { req: true, val: np.first }) +
+        nhF('nhf-i9-middle', 'Middle initial', {}) +
+        nhF('nhf-i9-othernames', 'Other last names used (if any)', {}) +
+        nhF('nhf-i9-street', 'Street address', { req: true }) +
+        nhF('nhf-i9-apt', 'Apt. / unit number', {}) +
+        nhF('nhf-i9-city', 'City', { req: true }) +
+        nhF('nhf-i9-state', 'State', { req: true }) +
+        nhF('nhf-i9-zip', 'ZIP code', { req: true, inputmode: 'numeric' }) +
+        nhF('nhf-i9-dob', 'Date of birth', { type: 'date', req: true }) +
+        nhF('nhf-i9-ssn', 'Social Security number', { req: true, inputmode: 'numeric', ph: 'XXX-XX-XXXX' }) +
+        nhF('nhf-i9-email', 'Email address', { type: 'email', val: hire.email || '' }) +
+        nhF('nhf-i9-phone', 'Phone number', { type: 'tel', val: hire.phone || '' }) +
+        nhF('nhf-i9-status', 'I attest, under penalty of perjury, that I am:', { req: true, type: 'select', options: [
+          ['citizen', NH_I9_STATUS_LABELS.citizen],
+          ['national', NH_I9_STATUS_LABELS.national],
+          ['lpr', NH_I9_STATUS_LABELS.lpr],
+          ['alien', NH_I9_STATUS_LABELS.alien]
+        ] }) +
+        '</div>' +
+        '<div class="portal-nh-grid" id="nhf-i9-anum-wrap" hidden>' +
+        nhF('nhf-i9-anum', 'USCIS Number / A-Number', { req: true }) +
+        '</div>' +
+        '<div class="portal-nh-grid" id="nhf-i9-alien-wrap" hidden>' +
+        nhF('nhf-i9-i94', 'Form I-94 admission number', {}) +
+        nhF('nhf-i9-passnum', 'Foreign passport number', {}) +
+        nhF('nhf-i9-passcountry', 'Country of issuance', {}) +
+        nhF('nhf-i9-exp', 'An alien authorized to work until (expiration date, if any)', { type: 'date' }) +
+        '</div>' +
+        nhCheck('nhf-i9-prep-check', 'A preparer or translator helped complete Section 1') +
+        '<div id="nhf-i9-prep-wrap" hidden><div class="portal-nh-grid">' +
+        nhF('nhf-i9-prep-last', 'Preparer / translator \u2014 last name', {}) +
+        nhF('nhf-i9-prep-first', 'Preparer / translator \u2014 first name', {}) +
+        nhF('nhf-i9-prep-address', 'Preparer / translator address (street, city, state, ZIP)', {}) +
+        nhF('nhf-i9-prep-date', 'Preparer / translator date signed', { type: 'date', val: nhToday() }) +
+        '</div>' +
+        nhPadHtml('nhf-i9-preppad', 'Preparer / translator signature') +
+        '</div>' +
+        nhPadHtml('nhf-i9-pad', 'Employee signature') +
+        nhF('nhf-i9-date', 'Date signed', { type: 'date', req: true, val: nhToday() }) +
+        '<h4 style="margin:1.1rem 0 0.4rem;">Section 2 — Employer review and attestation <span class="portal-muted portal-small">(Austin completes this after examining the employee\u2019s documents)</span></h4>' +
+        '<div class="portal-nh-grid">' +
+        nhF('nhf-i9-docset', 'Documents examined', { req: true, type: 'select', options: [
+          ['A', 'List A document'],
+          ['BC', 'List B and List C documents']
+        ] }) +
+        '</div>' +
+        nhCheck('nhf-i9-altproc', 'An alternative procedure authorized by the Secretary of DHS was used to examine the documents') +
+        nhF('nhf-i9-addlinfo', 'Additional information', {}) +
+        '<div id="nhf-i9-lista-wrap"><div class="portal-nh-grid">' +
+        nhF('nhf-i9-a-title', 'List A — document title', { req: true }) +
+        nhF('nhf-i9-a-auth', 'List A — issuing authority', { req: true }) +
+        nhF('nhf-i9-a-num', 'List A — document number', { req: true }) +
+        nhF('nhf-i9-a-exp', 'List A — expiration date (if any)', {}) +
+        '</div></div>' +
+        '<div id="nhf-i9-listbc-wrap" hidden><div class="portal-nh-grid">' +
+        nhF('nhf-i9-b-title', 'List B — document title', { req: true }) +
+        nhF('nhf-i9-b-auth', 'List B — issuing authority', { req: true }) +
+        nhF('nhf-i9-b-num', 'List B — document number', { req: true }) +
+        nhF('nhf-i9-b-exp', 'List B — expiration date (if any)', {}) +
+        nhF('nhf-i9-c-title', 'List C — document title', { req: true }) +
+        nhF('nhf-i9-c-auth', 'List C — issuing authority', { req: true }) +
+        nhF('nhf-i9-c-num', 'List C — document number', { req: true }) +
+        nhF('nhf-i9-c-exp', 'List C — expiration date (if any)', {}) +
+        '</div></div>' +
+        '<div class="portal-nh-grid">' +
+        nhF('nhf-i9-firstday', 'First day of employment', { type: 'date', req: true, val: hire.start_date || '' }) +
+        nhF('nhf-i9-bizname', 'Employer / business name', { req: true, val: 'Austin\u2019s Tech Repair Group' }) +
+        nhF('nhf-i9-erstreet', 'Employer address \u2014 street', { req: true, val: '1830 SR 725 Lot 115, Ranch Rd' }) +
+        nhF('nhf-i9-ercity', 'Employer address \u2014 city', { req: true, val: 'Spring Valley' }) +
+        nhF('nhf-i9-erstate', 'Employer address \u2014 state', { req: true, val: 'OH' }) +
+        nhF('nhf-i9-erzip', 'Employer address \u2014 ZIP', { req: true, val: '45370', inputmode: 'numeric' }) +
+        nhF('nhf-i9-repname', 'Name of employer or authorized representative', { req: true, val: 'Austin Tyler Caudill' }) +
+        nhF('nhf-i9-reptitle', 'Title of employer or authorized representative', { val: 'Owner' }) +
+        '</div>' +
+        nhPadHtml('nhf-i9-erpad', 'Employer signature') +
+        nhF('nhf-i9-erdate', 'Date signed (employer)', { type: 'date', req: true, val: nhToday() });
+      var wrap = nhModal('portal-nh-form-modal', nhFormShell('Form I-9 — Employment Eligibility Verification',
+        'Section 1 is completed by the employee; Section 2 by the employer after examining their documents. Current USCIS edition 01/20/25 (expires 05/31/2027). This files ATRG\u2019s onboarding record of the federal Form I-9 data.', body), 700);
+
+      var statusSel = wrap.querySelector('#nhf-i9-status');
+      function syncStatus() {
+        var v = statusSel.value;
+        wrap.querySelector('#nhf-i9-anum-wrap').hidden = !(v === 'lpr' || v === 'alien');
+        wrap.querySelector('#nhf-i9-alien-wrap').hidden = v !== 'alien';
+      }
+      statusSel.addEventListener('change', syncStatus);
+      syncStatus();
+      var prepCheck = wrap.querySelector('#nhf-i9-prep-check');
+      prepCheck.addEventListener('change', function () {
+        wrap.querySelector('#nhf-i9-prep-wrap').hidden = !prepCheck.checked;
+      });
+      var setSel = wrap.querySelector('#nhf-i9-docset');
+      function syncSet() {
+        var a = setSel.value === 'A';
+        wrap.querySelector('#nhf-i9-lista-wrap').hidden = !a;
+        wrap.querySelector('#nhf-i9-listbc-wrap').hidden = a;
+      }
+      setSel.addEventListener('change', syncSet);
+      syncSet();
+
+      var empPad = nhWirePadIn(wrap, 'nhf-i9-pad');
+      var erPad = nhWirePadIn(wrap, 'nhf-i9-erpad');
+      var prepPad = nhWirePadIn(wrap, 'nhf-i9-preppad');
+      wireFormSave(wrap, function () {
+        var pairs = [
+          ['nhf-i9-last', 'last name'], ['nhf-i9-first', 'first name'],
+          ['nhf-i9-street', 'street address'], ['nhf-i9-city', 'city'],
+          ['nhf-i9-state', 'state'], ['nhf-i9-zip', 'ZIP code'],
+          ['nhf-i9-dob', 'date of birth'], ['nhf-i9-ssn', 'Social Security number'],
+          ['nhf-i9-date', 'employee date signed'],
+          ['nhf-i9-firstday', 'first day of employment'],
+          ['nhf-i9-bizname', 'employer / business name'],
+          ['nhf-i9-erstreet', 'employer street address'], ['nhf-i9-ercity', 'employer city'],
+          ['nhf-i9-erstate', 'employer state'], ['nhf-i9-erzip', 'employer ZIP code'],
+          ['nhf-i9-repname', 'employer representative name'],
+          ['nhf-i9-erdate', 'employer date signed']
+        ];
+        var st = statusSel.value;
+        if (st === 'lpr') pairs.push(['nhf-i9-anum', 'USCIS Number / A-Number']);
+        if (st === 'alien' && !nhV(wrap, 'nhf-i9-anum') && !nhV(wrap, 'nhf-i9-i94') && !nhV(wrap, 'nhf-i9-passnum')) {
+          pairs.push(['nhf-i9-anum', 'USCIS A-Number, Form I-94 number, or foreign passport number']);
+        }
+        if (setSel.value === 'A') {
+          pairs.push(['nhf-i9-a-title', 'List A document title'], ['nhf-i9-a-auth', 'List A issuing authority'], ['nhf-i9-a-num', 'List A document number']);
+        } else {
+          pairs.push(['nhf-i9-b-title', 'List B document title'], ['nhf-i9-b-auth', 'List B issuing authority'], ['nhf-i9-b-num', 'List B document number'],
+            ['nhf-i9-c-title', 'List C document title'], ['nhf-i9-c-auth', 'List C issuing authority'], ['nhf-i9-c-num', 'List C document number']);
+        }
+        var miss = nhMissing(wrap, pairs);
+        if (miss) return { error: 'Missing: ' + miss + '.' };
+        if (!empPad.hasDrawn) return { error: 'The employee signature is required — sign in the box.' };
+        if (!erPad.hasDrawn) return { error: 'The employer signature is required \u2014 sign in the employer box.' };
+        if (prepCheck.checked && !prepPad.hasDrawn) return { error: 'The preparer / translator signature is required when a preparer or translator helped.' };
+        var sec1 = [
+          ['Last name (family name)', nhV(wrap, 'nhf-i9-last')],
+          ['First name (given name)', nhV(wrap, 'nhf-i9-first')],
+          ['Middle initial', nhV(wrap, 'nhf-i9-middle')],
+          ['Other last names used', nhV(wrap, 'nhf-i9-othernames')],
+          ['Street address', nhV(wrap, 'nhf-i9-street')],
+          ['Apt. / unit number', nhV(wrap, 'nhf-i9-apt')],
+          ['City', nhV(wrap, 'nhf-i9-city')],
+          ['State', nhV(wrap, 'nhf-i9-state')],
+          ['ZIP code', nhV(wrap, 'nhf-i9-zip')],
+          ['Date of birth', nhV(wrap, 'nhf-i9-dob')],
+          ['Social Security number', nhV(wrap, 'nhf-i9-ssn')],
+          ['Email address', nhV(wrap, 'nhf-i9-email')],
+          ['Phone number', nhV(wrap, 'nhf-i9-phone')],
+          ['Citizenship / immigration status attested', NH_I9_STATUS_LABELS[st] || st]
+        ];
+        if (st === 'lpr' || st === 'alien') sec1.push(['USCIS Number / A-Number', nhV(wrap, 'nhf-i9-anum')]);
+        if (st === 'alien') {
+          if (nhV(wrap, 'nhf-i9-i94')) sec1.push(['Form I-94 admission number', nhV(wrap, 'nhf-i9-i94')]);
+          if (nhV(wrap, 'nhf-i9-passnum')) sec1.push(['Foreign passport number', nhV(wrap, 'nhf-i9-passnum')]);
+          if (nhV(wrap, 'nhf-i9-passcountry')) sec1.push(['Country of issuance', nhV(wrap, 'nhf-i9-passcountry')]);
+          sec1.push(['Authorized to work until (expiration date, if any)', nhV(wrap, 'nhf-i9-exp') || 'No expiration date']);
+        }
+        sec1.push(['Preparer or translator used', prepCheck.checked ? 'Yes' : 'No']);
+        if (prepCheck.checked) {
+          sec1.push(['Preparer / translator last name', nhV(wrap, 'nhf-i9-prep-last')]);
+          sec1.push(['Preparer / translator first name', nhV(wrap, 'nhf-i9-prep-first')]);
+          sec1.push(['Preparer / translator address', nhV(wrap, 'nhf-i9-prep-address')]);
+        }
+        var sec2 = [];
+        if (setSel.value === 'A') {
+          sec2.push(['Documents examined', 'List A']);
+          sec2.push(['List A — document title', nhV(wrap, 'nhf-i9-a-title')]);
+          sec2.push(['List A — issuing authority', nhV(wrap, 'nhf-i9-a-auth')]);
+          sec2.push(['List A — document number', nhV(wrap, 'nhf-i9-a-num')]);
+          sec2.push(['List A — expiration date', nhV(wrap, 'nhf-i9-a-exp')]);
+        } else {
+          sec2.push(['Documents examined', 'List B and List C']);
+          sec2.push(['List B — document title', nhV(wrap, 'nhf-i9-b-title')]);
+          sec2.push(['List B — issuing authority', nhV(wrap, 'nhf-i9-b-auth')]);
+          sec2.push(['List B — document number', nhV(wrap, 'nhf-i9-b-num')]);
+          sec2.push(['List B — expiration date', nhV(wrap, 'nhf-i9-b-exp')]);
+          sec2.push(['List C — document title', nhV(wrap, 'nhf-i9-c-title')]);
+          sec2.push(['List C — issuing authority', nhV(wrap, 'nhf-i9-c-auth')]);
+          sec2.push(['List C — document number', nhV(wrap, 'nhf-i9-c-num')]);
+          sec2.push(['List C — expiration date', nhV(wrap, 'nhf-i9-c-exp')]);
+        }
+        sec2.push(['Alternative DHS procedure used to examine documents', nhChecked(wrap, 'nhf-i9-altproc') ? 'Yes' : 'No']);
+        if (nhV(wrap, 'nhf-i9-addlinfo')) sec2.push(['Additional information', nhV(wrap, 'nhf-i9-addlinfo')]);
+        sec2.push(['First day of employment', nhV(wrap, 'nhf-i9-firstday')]);
+        sec2.push(['Employer / business name', nhV(wrap, 'nhf-i9-bizname')]);
+        sec2.push(['Employer address', nhV(wrap, 'nhf-i9-erstreet') + ', ' + nhV(wrap, 'nhf-i9-ercity') + ', ' + nhV(wrap, 'nhf-i9-erstate') + ' ' + nhV(wrap, 'nhf-i9-erzip')]);
+        sec2.push(['Employer or authorized representative', nhV(wrap, 'nhf-i9-repname')]);
+        sec2.push(['Title', nhV(wrap, 'nhf-i9-reptitle')]);
+        var sections = [
+          {
+            title: 'Section 1 — Employee information and attestation',
+            lines: sec1,
+            text: 'Employee attestation: I attest, under penalty of perjury, that I have examined the information in this section and that it is true, correct, and complete, and that I am the citizenship or immigration status indicated above.'
+          },
+          {
+            title: 'Section 2 — Employer review and attestation',
+            lines: sec2,
+            text: 'Employer attestation: I attest, under penalty of perjury, that I have examined the document(s) presented by the employee named above, that the document(s) appear to be genuine and to relate to that employee, and that to the best of my knowledge the employee is authorized to work in the United States.'
+          }
+        ];
+        var sigs = [
+          {
+            canvas: wrap.querySelector('#nhf-i9-pad'), hasDrawn: empPad.hasDrawn,
+            caption: 'Employee signature',
+            name: nhV(wrap, 'nhf-i9-first') + ' ' + nhV(wrap, 'nhf-i9-last'),
+            date: nhV(wrap, 'nhf-i9-date')
+          },
+          {
+            canvas: wrap.querySelector('#nhf-i9-erpad'), hasDrawn: erPad.hasDrawn,
+            caption: 'Employer signature',
+            name: nhV(wrap, 'nhf-i9-repname'),
+            date: nhV(wrap, 'nhf-i9-erdate')
+          }
+        ];
+        if (prepCheck.checked) {
+          sigs.push({
+            canvas: wrap.querySelector('#nhf-i9-preppad'), hasDrawn: prepPad.hasDrawn,
+            caption: 'Preparer / translator signature (Supplement A)',
+            name: nhV(wrap, 'nhf-i9-prep-first') + ' ' + nhV(wrap, 'nhf-i9-prep-last'),
+            date: nhV(wrap, 'nhf-i9-prep-date')
+          });
+        }
+        return { kind: 'i9', sections: sections, sigs: sigs };
+      });
+    }
+
+
+    /* ----- Ohio Form IT 4 -----
+     * PORTAL_NEWHIRE_FORMS_2026_10_30 (Austin, Oct 30, 2026): added
+     * alongside the federal forms, built from the Ohio Department of
+     * Taxation's current Form IT 4, Employee's Withholding Exemption
+     * Certificate, Rev. 12/20 (the 12/7/2020 redesign that combined
+     * and replaced the old IT 4, IT 4NR, IT 4 MIL and IT MIL Sp;
+     * there is no Ohio IT 4-EZ). Section I carries the school
+     * district name and number lines (Ohio has no county withholding
+     * line on this form); employees claiming a Section III waiver
+     * complete Sections I, III and IV only. The official form has no
+     * employer-information block, so none is collected here. */
+    var NH_IT4_WAIVERS = [
+      ['w1', 'I am a full-year resident of Indiana, Kentucky, Michigan, Pennsylvania, or West Virginia.'],
+      ['w2', 'I am a resident military servicemember who is stationed outside Ohio on active duty military orders.'],
+      ['w3', 'I am a nonresident military servicemember who is stationed in Ohio due to military orders.'],
+      ['w4', 'I am a nonresident civilian spouse of a military servicemember and I am present in Ohio solely due to my spouse\u2019s military orders.'],
+      ['w5', 'I am exempt from Ohio withholding under R.C. 5747.06(A)(1) through (6).']
+    ];
+    function openOhioIt4Form() {
+      var hire = nhDocHire;
+      var waiverChecks = '';
+      NH_IT4_WAIVERS.forEach(function (w) { waiverChecks += nhCheck('nhf-it4-' + w[0], w[1]); });
+      var body =
+        '<h4 style="margin:0.25rem 0 0.4rem;">Section I \u2014 Personal information</h4>' +
+        '<div class="portal-nh-grid">' +
+        nhF('nhf-it4-name', 'Full name', { req: true, val: hire.full_name || '' }) +
+        nhF('nhf-it4-ssn', 'Social Security number', { req: true, inputmode: 'numeric', ph: 'XXX-XX-XXXX' }) +
+        nhF('nhf-it4-street', 'Home address \u2014 street', { req: true }) +
+        nhF('nhf-it4-city', 'City', { req: true }) +
+        nhF('nhf-it4-state', 'State', { req: true, val: 'OH' }) +
+        nhF('nhf-it4-zip', 'ZIP code', { req: true, inputmode: 'numeric' }) +
+        nhF('nhf-it4-sdname', 'Public school district of residence', {}) +
+        nhF('nhf-it4-sdnum', 'School district number (see The Finder at tax.ohio.gov)', { inputmode: 'numeric' }) +
+        '</div>' +
+        '<h4 style="margin:0.9rem 0 0.4rem;">Section II \u2014 Claiming withholding exemptions</h4>' +
+        '<div class="portal-nh-grid">' +
+        nhF('nhf-it4-line1', 'Line 1 \u2014 Personal exemption for yourself (enter 1 if claimed, 0 if you can be claimed as a dependent)', { type: 'select', options: [['1', '1'], ['0', '0']], val: '1' }) +
+        nhF('nhf-it4-line2', 'Line 2 \u2014 If married, personal exemption for your spouse if not separately claimed', { type: 'select', options: [['0', '0'], ['1', '1']], val: '0' }) +
+        nhF('nhf-it4-line3', 'Line 3 \u2014 Exemptions for dependents', { type: 'number', min: '0', step: '1', val: '0' }) +
+        nhF('nhf-it4-line5', 'Line 5 \u2014 Additional Ohio income tax withholding per pay period (optional, $)', { type: 'number', min: '0', step: '0.01' }) +
+        '</div>' +
+        '<p class="portal-muted portal-small">Line 4 (total exemptions) is calculated from lines 1\u20133 when the form is saved. Complete Section II unless you claim a waiver in Section III.</p>' +
+        '<h4 style="margin:0.9rem 0 0.4rem;">Section III \u2014 Withholding waiver</h4>' +
+        '<p class="portal-muted portal-small" style="margin:0 0 0.4rem;">I am not subject to Ohio or school district income tax withholding because (check all that apply):</p>' +
+        waiverChecks +
+        '<h4 style="margin:0.9rem 0 0.4rem;">Section IV \u2014 Signature (required)</h4>' +
+        '<p class="portal-muted portal-small">Under penalties of perjury, I declare that, to the best of my knowledge and belief, the information is true, correct and complete.</p>' +
+        nhPadHtml('nhf-it4-pad', 'Employee signature') +
+        nhF('nhf-it4-date', 'Date signed', { type: 'date', req: true, val: nhToday() });
+      var wrap = nhModal('portal-nh-form-modal', nhFormShell('Ohio IT 4 \u2014 Employee\u2019s Withholding Exemption Certificate',
+        'Ohio Department of Taxation Form IT 4, Rev. 12/20. Submit to your employer on or before your start date. This files ATRG\u2019s onboarding record of the Ohio IT 4 data.', body), 700);
+      var pad = nhWirePadIn(wrap, 'nhf-it4-pad');
+      wireFormSave(wrap, function () {
+        var waivers = [];
+        NH_IT4_WAIVERS.forEach(function (w) { if (nhChecked(wrap, 'nhf-it4-' + w[0])) waivers.push(w[1]); });
+        var pairs = [
+          ['nhf-it4-name', 'full name'], ['nhf-it4-ssn', 'Social Security number'],
+          ['nhf-it4-street', 'home address'], ['nhf-it4-city', 'city'],
+          ['nhf-it4-state', 'state'], ['nhf-it4-zip', 'ZIP code'],
+          ['nhf-it4-date', 'date signed']
+        ];
+        if (!waivers.length) {
+          pairs.push(['nhf-it4-sdname', 'school district of residence'], ['nhf-it4-sdnum', 'school district number']);
+        }
+        var miss = nhMissing(wrap, pairs);
+        if (miss) return { error: 'Missing: ' + miss + '.' };
+        if (!pad.hasDrawn) return { error: 'The employee signature is required \u2014 sign in the box.' };
+        var l1 = parseInt(nhV(wrap, 'nhf-it4-line1') || '0', 10) || 0;
+        var l2 = parseInt(nhV(wrap, 'nhf-it4-line2') || '0', 10) || 0;
+        var l3 = parseInt(nhV(wrap, 'nhf-it4-line3') || '0', 10) || 0;
+        var sections = [
+          {
+            title: 'Section I \u2014 Personal information',
+            lines: [
+              ['Full name', nhV(wrap, 'nhf-it4-name')],
+              ['Social Security number', nhV(wrap, 'nhf-it4-ssn')],
+              ['Home address', nhV(wrap, 'nhf-it4-street') + ', ' + nhV(wrap, 'nhf-it4-city') + ', ' + nhV(wrap, 'nhf-it4-state') + ' ' + nhV(wrap, 'nhf-it4-zip')],
+              ['Public school district of residence', nhV(wrap, 'nhf-it4-sdname')],
+              ['School district number', nhV(wrap, 'nhf-it4-sdnum')]
+            ]
+          },
+          {
+            title: 'Section II \u2014 Claiming withholding exemptions',
+            lines: [
+              ['Line 1 \u2014 Personal exemption for yourself', String(l1)],
+              ['Line 2 \u2014 Personal exemption for spouse', String(l2)],
+              ['Line 3 \u2014 Exemptions for dependents', String(l3)],
+              ['Line 4 \u2014 Total withholding exemptions', String(l1 + l2 + l3)],
+              ['Line 5 \u2014 Additional Ohio income tax withholding per pay period', nhV(wrap, 'nhf-it4-line5') ? '$' + nhV(wrap, 'nhf-it4-line5') : 'None']
+            ]
+          },
+          {
+            title: 'Section III \u2014 Withholding waiver',
+            lines: waivers.length ? waivers.map(function (t) { return ['Waiver claimed', t]; }) : [['Waiver claimed', 'None']]
+          },
+          {
+            title: 'Section IV \u2014 Signature',
+            lines: [],
+            text: 'Under penalties of perjury, I declare that, to the best of my knowledge and belief, the information is true, correct and complete.'
+          }
+        ];
+        var sigs = [{
+          canvas: wrap.querySelector('#nhf-it4-pad'), hasDrawn: pad.hasDrawn,
+          caption: 'Employee signature',
+          name: nhV(wrap, 'nhf-it4-name'),
+          date: nhV(wrap, 'nhf-it4-date')
+        }];
+        return { kind: 'ohio_it4', sections: sections, sigs: sigs };
+      });
     }
 
     function initNewHireForm() {
@@ -933,6 +1932,18 @@
     function init() {
       var tab = $('portal-tab-newhires');
       if (tab) tab.addEventListener('click', showNewHires);
+      var nhListEl = $('portal-nh-list');
+      if (nhListEl) nhListEl.addEventListener('click', function (e) {
+        var t = e.target;
+        while (t && t !== nhListEl) {
+          if (t.getAttribute && t.getAttribute('data-nh-docs')) {
+            var hire = nhRowsById[t.getAttribute('data-nh-docs')];
+            if (hire) openHireDocs(hire);
+            return;
+          }
+          t = t.parentNode;
+        }
+      });
       document.addEventListener('click', function (e) {
         var t = e.target;
         while (t && t !== document) {
