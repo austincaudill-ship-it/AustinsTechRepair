@@ -298,11 +298,19 @@
    * (full published Repair Authorization text, signature pad, printed
    * name — the same pattern as the portal's sign flow). The completed
    * signature is held in webSignature; the submit handler refuses to
-   * send without it. After the ticket insert succeeds, the PNG is
+   * send without it. After the ticket insert succeeds, the signing is
    * uploaded to web-signatures/<ticketId>/ in the ticket-documents
    * bucket and a ticket_documents row (doc_type 'repair_authorization')
    * is filed against the ticket. Anon access for exactly that path is
-   * granted by web-signature-filings.sql (run at publish time). */
+   * granted by web-signature-filings.sql (run at publish time).
+   * SITE_SIGNEDDOC_2026_10_30 (Oct 30, 2026): the filed artifact is no
+   * longer the bare signature PNG — it is the COMPLETE signed document
+   * composed as one self-contained HTML file (header, customer /
+   * phone / device, the published authorization text, and the
+   * signature affixed in a signature block; see
+   * buildWebSignedAuthorizationHtml). The bare PNG upload remains only
+   * as a fallback if composition is impossible, so a completed
+   * signature is never lost. */
   var webSignature = null; // { signerName: string, dataUrl: string }
   var signWired = false;
 
@@ -326,21 +334,79 @@
     } catch (e) { return null; }
   }
 
-  function fileWebSignature(client, ticketId, done) {
+  function escHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  /* SITE_SIGNEDDOC_2026_10_30: compose the complete signed Repair
+   * Authorization as one self-contained HTML document — ATRG header,
+   * the customer / phone / device and signing date, the site's own
+   * published authorization text (the same #service-agreement
+   * .legal-doc markup the signature popup clones at runtime, never a
+   * second hand-kept copy), and the signature image affixed in a
+   * signature block with the printed name and date. Returns null when
+   * the published text cannot be found, so the caller can fall back
+   * to the bare signature PNG instead of losing the signing. */
+  function buildWebSignedAuthorizationHtml(meta, signerName, signatureDataUrl, signedAt) {
+    var srcDoc = document.querySelector('#service-agreement .legal-doc');
+    if (!srcDoc || !srcDoc.innerHTML) return null;
+    var when = signedAt.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    var lines = [
+      ['Customer', meta.customerName],
+      ['Phone', meta.phone],
+      ['Device', meta.device]
+    ].filter(function (r) { return String(r[1] == null ? '' : r[1]).trim() !== ''; }).map(function (r) {
+      return '<tr><th style="text-align:left;padding:0.3rem 0.9rem 0.3rem 0;color:#6B5B43;font-weight:600;vertical-align:top;">' + escHtml(r[0]) + '</th>' +
+        '<td style="padding:0.3rem 0;">' + escHtml(r[1]) + '</td></tr>';
+    }).join('');
+    return '<!DOCTYPE html>\n<html lang="en"><head><meta charset="utf-8">' +
+      '<meta name="viewport" content="width=device-width, initial-scale=1">' +
+      '<title>Repair Authorization \u2014 Austin\u2019s Tech Repair Group</title></head>' +
+      '<body style="margin:0;background:#F3EDE0;color:#2C231A;font-family:Georgia,\'Times New Roman\',serif;">' +
+      '<div style="max-width:760px;margin:0 auto;padding:2rem 1.25rem 3rem;background:#FFFDF8;">' +
+      '<div style="text-align:center;border-bottom:3px solid #C96A1E;padding-bottom:1rem;margin-bottom:1.25rem;">' +
+      '<div style="font-size:1.55rem;font-weight:bold;letter-spacing:0.02em;">Austin\u2019s Tech Repair Group</div>' +
+      '<div style="margin-top:0.3rem;font-size:0.95rem;">(937) 280-6243</div></div>' +
+      '<h1 style="font-size:1.3rem;margin:0 0 1rem;">Repair Authorization</h1>' +
+      (lines ? '<table style="border-collapse:collapse;margin-bottom:1.25rem;font-size:0.98rem;"><tbody>' + lines + '</tbody></table>' : '') +
+      '<div style="font-size:0.95rem;line-height:1.55;">' + srcDoc.innerHTML + '</div>' +
+      '<h2 style="font-size:1.1rem;margin:1.75rem 0 0.5rem;">Signature</h2>' +
+      '<div style="border:1px solid #E6D9C0;border-radius:8px;padding:1rem;background:#fff;">' +
+      '<img alt="Customer signature" src="' + signatureDataUrl + '" style="display:block;max-width:100%;width:420px;height:auto;">' +
+      '<div style="border-top:2px solid #2C231A;margin-top:0.4rem;padding-top:0.5rem;font-size:0.95rem;">Signed by: ' + escHtml(signerName || '') + '</div>' +
+      '<div style="font-size:0.95rem;margin-top:0.25rem;">Date: ' + escHtml(when) + '</div>' +
+      '</div>' +
+      '<p style="font-size:0.8rem;color:#6B5B43;margin-top:1.5rem;">Signed electronically through austinstechrepairgroup.com and filed on the customer\u2019s repair ticket by Austin\u2019s Tech Repair Group.</p>' +
+      '</div></body></html>';
+  }
+
+  function fileWebSignature(client, ticketId, meta, done) {
     if (!webSignature || !client) { done(); return; }
     var stamp = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, 14);
-    var fileName = 'repair_authorization-' + stamp + '.png';
-    var path = 'web-signatures/' + ticketId + '/' + fileName;
+    var signedAt = new Date();
+    function fileArtifact(fileName, content, contentType, displayName) {
+      var path = 'web-signatures/' + ticketId + '/' + fileName;
+      client.storage.from('ticket-documents').upload(path, content, { contentType: contentType, upsert: false }).then(function (up) {
+        if (up.error) { done(); return; }
+        var row = {
+          ticket_id: ticketId, doc_type: 'repair_authorization', storage_path: path,
+          file_name: displayName || fileName, signer_name: webSignature.signerName, signed_at: signedAt.toISOString()
+        };
+        client.from('ticket_documents').insert(row).then(function () { done(); }).catch(function () { done(); });
+      }).catch(function () { done(); });
+    }
+    var html = null;
+    try { html = buildWebSignedAuthorizationHtml(meta || {}, webSignature.signerName, webSignature.dataUrl, signedAt); } catch (e) { html = null; }
+    if (html) {
+      var displayName = 'Repair Authorization \u2014 signed ' + signedAt.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) + '.html';
+      fileArtifact('repair_authorization-' + stamp + '.html', new Blob([html], { type: 'text/html' }), 'text/html', displayName);
+      return;
+    }
     var blob = dataUrlToBlob(webSignature.dataUrl);
     if (!blob) { done(); return; }
-    client.storage.from('ticket-documents').upload(path, blob, { contentType: 'image/png', upsert: false }).then(function (up) {
-      if (up.error) { done(); return; }
-      var row = {
-        ticket_id: ticketId, doc_type: 'repair_authorization', storage_path: path,
-        file_name: fileName, signer_name: webSignature.signerName, signed_at: new Date().toISOString()
-      };
-      client.from('ticket_documents').insert(row).then(function () { done(); }).catch(function () { done(); });
-    }).catch(function () { done(); });
+    fileArtifact('repair_authorization-' + stamp + '.png', blob, 'image/png', null);
   }
 
   function wireSignature(form) {
@@ -547,7 +613,7 @@
              then the ticket_documents row), then show success. Filing
              is best-effort like the alert email: the ticket insert
              above is the record that decides success. */
-          fileWebSignature(client, ticketId, function () {
+          fileWebSignature(client, ticketId, { customerName: row.customer_name, phone: v.phone, device: [v.device_type, v.device_info].filter(Boolean).join(' \u00b7 ') }, function () {
             showSuccess(form, 'service-request', v);
             /* SITE_PAYSTEP_2026_10_30: route the customer to Square
                to pay the house-call fee. Runs whether the signature

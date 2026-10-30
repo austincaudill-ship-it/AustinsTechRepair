@@ -1219,22 +1219,88 @@ function loadTicketThread(client, ticketId) {
     });
   }
 
+  /* PORTAL_SIGNEDDOC_2026_10_30 (Austin, Oct 30, 2026): a signed Repair
+   * Authorization now files as the COMPLETE document — the full
+   * agreement text (AUTH_TERMS_TEXT, the same copy the signature popup
+   * shows) with the customer's signature affixed in a signature block —
+   * composed as one self-contained HTML file. Before this, the filing
+   * was the bare signature PNG alone: opening it showed a squiggle on
+   * a blank page, which proves nothing. The signature image is embedded
+   * in the document as a data URI so the HTML stands on its own. If
+   * composition ever fails, the filing falls back to the bare PNG so a
+   * captured signature is never lost. */
+  function blobToDataUrl(blob, cb) {
+    try {
+      var reader = new FileReader();
+      reader.onload = function () { cb(String(reader.result || '')); };
+      reader.onerror = function () { cb(''); };
+      reader.readAsDataURL(blob);
+    } catch (e) { cb(''); }
+  }
+
+  function signedAuthorizationHtml(meta, signerName, signatureDataUrl, signedAtIso) {
+    var lines = [
+      ['Customer', meta.customerName],
+      ['Phone', meta.phone],
+      ['Device', meta.device]
+    ].filter(function (r) { return trim(r[1]) !== ''; }).map(function (r) {
+      return '<tr><th style="text-align:left;padding:0.3rem 0.9rem 0.3rem 0;color:#6B5B43;font-weight:600;vertical-align:top;">' + esc(r[0]) + '</th>' +
+        '<td style="padding:0.3rem 0;">' + esc(r[1]) + '</td></tr>';
+    }).join('');
+    return '<!DOCTYPE html>\n<html lang="en"><head><meta charset="utf-8">' +
+      '<meta name="viewport" content="width=device-width, initial-scale=1">' +
+      '<title>Repair Authorization \u2014 Austin\u2019s Tech Repair Group</title></head>' +
+      '<body style="margin:0;background:#F3EDE0;color:#2C231A;font-family:Georgia,\'Times New Roman\',serif;">' +
+      '<div style="max-width:760px;margin:0 auto;padding:2rem 1.25rem 3rem;background:#FFFDF8;">' +
+      '<div style="text-align:center;border-bottom:3px solid #C96A1E;padding-bottom:1rem;margin-bottom:1.25rem;">' +
+      '<div style="font-size:1.55rem;font-weight:bold;letter-spacing:0.02em;">Austin\u2019s Tech Repair Group</div>' +
+      '<div style="margin-top:0.3rem;font-size:0.95rem;">(937) 280-6243</div></div>' +
+      '<h1 style="font-size:1.3rem;margin:0 0 1rem;">Repair Authorization</h1>' +
+      (lines ? '<table style="border-collapse:collapse;margin-bottom:1.25rem;font-size:0.98rem;"><tbody>' + lines + '</tbody></table>' : '') +
+      '<div style="white-space:pre-wrap;font-size:0.92rem;line-height:1.5;border:1px solid #E6D9C0;border-radius:8px;padding:1rem;background:#FFFDF8;">' + esc(AUTH_TERMS_TEXT) + '</div>' +
+      '<h2 style="font-size:1.1rem;margin:1.75rem 0 0.5rem;">Signature</h2>' +
+      '<div style="border:1px solid #E6D9C0;border-radius:8px;padding:1rem;background:#fff;">' +
+      '<img alt="Customer signature" src="' + signatureDataUrl + '" style="display:block;max-width:100%;width:420px;height:auto;">' +
+      '<div style="border-top:2px solid #2C231A;margin-top:0.4rem;padding-top:0.5rem;font-size:0.95rem;">Signed by: ' + esc(signerName || '') + '</div>' +
+      '<div style="font-size:0.95rem;margin-top:0.25rem;">Date: ' + esc(fmtDateTime(signedAtIso)) + '</div>' +
+      '</div>' +
+      '<p style="font-size:0.8rem;color:#6B5B43;margin-top:1.5rem;">Signed electronically and filed on the customer\u2019s repair ticket by Austin\u2019s Tech Repair Group.</p>' +
+      '</div></body></html>';
+  }
+
   /* Shared filing for a drawn signature (PORTAL_CHECKIN_CONSENT_2026_10_30
    * refactored this out of the drawer flow so check-in files a signature
-   * identically): upload the PNG, file the ticket_documents row, and set
-   * the ticket's consent flags via markAuthorizationAccepted — the exact
-   * steps the drawer sign flow has always done. done(errText): errText
-   * is null on success. */
-  function fileSignedAuthorization(client, ticketId, blob, signerName, done) {
-    var path = ticketId + '/repair_authorization-' + docStamp() + '.png';
-    client.storage.from(DOC_BUCKET).upload(path, blob, { contentType: 'image/png', upsert: false }).then(function (up) {
-      if (up.error) { done('Saving failed \u2014 check the connection and try again.'); return; }
-      var row = { ticket_id: ticketId, doc_type: 'repair_authorization', storage_path: path, signer_name: signerName, signed_at: new Date().toISOString() };
-      client.from('ticket_documents').insert(row).then(function (res) {
-        if (res.error) { done('The signature saved but could not be filed \u2014 try again.'); return; }
-        markAuthorizationAccepted(client, { id: ticketId }).then(function () { done(null); }).catch(function () { done(null); });
-      }).catch(function () { done('The signature saved but could not be filed \u2014 try again.'); });
-    }).catch(function () { done('Saving failed \u2014 check the connection and try again.'); });
+   * identically): compose the signed document
+   * (PORTAL_SIGNEDDOC_2026_10_30), upload it, file the
+   * ticket_documents row, and set the ticket's consent flags via
+   * markAuthorizationAccepted — the exact steps the drawer sign flow
+   * has always done. meta carries the customer name / phone / device
+   * printed at the top of the document. done(errText): errText is null
+   * on success. */
+  function fileSignedAuthorization(client, ticketId, blob, signerName, done, meta) {
+    var signedAt = new Date().toISOString();
+    function fileArtifact(path, content, contentType, fileName) {
+      client.storage.from(DOC_BUCKET).upload(path, content, { contentType: contentType, upsert: false }).then(function (up) {
+        if (up.error) { done('Saving failed \u2014 check the connection and try again.'); return; }
+        var row = { ticket_id: ticketId, doc_type: 'repair_authorization', storage_path: path, signer_name: signerName, signed_at: signedAt };
+        if (fileName) row.file_name = fileName;
+        client.from('ticket_documents').insert(row).then(function (res) {
+          if (res.error) { done('The signature saved but could not be filed \u2014 try again.'); return; }
+          markAuthorizationAccepted(client, { id: ticketId }).then(function () { done(null); }).catch(function () { done(null); });
+        }).catch(function () { done('The signature saved but could not be filed \u2014 try again.'); });
+      }).catch(function () { done('Saving failed \u2014 check the connection and try again.'); });
+    }
+    function filePngFallback() {
+      fileArtifact(ticketId + '/repair_authorization-' + docStamp() + '.png', blob, 'image/png', null);
+    }
+    blobToDataUrl(blob, function (dataUrl) {
+      if (!dataUrl) { filePngFallback(); return; }
+      var html = null;
+      try { html = signedAuthorizationHtml(meta || {}, signerName, dataUrl, signedAt); } catch (e) { html = null; }
+      if (!html) { filePngFallback(); return; }
+      var fileName = 'Repair Authorization \u2014 signed ' + fmtDate(signedAt) + '.html';
+      fileArtifact(ticketId + '/repair_authorization-' + docStamp() + '.html', new Blob([html], { type: 'text/html' }), 'text/html', fileName);
+    });
   }
 
   /* The signature popup itself (agreement text + printed name + pad),
@@ -1325,7 +1391,7 @@ function loadTicketThread(client, ticketId) {
         if (errText) { finish(errText); return; }
         finish();
         openTicket(t.id);
-      });
+      }, { customerName: t.customer_name, phone: t.customer_phone, device: deviceLabel(t) });
     });
   }
 
@@ -3156,7 +3222,7 @@ function loadTicketThread(client, ticketId) {
   }
 
   /* File the check-in consent on the just-created ticket. Signed:
-   * the shared drawer filing (signature PNG + repair_authorization
+   * the shared drawer filing (signed document + repair_authorization
    * row + consent flags). Verbal: a generated text record naming the
    * customer, the ticket, the staff member, and the date/time, with
    * the exact statement that was read \u2014 filed as an 'other'
@@ -3168,7 +3234,8 @@ function loadTicketThread(client, ticketId) {
   function fileCiConsent(client, ticketId, row, consent, done) {
     if (!consent) { done(null); return; }
     if (consent.mode === 'signed') {
-      fileSignedAuthorization(client, ticketId, consent.blob, consent.signerName, done);
+      fileSignedAuthorization(client, ticketId, consent.blob, consent.signerName, done,
+        { customerName: row.customer_name, phone: row.customer_phone, device: deviceLabel(row) });
       return;
     }
     var when = new Date();
