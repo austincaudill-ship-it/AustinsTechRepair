@@ -119,6 +119,10 @@
         <button class="portal-tab" id="portal-tab-square" type="button" role="tab" data-tab="square">
           <i class="fas fa-square"></i> Square &amp; ATR One
         </button>
+        <div class="portal-nav-group">Financials</div>
+        <button class="portal-tab" id="portal-tab-financials" type="button" role="tab" data-tab="financials">
+          <i class="fas fa-chart-pie"></i> Financials
+        </button>
       </nav>
 
       <!-- TICKETS -->
@@ -645,6 +649,23 @@
           <a class="link-card" href="https://square.link/u/HtnQBIG1" target="_blank" rel="noopener"><i class="fas fa-briefcase"></i><strong>ATR One &mdash; Business Plus</strong><span>$39.99/mo signup link</span></a>
           <a class="link-card" href="https://square.link/u/V8WCkjbW" target="_blank" rel="noopener"><i class="fas fa-building"></i><strong>ATR One &mdash; Business Pro</strong><span>$49.99/mo signup link</span></a>
         </div>
+      </div>
+
+      <!-- FINANCIALS -->
+      <div class="portal-panel" id="portal-panel-financials" role="tabpanel" hidden>
+        <div class="portal-panel-head">
+          <h2 class="portal-h2">Financials</h2>
+          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="financials">
+            <i class="fas fa-rotate-right"></i> Refresh
+          </button>
+        </div>
+        <p class="portal-muted portal-small">The money picture from your own ticket records: what repairs billed, what customers have actually paid, what went out on parts, and what is left. Revenue is billed charges on tickets; parts cost is our cost on part orders.</p>
+        <div class="fin-periods" role="group" aria-label="Time period">
+          <button class="portal-btn portal-btn-outline portal-btn-sm fin-period active" type="button" data-fin-period="all">All time</button>
+          <button class="portal-btn portal-btn-outline portal-btn-sm fin-period" type="button" data-fin-period="month">This month</button>
+          <button class="portal-btn portal-btn-outline portal-btn-sm fin-period" type="button" data-fin-period="30d">Last 30 days</button>
+        </div>
+        <div id="portal-financials-body"><p class="portal-muted">Loading financials&hellip;</p></div>
       </div>
 
       <div class="portal-panel" id="portal-panel-requests" role="tabpanel" hidden>

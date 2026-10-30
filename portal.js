@@ -196,7 +196,7 @@
   var state = {
     user: null,
     profile: null,
-    loaded: { tickets: false, applications: false, investors: false, feedback: false, customers: false, inventory: false },
+    loaded: { tickets: false, applications: false, investors: false, feedback: false, customers: false, inventory: false, financials: false },
     customersCache: [], inventoryCache: []
   };
 
@@ -327,7 +327,7 @@
   var LOADERS = {
     tickets: loadTickets, applications: loadApplications, investors: loadInvestors,
     feedback: loadFeedback, customers: loadCustomers, inventory: loadInventory,
-    documents: loadDocumentsTab,
+    documents: loadDocumentsTab, financials: loadFinancials,
   };
 
   /* PORTAL_TAB_MEMORY_2026_10_30: remember the last active tab across
@@ -346,7 +346,7 @@
     var nav = $('portal-nav'); if (nav) nav.classList.remove('open');
     var tabs = document.querySelectorAll('.portal-tab');
     tabs.forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === name); });
-    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'documents'].forEach(function (n) {
+    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'documents', 'financials'].forEach(function (n) {
       $('portal-panel-' + n).hidden = n !== name;
     });
     closeDrawer();
@@ -1962,6 +1962,192 @@ function loadTicketThread(client, ticketId) {
           renderFeedback(res.data || []);
         })
         .catch(function () { listError(list, 'feedback'); });
+    });
+  }
+
+  /* ================= FINANCIALS =================
+   * PORTAL_FINANCIALS_2026_10_30 (Austin, Oct 30, 2026): the money
+   * picture, from the shop's own records only — nothing seeded,
+   * nothing estimated. Fields used:
+   *   ticket_charges: kind, qty, unit_price, ticket_id, created_at.
+   *     Revenue   = every line that is NOT a deposit_credit
+   *                 (qty x unit_price — what tickets billed).
+   *     Collected = deposit_credit lines (payments are recorded on
+   *                 the ticket itself as "Deposit received (credit)"
+   *                 lines, e.g. the cash button's "Paid in cash").
+   *   part_orders: our_cost, qty, status, ticket_id, created_at.
+   *     Parts cost = our_cost x qty — OUR cost, never retail_price
+   *     (the customer price). Cancelled orders are excluded; an
+   *     order with no cost recorded counts as $0.
+   *   tickets: id, job_date — every row is bucketed by its ticket's
+   *   job_date so a job counts in the month the work was done;
+   *   rows whose ticket is gone fall back to their created_at. */
+  var finPeriod = 'all';
+  var finCache = null;
+  var finWired = false;
+
+  function finRowDate(row, jobByTicket) {
+    var jd = row.ticket_id ? jobByTicket[row.ticket_id] : null;
+    if (jd) {
+      var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(jd));
+      if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+    }
+    if (row.created_at) {
+      var d = new Date(row.created_at);
+      if (!isNaN(d.getTime())) return d;
+    }
+    return null;
+  }
+
+  function finInPeriod(d) {
+    if (finPeriod === 'all') return true;
+    if (!d) return false;
+    var now = new Date();
+    if (finPeriod === 'month') return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+    if (finPeriod === '30d') {
+      var start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29);
+      var day = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      return day >= start && day <= now;
+    }
+    return true;
+  }
+
+  function finSum(charges, parts, jobByTicket, inPeriod) {
+    var revenue = 0, collected = 0, partsCost = 0;
+    charges.forEach(function (c) {
+      var d = finRowDate(c, jobByTicket);
+      if (inPeriod && !finInPeriod(d)) return;
+      var amt = Number(c.qty || 0) * Number(c.unit_price || 0);
+      if (c.kind === 'deposit_credit') collected += amt; else revenue += amt;
+    });
+    parts.forEach(function (p) {
+      if (p.status === 'Cancelled') return;
+      var d = finRowDate(p, jobByTicket);
+      if (inPeriod && !finInPeriod(d)) return;
+      partsCost += (Number(p.our_cost) || 0) * (Number(p.qty) || 0);
+    });
+    return { revenue: revenue, collected: collected, partsCost: partsCost, gross: revenue - partsCost };
+  }
+
+  function finMonthKey(d) { return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2); }
+
+  function finMonths(charges, parts, jobByTicket) {
+    var keys = [], byKey = {}, now = new Date(), i, d, k;
+    for (i = 5; i >= 0; i--) {
+      d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      k = finMonthKey(d);
+      keys.push({ key: k, label: d.toLocaleDateString(undefined, { month: 'long', year: 'numeric' }) });
+      byKey[k] = { revenue: 0, partsCost: 0 };
+    }
+    charges.forEach(function (c) {
+      if (c.kind === 'deposit_credit') return;
+      var dt = finRowDate(c, jobByTicket); if (!dt) return;
+      var b = byKey[finMonthKey(dt)]; if (!b) return;
+      b.revenue += Number(c.qty || 0) * Number(c.unit_price || 0);
+    });
+    parts.forEach(function (p) {
+      if (p.status === 'Cancelled') return;
+      var dt = finRowDate(p, jobByTicket); if (!dt) return;
+      var b = byKey[finMonthKey(dt)]; if (!b) return;
+      b.partsCost += (Number(p.our_cost) || 0) * (Number(p.qty) || 0);
+    });
+    return keys.map(function (kk) {
+      var v = byKey[kk.key];
+      return { label: kk.label, revenue: v.revenue, partsCost: v.partsCost };
+    });
+  }
+
+  function finDonut(revenue, partsCost, gross) {
+    var C = 2 * Math.PI * 80;
+    var ORANGE = '#D9540D', INK = '#2C231A', CREAM = '#EFE3CC';
+    var slices = '';
+    if (revenue > 0 && gross >= 0) {
+      var pf = Math.min(1, partsCost / revenue);
+      slices =
+        '<circle cx="100" cy="100" r="80" fill="none" stroke="' + ORANGE + '" stroke-width="34" stroke-dasharray="' + ((1 - pf) * C).toFixed(1) + ' ' + C.toFixed(1) + '" stroke-dashoffset="' + (-pf * C).toFixed(1) + '" transform="rotate(-90 100 100)"/>' +
+        '<circle cx="100" cy="100" r="80" fill="none" stroke="' + INK + '" stroke-width="34" stroke-dasharray="' + (pf * C).toFixed(1) + ' ' + C.toFixed(1) + '" transform="rotate(-90 100 100)"/>';
+    } else if (revenue > 0 && gross < 0) {
+      slices = '<circle cx="100" cy="100" r="80" fill="none" stroke="' + INK + '" stroke-width="34"/>';
+    }
+    return '<svg viewBox="0 0 200 200" width="190" height="190" role="img" aria-label="Donut chart of revenue split between parts cost and gross profit">' +
+      '<circle cx="100" cy="100" r="80" fill="none" stroke="' + CREAM + '" stroke-width="34"/>' + slices +
+      '<text x="100" y="93" text-anchor="middle" class="fin-donut-label">Revenue</text>' +
+      '<text x="100" y="119" text-anchor="middle" class="fin-donut-value">' + esc(fmtMoney(revenue)) + '</text></svg>';
+  }
+
+  function finCard(label, value) {
+    return '<div class="fin-card"><p class="fin-card-label">' + label + '</p><p class="fin-card-value">' + esc(fmtMoney(value)) + '</p></div>';
+  }
+
+  function renderFinancials() {
+    var body = $('portal-financials-body');
+    if (!body || !finCache) return;
+    var t = finSum(finCache.charges, finCache.parts, finCache.jobByTicket, true);
+    var margin = t.revenue > 0 ? (t.gross / t.revenue * 100) : null;
+    var html = '';
+    if (!finCache.charges.length && !finCache.parts.length) {
+      html += '<p class="portal-muted">Nothing recorded yet. As tickets get charges and part orders, the money picture fills in here.</p>';
+    }
+    html += '<div class="fin-cards">' +
+      finCard('Revenue (billed)', t.revenue) +
+      finCard('Collected (paid)', t.collected) +
+      finCard('Parts cost (ours)', t.partsCost) +
+      finCard('Gross profit', t.gross) +
+      '<div class="fin-card"><p class="fin-card-label">Margin</p><p class="fin-card-value">' + (margin == null ? '&mdash;' : margin.toFixed(1) + '%') + '</p></div>' +
+      '</div>';
+    html += '<div class="fin-chart-wrap">' + finDonut(t.revenue, t.partsCost, t.gross) +
+      '<div class="fin-legend">' +
+      '<p><span class="fin-dot" style="background:#D9540D"></span>Gross profit &mdash; <strong>' + esc(fmtMoney(t.gross)) + '</strong>' + (t.revenue > 0 ? ' (' + Math.round(t.gross / t.revenue * 100) + '%)' : '') + '</p>' +
+      '<p><span class="fin-dot" style="background:#2C231A"></span>Parts cost &mdash; <strong>' + esc(fmtMoney(t.partsCost)) + '</strong>' + (t.revenue > 0 ? ' (' + Math.round(t.partsCost / t.revenue * 100) + '%)' : '') + '</p>' +
+      (t.gross < 0 ? '<p class="portal-error">Parts cost more than revenue in this period.</p>' : '') +
+      '<p class="portal-muted portal-small">Collected so far: ' + esc(fmtMoney(t.collected)) + ' of ' + esc(fmtMoney(t.revenue)) + ' billed.</p>' +
+      '</div></div>';
+    var months = finMonths(finCache.charges, finCache.parts, finCache.jobByTicket);
+    html += '<div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Last 6 months</h3></div>' +
+      '<div class="portal-table-wrap"><table class="portal-table"><thead><tr><th>Month</th><th>Revenue</th><th>Parts cost</th><th>Gross profit</th></tr></thead><tbody>' +
+      months.map(function (m) {
+        return '<tr><td>' + esc(m.label) + '</td><td>' + esc(fmtMoney(m.revenue)) + '</td><td>' + esc(fmtMoney(m.partsCost)) + '</td><td>' + esc(fmtMoney(m.revenue - m.partsCost)) + '</td></tr>';
+      }).join('') +
+      '</tbody></table></div>';
+    html += '<p class="portal-muted portal-small">Counted by each ticket&rsquo;s job date. Part orders with no cost recorded count as $0; cancelled part orders are left out.</p>';
+    body.innerHTML = html;
+  }
+
+  function loadFinancials(force) {
+    var body = $('portal-financials-body');
+    if (!finWired) {
+      finWired = true;
+      document.querySelectorAll('[data-fin-period]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          finPeriod = btn.getAttribute('data-fin-period') || 'all';
+          document.querySelectorAll('[data-fin-period]').forEach(function (b) { b.classList.toggle('active', b === btn); });
+          renderFinancials();
+        });
+      });
+    }
+    if (body) body.innerHTML = '<p class="portal-muted">Loading financials&hellip;</p>';
+    withClient(function (client) {
+      if (!client) { if (body) body.innerHTML = '<p class="portal-error">Couldn&rsquo;t load financials.</p>'; return; }
+      var got = { charges: null, parts: null, tickets: null }, failed = false;
+      function fail() {
+        if (failed) return;
+        failed = true;
+        if (body) body.innerHTML = '<p class="portal-error">Couldn&rsquo;t load financials. Try Refresh.</p>';
+      }
+      function done() {
+        if (failed || !got.charges || !got.parts || !got.tickets) return;
+        var jobByTicket = {};
+        got.tickets.forEach(function (tk) { jobByTicket[tk.id] = tk.job_date || null; });
+        finCache = { charges: got.charges, parts: got.parts, jobByTicket: jobByTicket };
+        state.loaded.financials = true;
+        renderFinancials();
+      }
+      client.from('ticket_charges').select('ticket_id, kind, qty, unit_price, created_at')
+        .then(function (res) { if (res.error) { fail(); return; } got.charges = res.data || []; done(); }).catch(fail);
+      client.from('part_orders').select('ticket_id, our_cost, qty, status, created_at')
+        .then(function (res) { if (res.error) { fail(); return; } got.parts = res.data || []; done(); }).catch(fail);
+      client.from('tickets').select('id, job_date')
+        .then(function (res) { if (res.error) { fail(); return; } got.tickets = res.data || []; done(); }).catch(fail);
     });
   }
 

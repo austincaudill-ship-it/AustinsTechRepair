@@ -301,3 +301,16 @@
 
 .tc-bday-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .tc-bday-row input{padding:8px 10px;border:1px solid var(--line,#e5d9c8);border-radius:9px;font-size:16px;font-family:inherit}
+
+/* PORTAL_FINANCIALS_2026_10_30: Financials tab — totals cards, donut, legend */
+.fin-periods{display:flex;gap:.5rem;flex-wrap:wrap;margin:.9rem 0 .25rem}
+.fin-periods .fin-period.active{background:var(--brand,#D9540D);border-color:var(--brand,#D9540D);color:#fff}
+.fin-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.75rem;margin:1rem 0}
+.fin-card{background:var(--surface,#FFFDF8);border:1px solid var(--line,#E6D9C0);border-radius:12px;padding:.9rem 1rem}
+.fin-card-label{margin:0;color:var(--muted,#7D6C5B);font-size:.74rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.fin-card-value{margin:.2rem 0 0;font-family:var(--font-display,'Fraunces',Georgia,serif);font-size:1.45rem;font-weight:700;color:var(--ink,#2C231A)}
+.fin-chart-wrap{display:flex;gap:1.4rem;align-items:center;flex-wrap:wrap;margin:.5rem 0 1.1rem}
+.fin-legend p{margin:.35rem 0}
+.fin-dot{display:inline-block;width:.72rem;height:.72rem;border-radius:50%;margin-right:.45rem;vertical-align:baseline}
+.fin-donut-label{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;fill:var(--muted,#7D6C5B)}
+.fin-donut-value{font-size:19px;font-weight:800;fill:var(--ink,#2C231A)}
