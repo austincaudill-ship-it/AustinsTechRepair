@@ -1634,3 +1634,15 @@ a.service-card { text-decoration: none; color: inherit; display: block; }
 .footer-value { display: block; color: #B9A98F; font-size: 0.9rem; margin-bottom: 0.7rem; line-height: 1.45; }
 .footer-value i { color: var(--gold); width: 1.25em; }
 .footer-value strong { color: #FAF6EE; }
+
+/* SITE_VALUES_PAGE_2026_10_30 */
+.values-hero { border-radius: var(--radius-xl); overflow: hidden; box-shadow: var(--shadow-md); border: 1px solid var(--line); max-width: 880px; margin: 0 auto; }
+.values-hero img { width: 100%; height: auto; display: block; }
+.value-block { scroll-margin-top: 90px; }
+a.footer-value { text-decoration: none; cursor: pointer; transition: color var(--transition); }
+a.footer-value:hover { color: var(--gold); }
+a.footer-value:hover strong { color: var(--gold); }
+
+.values-closing { margin-top: 3rem; text-align: center; }
+.values-closing .feature-media { max-width: 520px; margin: 0 auto 1.2rem; }
+.values-closing-line { max-width: 640px; margin: 0 auto; color: #B9A98F; font-size: 1rem; line-height: 1.6; }
