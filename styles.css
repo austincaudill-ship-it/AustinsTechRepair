@@ -445,7 +445,7 @@ a { color: var(--brand); }
 .footer-disclaimer strong { color: #c9a86a; }
 .footer-bottom { position: relative; display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 1rem; border-top: 1px solid #3d3226; padding-top: 1.6rem; }
 .footer-copy { font-size: 0.8rem; color: #8d7d66; flex: none; text-align: center; }
-.footer-wordmark { position: absolute; right: 0; top: 50%; transform: translateY(-50%); }
+.footer-wordmark { position: static; transform: none; }
 @media (max-width: 560px) {
   .footer-bottom { flex-direction: column; }
   .footer-wordmark { position: static; transform: none; }
@@ -1555,3 +1555,18 @@ a.service-card { text-decoration: none; color: inherit; display: block; }
 .footer-share-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:999px;border:1.5px solid var(--brand);background:transparent;color:#FAF6EE;font-size:.9rem;font-weight:700;cursor:pointer;font-family:inherit;flex:none}
 .footer-share-btn:hover{background:var(--brand);color:#fff}
 .footer-share-btn .share-ico{display:block}
+
+/* ---------- SITE_AUDIT_FIXES_2026_10_30 (Oct 30, 2026) ----------
+   D12: the footer email link runs slightly smaller; the address in
+   index.html carries a <wbr> after the @ so it breaks there instead
+   of mid-word (the overflow-wrap:anywhere on .footer-link remains
+   only as a last resort on very narrow columns).
+   D13: the "ATR Group" sign-off is in-flow now (see .footer-wordmark
+   above) instead of pinned to the footer's bottom-right corner, and
+   on desktop widths the bottom row keeps right-side clearance equal
+   to the fixed chat pill's footprint, so nothing in the row renders
+   underneath the "Chat with us" button. */
+.footer-link.footer-email { font-size: 0.82rem; }
+@media (min-width: 921px) {
+  .footer-bottom { padding-right: 190px; }
+}

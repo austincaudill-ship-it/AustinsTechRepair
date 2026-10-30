@@ -56,6 +56,9 @@
   <script>(function(){try{var s=localStorage.getItem('atr-theme');var t=(s==='dark'||s==='light')?s:((window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
 </head>
 <body>
+  <!-- SITE_AUDIT_FIXES_2026_10_30 -->
+  <!-- SITE_CARDFEE_TERMS_2026_10_30 -->
+  <!-- SITE_SQUARE_BADGE_2026_10_30 -->
 
   <!-- HEADER -->
   <header class="header">
@@ -461,90 +464,9 @@
 
             <div class="repair-step" id="step-contact">
               <p class="eyebrow">Step 4 of 4</p>
-              <h3>Where do we reach you?</h3>
-              <div id="repair-form-wrap">
-                <form id="repair-contact-form" novalidate>
-                  <div class="drop-zone" id="file-drop-zone">
-                    <i class="fas fa-cloud-arrow-up" style="font-size: 2.2rem; color: var(--brand); margin-bottom: 0.6rem;"></i>
-                    <p style="font-weight: 700; margin-bottom: 0.4rem;">Add photos of the damage (optional)</p>
-                    <p style="font-size: 0.82rem; color: var(--muted); margin-bottom: 0.9rem;">Photos help us arrive with the right parts.</p>
-                    <input type="file" id="file-upload" name="photos" multiple accept="image/*" style="display: none;" />
-                    <button class="btn btn-outline" type="button" id="file-browse-btn"><i class="fas fa-folder-open"></i> Browse Files</button>
-                    <div id="file-preview-list" style="display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1rem; justify-content: center;"></div>
-                  </div>
-
-                  <div style="margin-bottom: 1rem;">
-                    <label class="field-label" for="rc-name">Full name *</label>
-                    <input class="form-field" type="text" id="rc-name" name="name" required placeholder="John Smith" autocomplete="name" />
-                  </div>
-                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                    <div>
-                      <label class="field-label" for="rc-phone">Phone *</label>
-                      <input class="form-field" type="tel" id="rc-phone" name="phone" required placeholder="(937) 555-0100" autocomplete="tel" />
-                    </div>
-                    <div>
-                      <label class="field-label" for="rc-email">Email *</label>
-                      <input class="form-field" type="email" id="rc-email" name="email" required placeholder="john@example.com" autocomplete="email" />
-                    </div>
-                  </div>
-                  <div style="margin-bottom: 1rem;">
-                    <label class="field-label" for="rc-serial">Serial number / IMEI <span style="text-transform:none; font-weight:600;">(optional &mdash; confirms your exact device so we order the right part)</span></label>
-                    <input class="form-field" type="text" id="rc-serial" name="serial" placeholder="Found in Settings or on the device" />
-                  </div>
-                  <div style="margin-bottom: 1.2rem;">
-                    <label class="field-label" for="rc-address">Service address <span style="text-transform:none; font-weight:600;">(where we come to you)</span></label>
-                    <input class="form-field" type="text" id="rc-address" name="address" placeholder="Street, City, ZIP" autocomplete="street-address" />
-                  </div>
-                  <div style="margin-bottom: 1.2rem;">
-                    <label class="field-label" for="rc-notes">Anything else we should know?</label>
-                    <input class="form-field" type="text" id="rc-notes" name="notes" placeholder="e.g. cracked last night, still powers on" />
-                  </div>
-                  <div style="margin-bottom: 1.2rem;">
-                    <label class="field-label" for="leadSource">How did you hear about us?</label>
-                    <select class="form-field" id="leadSource" name="leadSource">
-                      <option value="">Select one (optional)</option>
-                      <option value="google-search">Google search</option>
-                      <option value="google-maps">Google Maps</option>
-                      <option value="yelp">Yelp</option>
-                      <option value="facebook">Facebook</option>
-                      <option value="flyer">A flyer</option>
-                      <option value="referral">Referred by someone</option>
-                      <option value="drove-by">Drove by / saw a sign</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </div>
-
-                  <button class="btn btn-primary btn-block btn-lg" type="submit" id="repair-submit-btn">
-                    <i class="fas fa-paper-plane"></i> Send Repair Request
-                  </button>
-                  <p style="font-size: 0.8rem; color: var(--muted); text-align: center; margin-top: 0.9rem;">
-                    Sends your request directly to our team &mdash; no account needed.
-                  </p>
-                </form>
-              </div>
-              <div id="repair-success" class="form-success" style="display: none;">
-                <h3><i class="fas fa-circle-check"></i> Request received!</h3>
-                <p id="repair-success-msg">Thanks! We'll reach out shortly to confirm your appointment.</p>
-                <a class="btn btn-primary" href="#repair" onclick="document.getElementById('full-intake').scrollIntoView({behavior:'smooth'});return false;">
-                  <i class="fas fa-clipboard-list"></i> Or complete the full intake form
-                </a>
-              </div>
-            </div>
-          </div>
-
-          <div class="calendly-card mt-2">
-            <h3>Want your estimate by phone?</h3>
-            <p>Book a 30-minute phone call for your estimate &mdash; a great option if you prefer to talk it through. Repair appointments are booked through the repair request form and set in a 2-hour arrival window.</p>
-            <a href="https://calendly.com/service-austinstechrepairgroup/30min" target="_blank" rel="noopener" class="btn btn-dark">
-              <i class="fas fa-phone"></i> Book a 30-Minute Phone Call for Your Estimate
-            </a>
-          </div>
-          <div class="section-header center" style="margin-top:3rem;">
-            <p class="eyebrow">Full intake form</p>
-            <h3 class="section-title" style="font-size:1.7rem;">Rather write it all out?</h3>
-            <p class="section-copy">Skip the steps and give us every detail up front &mdash; exact model, what happened, the works. One form, nothing skipped.</p>
-          </div>
-          <!-- BEGIN SNIPPET: service-request -->
+              <h3>Contact</h3>
+              <div id="estimate-recap" style="margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.6rem;" hidden></div>
+                <!-- BEGIN SNIPPET: service-request -->
 <div class="atr-form-wrap" id="full-intake" data-form-wrap="service-request">
   <form class="atr-form" data-form="service-request" novalidate>
     <div class="atr-form-error" role="alert" hidden></div>
@@ -739,6 +661,14 @@
     </label>
     <span class="atr-field-error" data-error-for="work_auth_accepted"></span>
 
+    <div class="atr-field" id="sr-signature-block">
+      <label class="field-label">Repair authorization signature *</label>
+      <p class="atr-help">Read the Repair Authorization &amp; Service Agreement and sign it right here. Your signature is your authorization for the work, and a signed copy is filed on your repair ticket. The form sends once you have signed.</p>
+      <button class="btn btn-outline btn-block" type="button" id="sr-authorize-btn"><i class="fas fa-pen"></i> I authorize</button>
+      <p class="atr-help" id="sr-signature-status" style="margin-top:0.5rem;">Not signed yet.</p>
+      <span class="atr-field-error" data-error-for="signature"></span>
+    </div>
+
     <div class="atr-honeypot" aria-hidden="true">
       <label>Leave this field empty<input type="text" name="_honey" tabindex="-1" autocomplete="off"></label>
     </div>
@@ -754,6 +684,17 @@
   </div>
 </div>
 <!-- END SNIPPET: service-request -->
+            </div>
+          </div>
+
+          <div class="calendly-card mt-2">
+            <h3>Want your estimate by phone?</h3>
+            <p>Book a 30-minute phone call for your estimate &mdash; a great option if you prefer to talk it through. Repair appointments are booked through the repair request form and set in a 2-hour arrival window.</p>
+            <a href="https://calendly.com/service-austinstechrepairgroup/30min" target="_blank" rel="noopener" class="btn btn-dark">
+              <i class="fas fa-phone"></i> Book a 30-Minute Phone Call for Your Estimate
+            </a>
+          </div>
+
         </div>
       </div>
     </section>
@@ -1053,6 +994,22 @@
               <label class="acct-field">
                 <span>What's wrong?</span>
                 <textarea id="acct-t-issue" placeholder="Describe the problem…" rows="3" required></textarea>
+              </label>
+              <label class="atr-check">
+                <input type="checkbox" id="acct-t-marketing">
+                <span>Email me occasional offers and repair tips. <em>(Optional — no spam, ever.)</em></span>
+              </label>
+              <label class="atr-check">
+                <input type="checkbox" id="acct-t-terms">
+                <span>I agree to the <strong>Terms and Conditions</strong> of service. *</span>
+              </label>
+              <label class="atr-check">
+                <input type="checkbox" id="acct-t-dispatch">
+                <span>I understand the <strong>$35 house-call fee</strong> covers the trip to me plus a full diagnosis of my device, is due at scheduling, and is <strong>non-refundable</strong>. *</span>
+              </label>
+              <label class="atr-check">
+                <input type="checkbox" id="acct-t-work-auth">
+                <span>I <strong>authorize</strong> Austin&rsquo;s Tech Repair Group to perform the requested diagnostic and repair work on my device. *</span>
               </label>
               <p class="acct-error" id="acct-ticket-error" hidden></p>
               <button class="btn btn-primary btn-lg acct-submit" type="submit">Submit Request <i class="fas fa-arrow-right"></i></button>
@@ -1750,11 +1707,12 @@
             <ul>
               <li><strong>Parts you supply:</strong> You&rsquo;re welcome to supply everyday parts you can buy at retail &mdash; hard drives, memory, accessories. Our 1-year warranty covers only parts we supply; customer-supplied parts are installed as-is, with no warranty on the part.</li>
               <li><strong>Parts are paid upfront:</strong> Because parts are ordered for your specific job, the parts cost is due before we order. We order parts through our suppliers and they are delivered to us; we bring them to your install visit. If you cancel after parts are ordered, we keep the part and refund what you paid for the part.</li>
-              <li><strong>Replaced parts:</strong> Any part we remove from your device during a repair and replace becomes the property of Austin's Tech Repair Group.</li>
+              <li><strong>Replaced parts:</strong> Parts we remove during a repair are taken with us and disposed of properly to protect the environment. Some original manufacturer parts must be returned to the manufacturer.</li>
               <li><strong>Parts you supply:</strong> If you supply your own part, we will install it as-is; our 1-Year Limited Warranty does not cover customer-supplied parts.</li>
               <li><strong>Contact about your repair:</strong> You agree we may call and text you at the number you provide about your repair &mdash; scheduling, status updates, and completion.</li>
               <li><strong>Balance due:</strong> The remaining balance (labor) is due upon completion of the repair, before the device is released back to you.</li>
               <li><strong>Accepted payments:</strong> Visa, Mastercard, American Express, Discover, Apple Pay, Google Pay, Samsung Pay, Cash App Pay, PayPal, Venmo, and cash.</li>
+              <li><strong>Card processing fee:</strong> If you pay by credit or debit card, a processing fee is added to your total. Card payments are processed through Square, and the fee is exactly what Square charges for the transaction &mdash; passed through at Square&rsquo;s actual rate, never more than Square charges.</li>
             </ul>
 
             <h3>5. Cancellations</h3>
@@ -1877,11 +1835,12 @@
               <li><strong>Flat-rate repairs:</strong> Common repairs (screens, batteries, charging ports, back glass) are quoted at one flat rate &mdash; parts and labor included. No hourly billing.</li>
               <li><strong>Custom repairs:</strong> Repairs outside the standard list are quoted individually as one flat price and begin only with your approval.</li>
               <li><strong>Parts:</strong> Parts for your job are ordered by us through our suppliers and delivered to us. Because parts are ordered for your specific job, the parts cost is paid upfront before we order. If you cancel after parts are ordered, we keep the part and refund what you paid for the part.</li>
-              <li><strong>Replaced parts:</strong> Any part we remove from your device during a repair and replace becomes the property of Austin's Tech Repair Group.</li>
+              <li><strong>Replaced parts:</strong> Parts we remove during a repair are taken with us and disposed of properly to protect the environment. Some original manufacturer parts must be returned to the manufacturer.</li>
               <li><strong>Parts you supply:</strong> If you supply your own part, we will install it as-is; our 1-Year Limited Warranty does not cover customer-supplied parts.</li>
               <li><strong>Contact about your repair:</strong> You agree we may call and text you at the number you provide about your repair &mdash; scheduling, status updates, and completion.</li>
               <li><strong>Estimate approval:</strong> We confirm your price before beginning work. If hidden damage, corrosion, or additional failures are found during disassembly, we notify you and obtain your approval before proceeding with any extra work.</li>
               <li><strong>Payment due:</strong> The balance is due upon completion, before the device is released. We accept Visa, Mastercard, American Express, Discover, Apple Pay, Google Pay, Samsung Pay, Cash App Pay, PayPal, Venmo, and cash.</li>
+              <li><strong>Card processing fee:</strong> If you pay by credit or debit card, a processing fee is added to your total. Card payments are processed through Square, and the fee is exactly what Square charges for the transaction &mdash; passed through at Square&rsquo;s actual rate, never more than Square charges.</li>
             </ul>
 
             <h3>3. Repair Risks You Accept</h3>
@@ -2187,7 +2146,7 @@
           <span class="footer-col-title">Austin's Tech Repair Group</span>
           <p style="color:#B9A98F; font-size:0.88rem; margin-bottom:1rem;">Mobile electronics repair across Xenia, Dayton, Beavercreek &amp; the Miami Valley. We come to you.</p>
           <a class="footer-link" href="tel:9372806243" style="font-weight:800; color:var(--gold);"><i class="fas fa-phone"></i> 937-280-6243</a>
-          <a class="footer-link" href="mailto:austin.caudill@austinstechrepairgroup.com"><i class="fas fa-envelope"></i> austin.caudill@austinstechrepairgroup.com</a>
+          <a class="footer-link footer-email" href="mailto:austin.caudill@austinstechrepairgroup.com"><i class="fas fa-envelope"></i> austin.caudill@<wbr>austinstechrepairgroup.com</a>
           <p style="color:#B9A98F; font-size:0.88rem; margin-top:1rem;">Mon-Fri 5:30 AM-10:00 PM<br>Sat 8:30 AM-9:00 PM<br>Sun 9:00 AM-5:00 PM</p>
         </div>
         <div>
@@ -2222,7 +2181,7 @@
         </div>
       </div>
 
-      <div class="footer-payments"><span class="footer-payments-label">We accept</span><span class="pay-badge pay-mark-wrap" title="Visa"><img class="pay-mark-img" src="images/visa-mark.png" alt="Visa" /></span><span class="pay-badge pay-mark-wrap" title="Mastercard"><img class="pay-mark-img" src="images/mastercard-symbol.svg" alt="Mastercard" /></span><span class="pay-badge pay-mark-wrap" title="American Express"><img class="pay-mark-img" src="images/amex-mark.svg" alt="American Express" /></span><span class="pay-badge pay-mark-wrap" title="Discover"><img class="pay-mark-img" src="images/discover-mark.png" alt="Discover" /></span><img class="apple-pay-mark" src="images/apple-pay-mark.svg" alt="Apple Pay" title="Apple Pay" /><span class="pay-badge pay-mark-wrap" title="Google Pay"><img class="google-pay-mark" src="images/google-pay-mark.svg" alt="Google Pay" /></span><span class="pay-badge pay-mark-wrap" title="Samsung Pay"><img class="pay-mark-img" src="images/samsung-pay-mark.png" alt="Samsung Pay" /></span><span class="pay-badge pay-mark-wrap" title="PayPal"><img class="pay-mark-img" src="images/paypal-mark.svg" alt="PayPal" /></span><span class="pay-badge pay-mark-wrap" title="Venmo"><img class="pay-mark-img" src="images/venmo-mark.svg" alt="Venmo" /></span><span class="pay-badge pay-mark-wrap" title="Cash App Pay"><img class="pay-mark-img" src="images/cash-app-pay.svg" alt="Cash App Pay" /></span><span class="pay-badge pay-text" title="Cash"><i class="fas fa-money-bill-wave"></i> Cash</span></div><p class="footer-disclaimer">
+      <div class="footer-payments"><span class="footer-payments-label">We accept</span><span class="pay-badge pay-mark-wrap" title="Visa"><img class="pay-mark-img" src="images/visa-mark.png" alt="Visa" /></span><span class="pay-badge pay-mark-wrap" title="Mastercard"><img class="pay-mark-img" src="images/mastercard-symbol.svg" alt="Mastercard" /></span><span class="pay-badge pay-mark-wrap" title="American Express"><img class="pay-mark-img" src="images/amex-mark.svg" alt="American Express" /></span><span class="pay-badge pay-mark-wrap" title="Discover"><img class="pay-mark-img" src="images/discover-mark.png" alt="Discover" /></span><img class="apple-pay-mark" src="images/apple-pay-mark.svg" alt="Apple Pay" title="Apple Pay" /><span class="pay-badge pay-mark-wrap" title="Google Pay"><img class="google-pay-mark" src="images/google-pay-mark.svg" alt="Google Pay" /></span><span class="pay-badge pay-mark-wrap" title="Samsung Pay"><img class="pay-mark-img" src="images/samsung-pay-mark.png" alt="Samsung Pay" /></span><span class="pay-badge pay-mark-wrap" title="PayPal"><img class="pay-mark-img" src="images/paypal-mark.svg" alt="PayPal" /></span><span class="pay-badge pay-mark-wrap" title="Venmo"><img class="pay-mark-img" src="images/venmo-mark.svg" alt="Venmo" /></span><span class="pay-badge pay-mark-wrap" title="Cash App Pay"><img class="pay-mark-img" src="images/cash-app-pay.svg" alt="Cash App Pay" /></span><span class="pay-badge pay-mark-wrap" title="Square"><img class="pay-mark-img" src="images/square.svg" alt="Square" /></span><span class="pay-badge pay-text" title="Cash"><i class="fas fa-money-bill-wave"></i> Cash</span></div><p class="footer-disclaimer">
         <strong>Disclaimer:</strong> Austin's Tech Repair Group is an <strong>independent repair provider</strong> operating as a sole proprietorship in Ohio. We are <strong>not</strong> an authorized service provider for any manufacturer, and we are <strong>not affiliated with, sponsored by, or endorsed by</strong> Apple, Samsung, Google, Microsoft, Sony, Nintendo, Motorola, or any other company or brand named on this site. All trademarks, service marks, logos, and brand names are the property of their respective owners, and all rights in them are reserved by those owners. Apple, the Apple logo, Apple Pay, Apple Watch, Face ID, iPad, iPhone, and Touch ID are trademarks of Apple Inc., registered in the U.S. and other countries and regions. Samsung, Galaxy, and Samsung Pay are trademarks of Samsung Electronics Co., Ltd. Google, Pixel, Google Pay, and Android are trademarks of Google LLC. Microsoft, Windows, and Xbox are trademarks of the Microsoft group of companies. PlayStation is a trademark of Sony Interactive Entertainment Inc. Nintendo is a trademark of Nintendo Co., Ltd. Motorola is a trademark of Motorola Trademark Holdings, LLC. Visa is a trademark of Visa Inc. Mastercard is a trademark of Mastercard International Incorporated. Estimates shown on this site are approximate and confirmed after inspection. 1-year warranty covers parts and labor for the serviced issue; see Terms of Service for full details.
       </p>
 
@@ -2393,7 +2352,7 @@
     howlong: 'Most common repairs (screens, batteries, charge ports) are finished in a single visit once your part is in. If a job needs bench or board-level work, we will tell you the timeline upfront before you commit.',
     membership: 'ATR One membership: $9.99/mo for a single device, $19.99/mo Family (5 devices), $39.99/mo Business Plus, $49.99/mo Business Pro. Members get 20% off repairs, 25% off accessories, a free screen protector installed with every repair, free priority shipping on parts, priority scheduling, same-day diagnostics, and free remote support.',
     services: 'We repair phones, tablets, computers & laptops, game consoles, and smartwatches — including board-level diagnostics most shops will not touch. We also build websites for local businesses, install home and small-business networks and Wi-Fi equipment, and run internet cabling. We do not repair automotive electronics, vintage radios, home stereo systems, major appliances, or medical devices or equipment, and we are not an internet service provider (though we can recommend one and help you get set up).',
-    hours: 'We book by appointment — send a request here or through the Repair page and we will confirm your time. For anything urgent, call or text ' + PHONE_DISPLAY + '.',
+    hours: 'Our hours are Monday\u2013Friday 5:30 AM\u201310:00 PM, Saturday 8:30 AM\u20139:00 PM, and Sunday 9:00 AM\u20135:00 PM. We book by appointment \u2014 send a request here or through the Repair page and we will confirm your time. For anything urgent, call or text ' + PHONE_DISPLAY + '.',
     human: 'No problem — you can call or text Austin directly at ' + PHONE_DISPLAY + '. Or tap "Book a repair" and leave your number here, and he will reach out to you.'
   };
 
@@ -2518,16 +2477,20 @@
   function leadConfirm() {
     state = 'lead_confirm';
     var lines = 'Here\'s what I\'ll send to Austin:\n' +
-      '• Name: ' + lead.name + '\n' +
-      '• Phone: ' + lead.phone + '\n' +
-      (lead.email ? '• Email: ' + lead.email + '\n' : '') +
-      '• Device: ' + (lead.deviceLabel || lead.deviceText || 'Not specified') + '\n' +
-      '• Issue: ' + (lead.issueText || lead.repairLabel || 'Repair') +
+      '\u2022 Name: ' + lead.name + '\n' +
+      '\u2022 Phone: ' + lead.phone + '\n' +
+      (lead.email ? '\u2022 Email: ' + lead.email + '\n' : '') +
+      '\u2022 Device: ' + (lead.deviceLabel || lead.deviceText || 'Not specified') + '\n' +
+      '\u2022 Issue: ' + (lead.issueText || lead.repairLabel || 'Repair') +
       (lead.startPrice ? ' (starting price quoted: $' + lead.startPrice + ')' : '') +
-      '\n\nA $35 house-call fee applies to the visit — it covers travel and a full diagnosis, is due at booking, and is non-refundable. Tap "Send request" to agree to the Terms of Service and send this in.';
+      '\n\nOne last step \u2014 sending this in means all three of these are true:\n' +
+      '\u2022 I agree to the Terms and Conditions of service.\n' +
+      '\u2022 I understand the $35 house-call fee covers the trip to me plus a full diagnosis of my device, is due at scheduling, and is non-refundable.\n' +
+      '\u2022 I authorize Austin\'s Tech Repair Group to perform the requested diagnostic and repair work on my device.\n\n' +
+      'Tap "I agree \u2014 send request" to confirm all three and send this in.';
     bot(lines);
     chips([
-      { label: 'Send request', action: 'send_lead' },
+      { label: 'I agree \u2014 send request', action: 'send_lead' },
       { label: 'Start over', action: 'restart' }
     ]);
   }
@@ -2552,9 +2515,9 @@
       model: lead.deviceText || lead.deviceLabel || null,
       issue: issue,
       source: 'website-chat',
-      terms_accepted: true,
-      dispatch_acknowledged: true,
-      work_auth_accepted: false,
+      terms_accepted: !!lead.consentGiven,
+      dispatch_acknowledged: !!lead.consentGiven,
+      work_auth_accepted: !!lead.consentGiven,
       marketing_opt_in: false
     };
     try {
@@ -2639,13 +2602,25 @@
     }
     if (c.action === 'repair') { priceCtx.repairKey = c.key; priceAnswer(); return; }
     if (c.action === 'skip_email') { lead.email = null; leadDevice(); return; }
-    if (c.action === 'send_lead') { sendLead(); return; }
+    if (c.action === 'send_lead') { lead.consentGiven = true; sendLead(); return; }
   }
 
   function handleText(text) {
     addMsg(text, 'user');
     var t = text.trim();
     if (!t) return;
+    /* SITE_AUDIT_FIXES_2026_10_30 (D7): a typed escape always works
+       mid-flow, so a customer is never trapped in a guided step. */
+    var lt = t.toLowerCase();
+    if (state !== 'idle' && state !== 'sending' &&
+        (lt === 'menu' || lt === 'main menu' || lt === 'back to menu' || lt === 'restart' ||
+         lt === 'start over' || lt === 'cancel' || lt === 'never mind' || lt === 'nevermind' ||
+         lt === 'quit' || lt === 'exit')) {
+      lead = {}; priceCtx = {}; state = 'idle';
+      bot('No problem \u2014 back to the main menu. Ask me anything, or tap one of these:');
+      mainChips();
+      return;
+    }
     switch (state) {
       case 'lead_name':
         lead.name = t; leadPhone(); return;
@@ -2666,12 +2641,28 @@
         lead.issueText = t; leadConfirm(); return;
       case 'price_device':
       case 'price_samsung':
-      case 'price_repair':
-        bot('Tap one of the options above for that step — it keeps me from quoting the wrong device.');
+      case 'price_repair': {
+        /* D7: a real question typed mid-flow gets its answer inline;
+           the flow stays right where it was. */
+        var qi = intent(t);
+        if (qi && FAQ[qi]) {
+          bot(FAQ[qi]);
+          bot('Back to your price \u2014 tap one of the options above for that step whenever you are ready, or type "menu" to start over.');
+          return;
+        }
+        bot('Tap one of the options above for that step \u2014 it keeps me from quoting the wrong device. You can also type a question (like "hours" or "warranty") and I will answer it, or type "menu" to start over.');
         return;
-      case 'lead_confirm':
-        bot('Tap "Send request" above to send it in, or "Start over" to redo it.');
+      }
+      case 'lead_confirm': {
+        var ci = intent(t);
+        if (ci && FAQ[ci]) {
+          bot(FAQ[ci]);
+          bot('Your request is still ready above \u2014 tap "I agree \u2014 send request" to send it, or "Start over" to redo it.');
+          return;
+        }
+        bot('Tap "I agree \u2014 send request" above to send it in, or "Start over" to redo it. You can also type a question first, or "menu" to exit.');
         return;
+      }
       case 'sending':
         return;
       default: {
@@ -2911,6 +2902,42 @@
 </script>
 <!-- ==================== /SELF-SERVICE PASSWORD RESET ==================== -->
 
+<!-- ==================== WEB REPAIR AUTHORIZATION SIGNATURE ==================== -->
+<style>
+  .atr-sign-overlay{position:fixed;inset:0;background:rgba(20,14,8,.55);z-index:2100;display:none;align-items:center;justify-content:center;padding:16px}
+  .atr-sign-overlay.open{display:flex}
+  .atr-sign-card{background:var(--surface,#fffaf2);border:1px solid var(--line,#e5d9c8);border-radius:16px;max-width:640px;width:100%;max-height:92vh;overflow:auto;padding:24px;box-shadow:0 24px 60px rgba(30,20,10,.4);font-family:var(--font-body,system-ui,sans-serif);color:#2b2118}
+  .atr-sign-card h3{font-family:var(--font-display,Georgia,serif);margin:0 0 6px;font-size:1.25rem}
+  .atr-sign-card p{font-size:.92rem;line-height:1.5;margin:0 0 12px}
+  .atr-sign-text{max-height:36vh;overflow:auto;border:1px solid var(--line,#e5d9c8);border-radius:10px;padding:14px;background:#fffdf8;margin:0 0 12px}
+  .atr-sign-text h2{font-size:1.2rem;margin:0 0 .5em}
+  .atr-sign-text h3{font-size:1rem;margin:1.1em 0 .4em}
+  .atr-sign-text p,.atr-sign-text li{font-size:.88rem;line-height:1.55}
+  .atr-sign-card label{display:block;font-size:.82rem;font-weight:700;margin:12px 0 5px}
+  .atr-sign-card input{width:100%;box-sizing:border-box;border:1px solid var(--line,#e5d9c8);border-radius:10px;padding:11px 13px;font-size:.95rem;font-family:inherit;background:#fff;color:#2b2118}
+  #atr-sign-pad{width:100%;height:auto;display:block;background:#fff;border:2px solid #d8cbb6;border-radius:10px;touch-action:none}
+  .atr-sign-btn{width:100%;margin-top:16px;background:var(--brand,#b4551f);color:#fff;border:none;border-radius:999px;padding:12px;font-size:.95rem;font-weight:700;cursor:pointer;font-family:inherit}
+  .atr-sign-btn[disabled]{opacity:.6;cursor:wait}
+  .atr-sign-alt{width:100%;margin-top:9px;background:none;border:none;color:var(--brand,#b4551f);font-size:.88rem;font-weight:700;cursor:pointer;font-family:inherit}
+  .atr-sign-err{background:#fdeceb;border:1px solid #f2b8b0;color:#7c241a;border-radius:10px;padding:9px 12px;font-size:.88rem;margin-top:12px}
+  .atr-sign-x{float:right;background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--muted,#8a7a68)}
+</style>
+<div class="atr-sign-overlay" id="atr-sign-overlay" role="dialog" aria-modal="true" aria-label="Sign the Repair Authorization">
+  <div class="atr-sign-card">
+    <button class="atr-sign-x" id="atr-sign-close" type="button" aria-label="Close"><i class="fas fa-xmark"></i></button>
+    <h3>Repair Authorization &amp; Service Agreement</h3>
+    <p>Read the agreement, type your name, and sign in the box. Signing files this document on your repair ticket and marks your work as authorized.</p>
+    <div class="atr-sign-text" id="atr-sign-text"></div>
+    <label for="atr-sign-name">Printed name</label>
+    <input id="atr-sign-name" type="text" maxlength="120" autocomplete="name" placeholder="Your full name" />
+    <label for="atr-sign-pad">Signature</label>
+    <canvas id="atr-sign-pad" width="560" height="200"></canvas>
+    <button class="atr-sign-btn" id="atr-sign-save" type="button">Sign &amp; continue</button>
+    <button class="atr-sign-alt" id="atr-sign-clear" type="button">Clear signature</button>
+    <button class="atr-sign-alt" id="atr-sign-cancel" type="button">Cancel</button>
+    <div class="atr-sign-err" id="atr-sign-err" hidden></div>
+  </div>
+</div>
 <script>
 /* ===== ATRG Phase 3: customer birthday (self-service) ===== */
 (function () {
@@ -3295,6 +3322,8 @@
       e.preventDefault();
       var err = $('acct-ticket-error'); err.hidden = true;
       if (!currentCust || !sb) { err.textContent = 'Please sign in again, then submit.'; err.hidden = false; return; }
+      var termsBox = $('acct-t-terms'), dispatchBox = $('acct-t-dispatch'),
+          workAuthBox = $('acct-t-work-auth'), marketingBox = $('acct-t-marketing');
       var row = {
         customer_id: currentCust.id,
         customer_name: currentCust.name || null,
@@ -3305,12 +3334,15 @@
         model: $('acct-t-model').value.trim() || null,
         issue: $('acct-t-issue').value.trim(),
         source: 'website-account',
-        terms_accepted: true,
-        dispatch_acknowledged: true,
-        work_auth_accepted: false,
-        marketing_opt_in: false
+        terms_accepted: !!(termsBox && termsBox.checked),
+        dispatch_acknowledged: !!(dispatchBox && dispatchBox.checked),
+        work_auth_accepted: !!(workAuthBox && workAuthBox.checked),
+        marketing_opt_in: !!(marketingBox && marketingBox.checked)
       };
       if (!row.issue) { err.textContent = 'Tell us what\'s wrong with the device.'; err.hidden = false; return; }
+      if (!row.terms_accepted) { err.textContent = 'Please accept the Terms and Conditions to continue.'; err.hidden = false; return; }
+      if (!row.dispatch_acknowledged) { err.textContent = 'Please acknowledge the dispatch fee to continue.'; err.hidden = false; return; }
+      if (!row.work_auth_accepted) { err.textContent = 'Please authorize the work order to continue.'; err.hidden = false; return; }
       sb.from('tickets').insert(row).then(function (res) {
         if (res.error) { err.textContent = 'Couldn\'t submit \u2014 try again, or call or text (937) 280-6243.'; err.hidden = false; return; }
         tForm.reset();
@@ -3407,11 +3439,17 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     sb = getClient(); try{ if(window.supabase&&window.supabase.createClient){ var pkc=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{experimental:{passkey:true}}}); if(pkc) sb=pkc; } }catch(e){}
-    if (!sb) return;
+    /* SITE_AUDIT_FIXES_2026_10_30 (D4): the dialog's DOM-only wiring
+       (tabs, forgot-password, and the form handlers) is wired BEFORE
+       the client check further down, so the box still responds when
+       the Supabase library fails to load. Handlers that truly need
+       the client guard on sb and explain instead of dying silently. */
+    var SB_UNAVAILABLE = 'Sign-in could not load \u2014 check your connection and refresh the page. If it keeps happening, call or text us at (937) 280-6243.';
 
     var googleBtn = $('authx-google-btn');
     if (googleBtn) googleBtn.addEventListener('click', function () {
       showErr($('authx-login-error'), '');
+      if (!sb) { showErr($('authx-login-error'), SB_UNAVAILABLE); return; }
       googleBtn.disabled = true;
       sb.auth.signInWithOAuth({
         provider: 'google',
@@ -3444,6 +3482,7 @@
       var pass = $('authx-login-password').value || '';
       if (!validEmail(email)) { showErr($('authx-login-error'), 'Please enter a valid email address.'); return; }
       if (!pass) { showErr($('authx-login-error'), 'Please enter your password.'); return; }
+      if (!sb) { showErr($('authx-login-error'), SB_UNAVAILABLE); return; }
       var btn = loginForm.querySelector('button[type="submit"]');
       if (btn) { btn.disabled = true; btn.innerHTML = 'Logging in…'; }
       sb.auth.signInWithPassword({ email: email, password: pass }).then(function (res) {
@@ -3470,6 +3509,7 @@
       if (!name) { showErr($('authx-signup-error'), 'Please enter your name.'); return; }
       if (!validEmail(email)) { showErr($('authx-signup-error'), 'Please enter a valid email address.'); return; }
       if (!pass || pass.length < 8) { showErr($('authx-signup-error'), 'Please use a password of at least 8 characters.'); return; }
+      if (!sb) { showErr($('authx-signup-error'), SB_UNAVAILABLE); return; }
       pendingName = name; pendingPhone = phone;
       var btn = signupForm.querySelector('button[type="submit"]');
       if (btn) { btn.disabled = true; btn.innerHTML = 'Creating account…'; }
@@ -3498,7 +3538,7 @@
 
     var logoutBtn = $('authx-logout');
     if (logoutBtn) logoutBtn.addEventListener('click', function () {
-      sb.auth.signOut().catch(function () {});
+      if (sb) sb.auth.signOut().catch(function () {});
       exitAccount();
       var closeBtn = $('acct-close');
       if (closeBtn) { try { closeBtn.click(); } catch (e) {} }
@@ -3522,6 +3562,11 @@
         })
         .catch(function () { if (msg) msg.textContent = 'Couldn’t save — please try again.'; });
     });
+
+    if (!sb) {
+      showErr($('authx-login-error'), SB_UNAVAILABLE);
+      return;
+    }
 
     /* ---------- session restore + auth changes ---------- */
     sb.auth.getSession().then(function (res) {
@@ -3554,7 +3599,7 @@
 /* ===== ATRG: service-area map + travel fee checker (Contact page) ===== */
 (function () {
   var ORIGIN = [39.6099, -84.0082]; // Spring Valley, OH
-  var INCLUDED_MILES = 25, BASE_FEE = 35, PER_MILE = 0;
+  var INCLUDED_MILES = 25;
   var map = null, routeLayer = null, custMarker = null;
   function $(id) { return document.getElementById(id); }
   function ensureMap() {
@@ -3579,14 +3624,12 @@
     box.style.border = '1px solid ' + (ok ? '#bfe3bf' : '#f3cf9f');
     box.innerHTML = html;
   }
-  function feeFor(miles) {
-    var extra = Math.max(0, Math.ceil(miles) - INCLUDED_MILES);
-    return { extra: extra, total: BASE_FEE + extra * PER_MILE };
-  }
+  /* SITE_AUDIT_FIXES_2026_10_30 (D18): the house call is one flat
+     $35 (Oct 23 pricing model) \u2014 the branch is the 25-mile radius
+     only; the retired per-mile math is gone. */
   function present(miles, label) {
-    var f = feeFor(miles);
     var milesTxt = (Math.round(miles * 10) / 10).toFixed(1);
-    if (f.extra === 0) {
+    if (miles <= INCLUDED_MILES) {
       showResult('<strong>You\'re in our area.</strong> ' + label + ' is about <strong>' + milesTxt + ' miles</strong> from us. Your house call is a flat <strong>$35</strong> \u2014 travel and a full diagnosis included, due at booking.', true);
     } else {
       showResult('<strong>' + label + '</strong> is about <strong>' + milesTxt + ' road miles</strong> from us \u2014 just outside our usual 25-mile area. Reach out anyway: if we can make the trip, it\'s the same flat <strong>$35</strong> house call.', true);

@@ -1,14 +1,12 @@
 /* ==========================================================================
    AUSTIN'S TECH REPAIR GROUP — SITE SCRIPT
    Router + repair wizard + lead capture.
+   SITE_AUDIT_FIXES_2026_10_30: wizard step 4 is now the full intake
+   form (one form, one insert path — see atr-forms.js).
    ========================================================================== */
 
 (function () {
   'use strict';
-
-  // Where repair-request leads are emailed (free via FormSubmit; no server needed).
-  // First submission triggers a one-time activation email to this address.
-  var LEAD_EMAIL = 'service@austinstechrepairgroup.com';
 
   document.addEventListener('DOMContentLoaded', function () {
 
@@ -146,30 +144,13 @@
         contBtn.addEventListener('click', function () { goToRepairStep(4); });
       }
 
-      /* Photo picker (preview only; files are attached to the emailed lead) */
-      var fileInput = document.getElementById('file-upload');
-      var browseBtn = document.getElementById('file-browse-btn');
-      var previewList = document.getElementById('file-preview-list');
-      if (browseBtn && fileInput) {
-        browseBtn.addEventListener('click', function () { fileInput.click(); });
-        fileInput.addEventListener('change', function (e) {
-          previewList.innerHTML = '';
-          Array.prototype.forEach.call(e.target.files, function (file) {
-            var span = document.createElement('span');
-            span.className = 'pill';
-            span.innerHTML = '<i class="fas fa-file-image"></i> ' + escapeHtml(file.name);
-            previewList.appendChild(span);
-          });
-        });
-      }
-
       /* Lead source: the "How did you hear about us?" dropdown choice, plus
          automatic signals (external referrer hostname, utm_source param).
          Exposed on window so the account ticket insert reuses the same value.
          Format: "google-search", "yelp | ref: yelp.com", "flyer | utm: fb". */
       window.atrLeadSource = function () {
         var parts = [];
-        var sel = document.getElementById('leadSource');
+        var sel = document.getElementById('leadSourceIntake') || document.getElementById('leadSource');
         var choice = sel ? String(sel.value || '').trim() : '';
         if (choice) parts.push(choice);
         var refHost = '';
@@ -183,136 +164,6 @@
         return parts.join(' | ');
       };
 
-      /* Supabase (anon) client for filing quick-form requests as portal
-         tickets — same project and anon key as the account modules
-         below and atr-forms.js. index.html loads supabase-js v2 ahead
-         of this file, so window.supabase is available; if it is somehow
-         missing, leadClient() returns null and the submit handler
-         treats that as a filing error instead of faking success. */
-      var LEAD_SUPABASE_URL = 'https://lyujxpuicarblpkdzuuc.supabase.co';
-      var LEAD_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
-      var leadSb = null;
-      function leadClient() {
-        if (leadSb) return leadSb;
-        if (window.supabase && window.supabase.createClient) {
-          try { leadSb = window.supabase.createClient(LEAD_SUPABASE_URL, LEAD_SUPABASE_ANON_KEY); }
-          catch (err) { leadSb = null; }
-        }
-        return leadSb;
-      }
-
-      /* Lead capture: file the request as a ticket in the portal queue
-         (the Supabase insert is the system of record and the success
-         criterion); the FormSubmit email continues in parallel as a
-         fire-and-forget alert, mirroring atr-forms.js. */
-      var contactForm = document.getElementById('repair-contact-form');
-      if (contactForm) {
-        contactForm.addEventListener('submit', function (e) {
-          e.preventDefault();
-          var name = document.getElementById('rc-name').value.trim();
-          var phone = document.getElementById('rc-phone').value.trim();
-          var email = document.getElementById('rc-email').value.trim();
-          var address = document.getElementById('rc-address').value.trim();
-          var notes = document.getElementById('rc-notes').value.trim();
-          var serial = document.getElementById('rc-serial').value.trim();
-          var leadSource = window.atrLeadSource ? window.atrLeadSource() : '';
-
-          if (!name || !phone || !email) {
-            alert('Please fill in your name, phone, and email so we can reach you.');
-            return;
-          }
-
-          var submitBtn = document.getElementById('repair-submit-btn');
-          var submitBtnHtml = submitBtn.innerHTML;
-          submitBtn.disabled = true;
-          submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending\u2026';
-
-          var photoCount = fileInput && fileInput.files ? fileInput.files.length : 0;
-          var payload = {
-            _subject: 'New repair request: ' + repairState.device + ' \u2013 ' + repairState.issue,
-            _template: 'table',
-            'Device type': repairState.device || 'Not selected',
-            'Brand': repairState.brand || 'Not selected',
-            'Issue': repairState.issue || 'Not selected',
-            'Serial / IMEI': serial || '(not provided)',
-            'Estimate shown': repairState.priceRange,
-            'Name': name,
-            'Phone': phone,
-            'Email': email,
-            'Service address': address || '(not provided)',
-            'Notes': notes || '(none)',
-            'Heard about us': leadSource || '(not provided)',
-            'Photos attached by customer': photoCount > 0 ? photoCount + ' photo(s) \u2014 ask customer to text them to 937-280-6243' : 'None'
-          };
-
-          // Alert email: fire-and-forget. The ticket insert below is
-          // what decides success now, so a failed alert never blocks
-          // (or fakes) the customer's confirmation.
-          fetch('https://formsubmit.co/ajax/' + encodeURIComponent(LEAD_EMAIL), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify(payload)
-          }).catch(function () { /* alert email is best-effort */ });
-
-          // File the ticket in the portal queue. No .select(): the
-          // anon role is INSERT-only (return=minimal), so asking for
-          // the row back would fail the whole insert. customer_id is
-          // omitted on purpose — a guest ticket is claimed by verified
-          // email when the customer first signs in.
-          var issueText = repairState.issue || 'Repair request';
-          if (notes) issueText += ' \u2014 ' + notes;
-          issueText += ' (Estimate shown: ' + repairState.priceRange + ')';
-          var ticketRow = {
-            customer_name: name,
-            customer_phone: phone,
-            customer_email: email,
-            device_type: repairState.device || 'Business / Other',
-            brand: repairState.brand || null,
-            model: null,
-            issue: issueText,
-            service_address: address || null,
-            serial_imei: serial || null,
-            source: leadSource || 'website',
-            status: 'Awaiting Estimate'
-          };
-
-          function submitFailed() {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = submitBtnHtml;
-            var errEl = document.getElementById('repair-submit-error');
-            if (!errEl) {
-              errEl = document.createElement('p');
-              errEl.id = 'repair-submit-error';
-              errEl.style.cssText = 'color: #b03a2e; text-align: center; margin-top: 0.9rem;';
-              submitBtn.parentNode.insertBefore(errEl, submitBtn.nextSibling);
-            }
-            errEl.innerHTML = 'Something went wrong sending that. Please call or text us at ' +
-              '<a href="tel:9372806243">(937) 280-6243</a>' + " and we'll take it from there.";
-          }
-
-          var leadSbClient = leadClient();
-          if (!leadSbClient) { submitFailed(); return; }
-          leadSbClient.from('tickets').insert(ticketRow).then(function (res) {
-            if (res.error) { submitFailed(); return; }
-            showRepairSuccess(name);
-          }).catch(function () {
-            submitFailed();
-          });
-        });
-      }
-    }
-
-    function showRepairSuccess(name) {
-      var wrap = document.getElementById('repair-form-wrap');
-      var success = document.getElementById('repair-success');
-      var msg = document.getElementById('repair-success-msg');
-      if (msg) {
-        var first = name.split(' ')[0];
-        msg.textContent = 'Thanks ' + first + '! Your ' + (repairState.device || 'device') + ' request (' + (repairState.issue || 'repair') + ', est. ' + repairState.priceRange + ') is on its way to our team. We\'ll reach out shortly to confirm your appointment.';
-      }
-      if (wrap) wrap.style.display = 'none';
-      if (success) success.style.display = 'block';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function populateBrandsAndIssues(deviceKey) {
@@ -366,6 +217,51 @@
       }
     }
 
+    /* SITE_AUDIT_FIXES_2026_10_30: the guided selections (steps 1-3)
+       carry into the intake form at step 4. Fields the customer has
+       already filled are never overwritten, and the exact guided issue
+       + estimate are exposed on window.atrGuidedSelection so the
+       intake submit (atr-forms.js) merges them into the one ticket. */
+    var REPAIR_NEEDED_MAP = {
+      'Screen replacement': 'Screen replacement',
+      'Battery replacement': 'Battery replacement',
+      'Charging port repair': 'Charging port repair',
+      'Camera / speaker fix': 'Camera / speaker fix',
+      'Water damage / diagnostic': 'Water damage / diagnostic',
+      'Laptop screen replacement': 'Laptop screen replacement',
+      'SSD upgrade & OS install': 'SSD upgrade & OS install',
+      'Virus cleanup & tuneup': 'Virus cleanup & tuneup',
+      'HDMI port repair': 'HDMI port repair',
+      'Overheating / power fault': 'Overheating / power fault',
+      'Screen / digitizer repair': 'Screen replacement',
+      'Battery service': 'Battery replacement',
+      'Power / DC jack repair': 'Charging port repair'
+    };
+    function prefillIntakeFromGuided() {
+      window.atrGuidedSelection = {
+        device: repairState.device || '',
+        brand: repairState.brand || '',
+        issue: repairState.issue || '',
+        priceRange: repairState.priceRange || ''
+      };
+      var g = window.atrGuidedSelection;
+      var typeSel = document.getElementById('sr-device-type');
+      if (typeSel && !typeSel.value && g.device) typeSel.value = g.device;
+      var info = document.getElementById('sr-device-info');
+      if (info && !info.value && g.brand) info.value = g.brand;
+      var needSel = document.getElementById('sr-repair-needed');
+      if (needSel && !needSel.value && REPAIR_NEEDED_MAP[g.issue]) needSel.value = REPAIR_NEEDED_MAP[g.issue];
+      var recap = document.getElementById('estimate-recap');
+      if (recap && g.issue) {
+        recap.hidden = false;
+        recap.innerHTML =
+          '<span class="pill"><i class="fas fa-mobile-screen"></i> ' + escapeHtml(g.device) + '</span>' +
+          '<span class="pill"><i class="fas fa-tag"></i> ' + escapeHtml(g.brand || 'Any brand') + '</span>' +
+          '<span class="pill"><i class="fas fa-wrench"></i> ' + escapeHtml(g.issue) + '</span>' +
+          '<span class="pill"><i class="fas fa-dollar-sign"></i> Est. ' + escapeHtml(g.priceRange) + '</span>';
+      }
+    }
+
     function goToRepairStep(stepNum) {
       var ids = { 1: 'step-device', 2: 'step-issue', 3: 'step-estimate', 4: 'step-contact' };
       document.querySelectorAll('.repair-step').forEach(function (s) { s.classList.remove('active'); });
@@ -378,6 +274,7 @@
       });
       var card = document.querySelector('.repair-card');
       if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (stepNum === 4) prefillIntakeFromGuided();
     }
 
     function escapeHtml(str) {

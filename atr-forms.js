@@ -26,6 +26,11 @@
  * during go-live testing.
  *
  * Style: ES5, matching the rest of script.js on the site.
+ *
+ * SITE_AUDIT_FIXES_2026_10_30: the service-request form now also
+ * lives at step 4 of the repair wizard (one form, one insert path),
+ * carries the guided selections in, and requires the customer's
+ * signature on the Repair Authorization before it can send.
  * ===================================================================== */
 (function () {
   'use strict';
@@ -255,6 +260,135 @@
     return any;
   }
 
+  /* ================= WEB SIGNATURE (Repair Authorization) =================
+   * SITE_AUDIT_FIXES_2026_10_30. The service-request form ends with an
+   * "I authorize" button that opens the signature popup in index.html
+   * (full published Repair Authorization text, signature pad, printed
+   * name — the same pattern as the portal's sign flow). The completed
+   * signature is held in webSignature; the submit handler refuses to
+   * send without it. After the ticket insert succeeds, the PNG is
+   * uploaded to web-signatures/<ticketId>/ in the ticket-documents
+   * bucket and a ticket_documents row (doc_type 'repair_authorization')
+   * is filed against the ticket. Anon access for exactly that path is
+   * granted by web-signature-filings.sql (run at publish time). */
+  var webSignature = null; // { signerName: string, dataUrl: string }
+  var signWired = false;
+
+  function newTicketId() {
+    if (window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID();
+    var d = new Date().getTime();
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+      var r = (d + Math.random() * 16) % 16 | 0;
+      d = Math.floor(d / 16);
+      return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
+  }
+
+  function dataUrlToBlob(dataUrl) {
+    try {
+      var parts = String(dataUrl || '').split(',');
+      var bin = window.atob(parts[1] || '');
+      var arr = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      return new Blob([arr], { type: 'image/png' });
+    } catch (e) { return null; }
+  }
+
+  function fileWebSignature(client, ticketId, done) {
+    if (!webSignature || !client) { done(); return; }
+    var stamp = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, 14);
+    var fileName = 'repair_authorization-' + stamp + '.png';
+    var path = 'web-signatures/' + ticketId + '/' + fileName;
+    var blob = dataUrlToBlob(webSignature.dataUrl);
+    if (!blob) { done(); return; }
+    client.storage.from('ticket-documents').upload(path, blob, { contentType: 'image/png', upsert: false }).then(function (up) {
+      if (up.error) { done(); return; }
+      var row = {
+        ticket_id: ticketId, doc_type: 'repair_authorization', storage_path: path,
+        file_name: fileName, signer_name: webSignature.signerName, signed_at: new Date().toISOString()
+      };
+      client.from('ticket_documents').insert(row).then(function () { done(); }).catch(function () { done(); });
+    }).catch(function () { done(); });
+  }
+
+  function wireSignature(form) {
+    var btn = form.querySelector('#sr-authorize-btn');
+    if (!btn) return;
+    btn.addEventListener('click', function () { openSignPopup(form); });
+  }
+
+  function openSignPopup(form) {
+    var overlay = document.getElementById('atr-sign-overlay');
+    if (!overlay) return;
+    var textBox = document.getElementById('atr-sign-text');
+    if (textBox && !textBox.getAttribute('data-filled')) {
+      /* The popup shows the site's own published Repair Authorization
+         & Service Agreement verbatim — cloned from the legal page, so
+         the text can never drift from what the site publishes. */
+      var srcDoc = document.querySelector('#service-agreement .legal-doc');
+      if (srcDoc) { textBox.innerHTML = srcDoc.innerHTML; }
+      else { textBox.textContent = 'The full Repair Authorization & Service Agreement is linked in the footer of this page (Service Agreement & Waiver).'; }
+      textBox.setAttribute('data-filled', '1');
+    }
+    var errBox = document.getElementById('atr-sign-err');
+    function showSignErr(msg) { if (errBox) { errBox.textContent = msg; errBox.hidden = !msg; } }
+    function close() { overlay.classList.remove('open'); }
+    overlay.classList.add('open');
+    showSignErr('');
+
+    if (!signWired) {
+      signWired = true;
+      var canvas = document.getElementById('atr-sign-pad');
+      var ctx = canvas.getContext('2d');
+      ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#2b2118';
+      var drawing = false, last = null;
+      var hasDrawn = false;
+      function pos(e) {
+        var r = canvas.getBoundingClientRect();
+        return { x: (e.clientX - r.left) * (canvas.width / r.width), y: (e.clientY - r.top) * (canvas.height / r.height) };
+      }
+      canvas.addEventListener('pointerdown', function (e) {
+        drawing = true; hasDrawn = true; last = pos(e);
+        try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+        e.preventDefault();
+      });
+      canvas.addEventListener('pointermove', function (e) {
+        if (!drawing) return;
+        var p = pos(e);
+        ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+        last = p;
+      });
+      function endStroke() { drawing = false; }
+      canvas.addEventListener('pointerup', endStroke);
+      canvas.addEventListener('pointercancel', endStroke);
+      document.getElementById('atr-sign-clear').addEventListener('click', function () {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        hasDrawn = false;
+      });
+      document.getElementById('atr-sign-cancel').addEventListener('click', close);
+      document.getElementById('atr-sign-close').addEventListener('click', close);
+      overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });
+      document.getElementById('atr-sign-save').addEventListener('click', function () {
+        var nameInput = document.getElementById('atr-sign-name');
+        var name = trim(nameInput ? nameInput.value : '');
+        if (!name) { showSignErr('Type your printed name first.'); return; }
+        if (!hasDrawn) { showSignErr('Sign in the box first.'); return; }
+        webSignature = { signerName: name, dataUrl: canvas.toDataURL('image/png') };
+        close();
+        var status = document.getElementById('sr-signature-status');
+        if (status) status.textContent = 'Signed by ' + name + ' \u2014 now tap "Send Service Request" to finish.';
+        var slot = document.querySelector('form[data-form="service-request"] [data-error-for="signature"]');
+        if (slot) slot.textContent = '';
+      });
+    }
+    var nameInput = document.getElementById('atr-sign-name');
+    if (nameInput && !nameInput.value) {
+      var fn = field(form, 'first_name'), ln = field(form, 'last_name');
+      var full = (fn + ' ' + ln).trim();
+      if (full) nameInput.value = full;
+    }
+  }
+
   /* ================= SERVICE REQUEST =================
    * Replicates JotForm "Service Request" 261955946010055 (22 cataloged
    * fields). Writes to public.tickets; source is the composed lead
@@ -268,6 +402,7 @@
    *    reproduced on the public form.
    *  - JotForm's CAPTCHA is replaced by the honeypot above. */
   function handleServiceRequest(form) {
+    wireSignature(form);
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       clearErrors(form);
@@ -294,6 +429,7 @@
       if (!field(form, 'terms_accepted')) errors.terms_accepted = 'Please accept the Terms and Conditions to continue.';
       if (!field(form, 'dispatch_acknowledged')) errors.dispatch_acknowledged = 'Please acknowledge the dispatch fee to continue.';
       if (!field(form, 'work_auth_accepted')) errors.work_auth_accepted = 'Please authorize the work order to continue.';
+      if (!webSignature) errors.signature = 'Please tap "I authorize" and sign the Repair Authorization to continue.';
       if (applyErrors(form, errors)) return;
 
       var address = composeAddress(form, 'address');
@@ -307,12 +443,26 @@
         ? (v.problem ? v.repair_needed + ' — ' + v.problem : v.repair_needed)
         : v.problem;
 
+      /* SITE_AUDIT_FIXES_2026_10_30: when the customer arrived through
+         the guided wizard (steps 1–3), merge their selections in —
+         the guided issue and the estimate they were shown lead the
+         ticket's issue text, exactly like the retired mini contact
+         form did. The ticket id is generated here so the signed
+         authorization can be filed against the ticket afterwards
+         (the anon role cannot read the row back). */
+      var guided = window.atrGuidedSelection || null;
+      if (guided && guided.issue) {
+        issue = guided.issue + ' — ' + issue + ' (Estimate shown: ' + guided.priceRange + ')';
+      }
+      var ticketId = newTicketId();
+
       var row = {
+        id: ticketId,
         customer_name: fullName(form, 'first_name', 'last_name'),
         customer_phone: v.phone,
         customer_email: v.email,
         device_type: v.device_type,
-        brand: null, // JotForm collected brand+model as one "Device Information" text
+        brand: guided && guided.brand ? guided.brand : null, // guided wizard brand when present; the JotForm-era form collected brand+model as one "Device Information" text
         model: v.device_info || null,
         issue: issue,
         service_address: address || null,
@@ -325,7 +475,7 @@
         warranty_status: field(form, 'warranty_status') || null,
         terms_accepted: !!field(form, 'terms_accepted'),
         dispatch_acknowledged: !!field(form, 'dispatch_acknowledged'),
-        work_auth_accepted: !!field(form, 'work_auth_accepted'),
+        work_auth_accepted: webSignature ? true : !!field(form, 'work_auth_accepted'), // set from the completed signature (the submit gate above guarantees it)
         marketing_opt_in: !!field(form, 'marketing_opt_in'),
         source: leadSource(form) || 'website',
         status: 'Awaiting Estimate'
@@ -350,7 +500,9 @@
         ['Has it been repaired before?', row.prior_repair],
         ['Under manufacturer warranty?', row.warranty_status],
         ['Heard about us', row.source],
-        ['Marketing emails opt-in', row.marketing_opt_in ? 'Yes' : 'No']
+        ['Marketing emails opt-in', row.marketing_opt_in ? 'Yes' : 'No'],
+        ['Authorization signed by', webSignature ? webSignature.signerName : ''],
+        ['Guided estimate shown', guided ? guided.priceRange : '']
       ]);
 
       withClient(function (client) {
@@ -359,7 +511,13 @@
         client.from('tickets').insert(row).then(function (res) {
           setBusy(form, false);
           if (res.error) { showFormError(form, dbFailMessage()); return; }
-          showSuccess(form, 'service-request', v);
+          /* File the signed authorization on the new ticket (upload,
+             then the ticket_documents row), then show success. Filing
+             is best-effort like the alert email: the ticket insert
+             above is the record that decides success. */
+          fileWebSignature(client, ticketId, function () {
+            showSuccess(form, 'service-request', v);
+          });
         }).catch(function () {
           setBusy(form, false);
           showFormError(form, dbFailMessage());
