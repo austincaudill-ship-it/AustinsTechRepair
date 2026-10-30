@@ -577,7 +577,18 @@
             <label for="ci-notes">Check-in notes &mdash; the symptom, and how you verified it *</label>
             <textarea id="ci-notes" rows="3" placeholder="e.g. Left bud silent; swapped buds in case, fault follows the bud. Case charges fine." required></textarea>
           </div>
-          <p class="portal-error" id="ci-error" hidden></p>
+          <!-- PORTAL_CHECKIN_CONSENT_2026_10_30: Agreements section (one contiguous block; wired in portal.js by wireCiConsent). The read-aloud script text itself lives in portal.js (CI_CONSENT_SCRIPT) so the filed verbal record quotes the same string the staff read. -->
+          <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Agreements</h3></div>
+          <p class="portal-muted portal-small">One agreement covers everything &mdash; the Repair Authorization, the Terms &amp; Conditions, and the 1-Year Warranty. Take it now, in person or by phone, and it files itself on the ticket. Skipping is fine too &mdash; it can be signed later from the ticket&rsquo;s Documents section.</p>
+          <p class="portal-muted portal-small" style="margin-bottom:0.25rem;">By phone, read this statement to the customer, word for word:</p>
+          <div class="ci-consent-script" id="ci-consent-script" aria-label="Statement to read to the customer by phone"></div>
+          <div class="p2-actions">
+            <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="ci-terms-btn"><i class="fas fa-book-open"></i> Read the full terms</button>
+            <button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="ci-sign-btn"><i class="fas fa-pen-nib"></i> Customer signs now</button>
+            <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="ci-consent-clear" hidden>Clear agreement</button>
+          </div>
+          <label class="ci-consent-verbal"><input type="checkbox" id="ci-verbal-check" /> <span>Verbal agreement by phone &mdash; I read the statement above to the customer and they verbally agreed</span></label>
+          <p class="portal-muted portal-small" id="ci-consent-status">No agreement captured yet.</p><p class="portal-error" id="ci-error" hidden></p>
           <button class="portal-btn portal-btn-primary" id="ci-submit" type="submit"><i class="fas fa-arrow-right"></i> Create ticket &amp; add to queue</button>
         </form>
       </div>

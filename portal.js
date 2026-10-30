@@ -602,7 +602,12 @@ function loadTicketThread(client, ticketId) {
           '<div class="p2-actions"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p4-sign-btn"><i class="fas fa-pen-nib"></i> Sign repair authorization</button>' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p4-attach-btn"><i class="fas fa-paperclip"></i> Attach document</button>' +
           '<select id="p4-attach-type" aria-label="Attach as document type" style="padding:0.4rem;border:2px solid var(--line, #d8cbb6);border-radius:8px;background:var(--bg, #fff);color:var(--ink, #2c231a);"><option value="receipt">Receipt</option><option value="repair_authorization">Signed authorization</option><option value="other">Other</option></select>' +
-          '<input type="file" id="p4-attach-file" accept="image/*,application/pdf" hidden /></div>' +
+          '<input type="file" id="p4-attach-file" accept="image/*,application/pdf" hidden />' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p4-existing-btn"><i class="fas fa-link"></i> Attach an existing document</button></div>' +
+          '<div class="p2-form" id="p4-existing-picker" hidden><div class="p2-form-row">' +
+          '<select id="p4-existing-select" aria-label="Choose an unattached document" style="padding:0.4rem;border:2px solid var(--line, #d8cbb6);border-radius:8px;background:var(--bg, #fff);color:var(--ink, #2c231a);"><option value="">Loading documents&hellip;</option></select>' +
+          '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p4-existing-confirm">Attach to this ticket</button></div>' +
+          '<p class="portal-muted portal-small" id="p4-existing-msg" hidden></p></div>' +
           '<p class="portal-muted portal-small">Documents file themselves on this ticket. Signing the repair authorization here, or attaching one as a signed authorization, also marks Terms accepted and Work authorized on the ticket.</p>' +
           '<p class="portal-error" id="p4-doc-msg" hidden></p></div>' +
           '<div class="portal-drawer-section"><h3>ATR One</h3>' +
@@ -1007,6 +1012,10 @@ function loadTicketThread(client, ticketId) {
       fileInput.value = '';
       if (f) attachDocument(client, t, f);
     });
+    var existingBtn = $('p4-existing-btn');
+    if (existingBtn) existingBtn.addEventListener('click', function () { toggleExistingPicker(client); });
+    var existingConfirm = $('p4-existing-confirm');
+    if (existingConfirm) existingConfirm.addEventListener('click', function () { confirmExistingAttach(client, t); });
   }
 
   function attachDocument(client, t, file) {
@@ -1036,7 +1045,90 @@ function loadTicketThread(client, ticketId) {
     }).catch(function () { if (attachBtn) { attachBtn.disabled = false; attachBtn.textContent = 'Attach document'; } docMsg('Upload failed — check the connection and try again.'); });
   }
 
-  function openSignModal(client, t) {
+  /* PORTAL_ATTACH_EXISTING_2026_10_30 (Austin, Oct 30, 2026): from
+   * inside a ticket, file a document that is already in the system
+   * but unattached onto THIS ticket — the mirror of the Documents
+   * tab's Attach-to-repair picker, for when you are already standing
+   * in the repair. The list is the unattached set (see
+   * loadUnattachedDocuments); picking one sets its ticket_id through
+   * fileExistingDocumentOnTicket, the shared attach — a move, never
+   * a copy. Nothing is uploaded and no consent flags change. */
+  function toggleExistingPicker(client) {
+    var picker = $('p4-existing-picker');
+    if (!picker) return;
+    if (!picker.hidden) { picker.hidden = true; return; }
+    picker.hidden = false;
+    var sel = $('p4-existing-select');
+    var msg = $('p4-existing-msg');
+    var confirmBtn = $('p4-existing-confirm');
+    if (msg) { msg.hidden = true; msg.textContent = ''; }
+    if (sel) { sel.disabled = false; sel.innerHTML = '<option value="">Loading documents&hellip;</option>'; }
+    if (confirmBtn) confirmBtn.disabled = false;
+    loadUnattachedDocuments(client, function (rows) {
+      if (!rows) {
+        if (sel) { sel.innerHTML = ''; sel.disabled = true; }
+        if (confirmBtn) confirmBtn.disabled = true;
+        if (msg) { msg.textContent = 'Documents could not be loaded — try again.'; msg.hidden = false; }
+        return;
+      }
+      if (!rows.length) {
+        if (sel) { sel.innerHTML = ''; sel.disabled = true; }
+        if (confirmBtn) confirmBtn.disabled = true;
+        if (msg) { msg.textContent = 'No unattached documents to attach. A document uploaded in the Documents tab before its ticket exists will show up here.'; msg.hidden = false; }
+        return;
+      }
+      if (sel) {
+        sel.innerHTML = rows.map(function (d) {
+          var meta = fmtDateTime(d.signed_at || d.created_at);
+          if (d.signer_name) meta += ' · Signed by ' + d.signer_name;
+          else if (d.file_name) meta += ' · ' + d.file_name;
+          return '<option value="' + esc(d.id) + '">' + esc((DOC_TYPE_LABELS[d.doc_type] || 'Document') + ' · ' + meta) + '</option>';
+        }).join('');
+      }
+    });
+  }
+
+  function confirmExistingAttach(client, t) {
+    var sel = $('p4-existing-select');
+    var docId = sel ? sel.value : '';
+    if (!docId) { docMsg('Pick a document to attach first.'); return; }
+    docMsg('');
+    var confirmBtn = $('p4-existing-confirm');
+    if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = 'Attaching…'; }
+    fileExistingDocumentOnTicket(client, docId, t.id, function (errText) {
+      if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = 'Attach to this ticket'; }
+      if (errText) { docMsg(errText); return; }
+      var picker = $('p4-existing-picker');
+      if (picker) picker.hidden = true;
+      loadDocuments(client, t);
+    });
+  }
+
+  /* Shared filing for a drawn signature (PORTAL_CHECKIN_CONSENT_2026_10_30
+   * refactored this out of the drawer flow so check-in files a signature
+   * identically): upload the PNG, file the ticket_documents row, and set
+   * the ticket's consent flags via markAuthorizationAccepted — the exact
+   * steps the drawer sign flow has always done. done(errText): errText
+   * is null on success. */
+  function fileSignedAuthorization(client, ticketId, blob, signerName, done) {
+    var path = ticketId + '/repair_authorization-' + docStamp() + '.png';
+    client.storage.from(DOC_BUCKET).upload(path, blob, { contentType: 'image/png', upsert: false }).then(function (up) {
+      if (up.error) { done('Saving failed \u2014 check the connection and try again.'); return; }
+      var row = { ticket_id: ticketId, doc_type: 'repair_authorization', storage_path: path, signer_name: signerName, signed_at: new Date().toISOString() };
+      client.from('ticket_documents').insert(row).then(function (res) {
+        if (res.error) { done('The signature saved but could not be filed \u2014 try again.'); return; }
+        markAuthorizationAccepted(client, { id: ticketId }).then(function () { done(null); }).catch(function () { done(null); });
+      }).catch(function () { done('The signature saved but could not be filed \u2014 try again.'); });
+    }).catch(function () { done('Saving failed \u2014 check the connection and try again.'); });
+  }
+
+  /* The signature popup itself (agreement text + printed name + pad),
+   * shared by the ticket drawer and by check-in consent \u2014 one
+   * implementation, two callers; not a second copy. onCapture(blob,
+   * signerName, finish): the caller does whatever it needs with the
+   * captured signature, then calls finish() to close the popup, or
+   * finish(errText) to show the error and keep the popup open. */
+  function openSignatureCapture(initialName, onCapture) {
     var old = document.getElementById('p4-sign-modal');
     if (old && old.parentNode) old.parentNode.removeChild(old);
     var wrap = document.createElement('div');
@@ -1046,7 +1138,7 @@ function loadTicketThread(client, ticketId) {
       '<h3 style="margin:0 0 0.5rem;">Repair Authorization &amp; Service Agreement</h3>' +
       '<p class="portal-muted portal-small" style="margin:0 0 0.75rem;">Read the agreement, type your name, and sign in the box. Signing files this document on the ticket and marks Terms accepted and Work authorized.</p>' +
       '<div style="max-height:36vh;overflow:auto;border:1px solid #E6D9C0;border-radius:8px;padding:0.75rem;background:#FFFDF8;white-space:pre-wrap;font-size:0.85rem;line-height:1.45;">' + esc(AUTH_TERMS_TEXT) + '</div>' +
-      '<div class="portal-field" style="margin-top:0.75rem;"><label for="p4-sign-name">Printed name</label><input type="text" id="p4-sign-name" maxlength="120" value="' + esc(t.customer_name || '') + '" /></div>' +
+      '<div class="portal-field" style="margin-top:0.75rem;"><label for="p4-sign-name">Printed name</label><input type="text" id="p4-sign-name" maxlength="120" value="' + esc(initialName || '') + '" /></div>' +
       '<div class="portal-field"><label for="p4-pad">Signature</label>' +
       '<canvas id="p4-pad" width="560" height="200" style="width:100%;height:auto;display:block;background:#fff;border:2px solid #d8cbb6;border-radius:8px;touch-action:none;"></canvas></div>' +
       '<div class="p2-actions" style="margin-top:0.75rem;">' +
@@ -1093,18 +1185,13 @@ function loadTicketThread(client, ticketId) {
       if (!hasDrawn) { if (msg) msg.textContent = 'Sign in the box first.'; return; }
       var saveBtn = wrap.querySelector('#p4-sign-save');
       if (saveBtn) saveBtn.disabled = true;
-      if (msg) msg.textContent = 'Saving…';
+      if (msg) msg.textContent = 'Saving\u2026';
       function gotBlob(blob) {
-        if (!blob) { if (saveBtn) saveBtn.disabled = false; if (msg) msg.textContent = 'Could not capture the signature — try again.'; return; }
-        var path = t.id + '/repair_authorization-' + docStamp() + '.png';
-        client.storage.from(DOC_BUCKET).upload(path, blob, { contentType: 'image/png', upsert: false }).then(function (up) {
-          if (up.error) { if (saveBtn) saveBtn.disabled = false; if (msg) msg.textContent = 'Saving failed — check the connection and try again.'; return; }
-          var row = { ticket_id: t.id, doc_type: 'repair_authorization', storage_path: path, signer_name: name, signed_at: new Date().toISOString() };
-          client.from('ticket_documents').insert(row).then(function (res) {
-            if (res.error) { if (saveBtn) saveBtn.disabled = false; if (msg) msg.textContent = 'The signature saved but could not be filed — try again.'; return; }
-            markAuthorizationAccepted(client, t).then(function () { close(); openTicket(t.id); }).catch(function () { close(); openTicket(t.id); });
-          }).catch(function () { if (saveBtn) saveBtn.disabled = false; if (msg) msg.textContent = 'The signature saved but could not be filed — try again.'; });
-        }).catch(function () { if (saveBtn) saveBtn.disabled = false; if (msg) msg.textContent = 'Saving failed — check the connection and try again.'; });
+        if (!blob) { if (saveBtn) saveBtn.disabled = false; if (msg) msg.textContent = 'Could not capture the signature \u2014 try again.'; return; }
+        onCapture(blob, name, function (errText) {
+          if (errText) { if (saveBtn) saveBtn.disabled = false; if (msg) msg.textContent = errText; return; }
+          close();
+        });
       }
       if (canvas.toBlob) { canvas.toBlob(gotBlob, 'image/png'); }
       else {
@@ -1114,6 +1201,16 @@ function loadTicketThread(client, ticketId) {
         for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
         gotBlob(new Blob([arr], { type: 'image/png' }));
       }
+    });
+  }
+
+  function openSignModal(client, t) {
+    openSignatureCapture(t.customer_name || '', function (blob, name, finish) {
+      fileSignedAuthorization(client, t.id, blob, name, function (errText) {
+        if (errText) { finish(errText); return; }
+        finish();
+        openTicket(t.id);
+      });
     });
   }
 
@@ -1283,6 +1380,35 @@ function loadTicketThread(client, ticketId) {
     }).catch(function () { docTicketOptions = []; fill(docTicketOptions); });
   }
 
+  /* The unattached documents: ticket_documents rows with ticket_id
+   * NULL — the same set the Documents tab presents as unattached
+   * (its list loads every row; these are the ones with no ticket).
+   * done(rows): rows is null when the query failed, so callers can
+   * tell "none waiting" apart from "could not load". */
+  function loadUnattachedDocuments(client, done) {
+    client.from('ticket_documents').select('*').is('ticket_id', null).order('created_at', { ascending: false }).then(function (res) {
+      done(res.error ? null : (res.data || []));
+    }).catch(function () { done(null); });
+  }
+
+  /* Shared attach (PORTAL_ATTACH_EXISTING_2026_10_30): file an
+   * existing, unattached document onto a ticket. This is the ONE
+   * implementation of that move — the Documents tab picker
+   * (confirmDocAttach, below) and the ticket drawer's "Attach an
+   * existing document" picker (confirmExistingAttach) both call it.
+   * It sets ONLY ticket_id: a move, never a copy, and it changes no
+   * consent flags by itself — flag side-effects stay with the
+   * calling flow (the tab's picker still marks a signed
+   * authorization accepted after a successful attach, exactly as it
+   * did before this update was shared out). done(errText): errText
+   * is null on success. */
+  function fileExistingDocumentOnTicket(client, docId, ticketId, done) {
+    client.from('ticket_documents').update({ ticket_id: ticketId }).eq('id', docId).then(function (res) {
+      if (res.error) { done('Could not attach that document — try again.'); return; }
+      done(null);
+    }).catch(function () { done('Could not attach that document — try again.'); });
+  }
+
   function confirmDocAttach(client, docId) {
     var picker = document.getElementById('picker-' + docId);
     if (!picker) return;
@@ -1292,13 +1418,13 @@ function loadTicketThread(client, ticketId) {
     docTabListMsg('');
     var docRow = null;
     (docTabRows || []).forEach(function (d) { if (d.id === docId) docRow = d; });
-    client.from('ticket_documents').update({ ticket_id: ticketId }).eq('id', docId).then(function (res) {
-      if (res.error) { docTabListMsg('Could not attach that document — try again.'); return; }
+    fileExistingDocumentOnTicket(client, docId, ticketId, function (errText) {
+      if (errText) { docTabListMsg(errText); return; }
       function done() { loadDocTabList(client); }
       if (docRow && docRow.doc_type === 'repair_authorization') {
         markAuthorizationAccepted(client, { id: ticketId }).then(done).catch(done);
       } else { done(); }
-    }).catch(function () { docTabListMsg('Could not attach that document — try again.'); });
+    });
   }
 
   function wireDocTab(client) {
@@ -2804,6 +2930,162 @@ function loadTicketThread(client, ticketId) {
     });
   }
 
+  /* ================= CHECK-IN CONSENT =================
+   * PORTAL_CHECKIN_CONSENT_2026_10_30 (Austin, Oct 30, 2026): the
+   * Check-In form captures the customer's agreement to ALL the legal
+   * documents in one act. In person, the customer signs on the iPad
+   * or phone right there \u2014 the same signature popup the ticket
+   * drawer uses (openSignatureCapture, shared, not a copy). Over the
+   * phone \u2014 most check-ins \u2014 staff read CI_CONSENT_SCRIPT
+   * aloud, the customer verbally agrees, and staff tick the
+   * attestation box; that "virtually signs" the customer to the
+   * Repair Authorization, the Terms & Conditions, and the 1-Year
+   * Warranty. Either way, when the ticket is created the agreement
+   * files itself on the ticket exactly like a drawer signing does: a
+   * ticket_documents row plus the consent flags, via
+   * fileSignedAuthorization / markAuthorizationAccepted. Skipping is
+   * supported \u2014 the ticket is created as before and consent can
+   * still be taken later in the drawer's Documents section. */
+  var CI_CONSENT_SCRIPT = "Before we book your repair, I need to go over our terms \u2014 it only takes a moment. By agreeing, you accept our Repair Authorization, our Terms of Service, and our warranty terms. There is a $35 house-call fee due when we schedule your visit; it covers the trip and a full diagnosis, and it is non-refundable. You are giving us permission to diagnose your device, including taking it apart when that is needed to find the problem. Please make sure your device is backed up before we work on it: you are responsible for your data, and we are not liable if data is lost during a repair. The parts we supply and our labor are covered by a 1-year warranty. Any part we remove from your device and replace becomes our property. If your device is left unclaimed for more than 60 days after we tell you it is ready, it may be disposed of. And if you pay by card, the total includes a processing fee equal to what Square charges us. Do you agree to these terms?";
+  var ciConsent = null;
+
+  function ciConsentStatus() {
+    var status = $('ci-consent-status');
+    var clearBtn = $('ci-consent-clear');
+    var verbal = $('ci-verbal-check');
+    if (verbal) {
+      var shouldCheck = !!(ciConsent && ciConsent.mode === 'verbal');
+      if (verbal.checked !== shouldCheck) verbal.checked = shouldCheck;
+    }
+    if (clearBtn) clearBtn.hidden = !ciConsent;
+    if (!status) return;
+    if (!ciConsent) {
+      status.textContent = 'No agreement captured yet \u2014 the ticket can still be created, and the signature can be taken later from the ticket\u2019s Documents section.';
+    } else if (ciConsent.mode === 'signed') {
+      status.textContent = 'Signature captured from ' + ciConsent.signerName + ' \u2014 it files itself on this ticket when you create it.';
+    } else {
+      status.textContent = 'Verbal agreement recorded \u2014 a consent record files itself on this ticket when you create it.';
+    }
+  }
+
+  function ciConsentReset() {
+    ciConsent = null;
+    ciConsentStatus();
+  }
+
+  /* "Read the full terms": one popup with the FULL existing legal
+   * texts \u2014 the same BLANK_DOCS strings the Documents tab shows
+   * (AUTH_TERMS_TEXT / WARRANTY_TEXT / TERMS_CONDITIONS_TEXT),
+   * reused verbatim, no new legal copy. */
+  function showAllAgreements() {
+    var old = document.getElementById('ci-terms-modal');
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+    var wrap = document.createElement('div');
+    wrap.id = 'ci-terms-modal';
+    wrap.setAttribute('style', 'position:fixed;inset:0;background:rgba(44,35,26,0.55);z-index:3000;display:flex;align-items:center;justify-content:center;padding:1rem;');
+    var docs = BLANK_DOCS.map(function (d) {
+      return '<h4 style="margin:1rem 0 0.4rem;">' + esc(d.title) + '</h4>' +
+        '<div style="border:1px solid #E6D9C0;border-radius:8px;padding:0.75rem;background:#FFFDF8;white-space:pre-wrap;font-size:0.85rem;line-height:1.45;">' + esc(d.text) + '</div>';
+    }).join('');
+    wrap.innerHTML = '<div style="background:#FAF6EE;color:#2C231A;border-radius:14px;max-width:640px;width:100%;max-height:92vh;overflow:auto;padding:1.25rem;box-shadow:0 18px 50px rgba(0,0,0,0.35);">' +
+      '<h3 style="margin:0 0 0.5rem;">Agreements &mdash; full text</h3>' +
+      '<p class="portal-muted portal-small" style="margin:0;">The Repair Authorization, the 1-Year Limited Warranty, and the Terms &amp; Conditions \u2014 the same texts as the Documents tab, exactly as published.</p>' +
+      docs +
+      '<div class="p2-actions" style="margin-top:0.75rem;"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="ci-terms-close">Close</button></div></div>';
+    document.body.appendChild(wrap);
+    function close() { if (wrap.parentNode) wrap.parentNode.removeChild(wrap); }
+    wrap.addEventListener('click', function (e) { if (e.target === wrap) close(); });
+    wrap.querySelector('#ci-terms-close').addEventListener('click', close);
+  }
+
+  function wireCiConsent() {
+    var scriptBox = $('ci-consent-script');
+    if (scriptBox && !trim(scriptBox.textContent)) scriptBox.textContent = CI_CONSENT_SCRIPT;
+    var termsBtn = $('ci-terms-btn');
+    if (termsBtn && !termsBtn.getAttribute('data-wired')) {
+      termsBtn.setAttribute('data-wired', '1');
+      termsBtn.addEventListener('click', showAllAgreements);
+    }
+    var signBtn = $('ci-sign-btn');
+    if (signBtn && !signBtn.getAttribute('data-wired')) {
+      signBtn.setAttribute('data-wired', '1');
+      signBtn.addEventListener('click', function () {
+        var nameEl = $('ci-name');
+        openSignatureCapture(nameEl ? nameEl.value : '', function (blob, name, finish) {
+          ciConsent = { mode: 'signed', blob: blob, signerName: name };
+          ciConsentStatus();
+          finish();
+        });
+      });
+    }
+    var verbal = $('ci-verbal-check');
+    if (verbal && !verbal.getAttribute('data-wired')) {
+      verbal.setAttribute('data-wired', '1');
+      verbal.addEventListener('change', function () {
+        if (verbal.checked) ciConsent = { mode: 'verbal' };
+        else if (ciConsent && ciConsent.mode === 'verbal') ciConsent = null;
+        ciConsentStatus();
+      });
+    }
+    var clearBtn = $('ci-consent-clear');
+    if (clearBtn && !clearBtn.getAttribute('data-wired')) {
+      clearBtn.setAttribute('data-wired', '1');
+      clearBtn.addEventListener('click', function () { ciConsentReset(); });
+    }
+    ciConsentStatus();
+  }
+
+  /* File the check-in consent on the just-created ticket. Signed:
+   * the shared drawer filing (signature PNG + repair_authorization
+   * row + consent flags). Verbal: a generated text record naming the
+   * customer, the ticket, the staff member, and the date/time, with
+   * the exact statement that was read \u2014 filed as an 'other'
+   * document labeled as the verbal consent record, then the same
+   * consent flags via markAuthorizationAccepted. Because the rows and
+   * storage paths match the drawer flow's shape, the drawer's
+   * Documents section lists them exactly like a drawer-signed
+   * document. done(errText): errText is null on success. */
+  function fileCiConsent(client, ticketId, row, consent, done) {
+    if (!consent) { done(null); return; }
+    if (consent.mode === 'signed') {
+      fileSignedAuthorization(client, ticketId, consent.blob, consent.signerName, done);
+      return;
+    }
+    var when = new Date();
+    var staff = (state.profile && state.profile.name) || (state.user && state.user.email) || 'Staff';
+    var text = [
+      'Verbal Consent Record',
+      "Austin's Tech Repair Group",
+      '',
+      'Customer: ' + (row.customer_name || ''),
+      'Phone: ' + (row.customer_phone || ''),
+      'Ticket ID: ' + ticketId,
+      'Device: ' + deviceLabel(row),
+      'Date and time: ' + when.toLocaleString() + ' (' + when.toISOString() + ')',
+      'Recorded by: ' + staff,
+      '',
+      'How this consent was taken: the staff member named above read the statement below aloud to the customer by phone, and the customer verbally agreed to it. By that agreement, the customer agreed to the Repair Authorization & Service Agreement, the Terms & Conditions of Service, and the 1-Year Limited Warranty of Austin\u2019s Tech Repair Group, in full.',
+      '',
+      'Statement read to the customer:',
+      '\u201C' + CI_CONSENT_SCRIPT + '\u201D'
+    ].join('\n');
+    var blob = new Blob([text], { type: 'text/plain' });
+    var path = ticketId + '/verbal-consent-' + docStamp() + '.txt';
+    client.storage.from(DOC_BUCKET).upload(path, blob, { contentType: 'text/plain', upsert: false }).then(function (up) {
+      if (up.error) { done('The ticket was created, but the verbal consent record could not be saved \u2014 take the signature from the ticket\u2019s Documents section.'); return; }
+      var docRow = {
+        ticket_id: ticketId, doc_type: 'other', storage_path: path,
+        file_name: 'Verbal consent record.txt', signer_name: null,
+        signed_at: when.toISOString(),
+        note: 'Verbal agreement by phone at check-in \u2014 read-aloud statement agreed'
+      };
+      client.from('ticket_documents').insert(docRow).then(function (res) {
+        if (res.error) { done('The ticket was created, but the verbal consent record could not be filed \u2014 take the signature from the ticket\u2019s Documents section.'); return; }
+        markAuthorizationAccepted(client, { id: ticketId }).then(function () { done(null); }).catch(function () { done(null); });
+      }).catch(function () { done('The ticket was created, but the verbal consent record could not be filed \u2014 take the signature from the ticket\u2019s Documents section.'); });
+    }).catch(function () { done('The ticket was created, but the verbal consent record could not be saved \u2014 take the signature from the ticket\u2019s Documents section.'); });
+  }
+
   /* ================= CHECK-IN / TRIAGE ================= */
   var ciCustomerId = null, ciCustomersCache = null;
   function loadCheckinCustomers() {
@@ -2846,6 +3128,7 @@ function loadTicketThread(client, ticketId) {
     document.querySelectorAll('#ci-reasons .ci-chip').forEach(function (chip) {
       chip.addEventListener('click', function () { chip.classList.toggle('on'); });
     });
+    wireCiConsent();
     $('ci-form').addEventListener('submit', function (e) {
       e.preventDefault();
       var err = $('ci-error'); err.hidden = true;
@@ -2884,17 +3167,32 @@ function loadTicketThread(client, ticketId) {
         err.textContent = 'Name, phone, and check-in notes are required.'; err.hidden = false; return;
       }
       var btn = $('ci-submit'); btn.disabled = true;
+      var consent = ciConsent;
       withClient(function (client) {
         if (!client) { btn.disabled = false; return; }
         client.from('tickets').insert(row).select('id').single().then(function (res) {
-          btn.disabled = false;
-          if (res.error) { err.textContent = 'Could not create the ticket — try again.'; err.hidden = false; return; }
-          $('ci-form').reset(); ciCustomerId = null;
-          document.querySelectorAll('#ci-reasons .ci-chip.on').forEach(function (c) { c.classList.remove('on'); });
-          state.loaded.tickets = false;
-          activateTab('tickets');
-          loadTickets(true);
-          if (res.data && res.data.id) setTimeout(function () { openTicket(res.data.id); }, 450);
+          if (res.error) { btn.disabled = false; err.textContent = 'Could not create the ticket — try again.'; err.hidden = false; return; }
+          var newId = res.data && res.data.id;
+          var proceed = function (consentFailed) {
+            btn.disabled = false;
+            $('ci-form').reset(); ciCustomerId = null;
+            document.querySelectorAll('#ci-reasons .ci-chip.on').forEach(function (c) { c.classList.remove('on'); });
+            ciConsentReset();
+            state.loaded.tickets = false;
+            activateTab('tickets');
+            loadTickets(true);
+            if (newId) setTimeout(function () { openTicket(newId); }, 450);
+            if (consentFailed) setTimeout(function () { docMsg('The ticket was created, but the check-in agreement could not be filed — take the signature here in Documents.'); }, 900);
+          };
+          /* PORTAL_CHECKIN_CONSENT_2026_10_30: consent captured on the
+           * form files itself on the new ticket, in the drawer flow's
+           * order (create ticket → upload + file → set flags);
+           * no consent → the ticket is created exactly as before. */
+          if (consent && newId) {
+            fileCiConsent(client, newId, row, consent, function (fileErr) { proceed(!!fileErr); });
+          } else {
+            proceed(!!consent);
+          }
         }).catch(function () { btn.disabled = false; err.textContent = 'Could not create the ticket — try again.'; err.hidden = false; });
       });
     });
