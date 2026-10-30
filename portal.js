@@ -605,6 +605,9 @@ function loadTicketThread(client, ticketId) {
           '<input type="file" id="p4-attach-file" accept="image/*,application/pdf" hidden /></div>' +
           '<p class="portal-muted portal-small">Documents file themselves on this ticket. Signing the repair authorization here, or attaching one as a signed authorization, also marks Terms accepted and Work authorized on the ticket.</p>' +
           '<p class="portal-error" id="p4-doc-msg" hidden></p></div>' +
+          '<div class="portal-drawer-section"><h3>ATR One</h3>' +
+          '<div id="p5-atrone"><p class="portal-muted">Loading membership&hellip;</p></div>' +
+          '<p class="portal-error" id="p5-atr-msg" hidden></p></div>' +
           '<div class="portal-drawer-section"><h3>Charges</h3>' +
           '<div id="p2-charges"><p class="portal-muted">Loading charges&hellip;</p></div>' +
           '<form id="p2-charge-form" class="p2-form">' +
@@ -667,6 +670,7 @@ function loadTicketThread(client, ticketId) {
         loadParts(client, t);
         loadDocuments(client, t);
         wireDocuments(client, t);
+        loadMembership(client, t);
         loadStockItems(client, t);
         loadJobTimers(client, t);
         var timerBtn = $('portal-timer-btn');
@@ -1965,6 +1969,147 @@ function loadTicketThread(client, ticketId) {
     });
   }
 
+  /* ================= ATR ONE ON THE TICKET =================
+   * PORTAL_ATRONE_TICKET_2026_10_30 (Austin, Oct 30, 2026): everything
+   * for a job lives in the ticket. When a customer signs up for ATR
+   * One during a visit, staff record it here by hand — the sale itself
+   * runs through the Square signup links, but the portal record does
+   * not depend on Square. The membership belongs to the CUSTOMER
+   * (customer_memberships table, see memberships.sql); this drawer
+   * block, placed right above Charges where the house-call fee
+   * decision happens, shows it and writes it.
+   * Adding a membership ALSO files a charge line on THIS ticket —
+   * kind 'one_off' (a kind Financials already counts as revenue),
+   * qty 1 at the tier's monthly price, description naming the
+   * signup — so the sale is billed revenue on the ticket, shows in
+   * the drawer's Charges and on the receipt, and lands in Financials
+   * exactly like any other billed line. The money itself is recorded
+   * through the normal Payment section when it comes in, same as
+   * every other charge; nothing is marked paid automatically.
+   * Cancelling sets status 'cancelled' with cancelled_on set — the
+   * row and the signup charge stay on file, nothing is deleted.
+   * Member benefit is DISPLAY ONLY in v1: the block states the
+   * standing rule (no $35 house-call fee on covered devices); no
+   * charge math changes automatically. */
+  var ATRONE_TIERS = {
+    single: { name: 'Single', price: 9.99 },
+    family: { name: 'Family', price: 19.99 },
+    business_plus: { name: 'Business Plus', price: 39.99 },
+    business_pro: { name: 'Business Pro', price: 49.99 }
+  };
+  var ATRONE_BENEFIT_LINE = 'Member benefit: ATR One members pay no $35 house-call fee for devices covered under their subscription. Do not add the house-call fee for a covered device.';
+
+  function atroneTierName(key) {
+    var tr = ATRONE_TIERS[key];
+    return tr ? tr.name : String(key || '');
+  }
+
+  function todayDateOnly() {
+    var d = new Date();
+    var mm = d.getMonth() + 1, dd = d.getDate();
+    return d.getFullYear() + '-' + (mm < 10 ? '0' : '') + mm + '-' + (dd < 10 ? '0' : '') + dd;
+  }
+
+  function atrMsg(text) {
+    var m = $('p5-atr-msg');
+    if (!m) return;
+    if (text) { m.textContent = text; m.hidden = false; }
+    else { m.hidden = true; m.textContent = ''; }
+  }
+
+  function loadMembership(client, t, afterMsg) {
+    var box = $('p5-atrone');
+    if (!box) return;
+    if (!t.customer_id) {
+      box.innerHTML = '<p class="portal-muted">This ticket is not linked to a customer account yet (web submission), so an ATR One membership can&rsquo;t be recorded on it. Memberships live on the customer record.</p>';
+      return;
+    }
+    client.from('customer_memberships').select('*').eq('customer_id', t.customer_id).eq('status', 'active')
+      .order('started_on', { ascending: false }).limit(1).then(function (res) {
+        if (res.error) { box.innerHTML = '<p class="portal-muted">Memberships are not set up for this portal yet.</p>'; return; }
+        renderMembership(client, t, (res.data && res.data[0]) || null);
+        if (afterMsg) atrMsg(afterMsg);
+      }).catch(function () { box.innerHTML = '<p class="portal-muted">Membership could not be loaded.</p>'; });
+  }
+
+  function renderMembership(client, t, m) {
+    var box = $('p5-atrone');
+    if (!box) return;
+    atrMsg('');
+    if (m) {
+      var tier = ATRONE_TIERS[m.tier] || null;
+      box.innerHTML =
+        '<p style="margin:0 0 .35rem"><span class="portal-badge portal-badge-atrone"><i class="fas fa-star"></i> ATR One member</span></p>' +
+        '<p style="margin:.2rem 0"><strong>' + esc(atroneTierName(m.tier)) + '</strong>' +
+        (tier ? ' &middot; ' + fmtMoney(tier.price) + '/mo' : '') +
+        ' &middot; member since ' + esc(fmtJobDate(m.started_on) || fmtDate(m.started_on)) + '</p>' +
+        (m.note ? '<p class="portal-muted portal-small" style="margin:.2rem 0">' + esc(m.note) + '</p>' : '') +
+        '<p class="portal-muted portal-small" style="margin:.35rem 0">' + ATRONE_BENEFIT_LINE + '</p>' +
+        '<div class="p2-actions"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p5-atr-cancel">Cancel membership</button></div>' +
+        '<div id="p5-atr-cancel-confirm" hidden><p class="portal-error">Cancel this ATR One membership? The membership record and its signup charge stay on file; the member benefits stop. Normally this matches a cancellation in Square too.</p>' +
+        '<button class="portal-btn p2-btn-danger portal-btn-sm" type="button" id="p5-atr-cancel-yes">Yes, cancel membership</button> ' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p5-atr-cancel-no">Keep membership</button></div>';
+      var cancelBtn = $('p5-atr-cancel'), confirmBox = $('p5-atr-cancel-confirm');
+      if (cancelBtn && confirmBox) {
+        cancelBtn.addEventListener('click', function () { confirmBox.hidden = false; cancelBtn.hidden = true; });
+        $('p5-atr-cancel-no').addEventListener('click', function () { confirmBox.hidden = true; cancelBtn.hidden = false; });
+        $('p5-atr-cancel-yes').addEventListener('click', function () {
+          atrMsg('');
+          client.from('customer_memberships').update({ status: 'cancelled', cancelled_on: todayDateOnly() }).eq('id', m.id).then(function (res) {
+            if (res.error) { atrMsg('Could not cancel — try again.'); return; }
+            loadMembership(client, t, 'Membership cancelled and recorded. The signup charge stays on the ticket.');
+          }).catch(function () { atrMsg('Could not cancel — try again.'); });
+        });
+      }
+      return;
+    }
+    var opts = Object.keys(ATRONE_TIERS).map(function (k) {
+      var tr = ATRONE_TIERS[k];
+      return '<option value="' + k + '">' + esc(tr.name) + ' — ' + fmtMoney(tr.price) + '/mo</option>';
+    }).join('');
+    box.innerHTML =
+      '<p class="portal-muted" style="margin-top:0">No ATR One membership on this customer. If they sign up during this visit (through the Square signup links), record it here so it lives on the ticket.</p>' +
+      '<div class="p2-form-row"><select id="p5-atr-tier" aria-label="ATR One tier">' + opts + '</select>' +
+      '<input id="p5-atr-note" type="text" placeholder="Note (optional)" maxlength="200" aria-label="Membership note" /></div>' +
+      '<div class="p2-actions" style="margin-top:.5rem"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p5-atr-add"><i class="fas fa-plus"></i> Add ATR One membership</button></div>' +
+      '<p class="portal-muted portal-small">Adding files the signup as a charge line on this ticket at the tier price, so it shows in Charges and counts in Financials. Record the payment itself in the Payment section when it comes in.</p>';
+    var addBtn = $('p5-atr-add');
+    if (addBtn) addBtn.addEventListener('click', function () {
+      atrMsg('');
+      var tierKey = $('p5-atr-tier').value;
+      var tier = ATRONE_TIERS[tierKey] || null;
+      if (!tier) { atrMsg('Pick a tier first.'); return; }
+      var note = trim($('p5-atr-note').value) || null;
+      addBtn.disabled = true; addBtn.textContent = 'Adding…';
+      client.from('customer_memberships').insert({
+        customer_id: t.customer_id, tier: tierKey, status: 'active',
+        started_on: todayDateOnly(), note: note
+      }).then(function (res) {
+        if (res.error) {
+          addBtn.disabled = false; addBtn.textContent = 'Add ATR One membership';
+          atrMsg(res.error && res.error.code === '23505'
+            ? 'This customer already has an active ATR One membership on file.'
+            : 'Could not save the membership — try again.');
+          return;
+        }
+        var desc = 'ATR One membership signup — ' + tier.name + ' (' + fmtMoney(tier.price) + '/mo)';
+        var handMsg = 'Membership saved, but the signup charge line could not be added. Add it by hand in Charges below: Other charge, "' + desc + '", ' + fmtMoney(tier.price) + '.';
+        client.from('ticket_charges').insert({
+          ticket_id: t.id, kind: 'one_off', description: desc,
+          qty: 1, unit_price: tier.price, unit_cost: null
+        }).then(function (res2) {
+          loadCharges(client, t);
+          loadMembership(client, t, res2.error ? handMsg : 'Membership recorded on this customer, and the signup charge is on this ticket.');
+        }).catch(function () {
+          loadMembership(client, t, handMsg);
+        });
+      }).catch(function () {
+        addBtn.disabled = false; addBtn.textContent = 'Add ATR One membership';
+        atrMsg('Could not save the membership — try again.');
+      });
+    });
+  }
+
   /* ================= FINANCIALS =================
    * PORTAL_FINANCIALS_2026_10_30 (Austin, Oct 30, 2026): the money
    * picture, from the shop's own records only — nothing seeded,
@@ -2158,7 +2303,8 @@ function loadTicketThread(client, ticketId) {
     list.innerHTML = rows.map(function (c) {
       return '<article class="portal-card">' +
         '<div class="portal-card-top"><p class="portal-card-title">' + esc(c.name || 'Customer') + '</p>' +
-        '<span class="portal-badge portal-st-reviewed"><i class="fas fa-coins"></i> ' + esc(String(c.points)) + ' pts</span></div>' +
+        '<span class="portal-badge portal-st-reviewed"><i class="fas fa-coins"></i> ' + esc(String(c.points)) + ' pts</span>' +
+        (c.membershipTier ? '<span class="portal-badge portal-badge-atrone"><i class="fas fa-star"></i> ATR One · ' + esc(atroneTierName(c.membershipTier)) + '</span>' : '') + '</div>' +
         '<p class="portal-card-meta"><i class="fas fa-envelope"></i> ' + esc(c.email || '—') +
         (c.phone ? ' · <i class="fas fa-phone"></i> ' + esc(c.phone) : '') + '</p>' +
         '<p class="portal-card-meta"><i class="fas fa-cake-candles"></i> Birthday (month and day only): ' +
@@ -2184,7 +2330,8 @@ function loadTicketThread(client, ticketId) {
           var customers = res.data || [];
           var pointsByCustomer = {};
           var ordersByCustomer = {};
-          var pending = 2;
+          var membershipsByCustomer = {};
+          var pending = 3;
           function finish() {
             pending--;
             if (pending > 0) return;
@@ -2192,7 +2339,8 @@ function loadTicketThread(client, ticketId) {
               return {
                 id: c.id, name: c.name, email: c.email, phone: c.phone, created_at: c.created_at, birthday: c.birthday,
                 points: pointsByCustomer[c.id] || 0,
-                orderCount: ordersByCustomer[c.id] || 0
+                orderCount: ordersByCustomer[c.id] || 0,
+                membershipTier: membershipsByCustomer[c.id] || null
               };
             });
             state.customersCache = rows;
@@ -2206,6 +2354,16 @@ function loadTicketThread(client, ticketId) {
           client.from('orders').select('customer_id').then(function (r) {
             if (!r.error) (r.data || []).forEach(function (row) {
               if (row.customer_id) ordersByCustomer[row.customer_id] = (ordersByCustomer[row.customer_id] || 0) + 1;
+            });
+            finish();
+          }).catch(finish);
+          /* PORTAL_ATRONE_TICKET_2026_10_30: active ATR One tier per
+           * customer, for the badge on the customer card. If the
+           * memberships table is not set up yet the query just errors
+           * and no badges render — the tab still loads. */
+          client.from('customer_memberships').select('customer_id, tier').eq('status', 'active').then(function (r) {
+            if (!r.error) (r.data || []).forEach(function (row) {
+              if (row.customer_id && !membershipsByCustomer[row.customer_id]) membershipsByCustomer[row.customer_id] = row.tier;
             });
             finish();
           }).catch(finish);

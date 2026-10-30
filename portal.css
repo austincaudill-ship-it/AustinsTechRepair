@@ -314,3 +314,6 @@
 .fin-dot{display:inline-block;width:.72rem;height:.72rem;border-radius:50%;margin-right:.45rem;vertical-align:baseline}
 .fin-donut-label{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;fill:var(--muted,#7D6C5B)}
 .fin-donut-value{font-size:19px;font-weight:800;fill:var(--ink,#2C231A)}
+
+/* PORTAL_ATRONE_TICKET_2026_10_30: ATR One membership badge (ticket drawer + Customers cards) — solid brand orange so a member reads at a glance */
+.portal-badge-atrone { background: var(--brand, #D9540D); color: #fff; margin-left: .4rem; }
