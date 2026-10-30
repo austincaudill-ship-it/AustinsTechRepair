@@ -251,7 +251,8 @@
 .portal-tabs{flex-direction:column;align-items:stretch;gap:3px;background:var(--surface,#fff);border:1px solid var(--line,#e5d9c8);border-radius:14px;padding:10px;position:sticky;top:12px;max-height:calc(100vh - 24px);overflow-y:auto}
 .portal-tab{justify-content:flex-start;width:100%;border-radius:9px;padding:9px 11px}
 .portal-tab.active{background:var(--brand,#b4551f);color:#fff}
-.portal-nav-group{font-size:.68rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted,#6f6152);margin:10px 6px 3px}
+/* PORTAL_NAV_GROUPS_2026_10_30: group headers restyled to read as clear section labels, not faint captions (Austin could not see the grouping on his iPad) */
+.portal-nav-group{font-size:.82rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--brand-deep,#A63E06);margin:15px 6px 5px;padding-bottom:4px;border-bottom:2px solid var(--line,#e5d9c8)}
 .portal-nav-group:first-child{margin-top:0}
 @media (max-width:900px){
   #portal-dash-view{grid-template-columns:1fr}

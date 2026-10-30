@@ -83,6 +83,9 @@
         <button class="portal-tab" id="portal-tab-requests" type="button" role="tab" data-tab="requests">
           <i class="fas fa-clipboard-list"></i> Requests <span class="portal-count" id="portal-count-requests" hidden></span>
         </button>
+        <button class="portal-tab" id="portal-tab-documents" type="button" role="tab" data-tab="documents">
+          <i class="fas fa-folder-open"></i> Documents
+        </button>
         <div class="portal-nav-group">Parts &amp; Tools</div>
         <button class="portal-tab" id="portal-tab-inventory" type="button" role="tab" data-tab="inventory">
           <i class="fas fa-boxes"></i> Inventory &amp; Orders
@@ -142,6 +145,39 @@
         </div>
         <p class="q-legend"><span><i class="q-dot q-red"></i> Needs diagnostics</span><span><i class="q-dot q-orange"></i> Waiting on parts</span><span><i class="q-dot q-yellow"></i> In progress</span><span><i class="q-dot q-lime"></i> Quality check</span><span><i class="q-dot q-green"></i> Ready</span></p>
         <div id="portal-ticket-list"><p class="portal-muted">Loading tickets&hellip;</p></div>
+      </div>
+
+      <!-- DOCUMENTS -->
+      <div class="portal-panel" id="portal-panel-documents" role="tabpanel" hidden>
+        <div class="portal-panel-head">
+          <h2 class="portal-h2">Documents</h2>
+        </div>
+        <div class="portal-card" style="margin-bottom:1rem;">
+          <h3 style="margin-top:0;">Blank documents</h3>
+          <p class="portal-muted portal-small">The business&rsquo;s unsigned documents. Tap one to pull it up.</p>
+          <div id="portal-docs-blanks"><p class="portal-muted">Loading&hellip;</p></div>
+        </div>
+        <div class="portal-card" style="margin-bottom:1rem;">
+          <h3 style="margin-top:0;">Attach to repair</h3>
+          <p class="portal-muted portal-small">Upload a scan, photo, or PDF. It lands here unattached; file it onto a repair with its Attach button below and it shows on that ticket too.</p>
+          <div class="p2-form">
+            <div class="p2-form-row">
+              <select id="portal-docs-up-type" aria-label="Document type"><option value="receipt">Receipt</option><option value="repair_authorization">Signed authorization</option><option value="other">Other</option></select>
+              <input type="text" id="portal-docs-up-signer" placeholder="Signer name (for a signed authorization)" maxlength="120" aria-label="Signer name" />
+            </div>
+            <div class="p2-form-row">
+              <input type="file" id="portal-docs-up-file" accept="image/*,application/pdf" aria-label="Choose a document file" />
+              <button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="portal-docs-up-btn"><i class="fas fa-upload"></i> Upload</button>
+            </div>
+            <p class="portal-error" id="portal-docs-up-msg" hidden></p>
+          </div>
+        </div>
+        <div class="portal-card">
+          <h3 style="margin-top:0;">Signed &amp; filed documents</h3>
+          <div class="portal-field"><label for="portal-docs-search">Search by customer</label><input type="search" id="portal-docs-search" placeholder="Customer name" /></div>
+          <p class="portal-error" id="portal-docs-list-msg" hidden></p>
+          <div id="portal-docs-list"><p class="portal-muted">Loading documents&hellip;</p></div>
+        </div>
       </div>
 
       <!-- JOB APPLICATIONS -->
@@ -573,6 +609,7 @@
           <a class="link-card" href="https://www.ifixit.com" target="_blank" rel="noopener"><i class="fas fa-screwdriver-wrench"></i><strong>iFixit</strong><span>Guides &amp; genuine Pixel parts</span></a>
           <a class="link-card" href="https://austinstechrepairgroup.com" target="_blank" rel="noopener"><i class="fas fa-tags"></i><strong>Our Price Sheet</strong><span>Website price wizard</span></a>
           <a class="link-card" href="https://support.apple.com/iphone/repair" target="_blank" rel="noopener"><i class="fab fa-apple"></i><strong>Apple&rsquo;s Prices</strong><span>Official repair price anchor</span></a>
+          <a class="link-card" href="https://squareup.com/dashboard" target="_blank" rel="noopener"><i class="fas fa-square"></i><strong>Square Dashboard</strong><span>Sales, payouts, settings</span></a>
         </div>
         <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">FedEx tracking</h3></div>
         <p class="portal-muted portal-small">Type a tracking number and tap Track. It opens FedEx tracking in a new tab.</p>

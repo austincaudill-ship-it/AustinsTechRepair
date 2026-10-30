@@ -95,6 +95,19 @@
     return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
   }
 
+  /* PORTAL_JOB_DATE_2026_10_30: job_date is a date-only value
+   * ('YYYY-MM-DD'). Parse it as a LOCAL date — new Date('2026-06-30')
+   * is UTC midnight and would display as Jun 29 in Ohio. Returns ''
+   * when there is no job date so callers can fall back. */
+  function fmtJobDate(v) {
+    if (!v) return '';
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(v));
+    if (!m) return fmtDate(v);
+    var d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
   function fmtDateTime(iso) {
     if (!iso) return '—';
     var d = new Date(iso);
@@ -214,7 +227,14 @@
     var roleEl = $('portal-emp-role');
     roleEl.textContent = state.profile.role || '';
     roleEl.style.display = state.profile.role ? '' : 'none';
-    activateTab('tickets');
+    /* PORTAL_TAB_MEMORY_2026_10_30: reopen on the tab Austin last used.
+     * Clicking the saved tab's button replays exactly what a tap does,
+     * whichever script handles that tab. No saved tab (or a stale one
+     * with no matching button) keeps the old behavior: Repair Queue. */
+    var startTab = savedTab();
+    var startBtn = startTab ? $('portal-tab-' + startTab) : null;
+    if (startBtn && startTab !== 'tickets') { startBtn.click(); }
+    else { activateTab('tickets'); }
   }
 
   /* The employee gate: signed-in is NOT enough — the auth user's id
@@ -307,13 +327,26 @@
   var LOADERS = {
     tickets: loadTickets, applications: loadApplications, investors: loadInvestors,
     feedback: loadFeedback, customers: loadCustomers, inventory: loadInventory,
+    documents: loadDocumentsTab,
   };
 
+  /* PORTAL_TAB_MEMORY_2026_10_30: remember the last active tab across
+   * refreshes (Austin's request, Oct 30, 2026). The name is saved
+   * whenever a tab is activated — through activateTab, showExtraPanel,
+   * or any nav-button click (the capture listener in initTabs also
+   * covers the tabs whose handlers live in portal.html: Guides, New
+   * Hires, Requests, Prices). localStorage only — loading or
+   * refreshing the portal writes nothing to the database. */
+  var TAB_KEY = 'atrg-portal-tab';
+  function saveActiveTab(name) { try { window.localStorage.setItem(TAB_KEY, name); } catch (e) {} }
+  function savedTab() { try { return window.localStorage.getItem(TAB_KEY) || ''; } catch (e) { return ''; } }
+
   function activateTab(name) {
+    saveActiveTab(name);
     var nav = $('portal-nav'); if (nav) nav.classList.remove('open');
     var tabs = document.querySelectorAll('.portal-tab');
     tabs.forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === name); });
-    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices'].forEach(function (n) {
+    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'documents'].forEach(function (n) {
       $('portal-panel-' + n).hidden = n !== name;
     });
     closeDrawer();
@@ -324,6 +357,16 @@
     document.querySelectorAll('.portal-tab').forEach(function (t) {
       t.addEventListener('click', function () { activateTab(t.getAttribute('data-tab')); });
     });
+    /* PORTAL_TAB_MEMORY_2026_10_30: also record tabs whose own scripts
+     * handle the click (portal.html sections), so the restore on load
+     * works for every tab, not just the ones activateTab drives. */
+    document.addEventListener('click', function (e) {
+      var el = e.target;
+      while (el && el !== document) {
+        if (el.classList && el.classList.contains('portal-tab')) { saveActiveTab(el.getAttribute('data-tab')); return; }
+        el = el.parentNode;
+      }
+    }, true);
     document.addEventListener('click', function (e) {
       var el = e.target;
       while (el && el !== document) {
@@ -412,15 +455,29 @@
     withClient(function (client) {
       if (!client) { listError(list, 'tickets'); return; }
       var filter = $('portal-ticket-filter').value;
-      var q = client.from('tickets').select('*').order('created_at', { ascending: false }).limit(200);
-      if (filter !== 'all') q = q.eq('status', filter);
-      q.then(function (res) {
-        if (res.error) { listError(list, 'tickets'); return; }
+      /* PORTAL_JOB_DATE_2026_10_30: the queue orders by job_date in the
+       * same direction it used for created_at (newest first), with
+       * created_at as the tiebreak — new jobs on top, old jobs sink to
+       * the bottom on their own. If the job_date column is not live
+       * yet, fall back to the previous created_at-only ordering so the
+       * queue never breaks. */
+      function done(res) {
         state.loaded.tickets = true;
         renderTickets(res.data || []);
         var open = (res.data || []).filter(function (t) { return t.status !== 'Job Complete'; }).length;
         setCount('portal-count-tickets', $('portal-ticket-filter').value === 'all' ? open : 0);
-      }).catch(function () { listError(list, 'tickets'); });
+      }
+      function run(useJobDate) {
+        var q = client.from('tickets').select('*');
+        if (useJobDate) q = q.order('job_date', { ascending: false });
+        q = q.order('created_at', { ascending: false }).limit(200);
+        if (filter !== 'all') q = q.eq('status', filter);
+        q.then(function (res) {
+          if (res.error) { if (useJobDate) { run(false); return; } listError(list, 'tickets'); return; }
+          done(res);
+        }).catch(function () { if (useJobDate) { run(false); return; } listError(list, 'tickets'); });
+      }
+      run(true);
     });
   }
 
@@ -507,16 +564,17 @@ function loadTicketThread(client, ticketId) {
             ['Repaired before?', valOrDash(t.prior_repair)],
             ['Under warranty?', valOrDash(t.warranty_status)],
             ['Terms accepted', fmtBool(t.terms_accepted)],
-            ['Dispatch fee ack.', fmtBool(t.dispatch_acknowledged)],
+            ['House-call fee ack.', fmtBool(t.dispatch_acknowledged)],
             ['Work authorized', fmtBool(t.work_auth_accepted)],
             ['Marketing opt-in', fmtBool(t.marketing_opt_in)],
             ['Source', valOrDash(t.source)],
             ['Customer account', t.customer_id ? esc(t.customer_id) : 'Web submission — no account'],
-            ['Received', esc(fmtDateTime(t.created_at))],
+            ['Received', esc(fmtJobDate(t.job_date) || fmtDateTime(t.created_at))],
             ['Last updated', esc(fmtDateTime(t.updated_at))]
           ]) +
           '<div class="portal-drawer-section"><h3>Edit details</h3>' +
           '<p class="portal-muted portal-small">Update the triage and job details here. Save, and the Ticket details above refresh.</p>' +
+          '<div class="portal-field"><label for="p2-edit-jobdate">Job date</label><input type="date" id="p2-edit-jobdate" value="' + esc(t.job_date || String(t.created_at || '').slice(0, 10)) + '" /></div>' +
           '<div class="portal-field"><label for="p2-edit-issue">Issue</label><textarea id="p2-edit-issue" rows="2">' + esc(t.issue || '') + '</textarea></div>' +
           '<div class="portal-field"><label for="p2-edit-address">Service address</label><input type="text" id="p2-edit-address" value="' + esc(t.service_address || '') + '" /></div>' +
           '<div class="portal-field"><label for="p2-edit-serial">Serial / IMEI</label><input type="text" id="p2-edit-serial" value="' + esc(t.serial_imei || '') + '" /></div>' +
@@ -527,6 +585,10 @@ function loadTicketThread(client, ticketId) {
           '<div class="portal-field"><label for="p2-edit-backup">Backed up?</label><select id="p2-edit-backup"><option value="">Unknown</option><option value="Yes"' + (t.backed_up === 'Yes' ? ' selected' : '') + '>Yes</option><option value="No"' + (t.backed_up === 'No' ? ' selected' : '') + '>No</option></select></div>' +
           '<div class="portal-field"><label for="p2-edit-prior">Repaired before?</label><select id="p2-edit-prior"><option value="">Unknown</option><option value="Yes"' + (t.prior_repair === 'Yes' ? ' selected' : '') + '>Yes</option><option value="No"' + (t.prior_repair === 'No' ? ' selected' : '') + '>No</option></select></div></div>' +
           '<div class="portal-field"><label for="p2-edit-warranty">Under manufacturer warranty?</label><select id="p2-edit-warranty"><option value="">Unknown</option><option value="Yes &mdash; customer told our work may void it"' + (t.warranty_status && t.warranty_status.indexOf('Yes') === 0 ? ' selected' : '') + '>Yes &mdash; customer told our work may void it</option><option value="No"' + (t.warranty_status === 'No' ? ' selected' : '') + '>No</option></select></div>' +
+          '<div class="p2-form-row"><div class="portal-field"><label for="p2-edit-terms">Terms accepted</label><select id="p2-edit-terms"><option value="true"' + (t.terms_accepted ? ' selected' : '') + '>Yes</option><option value="false"' + (!t.terms_accepted ? ' selected' : '') + '>No</option></select></div>' +
+          '<div class="portal-field"><label for="p2-edit-dispatch">House-call fee acknowledged</label><select id="p2-edit-dispatch"><option value="true"' + (t.dispatch_acknowledged ? ' selected' : '') + '>Yes</option><option value="false"' + (!t.dispatch_acknowledged ? ' selected' : '') + '>No</option></select></div></div>' +
+          '<div class="p2-form-row"><div class="portal-field"><label for="p2-edit-workauth">Work authorized</label><select id="p2-edit-workauth"><option value="true"' + (t.work_auth_accepted ? ' selected' : '') + '>Yes</option><option value="false"' + (!t.work_auth_accepted ? ' selected' : '') + '>No</option></select></div>' +
+          '<div class="portal-field"><label for="p2-edit-marketing">Marketing opt-in</label><select id="p2-edit-marketing"><option value="true"' + (t.marketing_opt_in ? ' selected' : '') + '>Yes</option><option value="false"' + (!t.marketing_opt_in ? ' selected' : '') + '>No</option></select></div></div>' +
           '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-edit-save">Save details</button> ' +
           '<span class="portal-muted portal-small" id="p2-edit-msg"></span></div>' +
           '<div class="portal-drawer-section p2-actions"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-receipt-btn"><i class="fas fa-receipt"></i> Print receipt</button>' +
@@ -535,6 +597,14 @@ function loadTicketThread(client, ticketId) {
           '<div id="p2-delete-confirm" hidden><p class="portal-error">Permanently delete this ticket? Its charges and messages go with it. Part orders stay on file but detach from the ticket. This cannot be undone.</p>' +
           '<button class="portal-btn p2-btn-danger portal-btn-sm" type="button" id="p2-delete-yes">Yes, delete it</button> ' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-delete-no">Keep ticket</button></div></div>' +
+          '<div class="portal-drawer-section"><h3>Documents</h3>' +
+          '<div id="p4-docs"><p class="portal-muted">Loading documents&hellip;</p></div>' +
+          '<div class="p2-actions"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p4-sign-btn"><i class="fas fa-pen-nib"></i> Sign repair authorization</button>' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p4-attach-btn"><i class="fas fa-paperclip"></i> Attach document</button>' +
+          '<select id="p4-attach-type" aria-label="Attach as document type" style="padding:0.4rem;border:2px solid var(--line, #d8cbb6);border-radius:8px;background:var(--bg, #fff);color:var(--ink, #2c231a);"><option value="receipt">Receipt</option><option value="repair_authorization">Signed authorization</option><option value="other">Other</option></select>' +
+          '<input type="file" id="p4-attach-file" accept="image/*,application/pdf" hidden /></div>' +
+          '<p class="portal-muted portal-small">Documents file themselves on this ticket. Signing the repair authorization here, or attaching one as a signed authorization, also marks Terms accepted and Work authorized on the ticket.</p>' +
+          '<p class="portal-error" id="p4-doc-msg" hidden></p></div>' +
           '<div class="portal-drawer-section"><h3>Charges</h3>' +
           '<div id="p2-charges"><p class="portal-muted">Loading charges&hellip;</p></div>' +
           '<form id="p2-charge-form" class="p2-form">' +
@@ -595,6 +665,8 @@ function loadTicketThread(client, ticketId) {
         loadTicketThread(client, t.id); loadRepairLog(client, t.id); var repairForm = $("portal-repair-log-form"); if (repairForm) { repairForm.addEventListener("submit", function (e) { e.preventDefault(); var input = $("portal-repair-log-input"); var err = $("portal-repair-log-error"); if (err) { err.hidden = true; err.textContent = ""; } var text = input ? trim(input.value) : ""; if (!text) { return; } client.from("ticket_notes").insert({ ticket_id: t.id, author: (state.profile && state.profile.name) || null, note: text }).then(function (res2) { if (res2.error) { if (err) { err.textContent = "Could not save that update. Try again."; err.hidden = false; } return; } if (input) { input.value = ""; } loadRepairLog(client, t.id); }).catch(function () { if (err) { err.textContent = "Could not save that update. Try again."; err.hidden = false; } }); }); } 
         loadCharges(client, t);
         loadParts(client, t);
+        loadDocuments(client, t);
+        wireDocuments(client, t);
         loadStockItems(client, t);
         loadJobTimers(client, t);
         var timerBtn = $('portal-timer-btn');
@@ -625,7 +697,12 @@ function loadTicketThread(client, ticketId) {
             power_on: $('p2-edit-power').value || null,
             backed_up: $('p2-edit-backup').value || null,
             prior_repair: $('p2-edit-prior').value || null,
-            warranty_status: $('p2-edit-warranty').value || null
+            warranty_status: $('p2-edit-warranty').value || null,
+            job_date: $('p2-edit-jobdate').value || null,
+            terms_accepted: $('p2-edit-terms').value === 'true',
+            dispatch_acknowledged: $('p2-edit-dispatch').value === 'true',
+            work_auth_accepted: $('p2-edit-workauth').value === 'true',
+            marketing_opt_in: $('p2-edit-marketing').value === 'true'
           };
           client.from('tickets').update(patch).eq('id', t.id).then(function (res2) {
             if (res2.error) { if (msg) msg.textContent = 'Couldn\u2019t save \u2014 try again.'; return; }
@@ -849,6 +926,419 @@ function loadTicketThread(client, ticketId) {
    * newest part's carrier / tracking number / order number right then.
    * N.A. closes it saving nothing — tracking can be added later from the
    * part's Tracking button. Never blocks the status change itself. */
+  /* ================= TICKET DOCUMENTS =================
+   * PORTAL_DOCUMENTS_2026_10_30 (Austin, Oct 30, 2026): signed
+   * documents file themselves on the customer's ticket. A Documents
+   * section on the ticket drawer lists what is filed (private
+   * 'ticket-documents' storage bucket + ticket_documents table; see
+   * documents.sql), opens each through a short-lived signed URL, and
+   * offers two actions: sign the Repair Authorization in a popup
+   * (terms + signature pad + printed name), or attach a document
+   * (photo / scan / PDF) with a type. A signed authorization — drawn
+   * here or attached as one — also sets terms_accepted and
+   * work_auth_accepted on the ticket. The terms text below is the
+   * Repair Authorization & Service Agreement exactly as published on
+   * austinstechrepairgroup.com (extracted from the live page Oct 30,
+   * 2026); if the site's agreement changes, refresh this copy. */
+  var DOC_BUCKET = 'ticket-documents';
+  var DOC_TYPE_LABELS = { repair_authorization: 'Repair authorization', receipt: 'Receipt', other: 'Other document' };
+  var AUTH_TERMS_TEXT = "Repair Authorization & Service Agreement\nAustin's Tech Repair Group \u2014 State of Ohio, USA \u2014 Last updated October 23, 2026\nPLEASE READ THIS DOCUMENT CAREFULLY. By scheduling an appointment, submitting a repair request, or handing us your device, you (\"Customer,\" \"you\") authorize the services below and agree to these terms with Austin's Tech Repair Group (\"Company,\" \"we,\" \"us,\" \"our\"), a sole proprietorship operating in the State of Ohio.\n1. Authorization to Perform Services\nBy requesting service, you authorize Austin's Tech Repair Group to:\nReceive, handle, open, disassemble, diagnose, test, and repair your device;\nOrder and install the replacement parts you approve;\nRun software diagnostics and updates, and access device functions \u2014 using any passcode you provide \u2014 only as needed to complete and verify the repair;\nTake the device to our bench for advanced work (such as board-level repair) when on-site repair is not possible, and return it when finished.\nYou confirm that you own the device or have the owner's permission to authorize service on it. We service consumer and business electronics only; we do not service medical devices or equipment.\n2. Fees, Parts & Payment\nHouse-call fee: A $35.00 house-call fee applies to every mobile visit, covering travel and a full diagnosis. It is non-refundable in all cases, is due at scheduling, is charged separately from the repair price, and is never credited toward a repair. ATR One members pay no house-call fee for devices covered under their subscription.\nDiagnostics: Estimates are free. A full diagnosis \u2014 including disassembly or deep board-level diagnostics when required \u2014 is included in the house-call fee.\nFlat-rate repairs: Common repairs (screens, batteries, charging ports, back glass) are quoted at one flat rate \u2014 parts and labor included. No hourly billing.\nCustom repairs: Repairs outside the standard list are quoted individually as one flat price and begin only with your approval.\nParts: Parts for your job are ordered by us through our suppliers and delivered to us. Because parts are ordered for your specific job, the parts cost is paid upfront before we order. If you cancel after parts are ordered, we keep the part and refund what you paid for the part.\nReplaced parts: Any part we remove from your device during a repair and replace becomes the property of Austin's Tech Repair Group.\nParts you supply: If you supply your own part, we will install it as-is; our 1-Year Limited Warranty does not cover customer-supplied parts.\nContact about your repair: You agree we may call and text you at the number you provide about your repair \u2014 scheduling, status updates, and completion.\nEstimate approval: We confirm your price before beginning work. If hidden damage, corrosion, or additional failures are found during disassembly, we notify you and obtain your approval before proceeding with any extra work.\nPayment due: The balance is due upon completion, before the device is released. We accept Visa, Mastercard, American Express, Discover, Apple Pay, Google Pay, Samsung Pay, Cash App Pay, PayPal, Venmo, and cash.\n3. Repair Risks You Accept\nData: Diagnostics and repair can result in data loss or corruption. Back up your device before service. We are not responsible for lost data, files, photos, accounts, or settings.\nPre-existing damage: Devices with prior liquid exposure, corrosion, structural damage, or earlier repair attempts are fragile and can fail during normal handling. We are not responsible for a device that stops working because of a pre-existing condition.\nAlready-cracked parts: Removing a cracked screen or back glass can cause it to break further. If a damaged part cannot survive disassembly, replacing it becomes part of the repair and is quoted to you before we proceed.\nCosmetics: Minor marks from opening a device are a normal risk of repair work.\nManufacturer warranties & seals: Third-party repair can affect a manufacturer's warranty; unless the manufacturer explicitly states that opening the device does not void the warranty, our work may void it. A device's water-resistance rating cannot be guaranteed after any repair.\n4. Liability Waiver\nExcept in cases of gross negligence or willful misconduct, you release Austin's Tech Repair Group, its owner, and its representatives from liability for claims or damages arising from the repair services, and you agree that our total liability is limited to the amount you paid for the service. We are not liable for incidental, indirect, or consequential damages, including loss of data, loss of use, or loss of business.\n5. Warranty\nStandard repairs include a one (1) year limited warranty on the parts installed and labor performed, under our Warranty Policy.\nThe warranty is void for the affected repair if the device later suffers physical damage, liquid exposure, or is opened or repaired by another party.\nWarranty service requires your original repair invoice or receipt.\n6. Unclaimed Devices\nWe will notify you when your repair is complete. Equipment left unclaimed for more than sixty (60) days after that notice will be considered abandoned and may be disposed of, recycled, or sold to recover costs, as permitted by Ohio law.\n7. Governing Law & Entire Agreement\nThis Agreement is governed by the laws of the State of Ohio. Disputes will first be addressed through good-faith negotiation; if unresolved, they will be submitted to a court of competent jurisdiction in Greene County, Ohio. This document is the entire agreement between you and Austin's Tech Repair Group for repair services. If any provision is found unenforceable, the rest remain in effect.\nAustin's Tech Repair Group\nAustin Tyler Caudill, Owner\nState of Ohio, USA \u2014 (937) 280-6243";
+
+  function docStamp() { return new Date().toISOString().replace(/[:.]/g, '-'); }
+  function safeFileName(name) {
+    var s = String(name || 'document').replace(/[^A-Za-z0-9._-]+/g, '_').slice(-80);
+    return s || 'document';
+  }
+  function docMsg(text) {
+    var m = $('p4-doc-msg');
+    if (!m) return;
+    if (text) { m.textContent = text; m.hidden = false; }
+    else { m.hidden = true; m.textContent = ''; }
+  }
+
+  function loadDocuments(client, t) {
+    var box = $('p4-docs');
+    if (!box) return;
+    client.from('ticket_documents').select('*').eq('ticket_id', t.id).order('created_at', { ascending: false }).then(function (res) {
+      if (res.error) { box.innerHTML = '<p class="portal-muted">Documents are not set up for this portal yet.</p>'; return; }
+      var rows = res.data || [];
+      if (!rows.length) { box.innerHTML = '<p class="portal-muted">No documents on this ticket yet. Sign the repair authorization or attach one below.</p>'; return; }
+      box.innerHTML = rows.map(function (d) {
+        var when = d.signed_at || d.created_at;
+        var meta = esc(fmtDateTime(when));
+        if (d.signer_name) meta += ' &middot; Signed by ' + esc(d.signer_name);
+        if (d.file_name) meta += ' &middot; ' + esc(d.file_name);
+        if (d.note) meta += ' &middot; ' + esc(d.note);
+        return '<div class="p2-line"><div class="p2-line-main"><span class="p2-kind">' + esc(DOC_TYPE_LABELS[d.doc_type] || 'Document') + '</span>' +
+          '<span class="portal-muted portal-small">' + meta + '</span></div>' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-p4-view="' + esc(d.storage_path) + '"><i class="fas fa-eye"></i> View</button></div>';
+      }).join('');
+      var btns = box.querySelectorAll('[data-p4-view]');
+      for (var i = 0; i < btns.length; i++) {
+        btns[i].addEventListener('click', function () { viewDocument(client, this.getAttribute('data-p4-view')); });
+      }
+    }).catch(function () { box.innerHTML = '<p class="portal-muted">Documents could not be loaded.</p>'; });
+  }
+
+  function viewDocument(client, path) {
+    if (!path) return;
+    client.storage.from(DOC_BUCKET).createSignedUrl(path, SIGNED_URL_SECONDS).then(function (res) {
+      if (res.error || !res.data || !res.data.signedUrl) { docMsg('Could not open that document — try again.'); return; }
+      window.open(res.data.signedUrl, '_blank');
+    }).catch(function () { docMsg('Could not open that document — try again.'); });
+  }
+
+  function markAuthorizationAccepted(client, t) {
+    return client.from('tickets').update({ terms_accepted: true, work_auth_accepted: true }).eq('id', t.id);
+  }
+
+  function wireDocuments(client, t) {
+    var signBtn = $('p4-sign-btn');
+    if (signBtn) signBtn.addEventListener('click', function () { openSignModal(client, t); });
+    var fileInput = $('p4-attach-file');
+    var attachBtn = $('p4-attach-btn');
+    if (attachBtn && fileInput) attachBtn.addEventListener('click', function () { fileInput.click(); });
+    if (fileInput) fileInput.addEventListener('change', function () {
+      var f = fileInput.files && fileInput.files[0];
+      fileInput.value = '';
+      if (f) attachDocument(client, t, f);
+    });
+  }
+
+  function attachDocument(client, t, file) {
+    docMsg('');
+    var typeSel = $('p4-attach-type');
+    var type = typeSel ? typeSel.value : 'other';
+    if (DOC_TYPE_LABELS[type] === undefined) type = 'other';
+    if (file.size > 15 * 1024 * 1024) { docMsg('That file is over 15 MB — try a smaller scan or photo.'); return; }
+    var attachBtn = $('p4-attach-btn');
+    if (attachBtn) { attachBtn.disabled = true; attachBtn.textContent = 'Attaching…'; }
+    var path = t.id + '/' + type + '-' + docStamp() + '-' + safeFileName(file.name);
+    client.storage.from(DOC_BUCKET).upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: false }).then(function (up) {
+      if (up.error) { if (attachBtn) { attachBtn.disabled = false; attachBtn.textContent = 'Attach document'; } docMsg('Upload failed — check the connection and try again.'); return; }
+      var row = {
+        ticket_id: t.id, doc_type: type, storage_path: path, file_name: file.name,
+        signed_at: type === 'repair_authorization' ? new Date().toISOString() : null
+      };
+      client.from('ticket_documents').insert(row).then(function (res) {
+        if (attachBtn) { attachBtn.disabled = false; attachBtn.textContent = 'Attach document'; }
+        if (res.error) { docMsg('The file uploaded but could not be filed on the ticket — try again.'); return; }
+        if (type === 'repair_authorization') {
+          markAuthorizationAccepted(client, t).then(function () { openTicket(t.id); }).catch(function () { openTicket(t.id); });
+        } else {
+          loadDocuments(client, t);
+        }
+      }).catch(function () { if (attachBtn) { attachBtn.disabled = false; attachBtn.textContent = 'Attach document'; } docMsg('The file uploaded but could not be filed on the ticket — try again.'); });
+    }).catch(function () { if (attachBtn) { attachBtn.disabled = false; attachBtn.textContent = 'Attach document'; } docMsg('Upload failed — check the connection and try again.'); });
+  }
+
+  function openSignModal(client, t) {
+    var old = document.getElementById('p4-sign-modal');
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+    var wrap = document.createElement('div');
+    wrap.id = 'p4-sign-modal';
+    wrap.setAttribute('style', 'position:fixed;inset:0;background:rgba(44,35,26,0.55);z-index:3000;display:flex;align-items:center;justify-content:center;padding:1rem;');
+    wrap.innerHTML = '<div style="background:#FAF6EE;color:#2C231A;border-radius:14px;max-width:600px;width:100%;max-height:92vh;overflow:auto;padding:1.25rem;box-shadow:0 18px 50px rgba(0,0,0,0.35);">' +
+      '<h3 style="margin:0 0 0.5rem;">Repair Authorization &amp; Service Agreement</h3>' +
+      '<p class="portal-muted portal-small" style="margin:0 0 0.75rem;">Read the agreement, type your name, and sign in the box. Signing files this document on the ticket and marks Terms accepted and Work authorized.</p>' +
+      '<div style="max-height:36vh;overflow:auto;border:1px solid #E6D9C0;border-radius:8px;padding:0.75rem;background:#FFFDF8;white-space:pre-wrap;font-size:0.85rem;line-height:1.45;">' + esc(AUTH_TERMS_TEXT) + '</div>' +
+      '<div class="portal-field" style="margin-top:0.75rem;"><label for="p4-sign-name">Printed name</label><input type="text" id="p4-sign-name" maxlength="120" value="' + esc(t.customer_name || '') + '" /></div>' +
+      '<div class="portal-field"><label for="p4-pad">Signature</label>' +
+      '<canvas id="p4-pad" width="560" height="200" style="width:100%;height:auto;display:block;background:#fff;border:2px solid #d8cbb6;border-radius:8px;touch-action:none;"></canvas></div>' +
+      '<div class="p2-actions" style="margin-top:0.75rem;">' +
+      '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p4-sign-save">Sign &amp; save</button> ' +
+      '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p4-sign-clear">Clear</button> ' +
+      '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p4-sign-cancel">Cancel</button>' +
+      '<span class="portal-muted portal-small" id="p4-sign-msg"></span></div></div>';
+    document.body.appendChild(wrap);
+    function close() { if (wrap.parentNode) wrap.parentNode.removeChild(wrap); }
+    wrap.addEventListener('click', function (e) { if (e.target === wrap) close(); });
+    wrap.querySelector('#p4-sign-cancel').addEventListener('click', close);
+
+    var canvas = wrap.querySelector('#p4-pad');
+    var ctx = canvas.getContext('2d');
+    ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#2C231A';
+    var drawing = false, hasDrawn = false, last = null;
+    function pos(e) {
+      var r = canvas.getBoundingClientRect();
+      return { x: (e.clientX - r.left) * (canvas.width / r.width), y: (e.clientY - r.top) * (canvas.height / r.height) };
+    }
+    canvas.addEventListener('pointerdown', function (e) {
+      drawing = true; hasDrawn = true; last = pos(e);
+      try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+      e.preventDefault();
+    });
+    canvas.addEventListener('pointermove', function (e) {
+      if (!drawing) return;
+      var p = pos(e);
+      ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+      last = p;
+    });
+    function endStroke() { drawing = false; }
+    canvas.addEventListener('pointerup', endStroke);
+    canvas.addEventListener('pointercancel', endStroke);
+    wrap.querySelector('#p4-sign-clear').addEventListener('click', function () {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      hasDrawn = false;
+    });
+
+    wrap.querySelector('#p4-sign-save').addEventListener('click', function () {
+      var msg = wrap.querySelector('#p4-sign-msg');
+      var name = trim(wrap.querySelector('#p4-sign-name').value);
+      if (!name) { if (msg) msg.textContent = 'Type the printed name first.'; return; }
+      if (!hasDrawn) { if (msg) msg.textContent = 'Sign in the box first.'; return; }
+      var saveBtn = wrap.querySelector('#p4-sign-save');
+      if (saveBtn) saveBtn.disabled = true;
+      if (msg) msg.textContent = 'Saving…';
+      function gotBlob(blob) {
+        if (!blob) { if (saveBtn) saveBtn.disabled = false; if (msg) msg.textContent = 'Could not capture the signature — try again.'; return; }
+        var path = t.id + '/repair_authorization-' + docStamp() + '.png';
+        client.storage.from(DOC_BUCKET).upload(path, blob, { contentType: 'image/png', upsert: false }).then(function (up) {
+          if (up.error) { if (saveBtn) saveBtn.disabled = false; if (msg) msg.textContent = 'Saving failed — check the connection and try again.'; return; }
+          var row = { ticket_id: t.id, doc_type: 'repair_authorization', storage_path: path, signer_name: name, signed_at: new Date().toISOString() };
+          client.from('ticket_documents').insert(row).then(function (res) {
+            if (res.error) { if (saveBtn) saveBtn.disabled = false; if (msg) msg.textContent = 'The signature saved but could not be filed — try again.'; return; }
+            markAuthorizationAccepted(client, t).then(function () { close(); openTicket(t.id); }).catch(function () { close(); openTicket(t.id); });
+          }).catch(function () { if (saveBtn) saveBtn.disabled = false; if (msg) msg.textContent = 'The signature saved but could not be filed — try again.'; });
+        }).catch(function () { if (saveBtn) saveBtn.disabled = false; if (msg) msg.textContent = 'Saving failed — check the connection and try again.'; });
+      }
+      if (canvas.toBlob) { canvas.toBlob(gotBlob, 'image/png'); }
+      else {
+        var parts = String(canvas.toDataURL('image/png')).split(',');
+        var bin = window.atob(parts[1]);
+        var arr = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+        gotBlob(new Blob([arr], { type: 'image/png' }));
+      }
+    });
+  }
+
+  /* ================= DOCUMENTS TAB =================
+   * PORTAL_DOCUMENTS_TAB_2026_10_30 (Phase 3, Austin, Oct 30, 2026):
+   * the top-level Documents tab is the home for every document.
+   * Blank documents are the business's unsigned agreements, shown
+   * from the same canonical texts published on the website
+   * (extracted from the live page Oct 30, 2026, like AUTH_TERMS_TEXT;
+   * refresh these copies if the site's legal text changes). Signed &
+   * filed documents come from ticket_documents across all tickets,
+   * searchable by customer. Staff can upload a document that lands
+   * unattached (ticket_id NULL) and file it onto a ticket from here;
+   * filing a signed authorization sets that ticket's terms_accepted
+   * and work_auth_accepted, same as the drawer flow, and the document
+   * then also shows in that ticket's Documents section. */
+  var TERMS_CONDITIONS_TEXT = "Terms & Conditions of Service\nLast updated October 23, 2026\nThese Terms & Conditions govern repair services and website use for Austin's Tech Repair Group (\"Company,\" \"we,\" \"us,\" or \"our\"), a sole proprietorship operating in the State of Ohio. By scheduling an appointment, submitting a repair request, or using this website, you (\"Customer,\" \"you\") agree to these terms.\n1. Who We Are & What We Do\nMobile service: We come to you. Most repairs are completed at your home or office in the Miami Valley (Xenia, Dayton, and surrounding areas). Some advanced repairs, such as board-level work, may require us to take the device with your permission and return it when the work is complete.\nWhat we repair: Phones, tablets, computers & laptops, game consoles, smartwatches, and websites.\nWhat we do not repair: Automotive electronics and instrument clusters, vintage radios and tube equipment, home stereo and sound systems, and major appliances.\n2. Estimates & Pricing\nFlat-rate pricing: Common repairs are quoted at one flat rate \u2014 parts and labor included. There is no hourly billing.\nDiagnostics: Estimates are free. A full diagnosis of the problem \u2014 including disassembly or deep board-level work when required \u2014 is included in the $35.00 house-call fee, charged separately from the repair price.\nOnline estimator: Prices shown by the online estimator are starting prices for the most common models. Your final flat price is confirmed for your exact model before you book, and the price we confirm is the price you pay.\nCustom repairs: One-of-a-kind or unusual repairs are quoted individually as one flat price \u2014 and are always approved by you before work begins.\nHidden damage: If disassembly reveals additional damage or failed components beyond the original estimate, we stop, notify you, and get your approval before doing any extra work.\n3. House-Call Fee\nA $35.00 house-call fee applies to every mobile visit. It covers travel to your location and a full diagnosis of the problem, and it is due at scheduling.\nATR One members: Members pay no house-call fee for devices covered under their subscription.\nThe house-call fee is non-refundable in all cases and is charged separately from the repair price. It is never credited toward a repair.\n4. Parts & Payment\nParts you supply: You\u2019re welcome to supply everyday parts you can buy at retail \u2014 hard drives, memory, accessories. Our 1-year warranty covers only parts we supply; customer-supplied parts are installed as-is, with no warranty on the part.\nParts are paid upfront: Because parts are ordered for your specific job, the parts cost is due before we order. We order parts through our suppliers and they are delivered to us; we bring them to your install visit. If you cancel after parts are ordered, we keep the part and refund what you paid for the part.\nReplaced parts: Any part we remove from your device during a repair and replace becomes the property of Austin's Tech Repair Group.\nParts you supply: If you supply your own part, we will install it as-is; our 1-Year Limited Warranty does not cover customer-supplied parts.\nContact about your repair: You agree we may call and text you at the number you provide about your repair \u2014 scheduling, status updates, and completion.\nBalance due: The remaining balance (labor) is due upon completion of the repair, before the device is released back to you.\nAccepted payments: Visa, Mastercard, American Express, Discover, Apple Pay, Google Pay, Samsung Pay, Cash App Pay, PayPal, Venmo, and cash.\n5. Cancellations\nYou may cancel or reschedule before your appointment at no charge beyond the house-call fee, which is non-refundable once the appointment is booked.\nIf we arrive and you decline the confirmed repair, only the house-call fee is owed.\n6. Your Data\nData loss or corruption can occur during diagnostics or repair. You are responsible for backing up your device before service. We are not liable for lost data, files, photos, or settings. See the Repair Authorization for full details.\n7. Warranty\nStandard repairs are covered by our 1-Year Limited Warranty on the parts installed and the labor performed. Full terms and the claim process are in the Warranty Policy on this site.\n8. Limitation of Liability\nTo the fullest extent permitted by Ohio law, our total liability for any claim connected to a service is limited to the amount you paid for that service. We are not liable for incidental, indirect, or consequential damages, including loss of data, loss of use, or loss of business.\n9. Website Use\nYou must be 18 or using this site with a parent or guardian. Use the site only for lawful purposes; no scraping, data mining, malware, or attempts to gain unauthorized access.\nSite content (text, graphics, logos, and code) belongs to Austin's Tech Repair Group and may not be reproduced or commercially used without written permission.\nThe website is provided \"as is\" without warranties of any kind. We are not responsible for third-party websites linked from this site.\n10. Changes, Governing Law & Contact\nWe may update these terms; the version posted on this site when you book governs your service.\nThese terms are governed by the laws of the State of Ohio. Disputes will be addressed first through good-faith negotiation, then in a court of competent jurisdiction in Greene County, Ohio.\nQuestions: Austin's Tech Repair Group \u2014 Austin Tyler Caudill, Owner \u2014 Spring Valley, Ohio \u2014 (937) 280-6243 \u2014 austin.caudill@austinstechrepairgroup.com\nLegal";
+  var WARRANTY_TEXT = "1-Year Limited Warranty & Claims\nLast updated October 20, 2026\nAustin's Tech Repair Group stands behind its work. Every standard repair includes a 1-Year Limited Warranty on the parts we install and the labor we perform, under the terms below.\n1. What This Warranty Covers\nReplacement parts we installed (screens, batteries, charging ports, and other components) that fail due to a defect in the part itself.\nThe labor and workmanship of the specific repair on your invoice.\n2. Warranty Period\nCoverage runs for one year (365 days) from the date the repair was completed.\nThe warranty applies to the original customer and the device listed on the repair invoice. Please keep your invoice or receipt \u2014 it is your proof of coverage.\n3. What This Warranty Does Not Cover\nNew physical damage: Drops, impacts, cracks, pressure damage, or bent frames after the repair.\nParts supplied by the customer \u2014 this warranty covers only parts we supply.\nLiquid damage: Exposure to water, moisture, or steam after the repair.\nTampering: Devices opened, modified, or repaired by anyone other than Austin's Tech Repair Group after our service.\nSoftware problems: Viruses, malware, operating-system corruption, or issues caused by rooting, jailbreaking, or other modifications.\nUnrelated failures: Problems in parts or systems that were not part of the original repair, including pre-existing conditions.\nNormal wear: Gradual battery capacity fade over time and minor cosmetic wear that does not affect function.\n4. How to File a Warranty Claim\nStep 1 \u2014 Contact us: Call or text (937) 280-6243 or email austin.caudill@austinstechrepairgroup.com and describe the problem.\nStep 2 \u2014 Show your invoice: Present your original repair invoice or receipt so we can verify coverage.\nStep 3 \u2014 Inspection: We inspect and test the device to confirm the failure is a covered defect in the part or our workmanship.\nStep 4 \u2014 Remedy: If the claim is covered, we will repair or replace the defective part at no charge for parts or labor. If the part cannot be repaired or replaced, we will refund the price of that part.\nWarranty inspections are diagnostic visits; no house-call fee applies to a covered warranty claim.\n5. Limits\nThis warranty is limited to the repair, replacement, or refund described above. We are not liable for incidental or consequential damages, including loss of data or loss of use of the device during evaluation or repair.\nSome states do not allow limits on implied warranties or consequential damages, so parts of this section may not apply to you. This warranty gives you specific legal rights, and you may have other rights that vary by state.\nAustin's Tech Repair Group\nAustin Tyler Caudill, Owner\nSpring Valley, Ohio \u2014 (937) 280-6243";
+  var BLANK_DOCS = [
+    { title: 'Repair Authorization & Service Agreement', text: AUTH_TERMS_TEXT },
+    { title: '1-Year Limited Warranty', text: WARRANTY_TEXT },
+    { title: 'Terms & Conditions of Service', text: TERMS_CONDITIONS_TEXT }
+  ];
+  var docTabRows = null, docTabWired = false, docTicketOptions = null;
+
+  function showTextModal(title, text) {
+    var old = document.getElementById('p4-text-modal');
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+    var wrap = document.createElement('div');
+    wrap.id = 'p4-text-modal';
+    wrap.setAttribute('style', 'position:fixed;inset:0;background:rgba(44,35,26,0.55);z-index:3000;display:flex;align-items:center;justify-content:center;padding:1rem;');
+    wrap.innerHTML = '<div style="background:#FAF6EE;color:#2C231A;border-radius:14px;max-width:600px;width:100%;max-height:92vh;overflow:auto;padding:1.25rem;box-shadow:0 18px 50px rgba(0,0,0,0.35);">' +
+      '<h3 style="margin:0 0 0.75rem;">' + esc(title) + '</h3>' +
+      '<div style="max-height:62vh;overflow:auto;border:1px solid #E6D9C0;border-radius:8px;padding:0.75rem;background:#FFFDF8;white-space:pre-wrap;font-size:0.88rem;line-height:1.5;">' + esc(text) + '</div>' +
+      '<div class="p2-actions" style="margin-top:0.75rem;"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p4-text-close">Close</button></div></div>';
+    document.body.appendChild(wrap);
+    function close() { if (wrap.parentNode) wrap.parentNode.removeChild(wrap); }
+    wrap.addEventListener('click', function (e) { if (e.target === wrap) close(); });
+    wrap.querySelector('#p4-text-close').addEventListener('click', close);
+  }
+
+  function loadDocumentsTab(force) {
+    withClient(function (client) {
+      var listBox = $('portal-docs-list');
+      if (!client) { if (listBox) listBox.innerHTML = '<p class="portal-error">Couldn&rsquo;t reach the database. Reload the page to try again.</p>'; return; }
+      renderBlankDocs();
+      wireDocTab(client);
+      loadDocTabList(client);
+    });
+  }
+
+  function renderBlankDocs() {
+    var box = $('portal-docs-blanks');
+    if (!box) return;
+    box.innerHTML = BLANK_DOCS.map(function (d, i) {
+      return '<div class="p2-line"><div class="p2-line-main"><span class="p2-line-amt">' + esc(d.title) + '</span></div>' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-blank-doc="' + i + '"><i class="fas fa-eye"></i> View</button></div>';
+    }).join('');
+    var btns = box.querySelectorAll('[data-blank-doc]');
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].addEventListener('click', function () {
+        var d = BLANK_DOCS[Number(this.getAttribute('data-blank-doc'))];
+        if (d) showTextModal(d.title, d.text);
+      });
+    }
+  }
+
+  function docTabListMsg(text) {
+    var m = $('portal-docs-list-msg');
+    if (!m) return;
+    if (text) { m.textContent = text; m.hidden = false; }
+    else { m.hidden = true; m.textContent = ''; }
+  }
+
+  function loadDocTabList(client) {
+    var box = $('portal-docs-list');
+    if (!box) return;
+    function fallback() {
+      client.from('ticket_documents').select('*').order('created_at', { ascending: false }).limit(300).then(function (res2) {
+        docTabRows = res2.error ? [] : (res2.data || []);
+        renderDocTabList(client);
+      }).catch(function () { docTabRows = []; renderDocTabList(client); });
+    }
+    client.from('ticket_documents').select('*, tickets(customer_name, device_type, brand, model)').order('created_at', { ascending: false }).limit(300).then(function (res) {
+      if (res.error) { fallback(); return; }
+      docTabRows = res.data || [];
+      renderDocTabList(client);
+    }).catch(function () { fallback(); });
+  }
+
+  function renderDocTabList(client) {
+    var box = $('portal-docs-list');
+    if (!box) return;
+    var rows = docTabRows || [];
+    var q = '';
+    var search = $('portal-docs-search');
+    if (search) q = trim(search.value).toLowerCase();
+    var shown = rows.filter(function (d) {
+      if (!q) return true;
+      var cust = d.tickets && d.tickets.customer_name ? d.tickets.customer_name : '';
+      var hay = (cust + ' ' + (d.file_name || '') + ' ' + (d.signer_name || '')).toLowerCase();
+      return hay.indexOf(q) !== -1;
+    });
+    if (!rows.length) { box.innerHTML = '<p class="portal-muted">No documents filed yet. Signed authorizations and attachments from tickets will show up here.</p>'; return; }
+    if (!shown.length) { box.innerHTML = '<p class="portal-muted">No documents match that search.</p>'; return; }
+    box.innerHTML = shown.map(function (d) {
+      var cust = d.tickets && d.tickets.customer_name ? esc(d.tickets.customer_name) : null;
+      var dev = d.tickets ? esc(deviceLabel(d.tickets)) : '';
+      var head = cust ? '<span class="p2-line-amt">' + cust + '</span>' : '<span class="p2-kind">Unattached</span>';
+      var meta = esc(fmtDateTime(d.signed_at || d.created_at));
+      if (dev) meta += ' &middot; ' + dev;
+      if (d.signer_name) meta += ' &middot; Signed by ' + esc(d.signer_name);
+      if (d.file_name) meta += ' &middot; ' + esc(d.file_name);
+      var html = '<div class="p2-line"><div class="p2-line-main"><span class="p2-kind">' + esc(DOC_TYPE_LABELS[d.doc_type] || 'Document') + '</span>' + head +
+        '<br /><span class="portal-muted portal-small">' + meta + '</span></div>' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-doc-view="' + esc(d.storage_path) + '"><i class="fas fa-eye"></i> View</button>';
+      if (!d.ticket_id) {
+        html += ' <button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-doc-attach="' + esc(d.id) + '"><i class="fas fa-paperclip"></i> Attach</button>';
+      }
+      html += '</div>';
+      if (!d.ticket_id) {
+        html += '<div class="p2-form" id="picker-' + esc(d.id) + '" hidden><div class="p2-form-row">' +
+          '<select data-pick-select="' + esc(d.id) + '" aria-label="Choose the ticket for this document"><option value="">Loading tickets&hellip;</option></select>' +
+          '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-attach-confirm="' + esc(d.id) + '">Attach to this ticket</button></div></div>';
+      }
+      return html;
+    }).join('');
+    var views = box.querySelectorAll('[data-doc-view]');
+    for (var i = 0; i < views.length; i++) {
+      views[i].addEventListener('click', function () { viewDocTab(client, this.getAttribute('data-doc-view')); });
+    }
+    var attaches = box.querySelectorAll('[data-doc-attach]');
+    for (var j = 0; j < attaches.length; j++) {
+      attaches[j].addEventListener('click', function () { toggleDocPicker(client, this.getAttribute('data-doc-attach')); });
+    }
+    var confirms = box.querySelectorAll('[data-attach-confirm]');
+    for (var k = 0; k < confirms.length; k++) {
+      confirms[k].addEventListener('click', function () { confirmDocAttach(client, this.getAttribute('data-attach-confirm')); });
+    }
+  }
+
+  function viewDocTab(client, path) {
+    if (!path) return;
+    docTabListMsg('');
+    client.storage.from(DOC_BUCKET).createSignedUrl(path, SIGNED_URL_SECONDS).then(function (res) {
+      if (res.error || !res.data || !res.data.signedUrl) { docTabListMsg('Could not open that document — try again.'); return; }
+      window.open(res.data.signedUrl, '_blank');
+    }).catch(function () { docTabListMsg('Could not open that document — try again.'); });
+  }
+
+  function toggleDocPicker(client, docId) {
+    var picker = document.getElementById('picker-' + docId);
+    if (!picker) return;
+    if (!picker.hidden) { picker.hidden = true; return; }
+    picker.hidden = false;
+    var sel = picker.querySelector('select');
+    function fill(tickets) {
+      if (!tickets.length) { sel.innerHTML = '<option value="">No tickets found</option>'; return; }
+      sel.innerHTML = tickets.map(function (tk) {
+        return '<option value="' + esc(tk.id) + '">' + esc((tk.customer_name || 'No name') + ' · ' + deviceLabel(tk) + ' · ' + (tk.status || '')) + '</option>';
+      }).join('');
+    }
+    if (docTicketOptions) { fill(docTicketOptions); return; }
+    client.from('tickets').select('id, customer_name, device_type, brand, model, status').order('created_at', { ascending: false }).limit(200).then(function (res) {
+      docTicketOptions = res.error ? [] : (res.data || []);
+      fill(docTicketOptions);
+    }).catch(function () { docTicketOptions = []; fill(docTicketOptions); });
+  }
+
+  function confirmDocAttach(client, docId) {
+    var picker = document.getElementById('picker-' + docId);
+    if (!picker) return;
+    var sel = picker.querySelector('select');
+    var ticketId = sel ? sel.value : '';
+    if (!ticketId) { docTabListMsg('Pick a ticket for that document first.'); return; }
+    docTabListMsg('');
+    var docRow = null;
+    (docTabRows || []).forEach(function (d) { if (d.id === docId) docRow = d; });
+    client.from('ticket_documents').update({ ticket_id: ticketId }).eq('id', docId).then(function (res) {
+      if (res.error) { docTabListMsg('Could not attach that document — try again.'); return; }
+      function done() { loadDocTabList(client); }
+      if (docRow && docRow.doc_type === 'repair_authorization') {
+        markAuthorizationAccepted(client, { id: ticketId }).then(done).catch(done);
+      } else { done(); }
+    }).catch(function () { docTabListMsg('Could not attach that document — try again.'); });
+  }
+
+  function wireDocTab(client) {
+    if (docTabWired) return;
+    docTabWired = true;
+    var search = $('portal-docs-search');
+    if (search) search.addEventListener('input', function () { renderDocTabList(client); });
+    var upBtn = $('portal-docs-up-btn');
+    if (upBtn) upBtn.addEventListener('click', function () { uploadUnattached(client); });
+  }
+
+  function uploadUnattached(client) {
+    var msg = $('portal-docs-up-msg');
+    function fail(text) { if (msg) { msg.textContent = text; msg.hidden = false; } }
+    if (msg) { msg.hidden = true; msg.textContent = ''; }
+    var fileInput = $('portal-docs-up-file');
+    var file = fileInput && fileInput.files && fileInput.files[0];
+    if (!file) { fail('Choose a file first.'); return; }
+    if (file.size > 15 * 1024 * 1024) { fail('That file is over 15 MB — try a smaller scan or photo.'); return; }
+    var typeSel = $('portal-docs-up-type');
+    var type = typeSel ? typeSel.value : 'other';
+    if (DOC_TYPE_LABELS[type] === undefined) type = 'other';
+    var signerEl = $('portal-docs-up-signer');
+    var signer = signerEl ? trim(signerEl.value) : '';
+    var btn = $('portal-docs-up-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Uploading…'; }
+    var path = 'unattached/' + type + '-' + docStamp() + '-' + safeFileName(file.name);
+    client.storage.from(DOC_BUCKET).upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: false }).then(function (up) {
+      if (up.error) { if (btn) { btn.disabled = false; btn.textContent = 'Upload'; } fail('Upload failed — check the connection and try again.'); return; }
+      var row = {
+        ticket_id: null, doc_type: type, storage_path: path, file_name: file.name,
+        signer_name: signer || null,
+        signed_at: type === 'repair_authorization' ? new Date().toISOString() : null
+      };
+      client.from('ticket_documents').insert(row).then(function (res) {
+        if (btn) { btn.disabled = false; btn.textContent = 'Upload'; }
+        if (res.error) { fail('The file uploaded but could not be filed — try again.'); return; }
+        if (fileInput) fileInput.value = '';
+        if (signerEl) signerEl.value = '';
+        loadDocTabList(client);
+      }).catch(function () { if (btn) { btn.disabled = false; btn.textContent = 'Upload'; } fail('The file uploaded but could not be filed — try again.'); });
+    }).catch(function () { if (btn) { btn.disabled = false; btn.textContent = 'Upload'; } fail('Upload failed — check the connection and try again.'); });
+  }
+
   function showTrackingPopup(client, t) {
     client.from('part_orders').select('*').eq('ticket_id', t.id).order('created_at', { ascending: false }).limit(1).then(function (res) {
       var part = (!res.error && res.data && res.data[0]) || null;
@@ -1868,6 +2358,7 @@ function loadTicketThread(client, ticketId) {
   var EXTRA_LOADERS = { timeclock: loadTimeClock, checkin: loadCheckinCustomers };
   var extraLoaded = {};
   function showExtraPanel(name) {
+    saveActiveTab(name);
     document.querySelectorAll('.portal-panel').forEach(function (pn) { pn.hidden = true; });
     var panel = $('portal-panel-' + name);
     if (panel) panel.hidden = false;
