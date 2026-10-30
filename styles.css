@@ -1024,9 +1024,6 @@ html[data-theme="dark"] .header {
   .product-body { padding: 0.8rem; }
 }
 
-/* ===== Logged-in hub: mobile containment 2026-10-23 ===== */
-#employee-dashboard { max-width: 100%; overflow-x: clip; }
-#employee-dashboard table { max-width: 100%; }
 @media (max-width: 640px) {
   .emp-tabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; scrollbar-width: none; }
   .emp-tabs::-webkit-scrollbar { display: none; }
@@ -1583,6 +1580,25 @@ a.service-card { text-decoration: none; color: inherit; display: block; }
 .atr-paystep p { color: var(--ink-soft); margin-bottom: 1.1rem; }
 .atr-paystep .atr-paystep-note { font-size: 0.9rem; color: var(--muted); margin-bottom: 0; }
 
+/* ---------- SITE_AUDIT_BATCH2_2026_10_30 (Oct 30, 2026) ---------- */
+/* D14: on phones the "Add to Home Screen" prompt becomes a slim bar so it
+   no longer covers the footer's Share and Accessibility buttons. It stays
+   dismissible (the close button keeps its own slot at the right end), the
+   expanded steps open as a small card above the bar instead of growing
+   the bar over the footer, and desktop (>=769px) is unchanged. */
+@media (max-width: 768px) {
+  .install-prompt { flex-wrap: nowrap; gap: 0.5rem; padding: 0.45rem 1.7rem 0.45rem 0.6rem; border-radius: 999px; }
+  .install-prompt .install-icon { width: 28px; height: 28px; border-radius: 8px; }
+  .install-main { flex: 1 1 auto; }
+  .install-main strong { font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .install-main span { display: none; }
+  .install-action { padding: 0.4rem 0.85rem; }
+  .install-close { top: 50%; right: 8px; transform: translateY(-50%); }
+  .install-steps { position: absolute; left: 0; right: 0; bottom: calc(100% + 8px);
+    background: var(--card, #ffffff); border: 1px solid rgba(127, 150, 175, 0.35);
+    border-radius: 14px; padding: 0.6rem 0.75rem; box-shadow: 0 10px 30px rgba(4, 12, 24, 0.28); }
+  html[data-theme="dark"] .install-steps { background: var(--surface-warm); }
+}
 /* ===== SITE_MOBILE_HEADER_2026_10_30 =====
    Phone-width header fit: logo + full title + theme/Account/Portal buttons
    must share one row. The row's fixed costs (~424px) exceeded small
