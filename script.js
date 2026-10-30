@@ -517,20 +517,20 @@
   document.addEventListener('DOMContentLoaded', function () {
 
     var PRODUCTS = [
-      { id: 'glass-iphone', name: 'Tempered Glass Screen Protector — iPhone', cat: 'Screen Protectors', price: 14.99 },
-      { id: 'glass-samsung', name: 'Tempered Glass Screen Protector — Samsung Galaxy', cat: 'Screen Protectors', price: 14.99 },
-      { id: 'glass-privacy', name: 'Privacy Tempered Glass Screen Protector — iPhone', cat: 'Screen Protectors', price: 19.99 },
-      { id: 'case-clear-iphone', name: 'Clear TPU Case — iPhone', cat: 'Phone Cases', price: 14.99 },
-      { id: 'case-rugged-iphone', name: 'Shockproof Rugged Case — iPhone', cat: 'Phone Cases', price: 24.99 },
-      { id: 'case-clear-samsung', name: 'Clear TPU Case — Samsung Galaxy', cat: 'Phone Cases', price: 14.99 },
+      { id: 'glass-iphone', name: 'Tempered Glass Screen Protector — iPhone', cat: 'Screen Protectors', price: 14.99, pts: 1000 },
+      { id: 'glass-samsung', name: 'Tempered Glass Screen Protector — Samsung Galaxy', cat: 'Screen Protectors', price: 14.99, pts: 1000 },
+      { id: 'glass-privacy', name: 'Privacy Tempered Glass Screen Protector — iPhone', cat: 'Screen Protectors', price: 19.99, pts: 1000 },
+      { id: 'case-clear-iphone', name: 'Clear TPU Case — iPhone', cat: 'Phone Cases', price: 14.99, pts: 2500 },
+      { id: 'case-rugged-iphone', name: 'Shockproof Rugged Case — iPhone', cat: 'Phone Cases', price: 24.99, pts: 2500 },
+      { id: 'case-clear-samsung', name: 'Clear TPU Case — Samsung Galaxy', cat: 'Phone Cases', price: 14.99, pts: 2500 },
       { id: 'cable-lightning-usbc', name: 'Lightning to USB-C Charging Cable 1.2m', cat: 'Charging Cables', price: 14.99 },
       { id: 'cable-lightning-usba', name: 'Lightning to USB-A Charging Cable 1.2m', cat: 'Charging Cables', price: 12.99 },
       { id: 'cable-usbc-usbc', name: 'USB-C to USB-C 60W Fast-Charge Cable 1m', cat: 'Charging Cables', price: 12.99 },
-      { id: 'wall-dual-20w', name: '20W Dual-Port Wall Charger (USB-C + USB-A)', cat: 'Wall Chargers', price: 19.99 },
-      { id: 'wall-pd-20w', name: '20W USB-C Fast Wall Charger', cat: 'Wall Chargers', price: 17.99 },
-      { id: 'car-dual-usb', name: 'Dual USB Car Charger (Fast Charge)', cat: 'Car Chargers', price: 14.99 },
-      { id: 'mag-pad-15w', name: 'Magnetic Wireless Charging Pad 15W', cat: 'Wireless Chargers', price: 29.99 },
-      { id: 'station-3in1', name: '3-in-1 Wireless Charging Station', cat: 'Wireless Chargers', price: 44.99 }
+      { id: 'wall-dual-20w', name: '20W Dual-Port Wall Charger (USB-C + USB-A)', cat: 'Wall Chargers', price: 19.99, pts: 3500 },
+      { id: 'wall-pd-20w', name: '20W USB-C Fast Wall Charger', cat: 'Wall Chargers', price: 17.99, pts: 3500 },
+      { id: 'car-dual-usb', name: 'Dual USB Car Charger (Fast Charge)', cat: 'Car Chargers', price: 14.99, pts: 3500 },
+      { id: 'mag-pad-15w', name: 'Magnetic Wireless Charging Pad 15W', cat: 'Wireless Chargers', price: 29.99, pts: 3500 },
+      { id: 'station-3in1', name: '3-in-1 Wireless Charging Station', cat: 'Wireless Chargers', price: 44.99, pts: 3500 }
     ];
 
     var grid = document.getElementById('product-grid');
@@ -541,6 +541,7 @@
     var overlay = document.getElementById('cart-overlay');
 
     function money(n) { return '$' + n.toFixed(2); }
+    function fmtPts(n) { return Number(n || 0).toLocaleString('en-US'); }
 
     function getCart() {
       var cart;
@@ -562,6 +563,50 @@
       renderCart();
     }
 
+    /* SITE_POINTS_SPEND_2026_10_30: "pay with points" choices per cart
+     * line live in their own storage map, so the cash cart's shape is
+     * unchanged. A line can be points-paid only when the product carries
+     * a points price (p.pts). The map is pruned against the live cart on
+     * every read, exactly like the cart itself. */
+    var PTS_KEY = 'atr-cart-points';
+    function getPtsMap() {
+      var map;
+      try { map = JSON.parse(localStorage.getItem(PTS_KEY) || '{}'); } catch (e) { return {}; }
+      var cart = getCart();
+      var changed = false;
+      Object.keys(map).forEach(function (k) {
+        var p = PRODUCTS.find(function (x) { return x.id === k; });
+        if (!cart[k] || !p || !p.pts) { delete map[k]; changed = true; }
+      });
+      if (changed) { try { localStorage.setItem(PTS_KEY, JSON.stringify(map)); } catch (e) {} }
+      return map;
+    }
+    function savePtsMap(map) {
+      try { localStorage.setItem(PTS_KEY, JSON.stringify(map)); } catch (e) {}
+      renderCart();
+    }
+    function ptsLines() {
+      var cart = getCart();
+      var map = getPtsMap();
+      return Object.keys(map).map(function (id) {
+        var p = PRODUCTS.find(function (x) { return x.id === id; });
+        var qty = cart[id] || 0;
+        return p && qty > 0 ? { p: p, qty: qty, pts: p.pts * qty } : null;
+      }).filter(function (x) { return !!x; });
+    }
+    function ptsTotal() {
+      return ptsLines().reduce(function (sum, l) { return sum + l.pts; }, 0);
+    }
+    function cashSum() {
+      var cart = getCart();
+      var map = getPtsMap();
+      return Object.keys(cart).reduce(function (sum, k) {
+        if (map[k]) return sum;
+        var p = PRODUCTS.find(function (x) { return x.id === k; });
+        return sum + (p ? p.price * cart[k] : 0);
+      }, 0);
+    }
+
     function renderProducts(filter) {
       if (!grid) return;
       grid.innerHTML = '';
@@ -576,7 +621,7 @@
             '<span class="product-cat">' + p.cat + '</span>' +
             '<h3 class="product-name">' + p.name + '</h3>' +
             '<div class="product-foot">' +
-              '<span class="product-price">' + money(p.price) + '</span>' +
+              '<span class="product-price">' + money(p.price) + (p.pts ? ' <span class="product-pts">or ' + fmtPts(p.pts) + ' pts</span>' : '') + '</span>' +
               '<button class="add-btn" data-id="' + p.id + '"><i class="fas fa-plus"></i> Add</button>' +
             '</div>' +
           '</div>';
@@ -611,26 +656,56 @@
       }, 0);
     }
 
+    function paintCartPointsSummary(lines) {
+      var box = document.getElementById('cart-points-lines');
+      if (box) {
+        if (!lines.length) {
+          box.innerHTML = '';
+        } else {
+          var html = lines.map(function (l) {
+            return '<div class="cart-points-line"><span>' + l.p.name + ' &times; ' + l.qty + '</span><strong>' + fmtPts(l.pts) + ' pts</strong></div>';
+          }).join('');
+          html += '<div class="cart-points-line cart-points-total"><span>Paid with points</span><strong>' + fmtPts(ptsTotal()) + ' pts</strong></div>';
+          html += '<div class="cart-points-line"><span>Due at checkout</span><strong>' + money(cashSum()) + '</strong></div>';
+          box.innerHTML = html;
+        }
+      }
+      if (window.atrPoints && window.atrPoints.cartChanged) {
+        window.atrPoints.cartChanged({ sum: cartSum(), qty: cartQty() });
+      }
+    }
+
     function renderCart() {
       var cart = getCart();
       var ids = Object.keys(cart);
+      var lines = ptsLines();
       if (cartCount) cartCount.textContent = cartQty();
-      if (cartTotal) cartTotal.textContent = money(cartSum());
+      // #cart-total is always the amount the Square checkout will
+      // charge: points-paid lines come off the cash bill entirely.
+      if (cartTotal) {
+        cartTotal.textContent = money(lines.length ? cashSum() : cartSum());
+        var totalLabel = cartTotal.parentElement ? cartTotal.parentElement.querySelector('span') : null;
+        if (totalLabel) totalLabel.textContent = lines.length ? 'Due at checkout' : 'Subtotal';
+      }
+      paintCartPointsSummary(lines);
       if (!cartItems) return;
       if (!ids.length) {
         cartItems.innerHTML = '<p class="cart-empty">Your cart is empty.<br>Add some accessories to get started.</p>';
         return;
       }
       cartItems.innerHTML = '';
+      var ptsMap = getPtsMap();
       ids.forEach(function (id) {
         var p = PRODUCTS.find(function (x) { return x.id === id; });
         if (!p) return;
+        var payPts = !!ptsMap[id];
         var div = document.createElement('div');
         div.className = 'cart-item';
         div.innerHTML =
           '<div class="cart-item-info">' +
             '<div class="cart-item-name">' + p.name + '</div>' +
-            '<div class="cart-item-price">' + money(p.price) + ' each</div>' +
+            '<div class="cart-item-price">' + (payPts ? fmtPts(p.pts * cart[id]) + ' pts' + (cart[id] > 1 ? ' for ' + cart[id] : '') : money(p.price) + ' each') + '</div>' +
+            (p.pts ? '<button class="cart-pts-toggle' + (payPts ? ' is-on' : '') + '" data-pts-id="' + id + '" type="button">' + (payPts ? '<i class="fas fa-check"></i> Paying with points' : '<i class="fas fa-star"></i> Pay with points &mdash; ' + fmtPts(p.pts) + ' pts') + '</button>' : '') +
           '</div>' +
           '<div class="cart-qty">' +
             '<button class="qty-btn" data-act="dec" data-id="' + id + '">&minus;</button>' +
@@ -654,6 +729,14 @@
           var c = getCart();
           delete c[btn.getAttribute('data-id')];
           saveCart(c);
+        });
+      });
+      cartItems.querySelectorAll('.cart-pts-toggle').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var id = btn.getAttribute('data-pts-id');
+          var map = getPtsMap();
+          if (map[id]) delete map[id]; else map[id] = 1;
+          savePtsMap(map);
         });
       });
     }
@@ -697,6 +780,19 @@
 
     // Checkout: real payment via the Square checkout function (prices are
     // set server-side; the browser only sends product ids + quantities).
+    // SITE_POINTS_SPEND_2026_10_30: lines the customer toggled to points
+    // are settled for real BEFORE the redirect and are never sent to
+    // Square, so the cash total drops by exactly those lines. Commit
+    // order is deliberate:
+    //   1. Ask Square for the cash checkout URL first — nothing has been
+    //      deducted yet, so a failure here costs the customer nothing.
+    //   2. Deduct through window.atrPoints.spendOnShop: a guarded
+    //      balance update plus a points_redemptions row, rolled back if
+    //      the row cannot be recorded. If the balance cannot cover the
+    //      points lines, the whole checkout stops — no partial
+    //      deduction, no silent discount.
+    //   3. Only then leave for Square (or finish in place when the
+    //      whole cart was points-paid).
     var SQ_CHECKOUT_URL = 'https://lyujxpuicarblpkdzuuc.supabase.co/functions/v1/square-checkout';
     var SQ_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
     var checkoutBtn = document.getElementById('cart-checkout');
@@ -707,25 +803,79 @@
           return { id: id, qty: cart[id] };
         }).filter(function (x) { return x.qty > 0 && PRODUCTS.some(function (p) { return p.id === x.id; }); });
         if (!items.length) return;
+        var map = getPtsMap();
+        var ptsItems = items.filter(function (x) { return !!map[x.id]; });
+        var cashItems = items.filter(function (x) { return !map[x.id]; });
+        var total = ptsTotal();
         var original = checkoutBtn.innerHTML;
-        checkoutBtn.disabled = true;
-        checkoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Taking you to secure checkout&hellip;';
-        fetch(SQ_CHECKOUT_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + SQ_ANON_KEY,
-            'apikey': SQ_ANON_KEY
-          },
-          body: JSON.stringify({ items: items })
-        }).then(function (r) { return r.json(); }).then(function (d) {
-          if (d && d.url) { window.location.href = d.url; return; }
-          throw new Error('no checkout url');
-        }).catch(function () {
+        function restore(msg) {
           checkoutBtn.disabled = false;
           checkoutBtn.innerHTML = original;
-          alert('Checkout hit a snag — please try again, or text us at (937) 280-6243 and we will take your order.');
-        });
+          if (msg) alert(msg);
+        }
+        if (ptsItems.length) {
+          if (!window.atrPoints || !window.atrPoints.getSession()) {
+            alert('Sign in to pay with points — tap your account at the top of the page and sign in, then check out. Your cart is saved.');
+            return;
+          }
+          if (!(total > 0)) return;
+        }
+        checkoutBtn.disabled = true;
+        checkoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Taking you to secure checkout&hellip;';
+
+        function finishWithPoints(squareUrl) {
+          if (!ptsItems.length) {
+            if (squareUrl) window.location.href = squareUrl;
+            return;
+          }
+          window.atrPoints.spendOnShop(total, ptsItems.map(function (x) {
+            var p = PRODUCTS.find(function (y) { return y.id === x.id; });
+            return { id: x.id, name: p ? p.name : x.id, qty: x.qty, pts: p ? p.pts * x.qty : 0 };
+          })).then(function (res) {
+            if (!res || !res.ok) {
+              restore(res && res.message ? res.message : 'Points checkout hit a snag — nothing was charged. Please try again.');
+              return;
+            }
+            // Points are spent and recorded: drop those lines from the
+            // cart so nothing is bought twice.
+            var c = getCart();
+            var m = getPtsMap();
+            ptsItems.forEach(function (x) { delete c[x.id]; delete m[x.id]; });
+            try { localStorage.setItem('atr-cart', JSON.stringify(c)); } catch (e) {}
+            savePtsMap(m); // re-renders the now cash-only (or empty) cart
+            if (window.atrPoints.refreshAccountSurfaces) window.atrPoints.refreshAccountSurfaces();
+            if (squareUrl) { window.location.href = squareUrl; return; }
+            checkoutBtn.disabled = false;
+            checkoutBtn.innerHTML = original;
+            var done = document.getElementById('cart-points-success');
+            if (done) {
+              done.hidden = false;
+              done.innerHTML = '<strong>Paid with points — thank you!</strong><br>Your items are on order with us. We will bring them at your repair visit, or text you to coordinate pickup or delivery.';
+            }
+            renderCart();
+          }).catch(function () {
+            restore('Points checkout hit a snag — nothing was charged. Please try again, or text us at (937) 280-6243.');
+          });
+        }
+
+        if (cashItems.length) {
+          fetch(SQ_CHECKOUT_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + SQ_ANON_KEY,
+              'apikey': SQ_ANON_KEY
+            },
+            body: JSON.stringify({ items: cashItems })
+          }).then(function (r) { return r.json(); }).then(function (d) {
+            if (d && d.url) { finishWithPoints(d.url); return; }
+            throw new Error('no checkout url');
+          }).catch(function () {
+            restore('Checkout hit a snag — please try again, or text us at (937) 280-6243 and we will take your order.');
+          });
+        } else {
+          finishWithPoints(null);
+        }
       });
     }
 
@@ -1664,10 +1814,13 @@ if ("serviceWorker" in navigator) {
     var menuItems = document.querySelectorAll('[data-acct-menu]');
     var repairsView = document.getElementById('acct-view-repairs');
     var settingsView = document.getElementById('acct-view-settings');
+    var rewardsView = document.getElementById('acct-view-rewards');
     if (!menuItems.length || !repairsView || !settingsView) return;
     function show(view) {
       repairsView.hidden = view !== 'repairs';
       settingsView.hidden = view !== 'settings';
+      /* SITE_POINTS_SPEND_2026_10_30: third view — Rewards & Vouchers. */
+      if (rewardsView) rewardsView.hidden = view !== 'rewards';
       menuItems.forEach(function (btn) {
         btn.classList.toggle('is-active', btn.getAttribute('data-acct-menu') === view);
       });
@@ -1689,5 +1842,508 @@ if ("serviceWorker" in navigator) {
       if (window.atrOpenReset) { window.atrOpenReset(); return; }
       if (msg) msg.textContent = 'Use Forgot your password on the sign in screen to change it by email.';
     });
+  });
+})();
+
+/* ==================== POINTS SPENDING ====================
+   SITE_POINTS_SPEND_2026_10_30. Earning already exists (the portal
+   credits the rewards table when a ticket reaches Job Complete). This
+   module is the spending half, and window.atrPoints is the money API
+   every surface shares:
+     getSession()          the localStorage 'atr-account' mirror, or null
+     fetchBalance(id)      fresh rewards.points read -> Promise<number>
+     claimSpend(id, n)     guarded deduction -> Promise<result>
+     createVoucher(blocks) claim + voucher row + redemption row
+     spendOnShop(total, items)  claim + redemption row (kind 'shop'),
+                           called by the cart at its commit point
+   Atomicity mirrors the portal's earning claim: a spend first READS
+   the balance, then UPDATEs rewards setting points = balance - spend
+   WHERE points is still exactly balance (a compare-and-swap). If the
+   claim lands, the points_redemptions audit row is written; if that
+   write fails, the points are credited back with the mirror-image
+   guarded update before the customer hears anything. Two tabs or a
+   portal adjustment racing a spend can only make it fail cleanly —
+   never double-spend, never half-apply.
+   Graceful degradation: if points_vouchers / points_redemptions do
+   not exist yet (schema.sql runs separately, before publish), the
+   exchange surfaces hide behind an honest "not available online yet"
+   note and checkout falls back to cash-only with the points intact. */
+(function () {
+  'use strict';
+
+  var SUPABASE_URL = 'https://lyujxpuicarblpkdzuuc.supabase.co';
+  var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
+  var BLOCK_POINTS = 100;  // 100 points = $5 — the published rate
+  var BLOCK_VALUE = 5;
+  var PHONE_TEXT = '(937) 280-6243';
+
+  var sb = null;
+  function client() {
+    if (sb) return sb;
+    if (window.supabase && window.supabase.createClient) {
+      try { sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch (e) { sb = null; }
+    }
+    return sb;
+  }
+  function $(id) { return document.getElementById(id); }
+  function fmtPts(n) { return Number(n || 0).toLocaleString('en-US'); }
+  function escX(x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function firstName(full) { return String(full || '').trim().split(/\s+/)[0] || 'there'; }
+
+  function getSession() {
+    try { return JSON.parse(localStorage.getItem('atr-account') || 'null'); } catch (e) { return null; }
+  }
+
+  function patchSessionPoints(pts) {
+    try {
+      var s = getSession();
+      if (s) { s.points = pts; localStorage.setItem('atr-account', JSON.stringify(s)); }
+    } catch (e) {}
+    var num = $('acct-points-num');
+    if (num) num.textContent = pts;
+    var s2 = getSession();
+    var label = $('account-label');
+    if (label && s2) label.textContent = firstName(s2.name) + ' · ' + pts + ' pts';
+  }
+
+  function fetchBalance(customerId) {
+    var c = client();
+    if (!c || !customerId) return Promise.resolve(0);
+    return c.from('rewards').select('points').eq('customer_id', customerId).limit(1)
+      .then(function (res) {
+        if (res.error) throw res.error;
+        return (res.data && res.data.length) ? (res.data[0].points || 0) : 0;
+      });
+  }
+
+  function claimSpend(customerId, amount) {
+    var c = client();
+    if (!c) return Promise.resolve({ ok: false, reason: 'unavailable' });
+    return fetchBalance(customerId).then(function (bal) {
+      if (bal < amount) return { ok: false, reason: 'insufficient', balance: bal };
+      var next = bal - amount;
+      return c.from('rewards').update({ points: next })
+        .eq('customer_id', customerId).eq('points', bal).select('customer_id')
+        .then(function (res) {
+          if (res.error) throw res.error;
+          if (!res.data || !res.data.length) return { ok: false, reason: 'changed', balance: bal };
+          return { ok: true, balance: next, previous: bal };
+        });
+    }).catch(function () { return { ok: false, reason: 'error' }; });
+  }
+
+  function creditBack(customerId, amount, expectedCurrent) {
+    var c = client();
+    if (!c) return Promise.resolve(false);
+    return c.from('rewards').update({ points: expectedCurrent + amount })
+      .eq('customer_id', customerId).eq('points', expectedCurrent).select('customer_id')
+      .then(function (res) { return !res.error && !!(res.data && res.data.length); })
+      .catch(function () { return false; });
+  }
+
+  function recordRedemption(row) {
+    var c = client();
+    if (!c) return Promise.reject(new Error('no client'));
+    return c.from('points_redemptions').insert(row).select('id').single()
+      .then(function (res) {
+        if (res.error) throw res.error;
+        return res.data;
+      });
+  }
+
+  var CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  function makeCode() {
+    var out = 'ATRG-';
+    for (var i = 0; i < 6; i++) out += CODE_ALPHABET.charAt(Math.floor(Math.random() * CODE_ALPHABET.length));
+    return out;
+  }
+
+  /* Exchange $5 blocks for a voucher. One commit: claim the points,
+   * insert the voucher, write the audit row. Any failure after the
+   * claim rolls the points back before the customer hears about it. */
+  function createVoucher(blocks) {
+    var s = getSession();
+    if (!s || !s.id) return Promise.resolve({ ok: false, message: 'Please sign in first.' });
+    blocks = Math.max(0, Math.floor(Number(blocks) || 0));
+    if (!blocks) return Promise.resolve({ ok: false, message: 'Choose at least one $5 block.' });
+    var spend = blocks * BLOCK_POINTS;
+    var c = client();
+    if (!c) return Promise.resolve({ ok: false, message: 'Points are unavailable right now — please try again later.' });
+    return claimSpend(s.id, spend).then(function (claim) {
+      if (!claim.ok) {
+        if (claim.reason === 'insufficient') {
+          return { ok: false, message: 'Your balance is ' + fmtPts(claim.balance) + ' points — not enough for ' + blocks + ' block' + (blocks > 1 ? 's' : '') + '. Nothing was exchanged.' };
+        }
+        return { ok: false, message: 'Your balance just changed — please try again. Nothing was exchanged.' };
+      }
+      var attempts = 0;
+      function tryInsert() {
+        attempts++;
+        var code = makeCode();
+        return c.from('points_vouchers').insert({
+          customer_id: s.id, code: code, blocks: blocks,
+          value_dollars: blocks * BLOCK_VALUE, points_spent: spend, status: 'active'
+        }).select('id, code').single().then(function (res) {
+          if (res.error) {
+            // 23505 = the random code already exists: mint another.
+            if (res.error.code === '23505' && attempts < 3) return tryInsert();
+            throw res.error;
+          }
+          return recordRedemption({
+            customer_id: s.id, kind: 'voucher', points_spent: spend,
+            blocks: blocks, voucher_id: res.data.id,
+            details: { code: res.data.code, value_dollars: blocks * BLOCK_VALUE }
+          }).then(function () { return { code: res.data.code }; });
+        });
+      }
+      return tryInsert().then(function (done) {
+        patchSessionPoints(claim.balance);
+        return { ok: true, code: done.code, balance: claim.balance, value: blocks * BLOCK_VALUE };
+      }).catch(function () {
+        return creditBack(s.id, spend, claim.balance).then(function (back) {
+          if (back) patchSessionPoints(claim.previous);
+          return { ok: false, message: back
+            ? 'The exchange hit a snag and your points were put back. Please try again.'
+            : 'The exchange hit a snag. Text us at ' + PHONE_TEXT + ' and we will sort out your points.' };
+        });
+      });
+    });
+  }
+
+  /* Shop checkout commit for points-paid lines (called by the cart). */
+  function spendOnShop(total, items) {
+    var s = getSession();
+    if (!s || !s.id) return Promise.resolve({ ok: false, message: 'Please sign in to pay with points.' });
+    total = Math.floor(Number(total) || 0);
+    if (!(total > 0)) return Promise.resolve({ ok: false, message: 'Nothing to pay with points.' });
+    return claimSpend(s.id, total).then(function (claim) {
+      if (!claim.ok) {
+        if (claim.reason === 'insufficient') {
+          return { ok: false, message: 'Your points balance is ' + fmtPts(claim.balance) + ' — not enough for the items you marked (' + fmtPts(total) + ' pts). Nothing was charged. Unmark an item or two and try again.' };
+        }
+        return { ok: false, message: 'Your points balance just changed — please review your cart and try again. Nothing was charged.' };
+      }
+      return recordRedemption({
+        customer_id: s.id, kind: 'shop', points_spent: total,
+        details: { items: items }
+      }).then(function () {
+        patchSessionPoints(claim.balance);
+        return { ok: true, balance: claim.balance };
+      }).catch(function () {
+        return creditBack(s.id, total, claim.balance).then(function (back) {
+          if (back) patchSessionPoints(claim.previous);
+          return { ok: false, message: back
+            ? 'Points checkout hit a snag and your points were put back. Please try again.'
+            : 'Points checkout hit a snag. Text us at ' + PHONE_TEXT + ' and we will sort out your points.' };
+        });
+      });
+    });
+  }
+
+  function fetchVouchers(customerId) {
+    var c = client();
+    if (!c || !customerId) return Promise.resolve(null);
+    return c.from('points_vouchers').select('id, code, value_dollars, blocks, status, created_at')
+      .eq('customer_id', customerId).eq('status', 'active')
+      .order('created_at', { ascending: false }).limit(50)
+      .then(function (res) {
+        if (res.error) throw res.error;
+        return res.data || [];
+      }).catch(function () { return null; }); // null = table unavailable
+  }
+
+  /* ---------------- shared surface state ---------------- */
+  var cartSnapshot = { sum: 0, qty: 0 };
+  var lastBalance = null;
+  var vouchersKnown = null; // null = unprobed, true/false after first read
+  var exchangeBlocks = 1;
+  var cartBlocks = 1;
+
+  function refreshCartBadge() {
+    var badge = $('acct-cart-count');
+    if (!badge) return;
+    badge.textContent = cartSnapshot.qty || 0;
+    badge.hidden = !(cartSnapshot.qty > 0);
+  }
+
+  function paintExchange() {
+    var balEl = $('pts-balance-num');
+    var s = getSession();
+    var bal = (lastBalance !== null) ? lastBalance : (s ? (s.points || 0) : 0);
+    if (balEl) balEl.textContent = fmtPts(bal);
+    var max = Math.floor(bal / BLOCK_POINTS);
+    if (exchangeBlocks > max) exchangeBlocks = Math.max(1, max);
+    if (exchangeBlocks < 1) exchangeBlocks = 1;
+    var num = $('pts-blocks');
+    if (num) num.textContent = exchangeBlocks;
+    var sub = $('pts-blocks-sub');
+    if (sub) sub.textContent = fmtPts(exchangeBlocks * BLOCK_POINTS) + ' points = $' + (exchangeBlocks * BLOCK_VALUE) + ' voucher';
+    var minus = $('pts-minus'), plus = $('pts-plus'), btn = $('pts-exchange-btn');
+    if (minus) minus.disabled = exchangeBlocks <= 1;
+    if (plus) plus.disabled = exchangeBlocks >= max;
+    if (btn) {
+      btn.disabled = max < 1 || vouchersKnown === false;
+      btn.innerHTML = max < 1
+        ? 'You need ' + BLOCK_POINTS + ' points for a $5 block'
+        : '<i class="fas fa-ticket"></i> Exchange for a $' + (exchangeBlocks * BLOCK_VALUE) + ' voucher';
+    }
+    var wrap = $('pts-exchange'), un = $('pts-exchange-unavailable');
+    if (wrap && un && vouchersKnown !== null) {
+      wrap.hidden = vouchersKnown === false;
+      un.hidden = vouchersKnown !== false;
+    }
+  }
+
+  function paintCartPanel() {
+    var panel = $('cart-points-panel');
+    if (!panel) return;
+    var s = getSession();
+    var signin = $('cart-points-signin'), main = $('cart-points-main');
+    if (!s) {
+      panel.hidden = false;
+      if (signin) signin.hidden = false;
+      if (main) main.hidden = true;
+      return;
+    }
+    if (signin) signin.hidden = true;
+    if (main) main.hidden = false;
+    panel.hidden = false;
+    var bal = (lastBalance !== null) ? lastBalance : (s.points || 0);
+    var balEl = $('cart-points-balance');
+    if (balEl) balEl.textContent = fmtPts(bal);
+    var maxByBalance = Math.floor(bal / BLOCK_POINTS);
+    var maxByCart = Math.floor((cartSnapshot.sum || 0) / BLOCK_VALUE);
+    var max = Math.min(maxByBalance, maxByCart);
+    if (cartBlocks > max) cartBlocks = Math.max(1, max);
+    if (cartBlocks < 1) cartBlocks = 1;
+    var num = $('cart-pts-blocks');
+    if (num) num.textContent = cartBlocks;
+    var minus = $('cart-pts-minus'), plus = $('cart-pts-plus'), btn = $('cart-pts-convert-btn');
+    if (minus) minus.disabled = cartBlocks <= 1;
+    if (plus) plus.disabled = cartBlocks >= max;
+    if (btn) {
+      btn.disabled = max < 1 || vouchersKnown === false;
+      btn.innerHTML = '<i class="fas fa-ticket"></i> Turn ' + fmtPts(cartBlocks * BLOCK_POINTS) + ' points into a $' + (cartBlocks * BLOCK_VALUE) + ' voucher';
+    }
+    var conv = $('cart-points-convert');
+    if (conv && vouchersKnown === false) conv.hidden = true;
+    else if (conv) conv.hidden = false;
+  }
+
+  function refreshVoucherSurfaces() {
+    var s = getSession();
+    var strip = $('acct-voucher-strip');
+    if (!s || !s.id) { if (strip) strip.hidden = true; return Promise.resolve(); }
+    return fetchVouchers(s.id).then(function (list) {
+      if (list === null) {
+        vouchersKnown = false;
+        if (strip) strip.hidden = true;
+        var vl0 = $('pts-voucher-list');
+        if (vl0) vl0.innerHTML = '<p class="acct-muted">Vouchers are not available online yet.</p>';
+        paintExchange(); paintCartPanel();
+        return;
+      }
+      vouchersKnown = true;
+      if (strip) {
+        if (list.length) {
+          strip.hidden = false;
+          var total = list.reduce(function (n, v) { return n + (v.value_dollars || 0); }, 0);
+          var txt = $('acct-voucher-strip-text');
+          if (txt) txt.textContent = 'You have ' + list.length + ' voucher' + (list.length > 1 ? 's' : '') + ' worth $' + total + ' — tap to view';
+        } else {
+          strip.hidden = true;
+        }
+      }
+      var vl = $('pts-voucher-list');
+      if (vl) {
+        vl.innerHTML = list.length ? list.map(function (v) {
+          return '<div class="pts-voucher-card"><div><div class="pts-voucher-code">' + escX(v.code) + '</div>' +
+            '<div class="acct-muted" style="text-align:left;padding:0;">Show this code at your visit to use it.</div></div>' +
+            '<div class="pts-voucher-value">$' + escX(v.value_dollars) + '</div></div>';
+        }).join('') : '<p class="acct-muted">No vouchers yet — exchange points above and they will show up here.</p>';
+      }
+      paintExchange(); paintCartPanel();
+    });
+  }
+
+  function refreshBalances() {
+    var s = getSession();
+    if (!s || !s.id) { lastBalance = null; paintExchange(); paintCartPanel(); return Promise.resolve(); }
+    return fetchBalance(s.id).then(function (bal) {
+      lastBalance = bal;
+      patchSessionPoints(bal);
+      paintExchange(); paintCartPanel();
+    }).catch(function () { paintExchange(); paintCartPanel(); });
+  }
+
+  function refreshAccountSurfaces() {
+    refreshCartBadge();
+    return Promise.all([refreshBalances(), refreshVoucherSurfaces()]);
+  }
+
+  function refreshTicketPoints() {
+    var wrap = $('acct-t-points-wrap');
+    if (!wrap) return;
+    var s = getSession();
+    if (!s || !s.id) { wrap.hidden = true; return; }
+    fetchBalance(s.id).then(function (bal) {
+      lastBalance = bal;
+      var max = Math.floor(bal / BLOCK_POINTS);
+      if (max < 1) { wrap.hidden = true; return; }
+      wrap.hidden = false;
+      var det = $('acct-t-points-detail');
+      if (det) det.textContent = 'You have ' + fmtPts(bal) + ' points — up to $' + (max * BLOCK_VALUE) + ' off this repair.';
+      var sel = $('acct-t-points-blocks');
+      if (sel) {
+        var cur = sel.value;
+        sel.innerHTML = '';
+        for (var i = 1; i <= max; i++) {
+          var o = document.createElement('option');
+          o.value = i;
+          o.textContent = '$' + (i * BLOCK_VALUE) + ' off — ' + fmtPts(i * BLOCK_POINTS) + ' points';
+          sel.appendChild(o);
+        }
+        if (cur && Number(cur) <= max) sel.value = cur;
+      }
+    }).catch(function () { wrap.hidden = true; });
+  }
+
+  /* Public API — assigned synchronously at parse time, because the
+   * shop module's DOMContentLoaded handlers (registered earlier in
+   * this file) call cartChanged/checkout helpers. */
+  window.atrPoints = {
+    getSession: getSession,
+    fetchBalance: fetchBalance,
+    claimSpend: claimSpend,
+    createVoucher: createVoucher,
+    spendOnShop: spendOnShop,
+    refreshAccountSurfaces: refreshAccountSurfaces,
+    cartChanged: function (snapshot) {
+      if (snapshot) cartSnapshot = snapshot;
+      refreshCartBadge();
+      paintCartPanel();
+    }
+  };
+
+  document.addEventListener('DOMContentLoaded', function () {
+    /* Tappable points balance -> the Shop. The anchor carries
+     * data-page="shop", so the router navigates; we just close the
+     * account modal first (its own close button restores scroll). */
+    var ptsLink = $('acct-points-link');
+    if (ptsLink) ptsLink.addEventListener('click', function () {
+      var c = $('acct-close');
+      if (c) c.click();
+    });
+
+    /* Account-box Cart row: close the account, go to the Shop, open
+     * the cart drawer. */
+    var cartBtn = $('acct-menu-cart');
+    if (cartBtn) cartBtn.addEventListener('click', function () {
+      var c = $('acct-close');
+      if (c) c.click();
+      var link = document.querySelector('.nav-link[data-page="shop"], .menu-link[data-page="shop"]');
+      if (link) link.click();
+      else if (window.location.hash !== '#shop') window.location.hash = '#shop';
+      setTimeout(function () { var ob = $('cart-open-btn'); if (ob) ob.click(); }, 450);
+    });
+
+    /* Voucher strip -> the Rewards view. */
+    var strip = $('acct-voucher-strip');
+    if (strip) strip.addEventListener('click', function () {
+      var item = document.querySelector('[data-acct-menu="rewards"]');
+      if (item) item.click();
+    });
+
+    /* Rewards view: refresh every time it is opened. */
+    var rewardsItem = document.querySelector('[data-acct-menu="rewards"]');
+    if (rewardsItem) rewardsItem.addEventListener('click', function () {
+      refreshBalances();
+      refreshVoucherSurfaces();
+    });
+
+    /* Exchange steppers + button (account Rewards view). */
+    var exMinus = $('pts-minus'), exPlus = $('pts-plus'), exBtn = $('pts-exchange-btn');
+    if (exMinus) exMinus.addEventListener('click', function () { exchangeBlocks = Math.max(1, exchangeBlocks - 1); paintExchange(); });
+    if (exPlus) exPlus.addEventListener('click', function () { exchangeBlocks = exchangeBlocks + 1; paintExchange(); });
+    if (exBtn) exBtn.addEventListener('click', function () {
+      var err = $('pts-exchange-error'), ok = $('pts-exchange-success');
+      if (err) err.hidden = true;
+      if (ok) ok.hidden = true;
+      exBtn.disabled = true;
+      exBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Exchanging…';
+      createVoucher(exchangeBlocks).then(function (res) {
+        if (res.ok) {
+          if (ok) {
+            ok.hidden = false;
+            ok.innerHTML = '<strong>Your $' + res.value + ' voucher is ready: ' + escX(res.code) + '</strong><br>Show this code at your visit to use it. It is saved below under My vouchers.';
+          }
+          exchangeBlocks = 1;
+          refreshBalances();
+          refreshVoucherSurfaces();
+        } else {
+          if (err) { err.textContent = res.message; err.hidden = false; }
+          paintExchange();
+        }
+      });
+    });
+
+    /* Cart panel: sign-in nudge + voucher conversion. */
+    var signinBtn = $('cart-points-signin-btn');
+    if (signinBtn) signinBtn.addEventListener('click', function () {
+      var cc = $('cart-close');
+      if (cc) cc.click();
+      var ab = $('account-open-btn');
+      if (ab) ab.click();
+    });
+    var cMinus = $('cart-pts-minus'), cPlus = $('cart-pts-plus'), cBtn = $('cart-pts-convert-btn');
+    if (cMinus) cMinus.addEventListener('click', function () { cartBlocks = Math.max(1, cartBlocks - 1); paintCartPanel(); });
+    if (cPlus) cPlus.addEventListener('click', function () { cartBlocks = cartBlocks + 1; paintCartPanel(); });
+    if (cBtn) cBtn.addEventListener('click', function () {
+      var err = $('cart-pts-error'), ok = $('cart-pts-success');
+      if (err) err.hidden = true;
+      if (ok) ok.hidden = true;
+      cBtn.disabled = true;
+      createVoucher(cartBlocks).then(function (res) {
+        if (res.ok) {
+          if (ok) {
+            ok.hidden = false;
+            ok.innerHTML = '<strong>Voucher ' + escX(res.code) + ' — $' + res.value + '</strong><br>Show this code when you see us and we will apply its value then. It is also saved under My vouchers in your account.';
+          }
+          cartBlocks = 1;
+          refreshBalances();
+          refreshVoucherSurfaces();
+        } else {
+          if (err) { err.textContent = res.message; err.hidden = false; }
+          paintCartPanel();
+        }
+      });
+    });
+
+    /* New Request form: points block appears with a fresh balance. */
+    var ntBtn = $('acct-new-ticket-btn');
+    if (ntBtn) ntBtn.addEventListener('click', function () { refreshTicketPoints(); });
+    var usePts = $('acct-t-use-points');
+    if (usePts) usePts.addEventListener('change', function () {
+      var amt = $('acct-t-points-amount');
+      if (amt) amt.hidden = !usePts.checked;
+    });
+
+    /* Refresh the account surfaces whenever the account modal opens
+     * (covers sign-in, when renderDash swaps the views in). */
+    var modal = $('acct-modal');
+    if (modal && window.MutationObserver) {
+      var mo = new MutationObserver(function () {
+        if (!modal.hidden && getSession()) refreshAccountSurfaces();
+      });
+      mo.observe(modal, { attributes: true, attributeFilter: ['hidden'] });
+    }
+    var openBtn = $('account-open-btn');
+    if (openBtn) openBtn.addEventListener('click', function () {
+      if (getSession()) refreshAccountSurfaces();
+    });
+
+    refreshCartBadge();
+    paintCartPanel();
+    if (getSession()) { refreshBalances(); refreshVoucherSurfaces(); }
   });
 })();

@@ -1023,6 +1023,30 @@
       <div class="cart-footer">
         <div class="cart-total"><span>Subtotal</span><strong id="cart-total">$0.00</strong></div>
         <p class="cart-hint">Secure checkout by Square &mdash; tax calculated at checkout.</p>
+        <!-- SITE_POINTS_SPEND_2026_10_30: points panel. Signed out it is
+             only a nudge; signed in it carries the balance, the summary
+             of points-paid lines, and $5-block voucher conversion. -->
+        <div class="cart-points" id="cart-points-panel" hidden>
+          <div id="cart-points-signin" hidden>
+            <p class="cart-points-nudge"><i class="fas fa-star"></i> Have reward points? <button type="button" class="cart-points-linkbtn" id="cart-points-signin-btn">Sign in</button> to pay with points or turn points into a voucher.</p>
+          </div>
+          <div id="cart-points-main" hidden>
+            <p class="cart-points-balance"><i class="fas fa-star"></i> Your points: <strong id="cart-points-balance">0</strong> <span class="cart-points-rate">(100 points = $5)</span></p>
+            <div id="cart-points-lines"></div>
+            <div id="cart-points-convert">
+              <div class="pts-stepper pts-stepper-sm">
+                <button type="button" class="pts-step-btn" id="cart-pts-minus" aria-label="One block fewer">&minus;</button>
+                <div class="pts-step-val"><span id="cart-pts-blocks">1</span> &times; $5<br><span class="cart-points-rate">voucher blocks</span></div>
+                <button type="button" class="pts-step-btn" id="cart-pts-plus" aria-label="One block more">+</button>
+              </div>
+              <button class="btn btn-outline btn-sm" type="button" id="cart-pts-convert-btn"><i class="fas fa-ticket"></i> Turn points into a voucher</button>
+              <p class="cart-points-note">A voucher is used in person: show the code when you see us and we will apply its value then. It does not change today's online checkout total.</p>
+              <p class="acct-error" id="cart-pts-error" hidden></p>
+              <p class="pts-success" id="cart-pts-success" hidden></p>
+            </div>
+          </div>
+        </div>
+        <p class="pts-success" id="cart-points-success" hidden></p>
         <button class="btn btn-primary btn-lg cart-checkout" id="cart-checkout"><i class="fas fa-lock"></i> Secure Checkout &mdash; Square</button>
         <button class="cart-clear" id="cart-clear">Clear cart</button>
       </div>
@@ -1088,14 +1112,22 @@
         <!-- Logged-in view -->
         <div id="acct-dash-view" hidden>
           <h3><i class="fas fa-user-circle"></i> <span id="acct-dash-name">Hi there</span></h3>
-          <div class="acct-points">
+          <!-- SITE_POINTS_SPEND_2026_10_30: the balance is a door to
+               the Shop, and active vouchers surface right under it. -->
+          <a class="acct-points" id="acct-points-link" href="#shop" data-page="shop" aria-label="Your reward points — tap to shop with them">
             <div class="acct-points-num" id="acct-points-num">0</div>
             <div class="acct-points-label">reward points</div>
-          </div>
+            <div class="acct-points-tap">Tap to shop with your points <i class="fas fa-arrow-right"></i></div>
+          </a>
+          <button class="acct-voucher-strip" id="acct-voucher-strip" type="button" hidden>
+            <i class="fas fa-ticket"></i> <span id="acct-voucher-strip-text"></span>
+          </button>
 
           <!-- My Account menu: Repairs, Account Settings, Sign Out -->
           <div class="acct-menu" role="group" aria-label="My Account">
             <button class="acct-menu-item is-active" type="button" data-acct-menu="repairs"><i class="fas fa-tools"></i> Repairs</button>
+            <button class="acct-menu-item" type="button" data-acct-menu="rewards"><i class="fas fa-ticket"></i> Rewards &amp; Vouchers</button>
+            <button class="acct-menu-item" type="button" id="acct-menu-cart"><i class="fas fa-shopping-cart"></i> Cart <span class="acct-cart-count" id="acct-cart-count" hidden>0</span></button>
             <button class="acct-menu-item" type="button" data-acct-menu="settings"><i class="fas fa-gear"></i> Account Settings</button>
             <button class="acct-menu-item" type="button" id="authx-logout"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
           </div>
@@ -1173,11 +1205,47 @@
                 <input type="checkbox" id="acct-t-work-auth">
                 <span>I <strong>authorize</strong> Austin&rsquo;s Tech Repair Group to perform the requested diagnostic and repair work on my device. *</span>
               </label>
+              <!-- SITE_POINTS_SPEND_2026_10_30: intent only — nothing
+                   is deducted at booking; the discount lands at the
+                   visit. The block stays hidden without a balance. -->
+              <div class="acct-ticket-points" id="acct-t-points-wrap" hidden>
+                <label class="atr-check">
+                  <input type="checkbox" id="acct-t-use-points">
+                  <span><strong>Use my reward points toward this repair.</strong> <span id="acct-t-points-detail"></span></span>
+                </label>
+                <label class="acct-field" id="acct-t-points-amount" hidden>
+                  <span>How much? (100 points = $5)</span>
+                  <select id="acct-t-points-blocks"></select>
+                </label>
+                <p class="acct-muted" style="text-align:left;padding:0;">Nothing is deducted now — we apply the discount at your visit.</p>
+              </div>
               <p class="acct-error" id="acct-ticket-error" hidden></p>
               <button class="btn btn-primary btn-lg acct-submit" type="submit">Submit Request <i class="fas fa-arrow-right"></i></button>
             </form>
           </div>
 
+          </div>
+
+          <!-- Rewards & Vouchers (SITE_POINTS_SPEND_2026_10_30) -->
+          <div id="acct-view-rewards" hidden>
+            <div class="acct-rewards">
+              <h4><i class="fas fa-ticket"></i> Rewards &amp; Vouchers</h4>
+              <p class="acct-muted" style="text-align:left;padding:0;">You earn 1 point for every $1 of a completed repair. Trade points for a voucher — 100 points = $5 — and use it at your next visit, or pay for accessories with points right in the Shop.</p>
+              <div id="pts-exchange">
+                <p class="pts-balance-line">Your balance: <strong id="pts-balance-num">0</strong> points</p>
+                <div class="pts-stepper">
+                  <button type="button" class="pts-step-btn" id="pts-minus" aria-label="One block fewer">&minus;</button>
+                  <div class="pts-step-val"><span id="pts-blocks">1</span> &times; $5 block<br><span class="acct-muted" id="pts-blocks-sub" style="padding:0;">100 points = $5</span></div>
+                  <button type="button" class="pts-step-btn" id="pts-plus" aria-label="One block more">+</button>
+                </div>
+                <button class="btn btn-primary btn-lg acct-submit" type="button" id="pts-exchange-btn"><i class="fas fa-ticket"></i> Exchange for a voucher</button>
+                <p class="acct-error" id="pts-exchange-error" hidden></p>
+                <p class="pts-success" id="pts-exchange-success" hidden></p>
+              </div>
+              <p class="acct-muted" id="pts-exchange-unavailable" hidden>Points exchange is not available online yet — text us at (937) 280-6243 and we will apply your points for you.</p>
+              <h4 class="acct-detail-h"><i class="fas fa-ticket"></i> My vouchers</h4>
+              <div id="pts-voucher-list"><p class="acct-muted">Loading&hellip;</p></div>
+            </div>
           </div>
 
           <div id="acct-view-settings" hidden>
@@ -3415,13 +3483,35 @@
         work_auth_accepted: !!(workAuthBox && workAuthBox.checked),
         marketing_opt_in: !!(marketingBox && marketingBox.checked)
       };
+      /* SITE_POINTS_SPEND_2026_10_30: points toward this repair.
+       * Intent only — nothing is deducted at booking; the discount is
+       * applied at the visit. The block count rides in
+       * tickets.points_blocks_requested when that column exists; if
+       * the insert fails because it does not (schema.sql not run
+       * yet), the request is retried with the intent written into the
+       * issue text, so the booking never breaks and the ask is never
+       * lost. */
+      var ptsUseBox = $('acct-t-use-points'), ptsBlocksSel = $('acct-t-points-blocks');
+      var ptsBlocks = (ptsUseBox && ptsUseBox.checked && ptsBlocksSel) ? (parseInt(ptsBlocksSel.value, 10) || 0) : 0;
+      if (ptsBlocks > 0) row.points_blocks_requested = ptsBlocks;
       if (!row.issue) { err.textContent = 'Tell us what\'s wrong with the device.'; err.hidden = false; return; }
       if (!row.terms_accepted) { err.textContent = 'Please accept the Terms and Conditions to continue.'; err.hidden = false; return; }
       if (!row.dispatch_acknowledged) { err.textContent = 'Please acknowledge the dispatch fee to continue.'; err.hidden = false; return; }
       if (!row.work_auth_accepted) { err.textContent = 'Please authorize the work order to continue.'; err.hidden = false; return; }
-      sb.from('tickets').insert(row).then(function (res) {
+      var submitRow = sb.from('tickets').insert(row);
+      if (ptsBlocks > 0) {
+        submitRow = submitRow.then(function (first) {
+          if (!first.error) return first;
+          var fallback = {};
+          Object.keys(row).forEach(function (k) { if (k !== 'points_blocks_requested') fallback[k] = row[k]; });
+          fallback.issue = (fallback.issue || '') + '\n[Points: customer asked to use ' + (ptsBlocks * 100) + ' points ($' + (ptsBlocks * 5) + ') toward this repair — apply at the visit.]';
+          return sb.from('tickets').insert(fallback);
+        });
+      }
+      submitRow.then(function (res) {
         if (res.error) { err.textContent = 'Couldn\'t submit \u2014 try again, or call or text (937) 280-6243.'; err.hidden = false; return; }
         tForm.reset();
+        var ptsAmt = $('acct-t-points-amount'); if (ptsAmt) ptsAmt.hidden = true;
         showRepairsView();
         loadMyRepairs(currentCust);
       }).catch(function () { err.textContent = 'Couldn\'t submit \u2014 try again.'; err.hidden = false; });

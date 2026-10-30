@@ -1658,3 +1658,88 @@ html[data-theme="dark"] .service-card-icon { color: #FBEADB; }
 html[data-theme="dark"] .service-card:nth-child(2n) .service-card-icon { color: #DFF0EA; }
 .page-icon-banner { width: 100%; max-width: 720px; margin: 0 auto 1.5rem; border-radius: 12px; background: var(--brand-soft); color: var(--brand-deep); display: flex; align-items: center; justify-content: center; padding: 3.4rem 0; font-size: 4rem; }
 html[data-theme="dark"] .page-icon-banner { color: #FBEADB; }
+
+/* ===== SITE_POINTS_SPEND_2026_10_30 — points spending surfaces =====
+   Account box: tappable points balance, voucher strip, Cart row badge,
+   Rewards & Vouchers view (stepper, voucher cards). Shop: dual prices
+   on product cards, per-line points toggles in the cart, the cart
+   points panel, and the New Request points block. */
+a.acct-points { display: block; text-decoration: none; cursor: pointer; }
+a.acct-points:hover { border-color: var(--gold); }
+.acct-points-tap { margin-top: 0.55rem; font-size: 0.85rem; font-weight: 700; color: var(--brand); }
+.acct-points-tap i { font-size: 0.75rem; }
+.acct-cart-count {
+  margin-left: auto; background: var(--brand); color: #fff; border-radius: 999px;
+  padding: 0.08rem 0.55rem; font-size: 0.8rem; font-weight: 800; line-height: 1.4;
+}
+.acct-voucher-strip {
+  display: flex; align-items: center; gap: 0.6rem; width: 100%;
+  padding: 0.75rem 1rem; margin: -0.5rem 0 1.25rem;
+  border: 1px solid var(--gold); border-radius: var(--radius-sm);
+  background: var(--gold-soft); color: var(--ink); font-weight: 700; font-size: 0.92rem;
+  font-family: var(--font-body); cursor: pointer; text-align: left;
+}
+.acct-voucher-strip i { color: var(--gold); }
+.acct-voucher-strip[hidden] { display: none; }
+
+.pts-balance-line { font-size: 1rem; margin: 0.75rem 0 0.25rem; }
+.pts-balance-line strong { color: var(--gold); font-size: 1.2rem; }
+.pts-stepper { display: flex; align-items: center; justify-content: center; gap: 1rem; margin: 0.8rem 0 1rem; }
+.pts-stepper-sm { margin: 0.5rem 0 0.7rem; }
+.pts-step-btn {
+  width: 2.4rem; height: 2.4rem; flex: none; border-radius: 50%;
+  border: 2px solid var(--line); background: var(--surface); color: var(--brand-deep);
+  font-size: 1.25rem; font-weight: 800; line-height: 1; cursor: pointer; font-family: var(--font-body);
+}
+.pts-step-btn:hover:not([disabled]) { border-color: var(--brand); }
+.pts-step-btn[disabled] { opacity: 0.35; cursor: default; }
+.pts-step-val { text-align: center; font-weight: 700; min-width: 8.5rem; }
+.pts-success {
+  color: #1E6B34; background: #EAF7EE; border: 1px solid #BEE5C8;
+  border-radius: var(--radius-sm); padding: 0.65rem 0.9rem; font-size: 0.9rem; margin: 0.75rem 0;
+}
+.pts-success[hidden] { display: none; }
+.pts-voucher-card {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+  border: 1px solid var(--line); border-left: 4px solid var(--gold);
+  border-radius: var(--radius-sm); padding: 0.7rem 0.9rem; margin-bottom: 0.6rem; background: var(--bg);
+}
+.pts-voucher-code { font-weight: 800; letter-spacing: 0.05em; font-size: 1.05rem; }
+.pts-voucher-value { font-family: var(--font-display); font-weight: 800; font-size: 1.4rem; color: var(--gold); }
+
+.product-pts { color: var(--gold); font-weight: 800; font-size: 0.82em; white-space: nowrap; }
+.cart-pts-toggle {
+  display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 0.5rem;
+  padding: 0.35rem 0.7rem; border: 1px solid var(--line); border-radius: 999px;
+  background: var(--surface); color: var(--ink); font-size: 0.8rem; font-weight: 700;
+  font-family: var(--font-body); cursor: pointer;
+}
+.cart-pts-toggle i { color: var(--gold); }
+.cart-pts-toggle:hover { border-color: var(--gold); }
+.cart-pts-toggle.is-on { background: var(--gold-soft); border-color: var(--gold); color: var(--ink); }
+.cart-points { border-top: 1px dashed var(--line); margin-top: 0.85rem; padding-top: 0.85rem; }
+.cart-points[hidden] { display: none; }
+.cart-points-nudge { font-size: 0.9rem; margin: 0; }
+.cart-points-nudge i, .cart-points-balance i { color: var(--gold); margin-right: 0.3rem; }
+.cart-points-linkbtn {
+  background: none; border: none; padding: 0; color: var(--brand); font-weight: 800;
+  font-size: inherit; font-family: inherit; cursor: pointer; text-decoration: underline;
+}
+.cart-points-balance { font-size: 0.95rem; margin: 0 0 0.4rem; }
+.cart-points-rate { color: var(--muted); font-size: 0.82rem; }
+.cart-points-line { display: flex; justify-content: space-between; gap: 0.75rem; font-size: 0.9rem; padding: 0.15rem 0; }
+.cart-points-total { border-top: 1px solid var(--line); margin-top: 0.3rem; padding-top: 0.4rem; font-weight: 700; }
+.cart-points-note { font-size: 0.82rem; color: var(--muted); margin: 0.5rem 0 0; }
+#cart-points-convert .btn { width: 100%; }
+
+.acct-ticket-points {
+  border: 1px solid var(--gold); border-radius: var(--radius-sm);
+  padding: 0.85rem 1rem; margin-bottom: 1rem; background: var(--gold-soft);
+}
+.acct-ticket-points[hidden] { display: none; }
+.acct-ticket-points .acct-field { margin-top: 0.6rem; margin-bottom: 0.4rem; }
+.acct-ticket-points select {
+  width: 100%; padding: 0.7rem 0.9rem; border: 2px solid var(--line);
+  border-radius: var(--radius-sm); background: var(--bg); color: var(--ink);
+  font-size: 0.95rem; font-family: var(--font-body);
+}
