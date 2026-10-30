@@ -37,12 +37,11 @@
         var href = target.getAttribute('href');
         if (href && href.charAt(0) === '#') {
           e.preventDefault();
+          closeMobileMenu();
           if (window.location.hash !== href) { window.location.hash = href; }
           switchPage(href);
           var guideId = target.getAttribute('data-guide');
           if (guideId) { setTimeout(function () { var el = document.getElementById(guideId); if (el) el.scrollIntoView({ behavior: 'auto', block: 'start' }); }, 800); }
-          var mobileMenu = document.getElementById('mobile-menu');
-          if (mobileMenu) mobileMenu.setAttribute('aria-hidden', 'true');
         }
       }
     });
@@ -53,14 +52,76 @@
     });
 
     /* ---------------- Mobile menu ---------------- */
+    /* SITE_NAV_FIX_2026_10_30: two fixes. (1) Tapping the dimmed area
+       outside the panel now closes the menu — the cart drawer and account
+       modal already close on overlay click; the menu never had a handler
+       on #mobile-menu itself, which IS the dim layer here. (2) The page
+       behind the menu is scroll-locked while it is open, using the same
+       body-overflow pattern as openCart/openModal, extended to <html>
+       plus a touchmove guard because iOS Safari still scrolls the page
+       behind a fixed overlay with body overflow alone. Every close path
+       (X, backdrop tap, menu link, Escape, resize to desktop) funnels
+       through closeMobileMenu so the lock is always released. */
     var bottomMenuToggle = document.getElementById('bottom-menu-toggle');
     var mobileMenu = document.getElementById('mobile-menu');
     var menuClose = document.getElementById('menu-close');
+
+    function menuIsOpen() {
+      return !!mobileMenu && mobileMenu.getAttribute('aria-hidden') === 'false';
+    }
+
+    function lockPageScroll() {
+      document.documentElement.style.overflow = 'hidden';
+      document.body.style.overflow = 'hidden';
+    }
+    function unlockPageScroll() {
+      document.documentElement.style.overflow = '';
+      document.body.style.overflow = '';
+    }
+
+    /* While the menu is open, stop touch drags from scrolling the page
+       behind it. Drags that start inside the link list still scroll the
+       list itself; taps (clicks) are unaffected either way. */
+    function onMenuTouchMove(e) {
+      var t = e.target;
+      if (t && t.closest && !t.closest('.menu-links')) e.preventDefault();
+    }
+
+    function openMobileMenu() {
+      if (!mobileMenu || menuIsOpen()) return;
+      mobileMenu.setAttribute('aria-hidden', 'false');
+      lockPageScroll();
+      mobileMenu.addEventListener('touchmove', onMenuTouchMove, { passive: false });
+    }
+
+    function closeMobileMenu() {
+      if (!mobileMenu || !menuIsOpen()) return;
+      mobileMenu.setAttribute('aria-hidden', 'true');
+      unlockPageScroll();
+      mobileMenu.removeEventListener('touchmove', onMenuTouchMove);
+    }
+
     if (bottomMenuToggle && mobileMenu) {
-      bottomMenuToggle.addEventListener('click', function () { mobileMenu.setAttribute('aria-hidden', 'false'); });
+      bottomMenuToggle.addEventListener('click', openMobileMenu);
     }
     if (menuClose && mobileMenu) {
-      menuClose.addEventListener('click', function () { mobileMenu.setAttribute('aria-hidden', 'true'); });
+      menuClose.addEventListener('click', closeMobileMenu);
+    }
+    if (mobileMenu) {
+      /* A tap whose target is the nav element itself landed on the dimmed
+         backdrop outside .menu-panel (panel taps target panel children). */
+      mobileMenu.addEventListener('click', function (e) {
+        if (e.target === mobileMenu) closeMobileMenu();
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeMobileMenu();
+      });
+      /* The toggle that opens this menu only exists at mobile widths
+         (<= 920px). If the viewport grows past that while the menu is
+         open, close it so the scroll lock is never left behind. */
+      window.addEventListener('resize', function () {
+        if (window.innerWidth > 920) closeMobileMenu();
+      });
     }
 
     /* ---------------- Repair wizard ---------------- */
