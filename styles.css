@@ -1763,3 +1763,6 @@ img.service-card-img.svc-media-contain { object-fit: contain; background: #EAE4D
    full photo service cards that moved from home to the What We Fix page
    (#whatwedo) reuse the global .card-grid / .service-card rules unchanged
    (including the contain treatment above for the Networking tester photo). */
+
+/* ===== SITE_SHOP_EXPAND_2026_10_30 — one-line description on the new shop products ===== */
+.product-card .product-desc { font-size: 0.85rem; line-height: 1.45; color: var(--muted); margin: 0.3rem 0 0; }

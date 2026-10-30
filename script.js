@@ -530,7 +530,23 @@
       { id: 'wall-pd-20w', name: '20W USB-C Fast Wall Charger', cat: 'Wall Chargers', price: 17.99, pts: 3500 },
       { id: 'car-dual-usb', name: 'Dual USB Car Charger (Fast Charge)', cat: 'Car Chargers', price: 14.99, pts: 3500 },
       { id: 'mag-pad-15w', name: 'Magnetic Wireless Charging Pad 15W', cat: 'Wireless Chargers', price: 29.99, pts: 3500 },
-      { id: 'station-3in1', name: '3-in-1 Wireless Charging Station', cat: 'Wireless Chargers', price: 44.99, pts: 3500 }
+      { id: 'station-3in1', name: '3-in-1 Wireless Charging Station', cat: 'Wireless Chargers', price: 44.99, pts: 3500 },
+      /* SITE_SHOP_EXPAND_2026_10_30: 10 new products, prices from the
+       * verified research shortlist (Sentrix list + named-retailer
+       * fallbacks). Points prices only where Austin's menu names them:
+       * protectors 1000, cases 2500. The square-checkout Edge Function
+       * carries the same ids/prices — it must be redeployed with the
+       * staged update before these can check out. */
+      { id: 'tab-case-ipad-pro129', name: 'Folio Case for iPad Pro 12.9" (White)', cat: 'Tablets', price: 29.99, pts: 2500, desc: 'Apple\u2019s own Smart Folio in white, made for iPad Pro 12.9-inch (3rd\u20136th generation).' },
+      { id: 'tab-case-galaxy-a9plus', name: 'Book Cover Case for Galaxy Tab A9+', cat: 'Tablets', price: 59.99, pts: 2500, desc: 'Samsung\u2019s own book cover case for the Galaxy Tab A9+ (11-inch).' },
+      { id: 'tab-glass-ipad-109', name: 'Tempered Glass for iPad 10.9" (10th/11th Gen)', cat: 'Tablets', price: 19.99, pts: 1000, desc: 'Casper Pro tempered glass for iPad 10 (2022) and iPad 11 (2025).' },
+      { id: 'tab-glass-galaxy-a9plus', name: 'Tempered Glass for Galaxy Tab A9+ (11")', cat: 'Tablets', price: 24.99, pts: 1000, desc: 'Tempered glass screen protection for the Galaxy Tab A9+ 11-inch.' },
+      { id: 'acc-mouse-m510', name: 'Wireless Mouse (Full Size)', cat: 'Computer Accessories', price: 34.99, desc: 'Logitech M510 full-size wireless mouse \u2014 the one customers ask for by name.' },
+      { id: 'acc-hub-usb3-4port', name: '4-Port USB 3.0 Hub', cat: 'Computer Accessories', price: 19.99, desc: 'Anker 4-port USB 3.0 hub with 5Gbps data transfer \u2014 one port becomes four.' },
+      { id: 'dng-usbc-hdmi', name: 'USB-C to HDMI Adapter (4K)', cat: 'Dongles & Adapters', price: 19.99, desc: 'Anker 310 adapter \u2014 plug a USB-C device into an HDMI display, up to 4K.' },
+      { id: 'dng-usbc-usba-2pk', name: 'USB-C to USB-A Adapter (2-Pack)', cat: 'Dongles & Adapters', price: 16.99, desc: 'Two-pack of Anker USB-C to USB 3.0 adapters for older USB gear.' },
+      { id: 'sto-ssd-512', name: '512GB SSD (2.5" SATA)', cat: 'Storage', price: 129.99, desc: 'Apollo 512GB 2.5-inch SATA SSD \u2014 an internal upgrade drive for a laptop or desktop.' },
+      { id: 'sto-ssd-1tb', name: '1TB SSD (2.5" SATA)', cat: 'Storage', price: 189.99, desc: 'Apollo 1TB 2.5-inch SATA SSD \u2014 an internal upgrade drive for a laptop or desktop.' }
     ];
 
     var grid = document.getElementById('product-grid');
@@ -620,6 +636,7 @@
           '<div class="product-body">' +
             '<span class="product-cat">' + p.cat + '</span>' +
             '<h3 class="product-name">' + p.name + '</h3>' +
+            (p.desc ? '<p class="product-desc">' + p.desc + '</p>' : '') +
             '<div class="product-foot">' +
               '<span class="product-price">' + money(p.price) + (p.pts ? ' <span class="product-pts">or ' + fmtPts(p.pts) + ' pts</span>' : '') + '</span>' +
               '<button class="add-btn" data-id="' + p.id + '"><i class="fas fa-plus"></i> Add</button>' +
