@@ -1680,32 +1680,154 @@ function loadTicketThread(client, ticketId) {
     }, MEDIA_SIGN_OPTS);
   }
 
-  /* PORTAL_MEDIA_RELEASE_2026_10_30: the Documents tab entry point —
-   * pick the ticket the release belongs to, then the same signature
-   * popup as the drawer flow (openMediaSignModal). The signed
-   * release files on that ticket and the tab's list refreshes. */
-  function openMediaReleasePicker() {
+  /* ============ SIGN ANY BLANK DOCUMENT ============
+   * PORTAL_SIGN_ALL_DOCS_2026_10_30 (Austin, Oct 30, 2026): the
+   * Media Release's Documents-tab Sign button worked so well that
+   * every blank document gets one. The pieces below are the shared
+   * path all four documents sign through from the Documents tab —
+   * a parameterized signed-document composer and filer for the
+   * doc_type 'other' documents (the signedAuthorizationHtml /
+   * fileSignedMediaRelease pattern, generalized), one sign modal,
+   * and one ticket picker — driven per document by the DOC_SIGNERS
+   * configs (further below, beside BLANK_DOCS). The Repair
+   * Authorization does NOT use the generic filer: its config
+   * points at fileSignedAuthorization itself, so a signature
+   * started here composes the identical document and sets the
+   * identical consent flags as the drawer's own flow. */
+
+  /* The signedMediaReleaseHtml pattern, parameterized by document:
+   * one self-contained HTML file — business header, the
+   * Customer/Phone/Device table, the document's full text in a
+   * panel, and the signature block with the signature image
+   * embedded as a data URI — so a filed copy opens through the
+   * DOCVIEW overlay as a formatted document, never raw code. */
+  function signedOtherDocumentHtml(docTitle, bodyText, meta, signerName, signatureDataUrl, signedAtIso) {
+    var lines = [
+      ['Customer', meta.customerName],
+      ['Phone', meta.phone],
+      ['Device', meta.device]
+    ].filter(function (r) { return trim(r[1]) !== ''; }).map(function (r) {
+      return '<tr><th style="text-align:left;padding:0.3rem 0.9rem 0.3rem 0;color:#6B5B43;font-weight:600;vertical-align:top;">' + esc(r[0]) + '</th>' +
+        '<td style="padding:0.3rem 0;">' + esc(r[1]) + '</td></tr>';
+    }).join('');
+    return '<!DOCTYPE html>\n<html lang="en"><head><meta charset="utf-8">' +
+      '<meta name="viewport" content="width=device-width, initial-scale=1">' +
+      '<title>' + esc(docTitle) + ' \u2014 Austin\u2019s Tech Repair Group</title></head>' +
+      '<body style="margin:0;background:#F3EDE0;color:#2C231A;font-family:Georgia,\'Times New Roman\',serif;">' +
+      '<div style="max-width:760px;margin:0 auto;padding:2rem 1.25rem 3rem;background:#FFFDF8;">' +
+      '<div style="text-align:center;border-bottom:3px solid #C96A1E;padding-bottom:1rem;margin-bottom:1.25rem;">' +
+      '<div style="font-size:1.55rem;font-weight:bold;letter-spacing:0.02em;">Austin\u2019s Tech Repair Group</div>' +
+      '<div style="margin-top:0.3rem;font-size:0.95rem;">(937) 280-6243</div></div>' +
+      '<h1 style="font-size:1.3rem;margin:0 0 1rem;">' + esc(docTitle) + '</h1>' +
+      (lines ? '<table style="border-collapse:collapse;margin-bottom:1.25rem;font-size:0.98rem;"><tbody>' + lines + '</tbody></table>' : '') +
+      '<div style="white-space:pre-wrap;font-size:0.92rem;line-height:1.5;border:1px solid #E6D9C0;border-radius:8px;padding:1rem;background:#FFFDF8;">' + esc(bodyText) + '</div>' +
+      '<h2 style="font-size:1.1rem;margin:1.75rem 0 0.5rem;">Signature</h2>' +
+      '<div style="border:1px solid #E6D9C0;border-radius:8px;padding:1rem;background:#fff;">' +
+      '<img alt="Customer signature" src="' + signatureDataUrl + '" style="display:block;max-width:100%;width:420px;height:auto;">' +
+      '<div style="border-top:2px solid #2C231A;margin-top:0.4rem;padding-top:0.5rem;font-size:0.95rem;">Signed by: ' + esc(signerName || '') + '</div>' +
+      '<div style="font-size:0.95rem;margin-top:0.25rem;">Date: ' + esc(fmtDateTime(signedAtIso)) + '</div>' +
+      '</div>' +
+      '<p style="font-size:0.8rem;color:#6B5B43;margin-top:1.5rem;">Signed electronically and filed on the customer\u2019s repair ticket by Austin\u2019s Tech Repair Group.</p>' +
+      '</div></body></html>';
+  }
+
+  /* Where each generic-filed document lands: its storage path
+   * prefix, the label its filed copy is named with ("<label> —
+   * signed <date>.html"), the note on its ticket_documents row,
+   * and how its signed HTML composes. The text constants are read
+   * when a signature is captured, not when this file loads. */
+  var WARRANTY_FILE_SPEC = {
+    pathPrefix: 'warranty', fileNameLabel: 'Warranty',
+    note: 'Warranty \u2014 signed copy of the 1-Year Limited Warranty',
+    compose: function (meta, signerName, dataUrl, signedAt) { return signedOtherDocumentHtml('1-Year Limited Warranty', WARRANTY_TEXT, meta, signerName, dataUrl, signedAt); }
+  };
+  var TERMS_FILE_SPEC = {
+    pathPrefix: 'terms_of_service', fileNameLabel: 'Terms of Service',
+    note: 'Terms of Service \u2014 signed copy of the Terms & Conditions of Service',
+    compose: function (meta, signerName, dataUrl, signedAt) { return signedOtherDocumentHtml('Terms & Conditions of Service', TERMS_CONDITIONS_TEXT, meta, signerName, dataUrl, signedAt); }
+  };
+
+  /* Filing for a signed doc_type 'other' document — the
+   * fileSignedMediaRelease shape (compose, upload, file the
+   * ticket_documents row), parameterized by the document's file
+   * spec, with NO consent-flag side effects: these documents are
+   * not the repair authorization, so markAuthorizationAccepted is
+   * deliberately never called here. If composition ever fails, the
+   * filing falls back to the bare PNG so a captured signature is
+   * never lost, exactly like the flows it mirrors. done(errText):
+   * errText is null on success. */
+  function fileSignedOtherDocument(client, ticketId, blob, signerName, done, meta, spec) {
+    var signedAt = new Date().toISOString();
+    function fileArtifact(path, content, contentType, fileName) {
+      client.storage.from(DOC_BUCKET).upload(path, content, { contentType: contentType, upsert: false }).then(function (up) {
+        if (up.error) { done('Saving failed \u2014 check the connection and try again.'); return; }
+        var row = { ticket_id: ticketId, doc_type: 'other', storage_path: path, signer_name: signerName, signed_at: signedAt, note: spec.note };
+        if (fileName) row.file_name = fileName;
+        client.from('ticket_documents').insert(row).then(function (res) {
+          if (res.error) { done('The signature saved but could not be filed \u2014 try again.'); return; }
+          done(null);
+        }).catch(function () { done('The signature saved but could not be filed \u2014 try again.'); });
+      }).catch(function () { done('Saving failed \u2014 check the connection and try again.'); });
+    }
+    function filePngFallback() {
+      fileArtifact(ticketId + '/' + spec.pathPrefix + '-' + docStamp() + '.png', blob, 'image/png', null);
+    }
+    blobToDataUrl(blob, function (dataUrl) {
+      if (!dataUrl) { filePngFallback(); return; }
+      var html = null;
+      try { html = spec.compose(meta || {}, signerName, dataUrl, signedAt); } catch (e) { html = null; }
+      if (!html) { filePngFallback(); return; }
+      var fileName = spec.fileNameLabel + ' \u2014 signed ' + fmtDate(signedAt) + '.html';
+      fileArtifact(ticketId + '/' + spec.pathPrefix + '-' + docStamp() + '.html', new Blob([html], { type: 'text/html' }), 'text/html', fileName);
+    });
+  }
+
+  /* The shared sign modal for the Documents tab path: the same
+   * signature popup as everywhere else — the config's opts pick the
+   * document it shows, and a null opts gives the popup's built-in
+   * Repair Authorization presentation — then the config's filer
+   * files the capture. The Documents tab passes an `after` that
+   * refreshes its signed list; without one, the ticket drawer
+   * reopens, exactly as after the drawer's own sign buttons. */
+  function openDocSignModal(client, t, signer, after) {
+    openSignatureCapture(t.customer_name || '', function (blob, name, finish) {
+      signer.file(client, t.id, blob, name, function (errText) {
+        if (errText) { finish(errText); return; }
+        finish();
+        if (after) after();
+        else openTicket(t.id);
+      }, { customerName: t.customer_name, phone: t.customer_phone, device: deviceLabel(t) });
+    }, signer.opts || undefined);
+  }
+
+  /* PORTAL_SIGN_ALL_DOCS_2026_10_30: the Documents tab entry point,
+   * generalized from the media release picker — pick the ticket the
+   * document belongs to, then the shared signature popup
+   * (openDocSignModal) driven by that document's signer config.
+   * The signed document files on that ticket and the tab's list
+   * refreshes. */
+  function openDocSignPicker(doc) {
     withClient(function (client) {
       if (!client) return;
-      var old = document.getElementById('p4-media-pick-modal');
+      var old = document.getElementById('p4-doc-pick-modal');
       if (old && old.parentNode) old.parentNode.removeChild(old);
       var wrap = document.createElement('div');
-      wrap.id = 'p4-media-pick-modal';
+      wrap.id = 'p4-doc-pick-modal';
       wrap.setAttribute('style', 'position:fixed;inset:0;background:rgba(44,35,26,0.55);z-index:3000;display:flex;align-items:center;justify-content:center;padding:1rem;');
       wrap.innerHTML = '<div style="background:#FAF6EE;color:#2C231A;border-radius:14px;max-width:520px;width:100%;max-height:92vh;overflow:auto;padding:1.25rem;box-shadow:0 18px 50px rgba(0,0,0,0.35);">' +
-        '<h3 style="margin:0 0 0.5rem;">Sign a media release</h3>' +
-        '<p class="portal-muted portal-small" style="margin:0 0 0.75rem;">Pick the repair this release belongs to. The customer signs on the next screen, and the signed release files itself on that ticket.</p>' +
-        '<div class="portal-field"><label for="p4-media-pick-select">Ticket</label><select id="p4-media-pick-select"><option value="">Loading tickets&hellip;</option></select></div>' +
+        '<h3 style="margin:0 0 0.5rem;">' + esc(doc.signer.pickTitle) + '</h3>' +
+        '<p class="portal-muted portal-small" style="margin:0 0 0.75rem;">' + esc(doc.signer.pickBlurb) + '</p>' +
+        '<div class="portal-field"><label for="p4-doc-pick-select">Ticket</label><select id="p4-doc-pick-select"><option value="">Loading tickets&hellip;</option></select></div>' +
         '<div class="p2-actions" style="margin-top:0.75rem;">' +
-        '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p4-media-pick-go">Continue to signature</button> ' +
-        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p4-media-pick-cancel">Cancel</button>' +
-        '<span class="portal-muted portal-small" id="p4-media-pick-msg"></span></div></div>';
+        '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p4-doc-pick-go">Continue to signature</button> ' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p4-doc-pick-cancel">Cancel</button>' +
+        '<span class="portal-muted portal-small" id="p4-doc-pick-msg"></span></div></div>';
       document.body.appendChild(wrap);
       function close() { if (wrap.parentNode) wrap.parentNode.removeChild(wrap); }
       wrap.addEventListener('click', function (e) { if (e.target === wrap) close(); });
-      wrap.querySelector('#p4-media-pick-cancel').addEventListener('click', close);
+      wrap.querySelector('#p4-doc-pick-cancel').addEventListener('click', close);
       var tickets = [];
-      var sel = wrap.querySelector('#p4-media-pick-select');
+      var sel = wrap.querySelector('#p4-doc-pick-select');
       client.from('tickets').select('id, customer_name, customer_phone, device_type, brand, model, status').order('created_at', { ascending: false }).limit(200).then(function (res) {
         tickets = res.error ? [] : (res.data || []);
         if (!tickets.length) { sel.innerHTML = '<option value="">No tickets found</option>'; return; }
@@ -1713,13 +1835,13 @@ function loadTicketThread(client, ticketId) {
           return '<option value="' + esc(tk.id) + '">' + esc((tk.customer_name || 'No name') + ' \u00B7 ' + deviceLabel(tk) + ' \u00B7 ' + (tk.status || '')) + '</option>';
         }).join('');
       }).catch(function () { sel.innerHTML = '<option value="">Could not load tickets</option>'; });
-      wrap.querySelector('#p4-media-pick-go').addEventListener('click', function () {
-        var msg = wrap.querySelector('#p4-media-pick-msg');
+      wrap.querySelector('#p4-doc-pick-go').addEventListener('click', function () {
+        var msg = wrap.querySelector('#p4-doc-pick-msg');
         var chosen = null;
         tickets.forEach(function (tk) { if (tk.id === sel.value) chosen = tk; });
         if (!chosen) { if (msg) msg.textContent = 'Pick a ticket first.'; return; }
         close();
-        openMediaSignModal(client, chosen, function () { loadDocTabList(client); });
+        openDocSignModal(client, chosen, doc.signer, function () { loadDocTabList(client); });
       });
     });
   }
@@ -1739,16 +1861,77 @@ function loadTicketThread(client, ticketId) {
    * then also shows in that ticket's Documents section. */
   var TERMS_CONDITIONS_TEXT = "Terms & Conditions of Service\nLast updated October 23, 2026\nThese Terms & Conditions govern repair services and website use for Austin's Tech Repair Group (\"Company,\" \"we,\" \"us,\" or \"our\"), a sole proprietorship operating in the State of Ohio. By scheduling an appointment, submitting a repair request, or using this website, you (\"Customer,\" \"you\") agree to these terms.\n1. Who We Are & What We Do\nMobile service: We come to you. Most repairs are completed at your home or office in the Miami Valley (Xenia, Dayton, and surrounding areas). Some advanced repairs, such as board-level work, may require us to take the device with your permission and return it when the work is complete.\nWhat we repair: Phones, tablets, computers & laptops, game consoles, smartwatches, and websites.\nWhat we do not repair: Automotive electronics and instrument clusters, vintage radios and tube equipment, home stereo and sound systems, and major appliances.\n2. Estimates & Pricing\nFlat-rate pricing: Common repairs are quoted at one flat rate \u2014 parts and labor included. There is no hourly billing.\nDiagnostics: Estimates are free. A full diagnosis of the problem \u2014 including disassembly or deep board-level work when required \u2014 is included in the $35.00 house-call fee, charged separately from the repair price.\nOnline estimator: Prices shown by the online estimator are starting prices for the most common models. Your final flat price is confirmed for your exact model before you book, and the price we confirm is the price you pay.\nCustom repairs: One-of-a-kind or unusual repairs are quoted individually as one flat price \u2014 and are always approved by you before work begins.\nHidden damage: If disassembly reveals additional damage or failed components beyond the original estimate, we stop, notify you, and get your approval before doing any extra work.\n3. House-Call Fee\nA $35.00 house-call fee applies to every mobile visit. It covers travel to your location and a full diagnosis of the problem, and it is due at scheduling.\nATR One members: Members pay no house-call fee for devices covered under their subscription.\nThe house-call fee is non-refundable in all cases and is charged separately from the repair price. It is never credited toward a repair.\n4. Parts & Payment\nParts you supply: You\u2019re welcome to supply everyday parts you can buy at retail \u2014 hard drives, memory, accessories. Our 1-year warranty covers only parts we supply; customer-supplied parts are installed as-is, with no warranty on the part.\nParts are paid upfront: Because parts are ordered for your specific job, the parts cost is due before we order. We order parts through our suppliers and they are delivered to us; we bring them to your install visit. If you cancel after parts are ordered, we keep the part and refund what you paid for the part.\nReplaced parts: Parts we remove during a repair are taken with us and disposed of properly to protect the environment. Some original manufacturer parts must be returned to the manufacturer.\nParts you supply: If you supply your own part, we will install it as-is; our 1-Year Limited Warranty does not cover customer-supplied parts.\nContact about your repair: You agree we may call and text you at the number you provide about your repair \u2014 scheduling, status updates, and completion.\nBalance due: The remaining balance (labor) is due upon completion of the repair, before the device is released back to you.\nAccepted payments: Visa, Mastercard, American Express, Discover, Apple Pay, Google Pay, Samsung Pay, Cash App Pay, PayPal, Venmo, and cash.\nCard processing fee: If you pay by credit or debit card, a processing fee is added to your total. Card payments are processed through Square, and the fee is exactly what Square charges for the transaction \u2014 passed through at Square's actual rate, never more than Square charges.\n5. Cancellations\nYou may cancel or reschedule before your appointment at no charge beyond the house-call fee, which is non-refundable once the appointment is booked.\nIf we arrive and you decline the confirmed repair, only the house-call fee is owed.\n6. Your Data\nData loss or corruption can occur during diagnostics or repair. You are responsible for backing up your device before service. We are not liable for lost data, files, photos, or settings. See the Repair Authorization for full details.\n7. Warranty\nStandard repairs are covered by our 1-Year Limited Warranty on the parts installed and the labor performed. Full terms and the claim process are in the Warranty Policy on this site.\n8. Limitation of Liability\nTo the fullest extent permitted by Ohio law, our total liability for any claim connected to a service is limited to the amount you paid for that service. We are not liable for incidental, indirect, or consequential damages, including loss of data, loss of use, or loss of business.\n9. Website Use\nYou must be 18 or using this site with a parent or guardian. Use the site only for lawful purposes; no scraping, data mining, malware, or attempts to gain unauthorized access.\nSite content (text, graphics, logos, and code) belongs to Austin's Tech Repair Group and may not be reproduced or commercially used without written permission.\nThe website is provided \"as is\" without warranties of any kind. We are not responsible for third-party websites linked from this site.\n10. Changes, Governing Law & Contact\nWe may update these terms; the version posted on this site when you book governs your service.\nThese terms are governed by the laws of the State of Ohio. Disputes will be addressed first through good-faith negotiation, then in a court of competent jurisdiction in Greene County, Ohio.\nQuestions: Austin's Tech Repair Group \u2014 Austin Tyler Caudill, Owner \u2014 Spring Valley, Ohio \u2014 (937) 280-6243 \u2014 austin.caudill@austinstechrepairgroup.com\nLegal";
   var WARRANTY_TEXT = "1-Year Limited Warranty & Claims\nLast updated October 20, 2026\nAustin's Tech Repair Group stands behind its work. Every standard repair includes a 1-Year Limited Warranty on the parts we install and the labor we perform, under the terms below.\n1. What This Warranty Covers\nReplacement parts we installed (screens, batteries, charging ports, and other components) that fail due to a defect in the part itself.\nThe labor and workmanship of the specific repair on your invoice.\n2. Warranty Period\nCoverage runs for one year (365 days) from the date the repair was completed.\nThe warranty applies to the original customer and the device listed on the repair invoice. Please keep your invoice or receipt \u2014 it is your proof of coverage.\n3. What This Warranty Does Not Cover\nNew physical damage: Drops, impacts, cracks, pressure damage, or bent frames after the repair.\nParts supplied by the customer \u2014 this warranty covers only parts we supply.\nLiquid damage: Exposure to water, moisture, or steam after the repair.\nTampering: Devices opened, modified, or repaired by anyone other than Austin's Tech Repair Group after our service.\nSoftware problems: Viruses, malware, operating-system corruption, or issues caused by rooting, jailbreaking, or other modifications.\nUnrelated failures: Problems in parts or systems that were not part of the original repair, including pre-existing conditions.\nNormal wear: Gradual battery capacity fade over time and minor cosmetic wear that does not affect function.\n4. How to File a Warranty Claim\nStep 1 \u2014 Contact us: Call or text (937) 280-6243 or email austin.caudill@austinstechrepairgroup.com and describe the problem.\nStep 2 \u2014 Show your invoice: Present your original repair invoice or receipt so we can verify coverage.\nStep 3 \u2014 Inspection: We inspect and test the device to confirm the failure is a covered defect in the part or our workmanship.\nStep 4 \u2014 Remedy: If the claim is covered, we will repair or replace the defective part at no charge for parts or labor. If the part cannot be repaired or replaced, we will refund the price of that part.\nWarranty inspections are diagnostic visits; no house-call fee applies to a covered warranty claim.\n5. Limits\nThis warranty is limited to the repair, replacement, or refund described above. We are not liable for incidental or consequential damages, including loss of data or loss of use of the device during evaluation or repair.\nSome states do not allow limits on implied warranties or consequential damages, so parts of this section may not apply to you. This warranty gives you specific legal rights, and you may have other rights that vary by state.\nAustin's Tech Repair Group\nAustin Tyler Caudill, Owner\nSpring Valley, Ohio \u2014 (937) 280-6243";
+  /* PORTAL_SIGN_ALL_DOCS_2026_10_30 (Austin, Oct 30, 2026): the
+   * per-document signer configs behind the Documents tab's Sign
+   * buttons. Each config carries everything the shared signing path
+   * (openDocSignPicker -> openDocSignModal -> the config's filer)
+   * needs for its document: the document's full text, the ticket
+   * picker's heading and blurb, the signature popup's opts (null =
+   * the shared popup's built-in Repair Authorization presentation),
+   * and the filer that composes, uploads, and files the signed
+   * copy. Only the Repair Authorization's filer touches consent
+   * flags — and it is fileSignedAuthorization itself, the drawer's
+   * own, so its document and side effects are identical whichever
+   * button starts the signing. Defined here, after the document
+   * texts above, so every config reads the final constants. */
+  var DOC_SIGNERS = {
+    authorization: {
+      text: AUTH_TERMS_TEXT,
+      pickTitle: 'Sign a repair authorization',
+      pickBlurb: 'Pick the repair this authorization belongs to. The customer signs on the next screen, and the signed authorization files itself on that ticket.',
+      opts: null,
+      file: fileSignedAuthorization
+    },
+    warranty: {
+      text: WARRANTY_TEXT,
+      pickTitle: 'Sign a warranty',
+      pickBlurb: 'Pick the repair this warranty belongs to. The customer signs on the next screen, and the signed warranty files itself on that ticket.',
+      opts: {
+        title: '1-Year Limited Warranty',
+        intro: 'Read the warranty, type your name, and sign in the box. Signing files this signed copy of the warranty on the ticket.',
+        docText: WARRANTY_TEXT,
+        saveLabel: 'Sign & save'
+      },
+      file: function (client, ticketId, blob, signerName, done, meta) {
+        fileSignedOtherDocument(client, ticketId, blob, signerName, done, meta, WARRANTY_FILE_SPEC);
+      }
+    },
+    terms: {
+      text: TERMS_CONDITIONS_TEXT,
+      pickTitle: 'Sign the terms of service',
+      pickBlurb: 'Pick the repair these terms belong to. The customer signs on the next screen, and the signed terms file themselves on that ticket.',
+      opts: {
+        title: 'Terms & Conditions of Service',
+        intro: 'Read the terms, type your name, and sign in the box. Signing files this signed copy of the terms on the ticket.',
+        docText: TERMS_CONDITIONS_TEXT,
+        saveLabel: 'Sign & save'
+      },
+      file: function (client, ticketId, blob, signerName, done, meta) {
+        fileSignedOtherDocument(client, ticketId, blob, signerName, done, meta, TERMS_FILE_SPEC);
+      }
+    },
+    media: {
+      text: MEDIA_RELEASE_TEXT,
+      pickTitle: 'Sign a media release',
+      pickBlurb: 'Pick the repair this release belongs to. The customer signs on the next screen, and the signed release files itself on that ticket.',
+      opts: MEDIA_SIGN_OPTS,
+      file: fileSignedMediaRelease
+    }
+  };
+  /* PORTAL_SIGN_ALL_DOCS_2026_10_30: each blank document carries its
+   * signer config, which is what puts the Sign button on its
+   * Documents tab row (renderBlankDocs). */
   var BLANK_DOCS = [
-    { title: 'Repair Authorization & Service Agreement', text: AUTH_TERMS_TEXT },
-    { title: '1-Year Limited Warranty', text: WARRANTY_TEXT },
-    { title: 'Terms & Conditions of Service', text: TERMS_CONDITIONS_TEXT },
+    { title: 'Repair Authorization & Service Agreement', text: AUTH_TERMS_TEXT, signer: DOC_SIGNERS.authorization },
+    { title: '1-Year Limited Warranty', text: WARRANTY_TEXT, signer: DOC_SIGNERS.warranty },
+    { title: 'Terms & Conditions of Service', text: TERMS_CONDITIONS_TEXT, signer: DOC_SIGNERS.terms },
     /* PORTAL_MEDIA_RELEASE_2026_10_30: the Media Release lists with
      * the blank documents so it can be pulled up and read any time.
-     * The mediaRelease flag adds its Sign button (renderBlankDocs)
-     * and keeps it OUT of the check-in agreements popup
-     * (showAllAgreements) — it is signed on a job, never at check-in. */
-    { title: 'Media Release', text: MEDIA_RELEASE_TEXT, mediaRelease: true }
+     * The mediaRelease flag keeps it OUT of the check-in agreements
+     * popup (showAllAgreements) — it is signed on a job, never at
+     * check-in. Its Sign button comes from its signer config, like
+     * every blank document's (PORTAL_SIGN_ALL_DOCS_2026_10_30). */
+    { title: 'Media Release', text: MEDIA_RELEASE_TEXT, mediaRelease: true, signer: DOC_SIGNERS.media }
   ];
   var docTabRows = null, docTabWired = false, docTicketOptions = null;
 
@@ -1778,12 +1961,16 @@ function loadTicketThread(client, ticketId) {
     });
   }
 
+  /* PORTAL_SIGN_ALL_DOCS_2026_10_30: every blank document carries
+   * a signer config, so every row renders a Sign button beside its
+   * View button; the button opens the shared ticket picker for
+   * that document (openDocSignPicker). */
   function renderBlankDocs() {
     var box = $('portal-docs-blanks');
     if (!box) return;
     box.innerHTML = BLANK_DOCS.map(function (d, i) {
       return '<div class="p2-line"><div class="p2-line-main"><span class="p2-line-amt">' + esc(d.title) + '</span></div>' +
-        (d.mediaRelease ? '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-blank-sign="' + i + '"><i class="fas fa-pen-nib"></i> Sign</button> ' : '') +
+        (d.signer ? '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-blank-sign="' + i + '"><i class="fas fa-pen-nib"></i> Sign</button> ' : '') +
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-blank-doc="' + i + '"><i class="fas fa-eye"></i> View</button></div>';
     }).join('');
     var btns = box.querySelectorAll('[data-blank-doc]');
@@ -1795,7 +1982,10 @@ function loadTicketThread(client, ticketId) {
     }
     var signBtns = box.querySelectorAll('[data-blank-sign]');
     for (var s = 0; s < signBtns.length; s++) {
-      signBtns[s].addEventListener('click', function () { openMediaReleasePicker(); });
+      signBtns[s].addEventListener('click', function () {
+        var d = BLANK_DOCS[Number(this.getAttribute('data-blank-sign'))];
+        if (d && d.signer) openDocSignPicker(d);
+      });
     }
   }
 
