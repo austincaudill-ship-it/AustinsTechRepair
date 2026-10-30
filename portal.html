@@ -104,7 +104,10 @@
           <i class="fas fa-clock"></i> Time Clock
         </button>
         <button class="portal-tab" id="portal-tab-newhires" type="button" role="tab" data-tab="newhires">
-          <i class="fas fa-user-plus"></i> New Hire
+          <i class="fas fa-user-plus"></i> Employee Onboarding
+        </button>
+        <button class="portal-tab" id="portal-tab-teamdocs" type="button" role="tab" data-tab="teamdocs">
+          <i class="fas fa-folder-open"></i> Documents
         </button>
         <button class="portal-tab" id="portal-tab-applications" type="button" role="tab" data-tab="applications">
           <i class="fas fa-file-lines"></i> Job Applications <span class="portal-count" id="portal-count-applications" hidden></span>
@@ -313,6 +316,7 @@
           </button>
         </div>
         <p class="portal-muted portal-small">Onboard new employees (W-2) here. Each employee completes their I-9 and W-4 under Documents on their card below &mdash; Social Security and tax ID numbers live only inside those filed documents, never in this list.</p>
+        <p class="portal-muted portal-small">Blank onboarding forms and company documents (I-9, W-4, Ohio IT 4, direct deposit, non-compete, non-disclosure, employee handbook) live under Team &rarr; Documents. <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="portal-nh-forms-link">Open Team Documents</button></p>
         <form id="portal-newhire-form" novalidate>
           <div class="portal-nh-grid">
             <div class="portal-field">
@@ -393,6 +397,42 @@
           <h2 class="portal-h2">Current Employees</h2>
         </div>
         <div id="portal-nh-list"><p class="portal-muted">Loading employees&hellip;</p></div>
+      </div>
+
+      <!-- TEAM DOCUMENTS — PORTAL_TEAM_DOCS_2026_10_30 -->
+      <div class="portal-panel" id="portal-panel-teamdocs" role="tabpanel" hidden>
+        <div class="portal-panel-head">
+          <h2 class="portal-h2">Team Documents</h2>
+        </div>
+        <p class="portal-muted portal-small">Blank onboarding forms and company documents &mdash; here any time, no employee needed. View or print a blank copy, or attach one to a hire to complete and file it. Filed copies live under Documents on the employee&rsquo;s card in Employee Onboarding.</p>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:0.75rem;padding:0.55rem 0;border-bottom:1px solid #E6D9C0;">
+          <div><span style="font-weight:600;">Form I-9 &mdash; Employment Eligibility Verification</span><br /><span class="portal-muted portal-small">USCIS form &mdash; the employee completes Section 1; the employer completes Section 2.</span></div>
+          <span style="display:inline-flex;gap:0.4rem;flex-wrap:wrap;"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-view="i9"><i class="fas fa-eye"></i> View</button><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-print="i9"><i class="fas fa-print"></i> Print</button><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-td-attach="i9"><i class="fas fa-paperclip"></i> Attach to a hire</button></span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:0.75rem;padding:0.55rem 0;border-bottom:1px solid #E6D9C0;">
+          <div><span style="font-weight:600;">Form W-4 &mdash; Employee&rsquo;s Withholding Certificate</span><br /><span class="portal-muted portal-small">IRS form &mdash; federal tax withholding.</span></div>
+          <span style="display:inline-flex;gap:0.4rem;flex-wrap:wrap;"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-view="w4"><i class="fas fa-eye"></i> View</button><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-print="w4"><i class="fas fa-print"></i> Print</button><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-td-attach="w4"><i class="fas fa-paperclip"></i> Attach to a hire</button></span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:0.75rem;padding:0.55rem 0;border-bottom:1px solid #E6D9C0;">
+          <div><span style="font-weight:600;">Ohio IT 4 &mdash; Employee&rsquo;s Withholding Exemption Certificate</span><br /><span class="portal-muted portal-small">Ohio Department of Taxation &mdash; Ohio tax withholding.</span></div>
+          <span style="display:inline-flex;gap:0.4rem;flex-wrap:wrap;"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-view="ohio_it4"><i class="fas fa-eye"></i> View</button><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-print="ohio_it4"><i class="fas fa-print"></i> Print</button><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-td-attach="ohio_it4"><i class="fas fa-paperclip"></i> Attach to a hire</button></span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:0.75rem;padding:0.55rem 0;border-bottom:1px solid #E6D9C0;">
+          <div><span style="font-weight:600;">Direct Deposit Authorization</span><br /><span class="portal-muted portal-small">ATRG form &mdash; pay deposited into the employee&rsquo;s own bank account.</span></div>
+          <span style="display:inline-flex;gap:0.4rem;flex-wrap:wrap;"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-view="direct_deposit"><i class="fas fa-eye"></i> View</button><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-print="direct_deposit"><i class="fas fa-print"></i> Print</button><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-td-attach="direct_deposit"><i class="fas fa-paperclip"></i> Attach to a hire</button></span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:0.75rem;padding:0.55rem 0;border-bottom:1px solid #E6D9C0;">
+          <div><span style="font-weight:600;">Non-Compete Agreement</span><br /><span class="portal-muted portal-small">ATRG agreement &mdash; competing repair work and customer solicitation.</span></div>
+          <span style="display:inline-flex;gap:0.4rem;flex-wrap:wrap;"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-view="non_compete"><i class="fas fa-eye"></i> View</button><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-print="non_compete"><i class="fas fa-print"></i> Print</button><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-td-attach="non_compete"><i class="fas fa-paperclip"></i> Attach to a hire</button></span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:0.75rem;padding:0.55rem 0;border-bottom:1px solid #E6D9C0;">
+          <div><span style="font-weight:600;">Non-Disclosure Agreement</span><br /><span class="portal-muted portal-small">ATRG agreement &mdash; customer information, pricing, and internal know-how.</span></div>
+          <span style="display:inline-flex;gap:0.4rem;flex-wrap:wrap;"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-view="nda"><i class="fas fa-eye"></i> View</button><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-print="nda"><i class="fas fa-print"></i> Print</button><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-td-attach="nda"><i class="fas fa-paperclip"></i> Attach to a hire</button></span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:0.75rem;padding:0.55rem 0;border-bottom:1px solid #E6D9C0;">
+          <div><span style="font-weight:600;">Austin&rsquo;s Tech Repair Group &mdash; Employee Handbook</span><br /><span class="portal-muted portal-small">How ATRG works &mdash; ending with a signed acknowledgment page.</span></div>
+          <span style="display:inline-flex;gap:0.4rem;flex-wrap:wrap;"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-view="handbook"><i class="fas fa-eye"></i> View</button><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-print="handbook"><i class="fas fa-print"></i> Print</button><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-td-attach="handbook"><i class="fas fa-paperclip"></i> Attach to a hire</button></span>
+        </div>
       </div>
     </section>
   </main>
@@ -885,6 +925,23 @@
       if (!loaded) loadNewHires(false);
     }
 
+    /* PORTAL_TEAM_DOCS_2026_10_30: Team Documents is this section's
+     * second self-managed panel — same tab pattern as Employee
+     * Onboarding (the portal's built-in tab handler does not know
+     * either panel). */
+    function showTeamDocs() {
+      var tabs = document.querySelectorAll('.portal-tab');
+      var i;
+      for (i = 0; i < tabs.length; i++) {
+        tabs[i].classList.toggle('active', tabs[i].getAttribute('data-tab') === 'teamdocs');
+      }
+      var panels = document.querySelectorAll('.portal-panel');
+      for (i = 0; i < panels.length; i++) { panels[i].hidden = true; }
+      $('portal-panel-teamdocs').hidden = false;
+      var nnav = $('portal-nav'); if (nnav) nnav.classList.remove('open');
+      closeDrawerInline();
+    }
+
     /* ================= NEW HIRE DOCUMENTS =================
      * PORTAL_NEWHIRE_DOCS_2026_10_30 (Austin, Oct 30, 2026): every
      * hire gets a Documents button next to their status. It opens
@@ -913,6 +970,8 @@
     var NH_DOC_BUCKET = 'ticket-documents';
     var NH_DOC_KIND_LABELS = {
       i9: 'Form I-9', w4: 'Form W-4', w9: 'Form W-9', ohio_it4: 'Ohio IT 4',
+      direct_deposit: 'Direct Deposit Authorization', non_compete: 'Non-Compete Agreement',
+      nda: 'Non-Disclosure Agreement', handbook: 'Employee Handbook',
       id_copy: 'ID copy', certification: 'Certification',
       offer: 'Offer letter', other: 'Other document'
     };
@@ -1084,6 +1143,11 @@
         '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-nhd-form="w4">Form W-4</button>' +
         '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-nhd-form="ohio_it4">Ohio IT 4</button>' +
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-nhd-form="w9">Form W-9</button></div>' +
+        '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem;">' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-nhd-form="direct_deposit">Direct Deposit</button>' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-nhd-form="non_compete">Non-Compete</button>' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-nhd-form="nda">Non-Disclosure</button>' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-nhd-form="handbook">Employee Handbook</button></div>' +
         '<p class="portal-error" id="nhd-msg" hidden></p>' +
         '<p class="portal-muted" id="nhd-ok" hidden></p>' +
         '<div style="display:flex;gap:0.5rem;margin-top:1rem;"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="nhd-close">Close</button></div>',
@@ -1352,6 +1416,10 @@
       else if (kind === 'w4') openW4Form();
       else if (kind === 'w9') openW9Form();
       else if (kind === 'ohio_it4') openOhioIt4Form();
+      else if (kind === 'direct_deposit') openDirectDepositForm();
+      else if (kind === 'non_compete') openNonCompeteForm();
+      else if (kind === 'nda') openNdaForm();
+      else if (kind === 'handbook') openHandbookForm();
     }
 
     function wireFormSave(wrap, collect) {
@@ -1906,6 +1974,379 @@
       });
     }
 
+    /* ================= COMPANY FORMS + TEAM DOCUMENTS =================
+     * PORTAL_TEAM_DOCS_2026_10_30 (Austin, Oct 30, 2026): four ATRG
+     * company documents join the government forms — Direct Deposit
+     * Authorization, Non-Compete Agreement, Non-Disclosure Agreement,
+     * and the Employee Handbook — built and filed through the same
+     * builder + wireFormSave + fileFormRecord pattern as the I-9 /
+     * W-4 / W-9 / Ohio IT 4. The Team Documents panel (sidebar Team
+     * group) lists all seven with View / Print / Attach to a hire:
+     * View and Print render these same builders with a blank hire and
+     * the save path removed, so nothing can be filed from a blank
+     * view; Attach bridges into the existing per-employee Documents
+     * flow with the form preselected. These are plain-language
+     * business templates, not attorney-reviewed documents. */
+
+    /* ----- Direct Deposit Authorization (ATRG company form) ----- */
+    function openDirectDepositForm() {
+      var hire = nhDocHire;
+      var body =
+        '<div class="portal-nh-grid">' +
+        nhF('nhf-dd-name', 'Employee full name', { req: true, val: hire.full_name || '' }) +
+        nhF('nhf-dd-bank', 'Bank name', { req: true }) +
+        nhF('nhf-dd-routing', 'Routing number', { req: true, inputmode: 'numeric', ph: '9 digits' }) +
+        nhF('nhf-dd-account', 'Account number', { req: true, inputmode: 'numeric' }) +
+        '</div>' +
+        '<h4 style="margin:0.9rem 0 0.4rem;">Account type</h4>' +
+        nhCheck('nhf-dd-checking', 'Checking') +
+        nhCheck('nhf-dd-savings', 'Savings') +
+        '<p class="portal-muted portal-small" style="margin:0.6rem 0 0.4rem;">Pay election: my full net pay goes to this one account.</p>' +
+        '<p class="portal-muted portal-small" style="margin:0 0 0.4rem;">I authorize Austin\u2019s Tech Repair Group to deposit my pay directly into the account above, and to correct any erroneous deposits as allowed by law.</p>' +
+        nhPadHtml('nhf-dd-pad', 'Employee signature') +
+        nhF('nhf-dd-date', 'Date signed', { type: 'date', req: true, val: nhToday() });
+      var wrap = nhModal('portal-nh-form-modal', nhFormShell('Direct Deposit Authorization',
+        'ATRG company form \u2014 not a government form. The employee\u2019s bank details live only inside this filed document, never in any list.', body), 680);
+      var pad = nhWirePadIn(wrap, 'nhf-dd-pad');
+      wireFormSave(wrap, function () {
+        var miss = nhMissing(wrap, [
+          ['nhf-dd-name', 'employee name'], ['nhf-dd-bank', 'bank name'],
+          ['nhf-dd-routing', 'routing number'], ['nhf-dd-account', 'account number'],
+          ['nhf-dd-date', 'date signed']
+        ]);
+        if (miss) return { error: 'Missing: ' + miss + '.' };
+        var chk = nhChecked(wrap, 'nhf-dd-checking'), sav = nhChecked(wrap, 'nhf-dd-savings');
+        if (chk === sav) return { error: 'Choose one account type \u2014 Checking or Savings.' };
+        if (!pad.hasDrawn) return { error: 'The employee signature is required \u2014 sign in the box.' };
+        var sections = [{
+          title: 'Direct Deposit Authorization',
+          lines: [
+            ['Employee full name', nhV(wrap, 'nhf-dd-name')],
+            ['Bank name', nhV(wrap, 'nhf-dd-bank')],
+            ['Routing number', nhV(wrap, 'nhf-dd-routing')],
+            ['Account number', nhV(wrap, 'nhf-dd-account')],
+            ['Account type', chk ? 'Checking' : 'Savings'],
+            ['Pay election', 'Full net pay to this account']
+          ],
+          text: 'Authorization: I authorize Austin\u2019s Tech Repair Group to deposit my pay directly into the account above, and to correct any erroneous deposits as allowed by law.'
+        }];
+        var sigs = [{
+          canvas: wrap.querySelector('#nhf-dd-pad'), hasDrawn: pad.hasDrawn,
+          caption: 'Employee signature',
+          name: nhV(wrap, 'nhf-dd-name'),
+          date: nhV(wrap, 'nhf-dd-date')
+        }];
+        return { kind: 'direct_deposit', sections: sections, sigs: sigs };
+      });
+    }
+
+    /* ----- Non-Compete Agreement (ATRG company document) ----- */
+    var NC_PARTIES = 'This agreement is between Austin\u2019s Tech Repair Group (ATRG), a sole proprietorship in Spring Valley, Ohio, and the employee named below.';
+    var NC_AGREE = 'While employed by ATRG, and for 12 months after that employment ends for any reason, the employee agrees that within 25 miles of Spring Valley, Ohio, they will not: (1) work for, own, operate, or help run a business that repairs consumer electronics in competition with ATRG; or (2) contact or solicit ATRG customers to offer them repair work outside of ATRG.';
+    var NC_LIMIT = 'This agreement does not stop the employee from holding any job that does not compete with ATRG.';
+    var NC_SEV = 'If any part of this agreement is found unenforceable, that part will be read as narrowly as possible and the rest of the agreement will still apply.';
+    function openNonCompeteForm() {
+      var hire = nhDocHire;
+      var body =
+        '<p class="portal-small" style="margin:0 0 0.6rem;">' + NC_PARTIES + '</p>' +
+        '<div class="portal-nh-grid">' +
+        nhF('nhf-nc-name', 'Employee full name', { req: true, val: hire.full_name || '' }) +
+        nhF('nhf-nc-date', 'Date signed', { type: 'date', req: true, val: nhToday() }) +
+        '</div>' +
+        '<h4 style="margin:0.9rem 0 0.4rem;">What the employee agrees to</h4>' +
+        '<p class="portal-small" style="margin:0 0 0.5rem;">' + NC_AGREE + '</p>' +
+        '<p class="portal-small" style="margin:0 0 0.5rem;">' + NC_LIMIT + '</p>' +
+        '<h4 style="margin:0.9rem 0 0.4rem;">If part of this agreement cannot be enforced</h4>' +
+        '<p class="portal-small" style="margin:0 0 0.5rem;">' + NC_SEV + '</p>' +
+        nhPadHtml('nhf-nc-pad-emp', 'Employee signature') +
+        nhPadHtml('nhf-nc-pad-owner', 'Owner signature \u2014 Austin Caudill, Owner');
+      var wrap = nhModal('portal-nh-form-modal', nhFormShell('Non-Compete Agreement',
+        'ATRG company agreement \u2014 not a government form. Both sign: the employee first, then Austin as owner.', body), 700);
+      var padEmp = nhWirePadIn(wrap, 'nhf-nc-pad-emp');
+      var padOwner = nhWirePadIn(wrap, 'nhf-nc-pad-owner');
+      wireFormSave(wrap, function () {
+        var miss = nhMissing(wrap, [
+          ['nhf-nc-name', 'employee name'], ['nhf-nc-date', 'date signed']
+        ]);
+        if (miss) return { error: 'Missing: ' + miss + '.' };
+        if (!padEmp.hasDrawn) return { error: 'The employee signature is required \u2014 sign in the box.' };
+        if (!padOwner.hasDrawn) return { error: 'The owner signature is required \u2014 sign in the box.' };
+        var sections = [
+          { title: 'Parties', lines: [['Employee', nhV(wrap, 'nhf-nc-name')]], text: NC_PARTIES },
+          { title: 'What the employee agrees to', text: NC_AGREE + ' ' + NC_LIMIT },
+          { title: 'If part of this agreement cannot be enforced', text: NC_SEV }
+        ];
+        var sigs = [
+          { canvas: wrap.querySelector('#nhf-nc-pad-emp'), hasDrawn: padEmp.hasDrawn, caption: 'Employee signature', name: nhV(wrap, 'nhf-nc-name'), date: nhV(wrap, 'nhf-nc-date') },
+          { canvas: wrap.querySelector('#nhf-nc-pad-owner'), hasDrawn: padOwner.hasDrawn, caption: 'Owner signature', name: 'Austin Caudill, Owner', date: nhV(wrap, 'nhf-nc-date') }
+        ];
+        return { kind: 'non_compete', sections: sections, sigs: sigs };
+      });
+    }
+
+    /* ----- Non-Disclosure Agreement (ATRG company document) ----- */
+    var NDA_PARTIES = 'This agreement is between Austin\u2019s Tech Repair Group (ATRG), a sole proprietorship in Spring Valley, Ohio, and the employee named below.';
+    var NDA_COVERS = 'Confidential information includes: customer information and customer documents; portal access and login credentials; supplier pricing and ATRG\u2019s internal price book; ATRG\u2019s internal repair guides and procedures; and ATRG\u2019s business plans.';
+    var NDA_DUTY = 'The employee will not share confidential information with anyone outside ATRG, and will not use it for anything other than their work at ATRG. This duty continues after employment ends.';
+    var NDA_EXCEPT = 'This agreement does not cover information that is public through no fault of the employee, or information the employee is required to share by law or court order.';
+    function openNdaForm() {
+      var hire = nhDocHire;
+      var body =
+        '<p class="portal-small" style="margin:0 0 0.6rem;">' + NDA_PARTIES + '</p>' +
+        '<div class="portal-nh-grid">' +
+        nhF('nhf-nda-name', 'Employee full name', { req: true, val: hire.full_name || '' }) +
+        nhF('nhf-nda-date', 'Date signed', { type: 'date', req: true, val: nhToday() }) +
+        '</div>' +
+        '<h4 style="margin:0.9rem 0 0.4rem;">What counts as confidential</h4>' +
+        '<p class="portal-small" style="margin:0 0 0.5rem;">' + NDA_COVERS + '</p>' +
+        '<h4 style="margin:0.9rem 0 0.4rem;">The duty</h4>' +
+        '<p class="portal-small" style="margin:0 0 0.5rem;">' + NDA_DUTY + '</p>' +
+        '<h4 style="margin:0.9rem 0 0.4rem;">What is not covered</h4>' +
+        '<p class="portal-small" style="margin:0 0 0.5rem;">' + NDA_EXCEPT + '</p>' +
+        nhPadHtml('nhf-nda-pad-emp', 'Employee signature') +
+        nhPadHtml('nhf-nda-pad-owner', 'Owner signature \u2014 Austin Caudill, Owner');
+      var wrap = nhModal('portal-nh-form-modal', nhFormShell('Non-Disclosure Agreement',
+        'ATRG company agreement \u2014 not a government form. Both sign: the employee first, then Austin as owner.', body), 700);
+      var padEmp = nhWirePadIn(wrap, 'nhf-nda-pad-emp');
+      var padOwner = nhWirePadIn(wrap, 'nhf-nda-pad-owner');
+      wireFormSave(wrap, function () {
+        var miss = nhMissing(wrap, [
+          ['nhf-nda-name', 'employee name'], ['nhf-nda-date', 'date signed']
+        ]);
+        if (miss) return { error: 'Missing: ' + miss + '.' };
+        if (!padEmp.hasDrawn) return { error: 'The employee signature is required \u2014 sign in the box.' };
+        if (!padOwner.hasDrawn) return { error: 'The owner signature is required \u2014 sign in the box.' };
+        var sections = [
+          { title: 'Parties', lines: [['Employee', nhV(wrap, 'nhf-nda-name')]], text: NDA_PARTIES },
+          { title: 'What counts as confidential', text: NDA_COVERS },
+          { title: 'The duty', text: NDA_DUTY },
+          { title: 'What is not covered', text: NDA_EXCEPT }
+        ];
+        var sigs = [
+          { canvas: wrap.querySelector('#nhf-nda-pad-emp'), hasDrawn: padEmp.hasDrawn, caption: 'Employee signature', name: nhV(wrap, 'nhf-nda-name'), date: nhV(wrap, 'nhf-nda-date') },
+          { canvas: wrap.querySelector('#nhf-nda-pad-owner'), hasDrawn: padOwner.hasDrawn, caption: 'Owner signature', name: 'Austin Caudill, Owner', date: nhV(wrap, 'nhf-nda-date') }
+        ];
+        return { kind: 'nda', sections: sections, sigs: sigs };
+      });
+    }
+
+    /* ----- Employee Handbook (ATRG company document) -----
+     * Written in the spirit of Austin's business plan Company
+     * Operations doctrine (no managers, no write-ups, teaching over
+     * punishment, trust, equal voice, the 3/4 schedule), reconciled
+     * to the settled business rules where the older plan draft
+     * differs: sole proprietorship (never LLC), house calls only in
+     * 2-hour arrival windows, same-day diagnostics only, and no
+     * operating hours stated. The same chapter text renders in the
+     * modal and in the filed record, so the filed document is the
+     * complete handbook with the signed acknowledgment at the end. */
+    var HANDBOOK_CHAPTERS = [
+      ['At-will employment', 'Your employment with Austin\u2019s Tech Repair Group is at will. You may leave at any time, and the company may end your employment at any time, for any lawful reason. This handbook explains how we work \u2014 it is not a contract, and it does not promise employment for any set length of time.'],
+      ['How we run \u2014 no managers, no write-ups', 'ATRG has no managers and no write-ups. Write-ups ruin morale and make people feel small, so we do not use them. Instead, we teach: a detailed training structure shows every employee how to do the work the right way. Nobody here is above anybody else \u2014 every person has an equal voice, and trust in our employees is a very large part of how this company runs.'],
+      ['Respect: No Bullying, Ever', 'ATRG has zero tolerance for bullying. That means no bullying, harassment, intimidation, teasing that targets a person, shutting people out on purpose, or retaliation \u2014 toward coworkers, customers, or anyone else, in person, by text, or online. It applies to everybody equally, the owner included. If you see it or feel it, bring it straight to Austin. Reporting in good faith is always protected \u2014 nobody gets punished for speaking up. Know the difference: a mistake gets teaching and a move forward, but bullying is not a mistake. It is a choice, and it breaks the trust this company runs on. Bullying can end your employment.'],
+      ['Mistakes \u2014 we move forward', 'People make mistakes \u2014 a device gets damaged, you are running late, you cannot make a shift. We do not dwell on it or make a big deal of it. We learn what happened, learn how to do it right \u2014 starting with how to properly take devices apart \u2014 fix what can be fixed, and move forward. Hard work gets noticed and rewarded here. We do not dwell on the negatives.'],
+      ['Schedules and breaks', 'We believe in a real work-life balance. Schedules follow the 3/4 rule: work 4 days, off 3 days each week. A standard day is 7 hours, with a half-hour lunch and two paid 20-minute breaks. Shifts are flexible, and if you want more hours, some days can run up to 10 hours by choice.'],
+      ['Diversity and belonging', 'Everyone is welcome here. Hiring and advancement are based on merit \u2014 skills, qualifications, and experience \u2014 never on race, ethnicity, gender identity, sexual orientation, age, religion, disability, or background. Different people bring different strengths, and every team member should feel they belong and can do their best work.'],
+      ['How we work \u2014 house calls', 'ATRG serves customers at their homes \u2014 house calls only. Appointments are booked in 2-hour arrival windows. In a customer\u2019s home, be professional and respectful, explain the work in plain language, and leave the space as you found it. Diagnostics can be same-day; we never promise a same-day repair.'],
+      ['Photos and media', 'Never photograph inside a customer\u2019s home without that customer\u2019s signed media release first. No exceptions.'],
+      ['Customer privacy', 'Customer information, customer documents, and device data stay in the portal. Do not copy, share, or use them outside the job they belong to.'],
+      ['What we repair', 'We repair consumer and business electronics \u2014 phones, tablets, computers, game consoles, smartwatches, and similar devices. We do not work on medical devices or equipment. Ever.'],
+      ['Pay', 'Pay is sent by direct deposit. Your signed Direct Deposit Authorization must be on file before your first deposit.'],
+      ['Time clock', 'Clock in and out on the portal time clock at the start and end of every shift.'],
+      ['Tools and parts', 'Order parts only through ATRG\u2019s channels. The order number and the tracking link for every part go on the customer\u2019s ticket. Take care of the tools, and speak up right away if a tool is damaged or a part arrives wrong.'],
+      ['Safety', 'Turn devices off and unplug them before opening them. Treat swollen batteries and cracked glass with care. If a job cannot be done safely, stop and contact Austin \u2014 no repair is worth an injury.']
+    ];
+    var HANDBOOK_ACK = 'I have received and read the Austin\u2019s Tech Repair Group Employee Handbook \u2014 including at-will employment, how we run without managers or write-ups, the Respect: No Bullying, Ever rule, and the scheduling, privacy, media, and safety rules. I understand the handbook and will follow it.';
+    function openHandbookForm() {
+      var hire = nhDocHire;
+      var chaptersHtml = '';
+      for (var ci = 0; ci < HANDBOOK_CHAPTERS.length; ci++) {
+        chaptersHtml += '<h4 style="margin:0.9rem 0 0.4rem;">' + esc(HANDBOOK_CHAPTERS[ci][0]) + '</h4>' +
+          '<p class="portal-small" style="margin:0 0 0.5rem;">' + esc(HANDBOOK_CHAPTERS[ci][1]) + '</p>';
+      }
+      var body =
+        '<p class="portal-small" style="margin:0 0 0.5rem;"><strong>Our mission: Every technology, big or small \u2014 we tackle them all.</strong></p>' +
+        '<p class="portal-small" style="margin:0 0 0.5rem;">Austin\u2019s Tech Repair Group is a sole proprietorship based in Spring Valley, Ohio. This handbook is how we work.</p>' +
+        chaptersHtml +
+        '<h4 style="margin:1rem 0 0.4rem;">Acknowledgment</h4>' +
+        '<p class="portal-small" style="margin:0 0 0.5rem;">' + HANDBOOK_ACK + '</p>' +
+        '<div class="portal-nh-grid">' +
+        nhF('nhf-hb-name', 'Employee printed name', { req: true, val: hire.full_name || '' }) +
+        nhF('nhf-hb-date', 'Date signed', { type: 'date', req: true, val: nhToday() }) +
+        '</div>' +
+        nhPadHtml('nhf-hb-pad', 'Employee signature');
+      var wrap = nhModal('portal-nh-form-modal', nhFormShell('Austin\u2019s Tech Repair Group \u2014 Employee Handbook',
+        'The full handbook, with the signed acknowledgment at the end. Filing files the whole handbook together with the signed acknowledgment \u2014 one complete document.', body), 720);
+      var pad = nhWirePadIn(wrap, 'nhf-hb-pad');
+      wireFormSave(wrap, function () {
+        var miss = nhMissing(wrap, [
+          ['nhf-hb-name', 'printed name'], ['nhf-hb-date', 'date signed']
+        ]);
+        if (miss) return { error: 'Missing: ' + miss + '.' };
+        if (!pad.hasDrawn) return { error: 'The employee signature is required \u2014 sign in the box.' };
+        var sections = [];
+        for (var si = 0; si < HANDBOOK_CHAPTERS.length; si++) {
+          sections.push({ title: HANDBOOK_CHAPTERS[si][0], text: HANDBOOK_CHAPTERS[si][1] });
+        }
+        sections.push({
+          title: 'Acknowledgment',
+          lines: [['Employee printed name', nhV(wrap, 'nhf-hb-name')]],
+          text: HANDBOOK_ACK
+        });
+        var sigs = [{
+          canvas: wrap.querySelector('#nhf-hb-pad'), hasDrawn: pad.hasDrawn,
+          caption: 'Employee signature \u2014 acknowledgment',
+          name: nhV(wrap, 'nhf-hb-name'),
+          date: nhV(wrap, 'nhf-hb-date')
+        }];
+        return { kind: 'handbook', sections: sections, sigs: sigs };
+      });
+    }
+
+    /* ----- Team Documents: blank view / print / attach -----
+     * Blank views run the real builders against an empty hire, then
+     * strip the save path: the Save button is removed, every field is
+     * disabled, the signature pads are frozen, and the discard guard
+     * snapshot is cleared, so a blank view can never file anything.
+     * Print mirrors portal.js's own print path (same #portal-print-
+     * area + body.portal-printing contract, re-implemented here
+     * because portal.js exposes no globals). Attach reuses the
+     * existing filing path end to end: showNewHires() switches the
+     * tab, openHireDocs(hire) opens the person's Documents, and
+     * openHireForm(kind) opens the chosen form preselected. */
+    function openBlankDoc(kind, autoPrint) {
+      var prev = nhDocHire;
+      nhDocHire = { full_name: '', business_name: '', email: '', phone: '', start_date: '' };
+      openHireForm(kind);
+      nhDocHire = prev;
+      var wrap = document.getElementById('portal-nh-form-modal');
+      if (!wrap) return;
+      var save = wrap.querySelector('#nhf-save');
+      if (save && save.parentNode) save.parentNode.removeChild(save);
+      var cancel = wrap.querySelector('#nhf-cancel');
+      if (cancel) cancel.textContent = 'Close';
+      var h3 = wrap.querySelector('h3');
+      if (h3 && h3.nextElementSibling) {
+        var note = document.createElement('p');
+        note.className = 'portal-muted portal-small td-print-hide';
+        note.style.margin = '0 0 0.75rem';
+        note.textContent = 'Blank form \u2014 view or print only; nothing is saved from this view. To complete and file it, use Attach to a hire, or Documents on the employee\u2019s card.';
+        h3.parentNode.insertBefore(note, h3.nextElementSibling.nextSibling);
+      }
+      if (cancel && cancel.parentNode) {
+        var pb = document.createElement('button');
+        pb.type = 'button';
+        pb.className = 'portal-btn portal-btn-primary portal-btn-sm';
+        pb.innerHTML = '<i class="fas fa-print"></i> Print';
+        pb.addEventListener('click', function () { printFormModal(wrap); });
+        cancel.parentNode.insertBefore(pb, cancel);
+      }
+      var els = wrap.querySelectorAll('input, select, textarea');
+      for (var i = 0; i < els.length; i++) { els[i].disabled = true; }
+      var cvs = wrap.querySelectorAll('canvas');
+      for (var j = 0; j < cvs.length; j++) { cvs[j].style.pointerEvents = 'none'; }
+      var clrs = wrap.querySelectorAll('[data-nhpad-clear]');
+      for (var k = 0; k < clrs.length; k++) { clrs[k].disabled = true; }
+      nhFormSnapshot = null;
+      if (autoPrint) printFormModal(wrap);
+    }
+
+    function printFormModal(wrap) {
+      var area = $('portal-print-area');
+      if (!area || !wrap || !wrap.firstElementChild) { window.print(); return; }
+      var clone = wrap.firstElementChild.cloneNode(true);
+      var btns = clone.querySelectorAll('button');
+      for (var i = btns.length - 1; i >= 0; i--) { btns[i].parentNode.removeChild(btns[i]); }
+      var hides = clone.querySelectorAll('.td-print-hide, #nhf-msg');
+      for (var h = hides.length - 1; h >= 0; h--) { hides[h].parentNode.removeChild(hides[h]); }
+      var dis = clone.querySelectorAll('[disabled]');
+      for (var d = 0; d < dis.length; d++) { dis[d].removeAttribute('disabled'); }
+      area.className = '';
+      area.innerHTML = '';
+      area.appendChild(clone);
+      area.hidden = false;
+      document.body.classList.add('portal-printing');
+      setTimeout(function () {
+        window.print();
+        setTimeout(function () {
+          document.body.classList.remove('portal-printing');
+          area.hidden = true;
+          area.innerHTML = '';
+        }, 400);
+      }, 60);
+    }
+
+    function tdAttach(kind) {
+      var wrap = nhModal('portal-td-attach-modal',
+        '<h3 style="margin:0 0 0.25rem;">Attach \u2014 ' + esc(NH_DOC_KIND_LABELS[kind] || 'Document') + '</h3>' +
+        '<p class="portal-muted portal-small" style="margin:0 0 0.75rem;">Pick the employee who will complete and file this form. It opens ready to fill out under Documents on their card in Employee Onboarding.</p>' +
+        '<div id="td-attach-list"><p class="portal-muted">Loading employees&hellip;</p></div>' +
+        '<div style="display:flex;gap:0.5rem;margin-top:1rem;"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="td-attach-close">Cancel</button></div>',
+        560);
+      wrap.querySelector('#td-attach-close').addEventListener('click', function () { nhCloseModal('portal-td-attach-modal'); });
+      tdLoadAttachList(kind);
+    }
+
+    function tdRenderAttachList(kind, rows) {
+      var box = $('td-attach-list');
+      if (!box) return;
+      if (!rows.length) {
+        box.innerHTML = '<p class="portal-muted">No employees yet \u2014 a form can only be filed for a person who is on file.</p>' +
+          '<p class="portal-muted portal-small">Add the employee first with the form in Employee Onboarding. Once they are added, the Documents button on their card is where this form gets completed and filed.</p>' +
+          '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="td-attach-add">Add an employee</button>';
+        var add = box.querySelector('#td-attach-add');
+        if (add) add.addEventListener('click', function () {
+          nhCloseModal('portal-td-attach-modal');
+          showNewHires();
+          var nm = $('portal-nh-name');
+          if (nm) nm.focus();
+        });
+        return;
+      }
+      box.innerHTML = rows.map(function (h) {
+        return '<div style="display:flex;justify-content:space-between;align-items:center;gap:0.75rem;padding:0.45rem 0;border-bottom:1px solid #E6D9C0;">' +
+          '<div><span style="font-weight:600;">' + esc(h.full_name || 'Employee') + '</span>' +
+          (h.status ? '<br /><span class="portal-muted portal-small">' + esc(h.status) + '</span>' : '') + '</div>' +
+          '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-td-pick="' + esc(h.id) + '">Attach</button></div>';
+      }).join('');
+      var btns = box.querySelectorAll('[data-td-pick]');
+      for (var i = 0; i < btns.length; i++) {
+        btns[i].addEventListener('click', function () {
+          var hire = nhRowsById[this.getAttribute('data-td-pick')];
+          if (!hire) return;
+          nhCloseModal('portal-td-attach-modal');
+          showNewHires();
+          openHireDocs(hire);
+          openHireForm(kind);
+        });
+      }
+    }
+
+    function tdLoadAttachList(kind) {
+      var keys = Object.keys(nhRowsById);
+      if (loaded && keys.length) {
+        tdRenderAttachList(kind, keys.map(function (k) { return nhRowsById[k]; }));
+        return;
+      }
+      var client = getClient();
+      if (!client) {
+        var box0 = $('td-attach-list');
+        if (box0) box0.innerHTML = '<p class="portal-error">Couldn&rsquo;t reach the database.</p>';
+        return;
+      }
+      client.from('new_hires').select('*').order('created_at', { ascending: false }).limit(200).then(function (res) {
+        var box = $('td-attach-list');
+        if (res.error) { if (box) box.innerHTML = '<p class="portal-error">Couldn&rsquo;t load employees. Try again.</p>'; return; }
+        var rows = res.data || [];
+        nhRowsById = {};
+        for (var i = 0; i < rows.length; i++) { nhRowsById[rows[i].id] = rows[i]; }
+        tdRenderAttachList(kind, rows);
+      }).catch(function () {
+        var box = $('td-attach-list');
+        if (box) box.innerHTML = '<p class="portal-error">Couldn&rsquo;t load employees. Try again.</p>';
+      });
+    }
+
     function initNewHireForm() {
       var form = $('portal-newhire-form');
       if (!form) return;
@@ -1974,6 +2415,38 @@
     function init() {
       var tab = $('portal-tab-newhires');
       if (tab) tab.addEventListener('click', showNewHires);
+      /* PORTAL_TEAM_DOCS_2026_10_30: Team Documents tab + panel wiring,
+       * mirroring the New Hire wiring above (own tab handler, own
+       * document-click hider, button delegation inside the panel). */
+      var tdTab = $('portal-tab-teamdocs');
+      if (tdTab) tdTab.addEventListener('click', showTeamDocs);
+      var formsLink = $('portal-nh-forms-link');
+      if (formsLink) formsLink.addEventListener('click', showTeamDocs);
+      var tdPanel = $('portal-panel-teamdocs');
+      if (tdPanel) tdPanel.addEventListener('click', function (e) {
+        var t = e.target;
+        while (t && t !== tdPanel) {
+          if (t.getAttribute) {
+            if (t.getAttribute('data-td-view')) { openBlankDoc(t.getAttribute('data-td-view'), false); return; }
+            if (t.getAttribute('data-td-print')) { openBlankDoc(t.getAttribute('data-td-print'), true); return; }
+            if (t.getAttribute('data-td-attach')) { tdAttach(t.getAttribute('data-td-attach')); return; }
+          }
+          t = t.parentNode;
+        }
+      });
+      document.addEventListener('click', function (e) {
+        var t = e.target;
+        while (t && t !== document) {
+          if (t.getAttribute && t.getAttribute('data-tab')) {
+            if (t.getAttribute('data-tab') !== 'teamdocs') {
+              var p = $('portal-panel-teamdocs');
+              if (p) p.hidden = true;
+            }
+            return;
+          }
+          t = t.parentNode;
+        }
+      });
       var nhListEl = $('portal-nh-list');
       if (nhListEl) nhListEl.addEventListener('click', function (e) {
         var t = e.target;
