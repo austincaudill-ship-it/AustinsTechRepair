@@ -163,6 +163,26 @@
         });
       }
 
+      /* Lead source: the "How did you hear about us?" dropdown choice, plus
+         automatic signals (external referrer hostname, utm_source param).
+         Exposed on window so the account ticket insert reuses the same value.
+         Format: "google-search", "yelp | ref: yelp.com", "flyer | utm: fb". */
+      window.atrLeadSource = function () {
+        var parts = [];
+        var sel = document.getElementById('leadSource');
+        var choice = sel ? String(sel.value || '').trim() : '';
+        if (choice) parts.push(choice);
+        var refHost = '';
+        try {
+          if (document.referrer) refHost = new URL(document.referrer).hostname.replace(/^www\./, '');
+        } catch (err) { refHost = ''; }
+        if (refHost && refHost !== window.location.hostname) parts.push('ref: ' + refHost);
+        var utm = '';
+        try { utm = new URLSearchParams(window.location.search).get('utm_source') || ''; } catch (err) { utm = ''; }
+        if (utm) parts.push('utm: ' + String(utm).trim());
+        return parts.join(' | ');
+      };
+
       /* Lead capture: email the request directly (free, no server) */
       var contactForm = document.getElementById('repair-contact-form');
       if (contactForm) {
@@ -174,6 +194,7 @@
           var address = document.getElementById('rc-address').value.trim();
           var notes = document.getElementById('rc-notes').value.trim();
           var serial = document.getElementById('rc-serial').value.trim();
+          var leadSource = window.atrLeadSource ? window.atrLeadSource() : '';
 
           if (!name || !phone || !email) {
             alert('Please fill in your name, phone, and email so we can reach you.');
@@ -198,6 +219,7 @@
             'Email': email,
             'Service address': address || '(not provided)',
             'Notes': notes || '(none)',
+            'Heard about us': leadSource || '(not provided)',
             'Photos attached by customer': photoCount > 0 ? photoCount + ' photo(s) \u2014 ask customer to text them to 937-280-6243' : 'None'
           };
 
@@ -1218,7 +1240,8 @@
         brand: brand || null,
         model: model || null,
         issue: issue,
-        status: 'Awaiting Diagnostics'
+        status: 'Awaiting Diagnostics',
+        source: (window.atrLeadSource ? window.atrLeadSource() : '') || 'website'
       }).select('id').single()
         .then(function (res) {
           if (btn) { btn.disabled = false; btn.innerHTML = 'Submit Request <i class="fas fa-arrow-right"></i>'; }

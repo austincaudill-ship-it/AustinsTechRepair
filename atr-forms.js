@@ -110,6 +110,28 @@
     ], ', ');
   }
 
+  /* Lead source: the intake form's "How did you hear about us?" dropdown
+   * (name="lead_source"), composed exactly like script.js's
+   * window.atrLeadSource: dropdown value first, then " | ref: <hostname>"
+   * for an external referrer, then " | utm: <value>" when a utm_source
+   * URL parameter is present. Returns '' when nothing is present; the
+   * tickets insert falls back to 'website'.
+   * Format: "google-search", "yelp | ref: yelp.com", "flyer | utm: fb". */
+  function leadSource(form) {
+    var parts = [];
+    var choice = form ? field(form, 'lead_source') : '';
+    if (choice) parts.push(choice);
+    var refHost = '';
+    try {
+      if (document.referrer) refHost = new URL(document.referrer).hostname.replace(/^www\./, '');
+    } catch (err) { refHost = ''; }
+    if (refHost && refHost !== window.location.hostname) parts.push('ref: ' + refHost);
+    var utm = '';
+    try { utm = new URLSearchParams(window.location.search).get('utm_source') || ''; } catch (err) { utm = ''; }
+    if (utm) parts.push('utm: ' + trim(utm));
+    return parts.join(' | ');
+  }
+
   function validEmail(v) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trim(v));
   }
@@ -235,7 +257,8 @@
 
   /* ================= SERVICE REQUEST =================
    * Replicates JotForm "Service Request" 261955946010055 (22 cataloged
-   * fields). Writes to public.tickets with source='website'.
+   * fields). Writes to public.tickets; source is the composed lead
+   * source (see leadSource above), falling back to 'website'.
    * Mapping notes / exceptions (see README.md for the full table):
    *  - Email maps to tickets.customer_email (column added 2026-10-20).
    *  - The JotForm form's built-in "how was your experience" rating
@@ -304,7 +327,7 @@
         dispatch_acknowledged: !!field(form, 'dispatch_acknowledged'),
         work_auth_accepted: !!field(form, 'work_auth_accepted'),
         marketing_opt_in: !!field(form, 'marketing_opt_in'),
-        source: 'website'
+        source: leadSource(form) || 'website'
         // status intentionally omitted: DB default 'Waiting' applies.
         // customer_id intentionally omitted: anonymous web submission.
       };
@@ -326,6 +349,7 @@
         ['Is it backed up?', row.backed_up],
         ['Has it been repaired before?', row.prior_repair],
         ['Under manufacturer warranty?', row.warranty_status],
+        ['Heard about us', row.source],
         ['Marketing emails opt-in', row.marketing_opt_in ? 'Yes' : 'No']
       ]);
 

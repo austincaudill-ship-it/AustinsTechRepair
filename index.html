@@ -499,6 +499,20 @@
                     <label class="field-label" for="rc-notes">Anything else we should know?</label>
                     <input class="form-field" type="text" id="rc-notes" name="notes" placeholder="e.g. cracked last night, still powers on" />
                   </div>
+                  <div style="margin-bottom: 1.2rem;">
+                    <label class="field-label" for="leadSource">How did you hear about us?</label>
+                    <select class="form-field" id="leadSource" name="leadSource">
+                      <option value="">Select one (optional)</option>
+                      <option value="google-search">Google search</option>
+                      <option value="google-maps">Google Maps</option>
+                      <option value="yelp">Yelp</option>
+                      <option value="facebook">Facebook</option>
+                      <option value="flyer">A flyer</option>
+                      <option value="referral">Referred by someone</option>
+                      <option value="drove-by">Drove by / saw a sign</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
 
                   <button class="btn btn-primary btn-block btn-lg" type="submit" id="repair-submit-btn">
                     <i class="fas fa-paper-plane"></i> Send Repair Request
@@ -685,6 +699,21 @@
     <div class="atr-field">
       <label class="field-label" for="sr-serial">Serial number / IMEI <span class="atr-optional">(optional — speeds up parts ordering)</span></label>
       <input class="form-field" type="text" id="sr-serial" name="serial_imei" placeholder="Found in Settings or on the device">
+    </div>
+
+    <div class="atr-field">
+      <label class="field-label" for="leadSourceIntake">How did you hear about us?</label>
+      <select class="form-field" id="leadSourceIntake" name="lead_source">
+        <option value="">Select one (optional)</option>
+        <option value="google-search">Google search</option>
+        <option value="google-maps">Google Maps</option>
+        <option value="yelp">Yelp</option>
+        <option value="facebook">Facebook</option>
+        <option value="flyer">A flyer</option>
+        <option value="referral">Referred by someone</option>
+        <option value="drove-by">Drove by / saw a sign</option>
+        <option value="other">Other</option>
+      </select>
     </div>
 
     <label class="atr-check">
