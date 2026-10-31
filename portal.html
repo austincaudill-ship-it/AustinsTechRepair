@@ -399,26 +399,26 @@
         <div id="portal-nh-list"><p class="portal-muted">Loading employees&hellip;</p></div>
       </div>
 
-      <!-- TEAM DOCUMENTS — PORTAL_TEAM_DOCS_2026_10_30 -->
+      <!-- TEAM DOCUMENTS — PORTAL_TEAM_DOCS_2026_10_30 — PORTAL_GOV_FORMS_2026_10_31 -->
       <div class="portal-panel" id="portal-panel-teamdocs" role="tabpanel" hidden>
         <div class="portal-panel-head">
           <h2 class="portal-h2">Team Documents</h2>
         </div>
         <p class="portal-muted portal-small">Blank onboarding forms and company documents &mdash; here any time, no employee needed. View or print a blank copy, or attach one to a hire to complete and file it. Filed copies live under Documents on the employee&rsquo;s card in Employee Onboarding.</p>
         <div style="display:flex;justify-content:space-between;align-items:center;gap:0.75rem;padding:0.55rem 0;border-bottom:1px solid #E6D9C0;">
-          <div><span style="font-weight:600;">Form I-9 &mdash; Employment Eligibility Verification</span><br /><span class="portal-muted portal-small">USCIS form &mdash; the employee completes Section 1; the employer completes Section 2.</span></div>
+          <div><span style="font-weight:600;">Form I-9 &mdash; Employment Eligibility Verification</span><br /><span class="portal-muted portal-small">The actual USCIS form (expires 05/31/2027) &mdash; the employee completes Section 1; the employer completes Section 2.</span></div>
           <span style="display:inline-flex;gap:0.4rem;flex-wrap:wrap;"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-view="i9"><i class="fas fa-eye"></i> View</button><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-print="i9"><i class="fas fa-print"></i> Print</button><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-td-attach="i9"><i class="fas fa-paperclip"></i> Attach to a hire</button></span>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;gap:0.75rem;padding:0.55rem 0;border-bottom:1px solid #E6D9C0;">
-          <div><span style="font-weight:600;">Form W-4 &mdash; Employee&rsquo;s Withholding Certificate</span><br /><span class="portal-muted portal-small">IRS form &mdash; federal tax withholding.</span></div>
+          <div><span style="font-weight:600;">Form W-4 &mdash; Employee&rsquo;s Withholding Certificate</span><br /><span class="portal-muted portal-small">The actual IRS form (2026) &mdash; federal tax withholding.</span></div>
           <span style="display:inline-flex;gap:0.4rem;flex-wrap:wrap;"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-view="w4"><i class="fas fa-eye"></i> View</button><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-print="w4"><i class="fas fa-print"></i> Print</button><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-td-attach="w4"><i class="fas fa-paperclip"></i> Attach to a hire</button></span>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;gap:0.75rem;padding:0.55rem 0;border-bottom:1px solid #E6D9C0;">
-          <div><span style="font-weight:600;">Ohio IT 4 &mdash; Employee&rsquo;s Withholding Exemption Certificate</span><br /><span class="portal-muted portal-small">Ohio Department of Taxation &mdash; Ohio tax withholding.</span></div>
+          <div><span style="font-weight:600;">Ohio IT 4 &mdash; Employee&rsquo;s Withholding Exemption Certificate</span><br /><span class="portal-muted portal-small">The actual Ohio Department of Taxation form (Rev. 01/24) &mdash; Ohio tax withholding.</span></div>
           <span style="display:inline-flex;gap:0.4rem;flex-wrap:wrap;"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-view="ohio_it4"><i class="fas fa-eye"></i> View</button><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-print="ohio_it4"><i class="fas fa-print"></i> Print</button><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-td-attach="ohio_it4"><i class="fas fa-paperclip"></i> Attach to a hire</button></span>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;gap:0.75rem;padding:0.55rem 0;border-bottom:1px solid #E6D9C0;">
-          <div><span style="font-weight:600;">Direct Deposit Authorization</span><br /><span class="portal-muted portal-small">ATRG form &mdash; pay deposited into the employee&rsquo;s own bank account.</span></div>
+          <div><span style="font-weight:600;">Direct Deposit Authorization</span><br /><span class="portal-muted portal-small">Pay deposited into the employee&rsquo;s own bank account &mdash; the Wright-Patt Credit Union direct deposit form will replace this ATRG form once the business account is open.</span></div>
           <span style="display:inline-flex;gap:0.4rem;flex-wrap:wrap;"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-view="direct_deposit"><i class="fas fa-eye"></i> View</button><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-print="direct_deposit"><i class="fas fa-print"></i> Print</button><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-td-attach="direct_deposit"><i class="fas fa-paperclip"></i> Attach to a hire</button></span>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;gap:0.75rem;padding:0.55rem 0;border-bottom:1px solid #E6D9C0;">
@@ -977,6 +977,21 @@
     };
     var nhDocHire = null;
 
+    /* Gov forms update (Austin, Oct 31, 2026): the government forms
+     * are the ACTUAL official PDFs, hosted next to this portal at
+     * forms/ — never a recreation built here. View / Print in Team
+     * Documents opens the official PDF; per-hire, the hire completes
+     * and signs the official PDF itself and the completed PDF is what
+     * gets filed (openGovForm / nhFileGovForm below). The older
+     * in-portal builders for these kinds stay in the file as dead
+     * code only — nothing routes to them any more. */
+    var NH_GOV_FORMS = {
+      i9: { src: 'forms/form-i-9.pdf', agency: 'USCIS', edition: 'Expires 05/31/2027' },
+      w4: { src: 'forms/form-w-4.pdf', agency: 'IRS', edition: '2026 form' },
+      w9: { src: 'forms/form-w-9.pdf', agency: 'IRS', edition: 'Rev. March 2024' },
+      ohio_it4: { src: 'forms/ohio-it-4.pdf', agency: 'Ohio Department of Taxation', edition: 'Rev. 01/24' }
+    };
+
     function nhDocStamp() { return new Date().toISOString().replace(/[:.]/g, '-'); }
     function nhSafeFileName(name) {
       var s = String(name || 'document').replace(/[^A-Za-z0-9._-]+/g, '_').slice(-80);
@@ -1137,7 +1152,7 @@
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="nhd-add-btn"><i class="fas fa-upload"></i> Add document</button>' +
         '<input type="file" id="nhd-file" accept="image/*,application/pdf" hidden /></div>' +
         '<h4 style="margin:1.1rem 0 0.35rem;">Fill out a form</h4>' +
-        '<p class="portal-muted portal-small" style="margin:0 0 0.5rem;">The new hire completes these on this device and signs at the end. Saving files the completed form here.</p>' +
+        '<p class="portal-muted portal-small" style="margin:0 0 0.5rem;">Government forms (I-9, W-4, Ohio IT 4, W-9) open the actual official PDF &mdash; complete it, sign it, and file the completed PDF back here. Company documents (direct deposit, non-compete, NDA, handbook) are completed and signed here in the portal.</p>' +
         '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">' +
         '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-nhd-form="i9">Form I-9</button>' +
         '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-nhd-form="w4">Form W-4</button>' +
@@ -1412,14 +1427,90 @@
 
     function openHireForm(kind) {
       if (!nhDocHire) return;
-      if (kind === 'i9') openI9Form();
-      else if (kind === 'w4') openW4Form();
-      else if (kind === 'w9') openW9Form();
-      else if (kind === 'ohio_it4') openOhioIt4Form();
+      if (NH_GOV_FORMS[kind]) openGovForm(kind);
       else if (kind === 'direct_deposit') openDirectDepositForm();
       else if (kind === 'non_compete') openNonCompeteForm();
       else if (kind === 'nda') openNdaForm();
       else if (kind === 'handbook') openHandbookForm();
+    }
+
+    /* Government forms: the hire completes the ACTUAL official PDF
+     * (opened in a new tab), signs it there, saves the completed PDF
+     * to this device, and files that PDF here — the completed
+     * official form itself is the filed record, same bucket / path /
+     * employee_documents row pattern as every other hire document.
+     * This modal carries no fields of its own, so the form discard
+     * guard (nhFormSnapshot) is explicitly cleared on open. */
+    function openGovForm(kind) {
+      var gov = NH_GOV_FORMS[kind];
+      if (!gov || !nhDocHire) return;
+      var label = NH_DOC_KIND_LABELS[kind] || 'Government form';
+      var step1 = 'Open the official form and complete it in the PDF.';
+      if (kind === 'i9') step1 = 'Open the official form and complete it in the PDF &mdash; the employee completes Section 1, and the employer completes Section 2 after examining the employee&rsquo;s documents, on the same form.';
+      var wrap = nhModal('portal-nh-form-modal',
+        '<h3 style="margin:0 0 0.25rem;">' + esc(label) + '</h3>' +
+        '<p class="portal-muted portal-small" style="margin:0 0 0.75rem;">This is the actual official ' + esc(gov.agency) + ' form (' + esc(gov.edition) + '). ATRG files the completed official form itself &mdash; not a recreation.</p>' +
+        '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin:0 0 0.75rem;"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="nhgov-open"><i class="fas fa-file-pdf"></i> Open the official form</button></div>' +
+        '<ol style="margin:0 0 0.9rem;padding-left:1.3rem;" class="portal-small">' +
+        '<li style="margin-bottom:0.35rem;">' + step1 + '</li>' +
+        '<li style="margin-bottom:0.35rem;">Sign it in the PDF and save the completed PDF to this device.</li>' +
+        '<li>File it here with the button below &mdash; it goes into this employee&rsquo;s documents as the completed ' + esc(label) + '.</li>' +
+        '</ol>' +
+        '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="nhgov-file-btn"><i class="fas fa-upload"></i> File the completed form</button>' +
+        '<input type="file" id="nhgov-file" accept="application/pdf,image/*" hidden />' +
+        '<span class="portal-muted portal-small" id="nhgov-status"></span></div>' +
+        '<p class="portal-error" id="nhgov-msg" hidden></p>' +
+        '<div style="display:flex;gap:0.5rem;margin-top:1rem;"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="nhgov-cancel">Cancel</button></div>',
+        640);
+      nhFormSnapshot = null;
+      wrap.querySelector('#nhgov-open').addEventListener('click', function () { window.open(gov.src, '_blank'); });
+      wrap.querySelector('#nhgov-cancel').addEventListener('click', function () { nhCloseModal('portal-nh-form-modal'); });
+      var govFile = wrap.querySelector('#nhgov-file');
+      var govBtn = wrap.querySelector('#nhgov-file-btn');
+      if (govBtn && govFile) govBtn.addEventListener('click', function () { govFile.click(); });
+      if (govFile) govFile.addEventListener('change', function () {
+        var f = govFile.files && govFile.files[0];
+        govFile.value = '';
+        if (f) nhFileGovForm(kind, f, wrap);
+      });
+    }
+
+    function nhFileGovForm(kind, file, wrap) {
+      function govErr(text) {
+        var m = wrap ? wrap.querySelector('#nhgov-msg') : null;
+        if (m) { m.textContent = text || ''; m.hidden = !text; }
+      }
+      function govBusy(busy, text) {
+        var b = wrap ? wrap.querySelector('#nhgov-file-btn') : null;
+        if (b) b.disabled = busy;
+        var s = wrap ? wrap.querySelector('#nhgov-status') : null;
+        if (s) s.textContent = text || '';
+      }
+      govErr('');
+      if (NH_DOC_KIND_LABELS[kind] === undefined) { govErr('That form type is not recognized.'); return; }
+      if (!nhDocHire) { govErr('No employee is selected — close this and try again.'); return; }
+      if (file.size > 15 * 1024 * 1024) { govErr('That file is over 15 MB — try a smaller file.'); return; }
+      var client = getClient();
+      if (!client) { govErr('Couldn\u2019t reach the database. Check your connection and try again.'); return; }
+      govBusy(true, 'Filing\u2026');
+      var path = 'hire/' + nhDocHire.id + '/' + kind + '-' + nhDocStamp() + '-' + nhSafeFileName(file.name);
+      client.storage.from(NH_DOC_BUCKET).upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: false }).then(function (up) {
+        if (up.error) { govBusy(false, ''); govErr('Upload failed — check the connection and try again.'); return; }
+        var row = {
+          new_hire_id: nhDocHire.id, kind: kind, label: NH_DOC_KIND_LABELS[kind],
+          storage_path: path, original_filename: file.name,
+          mime_type: file.type || null, file_size: file.size
+        };
+        fileHireDoc(client, row, function (err) {
+          govBusy(false, '');
+          if (err) { govErr('The file uploaded but could not be filed — try again.'); return; }
+          if (kind === 'w9') syncW9Flag(client);
+          nhCloseModal('portal-nh-form-modal');
+          nhDocOk(NH_DOC_KIND_LABELS[kind] + ' added to ' + (nhDocHire.full_name || 'this hire') + '.');
+          loadHireDocs();
+        });
+      }).catch(function () { govBusy(false, ''); govErr('Upload failed — check the connection and try again.'); });
     }
 
     function wireFormSave(wrap, collect) {
@@ -2215,6 +2306,9 @@
      * tab, openHireDocs(hire) opens the person's Documents, and
      * openHireForm(kind) opens the chosen form preselected. */
     function openBlankDoc(kind, autoPrint) {
+      /* Government forms never render a blank recreation: View and
+       * Print open the actual official PDF instead. */
+      if (NH_GOV_FORMS[kind]) { window.open(NH_GOV_FORMS[kind].src, '_blank'); return; }
       var prev = nhDocHire;
       nhDocHire = { full_name: '', business_name: '', email: '', phone: '', start_date: '' };
       openHireForm(kind);
@@ -2427,8 +2521,18 @@
         var t = e.target;
         while (t && t !== tdPanel) {
           if (t.getAttribute) {
-            if (t.getAttribute('data-td-view')) { openBlankDoc(t.getAttribute('data-td-view'), false); return; }
-            if (t.getAttribute('data-td-print')) { openBlankDoc(t.getAttribute('data-td-print'), true); return; }
+            var tdViewKind = t.getAttribute('data-td-view');
+            if (tdViewKind) {
+              if (NH_GOV_FORMS[tdViewKind]) window.open(NH_GOV_FORMS[tdViewKind].src, '_blank');
+              else openBlankDoc(tdViewKind, false);
+              return;
+            }
+            var tdPrintKind = t.getAttribute('data-td-print');
+            if (tdPrintKind) {
+              if (NH_GOV_FORMS[tdPrintKind]) window.open(NH_GOV_FORMS[tdPrintKind].src, '_blank');
+              else openBlankDoc(tdPrintKind, true);
+              return;
+            }
             if (t.getAttribute('data-td-attach')) { tdAttach(t.getAttribute('data-td-attach')); return; }
           }
           t = t.parentNode;
