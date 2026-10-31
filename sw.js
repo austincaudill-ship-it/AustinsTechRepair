@@ -1,7 +1,7 @@
 // ATRG service worker — enables Add to Home Screen / app install.
 // Network-first for everything: visitors always get the freshest site,
 // cache is only a fallback when offline.
-const CACHE = "atrg-v1";
+const CACHE = "atrg-v2";
 const CORE = [
   "/",
   "/index.html",
