@@ -755,9 +755,20 @@
           </div>
 
           <!-- PRICE LOOKUP TOOL -->
+          <!-- SITE_BRAND_LIST_2026_10_31 -->
+          <style>
+            .price-lookup .pl-native-hidden { display: none !important; }
+            .price-lookup .price-step-brand { grid-column: 1 / -1; }
+            .pl-brand-list { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+            .pl-brand-tile { padding: 0.85rem 1rem; border: 2px solid var(--line); border-radius: var(--radius-sm); background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 0.95rem; font-weight: 600; text-align: left; cursor: pointer; }
+            .pl-brand-tile:hover { border-color: var(--brand); }
+            .pl-brand-tile:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+            .pl-brand-tile.active { border-color: var(--brand); background: var(--brand); color: #fff; }
+            @media (max-width: 560px) { .pl-brand-list { grid-template-columns: 1fr; } }
+          </style>
           <div class="price-lookup">
             <div class="price-steps">
-              <div class="price-step">
+              <div class="price-step price-step-brand">
                 <label for="pl-brand">1. Brand</label>
                 <select id="pl-brand">
                   <option value="">Select brand...</option>
@@ -770,6 +781,7 @@
                   <option value="pixel">Google Pixel</option>
                   <option value="motorola">Motorola</option>
                 </select>
+                <div class="pl-brand-list" id="pl-brand-list" role="listbox" aria-label="Choose a brand"></div>
               </div>
               <div class="price-step">
                 <label for="pl-repair">2. Repair</label>
@@ -3944,6 +3956,54 @@
     if (o && b) o.addEventListener('click', function () { b.click(); });
   }
   wire('acct-overlay', 'acct-close');
+})();
+</script>
+<script>
+/* SITE_BRAND_LIST_2026_10_31: the Prices lookup Brand step shows a tap list of
+   devices instead of the native dropdown. The original select stays in the page
+   as the value holder, so the existing price-lookup handlers in script.js
+   (current or an older cached copy) keep working unchanged. */
+(function () {
+  if (window.__atrBrandListWired) return;
+  window.__atrBrandListWired = true;
+  function wire() {
+    var sel = document.getElementById('pl-brand');
+    var list = document.getElementById('pl-brand-list');
+    if (!sel || !list || list.getAttribute('data-wired') === '1') return;
+    list.setAttribute('data-wired', '1');
+    var tiles = [];
+    Array.prototype.forEach.call(sel.options, function (opt) {
+      if (!opt.value) return;
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'pl-brand-tile';
+      b.textContent = opt.textContent;
+      b.setAttribute('role', 'option');
+      b.setAttribute('data-value', opt.value);
+      b.addEventListener('click', function () {
+        if (sel.value !== opt.value) {
+          sel.value = opt.value;
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        sync();
+      });
+      list.appendChild(b);
+      tiles.push(b);
+    });
+    if (!tiles.length) return;
+    sel.classList.add('pl-native-hidden');
+    function sync() {
+      tiles.forEach(function (b) {
+        var on = b.getAttribute('data-value') === sel.value;
+        b.classList.toggle('active', on);
+        b.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+    }
+    sel.addEventListener('change', sync);
+    sync();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wire);
+  else wire();
 })();
 </script>
 </body>
