@@ -755,51 +755,43 @@
           </div>
 
           <!-- PRICE LOOKUP TOOL -->
-          <!-- SITE_BRAND_LIST_2026_10_31 -->
+          <!-- SITE_DEVICE_LOOKUP_2026_10_31 -->
           <style>
-            .price-lookup .pl-native-hidden { display: none !important; }
-            .price-lookup .price-step-brand { grid-column: 1 / -1; }
-            .pl-brand-list { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
-            .pl-brand-tile { padding: 0.85rem 1rem; border: 2px solid var(--line); border-radius: var(--radius-sm); background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 0.95rem; font-weight: 600; text-align: left; cursor: pointer; }
-            .pl-brand-tile:hover { border-color: var(--brand); }
-            .pl-brand-tile:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
-            .pl-brand-tile.active { border-color: var(--brand); background: var(--brand); color: #fff; }
-            @media (max-width: 560px) { .pl-brand-list { grid-template-columns: 1fr; } }
+            .dt-step { margin-bottom: 1.25rem; }
+            .dt-step-label { display: block; font-weight: 700; font-size: 0.9rem; margin-bottom: 0.45rem; color: var(--ink); }
+            .dt-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+            .dt-tile { display: flex; align-items: center; gap: 0.55rem; padding: 0.85rem 1rem; border: 2px solid var(--line); border-radius: var(--radius-sm); background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 0.95rem; font-weight: 600; text-align: left; cursor: pointer; }
+            .dt-tile:hover { border-color: var(--brand); }
+            .dt-tile:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+            .dt-tile.active { border-color: var(--brand); background: var(--brand); color: #fff; }
+            .dt-tile i { width: 1.1rem; text-align: center; }
+            .dt-reset { background: none; border: none; padding: 0.25rem 0; margin-top: 0.75rem; color: var(--brand); font-family: var(--font-body); font-size: 0.9rem; font-weight: 700; text-decoration: underline; cursor: pointer; }
+            @media (min-width: 720px) { .dt-tiles-types { grid-template-columns: repeat(5, 1fr); } .dt-tiles-types .dt-tile { flex-direction: column; text-align: center; justify-content: center; } }
           </style>
-          <div class="price-lookup">
-            <div class="price-steps">
-              <div class="price-step price-step-brand">
-                <label for="pl-brand">1. Brand</label>
-                <select id="pl-brand">
-                  <option value="">Select brand...</option>
-                  <option value="iphone">iPhone</option>
-                  <option value="ipad">iPad</option>
-                  <option value="watch">Apple Watch</option>
-                  <option value="samsung-budget">Samsung (A / M / F series)</option>
-                  <option value="samsung-mid">Samsung (S series)</option>
-                  <option value="samsung-premium">Samsung (Fold / Flip)</option>
-                  <option value="pixel">Google Pixel</option>
-                  <option value="motorola">Motorola</option>
-                </select>
-                <div class="pl-brand-list" id="pl-brand-list" role="listbox" aria-label="Choose a brand"></div>
-              </div>
-              <div class="price-step">
-                <label for="pl-repair">2. Repair</label>
-                <select id="pl-repair" disabled>
-                  <option value="">Select repair...</option>
-                  <option value="screen">Screen Replacement</option>
-                  <option value="battery">Battery Replacement</option>
-                  <option value="backglass">Back Glass</option>
-                  <option value="chargeport">Charging Port</option>
-                </select>
-              </div>
+          <div class="price-lookup" id="dt-lookup">
+            <div class="dt-step" id="dt-step-type">
+              <span class="dt-step-label" id="dt-label-type">1. Device type</span>
+              <div class="dt-tiles dt-tiles-types" id="dt-types" role="group" aria-labelledby="dt-label-type"></div>
             </div>
-            <div class="price-result" id="pl-result" hidden>
-              <div class="price-result-label">Your flat-rate quote</div>
-              <div class="price-result-amount" id="pl-amount">$0</div>
-              <p class="price-result-note" id="pl-note"></p>
-              <a class="btn btn-primary" href="#repair" data-page="repair" id="pl-book">Book This Repair <i class="fas fa-arrow-right"></i></a>
+            <div class="dt-step" id="dt-step-brand" hidden>
+              <span class="dt-step-label" id="dt-label-brand">2. Brand</span>
+              <div class="dt-tiles" id="dt-brands" role="group" aria-labelledby="dt-label-brand"></div>
             </div>
+            <div class="dt-step" id="dt-step-model" hidden>
+              <span class="dt-step-label" id="dt-label-model">3. Model</span>
+              <div class="dt-tiles" id="dt-models" role="group" aria-labelledby="dt-label-model"></div>
+            </div>
+            <div class="dt-step" id="dt-step-repair" hidden>
+              <span class="dt-step-label" id="dt-label-repair">4. Repair</span>
+              <div class="dt-tiles" id="dt-repairs" role="group" aria-labelledby="dt-label-repair"></div>
+            </div>
+            <div class="price-result" id="dt-result" hidden>
+              <div class="price-result-label" id="dt-result-label">Your flat price</div>
+              <div class="price-result-amount" id="dt-amount">$0</div>
+              <p class="price-result-note" id="dt-note"></p>
+              <a class="btn btn-primary" href="#repair" data-page="repair" id="dt-book">Book This Repair <i class="fas fa-arrow-right"></i></a>
+            </div>
+            <button type="button" class="dt-reset" id="dt-reset" hidden>Start over</button>
           </div>
 
           <div class="pricing-grid">
@@ -3959,52 +3951,104 @@
 })();
 </script>
 <script>
-/* SITE_BRAND_LIST_2026_10_31: the Prices lookup Brand step shows a tap list of
-   devices instead of the native dropdown. The original select stays in the page
-   as the value holder, so the existing price-lookup handlers in script.js
-   (current or an older cached copy) keep working unchanged. */
+/* SITE_DEVICE_LOOKUP_2026_10_31: Prices lookup rebuilt the way Austin directed —
+   device type first, then brand, then model, then repair. Prices are the exact
+   price-book price for the picked model where one is set; where no price is set
+   the result says the flat price is confirmed before booking (no invented
+   numbers). Self-contained in index.html so an older cached script.js cannot
+   break it; the old pl-* handlers in script.js simply find no elements. */
 (function () {
-  if (window.__atrBrandListWired) return;
-  window.__atrBrandListWired = true;
+  if (window.__atrDeviceLookupWired) return;
+  window.__atrDeviceLookupWired = true;
+  var DATA = {"Phone":{"Apple":{"iPhone 8 / 8 Plus":{"Screen":51,"Battery":47,"Charging port":40,"Back glass":null,"Camera":45,"Speaker / Mic":null,"Board / Solder":null},"iPhone SE (2020 / 2022)":{"Screen":51,"Battery":null,"Charging port":40,"Back glass":null,"Camera":45,"Speaker / Mic":null,"Board / Solder":null},"iPhone X / XS / XR":{"Screen":50,"Battery":50,"Charging port":40,"Back glass":null,"Camera":43,"Speaker / Mic":39,"Board / Solder":null},"iPhone 11":{"Screen":52,"Battery":54,"Charging port":41,"Back glass":null,"Camera":44,"Speaker / Mic":40,"Board / Solder":null},"iPhone 12":{"Screen":53,"Battery":60,"Charging port":42,"Back glass":null,"Camera":49,"Speaker / Mic":40,"Board / Solder":null},"iPhone 13":{"Screen":55,"Battery":62,"Charging port":44,"Back glass":null,"Camera":59,"Speaker / Mic":42,"Board / Solder":null},"iPhone 14":{"Screen":55,"Battery":63,"Charging port":44,"Back glass":null,"Camera":86,"Speaker / Mic":42,"Board / Solder":null},"iPhone 15":{"Screen":57,"Battery":64,"Charging port":50,"Back glass":87,"Camera":64,"Speaker / Mic":44,"Board / Solder":null},"iPhone 16":{"Screen":58,"Battery":68,"Charging port":47,"Back glass":107,"Camera":53,"Speaker / Mic":50,"Board / Solder":null},"iPhone 17":{"Screen":63,"Battery":53,"Charging port":62,"Back glass":126,"Camera":null,"Speaker / Mic":45,"Board / Solder":null},"iPhone 17 Pro":{"Screen":67,"Battery":60,"Charging port":60,"Back glass":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"iPhone 17 Pro Max":{"Screen":67,"Battery":62,"Charging port":64,"Back glass":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"iPhone Air":{"Screen":96,"Battery":59,"Charging port":60,"Back glass":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"iPhone 17e":{"Screen":55,"Battery":54,"Charging port":49,"Back glass":110,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"iPhone 18":{"Screen":null,"Battery":null,"Charging port":null,"Back glass":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"iPhone 18 Pro":{"Screen":401,"Battery":108,"Charging port":81,"Back glass":175,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"iPhone 18 Pro Max":{"Screen":456,"Battery":108,"Charging port":112,"Back glass":175,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"iPhone Duo":{"Screen":null,"Battery":null,"Charging port":null,"Back glass":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null}},"Samsung":{"Galaxy S9 / S9 Plus":{"Screen":53,"Battery":null,"Charging port":null,"Back glass":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"Galaxy S10 / S10 Plus / S10e":{"Screen":75,"Battery":null,"Charging port":null,"Back glass":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"Galaxy S20 / S21":{"Screen":116,"Battery":49,"Charging port":null,"Back glass":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"Galaxy S20 Ultra / S21 Ultra":{"Screen":null,"Battery":null,"Charging port":null,"Back glass":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"Galaxy S22 / S23":{"Screen":135,"Battery":49,"Charging port":null,"Back glass":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"Galaxy S22 Ultra / S23 Ultra":{"Screen":128,"Battery":null,"Charging port":null,"Back glass":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"Galaxy S24 / S25":{"Screen":135,"Battery":null,"Charging port":null,"Back glass":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"Galaxy S24 Ultra / S25 Ultra":{"Screen":null,"Battery":null,"Charging port":null,"Back glass":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"Galaxy S26":{"Screen":131,"Battery":null,"Charging port":null,"Back glass":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"Galaxy S26 Ultra":{"Screen":154,"Battery":null,"Charging port":null,"Back glass":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"Galaxy Note 20":{"Screen":null,"Battery":null,"Charging port":null,"Back glass":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"Galaxy Z Flip / Flip 5G":{"Screen":null,"Battery":null,"Charging port":null,"Back glass":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"Galaxy Z Flip3 / Flip4":{"Screen":null,"Battery":null,"Charging port":null,"Back glass":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"Galaxy Z Flip5 / Flip6":{"Screen":null,"Battery":null,"Charging port":null,"Back glass":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"Galaxy Z Flip7 / Flip8":{"Screen":null,"Battery":null,"Charging port":null,"Back glass":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"Galaxy Z Fold / Fold2":{"Screen":null,"Battery":null,"Charging port":null,"Back glass":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"Galaxy Z Fold3 / Fold4":{"Screen":null,"Battery":null,"Charging port":null,"Back glass":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"Galaxy Z Fold5 / Fold6":{"Screen":null,"Battery":null,"Charging port":null,"Back glass":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"Galaxy Z Fold7 / Fold8":{"Screen":null,"Battery":null,"Charging port":null,"Back glass":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"Galaxy A13 / A14 / A15":{"Screen":49,"Battery":null,"Charging port":null,"Back glass":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"Galaxy A34 / A54 / A55":{"Screen":73,"Battery":46,"Charging port":43,"Back glass":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"Galaxy A36 / A56":{"Screen":null,"Battery":null,"Charging port":null,"Back glass":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null}},"Google":{"Pixel 6 / 6a":{"Screen":173,"Battery":46,"Charging port":null,"Back glass":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"Pixel 7 / 7a":{"Screen":166,"Battery":48,"Charging port":null,"Back glass":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"Pixel 8 / 8a":{"Screen":147,"Battery":48,"Charging port":null,"Back glass":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"Pixel 9 / 9a":{"Screen":197,"Battery":51,"Charging port":null,"Back glass":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"Pixel 10 / 10a":{"Screen":null,"Battery":null,"Charging port":null,"Back glass":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"Pixel 11 / 11a":{"Screen":null,"Battery":null,"Charging port":null,"Back glass":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null}}},"Tablet":{"Apple":{"iPad 5th / 6th gen":{"Screen":99,"Battery":null,"Charging port":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"iPad 7th / 8th / 9th gen":{"Screen":100,"Battery":null,"Charging port":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"iPad 10th gen":{"Screen":102,"Battery":118,"Charging port":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"iPad 11th gen":{"Screen":null,"Battery":118,"Charging port":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"iPad Air":{"Screen":null,"Battery":118,"Charging port":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"iPad mini":{"Screen":134,"Battery":null,"Charging port":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"iPad Pro 11-inch":{"Screen":208,"Battery":119,"Charging port":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"iPad Pro 12.9-inch":{"Screen":218,"Battery":null,"Charging port":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null}},"Samsung":{"Galaxy Tab A":{"Screen":null,"Battery":null,"Charging port":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null},"Galaxy Tab S":{"Screen":null,"Battery":null,"Charging port":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null}},"Google":{"Pixel Tablet":{"Screen":null,"Battery":null,"Charging port":null,"Camera":null,"Speaker / Mic":null,"Board / Solder":null}}},"Computer":{"Apple":{"MacBook Air":{"Screen":null,"Battery":null,"Charging port":null,"Speaker / Mic":null,"Board / Solder":null},"MacBook Pro":{"Screen":null,"Battery":null,"Charging port":null,"Speaker / Mic":null,"Board / Solder":null},"iMac":{"Screen":null,"Speaker / Mic":null,"Board / Solder":null}},"Microsoft":{"Surface Pro":{"Screen":null,"Battery":null,"Charging port":null,"Speaker / Mic":null,"Keyboard / Trackpad":null,"Board / Solder":null},"Surface Laptop":{"Screen":null,"Battery":null,"Charging port":null,"Speaker / Mic":null,"Keyboard / Trackpad":null,"Board / Solder":null},"Surface Book":{"Screen":null,"Battery":null,"Charging port":null,"Speaker / Mic":null,"Keyboard / Trackpad":null,"Board / Solder":null}},"Windows PC":{"Windows Laptop":{"Screen":null,"Battery":null,"Storage upgrade":null,"RAM upgrade":null,"Keyboard":null,"Virus / Software cleanup":63,"Board / Solder":null},"Windows Desktop":{"Storage upgrade":null,"RAM upgrade":null,"Virus / Software cleanup":63,"Board / Solder":null},"Gaming PC":{"Storage upgrade":null,"RAM upgrade":null,"Virus / Software cleanup":63,"Board / Solder":null},"All-in-One PC":{"Screen":null,"Storage upgrade":null,"RAM upgrade":null,"Virus / Software cleanup":63,"Board / Solder":null}},"Chromebook":{"Chromebook":{"Screen":null,"Battery":null,"Storage upgrade":null,"RAM upgrade":null,"Keyboard":null,"Virus / Software cleanup":63,"Board / Solder":null}}},"Smartwatch":{"Apple":{"Apple Watch Series":{"Screen":72,"Battery":null,"Charging port":null,"Speaker / Mic":null,"Board / Solder":null},"Apple Watch Ultra":{"Screen":null,"Battery":null,"Charging port":null,"Speaker / Mic":null,"Board / Solder":null}},"Samsung":{"Galaxy Watch":{"Screen":null,"Battery":null,"Charging port":null,"Speaker / Mic":null,"Board / Solder":null}},"Google":{"Pixel Watch":{"Screen":null,"Battery":null,"Charging port":null,"Speaker / Mic":null,"Board / Solder":null}},"Garmin":{"Garmin":{"Screen":null,"Battery":null,"Charging":null,"Band / Button":null,"Board / Solder":null}},"Fitbit":{"Fitbit":{"Screen":null,"Battery":null,"Charging":null,"Band / Button":null,"Board / Solder":null}},"Amazfit":{"Amazfit":{"Screen":null,"Battery":null,"Charging":null,"Band / Button":null,"Board / Solder":null}},"Fossil / Wear OS":{"Fossil / Wear OS":{"Screen":null,"Battery":null,"Charging":null,"Band / Button":null,"Board / Solder":null}}},"Game Console":{"PlayStation":{"PlayStation 5":{"HDMI port":199.99,"Disc drive":59.99,"Fan / Overheat":null,"Controller repair":null,"Storage upgrade":null,"Board / Solder":null},"PlayStation 5 Pro":{"HDMI port":199.99,"Disc drive":89.99,"Fan / Overheat":null,"Controller repair":null,"Storage upgrade":null,"Board / Solder":null},"PlayStation 4":{"HDMI port":149.99,"Disc drive":59.99,"Fan / Overheat":null,"Controller repair":null,"Storage upgrade":null,"Board / Solder":null},"PlayStation 4 Pro":{"HDMI port":149.99,"Disc drive":89.99,"Fan / Overheat":null,"Controller repair":null,"Storage upgrade":null,"Board / Solder":null}},"Xbox":{"Xbox Series X":{"HDMI port":199.99,"Disc drive":89.99,"Fan / Overheat":null,"Storage upgrade":null,"Board / Solder":null},"Xbox Series S":{"HDMI port":149.99,"Fan / Overheat":null,"Storage upgrade":null,"Board / Solder":null},"Xbox One":{"HDMI port":null,"Disc drive":59.99,"Fan / Overheat":null,"Storage upgrade":null,"Board / Solder":null}},"Nintendo":{"Nintendo Switch":{"HDMI port":null,"Fan / Overheat":null,"Controller repair":null,"Storage upgrade":null,"Board / Solder":null},"Nintendo Switch OLED":{"HDMI port":null,"Fan / Overheat":null,"Controller repair":null,"Storage upgrade":null,"Board / Solder":null},"Nintendo Switch 2":{"HDMI port":null,"Fan / Overheat":null,"Controller repair":null,"Storage upgrade":null,"Board / Solder":null}},"Valve":{"Steam Deck":{"HDMI port":null,"Fan / Overheat":null,"Controller repair":null,"Storage upgrade":null,"Board / Solder":null}}}};
+  var TYPES = [
+    { name: 'Phone', icon: 'fas fa-mobile-screen' },
+    { name: 'Tablet', icon: 'fas fa-tablet-screen-button' },
+    { name: 'Computer', icon: 'fas fa-laptop' },
+    { name: 'Smartwatch', icon: 'fas fa-clock' },
+    { name: 'Game Console', icon: 'fas fa-gamepad' }
+  ];
+  function $(id) { return document.getElementById(id); }
+  function fmt(p) { return (p % 1 === 0) ? '$' + p : '$' + p.toFixed(2); }
   function wire() {
-    var sel = document.getElementById('pl-brand');
-    var list = document.getElementById('pl-brand-list');
-    if (!sel || !list || list.getAttribute('data-wired') === '1') return;
-    list.setAttribute('data-wired', '1');
-    var tiles = [];
-    Array.prototype.forEach.call(sel.options, function (opt) {
-      if (!opt.value) return;
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'pl-brand-tile';
-      b.textContent = opt.textContent;
-      b.setAttribute('role', 'option');
-      b.setAttribute('data-value', opt.value);
-      b.addEventListener('click', function () {
-        if (sel.value !== opt.value) {
-          sel.value = opt.value;
-          sel.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-        sync();
-      });
-      list.appendChild(b);
-      tiles.push(b);
-    });
-    if (!tiles.length) return;
-    sel.classList.add('pl-native-hidden');
-    function sync() {
-      tiles.forEach(function (b) {
-        var on = b.getAttribute('data-value') === sel.value;
-        b.classList.toggle('active', on);
-        b.setAttribute('aria-selected', on ? 'true' : 'false');
+    var typeBox = $('dt-types'), brandBox = $('dt-brands'), modelBox = $('dt-models'), repairBox = $('dt-repairs');
+    var brandStep = $('dt-step-brand'), modelStep = $('dt-step-model'), repairStep = $('dt-step-repair');
+    var result = $('dt-result'), amount = $('dt-amount'), note = $('dt-note'), label = $('dt-result-label'), book = $('dt-book'), reset = $('dt-reset');
+    if (!typeBox || !brandBox || !modelBox || !repairBox || !result) return;
+    var state = { type: null, brand: null, model: null, repair: null };
+    function scrollTo(el) { try { el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {} }
+    function tiles(box, names, current, onPick, icons) {
+      box.innerHTML = '';
+      names.forEach(function (name, i) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'dt-tile' + (name === current ? ' active' : '');
+        b.setAttribute('aria-pressed', name === current ? 'true' : 'false');
+        if (icons && icons[i]) { var ic = document.createElement('i'); ic.className = icons[i]; ic.setAttribute('aria-hidden', 'true'); b.appendChild(ic); }
+        var s = document.createElement('span'); s.textContent = name; b.appendChild(s);
+        b.addEventListener('click', function () { onPick(name); });
+        box.appendChild(b);
       });
     }
-    sel.addEventListener('change', sync);
-    sync();
+    function renderTypes() {
+      tiles(typeBox, TYPES.map(function (t) { return t.name; }), state.type, pickType, TYPES.map(function (t) { return t.icon; }));
+    }
+    function pickType(name) {
+      state = { type: name, brand: null, model: null, repair: null };
+      renderTypes();
+      tiles(brandBox, Object.keys(DATA[name]), null, pickBrand, null);
+      brandStep.hidden = false; modelStep.hidden = true; repairStep.hidden = true;
+      result.hidden = true; result.classList.remove('show'); reset.hidden = false;
+      scrollTo(brandStep);
+    }
+    function pickBrand(name) {
+      state.brand = name; state.model = null; state.repair = null;
+      tiles(brandBox, Object.keys(DATA[state.type]), name, pickBrand, null);
+      tiles(modelBox, Object.keys(DATA[state.type][name]), null, pickModel, null);
+      modelStep.hidden = false; repairStep.hidden = true;
+      result.hidden = true; result.classList.remove('show');
+      scrollTo(modelStep);
+    }
+    function pickModel(name) {
+      state.model = name; state.repair = null;
+      tiles(modelBox, Object.keys(DATA[state.type][state.brand]), name, pickModel, null);
+      tiles(repairBox, Object.keys(DATA[state.type][state.brand][name]), null, pickRepair, null);
+      repairStep.hidden = false;
+      result.hidden = true; result.classList.remove('show');
+      scrollTo(repairStep);
+    }
+    function pickRepair(name) {
+      state.repair = name;
+      tiles(repairBox, Object.keys(DATA[state.type][state.brand][state.model]), name, pickRepair, null);
+      var price = DATA[state.type][state.brand][state.model][name];
+      if (typeof price === 'number') {
+        label.textContent = 'Your flat price';
+        amount.style.display = ''; amount.textContent = fmt(price);
+        note.textContent = name + ' for ' + state.model + ' — flat price, parts and labor included. A separate $35 house-call fee applies to the visit — due at booking, non-refundable, and it covers travel and a full diagnosis.';
+        book.innerHTML = 'Book This Repair <i class="fas fa-arrow-right"></i>';
+      } else {
+        label.textContent = 'We fix that — price confirmed up front';
+        amount.style.display = 'none';
+        note.textContent = 'There is no set price for ' + name + ' on the ' + state.model + ' yet. Book the visit and we confirm one flat price for your exact device before any work starts. The $35 house-call fee covers the trip and a full diagnosis.';
+        book.innerHTML = 'Book This Visit <i class="fas fa-arrow-right"></i>';
+      }
+      try { sessionStorage.setItem('atr-quote', JSON.stringify({ device: state.model, repair: name, price: (typeof price === 'number') ? price : null })); } catch (e) {}
+      result.hidden = false; result.classList.add('show');
+      scrollTo(result);
+    }
+    reset.addEventListener('click', function () {
+      state = { type: null, brand: null, model: null, repair: null };
+      renderTypes();
+      brandStep.hidden = true; modelStep.hidden = true; repairStep.hidden = true;
+      result.hidden = true; result.classList.remove('show'); reset.hidden = true;
+      scrollTo($('dt-lookup'));
+    });
+    renderTypes();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wire);
   else wire();
 })();
 </script>
+
 </body>
 </html>
