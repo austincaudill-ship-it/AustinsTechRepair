@@ -125,7 +125,8 @@
     }
 
     /* ---------------- Repair wizard ---------------- */
-    var repairState = { device: '', brand: '', issue: '', priceRange: '$50 \u2013 $150' };
+    var repairState = { device: '', brand: '', model: '', issue: '', priceRange: '$50 \u2013 $150', priceExact: null };
+    var DEFAULT_ESTIMATE_NOTE = '';
 
     /* SITE_FORM_BACKNAV_2026_10_30: step-navigation state. currentRepairStep
        is the step on screen; furthestRepairStep is the furthest step the
@@ -191,14 +192,18 @@
 
     var repairCard = document.querySelector('.repair-card');
     if (repairCard) {
+      var estNoteEl = document.getElementById('estimate-note');
+      if (estNoteEl) DEFAULT_ESTIMATE_NOTE = estNoteEl.innerHTML;
       document.querySelectorAll('[data-device]').forEach(function (btn) {
         btn.addEventListener('click', function () {
           repairState.device = btn.getAttribute('data-device');
           repairState.brand = '';
+          repairState.model = '';
           repairState.issue = '';
+          repairState.priceExact = null;
           document.querySelectorAll('[data-device]').forEach(function (b) { b.classList.remove('selected'); });
           btn.classList.add('selected');
-          populateBrandsAndIssues(repairState.device);
+          populateBookingOrFallback(repairState.device);
           /* SITE_FORM_BACKNAV_2026_10_30: picking a device resets the
              brand/issue picks, so steps 3\u20134 must be re-earned before
              their progress steps become tappable again. */
@@ -265,6 +270,10 @@
       var data = deviceData[deviceKey] || { brands: ['Standard'], issues: [{ name: 'General repair', price: '$50 \u2013 $150' }] };
       var makeGrid = document.getElementById('make-grid');
       var issueList = document.getElementById('issue-list');
+      var bkMW = document.getElementById('bk-model-wrap');
+      var bkRW = document.getElementById('bk-repair-wrap');
+      if (bkMW) bkMW.hidden = true;
+      if (bkRW) bkRW.hidden = true;
 
       if (makeGrid) {
         makeGrid.innerHTML = '';
@@ -299,7 +308,13 @@
             iBtn.classList.add('selected');
             repairState.issue = issue.name;
             repairState.priceRange = issue.price;
+            repairState.model = '';
+            repairState.priceExact = null;
             document.getElementById('estimate-price').textContent = issue.price;
+            var estLbl = document.getElementById('estimate-label');
+            if (estLbl) estLbl.textContent = 'Estimated price range';
+            var estNt = document.getElementById('estimate-note');
+            if (estNt && DEFAULT_ESTIMATE_NOTE) estNt.innerHTML = DEFAULT_ESTIMATE_NOTE;
             document.getElementById('estimate-summary').innerHTML =
               '<span class="pill"><i class="fas fa-mobile-screen"></i> ' + escapeHtml(repairState.device) + '</span>' +
               '<span class="pill"><i class="fas fa-tag"></i> ' + escapeHtml(repairState.brand || 'Any brand') + '</span>' +
@@ -311,6 +326,155 @@
         });
         issueList.appendChild(grid);
       }
+    }
+
+    /* SITE_BOOKING_PICKER_2026_10_31: the booking flow now runs the
+       same type -> brand -> model -> repair picker as the Prices page,
+       fed by the shared price book the lookup exposes as
+       window.ATR_PRICE_DATA. Priced repairs show the exact flat price;
+       unpriced ones carry the confirmed-up-front wording, never an
+       invented number. Business / Other keeps the brand + issue path
+       above (custom-quoted work). */
+    var BK_TYPE_MAP = { 'Smart Watch': 'Smartwatch' };
+    var BK_FRIENDLY = { 'Screen': 'Screen replacement', 'Battery': 'Battery replacement', 'Charging port': 'Charging port repair', 'Charging': 'Charging port repair' };
+    var BK_REPAIR_ORDER = ['Screen', 'Battery', 'Charging port', 'Back glass', 'Camera', 'Speaker / Mic', 'HDMI port', 'Disc drive', 'Fan / Overheat', 'Controller repair', 'Storage upgrade', 'RAM upgrade', 'Keyboard / Trackpad', 'Keyboard', 'Virus / Software cleanup', 'Charging', 'Band / Button', 'Board / Solder'];
+
+    function bkData() { return window.ATR_PRICE_DATA || null; }
+    function bkTypeKey(device) { return BK_TYPE_MAP[device] || device; }
+    function bkFmt(p) { return (p % 1 === 0) ? '$' + p : '$' + p.toFixed(2); }
+    function bkTile(label, sub) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'option-btn';
+      b.style.padding = '0.85rem 0.5rem';
+      if (sub) {
+        b.style.alignItems = 'flex-start';
+        b.style.textAlign = 'left';
+        b.innerHTML = '<strong>' + escapeHtml(label) + '</strong><span style="font-size:0.78rem; color: var(--brand-deep); font-weight:800;">' + escapeHtml(sub) + '</span>';
+      } else {
+        b.innerHTML = '<span>' + escapeHtml(label) + '</span>';
+      }
+      return b;
+    }
+    function bkSelect(container, btn) {
+      container.querySelectorAll('.option-btn').forEach(function (x) { x.classList.remove('selected'); });
+      btn.classList.add('selected');
+    }
+    function populateBookingOrFallback(device) {
+      var DATA = bkData();
+      if (DATA && DATA[bkTypeKey(device)]) populateBookingPicker(device);
+      else populateBrandsAndIssues(device);
+    }
+    function populateBookingPicker(device) {
+      var DATA = bkData();
+      var typeKey = bkTypeKey(device);
+      var makeGrid = document.getElementById('make-grid');
+      var issueList = document.getElementById('issue-list');
+      var modelWrap = document.getElementById('bk-model-wrap');
+      var repairWrap = document.getElementById('bk-repair-wrap');
+      if (issueList) issueList.innerHTML = '';
+      if (modelWrap) modelWrap.hidden = true;
+      if (repairWrap) repairWrap.hidden = true;
+      if (!makeGrid) { populateBrandsAndIssues(device); return; }
+      makeGrid.innerHTML = '';
+      Object.keys(DATA[typeKey]).concat(['__other__']).forEach(function (brandKey) {
+        var b = bkTile(brandKey === '__other__' ? 'Other brand' : brandKey);
+        b.addEventListener('click', function () {
+          bkSelect(makeGrid, b);
+          repairState.brand = brandKey === '__other__' ? 'Other' : brandKey;
+          repairState.model = '';
+          repairState.issue = '';
+          repairState.priceExact = null;
+          renderBkModels(typeKey, brandKey);
+        });
+        makeGrid.appendChild(b);
+      });
+    }
+    function renderBkModels(typeKey, brandKey) {
+      var DATA = bkData();
+      var modelWrap = document.getElementById('bk-model-wrap');
+      var repairWrap = document.getElementById('bk-repair-wrap');
+      var modelGrid = document.getElementById('bk-model-grid');
+      if (!modelGrid) return;
+      if (repairWrap) repairWrap.hidden = true;
+      modelGrid.innerHTML = '';
+      var names = brandKey === '__other__' ? [] : Object.keys(DATA[typeKey][brandKey]);
+      names.concat(['__notlisted__']).forEach(function (modelKey) {
+        var b = bkTile(modelKey === '__notlisted__' ? "My model isn't listed" : modelKey);
+        b.addEventListener('click', function () {
+          bkSelect(modelGrid, b);
+          repairState.model = modelKey === '__notlisted__' ? '' : modelKey;
+          repairState.issue = '';
+          repairState.priceExact = null;
+          renderBkRepairs(typeKey, brandKey, modelKey);
+        });
+        modelGrid.appendChild(b);
+      });
+      if (modelWrap) { modelWrap.hidden = false; try { modelWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {} }
+    }
+    function bkGenericRepairs(typeKey) {
+      var DATA = bkData();
+      var seen = {};
+      Object.keys(DATA[typeKey]).forEach(function (br) {
+        Object.keys(DATA[typeKey][br]).forEach(function (mo) {
+          Object.keys(DATA[typeKey][br][mo]).forEach(function (r) { seen[r] = true; });
+        });
+      });
+      return BK_REPAIR_ORDER.filter(function (r) { return seen[r]; });
+    }
+    function renderBkRepairs(typeKey, brandKey, modelKey) {
+      var DATA = bkData();
+      var repairWrap = document.getElementById('bk-repair-wrap');
+      var repairGrid = document.getElementById('bk-repair-grid');
+      if (!repairGrid) return;
+      repairGrid.innerHTML = '';
+      var repairs, priceOf;
+      if (brandKey !== '__other__' && modelKey !== '__notlisted__') {
+        repairs = Object.keys(DATA[typeKey][brandKey][modelKey]);
+        priceOf = function (r) { return DATA[typeKey][brandKey][modelKey][r]; };
+      } else {
+        repairs = bkGenericRepairs(typeKey);
+        priceOf = function () { return null; };
+      }
+      repairs.forEach(function (r) {
+        var price = priceOf(r);
+        var b = bkTile(BK_FRIENDLY[r] || r, (typeof price === 'number') ? bkFmt(price) : 'Price confirmed up front');
+        b.addEventListener('click', function () {
+          bkSelect(repairGrid, b);
+          pickBkRepair(r, price);
+        });
+        repairGrid.appendChild(b);
+      });
+      if (repairWrap) { repairWrap.hidden = false; try { repairWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {} }
+    }
+    function pickBkRepair(repairKey, price) {
+      var friendly = BK_FRIENDLY[repairKey] || repairKey;
+      repairState.issue = friendly;
+      repairState.priceExact = (typeof price === 'number') ? price : null;
+      var modelLabel = repairState.model || ((repairState.brand && repairState.brand !== 'Other') ? repairState.brand : repairState.device);
+      var lbl = document.getElementById('estimate-label');
+      var amt = document.getElementById('estimate-price');
+      var note = document.getElementById('estimate-note');
+      if (repairState.priceExact !== null) {
+        repairState.priceRange = bkFmt(repairState.priceExact);
+        if (lbl) lbl.textContent = 'Your flat price';
+        if (amt) amt.textContent = repairState.priceRange;
+        if (note) note.innerHTML = escapeHtml(friendly) + ' for ' + escapeHtml(modelLabel) + ' &mdash; flat price, parts and labor included. A separate $35 house-call fee applies to the visit &mdash; due at booking, non-refundable, and it covers travel and a full diagnosis. Estimates are always free. ATR One members pay no house-call fee for devices covered under their subscription.';
+      } else {
+        repairState.priceRange = 'Flat price confirmed before booking';
+        if (lbl) lbl.textContent = 'Your price';
+        if (amt) amt.textContent = 'Confirmed up front';
+        if (note) note.innerHTML = 'There is no set price for ' + escapeHtml(friendly.toLowerCase()) + ' on the ' + escapeHtml(modelLabel) + ' yet. Book the visit and we confirm one flat price for your exact device before any work starts. The $35 house-call fee covers the trip and a full diagnosis &mdash; due at booking, non-refundable. Estimates are always free. ATR One members pay no house-call fee for devices covered under their subscription.';
+      }
+      var summary = document.getElementById('estimate-summary');
+      if (summary) {
+        summary.innerHTML =
+          '<span class="pill"><i class="fas fa-mobile-screen"></i> ' + escapeHtml(repairState.device) + '</span>' +
+          '<span class="pill"><i class="fas fa-tag"></i> ' + escapeHtml(repairState.model ? (repairState.brand + ' ' + repairState.model) : (repairState.brand || 'Any brand')) + '</span>' +
+          '<span class="pill"><i class="fas fa-wrench"></i> ' + escapeHtml(repairState.issue) + '</span>';
+      }
+      furthestRepairStep = Math.max(furthestRepairStep, 3);
+      goToRepairStep(3);
     }
 
     /* SITE_AUDIT_FIXES_2026_10_30: the guided selections (steps 1-3)
@@ -331,20 +495,37 @@
       'Overheating / power fault': 'Overheating / power fault',
       'Screen / digitizer repair': 'Screen replacement',
       'Battery service': 'Battery replacement',
-      'Power / DC jack repair': 'Charging port repair'
+      'Power / DC jack repair': 'Charging port repair',
+      'Back glass': 'Other / not sure',
+      'Camera': 'Camera / speaker fix',
+      'Speaker / Mic': 'Camera / speaker fix',
+      'HDMI port': 'HDMI port repair',
+      'Disc drive': 'Other / not sure',
+      'Fan / Overheat': 'Overheating / power fault',
+      'Controller repair': 'Other / not sure',
+      'Storage upgrade': 'Other / not sure',
+      'RAM upgrade': 'Other / not sure',
+      'Keyboard / Trackpad': 'Other / not sure',
+      'Keyboard': 'Other / not sure',
+      'Virus / Software cleanup': 'Virus cleanup & tuneup',
+      'Charging': 'Charging port repair',
+      'Band / Button': 'Other / not sure',
+      'Board / Solder': 'Other / not sure'
     };
     function prefillIntakeFromGuided() {
       window.atrGuidedSelection = {
         device: repairState.device || '',
         brand: repairState.brand || '',
+        model: repairState.model || '',
         issue: repairState.issue || '',
-        priceRange: repairState.priceRange || ''
+        priceRange: repairState.priceRange || '',
+        price: (typeof repairState.priceExact === 'number') ? repairState.priceExact : null
       };
       var g = window.atrGuidedSelection;
       var typeSel = document.getElementById('sr-device-type');
       if (typeSel && !typeSel.value && g.device) typeSel.value = g.device;
       var info = document.getElementById('sr-device-info');
-      if (info && !info.value && g.brand) info.value = g.brand;
+      if (info && !info.value && (g.model || g.brand)) info.value = g.model || g.brand;
       var needSel = document.getElementById('sr-repair-needed');
       if (needSel && !needSel.value && REPAIR_NEEDED_MAP[g.issue]) needSel.value = REPAIR_NEEDED_MAP[g.issue];
       var recap = document.getElementById('estimate-recap');
@@ -352,9 +533,9 @@
         recap.hidden = false;
         recap.innerHTML =
           '<span class="pill"><i class="fas fa-mobile-screen"></i> ' + escapeHtml(g.device) + '</span>' +
-          '<span class="pill"><i class="fas fa-tag"></i> ' + escapeHtml(g.brand || 'Any brand') + '</span>' +
+          '<span class="pill"><i class="fas fa-tag"></i> ' + escapeHtml(g.model ? (g.brand + ' ' + g.model) : (g.brand || 'Any brand')) + '</span>' +
           '<span class="pill"><i class="fas fa-wrench"></i> ' + escapeHtml(g.issue) + '</span>' +
-          '<span class="pill"><i class="fas fa-dollar-sign"></i> Est. ' + escapeHtml(g.priceRange) + '</span>';
+          '<span class="pill"><i class="fas fa-dollar-sign"></i> ' + (g.price !== null && g.price !== undefined ? 'Flat ' : 'Est. ') + escapeHtml(g.priceRange) + '</span>';
       }
     }
 
