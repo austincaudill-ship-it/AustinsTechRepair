@@ -1025,6 +1025,73 @@ function loadTicketThread(client, ticketId) {
     return ' <span class="portal-muted portal-small">' + esc(p.tracking_number) + '</span>';
   }
 
+  /* PORTAL_LIVE_TRACKING_2026_11_01: the little Live tracking box under
+   * each part that has a tracking number — status plus the time it was
+   * updated, right on the ticket, no trip to the carrier's site. Status
+   * comes from the track-shipment Edge Function (AfterShip, any
+   * carrier, auto-detected) and is cached back onto the part row so it
+   * is still there the next time the ticket opens. */
+  var ltBusy = {};
+  function liveTrackHtml(p) {
+    if (!p.tracking_number) return '';
+    var status = p.tracking_status
+      ? '<strong>' + esc(p.tracking_status) + '</strong>' + (p.tracking_detail ? ' &middot; ' + esc(p.tracking_detail) : '')
+      : '<span class="portal-muted">Not checked yet</span>';
+    var meta = [];
+    if (p.tracking_eta) meta.push('Arriving ' + esc(fmtDate(p.tracking_eta)));
+    if (p.tracking_checked_at) meta.push('Updated ' + esc(fmtDateTime(p.tracking_checked_at)));
+    return '<div class="p2-live-track" data-live-track="' + esc(p.id) + '">' +
+      '<div class="p2-lt-head"><span class="p2-lt-dot" aria-hidden="true"></span><span class="p2-lt-title">Live tracking</span>' +
+      '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-lt-refresh="' + esc(p.id) + '"><i class="fas fa-rotate"></i> Refresh</button></div>' +
+      '<div class="p2-lt-status" data-lt-status>' + status + '</div>' +
+      '<div class="portal-muted portal-small" data-lt-meta>' + meta.join(' &middot; ') + '</div></div>';
+  }
+  function ltRender(box, p, note) {
+    if (!box) return;
+    var st = box.querySelector('[data-lt-status]');
+    var mt = box.querySelector('[data-lt-meta]');
+    if (st) st.innerHTML = note
+      ? '<span class="portal-muted">' + esc(note) + '</span>'
+      : '<strong>' + esc(p.tracking_status || '') + '</strong>' + (p.tracking_detail ? ' &middot; ' + esc(p.tracking_detail) : '');
+    if (mt) {
+      var meta = [];
+      if (p.tracking_eta) meta.push('Arriving ' + fmtDate(p.tracking_eta));
+      if (p.tracking_checked_at) meta.push('Updated ' + fmtDateTime(p.tracking_checked_at));
+      mt.textContent = meta.join(' \u00b7 ');
+    }
+  }
+  function refreshLiveTrack(client, part, box) {
+    if (!part.tracking_number || ltBusy[part.id]) return;
+    ltBusy[part.id] = true;
+    if (box) ltRender(box, part, 'Checking live status\u2026');
+    client.auth.getSession().then(function (sres) {
+      var token = sres && sres.data && sres.data.session ? sres.data.session.access_token : '';
+      return fetch(SUPABASE_URL + '/functions/v1/track-shipment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'apikey': SUPABASE_ANON_KEY },
+        body: JSON.stringify({ tracking_number: part.tracking_number, carrier: part.carrier || '' })
+      });
+    }).then(function (r) { return r.json(); }).then(function (out) {
+      ltBusy[part.id] = false;
+      if (!out || !out.ok) { if (box) ltRender(box, part, 'Couldn\u2019t get live status \u2014 try Refresh.'); return; }
+      if (!out.connected) { if (box) ltRender(box, part, 'Live tracking turns on once the AfterShip key is added.'); return; }
+      part.tracking_status = out.status || '';
+      part.tracking_detail = out.detail || '';
+      part.tracking_eta = out.eta || null;
+      part.tracking_checked_at = new Date().toISOString();
+      if (box) ltRender(box, part);
+      client.from('part_orders').update({
+        tracking_status: part.tracking_status,
+        tracking_detail: part.tracking_detail,
+        tracking_eta: part.tracking_eta,
+        tracking_checked_at: part.tracking_checked_at
+      }).eq('id', part.id).then(function () {}).catch(function () {});
+    }).catch(function () {
+      ltBusy[part.id] = false;
+      if (box) ltRender(box, part, 'Couldn\u2019t get live status \u2014 try Refresh.');
+    });
+  }
+
   function renderParts(t, rows) {
     var box = $('p2-parts');
     if (!box) return;
@@ -1049,6 +1116,7 @@ function loadTicketThread(client, ticketId) {
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-part-label="' + esc(p.id) + '"><i class="fas fa-tag"></i> Label</button>' +
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-part-track="' + esc(p.id) + '"><i class="fas fa-truck"></i> Tracking</button>' +
         '<button class="p2-x" type="button" data-part-del="' + esc(p.id) + '" aria-label="Remove part order">&times;</button></div>' +
+        liveTrackHtml(p) +
         '<div class="p2-track-edit" data-part-track-edit="' + esc(p.id) + '" hidden>' +
         '<div class="p2-form-row"><select data-track-carrier aria-label="Carrier">' + carrierOptions(p.carrier) + '</select>' +
         '<input type="text" data-track-number placeholder="Tracking number" maxlength="80" aria-label="Tracking number" value="' + esc(p.tracking_number || '') + '" />' +
@@ -1113,6 +1181,24 @@ function loadTicketThread(client, ticketId) {
           }).catch(function () { if (msg) msg.textContent = 'Couldn\u2019t save \u2014 try again.'; });
         });
       });
+    });
+    box.querySelectorAll('[data-lt-refresh]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var part = null;
+        rows.forEach(function (r) { if (r.id === btn.getAttribute('data-lt-refresh')) part = r; });
+        if (!part) return;
+        var ltBox = box.querySelector('[data-live-track="' + part.id + '"]');
+        withClient(function (client) { refreshLiveTrack(client, part, ltBox); });
+      });
+    });
+    /* Auto-check when the ticket opens if the saved status is stale
+       (over 15 minutes old) or missing, and the part is not in hand. */
+    rows.forEach(function (p) {
+      if (!p.tracking_number || p.status === 'Received' || p.tracking_status === 'Delivered') return;
+      var stale = !p.tracking_checked_at || (Date.now() - new Date(p.tracking_checked_at).getTime() > 15 * 60 * 1000);
+      if (!stale) return;
+      var ltBox = box.querySelector('[data-live-track="' + p.id + '"]');
+      withClient(function (client) { refreshLiveTrack(client, p, ltBox); });
     });
   }
 

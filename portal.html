@@ -675,10 +675,11 @@
           <a class="link-card" href="https://support.apple.com/iphone/repair" target="_blank" rel="noopener"><i class="fab fa-apple"></i><strong>Apple&rsquo;s Prices</strong><span>Official repair price anchor</span></a>
           <a class="link-card" href="https://squareup.com/dashboard" target="_blank" rel="noopener"><i class="fas fa-square"></i><strong>Square Dashboard</strong><span>Sales, payouts, settings</span></a>
         </div>
-        <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">FedEx tracking</h3></div>
-        <p class="portal-muted portal-small">Type a tracking number and tap Track. It opens FedEx tracking in a new tab.</p>
-        <div class="p2-form-row"><input type="text" id="p2-fedex-number" placeholder="Tracking number" aria-label="FedEx tracking number" />
-        <button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-fedex-track"><i class="fas fa-truck-fast"></i> Track on FedEx</button></div>
+        <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Live tracking</h3></div>
+        <p class="portal-muted portal-small">Type any tracking number &mdash; FedEx, UPS, USPS, DHL &mdash; and tap Track. The live status shows right here.</p>
+        <div class="p2-form-row"><input type="text" id="p2-track-number" placeholder="Tracking number" aria-label="Tracking number" />
+        <button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-track-btn"><i class="fas fa-truck-fast"></i> Track</button></div>
+        <div id="p2-track-result" hidden></div>
         <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Printers</h3></div>
         <p class="portal-muted portal-small">Receipts and Zebra part labels print through your device&rsquo;s printer list &mdash; Bluetooth, USB, or Wi-Fi printers your phone, tablet, or computer can already see. Pick the printer in the print dialog.</p>
         <p>
@@ -3391,6 +3392,14 @@
       background: var(--surface-warm, #f7f0e1); border: 1px solid var(--line, #d8cbb6); border-radius: 999px; padding: 0.1rem 0.5rem; margin-right: 0.35rem; }
     .p2-line-amt { font-weight: 700; white-space: nowrap; }
     .p2-x { background: none; border: none; color: #b3382e; font-size: 1.25rem; line-height: 1; cursor: pointer; padding: 0.2rem 0.4rem; flex: none; }
+    /* PORTAL_LIVE_TRACKING_2026_11_01: little Live tracking box on a ticket part + Tools tracker result */
+    .p2-live-track { flex: 1 1 100%; margin: 0.35rem 0 0.55rem; padding: 0.55rem 0.7rem; border: 1px solid var(--line, #d8cbb6); border-left: 4px solid var(--brand, #E07B2A); border-radius: 8px; background: var(--surface-warm, #f7f0e1); }
+    .p2-lt-head { display: flex; align-items: center; gap: 0.45rem; }
+    .p2-lt-dot { width: 0.55rem; height: 0.55rem; border-radius: 999px; background: #2f9e44; flex: none; }
+    .p2-lt-title { font-weight: 800; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; flex: 1; }
+    .p2-lt-status { margin-top: 0.3rem; font-size: 0.95rem; }
+    #p2-track-result { margin-top: 0.6rem; padding: 0.6rem 0.7rem; border: 1px solid var(--line, #d8cbb6); border-left: 4px solid var(--brand, #E07B2A); border-radius: 8px; background: var(--surface-warm, #f7f0e1); }
+    #p2-track-result ul { margin: 0.4rem 0 0; padding-left: 1.1rem; font-size: 0.88rem; }
     .p2-part-status { padding: 0.4rem; border: 2px solid var(--line, #d8cbb6); border-radius: 8px; background: var(--bg, #fff); color: var(--ink, #2c231a); flex: none; }
     /* PORTAL_PARTS_WRAP_FIX_2026_10_29: part rows wrap so the description keeps readable width on phones */
     .p2-part { flex-wrap: wrap; }
@@ -3774,7 +3783,11 @@ function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').repl
 function render(){var q=(document.getElementById('p2-price-search').value||'').toLowerCase();var b=document.getElementById('p2-price-brand').value;var box=document.getElementById('p2-price-results');if(!box)return;if(!q&&!b){box.innerHTML='<p class="portal-muted">Type a device or repair above to see prices.</p>';return;}var rows=PB.filter(function(r){return (!b||r.brand===b)&&(!q||(r.device+' '+r.repair).toLowerCase().indexOf(q)>-1);}).slice(0,50);if(!rows.length){box.innerHTML='<p class="portal-muted">No price found. Try a shorter search, like iPhone screen.</p>';return;}box.innerHTML='<table class="portal-table"><thead><tr><th>Device</th><th>Repair</th><th>Price</th></tr></thead><tbody>'+rows.map(function(r){return '<tr><td>'+esc(r.device)+'</td><td>'+esc(r.repair)+'</td><td>'+(r.price==null?'Price on request':'$'+r.price+' <span class="portal-muted">(all-in $'+r.all_in_price+')</span>')+'</td></tr>';}).join('')+'</tbody></table>';}
 document.addEventListener('input',function(e){if(e.target&&e.target.id==='p2-price-search')render();});
 document.addEventListener('change',function(e){if(e.target&&e.target.id==='p2-price-brand')render();});
-document.addEventListener('click',function(e){if(e.target&&e.target.closest&&e.target.closest('#p2-fedex-track')){var n=document.getElementById('p2-fedex-number');var v=n?n.value.trim():'';if(v)window.open('https://www.fedex.com/fedextrack/?trknbr='+encodeURIComponent(v),'_blank');}});
+/* PORTAL_LIVE_TRACKING_2026_11_01: Tools Live tracking box — any carrier, result renders in place */
+function p2EscT(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function p2TrackRun(){var n=document.getElementById('p2-track-number');var box=document.getElementById('p2-track-result');var v=n?n.value.trim():'';if(!v||!box)return;box.hidden=false;box.innerHTML='<p class="portal-muted portal-small">Checking live status&hellip;</p>';var url='https://lyujxpuicarblpkdzuuc.supabase.co';var anon='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';var client=null;try{client=window.supabase.createClient(url,anon);}catch(e){}if(!client){box.innerHTML='<p class="portal-error">Live tracking is unavailable right now.</p>';return;}client.auth.getSession().then(function(s){var t=s&&s.data&&s.data.session?s.data.session.access_token:'';return fetch(url+'/functions/v1/track-shipment',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+t,'apikey':anon},body:JSON.stringify({tracking_number:v})});}).then(function(r){return r.json();}).then(function(out){if(!out||!out.ok){box.innerHTML='<p class="portal-error">No live status found for that number. Check the number and try again.</p>';return;}if(!out.connected){box.innerHTML='<p class="portal-muted portal-small">Live tracking turns on once the AfterShip key is added. Until then: <a href="https://www.fedex.com/fedextrack/?trknbr='+encodeURIComponent(v)+'" target="_blank" rel="noopener">FedEx</a> &middot; <a href="https://www.ups.com/track?tracknum='+encodeURIComponent(v)+'" target="_blank" rel="noopener">UPS</a> &middot; <a href="https://tools.usps.com/go/TrackConfirmAction?tLabels='+encodeURIComponent(v)+'" target="_blank" rel="noopener">USPS</a></p>';return;}var h='<strong>'+p2EscT(out.status||'')+'</strong>';if(out.detail)h+=' &middot; '+p2EscT(out.detail);var meta=[];if(out.carrier)meta.push(p2EscT(out.carrier));if(out.eta)meta.push('Arriving '+p2EscT(String(out.eta).slice(0,10)));if(out.updated_at)meta.push('Updated '+p2EscT(new Date(out.updated_at).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})));if(meta.length)h+='<div class="portal-muted portal-small">'+meta.join(' &middot; ')+'</div>';if(out.events&&out.events.length){h+='<ul>'+out.events.map(function(ev){return '<li>'+p2EscT(ev.text)+(ev.location?' &mdash; '+p2EscT(ev.location):'')+(ev.time?' <span class="portal-muted">('+p2EscT(new Date(ev.time).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}))+')</span>':'')+'</li>';}).join('')+'</ul>';}box.innerHTML=h;}).catch(function(){box.innerHTML='<p class="portal-error">Couldn&rsquo;t get live status. Try again.</p>';});}
+document.addEventListener('click',function(e){if(e.target&&e.target.closest&&e.target.closest('#p2-track-btn'))p2TrackRun();});
+document.addEventListener('keydown',function(e){if(e.target&&e.target.id==='p2-track-number'&&e.key==='Enter'){e.preventDefault();p2TrackRun();}});
 })();
 </script>
 </body>
