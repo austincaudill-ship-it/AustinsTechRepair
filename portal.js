@@ -1028,8 +1028,8 @@ function loadTicketThread(client, ticketId) {
   /* PORTAL_LIVE_TRACKING_2026_11_01: the little Live tracking box under
    * each part that has a tracking number — status plus the time it was
    * updated, right on the ticket, no trip to the carrier's site. Status
-   * comes from the track-shipment Edge Function (AfterShip, any
-   * carrier, auto-detected) and is cached back onto the part row so it
+   * comes from the track-shipment Edge Function (each carrier's official
+   * developer API, auto-detected) and is cached back onto the part row so it
    * is still there the next time the ticket opens. */
   var ltBusy = {};
   function liveTrackHtml(p) {
@@ -1074,7 +1074,7 @@ function loadTicketThread(client, ticketId) {
     }).then(function (r) { return r.json(); }).then(function (out) {
       ltBusy[part.id] = false;
       if (!out || !out.ok) { if (box) ltRender(box, part, 'Couldn\u2019t get live status \u2014 try Refresh.'); return; }
-      if (!out.connected) { if (box) ltRender(box, part, 'Live tracking turns on once the AfterShip key is added.'); return; }
+      if (!out.connected) { if (box) ltRender(box, part, 'Live tracking for ' + (out.carrier || 'this carrier') + ' turns on once its developer keys are added.'); return; }
       part.tracking_status = out.status || '';
       part.tracking_detail = out.detail || '';
       part.tracking_eta = out.eta || null;
