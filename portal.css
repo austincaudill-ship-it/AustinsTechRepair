@@ -386,3 +386,76 @@ body.portal-scroll-locked{position:fixed;left:0;right:0;width:100%;overflow:hidd
 .portal-drawer{overscroll-behavior:contain}
 .portal-drawer-body{overscroll-behavior:contain}
 /* end PORTAL_DRAWER_SCROLL_LOCK_2026_11_02 */
+
+/* PORTAL_SIDEBAR_FREESCROLL_2026_11_02 (Austin, Nov 2, 2026): on his iPad
+   the ACTION BUTTON sidebar would not scroll under his finger while the
+   panel beside it scrolled freely ("action button is broken... make
+   action move freely independent"). WebKit measurements of the live
+   files at 834x1112 (his portrait case) show why: the sidebar's height
+   was only a CAP (max-height:calc(100vh - 24px)), never a definite
+   height. Its content is 1,011px tall, under the 1,088px portrait cap,
+   so the box grew to fit its content exactly (scrollHeight equaled
+   clientHeight, maxScroll 0) and, as a sticky item caged in a grid row
+   barely taller than itself, it could travel only ~77px with the page
+   before the row's edge stopped it — its bottom (Admin group,
+   Financials) stranded below the fold with no gesture able to reach it.
+   A wheel over the sidebar in WebKit portrait moved nothing at all; the
+   panel scrolled fine only because its content is ~5x its box. In
+   landscape (820px tall) the cap finally bit and the sidebar half
+   worked, which is why desktop/Chromium checks kept passing.
+   His refined spec the same day: the whole page stays fixed (header
+   included), the "Action Button" label stays fixed ABOVE the buttons
+   and is not part of the scrolling area, and exactly two things scroll,
+   independently — the button list and the open panel.
+   Structure (portal.html): the label moved out of the nav into a new
+   .portal-nav-col wrapper that carries the sidebar card (background,
+   border, radius, padding) as a flex column: label pinned on top
+   (flex:none), the nav below it as the one scroller (flex:1,
+   min-height:0). The card's sticky placement and height cap move from
+   the nav to the wrapper, so mouse desktops keep the same behavior —
+   card sticks, buttons scroll inside it, label now pinned instead of
+   scrolling away. Phones (640px and down) neutralize the wrapper with
+   display:contents and hide the pinned label (the Menu button does
+   that job there), leaving the phone menu exactly as it was.
+   Touch shell (pointer:coarse, 641px and up; mouse desktops get none
+   of it): the body is locked to the visible viewport (100dvh, 100vh
+   fallback) as a flex column so the page itself can never scroll, the
+   main area takes the remaining height (width:100% + border-box: as a
+   flex item its auto margins would otherwise shrink it to fit-content
+   and its content-box padding would add outside the 100%), and the
+   dashboard grid gets an explicit minmax(0,1fr) content row — head,
+   error, and MFA banner keep their own auto rows, so a shown banner
+   simply shrinks the panes. The wrapper and the panel fill that row
+   and the nav scrolls inside the wrapper: sticky comes off, heights
+   are definite, min-height:0 lets the overflow exist. The nav's
+   children get flex:none so the column-flex buttons keep their
+   natural height and genuinely overflow into the nav's own scrollbar
+   instead of being compressed to fit, and the nav gains momentum
+   scrolling (-webkit-overflow-scrolling:touch) and touch-action:pan-y
+   so a vertical finger drag is claimed by the button list itself.
+   overscroll-behavior:contain on both panes keeps a pane's scroll
+   from chaining into the other pane or the page. */
+.portal-nav-col{display:flex;flex-direction:column;background:var(--surface,#fff);border:1px solid var(--line,#e5d9c8);border-radius:14px;padding:10px;position:sticky;top:12px;max-height:calc(100vh - 24px);min-height:0}
+.portal-nav-col .portal-nav-label{flex:none}
+.portal-nav-col .portal-tabs{flex:1 1 auto;min-height:0;position:static;max-height:none;background:transparent;border:0;border-radius:0;padding:0;margin-bottom:0}
+@media (max-width:640px){
+  .portal-nav-col{display:contents}
+  .portal-nav-col .portal-nav-label{display:none}
+}
+@media screen and (min-width:641px) and (pointer:coarse){
+  .portal-body{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+  .portal-topbar{flex:none}
+  .portal-main{flex:1 1 auto;min-height:0;width:100%;box-sizing:border-box;display:flex;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  #portal-dash-view{flex:1 1 auto;min-width:0;min-height:0;grid-template-rows:auto auto auto minmax(0,1fr)}
+  #portal-dash-view .portal-dash-head{grid-row:1}
+  #portal-dash-view .portal-error{grid-row:2}
+  #portal-dash-view #portal-mfa-banner{grid-row:3}
+  #portal-dash-view .portal-nav-col{grid-row:4;grid-column:1}
+  #portal-dash-view .portal-panel{grid-row:4}
+  #portal-dash-view .portal-nav-col,
+  #portal-dash-view .portal-panel{position:static;height:100%;max-height:none;min-height:0}
+  #portal-dash-view .portal-panel{overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;margin-bottom:0}
+  #portal-dash-view .portal-tabs{overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+  #portal-dash-view .portal-tabs>*{flex:none}
+}
+/* end PORTAL_SIDEBAR_FREESCROLL_2026_11_02 */

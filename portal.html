@@ -131,9 +131,11 @@
         </div>
       </div>
 
-      <nav class="portal-tabs" id="portal-nav" role="tablist" aria-label="Portal sections">
-        <!-- PORTAL_ACTION_BUTTON_LABEL_2026_11_02 (Austin, Nov 2, 2026): he named the sidebar buttons "action buttons"; this label sits at the top of the sidebar above every group, styled by the same .portal-nav-group rule as Work / Parts & Tools / Team / Admin. -->
-        <div class="portal-nav-group">Action Button</div>
+            <div class="portal-nav-col">
+        <!-- PORTAL_ACTION_BUTTON_LABEL_2026_11_02 (Austin, Nov 2, 2026): he named the sidebar buttons "action buttons"; this label sits at the top of the sidebar above every group, styled by the same .portal-nav-group rule as Work / Parts & Tools / Team / Admin. Refined later on Nov 2, 2026 (PORTAL_SIDEBAR_FREESCROLL_2026_11_02): the label moved OUT of the scrolling nav into the .portal-nav-col wrapper so it stays pinned above the buttons at all times — only the buttons below it scroll. -->
+        <div class="portal-nav-group portal-nav-label">Action Button</div>
+        <nav class="portal-tabs" id="portal-nav" role="tablist" aria-label="Portal sections">
+
         <div class="portal-nav-group">Work</div>
         <button class="portal-tab" id="portal-tab-checkin" type="button" role="tab" data-tab="checkin">
           <i class="fas fa-clipboard-check"></i> Check-In
@@ -191,6 +193,7 @@
           <i class="fas fa-chart-pie"></i> Financials
         </button>
       </nav>
+      </div>
 
       <!-- TICKETS -->
       <div class="portal-panel" id="portal-panel-tickets" role="tabpanel">
