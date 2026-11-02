@@ -150,9 +150,6 @@
         <button class="portal-tab" id="portal-tab-members" type="button" role="tab" data-tab="members">
           <i class="fas fa-star"></i> ATR One Members
         </button>
-        <button class="portal-tab" id="portal-tab-requests" type="button" role="tab" data-tab="requests">
-          <i class="fas fa-clipboard-list"></i> Requests <span class="portal-count" id="portal-count-requests" hidden></span>
-        </button>
         <button class="portal-tab" id="portal-tab-documents" type="button" role="tab" data-tab="documents">
           <i class="fas fa-folder-open"></i> Documents
         </button>
@@ -170,6 +167,10 @@
           <i class="fas fa-book-open"></i> Guides
         </button>
         <div class="portal-nav-group">Associates</div>
+        <!-- PORTAL_CUSTOMER_PROFILE_2026_11_02 (Austin correction, Nov 2, 2026): the Requests button moved out of the first group into this group — Requests is the associates' queue (shop requests plus the change requests the owner approves). The button, its count span and the panel are otherwise byte-identical; group headings are NOT renamed here (the rename pass owns them). -->
+        <button class="portal-tab" id="portal-tab-requests" type="button" role="tab" data-tab="requests">
+          <i class="fas fa-clipboard-list"></i> Requests <span class="portal-count" id="portal-count-requests" hidden></span>
+        </button>
         <button class="portal-tab" id="portal-tab-timeclock" type="button" role="tab" data-tab="timeclock">
           <i class="fas fa-clock"></i> Time Clock
         </button>
@@ -813,6 +814,8 @@
           </button>
         </div>
         <p class="portal-muted portal-small">The shop&rsquo;s ask-for-it queue: swag &amp; merch, tools, and parts the team needs &mdash; separate from per-ticket part orders. New requests land at the top; move them to Ordered, Done, or Denied as they&rsquo;re handled.</p>
+        <!-- PORTAL_CUSTOMER_PROFILE_2026_11_02 (Austin correction, Nov 2, 2026): the "Customer update" section — associate-submitted customer-info changes wait here for the owner's approval, in the same Requests queue as everything else an associate asks for. portal.js renders it (owner only); the shop list below is untouched and keeps its own renderer. -->
+        <div id="portal-cust-edit-requests"></div>
         <div id="portal-request-list"><p class="portal-muted">Loading requests&hellip;</p></div>
 
         <div class="portal-panel-head portal-subhead">

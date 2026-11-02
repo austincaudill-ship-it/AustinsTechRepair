@@ -459,3 +459,21 @@ body.portal-scroll-locked{position:fixed;left:0;right:0;width:100%;overflow:hidd
   #portal-dash-view .portal-tabs>*{flex:none}
 }
 /* end PORTAL_SIDEBAR_FREESCROLL_2026_11_02 */
+
+/* PORTAL_CUSTOMER_PROFILE_2026_11_02: customer profile (drawer) +
+   edit-approval pieces. Only new classes for this feature; the
+   profile itself reuses .portal-drawer-section, .portal-kv,
+   .portal-field and .portal-badge. */
+.cust-badge-pending { background: #fef3c7; color: #92400e; margin-left: .4rem; }
+.cust-prof-invest { font-family: var(--font-display, 'Fraunces', Georgia, serif); font-size: 1.9rem; font-weight: 700; color: var(--brand-deep, #A63E06); margin: 0 0 .2rem; }
+.cust-prof-ticket { border: 1px solid var(--line, #E5D9C8); border-radius: 12px; padding: .65rem .8rem; margin-bottom: .55rem; }
+.cust-prof-ticket-top { display: flex; justify-content: space-between; align-items: center; gap: .6rem; margin-bottom: .25rem; }
+.cust-prof-ticket-date { font-weight: 700; font-size: .9rem; }
+.cust-prof-ticket-device { font-weight: 600; margin: 0 0 .15rem; }
+.cust-prof-ticket .portal-card-issue { margin: 0 0 .15rem; }
+.cust-req-card { border: 2px solid var(--brand, #D9540D); margin-bottom: 1rem; }
+.cust-req-title { font-family: var(--font-display, 'Fraunces', Georgia, serif); font-size: 1.05rem; margin: 0 0 .6rem; }
+.cust-req-row { border-top: 1px solid var(--line, #E5D9C8); padding: .6rem 0 .2rem; }
+.cust-req-row:first-of-type { border-top: none; padding-top: 0; }
+.cust-change-line { margin: 0 0 .2rem; overflow-wrap: anywhere; }
+/* end PORTAL_CUSTOMER_PROFILE_2026_11_02 */

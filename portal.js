@@ -4466,7 +4466,9 @@ function loadTicketThread(client, ticketId) {
       return '<article class="portal-card">' +
         '<div class="portal-card-top"><p class="portal-card-title">' + esc(c.name || 'Customer') + '</p>' +
         '<span class="portal-badge portal-st-reviewed"><i class="fas fa-coins"></i> ' + esc(String(c.points)) + ' pts</span>' +
-        (c.membershipTier ? '<span class="portal-badge portal-badge-atrone"><i class="fas fa-star"></i> ATR One · ' + esc(atroneTierName(c.membershipTier)) + '</span>' : '') + '</div>' +
+        (c.membershipTier ? '<span class="portal-badge portal-badge-atrone"><i class="fas fa-star"></i> ATR One · ' + esc(atroneTierName(c.membershipTier)) + '</span>' : '') +
+        /* PORTAL_CUSTOMER_PROFILE_2026_11_02: chip when an associate's edit for this customer is waiting on the owner. */
+        (custEditByCustomer[c.id] ? '<span class="portal-badge cust-badge-pending"><i class="fas fa-clock"></i> Edit waiting for approval</span>' : '') + '</div>' +
         '<p class="portal-card-meta"><i class="fas fa-envelope"></i> ' + esc(c.email || '—') +
         (c.phone ? ' · <i class="fas fa-phone"></i> ' + esc(c.phone) : '') + '</p>' +
         '<p class="portal-card-meta"><i class="fas fa-cake-candles"></i> Birthday (month and day only): ' +
@@ -4475,7 +4477,9 @@ function loadTicketThread(client, ticketId) {
         '<span class="portal-muted portal-small" data-bday-msg="' + esc(c.id) + '"></span></p>' +
         '<p class="portal-card-meta">' + esc(String(c.orderCount)) + ' shop order' + (c.orderCount === 1 ? '' : 's') +
         ' · Customer since ' + esc(fmtDate(c.created_at)) + '</p>' +
-        '<p><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-cust-delete="' + esc(c.id) + '">Delete customer</button> ' +
+        /* PORTAL_CUSTOMER_PROFILE_2026_11_02: View profile opens the customer profile in the drawer (contact, repair history, repair investments, editing). */
+        '<p><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-cust-profile="' + esc(c.id) + '"><i class="fas fa-id-card"></i> View profile</button> ' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-cust-delete="' + esc(c.id) + '">Delete customer</button> ' +
         '<span class="portal-muted portal-small" data-cust-delete-msg="' + esc(c.id) + '"></span></p>' +
         '</article>';
     }).join('');
@@ -4499,7 +4503,8 @@ function loadTicketThread(client, ticketId) {
             if (pending > 0) return;
             var rows = customers.map(function (c) {
               return {
-                id: c.id, name: c.name, email: c.email, phone: c.phone, created_at: c.created_at, birthday: c.birthday,
+                /* PORTAL_CUSTOMER_PROFILE_2026_11_02: address rides in the cache so a pending change can show "old -> new" in the approvals section. */
+                id: c.id, name: c.name, email: c.email, phone: c.phone, address: c.address, created_at: c.created_at, birthday: c.birthday,
                 points: pointsByCustomer[c.id] || 0,
                 orderCount: ordersByCustomer[c.id] || 0,
                 membershipTier: membershipsByCustomer[c.id] || null
@@ -4507,7 +4512,11 @@ function loadTicketThread(client, ticketId) {
             });
             state.customersCache = rows;
             state.loaded.customers = true;
-            applyCustomerSearch();
+            /* PORTAL_CUSTOMER_PROFILE_2026_11_02: pending change requests ride along with the customer list — the card chips and the Requests-panel approvals section both read from this load. */
+            loadCustEditRequests(function () {
+              applyCustomerSearch();
+              renderCustEditPanel();
+            });
           }
           client.from('rewards').select('customer_id, points').then(function (r) {
             if (!r.error) (r.data || []).forEach(function (row) { pointsByCustomer[row.customer_id] = row.points; });
@@ -4588,6 +4597,381 @@ function loadTicketThread(client, ticketId) {
       }).catch(function () { if (msg) msg.textContent = 'Couldn\u2019t save.'; });
     });
   }
+
+  /* ================= CUSTOMER PROFILES + EDIT APPROVALS =================
+   * PORTAL_CUSTOMER_PROFILE_2026_11_02 (Austin, Nov 2, 2026):
+   *
+   * Tapping a customer in the Customers panel opens their PROFILE in
+   * the shared drawer (so it inherits the drawer's scroll lock — the
+   * page behind stays frozen, only the profile scrolls):
+   *   - Contact info (name, email, phone, address, customer since).
+   *   - REPAIR HISTORY: the customer's own tickets (date, device,
+   *     issue, status) — no more hunting the Repair Queue for a past
+   *     repair.
+   *   - REPAIR INVESTMENTS: the money that customer has actually put
+   *     into ATRG through repairs. Austin's language rule: customers
+   *     INVEST in ATRG — the total is labeled "Repair investments",
+   *     never "paid". Computed exactly the way Financials computes
+   *     "Collected" (see finSum / the Phase 2 comment): ticket_charges
+   *     rows with kind = 'deposit_credit', amount = qty x unit_price,
+   *     summed across the customer's tickets.
+   *
+   * EDITING, with the owner/associate split Austin set:
+   *   - The signed-in role comes from state.profile (public.
+   *     employee_profiles, loaded at sign-in). isPortalOwner() is a
+   *     STRICT check — role exactly 'owner'. (The looser isManager()
+   *     helper, owner|admin|manager, exists for other features; this
+   *     one is owner-only by Austin's word: "Only on the owner
+   *     account.")
+   *   - OWNER: the edit form writes straight to the customers row.
+   *   - ASSOCIATE (any non-owner employee): the same form NEVER
+   *     writes the customer. It inserts one row into public.
+   *     customer_edit_requests (customer-edit-requests.sql) holding
+   *     just the fields that changed. Until approval, the customer
+   *     record is untouched.
+   *
+   * APPROVALS LIVE IN REQUESTS (Austin correction, Nov 2, 2026):
+   * the owner's review surface is NOT the Customers panel — it is a
+   * "Customer update" section at the top of the existing REQUESTS
+   * panel, the shop's one queue for everything associates ask for
+   * (parts, tools, swag — and now customer changes). Approving there
+   * applies the stored changes to the customers row; Rejecting
+   * discards them. The customer's profile and card still SHOW that a
+   * change is waiting (the associate needs that feedback, and the
+   * owner needs the context), but no Approve/Reject buttons exist
+   * anywhere except Requests — it is the single landing spot. The
+   * Requests tab's own count badge stays the shop queue's (owned by
+   * that panel's inline code); the customer-update count rides in
+   * the section heading.
+   *   - If customer_edit_requests does not exist yet (SQL not run),
+   *     every request query just errors into an empty list: profiles
+   *     still open, the owner can still edit directly, and an
+   *     associate's submit gets a plain "not set up yet" message —
+   *     the same degrade-gracefully posture as the Members panel.
+   */
+  var custEditRequests = [];      /* pending rows from customer_edit_requests */
+  var custEditByCustomer = {};    /* customer_id -> [pending rows] */
+  var custProfileCurrent = null;  /* full customers row open in the drawer */
+  var custProfileNotice = '';     /* one-shot message for the profile edit form */
+  var empNameCache = {};          /* employee_profiles id -> name */
+
+  var CUST_EDIT_FIELDS = [
+    { key: 'name', label: 'Name', type: 'text' },
+    { key: 'email', label: 'Email', type: 'email' },
+    { key: 'phone', label: 'Phone', type: 'tel' },
+    { key: 'address', label: 'Address', type: 'text' }
+  ];
+
+  /* The exact role check for this feature (see the block comment):
+   * Austin is the owner; everyone else on staff is an associate for
+   * customer-info purposes. */
+  function isPortalOwner() {
+    return trim(state.profile && state.profile.role).toLowerCase() === 'owner';
+  }
+
+  function custRowById(customerId) {
+    var row = null;
+    state.customersCache.forEach(function (c) { if (c.id === customerId) row = c; });
+    return row;
+  }
+
+  function loadEmpNames(client, done) {
+    var missing = [];
+    custEditRequests.forEach(function (r) {
+      if (r.submitted_by && !empNameCache[r.submitted_by] && missing.indexOf(r.submitted_by) === -1) missing.push(r.submitted_by);
+    });
+    if (!missing.length) { done(); return; }
+    client.from('employee_profiles').select('id, name').in('id', missing)
+      .then(function (res) {
+        if (!res.error) (res.data || []).forEach(function (p) { empNameCache[p.id] = p.name || 'Employee'; });
+        done();
+      })
+      .catch(function () { done(); });
+  }
+
+  function loadCustEditRequests(done) {
+    withClient(function (client) {
+      if (!client) { custEditRequests = []; custEditByCustomer = {}; if (done) done(); return; }
+      client.from('customer_edit_requests').select('*').eq('status', 'pending')
+        .order('created_at', { ascending: true }).limit(200)
+        .then(function (res) {
+          if (res.error) { /* Table not set up yet — no pending requests, no crash. */
+            custEditRequests = []; custEditByCustomer = {};
+            if (done) done(); return;
+          }
+          custEditRequests = res.data || [];
+          custEditByCustomer = {};
+          custEditRequests.forEach(function (r) {
+            (custEditByCustomer[r.customer_id] = custEditByCustomer[r.customer_id] || []).push(r);
+          });
+          loadEmpNames(client, function () { if (done) done(); });
+        })
+        .catch(function () { custEditRequests = []; custEditByCustomer = {}; if (done) done(); });
+    });
+  }
+
+  /* "Phone: (old) -> (new)" lines for one request. The old side reads
+   * the CURRENT customer row, so what the owner sees at decision time
+   * is the value his approval would replace. */
+  function custChangeLines(req, cust) {
+    var changes = req.changes || {};
+    var out = '';
+    CUST_EDIT_FIELDS.forEach(function (f) {
+      if (!Object.prototype.hasOwnProperty.call(changes, f.key)) return;
+      var oldVal = cust ? trim(cust[f.key]) : '';
+      out += '<p class="cust-change-line"><strong>' + esc(f.label) + ':</strong> ' +
+        (oldVal ? esc(oldVal) + ' &rarr; ' : '') + '<strong>' + esc(changes[f.key] || '—') + '</strong></p>';
+    });
+    return out || '<p class="cust-change-line">No field changes listed.</p>';
+  }
+
+  function custApproveRejectButtons(req) {
+    return '<p><button class="portal-btn portal-btn-sm" type="button" data-cust-approve="' + esc(req.id) + '">Approve</button> ' +
+      '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-cust-reject="' + esc(req.id) + '">Reject</button></p>';
+  }
+
+  /* The owner's approvals section — the "Customer update" block at
+   * the top of the REQUESTS panel (Austin correction, Nov 2, 2026;
+   * the container lives in that panel, above the shop request list,
+   * whose own renderer never touches it). Associates never see it
+   * (their pending requests show on the customer's profile instead).
+   * The rows keep their own table on purpose: the shop queue's kinds
+   * (swag/tool/part/other on tech_requests) carry an Ordered/Done/
+   * Denied lifecycle, while a customer update's approval APPLIES the
+   * stored changes to the customers row — a different lifecycle, so
+   * it renders as its own labeled section in the same panel rather
+   * than as rows in the shop list. */
+  function renderCustEditPanel(notice) {
+    var box = $('portal-cust-edit-requests');
+    if (!box) return;
+    if (!isPortalOwner() || !custEditRequests.length) { box.innerHTML = ''; return; }
+    var html = '<div class="portal-card cust-req-card"><h3 class="cust-req-title"><i class="fas fa-user-pen"></i> Customer updates waiting for your approval (' + custEditRequests.length + ')</h3>';
+    if (notice) html += '<p class="portal-error">' + esc(notice) + '</p>';
+    html += custEditRequests.map(function (r) {
+      var cust = custRowById(r.customer_id);
+      return '<div class="cust-req-row">' +
+        '<p class="portal-card-title">' + esc(cust ? (cust.name || 'Customer') : 'Customer') + ' <span class="portal-badge portal-st-new">Customer update</span></p>' +
+        custChangeLines(r, cust) +
+        '<p class="portal-muted portal-small">Submitted by ' + esc(empNameCache[r.submitted_by] || 'an associate') + ' · ' + esc(fmtDateTime(r.created_at)) + '</p>' +
+        custApproveRejectButtons(r) +
+        '</div>';
+    }).join('');
+    box.innerHTML = html + '</div>';
+  }
+
+  function openCustomerProfile(customerId) {
+    var cached = custRowById(customerId);
+    drawerLoading(cached ? (cached.name || 'Customer') : 'Customer profile');
+    withClient(function (client) {
+      if (!client) { $('portal-drawer-body').innerHTML = '<p class="portal-error">Couldn&rsquo;t reach the database.</p>'; return; }
+      client.from('customers').select('*').eq('id', customerId).maybeSingle()
+        .then(function (res) {
+          if (res.error || !res.data) { $('portal-drawer-body').innerHTML = '<p class="portal-error">Couldn&rsquo;t load that customer. They may have been deleted.</p>'; return; }
+          var cust = res.data;
+          custProfileCurrent = cust;
+          $('portal-drawer-title').textContent = cust.name || 'Customer';
+          client.from('tickets').select('*').eq('customer_id', customerId)
+            .order('created_at', { ascending: false }).limit(200)
+            .then(function (tres) {
+              var tickets = tres.error ? [] : (tres.data || []);
+              var ids = tickets.map(function (t) { return t.id; });
+              function render(charges) {
+                loadCustEditRequests(function () {
+                  renderCustProfile(cust, tickets, charges);
+                  renderCustEditPanel();
+                });
+              }
+              if (!ids.length) { render([]); return; }
+              client.from('ticket_charges').select('ticket_id, kind, qty, unit_price').in('ticket_id', ids)
+                .then(function (cres) { render(cres.error ? [] : (cres.data || [])); })
+                .catch(function () { render([]); });
+            })
+            .catch(function () { $('portal-drawer-body').innerHTML = '<p class="portal-error">Couldn&rsquo;t load that customer&rsquo;s repairs.</p>'; });
+        })
+        .catch(function () { $('portal-drawer-body').innerHTML = '<p class="portal-error">Couldn&rsquo;t load that customer.</p>'; });
+    });
+  }
+
+  function renderCustProfile(cust, tickets, charges) {
+    var body = $('portal-drawer-body');
+    if (!body) return;
+    var investedByTicket = {};
+    var totalInvested = 0;
+    (charges || []).forEach(function (c) {
+      if (c.kind !== 'deposit_credit') return;
+      var amt = Number(c.qty || 0) * Number(c.unit_price || 0);
+      investedByTicket[c.ticket_id] = (investedByTicket[c.ticket_id] || 0) + amt;
+      totalInvested += amt;
+    });
+    var pending = custEditByCustomer[cust.id] || [];
+    var owner = isPortalOwner();
+    var html = '';
+
+    html += '<div class="portal-drawer-section"><h3>Contact</h3>' + kvRows([
+      ['Name', valOrDash(cust.name)],
+      ['Email', valOrDash(cust.email)],
+      ['Phone', valOrDash(cust.phone)],
+      ['Address', valOrDash(cust.address)],
+      ['Customer since', esc(fmtDate(cust.created_at))]
+    ]) + '</div>';
+
+    /* Austin's language rule: this total is "Repair investments" —
+     * the word for what a customer puts into ATRG is "invested". */
+    html += '<div class="portal-drawer-section"><h3>Repair investments</h3>' +
+      '<p class="cust-prof-invest">' + esc(fmtMoney(totalInvested)) + '</p>' +
+      '<p class="portal-muted portal-small">Total invested with us across ' + tickets.length + ' repair' + (tickets.length === 1 ? '' : 's') + '.</p></div>';
+
+    html += '<div class="portal-drawer-section"><h3>Repair history</h3>';
+    if (!tickets.length) {
+      html += '<p class="portal-muted">No repairs on file yet.</p>';
+    } else {
+      html += tickets.map(function (t) {
+        var when = fmtJobDate(t.job_date) || fmtDate(t.created_at);
+        return '<div class="cust-prof-ticket">' +
+          '<div class="cust-prof-ticket-top"><span class="cust-prof-ticket-date">' + esc(when) + '</span>' +
+          '<span class="portal-badge portal-st-reviewed">' + esc(t.status || '') + '</span></div>' +
+          '<p class="cust-prof-ticket-device">' + esc(deviceLabel(t)) + '</p>' +
+          (t.issue ? '<p class="portal-card-issue">' + esc(t.issue) + '</p>' : '') +
+          '<p class="portal-muted portal-small">Invested ' + esc(fmtMoney(investedByTicket[t.id] || 0)) + ' on this repair</p>' +
+          '</div>';
+      }).join('');
+    }
+    html += '</div>';
+
+    if (pending.length) {
+      html += '<div class="portal-drawer-section"><h3>Changes waiting for approval</h3>' + pending.map(function (r) {
+        return '<div class="cust-req-row">' + custChangeLines(r, cust) +
+          '<p class="portal-muted portal-small">Submitted by ' + esc(empNameCache[r.submitted_by] || 'an associate') + ' · ' + esc(fmtDateTime(r.created_at)) + '</p>' +
+          /* Austin correction, Nov 2, 2026: no approve/reject here — Requests is the single landing spot for decisions. The profile only shows that a change is waiting. */
+          (owner
+            ? '<p class="portal-muted portal-small">Approve or reject this in Requests — that is where customer updates are decided.</p>'
+            : '<p class="portal-muted portal-small">Waiting on the owner to approve — the record above still shows the current information.</p>') +
+          '</div>';
+      }).join('') + '</div>';
+    }
+
+    html += '<div class="portal-drawer-section"><h3>' + (owner ? 'Edit contact info' : 'Suggest a change') + '</h3>' +
+      CUST_EDIT_FIELDS.map(function (f) {
+        return '<div class="portal-field"><label for="cust-prof-' + f.key + '">' + esc(f.label) + '</label>' +
+          '<input type="' + f.type + '" id="cust-prof-' + f.key + '" value="' + esc(cust[f.key] || '') + '" /></div>';
+      }).join('') +
+      '<p><button class="portal-btn" type="button" data-cust-edit-save="' + esc(cust.id) + '">' +
+      (owner ? 'Save changes' : 'Submit changes for approval') + '</button> ' +
+      '<span class="portal-muted portal-small" id="cust-prof-edit-msg">' + esc(custProfileNotice) + '</span></p>' +
+      '<p class="portal-muted portal-small">' + (owner
+        ? 'You are signed in as the owner — changes save straight to the customer record.'
+        : 'Associates cannot change a customer record directly. Your changes go to the owner, and the record only updates after he approves them.') + '</p>' +
+      '</div>';
+    custProfileNotice = '';
+    body.innerHTML = html;
+  }
+
+  function saveCustomerEdit(customerId) {
+    var msg = $('cust-prof-edit-msg');
+    var cust = custProfileCurrent;
+    if (!cust || cust.id !== customerId) return;
+    var changes = {};
+    CUST_EDIT_FIELDS.forEach(function (f) {
+      var el = $('cust-prof-' + f.key);
+      if (!el) return;
+      var v = trim(el.value);
+      if (v !== trim(cust[f.key])) changes[f.key] = v;
+    });
+    if (!Object.keys(changes).length) { if (msg) msg.textContent = 'No changes to save.'; return; }
+    if (changes.name !== undefined && !changes.name) { if (msg) msg.textContent = 'Name cannot be empty.'; return; }
+    if (changes.email !== undefined && !changes.email) { if (msg) msg.textContent = 'Email cannot be empty.'; return; }
+    if (msg) msg.textContent = isPortalOwner() ? 'Saving…' : 'Submitting…';
+    withClient(function (client) {
+      if (!client) { if (msg) msg.textContent = 'No connection.'; return; }
+      if (isPortalOwner()) {
+        /* Owner: straight to the customers row. */
+        client.from('customers').update(changes).eq('id', customerId)
+          .then(function (res) {
+            if (res.error) { if (msg) msg.textContent = 'Couldn’t save — that email may already be on another customer.'; return; }
+            Object.keys(changes).forEach(function (k) { cust[k] = changes[k]; });
+            var row = custRowById(customerId);
+            if (row) Object.keys(changes).forEach(function (k) { row[k] = changes[k]; });
+            custProfileNotice = 'Saved.';
+            openCustomerProfile(customerId);
+            applyCustomerSearch();
+          })
+          .catch(function () { if (msg) msg.textContent = 'Couldn’t save — try again.'; });
+        return;
+      }
+      /* Associate: file a change request. The customers row is NOT
+       * touched — it changes only when the owner approves. */
+      client.from('customer_edit_requests').insert({
+        customer_id: customerId, submitted_by: state.user.id,
+        changes: changes, status: 'pending'
+      })
+        .then(function (res) {
+          if (res.error) { if (msg) msg.textContent = 'Couldn’t submit — change requests are not set up yet.'; return; }
+          custProfileNotice = 'Submitted for approval. The record has not changed yet.';
+          loadCustEditRequests(function () {
+            openCustomerProfile(customerId);
+            renderCustEditPanel();
+          });
+        })
+        .catch(function () { if (msg) msg.textContent = 'Couldn’t submit — try again.'; });
+    });
+  }
+
+  function decideCustEdit(requestId, approve) {
+    if (!isPortalOwner()) return;
+    var req = null;
+    custEditRequests.forEach(function (r) { if (r.id === requestId) req = r; });
+    if (!req) { loadCustEditRequests(function () { renderCustEditPanel(); }); return; }
+    withClient(function (client) {
+      if (!client) return;
+      function stamp(status, done) {
+        client.from('customer_edit_requests')
+          .update({ status: status, decided_by: state.user.id, decided_at: new Date().toISOString() })
+          .eq('id', requestId)
+          .then(function () { done(); })
+          .catch(function () { done(); });
+      }
+      function finish() {
+        loadCustEditRequests(function () {
+          renderCustEditPanel();
+          applyCustomerSearch();
+          /* If the drawer is OPEN on this customer's profile right
+           * now, refresh it so the owner sees the change land (or the
+           * request clear). Both halves of the check matter: the
+           * drawer body keeps the last profile's HTML after it is
+           * closed, so the edit-save button's presence alone would
+           * reopen a drawer the owner had already dismissed — e.g.
+           * when he approves from Requests with no profile up. */
+          var drawerEl = $('portal-drawer');
+          if (custProfileCurrent && custProfileCurrent.id === req.customer_id &&
+              drawerEl && drawerEl.classList.contains('open') &&
+              document.querySelector('[data-cust-edit-save]')) {
+            custProfileNotice = approve ? 'Change approved and saved to the record.' : 'Change rejected — the record was not changed.';
+            openCustomerProfile(req.customer_id);
+          }
+        });
+      }
+      if (!approve) { stamp('rejected', finish); return; }
+      /* Approve: apply the stored changes FIRST; only a successful
+       * apply gets stamped approved. A failed apply (e.g. the new
+       * email already belongs to another customer) leaves the
+       * request pending with a plain explanation. */
+      client.from('customers').update(req.changes || {}).eq('id', req.customer_id)
+        .then(function (res) {
+          if (res.error) {
+            renderCustEditPanel('Could not apply that change — the email may already belong to another customer. The request is still waiting.');
+            return;
+          }
+          var row = custRowById(req.customer_id);
+          if (row) Object.keys(req.changes || {}).forEach(function (k) { row[k] = req.changes[k]; });
+          if (custProfileCurrent && custProfileCurrent.id === req.customer_id) {
+            Object.keys(req.changes || {}).forEach(function (k) { custProfileCurrent[k] = req.changes[k]; });
+          }
+          stamp('approved', finish);
+        })
+        .catch(function () { renderCustEditPanel('Could not apply that change. The request is still waiting.'); });
+    });
+  }
+  /* end PORTAL_CUSTOMER_PROFILE_2026_11_02 */
 
   /* ================= INVENTORY (Phase 3: editable van/shop stock) ================= */
   function itemLines(items) {
@@ -4822,9 +5206,29 @@ function loadTicketThread(client, ticketId) {
           if (bid) { saveBirthday(bid); return; }
           var del = t.getAttribute('data-cust-delete');
           if (del) { deleteCustomer(del); return; }
+          /* PORTAL_CUSTOMER_PROFILE_2026_11_02: customer profile + edit-approval actions (cards, drawer profile, approvals section). */
+          var cp = t.getAttribute('data-cust-profile');
+          if (cp) { openCustomerProfile(cp); return; }
+          var ca = t.getAttribute('data-cust-approve');
+          if (ca) { decideCustEdit(ca, true); return; }
+          var cr = t.getAttribute('data-cust-reject');
+          if (cr) { decideCustEdit(cr, false); return; }
+          var cs = t.getAttribute('data-cust-edit-save');
+          if (cs) { saveCustomerEdit(cs); return; }
         }
         t = t.parentNode;
       }
+    });
+
+    /* PORTAL_CUSTOMER_PROFILE_2026_11_02 (Austin correction): the
+     * approvals section lives in the Requests panel — refresh the
+     * pending customer updates every time that tab is opened, so the
+     * owner never lands on a stale queue. (The panel's own inline
+     * code shows the panel and loads the shop list; this listener is
+     * independent and only re-renders the customer-update section.) */
+    var reqTab = $('portal-tab-requests');
+    if (reqTab) reqTab.addEventListener('click', function () {
+      loadCustEditRequests(function () { renderCustEditPanel(); });
     });
 
     $('portal-ticket-filter').addEventListener('change', function () {
