@@ -1015,6 +1015,18 @@ function loadTicketThread(client, ticketId) {
           ? '<div class="portal-gate"><i class="fas fa-triangle-exclamation"></i> <strong>Parts not on hand yet.</strong> Don&rsquo;t start this repair until the part is in and scanned to the ticket.</div>'
           : '';
         var body = gateBanner +
+          /* PORTAL_TICKET_DRAWER_2026_11_02 (Austin, Nov 2, 2026):
+           * drawer section order — the Status control opens the
+           * drawer, first thing under the Ticket details heading
+           * (it used to sit below Parts), and Message customer
+           * sits directly above the Repair log (see below). Every
+           * section's markup and wiring are unchanged; only the
+           * order moved. */
+          '<div class="portal-drawer-section"><h3>Status</h3>' +
+          '<div class="portal-status-row"><select id="portal-ticket-status" aria-label="Ticket status">' +
+          statusOptions(TICKET_STATUSES, t.status) + '</select>' +
+          '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="portal-ticket-status-save">Save status</button>' +
+          '<span class="portal-muted portal-small" id="portal-ticket-status-msg"></span></div></div>' +
           '<div class="portal-card-top"><p class="portal-card-title">' + esc(deviceLabel(t)) + '</p>' + badge(t.status) + '</div>' +
           kvRows([
             ['Customer', valOrDash(t.customer_name)],
@@ -1070,19 +1082,29 @@ function loadTicketThread(client, ticketId) {
           '<div class="p2-actions"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p4-sign-btn"><i class="fas fa-pen-nib"></i> Sign repair authorization</button>' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p4-media-btn"><i class="fas fa-camera"></i> Sign media release</button>' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p4-attach-btn"><i class="fas fa-paperclip"></i> Attach document</button>' +
-          '<select id="p4-attach-type" aria-label="Attach as document type" style="padding:0.4rem;border:2px solid var(--line, #d8cbb6);border-radius:8px;background:var(--bg, #fff);color:var(--ink, #2c231a);"><option value="receipt">Receipt</option><option value="repair_authorization">Signed authorization</option><option value="other">Other</option></select>' +
+          '<select id="p4-attach-type" aria-label="Attach as document type" style="padding:0.4rem;border:2px solid var(--line, #d8cbb6);border-radius:8px;background:var(--bg, #fff);color:var(--ink, #2c231a);"><option value="receipt">Receipt</option><option value="part_order">Part order</option><option value="repair_authorization">Signed authorization</option><option value="other">Other</option></select>' +
           '<input type="file" id="p4-attach-file" accept="image/*,application/pdf" hidden />' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p4-existing-btn"><i class="fas fa-link"></i> Attach an existing document</button></div>' +
           '<div class="p2-form" id="p4-existing-picker" hidden>' +
           '<div id="p4-existing-list"><p class="portal-muted portal-small">Loading documents&hellip;</p></div></div>' +
           '<p class="portal-muted portal-small">Documents file themselves on this ticket. Signing the repair authorization here, or attaching one as a signed authorization, also marks Terms accepted and Work authorized on the ticket. The media release is separate: sign it only when the customer agrees to photos or clips of the device and the repair work.</p>' +
           '<p class="portal-error" id="p4-doc-msg" hidden></p></div>' +
+          '<div class="portal-drawer-section"><h3>Message customer</h3>' +
+          '<div class="portal-thread" id="portal-thread"><p class="portal-muted">Loading messages&hellip;</p></div>' +
+          '<form id="portal-note-form"><div class="portal-note-row">' +
+          '<textarea id="portal-note-input" placeholder="Add a note to this ticket&hellip;" maxlength="2000" aria-label="Add a note to this ticket"></textarea>' +
+          '<button class="portal-btn portal-btn-primary" type="submit"><i class="fas fa-paper-plane"></i></button></div>' +
+          '<p class="portal-muted portal-small">Notes are saved to this ticket&rsquo;s message thread as Tech.</p>' +
+          '<p class="portal-error" id="portal-note-error" hidden></p></form></div>' +
           /* PORTAL_DRAWER_DOCS_2026_10_30: the Repair Log section
-           * renders HERE, high in the drawer (right after Documents,
-           * before ATR One and Charges) — it used to be appended at
-           * the very bottom of the drawer. Log markup is unchanged;
-           * the proof-photo strip and Attach a photo control at the
-           * end of the section are new (same change). */
+           * renders high in the drawer, before ATR One and Charges —
+           * it used to be appended at the very bottom of the drawer.
+           * Log markup is unchanged; the proof-photo strip and
+           * Attach a photo control at the end of the section are new
+           * (same change).
+           * PORTAL_TICKET_DRAWER_2026_11_02: Message customer now
+           * sits directly above the Repair Log (it used to close the
+           * drawer, below Job timer), per Austin, Nov 2, 2026. */
           '<div class="portal-drawer-section"><h3>Repair log</h3>' +
           '<p class="portal-muted portal-small">Internal tech documentation for this repair, not shown to the customer.</p>' +
           (t.status === 'In Progress' ? '<p class="portal-muted"><strong>This repair is in progress. Please log what is happening here.</strong></p>' : '') +
@@ -1108,7 +1130,10 @@ function loadTicketThread(client, ticketId) {
           '<input id="p2-charge-price" type="number" step="0.01" min="0" placeholder="Price $" aria-label="Unit price" />' +
           '<input id="p2-charge-cost" type="number" step="0.01" min="0" placeholder="Our cost $ (optional)" aria-label="Unit cost" /></div>' +
           '<button class="portal-btn portal-btn-primary portal-btn-sm" type="submit">Add charge</button>' +
-          '<p class="portal-error" id="p2-charge-error" hidden></p></form></div>' +
+          '<p class="portal-error" id="p2-charge-error" hidden></p></form>' +
+          '<div class="p2-actions"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-gen-receipt-btn"><i class="fas fa-file"></i> Generate receipt</button>' +
+          '<span class="portal-muted portal-small" id="p2-gen-receipt-msg"></span></div>' +
+          '<p class="portal-muted portal-small">Generate receipt files a receipt built from these charges into Documents. If the charges change afterwards, generate again and it replaces the filed copy.</p></div>' +
           '<div class="portal-drawer-section"><h3>Payment</h3>' +
           '<div class="p2-actions"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p3-checkout-btn"><i class="fas fa-credit-card"></i> Charge / Check out</button>' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p3-cash-btn"><i class="fas fa-money-bill-wave"></i> Mark paid — cash</button>' +
@@ -1137,23 +1162,11 @@ function loadTicketThread(client, ticketId) {
           '<label class="p2-check"><input type="checkbox" id="p2-part-addcharge" checked /> Add the customer price to Charges as a part line</label>' +
           '<button class="portal-btn portal-btn-primary portal-btn-sm" type="submit">Add part order</button>' +
           '<p class="portal-error" id="p2-part-error" hidden></p></form></div>' +
-          '<div class="portal-drawer-section"><h3>Status</h3>' +
-          '<div class="portal-status-row"><select id="portal-ticket-status" aria-label="Ticket status">' +
-          statusOptions(TICKET_STATUSES, t.status) + '</select>' +
-          '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="portal-ticket-status-save">Save status</button>' +
-          '<span class="portal-muted portal-small" id="portal-ticket-status-msg"></span></div></div>' +
           '<div class="portal-drawer-section"><h3>Job timer</h3>' +
           '<p class="portal-muted" id="portal-timer-total">Loading time on this job&hellip;</p>' +
           '<div class="portal-status-row"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="portal-timer-btn">Start timer</button>' +
           '<span class="portal-muted portal-small" id="portal-timer-msg"></span></div>' +
-          '<div id="portal-timer-list"></div></div>' +
-          '<div class="portal-drawer-section"><h3>Message customer</h3>' +
-          '<div class="portal-thread" id="portal-thread"><p class="portal-muted">Loading messages&hellip;</p></div>' +
-          '<form id="portal-note-form"><div class="portal-note-row">' +
-          '<textarea id="portal-note-input" placeholder="Add a note to this ticket&hellip;" maxlength="2000" aria-label="Add a note to this ticket"></textarea>' +
-          '<button class="portal-btn portal-btn-primary" type="submit"><i class="fas fa-paper-plane"></i></button></div>' +
-          '<p class="portal-muted portal-small">Notes are saved to this ticket&rsquo;s message thread as Tech.</p>' +
-          '<p class="portal-error" id="portal-note-error" hidden></p></form></div>';
+          '<div id="portal-timer-list"></div></div>';
 
         $('portal-drawer-body').innerHTML = body;
         loadTicketThread(client, t.id); loadRepairLog(client, t.id); loadRepairLogPhotos(client, t); wireRepairLogPhotos(client, t); var repairForm = $("portal-repair-log-form"); if (repairForm) { repairForm.addEventListener("submit", function (e) { e.preventDefault(); var input = $("portal-repair-log-input"); var err = $("portal-repair-log-error"); if (err) { err.hidden = true; err.textContent = ""; } var text = input ? trim(input.value) : ""; if (!text) { return; } client.from("ticket_notes").insert({ ticket_id: t.id, author: (state.profile && state.profile.name) || null, note: text }).then(function (res2) { if (res2.error) { if (err) { err.textContent = "Could not save that update. Try again."; err.hidden = false; } return; } if (input) { input.value = ""; } loadRepairLog(client, t.id); }).catch(function () { if (err) { err.textContent = "Could not save that update. Try again."; err.hidden = false; } }); }); } 
@@ -1603,7 +1616,15 @@ function loadTicketThread(client, ticketId) {
    * the Square card processing fee bullet added (see
    * portal-copy-sync-2026-10-30/NOTES.md). */
   var DOC_BUCKET = 'ticket-documents';
-  var DOC_TYPE_LABELS = { repair_authorization: 'Repair authorization', receipt: 'Receipt', other: 'Other document' };
+  /* PORTAL_TICKET_DRAWER_2026_11_02 (Austin, Nov 2, 2026): a
+   * distinct 'part_order' type for SUPPLIER order documents (a
+   * Sentrix order confirmation, say). "Receipt" is reserved for
+   * ATRG-generated customer receipts — the supplier's paperwork is
+   * not our receipt. The ticket_documents check constraint gains
+   * 'part_order' through the runbook SQL in this build's
+   * CHANGES.md; until that SQL runs, filing a Part order fails the
+   * insert exactly like any other bad type, so run the SQL first. */
+  var DOC_TYPE_LABELS = { repair_authorization: 'Repair authorization', receipt: 'Receipt', part_order: 'Part order', other: 'Other document' };
   var AUTH_TERMS_TEXT = "Repair Authorization & Service Agreement\nAustin's Tech Repair Group \u2014 State of Ohio, USA \u2014 Last updated October 23, 2026\nPLEASE READ THIS DOCUMENT CAREFULLY. By scheduling an appointment, submitting a repair request, or handing us your device, you (\"Customer,\" \"you\") authorize the services below and agree to these terms with Austin's Tech Repair Group (\"Company,\" \"we,\" \"us,\" \"our\"), a sole proprietorship operating in the State of Ohio.\n1. Authorization to Perform Services\nBy requesting service, you authorize Austin's Tech Repair Group to:\nReceive, handle, open, disassemble, diagnose, test, and repair your device;\nOrder and install the replacement parts you approve;\nRun software diagnostics and updates, and access device functions \u2014 using any passcode you provide \u2014 only as needed to complete and verify the repair;\nTake the device to our bench for advanced work (such as board-level repair) when on-site repair is not possible, and return it when finished.\nYou confirm that you own the device or have the owner's permission to authorize service on it. We service consumer and business electronics only; we do not service medical devices or equipment.\n2. Fees, Parts & Payment\nHouse-call fee: A $35.00 house-call fee applies to every mobile visit, covering travel and a full diagnosis. It is non-refundable in all cases, is due at scheduling, is charged separately from the repair price, and is never credited toward a repair. ATR One members pay no house-call fee for devices covered under their subscription.\nDiagnostics: Estimates are free. A full diagnosis \u2014 including disassembly or deep board-level diagnostics when required \u2014 is included in the house-call fee.\nFlat-rate repairs: Common repairs (screens, batteries, charging ports, back glass) are quoted at one flat rate \u2014 parts and labor included. No hourly billing.\nCustom repairs: Repairs outside the standard list are quoted individually as one flat price and begin only with your approval.\nParts: Parts for your job are ordered by us through our suppliers and delivered to us. Because parts are ordered for your specific job, the parts cost is paid upfront before we order. If you cancel after parts are ordered, we keep the part and refund what you paid for the part.\nReplaced parts: Parts we remove during a repair are taken with us and disposed of properly to protect the environment. Some original manufacturer parts must be returned to the manufacturer.\nParts you supply: If you supply your own part, we will install it as-is; our 1-Year Limited Warranty does not cover customer-supplied parts.\nContact about your repair: You agree we may call and text you at the number you provide about your repair \u2014 scheduling, status updates, and completion.\nEstimate approval: We confirm your price before beginning work. If hidden damage, corrosion, or additional failures are found during disassembly, we notify you and obtain your approval before proceeding with any extra work.\nPayment due: The balance is due upon completion, before the device is released. We accept Visa, Mastercard, American Express, Discover, Apple Pay, Google Pay, Samsung Pay, Cash App Pay, PayPal, Venmo, and cash.\nCard processing fee: If you pay by credit or debit card, a processing fee is added to your total. Card payments are processed through Square, and the fee is exactly what Square charges for the transaction \u2014 passed through at Square's actual rate, never more than Square charges.\n3. Repair Risks You Accept\nData: Diagnostics and repair can result in data loss or corruption. Back up your device before service. We are not responsible for lost data, files, photos, accounts, or settings.\nPre-existing damage: Devices with prior liquid exposure, corrosion, structural damage, or earlier repair attempts are fragile and can fail during normal handling. We are not responsible for a device that stops working because of a pre-existing condition.\nAlready-cracked parts: Removing a cracked screen or back glass can cause it to break further. If a damaged part cannot survive disassembly, replacing it becomes part of the repair and is quoted to you before we proceed.\nCosmetics: Minor marks from opening a device are a normal risk of repair work.\nManufacturer warranties & seals: Third-party repair can affect a manufacturer's warranty; unless the manufacturer explicitly states that opening the device does not void the warranty, our work may void it. A device's water-resistance rating cannot be guaranteed after any repair.\n4. Liability Waiver\nExcept in cases of gross negligence or willful misconduct, you release Austin's Tech Repair Group, its owner, and its representatives from liability for claims or damages arising from the repair services, and you agree that our total liability is limited to the amount you paid for the service. We are not liable for incidental, indirect, or consequential damages, including loss of data, loss of use, or loss of business.\n5. Warranty\nStandard repairs include a one (1) year limited warranty on the parts installed and labor performed, under our Warranty Policy.\nThe warranty is void for the affected repair if the device later suffers physical damage, liquid exposure, or is opened or repaired by another party.\nWarranty service requires your original repair invoice or receipt.\n6. Unclaimed Devices\nWe will notify you when your repair is complete. Equipment left unclaimed for more than sixty (60) days after that notice will be considered abandoned and may be disposed of, recycled, or sold to recover costs, as permitted by Ohio law.\n7. Governing Law & Entire Agreement\nThis Agreement is governed by the laws of the State of Ohio. Disputes will first be addressed through good-faith negotiation; if unresolved, they will be submitted to a court of competent jurisdiction in Greene County, Ohio. This document is the entire agreement between you and Austin's Tech Repair Group for repair services. If any provision is found unenforceable, the rest remain in effect.\nAustin's Tech Repair Group\nAustin Tyler Caudill, Owner\nState of Ohio, USA \u2014 (937) 280-6243";
 
   function docStamp() { return new Date().toISOString().replace(/[:.]/g, '-'); }
@@ -2048,7 +2069,9 @@ function loadTicketThread(client, ticketId) {
    * implementation). A signed release composes as one self-contained
    * HTML document in the signedAuthorizationHtml pattern and files on
    * the ticket with doc_type 'other' (the ticket_documents check
-   * constraint allows only repair_authorization / receipt / other),
+   * constraint allows only repair_authorization / receipt /
+   * part_order / other — part_order joined the set with
+   * PORTAL_TICKET_DRAWER_2026_11_02),
    * so filed copies open through the same DOCVIEW overlay as every
    * signed document. Signing a media release changes NO consent
    * flags: it is not the repair authorization, so
@@ -2767,46 +2790,149 @@ function loadTicketThread(client, ticketId) {
     } catch (e) { finish(null); }
   }
 
+  /* PORTAL_TICKET_DRAWER_2026_11_02 (Austin, Nov 2, 2026): the
+   * receipt markup now comes from ONE composer,
+   * composeReceiptHtml, shared by Print receipt (printReceipt,
+   * below) and Generate receipt (generateReceipt, further
+   * below), so the printed receipt and the receipt filed in
+   * Documents can never drift apart. The composed markup is
+   * byte-for-byte what printReceipt built before this split. */
+  function composeReceiptHtml(t, auth) {
+    var rows = t._charges || [];
+    var tot = chargeTotals(rows);
+    var lines = rows.map(function (c) {
+      var amt = Number(c.qty || 0) * Number(c.unit_price || 0);
+      var label = c.kind === 'deposit_credit' ? esc(c.description) + ' (deposit)' : esc(c.description);
+      var sign = c.kind === 'deposit_credit' ? '&minus;' : '';
+      return '<tr><td>' + label + '</td><td class="rc-num">' + esc(c.qty) + '</td><td class="rc-num">' + sign + fmtMoney(Math.abs(amt)) + '</td></tr>';
+    }).join('');
+    if (!rows.length) lines = '<tr><td colspan="3">No charges recorded.</td></tr>';
+    var sigHtml = '';
+    if (auth && (auth.sigSrc || auth.viewerUrl)) {
+      sigHtml = '<div class="rc-sig">' +
+        (auth.sigSrc ? '<p class="rc-sig-head">Customer signature</p><img class="rc-sig-img" src="' + esc(auth.sigSrc) + '" alt="Customer signature"/>' : '') +
+        (auth.signerName || auth.signedAt ? '<p class="rc-sig-cap">Signed by ' + esc(auth.signerName) + (auth.signedAt ? ' &middot; ' + esc(fmtDateTime(auth.signedAt)) : '') + '</p>' : '') +
+        (auth.viewerUrl ? '<p class="rc-auth"><a href="' + esc(auth.viewerUrl) + '">View your signed Repair Authorization</a><br/><span class="rc-auth-url">' + esc(auth.viewerUrl) + '</span></p>' : '') +
+        '</div>';
+    }
+    var termsHtml = '<div class="rc-terms"><p class="rc-terms-head">Basic terms</p><ul>' +
+      RECEIPT_TERMS_SUMMARY.map(function (line) { return '<li>' + line + '</li>'; }).join('') +
+      '</ul></div>';
+    var html = '<div class="rc">' +
+      '<h1>Austin&rsquo;s Tech Repair Group</h1>' +
+      '<p class="rc-sub">Mobile Repair — Ohio · (937) 280-6243<br/>austinstechrepairgroup.com</p>' +
+      '<p class="rc-meta">Receipt · Ticket #' + shortCode(t) + '<br/>' + esc(fmtDateTime(t.created_at)) + '</p>' +
+      '<p class="rc-meta"><strong>' + esc(t.customer_name || '') + '</strong><br/>' + esc(deviceLabel(t)) + '<br/>' + esc(t.issue || '') + '</p>' +
+      '<table class="rc-table"><thead><tr><th>Description</th><th class="rc-num">Qty</th><th class="rc-num">Amount</th></tr></thead><tbody>' + lines + '</tbody></table>' +
+      '<table class="rc-table rc-totals"><tbody>' +
+      '<tr><td>Subtotal</td><td class="rc-num">' + fmtMoney(tot.subtotal) + '</td></tr>' +
+      (tot.deposits ? '<tr><td>Deposits received</td><td class="rc-num">&minus;' + fmtMoney(tot.deposits) + '</td></tr>' : '') +
+      '<tr class="rc-grand"><td>Balance due</td><td class="rc-num">' + fmtMoney(tot.balance) + '</td></tr>' +
+      '</tbody></table>' +
+      (tot.balance <= 0 && tot.subtotal > 0 ? '<p class="rc-paid">PAID IN FULL — thank you!</p>' : '') +
+      sigHtml +
+      termsHtml +
+      '<p class="rc-foot">Repairs are backed by our 1-Year Limited Warranty (parts &amp; labor). The $35 house-call fee is non-refundable. Thank you for your business!</p>' +
+      '</div>';
+    return html;
+  }
+
   function printReceipt(client, t) {
     fetchReceiptAuthorization(client, t, function (auth) {
-      var rows = t._charges || [];
-      var tot = chargeTotals(rows);
-      var lines = rows.map(function (c) {
-        var amt = Number(c.qty || 0) * Number(c.unit_price || 0);
-        var label = c.kind === 'deposit_credit' ? esc(c.description) + ' (deposit)' : esc(c.description);
-        var sign = c.kind === 'deposit_credit' ? '&minus;' : '';
-        return '<tr><td>' + label + '</td><td class="rc-num">' + esc(c.qty) + '</td><td class="rc-num">' + sign + fmtMoney(Math.abs(amt)) + '</td></tr>';
-      }).join('');
-      if (!rows.length) lines = '<tr><td colspan="3">No charges recorded.</td></tr>';
-      var sigHtml = '';
-      if (auth && (auth.sigSrc || auth.viewerUrl)) {
-        sigHtml = '<div class="rc-sig">' +
-          (auth.sigSrc ? '<p class="rc-sig-head">Customer signature</p><img class="rc-sig-img" src="' + esc(auth.sigSrc) + '" alt="Customer signature"/>' : '') +
-          (auth.signerName || auth.signedAt ? '<p class="rc-sig-cap">Signed by ' + esc(auth.signerName) + (auth.signedAt ? ' &middot; ' + esc(fmtDateTime(auth.signedAt)) : '') + '</p>' : '') +
-          (auth.viewerUrl ? '<p class="rc-auth"><a href="' + esc(auth.viewerUrl) + '">View your signed Repair Authorization</a><br/><span class="rc-auth-url">' + esc(auth.viewerUrl) + '</span></p>' : '') +
-          '</div>';
-      }
-      var termsHtml = '<div class="rc-terms"><p class="rc-terms-head">Basic terms</p><ul>' +
-        RECEIPT_TERMS_SUMMARY.map(function (line) { return '<li>' + line + '</li>'; }).join('') +
-        '</ul></div>';
-      var html = '<div class="rc">' +
-        '<h1>Austin&rsquo;s Tech Repair Group</h1>' +
-        '<p class="rc-sub">Mobile Repair — Ohio · (937) 280-6243<br/>austinstechrepairgroup.com</p>' +
-        '<p class="rc-meta">Receipt · Ticket #' + shortCode(t) + '<br/>' + esc(fmtDateTime(t.created_at)) + '</p>' +
-        '<p class="rc-meta"><strong>' + esc(t.customer_name || '') + '</strong><br/>' + esc(deviceLabel(t)) + '<br/>' + esc(t.issue || '') + '</p>' +
-        '<table class="rc-table"><thead><tr><th>Description</th><th class="rc-num">Qty</th><th class="rc-num">Amount</th></tr></thead><tbody>' + lines + '</tbody></table>' +
-        '<table class="rc-table rc-totals"><tbody>' +
-        '<tr><td>Subtotal</td><td class="rc-num">' + fmtMoney(tot.subtotal) + '</td></tr>' +
-        (tot.deposits ? '<tr><td>Deposits received</td><td class="rc-num">&minus;' + fmtMoney(tot.deposits) + '</td></tr>' : '') +
-        '<tr class="rc-grand"><td>Balance due</td><td class="rc-num">' + fmtMoney(tot.balance) + '</td></tr>' +
-        '</tbody></table>' +
-        (tot.balance <= 0 && tot.subtotal > 0 ? '<p class="rc-paid">PAID IN FULL — thank you!</p>' : '') +
-        sigHtml +
-        termsHtml +
-        '<p class="rc-foot">Repairs are backed by our 1-Year Limited Warranty (parts &amp; labor). The $35 house-call fee is non-refundable. Thank you for your business!</p>' +
-        '</div>';
-      printArea(html, 'receipt');
+      printArea(composeReceiptHtml(t, auth), 'receipt');
     });
+  }
+
+  /* The styles of the filed receipt document: the same .rc rules
+   * the print stylesheet in portal.html carries (PORTAL_SIGNED_
+   * RECEIPT_2026_10_30), inlined so the filed .html stands on its
+   * own in the DOCVIEW preview, like the signed authorization. */
+  var RECEIPT_DOC_CSS =
+    '.rc { color: #000; font-family: Arial, Helvetica, sans-serif; max-width: 560px; margin: 0 auto; }' +
+    '.rc h1 { font-size: 20pt; margin: 0 0 2pt; }' +
+    '.rc-sub { font-size: 10pt; color: #333; margin: 0 0 10pt; }' +
+    '.rc-meta { font-size: 10.5pt; margin: 0 0 10pt; line-height: 1.45; }' +
+    '.rc-table { width: 100%; border-collapse: collapse; font-size: 10.5pt; margin-bottom: 10pt; }' +
+    '.rc-table th, .rc-table td { border-bottom: 1px solid #bbb; padding: 4pt 2pt; text-align: left; }' +
+    '.rc-num { text-align: right !important; white-space: nowrap; }' +
+    '.rc-totals td { border-bottom: none; }' +
+    '.rc-grand td { border-top: 2px solid #000; font-weight: 800; font-size: 12pt; }' +
+    '.rc-paid { font-weight: 800; font-size: 13pt; text-align: center; border: 2px solid #000; padding: 6pt; margin: 10pt 0; }' +
+    '.rc-foot { font-size: 9pt; color: #333; margin-top: 14pt; line-height: 1.5; }' +
+    '.rc-sig { margin-top: 12pt; border-top: 1px solid #bbb; padding-top: 8pt; }' +
+    '.rc-sig-head { font-size: 9pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #333; margin: 0 0 4pt; }' +
+    '.rc-sig-img { display: block; max-width: 280px; max-height: 90px; border-bottom: 2px solid #000; padding-bottom: 2pt; }' +
+    '.rc-sig-cap { font-size: 9.5pt; color: #333; margin: 3pt 0 0; }' +
+    '.rc-auth { font-size: 9.5pt; margin: 7pt 0 0; line-height: 1.45; }' +
+    '.rc-auth-url { font-size: 7.5pt; color: #555; word-break: break-all; }' +
+    '.rc-terms { margin-top: 12pt; border-top: 1px solid #bbb; padding-top: 8pt; }' +
+    '.rc-terms-head { font-size: 10pt; font-weight: 700; margin: 0 0 4pt; }' +
+    '.rc-terms ul { margin: 0; padding-left: 12pt; font-size: 9pt; color: #333; line-height: 1.45; }' +
+    '.rc-terms li { margin-bottom: 2pt; }';
+
+  function receiptDocumentHtml(t, auth) {
+    return '<!DOCTYPE html>\n<html lang="en"><head><meta charset="utf-8">' +
+      '<meta name="viewport" content="width=device-width, initial-scale=1">' +
+      '<title>Receipt \u2014 Austin\u2019s Tech Repair Group</title>' +
+      '<style>body { margin: 0; background: #fff; padding: 18pt 10pt; }' + RECEIPT_DOC_CSS + '</style></head>' +
+      '<body>' + composeReceiptHtml(t, auth) + '</body></html>';
+  }
+
+  /* PORTAL_TICKET_DRAWER_2026_11_02 (Austin, Nov 2, 2026): Generate
+   * receipt, in the Charges section — "charges should add and
+   * generate the receipt and then that will go into documents."
+   * Reads the charges fresh (the same figures Print receipt and
+   * the points award use), composes the receipt through the shared
+   * composer (signature, terms summary and signed-authorization
+   * link included whenever a signed authorization is on file, via
+   * fetchReceiptAuthorization's usual never-block rules), and files
+   * it on the ticket as a doc_type 'receipt' document.
+   * ONE live generated receipt per ticket: it always lives at the
+   * fixed storage path below and files as a single
+   * ticket_documents row. Generating again after the charges change
+   * overwrites the stored file and refreshes that same row (new
+   * file name and date), so copies never pile up. A receipt
+   * ATTACHED by hand (a Square receipt scan, say) is a different
+   * file and row and is never touched. */
+  function generateReceipt(client, t) {
+    var btn = $('p2-gen-receipt-btn');
+    var msg = $('p2-gen-receipt-msg');
+    function note(text) { if (msg) msg.textContent = text; }
+    function fail(text) { if (btn) btn.disabled = false; note(text); }
+    if (btn) btn.disabled = true;
+    note('Building receipt\u2026');
+    client.from('ticket_charges').select('*').eq('ticket_id', t.id).order('created_at', { ascending: true }).then(function (res) {
+      if (res.error) { fail('Couldn\u2019t read the charges \u2014 try again.'); return; }
+      t._charges = res.data || [];
+      if (!t._charges.length) { fail('Add the charges first \u2014 the receipt is built from them.'); return; }
+      fetchReceiptAuthorization(client, t, function (auth) {
+        var path = t.id + '/receipt-generated.html';
+        var html = receiptDocumentHtml(t, auth);
+        client.storage.from(DOC_BUCKET).upload(path, html, { contentType: 'text/html', upsert: true }).then(function (up) {
+          if (up.error) { fail('Saving the receipt failed \u2014 try again.'); return; }
+          var fileName = 'Receipt \u2014 generated ' + fmtDate(new Date().toISOString()) + '.html';
+          var noteText = 'Generated from the ticket charges \u2014 generating again after a charge change replaces this copy.';
+          function filed() {
+            if (btn) btn.disabled = false;
+            note('Receipt saved to Documents.');
+            loadDocuments(client, t);
+          }
+          client.from('ticket_documents').select('id').eq('ticket_id', t.id).eq('storage_path', path).limit(1).then(function (q) {
+            if (!q.error && q.data && q.data.length) {
+              client.from('ticket_documents').update({ file_name: fileName, note: noteText, created_at: new Date().toISOString() }).eq('id', q.data[0].id).then(function (u) {
+                if (u.error) { fail('The receipt file saved but could not be listed \u2014 try again.'); return; }
+                filed();
+              }).catch(function () { fail('The receipt file saved but could not be listed \u2014 try again.'); });
+            } else {
+              client.from('ticket_documents').insert({ ticket_id: t.id, doc_type: 'receipt', storage_path: path, file_name: fileName, note: noteText }).then(function (ins) {
+                if (ins.error) { fail('The receipt file saved but could not be filed \u2014 try again.'); return; }
+                filed();
+              }).catch(function () { fail('The receipt file saved but could not be filed \u2014 try again.'); });
+            }
+          }).catch(function () { fail('Saving the receipt failed \u2014 try again.'); });
+        }).catch(function () { fail('Saving the receipt failed \u2014 try again.'); });
+      });
+    }).catch(function () { fail('Couldn\u2019t read the charges \u2014 try again.'); });
   }
 
   function printPartLabel(t, p) {
@@ -2829,6 +2955,12 @@ function loadTicketThread(client, ticketId) {
   function wireTicketActions(client, t) {
     var receiptBtn = $('p2-receipt-btn');
     if (receiptBtn) receiptBtn.addEventListener('click', function () { printReceipt(client, t); });
+
+    /* PORTAL_TICKET_DRAWER_2026_11_02: Generate receipt lives in
+     * the Charges section; it files the receipt into Documents
+     * (see generateReceipt). Print receipt above is unchanged. */
+    var genReceiptBtn = $('p2-gen-receipt-btn');
+    if (genReceiptBtn) genReceiptBtn.addEventListener('click', function () { generateReceipt(client, t); });
 
     var delBtn = $('p2-delete-btn'), confirmBox = $('p2-delete-confirm');
     if (delBtn && confirmBox) {
