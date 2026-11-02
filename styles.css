@@ -1793,3 +1793,41 @@ img.service-card-img.svc-media-contain { object-fit: contain; background: #EAE4D
   .account-label { display: none; }
   .header-cta { padding: 0.5rem 0.8rem; font-size: 0.85rem; gap: 8px; white-space: nowrap; }
 }
+
+/* ===== SITE_NAV_BLOCK_BUTTONS_2026_11_02 =====
+   Austin's call after approving the tablet nav fit: the top nav's text
+   links become block-style buttons — a visible block tile per link,
+   squared corners (5px, not pills), a bit larger than the plain text
+   links were. Everything else in the header is untouched: brand block,
+   theme toggle, account button, Portal button, and the Book a Repair
+   button (already a filled pill) keep their current styling.
+   Scope: wherever the horizontal desktop nav shows (min-width 921px),
+   so tablet and desktop match. The <=920px bottom nav and phone
+   layouts are not touched.
+   Tiles use the site's own warm palette variables, so dark mode
+   follows automatically: neutral warm block (surface-warm on a line
+   border), brand-soft on hover, solid brand for the current page.
+   The old hover/active underline bar is retired inside the tiles —
+   the block state itself carries the feedback now. Labels stay on
+   one line; tablet-band padding/gap are sized so the
+   SITE_TABLET_NAV_FIT_2026_11_02 fix cannot regress. */
+@media (min-width: 921px) {
+  .nav-desktop .nav-link {
+    background: var(--surface-warm);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    white-space: nowrap;
+    transition: color var(--transition), background var(--transition), border-color var(--transition);
+  }
+  .nav-desktop .nav-link::after { display: none; }
+  .nav-desktop .nav-link:hover { background: var(--brand-soft); border-color: var(--brand); }
+  .nav-desktop .nav-link.active { background: var(--brand); border-color: var(--brand); color: #FFF8EC; }
+}
+@media (min-width: 921px) and (max-width: 1400px) {
+  .nav-desktop { gap: 0.3rem; }
+  .nav-desktop .nav-link { font-size: 0.82rem; padding: 0.45rem 0.45rem; }
+}
+@media (min-width: 1401px) {
+  .nav-desktop { gap: 0.8rem; }
+  .nav-desktop .nav-link { font-size: 0.97rem; padding: 0.55rem 0.85rem; }
+}
