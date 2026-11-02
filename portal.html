@@ -356,6 +356,11 @@
                 <option value="shop">Shop</option>
               </select>
             </div>
+            <!-- PORTAL_PARTS_TO_INVENTORY_2026_11_02: reorder link — pasted once per item, then reorder is one tap -->
+            <div class="portal-field">
+              <label for="portal-inv-reorder-url">Reorder link</label>
+              <input type="url" id="portal-inv-reorder-url" placeholder="Paste the supplier product link" />
+            </div>
           </div>
           <p class="portal-error" id="portal-inv-error" hidden></p>
           <p class="portal-muted" id="portal-inv-success" hidden><i class="fas fa-circle-check"></i> Stock item saved.</p>
@@ -500,6 +505,13 @@
   </main>
 
   <!-- ==================== DETAIL DRAWER ==================== -->
+  <!-- PORTAL_GV_TEXTS_2026_11_02: the ticket drawer's Message customer
+       block gains an "Also text this to the customer" option, rendered
+       by portal.js (the drawer body is built there, so this file's only
+       change is this marker). Sends queue in public.outbound_texts and
+       go out from the business Google Voice number via the relay —
+       see portal.js, outbound_texts.sql, RELAY.md, CHANGES.md in
+       portal-gv-texts-2026-11-02/. -->
   <div class="portal-drawer-overlay" id="portal-drawer-overlay" hidden></div>
   <aside class="portal-drawer" id="portal-drawer" aria-hidden="true" aria-label="Record details">
     <div class="portal-drawer-head">

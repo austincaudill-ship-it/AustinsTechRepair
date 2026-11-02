@@ -340,3 +340,17 @@
    horizontal axis so the sidebar can never scroll left/right. */
 .portal-tabs{flex-wrap:nowrap;overflow-x:hidden}
 .portal-tab{min-width:0}
+
+/* PORTAL_DRAWER_SCROLL_LOCK_2026_11_02 (Austin, Nov 2, 2026): freeze the
+   page behind the open ticket drawer. portal.js adds .portal-scroll-locked
+   to the body when the drawer opens (with an inline top offset equal to
+   the saved scroll position) and removes it on close, restoring the
+   position. position:fixed on the body is what actually holds the page
+   still on iPad Safari; overflow:hidden alone lets touch scrolls through,
+   and overscroll-behavior:none stops rubber-band chaining. The contain
+   rules keep a scroll gesture at the top/bottom of the drawer from
+   chaining out to the page, so only the drawer's own content scrolls. */
+body.portal-scroll-locked{position:fixed;left:0;right:0;width:100%;overflow:hidden;overscroll-behavior:none}
+.portal-drawer{overscroll-behavior:contain}
+.portal-drawer-body{overscroll-behavior:contain}
+/* end PORTAL_DRAWER_SCROLL_LOCK_2026_11_02 */

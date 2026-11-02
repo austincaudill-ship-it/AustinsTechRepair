@@ -770,12 +770,42 @@
   }
 
   /* ================= DRAWER ================= */
+  /* PORTAL_DRAWER_SCROLL_LOCK_2026_11_02 (Austin, Nov 2, 2026): while
+   * the drawer is open, the page behind it must not scroll at all —
+   * Austin: scrolling with ticket details up still moved the back
+   * screen, and the whole page sometimes shifted. openDrawer and
+   * closeDrawer are the choke points every portal.js open/close path
+   * funnels through (ticket/application/investor openers, close
+   * button, overlay tap, Escape, tab switches). lockBodyScroll freezes
+   * the body (portal.css .portal-scroll-locked sets position:fixed —
+   * overflow:hidden alone does not stop iPad Safari) and
+   * unlockBodyScroll restores the exact pre-open scroll position.
+   * Both are idempotent: a second open keeps the first saved
+   * position, and a close with no lock held is a no-op. */
+  var drawerScrollY = null;
+  function lockBodyScroll() {
+    if (drawerScrollY !== null) return;
+    drawerScrollY = window.scrollY || window.pageYOffset || 0;
+    document.body.style.top = (-drawerScrollY) + 'px';
+    document.body.classList.add('portal-scroll-locked');
+  }
+  function unlockBodyScroll() {
+    if (drawerScrollY === null) return;
+    var y = drawerScrollY;
+    drawerScrollY = null;
+    document.body.classList.remove('portal-scroll-locked');
+    document.body.style.top = '';
+    window.scrollTo(0, y);
+  }
+  /* end PORTAL_DRAWER_SCROLL_LOCK_2026_11_02 */
+
   function openDrawer(title) {
     $('portal-drawer-title').textContent = title;
     $('portal-drawer-overlay').hidden = false;
     var d = $('portal-drawer');
     d.classList.add('open');
     d.setAttribute('aria-hidden', 'false');
+    lockBodyScroll(); /* PORTAL_DRAWER_SCROLL_LOCK_2026_11_02 */
   }
 
   function closeDrawer() {
@@ -783,12 +813,33 @@
     var d = $('portal-drawer');
     d.classList.remove('open');
     d.setAttribute('aria-hidden', 'true');
+    unlockBodyScroll(); /* PORTAL_DRAWER_SCROLL_LOCK_2026_11_02 */
   }
 
   function initDrawer() {
     $('portal-drawer-close').addEventListener('click', closeDrawer);
     $('portal-drawer-overlay').addEventListener('click', closeDrawer);
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeDrawer(); });
+    /* PORTAL_DRAWER_SCROLL_LOCK_2026_11_02: safety net — three inline
+     * portal.html sections (Onboarding/Team Docs, Guides, Requests)
+     * hide the drawer through their own closeDrawerInline() copies
+     * instead of closeDrawer(), which would strand the scroll lock.
+     * Every close path performs the same two DOM mutations (overlay
+     * hidden, .open removed), so watch those two signals and keep the
+     * lock in sync with the drawer's real state. */
+    if (window.MutationObserver) {
+      var ov = $('portal-drawer-overlay');
+      var dr = $('portal-drawer');
+      if (ov && dr) {
+        var lockObserver = new MutationObserver(function () {
+          var isOpen = !ov.hidden && dr.classList.contains('open');
+          if (isOpen) lockBodyScroll(); else unlockBodyScroll();
+        });
+        lockObserver.observe(ov, { attributes: true, attributeFilter: ['hidden'] });
+        lockObserver.observe(dr, { attributes: true, attributeFilter: ['class'] });
+      }
+    }
+    /* end PORTAL_DRAWER_SCROLL_LOCK_2026_11_02 */
   }
 
   function drawerLoading(title) {
@@ -867,7 +918,47 @@
     });
   }
 
-  function renderTicketThread(messages) {
+  /* ================= PORTAL_GV_TEXTS_2026_11_02 =================
+   * Google Voice texting relay (Austin, Nov 2, 2026): "figure out
+   * how to back end the Google Voice and basically plug that into
+   * the website." Google Voice has no official SMS API (see
+   * CHANGES.md), so a portal message that is also texted is queued
+   * as a row in public.outbound_texts and a signed-in browser relay
+   * at voice.google.com sends it from the business number
+   * (937) 280-6243 (RELAY.md). This block owns: the phone helpers,
+   * the per-message text status line in the thread, and the queue
+   * insert on send. Everything GV lives between the
+   * PORTAL_GV_TEXTS_2026_11_02 markers so the merge with the MFA
+   * email-backup and Portal Mail builds stays mechanical. */
+
+  /* Dialable form for Voice: 10 digits -> +1XXXXXXXXXX, 11 digits
+   * starting with 1 -> +1..., anything else passes through trimmed
+   * (the relay reports the on-screen failure if Voice rejects it). */
+  function gvNormalizePhone(raw) {
+    var v = trim(raw || '');
+    if (!v) return '';
+    var d = v.replace(/\D/g, '');
+    if (d.length === 10) return '+1' + d;
+    if (d.length === 11 && d.charAt(0) === '1') return '+' + d;
+    return v;
+  }
+
+  /* The small status line under a texted thread message. outbound
+   * rows are keyed by message_id; the newest row for a message
+   * wins (loadTicketThread orders ascending and overwrites). */
+  function gvTextStatusHtml(o) {
+    if (!o) return '';
+    var label = '';
+    if (o.status === 'queued') label = 'Text: Queued';
+    else if (o.status === 'sending') label = 'Text: Sending\u2026';
+    else if (o.status === 'sent') label = 'Text sent' + (o.sent_at ? ' \u00b7 ' + fmtDateTime(o.sent_at) : '');
+    else if (o.status === 'failed') label = 'Text failed' + (o.error ? ' \u2014 ' + o.error : '');
+    else label = 'Text: ' + o.status;
+    return '<span class="portal-muted portal-small" style="display:block;margin-top:0.3rem;">' +
+      '<i class="fas fa-comment-sms" aria-hidden="true"></i> ' + esc(label) + '</span>';
+  }
+
+  function renderTicketThread(messages, outboundByMessage) {
     var box = $('portal-thread');
     if (!box) return;
     if (!messages.length) {
@@ -876,12 +967,48 @@
     }
     box.innerHTML = messages.map(function (m) {
       var who = m.sender === 'tech' ? 'Tech' : 'Customer';
+      var gv = (m.sender === 'tech' && outboundByMessage) ? gvTextStatusHtml(outboundByMessage[m.id]) : '';
       return '<div class="portal-msg portal-msg-' + (m.sender === 'tech' ? 'tech' : 'customer') + '">' +
-        esc(m.message) +
+        esc(m.message) + gv +
         '<span class="portal-msg-meta">' + who + ' · ' + esc(fmtDateTime(m.created_at)) + '</span></div>';
     }).join('');
     box.scrollTop = box.scrollHeight;
   }
+
+  /* Keep the checkbox + note in the Message customer block honest
+   * about the number that will be texted. t._gvPhone is the resolved
+   * destination (customer profile phone first, ticket phone as the
+   * fallback -- see resolveGvPhone). */
+  function gvSyncTextControls(t) {
+    var check = $('portal-gv-text-check');
+    var note = $('portal-gv-text-note');
+    var phone = t && t._gvPhone ? t._gvPhone : '';
+    if (check) {
+      if (phone) { check.disabled = false; if (!check.getAttribute('data-gv-touched')) check.checked = true; }
+      else { check.disabled = true; check.checked = false; }
+    }
+    if (note) {
+      note.textContent = phone
+        ? 'Texts go from the business number (937) 280-6243 to ' + phone + ' via the Google Voice relay.'
+        : 'No phone number on file for this customer \u2014 texting unavailable.';
+    }
+  }
+
+  /* Resolve the texting number from the customer's profile
+   * (public.customers.phone for t.customer_id); the phone snapshot
+   * on the ticket itself is the fallback and the starting value, so
+   * the controls render correctly before this returns. */
+  function resolveGvPhone(client, t) {
+    t._gvPhone = gvNormalizePhone(t.customer_phone || '');
+    gvSyncTextControls(t);
+    if (!t.customer_id) return;
+    client.from('customers').select('phone').eq('id', t.customer_id).maybeSingle().then(function (res) {
+      if (res.error || !res.data) return;
+      var p = gvNormalizePhone(res.data.phone || '');
+      if (p) { t._gvPhone = p; gvSyncTextControls(t); }
+    }).catch(function () {});
+  }
+  /* ================= /PORTAL_GV_TEXTS_2026_11_02 ================= */
 
     function fmtTimer(mins) {
     var m = Math.round(mins);
@@ -914,7 +1041,18 @@
 function loadTicketThread(client, ticketId) {
     client.from('messages').select('*').eq('ticket_id', ticketId).order('created_at', { ascending: true })
       .then(function (res) {
-        renderTicketThread(res.error ? [] : (res.data || []));
+        var msgs = res.error ? [] : (res.data || []);
+        /* PORTAL_GV_TEXTS_2026_11_02: overlay each tech message with
+         * its outbound text status. If outbound_texts does not exist
+         * yet (its SQL has not run), the query errors and the thread
+         * renders exactly as before -- no status lines, no breakage. */
+        client.from('outbound_texts').select('*').eq('ticket_id', ticketId).order('created_at', { ascending: true })
+          .then(function (ores) {
+            var map = {};
+            if (!ores.error) (ores.data || []).forEach(function (o) { if (o.message_id) map[o.message_id] = o; });
+            renderTicketThread(msgs, map);
+          })
+          .catch(function () { renderTicketThread(msgs, {}); });
       })
       .catch(function () { renderTicketThread([]); });
   }
@@ -1094,6 +1232,15 @@ function loadTicketThread(client, ticketId) {
           '<form id="portal-note-form"><div class="portal-note-row">' +
           '<textarea id="portal-note-input" placeholder="Add a note to this ticket&hellip;" maxlength="2000" aria-label="Add a note to this ticket"></textarea>' +
           '<button class="portal-btn portal-btn-primary" type="submit"><i class="fas fa-paper-plane"></i></button></div>' +
+          /* PORTAL_GV_TEXTS_2026_11_02: the texting option. Default
+           * ON when the customer has a phone number on file (the
+           * checked/disabled state is set from t.customer_phone
+           * here and re-synced from the customer profile by
+           * resolveGvPhone / gvSyncTextControls); with no number it
+           * renders disabled and the note says why, in plain words. */
+          '<label class="p2-check"><input type="checkbox" id="portal-gv-text-check"' + (trim(t.customer_phone || '') ? ' checked' : ' disabled') + ' /> Also text this to the customer</label>' +
+          '<p class="portal-muted portal-small" id="portal-gv-text-note">' + (trim(t.customer_phone || '') ? 'Texts go from the business number (937) 280-6243 via the Google Voice relay.' : 'No phone number on file for this customer &mdash; texting unavailable.') + '</p>' +
+          '<p class="portal-muted portal-small" id="portal-gv-text-msg"></p>' +
           '<p class="portal-muted portal-small">Notes are saved to this ticket&rsquo;s message thread as Tech.</p>' +
           '<p class="portal-error" id="portal-note-error" hidden></p></form></div>' +
           /* PORTAL_DRAWER_DOCS_2026_10_30: the Repair Log section
@@ -1169,7 +1316,7 @@ function loadTicketThread(client, ticketId) {
           '<div id="portal-timer-list"></div></div>';
 
         $('portal-drawer-body').innerHTML = body;
-        loadTicketThread(client, t.id); loadRepairLog(client, t.id); loadRepairLogPhotos(client, t); wireRepairLogPhotos(client, t); var repairForm = $("portal-repair-log-form"); if (repairForm) { repairForm.addEventListener("submit", function (e) { e.preventDefault(); var input = $("portal-repair-log-input"); var err = $("portal-repair-log-error"); if (err) { err.hidden = true; err.textContent = ""; } var text = input ? trim(input.value) : ""; if (!text) { return; } client.from("ticket_notes").insert({ ticket_id: t.id, author: (state.profile && state.profile.name) || null, note: text }).then(function (res2) { if (res2.error) { if (err) { err.textContent = "Could not save that update. Try again."; err.hidden = false; } return; } if (input) { input.value = ""; } loadRepairLog(client, t.id); }).catch(function () { if (err) { err.textContent = "Could not save that update. Try again."; err.hidden = false; } }); }); } 
+        loadTicketThread(client, t.id); resolveGvPhone(client, t); /* PORTAL_GV_TEXTS_2026_11_02 */ loadRepairLog(client, t.id); loadRepairLogPhotos(client, t); wireRepairLogPhotos(client, t); var repairForm = $("portal-repair-log-form"); if (repairForm) { repairForm.addEventListener("submit", function (e) { e.preventDefault(); var input = $("portal-repair-log-input"); var err = $("portal-repair-log-error"); if (err) { err.hidden = true; err.textContent = ""; } var text = input ? trim(input.value) : ""; if (!text) { return; } client.from("ticket_notes").insert({ ticket_id: t.id, author: (state.profile && state.profile.name) || null, note: text }).then(function (res2) { if (res2.error) { if (err) { err.textContent = "Could not save that update. Try again."; err.hidden = false; } return; } if (input) { input.value = ""; } loadRepairLog(client, t.id); }).catch(function () { if (err) { err.textContent = "Could not save that update. Try again."; err.hidden = false; } }); }); } 
         loadCharges(client, t);
         loadParts(client, t);
         loadDocuments(client, t);
@@ -1188,6 +1335,8 @@ function loadTicketThread(client, ticketId) {
             client.from('job_timers').insert({ ticket_id: t.id, employee_name: (state.profile && state.profile.name) || null, started_at: new Date().toISOString() }).select().then(function (res) { timerBtn.disabled = false; if (res.error) { if (msg) msg.textContent = 'Could not start the timer. Try again.'; return; } var nid = res.data && res.data[0] ? res.data[0].id : null; if (nid) { timerBtn.textContent = 'Stop timer'; timerBtn.setAttribute('data-running', nid); var tot = $('portal-timer-total'); if (tot) tot.textContent = 'Time on this job: 0m (timer running)'; } loadJobTimers(client, t); }).catch(function () { timerBtn.disabled = false; if (msg) msg.textContent = 'Could not start the timer. Try again.'; });
           }
         });
+        var gvCheckEl = $('portal-gv-text-check');
+        if (gvCheckEl) gvCheckEl.addEventListener('change', function () { gvCheckEl.setAttribute('data-gv-touched', '1'); });
         wireTicketActions(client, t);
         wirePaymentActions(client, t);
 
@@ -1254,10 +1403,42 @@ function loadTicketThread(client, ticketId) {
           var err = $('portal-note-error');
           err.hidden = true;
           if (!text) return;
-          client.from('messages').insert({ ticket_id: t.id, sender: 'tech', message: text }).then(function (res2) {
+          /* PORTAL_GV_TEXTS_2026_11_02: capture the texting intent
+           * and destination BEFORE the async save. The thread insert
+           * now returns its row (.select(), the job_timers pattern)
+           * so the queued text can link back to its message. */
+          var gvCheck = $('portal-gv-text-check');
+          var gvMsg = $('portal-gv-text-msg');
+          var wantsText = !!(gvCheck && gvCheck.checked && !gvCheck.disabled);
+          var gvTo = t._gvPhone || gvNormalizePhone(t.customer_phone || '');
+          if (gvMsg) gvMsg.textContent = '';
+          client.from('messages').insert({ ticket_id: t.id, sender: 'tech', message: text }).select().then(function (res2) {
             if (res2.error) { err.textContent = 'Couldn&rsquo;t save that note. Try again.'; err.hidden = false; return; }
+            var msgRow = res2.data && res2.data[0] ? res2.data[0] : null;
             $('portal-note-input').value = '';
-            loadTicketThread(client, t.id);
+            if (!wantsText || !gvTo) { loadTicketThread(client, t.id); return; }
+            var outRow = {
+              ticket_id: t.id,
+              customer_id: t.customer_id || null,
+              message_id: msgRow ? msgRow.id : null,
+              to_number: gvTo,
+              body: text,
+              status: 'queued',
+              created_by: state.user ? state.user.id : null
+            };
+            client.from('outbound_texts').insert(outRow).then(function (ores) {
+              if (ores.error) {
+                /* The portal message saved fine; only the text
+                 * queue failed (e.g. outbound_texts SQL not run
+                 * yet). Say so next to the checkbox -- never lose
+                 * the message over a failed text. */
+                if (gvMsg) gvMsg.textContent = 'Saved to the thread, but the text could not be queued. The message is on the ticket; text the customer from Google Voice for now.';
+              }
+              loadTicketThread(client, t.id);
+            }).catch(function () {
+              if (gvMsg) gvMsg.textContent = 'Saved to the thread, but the text could not be queued. The message is on the ticket; text the customer from Google Voice for now.';
+              loadTicketThread(client, t.id);
+            });
           }).catch(function () { err.textContent = 'Couldn&rsquo;t save that note. Try again.'; err.hidden = false; });
         });
       }).catch(function () {
@@ -1474,6 +1655,17 @@ function loadTicketThread(client, ticketId) {
     });
   }
 
+  /* PORTAL_PARTS_TO_INVENTORY_2026_11_02: one-tap Reorder link on a
+   * ticket part row, shown only when the part is linked to an inventory
+   * item that carries a saved reorder_url (t._invById is filled by
+   * loadParts). Renders nothing otherwise. */
+  function partReorderHtml(t, p) {
+    if (!p || !p.inventory_id || !t || !t._invById) return '';
+    var inv = t._invById[p.inventory_id];
+    if (!inv || !trim(inv.reorder_url || '')) return '';
+    return '<a class="portal-btn portal-btn-outline portal-btn-sm" href="' + esc(inv.reorder_url) + '" target="_blank" rel="noopener"><i class="fas fa-cart-shopping"></i> Reorder</a>';
+  }
+
   function renderParts(t, rows) {
     var box = $('p2-parts');
     if (!box) return;
@@ -1497,6 +1689,7 @@ function loadTicketThread(client, ticketId) {
         '<select class="p2-part-status" data-part-id="' + esc(p.id) + '" aria-label="Part status">' + statusOpts + '</select>' +
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-part-label="' + esc(p.id) + '"><i class="fas fa-tag"></i> Label</button>' +
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-part-track="' + esc(p.id) + '"><i class="fas fa-truck"></i> Tracking</button>' +
+        /* PORTAL_PARTS_TO_INVENTORY_2026_11_02 */ partReorderHtml(t, p) +
         '<button class="p2-x" type="button" data-part-del="' + esc(p.id) + '" aria-label="Remove part order">&times;</button></div>' +
         liveTrackHtml(p) +
         '<div class="p2-track-edit" data-part-track-edit="' + esc(p.id) + '" hidden>' +
@@ -1588,7 +1781,17 @@ function loadTicketThread(client, ticketId) {
     client.from('part_orders').select('*').eq('ticket_id', t.id).order('created_at', { ascending: true }).then(function (res) {
       if (res.error) { var b = $('p2-parts'); if (b) b.innerHTML = '<p class="portal-error">Couldn&rsquo;t load parts.</p>'; return; }
       t._parts = res.data || [];
-      renderParts(t, t._parts);
+      /* PORTAL_PARTS_TO_INVENTORY_2026_11_02: fetch the linked inventory
+       * rows so part rows can show a Reorder link where one is saved.
+       * A failed fetch just renders the parts without links. */
+      var invIds = [];
+      t._parts.forEach(function (p) { if (p.inventory_id && invIds.indexOf(p.inventory_id) === -1) invIds.push(p.inventory_id); });
+      if (!invIds.length) { t._invById = {}; renderParts(t, t._parts); return; }
+      client.from('inventory').select('id, reorder_url').in('id', invIds).then(function (ires) {
+        t._invById = {};
+        if (!ires.error) (ires.data || []).forEach(function (r) { t._invById[r.id] = r; });
+        renderParts(t, t._parts);
+      }).catch(function () { t._invById = {}; renderParts(t, t._parts); });
     }).catch(function () {});
   }
 
@@ -3150,9 +3353,14 @@ function loadTicketThread(client, ticketId) {
         order_number: trim($('p2-part-ordernum').value) || null,
         status: 'Ordered'
       };
-      client.from('part_orders').insert(part).then(function (res) {
+      /* PORTAL_PARTS_TO_INVENTORY_2026_11_02: .select() returns the saved
+       * row so a hand-typed part can be linked to its inventory row. */
+      client.from('part_orders').insert(part).select().then(function (res) {
         if (res.error) { err.textContent = 'Couldn&rsquo;t add that part. Try again.'; err.hidden = false; return; }
         if (stockItem) { adjustStock(client, stockItem.id, -qty); loadStockItems(client, t); }
+        /* PORTAL_PARTS_TO_INVENTORY_2026_11_02: a part typed in by hand
+         * (not picked from stock) also lands in the inventory database. */
+        if (!stockItem && res.data && res.data[0]) landPartInInventory(client, res.data[0], part);
         var addCharge = $('p2-part-addcharge').checked && part.retail_price != null && part.retail_price > 0;
         partForm.reset(); $('p2-part-qty').value = '1'; $('p2-part-addcharge').checked = true;
         loadParts(client, t);
@@ -3169,6 +3377,80 @@ function loadTicketThread(client, ticketId) {
   /* ================= PHASE 3: STOCK + TICKET PAYMENTS ================= */
   /* Read-modify-write on stock_qty: fine for a small shop's volume,
    * and every path funnels through here so counts stay consistent. */
+
+  /* ================= PORTAL_PARTS_TO_INVENTORY_2026_11_02 =================
+   * Auto-land: a part typed onto a ticket by hand (not picked from stock)
+   * also lands in the inventory database, so the parts list stays the
+   * shop's catalog of everything it has ever ordered, each row ready to
+   * carry a reorder link. Dedupe: supplier_sku first (case-insensitive
+   * exact), else supplier + product name against the part description
+   * (with no supplier given, the name match only counts rows that also
+   * have no supplier). A found row gets its cost / retail refreshed only
+   * from newer non-null ticket values, and the ticket part links to it.
+   * Stock NEVER changes in this path — the part was ordered for that
+   * ticket, not shelved. Every failure here is console-only: the part
+   * itself is already saved, so staff never sees an error from this. */
+  function landPartInInventory(client, savedPart, part) {
+    try {
+      var linkBack = function (invId) {
+        if (!invId || !savedPart || !savedPart.id) return;
+        client.from('part_orders').update({ inventory_id: invId }).eq('id', savedPart.id)
+          .then(function () {}).catch(function () {});
+      };
+      var useFound = function (row) {
+        var patch = {};
+        if (part.our_cost != null) patch.cost = part.our_cost;
+        if (part.retail_price != null) patch.retail_price = part.retail_price;
+        if (!Object.keys(patch).length) { linkBack(row.id); return; }
+        client.from('inventory').update(patch).eq('id', row.id)
+          .then(function () { linkBack(row.id); })
+          .catch(function () { linkBack(row.id); });
+      };
+      var createRow = function () {
+        client.from('inventory').insert({
+          product_name: part.description,
+          supplier: part.supplier || null,
+          supplier_sku: part.supplier_sku || null,
+          cost: part.our_cost != null ? part.our_cost : null,
+          retail_price: part.retail_price != null ? part.retail_price : null,
+          stock_qty: 0,
+          reorder_point: 5,
+          location: ''
+        }).select().then(function (res) {
+          if (res.error) { if (window.console) console.warn('parts-to-inventory: inventory insert failed', res.error); return; }
+          if (res.data && res.data[0]) linkBack(res.data[0].id);
+        }).catch(function (e) { if (window.console) console.warn('parts-to-inventory: inventory insert failed', e); });
+      };
+      /* ilike with no wildcards in the value is a case-insensitive exact
+       * match; the JS re-check below keeps it exact even if a typed SKU
+       * or name happens to contain an ilike wildcard character. */
+      var exactOnly = function (rows, key, val) {
+        var want = String(val || '').toLowerCase();
+        return (rows || []).filter(function (r) { return String(r[key] || '').toLowerCase() === want; });
+      };
+      if (part.supplier_sku) {
+        client.from('inventory').select('*').ilike('supplier_sku', part.supplier_sku).then(function (res) {
+          if (res.error) { if (window.console) console.warn('parts-to-inventory: SKU lookup failed', res.error); return; }
+          var hits = exactOnly(res.data, 'supplier_sku', part.supplier_sku);
+          if (hits.length) useFound(hits[0]); else createRow();
+        }).catch(function (e) { if (window.console) console.warn('parts-to-inventory: SKU lookup failed', e); });
+      } else {
+        var q = client.from('inventory').select('*').ilike('product_name', part.description);
+        if (part.supplier) q = q.ilike('supplier', part.supplier);
+        q.then(function (res) {
+          if (res.error) { if (window.console) console.warn('parts-to-inventory: name lookup failed', res.error); return; }
+          var hits = exactOnly(res.data, 'product_name', part.description).filter(function (r) {
+            if (part.supplier) return String(r.supplier || '').toLowerCase() === String(part.supplier).toLowerCase();
+            return !trim(r.supplier || '');
+          });
+          if (hits.length) useFound(hits[0]); else createRow();
+        }).catch(function (e) { if (window.console) console.warn('parts-to-inventory: name lookup failed', e); });
+      }
+    } catch (e) {
+      if (window.console) console.warn('parts-to-inventory: skipped', e);
+    }
+  }
+
   function adjustStock(client, inventoryId, delta) {
     if (!inventoryId || !delta) return;
     client.from('inventory').select('stock_qty').eq('id', inventoryId).maybeSingle().then(function (res) {
@@ -3978,7 +4260,10 @@ function loadTicketThread(client, ticketId) {
         '<button class="p3-qty-btn" type="button" data-inv-dec="' + esc(p.id) + '" aria-label="Decrease stock">&minus;</button> ' +
         esc(String(p.stock_qty == null ? '—' : p.stock_qty)) + (low ? ' (low)' : '') +
         ' <button class="p3-qty-btn" type="button" data-inv-inc="' + esc(p.id) + '" aria-label="Increase stock">+</button></td>' +
-        '<td class="p3-inv-actions"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-inv-edit="' + esc(p.id) + '">Edit</button> ' +
+        '<td class="p3-inv-actions">' +
+        /* PORTAL_PARTS_TO_INVENTORY_2026_11_02: one-tap reorder, only when a link is saved */
+        (trim(p.reorder_url || '') ? '<a class="portal-btn portal-btn-outline portal-btn-sm" href="' + esc(p.reorder_url) + '" target="_blank" rel="noopener">Reorder</a> ' : '') +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-inv-edit="' + esc(p.id) + '">Edit</button> ' +
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-inv-del="' + esc(p.id) + '">Delete</button></td></tr>';
     }).join('');
     list.innerHTML = html + '</tbody></table></div>';
@@ -4052,6 +4337,7 @@ function loadTicketThread(client, ticketId) {
     $('portal-inv-retail').value = p.retail_price != null ? p.retail_price : '';
     $('portal-inv-qty').value = p.stock_qty != null ? p.stock_qty : 0;
     $('portal-inv-reorder').value = p.reorder_point != null ? p.reorder_point : 5;
+    /* PORTAL_PARTS_TO_INVENTORY_2026_11_02 */ $('portal-inv-reorder-url').value = p.reorder_url || '';
     $('portal-inv-location').value = p.location || 'van';
     $('portal-inv-submit').innerHTML = '<i class="fas fa-save"></i> Save changes';
     var cancel = $('portal-inv-cancel'); if (cancel) cancel.hidden = false;
@@ -4087,6 +4373,7 @@ function loadTicketThread(client, ticketId) {
       retail_price: num('portal-inv-retail'),
       stock_qty: parseInt($('portal-inv-qty').value, 10) || 0,
       reorder_point: parseInt($('portal-inv-reorder').value, 10),
+      /* PORTAL_PARTS_TO_INVENTORY_2026_11_02 */ reorder_url: trim($('portal-inv-reorder-url').value) || null,
       location: $('portal-inv-location').value
     };
     if (isNaN(row.reorder_point)) row.reorder_point = 5;
