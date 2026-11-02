@@ -202,6 +202,8 @@
            Small a.trustbar-item rule at the end of styles.css. -->
         <a class="trustbar-item" href="#warranty" data-page="warranty"><i class="fas fa-shield-halved"></i> 1-Year Warranty</a>
         <a class="trustbar-item" href="#repair" data-page="repair"><i class="fas fa-bolt"></i> Same-Day Diagnostics</a>
+        <!-- SITE_REVIEW_PAGE_2026_11_02: fifth pill, in the slot the removed We Come To You pill held -->
+        <a class="trustbar-item" href="#review" data-page="review"><i class="fas fa-pen"></i> Leave Us a Review</a>
         <a class="trustbar-item" href="#about" data-page="about"><i class="fas fa-star"></i> 10+ Years Experience</a>
         <a class="trustbar-item" href="#prices" data-page="prices"><i class="fas fa-magnifying-glass"></i> Free Estimates</a>
       </div>
@@ -347,7 +349,15 @@
         </div>
       </div>
 
-      <!-- Feedback at the bottom of the page -->
+    </section>
+
+    <!-- ==================== LEAVE A REVIEW ==================== -->
+    <!-- SITE_REVIEW_PAGE_2026_11_02: the "How Did We Do" feedback form
+         moved off the bottom of the home page into its own routed page.
+         The block inside is the home-page block verbatim (same header,
+         same #feedback wrapper, same form with data-form="feedback"),
+         so atr-forms.js and the Turnstile gate bind exactly as before. -->
+    <section id="review" class="page">
       <div class="section">
         <div class="container">
           <div class="section-header center">
@@ -2342,6 +2352,7 @@
           <a class="footer-link" href="#investors" data-page="investors">Investors</a>
           <a class="footer-link" href="#contact" data-page="contact">Contact</a>
           <a class="footer-link" href="#values" data-page="values">Our Values</a>
+          <a class="footer-link" href="#review" data-page="review">Leave Us a Review</a>
         </div>
         <div>
           <!-- SITE_FOOTER_VALUES_2026_10_30 -->
