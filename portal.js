@@ -1,5 +1,5 @@
 /* =====================================================================
- * ATRG Employee Portal — staff-only interface over the Supabase database
+ * ATRG Associate Hub — staff-only interface over the Supabase database
  * =====================================================================
  * "RepairShopr, but on steroids": tickets, job applications, investor
  * inquiries, customer feedback, customers, inventory and purchase
@@ -46,8 +46,15 @@
 
   /* Ticket statuses: EXACT values from the tickets.status check
    * constraint (supabase-phase2-tickets.sql). Do not add values here
-   * without updating the database constraint first. */
-  var TICKET_STATUSES = ['Awaiting Estimate', 'Awaiting Diagnostics', 'Awaiting Customer Response', 'Awaiting Parts', 'En Route to Customer', 'In Progress', 'Quality Control', 'Ready', 'Job Complete'];
+   * without updating the database constraint first.
+   * PORTAL_TIER_SET_FINISH_2026_11_02: 'Awaiting Repair' added
+   * directly after 'Awaiting Parts' on Austin's Nov 2, 2026 word
+   * (parts are in; the job waits for the repair itself). The staged
+   * widening SQL tickets-status-awaiting-repair.sql sits beside
+   * this build — STAGED ONLY, not run; run it before or with this
+   * set's publish if the live constraint does not already allow
+   * the new value. */
+  var TICKET_STATUSES = ['Awaiting Estimate', 'Awaiting Diagnostics', 'Awaiting Customer Response', 'Awaiting Parts', 'Awaiting Repair', 'En Route to Customer', 'In Progress', 'Quality Control', 'Ready', 'Job Complete'];
   var APPLICATION_STATUSES = ['New', 'Reviewed', 'Contacted', 'Rejected'];
   var INVESTOR_STATUSES = ['New', 'Reviewed', 'Contacted', 'Closed'];
 
@@ -159,6 +166,7 @@
       waitingforparts: 'portal-st-waitingparts',
       awaitingdiagnostics: 'portal-st-waiting', awaitingestimate: 'portal-st-waiting',
       awaitingcustomerresponse: 'portal-st-contacted', awaitingparts: 'portal-st-waitingparts',
+      awaitingrepair: 'portal-st-waitingparts',
       enroutetocustomer: 'portal-st-inprogress', qualitycontrol: 'portal-st-reviewed',
       ready: 'portal-st-ready', jobcomplete: 'portal-st-done',
       readyforpickup: 'portal-st-ready', shippedready: 'portal-st-ready',
@@ -1034,7 +1042,7 @@
     return parts.length ? parts.join(' · ') : 'Device not specified';
   }
 
-  var QCLASS = { 'Awaiting Diagnostics': 'q-red', 'Awaiting Estimate': 'q-red', 'Awaiting Customer Response': 'q-yellow', 'Awaiting Parts': 'q-orange', 'En Route to Customer': 'q-yellow', 'In Progress': 'q-yellow', 'Quality Control': 'q-lime', 'Ready': 'q-green', 'Job Complete': 'q-done' };
+  var QCLASS = { 'Awaiting Diagnostics': 'q-red', 'Awaiting Estimate': 'q-red', 'Awaiting Customer Response': 'q-yellow', 'Awaiting Parts': 'q-orange', 'Awaiting Repair': 'q-orange', 'En Route to Customer': 'q-yellow', 'In Progress': 'q-yellow', 'Quality Control': 'q-lime', 'Ready': 'q-green', 'Job Complete': 'q-done' };
   function renderTickets(rows) {
     var list = $('portal-ticket-list');
     if (!rows.length) { emptyState(list, 'No tickets match. New service requests from the website will show up here.'); return; }
@@ -2601,15 +2609,19 @@ function loadTicketThread(client, ticketId) {
     compose: function (meta, signerName, dataUrl, signedAt) { return signedOtherDocumentHtml('Terms & Conditions of Service', TERMS_CONDITIONS_TEXT, meta, signerName, dataUrl, signedAt); }
   };
 
-  /* PORTAL_ATRONE_DOC_2026_11_02 (Austin, Nov 2, 2026): the ATR One
-   * Membership Agreement's file spec — same shape as the warranty
-   * and terms specs above, so its signed copy composes, uploads,
-   * and files as doc_type 'other' exactly like theirs. */
-  var ATRONE_FILE_SPEC = {
-    pathPrefix: 'atr_one_membership', fileNameLabel: 'ATR One Membership Agreement',
-    note: 'ATR One Membership Agreement \u2014 signed copy of the ATR One Membership Agreement',
-    compose: function (meta, signerName, dataUrl, signedAt) { return signedOtherDocumentHtml('ATR One Membership Agreement', ATRONE_TERMS_TEXT, meta, signerName, dataUrl, signedAt); }
-  };
+  /* PORTAL_ATRONE_PER_TIER_2026_11_02 (Austin, Nov 2, 2026): one
+   * file spec per tier agreement — same shape as the warranty and
+   * terms specs above, so each tier's signed copy composes,
+   * uploads, and files as doc_type 'other' exactly like theirs. The
+   * four specs are assembled with the agreement texts further down
+   * (ATRONE_AGREEMENTS). */
+  function atrOneFileSpec(pathPrefix, title, text) {
+    return {
+      pathPrefix: pathPrefix, fileNameLabel: title,
+      note: title + ' \u2014 signed copy of the ' + title,
+      compose: function (meta, signerName, dataUrl, signedAt) { return signedOtherDocumentHtml(title, text, meta, signerName, dataUrl, signedAt); }
+    };
+  }
 
   /* Filing for a signed doc_type 'other' document — the
    * fileSignedMediaRelease shape (compose, upload, file the
@@ -2652,7 +2664,7 @@ function loadTicketThread(client, ticketId) {
    * full text in a panel) with blank signature lines in place of a
    * captured signature, so a document filed before signing opens as
    * the same readable page the customer will sign, never raw text. */
-  function unsignedAtrOneAgreementHtml(meta, bodyText) {
+  function unsignedAtrOneAgreementHtml(meta, bodyText, title) {
     var lines = [
       ['Customer', meta.customerName],
       ['Phone', meta.phone],
@@ -2663,13 +2675,13 @@ function loadTicketThread(client, ticketId) {
     }).join('');
     return '<!DOCTYPE html>\n<html lang="en"><head><meta charset="utf-8">' +
       '<meta name="viewport" content="width=device-width, initial-scale=1">' +
-      '<title>ATR One Membership Agreement \u2014 Austin\u2019s Tech Repair Group</title></head>' +
+      '<title>' + esc(title) + ' \u2014 Austin\u2019s Tech Repair Group</title></head>' +
       '<body style="margin:0;background:#F3EDE0;color:#2C231A;font-family:Georgia,\'Times New Roman\',serif;">' +
       '<div style="max-width:760px;margin:0 auto;padding:2rem 1.25rem 3rem;background:#FFFDF8;">' +
       '<div style="text-align:center;border-bottom:3px solid #C96A1E;padding-bottom:1rem;margin-bottom:1.25rem;">' +
       '<div style="font-size:1.55rem;font-weight:bold;letter-spacing:0.02em;">Austin\u2019s Tech Repair Group</div>' +
       '<div style="margin-top:0.3rem;font-size:0.95rem;">(937) 280-6243</div></div>' +
-      '<h1 style="font-size:1.3rem;margin:0 0 1rem;">ATR One Membership Agreement</h1>' +
+      '<h1 style="font-size:1.3rem;margin:0 0 1rem;">' + esc(title) + '</h1>' +
       (lines ? '<table style="border-collapse:collapse;margin-bottom:1.25rem;font-size:0.98rem;"><tbody>' + lines + '</tbody></table>' : '') +
       '<div style="white-space:pre-wrap;font-size:0.92rem;line-height:1.5;border:1px solid #E6D9C0;border-radius:8px;padding:1rem;background:#FFFDF8;">' + esc(bodyText) + '</div>' +
       '<h2 style="font-size:1.1rem;margin:1.75rem 0 0.5rem;">Signature</h2>' +
@@ -2683,28 +2695,33 @@ function loadTicketThread(client, ticketId) {
       '</div></body></html>';
   }
 
-  /* PORTAL_ATRONE_DOC_2026_11_02 (Austin, Nov 2, 2026): the check-in
-   * auto-attach. When a check-in is created with "Wants to sign up
-   * for ATR One", the membership agreement files itself on the new
-   * ticket in its pending state — an unsigned copy with signer_name
-   * and signed_at empty, the same pending state the Documents
-   * upload path uses for unsigned documents — so it sits on the
-   * ticket ready to view and to sign on the job through the
-   * agreement's own Sign flow (DOC_SIGNERS.atrone). Signing files
-   * the signed copy on the same ticket beside this one.
-   * done(errText): errText is null on success. The ticket exists
-   * either way; an attach failure never blocks it. */
-  function attachAtrOneAgreementAtCheckin(client, ticketId, row, done) {
+  /* PORTAL_ATRONE_PER_TIER_2026_11_02 (Austin, Nov 2, 2026): the
+   * check-in auto-attach. When a check-in is created with "Wants to
+   * sign up for ATR One", the agreement for the tier the customer
+   * picked at check-in (ciAtroneTier, recorded when a tier card in
+   * the signup box is tapped) files itself on the new ticket in its
+   * pending state — an unsigned copy with signer_name and
+   * signed_at empty, the same pending state the Documents upload
+   * path uses for unsigned documents — so it sits on the ticket
+   * ready to view and to sign on the job through that agreement's
+   * own Sign flow (DOC_SIGNERS). Signing files the signed copy on
+   * the same ticket beside this one. When NO tier was picked,
+   * nothing is attached rather than guessing a tier, and that is
+   * not an error. done(errText): errText is null on success. The
+   * ticket exists either way; an attach failure never blocks it. */
+  function attachAtrOneAgreementAtCheckin(client, ticketId, row, done, tierKey) {
+    var agreement = tierKey ? ATRONE_AGREEMENTS[tierKey] : null;
+    if (!agreement) { done(null); return; }
     var meta = { customerName: row.customer_name, phone: row.customer_phone, device: deviceLabel(row) };
-    var html = unsignedAtrOneAgreementHtml(meta, ATRONE_TERMS_TEXT);
-    var path = ticketId + '/' + ATRONE_FILE_SPEC.pathPrefix + '-' + docStamp() + '.html';
+    var html = unsignedAtrOneAgreementHtml(meta, agreement.text, agreement.title);
+    var path = ticketId + '/' + agreement.spec.pathPrefix + '-' + docStamp() + '.html';
     client.storage.from(DOC_BUCKET).upload(path, new Blob([html], { type: 'text/html' }), { contentType: 'text/html', upsert: false }).then(function (up) {
       if (up.error) { done('The ATR One membership agreement could not be attached.'); return; }
       var docRow = {
         ticket_id: ticketId, doc_type: 'other', storage_path: path,
-        file_name: 'ATR One Membership Agreement \u2014 awaiting signature.html',
+        file_name: agreement.title + ' \u2014 awaiting signature.html',
         signer_name: null, signed_at: null,
-        note: 'ATR One Membership Agreement \u2014 attached at check-in (customer wants to sign up for ATR One); awaiting signature'
+        note: agreement.title + ' \u2014 attached at check-in (customer wants to sign up for ATR One); awaiting signature'
       };
       client.from('ticket_documents').insert(docRow).then(function (res) {
         if (res.error) { done('The ATR One membership agreement could not be attached.'); return; }
@@ -2792,13 +2809,42 @@ function loadTicketThread(client, ticketId) {
    * then also shows in that ticket's Documents section. */
   var TERMS_CONDITIONS_TEXT = "Terms & Conditions of Service\nLast updated October 23, 2026\nThese Terms & Conditions govern repair services and website use for Austin's Tech Repair Group (\"Company,\" \"we,\" \"us,\" or \"our\"), a sole proprietorship operating in the State of Ohio. By scheduling an appointment, submitting a repair request, or using this website, you (\"Customer,\" \"you\") agree to these terms.\n1. Who We Are & What We Do\nMobile service: We come to you. Most repairs are completed at your home or office in the Miami Valley (Xenia, Dayton, and surrounding areas). Some advanced repairs, such as board-level work, may require us to take the device with your permission and return it when the work is complete.\nWhat we repair: Phones, tablets, computers & laptops, game consoles, smartwatches, and websites.\nWhat we do not repair: Automotive electronics and instrument clusters, vintage radios and tube equipment, home stereo and sound systems, and major appliances.\n2. Estimates & Pricing\nFlat-rate pricing: Common repairs are quoted at one flat rate \u2014 parts and labor included. There is no hourly billing.\nDiagnostics: Estimates are free. A full diagnosis of the problem \u2014 including disassembly or deep board-level work when required \u2014 is included in the $35.00 house-call fee, charged separately from the repair price.\nOnline estimator: Prices shown by the online estimator are starting prices for the most common models. Your final flat price is confirmed for your exact model before you book, and the price we confirm is the price you pay.\nCustom repairs: One-of-a-kind or unusual repairs are quoted individually as one flat price \u2014 and are always approved by you before work begins.\nHidden damage: If disassembly reveals additional damage or failed components beyond the original estimate, we stop, notify you, and get your approval before doing any extra work.\n3. House-Call Fee\nA $35.00 house-call fee applies to every mobile visit. It covers travel to your location and a full diagnosis of the problem, and it is due at scheduling.\nATR One members: Members pay no house-call fee for devices covered under their subscription.\nThe house-call fee is non-refundable in all cases and is charged separately from the repair price. It is never credited toward a repair.\n4. Parts & Payment\nParts you supply: You\u2019re welcome to supply everyday parts you can buy at retail \u2014 hard drives, memory, accessories. Our 1-year warranty covers only parts we supply; customer-supplied parts are installed as-is, with no warranty on the part.\nParts are paid upfront: Because parts are ordered for your specific job, the parts cost is due before we order. We order parts through our suppliers and they are delivered to us; we bring them to your install visit. If you cancel after parts are ordered, we keep the part and refund what you paid for the part.\nReplaced parts: Parts we remove during a repair are taken with us and disposed of properly to protect the environment. Some original manufacturer parts must be returned to the manufacturer.\nParts you supply: If you supply your own part, we will install it as-is; our 1-Year Limited Warranty does not cover customer-supplied parts.\nContact about your repair: You agree we may call and text you at the number you provide about your repair \u2014 scheduling, status updates, and completion.\nBalance due: The remaining balance (labor) is due upon completion of the repair, before the device is released back to you.\nAccepted payments: Visa, Mastercard, American Express, Discover, Apple Pay, Google Pay, Samsung Pay, Cash App Pay, PayPal, Venmo, and cash.\nCard processing fee: If you pay by credit or debit card, a processing fee is added to your total. Card payments are processed through Square, and the fee is exactly what Square charges for the transaction \u2014 passed through at Square's actual rate, never more than Square charges.\n5. Cancellations\nYou may cancel or reschedule before your appointment at no charge beyond the house-call fee, which is non-refundable once the appointment is booked.\nIf we arrive and you decline the confirmed repair, only the house-call fee is owed.\n6. Your Data\nData loss or corruption can occur during diagnostics or repair. You are responsible for backing up your device before service. We are not liable for lost data, files, photos, or settings. See the Repair Authorization for full details.\n7. Warranty\nStandard repairs are covered by our 1-Year Limited Warranty on the parts installed and the labor performed. Full terms and the claim process are in the Warranty Policy on this site.\n8. Limitation of Liability\nTo the fullest extent permitted by Ohio law, our total liability for any claim connected to a service is limited to the amount you paid for that service. We are not liable for incidental, indirect, or consequential damages, including loss of data, loss of use, or loss of business.\n9. Website Use\nYou must be 18 or using this site with a parent or guardian. Use the site only for lawful purposes; no scraping, data mining, malware, or attempts to gain unauthorized access.\nSite content (text, graphics, logos, and code) belongs to Austin's Tech Repair Group and may not be reproduced or commercially used without written permission.\nThe website is provided \"as is\" without warranties of any kind. We are not responsible for third-party websites linked from this site.\n10. Changes, Governing Law & Contact\nWe may update these terms; the version posted on this site when you book governs your service.\nThese terms are governed by the laws of the State of Ohio. Disputes will be addressed first through good-faith negotiation, then in a court of competent jurisdiction in Greene County, Ohio.\nQuestions: Austin's Tech Repair Group \u2014 Austin Tyler Caudill, Owner \u2014 Spring Valley, Ohio \u2014 (937) 280-6243 \u2014 austin.caudill@austinstechrepairgroup.com\nLegal";
   var WARRANTY_TEXT = "1-Year Limited Warranty & Claims\nLast updated October 20, 2026\nAustin's Tech Repair Group stands behind its work. Every standard repair includes a 1-Year Limited Warranty on the parts we install and the labor we perform, under the terms below.\n1. What This Warranty Covers\nReplacement parts we installed (screens, batteries, charging ports, and other components) that fail due to a defect in the part itself.\nThe labor and workmanship of the specific repair on your invoice.\n2. Warranty Period\nCoverage runs for one year (365 days) from the date the repair was completed.\nThe warranty applies to the original customer and the device listed on the repair invoice. Please keep your invoice or receipt \u2014 it is your proof of coverage.\n3. What This Warranty Does Not Cover\nNew physical damage: Drops, impacts, cracks, pressure damage, or bent frames after the repair.\nParts supplied by the customer \u2014 this warranty covers only parts we supply.\nLiquid damage: Exposure to water, moisture, or steam after the repair.\nTampering: Devices opened, modified, or repaired by anyone other than Austin's Tech Repair Group after our service.\nSoftware problems: Viruses, malware, operating-system corruption, or issues caused by rooting, jailbreaking, or other modifications.\nUnrelated failures: Problems in parts or systems that were not part of the original repair, including pre-existing conditions.\nNormal wear: Gradual battery capacity fade over time and minor cosmetic wear that does not affect function.\n4. How to File a Warranty Claim\nStep 1 \u2014 Contact us: Call or text (937) 280-6243 or email austin.caudill@austinstechrepairgroup.com and describe the problem.\nStep 2 \u2014 Show your invoice: Present your original repair invoice or receipt so we can verify coverage.\nStep 3 \u2014 Inspection: We inspect and test the device to confirm the failure is a covered defect in the part or our workmanship.\nStep 4 \u2014 Remedy: If the claim is covered, we will repair or replace the defective part at no charge for parts or labor. If the part cannot be repaired or replaced, we will refund the price of that part.\nWarranty inspections are diagnostic visits; no house-call fee applies to a covered warranty claim.\n5. Limits\nThis warranty is limited to the repair, replacement, or refund described above. We are not liable for incidental or consequential damages, including loss of data or loss of use of the device during evaluation or repair.\nSome states do not allow limits on implied warranties or consequential damages, so parts of this section may not apply to you. This warranty gives you specific legal rights, and you may have other rights that vary by state.\nAustin's Tech Repair Group\nAustin Tyler Caudill, Owner\nSpring Valley, Ohio \u2014 (937) 280-6243";
-  /* PORTAL_ATRONE_DOC_2026_11_02 (Austin, Nov 2, 2026): the ATR One
-   * Membership Agreement — the fifth blank document. Source of truth
-   * is atr-one-membership-agreement.txt beside this build; keep the
-   * two in step. The bracketed [AUSTIN TO DECIDE] lines are open
-   * points Austin has not settled yet; they stay visible in this
-   * staged draft until he rules on them. */
-  var ATRONE_TERMS_TEXT = "ATR One Membership Agreement\nAustin's Tech Repair Group \u2014 State of Ohio, USA \u2014 Last updated November 2, 2026\nPLEASE READ THIS DOCUMENT CAREFULLY. By joining ATR One, you (\"Member,\" \"you\") agree to these terms with Austin's Tech Repair Group (\"Company,\" \"we,\" \"us,\" \"our\"), a sole proprietorship operating in the State of Ohio. This agreement covers your ATR One membership. Repair work itself is authorized and warranted under our Repair Authorization & Service Agreement and our 1-Year Limited Warranty, which are separate documents.\n1. Membership Plans\nFree membership: Anyone may join ATR One free. Free members earn rewards points \u2014 1 point for every $1 spent with us \u2014 and 100 points take $5 off a future purchase or repair. Free membership does not include the paid plan benefits in Section 3.\nPaid plans: Paid memberships are billed monthly at the plan rates below.\nSingle Device \u2014 $9.99 per month. Covers 1 device.\nFamily \u2014 $19.99 per month. Covers up to 5 devices.\nBusiness Plus \u2014 $39.99 per month. Covers business computers, printers, and cash drawers.\nBusiness Pro \u2014 $49.99 per month. Full IT management.\nCovered devices: Plan benefits apply only to the devices covered under your plan. Your membership, your plan, and your covered devices are recorded on your customer account with us.\n2. Member Benefits \u2014 Paid Plans\nWhile your paid membership is active, you receive the following on your covered devices:\nRepairs: 20% off repairs on covered devices.\nAccessories: 25% off accessories.\nWholesale parts pricing: Paid members pay our wholesale cost for parts on covered repairs \u2014 the cost we pay, with no markup added.\nHouse-call fee: Paid members pay no $35.00 house-call fee for covered devices.\nDiagnostics: Diagnostics on covered devices are free.\nParts shipping: Free priority shipping on parts ordered for covered devices.\nPriority queue: Member work is scheduled ahead of non-member work.\nRemote support: Free remote customer service.\nWallet card: After signup, you receive your ATR One member card to add to Apple Wallet or Google Wallet.\nScreen protector: When we repair a covered device, a screen protector for that device is included free and installed at that repair. The free screen protector is part of a repair we perform on a device we repaired \u2014 it is not available on its own.\n3. Billing & Renewal\nPaid plans are billed monthly through Square. Your plan renews each month and continues until you cancel it.\n[AUSTIN TO DECIDE: price changes \u2014 whether plan prices may change, and how far ahead members are told.]\n[AUSTIN TO DECIDE: past-due payments \u2014 what happens when a monthly payment fails, including any grace period and when benefits pause.]\n4. Cancellation\nYou may cancel at any time. To stop the next monthly charge, cancel at least 3 days before your next billing date. If a monthly payment has already gone through and you cancel within 3 days of that payment, that payment is refunded in full. Your benefits continue to the end of the current billing period.\n5. Warranty\nThis membership does not change our repair warranty. Every repair we perform carries our 1-Year Limited Warranty on the parts we install and the labor we perform, under that warranty's own terms. Membership neither extends nor limits the warranty, and the warranty neither extends nor limits this membership.\n6. Governing Law & Entire Agreement\nThis Agreement is governed by the laws of the State of Ohio. Disputes will first be addressed through good-faith negotiation; if unresolved, they will be submitted to a court of competent jurisdiction in Greene County, Ohio. This document is the entire agreement between you and Austin's Tech Repair Group for the ATR One membership. If any provision is found unenforceable, the rest remain in effect.\n7. Your Signature\nBy signing this agreement, you agree to be billed monthly through Square for the plan you select, and you confirm that you understand ATR One is a monthly subscription that renews each month until you cancel it.\nAustin's Tech Repair Group\nAustin Tyler Caudill, Owner\nState of Ohio, USA \u2014 (937) 280-6243";
+  /* PORTAL_ATRONE_PER_TIER_2026_11_02 (Austin, Nov 2, 2026): ONE
+   * agreement per tier — the combined all-tiers text read as chop
+   * suey, so each plan now has its own agreement covering only its
+   * own tier: its price, its discounts, its coverage, plus the
+   * shared settled terms (points, wholesale parts, no house-call
+   * fee and free diagnostics on covered devices, priority parts
+   * shipping, priority queue, free remote service, the 90-day
+   * accessory exchange/return, the screen-protector term, the
+   * Section 4 cancel/refund rules, the Section 7 Square billing
+   * signature, warranty kept separate). Every line is the combined
+   * text's own wording, verbatim or tier-scoped; the business
+   * agreements alone carry the EIN-at-signup line and the
+   * point-of-sale setup wording (ATRG sets Square, cash drawers,
+   * and systems up; ATRG is not a payment processing company). The
+   * two [AUSTIN TO DECIDE] flags stay open in every text, exactly
+   * as written. Discounts per tier (PORTAL_ATRONE_TIERS_2026_11_02):
+   * Individual and Family 20% off repairs / 25% off accessories;
+   * Business 45% / 55%; Business Pro 50% / 65%. Display names:
+   * Individual (database tier single) and Family (database tier
+   * family) — prices, coverage counts, Square links, and the
+   * database tier values do not change. Source of truth: the four
+   * atr-one-*-membership-agreement.txt files beside this build. */
+  var ATRONE_INDIVIDUAL_TEXT = "ATR One Individual Membership Agreement\nAustin's Tech Repair Group — State of Ohio, USA — Last updated November 2, 2026\nPLEASE READ THIS DOCUMENT CAREFULLY. By joining ATR One, you (\"Member,\" \"you\") agree to these terms with Austin's Tech Repair Group (\"Company,\" \"we,\" \"us,\" \"our\"), a sole proprietorship operating in the State of Ohio. This agreement covers your ATR One Individual membership. Repair work itself is authorized and warranted under our Repair Authorization & Service Agreement and our 1-Year Limited Warranty, which are separate documents.\n1. Membership Plans\nFree membership: Anyone may join ATR One free. Free members earn rewards points — 1 point for every $1 spent with us — and 100 points take $5 off a future purchase or repair. Free membership does not include the paid plan benefits in Section 2.\nYour plan: ATR One Individual — $9.99 per month. Covers 1 device.\nCovered devices: Plan benefits apply only to the devices covered under your plan. Your membership, your plan, and your covered devices are recorded on your customer account with us.\n2. Member Benefits — Paid Plans\nWhile your paid membership is active, you receive the following on your covered devices:\nIndividual: 20% off repairs and 25% off accessories.\nWholesale parts pricing: Paid members pay our wholesale cost for parts on covered repairs — the cost we pay, with no markup added.\nHouse-call fee: Paid members pay no $35.00 house-call fee for covered devices.\nDiagnostics: Diagnostics on covered devices are free.\nParts shipping: Free priority shipping on parts ordered for covered devices.\nPriority queue: Member work is scheduled ahead of non-member work.\nRemote support: Free remote customer service.\nAccessory returns: Accessories you purchase from us can be exchanged or returned within 90 days of purchase.\nWallet card: After signup, you receive your ATR One member card to add to Apple Wallet or Google Wallet.\nScreen protector: When we repair a covered device, a screen protector for that device is included free and installed at that repair. The free screen protector is part of a repair we perform on a device we repaired — it is not available on its own.\n3. Billing & Renewal\nPaid plans are billed monthly through Square. Your plan renews each month and continues until you cancel it.\n[AUSTIN TO DECIDE: price changes — whether plan prices may change, and how far ahead members are told.]\n[AUSTIN TO DECIDE: past-due payments — what happens when a monthly payment fails, including any grace period and when benefits pause.]\n4. Cancellation\nYou may cancel at any time. To stop the next monthly charge, cancel at least 3 days before your next billing date. If a monthly payment has already gone through and you cancel within 3 days of that payment, that payment is refunded in full. Your benefits continue to the end of the current billing period.\n5. Warranty\nThis membership does not change our repair warranty. Every repair we perform carries our 1-Year Limited Warranty on the parts we install and the labor we perform, under that warranty's own terms. Membership neither extends nor limits the warranty, and the warranty neither extends nor limits this membership.\n6. Governing Law & Entire Agreement\nThis Agreement is governed by the laws of the State of Ohio. Disputes will first be addressed through good-faith negotiation; if unresolved, they will be submitted to a court of competent jurisdiction in Greene County, Ohio. This document is the entire agreement between you and Austin's Tech Repair Group for the ATR One membership. If any provision is found unenforceable, the rest remain in effect.\n7. Your Signature\nBy signing this agreement, you agree to be billed monthly through Square for the plan you select, and you confirm that you understand ATR One is a monthly subscription that renews each month until you cancel it.\nAustin's Tech Repair Group\nAustin Tyler Caudill, Owner\nState of Ohio, USA — (937) 280-6243";
+  var ATRONE_FAMILY_TEXT = "ATR One Family Membership Agreement\nAustin's Tech Repair Group — State of Ohio, USA — Last updated November 2, 2026\nPLEASE READ THIS DOCUMENT CAREFULLY. By joining ATR One, you (\"Member,\" \"you\") agree to these terms with Austin's Tech Repair Group (\"Company,\" \"we,\" \"us,\" \"our\"), a sole proprietorship operating in the State of Ohio. This agreement covers your ATR One Family membership. Repair work itself is authorized and warranted under our Repair Authorization & Service Agreement and our 1-Year Limited Warranty, which are separate documents.\n1. Membership Plans\nFree membership: Anyone may join ATR One free. Free members earn rewards points — 1 point for every $1 spent with us — and 100 points take $5 off a future purchase or repair. Free membership does not include the paid plan benefits in Section 2.\nYour plan: ATR One Family — $19.99 per month. Covers up to 5 devices.\nCovered devices: Plan benefits apply only to the devices covered under your plan. Your membership, your plan, and your covered devices are recorded on your customer account with us.\n2. Member Benefits — Paid Plans\nWhile your paid membership is active, you receive the following on your covered devices:\nFamily: 20% off repairs and 25% off accessories.\nWholesale parts pricing: Paid members pay our wholesale cost for parts on covered repairs — the cost we pay, with no markup added.\nHouse-call fee: Paid members pay no $35.00 house-call fee for covered devices.\nDiagnostics: Diagnostics on covered devices are free.\nParts shipping: Free priority shipping on parts ordered for covered devices.\nPriority queue: Member work is scheduled ahead of non-member work.\nRemote support: Free remote customer service.\nAccessory returns: Accessories you purchase from us can be exchanged or returned within 90 days of purchase.\nWallet card: After signup, you receive your ATR One member card to add to Apple Wallet or Google Wallet.\nScreen protector: When we repair a covered device, a screen protector for that device is included free and installed at that repair. The free screen protector is part of a repair we perform on a device we repaired — it is not available on its own.\n3. Billing & Renewal\nPaid plans are billed monthly through Square. Your plan renews each month and continues until you cancel it.\n[AUSTIN TO DECIDE: price changes — whether plan prices may change, and how far ahead members are told.]\n[AUSTIN TO DECIDE: past-due payments — what happens when a monthly payment fails, including any grace period and when benefits pause.]\n4. Cancellation\nYou may cancel at any time. To stop the next monthly charge, cancel at least 3 days before your next billing date. If a monthly payment has already gone through and you cancel within 3 days of that payment, that payment is refunded in full. Your benefits continue to the end of the current billing period.\n5. Warranty\nThis membership does not change our repair warranty. Every repair we perform carries our 1-Year Limited Warranty on the parts we install and the labor we perform, under that warranty's own terms. Membership neither extends nor limits the warranty, and the warranty neither extends nor limits this membership.\n6. Governing Law & Entire Agreement\nThis Agreement is governed by the laws of the State of Ohio. Disputes will first be addressed through good-faith negotiation; if unresolved, they will be submitted to a court of competent jurisdiction in Greene County, Ohio. This document is the entire agreement between you and Austin's Tech Repair Group for the ATR One membership. If any provision is found unenforceable, the rest remain in effect.\n7. Your Signature\nBy signing this agreement, you agree to be billed monthly through Square for the plan you select, and you confirm that you understand ATR One is a monthly subscription that renews each month until you cancel it.\nAustin's Tech Repair Group\nAustin Tyler Caudill, Owner\nState of Ohio, USA — (937) 280-6243";
+  var ATRONE_BUSINESS_TEXT = "ATR One Business Membership Agreement\nAustin's Tech Repair Group — State of Ohio, USA — Last updated November 2, 2026\nPLEASE READ THIS DOCUMENT CAREFULLY. By joining ATR One, you (\"Member,\" \"you\") agree to these terms with Austin's Tech Repair Group (\"Company,\" \"we,\" \"us,\" \"our\"), a sole proprietorship operating in the State of Ohio. This agreement covers your ATR One Business membership. Repair work itself is authorized and warranted under our Repair Authorization & Service Agreement and our 1-Year Limited Warranty, which are separate documents.\n1. Membership Plans\nFree membership: Anyone may join ATR One free. Free members earn rewards points — 1 point for every $1 spent with us — and 100 points take $5 off a future purchase or repair. Free membership does not include the paid plan benefits in Section 2.\nYour plan: ATR One Business — $49.99 per month. Covers business computers, printers, and cash drawers.\nBusiness membership requires the business's EIN at signup.\nBusiness setup: On a business plan, we can come out and set up your point of sale for you — we set up Square, cash drawers, and your systems. Austin's Tech Repair Group is not a payment processing company: we help you set it up, and we do not process payments.\nCovered devices: Plan benefits apply only to the devices covered under your plan. Your membership, your plan, and your covered devices are recorded on your customer account with us.\n2. Member Benefits — Paid Plans\nWhile your paid membership is active, you receive the following on your covered devices:\nBusiness: 45% off repairs and 55% off accessories.\nWholesale parts pricing: Paid members pay our wholesale cost for parts on covered repairs — the cost we pay, with no markup added.\nHouse-call fee: Paid members pay no $35.00 house-call fee for covered devices.\nDiagnostics: Diagnostics on covered devices are free.\nParts shipping: Free priority shipping on parts ordered for covered devices.\nPriority queue: Member work is scheduled ahead of non-member work.\nRemote support: Free remote customer service.\nAccessory returns: Accessories you purchase from us can be exchanged or returned within 90 days of purchase.\nWallet card: After signup, you receive your ATR One member card to add to Apple Wallet or Google Wallet.\nScreen protector: When we repair a covered device, a screen protector for that device is included free and installed at that repair. The free screen protector is part of a repair we perform on a device we repaired — it is not available on its own.\n3. Billing & Renewal\nPaid plans are billed monthly through Square. Your plan renews each month and continues until you cancel it.\n[AUSTIN TO DECIDE: price changes — whether plan prices may change, and how far ahead members are told.]\n[AUSTIN TO DECIDE: past-due payments — what happens when a monthly payment fails, including any grace period and when benefits pause.]\n4. Cancellation\nYou may cancel at any time. To stop the next monthly charge, cancel at least 3 days before your next billing date. If a monthly payment has already gone through and you cancel within 3 days of that payment, that payment is refunded in full. Your benefits continue to the end of the current billing period.\n5. Warranty\nThis membership does not change our repair warranty. Every repair we perform carries our 1-Year Limited Warranty on the parts we install and the labor we perform, under that warranty's own terms. Membership neither extends nor limits the warranty, and the warranty neither extends nor limits this membership.\n6. Governing Law & Entire Agreement\nThis Agreement is governed by the laws of the State of Ohio. Disputes will first be addressed through good-faith negotiation; if unresolved, they will be submitted to a court of competent jurisdiction in Greene County, Ohio. This document is the entire agreement between you and Austin's Tech Repair Group for the ATR One membership. If any provision is found unenforceable, the rest remain in effect.\n7. Your Signature\nBy signing this agreement, you agree to be billed monthly through Square for the plan you select, and you confirm that you understand ATR One is a monthly subscription that renews each month until you cancel it.\nAustin's Tech Repair Group\nAustin Tyler Caudill, Owner\nState of Ohio, USA — (937) 280-6243";
+  var ATRONE_BUSINESS_PRO_TEXT = "ATR One Business Pro Membership Agreement\nAustin's Tech Repair Group — State of Ohio, USA — Last updated November 2, 2026\nPLEASE READ THIS DOCUMENT CAREFULLY. By joining ATR One, you (\"Member,\" \"you\") agree to these terms with Austin's Tech Repair Group (\"Company,\" \"we,\" \"us,\" \"our\"), a sole proprietorship operating in the State of Ohio. This agreement covers your ATR One Business Pro membership. Repair work itself is authorized and warranted under our Repair Authorization & Service Agreement and our 1-Year Limited Warranty, which are separate documents.\n1. Membership Plans\nFree membership: Anyone may join ATR One free. Free members earn rewards points — 1 point for every $1 spent with us — and 100 points take $5 off a future purchase or repair. Free membership does not include the paid plan benefits in Section 2.\nYour plan: ATR One Business Pro — $99.99 per month. Full IT management, including server setup.\nBusiness Pro membership requires the business's EIN at signup.\nBusiness setup: On a business plan, we can come out and set up your point of sale for you — we set up Square, cash drawers, and your systems. Austin's Tech Repair Group is not a payment processing company: we help you set it up, and we do not process payments.\nCovered devices: Plan benefits apply only to the devices covered under your plan. Your membership, your plan, and your covered devices are recorded on your customer account with us.\n2. Member Benefits — Paid Plans\nWhile your paid membership is active, you receive the following on your covered devices:\nBusiness Pro: 50% off repairs and 65% off accessories.\nWholesale parts pricing: Paid members pay our wholesale cost for parts on covered repairs — the cost we pay, with no markup added.\nHouse-call fee: Paid members pay no $35.00 house-call fee for covered devices.\nDiagnostics: Diagnostics on covered devices are free.\nParts shipping: Free priority shipping on parts ordered for covered devices.\nPriority queue: Member work is scheduled ahead of non-member work.\nRemote support: Free remote customer service.\nAccessory returns: Accessories you purchase from us can be exchanged or returned within 90 days of purchase.\nWallet card: After signup, you receive your ATR One member card to add to Apple Wallet or Google Wallet.\nScreen protector: When we repair a covered device, a screen protector for that device is included free and installed at that repair. The free screen protector is part of a repair we perform on a device we repaired — it is not available on its own.\n3. Billing & Renewal\nPaid plans are billed monthly through Square. Your plan renews each month and continues until you cancel it.\n[AUSTIN TO DECIDE: price changes — whether plan prices may change, and how far ahead members are told.]\n[AUSTIN TO DECIDE: past-due payments — what happens when a monthly payment fails, including any grace period and when benefits pause.]\n4. Cancellation\nYou may cancel at any time. To stop the next monthly charge, cancel at least 3 days before your next billing date. If a monthly payment has already gone through and you cancel within 3 days of that payment, that payment is refunded in full. Your benefits continue to the end of the current billing period.\n5. Warranty\nThis membership does not change our repair warranty. Every repair we perform carries our 1-Year Limited Warranty on the parts we install and the labor we perform, under that warranty's own terms. Membership neither extends nor limits the warranty, and the warranty neither extends nor limits this membership.\n6. Governing Law & Entire Agreement\nThis Agreement is governed by the laws of the State of Ohio. Disputes will first be addressed through good-faith negotiation; if unresolved, they will be submitted to a court of competent jurisdiction in Greene County, Ohio. This document is the entire agreement between you and Austin's Tech Repair Group for the ATR One membership. If any provision is found unenforceable, the rest remain in effect.\n7. Your Signature\nBy signing this agreement, you agree to be billed monthly through Square for the plan you select, and you confirm that you understand ATR One is a monthly subscription that renews each month until you cancel it.\nAustin's Tech Repair Group\nAustin Tyler Caudill, Owner\nState of Ohio, USA — (937) 280-6243";
+  /* The four agreements, keyed by database tier value: title,
+   * display short name, text, and file spec. DOC_SIGNERS, the
+   * Documents library (BLANK_DOCS), and the check-in auto-attach
+   * all read from this one map. */
+  var ATRONE_AGREEMENTS = {
+    single: { title: 'ATR One Individual Membership Agreement', shortName: 'Individual', text: ATRONE_INDIVIDUAL_TEXT, spec: atrOneFileSpec('atr_one_individual', 'ATR One Individual Membership Agreement', ATRONE_INDIVIDUAL_TEXT) },
+    family: { title: 'ATR One Family Membership Agreement', shortName: 'Family', text: ATRONE_FAMILY_TEXT, spec: atrOneFileSpec('atr_one_family', 'ATR One Family Membership Agreement', ATRONE_FAMILY_TEXT) },
+    business_plus: { title: 'ATR One Business Membership Agreement', shortName: 'Business', text: ATRONE_BUSINESS_TEXT, spec: atrOneFileSpec('atr_one_business', 'ATR One Business Membership Agreement', ATRONE_BUSINESS_TEXT) },
+    business_pro: { title: 'ATR One Business Pro Membership Agreement', shortName: 'Business Pro', text: ATRONE_BUSINESS_PRO_TEXT, spec: atrOneFileSpec('atr_one_business_pro', 'ATR One Business Pro Membership Agreement', ATRONE_BUSINESS_PRO_TEXT) }
+  };
   /* PORTAL_SIGN_ALL_DOCS_2026_10_30 (Austin, Oct 30, 2026): the
    * per-document signer configs behind the Documents tab's Sign
    * buttons. Each config carries everything the shared signing path
@@ -2812,6 +2858,27 @@ function loadTicketThread(client, ticketId) {
    * own, so its document and side effects are identical whichever
    * button starts the signing. Defined here, after the document
    * texts above, so every config reads the final constants. */
+  /* PORTAL_ATRONE_PER_TIER_2026_11_02: each tier's agreement signs
+   * through the same generic path as the warranty and the terms —
+   * the shared picker, the shared popup, fileSignedOtherDocument —
+   * with its own text and file spec from ATRONE_AGREEMENTS. */
+  function atrOneSigner(tierKey) {
+    var agreement = ATRONE_AGREEMENTS[tierKey];
+    return {
+      text: agreement.text,
+      pickTitle: 'Sign an ATR One ' + agreement.shortName + ' membership agreement',
+      pickBlurb: 'Pick the ticket this membership belongs to. The customer signs on the next screen, and the signed membership agreement files itself on that ticket.',
+      opts: {
+        title: agreement.title,
+        intro: 'Read the agreement, type your name, and sign in the box. Signing files this signed copy of the membership agreement on the ticket.',
+        docText: agreement.text,
+        saveLabel: 'Sign & save'
+      },
+      file: function (client, ticketId, blob, signerName, done, meta) {
+        fileSignedOtherDocument(client, ticketId, blob, signerName, done, meta, agreement.spec);
+      }
+    };
+  }
   var DOC_SIGNERS = {
     authorization: {
       text: AUTH_TERMS_TEXT,
@@ -2848,23 +2915,10 @@ function loadTicketThread(client, ticketId) {
         fileSignedOtherDocument(client, ticketId, blob, signerName, done, meta, TERMS_FILE_SPEC);
       }
     },
-    /* PORTAL_ATRONE_DOC_2026_11_02: the membership agreement signs
-     * through the same generic path as the warranty and the terms —
-     * the shared picker, the shared popup, fileSignedOtherDocument. */
-    atrone: {
-      text: ATRONE_TERMS_TEXT,
-      pickTitle: 'Sign an ATR One membership agreement',
-      pickBlurb: 'Pick the ticket this membership belongs to. The customer signs on the next screen, and the signed membership agreement files itself on that ticket.',
-      opts: {
-        title: 'ATR One Membership Agreement',
-        intro: 'Read the agreement, type your name, and sign in the box. Signing files this signed copy of the membership agreement on the ticket.',
-        docText: ATRONE_TERMS_TEXT,
-        saveLabel: 'Sign & save'
-      },
-      file: function (client, ticketId, blob, signerName, done, meta) {
-        fileSignedOtherDocument(client, ticketId, blob, signerName, done, meta, ATRONE_FILE_SPEC);
-      }
-    },
+    atrone_single: atrOneSigner('single'),
+    atrone_family: atrOneSigner('family'),
+    atrone_business: atrOneSigner('business_plus'),
+    atrone_business_pro: atrOneSigner('business_pro'),
     media: {
       text: MEDIA_RELEASE_TEXT,
       pickTitle: 'Sign a media release',
@@ -2887,15 +2941,19 @@ function loadTicketThread(client, ticketId) {
      * check-in. Its Sign button comes from its signer config, like
      * every blank document's (PORTAL_SIGN_ALL_DOCS_2026_10_30). */
     { title: 'Media Release', text: MEDIA_RELEASE_TEXT, mediaRelease: true, signer: DOC_SIGNERS.media },
-    /* PORTAL_ATRONE_DOC_2026_11_02: the ATR One Membership Agreement
-     * lists with the blank documents so it can be pulled up and read
-     * any time, and signed from Documents or on a job. It carries the
-     * mediaRelease flag for the same reason the Media Release does:
-     * in this file that flag is what keeps a document OUT of the
-     * check-in agreements popup (showAllAgreements) — a membership is
-     * never signed at check-in. Its Sign button comes from its signer
-     * config, like every blank document's. */
-    { title: 'ATR One Membership Agreement', text: ATRONE_TERMS_TEXT, mediaRelease: true, signer: DOC_SIGNERS.atrone }
+    /* PORTAL_ATRONE_PER_TIER_2026_11_02: the four ATR One
+     * membership agreements list with the blank documents so each
+     * can be pulled up and read any time, and signed from Documents
+     * or on a job. Each carries the mediaRelease flag for the same
+     * reason the Media Release does: in this file that flag is what
+     * keeps a document OUT of the check-in agreements popup
+     * (showAllAgreements) — a membership is never signed at
+     * check-in. Each Sign button comes from its signer config, like
+     * every blank document's. */
+    { title: 'ATR One Individual Membership Agreement', text: ATRONE_AGREEMENTS.single.text, mediaRelease: true, signer: DOC_SIGNERS.atrone_single },
+    { title: 'ATR One Family Membership Agreement', text: ATRONE_AGREEMENTS.family.text, mediaRelease: true, signer: DOC_SIGNERS.atrone_family },
+    { title: 'ATR One Business Membership Agreement', text: ATRONE_AGREEMENTS.business_plus.text, mediaRelease: true, signer: DOC_SIGNERS.atrone_business },
+    { title: 'ATR One Business Pro Membership Agreement', text: ATRONE_AGREEMENTS.business_pro.text, mediaRelease: true, signer: DOC_SIGNERS.atrone_business_pro }
   ];
   var docTabRows = null, docTabWired = false, docTicketOptions = null;
 
@@ -4060,11 +4118,19 @@ function loadTicketThread(client, ticketId) {
    * Member benefit is DISPLAY ONLY in v1: the block states the
    * standing rule (no $35 house-call fee on covered devices); no
    * charge math changes automatically. */
+  /* PORTAL_ATRONE_TIERS_2026_11_02 + PORTAL_TIER_SET_FINISH_2026_11_02:
+   * final display names and prices (Austin, Nov 2, 2026) — single
+   * shows as Individual $9.99, family as Family $19.99,
+   * business_plus as Business $49.99 (renamed and repriced from
+   * $39.99), business_pro as Business Pro $99.99
+   * (repriced from $49.99). Keys and stored tier values unchanged.
+   * NOTE: Square still bills the old business prices until its
+   * plans are updated — see CHANGES.md publish preconditions. */
   var ATRONE_TIERS = {
-    single: { name: 'Single', price: 9.99 },
+    single: { name: 'Individual', price: 9.99 },
     family: { name: 'Family', price: 19.99 },
-    business_plus: { name: 'Business Plus', price: 39.99 },
-    business_pro: { name: 'Business Pro', price: 49.99 }
+    business_plus: { name: 'Business', price: 49.99 },
+    business_pro: { name: 'Business Pro', price: 99.99 }
   };
   var ATRONE_BENEFIT_LINE = 'Member benefit: ATR One members pay no $35 house-call fee for devices covered under their subscription. Do not add the house-call fee for a covered device.';
 
@@ -4471,14 +4537,16 @@ function loadTicketThread(client, ticketId) {
         (custEditByCustomer[c.id] ? '<span class="portal-badge cust-badge-pending"><i class="fas fa-clock"></i> Edit waiting for approval</span>' : '') + '</div>' +
         '<p class="portal-card-meta"><i class="fas fa-envelope"></i> ' + esc(c.email || '—') +
         (c.phone ? ' · <i class="fas fa-phone"></i> ' + esc(c.phone) : '') + '</p>' +
-        '<p class="portal-card-meta"><i class="fas fa-cake-candles"></i> Birthday (month and day only): ' +
-        bdaySelects(c) + ' ' +
-        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-bday-save="' + esc(c.id) + '">Save</button> ' +
-        '<span class="portal-muted portal-small" data-bday-msg="' + esc(c.id) + '"></span></p>' +
+        /* PORTAL_TIER_SET_FINISH_2026_11_02: the standalone birthday
+         * editor is GONE from the card (Austin, Nov 2, 2026) —
+         * birthday editing lives inside the profile's Edit details
+         * form now (see renderCustProfile). */
         '<p class="portal-card-meta">' + esc(String(c.orderCount)) + ' shop order' + (c.orderCount === 1 ? '' : 's') +
         ' · Customer since ' + esc(fmtDate(c.created_at)) + '</p>' +
-        /* PORTAL_CUSTOMER_PROFILE_2026_11_02: View profile opens the customer profile in the drawer (contact, repair history, repair investments, editing). */
-        '<p><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-cust-profile="' + esc(c.id) + '"><i class="fas fa-id-card"></i> View profile</button> ' +
+        /* PORTAL_TIER_SET_FINISH_2026_11_02: the card affordance reads
+         * "View details" — the RepairQ pattern (the ticket card says
+         * "View details", and inside, an "Edit details" button). */
+        '<p><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-cust-profile="' + esc(c.id) + '"><i class="fas fa-id-card"></i> View details</button> ' +
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-cust-delete="' + esc(c.id) + '">Delete customer</button> ' +
         '<span class="portal-muted portal-small" data-cust-delete-msg="' + esc(c.id) + '"></span></p>' +
         '</article>';
@@ -4581,22 +4649,10 @@ function loadTicketThread(client, ticketId) {
     });
   }
 
-  function saveBirthday(customerId) {
-    var mo = document.querySelector('[data-bday-month="' + customerId + '"]');
-    var dy = document.querySelector('[data-bday-day="' + customerId + '"]');
-    var msg = document.querySelector('[data-bday-msg="' + customerId + '"]');
-    if (!mo || !dy) return;
-    var val = (mo.value && dy.value) ? (mo.value + '-' + dy.value) : null;
-    if (msg) msg.textContent = 'Saving\u2026';
-    withClient(function (client) {
-      if (!client) { if (msg) msg.textContent = 'No connection.'; return; }
-      client.from('customers').update({ birthday: val }).eq('id', customerId).then(function (res) {
-        if (res.error) { if (msg) msg.textContent = 'Couldn\u2019t save.'; return; }
-        if (msg) msg.textContent = 'Saved.';
-        state.customersCache.forEach(function (c) { if (c.id === customerId) c.birthday = val; });
-      }).catch(function () { if (msg) msg.textContent = 'Couldn\u2019t save.'; });
-    });
-  }
+  /* PORTAL_TIER_SET_FINISH_2026_11_02: the standalone card birthday
+   * saver that used to live here is removed — birthday saves ride
+   * the profile's Edit details form (saveCustomerEdit below). The
+   * bdaySelects() builder above is reused by that form. */
 
   /* ================= CUSTOMER PROFILES + EDIT APPROVALS =================
    * PORTAL_CUSTOMER_PROFILE_2026_11_02 (Austin, Nov 2, 2026):
@@ -4653,6 +4709,7 @@ function loadTicketThread(client, ticketId) {
   var custEditByCustomer = {};    /* customer_id -> [pending rows] */
   var custProfileCurrent = null;  /* full customers row open in the drawer */
   var custProfileNotice = '';     /* one-shot message for the profile edit form */
+  var custProfileMembership = null; /* PORTAL_TIER_SET_FINISH_2026_11_02: latest customer_memberships row (any status) for the open profile, or null */
   var empNameCache = {};          /* employee_profiles id -> name */
 
   var CUST_EDIT_FIELDS = [
@@ -4710,11 +4767,49 @@ function loadTicketThread(client, ticketId) {
     });
   }
 
+  /* PORTAL_TIER_SET_FINISH_2026_11_02: birthday helpers — birthdays
+   * are month and day ONLY, never a year (Austin's standing rule).
+   * Stored values may be 'MM-DD' or a legacy full date; both
+   * normalize to 'MM-DD' for compare/display. */
+  function bdayMonthDay(val) {
+    var parts = String(val || '').split('-');
+    if (parts.length === 3) return parts[1] + '-' + parts[2];
+    if (parts.length === 2 && parts[0] && parts[1]) return parts[0] + '-' + parts[1];
+    return '';
+  }
+  function bdayDisplay(val) {
+    var md = bdayMonthDay(val);
+    if (!md) return '—';
+    var p = md.split('-');
+    return p[0] + '/' + p[1];
+  }
+
   /* "Phone: (old) -> (new)" lines for one request. The old side reads
    * the CURRENT customer row, so what the owner sees at decision time
    * is the value his approval would replace. */
   function custChangeLines(req, cust) {
     var changes = req.changes || {};
+    /* PORTAL_TIER_SET_FINISH_2026_11_02: membership change requests
+     * ride this same queue with the members build's _kind payload
+     * (PORTAL_MEMBERS_EDIT_2026_11_02 format) — their lines describe
+     * the proposed membership change, not contact fields. */
+    if (changes._kind === 'membership') {
+      var mout = '';
+      if (changes._create) {
+        mout += '<p class="cust-change-line"><strong>Membership:</strong> turn <strong>ON</strong> — new <strong>' + esc(atroneTierName(changes.tier)) + '</strong> membership</p>';
+      } else {
+        if (changes.status === 'cancelled') {
+          mout += '<p class="cust-change-line"><strong>Membership:</strong> turn <strong>OFF</strong> (cancelled' +
+            (changes.cancelled_on ? ', cancelled on ' + esc(fmtJobDate(changes.cancelled_on)) : '') + ')</p>';
+        } else if (changes.status === 'active') {
+          mout += '<p class="cust-change-line"><strong>Membership:</strong> turn <strong>ON</strong> (active again)</p>';
+        }
+        if (changes.tier) {
+          mout += '<p class="cust-change-line"><strong>Tier:</strong> &rarr; <strong>' + esc(atroneTierName(changes.tier)) + '</strong></p>';
+        }
+      }
+      return mout || '<p class="cust-change-line">Membership change.</p>';
+    }
     var out = '';
     CUST_EDIT_FIELDS.forEach(function (f) {
       if (!Object.prototype.hasOwnProperty.call(changes, f.key)) return;
@@ -4722,6 +4817,13 @@ function loadTicketThread(client, ticketId) {
       out += '<p class="cust-change-line"><strong>' + esc(f.label) + ':</strong> ' +
         (oldVal ? esc(oldVal) + ' &rarr; ' : '') + '<strong>' + esc(changes[f.key] || '—') + '</strong></p>';
     });
+    /* PORTAL_TIER_SET_FINISH_2026_11_02: birthday changes ride the
+     * same request (the profile's Edit details form carries them). */
+    if (Object.prototype.hasOwnProperty.call(changes, 'birthday')) {
+      out += '<p class="cust-change-line"><strong>Birthday:</strong> ' +
+        (cust && bdayMonthDay(cust.birthday) ? esc(bdayDisplay(cust.birthday)) + ' &rarr; ' : '') +
+        '<strong>' + esc(changes.birthday ? bdayDisplay(changes.birthday) : '—') + '</strong></p>';
+    }
     return out || '<p class="cust-change-line">No field changes listed.</p>';
   }
 
@@ -4770,6 +4872,19 @@ function loadTicketThread(client, ticketId) {
           var cust = res.data;
           custProfileCurrent = cust;
           $('portal-drawer-title').textContent = cust.name || 'Customer';
+          /* PORTAL_TIER_SET_FINISH_2026_11_02: the profile also shows
+           * and edits the customer's ATR One membership, which lives
+           * in customer_memberships — load the latest row (any
+           * status) before rendering. If the table is not set up the
+           * query just errors and the profile renders without it. */
+          client.from('customer_memberships').select('*').eq('customer_id', customerId)
+            .order('started_on', { ascending: false }).limit(1)
+            .then(function (mres) {
+              custProfileMembership = mres.error ? null : ((mres.data || [])[0] || null);
+              proceed();
+            })
+            .catch(function () { custProfileMembership = null; proceed(); });
+          function proceed() {
           client.from('tickets').select('*').eq('customer_id', customerId)
             .order('created_at', { ascending: false }).limit(200)
             .then(function (tres) {
@@ -4787,6 +4902,7 @@ function loadTicketThread(client, ticketId) {
                 .catch(function () { render([]); });
             })
             .catch(function () { $('portal-drawer-body').innerHTML = '<p class="portal-error">Couldn&rsquo;t load that customer&rsquo;s repairs.</p>'; });
+          }
         })
         .catch(function () { $('portal-drawer-body').innerHTML = '<p class="portal-error">Couldn&rsquo;t load that customer.</p>'; });
     });
@@ -4812,8 +4928,31 @@ function loadTicketThread(client, ticketId) {
       ['Email', valOrDash(cust.email)],
       ['Phone', valOrDash(cust.phone)],
       ['Address', valOrDash(cust.address)],
+      ['Birthday', esc(bdayDisplay(cust.birthday))],
       ['Customer since', esc(fmtDate(cust.created_at))]
     ]) + '</div>';
+
+    /* PORTAL_TIER_SET_FINISH_2026_11_02: ATR One status on the
+     * profile (Austin, Nov 2, 2026) — the same customer_memberships
+     * record the Members panel reads, so the two surfaces can never
+     * disagree. Green dot = active, red dot = not active; a customer
+     * with no membership row reads "ATR One: Not a member". */
+    var mem = custProfileMembership;
+    html += '<div class="portal-drawer-section"><h3>ATR One</h3>';
+    if (!mem) {
+      html += '<p class="cust-prof-mem"><span class="mem-dot mem-dot-off"></span> ATR One: Not a member</p>';
+    } else {
+      var memActive = mem.status === 'active';
+      var memTier = ATRONE_TIERS[mem.tier] || null;
+      html += '<p class="cust-prof-mem"><span class="mem-dot ' + (memActive ? 'mem-dot-on' : 'mem-dot-off') + '"></span> ' +
+        '<strong>ATR One ' + esc(atroneTierName(mem.tier)) + '</strong>' +
+        (memTier ? ' · ' + esc(fmtMoney(memTier.price)) + '/mo' : '') +
+        ' · ' + (memActive ? 'Active' : 'Not active') + '</p>' +
+        '<p class="portal-muted portal-small">Member since ' + esc(fmtJobDate(mem.started_on) || fmtDate(mem.started_on)) +
+        (mem.cancelled_on ? ' · Cancelled ' + esc(fmtJobDate(mem.cancelled_on) || fmtDate(mem.cancelled_on)) : '') +
+        (mem.note ? ' · ' + esc(mem.note) : '') + '</p>';
+    }
+    html += '</div>';
 
     /* Austin's language rule: this total is "Repair investments" —
      * the word for what a customer puts into ATRG is "invested". */
@@ -4850,22 +4989,80 @@ function loadTicketThread(client, ticketId) {
       }).join('') + '</div>';
     }
 
-    html += '<div class="portal-drawer-section"><h3>' + (owner ? 'Edit contact info' : 'Suggest a change') + '</h3>' +
+    /* PORTAL_TIER_SET_FINISH_2026_11_02: the edit form sits behind
+     * an "Edit details" button (the RepairQ pattern — the ticket
+     * drawer's card says "View details", and inside the details
+     * there is an "Edit details" button). One form carries contact
+     * info, the birthday (folded in here — no separate birthday
+     * editor), and the ATR One membership controls. */
+    html += '<div class="portal-drawer-section">' +
+      '<p style="margin:0"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="cust-prof-edit-btn"><i class="fas fa-pen"></i> Edit details</button></p>' +
+      '<div id="cust-prof-edit-form" hidden>' +
+      '<h3>' + (owner ? 'Edit contact info' : 'Suggest a change') + '</h3>' +
       CUST_EDIT_FIELDS.map(function (f) {
         return '<div class="portal-field"><label for="cust-prof-' + f.key + '">' + esc(f.label) + '</label>' +
           '<input type="' + f.type + '" id="cust-prof-' + f.key + '" value="' + esc(cust[f.key] || '') + '" /></div>';
       }).join('') +
+      '<div class="portal-field"><label>Birthday (month and day only)</label><div>' + bdaySelects(cust) + '</div></div>' +
+      '<div class="portal-field"><label for="cust-prof-mem">ATR One member</label>' +
+      '<select id="cust-prof-mem"><option value="no">No</option><option value="yes">Yes</option></select></div>' +
+      '<div class="portal-field"><label for="cust-prof-mem-tier">ATR One tier</label>' +
+      '<select id="cust-prof-mem-tier">' +
+      Object.keys(ATRONE_TIERS).map(function (k) {
+        var tr = ATRONE_TIERS[k];
+        return '<option value="' + k + '">' + esc(tr.name) + ' — ' + esc(fmtMoney(tr.price)) + '/mo</option>';
+      }).join('') +
+      '</select></div>' +
       '<p><button class="portal-btn" type="button" data-cust-edit-save="' + esc(cust.id) + '">' +
       (owner ? 'Save changes' : 'Submit changes for approval') + '</button> ' +
       '<span class="portal-muted portal-small" id="cust-prof-edit-msg">' + esc(custProfileNotice) + '</span></p>' +
       '<p class="portal-muted portal-small">' + (owner
         ? 'You are signed in as the owner — changes save straight to the customer record.'
         : 'Associates cannot change a customer record directly. Your changes go to the owner, and the record only updates after he approves them.') + '</p>' +
-      '</div>';
+      '</div></div>';
     custProfileNotice = '';
     body.innerHTML = html;
+
+    /* Wire the Edit details toggle and preset the membership
+     * controls from the loaded membership row. */
+    var editBtn = $('cust-prof-edit-btn'), editBox = $('cust-prof-edit-form');
+    if (editBtn && editBox) {
+      editBtn.addEventListener('click', function () {
+        editBox.hidden = !editBox.hidden;
+        editBtn.innerHTML = editBox.hidden
+          ? '<i class="fas fa-pen"></i> Edit details'
+          : '<i class="fas fa-chevron-up"></i> Hide edit form';
+      });
+    }
+    var memSel = $('cust-prof-mem'), memTierSel = $('cust-prof-mem-tier');
+    if (memSel && memTierSel) {
+      memSel.value = (mem && mem.status === 'active') ? 'yes' : 'no';
+      memTierSel.value = mem ? mem.tier : 'single';
+      memTierSel.disabled = memSel.value !== 'yes';
+      memSel.addEventListener('change', function () {
+        memTierSel.disabled = memSel.value !== 'yes';
+      });
+    }
   }
 
+  /* PORTAL_TIER_SET_FINISH_2026_11_02: saveCustomerEdit now covers
+   * the whole Edit details form in one save — contact fields, the
+   * birthday (folded into this form; month/day only, stored as
+   * 'MM-DD' exactly like the old card editor stored it), and the
+   * ATR One membership controls, which write the SAME
+   * customer_memberships record the Members panel edits.
+   *   - OWNER: contact + birthday write straight to the customers
+   *     row; membership writes straight to customer_memberships
+   *     (insert when there is no row, reactivate/update the latest
+   *     row when there is one, cancel it when Member = No).
+   *   - ASSOCIATE: nothing is written directly. Contact + birthday
+   *     changes file as one customer_edit_requests row (the standing
+   *     payload); a membership change files as its OWN row carrying
+   *     the members build's _kind='membership' payload, so the
+   *     owner's approval applies it to customer_memberships.
+   * A membership recorded from the profile carries no ticket, so —
+   * unlike the ticket drawer's signup — no signup charge line is
+   * filed here; the record is the membership itself. */
   function saveCustomerEdit(customerId) {
     var msg = $('cust-prof-edit-msg');
     var cust = custProfileCurrent;
@@ -4877,42 +5074,121 @@ function loadTicketThread(client, ticketId) {
       var v = trim(el.value);
       if (v !== trim(cust[f.key])) changes[f.key] = v;
     });
-    if (!Object.keys(changes).length) { if (msg) msg.textContent = 'No changes to save.'; return; }
+    /* Birthday from this form's month/day selects. */
+    var mo = document.querySelector('[data-bday-month="' + customerId + '"]');
+    var dy = document.querySelector('[data-bday-day="' + customerId + '"]');
+    if (mo && dy) {
+      var newBday = (mo.value && dy.value) ? (mo.value + '-' + dy.value) : null;
+      var curBday = bdayMonthDay(cust.birthday) || null;
+      if (newBday !== curBday) changes.birthday = newBday;
+    }
+    /* Membership intent from the Yes/No + tier controls. */
+    var memSel = $('cust-prof-mem'), memTierSel = $('cust-prof-mem-tier');
+    var wantMember = !!(memSel && memSel.value === 'yes');
+    var wantTier = memTierSel ? memTierSel.value : 'single';
+    var mem = custProfileMembership;
+    var activeRow = (mem && mem.status === 'active') ? mem : null;
+    var memChange = null; /* { create:true, tier } or { create:false, patch } */
+    if (wantMember) {
+      if (activeRow) {
+        if (activeRow.tier !== wantTier) memChange = { create: false, patch: { tier: wantTier } };
+      } else if (mem) {
+        memChange = { create: false, patch: { status: 'active', cancelled_on: null, tier: wantTier } };
+      } else {
+        memChange = { create: true, tier: wantTier };
+      }
+    } else if (activeRow) {
+      memChange = { create: false, patch: { status: 'cancelled', cancelled_on: todayDateOnly() } };
+    }
+    var hasContact = Object.keys(changes).length > 0;
+    if (!hasContact && !memChange) { if (msg) msg.textContent = 'No changes to save.'; return; }
     if (changes.name !== undefined && !changes.name) { if (msg) msg.textContent = 'Name cannot be empty.'; return; }
     if (changes.email !== undefined && !changes.email) { if (msg) msg.textContent = 'Email cannot be empty.'; return; }
-    if (msg) msg.textContent = isPortalOwner() ? 'Saving…' : 'Submitting…';
+    if (msg) msg.textContent = isPortalOwner() ? 'Saving\u2026' : 'Submitting\u2026';
     withClient(function (client) {
       if (!client) { if (msg) msg.textContent = 'No connection.'; return; }
       if (isPortalOwner()) {
-        /* Owner: straight to the customers row. */
-        client.from('customers').update(changes).eq('id', customerId)
-          .then(function (res) {
-            if (res.error) { if (msg) msg.textContent = 'Couldn’t save — that email may already be on another customer.'; return; }
-            Object.keys(changes).forEach(function (k) { cust[k] = changes[k]; });
-            var row = custRowById(customerId);
-            if (row) Object.keys(changes).forEach(function (k) { row[k] = changes[k]; });
-            custProfileNotice = 'Saved.';
-            openCustomerProfile(customerId);
-            applyCustomerSearch();
-          })
-          .catch(function () { if (msg) msg.textContent = 'Couldn’t save — try again.'; });
+        /* Owner: straight to the rows. */
+        var chain = Promise.resolve();
+        if (hasContact) {
+          chain = chain.then(function () {
+            return client.from('customers').update(changes).eq('id', customerId).then(function (res) {
+              if (res.error) throw new Error('contact');
+            });
+          });
+        }
+        if (memChange) {
+          chain = chain.then(function () {
+            var op = memChange.create
+              ? client.from('customer_memberships').insert({
+                  customer_id: customerId, tier: memChange.tier, status: 'active',
+                  started_on: todayDateOnly(), note: null
+                })
+              : client.from('customer_memberships').update(memChange.patch).eq('id', mem.id);
+            return op.then(function (res) { if (res.error) throw new Error('membership'); });
+          });
+        }
+        chain.then(function () {
+          Object.keys(changes).forEach(function (k) { cust[k] = changes[k]; });
+          var row = custRowById(customerId);
+          if (row) Object.keys(changes).forEach(function (k) { row[k] = changes[k]; });
+          custProfileNotice = 'Saved.';
+          if (memChange) loadAtrOneMembers(true);
+          openCustomerProfile(customerId);
+          applyCustomerSearch();
+        }).catch(function () {
+          if (msg) msg.textContent = 'Couldn\u2019t save \u2014 that email may already be on another customer, or the membership table is not set up yet.';
+        });
         return;
       }
-      /* Associate: file a change request. The customers row is NOT
-       * touched — it changes only when the owner approves. */
-      client.from('customer_edit_requests').insert({
-        customer_id: customerId, submitted_by: state.user.id,
-        changes: changes, status: 'pending'
-      })
-        .then(function (res) {
-          if (res.error) { if (msg) msg.textContent = 'Couldn’t submit — change requests are not set up yet.'; return; }
-          custProfileNotice = 'Submitted for approval. The record has not changed yet.';
-          loadCustEditRequests(function () {
-            openCustomerProfile(customerId);
-            renderCustEditPanel();
+      /* Associate: file requests. The records are NOT touched \u2014
+       * they change only when the owner approves in Requests. */
+      var inserts = [];
+      if (hasContact) {
+        inserts.push(function () {
+          return client.from('customer_edit_requests').insert({
+            customer_id: customerId, submitted_by: state.user.id,
+            changes: changes, status: 'pending'
           });
-        })
-        .catch(function () { if (msg) msg.textContent = 'Couldn’t submit — try again.'; });
+        });
+      }
+      if (memChange) {
+        inserts.push(function () {
+          var payload;
+          if (memChange.create) {
+            payload = {
+              _kind: 'membership', membership_id: null, _create: true,
+              _member_name: cust.name || 'Customer',
+              status: 'active', cancelled_on: null, tier: memChange.tier
+            };
+          } else {
+            payload = {
+              _kind: 'membership', membership_id: mem.id,
+              _member_name: cust.name || 'Customer'
+            };
+            ['status', 'cancelled_on', 'tier'].forEach(function (k) {
+              if (Object.prototype.hasOwnProperty.call(memChange.patch, k)) payload[k] = memChange.patch[k];
+            });
+          }
+          return client.from('customer_edit_requests').insert({
+            customer_id: customerId, submitted_by: state.user.id,
+            changes: payload, status: 'pending'
+          });
+        });
+      }
+      var seq = Promise.resolve();
+      inserts.forEach(function (fn) {
+        seq = seq.then(fn).then(function (res) { if (res.error) throw new Error('insert'); });
+      });
+      seq.then(function () {
+        custProfileNotice = 'Submitted for approval. The record has not changed yet.';
+        loadCustEditRequests(function () {
+          openCustomerProfile(customerId);
+          renderCustEditPanel();
+        });
+      }).catch(function () {
+        if (msg) msg.textContent = 'Couldn\u2019t submit \u2014 change requests are not set up yet.';
+      });
     });
   }
 
@@ -4951,6 +5227,47 @@ function loadTicketThread(client, ticketId) {
         });
       }
       if (!approve) { stamp('rejected', finish); return; }
+      /* PORTAL_TIER_SET_FINISH_2026_11_02: approving a MEMBERSHIP
+       * request (the members build's _kind payload — membership
+       * changes from the Members panel AND from the customer
+       * profile ride this queue) applies its payload to
+       * customer_memberships, never to customers. _create files a
+       * brand-new membership row for the customer; otherwise the
+       * payload patches the membership it names. */
+      if (req.changes && req.changes._kind === 'membership') {
+        var mc = req.changes;
+        function memApplied() {
+          stamp('approved', function () {
+            finish();
+            loadAtrOneMembers(true);
+          });
+        }
+        function memFailed() {
+          renderCustEditPanel('Could not apply that membership change. The request is still waiting.');
+        }
+        if (mc._create) {
+          if (!mc.tier) { renderCustEditPanel('That membership request is missing its tier — it is still waiting.'); return; }
+          client.from('customer_memberships').insert({
+            customer_id: req.customer_id, tier: mc.tier, status: 'active',
+            started_on: todayDateOnly(), note: null
+          }).then(function (res) { if (res.error) { memFailed(); return; } memApplied(); })
+            .catch(memFailed);
+          return;
+        }
+        var mid = mc.membership_id;
+        var mupd = {};
+        ['status', 'cancelled_on', 'tier'].forEach(function (k) {
+          if (Object.prototype.hasOwnProperty.call(mc, k)) mupd[k] = mc[k];
+        });
+        if (!mid || !Object.keys(mupd).length) {
+          renderCustEditPanel('That membership request is missing its membership — it is still waiting.');
+          return;
+        }
+        client.from('customer_memberships').update(mupd).eq('id', mid)
+          .then(function (res) { if (res.error) { memFailed(); return; } memApplied(); })
+          .catch(memFailed);
+        return;
+      }
       /* Approve: apply the stored changes FIRST; only a successful
        * apply gets stamped approved. A failed apply (e.g. the new
        * email already belongs to another customer) leaves the
@@ -5202,8 +5519,6 @@ function loadTicketThread(client, ticketId) {
           if (aid) { openApplication(aid); return; }
           var iid = t.getAttribute('data-view-investor');
           if (iid) { openInvestor(iid); return; }
-          var bid = t.getAttribute('data-bday-save');
-          if (bid) { saveBirthday(bid); return; }
           var del = t.getAttribute('data-cust-delete');
           if (del) { deleteCustomer(del); return; }
           /* PORTAL_CUSTOMER_PROFILE_2026_11_02: customer profile + edit-approval actions (cards, drawer profile, approvals section). */
@@ -5543,6 +5858,12 @@ function loadTicketThread(client, ticketId) {
 
   /* ================= CHECK-IN / TRIAGE ================= */
   var ciCustomerId = null, ciCustomersCache = null;
+  /* PORTAL_ATRONE_PER_TIER_2026_11_02: the tier picked at check-in
+   * — set when a Square tier card in the signup box is tapped (each
+   * card's plan link identifies its tier), read at submit so the
+   * agreement attached to the new ticket is that tier's agreement.
+   * Null when no card was tapped: then no agreement is attached. */
+  var ciAtroneTier = null;
   function loadCheckinCustomers() {
     withClient(function (client) {
       if (!client) return;
@@ -5580,6 +5901,22 @@ function loadTicketThread(client, ticketId) {
         if (box) box.hidden = atrSel.value !== 'signup';
       });
     }
+    /* PORTAL_ATRONE_PER_TIER_2026_11_02: tapping a tier card in the
+     * signup box records the tier — each card links to its own
+     * Square plan, and the plan link identifies the tier. */
+    var ciSignupBox = $('ci-atrone-signup');
+    if (ciSignupBox && !ciSignupBox.getAttribute('data-wired')) {
+      ciSignupBox.setAttribute('data-wired', '1');
+      ciSignupBox.querySelectorAll('a').forEach(function (a) {
+        a.addEventListener('click', function () {
+          var href = a.getAttribute('href') || '';
+          if (href.indexOf('eFKxDvyo') !== -1) ciAtroneTier = 'single';
+          else if (href.indexOf('ZA7502vD') !== -1) ciAtroneTier = 'family';
+          else if (href.indexOf('HtnQBIG1') !== -1) ciAtroneTier = 'business_plus';
+          else if (href.indexOf('V8WCkjbW') !== -1) ciAtroneTier = 'business_pro';
+        });
+      });
+    }
     /* PORTAL_ISSUE_TILES_2026_10_30: issue picker tiles toggle .on */
     document.querySelectorAll('#ci-reasons .ci-tile').forEach(function (tile) {
       tile.addEventListener('click', function () {
@@ -5613,6 +5950,7 @@ function loadTicketThread(client, ticketId) {
     function ciResetForm() {
       $('ci-form').reset();
       ciCustomerId = null;
+      ciAtroneTier = null;
       document.querySelectorAll('#ci-reasons .ci-tile.on').forEach(function (c) { c.classList.remove('on'); c.setAttribute('aria-pressed', 'false'); });
       var res = $('ci-results'); if (res) res.innerHTML = '';
       var err = $('ci-error'); if (err) { err.textContent = ''; err.hidden = true; }
@@ -5675,6 +6013,7 @@ function loadTicketThread(client, ticketId) {
       /* PORTAL_ATRONE_DOC_2026_11_02: captured before the insert —
        * the form (and this select) is reset once the ticket exists. */
       var wantsAtrOneSignup = $('ci-atrone') ? $('ci-atrone').value === 'signup' : false;
+      var signupTier = wantsAtrOneSignup ? ciAtroneTier : null;
       withClient(function (client) {
         if (!client) { btn.disabled = false; return; }
         client.from('tickets').insert(row).select('id').single().then(function (res) {
@@ -5682,7 +6021,7 @@ function loadTicketThread(client, ticketId) {
           var newId = res.data && res.data.id;
           var proceed = function (consentFailed, atroneAttachFailed) {
             btn.disabled = false;
-            $('ci-form').reset(); ciCustomerId = null;
+            $('ci-form').reset(); ciCustomerId = null; ciAtroneTier = null;
             document.querySelectorAll('#ci-reasons .ci-tile.on').forEach(function (c) { c.classList.remove('on'); c.setAttribute('aria-pressed', 'false'); });
             ciConsentReset();
             state.loaded.tickets = false;
@@ -5696,16 +6035,18 @@ function loadTicketThread(client, ticketId) {
            * form files itself on the new ticket, in the drawer flow's
            * order (create ticket → upload + file → set flags);
            * no consent → the ticket is created exactly as before. */
-          /* PORTAL_ATRONE_DOC_2026_11_02: a wants-signup check-in gets
-           * the membership agreement filed on the new ticket right
-           * after creation — after any check-in consent, the drawer
-           * flow's order (create ticket → file documents) — so the
-           * agreement is on the ticket for the customer to view and
-           * sign; staff never fetch it from Documents by hand. Every
-           * other check-in follows the exact path it always has. */
+          /* PORTAL_ATRONE_PER_TIER_2026_11_02: a wants-signup
+           * check-in gets the agreement for the tier picked at
+           * check-in filed on the new ticket right after creation
+           * — after any check-in consent, the drawer flow's order
+           * (create ticket → file documents) — so the agreement
+           * is on the ticket for the customer to view and sign;
+           * staff never fetch it from Documents by hand. No tier
+           * picked → nothing attached, never a guess. Every other
+           * check-in follows the exact path it always has. */
           var afterConsent = function (consentFailed) {
             if (wantsAtrOneSignup && newId) {
-              attachAtrOneAgreementAtCheckin(client, newId, row, function (attachErr) { proceed(consentFailed, !!attachErr); });
+              attachAtrOneAgreementAtCheckin(client, newId, row, function (attachErr) { proceed(consentFailed, !!attachErr); }, signupTier);
             } else {
               proceed(consentFailed, false);
             }

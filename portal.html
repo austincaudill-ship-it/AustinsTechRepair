@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Employee Portal | Austin's Tech Repair Group</title>
+  <title>Associate Hub | Austin's Tech Repair Group</title>
   <meta name="description" content="Staff-only operations portal for Austin's Tech Repair Group: tickets, job applications, investors, feedback, customers, inventory, new hires." />
   <meta name="robots" content="noindex, nofollow" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
@@ -35,7 +35,7 @@
   <header class="portal-topbar">
     <div class="portal-topbar-inner">
       <span class="portal-brand"><i class="fas fa-screwdriver-wrench"></i> Austin's Tech Repair Group</span>
-      <span class="portal-topbar-tag">Employee Portal</span> <a class="portal-btn portal-btn-outline" href="https://austinstechrepairgroup.com/">Back to site</a>
+      <span class="portal-topbar-tag">Associate Hub</span> <a class="portal-btn portal-btn-outline" href="https://austinstechrepairgroup.com/">Back to site</a>
     </div>
   </header>
 
@@ -46,7 +46,7 @@
     <section id="portal-login-view" class="portal-login-wrap">
       <div class="portal-login-card">
         <p class="portal-eyebrow">Staff only</p>
-        <h1 class="portal-h1"><i class="fas fa-id-badge"></i> Employee Login</h1>
+        <h1 class="portal-h1"><i class="fas fa-id-badge"></i> Associate Hub</h1>
         <p class="portal-muted">Sign in with your employee email and password. This area is
           for Austin's Tech Repair Group staff only — customers can't see anything here.</p>
 
@@ -103,8 +103,8 @@
     <section id="portal-dash-view" hidden>
       <div class="portal-dash-head">
         <div>
-          <p class="portal-eyebrow">Operations Hub</p>
-          <h1 class="portal-h1"><i class="fas fa-briefcase"></i> Employee Portal</h1>
+          <p class="portal-eyebrow">Austin's Tech Repair Group</p>
+          <h1 class="portal-h1"><i class="fas fa-briefcase"></i> Associate Hub</h1>
           <p class="portal-muted portal-dash-sub"><span id="portal-greeting">Welcome back</span>, <span id="portal-emp-name">teammate</span>
             <span class="portal-badge portal-badge-role" id="portal-emp-role"></span></p>
           <p class="portal-clock-line"><i class="far fa-clock"></i> <span id="portal-clock"></span> &middot; <span id="portal-date"></span></p>
@@ -211,6 +211,7 @@
               <option value="Awaiting Diagnostics">Awaiting Diagnostics</option>
               <option value="Awaiting Customer Response">Awaiting Customer Response</option>
               <option value="Awaiting Parts">Awaiting Parts</option>
+              <option value="Awaiting Repair">Awaiting Repair</option>
               <option value="En Route to Customer">En Route to Customer</option>
               <option value="In Progress">In Progress</option>
               <option value="Quality Control">Quality Control</option>
@@ -651,10 +652,10 @@
           <div id="ci-atrone-signup" hidden>
             <p class="portal-muted portal-small">Internal signup &mdash; use these links to sign the customer up on the spot, same signup links as the Square &amp; ATR One panel.</p>
             <div class="link-grid">
-              <a class="link-card" href="https://square.link/u/eFKxDvyo" target="_blank" rel="noopener"><i class="fas fa-user"></i><strong>ATR One &mdash; Single</strong><span>$9.99/mo signup link</span></a>
+              <a class="link-card" href="https://square.link/u/eFKxDvyo" target="_blank" rel="noopener"><i class="fas fa-user"></i><strong>ATR One &mdash; Individual</strong><span>$9.99/mo signup link</span></a>
               <a class="link-card" href="https://square.link/u/ZA7502vD" target="_blank" rel="noopener"><i class="fas fa-users"></i><strong>ATR One &mdash; Family</strong><span>$19.99/mo signup link</span></a>
-              <a class="link-card" href="https://square.link/u/HtnQBIG1" target="_blank" rel="noopener"><i class="fas fa-briefcase"></i><strong>ATR One &mdash; Business Plus</strong><span>$39.99/mo signup link</span></a>
-              <a class="link-card" href="https://square.link/u/V8WCkjbW" target="_blank" rel="noopener"><i class="fas fa-building"></i><strong>ATR One &mdash; Business Pro</strong><span>$49.99/mo signup link</span></a>
+              <a class="link-card" href="https://square.link/u/HtnQBIG1" target="_blank" rel="noopener"><i class="fas fa-briefcase"></i><strong>ATR One &mdash; Business</strong><span>$49.99/mo signup link</span></a>
+              <a class="link-card" href="https://square.link/u/V8WCkjbW" target="_blank" rel="noopener"><i class="fas fa-building"></i><strong>ATR One &mdash; Business Pro</strong><span>$99.99/mo signup link</span></a>
             </div>
           </div>
           <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Device</h3></div>
@@ -781,11 +782,12 @@
         <p class="portal-muted portal-small">Ticket checkout is built into every ticket (open one &rarr; Payment &rarr; Charge / Check out). These are the quick doors:</p>
         <div class="link-grid">
           <a class="link-card" href="https://squareup.com/dashboard" target="_blank" rel="noopener"><i class="fas fa-square"></i><strong>Square Dashboard</strong><span>Sales, payouts, settings</span></a>
-          <a class="link-card" href="https://austinstechrepairgroup.com" target="_blank" rel="noopener"><i class="fas fa-store"></i><strong>Website Shop</strong><span>Accessories storefront</span></a>
-          <a class="link-card" href="https://square.link/u/eFKxDvyo" target="_blank" rel="noopener"><i class="fas fa-user"></i><strong>ATR One &mdash; Single</strong><span>$9.99/mo signup link</span></a>
+          <!-- PORTAL_SHOP_LINK_2026_11_02: this card pointed at the bare home page, so it felt dead (Austin, Nov 2, 2026). It now lands on the shop page itself, same new-tab behavior as its sibling cards. -->
+          <a class="link-card" href="https://austinstechrepairgroup.com/#shop" target="_blank" rel="noopener"><i class="fas fa-store"></i><strong>Website Shop</strong><span>Accessories storefront</span></a>
+          <a class="link-card" href="https://square.link/u/eFKxDvyo" target="_blank" rel="noopener"><i class="fas fa-user"></i><strong>ATR One &mdash; Individual</strong><span>$9.99/mo signup link</span></a>
           <a class="link-card" href="https://square.link/u/ZA7502vD" target="_blank" rel="noopener"><i class="fas fa-users"></i><strong>ATR One &mdash; Family</strong><span>$19.99/mo signup link</span></a>
-          <a class="link-card" href="https://square.link/u/HtnQBIG1" target="_blank" rel="noopener"><i class="fas fa-briefcase"></i><strong>ATR One &mdash; Business Plus</strong><span>$39.99/mo signup link</span></a>
-          <a class="link-card" href="https://square.link/u/V8WCkjbW" target="_blank" rel="noopener"><i class="fas fa-building"></i><strong>ATR One &mdash; Business Pro</strong><span>$49.99/mo signup link</span></a>
+          <a class="link-card" href="https://square.link/u/HtnQBIG1" target="_blank" rel="noopener"><i class="fas fa-briefcase"></i><strong>ATR One &mdash; Business</strong><span>$49.99/mo signup link</span></a>
+          <a class="link-card" href="https://square.link/u/V8WCkjbW" target="_blank" rel="noopener"><i class="fas fa-building"></i><strong>ATR One &mdash; Business Pro</strong><span>$99.99/mo signup link</span></a>
         </div>
       </div>
 
@@ -2358,7 +2360,7 @@
       ['Photos and media', 'Never photograph inside a customer\u2019s home without that customer\u2019s signed media release first. No exceptions.'],
       ['Customer privacy', 'Customer information, customer documents, and device data stay in the portal. Do not copy, share, or use them outside the job they belong to.'],
       ['What we repair', 'We repair consumer and business electronics \u2014 phones, tablets, computers, game consoles, smartwatches, and similar devices. We do not work on medical devices or equipment. Ever.'],
-      ['Pay', 'Pay is sent by direct deposit. Your signed Direct Deposit Authorization must be on file before your first deposit.'],
+      ['Pay', 'Associates are paid weekly. Pay is sent by direct deposit. Your signed Direct Deposit Authorization must be on file before your first deposit.'],
       ['Time clock', 'Clock in and out on the portal time clock at the start and end of every shift.'],
       ['Tools and parts', 'Order parts only through ATRG\u2019s channels. The order number and the tracking link for every part go on the customer\u2019s ticket. Take care of the tools, and speak up right away if a tool is damaged or a part arrives wrong.'],
       ['Safety', 'Turn devices off and unplug them before opening them. Treat swollen batteries and cracked glass with care. If a job cannot be done safely, stop and contact Austin \u2014 no repair is worth an injury.']
@@ -2420,9 +2422,13 @@
      * same fields, employee + owner signature pads, same
      * wireFormSave / fileFormRecord pipeline, kind
      * 'atr_one_employee'. Canonical text:
-     * atr-one-employee-agreement.txt in this build folder. */
+     * atr-one-employee-agreement.txt in this build folder.
+     * PORTAL_ATRONE_TIERS_2026_11_02: AO_GET now names the tier —
+     * employees receive ATR One Business Pro, free — with the
+     * Business Pro numbers (50% off repairs, 65% off accessories),
+     * per Austin's tier dictation, Nov 2, 2026. AO_RULES untouched. */
     var AO_PARTIES = 'This agreement is between Austin\u2019s Tech Repair Group (ATRG), a sole proprietorship in Spring Valley, Ohio, and the employee named below.';
-    var AO_GET = 'As an ATRG employee, you get an ATR One membership provided by the company at no charge to you while you are an employee. On your own devices, you get: 20% off repairs; 25% off accessories; parts at wholesale cost, with no markup; no $35 house-call fee and free diagnostics on covered devices; free priority shipping on parts; and priority in the queue.';
+    var AO_GET = 'As an ATRG employee, you get an ATR One Business Pro membership \u2014 the Business Pro plan \u2014 provided by the company free, at no charge to you, while you are an employee. On your own devices, you get the Business Pro benefits: 50% off repairs; 65% off accessories; parts at wholesale cost, with no markup; no $35 house-call fee and free diagnostics on covered devices; free priority shipping on parts; and priority in the queue.';
     var AO_RULES = 'Your membership is for you only \u2014 you, the employee. You will not misuse the membership. You will not share it with anyone else \u2014 it is not to be shared. You will not show, present, or lend your membership in any way so that someone who is not an employee gets member pricing or member benefits, and you will not give it to anyone \u2014 it is not to be given away. The membership is not transferable \u2014 you cannot pass it to another person. The membership is not sellable \u2014 you cannot sell it or trade it for anything.';
     var AO_END = 'The membership is a benefit of working at ATRG. It starts when the company sets it up for you and ends when your employment with ATRG ends. If you misuse the membership or break the rules in this agreement, the company can end your membership.';
     function openAtrOneEmployeeForm() {
