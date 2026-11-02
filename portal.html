@@ -132,6 +132,8 @@
       </div>
 
       <nav class="portal-tabs" id="portal-nav" role="tablist" aria-label="Portal sections">
+        <!-- PORTAL_ACTION_BUTTON_LABEL_2026_11_02 (Austin, Nov 2, 2026): he named the sidebar buttons "action buttons"; this label sits at the top of the sidebar above every group, styled by the same .portal-nav-group rule as Work / Parts & Tools / Team / Admin. -->
+        <div class="portal-nav-group">Action Button</div>
         <div class="portal-nav-group">Work</div>
         <button class="portal-tab" id="portal-tab-checkin" type="button" role="tab" data-tab="checkin">
           <i class="fas fa-clipboard-check"></i> Check-In
@@ -501,32 +503,7 @@
           <span style="display:inline-flex;gap:0.4rem;flex-wrap:wrap;"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-view="handbook"><i class="fas fa-eye"></i> View</button><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-print="handbook"><i class="fas fa-print"></i> Print</button><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-td-attach="handbook"><i class="fas fa-paperclip"></i> Attach to a hire</button></span>
         </div>
       </div>
-    </section>
-  </main>
-
-  <!-- ==================== DETAIL DRAWER ==================== -->
-  <!-- PORTAL_GV_TEXTS_2026_11_02: the ticket drawer's Message customer
-       block gains an "Also text this to the customer" option, rendered
-       by portal.js (the drawer body is built there, so this file's only
-       change is this marker). Sends queue in public.outbound_texts and
-       go out from the business Google Voice number via the relay —
-       see portal.js, outbound_texts.sql, RELAY.md, CHANGES.md in
-       portal-gv-texts-2026-11-02/. -->
-  <div class="portal-drawer-overlay" id="portal-drawer-overlay" hidden></div>
-  <aside class="portal-drawer" id="portal-drawer" aria-hidden="true" aria-label="Record details">
-    <div class="portal-drawer-head">
-      <h2 class="portal-h2" id="portal-drawer-title">Details</h2>
-      <button class="portal-drawer-close" id="portal-drawer-close" type="button" aria-label="Close details">
-        <i class="fas fa-times"></i>
-      </button>
-    </div>
-    <div class="portal-drawer-body" id="portal-drawer-body">
-      <p class="portal-muted">Loading&hellip;</p>
-    </div>
-  </aside>
-
-
-      <!-- GUIDES -->
+    <!-- PORTAL_PANEL_PLACEMENT_2026_11_02: the Guides, Check-In, Time Clock, Tools & Links, Price Book, Square & ATR One, Financials, and Requests panels used to sit AFTER this section, as direct children of <body>, so the dashboard grid never placed them and they rendered full-width below the sidebar. They are relocated inside #portal-dash-view here so every panel takes the content column next to the sidebar. -->
       <div class="portal-panel" id="portal-panel-guides" role="tabpanel" hidden>
         <div class="portal-panel-head">
           <h2 class="portal-h2">Repair Guides &amp; How-Tos</h2>
@@ -848,6 +825,33 @@
           </button>
         </form>
       </div>
+    </section>
+  </main>
+
+  <!-- ==================== DETAIL DRAWER ==================== -->
+  <!-- PORTAL_GV_TEXTS_2026_11_02: the ticket drawer's Message customer
+       block gains an "Also text this to the customer" option, rendered
+       by portal.js (the drawer body is built there, so this file's only
+       change is this marker). Sends queue in public.outbound_texts and
+       go out from the business Google Voice number via the relay —
+       see portal.js, outbound_texts.sql, RELAY.md, CHANGES.md in
+       portal-gv-texts-2026-11-02/. -->
+  <div class="portal-drawer-overlay" id="portal-drawer-overlay" hidden></div>
+  <aside class="portal-drawer" id="portal-drawer" aria-hidden="true" aria-label="Record details">
+    <div class="portal-drawer-head">
+      <h2 class="portal-h2" id="portal-drawer-title">Details</h2>
+      <button class="portal-drawer-close" id="portal-drawer-close" type="button" aria-label="Close details">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="portal-drawer-body" id="portal-drawer-body">
+      <p class="portal-muted">Loading&hellip;</p>
+    </div>
+  </aside>
+
+
+      <!-- GUIDES -->
+      
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>

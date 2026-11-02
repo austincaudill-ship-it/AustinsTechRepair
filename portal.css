@@ -254,7 +254,39 @@
 /* PORTAL_NAV_GROUPS_2026_10_30: group headers restyled to read as clear section labels, not faint captions (Austin could not see the grouping on his iPad) */
 .portal-nav-group{font-size:.82rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--brand-deep,#A63E06);margin:15px 6px 5px;padding-bottom:4px;border-bottom:2px solid var(--line,#e5d9c8)}
 .portal-nav-group:first-child{margin-top:0}
-@media (max-width:900px){
+/* PORTAL_PANEL_PLACEMENT_2026_11_02 (Austin, Nov 2, 2026): panels must open
+ right NEXT to the sidebar, side by side, on his iPad. Two-part fix (the
+ portal.html half relocates the eight panels that lived outside
+ #portal-dash-view back inside the grid). This CSS half: the old
+ max-width:900px block collapsed the dashboard to one column, so at iPad
+ portrait (834px) the sidebar hid behind the Menu button and every panel
+ stacked underneath it. The collapse now applies only at phone widths
+ (max-width:640px, unchanged rules). Between 641px and 900px the two-column
+ layout survives with a narrower 200px sidebar, so portrait iPad keeps the
+ panel in the content column beside the nav. The MFA banner gets the same
+ full-width span as the dash head and error row; unpinned, grid
+ auto-placement would put it in the sidebar's cell and push the nav and
+ panel out of their row. */
+#portal-dash-view #portal-mfa-banner{grid-column:1/-1}
+/* Stationary sidebar, independently scrolling columns (Austin, Nov 2,
+ 2026: "Needs to be Apple like" — on Repair Queue he can scroll the action
+ buttons and scroll the panel, each on its own, neither dragging the
+ other). The sidebar already had this shape on desktop (sticky, own
+ max-height, overflow-y auto); the old 900px collapse was what removed it
+ on iPad, and the breakpoint change above now lets it apply there. The
+ panel column gets the mirror treatment at 641px and up: sticky at the
+ same top offset, capped at the same viewport height, scrolling inside
+ itself. overscroll-behavior:contain on both columns stops a scroll
+ gesture in one column from chaining into the page or the other column.
+ Phones (640px and down) keep the single-column page scroll, unchanged. */
+@media screen and (min-width:641px){
+  #portal-dash-view .portal-panel{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow-y:auto;overscroll-behavior:contain}
+  #portal-dash-view .portal-tabs{overscroll-behavior:contain}
+}
+@media (min-width:641px) and (max-width:900px){
+  #portal-dash-view{grid-template-columns:200px 1fr}
+}
+@media (max-width:640px){
   #portal-dash-view{grid-template-columns:1fr}
   #portal-dash-view .portal-panel{grid-column:1}
   #portal-nav-toggle{display:inline-flex}
