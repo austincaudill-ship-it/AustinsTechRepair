@@ -521,6 +521,11 @@
           <div><span style="font-weight:600;">Austin&rsquo;s Tech Repair Group &mdash; Employee Handbook</span><br /><span class="portal-muted portal-small">How ATRG works &mdash; ending with a signed acknowledgment page.</span></div>
           <span style="display:inline-flex;gap:0.4rem;flex-wrap:wrap;"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-view="handbook"><i class="fas fa-eye"></i> View</button><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-print="handbook"><i class="fas fa-print"></i> Print</button><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-td-attach="handbook"><i class="fas fa-paperclip"></i> Attach to a hire</button></span>
         </div>
+        <!-- PORTAL_ATRONE_EMPDOC_2026_11_02: ATR One Employee Membership Agreement row — same View / Print / Attach to a hire mechanics as every sibling row (Austin, Nov 2, 2026: a formal Team Document employees sign, NOT a guide). -->
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:0.75rem;padding:0.55rem 0;border-bottom:1px solid #E6D9C0;">
+          <div><span style="font-weight:600;">ATR One Employee Membership Agreement</span><br /><span class="portal-muted portal-small">ATRG agreement &mdash; the free employee ATR One membership: what the employee gets, and the rules they sign to. Employees only &mdash; no sharing, not transferable, not sellable.</span></div>
+          <span style="display:inline-flex;gap:0.4rem;flex-wrap:wrap;"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-view="atr_one_employee"><i class="fas fa-eye"></i> View</button><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-print="atr_one_employee"><i class="fas fa-print"></i> Print</button><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-td-attach="atr_one_employee"><i class="fas fa-paperclip"></i> Attach to a hire</button></span>
+        </div>
       </div>
     <!-- PORTAL_PANEL_PLACEMENT_2026_11_02: the Guides, Check-In, Time Clock, Tools & Links, Price Book, Square & ATR One, Financials, and Requests panels used to sit AFTER this section, as direct children of <body>, so the dashboard grid never placed them and they rendered full-width below the sidebar. They are relocated inside #portal-dash-view here so every panel takes the content column next to the sidebar. -->
       <div class="portal-panel" id="portal-panel-guides" role="tabpanel" hidden>
@@ -1070,6 +1075,12 @@
       i9: 'Form I-9', w4: 'Form W-4', w9: 'Form W-9', ohio_it4: 'Ohio IT 4',
       direct_deposit: 'Direct Deposit Authorization', non_compete: 'Non-Compete Agreement',
       nda: 'Non-Disclosure Agreement', handbook: 'Employee Handbook',
+      /* PORTAL_ATRONE_EMPDOC_2026_11_02: registry entry for the ATR
+       * One Employee Membership Agreement — this label drives the
+       * filed record's title, the hire Documents upload type picker,
+       * and the Team Documents attach modal heading, exactly as it
+       * does for its sibling kinds. */
+      atr_one_employee: 'ATR One Employee Membership Agreement',
       id_copy: 'ID copy', certification: 'Certification',
       offer: 'Offer letter', other: 'Other document'
     };
@@ -1250,7 +1261,7 @@
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="nhd-add-btn"><i class="fas fa-upload"></i> Add document</button>' +
         '<input type="file" id="nhd-file" accept="image/*,application/pdf" hidden /></div>' +
         '<h4 style="margin:1.1rem 0 0.35rem;">Fill out a form</h4>' +
-        '<p class="portal-muted portal-small" style="margin:0 0 0.5rem;">Government forms (I-9, W-4, Ohio IT 4, W-9) open the actual official PDF &mdash; complete it, sign it, and file the completed PDF back here. Company documents (direct deposit, non-compete, NDA, handbook) are completed and signed here in the portal.</p>' +
+        '<p class="portal-muted portal-small" style="margin:0 0 0.5rem;">Government forms (I-9, W-4, Ohio IT 4, W-9) open the actual official PDF &mdash; complete it, sign it, and file the completed PDF back here. Company documents (direct deposit, non-compete, NDA, handbook, ATR One employee agreement) are completed and signed here in the portal.</p>' +
         '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">' +
         '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-nhd-form="i9">Form I-9</button>' +
         '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-nhd-form="w4">Form W-4</button>' +
@@ -1260,7 +1271,9 @@
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-nhd-form="direct_deposit">Direct Deposit</button>' +
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-nhd-form="non_compete">Non-Compete</button>' +
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-nhd-form="nda">Non-Disclosure</button>' +
-        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-nhd-form="handbook">Employee Handbook</button></div>' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-nhd-form="handbook">Employee Handbook</button>' +
+        /* PORTAL_ATRONE_EMPDOC_2026_11_02: the employee agreement joins the company-document buttons, same openHireForm path. */
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-nhd-form="atr_one_employee">ATR One Employee</button></div>' +
         '<p class="portal-error" id="nhd-msg" hidden></p>' +
         '<p class="portal-muted" id="nhd-ok" hidden></p>' +
         '<div style="display:flex;gap:0.5rem;margin-top:1rem;"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="nhd-close">Close</button></div>',
@@ -1530,6 +1543,8 @@
       else if (kind === 'non_compete') openNonCompeteForm();
       else if (kind === 'nda') openNdaForm();
       else if (kind === 'handbook') openHandbookForm();
+      /* PORTAL_ATRONE_EMPDOC_2026_11_02: route the employee agreement to its builder, same dispatch as its siblings. */
+      else if (kind === 'atr_one_employee') openAtrOneEmployeeForm();
     }
 
     /* Government forms: the hire completes the ACTUAL official PDF
@@ -2389,6 +2404,62 @@
           date: nhV(wrap, 'nhf-hb-date')
         }];
         return { kind: 'handbook', sections: sections, sigs: sigs };
+      });
+    }
+
+    /* ----- ATR One Employee Membership Agreement (ATRG company document) -----
+     * PORTAL_ATRONE_EMPDOC_2026_11_02 (Austin, Nov 2, 2026): the
+     * employee side of ATR One is a formal Team Document employees
+     * SIGN — not a guide, and never customer-facing. It tells the
+     * employee what the free membership gives them and carries
+     * Austin's restrictions as the agreement's core obligations.
+     * Built and filed through the exact NDA pattern: same modal,
+     * same fields, employee + owner signature pads, same
+     * wireFormSave / fileFormRecord pipeline, kind
+     * 'atr_one_employee'. Canonical text:
+     * atr-one-employee-agreement.txt in this build folder. */
+    var AO_PARTIES = 'This agreement is between Austin\u2019s Tech Repair Group (ATRG), a sole proprietorship in Spring Valley, Ohio, and the employee named below.';
+    var AO_GET = 'As an ATRG employee, you get an ATR One membership provided by the company at no charge to you while you are an employee. On your own devices, you get: 20% off repairs; 25% off accessories; parts at wholesale cost, with no markup; no $35 house-call fee and free diagnostics on covered devices; free priority shipping on parts; and priority in the queue.';
+    var AO_RULES = 'Your membership is for you only \u2014 you, the employee. You will not misuse the membership. You will not share it with anyone else \u2014 it is not to be shared. You will not show, present, or lend your membership in any way so that someone who is not an employee gets member pricing or member benefits, and you will not give it to anyone \u2014 it is not to be given away. The membership is not transferable \u2014 you cannot pass it to another person. The membership is not sellable \u2014 you cannot sell it or trade it for anything.';
+    var AO_END = 'The membership is a benefit of working at ATRG. It starts when the company sets it up for you and ends when your employment with ATRG ends. If you misuse the membership or break the rules in this agreement, the company can end your membership.';
+    function openAtrOneEmployeeForm() {
+      var hire = nhDocHire;
+      var body =
+        '<p class="portal-small" style="margin:0 0 0.6rem;">' + AO_PARTIES + '</p>' +
+        '<div class="portal-nh-grid">' +
+        nhF('nhf-ao-name', 'Employee full name', { req: true, val: hire.full_name || '' }) +
+        nhF('nhf-ao-date', 'Date signed', { type: 'date', req: true, val: nhToday() }) +
+        '</div>' +
+        '<h4 style="margin:0.9rem 0 0.4rem;">What you get</h4>' +
+        '<p class="portal-small" style="margin:0 0 0.5rem;">' + AO_GET + '</p>' +
+        '<h4 style="margin:0.9rem 0 0.4rem;">The rules</h4>' +
+        '<p class="portal-small" style="margin:0 0 0.5rem;">' + AO_RULES + '</p>' +
+        '<h4 style="margin:0.9rem 0 0.4rem;">When it ends</h4>' +
+        '<p class="portal-small" style="margin:0 0 0.5rem;">' + AO_END + '</p>' +
+        nhPadHtml('nhf-ao-pad-emp', 'Employee signature') +
+        nhPadHtml('nhf-ao-pad-owner', 'Owner signature \u2014 Austin Caudill, Owner');
+      var wrap = nhModal('portal-nh-form-modal', nhFormShell('ATR One Employee Membership Agreement',
+        'ATRG company agreement \u2014 not a government form. Employees only: the free employee membership is never shared, transferred, or sold. Both sign: the employee first, then Austin as owner.', body), 700);
+      var padEmp = nhWirePadIn(wrap, 'nhf-ao-pad-emp');
+      var padOwner = nhWirePadIn(wrap, 'nhf-ao-pad-owner');
+      wireFormSave(wrap, function () {
+        var miss = nhMissing(wrap, [
+          ['nhf-ao-name', 'employee name'], ['nhf-ao-date', 'date signed']
+        ]);
+        if (miss) return { error: 'Missing: ' + miss + '.' };
+        if (!padEmp.hasDrawn) return { error: 'The employee signature is required \u2014 sign in the box.' };
+        if (!padOwner.hasDrawn) return { error: 'The owner signature is required \u2014 sign in the box.' };
+        var sections = [
+          { title: 'Parties', lines: [['Employee', nhV(wrap, 'nhf-ao-name')]], text: AO_PARTIES },
+          { title: 'What you get', text: AO_GET },
+          { title: 'The rules', text: AO_RULES },
+          { title: 'When it ends', text: AO_END }
+        ];
+        var sigs = [
+          { canvas: wrap.querySelector('#nhf-ao-pad-emp'), hasDrawn: padEmp.hasDrawn, caption: 'Employee signature', name: nhV(wrap, 'nhf-ao-name'), date: nhV(wrap, 'nhf-ao-date') },
+          { canvas: wrap.querySelector('#nhf-ao-pad-owner'), hasDrawn: padOwner.hasDrawn, caption: 'Owner signature', name: 'Austin Caudill, Owner', date: nhV(wrap, 'nhf-ao-date') }
+        ];
+        return { kind: 'atr_one_employee', sections: sections, sigs: sigs };
       });
     }
 
