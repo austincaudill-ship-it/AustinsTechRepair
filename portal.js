@@ -481,25 +481,60 @@
     refreshMfaBanner();
   }
 
+  /* PORTAL_MFA_ENROLL_FIX_2026_11_02: GoTrue rejects a second factor
+   * with the same friendly name. That error means a factor already
+   * exists for this staffer — it is the already-set-up case, not a
+   * failure to report raw. */
+  function mfaDupNameError(e) {
+    var m = (e && e.message) || '';
+    return /friendly name/i.test(m) && /already exists/i.test(m);
+  }
+
+  /* PORTAL_MFA_ENROLL_FIX_2026_11_02: land a staffer who already has
+   * a verified factor back on a clean dashboard: enrollment card
+   * closed, setup prompt hidden, one plain note. */
+  function mfaAlreadySetUp() {
+    mfaState.hasFactor = true;
+    mfaState.enrollId = null;
+    hideMfaEnrollView();
+    showDashError('Your authenticator is already set up.');
+  }
+
   function startMfaEnroll(client) {
-    function startFailed(msg) {
-      showDashError('Could not start authenticator setup: ' + msg + ' Reload the page and try again.');
+    function startFailed() {
+      /* PORTAL_MFA_ENROLL_FIX_2026_11_02: any setup failure leaves a
+       * clean UI — enrollment card closed (it only ever opens after
+       * a successful enroll, below), dashboard normal, friendly text
+       * only, never the raw server message. */
+      var ev = $('portal-mfa-enroll-view'); if (ev) ev.hidden = true;
+      var lv = $('portal-login-view'); if (lv) lv.hidden = true;
+      var dv = $('portal-dash-view'); if (dv) dv.hidden = false;
+      showDashError('Could not start authenticator setup. Reload the page and try again.');
     }
-    /* Remove any half-finished (unverified) TOTP factors first, so a
-     * cancelled setup never blocks a fresh try. Best effort only. */
+    /* PORTAL_MFA_ENROLL_FIX_2026_11_02: read the factor list BEFORE
+     * enrolling. A verified TOTP factor means setup is already done;
+     * enrolling again would only hit the duplicate friendly-name
+     * error. Half-finished (unverified) factors are still removed
+     * first, as before, so a cancelled setup never blocks a retry.
+     * If the list cannot be read, fall through and try the enroll —
+     * the duplicate-name guard in the result handler still catches
+     * the already-set-up case. */
     client.auth.mfa.listFactors()
       .then(function (res) {
-        var all = (res && res.data && res.data.all) || [];
+        var data = (res && res.data) || null;
+        if (data && pickVerifiedTotp(data)) return 'already';
+        var all = (data && data.all) || [];
         var chain = Promise.resolve();
         all.forEach(function (f) {
           if (f && f.factor_type === 'totp' && f.status !== 'verified') {
             chain = chain.then(function () { return client.auth.mfa.unenroll({ factorId: f.id }); });
           }
         });
-        return chain;
+        return chain.then(function () { return 'go'; });
       })
-      .catch(function () { return null; })
-      .then(function () {
+      .catch(function () { return 'go'; })
+      .then(function (step) {
+        if (step === 'already') { mfaAlreadySetUp(); return null; }
         return client.auth.mfa.enroll({
           factorType: 'totp',
           issuer: "Austin's Tech Repair Group",
@@ -507,8 +542,10 @@
         });
       })
       .then(function (res) {
-        if (!res || res.error || !res.data || !res.data.totp) {
-          startFailed((res && res.error && res.error.message) || 'unknown error');
+        if (!res) return;
+        if (res.error || !res.data || !res.data.totp) {
+          if (mfaDupNameError(res.error)) { mfaAlreadySetUp(); return; }
+          startFailed();
           return;
         }
         mfaState.enrollId = res.data.id;
@@ -524,7 +561,8 @@
         showMfaEnrollView();
       })
       .catch(function (err2) {
-        startFailed((err2 && err2.message) || 'unknown error');
+        if (mfaDupNameError(err2)) { mfaAlreadySetUp(); return; }
+        startFailed();
       });
   }
 
@@ -550,6 +588,11 @@
         }
         mfaState.hasFactor = true;
         mfaState.enrollId = null;
+        /* PORTAL_MFA_ENROLL_FIX_2026_11_02: refresh the setup prompt
+         * the moment the first code verifies, so the banner state is
+         * already correct when the dashboard comes back — it no
+         * longer waits for Back / Cancel / a reload to catch up. */
+        refreshMfaBanner();
         var main = $('portal-mfa-enroll-main'); if (main) main.hidden = true;
         var done = $('portal-mfa-enroll-done'); if (done) done.hidden = false;
       })
@@ -562,12 +605,16 @@
   function cancelMfaEnroll(client) {
     var fid = mfaState.enrollId;
     mfaState.enrollId = null;
-    if (fid && client.auth.mfa) {
-      /* Best effort: delete the pending factor so nothing
-       * half-set-up lingers on the account. */
-      try { client.auth.mfa.unenroll({ factorId: fid }).catch(function () {}); }
-      catch (e) {}
-    }
+    /* PORTAL_MFA_ENROLL_FIX_2026_11_02: the pending factor is only
+     * unenrolled when a pending id actually exists, and closing the
+     * card is unconditional — hideMfaEnrollView runs no matter what
+     * the best-effort unenroll does, so Cancel always lands on the
+     * clean dashboard. */
+    try {
+      if (fid && client.auth.mfa) {
+        client.auth.mfa.unenroll({ factorId: fid }).catch(function () {});
+      }
+    } catch (e) {}
     hideMfaEnrollView();
   }
 

@@ -20,6 +20,14 @@
     .portal-mfa-banner { display: flex; flex-wrap: wrap; gap: 0.8rem 1.2rem; align-items: center; justify-content: space-between; background: var(--surface, #FFFDF8); border: 1px solid var(--brand, #D9540D); border-radius: 1rem; padding: 1rem 1.2rem; margin: 0 0 1rem; }
     .portal-mfa-banner-text { margin: 0; flex: 1 1 320px; }
     .portal-mfa-banner-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+    /* PORTAL_MFA_ENROLL_FIX_2026_11_02: the enroll section (via
+       .portal-login-wrap in portal.css) and this banner both carry
+       author display:flex rules, which override the browser's
+       built-in [hidden] hiding. portal.css's !important hidden fix
+       (Oct 23) covers only the login and dash views, so these two
+       MFA elements could never actually hide. Give them the same
+       treatment so their hidden attribute works. */
+    #portal-mfa-enroll-view[hidden], #portal-mfa-banner[hidden] { display: none !important; }
   </style>
 </head>
 <body class="portal-body">
