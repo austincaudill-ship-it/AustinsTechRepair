@@ -1831,3 +1831,53 @@ img.service-card-img.svc-media-contain { object-fit: contain; background: #EAE4D
   .nav-desktop { gap: 0.8rem; }
   .nav-desktop .nav-link { font-size: 0.97rem; padding: 0.55rem 0.85rem; }
 }
+
+/* ===== SITE_NAV_DRAWER_PILLS_2026_11_02 =====
+   Austin's call (Nov 2, photo of the open drawer): the slide-out menu
+   was a bare text list floating on a plain panel — "add some bubbles
+   or something to this, what can we do to make this look better."
+   The drawer links now wear the SAME rounded block treatment he
+   approved for the top nav this morning (SITE_NAV_BLOCK_BUTTONS):
+   warm surface tile, 1px line border, 999px radius, brand-soft on
+   hover, solid brand with cream text for the current page — just
+   full-width, as proper tap rows with a 10px rhythm. The panel's
+   empty bottom is put to work: under the existing .menu-footer
+   border (the divider, unchanged) sits a full-width Book a Repair
+   pill — same target and primary treatment as the header CTA — and
+   the existing phone link becomes a ghost pill row of the same
+   shape. Palette variables only, so dark mode follows like the top
+   nav tiles. Icons were deliberately skipped: the link set shares no
+   glyph language with the site's other icon rows (the header actions
+   and hero use one-off Font Awesome glyphs, the bottom nav uses a
+   labeled set for different destinations), so a per-link icon set
+   here would read as improvised; the pills are the upgrade.
+   Markup (index.html): one .menu-cta anchor added inside
+   .menu-footer; the phone link's display text becomes
+   "(937) 280-6243" and its tel: href gains +1 (same number, the
+   format the hero call button already uses). No JS hooks touched —
+   #mobile-menu, #menu-close, .menu-link and data-page all as before.
+   Nothing outside the drawer is restyled. */
+.menu-links { gap: 10px; padding-bottom: 0.5rem; }
+.menu-link {
+  display: flex; align-items: center; min-height: 52px;
+  padding: 0.8rem 1.15rem;
+  background: var(--surface-warm); border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 1.08rem; font-weight: 700; color: var(--ink);
+  transition: color var(--transition), background var(--transition), border-color var(--transition), transform var(--transition);
+}
+.menu-link:hover { background: var(--brand-soft); border-color: var(--brand); color: var(--ink); }
+.menu-link:active { transform: scale(0.98); }
+.menu-link.active { background: var(--brand); border-color: var(--brand); color: #FFF8EC; }
+.menu-link.active:hover { background: var(--brand-deep); border-color: var(--brand-deep); color: #FFF8EC; }
+.menu-cta { width: 100%; margin-bottom: 10px; }
+.menu-phone {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  min-height: 52px; padding: 0.8rem 1.15rem; margin-bottom: 10px;
+  background: transparent; border: 2px solid var(--line); border-radius: 999px;
+  font-size: 1.05rem; font-weight: 800; color: var(--ink);
+  transition: border-color var(--transition), color var(--transition), transform var(--transition);
+}
+.menu-phone:hover { border-color: var(--brand); color: var(--brand-deep); }
+.menu-phone:active { transform: scale(0.98); }
+.menu-tag { display: block; text-align: center; }
