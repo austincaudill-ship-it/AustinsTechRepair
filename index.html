@@ -194,11 +194,17 @@
       <!-- SITE_BADGE_BURST_2026_11_02: trustbar restyled as an orange
            burst band with cream pills — CSS only, see the delimited
            block at the end of styles.css. Badge texts unchanged. -->
-        <div class="trustbar-item"><i class="fas fa-shield-halved"></i> 1-Year Warranty</div>
-        <div class="trustbar-item"><i class="fas fa-bolt"></i> Same-Day Diagnostics</div>
-        <div class="trustbar-item"><i class="fas fa-truck"></i> We Come To You</div>
-        <div class="trustbar-item"><i class="fas fa-star"></i> 10+ Years Experience</div>
-        <div class="trustbar-item"><i class="fas fa-magnifying-glass"></i> Free Estimates</div>
+      <!-- SITE_TRUSTBAND_LINKS_2026_11_02: the five pills are now real
+           links (Austin: they looked clickable but went nowhere).
+           Warranty -> #warranty page, Same-Day Diagnostics and
+           We Come To You -> #repair booking flow, 10+ Years
+           Experience -> #about page, Free Estimates -> #prices page.
+           Small a.trustbar-item rule at the end of styles.css. -->
+        <a class="trustbar-item" href="#warranty" data-page="warranty"><i class="fas fa-shield-halved"></i> 1-Year Warranty</a>
+        <a class="trustbar-item" href="#repair" data-page="repair"><i class="fas fa-bolt"></i> Same-Day Diagnostics</a>
+        <a class="trustbar-item" href="#repair" data-page="repair"><i class="fas fa-truck"></i> We Come To You</a>
+        <a class="trustbar-item" href="#about" data-page="about"><i class="fas fa-star"></i> 10+ Years Experience</a>
+        <a class="trustbar-item" href="#prices" data-page="prices"><i class="fas fa-magnifying-glass"></i> Free Estimates</a>
       </div>
 
       <!-- Apple-style feature rows -->

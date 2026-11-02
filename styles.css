@@ -1955,3 +1955,17 @@ html[data-theme="dark"] .trustbar {
   .trustbar-item i { width: 1.5rem; height: 1.5rem; font-size: 0.82rem; }
   .trustbar-item:last-child { grid-column: 1 / -1; justify-self: center; }
 }
+
+/* ===== SITE_TRUSTBAND_LINKS_2026_11_02 =====
+   The trust-band pills are now real <a> links (same classes, same
+   look). Anchors pick up the browser's default underline, which the
+   div pills never had — remove it so the band looks unchanged, and
+   give keyboard focus a cream ring that stays visible on the orange
+   band in both themes (the band's own cream is #FFF8EC, the same
+   cream as its inset highlight). Hover lift already comes from the
+   burst block's .trustbar-item:hover. */
+a.trustbar-item { text-decoration: none; }
+a.trustbar-item:focus-visible {
+  outline: 2px solid #FFF8EC;
+  outline-offset: 3px;
+}
