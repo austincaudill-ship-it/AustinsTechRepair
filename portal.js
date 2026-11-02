@@ -225,7 +225,7 @@
   }
 
   /* ================= AUTH ================= */
-  var resetSuccessMessage = null; function isRecoveryHash() { var h = window.location.hash || ""; var q = window.location.search || ""; return h.indexOf("type=recovery") !== -1 || q.indexOf("type=recovery") !== -1; } function showResetView(msg) { var dv = $("portal-dash-view"); if (dv) { dv.hidden = true; } var lv = $("portal-login-view"); if (lv) { lv.hidden = false; } var rf = $("portal-login-form"); if (rf) { rf.hidden = true; } var rv = $("portal-reset-view"); if (rv) { rv.hidden = false; } var mv2 = $("portal-mfa-view"); if (mv2) { mv2.hidden = true; } /* PORTAL_MFA_2026_11_02: recovery view never shares the card with the two-step check. */ var re = $("portal-reset-error"); if (re) { if (msg) { re.textContent = msg; re.hidden = false; } else { re.hidden = true; re.textContent = ""; } } var fm2 = $("portal-forgot-msg"); if (fm2) { fm2.hidden = true; } } function initPasswordReset() { withClient(function (client) { if (!client) { return; } var fb = $("portal-forgot-btn"); if (fb) { fb.addEventListener("click", function () { var em = $("portal-login-email"); var email = em ? trim(em.value) : ""; var mg = $("portal-forgot-msg"); if (!email) { if (mg) { mg.textContent = "Enter your employee email first"; mg.hidden = false; } return; } client.auth.resetPasswordForEmail(email, { redirectTo: "https://austinstechrepairgroup.com/portal.html" }).then(function (res) { if (mg) { if (res.error) { mg.textContent = res.error.message || "Could not send the reset email. Try again."; } else { mg.textContent = "Check your email for a password reset link"; } mg.hidden = false; } }).catch(function (err) { if (mg) { mg.textContent = (err && err.message) || "Could not send the reset email. Try again."; mg.hidden = false; } }); }); } /* PORTAL_DEADEND_2026_10_30: "Back to sign in" exits the recovery view and restores the normal sign-in form. */ var bb = $("portal-reset-back-btn"); if (bb) { bb.addEventListener("click", function () { showLogin(null); }); } var rb = $("portal-reset-btn"); if (rb) { rb.addEventListener("click", function () { var pwEl = $("portal-reset-password"); var cfEl = $("portal-reset-confirm"); var er = $("portal-reset-error"); var pw = pwEl ? pwEl.value : ""; var cf = cfEl ? cfEl.value : ""; if (er) { er.hidden = true; er.textContent = ""; } if (pw !== cf) { if (er) { er.textContent = "Passwords do not match"; er.hidden = false; } return; } if (pw.length < 8) { if (er) { er.textContent = "Password must be at least 8 characters"; er.hidden = false; } return; } client.auth.updateUser({ password: pw }).then(function (res) { if (res.error) { if (er) { er.textContent = res.error.message || "Could not update the password. Try again."; er.hidden = false; } return; } var doneMsg = "Password updated. Sign in with your new password."; resetSuccessMessage = doneMsg; client.auth.signOut().then(function () { showLogin(doneMsg); }); }).catch(function (err) { if (er) { er.textContent = (err && err.message) || "Could not update the password. Try again."; er.hidden = false; } }); }); } }); } function showLogin(errorMsg) {
+  var resetSuccessMessage = null; function isRecoveryHash() { var h = window.location.hash || ""; var q = window.location.search || ""; return h.indexOf("type=recovery") !== -1 || q.indexOf("type=recovery") !== -1; } function showResetView(msg) { var dv = $("portal-dash-view"); if (dv) { dv.hidden = true; } var lv = $("portal-login-view"); if (lv) { lv.hidden = false; } var rf = $("portal-login-form"); if (rf) { rf.hidden = true; } var rv = $("portal-reset-view"); if (rv) { rv.hidden = false; } var mv2 = $("portal-mfa-view"); if (mv2) { mv2.hidden = true; } /* PORTAL_MFA_2026_11_02: recovery view never shares the card with the two-step check. */ var re = $("portal-reset-error"); if (re) { if (msg) { re.textContent = msg; re.hidden = false; } else { re.hidden = true; re.textContent = ""; } } var fm2 = $("portal-forgot-msg"); if (fm2) { fm2.hidden = true; } } function initPasswordReset() { withClient(function (client) { if (!client) { return; } var fb = $("portal-forgot-btn"); if (fb) { fb.addEventListener("click", function () { var em = $("portal-login-email"); var email = em ? trim(em.value) : ""; var mg = $("portal-forgot-msg"); if (!email) { if (mg) { mg.textContent = "Enter your employee email first"; mg.hidden = false; } return; } client.auth.resetPasswordForEmail(email, { redirectTo: "https://austinstechrepairgroup.com/portal.html" }).then(function (res) { if (mg) { if (res.error) { mg.textContent = res.error.message || "Could not send the reset email. Try again."; } else { mg.textContent = "Check your email for a password reset link"; } mg.hidden = false; } }).catch(function (err) { if (mg) { mg.textContent = (err && err.message) || "Could not send the reset email. Try again."; mg.hidden = false; } }); }); } /* PORTAL_DEADEND_2026_10_30: "Back to sign in" exits the recovery view and restores the normal sign-in form. */ var bb = $("portal-reset-back-btn"); if (bb) { bb.addEventListener("click", function () { /* PORTAL_DEVICE_TRUST_2026_11_02: during a forced 30-day rotation, Back is the only exit and it must close the session - landing on the plain form with a live session would bounce straight back to the forced step. signOut fires SIGNED_OUT, whose handler shows the sign-in form. */ if (pwGateState.forced) { pwGateState.forced = false; var _pn = $("portal-reset-note"); if (_pn) { _pn.hidden = true; } client.auth.signOut(); return; } showLogin(null); }); } var rb = $("portal-reset-btn"); if (rb) { rb.addEventListener("click", function () { var pwEl = $("portal-reset-password"); var cfEl = $("portal-reset-confirm"); var er = $("portal-reset-error"); var pw = pwEl ? pwEl.value : ""; var cf = cfEl ? cfEl.value : ""; if (er) { er.hidden = true; er.textContent = ""; } if (pw !== cf) { if (er) { er.textContent = "Passwords do not match"; er.hidden = false; } return; } if (pw.length < 8) { if (er) { er.textContent = "Password must be at least 8 characters"; er.hidden = false; } return; } client.auth.updateUser({ password: pw }).then(function (res) { if (res.error) { if (er) { er.textContent = res.error.message || "Could not update the password. Try again."; er.hidden = false; } return; } /* PORTAL_DEVICE_TRUST_2026_11_02: any successful set through this view restarts the 30-day password clock (best-effort stamp, see stampPasswordChanged). A forced rotation then continues straight to the dashboard - password and authenticator both already passed, and the factor is untouched. The email-link recovery path keeps its original sign-out ending below. */ stampPasswordChanged(client, function () { if (pwGateState.forced) { pwGateState.forced = false; var _pn2 = $("portal-reset-note"); if (_pn2) { _pn2.hidden = true; } if (state.profile) { state.profile.password_changed_at = new Date().toISOString(); } proceedToDashboard(); return; } var doneMsg = "Password updated. Sign in with your new password."; resetSuccessMessage = doneMsg; client.auth.signOut().then(function () { showLogin(doneMsg); }); }); }).catch(function (err) { if (er) { er.textContent = (err && err.message) || "Could not update the password. Try again."; er.hidden = false; } }); }); } }); } function showLogin(errorMsg) {
     $('portal-dash-view').hidden = true;
     $('portal-login-view').hidden = false;
     var _rf = $("portal-login-form"); if (_rf) { _rf.hidden = false; }
@@ -263,9 +263,22 @@
    * must have a row in employee_profiles. Anyone else (e.g. a customer
    * account) is signed back out immediately. */
   function verifyEmployee(client, user, done) {
-    client.from('employee_profiles').select('id, name, role').eq('id', user.id).maybeSingle()
+    /* PORTAL_DEVICE_TRUST_2026_11_02: the profile read also loads
+     * password_changed_at for the 30-day rotation gate. If that
+     * column does not exist yet (portal files published before the
+     * SQL ran), fall back to the original select so nobody is locked
+     * out over deploy order; the age gate then sees no date and lets
+     * this sign-in through unrotated. */
+    client.from('employee_profiles').select('id, name, role, password_changed_at').eq('id', user.id).maybeSingle()
       .then(function (res) {
-        if (res.error || !res.data) { done(null); return; }
+        if (res.error) {
+          return client.from('employee_profiles').select('id, name, role').eq('id', user.id).maybeSingle()
+            .then(function (res2) {
+              if (res2.error || !res2.data) { done(null); return; }
+              done(res2.data);
+            });
+        }
+        if (!res.data) { done(null); return; }
         done(res.data);
       })
       .catch(function () { done(null); });
@@ -369,37 +382,40 @@
   }
 
   function mfaGate(client) {
-    if (!client.auth.mfa) { mfaState.hasFactor = false; proceedToDashboard(); return; }
+    if (!client.auth.mfa) { mfaState.hasFactor = false; afterMfaGate(client); return; }
     client.auth.mfa.getAuthenticatorAssuranceLevel()
       .then(function (res) {
         var d = (res && res.data) || {};
         if (d.nextLevel === 'aal2' && d.currentLevel === 'aal2') {
           mfaState.hasFactor = true;
-          proceedToDashboard();
+          afterMfaGate(client);
           return;
         }
         if (d.nextLevel === 'aal2') {
           /* A verified factor exists but this session is only AAL1:
-           * the code check is required before the dashboard loads. */
+           * the code check is required before the dashboard loads -
+           * unless this device is inside its 30-day trust window
+           * (PORTAL_DEVICE_TRUST_2026_11_02), which trustOrChallenge
+           * checks first. */
           mfaState.hasFactor = true;
-          beginMfaChallenge(client);
+          trustOrChallenge(client);
           return;
         }
         mfaState.hasFactor = false;
-        proceedToDashboard();
+        afterMfaGate(client);
       })
       .catch(function () {
         /* AAL lookup failed (offline hiccup, older client): fall back
          * to the factor list so a staffer WITH a factor is still
-         * challenged. If that fails too, let them in — availability
+         * challenged. If that fails too, let them in - availability
          * first in this build; the enforcement pass can revisit. */
         client.auth.mfa.listFactors()
           .then(function (res) {
             var f = pickVerifiedTotp(res && res.data);
-            if (f) { mfaState.hasFactor = true; beginMfaChallenge(client); }
-            else { mfaState.hasFactor = false; proceedToDashboard(); }
+            if (f) { mfaState.hasFactor = true; trustOrChallenge(client); }
+            else { mfaState.hasFactor = false; afterMfaGate(client); }
           })
-          .catch(function () { mfaState.hasFactor = false; proceedToDashboard(); });
+          .catch(function () { mfaState.hasFactor = false; afterMfaGate(client); });
       });
   }
 
@@ -407,7 +423,7 @@
     client.auth.mfa.listFactors()
       .then(function (res) {
         var f = pickVerifiedTotp(res && res.data);
-        if (!f) { mfaState.hasFactor = false; proceedToDashboard(); return null; }
+        if (!f) { mfaState.hasFactor = false; afterMfaGate(client); return null; }
         mfaState.factorId = f.id;
         return client.auth.mfa.challenge({ factorId: f.id });
       })
@@ -448,7 +464,11 @@
         }
         mfaState.challengeId = null;
         if (codeEl) codeEl.value = '';
-        proceedToDashboard();
+        /* PORTAL_DEVICE_TRUST_2026_11_02: the authenticator just
+         * passed on this device - remember the device for 30 days,
+         * then continue through the post-MFA gates. */
+        createDeviceTrust(client);
+        afterMfaGate(client);
       })
       .catch(function () {
         if (btn) btn.disabled = false;
@@ -593,6 +613,10 @@
          * already correct when the dashboard comes back — it no
          * longer waits for Back / Cancel / a reload to catch up. */
         refreshMfaBanner();
+        /* PORTAL_DEVICE_TRUST_2026_11_02: proving a fresh factor's
+         * first code counts as passing the authenticator on this
+         * device, so it earns the same 30-day trust. */
+        createDeviceTrust(client);
         var main = $('portal-mfa-enroll-main'); if (main) main.hidden = true;
         var done = $('portal-mfa-enroll-done'); if (done) done.hidden = false;
       })
@@ -644,6 +668,155 @@
     if (cb) cb.addEventListener('click', function () { cancelMfaEnroll(client); });
     var dn = $('portal-mfa-enroll-done-btn');
     if (dn) dn.addEventListener('click', function () { hideMfaEnrollView(); });
+  }
+
+  /* ================= DEVICE TRUST + PASSWORD AGE =================
+   * PORTAL_DEVICE_TRUST_2026_11_02 (Austin's policy, Nov 2, 2026):
+   *
+   * 1) REMEMBER THIS DEVICE FOR 30 DAYS. When a staffer passes the
+   *    authenticator check (the sign-in challenge, or a fresh
+   *    enrollment's first verify), the device-trust Edge Function
+   *    issues a random trust token; only its SHA-256 hash is stored
+   *    server-side (public.portal_trusted_devices, 30-day expiry).
+   *    The raw token lives in this device's localStorage. On a later
+   *    sign-in, trustOrChallenge presents the token BEFORE any
+   *    challenge starts: a live, unexpired row for this staffer
+   *    skips the code prompt; anything else falls through to the
+   *    normal challenge. Signing out does NOT clear the token -
+   *    remembering the device is the point. A trusted skip leaves
+   *    the Auth session at AAL1; the portal treats it as
+   *    MFA-satisfied, the same posture as the rest of this
+   *    client-side gate (see this build's CHANGES.md).
+   *
+   * 2) PASSWORD RESET EVERY 30 DAYS. verifyEmployee loads
+   *    employee_profiles.password_changed_at with the profile.
+   *    afterMfaGate runs at the end of EVERY sign-in gate pass
+   *    (AAL2 session, trusted device, challenge verify, no factor):
+   *    a password 30+ days old routes to the existing
+   *    set-a-new-password view in forced mode - the same updateUser
+   *    plumbing as the email recovery, except a successful set
+   *    stamps the clock and continues to the dashboard instead of
+   *    signing out, and Back signs out fully. A password change
+   *    never touches MFA enrollment.
+   */
+  var TRUST_TOKEN_KEY = 'atrg-portal-trusted-device';
+  var PASSWORD_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+  var pwGateState = { forced: false };
+
+  function readTrustToken() {
+    try { return window.localStorage.getItem(TRUST_TOKEN_KEY) || ''; }
+    catch (e) { return ''; }
+  }
+
+  function storeTrustToken(token) {
+    try { if (token) window.localStorage.setItem(TRUST_TOKEN_KEY, token); }
+    catch (e) {}
+  }
+
+  function clearTrustToken() {
+    try { window.localStorage.removeItem(TRUST_TOKEN_KEY); } catch (e) {}
+  }
+
+  /* Same fetch shape as the track-shipment call: the caller's own
+   * session JWT plus the anon key, JSON in, JSON out. Any transport
+   * failure reports null - callers read that as "not trusted / not
+   * stored", never as a hard stop. */
+  function callDeviceTrust(client, payload, done) {
+    var finished = false;
+    function finish(out) { if (!finished) { finished = true; done(out); } }
+    try {
+      client.auth.getSession().then(function (sres) {
+        var token = sres && sres.data && sres.data.session ? sres.data.session.access_token : '';
+        if (!token) { finish(null); return null; }
+        return fetch(SUPABASE_URL + '/functions/v1/device-trust', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'apikey': SUPABASE_ANON_KEY },
+          body: JSON.stringify(payload)
+        });
+      }).then(function (r) {
+        if (!r) { finish(null); return null; }
+        return r.json();
+      }).then(function (out) { finish(out || null); })
+      .catch(function () { finish(null); });
+    } catch (e) { finish(null); }
+  }
+
+  function checkDeviceTrust(client, done) {
+    var token = readTrustToken();
+    if (!token) { done(false); return; }
+    callDeviceTrust(client, { action: 'check', token: token }, function (out) {
+      if (out && out.trusted === true) { done(true); return; }
+      /* A definitive not-trusted answer (expired, revoked, or never
+       * issued) retires the stored token so this device stops
+       * offering it. No answer at all (offline, function down)
+       * keeps the token - the staffer just does the code check
+       * this time. */
+      if (out && out.trusted === false) clearTrustToken();
+      done(false);
+    });
+  }
+
+  function createDeviceTrust(client) {
+    var label = '';
+    try { label = window.navigator.userAgent || ''; } catch (e) {}
+    callDeviceTrust(client, { action: 'create', label: label }, function (out) {
+      if (out && out.token) storeTrustToken(out.token);
+    });
+  }
+
+  /* The challenge fork in mfaGate: trust first, challenge second.
+   * This ordering is the whole feature - with a valid trust, the
+   * challenge view is never shown. */
+  function trustOrChallenge(client) {
+    checkDeviceTrust(client, function (trusted) {
+      if (trusted) { afterMfaGate(client); return; }
+      beginMfaChallenge(client);
+    });
+  }
+
+  function passwordIsStale() {
+    var raw = state.profile && state.profile.password_changed_at;
+    if (!raw) return false;
+    var t = new Date(raw).getTime();
+    if (isNaN(t)) return false;
+    return (Date.now() - t) >= PASSWORD_MAX_AGE_MS;
+  }
+
+  /* Post-MFA routing for every sign-in path. Only a stale password
+   * diverts, into the forced set-a-new-password step; everyone else
+   * lands exactly where they landed before this build. */
+  function afterMfaGate(client) {
+    if (passwordIsStale()) { showForcedPasswordChange(); return; }
+    proceedToDashboard();
+  }
+
+  function showForcedPasswordChange() {
+    pwGateState.forced = true;
+    showResetView(null);
+    var note = $('portal-reset-note');
+    if (note) note.hidden = false;
+    var pw = $('portal-reset-password');
+    if (pw && pw.focus) pw.focus();
+  }
+
+  /* Best-effort stamp of the 30-day clock after a successful
+   * updateUser in the reset view - the same own-row update shape
+   * the portal already uses for the profile birthday. Never blocks
+   * the flow it rides on: every failure path still calls done. */
+  function stampPasswordChanged(client, done) {
+    var finished = false;
+    function finish() { if (!finished) { finished = true; if (done) done(); } }
+    try {
+      client.auth.getUser().then(function (res) {
+        var u = res && res.data && res.data.user;
+        if (!u) { finish(); return null; }
+        return client.from('employee_profiles')
+          .update({ password_changed_at: new Date().toISOString() })
+          .eq('id', u.id)
+          .then(function () { finish(); })
+          .catch(function () { finish(); });
+      }).catch(function () { finish(); });
+    } catch (e) { finish(); }
   }
 
   function initAuth() {
