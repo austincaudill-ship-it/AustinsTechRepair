@@ -221,7 +221,7 @@
   var state = {
     user: null,
     profile: null,
-    loaded: { tickets: false, applications: false, investors: false, feedback: false, customers: false, members: false, inventory: false, financials: false },
+    loaded: { tickets: false, applications: false, investors: false, feedback: false, customers: false, members: false, inventory: false, financials: false, associates: false },
     customersCache: [], inventoryCache: []
   };
 
@@ -255,7 +255,11 @@
     tickClock();
     if (!state.clockTimer) state.clockTimer = setInterval(tickClock, 30000);
     var roleEl = $('portal-emp-role');
-    roleEl.textContent = state.profile.role || '';
+    /* PORTAL_ROSTER_DETAIL_2026_11_02: display-only role label —
+     * roleLabel() maps the stored 'owner' to "Admin" for rendering;
+     * state.profile.role itself is never rewritten, so every check
+     * downstream keeps reading the stored value. */
+    roleEl.textContent = roleLabel(state.profile.role);
     roleEl.style.display = state.profile.role ? '' : 'none';
     /* PORTAL_TAB_MEMORY_2026_10_30: reopen on the tab Austin last used.
      * Clicking the saved tab's button replays exactly what a tap does,
@@ -895,6 +899,8 @@
     tickets: loadTickets, applications: loadApplications, investors: loadInvestors,
     feedback: loadFeedback, customers: loadCustomers, members: loadAtrOneMembers, inventory: loadInventory,
     documents: loadDocumentsTab, financials: loadFinancials,
+    /* PORTAL_SIDEBAR_ROSTER_2026_11_02: the Associates roster panel. */
+    associates: loadAssociates,
   };
 
   /* PORTAL_TAB_MEMORY_2026_10_30: remember the last active tab across
@@ -913,7 +919,7 @@
     var nav = $('portal-nav'); if (nav) nav.classList.remove('open');
     var tabs = document.querySelectorAll('.portal-tab');
     tabs.forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === name); });
-    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'documents', 'financials'].forEach(function (n) {
+    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'documents', 'financials', 'associates'].forEach(function (n) {
       $('portal-panel-' + n).hidden = n !== name;
     });
     closeDrawer();
@@ -1210,6 +1216,7 @@
         if (!r.stopped_at) running = r;
       });
       totalEl.textContent = rows.length ? ('Time on this job: ' + fmtTimer(total) + (running ? ' (timer running)' : '')) : 'No time logged on this job yet.';
+      tkAccSetHint('timer', running ? 'Timer running' : ''); /* PORTAL_TICKET_ACCORDION_2026_11_02: a running timer shows on the closed Job timer header. */
       if (btn) { btn.textContent = running ? 'Stop timer' : 'Start timer'; if (running) btn.setAttribute('data-running', running.id); else btn.removeAttribute('data-running'); }
       listEl.innerHTML = rows.map(function (r) {
         var s = new Date(r.started_at);
@@ -1320,6 +1327,74 @@ function loadTicketThread(client, ticketId) {
     });
   }
 
+  /* ================= TICKET DRAWER ACCORDION =================
+   * PORTAL_TICKET_ACCORDION_2026_11_02 (Austin, Nov 2, 2026): the
+   * ticket drawer stacked every section open at once — "very hard
+   * to read... very overwhelming for a technician" (his words,
+   * reading Patrick's ticket). Every section below the always-
+   * visible header + Status now sits behind a tappable header row
+   * (chevron, generous iPad tap target): tap to open, tap to hide.
+   * Nothing inside a section changed — same markup, same wiring —
+   * only a header button and a body wrapper were added around it.
+   * Open/closed choices live in tkAccState (in-memory, this
+   * session) so moving between tickets keeps the tech's layout.
+   * Default open: Message customer + Repair log — the two sections
+   * a tech works in during a job (talk to the customer, log the
+   * work), and the pair Austin's approved order already joins.
+   * A closed header can carry a right-side hint (tkAccSetHint),
+   * fed by the section's own loader — balance due, tracking
+   * status, an unsigned authorization, a running timer — so
+   * closed never means invisible. */
+  var TK_ACC_DEFAULT_OPEN = { message: true, repairlog: true };
+  var tkAccState = {};
+  function tkAccOpen(key) {
+    return Object.prototype.hasOwnProperty.call(tkAccState, key) ? tkAccState[key] : !!TK_ACC_DEFAULT_OPEN[key];
+  }
+  function tkAccHead(key, title) {
+    var open = tkAccOpen(key);
+    return '<button type="button" class="tk-acc-head' + (open ? ' tk-acc-open' : '') + '" data-acc-toggle="' + key + '" aria-expanded="' + (open ? 'true' : 'false') + '">' +
+      '<span class="tk-acc-title">' + title + '</span>' +
+      '<span class="tk-acc-hint" data-acc-hint="' + key + '"></span>' +
+      '<i class="fas fa-chevron-down tk-acc-chev" aria-hidden="true"></i></button>';
+  }
+  function tkAccBodyOpen(key) {
+    return '<div class="tk-acc-body" data-acc-body="' + key + '"' + (tkAccOpen(key) ? '' : ' hidden') + '>';
+  }
+  function tkAccSetHint(key, text) {
+    var body = $('portal-drawer-body');
+    if (!body) return;
+    var el = body.querySelector('[data-acc-hint="' + key + '"]');
+    if (el) el.textContent = text || '';
+  }
+  function wireTicketAccordion() {
+    var body = $('portal-drawer-body');
+    if (!body) return;
+    body.querySelectorAll('[data-acc-toggle]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var key = btn.getAttribute('data-acc-toggle');
+        var open = !tkAccOpen(key);
+        tkAccState[key] = open;
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        btn.classList.toggle('tk-acc-open', open);
+        var panel = body.querySelector('[data-acc-body="' + key + '"]');
+        if (!panel) return;
+        if (open) {
+          panel.hidden = false;
+          var target = panel.scrollHeight;
+          panel.style.height = '0px';
+          void panel.offsetHeight;
+          panel.style.height = target + 'px';
+          setTimeout(function () { if (tkAccOpen(key)) panel.style.height = ''; }, 260);
+        } else {
+          panel.style.height = panel.scrollHeight + 'px';
+          void panel.offsetHeight;
+          panel.style.height = '0px';
+          setTimeout(function () { if (!tkAccOpen(key)) { panel.hidden = true; panel.style.height = ''; } }, 260);
+        }
+      });
+    });
+  }
+
   function openTicket(id) {
     drawerLoading('Ticket details');
     withClient(function (client) {
@@ -1371,7 +1446,7 @@ function loadTicketThread(client, ticketId) {
             ['Received', esc(fmtJobDate(t.job_date) || fmtDateTime(t.created_at))],
             ['Last updated', esc(fmtDateTime(t.updated_at))]
           ]) +
-          '<div class="portal-drawer-section"><h3>Edit details</h3>' +
+          '<div class="portal-drawer-section tk-acc" data-acc="edit">' + tkAccHead('edit', 'Edit details') + tkAccBodyOpen('edit') +
           '<p class="portal-muted portal-small">Update the triage and job details here. Save, and the Ticket details above refresh.</p>' +
           '<div class="portal-field"><label for="p2-edit-jobdate">Job date</label><input type="date" id="p2-edit-jobdate" value="' + esc(t.job_date || String(t.created_at || '').slice(0, 10)) + '" /></div>' +
           '<div class="portal-field"><label for="p2-edit-issue">Issue</label><textarea id="p2-edit-issue" rows="2">' + esc(t.issue || '') + '</textarea></div>' +
@@ -1389,14 +1464,14 @@ function loadTicketThread(client, ticketId) {
           '<div class="p2-form-row"><div class="portal-field"><label for="p2-edit-workauth">Work authorized</label><select id="p2-edit-workauth"><option value="true"' + (t.work_auth_accepted ? ' selected' : '') + '>Yes</option><option value="false"' + (!t.work_auth_accepted ? ' selected' : '') + '>No</option></select></div>' +
           '<div class="portal-field"><label for="p2-edit-marketing">Marketing opt-in</label><select id="p2-edit-marketing"><option value="true"' + (t.marketing_opt_in ? ' selected' : '') + '>Yes</option><option value="false"' + (!t.marketing_opt_in ? ' selected' : '') + '>No</option></select></div></div>' +
           '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-edit-save">Save details</button> ' +
-          '<span class="portal-muted portal-small" id="p2-edit-msg"></span></div>' +
+          '<span class="portal-muted portal-small" id="p2-edit-msg"></span></div></div>' +
           '<div class="portal-drawer-section p2-actions"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-receipt-btn"><i class="fas fa-receipt"></i> Print receipt</button>' +
           '<button class="portal-btn p2-btn-danger portal-btn-sm" type="button" id="p2-delete-btn"><i class="fas fa-trash"></i> Delete ticket</button>' +
           '<span class="portal-muted portal-small" id="p2-action-msg"></span>' +
           '<div id="p2-delete-confirm" hidden><p class="portal-error">Permanently delete this ticket? Its charges and messages go with it. Part orders stay on file but detach from the ticket. This cannot be undone.</p>' +
           '<button class="portal-btn p2-btn-danger portal-btn-sm" type="button" id="p2-delete-yes">Yes, delete it</button> ' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-delete-no">Keep ticket</button></div></div>' +
-          '<div class="portal-drawer-section"><h3>Documents</h3>' +
+          '<div class="portal-drawer-section tk-acc" data-acc="documents">' + tkAccHead('documents', 'Documents') + tkAccBodyOpen('documents') +
           '<div id="p4-docs"><p class="portal-muted">Loading documents&hellip;</p></div>' +
           '<div class="p2-actions"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p4-sign-btn"><i class="fas fa-pen-nib"></i> Sign repair authorization</button>' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p4-media-btn"><i class="fas fa-camera"></i> Sign media release</button>' +
@@ -1407,8 +1482,8 @@ function loadTicketThread(client, ticketId) {
           '<div class="p2-form" id="p4-existing-picker" hidden>' +
           '<div id="p4-existing-list"><p class="portal-muted portal-small">Loading documents&hellip;</p></div></div>' +
           '<p class="portal-muted portal-small">Documents file themselves on this ticket. Signing the repair authorization here, or attaching one as a signed authorization, also marks Terms accepted and Work authorized on the ticket. The media release is separate: sign it only when the customer agrees to photos or clips of the device and the repair work.</p>' +
-          '<p class="portal-error" id="p4-doc-msg" hidden></p></div>' +
-          '<div class="portal-drawer-section"><h3>Message customer</h3>' +
+          '<p class="portal-error" id="p4-doc-msg" hidden></p></div></div>' +
+          '<div class="portal-drawer-section tk-acc" data-acc="message">' + tkAccHead('message', 'Message customer') + tkAccBodyOpen('message') +
           '<div class="portal-thread" id="portal-thread"><p class="portal-muted">Loading messages&hellip;</p></div>' +
           '<form id="portal-note-form"><div class="portal-note-row">' +
           '<textarea id="portal-note-input" placeholder="Add a note to this ticket&hellip;" maxlength="2000" aria-label="Add a note to this ticket"></textarea>' +
@@ -1423,7 +1498,7 @@ function loadTicketThread(client, ticketId) {
           '<p class="portal-muted portal-small" id="portal-gv-text-note">' + (trim(t.customer_phone || '') ? 'Texts go from the business number (937) 280-6243 via the Google Voice relay.' : 'No phone number on file for this customer &mdash; texting unavailable.') + '</p>' +
           '<p class="portal-muted portal-small" id="portal-gv-text-msg"></p>' +
           '<p class="portal-muted portal-small">Notes are saved to this ticket&rsquo;s message thread as Tech.</p>' +
-          '<p class="portal-error" id="portal-note-error" hidden></p></form></div>' +
+          '<p class="portal-error" id="portal-note-error" hidden></p></form></div></div>' +
           /* PORTAL_DRAWER_DOCS_2026_10_30: the Repair Log section
            * renders high in the drawer, before ATR One and Charges —
            * it used to be appended at the very bottom of the drawer.
@@ -1433,7 +1508,7 @@ function loadTicketThread(client, ticketId) {
            * PORTAL_TICKET_DRAWER_2026_11_02: Message customer now
            * sits directly above the Repair Log (it used to close the
            * drawer, below Job timer), per Austin, Nov 2, 2026. */
-          '<div class="portal-drawer-section"><h3>Repair log</h3>' +
+          '<div class="portal-drawer-section tk-acc" data-acc="repairlog">' + tkAccHead('repairlog', 'Repair log') + tkAccBodyOpen('repairlog') +
           '<p class="portal-muted portal-small">Internal tech documentation for this repair, not shown to the customer.</p>' +
           (t.status === 'In Progress' ? '<p class="portal-muted"><strong>This repair is in progress. Please log what is happening here.</strong></p>' : '') +
           '<div class="portal-thread" id="portal-repair-log-list"><p class="portal-muted">Loading repair log&hellip;</p></div>' +
@@ -1445,11 +1520,11 @@ function loadTicketThread(client, ticketId) {
           '<div class="p2-actions"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="portal-repair-log-photo-btn"><i class="fas fa-camera"></i> Attach a photo</button>' +
           '<span class="portal-muted portal-small" id="portal-repair-log-photo-msg"></span></div>' +
           '<input type="file" id="portal-repair-log-photo-file" accept="image/*" hidden />' +
-          '<p class="portal-error" id="portal-repair-log-photo-error" hidden></p></div>' +
-          '<div class="portal-drawer-section"><h3>ATR One</h3>' +
+          '<p class="portal-error" id="portal-repair-log-photo-error" hidden></p></div></div>' +
+          '<div class="portal-drawer-section tk-acc" data-acc="atrone">' + tkAccHead('atrone', 'ATR One') + tkAccBodyOpen('atrone') +
           '<div id="p5-atrone"><p class="portal-muted">Loading membership&hellip;</p></div>' +
-          '<p class="portal-error" id="p5-atr-msg" hidden></p></div>' +
-          '<div class="portal-drawer-section"><h3>Charges</h3>' +
+          '<p class="portal-error" id="p5-atr-msg" hidden></p></div></div>' +
+          '<div class="portal-drawer-section tk-acc" data-acc="charges">' + tkAccHead('charges', 'Charges') + tkAccBodyOpen('charges') +
           '<div id="p2-charges"><p class="portal-muted">Loading charges&hellip;</p></div>' +
           '<form id="p2-charge-form" class="p2-form">' +
           '<select id="p2-charge-kind" aria-label="Charge type"><option value="part">Part</option><option value="labor">Labor</option><option value="one_off">Other charge</option><option value="dispatch">House-call fee</option><option value="deposit_credit">Deposit received (credit)</option></select>' +
@@ -1457,17 +1532,19 @@ function loadTicketThread(client, ticketId) {
           '<div class="p2-form-row"><input id="p2-charge-qty" type="number" step="0.5" min="0" value="1" aria-label="Quantity" />' +
           '<input id="p2-charge-price" type="number" step="0.01" min="0" placeholder="Price $" aria-label="Unit price" />' +
           '<input id="p2-charge-cost" type="number" step="0.01" min="0" placeholder="Our cost $ (optional)" aria-label="Unit cost" /></div>' +
+          /* PORTAL_CHARGE_DEDUCTOR_2026_11_02: one control that deducts — waive the charge being added instead of adding a second credit line. */
+          '<label class="p2-check"><input type="checkbox" id="p2-charge-waive" /> Waive this charge &mdash; show it as waived, counting $0</label>' +
           '<button class="portal-btn portal-btn-primary portal-btn-sm" type="submit">Add charge</button>' +
           '<p class="portal-error" id="p2-charge-error" hidden></p></form>' +
           '<div class="p2-actions"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-gen-receipt-btn"><i class="fas fa-file"></i> Generate receipt</button>' +
           '<span class="portal-muted portal-small" id="p2-gen-receipt-msg"></span></div>' +
-          '<p class="portal-muted portal-small">Generate receipt files a receipt built from these charges into Documents. If the charges change afterwards, generate again and it replaces the filed copy.</p></div>' +
-          '<div class="portal-drawer-section"><h3>Payment</h3>' +
+          '<p class="portal-muted portal-small">Generate receipt files a receipt built from these charges into Documents. If the charges change afterwards, generate again and it replaces the filed copy.</p></div></div>' +
+          '<div class="portal-drawer-section tk-acc" data-acc="payment">' + tkAccHead('payment', 'Payment') + tkAccBodyOpen('payment') +
           '<div class="p2-actions"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p3-checkout-btn"><i class="fas fa-credit-card"></i> Charge / Check out</button>' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p3-cash-btn"><i class="fas fa-money-bill-wave"></i> Mark paid — cash</button>' +
           '<span class="portal-muted portal-small" id="p3-pay-msg"></span></div>' +
-          '<div id="p3-checkout-link" hidden></div></div>' +
-          '<div class="portal-drawer-section"><h3>Parts on this ticket</h3>' +
+          '<div id="p3-checkout-link" hidden></div></div></div>' +
+          '<div class="portal-drawer-section tk-acc" data-acc="parts">' + tkAccHead('parts', 'Parts on this ticket') + tkAccBodyOpen('parts') +
           '<div id="p2-parts"><p class="portal-muted">Loading parts&hellip;</p></div>' +
           '<div class="p2-actions"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-scan-btn"><i class="fas fa-barcode"></i> Scan barcode</button>' +
           '<span class="portal-muted portal-small" id="p2-scan-msg"></span></div>' +
@@ -1489,14 +1566,15 @@ function loadTicketThread(client, ticketId) {
           '<input id="p2-part-ordernum" type="text" placeholder="Order number" maxlength="80" aria-label="Order number" /></div>' +
           '<label class="p2-check"><input type="checkbox" id="p2-part-addcharge" checked /> Add the customer price to Charges as a part line</label>' +
           '<button class="portal-btn portal-btn-primary portal-btn-sm" type="submit">Add part order</button>' +
-          '<p class="portal-error" id="p2-part-error" hidden></p></form></div>' +
-          '<div class="portal-drawer-section"><h3>Job timer</h3>' +
+          '<p class="portal-error" id="p2-part-error" hidden></p></form></div></div>' +
+          '<div class="portal-drawer-section tk-acc" data-acc="timer">' + tkAccHead('timer', 'Job timer') + tkAccBodyOpen('timer') +
           '<p class="portal-muted" id="portal-timer-total">Loading time on this job&hellip;</p>' +
           '<div class="portal-status-row"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="portal-timer-btn">Start timer</button>' +
           '<span class="portal-muted portal-small" id="portal-timer-msg"></span></div>' +
-          '<div id="portal-timer-list"></div></div>';
+          '<div id="portal-timer-list"></div></div></div>';
 
         $('portal-drawer-body').innerHTML = body;
+        wireTicketAccordion(); /* PORTAL_TICKET_ACCORDION_2026_11_02 */
         loadTicketThread(client, t.id); resolveGvPhone(client, t); /* PORTAL_GV_TEXTS_2026_11_02 */ loadRepairLog(client, t.id); loadRepairLogPhotos(client, t); wireRepairLogPhotos(client, t); var repairForm = $("portal-repair-log-form"); if (repairForm) { repairForm.addEventListener("submit", function (e) { e.preventDefault(); var input = $("portal-repair-log-input"); var err = $("portal-repair-log-error"); if (err) { err.hidden = true; err.textContent = ""; } var text = input ? trim(input.value) : ""; if (!text) { return; } client.from("ticket_notes").insert({ ticket_id: t.id, author: (state.profile && state.profile.name) || null, note: text }).then(function (res2) { if (res2.error) { if (err) { err.textContent = "Could not save that update. Try again."; err.hidden = false; } return; } if (input) { input.value = ""; } loadRepairLog(client, t.id); }).catch(function () { if (err) { err.textContent = "Could not save that update. Try again."; err.hidden = false; } }); }); } 
         loadCharges(client, t);
         loadParts(client, t);
@@ -1640,6 +1718,32 @@ function loadTicketThread(client, ticketId) {
     return { subtotal: subtotal, deposits: deposits, balance: subtotal - deposits };
   }
 
+  /* PORTAL_CHARGE_DEDUCTOR_2026_11_02 (Austin, Nov 2, 2026): a
+   * waived charge is ONE ticket_charges row — the kind the staffer
+   * picked, unit_price 0, and the waived face amount (the line total
+   * that was waived) carried at the end of the description as the
+   * marker " [waived $35.00]". Every reader of ticket_charges sums
+   * qty x unit_price and splits only on kind === 'deposit_credit'
+   * (chargeTotals above, finSum / finMonths in Financials, the
+   * customer profile's Repair investments total, the receipt
+   * composer, the checkout balance, the points award), so a $0 row
+   * of an ordinary kind contributes exactly $0 everywhere with no
+   * reader changes — and because it is NOT a deposit_credit, a
+   * waiver never inflates Collected or Repair investments: a waiver
+   * is not a payment. The marker exists only so the ticket and the
+   * receipt can show what was waived. A deposit_credit row is never
+   * treated as waived (deposits are payments, handled as before). */
+  var WAIVED_MARK_RE = /^(.*) \[waived \$([0-9]+(?:\.[0-9]{1,2})?)\]$/;
+  function waivedFace(c) {
+    if (!c || c.kind === 'deposit_credit') return null;
+    var m = String(c.description || '').match(WAIVED_MARK_RE);
+    return m ? parseFloat(m[2]) : null;
+  }
+  function waivedName(c) {
+    var m = String((c && c.description) || '').match(WAIVED_MARK_RE);
+    return m ? m[1] : String((c && c.description) || '');
+  }
+
   /* PORTAL_POINTS_EARN_2026_10_30: ATR One member-multiplier hook.
    * Returns 1 for everyone today — no boost rate exists yet. It takes
    * the ticket (which carries customer_id) so a future member lookup
@@ -1717,6 +1821,17 @@ function loadTicketThread(client, ticketId) {
         var amt = Number(c.qty || 0) * Number(c.unit_price || 0);
         var kindLabel = { part: 'Part', labor: 'Labor', one_off: 'Other', dispatch: 'House-call fee', deposit_credit: 'Deposit' }[c.kind] || c.kind;
         var sign = c.kind === 'deposit_credit' ? '&minus;' : '';
+        /* PORTAL_CHARGE_DEDUCTOR_2026_11_02: a waived line shows its
+         * face amount struck through beside the $0 it counts. The
+         * delete button is the same one every line gets. */
+        var face = waivedFace(c);
+        if (face != null) {
+          return '<div class="p2-line"><div class="p2-line-main"><span class="p2-kind">' + esc(kindLabel) + '</span> ' + esc(waivedName(c)) +
+            '<span class="portal-muted portal-small"> &times;' + esc(c.qty) + ' &mdash; was ' + fmtMoney(face) + ' &mdash; waived' +
+            (c.unit_cost != null ? ' (our cost ' + fmtMoney(c.unit_cost) + ')' : '') + '</span></div>' +
+            '<div class="p2-line-amt"><s class="p2-waived-face">' + fmtMoney(face) + '</s> ' + fmtMoney(0) + '</div>' +
+            '<button class="p2-x" type="button" data-charge-del="' + esc(c.id) + '" aria-label="Remove charge">&times;</button></div>';
+        }
         return '<div class="p2-line"><div class="p2-line-main"><span class="p2-kind">' + esc(kindLabel) + '</span> ' + esc(c.description) +
           '<span class="portal-muted portal-small"> &times;' + esc(c.qty) + ' @ ' + fmtMoney(c.unit_price) +
           (c.unit_cost != null ? ' (our cost ' + fmtMoney(c.unit_cost) + ')' : '') + '</span></div>' +
@@ -1738,6 +1853,10 @@ function loadTicketThread(client, ticketId) {
         });
       });
     });
+    /* PORTAL_TICKET_ACCORDION_2026_11_02: the closed Charges header
+     * carries the balance, so a due amount is never hidden. */
+    var accTot = chargeTotals(rows);
+    tkAccSetHint('charges', rows.length ? (accTot.balance > 0 ? fmtMoney(accTot.balance) + ' due' : 'Paid in full') : '');
   }
 
   function loadCharges(client, t) {
@@ -1852,6 +1971,7 @@ function loadTicketThread(client, ticketId) {
     if (!box) return;
     if (!rows.length) {
       box.innerHTML = '<p class="portal-muted">No parts ordered for this ticket yet.</p>';
+      tkAccSetHint('parts', ''); /* PORTAL_TICKET_ACCORDION_2026_11_02 */
       return;
     }
     box.innerHTML = rows.map(function (p) {
@@ -1956,6 +2076,14 @@ function loadTicketThread(client, ticketId) {
       var ltBox = box.querySelector('[data-live-track="' + p.id + '"]');
       withClient(function (client) { refreshLiveTrack(client, p, ltBox); });
     });
+    /* PORTAL_TICKET_ACCORDION_2026_11_02: the closed Parts header
+     * carries the freshest tracking word for parts still out, so a
+     * shipment update is never hidden behind the fold. */
+    var accOpenParts = rows.filter(function (p) { return p.status !== 'Received' && p.status !== 'Cancelled'; });
+    var accTracked = accOpenParts.filter(function (p) { return !!p.tracking_status; });
+    tkAccSetHint('parts', accTracked.length ? accTracked[0].tracking_status :
+      (accOpenParts.length ? accOpenParts.length + (accOpenParts.length === 1 ? ' part on the way' : ' parts on the way') :
+      (rows.some(function (p) { return p.status === 'Received'; }) ? 'All received' : '')));
   }
 
   function loadParts(client, t) {
@@ -2029,7 +2157,7 @@ function loadTicketThread(client, ticketId) {
     client.from('ticket_documents').select('*').eq('ticket_id', t.id).order('created_at', { ascending: false }).then(function (res) {
       if (res.error) { box.innerHTML = '<p class="portal-muted">Documents are not set up for this portal yet.</p>'; return; }
       var rows = res.data || [];
-      if (!rows.length) { box.innerHTML = '<p class="portal-muted">No documents on this ticket yet. Sign the repair authorization or attach one below.</p>'; return; }
+      if (!rows.length) { box.innerHTML = '<p class="portal-muted">No documents on this ticket yet. Sign the repair authorization or attach one below.</p>'; tkAccSetHint('documents', 'Authorization not signed'); return; }
       box.innerHTML = rows.map(function (d) {
         var when = d.signed_at || d.created_at;
         var meta = esc(fmtDateTime(when));
@@ -2044,6 +2172,9 @@ function loadTicketThread(client, ticketId) {
       for (var i = 0; i < btns.length; i++) {
         btns[i].addEventListener('click', function () { viewDocument(client, this.getAttribute('data-p4-view'), this.getAttribute('data-p4-view-name')); });
       }
+      /* PORTAL_TICKET_ACCORDION_2026_11_02: an unsigned repair
+       * authorization flags itself on the closed Documents header. */
+      tkAccSetHint('documents', rows.some(function (d) { return d.doc_type === 'repair_authorization'; }) ? '' : 'Authorization not signed');
     }).catch(function () { box.innerHTML = '<p class="portal-muted">Documents could not be loaded.</p>'; });
   }
 
@@ -3348,6 +3479,15 @@ function loadTicketThread(client, ticketId) {
       var amt = Number(c.qty || 0) * Number(c.unit_price || 0);
       var label = c.kind === 'deposit_credit' ? esc(c.description) + ' (deposit)' : esc(c.description);
       var sign = c.kind === 'deposit_credit' ? '&minus;' : '';
+      /* PORTAL_CHARGE_DEDUCTOR_2026_11_02: a waived line prints its
+       * name followed by "— waived", its face amount struck through,
+       * and the $0 it counts. The <s> element carries the strike in
+       * both the print stylesheet and the filed receipt document, so
+       * no receipt CSS change is needed anywhere. */
+      var face = waivedFace(c);
+      if (face != null) {
+        return '<tr><td>' + esc(waivedName(c)) + ' &mdash; waived</td><td class="rc-num">' + esc(c.qty) + '</td><td class="rc-num"><s>' + fmtMoney(face) + '</s> ' + fmtMoney(0) + '</td></tr>';
+      }
       return '<tr><td>' + label + '</td><td class="rc-num">' + esc(c.qty) + '</td><td class="rc-num">' + sign + fmtMoney(Math.abs(amt)) + '</td></tr>';
     }).join('');
     if (!rows.length) lines = '<tr><td colspan="3">No charges recorded.</td></tr>';
@@ -3537,14 +3677,36 @@ function loadTicketThread(client, ticketId) {
       var err = $('p2-charge-error'); err.hidden = true;
       var desc = trim($('p2-charge-desc').value);
       var price = parseFloat($('p2-charge-price').value);
-      if (!desc || isNaN(price)) { err.textContent = 'Give the charge a description and a price.'; err.hidden = false; return; }
+      var qty = parseFloat($('p2-charge-qty').value) || 1;
+      /* PORTAL_CHARGE_DEDUCTOR_2026_11_02: "Waive this charge" is
+       * the deductor — it saves ONE line (this kind, this name) at
+       * $0 with the waived face amount in the description marker,
+       * instead of a charge line plus a separate credit line. It
+       * never applies to a deposit (a deposit is a payment, not a
+       * fee), and it never blocks the save: with the toggle on, an
+       * empty or $0 price just saves a plain $0 line. A typed $0
+       * without the toggle saves exactly as it always has. */
+      var waiveEl = $('p2-charge-waive');
+      var waive = !!(waiveEl && waiveEl.checked) && kindSel.value !== 'deposit_credit';
+      if (!desc) { err.textContent = 'Give the charge a description and a price.'; err.hidden = false; return; }
+      if (isNaN(price)) {
+        if (!waive) { err.textContent = 'Give the charge a description and a price.'; err.hidden = false; return; }
+        price = 0;
+      }
+      var insertDesc = desc, insertPrice = price;
+      if (waive && price > 0) {
+        insertDesc = desc + ' [waived $' + (qty * price).toFixed(2) + ']';
+        insertPrice = 0;
+      } else if (waive) {
+        insertPrice = 0;
+      }
       var costRaw = $('p2-charge-cost').value;
       client.from('ticket_charges').insert({
         ticket_id: t.id,
         kind: kindSel.value,
-        description: desc,
-        qty: parseFloat($('p2-charge-qty').value) || 1,
-        unit_price: price,
+        description: insertDesc,
+        qty: qty,
+        unit_price: insertPrice,
         unit_cost: costRaw === '' ? null : parseFloat(costRaw)
       }).then(function (res) {
         if (res.error) { err.textContent = 'Couldn&rsquo;t add that charge. Try again.'; err.hidden = false; return; }
@@ -4246,6 +4408,32 @@ function loadTicketThread(client, ticketId) {
   }
 
   /* ================= ATR ONE MEMBERS PANEL =================
+   * PORTAL_MEMBERS_EDIT_2026_11_02 (Austin, Nov 2, 2026): the panel is now
+   * EDITABLE, like the customer profiles. Each row carries a status
+   * dot — GREEN when the recorded status is 'active' (good standing),
+   * RED for anything else (cancelled/off) — and tapping a member opens
+   * the member editor in the shared drawer (below). The OWNER turns
+   * the membership off (status 'cancelled', cancelled_on = today) or
+   * back on (status 'active', cancelled_on cleared) directly, and can
+   * correct a wrongly recorded tier on the same save path. An
+   * ASSOCIATE never writes customer_memberships: their turn off/on is
+   * filed as a pending request the owner decides in Requests — see
+   * the approval note at the editor block for how the existing
+   * customer_edit_requests queue carries membership changes.
+   * STATUS TRUTH: membership status is a MANUAL portal record. There
+   * is no automatic Square payment feed; the dot reflects the recorded
+   * status only and nothing here pretends a missed payment flips it.
+   * TIER DISPLAY NAMES (Austin, Nov 2, 2026, final): the Members panel
+   * and its editor show Individual / Family / Business / Business Pro
+   * at $9.99 / $19.99 / $49.99 / $99.99 per month. That mapping lives in
+   * ATRONE_DISPLAY_TIERS below and is used ONLY by this panel and its
+   * editor: the shared ATRONE_TIERS map above still drives the ticket
+   * drawer's signup flow and its charge lines, and its prices were
+   * deliberately NOT changed here — they are what Square currently
+   * bills, and repricing them is tied to updating Square first.
+   * Database tier values (single/family/business_plus/business_pro)
+   * never change.
+   *
    * PORTAL_ATRONE_MEMBERS_2026_11_02 (Austin, Nov 2, 2026): a
    * dedicated "ATR One Members" action button under Customer (the
    * first sidebar group, renamed from Work the same day), so he can
@@ -4260,6 +4448,20 @@ function loadTicketThread(client, ticketId) {
    * not run), the query errors and the panel says so plainly with
    * the same no-members wording instead of breaking — the pattern
    * the drawer block and the Customers badge already use. */
+  var ATRONE_DISPLAY_TIERS = {
+    single: { name: 'Individual', price: 9.99 },
+    family: { name: 'Family', price: 19.99 },
+    business_plus: { name: 'Business', price: 49.99 },
+    business_pro: { name: 'Business Pro', price: 99.99 }
+  };
+  var atrMembersCache = [];   /* mapped member rows from the last panel load */
+
+  function atroneDisplayTier(key) { return ATRONE_DISPLAY_TIERS[key] || null; }
+  function atroneDisplayName(key) {
+    var t = atroneDisplayTier(key);
+    return t ? t.name : atroneTierName(key);
+  }
+
   function loadAtrOneMembers(force) {
     var list = $('portal-members-list');
     if (!list) return;
@@ -4276,7 +4478,7 @@ function loadTicketThread(client, ticketId) {
             return;
           }
           var rows = res.data || [];
-          if (!rows.length) { state.loaded.members = true; renderAtrOneMembers(list, []); return; }
+          if (!rows.length) { state.loaded.members = true; atrMembersCache = []; renderAtrOneMembers(list, []); return; }
           var ids = [];
           rows.forEach(function (r) { if (r.customer_id && ids.indexOf(r.customer_id) === -1) ids.push(r.customer_id); });
           client.from('customers').select('id, name').in('id', ids)
@@ -4301,6 +4503,7 @@ function loadTicketThread(client, ticketId) {
                 return String(a.name || '').localeCompare(String(b.name || ''));
               });
               state.loaded.members = true;
+              atrMembersCache = members;
               renderAtrOneMembers(list, members);
             })
             .catch(function () { listError(list, 'members'); });
@@ -4318,25 +4521,230 @@ function loadTicketThread(client, ticketId) {
     rows.forEach(function (m) { if (m.status === 'active') activeCount++; });
     var html = '<p class="portal-muted">' + activeCount + ' active member' + (activeCount === 1 ? '' : 's') + '</p>';
     html += rows.map(function (m) {
-      var tier = ATRONE_TIERS[m.tier] || null;
+      var tier = atroneDisplayTier(m.tier);
       var tierLine = tier
         ? tier.name + ' &middot; ' + esc(fmtMoney(tier.price)) + '/mo'
-        : esc(atroneTierName(m.tier));
+        : esc(atroneDisplayName(m.tier));
       var statusLine = m.status === 'active'
         ? 'Member since ' + esc(fmtJobDate(m.startedOn) || '—')
         : 'Cancelled ' + esc(fmtJobDate(m.cancelledOn) || '') + ' &middot; member since ' + esc(fmtJobDate(m.startedOn) || '—');
-      return '<article class="portal-card">' +
-        '<div class="portal-card-top"><p class="portal-card-title">' + esc(m.name || 'Customer') + '</p>' +
-        (m.status === 'active'
-          ? '<span class="portal-badge portal-badge-atrone"><i class="fas fa-star"></i> ATR One &middot; ' + esc(tier ? tier.name : atroneTierName(m.tier)) + '</span>'
+      var active = m.status === 'active';
+      var dot = '<span class="mem-status-dot ' + (active ? 'mem-dot-on' : 'mem-dot-off') + '" title="' +
+        (active ? 'Active — good standing' : 'Not active') + '" aria-label="' + (active ? 'Active' : 'Not active') + '"></span>';
+      return '<article class="portal-card mem-card" data-member-edit="' + esc(m.id) + '" title="Tap to view or edit this membership">' +
+        '<div class="portal-card-top"><p class="portal-card-title">' + dot + esc(m.name || 'Customer') + '</p>' +
+        (active
+          ? '<span class="portal-badge portal-badge-atrone"><i class="fas fa-star"></i> ATR One &middot; ' + esc(tier ? tier.name : atroneDisplayName(m.tier)) + '</span>'
           : '<span class="portal-badge portal-st-cancelled">Cancelled</span>') + '</div>' +
         '<p class="portal-card-meta"><i class="fas fa-star"></i> ' + tierLine + '</p>' +
         '<p class="portal-card-meta">' + statusLine + '</p>' +
         (m.note ? '<p class="portal-card-meta"><i class="fas fa-note-sticky"></i> ' + esc(m.note) + '</p>' : '') +
+        '<p class="portal-card-meta portal-muted">Tap to view or edit this membership</p>' +
         '</article>';
     }).join('');
     list.innerHTML = html;
   }
+
+  /* ================= ATR ONE MEMBER EDITOR =================
+   * PORTAL_MEMBERS_EDIT_2026_11_02: tapping a member card opens this editor in
+   * the shared drawer (scroll lock included, same as the customer
+   * profile). It shows the member, tier, recorded status, started /
+   * cancelled dates, and note, with the actions for the current
+   * status: Turn off (active -> cancelled, cancelled_on = today) or
+   * Turn on (anything else -> active, cancelled_on cleared). The
+   * OWNER saves straight to customer_memberships; tier correction is
+   * owner-only and rides the same update. An ASSOCIATE's turn off/on
+   * is a submission, never a write.
+   *
+   * APPROVAL PATH — reusing customer_edit_requests, deliberately:
+   * the table stores (customer_id, submitted_by, changes jsonb,
+   * status, decided_*), and a membership belongs to a customer, so a
+   * membership change request fits the same row shape with the
+   * changes payload discriminated by _kind:
+   *   { _kind: 'membership', membership_id: <customer_memberships id>,
+   *     _member_name: <snapshot for the Requests list>,
+   *     status: 'cancelled'|'active', cancelled_on: <date|null>,
+   *     tier: <only if a tier change were ever proposed> }
+   * custChangeLines / renderCustEditPanel / decideCustEdit branch on
+   * _kind (see the PORTAL_MEMBERS_EDIT_2026_11_02 notes there): approval applies
+   * the payload to customer_memberships, NOT to customers. One queue,
+   * one Requests landing spot, one approve/reject implementation —
+   * no second approval system, and no new table or SQL. */
+  var memEditCurrent = null;   /* mapped member row open in the drawer */
+  var memEditNotice = '';      /* one-shot message for the editor */
+
+  function memberById(memberId) {
+    var row = null;
+    atrMembersCache.forEach(function (m) { if (m.id === memberId) row = m; });
+    return row;
+  }
+
+  function memPendingFor(membershipId) {
+    return custEditRequests.filter(function (r) {
+      return r.changes && r.changes._kind === 'membership' && r.changes.membership_id === membershipId;
+    });
+  }
+
+  function openMemberEditor(memberId) {
+    var m = memberById(memberId);
+    if (!m) { loadAtrOneMembers(true); return; }
+    memEditCurrent = m;
+    drawerLoading(m.name || 'Member');
+    loadCustEditRequests(function () {
+      renderCustEditPanel();
+      renderMemberEditor();
+    });
+  }
+
+  function renderMemberEditor() {
+    var body = $('portal-drawer-body');
+    if (!body || !memEditCurrent) return;
+    var m = memEditCurrent;
+    $('portal-drawer-title').textContent = m.name || 'Member';
+    var owner = isPortalOwner();
+    var active = m.status === 'active';
+    var tier = atroneDisplayTier(m.tier);
+    var tierText = tier ? (tier.name + ' &middot; ' + fmtMoney(tier.price) + '/mo') : atroneDisplayName(m.tier);
+    var dot = '<span class="mem-status-dot ' + (active ? 'mem-dot-on' : 'mem-dot-off') + '"></span>';
+    var pending = memPendingFor(m.id);
+    var html = '';
+
+    html += '<div class="portal-drawer-section"><h3>Membership</h3>' + kvRows([
+      ['Member', esc(m.name || 'Customer')],
+      ['Tier', tierText],
+      ['Status', dot + (active ? 'Active — good standing' : 'Off (' + esc(m.status || 'cancelled') + ')')],
+      ['Member since', esc(fmtJobDate(m.startedOn) || '—')],
+      ['Cancelled on', esc(fmtJobDate(m.cancelledOn) || '—')],
+      ['Note', esc(m.note || '—')]
+    ]) +
+      '<p class="portal-muted portal-small">This status is the portal&rsquo;s own record. It changes only when someone changes it here.</p></div>';
+
+    if (pending.length) {
+      html += '<div class="portal-drawer-section"><h3>Changes waiting for approval</h3>' + pending.map(function (r) {
+        return '<div class="cust-req-row">' + custChangeLines(r, null) +
+          '<p class="portal-muted portal-small">Submitted by ' + esc(empNameCache[r.submitted_by] || 'an associate') + ' &middot; ' + esc(fmtDateTime(r.created_at)) + '</p>' +
+          (owner
+            ? '<p class="portal-muted portal-small">Approve or reject this in Requests — that is where membership updates are decided.</p>'
+            : '<p class="portal-muted portal-small">Waiting on the owner to approve — the record above still shows the current status.</p>') +
+          '</div>';
+      }).join('') + '</div>';
+    }
+
+    html += '<div class="portal-drawer-section"><h3>' + (owner ? 'Edit membership' : 'Request a change') + '</h3>';
+    if (owner) {
+      var opts = Object.keys(ATRONE_DISPLAY_TIERS).map(function (k) {
+        var tr = ATRONE_DISPLAY_TIERS[k];
+        return '<option value="' + k + '"' + (k === m.tier ? ' selected' : '') + '>' + esc(tr.name) + ' — ' + fmtMoney(tr.price) + '/mo</option>';
+      }).join('');
+      if (!atroneDisplayTier(m.tier)) opts = '<option value="' + esc(m.tier) + '" selected>' + esc(atroneDisplayName(m.tier)) + '</option>' + opts;
+      html += '<div class="portal-field"><label for="mem-edit-tier">Tier (correct it if it was recorded wrong)</label>' +
+        '<select id="mem-edit-tier">' + opts + '</select></div>' +
+        '<p><button class="portal-btn portal-btn-outline" type="button" data-mem-tier-save="' + esc(m.id) + '">Save tier correction</button></p>';
+    } else {
+      html += '<p class="portal-muted portal-small">Tier: <strong>' + esc(tierText) + '</strong> — tier corrections are owner-only.</p>';
+    }
+    html += '<p><button class="portal-btn ' + (active ? 'p2-btn-danger' : 'portal-btn-primary') + '" type="button" data-mem-toggle="' + esc(m.id) + '">' +
+      (owner
+        ? (active ? 'Turn off membership' : 'Turn on membership')
+        : (active ? 'Submit turn-off for approval' : 'Submit turn-on for approval')) +
+      '</button> ' +
+      '<span class="portal-muted portal-small" id="mem-edit-msg">' + esc(memEditNotice) + '</span></p>' +
+      '<p class="portal-muted portal-small">' + (owner
+        ? (active
+          ? 'Turning off records the membership as cancelled with today&rsquo;s date. The record stays on file; nothing is deleted.'
+          : 'Turning on records the membership as active again and clears the cancelled date.')
+        : 'Associates cannot change a membership directly. Your request goes to the owner in Requests, and the record only updates after he approves it.') + '</p>' +
+      '</div>';
+    memEditNotice = '';
+    body.innerHTML = html;
+  }
+
+  function memApplyLocal(memberId, upd) {
+    [memEditCurrent].concat(atrMembersCache).forEach(function (mm) {
+      if (!mm || mm.id !== memberId) return;
+      if (upd.status !== undefined) mm.status = upd.status;
+      if (upd.cancelled_on !== undefined) mm.cancelledOn = upd.cancelled_on;
+      if (upd.tier !== undefined) mm.tier = upd.tier;
+    });
+  }
+
+  function saveMembershipTier(memberId) {
+    if (!isPortalOwner()) return;
+    var m = memEditCurrent;
+    if (!m || m.id !== memberId) return;
+    var sel = $('mem-edit-tier');
+    var msg = $('mem-edit-msg');
+    if (!sel) return;
+    if (sel.value === m.tier) { if (msg) msg.textContent = 'That is already the recorded tier.'; return; }
+    if (msg) msg.textContent = 'Saving…';
+    withClient(function (client) {
+      if (!client) { if (msg) msg.textContent = 'No connection.'; return; }
+      client.from('customer_memberships').update({ tier: sel.value }).eq('id', m.id)
+        .then(function (res) {
+          if (res.error) { if (msg) msg.textContent = 'Couldn&rsquo;t save — try again.'; return; }
+          memApplyLocal(m.id, { tier: sel.value });
+          memEditNotice = 'Tier corrected to ' + atroneDisplayName(sel.value) + '.';
+          loadAtrOneMembers(true);
+          renderMemberEditor();
+        })
+        .catch(function () { if (msg) msg.textContent = 'Couldn&rsquo;t save — try again.'; });
+    });
+  }
+
+  function saveMembershipToggle(memberId) {
+    var m = memEditCurrent;
+    if (!m || m.id !== memberId) return;
+    var msg = $('mem-edit-msg');
+    var turningOff = m.status === 'active';
+    var change = turningOff
+      ? { status: 'cancelled', cancelled_on: todayDateOnly() }
+      : { status: 'active', cancelled_on: null };
+    if (isPortalOwner()) {
+      /* Owner: straight to the membership row. A tier correction
+       * still sitting in the select rides along on the same save. */
+      var sel = $('mem-edit-tier');
+      if (sel && sel.value && sel.value !== m.tier) change.tier = sel.value;
+      if (msg) msg.textContent = 'Saving…';
+      withClient(function (client) {
+        if (!client) { if (msg) msg.textContent = 'No connection.'; return; }
+        client.from('customer_memberships').update(change).eq('id', m.id)
+          .then(function (res) {
+            if (res.error) { if (msg) msg.textContent = 'Couldn&rsquo;t save — try again.'; return; }
+            memApplyLocal(m.id, change);
+            memEditNotice = turningOff ? 'Membership turned off.' : 'Membership turned back on.';
+            loadAtrOneMembers(true);
+            renderMemberEditor();
+          })
+          .catch(function () { if (msg) msg.textContent = 'Couldn&rsquo;t save — try again.'; });
+      });
+      return;
+    }
+    /* Associate: file a membership change request in the same queue
+     * as customer updates. customer_memberships is NOT touched — it
+     * changes only when the owner approves in Requests. */
+    if (msg) msg.textContent = 'Submitting…';
+    withClient(function (client) {
+      if (!client) { if (msg) msg.textContent = 'No connection.'; return; }
+      var changes = {
+        _kind: 'membership', membership_id: m.id, _member_name: m.name || 'Customer',
+        status: change.status, cancelled_on: change.cancelled_on
+      };
+      client.from('customer_edit_requests').insert({
+        customer_id: m.customerId, submitted_by: state.user.id,
+        changes: changes, status: 'pending'
+      })
+        .then(function (res) {
+          if (res.error) { if (msg) msg.textContent = 'Couldn&rsquo;t submit — change requests are not set up yet.'; return; }
+          memEditNotice = 'Submitted for approval. The membership has not changed yet.';
+          loadCustEditRequests(function () {
+            renderCustEditPanel();
+            renderMemberEditor();
+          });
+        })
+        .catch(function () { if (msg) msg.textContent = 'Couldn&rsquo;t submit — try again.'; });
+    });
+  }
+  /* end PORTAL_MEMBERS_EDIT_2026_11_02 (member editor) */
 
   /* ================= FINANCIALS =================
    * PORTAL_FINANCIALS_2026_10_30 (Austin, Oct 30, 2026): the money
@@ -4524,6 +4932,278 @@ function loadTicketThread(client, ticketId) {
     });
   }
 
+  /* ================= ASSOCIATES ROSTER =================
+   * PORTAL_SIDEBAR_ROSTER_2026_11_02 (Austin, Nov 2, 2026): the
+   * Associates sidebar group listed Requests, Time Clock, Employee
+   * Onboarding, Documents and Job Applications — but no list of the
+   * associates themselves. This panel is that list: every row of
+   * public.employee_profiles (the portal's sign-in list — the same
+   * table the employee gate reads at sign-in), name + role + active
+   * status at a glance, in the portal-card style of the other lists.
+   *
+   * ACTIVE STATUS, honestly: employee_profiles has NO active/status
+   * column anywhere in this codebase (every existing select reads
+   * only id, name, role, birthday, password_changed_at). A profile
+   * row existing IS what lets that person sign in — the gate signs
+   * anyone without a row straight back out — so every row the query
+   * returns is shown Active with the members build's green dot. No
+   * column is queried or invented beyond the fields the record is
+   * already known to hold.
+   *
+   * THE CARD TAP: there is NO employee-card surface for
+   * employee_profiles to reuse. The portal's only employee cards are
+   * the Employee Onboarding cards, and those are new_hires records
+   * (renderNewHires / openHireDocs in portal.html, keyed by
+   * new_hire_id) — a different table and id space; the Team Documents
+   * Attach flow (tdAttach) targets those hire cards, not sign-in
+   * profiles, so opening one for an employee_profiles row would file
+   * documents against the wrong record. Per the fallback for exactly
+   * this case, tapping a roster row EXPANDS it in place to every
+   * profile field the record holds (name, role, birthday, status) —
+   * nothing invented, nothing linked across tables.
+   *
+   * PORTAL_ROSTER_DETAIL_2026_11_02 (Austin, Nov 2, 2026): two
+   * additions on this roster.
+   *
+   * ROLE LABELS: roleLabel() below is a DISPLAY-ONLY map — the
+   * stored role 'owner' renders as "Admin" wherever a role label is
+   * drawn (the header beside his name, this roster's badge, meta
+   * line and expanded Role row). The stored value is never
+   * rewritten: isPortalOwner(), isManager() and every other check
+   * keep comparing the raw stored role, and RLS never sees a label.
+   *
+   * THE OWNER'S FULL RECORD: Austin — the Associates button "tells
+   * me all the associates, their pay, their time clocks, all of
+   * that stuff, but that's only visible to my account because it
+   * says owner." So when the signed-in profile is the owner,
+   * expanding a card adds an owner-only section with the
+   * associate's pay rate, a time summary, and a View time card
+   * jump. PAY: employee_profiles has NO pay/comp column anywhere
+   * in this codebase (searched portal.js, portal.html, every
+   * staged build folder, and the deployed schema record
+   * supabase-employee-hub.sql — pay_rate exists only on new_hires,
+   * the onboarding record). The roster therefore asks for pay_rate
+   * ONLY on the owner's load and falls back to the plain select
+   * when the column is not there yet (the staged migration
+   * employee-profiles-pay-rate.sql adds it; until it runs, the pay
+   * section simply does not render — no error, no empty box). A
+   * non-owner's browser never requests the column, and the section
+   * itself renders only when isPortalOwner() — a manager or
+   * associate expanding a card gets exactly the fields the previous
+   * build showed, and the pay/time markup never enters their DOM.
+   * TIME: read from time_entries for that associate — on the clock
+   * now (and since when) or off the clock, plus closed hours in
+   * the current pay week, computed exactly like the time clock's
+   * own "Closed time this week" (Monday-start weekStart(), closed
+   * entries only). VIEW TIME CARD records the associate's id on
+   * window.portalTcFocusEmployeeId and then opens the Time Clocks
+   * panel the way its own Action Button does; when the
+   * per-associate time-cards panel (portal-time-cards-2026-11-02,
+   * earlier in the publish chain) exposes a way to select one
+   * associate's card, the port wires the jump to it — until then
+   * the panel simply opens on the tapped associate's behalf. */
+  function roleLabel(role) {
+    var r = trim(role);
+    if (!r) return '';
+    return r.toLowerCase() === 'owner' ? 'Admin' : r;
+  }
+
+  var associatesCache = [];
+  var assocExpandedId = null;
+  var assocPayKnown = false;   /* the owner's load got pay_rate back (column exists) */
+  var assocTimeCache = {};     /* employee id -> { loading:true } | { open:Date|null, weekMs:Number } */
+
+  function renderAssociates(rows) {
+    var list = $('portal-associates-list');
+    if (!list) return;
+    if (!rows.length) { emptyState(list, 'No associates on file yet. When someone is added as an employee and can sign in to the portal, they will show up here.'); return; }
+    list.innerHTML = rows.map(function (a) {
+      var open = assocExpandedId === a.id;
+      var detail = '';
+      if (open) {
+        detail = '<div class="assoc-detail">' + kvRows([
+          ['Name', valOrDash(a.name)],
+          ['Role', valOrDash(roleLabel(a.role))],
+          ['Status', '<span class="mem-status-dot mem-dot-on"></span>Active &mdash; sign-in profile on file'],
+          ['Birthday', a.birthday ? esc(fmtJobDate(a.birthday) || fmtDate(a.birthday)) : '&mdash;']
+        ]);
+        /* PORTAL_ROSTER_DETAIL_2026_11_02: the owner-only full record
+         * (pay + time + time-card jump) exists in the markup ONLY for
+         * the owner — see the section comment above. */
+        if (isPortalOwner()) detail += assocOwnerSection(a);
+        detail +=
+        '<p class="portal-muted portal-small">This is their portal sign-in profile. Onboarding paperwork (I-9, W-4, signed agreements) lives on their card in Employee Onboarding, under Documents.</p></div>';
+      }
+      return '<article class="portal-card assoc-card" data-assoc-toggle="' + esc(a.id) + '" style="cursor:pointer" title="Tap to ' + (open ? 'close' : 'view') + ' this associate&rsquo;s profile">' +
+        '<div class="portal-card-top"><p class="portal-card-title"><span class="mem-status-dot mem-dot-on" title="Active" aria-label="Active"></span>' + esc(a.name || 'Associate') + '</p>' +
+        '<span class="portal-card-topright">' +
+        (a.role ? '<span class="portal-badge portal-badge-role">' + esc(roleLabel(a.role)) + '</span>' : '') +
+        '<span class="portal-badge portal-st-ready">Active</span></span></div>' +
+        '<p class="portal-card-meta"><i class="fas fa-user"></i> ' + esc(roleLabel(a.role) || 'Associate') + ' &middot; Active' +
+        (a.birthday ? ' &middot; <i class="fas fa-cake-candles"></i> ' + esc(fmtJobDate(a.birthday) || fmtDate(a.birthday)) : '') + '</p>' +
+        '<p class="portal-card-meta portal-muted">' + (open ? 'Tap to close' : 'Tap to view profile') + '</p>' +
+        detail +
+        '</article>';
+    }).join('');
+    /* PORTAL_ROSTER_DETAIL_2026_11_02: an open owner card whose time
+     * summary has not been fetched yet (first expansion, or a roster
+     * refresh while a card is open) fetches it once; loadAssocTime
+     * re-renders when the rows land. */
+    if (assocExpandedId && isPortalOwner() && !assocTimeCache[assocExpandedId]) loadAssocTime(assocExpandedId);
+  }
+
+  function loadAssociates(force) {
+    var list = $('portal-associates-list');
+    if (!list) return;
+    if (!force) list.innerHTML = '<p class="portal-muted">Loading associates&hellip;</p>';
+    withClient(function (client) {
+      if (!client) { listError(list, 'associates'); return; }
+      var finish = function (rows) {
+        state.loaded.associates = true;
+        associatesCache = rows;
+        assocTimeCache = {};
+        renderAssociates(associatesCache);
+      };
+      /* Only fields the record is known to hold (see the gate's own
+       * selects at sign-in, and the team-birthdays select). Ordered
+       * by name so the owner reads first only if the alphabet puts
+       * him there — no special-casing. */
+      var plain = function () {
+        client.from('employee_profiles').select('id, name, role, birthday').order('name', { ascending: true }).limit(200)
+          .then(function (res) {
+            if (res.error) { listError(list, 'associates'); return; }
+            assocPayKnown = false;
+            finish(res.data || []);
+          })
+          .catch(function () { listError(list, 'associates'); });
+      };
+      if (!isPortalOwner()) { plain(); return; }
+      /* PORTAL_ROSTER_DETAIL_2026_11_02: the owner's load also asks
+       * for pay_rate. If the column is not live yet the select
+       * errors and the roster quietly loads without it — the same
+       * fallback shape verifyEmployee uses for password_changed_at —
+       * and the pay section then hides (assocPayKnown stays false). */
+      client.from('employee_profiles').select('id, name, role, birthday, pay_rate').order('name', { ascending: true }).limit(200)
+        .then(function (res) {
+          if (res.error) { plain(); return; }
+          assocPayKnown = true;
+          finish(res.data || []);
+        })
+        .catch(function () { plain(); });
+    });
+  }
+
+  function toggleAssociateCard(id) {
+    assocExpandedId = assocExpandedId === id ? null : id;
+    renderAssociates(associatesCache);
+  }
+
+  /* ================= PORTAL_ROSTER_DETAIL_2026_11_02: the owner's full record =================
+   * Everything below renders ONLY inside an expansion the owner
+   * opened (renderAssociates gates on isPortalOwner() before any of
+   * this markup exists), and the pay data behind it was only ever
+   * requested on the owner's load. */
+
+  function assocOwnerSection(a) {
+    var out = '<div class="assoc-owner-sec"><p class="assoc-owner-head"><i class="fas fa-lock"></i> Owner only</p>';
+    if (assocPayKnown) {
+      var has = a.pay_rate != null && a.pay_rate !== '' && !isNaN(Number(a.pay_rate));
+      out += '<div class="assoc-pay-row"><span class="assoc-pay-label">Pay rate' +
+        '<span class="assoc-pay-cur">' + (has ? esc(fmtMoney(a.pay_rate)) + ' / hr' : 'Not set') + '</span></span>' +
+        '<span class="assoc-pay-edit"><input type="number" min="0" step="0.01" inputmode="decimal" placeholder="$ / hr" aria-label="Pay rate in dollars per hour" data-assoc-pay-input="' + esc(a.id) + '" value="' + (has ? esc(String(Number(a.pay_rate))) : '') + '">' +
+        '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-assoc-pay-save="' + esc(a.id) + '">Save</button></span></div>' +
+        '<p class="portal-small assoc-pay-msg" data-assoc-pay-msg="' + esc(a.id) + '"></p>';
+    }
+    var t = assocTimeCache[a.id];
+    out += '<div class="assoc-time" data-assoc-time="' + esc(a.id) + '">' +
+      (t && !t.loading ? assocTimeHtml(t) : '<p class="portal-muted portal-small">Loading time&hellip;</p>') + '</div>';
+    out += '<p class="assoc-timecard-row"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-assoc-timecard="' + esc(a.id) + '"><i class="fas fa-clock"></i> View time card</button></p>';
+    out += '</div>';
+    return out;
+  }
+
+  function assocTimeHtml(t) {
+    var line;
+    if (t.open) {
+      line = '<p class="assoc-time-line"><strong>On the clock</strong> since ' +
+        esc(t.open.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })) + ' &middot; ' +
+        esc(t.open.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })) + '</p>';
+    } else {
+      line = '<p class="assoc-time-line">Off the clock</p>';
+    }
+    return line + '<p class="assoc-time-line">Hours this pay week: <strong>' + esc(fmtHours(t.weekMs)) + '</strong>' +
+      (t.open ? ' <span class="portal-muted">(plus the shift in progress)</span>' : '') + '</p>';
+  }
+
+  /* One associate's time summary from time_entries: the open entry
+   * (no clock_out), if any, and the closed hours inside the current
+   * Monday-start pay week — weekStart() and the closed-only total
+   * are the time clock's own math (loadTimeClock). */
+  function loadAssocTime(id) {
+    assocTimeCache[id] = { loading: true };
+    withClient(function (client) {
+      var settle = function (summary) {
+        assocTimeCache[id] = summary;
+        if (assocExpandedId === id) renderAssociates(associatesCache);
+      };
+      if (!client) { settle({ open: null, weekMs: 0 }); return; }
+      client.from('time_entries').select('*').eq('employee_id', id).order('clock_in', { ascending: false }).limit(100)
+        .then(function (res) {
+          var rows = (!res.error && res.data) || [];
+          var open = null, weekMs = 0, ws = weekStart();
+          rows.forEach(function (r) {
+            var ci = new Date(r.clock_in), co = r.clock_out ? new Date(r.clock_out) : null;
+            if (!co && !open) open = ci;
+            if (co && ci >= ws) weekMs += (co - ci);
+          });
+          settle({ open: open, weekMs: weekMs });
+        })
+        .catch(function () { settle({ open: null, weekMs: 0 }); });
+    });
+  }
+
+  /* Owner-only save. Writes the profile row's pay_rate (empty box
+   * clears it back to Not set); any refusal — RLS included — lands
+   * in the message line instead of failing silently. */
+  function saveAssocPay(id) {
+    var input = document.querySelector('[data-assoc-pay-input="' + id + '"]');
+    var msg = document.querySelector('[data-assoc-pay-msg="' + id + '"]');
+    if (!input) return;
+    var raw = trim(input.value);
+    var val = null;
+    if (raw !== '') {
+      val = Number(raw);
+      if (isNaN(val) || !isFinite(val) || val < 0) {
+        if (msg) msg.textContent = 'Enter a rate like 18.50, or clear the box to remove it.';
+        return;
+      }
+      val = Math.round(val * 100) / 100;
+    }
+    if (msg) msg.textContent = 'Saving&hellip;';
+    withClient(function (client) {
+      if (!client) { if (msg) msg.textContent = 'Could not save. Try again.'; return; }
+      client.from('employee_profiles').update({ pay_rate: val }).eq('id', id)
+        .then(function (res) {
+          if (res.error) { if (msg) msg.textContent = 'Could not save that rate.'; return; }
+          associatesCache.forEach(function (r) { if (r.id === id) r.pay_rate = val; });
+          if (msg) msg.textContent = 'Saved.';
+          setTimeout(function () { if (assocExpandedId === id) renderAssociates(associatesCache); }, 900);
+        })
+        .catch(function () { if (msg) msg.textContent = 'Could not save. Try again.'; });
+    });
+  }
+
+  /* Opens the Time Clocks panel exactly the way its own Action
+   * Button does, after recording whose card the owner was looking
+   * at (see the section comment for the port-forward wire). */
+  function openAssocTimeCard(id) {
+    window.portalTcFocusEmployeeId = id;
+    var tab = $('portal-tab-timeclock');
+    if (tab) { tab.click(); return; }
+    showExtraPanel('timeclock');
+  }
+  /* end PORTAL_SIDEBAR_ROSTER_2026_11_02 (associates roster) + PORTAL_ROSTER_DETAIL_2026_11_02 (owner's full record) */
+
   /* ================= CUSTOMERS ================= */
   function renderCustomers(rows) {
     var list = $('portal-customer-list');
@@ -4636,7 +5316,8 @@ function loadTicketThread(client, ticketId) {
     var row = null;
     state.customersCache.forEach(function (c) { if (c.id === customerId) row = c; });
     var name = row ? (row.name || 'this customer') : 'this customer';
-    if (!window.confirm('Delete ' + name + ' from Customers? This cannot be undone. If this customer has tickets or orders linked, the delete will be blocked.')) return;
+    /* PORTAL_SIDEBAR_ROSTER_2026_11_02: display text only — the list this delete runs from is labeled "Guest" now (Austin's word for customers). Behavior is unchanged. */
+    if (!window.confirm('Delete ' + name + ' from Guest? This cannot be undone. If this customer has tickets or orders linked, the delete will be blocked.')) return;
     var msg = document.querySelector('[data-cust-delete-msg="' + customerId + '"]');
     if (msg) msg.textContent = 'Deleting\u2026';
     withClient(function (client) {
@@ -4847,12 +5528,23 @@ function loadTicketThread(client, ticketId) {
     var box = $('portal-cust-edit-requests');
     if (!box) return;
     if (!isPortalOwner() || !custEditRequests.length) { box.innerHTML = ''; return; }
-    var html = '<div class="portal-card cust-req-card"><h3 class="cust-req-title"><i class="fas fa-user-pen"></i> Customer updates waiting for your approval (' + custEditRequests.length + ')</h3>';
+    /* PORTAL_MEMBERS_EDIT_2026_11_02: once membership requests ride
+     * this section too, the heading stops calling everything a
+     * customer update; each row's badge carries its kind. */
+    var anyMem = custEditRequests.some(function (r) { return r.changes && r.changes._kind === 'membership'; });
+    var html = '<div class="portal-card cust-req-card"><h3 class="cust-req-title"><i class="fas fa-user-pen"></i> ' +
+      (anyMem ? 'Updates' : 'Customer updates') + ' waiting for your approval (' + custEditRequests.length + ')</h3>';
     if (notice) html += '<p class="portal-error">' + esc(notice) + '</p>';
     html += custEditRequests.map(function (r) {
       var cust = custRowById(r.customer_id);
+      /* PORTAL_MEMBERS_EDIT_2026_11_02: membership requests render in the same
+       * section with their own badge; the name falls back to the
+       * snapshot stored on the request when the customer list has
+       * not been loaded in this session. */
+      var isMem = r.changes && r.changes._kind === 'membership';
+      var rowName = cust ? (cust.name || 'Customer') : ((r.changes && r.changes._member_name) || 'Customer');
       return '<div class="cust-req-row">' +
-        '<p class="portal-card-title">' + esc(cust ? (cust.name || 'Customer') : 'Customer') + ' <span class="portal-badge portal-st-new">Customer update</span></p>' +
+        '<p class="portal-card-title">' + esc(rowName) + ' <span class="portal-badge portal-st-new">' + (isMem ? 'Membership update' : 'Customer update') + '</span></p>' +
         custChangeLines(r, cust) +
         '<p class="portal-muted portal-small">Submitted by ' + esc(empNameCache[r.submitted_by] || 'an associate') + ' · ' + esc(fmtDateTime(r.created_at)) + '</p>' +
         custApproveRejectButtons(r) +
@@ -5236,10 +5928,21 @@ function loadTicketThread(client, ticketId) {
        * payload patches the membership it names. */
       if (req.changes && req.changes._kind === 'membership') {
         var mc = req.changes;
-        function memApplied() {
+        /* Reconciled at the chain-on-tier merge: the members-edit
+         * build's post-approval behavior (PORTAL_MEMBERS_EDIT_2026_11_02)
+         * rides this branch too — a successful apply updates the
+         * local member rows at once and refreshes an open member
+         * editor, on top of the stamp + panel reload. */
+        function memApplied(appliedId, appliedUpd) {
+          if (appliedId && appliedUpd) memApplyLocal(appliedId, appliedUpd);
           stamp('approved', function () {
             finish();
             loadAtrOneMembers(true);
+            var dr = $('portal-drawer');
+            if (appliedId && memEditCurrent && memEditCurrent.id === appliedId && dr && dr.classList.contains('open')) {
+              memEditNotice = 'Membership change approved and saved.';
+              renderMemberEditor();
+            }
           });
         }
         function memFailed() {
@@ -5264,7 +5967,7 @@ function loadTicketThread(client, ticketId) {
           return;
         }
         client.from('customer_memberships').update(mupd).eq('id', mid)
-          .then(function (res) { if (res.error) { memFailed(); return; } memApplied(); })
+          .then(function (res) { if (res.error) { memFailed(); return; } memApplied(mid, mupd); })
           .catch(memFailed);
         return;
       }
@@ -5340,6 +6043,8 @@ function loadTicketThread(client, ticketId) {
         '<td class="p3-inv-actions">' +
         /* PORTAL_PARTS_TO_INVENTORY_2026_11_02: one-tap reorder, only when a link is saved */
         (trim(p.reorder_url || '') ? '<a class="portal-btn portal-btn-outline portal-btn-sm" href="' + esc(p.reorder_url) + '" target="_blank" rel="noopener">Reorder</a> ' : '') +
+        /* PORTAL_INV_SCAN_2026_11_02 (attach to repair): disabled at zero — the panel already shows the count at 0 (low) */
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-inv-attach="' + esc(p.id) + '"' + ((Number(p.stock_qty) || 0) < 1 ? ' disabled' : '') + '>Attach to repair</button> ' +
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-inv-edit="' + esc(p.id) + '">Edit</button> ' +
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-inv-del="' + esc(p.id) + '">Delete</button></td></tr>';
     }).join('');
@@ -5382,6 +6087,10 @@ function loadTicketThread(client, ticketId) {
     });
     list.querySelectorAll('[data-inv-edit]').forEach(function (btn) {
       btn.addEventListener('click', function () { fillInventoryForm(invRow(btn.getAttribute('data-inv-edit'))); });
+    });
+    /* PORTAL_INV_SCAN_2026_11_02 (attach to repair) */
+    list.querySelectorAll('[data-inv-attach]').forEach(function (btn) {
+      btn.addEventListener('click', function () { openInvAttachPicker(invRow(btn.getAttribute('data-inv-attach'))); });
     });
     list.querySelectorAll('[data-inv-del]').forEach(function (btn) {
       btn.addEventListener('click', function () {
@@ -5471,6 +6180,283 @@ function loadTicketThread(client, ticketId) {
     });
   }
 
+  /* ================= PORTAL_INV_SCAN_2026_11_02 =================
+   * Scan UPC in Inventory & Orders: receive stock by scanning the
+   * UPC on the supplier box (Austin, Nov 2, 2026 — the panel had Add
+   * stock item but no way to scan). This REUSES the ticket drawer's
+   * barcode scanner (the "Parts on this ticket" section above):
+   * same camera flow (BarcodeDetector, ZXing fallback loaded from
+   * the same CDN, Stop camera, type-the-code manual fallback) and
+   * the same match logic — the code is looked up as a supplier SKU
+   * in inventory first, then in past part_orders. Matches come from
+   * ATRG's own records only; there is no external UPC lookup.
+   * What differs is only where the result lands: the stock form.
+   * A part already in inventory opens in that form (Save changes)
+   * with the quantity focused, so receiving updates its count
+   * instead of duplicating the row; a past-order match or a brand
+   * new code starts the Add stock item form prefilled. */
+  var invScanStream = null, invScanTimer = null, invScanReader = null;
+  function stopInvScan() {
+    if (invScanTimer) { clearInterval(invScanTimer); invScanTimer = null; }
+    if (invScanReader && invScanReader.reset) { try { invScanReader.reset(); } catch (e) {} invScanReader = null; }
+    if (invScanStream) { invScanStream.getTracks().forEach(function (tr) { tr.stop(); }); invScanStream = null; }
+    var v = $('portal-inv-scan-video'); if (v) v.srcObject = null;
+    var box = $('portal-inv-scan-box'); if (box) box.hidden = true;
+  }
+  function focusInvField(id) {
+    var el = $(id);
+    if (!el) return;
+    try { el.focus(); if (el.select) el.select(); } catch (e) {}
+  }
+  function applyInvScannedCode(code) {
+    code = String(code || '').trim();
+    if (!code) return;
+    stopInvScan();
+    var msg = $('portal-inv-scan-msg');
+    if (msg) msg.textContent = 'Scanned: ' + code + ' — looking it up…';
+    withClient(function (client) {
+      if (!client) {
+        resetInventoryForm();
+        $('portal-inv-sku').value = code;
+        if (!$('portal-inv-supplier').value) $('portal-inv-supplier').value = 'Mobile Sentrix';
+        if (msg) msg.textContent = 'Code filled in as ' + code + ' — add the name and price, then tap Add stock item.';
+        focusInvField('portal-inv-name');
+        return;
+      }
+      /* Match order (same as the ticket drawer): stock first, then a part already ordered on a ticket. */
+      client.from('inventory').select('*').eq('supplier_sku', code).maybeSingle().then(function (res) {
+        if (res.data) {
+          /* Already a stock item: open it in the form so receiving
+           * updates the count on the one row — never a duplicate. */
+          fillInventoryForm(res.data);
+          if (msg) msg.textContent = 'Matched stock: ' + (res.data.product_name || code) + ' — already on file. Update the quantity to what is on hand now and tap Save changes.';
+          focusInvField('portal-inv-qty');
+          return;
+        }
+        return client.from('part_orders').select('*').eq('supplier_sku', code).order('created_at', { ascending: false }).limit(1).maybeSingle();
+      }).then(function (res) {
+        if (res && res.data) {
+          var po = res.data;
+          resetInventoryForm();
+          $('portal-inv-name').value = po.description || '';
+          $('portal-inv-supplier').value = po.supplier || 'Mobile Sentrix';
+          $('portal-inv-sku').value = code;
+          if (po.our_cost != null) $('portal-inv-cost').value = po.our_cost;
+          if (po.retail_price != null) $('portal-inv-retail').value = po.retail_price;
+          $('portal-inv-qty').value = '';
+          var form = $('portal-inv-form');
+          if (form && form.scrollIntoView) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          if (msg) msg.textContent = 'Matched an earlier part order: ' + (po.description || code) + ' — type how many arrived and tap Add stock item.';
+          focusInvField('portal-inv-qty');
+        } else if (msg && msg.textContent.indexOf('Matched') !== 0) {
+          resetInventoryForm();
+          $('portal-inv-sku').value = code;
+          $('portal-inv-supplier').value = 'Mobile Sentrix';
+          var form2 = $('portal-inv-form');
+          if (form2 && form2.scrollIntoView) form2.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          msg.textContent = 'No match on file for ' + code + ' — code and supplier are filled in, add the name and price, then tap Add stock item. It will match next time.';
+          focusInvField('portal-inv-name');
+        }
+      }).catch(function () {
+        resetInventoryForm();
+        $('portal-inv-sku').value = code;
+        if (!$('portal-inv-supplier').value) $('portal-inv-supplier').value = 'Mobile Sentrix';
+        if (msg) msg.textContent = 'Code filled in as ' + code + ' — add the name and price, then tap Add stock item.';
+        focusInvField('portal-inv-name');
+      });
+    });
+  }
+  function startInvScan() {
+    var box = $('portal-inv-scan-box'); if (!box) return;
+    if (invScanStream || invScanTimer) stopInvScan();
+    box.hidden = false;
+    if (box.scrollIntoView) box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    var status = $('portal-inv-scan-status');
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      if (status) status.textContent = 'This device cannot open the camera here — type the code below instead.';
+      return;
+    }
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }).then(function (stream) {
+      invScanStream = stream;
+      var v = $('portal-inv-scan-video'); v.srcObject = stream; v.play();
+      if (status) status.textContent = 'Point the camera at the UPC…';
+      if (window.BarcodeDetector) {
+        var det = new BarcodeDetector({ formats: ['upc_a', 'upc_e', 'ean_13', 'ean_8', 'code_128', 'code_39', 'qr_code'] });
+        invScanTimer = setInterval(function () {
+          det.detect(v).then(function (codes) {
+            if (codes && codes.length) applyInvScannedCode(codes[0].rawValue);
+          }).catch(function () {});
+        }, 500);
+      } else if (window.ZXing) {
+        try {
+          invScanReader = new ZXing.BrowserMultiFormatReader();
+          invScanReader.decodeFromVideoDevice(null, v, function (result) {
+            if (result) applyInvScannedCode(result.getText());
+          });
+        } catch (e) {
+          if (status) status.textContent = 'Camera opened but barcode reading is not available here — type the code below instead.';
+        }
+      } else {
+        var s = document.createElement('script');
+        s.src = 'https://unpkg.com/@zxing/browser@0.1.5/umd/index.min.js';
+        s.onload = function () {
+          if (!window.ZXing) { if (status) status.textContent = 'Barcode reading could not load — type the code below instead.'; return; }
+          try {
+            invScanReader = new ZXing.BrowserMultiFormatReader();
+            invScanReader.decodeFromVideoDevice(null, v, function (result) {
+              if (result) applyInvScannedCode(result.getText());
+            });
+          } catch (e) {}
+        };
+        s.onerror = function () { if (status) status.textContent = 'Barcode reading could not load — type the code below instead.'; };
+        document.head.appendChild(s);
+      }
+    }).catch(function () {
+      if (status) status.textContent = 'Camera permission was denied — type the code below instead.';
+    });
+  }
+
+  /* ---------- PORTAL_INV_SCAN_2026_11_02 (attach to repair) ----------
+   * Austin, Nov 2, 2026: the inventory flow is parts and stock first —
+   * a part gets stocked, then from the stock list it attaches to a
+   * job. "Attach to repair" on a stock row opens a ticket picker in
+   * the shared drawer: the open repair queue (everything not Job
+   * Complete, queue order), searchable by customer, device or issue,
+   * mirroring the check-in customer picker (search input + .ci-result
+   * buttons). Picking a ticket attaches the part with the SAME code
+   * path the ticket drawer's own part form uses when a part is picked
+   * from stock: insert the same part_orders row (inventory_id set,
+   * description / supplier / SKU / cost / retail carried from the
+   * stock item, qty 1, status 'Ordered'), then the drawer's own
+   * adjustStock() takes the unit out of stock. No second mechanism,
+   * and landPartInInventory is not involved — the part came FROM the
+   * inventory row, so there is nothing new to land. */
+  var invAttachItem = null, invAttachTickets = null;
+  function openInvAttachPicker(item) {
+    if (!item) return;
+    if ((Number(item.stock_qty) || 0) < 1) return; /* button is disabled at zero; belt and braces */
+    invAttachItem = item;
+    invAttachTickets = null;
+    openDrawer('Attach to repair');
+    var body = $('portal-drawer-body');
+    body.innerHTML =
+      '<div class="portal-drawer-section"><p class="portal-card-title">' + esc(item.product_name || 'Part') + '</p>' +
+      '<p class="portal-card-meta">' + esc(String(item.stock_qty)) + ' in stock' +
+      (item.supplier_sku ? ' &middot; SKU ' + esc(item.supplier_sku) : '') +
+      (item.supplier ? ' &middot; ' + esc(item.supplier) : '') + '</p>' +
+      '<div class="portal-field"><label for="inv-attach-search">Which repair?</label>' +
+      '<input type="search" id="inv-attach-search" placeholder="Search customer or device&hellip;" autocomplete="off" /></div>' +
+      '<div id="inv-attach-results"><p class="portal-muted">Loading open repairs&hellip;</p></div>' +
+      '<p class="portal-error" id="inv-attach-error" hidden></p>' +
+      '<p class="portal-muted portal-small" id="inv-attach-msg"></p></div>';
+    var search = $('inv-attach-search');
+    if (search) {
+      search.addEventListener('input', renderInvAttachResults);
+      try { search.focus(); } catch (e) {}
+    }
+    withClient(function (client) {
+      if (!client) { $('inv-attach-results').innerHTML = '<p class="portal-error">Couldn&rsquo;t reach the database.</p>'; return; }
+      var q = client.from('tickets').select('*').neq('status', 'Job Complete');
+      q = q.order('job_date', { ascending: false });
+      q = q.order('created_at', { ascending: false }).limit(200);
+      q.then(function (res) {
+        if (res.error) { $('inv-attach-results').innerHTML = '<p class="portal-error">Couldn&rsquo;t load the repair queue.</p>'; return; }
+        invAttachTickets = res.data || [];
+        renderInvAttachResults();
+      }).catch(function () { $('inv-attach-results').innerHTML = '<p class="portal-error">Couldn&rsquo;t load the repair queue.</p>'; });
+    });
+  }
+  function renderInvAttachResults() {
+    var box = $('inv-attach-results');
+    if (!box || !invAttachTickets) return;
+    var term = trim((($('inv-attach-search') || {}).value || '')).toLowerCase();
+    var hits = invAttachTickets.filter(function (t) {
+      if (!term) return true;
+      var hay = ((t.customer_name || '') + ' ' + deviceLabel(t) + ' ' + (t.issue || '')).toLowerCase();
+      return hay.indexOf(term) !== -1;
+    }).slice(0, 50);
+    if (!invAttachTickets.length) { box.innerHTML = '<p class="portal-muted">No open repairs right now.</p>'; return; }
+    if (!hits.length) { box.innerHTML = '<p class="portal-muted">No open repair matches that search.</p>'; return; }
+    box.innerHTML = hits.map(function (t) {
+      return '<button type="button" class="ci-result" data-inv-attach-pick="' + esc(t.id) + '"><strong>' + esc(t.customer_name || 'No name given') + '</strong><span>' + esc(deviceLabel(t)) + ' &middot; ' + esc(t.status || '') + '</span></button>';
+    }).join('');
+    box.querySelectorAll('[data-inv-attach-pick]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var t = null;
+        invAttachTickets.forEach(function (x) { if (String(x.id) === b.getAttribute('data-inv-attach-pick')) t = x; });
+        if (t) attachStockToTicket(t);
+      });
+    });
+  }
+  function attachStockToTicket(t) {
+    var item = invAttachItem;
+    if (!item) return;
+    var err = $('inv-attach-error');
+    if (err) { err.hidden = true; err.textContent = ''; }
+    var msg = $('inv-attach-msg');
+    var box = $('inv-attach-results');
+    if (box) box.querySelectorAll('[data-inv-attach-pick]').forEach(function (b) { b.disabled = true; });
+    if (msg) msg.textContent = 'Attaching&hellip;';
+    withClient(function (client) {
+      if (!client) {
+        if (msg) msg.textContent = '';
+        if (err) { err.textContent = 'Couldn&rsquo;t reach the database.'; err.hidden = false; }
+        renderInvAttachResults();
+        return;
+      }
+      if ((Number(item.stock_qty) || 0) < 1) {
+        if (msg) msg.textContent = '';
+        if (err) { err.textContent = 'That part is out of stock.'; err.hidden = false; }
+        renderInvAttachResults();
+        return;
+      }
+      var part = {
+        ticket_id: t.id,
+        inventory_id: item.id,
+        description: item.product_name || '',
+        supplier: item.supplier || null,
+        supplier_sku: item.supplier_sku || null,
+        our_cost: item.cost != null ? item.cost : null,
+        retail_price: item.retail_price != null ? item.retail_price : null,
+        qty: 1,
+        carrier: null,
+        tracking_number: null,
+        order_number: null,
+        status: 'Ordered'
+      };
+      client.from('part_orders').insert(part).select().then(function (res) {
+        if (res.error) {
+          if (msg) msg.textContent = '';
+          if (err) { err.textContent = 'Couldn&rsquo;t attach that part. Try again.'; err.hidden = false; }
+          renderInvAttachResults();
+          return;
+        }
+        adjustStock(client, item.id, -1);
+        var left = Math.max(0, (Number(item.stock_qty) || 0) - 1);
+        state.loaded.inventory = false;
+        loadInventory(true);
+        $('portal-drawer-body').innerHTML =
+          '<div class="portal-drawer-section"><p class="portal-card-title">' + esc(item.product_name || 'Part') + '</p>' +
+          '<p>Attached to ' + esc(t.customer_name || 'the repair') + ' &mdash; ' + esc(deviceLabel(t)) + '.</p>' +
+          '<p class="portal-card-meta">Stock left: ' + left + '</p>' +
+          '<button class="portal-btn portal-btn-primary" type="button" id="inv-attach-done">Done</button></div>';
+        var done = $('inv-attach-done');
+        if (done) done.addEventListener('click', function () {
+          /* adjustStock is fire-and-forget (the drawer's helper), so
+           * reload once more as the drawer closes — the panel behind
+           * then shows the landed count, not a mid-flight one. */
+          state.loaded.inventory = false;
+          loadInventory(true);
+          closeDrawer();
+        });
+      }).catch(function () {
+        if (msg) msg.textContent = '';
+        if (err) { err.textContent = 'Couldn&rsquo;t attach that part. Try again.'; err.hidden = false; }
+        renderInvAttachResults();
+      });
+    });
+  }
+
   function renderPurchaseOrders(rows) {
     var list = $('portal-po-list');
     if (!rows.length) { emptyState(list, 'No purchase orders yet.'); return; }
@@ -5510,6 +6496,13 @@ function loadTicketThread(client, ticketId) {
   /* ================= GLOBAL CLICK DELEGATION ================= */
   function initDelegation() {
     document.addEventListener('click', function (e) {
+      /* PORTAL_ROSTER_DETAIL_2026_11_02: taps inside the roster's
+       * owner-section fields must not fall through to the card
+       * toggle below (the whole card is the toggle target) — typing
+       * a pay rate is not a tap on the card. Buttons in the detail
+       * carry their own data attributes and are still handled by
+       * their branches as the walk passes them. */
+      if (e.target && e.target.closest && e.target.closest('.assoc-detail input, .assoc-detail select, .assoc-detail textarea')) return;
       var t = e.target;
       while (t && t !== document) {
         if (t.getAttribute) {
@@ -5530,6 +6523,23 @@ function loadTicketThread(client, ticketId) {
           if (cr) { decideCustEdit(cr, false); return; }
           var cs = t.getAttribute('data-cust-edit-save');
           if (cs) { saveCustomerEdit(cs); return; }
+          /* PORTAL_ROSTER_DETAIL_2026_11_02: roster owner-section
+           * actions — the walk reaches these buttons before the card
+           * they sit in, so they act instead of toggling it. */
+          var aps = t.getAttribute('data-assoc-pay-save');
+          if (aps) { saveAssocPay(aps); return; }
+          var atc = t.getAttribute('data-assoc-timecard');
+          if (atc) { openAssocTimeCard(atc); return; }
+          /* PORTAL_SIDEBAR_ROSTER_2026_11_02: roster row tap expands/collapses that associate's profile in place. */
+          var at = t.getAttribute('data-assoc-toggle');
+          if (at) { toggleAssociateCard(at); return; }
+          /* PORTAL_MEMBERS_EDIT_2026_11_02: member cards + member editor actions. */
+          var me = t.getAttribute('data-member-edit');
+          if (me) { openMemberEditor(me); return; }
+          var mt = t.getAttribute('data-mem-toggle');
+          if (mt) { saveMembershipToggle(mt); return; }
+          var mts = t.getAttribute('data-mem-tier-save');
+          if (mts) { saveMembershipTier(mts); return; }
         }
         t = t.parentNode;
       }
@@ -5557,6 +6567,16 @@ function loadTicketThread(client, ticketId) {
     if (invFormEl) invFormEl.addEventListener('submit', saveInventoryItem);
     var invCancelEl = $('portal-inv-cancel');
     if (invCancelEl) invCancelEl.addEventListener('click', resetInventoryForm);
+    /* PORTAL_INV_SCAN_2026_11_02 */
+    var invScanBtn = $('portal-inv-scan-btn');
+    if (invScanBtn) invScanBtn.addEventListener('click', startInvScan);
+    var invScanStop = $('portal-inv-scan-stop');
+    if (invScanStop) invScanStop.addEventListener('click', stopInvScan);
+    var invScanUse = $('portal-inv-scan-use');
+    if (invScanUse) invScanUse.addEventListener('click', function () {
+      var code = $('portal-inv-scan-manual') ? $('portal-inv-scan-manual').value : '';
+      applyInvScannedCode(code);
+    });
   }
 
   /* ================= INIT ================= */
@@ -5608,6 +6628,9 @@ function loadTicketThread(client, ticketId) {
     var rb = $('tc-test-receipt'); if (rb) rb.addEventListener('click', function () { printTest(false); });
     var lb = $('tc-test-label'); if (lb) lb.addEventListener('click', function () { printTest(true); });
     var act = $('tc-action'); if (act) act.addEventListener('click', toggleClock);
+    /* PORTAL_TIME_CARDS_2026_11_02: week stepper for the time cards. */
+    var wp = $('tc-week-prev'); if (wp) wp.addEventListener('click', function () { tcWeekOffset -= 1; renderTimeCards(); });
+    var wn = $('tc-week-next'); if (wn) wn.addEventListener('click', function () { if (tcWeekOffset < 0) { tcWeekOffset += 1; renderTimeCards(); } });
   }
   function printTest(isLabel) {
     var w = window.open('', '_blank', 'width=420,height=560');
@@ -5624,23 +6647,43 @@ function loadTicketThread(client, ticketId) {
   function isManager() { return /owner|admin|manager/i.test((state.profile && state.profile.role) || ''); }
   function fmtHours(ms) { return (ms / 3600000).toFixed(2) + ' hrs'; }
   function weekStart() { var d = new Date(); d.setHours(0, 0, 0, 0); var day = (d.getDay() + 6) % 7; d.setDate(d.getDate() - day); return d; }
+  /* PORTAL_TIME_CARDS_2026_11_02 (Austin, Nov 2, 2026): "time clock. I
+   * need it to be a little bit better so I can see associates time
+   * cards." The panel is now TIME CARDS: an owner-only "On the clock
+   * now" board at the top (who is clocked in and since when), then one
+   * card per associate with their shifts for one pay week at a time
+   * (ATRG pays weekly, so cards follow the same Monday-start week as
+   * weekStart()), previous/next week stepping, and each card's total
+   * hours for the displayed week. The displayed week IS the pay week
+   * and is labeled that way: the stepper header reads "Pay week:
+   * <range>" and each card's total reads "Pay-week total". The old flat "My time this week"
+   * list and the manager approve queue are replaced: the approve
+   * action (same approved flag, owner only) now sits on the shift row
+   * inside the associate's card. Access mirrors the old panel — the
+   * owner fetches every entry; an associate's loader only ever
+   * queries their own employee_id, so they see only their own card
+   * and never the on-the-clock board. Clock in / out is unchanged:
+   * toggleClock still inserts {employee_id, employee_name} on clock
+   * in and stamps clock_out on clock out. A shift belongs to the week
+   * of its clock_in; an overnight shift's hours land on the day it
+   * started (duration is clock_out minus clock_in, unchanged). The
+   * week stepper re-renders from the rows already fetched, so
+   * stepping never loses the on-the-clock board. */
+  var tcWeekOffset = 0;
+  var tcCardRows = null;
+  var tcClientRef = null;
+  function tcWeekStart() { var d = weekStart(); d.setDate(d.getDate() + tcWeekOffset * 7); return d; }
   function loadTimeClock() {
     withClient(function (client) {
       if (!client || !state.user) return;
+      tcClientRef = client;
       client.from('time_entries').select('*').eq('employee_id', state.user.id).order('clock_in', { ascending: false }).limit(60)
         .then(function (res) {
-          var status = $('tc-status'), btn = $('tc-action'), list = $('tc-my-list');
-          if (res.error) { if (status) status.textContent = 'Time clock is not set up yet.'; if (list) list.innerHTML = ''; return; }
+          var status = $('tc-status'), btn = $('tc-action');
+          if (res.error) { if (status) status.textContent = 'Time clock is not set up yet.'; var cardsErr = $('tc-cards'); if (cardsErr) cardsErr.innerHTML = ''; return; }
           var rows = res.data || [];
           tcOpenEntry = null;
           rows.forEach(function (r) { if (!r.clock_out) tcOpenEntry = r; });
-          var ws = weekStart(), total = 0;
-          var html = rows.filter(function (r) { return new Date(r.clock_in) >= ws; }).map(function (r) {
-            var ci = new Date(r.clock_in), co = r.clock_out ? new Date(r.clock_out) : null;
-            if (co) total += (co - ci);
-            return '<div class="tc-row"><span>' + esc(ci.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })) + ' &middot; ' + esc(ci.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })) + ' &rarr; ' + (co ? esc(co.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })) + ' (' + fmtHours(co - ci) + ')' : '<strong>on the clock</strong>') + '</span>' + (r.approved ? '<span class="tc-badge">Approved</span>' : '<span class="tc-badge tc-badge-pending">Pending</span>') + '</div>';
-          }).join('');
-          if (list) list.innerHTML = (html || '<p class="portal-muted">No time logged this week yet.</p>') + '<p class="tc-total">Closed time this week: <strong>' + fmtHours(total) + '</strong></p>';
           if (tcOpenEntry) {
             if (status) status.innerHTML = 'You are <strong>on the clock</strong> since ' + esc(new Date(tcOpenEntry.clock_in).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })) + '.';
             if (btn) btn.textContent = 'Clock Out';
@@ -5649,31 +6692,74 @@ function loadTicketThread(client, ticketId) {
             if (btn) btn.textContent = 'Clock In';
           }
           loadBirthdays(client);
-          if (isManager()) loadTimeAdmin(client);
+          loadTimeCards(client);
         });
     });
   }
-  function loadTimeAdmin(client) {
-    var wrap = $('tc-admin-wrap'), list = $('tc-admin-list');
-    if (!wrap || !list) return;
-    wrap.hidden = false;
-    client.from('time_entries').select('*').order('clock_in', { ascending: false }).limit(100).then(function (res) {
-      if (res.error) { list.innerHTML = '<p class="portal-muted">Team time unavailable.</p>'; return; }
-      var rows = res.data || [];
-      var onNow = rows.filter(function (r) { return !r.clock_out; });
-      var pending = rows.filter(function (r) { return r.clock_out && !r.approved; });
-      var html = '';
-      html += '<p class="tc-sub">On the clock now: ' + (onNow.length ? onNow.map(function (r) { return esc(r.employee_name || 'Tech'); }).join(', ') : 'nobody') + '</p>';
-      if (!pending.length) html += '<p class="portal-muted">No hours waiting for approval.</p>';
-      html += pending.map(function (r) {
-        var ci = new Date(r.clock_in), co = new Date(r.clock_out);
-        return '<div class="tc-row"><span><strong>' + esc(r.employee_name || 'Tech') + '</strong> &middot; ' + esc(ci.toLocaleDateString([], { month: 'short', day: 'numeric' })) + ' &middot; ' + fmtHours(co - ci) + '</span><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-approve="' + r.id + '">Approve</button></div>';
+  function loadTimeCards(client) {
+    var cards = $('tc-cards'), onWrap = $('tc-onnow-wrap');
+    if (isManager()) {
+      if (onWrap) onWrap.hidden = false;
+      client.from('time_entries').select('*').is('clock_out', null).order('clock_in', { ascending: true }).then(function (res) {
+        renderOnNow(res.error ? null : (res.data || []));
+      });
+      client.from('time_entries').select('*').order('clock_in', { ascending: false }).limit(300).then(function (res) {
+        if (res.error) { if (cards) cards.innerHTML = '<p class="portal-muted">Team time unavailable.</p>'; return; }
+        tcCardRows = res.data || [];
+        renderTimeCards();
+      });
+    } else {
+      if (onWrap) onWrap.hidden = true;
+      client.from('time_entries').select('*').eq('employee_id', state.user.id).order('clock_in', { ascending: false }).limit(300).then(function (res) {
+        if (res.error) { if (cards) cards.innerHTML = '<p class="portal-muted">Your time is unavailable.</p>'; return; }
+        tcCardRows = res.data || [];
+        renderTimeCards();
+      });
+    }
+  }
+  function renderOnNow(rows) {
+    var list = $('tc-onnow-list');
+    if (!list) return;
+    if (!rows || !rows.length) { list.innerHTML = '<p class="portal-muted">Nobody is on the clock right now.</p>'; return; }
+    list.innerHTML = rows.map(function (r) {
+      var ci = new Date(r.clock_in);
+      return '<div class="tc-row"><span><strong>' + esc(r.employee_name || 'Tech') + '</strong></span><span class="portal-muted">since ' + esc(ci.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })) + ' &middot; ' + esc(ci.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })) + '</span></div>';
+    }).join('');
+  }
+  function renderTimeCards() {
+    var wrap = $('tc-cards');
+    if (!wrap || !tcCardRows) return;
+    var ws = tcWeekStart(), we = new Date(ws); we.setDate(we.getDate() + 7);
+    var sun = new Date(we); sun.setDate(sun.getDate() - 1);
+    var label = $('tc-week-label');
+    if (label) label.textContent = 'Pay week: ' + ws.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' \u2013 ' + sun.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    var next = $('tc-week-next'); if (next) next.disabled = tcWeekOffset >= 0;
+    var inWeek = tcCardRows.filter(function (r) { var d = new Date(r.clock_in); return d >= ws && d < we; });
+    if (!inWeek.length) { wrap.innerHTML = '<p class="portal-muted">No time logged for this week.</p>'; return; }
+    var groups = [], byKey = {};
+    inWeek.forEach(function (r) {
+      var key = r.employee_id || r.employee_name || 'tech';
+      if (!byKey[key]) { byKey[key] = { name: r.employee_name || 'Tech', rows: [] }; groups.push(byKey[key]); }
+      byKey[key].rows.push(r);
+    });
+    var mgr = isManager();
+    wrap.innerHTML = groups.map(function (g) {
+      var total = 0;
+      var rowsHtml = g.rows.map(function (r) {
+        var ci = new Date(r.clock_in), co = r.clock_out ? new Date(r.clock_out) : null;
+        var when = esc(ci.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })) + ' &middot; ' + esc(ci.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })) + ' &rarr; ';
+        if (!co) return '<div class="tc-row"><span>' + when + '<strong>On the clock</strong></span></div>';
+        total += (co - ci);
+        var badge = r.approved ? '<span class="tc-badge">Approved</span>' : '<span class="tc-badge tc-badge-pending">Pending approval</span>';
+        var approve = (!r.approved && mgr) ? '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-approve="' + r.id + '">Approve</button>' : '';
+        return '<div class="tc-row"><span>' + when + esc(co.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })) + ' (' + fmtHours(co - ci) + ')</span><span class="tc-row-end">' + badge + approve + '</span></div>';
       }).join('');
-      list.innerHTML = html;
-      list.querySelectorAll('[data-approve]').forEach(function (b) {
-        b.addEventListener('click', function () {
-          client.from('time_entries').update({ approved: true }).eq('id', b.getAttribute('data-approve')).then(function () { loadTimeAdmin(client); loadTimeClock(); });
-        });
+      return '<div class="tc-card"><div class="tc-card-head"><strong>' + esc(g.name) + '</strong><span class="tc-card-total">Pay-week total: ' + fmtHours(total) + '</span></div>' + rowsHtml + '</div>';
+    }).join('');
+    wrap.querySelectorAll('[data-approve]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        if (!tcClientRef) return;
+        tcClientRef.from('time_entries').update({ approved: true }).eq('id', b.getAttribute('data-approve')).then(function () { loadTimeClock(); });
       });
     });
   }

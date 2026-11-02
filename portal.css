@@ -478,6 +478,90 @@ body.portal-scroll-locked{position:fixed;left:0;right:0;width:100%;overflow:hidd
 .cust-change-line { margin: 0 0 .2rem; overflow-wrap: anywhere; }
 /* end PORTAL_CUSTOMER_PROFILE_2026_11_02 */
 
+/* PORTAL_MEMBERS_EDIT_2026_11_02: ATR One member status dots + tappable member cards.
+ * Green dot = status 'active' (good standing); red dot = anything else
+ * (cancelled/off). The dot mirrors the recorded status only — membership
+ * status is a manual portal record, never a payment feed. */
+.mem-status-dot { display: inline-block; width: .62rem; height: .62rem; border-radius: 50%; margin-right: .45rem; }
+.mem-dot-on { background: #1e9e52; box-shadow: 0 0 0 3px rgba(30, 158, 82, .18); }
+.mem-dot-off { background: #d23b2e; box-shadow: 0 0 0 3px rgba(210, 59, 46, .15); }
+.mem-card { cursor: pointer; }
+.mem-card .portal-card-title { display: flex; align-items: center; }
+
+/* PORTAL_INV_SCAN_2026_11_02: Inventory & Orders scan box (video +
+ * controls) spacing; mirrors the ticket drawer's scan box look. */
+#portal-inv-scan-box { margin: 0 0 1rem; }
+#portal-inv-scan-box video { display: block; margin-bottom: .5rem; }
+/* end PORTAL_INV_SCAN_2026_11_02 */
+
+/* PORTAL_TIME_CARDS_2026_11_02: Time Clock panel — week stepper bar,
+ * one card per associate, and the badge + Approve cluster at the end
+ * of a shift row. Rows/badges themselves reuse the existing .tc-row /
+ * .tc-badge rules above. */
+.tc-weekbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 2px 0 12px; }
+.tc-week-label { font-weight: 700; }
+.tc-card { border: 1px solid var(--line,#e5d9c8); border-radius: 14px; background: var(--surface,#fff); padding: 4px 12px 8px; margin-bottom: 14px; }
+.tc-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0 2px; font-size: 1rem; }
+.tc-card-total { font-weight: 700; white-space: nowrap; }
+
+/* ================= PORTAL_ROSTER_DETAIL_2026_11_02 =================
+ * The owner-only section inside an expanded roster card (pay rate
+ * editor + time summary + View time card). Rendered only for the
+ * owner — see portal.js. */
+.assoc-owner-sec { border-top: 1px dashed var(--line, #E5D9C8); margin-top: .6rem; padding-top: .6rem; }
+.assoc-owner-head { font-size: .78rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted, #8A7A63); margin: 0 0 .5rem; }
+.assoc-pay-row { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem .9rem; }
+.assoc-pay-label { font-weight: 700; font-size: .9rem; }
+.assoc-pay-cur { font-weight: 400; margin-left: .4rem; }
+.assoc-pay-edit { display: inline-flex; align-items: center; gap: .4rem; }
+.assoc-pay-edit input {
+  width: 6.5rem; box-sizing: border-box; padding: 0.45rem 0.6rem;
+  border: 1px solid var(--line, #E6D9C0); border-radius: 8px;
+  background: var(--bg, #FAF6EE); color: var(--ink, #2C231A);
+  font-family: inherit; font-size: 0.95rem;
+}
+.assoc-pay-msg { min-height: 1.05em; margin: .25rem 0 .35rem; color: var(--muted, #8A7A63); }
+.assoc-time-line { margin: .2rem 0; }
+.assoc-timecard-row { margin: .55rem 0 0; }
+/* end PORTAL_ROSTER_DETAIL_2026_11_02 */
+.tc-row-end { display: flex; align-items: center; gap: 8px; flex: none; }
+/* end PORTAL_TIME_CARDS_2026_11_02 */
+
+/* PORTAL_SIDEBAR_ROSTER_2026_11_02: Associates roster cards — tappable
+ * like the member cards (.mem-card pattern); the title carries the
+ * shared status dot, and the expanded profile sits under a hairline
+ * reusing .portal-kv. */
+.assoc-card { cursor: pointer; }
+.assoc-card .portal-card-title { display: flex; align-items: center; }
+.assoc-detail { border-top: 1px solid var(--line, #E5D9C8); margin-top: .6rem; padding-top: .7rem; }
+.assoc-detail .portal-kv { margin-bottom: .5rem; }
+/* end PORTAL_SIDEBAR_ROSTER_2026_11_02 */
+
+/* PORTAL_CHARGE_DEDUCTOR_2026_11_02: the struck, muted face amount
+ * on a waived charge line in the ticket's Charges list (the <s>
+ * element itself carries the line-through). */
+.p2-waived-face { opacity: .55; }
+/* end PORTAL_CHARGE_DEDUCTOR_2026_11_02 */
+
+/* PORTAL_TICKET_ACCORDION_2026_11_02: collapsible ticket drawer sections.
+ * The header row replaces the section's old h3 (same display font and
+ * size), spans the section's full width, and gives iPad fingers a 48px
+ * target; the chevron turns when the section is open. The body wrapper
+ * is display:none via [hidden] while closed and height-animated by
+ * wireTicketAccordion() on toggle. The hint sits at the right, before
+ * the chevron, so a closed section can still say "$20.00 due",
+ * "In transit", "Authorization not signed", or "Timer running" —
+ * closed never means invisible. Status and the ticket header above it
+ * carry no accordion markup and are always visible. */
+.tk-acc-head { display: flex; align-items: center; gap: .55rem; width: 100%; min-height: 48px; padding: .3rem .15rem; margin: 0 0 .6rem; background: none; border: none; border-bottom: 1px solid var(--line, #E6D9C0); color: var(--ink, #2C231A); cursor: pointer; text-align: left; -webkit-appearance: none; appearance: none; -webkit-tap-highlight-color: transparent; }
+.tk-acc-title { font-family: var(--font-display, 'Fraunces', Georgia, serif); font-size: 1.05rem; font-weight: 700; }
+.tk-acc-hint { margin-left: auto; font-size: .82rem; font-weight: 600; color: var(--brand-deep, #A63E06); white-space: nowrap; }
+.tk-acc-chev { color: var(--brand, #D9540D); font-size: .85rem; flex: none; transition: transform .22s ease; }
+.tk-acc-head.tk-acc-open .tk-acc-chev { transform: rotate(180deg); }
+.tk-acc-body { overflow: hidden; transition: height .22s ease; }
+.tk-acc-body[hidden] { display: none; }
+/* end PORTAL_TICKET_ACCORDION_2026_11_02 */
+
 /* PORTAL_TIER_SET_FINISH_2026_11_02: ATR One status on the customer
    profile — the membership dot (green active / red not active). */
 .cust-prof-mem { display: flex; align-items: center; gap: .5rem; margin: 0 0 .3rem; }

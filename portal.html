@@ -143,8 +143,9 @@
         <button class="portal-tab active" id="portal-tab-tickets" type="button" role="tab" data-tab="tickets">
           <i class="fas fa-list-ol"></i> Repair Queue <span class="portal-count" id="portal-count-tickets" hidden></span>
         </button>
+        <!-- PORTAL_SIDEBAR_ROSTER_2026_11_02 (Austin, Nov 2, 2026): this button's display label is "Guest" — his word for customers. Display text ONLY: the tab id (portal-tab-customers) and data-tab="customers" are unchanged, and every handler stays keyed to those ids, never to the label text. -->
         <button class="portal-tab" id="portal-tab-customers" type="button" role="tab" data-tab="customers">
-          <i class="fas fa-users"></i> Customers
+          <i class="fas fa-users"></i> Guest
         </button>
         <!-- PORTAL_ATRONE_MEMBERS_2026_11_02 (Austin, Nov 2, 2026): a dedicated ATR One Members action button under Customer (the first sidebar group, renamed from Work the same day) — the membership list used to be reachable only through the Admin "Square & ATR One" panel; he wants to just look and see who is a member. -->
         <button class="portal-tab" id="portal-tab-members" type="button" role="tab" data-tab="members">
@@ -167,6 +168,10 @@
           <i class="fas fa-book-open"></i> Guides
         </button>
         <div class="portal-nav-group">Associates</div>
+        <!-- PORTAL_SIDEBAR_ROSTER_2026_11_02 (Austin, Nov 2, 2026): the Associates group had Requests, Time Clock, Employee Onboarding, Documents and Job Applications but no list of the associates themselves. This "Associates" Action Button is FIRST in the group and opens the roster panel (portal-panel-associates): every employee_profiles row — name, role, active status at a glance. -->
+        <button class="portal-tab" id="portal-tab-associates" type="button" role="tab" data-tab="associates">
+          <i class="fas fa-user-group"></i> Associates
+        </button>
         <!-- PORTAL_CUSTOMER_PROFILE_2026_11_02 (Austin correction, Nov 2, 2026): the Requests button moved out of the first group into this group — Requests is the associates' queue (shop requests plus the change requests the owner approves). The button, its count span and the panel are otherwise byte-identical; group headings are NOT renamed here (the rename pass owns them). -->
         <button class="portal-tab" id="portal-tab-requests" type="button" role="tab" data-tab="requests">
           <i class="fas fa-clipboard-list"></i> Requests <span class="portal-count" id="portal-count-requests" hidden></span>
@@ -293,10 +298,10 @@
         <div id="portal-feedback-list"><p class="portal-muted">Loading feedback&hellip;</p></div>
       </div>
 
-      <!-- CUSTOMERS -->
+      <!-- CUSTOMERS (panel label "Guest" — PORTAL_SIDEBAR_ROSTER_2026_11_02: Austin's word for customers; panel id, search and every control below are unchanged) -->
       <div class="portal-panel" id="portal-panel-customers" role="tabpanel" hidden>
         <div class="portal-panel-head">
-          <h2 class="portal-h2">Customers</h2>
+          <h2 class="portal-h2">Guest</h2>
           <input type="search" id="portal-cust-search" placeholder="Search name or email&hellip;" aria-label="Search customers" />
         </div>
         <p class="portal-muted portal-small">Delete removes the customer account only, and asks you to confirm first. If a customer has tickets or orders linked, the delete is blocked and you will see a message.</p>
@@ -304,7 +309,7 @@
         <div id="portal-customer-list"><p class="portal-muted">Loading customers&hellip;</p></div>
       </div>
 
-      <!-- ATR ONE MEMBERS (PORTAL_ATRONE_MEMBERS_2026_11_02): read-only member list; memberships are added/cancelled from the ticket drawer, never here. -->
+      <!-- ATR ONE MEMBERS (PORTAL_ATRONE_MEMBERS_2026_11_02): member list; memberships are added from the ticket drawer. PORTAL_MEMBERS_EDIT_2026_11_02 (Austin, Nov 2, 2026): rows carry a status dot (green = active / good standing, red = off) and tapping a member opens its editor right here — the owner turns the membership off or on and can correct the tier; an associate's change is submitted for owner approval in Requests. -->
       <div class="portal-panel" id="portal-panel-members" role="tabpanel" hidden>
         <div class="portal-panel-head">
           <h2 class="portal-h2">ATR One Members</h2>
@@ -312,7 +317,7 @@
             <i class="fas fa-rotate-right"></i> Refresh
           </button>
         </div>
-        <p class="portal-muted portal-small">Everyone with an ATR One membership on file. Memberships are added or cancelled from a customer&rsquo;s ticket &mdash; this list is just for looking.</p>
+        <p class="portal-muted portal-small">Everyone with an ATR One membership on file. Green dot: the membership is on (good standing). Red dot: it is off. Tap a member to turn their membership off or on, or to correct their tier. New memberships are still added from a customer&rsquo;s ticket.</p>
         <div id="portal-members-list"><p class="portal-muted">Loading members&hellip;</p></div>
       </div>
 
@@ -331,11 +336,19 @@
             </button>
           </div>
         </div>
-        <p class="portal-muted portal-small">Van + shop stock. Use +/&minus; to adjust counts, Edit to change an item, and the form below to add stock. Parts pulled from stock onto a ticket come off the count automatically &mdash; and go back on if the part is removed.</p>
+        <p class="portal-muted portal-small">Van + shop stock. Use +/&minus; to adjust counts, Edit to change an item, and the form below to add stock. Parts pulled from stock onto a ticket come off the count automatically &mdash; and go back on if the part is removed. To receive a part, tap Scan UPC by the form and scan the code on its box.</p>
         <div id="portal-inventory-list"><p class="portal-muted">Loading inventory&hellip;</p></div>
 
         <div class="portal-panel-head portal-subhead">
           <h2 class="portal-h2">Add / edit stock item</h2>
+        </div>
+        <!-- PORTAL_INV_SCAN_2026_11_02: scan a supplier UPC to receive stock; same scanner as the ticket drawer's Parts section -->
+        <div id="portal-inv-scan-box" hidden>
+          <video id="portal-inv-scan-video" playsinline muted style="width:100%;max-width:420px;border-radius:12px;background:#000"></video>
+          <div class="p2-actions"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="portal-inv-scan-stop">Stop camera</button>
+          <input id="portal-inv-scan-manual" type="text" placeholder="Or type the code" aria-label="UPC code" />
+          <button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="portal-inv-scan-use">Use code</button></div>
+          <p class="portal-muted portal-small" id="portal-inv-scan-status">Point the camera at the UPC on the Mobile Sentrix box. If the camera cannot read it, type the code instead.</p>
         </div>
         <form id="portal-inv-form" novalidate>
           <input type="hidden" id="portal-inv-id" />
@@ -387,6 +400,9 @@
           </div>
           <p class="portal-error" id="portal-inv-error" hidden></p>
           <p class="portal-muted" id="portal-inv-success" hidden><i class="fas fa-circle-check"></i> Stock item saved.</p>
+          <!-- PORTAL_INV_SCAN_2026_11_02 -->
+          <button class="portal-btn portal-btn-outline" id="portal-inv-scan-btn" type="button"><i class="fas fa-barcode"></i> Scan UPC</button>
+          <span class="portal-muted portal-small" id="portal-inv-scan-msg"></span>
           <button class="portal-btn portal-btn-primary" id="portal-inv-submit" type="submit"><i class="fas fa-plus"></i> Add stock item</button>
           <button class="portal-btn portal-btn-outline" id="portal-inv-cancel" type="button" hidden>Cancel edit</button>
         </form>
@@ -395,6 +411,18 @@
           <h2 class="portal-h2">Purchase Orders <span class="portal-muted portal-small">(restock orders, not ticket part orders)</span></h2>
         </div>
         <div id="portal-po-list"><p class="portal-muted">Loading purchase orders&hellip;</p></div>
+      </div>
+
+      <!-- ASSOCIATES ROSTER — PORTAL_SIDEBAR_ROSTER_2026_11_02 (Austin, Nov 2, 2026): the roster behind the Associates group's first Action Button. Lists every employee_profiles row (the portal sign-in list) — name, role and active status at a glance, in the same card style as the other lists. Tapping a row expands it in place to the profile fields the record holds; there is no separate employee-card surface for employee_profiles anywhere in the portal (see CHANGES.md), so nothing else is opened. -->
+      <div class="portal-panel" id="portal-panel-associates" role="tabpanel" hidden>
+        <div class="portal-panel-head">
+          <h2 class="portal-h2">Associates</h2>
+          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="associates">
+            <i class="fas fa-rotate-right"></i> Refresh
+          </button>
+        </div>
+        <p class="portal-muted portal-small">Everyone who can sign in to this portal. Green dot: active &mdash; their sign-in profile is on file. Tap an associate to see their profile.</p>
+        <div id="portal-associates-list"><p class="portal-muted">Loading associates&hellip;</p></div>
       </div>
 
       <!-- NEW HIRES (EMPLOYEE ONBOARDING) — PORTAL_NEWHIRE_RELABEL_2026_10_30 -->
@@ -726,17 +754,23 @@
           <button class="portal-btn portal-btn-primary tc-bigbtn" id="tc-action" type="button">Clock In</button>
           <p class="portal-muted portal-small">Your whole shift counts &mdash; clock in when you head out the door, clock out when the work is done.</p>
         </div>
-        <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">My time this week</h3></div>
-        <div id="tc-my-list"><p class="portal-muted">Loading&hellip;</p></div>
+        <!-- PORTAL_TIME_CARDS_2026_11_02: the old "My time this week" list and the manager "Team — approve hours" queue are replaced by time cards (loader in portal.js). On the clock now sits at the top for the owner; below it, one card per associate with a week stepper. -->
+        <div id="tc-onnow-wrap" hidden>
+          <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">On the clock now</h3></div>
+          <div id="tc-onnow-list"><p class="portal-muted">Loading&hellip;</p></div>
+        </div>
+        <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Time cards</h3></div>
+        <div class="tc-weekbar">
+          <button class="portal-btn portal-btn-outline portal-btn-sm" id="tc-week-prev" type="button">&larr; Previous week</button>
+          <span class="tc-week-label" id="tc-week-label"></span>
+          <button class="portal-btn portal-btn-outline portal-btn-sm" id="tc-week-next" type="button">Next week &rarr;</button>
+        </div>
+        <div id="tc-cards"><p class="portal-muted">Loading&hellip;</p></div>
         <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">My birthday</h3></div>
         <p class="portal-muted portal-small">Birthdays are a big deal here &mdash; we honor our team&rsquo;s and our customers&rsquo;. Add yours:</p>
         <p class="tc-bday-row"><input type="date" id="tc-birthday" aria-label="Your birthday" /> <button class="portal-btn portal-btn-outline portal-btn-sm" id="tc-birthday-save" type="button">Save birthday</button> <span class="portal-muted portal-small" id="tc-birthday-msg"></span></p>
         <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Team birthdays coming up</h3></div>
         <div id="tc-birthdays"><p class="portal-muted">Loading&hellip;</p></div>
-        <div id="tc-admin-wrap" hidden>
-          <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Team &mdash; approve hours</h3></div>
-          <div id="tc-admin-list"><p class="portal-muted">Loading&hellip;</p></div>
-        </div>
       </div>
 
       <!-- TOOLS & LINKS -->
@@ -3670,6 +3704,16 @@
   var currentMatches = [];   // scored matches for the current device
   var debounce = null;
 
+  /* PORTAL_TICKET_ACCORDION_2026_11_02: this section folds away like
+   * the ticket drawer's other sections (portal.js) — Austin found
+   * the stacked-open drawer overwhelming. Self-contained copy of
+   * the same pattern (header button + body wrapper, same classes so
+   * portal.css styles it), with the open state kept in this module
+   * so it survives section rebuilds and ticket switches within the
+   * session. Default CLOSED: manuals are reference material, and
+   * the drawer's clean read comes first. */
+  var p31Open = false;
+
   function $(id) { return document.getElementById(id); }
 
   function esc(v) {
@@ -3808,6 +3852,11 @@
   function renderList() {
     var list = $('p31-list');
     if (!list) return;
+    /* PORTAL_TICKET_ACCORDION_2026_11_02: the match count rides the
+     * folded header, so a tech can see guides exist without opening. */
+    var hintEl = document.querySelector('#p31-manuals [data-acc-hint="manuals"]');
+    if (hintEl) hintEl.textContent = (!loadFailed && allGuides && currentMatches.length)
+      ? currentMatches.length + (currentMatches.length === 1 ? ' guide' : ' guides') : '';
     var q = trim(($('p31-search') || {}).value).toLowerCase();
     var rows = currentMatches;
     if (q) {
@@ -3877,7 +3926,13 @@
 
   /* ============ SECTION TEMPLATE (the drawer markup, injected) ============ */
   function sectionHtml(deviceText, hasDevice) {
-    return '<h3><i class="fas fa-book-open"></i> Manuals for this device</h3>' +
+    /* PORTAL_TICKET_ACCORDION_2026_11_02: header button + body
+     * wrapper replace the old always-open h3 block. */
+    return '<button type="button" class="tk-acc-head' + (p31Open ? ' tk-acc-open' : '') + '" data-acc-toggle="manuals" aria-expanded="' + (p31Open ? 'true' : 'false') + '">' +
+      '<span class="tk-acc-title"><i class="fas fa-book-open"></i> Manuals for this device</span>' +
+      '<span class="tk-acc-hint" data-acc-hint="manuals"></span>' +
+      '<i class="fas fa-chevron-down tk-acc-chev" aria-hidden="true"></i></button>' +
+      '<div class="tk-acc-body" data-acc-body="manuals"' + (p31Open ? '' : ' hidden') + '>' +
       (hasDevice
         ? '<p class="portal-muted portal-small">For: ' + esc(deviceText) + ' — manufacturer manuals and iFixit guides from the shop library.</p>'
         : '<p class="portal-muted portal-small">No device on this ticket — filter the shop library, or search all guides.</p>') +
@@ -3886,7 +3941,7 @@
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p31-all-btn">' +
           '<i class="fas fa-magnifying-glass"></i> Search all guides</button>' +
       '</div>' +
-      '<div id="p31-list"><p class="portal-muted">Loading manuals&hellip;</p></div>';
+      '<div id="p31-list"><p class="portal-muted">Loading manuals&hellip;</p></div></div>';
   }
 
   function wireSection(section, deviceText) {
@@ -3894,6 +3949,28 @@
     if (search) search.addEventListener('input', renderList);
     var btn = section.querySelector('#p31-all-btn');
     if (btn) btn.addEventListener('click', function () { searchAllGuides(deviceText); });
+    /* PORTAL_TICKET_ACCORDION_2026_11_02: fold/unfold with the same
+     * 220ms height animation the portal.js sections use. */
+    var head = section.querySelector('[data-acc-toggle="manuals"]');
+    var panel = section.querySelector('[data-acc-body="manuals"]');
+    if (head && panel) head.addEventListener('click', function () {
+      p31Open = !p31Open;
+      head.setAttribute('aria-expanded', p31Open ? 'true' : 'false');
+      head.classList.toggle('tk-acc-open', p31Open);
+      if (p31Open) {
+        panel.hidden = false;
+        var target = panel.scrollHeight;
+        panel.style.height = '0px';
+        void panel.offsetHeight;
+        panel.style.height = target + 'px';
+        window.setTimeout(function () { if (p31Open) panel.style.height = ''; }, 260);
+      } else {
+        panel.style.height = panel.scrollHeight + 'px';
+        void panel.offsetHeight;
+        panel.style.height = '0px';
+        window.setTimeout(function () { if (!p31Open) { panel.hidden = true; panel.style.height = ''; } }, 260);
+      }
+    });
   }
 
   /* Detect a rendered ticket drawer and (re)build the section.
@@ -3910,14 +3987,18 @@
     if (existing && existing.getAttribute('data-device') === key) return;
 
     var section = document.createElement('div');
-    section.className = 'portal-drawer-section';
+    section.className = 'portal-drawer-section tk-acc'; /* PORTAL_TICKET_ACCORDION_2026_11_02 */
     section.id = 'p31-manuals';
+    section.setAttribute('data-acc', 'manuals'); /* PORTAL_TICKET_ACCORDION_2026_11_02 */
     section.setAttribute('data-device', key);
     section.innerHTML = sectionHtml(deviceText, hasDevice);
 
-    /* Anchor: the "Parts on this ticket" section (portal.js openTicket). */
+    /* Anchor: the "Parts on this ticket" section (portal.js openTicket).
+     * PORTAL_TICKET_ACCORDION_2026_11_02: accordion sections carry
+     * their title in a .tk-acc-title span, not an h3 — match both so
+     * this section keeps its place directly above Parts. */
     var anchor = null;
-    var heads = body.querySelectorAll('.portal-drawer-section h3');
+    var heads = body.querySelectorAll('.portal-drawer-section h3, .portal-drawer-section .tk-acc-title');
     for (var i = 0; i < heads.length; i++) {
       if (trim(heads[i].textContent) === 'Parts on this ticket') {
         anchor = heads[i].closest ? heads[i].closest('.portal-drawer-section') : heads[i].parentNode;
