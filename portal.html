@@ -8,6 +8,19 @@
   <meta name="robots" content="noindex, nofollow" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
   <link rel="stylesheet" href="portal.css" />
+  <style>
+    /* PORTAL_MFA_2026_11_02: styles for the two-step sign-in check, the
+       dashboard authenticator setup prompt, and the enrollment view.
+       Same palette variables as portal.css; kept in this file so the
+       MFA build touches portal.html + portal.js only. */
+    .portal-mfa-code-input { font-size: 1.35rem; letter-spacing: 0.35em; text-align: center; font-weight: 700; }
+    .portal-mfa-qr { text-align: center; margin: 1rem 0; }
+    .portal-mfa-qr img { width: 220px; max-width: 100%; height: auto; background: #fff; border: 1px solid var(--line, #E6D9C0); border-radius: 0.9rem; padding: 0.6rem; }
+    .portal-mfa-secret { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1.05rem; letter-spacing: 0.12em; text-align: center; word-break: break-all; background: var(--surface, #FFFDF8); border: 1px dashed var(--brand, #D9540D); border-radius: 0.7rem; padding: 0.6rem 0.8rem; user-select: all; }
+    .portal-mfa-banner { display: flex; flex-wrap: wrap; gap: 0.8rem 1.2rem; align-items: center; justify-content: space-between; background: var(--surface, #FFFDF8); border: 1px solid var(--brand, #D9540D); border-radius: 1rem; padding: 1rem 1.2rem; margin: 0 0 1rem; }
+    .portal-mfa-banner-text { margin: 0; flex: 1 1 320px; }
+    .portal-mfa-banner-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+  </style>
 </head>
 <body class="portal-body">
 
@@ -45,7 +58,36 @@
             <i class="fas fa-right-to-bracket"></i> Sign In
           </button>
         </form>
-        <button class="portal-btn portal-btn-outline portal-btn-block" id="portal-forgot-btn" type="button">Forgot your password?</button><p class="portal-muted portal-small" id="portal-forgot-msg" hidden></p><!-- PORTAL_DEADEND_2026_10_30: reset view gains a Back to sign in exit (button after Set new password). --><div id="portal-reset-view" hidden><div class="portal-field"><label for="portal-reset-password">New password</label><input type="password" id="portal-reset-password" autocomplete="new-password" placeholder="New password" /></div><div class="portal-field"><label for="portal-reset-confirm">Confirm new password</label><input type="password" id="portal-reset-confirm" autocomplete="new-password" placeholder="Confirm new password" /></div><p class="portal-error" id="portal-reset-error" hidden></p><button class="portal-btn portal-btn-primary portal-btn-block" id="portal-reset-btn" type="button">Set new password</button><button class="portal-btn portal-btn-outline portal-btn-block" id="portal-reset-back-btn" type="button">Back to sign in</button></div><p class="portal-muted portal-small"><a href="https://austinstechrepairgroup.com/">Back to site</a></p>
+        <button class="portal-btn portal-btn-outline portal-btn-block" id="portal-forgot-btn" type="button">Forgot your password?</button><p class="portal-muted portal-small" id="portal-forgot-msg" hidden></p><!-- PORTAL_DEADEND_2026_10_30: reset view gains a Back to sign in exit (button after Set new password). --><div id="portal-reset-view" hidden><div class="portal-field"><label for="portal-reset-password">New password</label><input type="password" id="portal-reset-password" autocomplete="new-password" placeholder="New password" /></div><div class="portal-field"><label for="portal-reset-confirm">Confirm new password</label><input type="password" id="portal-reset-confirm" autocomplete="new-password" placeholder="Confirm new password" /></div><p class="portal-error" id="portal-reset-error" hidden></p><button class="portal-btn portal-btn-primary portal-btn-block" id="portal-reset-btn" type="button">Set new password</button><button class="portal-btn portal-btn-outline portal-btn-block" id="portal-reset-back-btn" type="button">Back to sign in</button></div><!-- PORTAL_MFA_2026_11_02: two-step sign-in check. After a correct password, staff with an authenticator app enrolled land here; the dashboard does not load until the code verifies. "Back to sign in" signs the session out and returns to the plain sign-in form. --><div id="portal-mfa-view" hidden><h2 class="portal-h2"><i class="fas fa-shield-halved"></i> Two-step sign-in</h2><p class="portal-muted">Open your authenticator app and enter the 6-digit code for Austin's Tech Repair Group.</p><div class="portal-field"><label for="portal-mfa-code">6-digit code</label><input type="text" id="portal-mfa-code" class="portal-mfa-code-input" inputmode="numeric" autocomplete="one-time-code" maxlength="7" placeholder="123456" /></div><p class="portal-error" id="portal-mfa-error" hidden></p><button class="portal-btn portal-btn-primary portal-btn-block" id="portal-mfa-verify-btn" type="button"><i class="fas fa-circle-check"></i> Verify and continue</button><button class="portal-btn portal-btn-outline portal-btn-block" id="portal-mfa-newcheck-btn" type="button">Start a new check</button><button class="portal-btn portal-btn-outline portal-btn-block" id="portal-mfa-back-btn" type="button">Back to sign in</button></div><p class="portal-muted portal-small"><a href="https://austinstechrepairgroup.com/">Back to site</a></p>
+      </div>
+    </section>
+
+    <!-- ==================== MFA ENROLL VIEW ==================== -->
+    <!-- PORTAL_MFA_2026_11_02: authenticator enrollment. Reached from the
+         dashboard setup prompt while signed in. Cancel returns to the
+         dashboard and removes the pending (unverified) factor, so no
+         half-finished setup is left behind. -->
+    <section id="portal-mfa-enroll-view" class="portal-login-wrap" hidden>
+      <div class="portal-login-card">
+        <p class="portal-eyebrow">Account security</p>
+        <h1 class="portal-h1"><i class="fas fa-shield-halved"></i> Set up your authenticator</h1>
+        <div id="portal-mfa-enroll-main">
+          <p class="portal-muted">Open your authenticator app (Google Authenticator, Microsoft Authenticator, Authy, or your password manager), add a new account, and scan this code.</p>
+          <div class="portal-mfa-qr"><img id="portal-mfa-enroll-qr" alt="QR code for authenticator setup" /></div>
+          <p class="portal-muted portal-small">Can&rsquo;t scan it? Add the account by hand with this key:</p>
+          <p class="portal-mfa-secret" id="portal-mfa-enroll-secret"></p>
+          <div class="portal-field">
+            <label for="portal-mfa-enroll-code">Enter the 6-digit code the app shows</label>
+            <input type="text" id="portal-mfa-enroll-code" class="portal-mfa-code-input" inputmode="numeric" autocomplete="one-time-code" maxlength="7" placeholder="123456" />
+          </div>
+          <p class="portal-error" id="portal-mfa-enroll-error" hidden></p>
+          <button class="portal-btn portal-btn-primary portal-btn-block" id="portal-mfa-enroll-verify-btn" type="button"><i class="fas fa-circle-check"></i> Turn on two-step sign-in</button>
+          <button class="portal-btn portal-btn-outline portal-btn-block" id="portal-mfa-enroll-cancel-btn" type="button">Cancel</button>
+        </div>
+        <div id="portal-mfa-enroll-done" hidden>
+          <p class="portal-muted">You&rsquo;re all set — your authenticator is on. From your next sign-in, the portal will ask for a code from the app right after your password.</p>
+          <button class="portal-btn portal-btn-primary portal-btn-block" id="portal-mfa-enroll-done-btn" type="button">Back to the portal</button>
+        </div>
       </div>
     </section>
 
@@ -68,6 +110,18 @@
       </div>
 
       <p class="portal-error" id="portal-dash-error" hidden></p>
+
+      <!-- PORTAL_MFA_2026_11_02: authenticator setup prompt. Shown on the
+           dashboard only to staff without a verified authenticator
+           factor. Dismissible for the rest of the browser session; it
+           never blocks the dashboard. portal.js decides visibility. -->
+      <div id="portal-mfa-banner" class="portal-mfa-banner" hidden>
+        <p class="portal-mfa-banner-text"><i class="fas fa-shield-halved"></i> <strong>Make your sign-in stronger.</strong> Add an authenticator app and the portal will ask for a 6-digit code after your password. It takes about a minute.</p>
+        <div class="portal-mfa-banner-actions">
+          <button class="portal-btn portal-btn-primary" id="portal-mfa-banner-setup" type="button"><i class="fas fa-mobile-screen"></i> Set up authenticator</button>
+          <button class="portal-btn portal-btn-outline" id="portal-mfa-banner-dismiss" type="button">Not now</button>
+        </div>
+      </div>
 
       <nav class="portal-tabs" id="portal-nav" role="tablist" aria-label="Portal sections">
         <div class="portal-nav-group">Work</div>

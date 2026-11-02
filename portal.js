@@ -225,11 +225,16 @@
   }
 
   /* ================= AUTH ================= */
-  var resetSuccessMessage = null; function isRecoveryHash() { var h = window.location.hash || ""; var q = window.location.search || ""; return h.indexOf("type=recovery") !== -1 || q.indexOf("type=recovery") !== -1; } function showResetView(msg) { var dv = $("portal-dash-view"); if (dv) { dv.hidden = true; } var lv = $("portal-login-view"); if (lv) { lv.hidden = false; } var rf = $("portal-login-form"); if (rf) { rf.hidden = true; } var rv = $("portal-reset-view"); if (rv) { rv.hidden = false; } var re = $("portal-reset-error"); if (re) { if (msg) { re.textContent = msg; re.hidden = false; } else { re.hidden = true; re.textContent = ""; } } var fm2 = $("portal-forgot-msg"); if (fm2) { fm2.hidden = true; } } function initPasswordReset() { withClient(function (client) { if (!client) { return; } var fb = $("portal-forgot-btn"); if (fb) { fb.addEventListener("click", function () { var em = $("portal-login-email"); var email = em ? trim(em.value) : ""; var mg = $("portal-forgot-msg"); if (!email) { if (mg) { mg.textContent = "Enter your employee email first"; mg.hidden = false; } return; } client.auth.resetPasswordForEmail(email, { redirectTo: "https://austinstechrepairgroup.com/portal.html" }).then(function (res) { if (mg) { if (res.error) { mg.textContent = res.error.message || "Could not send the reset email. Try again."; } else { mg.textContent = "Check your email for a password reset link"; } mg.hidden = false; } }).catch(function (err) { if (mg) { mg.textContent = (err && err.message) || "Could not send the reset email. Try again."; mg.hidden = false; } }); }); } /* PORTAL_DEADEND_2026_10_30: "Back to sign in" exits the recovery view and restores the normal sign-in form. */ var bb = $("portal-reset-back-btn"); if (bb) { bb.addEventListener("click", function () { showLogin(null); }); } var rb = $("portal-reset-btn"); if (rb) { rb.addEventListener("click", function () { var pwEl = $("portal-reset-password"); var cfEl = $("portal-reset-confirm"); var er = $("portal-reset-error"); var pw = pwEl ? pwEl.value : ""; var cf = cfEl ? cfEl.value : ""; if (er) { er.hidden = true; er.textContent = ""; } if (pw !== cf) { if (er) { er.textContent = "Passwords do not match"; er.hidden = false; } return; } if (pw.length < 8) { if (er) { er.textContent = "Password must be at least 8 characters"; er.hidden = false; } return; } client.auth.updateUser({ password: pw }).then(function (res) { if (res.error) { if (er) { er.textContent = res.error.message || "Could not update the password. Try again."; er.hidden = false; } return; } var doneMsg = "Password updated. Sign in with your new password."; resetSuccessMessage = doneMsg; client.auth.signOut().then(function () { showLogin(doneMsg); }); }).catch(function (err) { if (er) { er.textContent = (err && err.message) || "Could not update the password. Try again."; er.hidden = false; } }); }); } }); } function showLogin(errorMsg) {
+  var resetSuccessMessage = null; function isRecoveryHash() { var h = window.location.hash || ""; var q = window.location.search || ""; return h.indexOf("type=recovery") !== -1 || q.indexOf("type=recovery") !== -1; } function showResetView(msg) { var dv = $("portal-dash-view"); if (dv) { dv.hidden = true; } var lv = $("portal-login-view"); if (lv) { lv.hidden = false; } var rf = $("portal-login-form"); if (rf) { rf.hidden = true; } var rv = $("portal-reset-view"); if (rv) { rv.hidden = false; } var mv2 = $("portal-mfa-view"); if (mv2) { mv2.hidden = true; } /* PORTAL_MFA_2026_11_02: recovery view never shares the card with the two-step check. */ var re = $("portal-reset-error"); if (re) { if (msg) { re.textContent = msg; re.hidden = false; } else { re.hidden = true; re.textContent = ""; } } var fm2 = $("portal-forgot-msg"); if (fm2) { fm2.hidden = true; } } function initPasswordReset() { withClient(function (client) { if (!client) { return; } var fb = $("portal-forgot-btn"); if (fb) { fb.addEventListener("click", function () { var em = $("portal-login-email"); var email = em ? trim(em.value) : ""; var mg = $("portal-forgot-msg"); if (!email) { if (mg) { mg.textContent = "Enter your employee email first"; mg.hidden = false; } return; } client.auth.resetPasswordForEmail(email, { redirectTo: "https://austinstechrepairgroup.com/portal.html" }).then(function (res) { if (mg) { if (res.error) { mg.textContent = res.error.message || "Could not send the reset email. Try again."; } else { mg.textContent = "Check your email for a password reset link"; } mg.hidden = false; } }).catch(function (err) { if (mg) { mg.textContent = (err && err.message) || "Could not send the reset email. Try again."; mg.hidden = false; } }); }); } /* PORTAL_DEADEND_2026_10_30: "Back to sign in" exits the recovery view and restores the normal sign-in form. */ var bb = $("portal-reset-back-btn"); if (bb) { bb.addEventListener("click", function () { showLogin(null); }); } var rb = $("portal-reset-btn"); if (rb) { rb.addEventListener("click", function () { var pwEl = $("portal-reset-password"); var cfEl = $("portal-reset-confirm"); var er = $("portal-reset-error"); var pw = pwEl ? pwEl.value : ""; var cf = cfEl ? cfEl.value : ""; if (er) { er.hidden = true; er.textContent = ""; } if (pw !== cf) { if (er) { er.textContent = "Passwords do not match"; er.hidden = false; } return; } if (pw.length < 8) { if (er) { er.textContent = "Password must be at least 8 characters"; er.hidden = false; } return; } client.auth.updateUser({ password: pw }).then(function (res) { if (res.error) { if (er) { er.textContent = res.error.message || "Could not update the password. Try again."; er.hidden = false; } return; } var doneMsg = "Password updated. Sign in with your new password."; resetSuccessMessage = doneMsg; client.auth.signOut().then(function () { showLogin(doneMsg); }); }).catch(function (err) { if (er) { er.textContent = (err && err.message) || "Could not update the password. Try again."; er.hidden = false; } }); }); } }); } function showLogin(errorMsg) {
     $('portal-dash-view').hidden = true;
     $('portal-login-view').hidden = false;
     var _rf = $("portal-login-form"); if (_rf) { _rf.hidden = false; }
     var _rv = $("portal-reset-view"); if (_rv) { _rv.hidden = true; }
+    /* PORTAL_MFA_2026_11_02: sign-in screen also clears the two-step
+     * check and the enrollment view, so every route back here (sign
+     * out, MFA cancel, recovery exit) lands on the plain form. */
+    var _mv = $("portal-mfa-view"); if (_mv) { _mv.hidden = true; }
+    var _ev = $("portal-mfa-enroll-view"); if (_ev) { _ev.hidden = true; }
     var err = $('portal-login-error');
     if (errorMsg) { err.textContent = errorMsg; err.hidden = false; }
     else { err.hidden = true; err.textContent = ''; }
@@ -277,8 +282,321 @@
       }
       state.user = user;
       state.profile = profile;
-      showDashboard();
+      /* PORTAL_MFA_2026_11_02: the employee gate passed — hand off to
+       * the MFA gate, which either challenges (verified factor,
+       * session still AAL1), or loads the dashboard (AAL2 already, or
+       * no factor yet — dashboard plus the setup prompt). */
+      mfaGate(client);
     });
+  }
+
+  /* ================= MFA — TOTP authenticator app =================
+   * PORTAL_MFA_2026_11_02: two-step sign-in on top of the password,
+   * using Supabase Auth MFA (TOTP factors): auth.mfa.enroll /
+   * challenge / verify, and getAuthenticatorAssuranceLevel (AAL).
+   *
+   * Where it hooks in: enterIfEmployee still runs first and is
+   * unchanged — the employee_profiles gate decides WHO gets in.
+   * mfaGate then decides the second step:
+   *   - verified TOTP factor + session still at AAL1 -> the challenge
+   *     view; the dashboard loads only after mfa.verify succeeds and
+   *     the session reaches AAL2.
+   *   - session already at AAL2 -> straight to the dashboard.
+   *   - no verified factor -> straight to the dashboard, plus a
+   *     dismissible setup prompt on it. Enrollment is encouraged,
+   *     NOT required in this build (see CHANGES.md for the later
+   *     enforcement flip).
+   * Enrollment runs while signed in at AAL1: mfa.enroll returns a QR
+   * code (SVG data URI) plus a manual key; the first code is proven
+   * with challenge+verify, which activates the factor. Cancelling
+   * enrollment unenrolls the pending factor so no half-finished
+   * factor is left behind. */
+  var mfaState = {
+    hasFactor: false,
+    factorId: null,
+    challengeId: null,
+    enrollId: null
+  };
+  var MFA_NAG_KEY = 'atrg-portal-mfa-nag-dismissed';
+
+  function mfaNagDismissed() {
+    try { return window.sessionStorage.getItem(MFA_NAG_KEY) === '1'; }
+    catch (e) { return false; }
+  }
+
+  function mfaDismissNag() {
+    try { window.sessionStorage.setItem(MFA_NAG_KEY, '1'); } catch (e) {}
+    var b = $('portal-mfa-banner');
+    if (b) b.hidden = true;
+  }
+
+  function refreshMfaBanner() {
+    var banner = $('portal-mfa-banner');
+    if (banner) banner.hidden = !!mfaState.hasFactor || mfaNagDismissed();
+  }
+
+  function pickVerifiedTotp(listData) {
+    var all = (listData && (listData.all || listData.totp)) || [];
+    var i;
+    for (i = 0; i < all.length; i++) {
+      if (all[i] && all[i].factor_type === 'totp' && all[i].status === 'verified') return all[i];
+    }
+    /* listFactors().totp already holds only verified TOTP factors on
+     * current supabase-js; if status fields are absent, trust it. */
+    var totp = (listData && listData.totp) || [];
+    return totp.length ? totp[0] : null;
+  }
+
+  function proceedToDashboard() {
+    showDashboard();
+    refreshMfaBanner();
+  }
+
+  function showMfaView(errorMsg) {
+    var dv = $('portal-dash-view'); if (dv) dv.hidden = true;
+    var lv = $('portal-login-view'); if (lv) lv.hidden = false;
+    var lf = $('portal-login-form'); if (lf) lf.hidden = true;
+    var rv = $('portal-reset-view'); if (rv) rv.hidden = true;
+    var fm = $('portal-forgot-msg'); if (fm) fm.hidden = true;
+    var mv = $('portal-mfa-view'); if (mv) mv.hidden = false;
+    var err = $('portal-mfa-error');
+    if (err) {
+      if (errorMsg) { err.textContent = errorMsg; err.hidden = false; }
+      else { err.hidden = true; err.textContent = ''; }
+    }
+    var code = $('portal-mfa-code');
+    if (code) { code.value = ''; if (code.focus) code.focus(); }
+  }
+
+  function mfaGate(client) {
+    if (!client.auth.mfa) { mfaState.hasFactor = false; proceedToDashboard(); return; }
+    client.auth.mfa.getAuthenticatorAssuranceLevel()
+      .then(function (res) {
+        var d = (res && res.data) || {};
+        if (d.nextLevel === 'aal2' && d.currentLevel === 'aal2') {
+          mfaState.hasFactor = true;
+          proceedToDashboard();
+          return;
+        }
+        if (d.nextLevel === 'aal2') {
+          /* A verified factor exists but this session is only AAL1:
+           * the code check is required before the dashboard loads. */
+          mfaState.hasFactor = true;
+          beginMfaChallenge(client);
+          return;
+        }
+        mfaState.hasFactor = false;
+        proceedToDashboard();
+      })
+      .catch(function () {
+        /* AAL lookup failed (offline hiccup, older client): fall back
+         * to the factor list so a staffer WITH a factor is still
+         * challenged. If that fails too, let them in — availability
+         * first in this build; the enforcement pass can revisit. */
+        client.auth.mfa.listFactors()
+          .then(function (res) {
+            var f = pickVerifiedTotp(res && res.data);
+            if (f) { mfaState.hasFactor = true; beginMfaChallenge(client); }
+            else { mfaState.hasFactor = false; proceedToDashboard(); }
+          })
+          .catch(function () { mfaState.hasFactor = false; proceedToDashboard(); });
+      });
+  }
+
+  function beginMfaChallenge(client) {
+    client.auth.mfa.listFactors()
+      .then(function (res) {
+        var f = pickVerifiedTotp(res && res.data);
+        if (!f) { mfaState.hasFactor = false; proceedToDashboard(); return null; }
+        mfaState.factorId = f.id;
+        return client.auth.mfa.challenge({ factorId: f.id });
+      })
+      .then(function (cres) {
+        if (!cres) return;
+        if (cres.error || !cres.data) {
+          mfaState.challengeId = null;
+          showMfaView('Could not start the security check. Go back to sign in and try again.');
+          return;
+        }
+        mfaState.challengeId = cres.data.id;
+        showMfaView(null);
+      })
+      .catch(function () {
+        mfaState.challengeId = null;
+        showMfaView('Could not start the security check. Check your connection, or go back to sign in.');
+      });
+  }
+
+  function submitMfaCode(client) {
+    var err = $('portal-mfa-error');
+    var codeEl = $('portal-mfa-code');
+    var code = codeEl ? trim(codeEl.value).replace(/\s+/g, '') : '';
+    function fail(msg) { if (err) { err.textContent = msg; err.hidden = false; } }
+    if (!mfaState.factorId || !mfaState.challengeId) {
+      fail('This check is no longer active. Tap "Start a new check", or go back to sign in.');
+      return;
+    }
+    if (!/^\d{6}$/.test(code)) { fail('Enter the 6-digit code from your authenticator app.'); return; }
+    var btn = $('portal-mfa-verify-btn');
+    if (btn) btn.disabled = true;
+    client.auth.mfa.verify({ factorId: mfaState.factorId, challengeId: mfaState.challengeId, code: code })
+      .then(function (res) {
+        if (btn) btn.disabled = false;
+        if (res.error) {
+          fail('That code did not match, or the check timed out. Enter the newest code from the app — if it keeps failing, tap "Start a new check".');
+          return;
+        }
+        mfaState.challengeId = null;
+        if (codeEl) codeEl.value = '';
+        proceedToDashboard();
+      })
+      .catch(function () {
+        if (btn) btn.disabled = false;
+        fail('Could not verify the code. Check your connection and try again.');
+      });
+  }
+
+  function cancelMfaChallenge(client) {
+    mfaState.factorId = null;
+    mfaState.challengeId = null;
+    var codeEl = $('portal-mfa-code');
+    if (codeEl) codeEl.value = '';
+    /* Signing out fires SIGNED_OUT, whose handler shows the plain
+     * sign-in form — a clean return with the session fully closed,
+     * never a half-signed-in dashboard. */
+    client.auth.signOut();
+  }
+
+  function showMfaEnrollView() {
+    var dv = $('portal-dash-view'); if (dv) dv.hidden = true;
+    var lv = $('portal-login-view'); if (lv) lv.hidden = true;
+    var ev = $('portal-mfa-enroll-view'); if (ev) ev.hidden = false;
+    var main = $('portal-mfa-enroll-main'); if (main) main.hidden = false;
+    var done = $('portal-mfa-enroll-done'); if (done) done.hidden = true;
+  }
+
+  function hideMfaEnrollView() {
+    var ev = $('portal-mfa-enroll-view'); if (ev) ev.hidden = true;
+    showDashboard();
+    refreshMfaBanner();
+  }
+
+  function startMfaEnroll(client) {
+    function startFailed(msg) {
+      showDashError('Could not start authenticator setup: ' + msg + ' Reload the page and try again.');
+    }
+    /* Remove any half-finished (unverified) TOTP factors first, so a
+     * cancelled setup never blocks a fresh try. Best effort only. */
+    client.auth.mfa.listFactors()
+      .then(function (res) {
+        var all = (res && res.data && res.data.all) || [];
+        var chain = Promise.resolve();
+        all.forEach(function (f) {
+          if (f && f.factor_type === 'totp' && f.status !== 'verified') {
+            chain = chain.then(function () { return client.auth.mfa.unenroll({ factorId: f.id }); });
+          }
+        });
+        return chain;
+      })
+      .catch(function () { return null; })
+      .then(function () {
+        return client.auth.mfa.enroll({
+          factorType: 'totp',
+          issuer: "Austin's Tech Repair Group",
+          friendlyName: 'Authenticator app'
+        });
+      })
+      .then(function (res) {
+        if (!res || res.error || !res.data || !res.data.totp) {
+          startFailed((res && res.error && res.error.message) || 'unknown error');
+          return;
+        }
+        mfaState.enrollId = res.data.id;
+        var qr = $('portal-mfa-enroll-qr');
+        if (qr) qr.src = res.data.totp.qr_code;
+        var sec = $('portal-mfa-enroll-secret');
+        if (sec) sec.textContent = res.data.totp.secret;
+        var codeEl = $('portal-mfa-enroll-code');
+        if (codeEl) codeEl.value = '';
+        var e2 = $('portal-mfa-enroll-error');
+        if (e2) { e2.hidden = true; e2.textContent = ''; }
+        showDashError(null);
+        showMfaEnrollView();
+      })
+      .catch(function (err2) {
+        startFailed((err2 && err2.message) || 'unknown error');
+      });
+  }
+
+  function submitMfaEnrollCode(client) {
+    var err = $('portal-mfa-enroll-error');
+    var codeEl = $('portal-mfa-enroll-code');
+    var code = codeEl ? trim(codeEl.value).replace(/\s+/g, '') : '';
+    function fail(msg) { if (err) { err.textContent = msg; err.hidden = false; } }
+    if (!mfaState.enrollId) { fail('Setup is no longer active. Cancel and start again.'); return; }
+    if (!/^\d{6}$/.test(code)) { fail('Enter the 6-digit code the app shows for this account.'); return; }
+    var btn = $('portal-mfa-enroll-verify-btn');
+    if (btn) btn.disabled = true;
+    client.auth.mfa.challenge({ factorId: mfaState.enrollId })
+      .then(function (cres) {
+        if (!cres || cres.error || !cres.data) { throw new Error('challenge'); }
+        return client.auth.mfa.verify({ factorId: mfaState.enrollId, challengeId: cres.data.id, code: code });
+      })
+      .then(function (res) {
+        if (btn) btn.disabled = false;
+        if (!res || res.error) {
+          fail('That code did not match. Wait for a fresh code in the app and try again.');
+          return;
+        }
+        mfaState.hasFactor = true;
+        mfaState.enrollId = null;
+        var main = $('portal-mfa-enroll-main'); if (main) main.hidden = true;
+        var done = $('portal-mfa-enroll-done'); if (done) done.hidden = false;
+      })
+      .catch(function () {
+        if (btn) btn.disabled = false;
+        fail('Could not finish setup. Check your connection and try again.');
+      });
+  }
+
+  function cancelMfaEnroll(client) {
+    var fid = mfaState.enrollId;
+    mfaState.enrollId = null;
+    if (fid && client.auth.mfa) {
+      /* Best effort: delete the pending factor so nothing
+       * half-set-up lingers on the account. */
+      try { client.auth.mfa.unenroll({ factorId: fid }).catch(function () {}); }
+      catch (e) {}
+    }
+    hideMfaEnrollView();
+  }
+
+  function initMfa(client) {
+    if (!client || !client.auth || !client.auth.mfa) return;
+    var vb = $('portal-mfa-verify-btn');
+    if (vb) vb.addEventListener('click', function () { submitMfaCode(client); });
+    var ci = $('portal-mfa-code');
+    if (ci) ci.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); submitMfaCode(client); }
+    });
+    var nb = $('portal-mfa-newcheck-btn');
+    if (nb) nb.addEventListener('click', function () { beginMfaChallenge(client); });
+    var bb = $('portal-mfa-back-btn');
+    if (bb) bb.addEventListener('click', function () { cancelMfaChallenge(client); });
+    var bs = $('portal-mfa-banner-setup');
+    if (bs) bs.addEventListener('click', function () { startMfaEnroll(client); });
+    var bd = $('portal-mfa-banner-dismiss');
+    if (bd) bd.addEventListener('click', function () { mfaDismissNag(); });
+    var evb = $('portal-mfa-enroll-verify-btn');
+    if (evb) evb.addEventListener('click', function () { submitMfaEnrollCode(client); });
+    var ec = $('portal-mfa-enroll-code');
+    if (ec) ec.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); submitMfaEnrollCode(client); }
+    });
+    var cb = $('portal-mfa-enroll-cancel-btn');
+    if (cb) cb.addEventListener('click', function () { cancelMfaEnroll(client); });
+    var dn = $('portal-mfa-enroll-done-btn');
+    if (dn) dn.addEventListener('click', function () { hideMfaEnrollView(); });
   }
 
   function initAuth() {
@@ -337,6 +655,10 @@
       $('portal-logout').addEventListener('click', function () {
         client.auth.signOut();
       });
+
+      /* PORTAL_MFA_2026_11_02: wire the two-step check, the setup
+       * prompt, and the enrollment view to this same client. */
+      initMfa(client);
     });
   }
 
