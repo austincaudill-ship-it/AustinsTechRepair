@@ -1,12 +1,16 @@
 // ATRG service worker — enables Add to Home Screen / app install.
 // Network-first for everything: visitors always get the freshest site,
 // cache is only a fallback when offline.
-const CACHE = "atrg-v3";
+// SITE_TURNSTILE_2026_11_02 (staged): cache bumped to atrg-v4 and
+// /turnstile.js added to the shell so no visitor can be served the
+// pre-Turnstile script.js / atr-forms.js from an old cache.
+const CACHE = "atrg-v4";
 const CORE = [
   "/",
   "/index.html",
   "/styles.css",
   "/script.js",
+  "/turnstile.js",
   "/manifest.webmanifest",
   "/images/icon-192.png",
   "/images/icon-512.png"

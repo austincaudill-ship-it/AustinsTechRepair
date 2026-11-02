@@ -1608,6 +1608,40 @@
     if (newTicketBack) newTicketBack.addEventListener('click', showRepairsList);
     if (newTicketBtn) newTicketBtn.addEventListener('click', showNewTicket);
 
+    /* ---------- SITE_TURNSTILE_2026_11_02 (staged): Turnstile gate
+       * for both account forms. Registered BEFORE the real submit
+       * handlers below so the shared gate (turnstile.js) can hold a
+       * submit until the verify-turnstile Edge Function confirms the
+       * token server-side. These forms are signed-in only, so the
+       * session JWT is passed as the bearer when one is available.
+       * Containers (#ts-acct-msg / #ts-acct-ticket) live in
+       * index.html next to each form's submit button. */
+    if (window.atrTurnstile) {
+      var tsBearer = function (cb) {
+        if (sb && sb.auth && sb.auth.getSession) {
+          sb.auth.getSession().then(function (r) {
+            cb(r && r.data && r.data.session ? r.data.session.access_token : null);
+          }).catch(function () { cb(null); });
+        } else cb(null);
+      };
+      var tsMsgSlot = document.getElementById('ts-acct-msg');
+      if (msgForm && tsMsgSlot) {
+        window.atrTurnstile.mount(tsMsgSlot);
+        window.atrTurnstile.gate(msgForm, tsMsgSlot, {
+          getBearer: tsBearer,
+          onBlocked: function () { showError(msgError, 'Please complete the quick human check, then send again.'); }
+        });
+      }
+      var tsTicketSlot = document.getElementById('ts-acct-ticket');
+      if (ticketForm && tsTicketSlot) {
+        window.atrTurnstile.mount(tsTicketSlot);
+        window.atrTurnstile.gate(ticketForm, tsTicketSlot, {
+          getBearer: tsBearer,
+          onBlocked: function () { showError(ticketError, 'Please complete the quick human check above the button, then submit again.'); }
+        });
+      }
+    }
+
     /* ---------- send message ---------- */
     if (msgForm) msgForm.addEventListener('submit', function (e) {
       e.preventDefault();

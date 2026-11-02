@@ -37,6 +37,16 @@
  * $35 house-call fee through Square and the appointment counts as
  * fully booked once the fee is paid. Display + link only; it runs
  * after the ticket insert has already decided success.
+ *
+ * SITE_TURNSTILE_2026_11_02 (staged): every form below is gated by
+ * Cloudflare Turnstile. init() injects the widget container and
+ * registers the shared submit gate (turnstile.js) BEFORE the real
+ * handler: no token + no server confirmation from the
+ * verify-turnstile Edge Function = no insert, and the FormSubmit
+ * alert (which only runs inside the handlers) never fires either.
+ * The honeypot check still runs first inside each handler — spam
+ * that fills it gets the usual fake success without ever reaching
+ * the insert. See CHANGES.md for the residual-risk note.
  * ===================================================================== */
 (function () {
   'use strict';
@@ -1001,7 +1011,33 @@
   function init() {
     document.querySelectorAll('form[data-form]').forEach(function (form) {
       var kind = form.getAttribute('data-form');
-      if (HANDLERS[kind]) HANDLERS[kind](form);
+      if (!HANDLERS[kind]) return;
+      /* SITE_TURNSTILE_2026_11_02: one widget per form, injected
+       * just above the submit button (the service-request form is
+       * also the repair wizard's step 4, so the wizard intake is
+       * covered by this same gate), and the gate listener is
+       * registered BEFORE the real handler so it can hold the
+       * submit until the server confirms the token. If turnstile.js
+       * failed to load, the gate is skipped rather than breaking
+       * the form outright — the publish checklist requires
+       * turnstile.js to be live alongside this file. */
+      var slot = document.createElement('div');
+      slot.className = 'atr-turnstile';
+      var btn = form.querySelector('[type="submit"]');
+      if (btn && btn.parentNode === form) form.insertBefore(slot, btn);
+      else if (btn && btn.parentNode) btn.parentNode.insertBefore(slot, btn);
+      else form.appendChild(slot);
+      if (window.atrTurnstile) {
+        window.atrTurnstile.mount(slot);
+        window.atrTurnstile.gate(form, slot, {
+          onBlocked: function (reason) {
+            showFormError(form, reason === 'failed'
+              ? 'The human check did not pass. Please complete it again, or call or text us at (937) 280-6243.'
+              : 'Please complete the quick human check above the button, then send again. Stuck? Call or text us at (937) 280-6243.');
+          }
+        });
+      }
+      HANDLERS[kind](form);
     });
   }
 

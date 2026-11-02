@@ -1116,6 +1116,7 @@
               <input type="password" id="authx-login-password" placeholder="••••••••" autocomplete="current-password" aria-label="Password" required>
             </label>
             <p class="acct-error" id="authx-login-error" hidden></p>
+            <div class="atr-turnstile" id="ts-login"></div>
             <button class="btn btn-primary btn-lg acct-submit" type="submit">Log In <i class="fas fa-arrow-right"></i></button>
             <button class="authx-forgot" id="authx-forgot-btn" type="button">Forgot your password?</button>
           </form>
@@ -1139,6 +1140,7 @@
             </label>
             <p class="acct-error" id="authx-signup-error" hidden></p>
             <p class="acct-muted" id="authx-signup-note" hidden></p>
+            <div class="atr-turnstile" id="ts-signup"></div>
             <button class="btn btn-primary btn-lg acct-submit" type="submit">Create Account <i class="fas fa-arrow-right"></i></button>
           </form>
 
@@ -1189,6 +1191,7 @@
                 <input type="text" id="acct-msg-input" placeholder="Write a message…" autocomplete="off" maxlength="1000" aria-label="Write a message">
                 <button class="btn btn-primary btn-sm" type="submit" aria-label="Send message"><i class="fas fa-paper-plane"></i></button>
               </div>
+              <div class="atr-turnstile" id="ts-acct-msg"></div>
               <p class="acct-error" id="acct-msg-error" hidden></p>
             </form>
           </div>
@@ -1254,6 +1257,7 @@
                 </label>
                 <p class="acct-muted" style="text-align:left;padding:0;">Nothing is deducted now — we apply the discount at your visit.</p>
               </div>
+              <div class="atr-turnstile" id="ts-acct-ticket"></div>
               <p class="acct-error" id="acct-ticket-error" hidden></p>
               <button class="btn btn-primary btn-lg acct-submit" type="submit">Submit Request <i class="fas fa-arrow-right"></i></button>
             </form>
@@ -2395,6 +2399,11 @@
     <button class="a11y-reset" id="a11y-reset" type="button">Reset all</button>
   </div>
 
+  <!-- SITE_TURNSTILE_2026_11_02 (staged): Cloudflare Turnstile API
+       (explicit render) + the shared ATR Turnstile helper. Must load
+       before script.js / atr-forms.js, which mount the widgets. -->
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+  <script src="turnstile.js"></script>
   <script src="script.js"></script>
   <script src="atr-forms.js"></script>
 
@@ -2571,6 +2580,7 @@
     <input id="atr-chat-text" type="text" placeholder="Type your answer or a question…" autocomplete="off" aria-label="Type a message" />
     <button class="atr-chat-send" type="submit" aria-label="Send message"><i class="fas fa-paper-plane"></i></button>
   </form>
+  <div class="atr-turnstile" id="ts-chat"></div>
   <div class="atr-chat-note">Prefer a person? Call or text (937) 280-6243.</div>
 </div>
 <script>
@@ -2750,9 +2760,44 @@
     }
     cb(null);
   }
+  /* SITE_TURNSTILE_2026_11_02 (staged): the chat lead is a public
+   * tickets insert, so it is gated like the other forms — widget
+   * token first, server confirmation via the verify-turnstile Edge
+   * Function second, and only then does doSendLead() run. Nothing is
+   * written and no FormSubmit alert fires before the gate passes.
+   * On a failed or missing check the confirm chips are re-shown so
+   * the customer can complete the check and tap send again. */
   function sendLead() {
+    var tsEl = el('ts-chat');
+    var tsTok = window.atrTurnstile ? window.atrTurnstile.token(tsEl) : '';
+    if (!tsTok) {
+      if (window.atrTurnstile) window.atrTurnstile.mount(tsEl);
+      bot('One quick human check first — it sits right under the message box below. Complete it, then tap "I agree — send request" again.');
+      chips([
+        { label: 'I agree \u2014 send request', action: 'send_lead' },
+        { label: 'Start over', action: 'restart' }
+      ]);
+      return;
+    }
     state = 'sending';
     bot('Sending…');
+    window.atrTurnstile.verify(tsTok, null, function (ok) {
+      window.atrTurnstile.reset(tsEl);
+      if (!ok) {
+        state = 'lead_confirm';
+        bot('That human check did not pass. Please complete it again under the message box, then tap "I agree — send request".');
+        chips([
+          { label: 'I agree \u2014 send request', action: 'send_lead' },
+          { label: 'Start over', action: 'restart' }
+        ]);
+        return;
+      }
+      doSendLead();
+    });
+  }
+
+  function doSendLead() {
+    state = 'sending';
     var issue = 'Chat request — ' + (lead.deviceLabel || lead.deviceText || 'Device') + ': ' +
       (lead.issueText || lead.repairLabel || 'Repair') +
       (lead.startPrice ? ' (starting price quoted in chat: $' + lead.startPrice + ')' : '');
@@ -2939,6 +2984,10 @@
     if (open) {
       panel.classList.add('open');
       btn.style.display = 'none';
+      /* SITE_TURNSTILE_2026_11_02 (staged): render the human check
+       * under the message box as soon as the panel opens, so a token
+       * is ready by the time a lead is ready to send. */
+      if (window.atrTurnstile) window.atrTurnstile.mount(el('ts-chat'));
       if (!started) { started = true; greet(); }
       setTimeout(function () { input.focus(); }, 60);
     } else {
@@ -2987,6 +3036,7 @@
       <p>Enter your email and we'll send you a code. Type the code here with your new password — no need to click anything in the email.</p>
       <label for="atr-reset-email">Email</label>
       <input id="atr-reset-email" type="email" autocomplete="email" placeholder="you@example.com" />
+      <div class="atr-turnstile" id="ts-reset"></div>
       <button class="atr-reset-btn" id="atr-reset-send" type="button">Email me a code</button>
       <div class="atr-reset-err" id="atr-reset-req-err" hidden></div>
     </div>
@@ -3064,8 +3114,18 @@
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showErr('atr-reset-req-err', 'Please enter a valid email address.'); return; }
     var client = getClient();
     if (!client) { showErr('atr-reset-req-err', 'Could not start the reset. Please try again in a moment.'); return; }
+    /* SITE_TURNSTILE_2026_11_02 (staged): reset requests carry a
+     * Turnstile token as captchaToken, verified by Supabase Auth
+     * itself once captcha protection is enabled (see CHANGES.md). */
+    var tsTokReset = window.atrTurnstile ? window.atrTurnstile.token(el('ts-reset')) : '';
+    if (!tsTokReset) {
+      if (window.atrTurnstile) window.atrTurnstile.mount(el('ts-reset'));
+      showErr('atr-reset-req-err', 'Please complete the quick human check, then tap again.');
+      return;
+    }
     btn.disabled = true; btn.textContent = 'Sending…';
-    client.auth.resetPasswordForEmail(email).then(function (res) {
+    client.auth.resetPasswordForEmail(email, { captchaToken: tsTokReset }).then(function (res) {
+      if (window.atrTurnstile) window.atrTurnstile.reset(el('ts-reset'));
       btn.disabled = false; btn.textContent = 'Email me a code';
       if (res.error) { showErr('atr-reset-req-err', 'We could not send that code. Double-check the email and try again.'); return; }
       showErr('atr-reset-req-err', '');
@@ -3136,7 +3196,7 @@
     el('atr-reset-link-set').addEventListener('click', linkSet);
 
     // Expose for the account modal's "Forgot password" button and other pages.
-    window.atrOpenReset = function () { showStep('request'); open(); };
+    window.atrOpenReset = function () { showStep('request'); open(); if (window.atrTurnstile) window.atrTurnstile.mount(el('ts-reset')); };
 
     var client = getClient();
     // Recovery links that arrive dead (expired/invalid) land back here with an
@@ -3723,6 +3783,9 @@
     if (sf) sf.hidden = isLogin;
     showErr($('authx-login-error'), '');
     showErr($('authx-signup-error'), '');
+    /* SITE_TURNSTILE_2026_11_02 (staged): (re)mount whichever auth
+     * widget just became visible; mounting is idempotent. */
+    if (window.atrTurnstile) window.atrTurnstile.mount($(isLogin ? 'ts-login' : 'ts-signup'));
   }
 
   document.addEventListener('DOMContentLoaded', function () {
@@ -3733,6 +3796,19 @@
        the Supabase library fails to load. Handlers that truly need
        the client guard on sb and explain instead of dying silently. */
     var SB_UNAVAILABLE = 'Sign-in could not load \u2014 check your connection and refresh the page. If it keeps happening, call or text us at (937) 280-6243.';
+
+    /* SITE_TURNSTILE_2026_11_02 (staged): mount the login + signup
+     * human checks when the account box opens. Supabase Auth verifies
+     * these tokens itself once captcha protection is enabled in the
+     * project (see CHANGES.md) — the token travels as captchaToken on
+     * the sign-in / sign-up calls below. */
+    var acctOpenBtn = $('account-open-btn');
+    if (acctOpenBtn) acctOpenBtn.addEventListener('click', function () {
+      if (window.atrTurnstile) {
+        window.atrTurnstile.mount($('ts-login'));
+        window.atrTurnstile.mount($('ts-signup'));
+      }
+    });
 
     var googleBtn = $('authx-google-btn');
     if (googleBtn) googleBtn.addEventListener('click', function () {
@@ -3771,9 +3847,16 @@
       if (!validEmail(email)) { showErr($('authx-login-error'), 'Please enter a valid email address.'); return; }
       if (!pass) { showErr($('authx-login-error'), 'Please enter your password.'); return; }
       if (!sb) { showErr($('authx-login-error'), SB_UNAVAILABLE); return; }
+      var tsTokLogin = window.atrTurnstile ? window.atrTurnstile.token($('ts-login')) : '';
+      if (!tsTokLogin) {
+        if (window.atrTurnstile) window.atrTurnstile.mount($('ts-login'));
+        showErr($('authx-login-error'), 'Please complete the quick human check above the button, then log in again.');
+        return;
+      }
       var btn = loginForm.querySelector('button[type="submit"]');
       if (btn) { btn.disabled = true; btn.innerHTML = 'Logging in…'; }
-      sb.auth.signInWithPassword({ email: email, password: pass }).then(function (res) {
+      sb.auth.signInWithPassword({ email: email, password: pass, options: { captchaToken: tsTokLogin } }).then(function (res) {
+        if (window.atrTurnstile) window.atrTurnstile.reset($('ts-login'));
         if (btn) { btn.disabled = false; btn.innerHTML = 'Log In <i class="fas fa-arrow-right"></i>'; }
         if (res.error) {
           showErr($('authx-login-error'), 'That email and password did not match. New here? Tap Sign Up — or use "Forgot your password?" below.');
@@ -3798,13 +3881,20 @@
       if (!validEmail(email)) { showErr($('authx-signup-error'), 'Please enter a valid email address.'); return; }
       if (!pass || pass.length < 8) { showErr($('authx-signup-error'), 'Please use a password of at least 8 characters.'); return; }
       if (!sb) { showErr($('authx-signup-error'), SB_UNAVAILABLE); return; }
+      var tsTokSignup = window.atrTurnstile ? window.atrTurnstile.token($('ts-signup')) : '';
+      if (!tsTokSignup) {
+        if (window.atrTurnstile) window.atrTurnstile.mount($('ts-signup'));
+        showErr($('authx-signup-error'), 'Please complete the quick human check above the button, then create the account again.');
+        return;
+      }
       pendingName = name; pendingPhone = phone;
       var btn = signupForm.querySelector('button[type="submit"]');
       if (btn) { btn.disabled = true; btn.innerHTML = 'Creating account…'; }
       sb.auth.signUp({
         email: email, password: pass,
-        options: { data: { full_name: name }, emailRedirectTo: window.location.origin + window.location.pathname }
+        options: { data: { full_name: name }, emailRedirectTo: window.location.origin + window.location.pathname, captchaToken: tsTokSignup }
       }).then(function (res) {
+        if (window.atrTurnstile) window.atrTurnstile.reset($('ts-signup'));
         if (btn) { btn.disabled = false; btn.innerHTML = 'Create Account <i class="fas fa-arrow-right"></i>'; }
         if (res.error) {
           showErr($('authx-signup-error'), /already/i.test(res.error.message || '')
