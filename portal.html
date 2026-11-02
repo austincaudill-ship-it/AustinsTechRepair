@@ -136,7 +136,7 @@
         <div class="portal-nav-group portal-nav-label">Action Button</div>
         <nav class="portal-tabs" id="portal-nav" role="tablist" aria-label="Portal sections">
 
-        <div class="portal-nav-group">Work</div>
+        <div class="portal-nav-group">Customer</div>
         <button class="portal-tab" id="portal-tab-checkin" type="button" role="tab" data-tab="checkin">
           <i class="fas fa-clipboard-check"></i> Check-In
         </button>
@@ -145,6 +145,10 @@
         </button>
         <button class="portal-tab" id="portal-tab-customers" type="button" role="tab" data-tab="customers">
           <i class="fas fa-users"></i> Customers
+        </button>
+        <!-- PORTAL_ATRONE_MEMBERS_2026_11_02 (Austin, Nov 2, 2026): a dedicated ATR One Members action button under Customer (the first sidebar group, renamed from Work the same day) — the membership list used to be reachable only through the Admin "Square & ATR One" panel; he wants to just look and see who is a member. -->
+        <button class="portal-tab" id="portal-tab-members" type="button" role="tab" data-tab="members">
+          <i class="fas fa-star"></i> ATR One Members
         </button>
         <button class="portal-tab" id="portal-tab-requests" type="button" role="tab" data-tab="requests">
           <i class="fas fa-clipboard-list"></i> Requests <span class="portal-count" id="portal-count-requests" hidden></span>
@@ -296,6 +300,18 @@
         <p class="portal-muted portal-small">Delete removes the customer account only, and asks you to confirm first. If a customer has tickets or orders linked, the delete is blocked and you will see a message.</p>
         <div id="portal-celebrations"></div>
         <div id="portal-customer-list"><p class="portal-muted">Loading customers&hellip;</p></div>
+      </div>
+
+      <!-- ATR ONE MEMBERS (PORTAL_ATRONE_MEMBERS_2026_11_02): read-only member list; memberships are added/cancelled from the ticket drawer, never here. -->
+      <div class="portal-panel" id="portal-panel-members" role="tabpanel" hidden>
+        <div class="portal-panel-head">
+          <h2 class="portal-h2">ATR One Members</h2>
+          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="members">
+            <i class="fas fa-rotate-right"></i> Refresh
+          </button>
+        </div>
+        <p class="portal-muted portal-small">Everyone with an ATR One membership on file. Memberships are added or cancelled from a customer&rsquo;s ticket &mdash; this list is just for looking.</p>
+        <div id="portal-members-list"><p class="portal-muted">Loading members&hellip;</p></div>
       </div>
 
       <!-- INVENTORY + PURCHASE ORDERS (Phase 3: editable van/shop stock) -->

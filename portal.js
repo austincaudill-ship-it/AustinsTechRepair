@@ -213,7 +213,7 @@
   var state = {
     user: null,
     profile: null,
-    loaded: { tickets: false, applications: false, investors: false, feedback: false, customers: false, inventory: false, financials: false },
+    loaded: { tickets: false, applications: false, investors: false, feedback: false, customers: false, members: false, inventory: false, financials: false },
     customersCache: [], inventoryCache: []
   };
 
@@ -885,7 +885,7 @@
   /* ================= TABS ================= */
   var LOADERS = {
     tickets: loadTickets, applications: loadApplications, investors: loadInvestors,
-    feedback: loadFeedback, customers: loadCustomers, inventory: loadInventory,
+    feedback: loadFeedback, customers: loadCustomers, members: loadAtrOneMembers, inventory: loadInventory,
     documents: loadDocumentsTab, financials: loadFinancials,
   };
 
@@ -905,7 +905,7 @@
     var nav = $('portal-nav'); if (nav) nav.classList.remove('open');
     var tabs = document.querySelectorAll('.portal-tab');
     tabs.forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === name); });
-    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'documents', 'financials'].forEach(function (n) {
+    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'documents', 'financials'].forEach(function (n) {
       $('portal-panel-' + n).hidden = n !== name;
     });
     closeDrawer();
@@ -4067,6 +4067,99 @@ function loadTicketThread(client, ticketId) {
         atrMsg('Could not save the membership — try again.');
       });
     });
+  }
+
+  /* ================= ATR ONE MEMBERS PANEL =================
+   * PORTAL_ATRONE_MEMBERS_2026_11_02 (Austin, Nov 2, 2026): a
+   * dedicated "ATR One Members" action button under Customer (the
+   * first sidebar group, renamed from Work the same day), so he can
+   * just look and see who is a member — before this, memberships
+   * were only visible one customer at a time (ticket drawer block,
+   * Customers badge) or not at all. This panel is READ-ONLY: it
+   * lists every row of the same customer_memberships table the
+   * drawer writes (PORTAL_ATRONE_TICKET_2026_10_30), joined to
+   * customers for the name. Adding and cancelling stay in the
+   * ticket drawer, exactly as before — nothing here writes.
+   * If the memberships table is not set up yet (memberships.sql
+   * not run), the query errors and the panel says so plainly with
+   * the same no-members wording instead of breaking — the pattern
+   * the drawer block and the Customers badge already use. */
+  function loadAtrOneMembers(force) {
+    var list = $('portal-members-list');
+    if (!list) return;
+    if (!force) list.innerHTML = '<p class="portal-muted">Loading members&hellip;</p>';
+    withClient(function (client) {
+      if (!client) { listError(list, 'members'); return; }
+      client.from('customer_memberships')
+        .select('id, customer_id, tier, status, started_on, cancelled_on, note')
+        .order('started_on', { ascending: true }).limit(500)
+        .then(function (res) {
+          if (res.error) {
+            list.innerHTML = '<p class="portal-muted">No ATR One members yet.</p>' +
+              '<p class="portal-muted portal-small">Memberships are not set up for this portal yet.</p>';
+            return;
+          }
+          var rows = res.data || [];
+          if (!rows.length) { state.loaded.members = true; renderAtrOneMembers(list, []); return; }
+          var ids = [];
+          rows.forEach(function (r) { if (r.customer_id && ids.indexOf(r.customer_id) === -1) ids.push(r.customer_id); });
+          client.from('customers').select('id, name').in('id', ids)
+            .then(function (cres) {
+              var names = {};
+              if (!cres.error) (cres.data || []).forEach(function (c) { names[c.id] = c.name; });
+              var members = rows.map(function (r) {
+                return {
+                  id: r.id, customerId: r.customer_id,
+                  name: names[r.customer_id] || 'Customer',
+                  tier: r.tier, status: r.status,
+                  startedOn: r.started_on, cancelledOn: r.cancelled_on,
+                  note: r.note
+                };
+              });
+              /* Active members first, then by name — the order
+               * Austin scans in. The database returns signup order;
+               * the ranking is a display choice, so it lives here. */
+              members.sort(function (a, b) {
+                var as = a.status === 'active' ? 0 : 1, bs = b.status === 'active' ? 0 : 1;
+                if (as !== bs) return as - bs;
+                return String(a.name || '').localeCompare(String(b.name || ''));
+              });
+              state.loaded.members = true;
+              renderAtrOneMembers(list, members);
+            })
+            .catch(function () { listError(list, 'members'); });
+        })
+        .catch(function () { listError(list, 'members'); });
+    });
+  }
+
+  function renderAtrOneMembers(list, rows) {
+    if (!rows.length) {
+      emptyState(list, 'No ATR One members yet. When a customer signs up, record it on their ticket and they will show up here.');
+      return;
+    }
+    var activeCount = 0;
+    rows.forEach(function (m) { if (m.status === 'active') activeCount++; });
+    var html = '<p class="portal-muted">' + activeCount + ' active member' + (activeCount === 1 ? '' : 's') + '</p>';
+    html += rows.map(function (m) {
+      var tier = ATRONE_TIERS[m.tier] || null;
+      var tierLine = tier
+        ? tier.name + ' &middot; ' + esc(fmtMoney(tier.price)) + '/mo'
+        : esc(atroneTierName(m.tier));
+      var statusLine = m.status === 'active'
+        ? 'Member since ' + esc(fmtJobDate(m.startedOn) || '—')
+        : 'Cancelled ' + esc(fmtJobDate(m.cancelledOn) || '') + ' &middot; member since ' + esc(fmtJobDate(m.startedOn) || '—');
+      return '<article class="portal-card">' +
+        '<div class="portal-card-top"><p class="portal-card-title">' + esc(m.name || 'Customer') + '</p>' +
+        (m.status === 'active'
+          ? '<span class="portal-badge portal-badge-atrone"><i class="fas fa-star"></i> ATR One &middot; ' + esc(tier ? tier.name : atroneTierName(m.tier)) + '</span>'
+          : '<span class="portal-badge portal-st-cancelled">Cancelled</span>') + '</div>' +
+        '<p class="portal-card-meta"><i class="fas fa-star"></i> ' + tierLine + '</p>' +
+        '<p class="portal-card-meta">' + statusLine + '</p>' +
+        (m.note ? '<p class="portal-card-meta"><i class="fas fa-note-sticky"></i> ' + esc(m.note) + '</p>' : '') +
+        '</article>';
+    }).join('');
+    list.innerHTML = html;
   }
 
   /* ================= FINANCIALS =================
