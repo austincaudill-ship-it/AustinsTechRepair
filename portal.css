@@ -850,6 +850,58 @@ body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-logout{displa
 .teamchat-composer .portal-btn { min-height: 3rem; padding-left: 1.3rem; padding-right: 1.3rem; }
 /* end TEAMCHAT_2026_11_03 */
 
+/* ================= TEAMCHAT_CHANNELS_2026_11_03 =================
+ * Team Chat channels: the channel bar (Office + direct chats and
+ * groups), the find-someone search with its Chat buttons, and the
+ * New group form. Same palette and tap-target language as the
+ * thread above — pill channels in cream with a burnt-orange fill
+ * for the open one, generous rows a thumb can hit one-handed. */
+.teamchat-channels {
+  display: flex; flex-wrap: wrap; gap: 0.45rem; margin-bottom: 0.75rem;
+}
+.teamchat-chan {
+  appearance: none; cursor: pointer; font: inherit; font-size: 0.9rem; font-weight: 600;
+  padding: 0.5rem 0.95rem; border-radius: 999px; min-height: 2.6rem;
+  background: var(--surface, #FFFDF8); color: var(--ink, #2C231A);
+  border: 1px solid var(--line, #E6D9C0);
+}
+.teamchat-chan-active {
+  background: var(--brand, #B4551F); border-color: var(--brand, #B4551F); color: #FFFAF2;
+}
+.teamchat-find { margin-bottom: 0.75rem; }
+.teamchat-find-field { margin-bottom: 0.4rem; }
+.teamchat-find-field input {
+  width: 100%; box-sizing: border-box; padding: 0.65rem 0.8rem; min-height: 3rem;
+  border: 1px solid var(--line, #E6D9C0); border-radius: 8px;
+  background: var(--bg, #FFFAF2); color: var(--ink, #2C231A); font-family: inherit; font-size: 0.95rem;
+}
+.teamchat-find-results { display: flex; flex-direction: column; gap: 0.4rem; }
+.teamchat-person {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.6rem;
+  padding: 0.45rem 0.7rem; border: 1px solid var(--line, #E6D9C0); border-radius: 10px;
+  background: var(--surface, #FFFDF8);
+}
+.teamchat-person-name { font-weight: 600; font-size: 0.95rem; }
+.teamchat-group { margin-bottom: 0.75rem; }
+.teamchat-group-form {
+  margin-top: 0.6rem; padding: 0.8rem; border: 1px solid var(--line, #E6D9C0);
+  border-radius: 10px; background: var(--surface, #FFFDF8);
+}
+.teamchat-group-form input[type="text"] {
+  width: 100%; box-sizing: border-box; padding: 0.65rem 0.8rem; min-height: 3rem;
+  border: 1px solid var(--line, #E6D9C0); border-radius: 8px;
+  background: var(--bg, #FFFAF2); color: var(--ink, #2C231A); font-family: inherit; font-size: 0.95rem;
+}
+.teamchat-group-members-label { display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.35rem; }
+.teamchat-group-members { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 0.6rem; }
+.teamchat-group-member {
+  display: flex; align-items: center; gap: 0.55rem; cursor: pointer;
+  padding: 0.5rem 0.6rem; border: 1px solid var(--line, #E6D9C0); border-radius: 8px;
+  background: var(--bg, #FFFAF2); font-size: 0.95rem; min-height: 2.6rem; box-sizing: border-box;
+}
+.teamchat-group-member input[type="checkbox"] { width: 1.15rem; height: 1.15rem; accent-color: var(--brand, #B4551F); }
+/* end TEAMCHAT_CHANNELS_2026_11_03 */
+
 /* ---------- LOC_SETTINGS_2026_11_03 ----------
  * The Location tracking settings card (top of the Mileage panel —
  * the consent choice as a normal setting now that the sign-in
@@ -889,3 +941,19 @@ body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-logout{displa
   font-family: inherit; font-size: 0.95rem;
 }
 /* end ACCOUNT_CONTROLS_2026_11_03 */
+
+/* ---------- ACCOUNT_AUDIT_2026_11_03 ----------
+ * The "Account activity" card at the bottom of Account Controls:
+ * one quiet row per signed account change — what happened on the
+ * left, when it happened muted on the right, hairline dividers
+ * between rows. Reuses portal-card and the panel's own palette;
+ * nothing new to learn. */
+.acct-audit-card { padding-top: 0.4rem; padding-bottom: 0.4rem; }
+.acct-audit-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  gap: 1rem; margin: 0; padding: 0.55rem 0;
+  border-bottom: 1px solid var(--line, #E5D9C8);
+}
+.acct-audit-row:last-child { border-bottom: none; }
+.acct-audit-when { white-space: nowrap; font-size: 0.85rem; }
+/* end ACCOUNT_AUDIT_2026_11_03 */

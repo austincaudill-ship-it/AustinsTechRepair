@@ -5877,7 +5877,17 @@ function loadTicketThread(client, ticketId) {
    * action uses the portal's confirm-arm pattern (the inventory
    * delete shape): first tap arms the button ("Tap again to…"),
    * second tap runs it. The function's own error text is shown
-   * as-is in the panel — nothing is dressed up as success. */
+   * as-is in the panel — nothing is dressed up as success.
+   *
+   * ACCOUNT_AUDIT_2026_11_03 (Austin, Nov 3, 2026): below the staff
+   * list, an "Account activity" card signs every account change
+   * like ticket work — who did it, what they did, to whom, when.
+   * The function writes the rows (staff_admin_audit); this panel
+   * only READS them, straight through the portal's own Supabase
+   * client — the table's RLS lets owners read and nobody else, so
+   * no function action exists for reads. loadAccountControls loads
+   * the trail right after the staff list, and acctRun's reload
+   * after any change brings the new row straight into view. */
 
   var acctStaffCache = [];
   var acctExpand = null; /* { id, mode: 'email' | 'password' } | null */
@@ -5931,7 +5941,63 @@ function loadTicketThread(client, ticketId) {
       state.loaded.accountcontrols = true;
       acctStaffCache = out.staff || [];
       renderAccountControls();
+      loadAccountAudit();
     });
+  }
+
+  /* ACCOUNT_AUDIT_2026_11_03: the activity trail. Read directly
+   * from staff_admin_audit with the signed-in session — RLS on the
+   * table answers owners only, and loadAccountControls has already
+   * gated this whole panel on isPortalOwner(). */
+  function loadAccountAudit() {
+    var box = $('portal-acct-audit-list');
+    if (!box) return;
+    if (!isPortalOwner()) { box.innerHTML = ''; return; }
+    withClient(function (client) {
+      if (!client) { listError(box, 'account activity'); return; }
+      client.from('staff_admin_audit')
+        .select('id, actor_name, action, target_name, detail, created_at')
+        .order('created_at', { ascending: false })
+        .limit(20)
+        .then(function (res) {
+          if (res.error) { listError(box, 'account activity'); return; }
+          renderAccountAudit(res.data || []);
+        })
+        .catch(function () { listError(box, 'account activity'); });
+    });
+  }
+
+  /* One audit row in plain owner language. Every stored field goes
+   * through esc() — names, emails and roles are data, never markup. */
+  function acctAuditLine(r) {
+    var actor = r.actor_name || 'The owner';
+    var target = r.target_name || 'a staff account';
+    switch (r.action) {
+      case 'password_set':
+        return actor + ' set a new password for ' + target;
+      case 'login_email_changed':
+        return actor + ' changed ' + target + '\u2019s login email' +
+          (r.detail ? ' to ' + r.detail : '');
+      case 'deactivated':
+        return actor + ' deactivated ' + target;
+      case 'activated':
+        return actor + ' activated ' + target;
+      case 'account_created':
+        return actor + ' created the account for ' + target +
+          (r.detail ? ' (' + roleLabel(r.detail) + ')' : '');
+      default:
+        return actor + ' updated ' + target;
+    }
+  }
+
+  function renderAccountAudit(rows) {
+    var box = $('portal-acct-audit-list');
+    if (!box) return;
+    if (!rows.length) { emptyState(box, 'No account changes recorded yet.'); return; }
+    box.innerHTML = rows.map(function (r) {
+      return '<p class="acct-audit-row"><span class="acct-audit-text">' + esc(acctAuditLine(r)) + '</span>' +
+        '<span class="acct-audit-when portal-muted">' + esc(fmtDateTime(r.created_at)) + '</span></p>';
+    }).join('');
   }
 
   function renderAccountControls() {
@@ -6258,6 +6324,36 @@ function loadTicketThread(client, ticketId) {
   var teamChatClient = null;
   var teamChatWired = false;
 
+  /* ================= TEAMCHAT_CHANNELS_2026_11_03 =================
+   * Austin, Nov 3, 2026: "We need to be able to type an associate
+   * name and it pulls it up and we can press chat and send messages
+   * to each other" and "Make a group chat."
+   *
+   * The single office thread above grows channels (team-channels.sql
+   * in this build folder): public.team_channels (office / dm / group)
+   * + public.team_channel_members, and team_messages.channel_id says
+   * which conversation a message belongs to. The panel now carries:
+   *   - a channel bar: Office first, then my DM and group channels,
+   *     most recent activity first — tapping one switches the view;
+   *   - a find-someone search: type a name, tap Chat, and the DM
+   *     channel for that pair is found or created (its dm_key is the
+   *     two profile ids sorted and colon-joined, unique-indexed in
+   *     the database, so a pair can only ever have one DM channel);
+   *   - a New group form: a name plus a checkbox per associate.
+   * Names come from public.team_directory — the id/name/role-only
+   * view from the SQL — because employee_profiles itself is own-row
+   * plus owner-only by policy (pay rates live there); if the view
+   * is missing the code falls back to the plain profiles select,
+   * which still serves the owner fully.
+   * The message list, composer and 20-second poll now work per open
+   * channel; the poll refreshes the channel bar too, so a brand new
+   * DM or group shows up without reopening the panel. Everything
+   * still renders through esc(), and history stays append-only. */
+  var TEAM_OFFICE_ID = '00000000-0000-4000-8000-000000000001';
+  var teamChatOpenId = TEAM_OFFICE_ID;
+  var teamChatChannels = [];  /* [{id, kind, name, label, lastAt}] */
+  var teamChatDirectory = []; /* [{id, name, role}] — everyone on staff */
+
   function teamChatMsgHtml(m) {
     var mine = !!(state.user && m.author_id === state.user.id);
     return '<div class="teamchat-msg' + (mine ? ' teamchat-msg-mine' : '') + '">' +
@@ -6265,16 +6361,150 @@ function loadTicketThread(client, ticketId) {
       '<span class="teamchat-msg-body">' + esc(m.body || '') + '</span></div>';
   }
 
+  function teamChatErr(text) {
+    var err = $('portal-teamchat-error');
+    if (err) { err.textContent = text || ''; err.hidden = !text; }
+  }
+
+  function teamChatDmKey(a, b) { return [a, b].sort().join(':'); }
+
+  function teamChatDirName(id) {
+    for (var i = 0; i < teamChatDirectory.length; i++) {
+      if (teamChatDirectory[i].id === id) return teamChatDirectory[i].name || 'Associate';
+    }
+    return 'Associate';
+  }
+
+  function teamChatOpenChannel() {
+    for (var i = 0; i < teamChatChannels.length; i++) {
+      if (teamChatChannels[i].id === teamChatOpenId) return teamChatChannels[i];
+    }
+    return { id: TEAM_OFFICE_ID, kind: 'office', name: 'Office', label: 'Office', lastAt: '' };
+  }
+
+  function renderTeamChatChannels() {
+    var bar = $('portal-teamchat-channels');
+    if (!bar) return;
+    if (!teamChatChannels.length) {
+      bar.innerHTML = '<p class="portal-muted portal-small">Loading channels&hellip;</p>';
+      return;
+    }
+    bar.innerHTML = teamChatChannels.map(function (ch) {
+      var icon = ch.kind === 'office' ? 'fa-house' : (ch.kind === 'group' ? 'fa-users' : 'fa-user');
+      return '<button class="teamchat-chan' + (ch.id === teamChatOpenId ? ' teamchat-chan-active' : '') + '" type="button" data-tc-open="' + esc(ch.id) + '">' +
+        '<i class="fas ' + icon + '"></i> ' + esc(ch.label || ch.name || 'Chat') + '</button>';
+    }).join('');
+  }
+
+  function updateTeamChatComposerLabel() {
+    var label = $('portal-teamchat-input-label');
+    if (label) label.textContent = 'Message ' + (teamChatOpenChannel().label || 'Office');
+  }
+
+  function openTeamChannel(id) {
+    if (!id) return;
+    teamChatOpenId = id;
+    renderTeamChatChannels();
+    updateTeamChatComposerLabel();
+    fetchTeamChat(true);
+  }
+
+  /* The staff directory: names for the find-someone search, the
+   * group picker, and DM channel labels. View first, profiles
+   * fallback (see the block comment above). */
+  function fetchTeamDirectory(done) {
+    if (!teamChatClient || !state.user) { if (done) done(); return; }
+    var apply = function (rows) {
+      teamChatDirectory = rows || [];
+      renderTeamChatGroupMembers();
+      if (done) done();
+    };
+    teamChatClient.from('team_directory').select('id, name, role').order('name', { ascending: true }).limit(200)
+      .then(function (res) {
+        if (res.error) throw res.error;
+        apply(res.data || []);
+      })
+      .catch(function () {
+        teamChatClient.from('employee_profiles').select('id, name, role').order('name', { ascending: true }).limit(200)
+          .then(function (res) { apply(res.data || []); })
+          .catch(function () { apply([]); });
+      });
+  }
+
+  /* TEAMCHAT_CHANNELS_2026_11_03: rebuild the channel bar — the
+   * office channel pinned first, then every channel I belong to,
+   * most recent activity first. If the channels tables are not
+   * there yet (SQL not run), the bar quietly keeps just Office and
+   * fetchTeamChat shows the plain load error, like the first build. */
+  function fetchTeamChannels(done) {
+    if (!teamChatClient || !state.user) { if (done) done(); return; }
+    var me = state.user.id;
+    var settle = function () { if (done) done(); };
+    teamChatClient.from('team_channel_members').select('channel_id').eq('employee_id', me)
+      .then(function (res) {
+        if (res.error) throw res.error;
+        var ids = (res.data || []).map(function (r) { return r.channel_id; })
+          .filter(function (id) { return id !== TEAM_OFFICE_ID; });
+        if (!ids.length) { finishTeamChannels([], {}); settle(); return null; }
+        return teamChatClient.from('team_channels').select('id, kind, name, dm_key, created_at').in('id', ids)
+          .then(function (cres) {
+            if (cres.error) throw cres.error;
+            var chans = cres.data || [];
+            var dmIds = chans.filter(function (c) { return c.kind === 'dm'; }).map(function (c) { return c.id; });
+            var membersP = dmIds.length
+              ? teamChatClient.from('team_channel_members').select('channel_id, employee_id').in('channel_id', dmIds)
+              : Promise.resolve({ data: [] });
+            return membersP.then(function (mres) {
+              var others = {};
+              (mres.data || []).forEach(function (m) { if (m.employee_id !== me) others[m.channel_id] = m.employee_id; });
+              return teamChatClient.from('team_messages').select('channel_id, created_at')
+                .in('channel_id', ids.concat([TEAM_OFFICE_ID]))
+                .order('created_at', { ascending: false }).limit(300)
+                .then(function (ares) {
+                  var lastAt = {};
+                  (ares.data || []).forEach(function (r) { if (!lastAt[r.channel_id]) lastAt[r.channel_id] = r.created_at; });
+                  finishTeamChannels(chans.map(function (c) {
+                    return {
+                      id: c.id, kind: c.kind, name: c.name || '',
+                      label: c.kind === 'dm' ? teamChatDirName(others[c.id]) : (c.name || 'Group'),
+                      lastAt: lastAt[c.id] || c.created_at || ''
+                    };
+                  }), { officeAt: lastAt[TEAM_OFFICE_ID] || '' });
+                  settle();
+                });
+            });
+          });
+      })
+      .catch(function () { finishTeamChannels([], {}); settle(); });
+  }
+
+  function finishTeamChannels(rest, officeInfo) {
+    var office = { id: TEAM_OFFICE_ID, kind: 'office', name: 'Office', label: 'Office', lastAt: (officeInfo && officeInfo.officeAt) || '' };
+    rest.sort(function (a, b) { return String(b.lastAt || '').localeCompare(String(a.lastAt || '')); });
+    teamChatChannels = [office].concat(rest);
+    var stillThere = false;
+    teamChatChannels.forEach(function (c) { if (c.id === teamChatOpenId) stillThere = true; });
+    if (!stillThere) teamChatOpenId = TEAM_OFFICE_ID;
+    renderTeamChatChannels();
+    updateTeamChatComposerLabel();
+  }
+
   function fetchTeamChat(stick) {
     if (!teamChatClient || !state.user) return;
     teamChatClient.from('team_messages').select('id, author_id, author_name, body, created_at')
+      .eq('channel_id', teamChatOpenId)
       .order('created_at', { ascending: false }).limit(100)
       .then(function (res) {
         var box = $('portal-teamchat-list');
         if (!box) return;
         if (res.error) { listError(box, 'team chat'); stopTeamChatPoll(); return; }
         var rows = (res.data || []).slice().reverse(); /* newest last */
-        if (!rows.length) { emptyState(box, 'No messages yet. Say hello to the team.'); return; }
+        if (!rows.length) {
+          emptyState(box, teamChatOpenId === TEAM_OFFICE_ID
+            ? 'No messages yet. Say hello to the team.'
+            : 'No messages yet. Start the conversation.');
+          return;
+        }
         var prevTop = box.scrollTop;
         var wasNearBottom = (box.scrollHeight - prevTop - box.clientHeight) < 140;
         box.innerHTML = rows.map(teamChatMsgHtml).join('');
@@ -6292,6 +6522,7 @@ function loadTicketThread(client, ticketId) {
     teamChatTimer = setInterval(function () {
       var panel = $('portal-panel-teamchat');
       if (!panel || panel.hidden) { stopTeamChatPoll(); return; }
+      fetchTeamChannels();
       fetchTeamChat(false);
     }, 20000);
   }
@@ -6299,6 +6530,7 @@ function loadTicketThread(client, ticketId) {
     if (teamChatTimer) { clearInterval(teamChatTimer); teamChatTimer = null; }
   }
   function resumeTeamChat() {
+    if (teamChatClient && state.user) fetchTeamChannels();
     fetchTeamChat(true);
     startTeamChatPoll();
   }
@@ -6313,16 +6545,119 @@ function loadTicketThread(client, ticketId) {
     client.from('team_messages').insert({
       author_id: state.user.id,
       author_name: (state.profile && state.profile.name) || 'Associate',
-      body: text
+      body: text,
+      channel_id: teamChatOpenId
     }).then(function (res) {
       if (btn) btn.disabled = false;
       if (res.error) { if (err) { err.textContent = 'Could not send that message. Try again.'; err.hidden = false; } return; }
       input.value = '';
       fetchTeamChat(true);
+      fetchTeamChannels();
     }).catch(function () {
       if (btn) btn.disabled = false;
       if (err) { err.textContent = 'Could not send that message. Try again.'; err.hidden = false; }
     });
+  }
+
+  /* Find-or-create the DM channel for a pair, then open it. The
+   * dm_key unique index means the pair can only ever land on one
+   * shared channel, whichever of the two creates it first. */
+  function teamChatOpenDm(otherId) {
+    if (!teamChatClient || !state.user || !otherId || otherId === state.user.id) return;
+    var me = state.user.id;
+    var key = teamChatDmKey(me, otherId);
+    teamChatErr('');
+    teamChatClient.from('team_channels').select('id').eq('dm_key', key).limit(1)
+      .then(function (res) {
+        if (res.error) throw res.error;
+        if (res.data && res.data.length) {
+          var existing = res.data[0].id;
+          fetchTeamChannels(function () { openTeamChannel(existing); });
+          return null;
+        }
+        return teamChatClient.from('team_channels')
+          .insert({ kind: 'dm', name: null, dm_key: key, created_by: me }).select('id').single()
+          .then(function (cres) {
+            if (cres.error) throw cres.error;
+            var cid = cres.data.id;
+            return teamChatClient.from('team_channel_members').insert([
+              { channel_id: cid, employee_id: me },
+              { channel_id: cid, employee_id: otherId }
+            ]).then(function (mres) {
+              if (mres.error) throw mres.error;
+              fetchTeamChannels(function () { openTeamChannel(cid); });
+            });
+          });
+      })
+      .catch(function () { teamChatErr('Could not open that chat. Try again.'); });
+  }
+
+  function renderTeamChatFind() {
+    var box = $('portal-teamchat-find-results');
+    var input = $('portal-teamchat-find');
+    if (!box || !input) return;
+    var q = trim(input.value).toLowerCase();
+    if (!q) { box.innerHTML = ''; return; }
+    var me = state.user ? state.user.id : '';
+    var hits = teamChatDirectory.filter(function (p) {
+      return p.id !== me && (p.name || '').toLowerCase().indexOf(q) !== -1;
+    }).slice(0, 8);
+    if (!hits.length) {
+      box.innerHTML = '<p class="portal-muted portal-small">No associates match that name.</p>';
+      return;
+    }
+    box.innerHTML = hits.map(function (p) {
+      return '<div class="teamchat-person"><span class="teamchat-person-name">' + esc(p.name || 'Associate') + '</span>' +
+        '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-tc-chat="' + esc(p.id) + '"><i class="fas fa-comment"></i> Chat</button></div>';
+    }).join('');
+  }
+
+  function renderTeamChatGroupMembers() {
+    var box = $('portal-teamchat-group-members');
+    if (!box) return;
+    var me = state.user ? state.user.id : '';
+    var others = teamChatDirectory.filter(function (p) { return p.id !== me; });
+    if (!others.length) {
+      box.innerHTML = '<p class="portal-muted portal-small">No other associates yet.</p>';
+      return;
+    }
+    box.innerHTML = others.map(function (p) {
+      return '<label class="teamchat-group-member"><input type="checkbox" data-tc-member="' + esc(p.id) + '" /> ' + esc(p.name || 'Associate') + '</label>';
+    }).join('');
+  }
+
+  function createTeamChatGroup() {
+    if (!teamChatClient || !state.user) return;
+    var nameInput = $('portal-teamchat-group-name');
+    var name = nameInput ? trim(nameInput.value) : '';
+    if (!name) { teamChatErr('Give the group a name first.'); return; }
+    var ids = [];
+    document.querySelectorAll('[data-tc-member]:checked').forEach(function (b) { ids.push(b.getAttribute('data-tc-member')); });
+    if (!ids.length) { teamChatErr('Add at least one person to the group.'); return; }
+    var me = state.user.id;
+    var btn = $('portal-teamchat-group-create');
+    if (btn) btn.disabled = true;
+    teamChatErr('');
+    teamChatClient.from('team_channels').insert({ kind: 'group', name: name, created_by: me }).select('id').single()
+      .then(function (cres) {
+        if (cres.error) throw cres.error;
+        var cid = cres.data.id;
+        var rows = [{ channel_id: cid, employee_id: me }]
+          .concat(ids.map(function (id) { return { channel_id: cid, employee_id: id }; }));
+        return teamChatClient.from('team_channel_members').insert(rows).then(function (mres) {
+          if (mres.error) throw mres.error;
+          if (btn) btn.disabled = false;
+          if (nameInput) nameInput.value = '';
+          var gform = $('portal-teamchat-group-form');
+          if (gform) gform.hidden = true;
+          renderTeamChatGroupMembers();
+          fetchTeamChannels(function () { openTeamChannel(cid); });
+        });
+      })
+      .catch(function () {
+        if (btn) btn.disabled = false;
+        teamChatErr('Could not create that group. Try again.');
+      });
   }
 
   function wireTeamChat(client) {
@@ -6336,6 +6671,40 @@ function loadTicketThread(client, ticketId) {
     if (input) input.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendTeamChat(client); }
     });
+    /* TEAMCHAT_CHANNELS_2026_11_03: channel bar taps, find-someone
+     * search + Chat buttons, and the New group form. Delegated
+     * listeners, because the bar and results re-render constantly. */
+    var bar = $('portal-teamchat-channels');
+    if (bar) bar.addEventListener('click', function (e) {
+      var el = e.target;
+      while (el && el !== bar) {
+        if (el.getAttribute && el.getAttribute('data-tc-open')) { openTeamChannel(el.getAttribute('data-tc-open')); return; }
+        el = el.parentNode;
+      }
+    });
+    var find = $('portal-teamchat-find');
+    if (find) find.addEventListener('input', renderTeamChatFind);
+    var results = $('portal-teamchat-find-results');
+    if (results) results.addEventListener('click', function (e) {
+      var el = e.target;
+      while (el && el !== results) {
+        if (el.getAttribute && el.getAttribute('data-tc-chat')) {
+          var other = el.getAttribute('data-tc-chat');
+          if (find) find.value = '';
+          renderTeamChatFind();
+          teamChatOpenDm(other);
+          return;
+        }
+        el = el.parentNode;
+      }
+    });
+    var toggle = $('portal-teamchat-group-toggle');
+    var gform = $('portal-teamchat-group-form');
+    if (toggle && gform) toggle.addEventListener('click', function () {
+      gform.hidden = !gform.hidden;
+      if (!gform.hidden) renderTeamChatGroupMembers();
+    });
+    if (gform) gform.addEventListener('submit', function (e) { e.preventDefault(); createTeamChatGroup(); });
   }
 
   function loadTeamChat(force) {
@@ -6344,6 +6713,7 @@ function loadTicketThread(client, ticketId) {
       if (!client || !state.user) return;
       teamChatClient = client;
       wireTeamChat(client);
+      fetchTeamDirectory(function () { fetchTeamChannels(); });
       fetchTeamChat(true);
       startTeamChatPoll();
     });

@@ -168,11 +168,7 @@
           <i class="fas fa-book-open"></i> Guides
         </button>
         <div class="portal-nav-group">Associates</div>
-        <!-- PORTAL_SIDEBAR_ROSTER_2026_11_02 (Austin, Nov 2, 2026): the Associates group had Requests, Time Clock, Employee Onboarding, Documents and Job Applications but no list of the associates themselves. This "Associates" Action Button is FIRST in the group and opens the roster panel (portal-panel-associates): every employee_profiles row — name, role, active status at a glance. -->
-        <button class="portal-tab" id="portal-tab-associates" type="button" role="tab" data-tab="associates">
-          <i class="fas fa-user-group"></i> Associates
-        </button>
-        <!-- TEAMCHAT_2026_11_03 (Austin, Nov 3, 2026): "build the internal team chat in associates action button." An internal Team Chat Action Button directly under the Associates roster button — the office channel where Alfred, Pepper and the associates talk inside the portal, never on a personal account. Panel: portal-panel-teamchat, loader loadTeamChat in portal.js (same LOADERS wiring as Payroll); messages live in public.team_messages (see team-chat.sql in this build folder). -->
+        <!-- TEAMCHAT_2026_11_03 (Austin, Nov 3, 2026): "build the internal team chat in associates action button." An internal Team Chat Action Button, first in the Associates group (the roster button that originally sat above it moved to Admin in the TEAMCHAT_CHANNELS_2026_11_03 build) — the office channel where Alfred, Pepper and the associates talk inside the portal, never on a personal account. Panel: portal-panel-teamchat, loader loadTeamChat in portal.js (same LOADERS wiring as Payroll); messages live in public.team_messages (see team-chat.sql in this build folder). -->
         <button class="portal-tab" id="portal-tab-teamchat" type="button" role="tab" data-tab="teamchat">
           <i class="fas fa-comments"></i> Team Chat
         </button>
@@ -189,6 +185,10 @@
         </button>
         <!-- ACCOUNT_CONTROLS_2026_11_03 (Austin, Nov 3, 2026): Employee Onboarding, Documents and Job Applications moved OUT of this group into the Admin group below — they are owner-side tools, not associate tools. Buttons only: ids, data-tab values and panels are unchanged, so every handler keyed to them works exactly as before. -->
         <div class="portal-nav-group">Admin</div>
+        <!-- PORTAL_SIDEBAR_ROSTER_2026_11_02 (Austin, Nov 2, 2026): the Associates group had Requests, Time Clock, Employee Onboarding, Documents and Job Applications but no list of the associates themselves. This "Associates" Action Button opens the roster panel (portal-panel-associates): every employee_profiles row — name, role, active status at a glance. TEAMCHAT_CHANNELS_2026_11_03 (Austin, Nov 3, 2026): the button moved out of the Associates group into Admin, FIRST in the group — the roster is the people directory and the management tools are Admin's; button, id, data-tab, panel and loader are unchanged, and the Associates group keeps Team Chat, Requests, Time Clock and Mileage. -->
+        <button class="portal-tab" id="portal-tab-associates" type="button" role="tab" data-tab="associates">
+          <i class="fas fa-user-group"></i> Associates
+        </button>
         <button class="portal-tab" id="portal-tab-investors" type="button" role="tab" data-tab="investors">
           <i class="fas fa-handshake"></i> Investors <span class="portal-count" id="portal-count-applications2" hidden></span>
         </button>
@@ -358,6 +358,13 @@
         <button class="portal-btn portal-btn-primary" type="button" data-acct-add>
           <i class="fas fa-user-plus"></i> Add staff login
         </button>
+        <!-- ACCOUNT_AUDIT_2026_11_03 (Austin, Nov 3, 2026): account changes are signed like ticket work — who did it, what they did, to whom, and when. The staff-admin Edge Function writes one row per change to staff_admin_audit; this card reads the latest 20 back through the normal portal client (the table's RLS lets only owners read). Rows are rendered by renderAccountAudit in portal.js; the panel's own Refresh button reloads this list along with the staff list. -->
+        <div class="portal-panel-head portal-subhead">
+          <h2 class="portal-h2">Account activity</h2>
+        </div>
+        <article class="portal-card acct-audit-card">
+          <div id="portal-acct-audit-list"><p class="portal-muted">Loading account activity&hellip;</p></div>
+        </article>
       </div>
 
       <!-- CUSTOMERS (panel label "Guest" — PORTAL_SIDEBAR_ROSTER_2026_11_02: Austin's word for customers; panel id, search and every control below are unchanged) -->
@@ -496,11 +503,34 @@
           </button>
         </div>
         <p class="portal-muted portal-small">The office channel: every associate, Alfred and Pepper in one thread. Staff only &mdash; guests never see this.</p>
+        <!-- TEAMCHAT_CHANNELS_2026_11_03 (Austin, Nov 3, 2026): "type an associate name and it pulls it up and we can press chat" + "Make a group chat." The panel grows a channel bar (Office + your direct chats and groups), a find-someone search that opens a direct chat, and a New group form; the message list and composer below now work per open channel (public.team_channels / team_channel_members, see team-channels.sql in this build folder). -->
+        <div class="teamchat-channels" id="portal-teamchat-channels" aria-label="Chat channels"><p class="portal-muted portal-small">Loading channels&hellip;</p></div>
+        <div class="teamchat-find">
+          <div class="portal-field teamchat-find-field">
+            <label for="portal-teamchat-find">Find someone to chat with</label>
+            <input type="search" id="portal-teamchat-find" placeholder="Type an associate&rsquo;s name&hellip;" autocomplete="off" />
+          </div>
+          <div class="teamchat-find-results" id="portal-teamchat-find-results"></div>
+        </div>
+        <div class="teamchat-group">
+          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="portal-teamchat-group-toggle"><i class="fas fa-users"></i> New group</button>
+          <form class="teamchat-group-form" id="portal-teamchat-group-form" hidden novalidate>
+            <div class="portal-field">
+              <label for="portal-teamchat-group-name">Group name</label>
+              <input type="text" id="portal-teamchat-group-name" maxlength="60" placeholder="e.g. Weekend crew" autocomplete="off" />
+            </div>
+            <div class="portal-field">
+              <span class="teamchat-group-members-label">Add people</span>
+              <div class="teamchat-group-members" id="portal-teamchat-group-members"><p class="portal-muted portal-small">Loading associates&hellip;</p></div>
+            </div>
+            <button class="portal-btn portal-btn-primary portal-btn-sm" type="submit" id="portal-teamchat-group-create"><i class="fas fa-plus"></i> Create group</button>
+          </form>
+        </div>
         <div class="teamchat-list" id="portal-teamchat-list"><p class="portal-muted">Loading messages&hellip;</p></div>
         <p class="portal-error" id="portal-teamchat-error" hidden></p>
         <form class="teamchat-composer" id="portal-teamchat-form" novalidate>
           <div class="portal-field teamchat-field">
-            <label for="portal-teamchat-input">Message the team</label>
+            <label for="portal-teamchat-input" id="portal-teamchat-input-label">Message Office</label>
             <textarea id="portal-teamchat-input" rows="2" maxlength="2000" placeholder="Write a message&hellip;"></textarea>
           </div>
           <button class="portal-btn portal-btn-primary" type="submit" id="portal-teamchat-send"><i class="fas fa-paper-plane"></i> Send</button>
