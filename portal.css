@@ -870,3 +870,22 @@ body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-logout{displa
 .pw-eye:hover { background: var(--brand-soft, #FBEADB); }
 .pw-eye:focus-visible { outline: 2px solid var(--brand, #B4551F); outline-offset: 1px; }
 /* end LOC_SETTINGS_2026_11_03 */
+
+/* ---------- ACCOUNT_CONTROLS_2026_11_03 ----------
+ * Account Controls panel (Admin group): staff login rows, the
+ * inline Edit login / Set password forms that open inside a row,
+ * and the Add staff login grid. Everything reuses the portal's own
+ * cards, badges, buttons and fields; this block only carries the
+ * row form divider, the deactivated dim, the add-form grid and a
+ * select style matching .portal-field inputs (the base field rule
+ * covers inputs and textareas only). */
+.acct-form { border-top: 1px dashed var(--line, #E5D9C8); margin-top: 0.7rem; padding-top: 0.8rem; }
+.acct-card-off { opacity: 0.72; }
+.acct-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0 1rem; max-width: 760px; }
+#portal-panel-accountcontrols .portal-field select {
+  width: 100%; box-sizing: border-box; padding: 0.65rem 0.8rem;
+  border: 1px solid var(--line, #E6D9C0); border-radius: 8px;
+  background: var(--bg, #FAF6EE); color: var(--ink, #2C231A);
+  font-family: inherit; font-size: 0.95rem;
+}
+/* end ACCOUNT_CONTROLS_2026_11_03 */

@@ -187,15 +187,7 @@
         <button class="portal-tab" id="portal-tab-mileage" type="button" role="tab" data-tab="mileage">
           <i class="fas fa-route"></i> Mileage
         </button>
-        <button class="portal-tab" id="portal-tab-newhires" type="button" role="tab" data-tab="newhires">
-          <i class="fas fa-user-plus"></i> Employee Onboarding
-        </button>
-        <button class="portal-tab" id="portal-tab-teamdocs" type="button" role="tab" data-tab="teamdocs">
-          <i class="fas fa-folder-open"></i> Documents
-        </button>
-        <button class="portal-tab" id="portal-tab-applications" type="button" role="tab" data-tab="applications">
-          <i class="fas fa-file-lines"></i> Job Applications <span class="portal-count" id="portal-count-applications" hidden></span>
-        </button>
+        <!-- ACCOUNT_CONTROLS_2026_11_03 (Austin, Nov 3, 2026): Employee Onboarding, Documents and Job Applications moved OUT of this group into the Admin group below — they are owner-side tools, not associate tools. Buttons only: ids, data-tab values and panels are unchanged, so every handler keyed to them works exactly as before. -->
         <div class="portal-nav-group">Admin</div>
         <button class="portal-tab" id="portal-tab-investors" type="button" role="tab" data-tab="investors">
           <i class="fas fa-handshake"></i> Investors <span class="portal-count" id="portal-count-applications2" hidden></span>
@@ -205,6 +197,19 @@
         </button>
         <button class="portal-tab" id="portal-tab-square" type="button" role="tab" data-tab="square">
           <i class="fas fa-square"></i> Square &amp; ATR One
+        </button>
+        <!-- ACCOUNT_CONTROLS_2026_11_03 (Austin, Nov 3, 2026): "I need a button to be able to change and edit people logins — change login, deactivate, activate accounts and all that." Account Controls is an Admin-group Action Button opening portal-panel-accountcontrols: every staff login with Edit login / Set password / Deactivate-Activate, plus Add staff login. The panel talks to the staff-admin Edge Function, which re-checks the owner role server-side on every call; portal.js also guards the render with isPortalOwner(). Below it, Employee Onboarding, Documents and Job Applications moved here from the Associates group the same day (Austin's placement call) — the three buttons are byte-identical to what sat under Associates; only their group changed. -->
+        <button class="portal-tab" id="portal-tab-accountcontrols" type="button" role="tab" data-tab="accountcontrols">
+          <i class="fas fa-user-gear"></i> Account Controls
+        </button>
+        <button class="portal-tab" id="portal-tab-newhires" type="button" role="tab" data-tab="newhires">
+          <i class="fas fa-user-plus"></i> Employee Onboarding
+        </button>
+        <button class="portal-tab" id="portal-tab-teamdocs" type="button" role="tab" data-tab="teamdocs">
+          <i class="fas fa-folder-open"></i> Documents
+        </button>
+        <button class="portal-tab" id="portal-tab-applications" type="button" role="tab" data-tab="applications">
+          <i class="fas fa-file-lines"></i> Job Applications <span class="portal-count" id="portal-count-applications" hidden></span>
         </button>
         <div class="portal-nav-group">Financials</div>
         <button class="portal-tab" id="portal-tab-financials" type="button" role="tab" data-tab="financials">
@@ -312,6 +317,47 @@
           </button>
         </div>
         <div id="portal-feedback-list"><p class="portal-muted">Loading feedback&hellip;</p></div>
+      </div>
+
+      <!-- ACCOUNT CONTROLS — ACCOUNT_CONTROLS_2026_11_03 (Austin, Nov 3, 2026): the owner's front-end for staff logins — change a login email, set a password, deactivate / activate an account, add a new staff login. All work runs through the staff-admin Edge Function (functions/staff-admin/index.ts in this build folder): the function holds the service role and re-checks that the caller is the owner on every call; this panel renders only for the owner (portal.js loadAccountControls guards on isPortalOwner()). Rows, inline Edit login / Set password forms and the confirm-arm buttons are rendered and wired in portal.js. -->
+      <div class="portal-panel" id="portal-panel-accountcontrols" role="tabpanel" hidden>
+        <div class="portal-panel-head">
+          <h2 class="portal-h2">Account Controls</h2>
+          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="accountcontrols">
+            <i class="fas fa-rotate-right"></i> Refresh
+          </button>
+        </div>
+        <p class="portal-muted portal-small">Every staff login for this portal. Change a login email, set a new password, or deactivate an account that should not sign in anymore &mdash; deactivated accounts can be activated again here. Changes take effect right away. Owner only.</p>
+        <p class="portal-error" id="portal-acct-error" hidden></p>
+        <p class="portal-muted" id="portal-acct-note" hidden></p>
+        <div id="portal-acct-list"><p class="portal-muted">Loading staff logins&hellip;</p></div>
+        <div class="portal-panel-head portal-subhead">
+          <h2 class="portal-h2">Add staff login</h2>
+        </div>
+        <div class="acct-grid">
+          <div class="portal-field">
+            <label for="portal-acct-add-name">Full name</label>
+            <input type="text" id="portal-acct-add-name" placeholder="e.g. Jamie Smith" autocomplete="off" />
+          </div>
+          <div class="portal-field">
+            <label for="portal-acct-add-email">Login email</label>
+            <input type="email" id="portal-acct-add-email" placeholder="name@austinstechrepairgroup.com" autocomplete="off" />
+          </div>
+          <div class="portal-field">
+            <label for="portal-acct-add-password">Password</label>
+            <span class="pw-wrap"><input type="password" id="portal-acct-add-password" placeholder="At least 8 characters" autocomplete="new-password" /><button class="pw-eye" type="button" data-acct-eye="portal-acct-add-password" aria-label="Show password"><i class="fas fa-eye"></i></button></span>
+          </div>
+          <div class="portal-field">
+            <label for="portal-acct-add-role">Role</label>
+            <select id="portal-acct-add-role">
+              <option value="associate" selected>Associate</option>
+              <option value="owner">Owner</option>
+            </select>
+          </div>
+        </div>
+        <button class="portal-btn portal-btn-primary" type="button" data-acct-add>
+          <i class="fas fa-user-plus"></i> Add staff login
+        </button>
       </div>
 
       <!-- CUSTOMERS (panel label "Guest" — PORTAL_SIDEBAR_ROSTER_2026_11_02: Austin's word for customers; panel id, search and every control below are unchanged) -->

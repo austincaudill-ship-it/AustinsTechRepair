@@ -930,6 +930,8 @@
     associates: loadAssociates,
     /* TEAMCHAT_2026_11_03: the internal Team Chat panel. */
     teamchat: loadTeamChat,
+    /* ACCOUNT_CONTROLS_2026_11_03: the Admin group's Account Controls panel. */
+    accountcontrols: loadAccountControls,
   };
 
   /* PORTAL_TAB_MEMORY_2026_10_30: remember the last active tab across
@@ -948,7 +950,7 @@
     var nav = $('portal-nav'); if (nav) nav.classList.remove('open');
     var tabs = document.querySelectorAll('.portal-tab');
     tabs.forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === name); });
-    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'documents', 'financials', 'payroll', 'associates', 'mileage', 'teamchat'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too */
+    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'documents', 'financials', 'payroll', 'associates', 'mileage', 'teamchat', 'accountcontrols'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too; ACCOUNT_CONTROLS_2026_11_03: 'accountcontrols' hides and shows with the rest too */
       $('portal-panel-' + n).hidden = n !== name;
     });
     closeDrawer();
@@ -5850,6 +5852,236 @@ function loadTicketThread(client, ticketId) {
     renderAssociates(associatesCache);
   }
 
+  /* ================= ACCOUNT_CONTROLS_2026_11_03: Account Controls =================
+   * Austin, Nov 3, 2026: "I need a button to be able to change and
+   * edit people logins — I need access to the backend on a front end
+   * button. I can change login, deactivate, activate accounts and
+   * all that."
+   *
+   * The panel (portal-panel-accountcontrols) sits in the ADMIN
+   * sidebar group and lists every staff login: name, role, login
+   * email, an Active / Deactivated chip, and Edit login / Set
+   * password / Deactivate-or-Activate per row, plus an Add staff
+   * login form. Nothing here touches auth directly: changing another
+   * person's login needs the Auth Admin API and its service-role
+   * key, which must never ship in client code. Every action is a
+   * POST to the staff-admin Edge Function with the caller's own
+   * session JWT (the callSendReceipt fetch shape); the function
+   * re-checks the caller's employee_profiles role server-side and
+   * refuses anyone who is not the owner. This render is ALSO guarded
+   * by isPortalOwner(), so an associate session never even builds
+   * the rows.
+   *
+   * Edit login and Set password open a small inline form inside the
+   * row (no window.prompt anywhere). Every credential or destructive
+   * action uses the portal's confirm-arm pattern (the inventory
+   * delete shape): first tap arms the button ("Tap again to…"),
+   * second tap runs it. The function's own error text is shown
+   * as-is in the panel — nothing is dressed up as success. */
+
+  var acctStaffCache = [];
+  var acctExpand = null; /* { id, mode: 'email' | 'password' } | null */
+
+  function acctNote(text) {
+    var n = $('portal-acct-note');
+    if (n) { n.textContent = text || ''; n.hidden = !text; }
+  }
+
+  function acctError(text) {
+    var e = $('portal-acct-error');
+    if (e) { e.textContent = text || ''; e.hidden = !text; }
+  }
+
+  /* The staff-admin call: the same fetch shape as callSendReceipt —
+   * the caller's own session JWT plus the anon key, JSON in, JSON
+   * out. done(out) gets the parsed body, or null when the call
+   * itself failed (no session, network, non-JSON). */
+  function callStaffAdmin(payload, done) {
+    var finished = false;
+    function finish(out) { if (!finished) { finished = true; done(out); } }
+    withClient(function (client) {
+      if (!client) { finish(null); return; }
+      try {
+        client.auth.getSession().then(function (sres) {
+          var token = sres && sres.data && sres.data.session ? sres.data.session.access_token : '';
+          if (!token) { finish(null); return null; }
+          return fetch(SUPABASE_URL + '/functions/v1/staff-admin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'apikey': SUPABASE_ANON_KEY },
+            body: JSON.stringify(payload)
+          });
+        }).then(function (r) {
+          if (!r) { finish(null); return null; }
+          return r.json();
+        }).then(function (out) { finish(out || null); })
+        .catch(function () { finish(null); });
+      } catch (e) { finish(null); }
+    });
+  }
+
+  function loadAccountControls(force) {
+    var list = $('portal-acct-list');
+    if (!list) return;
+    if (!isPortalOwner()) { list.innerHTML = ''; return; }
+    if (!force) list.innerHTML = '<p class="portal-muted">Loading staff logins&hellip;</p>';
+    callStaffAdmin({ action: 'list' }, function (out) {
+      if (!out) { listError(list, 'staff logins'); return; }
+      if (!out.ok) { list.innerHTML = ''; acctError(out.error || 'Could not load the staff logins.'); return; }
+      acctError('');
+      state.loaded.accountcontrols = true;
+      acctStaffCache = out.staff || [];
+      renderAccountControls();
+    });
+  }
+
+  function renderAccountControls() {
+    var list = $('portal-acct-list');
+    if (!list) return;
+    if (!isPortalOwner()) { list.innerHTML = ''; return; }
+    if (!acctStaffCache.length) { emptyState(list, 'No staff logins yet. Add the first one with the form below.'); return; }
+    list.innerHTML = acctStaffCache.map(function (s) {
+      var isSelf = !!(state.user && s.id === state.user.id);
+      var open = !!(acctExpand && acctExpand.id === s.id);
+      var chip = s.banned
+        ? '<span class="portal-badge portal-st-cancelled">Deactivated</span>'
+        : '<span class="portal-badge portal-st-ready">Active</span>';
+      var form = '';
+      if (open && acctExpand.mode === 'email') {
+        form = '<div class="acct-form"><div class="portal-field"><label for="acct-email-' + esc(s.id) + '">Login email</label>' +
+          '<input type="email" id="acct-email-' + esc(s.id) + '" value="' + esc(s.email || '') + '" autocomplete="off" /></div>' +
+          '<div class="portal-card-actions">' +
+          '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-acct-email-save="' + esc(s.id) + '">Save login email</button>' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-acct-cancel="1">Cancel</button>' +
+          '</div></div>';
+      } else if (open && acctExpand.mode === 'password') {
+        form = '<div class="acct-form"><div class="portal-field"><label for="acct-pass-' + esc(s.id) + '">New password</label>' +
+          '<span class="pw-wrap"><input type="password" id="acct-pass-' + esc(s.id) + '" placeholder="At least 8 characters" autocomplete="new-password" />' +
+          '<button class="pw-eye" type="button" data-acct-eye="acct-pass-' + esc(s.id) + '" aria-label="Show password"><i class="fas fa-eye"></i></button></span></div>' +
+          '<div class="portal-card-actions">' +
+          '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-acct-pass-save="' + esc(s.id) + '">Set password</button>' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-acct-cancel="1">Cancel</button>' +
+          '</div></div>';
+      }
+      return '<article class="portal-card acct-card' + (s.banned ? ' acct-card-off' : '') + '">' +
+        '<div class="portal-card-top"><p class="portal-card-title"><span class="mem-status-dot ' + (s.banned ? 'mem-dot-off' : 'mem-dot-on') + '"></span>' + esc(s.name || 'Staff member') + (isSelf ? ' <span class="portal-muted portal-small">(you)</span>' : '') + '</p>' +
+        '<span class="portal-card-topright">' +
+        (s.role ? '<span class="portal-badge portal-badge-role">' + esc(roleLabel(s.role)) + '</span>' : '') +
+        chip + '</span></div>' +
+        '<p class="portal-card-meta"><i class="fas fa-envelope"></i> ' + esc(s.email || 'No login email') + '</p>' +
+        (s.created_at ? '<p class="portal-card-meta portal-muted">Login created ' + esc(fmtDate(s.created_at)) + '</p>' : '') +
+        '<div class="portal-card-actions">' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-acct-edit="' + esc(s.id) + '"><i class="fas fa-pen"></i> Edit login</button>' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-acct-pass="' + esc(s.id) + '"><i class="fas fa-key"></i> Set password</button>' +
+        (isSelf
+          ? '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" disabled title="You cannot deactivate your own account">Deactivate</button>'
+          : '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-acct-ban="' + esc(s.id) + '"><i class="fas fa-' + (s.banned ? 'circle-check' : 'ban') + '"></i> ' + (s.banned ? 'Activate' : 'Deactivate') + '</button>') +
+        '</div>' + form +
+        '</article>';
+    }).join('');
+  }
+
+  /* Confirm-arm, the inventory-delete shape: the first tap arms the
+   * button and relabels it; only the second tap runs the action. */
+  function acctArm(btn, label) {
+    if (btn.getAttribute('data-confirm') !== '1') {
+      btn.setAttribute('data-confirm', '1');
+      btn.textContent = label;
+      return false;
+    }
+    return true;
+  }
+
+  function acctRun(btn, payload, successText, onOk) {
+    btn.disabled = true;
+    acctError('');
+    callStaffAdmin(payload, function (out) {
+      btn.disabled = false;
+      if (!out) { acctError('That did not go through — check the connection and try again.'); return; }
+      if (!out.ok) {
+        btn.removeAttribute('data-confirm');
+        acctError(out.error || 'That did not go through.');
+        return;
+      }
+      acctExpand = null;
+      acctNote(successText);
+      if (onOk) onOk();
+      state.loaded.accountcontrols = false;
+      loadAccountControls(true);
+    });
+  }
+
+  function acctToggleForm(id, mode) {
+    if (acctExpand && acctExpand.id === id && acctExpand.mode === mode) acctExpand = null;
+    else acctExpand = { id: id, mode: mode };
+    acctError('');
+    renderAccountControls();
+    if (acctExpand) {
+      var input = $(mode === 'email' ? 'acct-email-' + id : 'acct-pass-' + id);
+      if (input) { input.focus(); if (mode === 'email' && input.select) input.select(); }
+    }
+  }
+
+  function acctToggleEye(btn) {
+    var input = $(btn.getAttribute('data-acct-eye'));
+    if (!input) return;
+    var show = input.type === 'password';
+    input.type = show ? 'text' : 'password';
+    btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+    btn.innerHTML = '<i class="fas fa-eye' + (show ? '-slash' : '') + '"></i>';
+    input.focus();
+  }
+
+  function acctSaveEmail(btn, id) {
+    var input = $('acct-email-' + id);
+    var email = input ? trim(input.value) : '';
+    if (!email) { acctError('Enter the new login email first.'); return; }
+    if (!acctArm(btn, 'Tap again to save')) return;
+    acctRun(btn, { action: 'update_email', user_id: id, email: email }, 'Login email updated.');
+  }
+
+  function acctSavePassword(btn, id) {
+    var input = $('acct-pass-' + id);
+    var pw = input ? input.value : '';
+    if (!pw || pw.length < 8) { acctError('The new password must be at least 8 characters.'); return; }
+    if (!acctArm(btn, 'Tap again to set it')) return;
+    acctRun(btn, { action: 'set_password', user_id: id, password: pw }, 'Password updated — it works at their next sign-in.');
+  }
+
+  function acctToggleBan(btn, id) {
+    var row = null;
+    acctStaffCache.forEach(function (s) { if (s.id === id) row = s; });
+    if (!row) return;
+    var target = !row.banned;
+    if (!acctArm(btn, target ? 'Confirm deactivate?' : 'Confirm activate?')) return;
+    acctRun(btn, { action: 'set_ban', user_id: id, banned: target },
+      target
+        ? (row.name || 'That account') + ' is deactivated — they cannot sign in now.'
+        : (row.name || 'That account') + ' is active again — they can sign in.');
+  }
+
+  function acctAddUser(btn) {
+    var nameEl = $('portal-acct-add-name');
+    var emailEl = $('portal-acct-add-email');
+    var pwEl = $('portal-acct-add-password');
+    var roleEl = $('portal-acct-add-role');
+    var name = nameEl ? trim(nameEl.value) : '';
+    var email = emailEl ? trim(emailEl.value) : '';
+    var pw = pwEl ? pwEl.value : '';
+    var role = roleEl ? roleEl.value : 'associate';
+    if (!name) { acctError('Enter the new staff member\u2019s name first.'); return; }
+    if (!email) { acctError('Enter a login email first.'); return; }
+    if (!pw || pw.length < 8) { acctError('The password must be at least 8 characters.'); return; }
+    if (!acctArm(btn, 'Tap again to add')) return;
+    acctRun(btn, { action: 'create_user', email: email, password: pw, name: name, role: role },
+      'Staff login added for ' + name + ' — they can sign in now.',
+      function () {
+        if (nameEl) nameEl.value = '';
+        if (emailEl) emailEl.value = '';
+        if (pwEl) pwEl.value = '';
+        if (roleEl) roleEl.value = 'associate';
+      });
+  }
+
   /* ================= PORTAL_ROSTER_DETAIL_2026_11_02: the owner's full record =================
    * Everything below renders ONLY inside an expansion the owner
    * opened (renderAssociates gates on isPortalOwner() before any of
@@ -7446,6 +7678,25 @@ function loadTicketThread(client, ticketId) {
           if (ahs) { saveAssocHome(ahs); return; } /* PORTAL_MILEAGE_2026_11_02 */
           var atc = t.getAttribute('data-assoc-timecard');
           if (atc) { openAssocTimeCard(atc); return; }
+          /* ACCOUNT_CONTROLS_2026_11_03: Account Controls panel
+           * actions (staff login rows, their inline forms, the
+           * password eyes and the Add staff login button). */
+          var acey = t.getAttribute('data-acct-eye');
+          if (acey) { acctToggleEye(t); return; }
+          var ace = t.getAttribute('data-acct-edit');
+          if (ace) { acctToggleForm(ace, 'email'); return; }
+          var acp = t.getAttribute('data-acct-pass');
+          if (acp) { acctToggleForm(acp, 'password'); return; }
+          var aces = t.getAttribute('data-acct-email-save');
+          if (aces) { acctSaveEmail(t, aces); return; }
+          var acps = t.getAttribute('data-acct-pass-save');
+          if (acps) { acctSavePassword(t, acps); return; }
+          var acb = t.getAttribute('data-acct-ban');
+          if (acb) { acctToggleBan(t, acb); return; }
+          var accx = t.getAttribute('data-acct-cancel');
+          if (accx) { acctExpand = null; renderAccountControls(); return; }
+          var acad = t.getAttribute('data-acct-add');
+          if (acad) { acctAddUser(t); return; }
           /* PORTAL_SIDEBAR_ROSTER_2026_11_02: roster row tap expands/collapses that associate's profile in place. */
           var at = t.getAttribute('data-assoc-toggle');
           if (at) { toggleAssociateCard(at); return; }
