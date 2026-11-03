@@ -1999,7 +1999,9 @@ span.acct-tech-disc { display:inline-flex; align-items:center; justify-content:c
    desktop, stacked on phones. The video is controls-on, click to play —
    the site has no autoplay media convention.
    ========================================================================== */
-.milo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start; }
+/* MILO_SIMPLE_2026_11_03: one photo card only — single centered column,
+   capped so the lone card never stretches the full row on desktop. */
+.milo-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; align-items: start; max-width: 560px; margin: 0 auto; }
 .milo-figure { margin: 0; }
 .milo-card { border-radius: var(--radius-xl); overflow: hidden; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow-md); }
 .milo-card img, .milo-card video { width: 100%; height: auto; display: block; }
