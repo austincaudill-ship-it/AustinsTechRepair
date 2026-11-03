@@ -3767,6 +3767,11 @@
   <style>
     /* ===== Portal Phase 2: charges, parts, receipt, labels ===== */
     .p2-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+    /* PORTAL_RECEIPT_TOP_2026_11_03: clear breathing room under the Add charge
+       form — the receipt buttons that used to crowd it moved to the top of the
+       ticket (Austin, Nov 3, 2026). 1.25rem matches the drawer's generous
+       section spacing scale. */
+    #p2-charge-form { margin-bottom: 1.25rem; }
     .p2-btn-danger { background: #b3382e; color: #fff; border: 2px solid #b3382e; }
     .p2-btn-danger:hover { background: #93291f; }
     .p2-form { display: flex; flex-direction: column; gap: 0.55rem; margin-top: 0.9rem; }

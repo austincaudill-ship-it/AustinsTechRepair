@@ -1489,6 +1489,9 @@ function loadTicketThread(client, ticketId) {
    * Default open: Message customer + Repair log — the two sections
    * a tech works in during a job (talk to the customer, log the
    * work), and the pair Austin's approved order already joins.
+   * PORTAL_TICKET_DETAILS_COLLAPSE_2026_11_03: Ticket details uses
+   * this same accordion and is deliberately absent from the default
+   * list below, so it starts collapsed while Status stays visible.
    * A closed header can carry a right-side hint (tkAccSetHint),
    * fed by the section's own loader — balance due, tracking
    * status, an unsigned authorization, a running timer — so
@@ -1577,6 +1580,10 @@ function loadTicketThread(client, ticketId) {
           '<select id="portal-ticket-assignee" aria-label="Assigned technician"><option value="">Unassigned</option></select>' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="portal-ticket-assignee-save">Save assignment</button>' +
           '<span class="portal-muted portal-small" id="portal-ticket-assignee-msg"></span></div></div>' +
+          /* PORTAL_TICKET_DETAILS_COLLAPSE_2026_11_03: Ticket details
+           * is an accordion section like Edit details and Documents;
+           * it is not in TK_ACC_DEFAULT_OPEN, so it starts collapsed. */
+          '<div class="portal-drawer-section tk-acc" data-acc="details">' + tkAccHead('details', 'Ticket details') + tkAccBodyOpen('details') +
           '<div class="portal-card-top"><p class="portal-card-title">' + esc(deviceLabel(t)) + '</p>' + badge(t.status) + '</div>' +
           kvRows([
             ['Customer', valOrDash(t.customer_name)],
@@ -1602,6 +1609,7 @@ function loadTicketThread(client, ticketId) {
             ['Received', esc(fmtJobDate(t.job_date) || fmtDateTime(t.created_at))],
             ['Last updated', esc(fmtDateTime(t.updated_at))]
           ]) +
+          '</div></div>' + /* PORTAL_TICKET_DETAILS_COLLAPSE_2026_11_03: close the Ticket details accordion body and section. */
           '<div class="portal-drawer-section tk-acc" data-acc="edit">' + tkAccHead('edit', 'Edit details') + tkAccBodyOpen('edit') +
           '<p class="portal-muted portal-small">Update the triage and job details here. Save, and the Ticket details above refresh.</p>' +
           '<div class="portal-field"><label for="p2-edit-jobdate">Job date</label><input type="date" id="p2-edit-jobdate" value="' + esc(t.job_date || String(t.created_at || '').slice(0, 10)) + '" /></div>' +
@@ -1622,6 +1630,15 @@ function loadTicketThread(client, ticketId) {
           '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-edit-save">Save details</button> ' +
           '<span class="portal-muted portal-small" id="p2-edit-msg"></span></div></div>' +
           '<div class="portal-drawer-section p2-actions"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-receipt-btn"><i class="fas fa-receipt"></i> Print receipt</button>' +
+          /* PORTAL_RECEIPT_TOP_2026_11_03: the receipt actions live
+           * together at the top of the ticket, beside Print receipt —
+           * Generate / Download / Email moved up here out of Charges
+           * (Austin, Nov 3, 2026). Same IDs, same handlers, same
+           * status line beside the buttons; only the location moved. */
+          '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-gen-receipt-btn"><i class="fas fa-file"></i> Generate receipt</button>' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-download-receipt-btn"><i class="fas fa-download"></i> Download receipt</button>' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-email-receipt-btn"><i class="fas fa-envelope"></i> Email receipt</button>' +
+          '<span class="portal-muted portal-small" id="p2-gen-receipt-msg"></span>' +
           '<button class="portal-btn p2-btn-danger portal-btn-sm" type="button" id="p2-delete-btn"><i class="fas fa-trash"></i> Delete ticket</button>' +
           '<span class="portal-muted portal-small" id="p2-action-msg"></span>' +
           '<div id="p2-delete-confirm" hidden><p class="portal-error">Permanently delete this ticket? Its charges and messages go with it. Part orders stay on file but detach from the ticket. This cannot be undone.</p>' +
@@ -1704,14 +1721,10 @@ function loadTicketThread(client, ticketId) {
           '<label class="p2-check"><input type="checkbox" id="p2-charge-waive" /> Waive this charge &mdash; show it as waived, counting $0</label>' +
           '<button class="portal-btn portal-btn-primary portal-btn-sm" type="submit">Add charge</button>' +
           '<p class="portal-error" id="p2-charge-error" hidden></p></form>' +
-          /* PORTAL_RECEIPT_SEND_2026_11_02: Download receipt (PDF)
-           * and Email receipt join Generate receipt in the same
-           * actions row — the receipt leaves the portal. All three
-           * share the one status line beside them. */
-          '<div class="p2-actions"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-gen-receipt-btn"><i class="fas fa-file"></i> Generate receipt</button>' +
-          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-download-receipt-btn"><i class="fas fa-download"></i> Download receipt</button>' +
-          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-email-receipt-btn"><i class="fas fa-envelope"></i> Email receipt</button>' +
-          '<span class="portal-muted portal-small" id="p2-gen-receipt-msg"></span></div>' +
+          /* PORTAL_RECEIPT_TOP_2026_11_03: the Generate / Download /
+           * Email receipt row that used to sit here moved to the top
+           * of the ticket, beside Print receipt (Austin, Nov 3, 2026).
+           * The help paragraph stays with the charges it explains. */
           '<p class="portal-muted portal-small">Generate receipt files a receipt built from these charges into Documents. If the charges change afterwards, generate again and it replaces the filed copy. Download receipt saves that same receipt as a PDF file. Email receipt sends the PDF to the customer&rsquo;s email on file &mdash; the fallback when a portal message or text does not reach them.</p></div></div>' +
           '<div class="portal-drawer-section tk-acc" data-acc="payment">' + tkAccHead('payment', 'Payment') + tkAccBodyOpen('payment') +
           '<div class="p2-actions"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p3-checkout-btn"><i class="fas fa-credit-card"></i> Charge / Check out</button>' +
@@ -4173,50 +4186,173 @@ function loadTicketThread(client, ticketId) {
     } catch (e) { finish(null); }
   }
 
+  /* PORTAL_EMAIL_RECEIPT_MAILTO_2026_11_03 (Austin, Nov 3, 2026:
+   * "When you push the email receipt button, just have that open
+   * the native emailer app that's on the device that you're using.
+   * I will already have it signed in so email receipt attaches it
+   * to email. Sends it that way."): Email receipt no longer sends
+   * anything itself. The old flow built a PDF, uploaded it, and
+   * called the send-receipt Edge Function, which has sat inert
+   * since Nov 2 waiting on Zoho SMTP secrets and a mailbox app
+   * password. That invocation is gone from this button. The
+   * send-receipt function, callSendReceipt, uploadReceiptPdf and
+   * buildReceiptPdfBlob are all left in place, untouched — nothing
+   * server-side is deleted or changed; this button simply stops
+   * calling them.
+   *
+   * The new flow hands the receipt to the DEVICE's own mail app,
+   * which is already signed in as the staffer using the portal:
+   * 1. Make sure the filed receipt of record exists (the same
+   *    <ticket_id>/receipt-generated.html Download receipt v2
+   *    delivers; generate one through generateReceipt first when
+   *    none is filed).
+   * 2. Mint a signed URL with RECEIPT_AUTH_URL_SECONDS (one
+   *    year) — the same lifetime the receipt's printed customer
+   *    link already uses — and wrap it in the view-doc.html
+   *    viewer, because storage serves these HTML files as raw
+   *    text and the viewer renders the receipt as a page. (The
+   *    one-hour SIGNED_URL_SECONDS stays right for Download,
+   *    where delivery happens seconds after minting; an emailed
+   *    link has to outlive the inbox.)
+   * 3. Re-read the charges directly (the same read generateReceipt
+   *    does — no authorization fetch, so the handoff stays fast)
+   *    and build a short plain summary from chargeTotals.
+   * 4. Tier 1: where the browser can share files
+   *    (navigator.canShare with files — iOS/iPadOS Safari and
+   *    Android Chrome can), fetch the filed receipt through its
+   *    signed URL, wrap the bytes as a File, and call
+   *    navigator.share with the file attached, so the share sheet
+   *    offers the device's Mail app with the receipt REALLY
+   *    attached. The shared file is the filed HTML itself, never
+   *    buildReceiptPdfBlob's html2canvas PDF, which the Download
+   *    receipt v2 work proved blank on iOS.
+   * 5. Tier 2 (fallback, everywhere else): open a mailto: link,
+   *    To prefilled from the ticket's customer_email when one is
+   *    on file and shaped like an address, subject "Your receipt
+   *    from Austin's Tech Repair Group", body carrying the plain
+   *    summary and the view link. A mailto cannot attach a file —
+   *    that is a hard limit of the protocol, not a choice — so the
+   *    link in the body is how the receipt rides along here.
+   * A cancelled share sheet is not an error and never falls
+   * through to mailto behind the staffer's back: it just reports
+   * the cancellation. No customer email on file never blocks the
+   * share tier, and on the mailto tier it only leaves To empty
+   * with a status line saying the address needs adding — no
+   * address is ever invented. */
   function emailReceipt(client, t) {
     var btn = $('p2-email-receipt-btn');
     var msg = $('p2-gen-receipt-msg');
     function note(text) { if (msg) msg.textContent = text; }
     function fail(text) { if (btn) btn.disabled = false; note(text); }
+    function done(text) { if (btn) btn.disabled = false; note(text); }
     if (btn) btn.disabled = true;
-    note('Building receipt\u2026');
-    loadFreshReceiptCharges(client, t, fail, function (auth) {
-      /* File the same HTML Generate receipt files, so Documents and
-       * the emailed PDF are the same receipt at the same moment.
-       * The documents-row refresh is best-effort here: the send
-       * reads the storage files directly, so a listing hiccup must
-       * not block the customer's email. */
-      var htmlPath = t.id + '/receipt-generated.html';
-      var html = receiptDocumentHtml(t, auth);
-      client.storage.from(DOC_BUCKET).upload(htmlPath, html, { contentType: 'text/html', upsert: true }).then(function (up) {
-        if (up.error) { fail('Saving the receipt failed \u2014 try again.'); return; }
-        var fileName = 'Receipt \u2014 generated ' + fmtDate(new Date().toISOString()) + '.html';
-        var noteText = 'Generated from the ticket charges \u2014 generating again after a charge change replaces this copy.';
-        var after = function () {
-          buildReceiptPdfBlob(t, auth, fail, function (blob) {
-            uploadReceiptPdf(client, t, blob, fail, function () {
-              note('Emailing receipt\u2026');
-              callSendReceipt(client, t.id, function (out) {
-                if (btn) btn.disabled = false;
-                if (!out) { note('Emailing the receipt failed \u2014 try again.'); return; }
-                if (out.ok) { note('Receipt emailed to ' + (out.recipient || 'the customer') + '.'); loadDocuments(client, t); return; }
-                if (out.error === 'no_email') { note('No email on file for this customer \u2014 add one under Edit details, or use Download receipt.'); return; }
-                if (out.error === 'not_configured') { note('Email sending is not connected yet \u2014 use Download receipt for now.'); return; }
-                if (out.error === 'receipt_missing') { note('The receipt file was not ready \u2014 try Email receipt again.'); return; }
-                note('Emailing the receipt failed \u2014 try again.');
-              });
-            });
+    note('Preparing receipt\u2026');
+    var path = t.id + '/receipt-generated.html';
+    var fileName = 'Receipt-' + shortCode(t) + '.html';
+    var subject = 'Your receipt from Austin\u2019s Tech Repair Group';
+
+    /* PORTAL_EMAIL_RECEIPT_MAILTO_2026_11_03: step 2 — sign the
+     * filed receipt for a year and wrap it in the viewer. */
+    function signAndSummarize() {
+      client.storage.from(DOC_BUCKET).createSignedUrl(path, RECEIPT_AUTH_URL_SECONDS).then(function (res) {
+        if (res.error || !res.data || !res.data.signedUrl) { fail('Couldn\u2019t prepare the receipt \u2014 try again.'); return; }
+        var signedUrl = res.data.signedUrl;
+        var viewLink = DOC_VIEWER_URL + encodeURIComponent(signedUrl);
+        client.from('ticket_charges').select('*').eq('ticket_id', t.id).order('created_at', { ascending: true }).then(function (cres) {
+          if (cres.error) { fail('Couldn\u2019t read the charges \u2014 try again.'); return; }
+          t._charges = cres.data || [];
+          if (!t._charges.length) { fail('Add the charges first \u2014 the receipt is built from them.'); return; }
+          handOff(signedUrl, viewLink);
+        }).catch(function () { fail('Couldn\u2019t read the charges \u2014 try again.'); });
+      }).catch(function () { fail('Couldn\u2019t prepare the receipt \u2014 try again.'); });
+    }
+
+    /* PORTAL_EMAIL_RECEIPT_MAILTO_2026_11_03: the plain summary
+     * both tiers carry — the same chargeTotals figures the receipt
+     * composer itself prints. */
+    function summaryText(viewLink) {
+      var tot = chargeTotals(t._charges || []);
+      var lines = [
+        'Your receipt from Austin\u2019s Tech Repair Group',
+        '',
+        'Ticket #' + shortCode(t),
+        'Device: ' + deviceLabel(t),
+        'Subtotal: ' + fmtMoney(tot.subtotal)
+      ];
+      if (tot.deposits) lines.push('Deposits received: -' + fmtMoney(tot.deposits));
+      if (tot.balance <= 0 && tot.subtotal > 0) lines.push('Paid in full \u2014 thank you!');
+      else lines.push('Balance due: ' + fmtMoney(tot.balance));
+      lines.push('');
+      lines.push('View or print your receipt:');
+      lines.push(viewLink);
+      lines.push('');
+      lines.push('Thank you for your business!');
+      lines.push('Austin\u2019s Tech Repair Group \u00b7 (937) 280-6243');
+      return lines.join('\n');
+    }
+
+    function handOff(signedUrl, viewLink) {
+      var body = summaryText(viewLink);
+      /* PORTAL_EMAIL_RECEIPT_MAILTO_2026_11_03: tier 2 — the
+       * mailto fallback. Opens through a programmatic anchor click
+       * (the same delivery shape Download receipt uses); mailto
+       * navigations are not popup-blocked the way window.open is,
+       * and this runs right after the fast reads above. */
+      function openMailto() {
+        var to = trim(t.customer_email || '');
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) to = '';
+        var href = 'mailto:' + to +
+          '?subject=' + encodeURIComponent(subject) +
+          '&body=' + encodeURIComponent(body);
+        var a = document.createElement('a');
+        a.href = href;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function () { if (a.parentNode) a.parentNode.removeChild(a); }, 800);
+        done(to
+          ? 'Mail opened with your receipt \u2014 review it and send from your mail app.'
+          : 'Mail opened \u2014 add the customer\u2019s email address in the To line (none on file for this ticket).');
+      }
+      /* PORTAL_EMAIL_RECEIPT_MAILTO_2026_11_03: tier 1 — share
+       * the filed receipt as a real file where the browser
+       * supports it, so the device's Mail app gets it attached. */
+      var shareApis = false;
+      try { shareApis = !!(navigator.share && navigator.canShare && typeof File !== 'undefined'); } catch (e) { shareApis = false; }
+      if (!shareApis) { openMailto(); return; }
+      fetch(signedUrl).then(function (r) { return r.blob(); }).then(function (blob) {
+        var file = null;
+        try { file = new File([blob], fileName, { type: 'text/html' }); } catch (e) { file = null; }
+        var canFiles = false;
+        if (file) { try { canFiles = !!navigator.canShare({ files: [file] }); } catch (e) { canFiles = false; } }
+        if (!canFiles) { openMailto(); return; }
+        var shareText = 'Your receipt from Austin\u2019s Tech Repair Group \u2014 Ticket #' + shortCode(t) + '. View it here: ' + viewLink;
+        var p = null;
+        try { p = navigator.share({ files: [file], title: subject, text: shareText }); } catch (e) { p = null; }
+        if (p && p.then) {
+          p.then(function () {
+            done('Share sheet closed \u2014 if you picked Mail, send it from your mail app.');
+          }, function (err) {
+            if (err && err.name === 'AbortError') { done('Sharing cancelled \u2014 tap Email receipt to try again.'); return; }
+            openMailto();
           });
-        };
-        client.from('ticket_documents').select('id').eq('ticket_id', t.id).eq('storage_path', htmlPath).limit(1).then(function (q) {
-          if (!q.error && q.data && q.data.length) {
-            client.from('ticket_documents').update({ file_name: fileName, note: noteText, created_at: new Date().toISOString() }).eq('id', q.data[0].id).then(function () { after(); }).catch(function () { after(); });
-          } else {
-            client.from('ticket_documents').insert({ ticket_id: t.id, doc_type: 'receipt', storage_path: htmlPath, file_name: fileName, note: noteText }).then(function () { after(); }).catch(function () { after(); });
-          }
-        }).catch(function () { after(); });
-      }).catch(function () { fail('Saving the receipt failed \u2014 try again.'); });
-    });
+        } else {
+          done('Share sheet opened \u2014 pick Mail to send the receipt.');
+        }
+      }).catch(function () { openMailto(); });
+    }
+
+    /* Step 1: the filed receipt of record, generated on the spot
+     * through the Generate machinery when none is filed yet — the
+     * same pattern downloadReceipt v2 uses. If generation fails,
+     * generateReceipt has already put its own error on this status
+     * line; just re-enable without overwriting it. */
+    client.from('ticket_documents').select('id').eq('ticket_id', t.id).eq('storage_path', path).limit(1).then(function (q) {
+      if (!q.error && q.data && q.data.length) { signAndSummarize(); return; }
+      generateReceipt(client, t, function (ok) {
+        if (!ok) { if (btn) btn.disabled = false; return; }
+        signAndSummarize();
+      });
+    }).catch(function () { fail('Couldn\u2019t prepare the receipt \u2014 try again.'); });
   }
 
   function printPartLabel(t, p) {
