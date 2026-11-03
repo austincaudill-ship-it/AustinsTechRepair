@@ -3824,11 +3824,25 @@ function loadTicketThread(client, ticketId) {
    * file name and date), so copies never pile up. A receipt
    * ATTACHED by hand (a Square receipt scan, say) is a different
    * file and row and is never touched. */
-  function generateReceipt(client, t) {
+  function generateReceipt(client, t, onFiled) {
     var btn = $('p2-gen-receipt-btn');
     var msg = $('p2-gen-receipt-msg');
     function note(text) { if (msg) msg.textContent = text; }
-    function fail(text) { if (btn) btn.disabled = false; note(text); }
+    /* PORTAL_RECEIPT_DOWNLOAD_V2_2026_11_03: optional completion
+     * callback for downloadReceipt v2, which may need a receipt
+     * filed before it can sign a URL for it: onFiled(false) on
+     * any failure, onFiled(true) once the receipt is filed.
+     * fail() here is the single funnel for every failure path
+     * and filed() below the single funnel for success, so the
+     * callback fires exactly once. The Generate button wiring
+     * passes no callback — its behavior is unchanged. */
+    var filedReported = false;
+    function reportFiled(ok) {
+      if (filedReported) return;
+      filedReported = true;
+      if (onFiled) { try { onFiled(ok); } catch (e) {} }
+    }
+    function fail(text) { if (btn) btn.disabled = false; note(text); reportFiled(false); }
     if (btn) btn.disabled = true;
     note('Building receipt\u2026');
     client.from('ticket_charges').select('*').eq('ticket_id', t.id).order('created_at', { ascending: true }).then(function (res) {
@@ -3846,6 +3860,7 @@ function loadTicketThread(client, ticketId) {
             if (btn) btn.disabled = false;
             note('Receipt saved to Documents.');
             loadDocuments(client, t);
+            reportFiled(true); /* PORTAL_RECEIPT_DOWNLOAD_V2_2026_11_03 */
           }
           client.from('ticket_documents').select('id').eq('ticket_id', t.id).eq('storage_path', path).limit(1).then(function (q) {
             if (!q.error && q.data && q.data.length) {
@@ -3980,28 +3995,85 @@ function loadTicketThread(client, ticketId) {
       if (previewWin && !previewWin.closed) { try { previewWin.close(); } catch (e) {} }
       fail(text);
     }
-    loadFreshReceiptCharges(client, t, failAndClose, function (auth) {
-      buildReceiptPdfBlob(t, auth, failAndClose, function (blob, fileName) {
-        var url = URL.createObjectURL(blob);
-        var usedPreview = false;
-        if (previewWin && !previewWin.closed) {
-          try { previewWin.location.href = url; usedPreview = true; } catch (e) { usedPreview = false; }
+    /* PORTAL_RECEIPT_DOWNLOAD_V2_2026_11_03: the v1 block above
+     * fixed WHEN the tab opens, and on the owner's iPad the tab
+     * now does open — but it stays blank, because what v1 pointed
+     * it at was an html2canvas raster of a div parked at
+     * left:-10000px (buildReceiptPdfBlob), which can come back as
+     * an empty canvas, and a blank PDF in a tab gives the share
+     * sheet nothing to act on. v2 takes html2canvas out of
+     * Download receipt entirely: deliver the receipt that is
+     * filed on the ticket — the generated HTML of record at the
+     * fixed path below, generated on the spot through
+     * generateReceipt when none is filed yet — through a signed
+     * URL minted exactly like viewStoredDocument mints them.
+     * SIGNED_URL_SECONDS (1 hour) is the right lifetime here:
+     * delivery happens seconds after minting, while the one-year
+     * RECEIPT_AUTH_URL_SECONDS exists only for links printed or
+     * emailed to customers. On iOS/Safari the pre-opened window
+     * is pointed at the signed URL through the site's
+     * view-doc.html viewer (DOC_VIEWER_URL), never at storage
+     * directly: storage serves these HTML files as raw text
+     * (PORTAL_DOCVIEW_2026_10_30), and the viewer renders the
+     * same file formatted, like the Documents preview does. On
+     * other browsers the signed URL is requested with a download
+     * filename, so storage answers with an attachment
+     * disposition and the anchor click below saves the file — a
+     * bare download attribute alone is ignored cross-origin.
+     * Any failure closes the pre-opened window and reports on
+     * the status line: a blank tab is never stranded.
+     * buildReceiptPdfBlob is still used by Email receipt only. */
+    var path = t.id + '/receipt-generated.html';
+    var fileName = 'Receipt-' + shortCode(t) + '.html';
+    function deliver() {
+      var wantPreview = isIOSLike || isSafariUA;
+      var signOpts = wantPreview ? undefined : { download: fileName };
+      client.storage.from(DOC_BUCKET).createSignedUrl(path, SIGNED_URL_SECONDS, signOpts).then(function (res) {
+        if (res.error || !res.data || !res.data.signedUrl) { failAndClose('Couldn\u2019t open the receipt \u2014 try again.'); return; }
+        var signedUrl = res.data.signedUrl;
+        if (wantPreview) {
+          var target = DOC_VIEWER_URL + encodeURIComponent(signedUrl);
+          var usedPreview = false;
+          if (previewWin && !previewWin.closed) {
+            try { previewWin.location.href = target; usedPreview = true; } catch (e) { usedPreview = false; }
+          }
+          if (!usedPreview) {
+            var w = null;
+            try { w = window.open(target, '_blank'); } catch (e) { w = null; }
+            usedPreview = !!w;
+          }
+          if (btn) btn.disabled = false;
+          note(usedPreview ? 'Receipt opened \u2014 use Share to save or print it.' : 'Receipt is ready in Documents \u2014 use View to open it.');
+          return;
         }
-        if (!usedPreview) {
-          var a = document.createElement('a');
-          a.href = url;
-          a.download = fileName;
-          document.body.appendChild(a);
-          a.click();
-          setTimeout(function () {
-            if (a.parentNode) a.parentNode.removeChild(a);
-          }, 800);
-        }
-        setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+        var a = document.createElement('a');
+        a.href = signedUrl;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function () {
+          if (a.parentNode) a.parentNode.removeChild(a);
+        }, 800);
         if (btn) btn.disabled = false;
-        note(usedPreview ? 'Receipt opened — use Share to save the PDF.' : 'Receipt PDF downloaded.');
+        note('Receipt downloaded.');
+      }).catch(function () { failAndClose('Couldn\u2019t open the receipt \u2014 try again.'); });
+    }
+    client.from('ticket_documents').select('id').eq('ticket_id', t.id).eq('storage_path', path).limit(1).then(function (q) {
+      if (!q.error && q.data && q.data.length) { deliver(); return; }
+      /* No generated receipt filed yet: build and file one
+       * through the Generate machinery, then deliver the copy it
+       * filed. If that fails, generateReceipt has already put its
+       * own error on this same status line — just close the
+       * pre-opened window and re-enable, without overwriting it. */
+      generateReceipt(client, t, function (ok) {
+        if (!ok) {
+          if (previewWin && !previewWin.closed) { try { previewWin.close(); } catch (e) {} }
+          if (btn) btn.disabled = false;
+          return;
+        }
+        deliver();
       });
-    });
+    }).catch(function () { failAndClose('Couldn\u2019t open the receipt \u2014 try again.'); });
   }
 
   /* Files the receipt PDF beside the filed receipt HTML at a fixed
