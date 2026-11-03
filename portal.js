@@ -54,7 +54,12 @@
    * this build — STAGED ONLY, not run; run it before or with this
    * set's publish if the live constraint does not already allow
    * the new value. */
-  var TICKET_STATUSES = ['Awaiting Estimate', 'Awaiting Diagnostics', 'Awaiting Customer Response', 'Awaiting Parts', 'Awaiting Repair', 'En Route to Customer', 'In Progress', 'Quality Control', 'Ready', 'Job Complete'];
+  /* WARRANTY_PORTAL_2026_11_03 (Austin, Nov 3, 2026): 'Rework / Warranty'
+   * is a new pipeline status, sitting immediately before 'In Progress'
+   * — a warranty rework ticket is active work that still flows
+   * Quality Control -> Ready -> Job Complete. No existing status is
+   * renamed or removed. */
+  var TICKET_STATUSES = ['Awaiting Estimate', 'Awaiting Diagnostics', 'Awaiting Customer Response', 'Awaiting Parts', 'Awaiting Repair', 'En Route to Customer', 'Rework / Warranty', 'In Progress', 'Quality Control', 'Ready', 'Job Complete'];
   var APPLICATION_STATUSES = ['New', 'Reviewed', 'Contacted', 'Rejected'];
   var INVESTOR_STATUSES = ['New', 'Reviewed', 'Contacted', 'Closed'];
 
@@ -201,6 +206,11 @@
       completed: 'portal-st-done', received: 'portal-st-done',
       reviewed: 'portal-st-reviewed', ordered: 'portal-st-reviewed',
       contacted: 'portal-st-contacted',
+      /* WARRANTY_PORTAL_2026_11_03: badge colors for the warranty
+       * request statuses (Approved / Denied) and for the Rework /
+       * Warranty ticket status (calm teal — portal.css .portal-st-rework). */
+      approved: 'portal-st-ready', denied: 'portal-st-rejected',
+      reworkwarranty: 'portal-st-rework',
       cancelled: 'portal-st-cancelled', rejected: 'portal-st-rejected', closed: 'portal-st-closed',
       draft: 'portal-st-draft'
     };
@@ -249,7 +259,7 @@
   var state = {
     user: null,
     profile: null,
-    loaded: { tickets: false, applications: false, investors: false, feedback: false, customers: false, members: false, inventory: false, financials: false, associateaccounts: false }, /* ASSOCIATE_ACCOUNTS_2026_11_03: one loaded flag for the merged panel (was 'associates' + the Account Controls loads) */
+    loaded: { tickets: false, applications: false, investors: false, feedback: false, customers: false, members: false, inventory: false, financials: false, associateaccounts: false, warranty: false }, /* ASSOCIATE_ACCOUNTS_2026_11_03: one loaded flag for the merged panel (was 'associates' + the Account Controls loads); WARRANTY_PORTAL_2026_11_03: 'warranty' flag for the Warranty panel */
     customersCache: [], inventoryCache: []
   };
 
@@ -1045,6 +1055,9 @@
     associateaccounts: loadAssociateAccounts,
     /* TEAMCHAT_2026_11_03: the internal Team Chat panel. */
     teamchat: loadTeamChat,
+    /* WARRANTY_PORTAL_2026_11_03: the Warranty panel (Guest group) —
+     * warranty requests from the website form, worked by all staff. */
+    warranty: loadWarrantyRequests,
   };
 
   /* PORTAL_TAB_MEMORY_2026_10_30: remember the last active tab across
@@ -1063,7 +1076,7 @@
     var nav = $('portal-nav'); if (nav) nav.classList.remove('open');
     var tabs = document.querySelectorAll('.portal-tab');
     tabs.forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === name); });
-    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'documents', 'financials', 'payroll', 'mileage', 'teamchat', 'associateaccounts'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too; ASSOCIATE_ACCOUNTS_2026_11_03: 'associateaccounts' hides and shows with the rest too (it absorbed ACCOUNT_CONTROLS_2026_11_03's 'accountcontrols' and the roster's 'associates') */
+    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'documents', 'financials', 'payroll', 'mileage', 'teamchat', 'associateaccounts', 'warranty'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too; ASSOCIATE_ACCOUNTS_2026_11_03: 'associateaccounts' hides and shows with the rest too (it absorbed ACCOUNT_CONTROLS_2026_11_03's 'accountcontrols' and the roster's 'associates'); WARRANTY_PORTAL_2026_11_03: 'warranty' hides and shows with the rest too */
       $('portal-panel-' + n).hidden = n !== name;
     });
     closeDrawer();
@@ -1196,7 +1209,10 @@
     return parts.length ? parts.join(' · ') : 'Device not specified';
   }
 
-  var QCLASS = { 'Awaiting Diagnostics': 'q-red', 'Awaiting Estimate': 'q-red', 'Awaiting Customer Response': 'q-yellow', 'Awaiting Parts': 'q-orange', 'Awaiting Repair': 'q-orange', 'En Route to Customer': 'q-yellow', 'In Progress': 'q-yellow', 'Quality Control': 'q-lime', 'Ready': 'q-green', 'Job Complete': 'q-done' };
+  /* WARRANTY_PORTAL_2026_11_03: 'Rework / Warranty' gets the calm
+   * teal queue treatment (portal.css q-rework) — active work, but
+   * visually distinct from the yellow In Progress. */
+  var QCLASS = { 'Awaiting Diagnostics': 'q-red', 'Awaiting Estimate': 'q-red', 'Awaiting Customer Response': 'q-yellow', 'Awaiting Parts': 'q-orange', 'Awaiting Repair': 'q-orange', 'En Route to Customer': 'q-yellow', 'Rework / Warranty': 'q-rework', 'In Progress': 'q-yellow', 'Quality Control': 'q-lime', 'Ready': 'q-green', 'Job Complete': 'q-done' };
   function renderTickets(rows) {
     var list = $('portal-ticket-list');
     if (!rows.length) { emptyState(list, 'No tickets match. New service requests from the website will show up here.'); return; }
@@ -2317,11 +2333,50 @@ function loadTicketThread(client, ticketId) {
     }).catch(function () {});
   }
 
+  /* WARRANTY_PORTAL_2026_11_03 (Austin, Nov 3, 2026): the Warranty
+   * exemption control at the top of a ticket's Charges section.
+   * Pressing the button toggles tickets.warranty_exempt (column SQL
+   * in warranty-exemption.sql, staged with this build). The charge
+   * LINES are never touched: the amounts stay recorded exactly as
+   * entered, the Charges totals gain an exemption line, and the
+   * Balance due reads $0.00. Toggling off restores the balance.
+   * Financials excludes an exempt ticket's charges from every money
+   * rollup (see finChargeExempt below), so exempt work is neither
+   * collected revenue nor money owed. */
+  function warrantyExemptBarHtml(t) {
+    var on = !!(t && t.warranty_exempt);
+    return '<div class="warranty-exempt-bar' + (on ? ' on' : '') + '">' +
+      (on ? '<p class="warranty-exempt-note"><i class="fas fa-shield-halved"></i> <strong>Warranty &mdash; exempt.</strong> The charges below stay on record, but the customer owes $0.00 on this ticket.</p>' : '') +
+      '<div class="portal-status-row"><button class="portal-btn ' + (on ? 'portal-btn-primary' : 'portal-btn-outline') + ' portal-btn-sm" type="button" id="p2-warranty-exempt-btn" aria-pressed="' + (on ? 'true' : 'false') + '"><i class="fas fa-shield-halved"></i> Warranty exemption</button>' +
+      '<span class="portal-muted portal-small" id="p2-warranty-exempt-msg">' + (on ? 'Exemption is on. Press the button again to remove it and restore the balance.' : 'Covered warranty rework? Press to bring this ticket&rsquo;s balance due to $0.') + '</span></div></div>';
+  }
+
+  function wireWarrantyExemptButton(t) {
+    var btn = $('p2-warranty-exempt-btn');
+    if (!btn || !t) return;
+    btn.addEventListener('click', function () {
+      var msg = $('p2-warranty-exempt-msg');
+      var next = !t.warranty_exempt;
+      if (msg) msg.textContent = 'Saving…';
+      withClient(function (client) {
+        if (!client) { if (msg) msg.textContent = 'Couldn’t save — try again.'; return; }
+        client.from('tickets').update({ warranty_exempt: next }).eq('id', t.id).then(function (res) {
+          if (res.error) { if (msg) msg.textContent = 'Couldn’t save — try again.'; return; }
+          t.warranty_exempt = next;
+          loadCharges(client, t);
+        }).catch(function () { if (msg) msg.textContent = 'Couldn’t save — try again.'; });
+      });
+    });
+  }
+
   function renderCharges(t, rows) {
     var box = $('p2-charges');
     if (!box) return;
+    /* WARRANTY_PORTAL_2026_11_03: the exemption control renders
+     * above the lines in both the empty and the populated state. */
+    var exemptBar = warrantyExemptBarHtml(t);
     if (!rows.length) {
-      box.innerHTML = '<p class="portal-muted">No charges yet. Add the repair price, parts, and the house-call fee here — the receipt is built from these lines.</p>';
+      box.innerHTML = exemptBar + '<p class="portal-muted">No charges yet. Add the repair price, parts, and the house-call fee here — the receipt is built from these lines.</p>';
     } else {
       var tot = chargeTotals(rows);
       var html = rows.map(function (c) {
@@ -2346,11 +2401,18 @@ function loadTicketThread(client, ticketId) {
           '<div class="p2-line-amt">' + sign + fmtMoney(Math.abs(amt)) + '</div>' +
           '<button class="p2-x" type="button" data-charge-del="' + esc(c.id) + '" aria-label="Remove charge">&times;</button></div>';
       }).join('');
+      /* WARRANTY_PORTAL_2026_11_03: on a warranty-exempt ticket the
+       * recorded amounts stand exactly as entered — the totals gain
+       * a Warranty exemption line covering the balance, and the
+       * Balance due reads $0.00. ticket_charges itself is untouched. */
       html += '<div class="p2-totals">' +
         '<div><span>Subtotal</span><span>' + fmtMoney(tot.subtotal) + '</span></div>' +
         (tot.deposits ? '<div><span>Deposits received</span><span>&minus;' + fmtMoney(tot.deposits) + '</span></div>' : '') +
-        '<div class="p2-grand"><span>Balance due</span><span>' + fmtMoney(tot.balance) + '</span></div></div>';
-      box.innerHTML = html;
+        (t.warranty_exempt
+          ? '<div><span>Warranty exemption</span><span>&minus;' + fmtMoney(tot.balance) + '</span></div>' +
+            '<div class="p2-grand"><span>Balance due</span><span>' + fmtMoney(0) + '</span></div></div>'
+          : '<div class="p2-grand"><span>Balance due</span><span>' + fmtMoney(tot.balance) + '</span></div></div>');
+      box.innerHTML = exemptBar + html;
     }
     box.querySelectorAll('[data-charge-del]').forEach(function (btn) {
       btn.addEventListener('click', function () {
@@ -2361,10 +2423,13 @@ function loadTicketThread(client, ticketId) {
         });
       });
     });
+    wireWarrantyExemptButton(t);
     /* PORTAL_TICKET_ACCORDION_2026_11_02: the closed Charges header
-     * carries the balance, so a due amount is never hidden. */
+     * carries the balance, so a due amount is never hidden.
+     * WARRANTY_PORTAL_2026_11_03: an exempt ticket's header says so
+     * instead — its balance due is $0 however the lines add up. */
     var accTot = chargeTotals(rows);
-    tkAccSetHint('charges', rows.length ? (accTot.balance > 0 ? fmtMoney(accTot.balance) + ' due' : 'Paid in full') : '');
+    tkAccSetHint('charges', t.warranty_exempt ? 'Warranty — exempt' : (rows.length ? (accTot.balance > 0 ? fmtMoney(accTot.balance) + ' due' : 'Paid in full') : ''));
   }
 
   function loadCharges(client, t) {
@@ -5327,6 +5392,103 @@ function loadTicketThread(client, ticketId) {
     });
   }
 
+  /* ================= WARRANTY REQUESTS =================
+   * WARRANTY_PORTAL_2026_11_03 (Austin, Nov 3, 2026): the portal
+   * half of the website warranty form. Customers file requests into
+   * public.warranty_requests (schema + RLS + grants live in
+   * warranty-requests.sql, staged with the website-warranty-form
+   * build); every staff role works them here — owner AND associates,
+   * Pepper included, because this is her lane. This loader therefore
+   * deliberately carries NO isPortalOwner() guard, unlike the Admin
+   * panels. Staff read/update rides the authenticated SELECT/UPDATE
+   * policies on the table.
+   *
+   * The card leads with the request's ticket_ref as "Original
+   * ticket: ..." — the ticket number from the customer's receipt.
+   * That reference is how a request connects to the rework: staff
+   * open that ticket, set its status to Rework / Warranty, and press
+   * Warranty exemption in its Charges.
+   *
+   * Status values are the portal's canonical set below. The stored
+   * value is matched case-insensitively (the website form's column
+   * default is lowercase 'new'), and saving writes the canonical
+   * value, so the panel behaves the same whichever shape the row
+   * arrived in. */
+  var WARRANTY_STATUSES = ['New', 'Contacted', 'Approved', 'Denied', 'Completed'];
+  function warrantyStatusOf(r) {
+    var s = String((r && r.status) || '').toLowerCase();
+    for (var i = 0; i < WARRANTY_STATUSES.length; i++) {
+      if (WARRANTY_STATUSES[i].toLowerCase() === s) return WARRANTY_STATUSES[i];
+    }
+    return 'New';
+  }
+
+  function renderWarrantyRequests(rows) {
+    var list = $('portal-warranty-list');
+    if (!rows.length) { emptyState(list, 'No warranty requests yet. Requests filed from the website warranty form will show up here.'); return; }
+    list.innerHTML = rows.map(function (r) {
+      var st = warrantyStatusOf(r);
+      var ref = trim(r.ticket_ref)
+        ? '<p class="warranty-ticket-ref"><i class="fas fa-ticket"></i> Original ticket: <strong>' + esc(r.ticket_ref) + '</strong></p>'
+        : '<p class="warranty-ticket-ref"><i class="fas fa-ticket"></i> Original ticket: not given</p>';
+      var contactBits = [];
+      if (trim(r.phone)) contactBits.push(esc(r.phone));
+      if (trim(r.email)) contactBits.push(esc(r.email));
+      var repairDate = r.repair_date ? (fmtJobDate(r.repair_date) || fmtDate(r.repair_date)) : '';
+      return '<article class="portal-card">' +
+        '<div class="portal-card-top"><p class="portal-card-title">' + esc(r.customer_name || 'Customer') + '</p><span data-warranty-badge="' + esc(r.id) + '">' + badge(st) + '</span></div>' +
+        ref +
+        (contactBits.length ? '<p class="portal-card-meta">' + contactBits.join(' &middot; ') + '</p>' : '') +
+        '<p class="portal-card-meta">Device: ' + valOrDash(r.device) + (repairDate ? ' &middot; Original repair: ' + esc(repairDate) : '') + '</p>' +
+        '<p class="portal-card-meta">Under warranty: ' + valOrDash(r.part_service) + '</p>' +
+        (trim(r.problem) ? '<p class="portal-card-issue">' + esc(r.problem).replace(/\n/g, '<br>') + '</p>' : '') +
+        '<p class="portal-card-meta">Preferred contact: ' + valOrDash(r.contact_pref) + ' &middot; Submitted ' + esc(fmtDateTime(r.created_at)) + '</p>' +
+        '<div class="portal-status-row warranty-status-row"><label class="portal-small" for="portal-warranty-status-' + esc(r.id) + '">Status</label>' +
+        '<select id="portal-warranty-status-' + esc(r.id) + '" data-warranty-status="' + esc(r.id) + '" aria-label="Warranty request status">' +
+        statusOptions(WARRANTY_STATUSES, st) + '</select>' +
+        '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-warranty-save="' + esc(r.id) + '">Save status</button>' +
+        '<span class="portal-muted portal-small" data-warranty-msg="' + esc(r.id) + '"></span></div>' +
+        '</article>';
+    }).join('');
+    list.querySelectorAll('[data-warranty-save]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = btn.getAttribute('data-warranty-save');
+        var sel = list.querySelector('[data-warranty-status="' + id + '"]');
+        var msg = list.querySelector('[data-warranty-msg="' + id + '"]');
+        if (!sel) return;
+        var next = sel.value;
+        if (msg) msg.textContent = 'Saving…';
+        withClient(function (client) {
+          if (!client) { if (msg) msg.textContent = 'Couldn’t save — try again.'; return; }
+          client.from('warranty_requests').update({ status: next }).eq('id', id).then(function (res) {
+            if (res.error) { if (msg) msg.textContent = 'Couldn’t save — try again.'; return; }
+            if (msg) msg.textContent = 'Saved.';
+            var b = list.querySelector('[data-warranty-badge="' + id + '"]');
+            if (b) b.innerHTML = badge(next);
+            state.loaded.warranty = false;
+          }).catch(function () { if (msg) msg.textContent = 'Couldn’t save — try again.'; });
+        });
+      });
+    });
+  }
+
+  function loadWarrantyRequests(force) {
+    var list = $('portal-warranty-list');
+    if (!list) return;
+    if (!force) list.innerHTML = '<p class="portal-muted">Loading warranty requests&hellip;</p>';
+    withClient(function (client) {
+      if (!client) { listError(list, 'warranty requests'); return; }
+      client.from('warranty_requests').select('*').order('created_at', { ascending: false }).limit(200)
+        .then(function (res) {
+          if (res.error) { listError(list, 'warranty requests'); return; }
+          state.loaded.warranty = true;
+          renderWarrantyRequests(res.data || []);
+          setCount('portal-count-warranty', (res.data || []).filter(function (r) { return warrantyStatusOf(r) === 'New'; }).length);
+        })
+        .catch(function () { listError(list, 'warranty requests'); });
+    });
+  }
+
   /* ================= ATR ONE ON THE TICKET =================
    * PORTAL_ATRONE_TICKET_2026_10_30 (Austin, Oct 30, 2026): everything
    * for a job lives in the ticket. When a customer signs up for ATR
@@ -5834,6 +5996,17 @@ function loadTicketThread(client, ticketId) {
    *   rows whose ticket is gone fall back to their created_at. */
   var finPeriod = 'all';
   var finCache = null;
+  /* WARRANTY_PORTAL_2026_11_03: ticket ids whose charges are
+   * warranty-exempt (tickets.warranty_exempt), rebuilt by
+   * loadFinancials on every load. An exempt ticket's charges count
+   * NOWHERE in the money rollups below — not as revenue billed,
+   * not as collected, not in the card-collected processing base:
+   * the work was warranty work, so it is neither revenue nor money
+   * owed. (Part ORDERS on an exempt ticket still count in partsCost:
+   * our cost is a real cost figure, shown for information only, and
+   * it never enters the NET line.) */
+  var finExemptByTicket = {};
+  function finChargeExempt(c) { return !!(c && c.ticket_id && finExemptByTicket[c.ticket_id]); }
   var finWired = false;
 
   function finRowDate(row, jobByTicket) {
@@ -5865,6 +6038,7 @@ function loadTicketThread(client, ticketId) {
   function finSum(charges, parts, jobByTicket, inPeriod) {
     var revenue = 0, collected = 0, partsCost = 0;
     charges.forEach(function (c) {
+      if (finChargeExempt(c)) return; /* WARRANTY_PORTAL_2026_11_03: exempt tickets contribute $0 billed and $0 collected */
       var d = finRowDate(c, jobByTicket);
       if (inPeriod && !finInPeriod(d)) return;
       var amt = Number(c.qty || 0) * Number(c.unit_price || 0);
@@ -5891,6 +6065,7 @@ function loadTicketThread(client, ticketId) {
     }
     charges.forEach(function (c) {
       if (c.kind === 'deposit_credit') return;
+      if (finChargeExempt(c)) return; /* WARRANTY_PORTAL_2026_11_03: exempt tickets contribute $0 revenue in the month table too */
       var dt = finRowDate(c, jobByTicket); if (!dt) return;
       var b = byKey[finMonthKey(dt)]; if (!b) return;
       b.revenue += Number(c.qty || 0) * Number(c.unit_price || 0);
@@ -5997,7 +6172,8 @@ function loadTicketThread(client, ticketId) {
         if (failed || !got.charges || !got.parts || !got.tickets) return;
         if (!payrollSettled.time || !payrollSettled.profiles || !payrollSettled.approvals) return;
         var jobByTicket = {};
-        got.tickets.forEach(function (tk) { jobByTicket[tk.id] = tk.job_date || null; });
+        finExemptByTicket = {}; /* WARRANTY_PORTAL_2026_11_03: rebuilt with every load, alongside jobByTicket */
+        got.tickets.forEach(function (tk) { jobByTicket[tk.id] = tk.job_date || null; if (tk.warranty_exempt) finExemptByTicket[tk.id] = true; });
         finCache = { charges: got.charges, parts: got.parts, jobByTicket: jobByTicket, timeEntries: got.time || [], profiles: got.profiles || [], approvals: got.approvals || [] };
         state.loaded.financials = true;
         renderFinancials();
@@ -6009,8 +6185,21 @@ function loadTicketThread(client, ticketId) {
         .then(function (res) { if (res.error) { fail(); return; } got.charges = res.data || []; done(); }).catch(fail);
       client.from('part_orders').select('ticket_id, our_cost, qty, status, created_at')
         .then(function (res) { if (res.error) { fail(); return; } got.parts = res.data || []; done(); }).catch(fail);
-      client.from('tickets').select('id, job_date')
-        .then(function (res) { if (res.error) { fail(); return; } got.tickets = res.data || []; done(); }).catch(fail);
+      /* WARRANTY_PORTAL_2026_11_03: warranty_exempt rides along so
+       * exempt tickets drop out of the money figures. If the column
+       * is not live yet (this code published before
+       * warranty-exemption.sql ran), fall back to the plain select —
+       * the same degrade-gracefully pattern as the payroll sources
+       * below — and nothing is exempt until the column exists. */
+      client.from('tickets').select('id, job_date, warranty_exempt')
+        .then(function (res) {
+          if (res.error) {
+            return client.from('tickets').select('id, job_date')
+              .then(function (res2) { if (res2.error) { fail(); return; } got.tickets = res2.data || []; done(); })
+              .catch(fail);
+          }
+          got.tickets = res.data || []; done();
+        }).catch(fail);
       /* PORTAL_FINANCIALS_2026_11_02: payroll sources. Time entries
        * are asked for with the type/miles columns first and fall
        * back to the plain columns (finTimeKnown flags which world
@@ -6154,6 +6343,7 @@ function loadTicketThread(client, ticketId) {
     var sum = 0;
     charges.forEach(function (c) {
       if (c.kind !== 'deposit_credit') return;
+      if (finChargeExempt(c)) return; /* WARRANTY_PORTAL_2026_11_03: no processing-fee base from exempt tickets */
       if (!finInPeriod(finRowDate(c, jobByTicket))) return;
       if (!FIN_CARD_RE.test(String(c.description || ''))) return;
       sum += Number(c.qty || 0) * Number(c.unit_price || 0);

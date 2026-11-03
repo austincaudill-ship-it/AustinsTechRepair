@@ -1038,3 +1038,19 @@ span.avatar-disc {
 .rlog-mention-none { margin: 0; padding: 0.5rem 0.6rem; }
 .rlog-status { margin-top: 0.45rem; }
 /* end TICKET_MENTIONS_2026_11_03 */
+
+/* WARRANTY_PORTAL_2026_11_03 (Austin, Nov 3, 2026): Warranty panel,
+ * the Rework / Warranty ticket status, and the Warranty exemption
+ * treatment in Charges. The status color is a calm teal — distinct
+ * from the yellow In Progress and the green Ready. */
+/* start WARRANTY_PORTAL_2026_11_03 */
+.portal-st-rework { background: #ccfbf1; color: #115e59; }
+.portal-card.q-rework { border-left: 6px solid #0f766e; }
+.q-rework .q-chip { background: #0f766e; }
+.q-dot.q-rework { background: #0f766e; }
+.warranty-ticket-ref { font-size: 0.95rem; color: var(--ink, #2C231A); margin: 0.2rem 0; }
+.warranty-status-row { margin-top: 0.65rem; }
+.warranty-exempt-bar { margin-bottom: 0.8rem; }
+.warranty-exempt-bar.on { background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 10px; padding: 0.65rem 0.8rem; }
+.warranty-exempt-note { margin: 0 0 0.55rem; color: #115e59; }
+/* end WARRANTY_PORTAL_2026_11_03 */

@@ -154,6 +154,10 @@
         <button class="portal-tab" id="portal-tab-documents" type="button" role="tab" data-tab="documents">
           <i class="fas fa-folder-open"></i> Documents
         </button>
+        <!-- WARRANTY_PORTAL_2026_11_03 (Austin, Nov 3, 2026): a Warranty Action Button in the Guest group, last in the group — warranty requests are guest-originated work (customers file them from the website's warranty form), and every staff role works them here, Pepper included: this is her lane. Panel: portal-panel-warranty, loader loadWarrantyRequests in portal.js. -->
+        <button class="portal-tab" id="portal-tab-warranty" type="button" role="tab" data-tab="warranty">
+          <i class="fas fa-shield-halved"></i> Warranty <span class="portal-count" id="portal-count-warranty" hidden></span>
+        </button>
         <div class="portal-nav-group">Parts &amp; Tools</div>
         <button class="portal-tab" id="portal-tab-inventory" type="button" role="tab" data-tab="inventory">
           <i class="fas fa-boxes"></i> Inventory &amp; Orders
@@ -235,6 +239,8 @@
               <option value="Awaiting Parts">Awaiting Parts</option>
               <option value="Awaiting Repair">Awaiting Repair</option>
               <option value="En Route to Customer">En Route to Customer</option>
+              <!-- WARRANTY_PORTAL_2026_11_03: the Rework / Warranty status filters like every other status; it sits immediately before In Progress in the pipeline. -->
+              <option value="Rework / Warranty">Rework / Warranty</option>
               <option value="In Progress">In Progress</option>
               <option value="Quality Control">Quality Control</option>
               <option value="Ready">Ready</option>
@@ -245,7 +251,7 @@
             </button>
           </div>
         </div>
-        <p class="q-legend"><span><i class="q-dot q-red"></i> Needs diagnostics</span><span><i class="q-dot q-orange"></i> Waiting on parts</span><span><i class="q-dot q-yellow"></i> In progress</span><span><i class="q-dot q-lime"></i> Quality check</span><span><i class="q-dot q-green"></i> Ready</span></p>
+        <p class="q-legend"><span><i class="q-dot q-red"></i> Needs diagnostics</span><span><i class="q-dot q-orange"></i> Waiting on parts</span><span><i class="q-dot q-yellow"></i> In progress</span><span><i class="q-dot q-rework"></i> Rework / warranty</span><span><i class="q-dot q-lime"></i> Quality check</span><span><i class="q-dot q-green"></i> Ready</span></p>
         <div id="portal-ticket-list"><p class="portal-muted">Loading tickets&hellip;</p></div>
       </div>
 
@@ -280,6 +286,18 @@
           <p class="portal-error" id="portal-docs-list-msg" hidden></p>
           <div id="portal-docs-list"><p class="portal-muted">Loading documents&hellip;</p></div>
         </div>
+      </div>
+
+      <!-- WARRANTY — WARRANTY_PORTAL_2026_11_03 (Austin, Nov 3, 2026): warranty requests customers file from the website's warranty form land in public.warranty_requests and are worked here by any staff role — owner and associates alike; this is Pepper's lane, so there is deliberately no owner gate. Each card leads with the "Original ticket" reference the customer copied from their receipt: staff use it to pull up the original job, set that ticket's status to Rework / Warranty, and press the Warranty exemption button in its Charges so the rework costs the customer $0 while the charges stay on record. -->
+      <div class="portal-panel" id="portal-panel-warranty" role="tabpanel" hidden>
+        <div class="portal-panel-head">
+          <h2 class="portal-h2">Warranty Requests</h2>
+          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="warranty">
+            <i class="fas fa-rotate-right"></i> Refresh
+          </button>
+        </div>
+        <p class="portal-muted portal-small">Requests from the website&rsquo;s warranty form, newest first. Open the original ticket named on a card, set its status to Rework / Warranty, and use the Warranty exemption button in its Charges &mdash; the charges stay recorded and the customer owes $0.</p>
+        <div id="portal-warranty-list"><p class="portal-muted">Loading warranty requests&hellip;</p></div>
       </div>
 
       <!-- JOB APPLICATIONS -->
