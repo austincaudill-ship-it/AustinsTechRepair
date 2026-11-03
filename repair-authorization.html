@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<!-- RECEIPT_SIG_FIX_2026_11_03 (Nov 3, 2026): the short, typeable
+     route to a customer's signed Repair Authorization, printed on
+     the receipt in place of the raw signed URL:
+       austinstechrepairgroup.com/repair-authorization + code
+     The customer types the 8-character document code from their
+     receipt; this page asks the doc-code Edge Function to resolve
+     it and hands off to view-doc.html, which renders the signed
+     document as a formatted page. Codes live in
+     public.doc_short_codes (staged SQL: doc-short-codes.sql) and
+     are created by the portal when a receipt is composed.
+     STAGED ONLY — publish with the portal-financials-payroll set. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your Signed Repair Authorization — Austin’s Tech Repair Group</title>
+<style>
+  body { margin: 0; background: #F3EDE0; color: #2C231A; font-family: Georgia, 'Times New Roman', serif; }
+  .box { max-width: 560px; margin: 10vh auto 0; background: #FFFDF8; border: 1px solid #E6D9C0; border-radius: 10px; padding: 2rem 1.5rem; text-align: center; }
+  .biz { font-size: 1.3rem; font-weight: bold; border-bottom: 3px solid #C96A1E; padding-bottom: 0.8rem; margin-bottom: 1rem; }
+  p { line-height: 1.55; font-size: 1rem; }
+  a { color: #C96A1E; }
+  label { display: block; font-size: 0.95rem; margin-bottom: 0.5rem; }
+  input { font-size: 1.25rem; letter-spacing: 0.18em; text-transform: uppercase; text-align: center; padding: 0.6rem 0.5rem; width: 100%; max-width: 320px; box-sizing: border-box; border: 2px solid #C96A1E; border-radius: 8px; background: #fff; color: #2C231A; }
+  button { margin-top: 1rem; font-size: 1.05rem; padding: 0.7rem 1.4rem; border: none; border-radius: 8px; background: #C96A1E; color: #fff; cursor: pointer; }
+  button:disabled { opacity: 0.6; cursor: default; }
+  .err { color: #8C2B0E; font-weight: bold; }
+  .hint { font-size: 0.9rem; color: #5A4A36; }
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="biz">Austin’s Tech Repair Group</div>
+  <p><strong>View your signed Repair Authorization</strong></p>
+  <p>Enter the document code printed on your receipt, under your signature. It looks like <strong>K7QX-4MZD</strong>.</p>
+  <form id="code-form">
+    <label for="code">Document code</label>
+    <input id="code" name="code" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="12" placeholder="K7QX-4MZD">
+    <br>
+    <button id="go" type="submit">View my authorization</button>
+  </form>
+  <p class="err" id="msg" hidden></p>
+  <p class="hint">No code, or it isn’t working? Call or text us at <a href="tel:+19372806243">(937) 280-6243</a> and we will send you a fresh copy.</p>
+</div>
+<script>
+(function () {
+  var FN_URL = 'https://lyujxpuicarblpkdzuuc.supabase.co/functions/v1/doc-code';
+  var ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
+  var form = document.getElementById('code-form');
+  var input = document.getElementById('code');
+  var btn = document.getElementById('go');
+  var msg = document.getElementById('msg');
+
+  function showError(text) {
+    msg.textContent = text;
+    msg.hidden = false;
+    btn.disabled = false;
+    btn.textContent = 'View my authorization';
+  }
+
+  function resolve(code) {
+    var clean = String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (clean.length !== 8) {
+      showError('That code is 8 characters — check the code on your receipt and try again.');
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = 'Opening your document…';
+    msg.hidden = true;
+    fetch(FN_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': ANON_KEY,
+        'Authorization': 'Bearer ' + ANON_KEY
+      },
+      body: JSON.stringify({ code: clean })
+    }).then(function (resp) { return resp.json(); }).then(function (data) {
+      if (data && data.ok && data.url) {
+        window.location.href = data.url;
+        return;
+      }
+      showError('We couldn’t find a document for that code. Double-check the code on your receipt, or call or text us and we will send you a fresh copy.');
+    }).catch(function () {
+      showError('Something went wrong opening your document. Please try again, or call or text us and we will send you a fresh copy.');
+    });
+  }
+
+  form.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    resolve(input.value);
+  });
+
+  var pre = null;
+  try { pre = new URLSearchParams(window.location.search).get('code'); } catch (e) { pre = null; }
+  if (pre) {
+    input.value = pre;
+    resolve(pre);
+  }
+})();
+</script>
+</body>
+</html>

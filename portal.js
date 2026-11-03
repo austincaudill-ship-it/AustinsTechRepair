@@ -265,6 +265,10 @@
      * Clicking the saved tab's button replays exactly what a tap does,
      * whichever script handles that tab. No saved tab (or a stale one
      * with no matching button) keeps the old behavior: Repair Queue. */
+    /* PORTAL_LOCATION_2026_11_02: geofencing consent check + the
+     * login snapshot, once the dashboard is up. Fully guarded —
+     * it can never block or delay the sign-in flow. */
+    try { geoInitAfterLogin(); } catch (e) {}
     var startTab = savedTab();
     var startBtn = startTab ? $('portal-tab-' + startTab) : null;
     if (startBtn && startTab !== 'tickets') { startBtn.click(); }
@@ -919,7 +923,7 @@
     var nav = $('portal-nav'); if (nav) nav.classList.remove('open');
     var tabs = document.querySelectorAll('.portal-tab');
     tabs.forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === name); });
-    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'documents', 'financials', 'associates'].forEach(function (n) {
+    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'documents', 'financials', 'associates', 'mileage'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest */
       $('portal-panel-' + n).hidden = n !== name;
     });
     closeDrawer();
@@ -1527,7 +1531,19 @@ function loadTicketThread(client, ticketId) {
           '<div class="portal-drawer-section tk-acc" data-acc="charges">' + tkAccHead('charges', 'Charges') + tkAccBodyOpen('charges') +
           '<div id="p2-charges"><p class="portal-muted">Loading charges&hellip;</p></div>' +
           '<form id="p2-charge-form" class="p2-form">' +
-          '<select id="p2-charge-kind" aria-label="Charge type"><option value="part">Part</option><option value="labor">Labor</option><option value="one_off">Other charge</option><option value="dispatch">House-call fee</option><option value="deposit_credit">Deposit received (credit)</option></select>' +
+          /* PORTAL_TIP_2026_11_02 (Austin, Nov 2, 2026): "Add a tip
+           * button" — Tip is a first-class charge kind in this select
+           * (it used to be hand-typed as an Other charge; that is how
+           * Patrick's $10 tip got in). The rest of this PORTAL_TIP
+           * change: the kind-change handler below auto-fills the
+           * description "Tip" and disables/hides Our cost for tips,
+           * the submit handler never saves a cost on a tip, and the
+           * Charges row label map reads TIP. A tip is otherwise an
+           * ordinary charge line: every reader splits only on
+           * kind === 'deposit_credit', so a tip counts into the
+           * subtotal and balance due, lands in Financials as revenue,
+           * and prints on the receipt from its description, "Tip". */
+          '<select id="p2-charge-kind" aria-label="Charge type"><option value="part">Part</option><option value="labor">Labor</option><option value="one_off">Other charge</option><option value="dispatch">House-call fee</option><option value="tip">Tip</option><option value="deposit_credit">Deposit received (credit)</option></select>' +
           '<input id="p2-charge-desc" type="text" placeholder="Description" maxlength="200" aria-label="Charge description" />' +
           '<div class="p2-form-row"><input id="p2-charge-qty" type="number" step="0.5" min="0" value="1" aria-label="Quantity" />' +
           '<input id="p2-charge-price" type="number" step="0.01" min="0" placeholder="Price $" aria-label="Unit price" />' +
@@ -1536,9 +1552,15 @@ function loadTicketThread(client, ticketId) {
           '<label class="p2-check"><input type="checkbox" id="p2-charge-waive" /> Waive this charge &mdash; show it as waived, counting $0</label>' +
           '<button class="portal-btn portal-btn-primary portal-btn-sm" type="submit">Add charge</button>' +
           '<p class="portal-error" id="p2-charge-error" hidden></p></form>' +
+          /* PORTAL_RECEIPT_SEND_2026_11_02: Download receipt (PDF)
+           * and Email receipt join Generate receipt in the same
+           * actions row — the receipt leaves the portal. All three
+           * share the one status line beside them. */
           '<div class="p2-actions"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-gen-receipt-btn"><i class="fas fa-file"></i> Generate receipt</button>' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-download-receipt-btn"><i class="fas fa-download"></i> Download receipt</button>' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-email-receipt-btn"><i class="fas fa-envelope"></i> Email receipt</button>' +
           '<span class="portal-muted portal-small" id="p2-gen-receipt-msg"></span></div>' +
-          '<p class="portal-muted portal-small">Generate receipt files a receipt built from these charges into Documents. If the charges change afterwards, generate again and it replaces the filed copy.</p></div></div>' +
+          '<p class="portal-muted portal-small">Generate receipt files a receipt built from these charges into Documents. If the charges change afterwards, generate again and it replaces the filed copy. Download receipt saves that same receipt as a PDF file. Email receipt sends the PDF to the customer&rsquo;s email on file &mdash; the fallback when a portal message or text does not reach them.</p></div></div>' +
           '<div class="portal-drawer-section tk-acc" data-acc="payment">' + tkAccHead('payment', 'Payment') + tkAccBodyOpen('payment') +
           '<div class="p2-actions"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p3-checkout-btn"><i class="fas fa-credit-card"></i> Charge / Check out</button>' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p3-cash-btn"><i class="fas fa-money-bill-wave"></i> Mark paid — cash</button>' +
@@ -1819,7 +1841,8 @@ function loadTicketThread(client, ticketId) {
       var tot = chargeTotals(rows);
       var html = rows.map(function (c) {
         var amt = Number(c.qty || 0) * Number(c.unit_price || 0);
-        var kindLabel = { part: 'Part', labor: 'Labor', one_off: 'Other', dispatch: 'House-call fee', deposit_credit: 'Deposit' }[c.kind] || c.kind;
+        /* PORTAL_TIP_2026_11_02: tip rows carry the TIP pill. */
+        var kindLabel = { part: 'Part', labor: 'Labor', one_off: 'Other', dispatch: 'House-call fee', tip: 'Tip', deposit_credit: 'Deposit' }[c.kind] || c.kind;
         var sign = c.kind === 'deposit_credit' ? '&minus;' : '';
         /* PORTAL_CHARGE_DEDUCTOR_2026_11_02: a waived line shows its
          * face amount struck through beside the $0 it counts. The
@@ -3428,6 +3451,85 @@ function loadTicketThread(client, ticketId) {
     'Card payments carry a processing fee at Square&rsquo;s actual rate.'
   ];
 
+  /* RECEIPT_SIG_FIX_2026_11_03 (Austin, Nov 3, 2026): the receipt
+   * printed the signed authorization's viewer URL as visible text —
+   * a one-year Supabase signed URL wrapped in the view-doc.html
+   * query string, spread across seven lines of gibberish on
+   * Patrick's printed receipt. A customer can neither read nor type
+   * that. Three fixes, all in this receipt block:
+   * 1. The raw URL NEVER renders as visible text again (the
+   *    composer below keeps it only inside the link's href).
+   * 2. Directly under the signature, a "What you signed" summary of
+   *    the Repair Authorization & Service Agreement itself
+   *    (RECEIPT_SIGNED_SUMMARY — a plain condensation of
+   *    AUTH_TERMS_TEXT above, section by section; no new terms).
+   * 3. One short, human-typeable route to the full document:
+   *    austinstechrepairgroup.com/repair-authorization + an 8-letter
+   *    document code (RECEIPT_SIG_FIX: the repair-authorization.html
+   *    page and the doc-code Edge Function, staged beside this
+   *    build). Codes live in public.doc_short_codes (staged SQL:
+   *    doc-short-codes.sql — NOT run yet). Until that table exists,
+   *    ensureReceiptDocCode quietly returns '' and the receipt
+   *    simply omits the code line — the composer never blocks and
+   *    never prints a code that cannot resolve. */
+  var RECEIPT_SIGNED_SUMMARY = [
+    'You authorized us to receive, open, disassemble, diagnose, test, and repair your device, and to order and install the replacement parts you approved.',
+    'The $35 house-call fee covers travel and a full diagnosis; it is non-refundable, due at scheduling, charged separately from the repair price, and never credited toward a repair. ATR One members pay no house-call fee for covered devices.',
+    'We confirm your price before work begins, and if hidden damage or extra failures are found, we get your approval before any extra work. Parts are ordered for your job and paid upfront; if you cancel after parts are ordered, we keep the part and refund what you paid for it.',
+    'The balance is due on completion, before your device is released. Card payments carry a processing fee at Square&rsquo;s actual rate.',
+    'Back up your device before service — diagnostics and repair can cause data loss, and we are not responsible for lost data, files, photos, accounts, or settings.',
+    'Your repair carries a 1-year limited warranty on the parts installed and the labor performed.',
+    'If your device is left unclaimed more than 60 days after we notify you it is ready, it may be treated as abandoned under Ohio law.'
+  ];
+  var DOC_SHORT_PATH = 'austinstechrepairgroup.com/repair-authorization';
+  var DOC_CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; /* no I, L, O, 0, 1 — nothing confusable when read off paper */
+
+  function newDocCode() {
+    var out = '';
+    for (var i = 0; i < 8; i++) out += DOC_CODE_ALPHABET.charAt(Math.floor(Math.random() * DOC_CODE_ALPHABET.length));
+    return out;
+  }
+  function fmtDocCode(code) {
+    var c = String(code || '').toUpperCase();
+    return c.length === 8 ? c.slice(0, 4) + '-' + c.slice(4) : c;
+  }
+
+  /* RECEIPT_SIG_FIX_2026_11_03: the document's short code, created
+   * lazily the first time any receipt for the ticket is composed
+   * (print, filed, downloaded, and emailed receipts all pass through
+   * fetchReceiptAuthorization, so the code exists before it can ever
+   * be printed). Best-effort under the receipt's never-block rule:
+   * ANY failure — including doc_short_codes not existing yet —
+   * finishes with '' and the receipt just omits the code line. */
+  function ensureReceiptDocCode(client, row, done) {
+    var settled = false;
+    function fin(code) {
+      if (settled) return;
+      settled = true;
+      try { done(code || ''); } catch (e) { /* never block the receipt */ }
+    }
+    try {
+      client.from('doc_short_codes').select('code')
+        .eq('ticket_id', row.ticket_id).eq('storage_path', row.storage_path || '')
+        .limit(1).then(function (res) {
+          if (res.error) { fin(''); return; }
+          if (res.data && res.data.length && res.data[0].code) { fin(res.data[0].code); return; }
+          var code = newDocCode();
+          client.from('doc_short_codes').insert({
+            code: code,
+            ticket_id: row.ticket_id,
+            storage_path: row.storage_path || '',
+            doc_type: row.doc_type || 'repair_authorization'
+          }).then(function (ins) {
+            /* A unique-conflict here just means a parallel compose
+             * won the race; the receipt still omits the code this
+             * once and picks the stored code up next time. */
+            fin(ins.error ? '' : code);
+          }).catch(function () { fin(''); });
+        }).catch(function () { fin(''); });
+    } catch (e) { fin(''); }
+  }
+
   function fetchReceiptAuthorization(client, t, cb) {
     var settled = false;
     var timer = setTimeout(function () { finish(null); }, 6000);
@@ -3449,11 +3551,23 @@ function loadTicketThread(client, ticketId) {
             var path = String(row.storage_path || '');
             if (/\.html?$/i.test(path)) {
               auth.viewerUrl = DOC_VIEWER_URL + encodeURIComponent(url);
+              /* RECEIPT_SIG_FIX_2026_11_03: resolve (or lazily
+               * create) this document's short code on every exit
+               * from the .html branch, so the receipt can print the
+               * typeable repair-authorization path + code. Any
+               * failure finishes with no code, per the never-block
+               * rule above. */
+              var finishWithCode = function () {
+                ensureReceiptDocCode(client, row, function (code) {
+                  if (code) auth.docCode = code;
+                  finish(auth);
+                });
+              };
               fetch(url).then(function (resp) { return resp.text(); }).then(function (text) {
                 var m = String(text || '').match(/alt="Customer signature"\s+src="(data:image\/[^"]+)"/);
                 if (m) auth.sigSrc = m[1];
-                finish(auth);
-              }).catch(function () { finish(auth); });
+                finishWithCode();
+              }).catch(function () { finishWithCode(); });
             } else if (/\.(png|jpe?g)$/i.test(path)) {
               auth.sigSrc = url;
               finish(auth);
@@ -3493,10 +3607,23 @@ function loadTicketThread(client, ticketId) {
     if (!rows.length) lines = '<tr><td colspan="3">No charges recorded.</td></tr>';
     var sigHtml = '';
     if (auth && (auth.sigSrc || auth.viewerUrl)) {
+      /* RECEIPT_SIG_FIX_2026_11_03: the signed viewer URL lives ONLY
+       * in the link's href (screen, filed, and PDF receipts all stay
+       * clickable) — it is never concatenated as visible text again.
+       * In its place: one short typeable line (path + document code,
+       * shown only when a code exists) and the "What you signed"
+       * summary of the authorization itself, directly under the
+       * signature block. */
+      var signedHtml = '<div class="rc-signed"><p class="rc-signed-head">What you signed</p>' +
+        '<p class="rc-signed-intro">A plain summary of the Repair Authorization &amp; Service Agreement your signature accepted.</p><ul>' +
+        RECEIPT_SIGNED_SUMMARY.map(function (line) { return '<li>' + line + '</li>'; }).join('') +
+        '</ul></div>';
       sigHtml = '<div class="rc-sig">' +
         (auth.sigSrc ? '<p class="rc-sig-head">Customer signature</p><img class="rc-sig-img" src="' + esc(auth.sigSrc) + '" alt="Customer signature"/>' : '') +
         (auth.signerName || auth.signedAt ? '<p class="rc-sig-cap">Signed by ' + esc(auth.signerName) + (auth.signedAt ? ' &middot; ' + esc(fmtDateTime(auth.signedAt)) : '') + '</p>' : '') +
-        (auth.viewerUrl ? '<p class="rc-auth"><a href="' + esc(auth.viewerUrl) + '">View your signed Repair Authorization</a><br/><span class="rc-auth-url">' + esc(auth.viewerUrl) + '</span></p>' : '') +
+        (auth.viewerUrl ? '<p class="rc-auth"><a href="' + esc(auth.viewerUrl) + '">View your signed Repair Authorization</a></p>' : '') +
+        (auth.viewerUrl && auth.docCode ? '<p class="rc-auth-short">To open it later, go to <strong>' + esc(DOC_SHORT_PATH) + '</strong> and enter code <strong>' + esc(fmtDocCode(auth.docCode)) + '</strong></p>' : '') +
+        signedHtml +
         '</div>';
     }
     var termsHtml = '<div class="rc-terms"><p class="rc-terms-head">Basic terms</p><ul>' +
@@ -3548,7 +3675,15 @@ function loadTicketThread(client, ticketId) {
     '.rc-sig-img { display: block; max-width: 280px; max-height: 90px; border-bottom: 2px solid #000; padding-bottom: 2pt; }' +
     '.rc-sig-cap { font-size: 9.5pt; color: #333; margin: 3pt 0 0; }' +
     '.rc-auth { font-size: 9.5pt; margin: 7pt 0 0; line-height: 1.45; }' +
-    '.rc-auth-url { font-size: 7.5pt; color: #555; word-break: break-all; }' +
+    /* RECEIPT_SIG_FIX_2026_11_03: .rc-auth-url is GONE (it styled the
+     * raw signed URL printed as text). New: the short typeable line
+     * and the "What you signed" summary block. */
+    '.rc-auth-short { font-size: 9.5pt; margin: 3pt 0 0; line-height: 1.45; color: #333; }' +
+    '.rc-signed { margin-top: 10pt; }' +
+    '.rc-signed-head { font-size: 10pt; font-weight: 700; margin: 0 0 2pt; }' +
+    '.rc-signed-intro { font-size: 9pt; color: #333; margin: 0 0 4pt; line-height: 1.45; }' +
+    '.rc-signed ul { margin: 0; padding-left: 12pt; font-size: 9pt; color: #333; line-height: 1.45; }' +
+    '.rc-signed li { margin-bottom: 2pt; }' +
     '.rc-terms { margin-top: 12pt; border-top: 1px solid #bbb; padding-top: 8pt; }' +
     '.rc-terms-head { font-size: 10pt; font-weight: 700; margin: 0 0 4pt; }' +
     '.rc-terms ul { margin: 0; padding-left: 12pt; font-size: 9pt; color: #333; line-height: 1.45; }' +
@@ -3619,6 +3754,199 @@ function loadTicketThread(client, ticketId) {
     }).catch(function () { fail('Couldn\u2019t read the charges \u2014 try again.'); });
   }
 
+  /* PORTAL_RECEIPT_SEND_2026_11_02 (Austin, Nov 2, 2026: "give the
+   * portal life outside the portal"): the receipt leaves the portal.
+   * Download receipt turns the ticket's receipt into a real PDF
+   * file; Email receipt sends that PDF to the customer's email on
+   * file — the fallback when Message customer / the Google Voice
+   * text does not reach them.
+   *
+   * Both start from the SAME freshly-read charges and the SAME
+   * composer (composeReceiptHtml / receiptDocumentHtml) as Print
+   * receipt and Generate receipt, so the PDF and the emailed copy
+   * can never drift from the receipt on screen. The PDF renders
+   * client-side with the vendored html2pdf bundle (html2canvas +
+   * jsPDF; portal.html loads html2pdf.bundle.min.js — no service,
+   * no per-use cost). The email itself is sent by the send-receipt
+   * Edge Function: this page hands it ONLY the ticket id, and the
+   * function resolves the customer's email server-side (the
+   * notify-events rule — a browser never names a recipient),
+   * attaches the PDF copy uploaded below, and sends it from the
+   * no-reply system mailbox with replies routed to the service@
+   * general inbox. */
+
+  /* Reads the charges fresh — the exact read generateReceipt has
+   * always done — so a download or an email is never built from
+   * figures the tech has already changed. fail() receives the same
+   * wording generateReceipt uses. */
+  function loadFreshReceiptCharges(client, t, fail, done) {
+    client.from('ticket_charges').select('*').eq('ticket_id', t.id).order('created_at', { ascending: true }).then(function (res) {
+      if (res.error) { fail('Couldn\u2019t read the charges \u2014 try again.'); return; }
+      t._charges = res.data || [];
+      if (!t._charges.length) { fail('Add the charges first \u2014 the receipt is built from them.'); return; }
+      fetchReceiptAuthorization(client, t, function (auth) { done(auth); });
+    }).catch(function () { fail('Couldn\u2019t read the charges \u2014 try again.'); });
+  }
+
+  /* Renders the receipt into an off-screen box styled by
+   * RECEIPT_DOC_CSS — the filed document's own styles — so the PDF
+   * is the filed receipt, then hands the PDF Blob to done(). An
+   * http(s) signature image (the PNG-fallback filing) is first
+   * swapped for a data URL: html2canvas cannot always draw a
+   * cross-origin image, and the receipt must never ship with the
+   * signature missing. Any failure calls fail(). */
+  function buildReceiptPdfBlob(t, auth, fail, done) {
+    if (!window.html2pdf) { fail('The PDF maker did not load \u2014 use Print receipt and Save as PDF instead.'); return; }
+    var finish = function (authNow) {
+      var style = document.createElement('style');
+      style.textContent = RECEIPT_DOC_CSS;
+      var box = document.createElement('div');
+      box.setAttribute('style', 'position:fixed;left:-10000px;top:0;width:600px;background:#fff;padding:24px;');
+      box.innerHTML = composeReceiptHtml(t, authNow);
+      document.body.appendChild(style);
+      document.body.appendChild(box);
+      var cleanup = function () {
+        if (box.parentNode) box.parentNode.removeChild(box);
+        if (style.parentNode) style.parentNode.removeChild(style);
+      };
+      var opt = {
+        margin: [30, 30, 30, 30],
+        filename: 'Receipt-' + shortCode(t) + '.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+        jsPDF: { unit: 'pt', format: 'letter', orientation: 'portrait' }
+      };
+      window.html2pdf().set(opt).from(box).outputPdf('blob').then(function (blob) {
+        cleanup();
+        done(blob, opt.filename);
+      }).catch(function () {
+        cleanup();
+        fail('Making the PDF failed \u2014 try again, or use Print receipt.');
+      });
+    };
+    if (auth && auth.sigSrc && /^https?:\/\//i.test(auth.sigSrc)) {
+      fetch(auth.sigSrc).then(function (r) { return r.blob(); }).then(function (blob) {
+        var reader = new FileReader();
+        reader.onload = function () {
+          finish({ signerName: auth.signerName, signedAt: auth.signedAt, sigSrc: String(reader.result || ''), viewerUrl: auth.viewerUrl });
+        };
+        reader.onerror = function () { finish(auth); };
+        reader.readAsDataURL(blob);
+      }).catch(function () { finish(auth); });
+    } else {
+      finish(auth);
+    }
+  }
+
+  function downloadReceipt(client, t) {
+    var btn = $('p2-download-receipt-btn');
+    var msg = $('p2-gen-receipt-msg');
+    function note(text) { if (msg) msg.textContent = text; }
+    function fail(text) { if (btn) btn.disabled = false; note(text); }
+    if (btn) btn.disabled = true;
+    note('Building receipt\u2026');
+    loadFreshReceiptCharges(client, t, fail, function (auth) {
+      buildReceiptPdfBlob(t, auth, fail, function (blob, fileName) {
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function () {
+          if (a.parentNode) a.parentNode.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 800);
+        if (btn) btn.disabled = false;
+        note('Receipt PDF downloaded.');
+      });
+    });
+  }
+
+  /* Files the receipt PDF beside the filed receipt HTML at a fixed
+   * path — the send-receipt function attaches exactly this file, so
+   * what was emailed is always retrievable, and re-sending after a
+   * charge change re-uploads a fresh copy first (emailReceipt
+   * always rebuilds before it sends). Deliberately NO
+   * ticket_documents row: the filed HTML stays the one generated
+   * receipt of record in Documents; the PDF is its send rendering. */
+  function uploadReceiptPdf(client, t, blob, fail, done) {
+    var path = t.id + '/receipt-generated.pdf';
+    client.storage.from(DOC_BUCKET).upload(path, blob, { contentType: 'application/pdf', upsert: true }).then(function (up) {
+      if (up.error) { fail('Saving the receipt PDF failed \u2014 try again.'); return; }
+      done();
+    }).catch(function () { fail('Saving the receipt PDF failed \u2014 try again.'); });
+  }
+
+  /* The send-receipt call: the same fetch shape as device-trust and
+   * track-shipment — the caller's own session JWT plus the anon
+   * key, JSON in, JSON out. The body carries ONLY the ticket id. */
+  function callSendReceipt(client, ticketId, done) {
+    var finished = false;
+    function finish(out) { if (!finished) { finished = true; done(out); } }
+    try {
+      client.auth.getSession().then(function (sres) {
+        var token = sres && sres.data && sres.data.session ? sres.data.session.access_token : '';
+        if (!token) { finish(null); return null; }
+        return fetch(SUPABASE_URL + '/functions/v1/send-receipt', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'apikey': SUPABASE_ANON_KEY },
+          body: JSON.stringify({ ticket_id: ticketId })
+        });
+      }).then(function (r) {
+        if (!r) { finish(null); return null; }
+        return r.json();
+      }).then(function (out) { finish(out || null); })
+      .catch(function () { finish(null); });
+    } catch (e) { finish(null); }
+  }
+
+  function emailReceipt(client, t) {
+    var btn = $('p2-email-receipt-btn');
+    var msg = $('p2-gen-receipt-msg');
+    function note(text) { if (msg) msg.textContent = text; }
+    function fail(text) { if (btn) btn.disabled = false; note(text); }
+    if (btn) btn.disabled = true;
+    note('Building receipt\u2026');
+    loadFreshReceiptCharges(client, t, fail, function (auth) {
+      /* File the same HTML Generate receipt files, so Documents and
+       * the emailed PDF are the same receipt at the same moment.
+       * The documents-row refresh is best-effort here: the send
+       * reads the storage files directly, so a listing hiccup must
+       * not block the customer's email. */
+      var htmlPath = t.id + '/receipt-generated.html';
+      var html = receiptDocumentHtml(t, auth);
+      client.storage.from(DOC_BUCKET).upload(htmlPath, html, { contentType: 'text/html', upsert: true }).then(function (up) {
+        if (up.error) { fail('Saving the receipt failed \u2014 try again.'); return; }
+        var fileName = 'Receipt \u2014 generated ' + fmtDate(new Date().toISOString()) + '.html';
+        var noteText = 'Generated from the ticket charges \u2014 generating again after a charge change replaces this copy.';
+        var after = function () {
+          buildReceiptPdfBlob(t, auth, fail, function (blob) {
+            uploadReceiptPdf(client, t, blob, fail, function () {
+              note('Emailing receipt\u2026');
+              callSendReceipt(client, t.id, function (out) {
+                if (btn) btn.disabled = false;
+                if (!out) { note('Emailing the receipt failed \u2014 try again.'); return; }
+                if (out.ok) { note('Receipt emailed to ' + (out.recipient || 'the customer') + '.'); loadDocuments(client, t); return; }
+                if (out.error === 'no_email') { note('No email on file for this customer \u2014 add one under Edit details, or use Download receipt.'); return; }
+                if (out.error === 'not_configured') { note('Email sending is not connected yet \u2014 use Download receipt for now.'); return; }
+                if (out.error === 'receipt_missing') { note('The receipt file was not ready \u2014 try Email receipt again.'); return; }
+                note('Emailing the receipt failed \u2014 try again.');
+              });
+            });
+          });
+        };
+        client.from('ticket_documents').select('id').eq('ticket_id', t.id).eq('storage_path', htmlPath).limit(1).then(function (q) {
+          if (!q.error && q.data && q.data.length) {
+            client.from('ticket_documents').update({ file_name: fileName, note: noteText, created_at: new Date().toISOString() }).eq('id', q.data[0].id).then(function () { after(); }).catch(function () { after(); });
+          } else {
+            client.from('ticket_documents').insert({ ticket_id: t.id, doc_type: 'receipt', storage_path: htmlPath, file_name: fileName, note: noteText }).then(function () { after(); }).catch(function () { after(); });
+          }
+        }).catch(function () { after(); });
+      }).catch(function () { fail('Saving the receipt failed \u2014 try again.'); });
+    });
+  }
+
   function printPartLabel(t, p) {
     var partUrl = 'https://austinstechrepairgroup.com/portal.html?part=' + p.id;
     var html = '<div class="lbl"><div class="lbl-flex"><div class="lbl-text">' +
@@ -3646,6 +3974,13 @@ function loadTicketThread(client, ticketId) {
     var genReceiptBtn = $('p2-gen-receipt-btn');
     if (genReceiptBtn) genReceiptBtn.addEventListener('click', function () { generateReceipt(client, t); });
 
+    /* PORTAL_RECEIPT_SEND_2026_11_02: Download receipt (PDF) and
+     * Email receipt, wired beside Generate receipt. */
+    var dlReceiptBtn = $('p2-download-receipt-btn');
+    if (dlReceiptBtn) dlReceiptBtn.addEventListener('click', function () { downloadReceipt(client, t); });
+    var emailReceiptBtn = $('p2-email-receipt-btn');
+    if (emailReceiptBtn) emailReceiptBtn.addEventListener('click', function () { emailReceipt(client, t); });
+
     var delBtn = $('p2-delete-btn'), confirmBox = $('p2-delete-confirm');
     if (delBtn && confirmBox) {
       delBtn.addEventListener('click', function () { confirmBox.hidden = false; delBtn.hidden = true; });
@@ -3661,7 +3996,22 @@ function loadTicketThread(client, ticketId) {
     }
 
     var kindSel = $('p2-charge-kind');
-    if (kindSel) kindSel.addEventListener('change', function () {
+    /* PORTAL_TIP_2026_11_02: one sync for the kind select. Tip
+     * auto-fills the description "Tip" (still editable, same pattern
+     * as dispatch and deposit below) and takes Our cost out of play —
+     * a tip has no cost, so the field is cleared, disabled, and
+     * hidden; any other kind restores it. The submit handler calls
+     * this again after its form reset so the cost field comes back
+     * with the select. */
+    function syncChargeKind() {
+      if (!kindSel) return;
+      var costEl = $('p2-charge-cost');
+      var isTip = kindSel.value === 'tip';
+      if (costEl) {
+        costEl.disabled = isTip;
+        costEl.style.display = isTip ? 'none' : '';
+        if (isTip) costEl.value = '';
+      }
       if (kindSel.value === 'dispatch') {
         if (!$('p2-charge-desc').value) $('p2-charge-desc').value = 'House-call fee (non-refundable)';
         if (!$('p2-charge-price').value) $('p2-charge-price').value = '35';
@@ -3669,7 +4019,11 @@ function loadTicketThread(client, ticketId) {
       if (kindSel.value === 'deposit_credit' && !$('p2-charge-desc').value) {
         $('p2-charge-desc').value = 'Parts deposit received';
       }
-    });
+      if (isTip && !$('p2-charge-desc').value) {
+        $('p2-charge-desc').value = 'Tip';
+      }
+    }
+    if (kindSel) kindSel.addEventListener('change', syncChargeKind);
 
     var chargeForm = $('p2-charge-form');
     if (chargeForm) chargeForm.addEventListener('submit', function (e) {
@@ -3700,7 +4054,9 @@ function loadTicketThread(client, ticketId) {
       } else if (waive) {
         insertPrice = 0;
       }
-      var costRaw = $('p2-charge-cost').value;
+      /* PORTAL_TIP_2026_11_02: belt and braces — a tip row never
+       * saves a unit_cost, even if the field somehow held a value. */
+      var costRaw = kindSel.value === 'tip' ? '' : $('p2-charge-cost').value;
       client.from('ticket_charges').insert({
         ticket_id: t.id,
         kind: kindSel.value,
@@ -3711,6 +4067,9 @@ function loadTicketThread(client, ticketId) {
       }).then(function (res) {
         if (res.error) { err.textContent = 'Couldn&rsquo;t add that charge. Try again.'; err.hidden = false; return; }
         chargeForm.reset(); $('p2-charge-qty').value = '1';
+        /* PORTAL_TIP_2026_11_02: restore the Our cost field the
+         * reset's return to Part leaves hidden/disabled otherwise. */
+        syncChargeKind();
         loadCharges(client, t);
       }).catch(function () { err.textContent = 'Couldn&rsquo;t add that charge. Try again.'; err.hidden = false; });
     });
@@ -4891,7 +5250,11 @@ function loadTicketThread(client, ticketId) {
       }).join('') +
       '</tbody></table></div>';
     html += '<p class="portal-muted portal-small">Counted by each ticket&rsquo;s job date. Part orders with no cost recorded count as $0; cancelled part orders are left out.</p>';
+    /* PORTAL_FINANCIALS_2026_11_02: payroll, processing, and the
+     * true bottom line (finBottomLineHtml, in the block below). */
+    html += finBottomLineHtml(t);
     body.innerHTML = html;
+    wireFinSettings(body);
   }
 
   function loadFinancials(force) {
@@ -4909,7 +5272,11 @@ function loadTicketThread(client, ticketId) {
     if (body) body.innerHTML = '<p class="portal-muted">Loading financials&hellip;</p>';
     withClient(function (client) {
       if (!client) { if (body) body.innerHTML = '<p class="portal-error">Couldn&rsquo;t load financials.</p>'; return; }
-      var got = { charges: null, parts: null, tickets: null }, failed = false;
+      var got = { charges: null, parts: null, tickets: null, time: null, profiles: null, approvals: null }, failed = false;
+      /* PORTAL_FINANCIALS_2026_11_02: the payroll sources settle
+       * separately — a missing one degrades only its own section
+       * of the bottom line instead of blanking the whole panel. */
+      var payrollSettled = { time: false, profiles: false, approvals: false };
       function fail() {
         if (failed) return;
         failed = true;
@@ -4917,20 +5284,293 @@ function loadTicketThread(client, ticketId) {
       }
       function done() {
         if (failed || !got.charges || !got.parts || !got.tickets) return;
+        if (!payrollSettled.time || !payrollSettled.profiles || !payrollSettled.approvals) return;
         var jobByTicket = {};
         got.tickets.forEach(function (tk) { jobByTicket[tk.id] = tk.job_date || null; });
-        finCache = { charges: got.charges, parts: got.parts, jobByTicket: jobByTicket };
+        finCache = { charges: got.charges, parts: got.parts, jobByTicket: jobByTicket, timeEntries: got.time || [], profiles: got.profiles || [], approvals: got.approvals || [] };
         state.loaded.financials = true;
         renderFinancials();
       }
-      client.from('ticket_charges').select('ticket_id, kind, qty, unit_price, created_at')
+      /* PORTAL_FINANCIALS_2026_11_02: settlePayroll is called by
+       * each payroll fetch below, on success or graceful fallback. */
+      function settlePayroll() { if (payrollSettled.time && payrollSettled.profiles && payrollSettled.approvals) done(); }
+      client.from('ticket_charges').select('ticket_id, kind, qty, unit_price, created_at, description') /* PORTAL_FINANCIALS_2026_11_02: description — the only place a payment's method is written down (finCardCollected) */
         .then(function (res) { if (res.error) { fail(); return; } got.charges = res.data || []; done(); }).catch(fail);
       client.from('part_orders').select('ticket_id, our_cost, qty, status, created_at')
         .then(function (res) { if (res.error) { fail(); return; } got.parts = res.data || []; done(); }).catch(fail);
       client.from('tickets').select('id, job_date')
         .then(function (res) { if (res.error) { fail(); return; } got.tickets = res.data || []; done(); }).catch(fail);
+      /* PORTAL_FINANCIALS_2026_11_02: payroll sources. Time entries
+       * are asked for with the type/miles columns first and fall
+       * back to the plain columns (finTimeKnown flags which world
+       * we are in); profiles fall back the same way the roster's
+       * pay load does; approvals simply may not exist yet. */
+      client.from('time_entries').select('employee_id, employee_name, clock_in, clock_out, entry_type, miles')
+        .order('clock_in', { ascending: false }).limit(1000)
+        .then(function (res) {
+          if (res.error) {
+            finTimeKnown = false;
+            return client.from('time_entries').select('employee_id, employee_name, clock_in, clock_out')
+              .order('clock_in', { ascending: false }).limit(1000)
+              .then(function (res2) { got.time = res2.error ? [] : (res2.data || []); payrollSettled.time = true; settlePayroll(); })
+              .catch(function () { got.time = []; payrollSettled.time = true; settlePayroll(); });
+          }
+          finTimeKnown = true;
+          got.time = res.data || []; payrollSettled.time = true; settlePayroll();
+        })
+        .catch(function () { got.time = []; payrollSettled.time = true; settlePayroll(); });
+      client.from('employee_profiles').select('id, name, role, pay_rate')
+        .then(function (res) {
+          if (res.error) {
+            return client.from('employee_profiles').select('id, name, role')
+              .then(function (res2) { got.profiles = res2.error ? [] : (res2.data || []); payrollSettled.profiles = true; settlePayroll(); })
+              .catch(function () { got.profiles = []; payrollSettled.profiles = true; settlePayroll(); });
+          }
+          got.profiles = res.data || []; payrollSettled.profiles = true; settlePayroll();
+        })
+        .catch(function () { got.profiles = []; payrollSettled.profiles = true; settlePayroll(); });
+      client.from('time_card_approvals').select('employee_id, week_start, approved_by, approved_at').limit(1000)
+        .then(function (res) {
+          finApprovalsKnown = !res.error;
+          got.approvals = res.error ? [] : (res.data || []);
+          payrollSettled.approvals = true; settlePayroll();
+        })
+        .catch(function () { finApprovalsKnown = false; got.approvals = []; payrollSettled.approvals = true; settlePayroll(); });
     });
   }
+
+  /* ================= PORTAL_FINANCIALS_2026_11_02 =================
+   * (Austin, Nov 2, 2026): "down the bottom where it says financials
+   * we need to do like a pay payroll subtracted by process and all
+   * that kind of stuff too" — the panel now carries a true bottom
+   * line under the original cards/donut/months (which are untouched,
+   * on their original definitions):
+   *
+   *   MONEY IN  = Collected (paid) — the panel's own collected
+   *               figure (deposit_credit lines), labeled as such.
+   *   PARTS     = the panel's own parts cost (part_orders.our_cost —
+   *               see the audit note in REPORT.md for why this basis
+   *               is kept instead of ticket_charges.unit_cost).
+   *   PAYROLL   = time_entries hours x employee_profiles.pay_rate,
+   *               computed with the time clock's own rules: closed
+   *               entries only, duration = clock_out - clock_in,
+   *               attributed to the day (and pay week) the shift
+   *               STARTED. The owner is included at his own set rate
+   *               exactly like any associate (his $25/hr is his own
+   *               deliberate setting). Split into Approved (the
+   *               associate's pay week has a time_card_approvals
+   *               row — final, ready for Friday pay) and Awaiting
+   *               approval (the rest). An associate with no rate set
+   *               is listed with "rate not set"; their hours are
+   *               shown but never priced or folded into any total.
+   *   DRIVING   = (PORTAL_TIMECARDS_2026_11_02 types) a driving
+   *               entry earns NO paid hours for anyone. Techs earn
+   *               mileage instead: miles x the rate for the date
+   *               driven — the IRS business standard mileage rate
+   *               by default (2026: $0.725/mi Jan 1–Jun 30, $0.76/mi
+   *               Jul 1–Dec 31), or Austin's own rate for ALL miles
+   *               when he sets the override below. The owner's
+   *               driving is unpaid entirely — no hourly, no
+   *               mileage — and is shown labeled, never silent.
+   *   PROCESSING= an owner-set fee % applied to CARD-collected
+   *               revenue in the period, labeled an estimate.
+   *               Processing fees are not recorded anywhere in the
+   *               portal's data (verified — see REPORT.md): payments
+   *               land as deposit_credit lines and the only method
+   *               ever written down is the free-text description
+   *               ('Paid in cash' from the cash button; Square-link
+   *               payments are hand-recorded lines). Card payments
+   *               are therefore identified by description keywords,
+   *               and the base used is printed on the line itself.
+   *   NET       = Collected − Parts − Payroll (approved + awaiting)
+   *               − Processing.
+   *
+   * SETTINGS: the portal has no settings table or key-value store
+   * anywhere (verified across portal.js and portal.html), so the
+   * fee % and the mileage override live in localStorage through the
+   * same try/catch pattern as the device-trust token and the
+   * remembered tab — per-device, blank/0 until Austin sets them.
+   * Everything below recalculates with the panel's existing period
+   * buttons because renderFinancials rebuilds from finCache. */
+  var FIN_FEE_KEY = 'atrg_fin_processing_pct';
+  var FIN_MILES_KEY = 'atrg_fin_mileage_rate';
+  var finTimeKnown = false;      /* time_entries answered with entry_type + miles */
+  var finApprovalsKnown = false; /* time_card_approvals answered */
+
+  function finStoredNumber(key) {
+    try {
+      var v = parseFloat(window.localStorage.getItem(key));
+      return isFinite(v) && v > 0 ? v : 0;
+    } catch (e) { return 0; }
+  }
+  function finStoreNumber(key, v) {
+    try {
+      if (v > 0) window.localStorage.setItem(key, String(v));
+      else window.localStorage.removeItem(key);
+    } catch (e) {}
+  }
+  function finFeePct() { return finStoredNumber(FIN_FEE_KEY); }
+  function finMileageOverride() {
+    var v = finStoredNumber(FIN_MILES_KEY);
+    return v > 0 ? v : null;
+  }
+  /* The mileage rate for miles driven on date d: Austin's override
+   * wins for all miles when set; otherwise the IRS business standard
+   * mileage rate for 2026 (verified figures — 72.5 cents through
+   * Jun 30, 76 cents from Jul 1). Dates outside 2026 use the nearest
+   * 2026 figure until the table is updated; only 2026 is verified. */
+  function mileageRateFor(d) {
+    var ov = finMileageOverride();
+    if (ov != null) return { rate: ov, owner: true };
+    return { rate: d.getTime() >= new Date(2026, 6, 1).getTime() ? 0.76 : 0.725, owner: false };
+  }
+  /* The Monday of d's pay week as 'YYYY-MM-DD' — the same Monday
+   * arithmetic as weekStart(), and the key time_card_approvals
+   * stores in week_start. */
+  function finWeekKey(d) {
+    var x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
+    return x.getFullYear() + '-' + ('0' + (x.getMonth() + 1)).slice(-2) + '-' + ('0' + x.getDate()).slice(-2);
+  }
+  var FIN_CARD_RE = /card|square|visa|mastercard|amex|discover|apple ?pay|google ?pay|samsung ?pay|credit|debit/i;
+  function finCardCollected(charges, jobByTicket) {
+    var sum = 0;
+    charges.forEach(function (c) {
+      if (c.kind !== 'deposit_credit') return;
+      if (!finInPeriod(finRowDate(c, jobByTicket))) return;
+      if (!FIN_CARD_RE.test(String(c.description || ''))) return;
+      sum += Number(c.qty || 0) * Number(c.unit_price || 0);
+    });
+    return sum;
+  }
+
+  function finPayroll() {
+    var profById = {};
+    (finCache.profiles || []).forEach(function (p) { profById[p.id] = p; });
+    var appr = {};
+    (finCache.approvals || []).forEach(function (a) { appr[a.employee_id + '|' + String(a.week_start).slice(0, 10)] = a; });
+    var byId = {}, rows = [];
+    (finCache.timeEntries || []).forEach(function (r) {
+      var ci = new Date(r.clock_in), co = r.clock_out ? new Date(r.clock_out) : null;
+      if (!co || isNaN(ci.getTime()) || isNaN(co.getTime())) return;
+      if (!finInPeriod(ci)) return;
+      var id = r.employee_id || r.employee_name || 'tech';
+      var g = byId[id];
+      if (!g) {
+        var p = profById[id] || null;
+        var rate = null;
+        if (p && p.pay_rate != null && p.pay_rate !== '' && !isNaN(Number(p.pay_rate))) rate = Number(p.pay_rate);
+        g = byId[id] = {
+          id: id, name: (p && p.name) || r.employee_name || 'Associate',
+          isOwner: !!(p && trim(p.role).toLowerCase() === 'owner'),
+          rate: rate, workMs: 0, apprWorkMs: 0, drivingMs: 0,
+          miles: 0, milesAmt: 0, apprMilesAmt: 0, ownerMiles: 0
+        };
+        rows.push(g);
+      }
+      var dur = co - ci; if (dur < 0) dur = 0;
+      var isAppr = finApprovalsKnown && !!appr[id + '|' + finWeekKey(ci)];
+      if (finTimeKnown && r.entry_type === 'driving') {
+        g.drivingMs += dur;
+        var mi = Number(r.miles) || 0;
+        if (g.isOwner) { g.ownerMiles += mi; return; }
+        var amt = mi * mileageRateFor(ci).rate;
+        g.miles += mi; g.milesAmt += amt;
+        if (isAppr) g.apprMilesAmt += amt;
+      } else {
+        g.workMs += dur;
+        if (isAppr) g.apprWorkMs += dur;
+      }
+    });
+    var approved = 0, pending = 0, unsetMs = 0;
+    rows.forEach(function (g) {
+      g.workGross = g.rate == null ? null : (g.workMs / 3600000) * g.rate;
+      g.apprGross = g.rate == null ? null : (g.apprWorkMs / 3600000) * g.rate;
+      if (g.rate == null) { unsetMs += g.workMs; }
+      else { approved += g.apprGross; pending += (g.workGross - g.apprGross); }
+      approved += g.apprMilesAmt;
+      pending += (g.milesAmt - g.apprMilesAmt);
+    });
+    return { rows: rows, approved: approved, pending: pending, total: approved + pending, unsetMs: unsetMs };
+  }
+
+  function finBottomLineHtml(t) {
+    var pay = finPayroll();
+    var pct = finFeePct();
+    var cardBase = finCardCollected(finCache.charges, finCache.jobByTicket);
+    var processing = Math.round(cardBase * pct) / 100;
+    var net = t.collected - t.partsCost - pay.total - processing;
+    var ovr = finMileageOverride();
+    var html = '';
+    html += '<div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Payroll</h3></div>';
+    if (!pay.rows.length) {
+      html += '<p class="portal-muted">No time logged in this period, so no payroll.</p>';
+    } else {
+      html += '<div class="portal-table-wrap"><table class="portal-table"><thead><tr><th>Associate</th><th>Work hours</th><th>Rate</th><th>Work pay</th><th>Driving</th><th>Miles</th><th>Mileage pay</th></tr></thead><tbody>' +
+        pay.rows.map(function (g) {
+          return '<tr><td>' + esc(g.name) + (g.isOwner ? ' (owner)' : '') + '</td>' +
+            '<td>' + esc(fmtHours(g.workMs)) + '</td>' +
+            '<td>' + (g.rate == null ? 'Rate not set' : esc(fmtMoney(g.rate)) + ' / hr') + '</td>' +
+            '<td>' + (g.workGross == null ? '&mdash;' : esc(fmtMoney(g.workGross))) + '</td>' +
+            '<td>' + (g.drivingMs > 0 ? esc(fmtHours(g.drivingMs)) : '&mdash;') + '</td>' +
+            '<td>' + (g.isOwner ? (g.ownerMiles > 0 ? g.ownerMiles.toFixed(1) + ' mi' : '&mdash;') : (g.miles > 0 ? g.miles.toFixed(1) + ' mi' : '&mdash;')) + '</td>' +
+            '<td>' + (g.isOwner ? '&mdash;' : (g.milesAmt > 0 ? esc(fmtMoney(g.milesAmt)) : '&mdash;')) + '</td></tr>';
+        }).join('') +
+        '</tbody></table></div>';
+    }
+    if (pay.unsetMs > 0) {
+      html += '<p class="portal-error">' + esc(fmtHours(pay.unsetMs)) + ' of work time above has no pay rate set — it is NOT counted in payroll. Set rates on the Associates cards.</p>';
+    }
+    var ownerDrive = null;
+    pay.rows.forEach(function (g) { if (g.isOwner && (g.drivingMs > 0 || g.ownerMiles > 0)) ownerDrive = g; });
+    if (ownerDrive) {
+      html += '<p class="portal-muted portal-small">Owner driving (' + esc(fmtHours(ownerDrive.drivingMs)) + (ownerDrive.ownerMiles > 0 ? ', ' + ownerDrive.ownerMiles.toFixed(1) + ' mi' : '') + ') is recorded but unpaid — no hourly and no mileage, per the house rule.</p>';
+    }
+    html += '<p class="portal-muted portal-small">' + (ovr != null
+      ? 'Mileage is paid at your rate of ' + esc(fmtMoney(ovr)) + ' / mi for all miles.'
+      : 'Mileage is paid at the IRS rate for the date driven — 72.5&cent; / mi through Jun 30, 2026, 76&cent; / mi from Jul 1, 2026 — unless you set your own rate below.') + '</p>';
+    if (!finTimeKnown) {
+      html += '<p class="portal-muted portal-small">Driving and mileage tracking turns on once the staged time-entries update runs — until then every entry counts as work time, the only kind there was.</p>';
+    }
+    if (!finApprovalsKnown) {
+      html += '<p class="portal-muted portal-small">Week approvals are not set up yet (they arrive with the staged approvals table) — until then all payroll counts as awaiting approval.</p>';
+    } else {
+      html += '<p class="portal-muted portal-small">Approved payroll is final — ready for Friday pay. The rest is waiting on the Tuesday approval, on the Time cards.</p>';
+    }
+    html += '<p>Payroll — approved (final): <strong>' + esc(fmtMoney(pay.approved)) + '</strong> &middot; Payroll — awaiting approval: <strong>' + esc(fmtMoney(pay.pending)) + '</strong></p>';
+    html += '<div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Processing &amp; bottom line</h3></div>';
+    html += '<div class="fin-settings">' +
+      '<label>Card processing fee %<input type="number" id="fin-fee-pct" min="0" step="0.01" inputmode="decimal" placeholder="0" value="' + (pct > 0 ? esc(String(pct)) : '') + '"></label>' +
+      '<label>Mileage rate $ / mi (blank = IRS)<input type="number" id="fin-miles-rate" min="0" step="0.01" inputmode="decimal" placeholder="IRS rate" value="' + (ovr != null ? esc(String(ovr)) : '') + '"></label>' +
+      '</div>' +
+      '<p class="portal-muted portal-small">Your two rates, kept on this device. The processing % is an estimate, applied to the card payments collected in the period — identified from the payment notes (' + esc(fmtMoney(cardBase)) + ' of card payments in this period), because the portal records how a payment was described, not a method field.</p>';
+    html += '<div class="portal-table-wrap"><table class="portal-table"><tbody>' +
+      '<tr><td>Collected (paid)</td><td>' + esc(fmtMoney(t.collected)) + '</td></tr>' +
+      '<tr><td>Parts cost (ours)</td><td>&minus;' + esc(fmtMoney(t.partsCost)) + '</td></tr>' +
+      '<tr><td>Payroll — approved</td><td>&minus;' + esc(fmtMoney(pay.approved)) + '</td></tr>' +
+      '<tr><td>Payroll — awaiting approval</td><td>&minus;' + esc(fmtMoney(pay.pending)) + '</td></tr>' +
+      '<tr><td>Processing (est.)</td><td>&minus;' + esc(fmtMoney(processing)) + '</td></tr>' +
+      '</tbody></table></div>';
+    html += '<div class="fin-cards"><div class="fin-card fin-net-card"><p class="fin-card-label">Net for this period</p><p class="fin-card-value fin-net-value">' + esc(fmtMoney(net)) + '</p></div></div>';
+    html += '<p class="portal-muted portal-small">Net = collected &minus; parts &minus; payroll &minus; processing. Billed-but-unpaid work is in the cards at the top, not down here — this is the money that actually moved.</p>';
+    return html;
+  }
+
+  function wireFinSettings(body) {
+    var fee = body.querySelector('#fin-fee-pct');
+    if (fee) fee.addEventListener('change', function () {
+      var v = parseFloat(fee.value);
+      finStoreNumber(FIN_FEE_KEY, isFinite(v) && v > 0 ? Math.round(v * 100) / 100 : 0);
+      renderFinancials();
+    });
+    var mi = body.querySelector('#fin-miles-rate');
+    if (mi) mi.addEventListener('change', function () {
+      var v = parseFloat(mi.value);
+      finStoreNumber(FIN_MILES_KEY, isFinite(v) && v > 0 ? Math.round(v * 1000) / 1000 : 0);
+      renderFinancials();
+    });
+  }
+  /* end PORTAL_FINANCIALS_2026_11_02 */
 
   /* ================= ASSOCIATES ROSTER =================
    * PORTAL_SIDEBAR_ROSTER_2026_11_02 (Austin, Nov 2, 2026): the
@@ -5078,6 +5718,7 @@ function loadTicketThread(client, ticketId) {
           .catch(function () { listError(list, 'associates'); });
       };
       if (!isPortalOwner()) { plain(); return; }
+      loadAssocHome(client); /* PORTAL_MILEAGE_2026_11_02: independent home_address probe — never disturbs the pay fallback below */
       /* PORTAL_ROSTER_DETAIL_2026_11_02: the owner's load also asks
        * for pay_rate. If the column is not live yet the select
        * errors and the roster quietly loads without it — the same
@@ -5113,6 +5754,15 @@ function loadTicketThread(client, ticketId) {
         '<span class="assoc-pay-edit"><input type="number" min="0" step="0.01" inputmode="decimal" placeholder="$ / hr" aria-label="Pay rate in dollars per hour" data-assoc-pay-input="' + esc(a.id) + '" value="' + (has ? esc(String(Number(a.pay_rate))) : '') + '">' +
         '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-assoc-pay-save="' + esc(a.id) + '">Save</button></span></div>' +
         '<p class="portal-small assoc-pay-msg" data-assoc-pay-msg="' + esc(a.id) + '"></p>';
+    }
+    /* PORTAL_MILEAGE_2026_11_02: the owner's home-address editor —
+     * same owner-only section, independent column probe. */
+    if (assocHomeKnown) {
+      var homeVal = assocHomeById[a.id] || '';
+      out += '<div class="assoc-pay-row"><span class="assoc-pay-label">Home address<span class="assoc-pay-cur">' + (homeVal ? esc(homeVal) : 'Not set') + '</span></span>' +
+        '<span class="assoc-pay-edit"><input type="text" placeholder="Street, City, State ZIP" aria-label="Home address" data-assoc-home-input="' + esc(a.id) + '" value="' + esc(homeVal) + '">' +
+        '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-assoc-home-save="' + esc(a.id) + '">Save</button></span></div>' +
+        '<p class="portal-small assoc-pay-msg" data-assoc-home-msg="' + esc(a.id) + '"></p>';
     }
     var t = assocTimeCache[a.id];
     out += '<div class="assoc-time" data-assoc-time="' + esc(a.id) + '">' +
@@ -6528,6 +7178,8 @@ function loadTicketThread(client, ticketId) {
            * they sit in, so they act instead of toggling it. */
           var aps = t.getAttribute('data-assoc-pay-save');
           if (aps) { saveAssocPay(aps); return; }
+          var ahs = t.getAttribute('data-assoc-home-save');
+          if (ahs) { saveAssocHome(ahs); return; } /* PORTAL_MILEAGE_2026_11_02 */
           var atc = t.getAttribute('data-assoc-timecard');
           if (atc) { openAssocTimeCard(atc); return; }
           /* PORTAL_SIDEBAR_ROSTER_2026_11_02: roster row tap expands/collapses that associate's profile in place. */
@@ -6605,7 +7257,7 @@ function loadTicketThread(client, ticketId) {
   }
 
   /* ================= EXTRA TABS (timeclock / links / square) ================= */
-  var EXTRA_LOADERS = { timeclock: loadTimeClock, checkin: loadCheckinCustomers };
+  var EXTRA_LOADERS = { timeclock: loadTimeClock, checkin: loadCheckinCustomers, mileage: loadMileage /* PORTAL_MILEAGE_2026_11_02 */ };
   var extraLoaded = {};
   function showExtraPanel(name) {
     saveActiveTab(name);
@@ -6618,7 +7270,7 @@ function loadTicketThread(client, ticketId) {
     if (!extraLoaded[name] && EXTRA_LOADERS[name]) { extraLoaded[name] = true; EXTRA_LOADERS[name](false); }
   }
   function initExtraTabs() {
-    ['timeclock', 'links', 'square', 'checkin'].forEach(function (name) {
+    ['timeclock', 'links', 'square', 'checkin', 'mileage'].forEach(function (name) { /* PORTAL_MILEAGE_2026_11_02 */
       var tab = $('portal-tab-' + name);
       if (tab) tab.addEventListener('click', function () { showExtraPanel(name); });
     });
@@ -6628,6 +7280,10 @@ function loadTicketThread(client, ticketId) {
     var rb = $('tc-test-receipt'); if (rb) rb.addEventListener('click', function () { printTest(false); });
     var lb = $('tc-test-label'); if (lb) lb.addEventListener('click', function () { printTest(true); });
     var act = $('tc-action'); if (act) act.addEventListener('click', toggleClock);
+    /* PORTAL_MILEAGE_2026_11_02: mileage panel wiring, plus the
+     * associate's own home-address save on the Time Clock panel. */
+    initMileage();
+    var hsb = $('tc-home-save'); if (hsb) hsb.addEventListener('click', saveOwnHome);
     /* PORTAL_TIME_CARDS_2026_11_02: week stepper for the time cards. */
     var wp = $('tc-week-prev'); if (wp) wp.addEventListener('click', function () { tcWeekOffset -= 1; renderTimeCards(); });
     var wn = $('tc-week-next'); if (wn) wn.addEventListener('click', function () { if (tcWeekOffset < 0) { tcWeekOffset += 1; renderTimeCards(); } });
@@ -6693,6 +7349,7 @@ function loadTicketThread(client, ticketId) {
           }
           loadBirthdays(client);
           loadTimeCards(client);
+          loadOwnHome(client); /* PORTAL_MILEAGE_2026_11_02: the associate's own home-address row */
         });
     });
   }
@@ -6706,14 +7363,14 @@ function loadTicketThread(client, ticketId) {
       client.from('time_entries').select('*').order('clock_in', { ascending: false }).limit(300).then(function (res) {
         if (res.error) { if (cards) cards.innerHTML = '<p class="portal-muted">Team time unavailable.</p>'; return; }
         tcCardRows = res.data || [];
-        renderTimeCards();
+        renderTimeCards(); tcMetaLoad(client); /* PORTAL_TIMECARDS_2026_11_02: fields / profiles / approvals settle in behind the cards */
       });
     } else {
       if (onWrap) onWrap.hidden = true;
       client.from('time_entries').select('*').eq('employee_id', state.user.id).order('clock_in', { ascending: false }).limit(300).then(function (res) {
         if (res.error) { if (cards) cards.innerHTML = '<p class="portal-muted">Your time is unavailable.</p>'; return; }
         tcCardRows = res.data || [];
-        renderTimeCards();
+        renderTimeCards(); tcMetaLoad(client); /* PORTAL_TIMECARDS_2026_11_02 */
       });
     }
   }
@@ -6735,26 +7392,39 @@ function loadTicketThread(client, ticketId) {
     if (label) label.textContent = 'Pay week: ' + ws.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' \u2013 ' + sun.toLocaleDateString([], { month: 'short', day: 'numeric' });
     var next = $('tc-week-next'); if (next) next.disabled = tcWeekOffset >= 0;
     var inWeek = tcCardRows.filter(function (r) { var d = new Date(r.clock_in); return d >= ws && d < we; });
-    if (!inWeek.length) { wrap.innerHTML = '<p class="portal-muted">No time logged for this week.</p>'; return; }
+    if (!inWeek.length) { wrap.innerHTML = tcOwnerBarHtml() + '<p class="portal-muted">No time logged for this week.</p>'; wireTcManual(wrap); return; } /* PORTAL_TIMECARDS_2026_11_02: the owner can still add the week's first entry */
     var groups = [], byKey = {};
     inWeek.forEach(function (r) {
       var key = r.employee_id || r.employee_name || 'tech';
-      if (!byKey[key]) { byKey[key] = { name: r.employee_name || 'Tech', rows: [] }; groups.push(byKey[key]); }
+      if (!byKey[key]) { byKey[key] = { id: r.employee_id || null, name: r.employee_name || 'Tech', rows: [], workMs: 0, driveMs: 0 }; groups.push(byKey[key]); }
       byKey[key].rows.push(r);
     });
     var mgr = isManager();
-    wrap.innerHTML = groups.map(function (g) {
+    wrap.innerHTML = tcOwnerBarHtml() + groups.map(function (g) { /* PORTAL_TIMECARDS_2026_11_02: the owner add bar rides on top of the cards */
       var total = 0;
       var rowsHtml = g.rows.map(function (r) {
         var ci = new Date(r.clock_in), co = r.clock_out ? new Date(r.clock_out) : null;
         var when = esc(ci.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })) + ' &middot; ' + esc(ci.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })) + ' &rarr; ';
-        if (!co) return '<div class="tc-row"><span>' + when + '<strong>On the clock</strong></span></div>';
+        /* PORTAL_TIMECARDS_2026_11_02: the row editor replaces the
+         * row outright while it is open. */
+        if (tcEditId === r.id) return tcEditFormHtml(r);
+        var isDriving = tcFieldsKnown && r.entry_type === 'driving';
+        var editBtn = isPortalOwner() ? '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-tc-edit="' + r.id + '">Edit</button>' : '';
+        var tripLine = '';
+        if (isDriving && (r.from_location || r.to_location)) {
+          tripLine = '<div class="tc-note-line"><i class="fas fa-route"></i> ' + esc(r.from_location || '?') + ' &rarr; ' + esc(r.to_location || '?') + (r.miles != null && r.miles !== '' ? ' &middot; ' + esc(String(Number(r.miles))) + ' mi' : '') + '</div>';
+        }
+        var noteLine = (tcFieldsKnown && r.note) ? '<div class="tc-note-line">' + esc(r.note) + '</div>' : '';
+        var driveBadge = isDriving ? '<span class="tc-badge"><i class="fas fa-car"></i> Driving</span>' : '';
+        if (!co) return '<div class="tc-row"><span>' + when + '<strong>On the clock</strong></span><span class="tc-row-end">' + driveBadge + editBtn + '</span></div>' + tripLine + noteLine;
         total += (co - ci);
+        if (isDriving) g.driveMs += (co - ci); else g.workMs += (co - ci);
         var badge = r.approved ? '<span class="tc-badge">Approved</span>' : '<span class="tc-badge tc-badge-pending">Pending approval</span>';
         var approve = (!r.approved && mgr) ? '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-approve="' + r.id + '">Approve</button>' : '';
-        return '<div class="tc-row"><span>' + when + esc(co.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })) + ' (' + fmtHours(co - ci) + ')</span><span class="tc-row-end">' + badge + approve + '</span></div>';
+        return '<div class="tc-row"><span>' + when + esc(co.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })) + ' (' + fmtHours(co - ci) + ')</span><span class="tc-row-end">' + driveBadge + badge + approve + editBtn + '</span></div>' + tripLine + noteLine;
       }).join('');
-      return '<div class="tc-card"><div class="tc-card-head"><strong>' + esc(g.name) + '</strong><span class="tc-card-total">Pay-week total: ' + fmtHours(total) + '</span></div>' + rowsHtml + '</div>';
+      var driveNote = g.driveMs > 0 ? ' <span class="portal-muted">(incl. ' + esc(fmtHours(g.driveMs)) + ' driving — mileage only)</span>' : '';
+      return '<div class="tc-card"><div class="tc-card-head"><strong>' + esc(g.name) + '</strong><span class="tc-card-total">Pay-week total: ' + fmtHours(total) + driveNote + '</span></div>' + tcWeekApprovalHtml(g) + rowsHtml + '</div>'; /* PORTAL_TIMECARDS_2026_11_02: driving breakout + the weekly approval */
     }).join('');
     wrap.querySelectorAll('[data-approve]').forEach(function (b) {
       b.addEventListener('click', function () {
@@ -6762,12 +7432,14 @@ function loadTicketThread(client, ticketId) {
         tcClientRef.from('time_entries').update({ approved: true }).eq('id', b.getAttribute('data-approve')).then(function () { loadTimeClock(); });
       });
     });
+    wireTcManual(wrap); /* PORTAL_TIMECARDS_2026_11_02 */
   }
   function toggleClock() {
     withClient(function (client) {
       if (!client || !state.user) return;
       var btn = $('tc-action'); if (btn) btn.disabled = true;
-      var done = function () { if (btn) btn.disabled = false; extraLoaded.timeclock = true; loadTimeClock(); };
+      var wasOpenTc = !!tcOpenEntry; /* PORTAL_LOCATION_2026_11_02: which snapshot this clock action files */
+      var done = function () { if (btn) btn.disabled = false; extraLoaded.timeclock = true; loadTimeClock(); try { geoCapture(wasOpenTc ? 'clock_out' : 'clock_in'); } catch (e) {} };
       if (tcOpenEntry) {
         client.from('time_entries').update({ clock_out: new Date().toISOString() }).eq('id', tcOpenEntry.id).then(done).catch(done);
       } else {
@@ -6775,6 +7447,1197 @@ function loadTicketThread(client, ticketId) {
       }
     });
   }
+
+  /* ================= PORTAL_TIMECARDS_2026_11_02 =================
+   * (Austin, Nov 2, 2026): full manual control of time cards for
+   * the owner, plus the weekly approval.
+   *
+   * MANUAL ENTRIES: the owner can add an entry for any associate
+   * (date, clock-in, clock-out, type, miles, note), edit any entry's
+   * times (shortening included — it is the same edit), and delete an
+   * entry outright behind a two-tap confirm. Everything is gated on
+   * isPortalOwner() — the same gate as the pay-rate editor — and the
+   * controls never render for anyone else. Writes go to the same
+   * time_entries rows everything else reads, so a manual change
+   * flows on its own into the roster's "Hours this pay week"
+   * (loadAssocTime re-reads the table; the roster cache is also
+   * dropped below), the time-card totals (this panel re-fetches),
+   * and Financials payroll (its own fetch).
+   *
+   * TYPES (with PORTAL_MILEAGE_2026_11_02): an entry is Work or
+   * Driving. The type / miles / note / trip-endpoint columns arrive
+   * with time-entries-fields.sql; until then tcFieldsKnown is false
+   * and the forms carry times only — entries still save, and nothing
+   * pretends the extra fields exist.
+   *
+   * WEEKLY APPROVAL: one row in time_card_approvals per associate
+   * per pay week (week_start = the Monday, finWeekKey). Austin's
+   * cadence: approve every TUESDAY for FRIDAY pay, for the completed
+   * Mon–Sun week. The Approve control sits on each associate's card
+   * for the displayed week; an approved week shows who approved it
+   * and when, with an Undo. This is separate from the per-ENTRY
+   * approved flag the shift rows already carry — that one is
+   * untouched. Until the approvals table exists
+   * (time-card-approvals.sql), tcApprovalsKnown is false and the
+   * approval controls simply do not render. */
+  var tcEditId = null;
+  var tcFieldsProbed = false;
+  var tcFieldsKnown = false;
+  var tcMetaLoaded = false;
+  var tcProfiles = [];
+  var tcApprovals = {};
+  var tcApprovalsKnown = false;
+  var tcManualMsg = '';
+
+  function tcProbeFields(client, done) {
+    if (tcFieldsProbed) { if (done) done(tcFieldsKnown); return; }
+    client.from('time_entries').select('id, entry_type, miles, note, from_location, to_location').limit(1)
+      .then(function (res) { tcFieldsProbed = true; tcFieldsKnown = !res.error; if (done) done(tcFieldsKnown); })
+      .catch(function () { tcFieldsProbed = true; tcFieldsKnown = false; if (done) done(false); });
+  }
+
+  function tcMetaLoad(client) {
+    if (tcMetaLoaded || !client) return;
+    tcMetaLoaded = true;
+    tcProbeFields(client, function () { if (tcCardRows) renderTimeCards(); });
+    client.from('employee_profiles').select('id, name').order('name', { ascending: true }).limit(200)
+      .then(function (res) { if (!res.error) { tcProfiles = res.data || []; if (tcCardRows) renderTimeCards(); } })
+      .catch(function () {});
+    client.from('time_card_approvals').select('employee_id, week_start, approved_by, approved_at').limit(500)
+      .then(function (res) {
+        if (res.error) { tcApprovalsKnown = false; return; }
+        tcApprovalsKnown = true;
+        tcApprovals = {};
+        (res.data || []).forEach(function (a) { tcApprovals[a.employee_id + '|' + String(a.week_start).slice(0, 10)] = a; });
+        if (tcCardRows) renderTimeCards();
+      })
+      .catch(function () { tcApprovalsKnown = false; });
+  }
+
+  function tcPad2(n) { return ('0' + n).slice(-2); }
+  function tcDateStr(d) { return d.getFullYear() + '-' + tcPad2(d.getMonth() + 1) + '-' + tcPad2(d.getDate()); }
+  function tcTimeStr(d) { return tcPad2(d.getHours()) + ':' + tcPad2(d.getMinutes()); }
+  function tcParseLocal(ds, ts) {
+    var dm = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ds || ''), tm = /^(\d{2}):(\d{2})$/.exec(ts || '');
+    if (!dm || !tm) return null;
+    return new Date(Number(dm[1]), Number(dm[2]) - 1, Number(dm[3]), Number(tm[1]), Number(tm[2]));
+  }
+  function tcProfileName(id) {
+    for (var i = 0; i < tcProfiles.length; i++) if (tcProfiles[i].id === id) return tcProfiles[i].name || 'Associate';
+    if (id === (state.user && state.user.id)) return (state.profile && state.profile.name) || 'Associate';
+    return 'Associate';
+  }
+  function tcReloadCards() {
+    assocTimeCache = {};
+    tcEditId = null;
+    if (tcClientRef) loadTimeCards(tcClientRef);
+  }
+
+  function tcTypeFieldsHtml(prefix, type, miles, note) {
+    if (!tcFieldsKnown) return '';
+    return '<label>Type <select id="' + prefix + '-type"><option value="work"' + (type === 'driving' ? '' : ' selected') + '>Work</option><option value="driving"' + (type === 'driving' ? ' selected' : '') + '>Driving</option></select></label>' +
+      '<label>Miles (driving) <input type="number" id="' + prefix + '-miles" min="0" step="0.1" inputmode="decimal" value="' + (miles != null && miles !== '' ? esc(String(Number(miles))) : '') + '"></label>' +
+      '<label>Note <input type="text" id="' + prefix + '-note" value="' + esc(note || '') + '"></label>';
+  }
+
+  function tcOwnerBarHtml() {
+    if (!isPortalOwner()) return '';
+    var people = tcProfiles.length ? tcProfiles : [];
+    if (!people.length && tcCardRows) {
+      var seen = {};
+      tcCardRows.forEach(function (r) { if (r.employee_id && !seen[r.employee_id]) { seen[r.employee_id] = 1; people.push({ id: r.employee_id, name: r.employee_name || 'Associate' }); } });
+    }
+    var opts = people.map(function (p) { return '<option value="' + esc(p.id) + '">' + esc(p.name || 'Associate') + '</option>'; }).join('');
+    var today = tcDateStr(new Date());
+    return '<div class="tc-owner-bar"><p class="assoc-owner-head"><i class="fas fa-lock"></i> Owner — add a time entry</p>' +
+      '<div class="tc-manual-grid">' +
+      '<label>Associate <select id="tc-add-emp">' + opts + '</select></label>' +
+      '<label>Date in <input type="date" id="tc-add-indate" value="' + today + '"></label>' +
+      '<label>Time in <input type="time" id="tc-add-intime"></label>' +
+      '<label>Date out <input type="date" id="tc-add-outdate" value="' + today + '"></label>' +
+      '<label>Time out <input type="time" id="tc-add-outtime"></label>' +
+      tcTypeFieldsHtml('tc-add', 'work', '', '') +
+      '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-tc-add="1">Add entry</button>' +
+      '</div>' +
+      (tcFieldsKnown ? '' : '<p class="portal-muted portal-small">Times only for now — entry type, miles and notes turn on when the staged time-entries update runs.</p>') +
+      '<p class="portal-muted portal-small">Approving a week: step to the completed Mon–Sun week on an associate&rsquo;s card and tap Approve week — you do this on Tuesdays, for Friday pay.</p>' +
+      (tcManualMsg ? '<p class="portal-small tc-manual-msg">' + esc(tcManualMsg) + '</p>' : '') +
+      '</div>';
+  }
+
+  function tcEditFormHtml(r) {
+    var ci = new Date(r.clock_in), co = r.clock_out ? new Date(r.clock_out) : null;
+    return '<div class="tc-row"><form class="tc-edit-form" data-tc-editform="' + esc(r.id) + '">' +
+      '<div class="tc-manual-grid">' +
+      '<label>Date in <input type="date" data-f="indate" value="' + tcDateStr(ci) + '"></label>' +
+      '<label>Time in <input type="time" data-f="intime" value="' + tcTimeStr(ci) + '"></label>' +
+      '<label>Date out <input type="date" data-f="outdate" value="' + (co ? tcDateStr(co) : '') + '"></label>' +
+      '<label>Time out <input type="time" data-f="outtime" value="' + (co ? tcTimeStr(co) : '') + '"></label>' +
+      (tcFieldsKnown ? '<label>Type <select data-f="type"><option value="work"' + (r.entry_type === 'driving' ? '' : ' selected') + '>Work</option><option value="driving"' + (r.entry_type === 'driving' ? ' selected' : '') + '>Driving</option></select></label>' +
+        '<label>Miles (driving) <input type="number" data-f="miles" min="0" step="0.1" inputmode="decimal" value="' + (r.miles != null && r.miles !== '' ? esc(String(Number(r.miles))) : '') + '"></label>' +
+        '<label>Note <input type="text" data-f="note" value="' + esc(r.note || '') + '"></label>' : '') +
+      '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-tc-save="' + esc(r.id) + '">Save</button>' +
+      '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-tc-cancel="1">Cancel</button>' +
+      '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-tc-del="' + esc(r.id) + '">Delete entry</button>' +
+      '</div>' +
+      '<p class="portal-muted portal-small">Leave the out fields empty to keep the shift open. Shortening a shift is just this edit with an earlier out time.</p>' +
+      '</form></div>';
+  }
+
+  function tcWeekApprovalHtml(g) {
+    if (!g.id || !tcApprovalsKnown) return '';
+    var wk = finWeekKey(tcWeekStart());
+    var a = tcApprovals[g.id + '|' + wk];
+    if (a) {
+      var who = a.approved_by ? tcProfileName(a.approved_by) : 'the owner';
+      var when = a.approved_at ? new Date(a.approved_at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
+      return '<div class="tc-approval"><span class="tc-badge">Week approved</span><span class="portal-muted portal-small">by ' + esc(who) + (when ? ' &middot; ' + esc(when) : '') + ' — ready for Friday pay</span>' +
+        (isPortalOwner() ? '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-tc-unapprove-week="' + esc(g.id) + '">Undo approval</button>' : '') + '</div>';
+    }
+    if (isPortalOwner()) {
+      return '<div class="tc-approval"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-tc-approve-week="' + esc(g.id) + '">Approve week</button><span class="portal-muted portal-small">Approving is for the completed Mon–Sun week — Tuesdays, for Friday pay.</span></div>';
+    }
+    return '<div class="tc-approval"><span class="tc-badge tc-badge-pending">Week not yet approved</span></div>';
+  }
+
+  function tcReadTimes(scope, indateId, intimeId, outdateId, outtimeId) {
+    var gi = function (id) { var el = scope.querySelector('#' + id); return el ? el.value : ''; };
+    var inD = tcParseLocal(gi(indateId), gi(intimeId));
+    var outDs = gi(outdateId), outTs = gi(outtimeId);
+    var outD = null;
+    if (outDs || outTs) {
+      outD = tcParseLocal(outDs, outTs);
+      if (!outD) return { error: 'The out date and time need both halves.' };
+    }
+    if (!inD) return { error: 'The in date and time need both halves.' };
+    if (outD && outD <= inD) return { error: 'Clock-out has to be after clock-in.' };
+    return { inD: inD, outD: outD };
+  }
+
+  function tcAddEntry() {
+    if (!tcClientRef) return;
+    var wrap = $('tc-cards'); if (!wrap) return;
+    var empEl = wrap.querySelector('#tc-add-emp');
+    var empId = empEl ? empEl.value : '';
+    if (!empId) { tcManualMsg = 'Pick an associate first.'; renderTimeCards(); return; }
+    var times = tcReadTimes(wrap, 'tc-add-indate', 'tc-add-intime', 'tc-add-outdate', 'tc-add-outtime');
+    if (times.error) { tcManualMsg = times.error; renderTimeCards(); return; }
+    var row = {
+      employee_id: empId, employee_name: tcProfileName(empId),
+      clock_in: times.inD.toISOString(), clock_out: times.outD ? times.outD.toISOString() : null
+    };
+    if (tcFieldsKnown) {
+      var typeEl = wrap.querySelector('#tc-add-type');
+      var type = typeEl ? typeEl.value : 'work';
+      row.entry_type = type;
+      var milesEl = wrap.querySelector('#tc-add-miles');
+      var noteEl = wrap.querySelector('#tc-add-note');
+      row.miles = type === 'driving' && milesEl && milesEl.value !== '' ? parseFloat(milesEl.value) : null;
+      row.note = noteEl && trim(noteEl.value) ? trim(noteEl.value) : null;
+    }
+    tcClientRef.from('time_entries').insert(row).then(function (res) {
+      if (res.error) { tcManualMsg = 'Could not add that entry. Try again.'; renderTimeCards(); return; }
+      tcManualMsg = 'Entry added for ' + tcProfileName(empId) + '.';
+      tcReloadCards();
+    }).catch(function () { tcManualMsg = 'Could not add that entry. Try again.'; renderTimeCards(); });
+  }
+
+  function tcSaveEdit(id) {
+    if (!tcClientRef) return;
+    var form = document.querySelector('[data-tc-editform="' + id + '"]');
+    if (!form) return;
+    var q = function (f) { var el = form.querySelector('[data-f="' + f + '"]'); return el ? el.value : ''; };
+    var inD = tcParseLocal(q('indate'), q('intime'));
+    var outD = null;
+    if (q('outdate') || q('outtime')) {
+      outD = tcParseLocal(q('outdate'), q('outtime'));
+      if (!outD) { tcManualMsg = 'The out date and time need both halves.'; renderTimeCards(); return; }
+    }
+    if (!inD) { tcManualMsg = 'The in date and time need both halves.'; renderTimeCards(); return; }
+    if (outD && outD <= inD) { tcManualMsg = 'Clock-out has to be after clock-in.'; renderTimeCards(); return; }
+    var upd = { clock_in: inD.toISOString(), clock_out: outD ? outD.toISOString() : null };
+    if (tcFieldsKnown) {
+      var type = q('type') || 'work';
+      upd.entry_type = type;
+      upd.miles = type === 'driving' && q('miles') !== '' ? parseFloat(q('miles')) : null;
+      upd.note = trim(q('note')) || null;
+    }
+    tcClientRef.from('time_entries').update(upd).eq('id', id).then(function (res) {
+      if (res.error) { tcManualMsg = 'Could not save that edit. Try again.'; renderTimeCards(); return; }
+      tcManualMsg = 'Entry updated.';
+      tcReloadCards();
+    }).catch(function () { tcManualMsg = 'Could not save that edit. Try again.'; renderTimeCards(); });
+  }
+
+  function tcDeleteEntry(id) {
+    if (!tcClientRef) return;
+    tcClientRef.from('time_entries').delete().eq('id', id).then(function (res) {
+      if (res.error) { tcManualMsg = 'Could not delete that entry. Try again.'; renderTimeCards(); return; }
+      tcManualMsg = 'Entry deleted.';
+      tcReloadCards();
+    }).catch(function () { tcManualMsg = 'Could not delete that entry. Try again.'; renderTimeCards(); });
+  }
+
+  function tcApproveWeek(empId) {
+    if (!tcClientRef || !state.user) return;
+    var wk = finWeekKey(tcWeekStart());
+    tcClientRef.from('time_card_approvals').insert({ employee_id: empId, week_start: wk, approved_by: state.user.id })
+      .then(function (res) {
+        if (res.error) { tcManualMsg = 'Could not approve that week — the approvals table may not be set up yet.'; renderTimeCards(); return; }
+        tcApprovals[empId + '|' + wk] = { employee_id: empId, week_start: wk, approved_by: state.user.id, approved_at: new Date().toISOString() };
+        tcManualMsg = 'Week approved for ' + tcProfileName(empId) + ' — ready for Friday pay.';
+        renderTimeCards();
+      })
+      .catch(function () { tcManualMsg = 'Could not approve that week. Try again.'; renderTimeCards(); });
+  }
+
+  function tcUnapproveWeek(empId) {
+    if (!tcClientRef) return;
+    var wk = finWeekKey(tcWeekStart());
+    tcClientRef.from('time_card_approvals').delete().eq('employee_id', empId).eq('week_start', wk)
+      .then(function (res) {
+        if (res.error) { tcManualMsg = 'Could not undo that approval. Try again.'; renderTimeCards(); return; }
+        delete tcApprovals[empId + '|' + wk];
+        tcManualMsg = 'Approval undone for ' + tcProfileName(empId) + '.';
+        renderTimeCards();
+      })
+      .catch(function () { tcManualMsg = 'Could not undo that approval. Try again.'; renderTimeCards(); });
+  }
+
+  function wireTcManual(wrap) {
+    if (!wrap) return;
+    wrap.querySelectorAll('[data-tc-edit]').forEach(function (b) {
+      b.addEventListener('click', function () { tcEditId = b.getAttribute('data-tc-edit'); renderTimeCards(); });
+    });
+    wrap.querySelectorAll('[data-tc-cancel]').forEach(function (b) {
+      b.addEventListener('click', function () { tcEditId = null; renderTimeCards(); });
+    });
+    wrap.querySelectorAll('[data-tc-save]').forEach(function (b) {
+      b.addEventListener('click', function () { tcSaveEdit(b.getAttribute('data-tc-save')); });
+    });
+    wrap.querySelectorAll('[data-tc-del]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        if (b.getAttribute('data-confirm') !== '1') {
+          b.setAttribute('data-confirm', '1');
+          b.textContent = 'Confirm — delete this entry?';
+          return;
+        }
+        tcDeleteEntry(b.getAttribute('data-tc-del'));
+      });
+    });
+    wrap.querySelectorAll('[data-tc-add]').forEach(function (b) {
+      b.addEventListener('click', function () { tcAddEntry(); });
+    });
+    wrap.querySelectorAll('[data-tc-approve-week]').forEach(function (b) {
+      b.addEventListener('click', function () { tcApproveWeek(b.getAttribute('data-tc-approve-week')); });
+    });
+    wrap.querySelectorAll('[data-tc-unapprove-week]').forEach(function (b) {
+      b.addEventListener('click', function () { tcUnapproveWeek(b.getAttribute('data-tc-unapprove-week')); });
+    });
+  }
+  /* end PORTAL_TIMECARDS_2026_11_02 */
+
+  /* ================= PORTAL_MILEAGE_2026_11_02 =================
+   * (Austin, Nov 2, 2026): the Mileage panel — "the biggest thing
+   * we have not put in there". Technicians log trips; road miles
+   * and drive time are calculated automatically; a saved trip files
+   * a Driving time entry that shows on the tech's time card and
+   * pays mileage in Financials (Parts 1/5 rules live there — this
+   * panel only creates the entries).
+   *
+   * ROUTING — the free OpenStreetMap stack, behind ONE function:
+   * computeRouteMiles(from, to, done) is the only place that knows
+   * about the providers. Geocoding is Nominatim (results cached in
+   * memory for the session; calls serialized at ~1/second per its
+   * usage policy) and routing is the public OSRM service — no API
+   * key, fine at this shop's human scale. A keyed provider
+   * (OpenRouteService, Google Distance Matrix) can replace the
+   * internals of nominatimGeocode / osrmRoute later without the UI
+   * or the data model ever knowing. If an address cannot be found
+   * or routing fails, the tech types the miles by hand and the trip
+   * still saves — the failure text says exactly that.
+   *
+   * TRIP MODEL: trips normally run from the tech's house to the
+   * store or a customer's address, so both endpoints are usually
+   * known: the From pre-fills with the tech's home address (a field
+   * on their employee profile — they can set their own here on the
+   * Time Clock panel; the owner can set anyone's from the roster),
+   * and the To quick-pick offers the store (the geofence base
+   * address) and every open ticket's service address. Free text
+   * always works too. A saved trip's duration becomes the entry's
+   * clock_out minus clock_in (start time + route minutes), so the
+   * "hours" on the card adjust through the normal entry editor.
+   * The Return trip button on a saved trip files the reverse leg
+   * with miles recomputed (falling back to the original miles if
+   * routing fails).
+   *
+   * DATA MODEL: a trip IS a time_entries row (entry_type 'driving',
+   * miles, from/to + coordinates) — no separate trips table — so
+   * time cards, manual editing, approvals and payroll all see it
+   * with zero extra plumbing. The columns arrive with
+   * time-entries-fields.sql; until then the panel says so and the
+   * form waits. */
+
+  /* ---------- home addresses (profile field) ---------- */
+  var assocHomeById = {};
+  var assocHomeKnown = false;
+  var ownHomeAddress = '';
+
+  function loadAssocHome(client) {
+    client.from('employee_profiles').select('id, home_address').limit(200)
+      .then(function (res) {
+        if (res.error) { assocHomeKnown = false; return; }
+        assocHomeKnown = true;
+        assocHomeById = {};
+        (res.data || []).forEach(function (r) { assocHomeById[r.id] = r.home_address || ''; });
+        if (assocExpandedId) renderAssociates(associatesCache);
+      })
+      .catch(function () { assocHomeKnown = false; });
+  }
+
+  /* Owner-only, mirrors saveAssocPay exactly: writes the profile
+   * row's home_address (empty box clears it); any refusal lands in
+   * the message line instead of failing silently. */
+  function saveAssocHome(id) {
+    var input = document.querySelector('[data-assoc-home-input="' + id + '"]');
+    var msg = document.querySelector('[data-assoc-home-msg="' + id + '"]');
+    if (!input) return;
+    var val = trim(input.value);
+    if (msg) msg.textContent = 'Saving&hellip;';
+    withClient(function (client) {
+      if (!client) { if (msg) msg.textContent = 'Could not save. Try again.'; return; }
+      client.from('employee_profiles').update({ home_address: val || null }).eq('id', id)
+        .then(function (res) {
+          if (res.error) { if (msg) msg.textContent = 'Could not save that address.'; return; }
+          assocHomeById[id] = val;
+          if (msg) msg.textContent = 'Saved.';
+          try { geoEnsureHomeFence(client, id, val, tcProfileName(id)); } catch (e) {}
+          setTimeout(function () { if (assocExpandedId === id) renderAssociates(associatesCache); }, 900);
+        })
+        .catch(function () { if (msg) msg.textContent = 'Could not save. Try again.'; });
+    });
+  }
+
+  function loadOwnHome(client) {
+    if (!state.user) return;
+    client.from('employee_profiles').select('home_address').eq('id', state.user.id).maybeSingle()
+      .then(function (res) {
+        if (res.error || !res.data) return;
+        ownHomeAddress = res.data.home_address || '';
+        var wrap = $('tc-home-wrap'), input = $('tc-home-address');
+        if (wrap) wrap.hidden = false;
+        if (input) input.value = ownHomeAddress;
+      })
+      .catch(function () {});
+  }
+
+  function saveOwnHome() {
+    var input = $('tc-home-address'), msg = $('tc-home-msg');
+    if (!input || !state.user) return;
+    var val = trim(input.value);
+    if (msg) msg.textContent = 'Saving&hellip;';
+    withClient(function (client) {
+      if (!client) { if (msg) msg.textContent = 'Could not save. Try again.'; return; }
+      client.from('employee_profiles').update({ home_address: val || null }).eq('id', state.user.id)
+        .then(function (res) {
+          if (res.error) { if (msg) msg.textContent = 'Could not save that address.'; return; }
+          ownHomeAddress = val;
+          if (msg) msg.textContent = 'Saved.';
+          try { geoEnsureHomeFence(client, state.user.id, val, (state.profile && state.profile.name) || ''); } catch (e) {}
+        })
+        .catch(function () { if (msg) msg.textContent = 'Could not save. Try again.'; });
+    });
+  }
+
+  /* ---------- routing (the swap point) ---------- */
+  var geoCache = {};
+  var geoChain = Promise.resolve();
+  var geoLastHit = 0;
+  function geoThrottled(fn) {
+    var run = geoChain.then(function () {
+      var wait = Math.max(0, 1100 - (Date.now() - geoLastHit));
+      return new Promise(function (res) { setTimeout(res, wait); });
+    }).then(function () { geoLastHit = Date.now(); return fn(); });
+    geoChain = run.then(function () {}, function () {});
+    return run;
+  }
+  function nominatimGeocode(text) {
+    var key = 'g:' + trim(text).toLowerCase();
+    if (!trim(text)) return Promise.resolve(null);
+    if (geoCache[key]) return Promise.resolve(geoCache[key]);
+    return geoThrottled(function () {
+      return fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&q=' + encodeURIComponent(trim(text)), { headers: { 'Accept': 'application/json' } })
+        .then(function (r) { return r.json(); })
+        .then(function (rows) {
+          var out = null;
+          if (rows && rows.length) out = { lat: parseFloat(rows[0].lat), lng: parseFloat(rows[0].lon), label: rows[0].display_name };
+          if (out) geoCache[key] = out;
+          return out;
+        })
+        .catch(function () { return null; });
+    });
+  }
+  function nominatimReverse(lat, lng) {
+    var key = 'r:' + lat.toFixed(5) + ',' + lng.toFixed(5);
+    if (geoCache[key]) return Promise.resolve(geoCache[key]);
+    return geoThrottled(function () {
+      return fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng, { headers: { 'Accept': 'application/json' } })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          var out = (j && j.display_name) ? { label: j.display_name } : null;
+          if (out) geoCache[key] = out;
+          return out;
+        })
+        .catch(function () { return null; });
+    });
+  }
+  function osrmRoute(a, b) {
+    return fetch('https://router.project-osrm.org/route/v1/driving/' + a.lng + ',' + a.lat + ';' + b.lng + ',' + b.lat + '?overview=false')
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (!j || j.code !== 'Ok' || !j.routes || !j.routes.length) return null;
+        return { miles: Math.round(j.routes[0].distance / 1609.344 * 10) / 10, minutes: Math.round(j.routes[0].duration / 60) };
+      })
+      .catch(function () { return null; });
+  }
+  /* from / to: { text, lat, lng } — coordinates ride along when the
+   * endpoint came from GPS or a pick, so routing can skip geocoding
+   * that end entirely. done receives { miles, minutes, fromLabel,
+   * toLabel, fromLat, fromLng, toLat, toLng } or { error }. */
+  function computeRouteMiles(from, to, done) {
+    var resFrom = (from.lat != null && from.lng != null)
+      ? Promise.resolve({ lat: from.lat, lng: from.lng, label: from.text || '' })
+      : nominatimGeocode(from.text);
+    resFrom.then(function (a) {
+      if (!a) { done({ error: 'Could not find the From address. Check it, or type the miles by hand and save — the trip still files.' }); return; }
+      var resTo = (to.lat != null && to.lng != null)
+        ? Promise.resolve({ lat: to.lat, lng: to.lng, label: to.text || '' })
+        : nominatimGeocode(to.text);
+      resTo.then(function (b) {
+        if (!b) { done({ error: 'Could not find the To address. Check it, or type the miles by hand and save — the trip still files.' }); return; }
+        osrmRoute(a, b).then(function (rt) {
+          if (!rt) { done({ error: 'The routing service did not answer for that trip. Type the miles by hand and save — the trip still files.' }); return; }
+          done({ miles: rt.miles, minutes: rt.minutes, fromLabel: a.label, toLabel: b.label, fromLat: a.lat, fromLng: a.lng, toLat: b.lat, toLng: b.lng });
+        });
+      });
+    });
+  }
+
+  /* ---------- the panel ---------- */
+  var mlClientRef = null;
+  var mlProfiles = [];
+  var mlHomeKnown = false;
+  var mlTrips = [];
+  var mlFromCoords = null;
+  var mlToCoords = null;
+  var mlLastDefaultFrom = '';
+
+  function fmtRate(r) { return r >= 1 ? fmtMoney(r) : (Math.round(r * 1000) / 10) + '&cent;'; }
+
+  function initMileage() {
+    var rb = $('ml-refresh'); if (rb) rb.addEventListener('click', function () { loadMileage(); });
+    var calc = $('ml-route-btn'); if (calc) calc.addEventListener('click', function () { mlCalculate(); });
+    var form = $('ml-form'); if (form) form.addEventListener('submit', function (e) { e.preventDefault(); mlSaveTrip(); });
+    var fg = $('ml-from-gps'); if (fg) fg.addEventListener('click', function () { geoFillFromGps('from'); });
+    var tg = $('ml-to-gps'); if (tg) tg.addEventListener('click', function () { geoFillFromGps('to'); });
+    var tech = $('ml-tech'); if (tech) tech.addEventListener('change', function () { mlApplyTechDefaults(); });
+    var pick = $('ml-to-pick'); if (pick) pick.addEventListener('change', function () { if (pick.value) { $('ml-to').value = pick.value; mlToCoords = null; } });
+    var fromEl = $('ml-from'); if (fromEl) fromEl.addEventListener('input', function () { mlFromCoords = null; });
+    var toEl = $('ml-to'); if (toEl) toEl.addEventListener('input', function () { mlToCoords = null; });
+  }
+
+  function loadMileage() {
+    var list = $('ml-list');
+    if (list) list.innerHTML = '<p class="portal-muted">Loading trips&hellip;</p>';
+    withClient(function (client) {
+      if (!client || !state.user) return;
+      mlClientRef = client;
+      tcProbeFields(client, function (known) {
+        var note = $('ml-setup-note');
+        if (!known) {
+          if (note) note.innerHTML = '<p class="portal-error">Mileage tracking turns on once the staged time-entries update runs — it adds the trip fields to time entries. The form is built and waiting.</p>';
+          if (list) list.innerHTML = '';
+          try { geoLoadFences(client, function () { geoRenderOwnerSections(); }); } catch (e) {}
+          return;
+        }
+        if (note) note.innerHTML = '';
+        mlLoadProfiles(client, function () {
+          mlPopulateTech();
+          mlPopulatePicks(client);
+          mlLoadTrips(client);
+          try { geoLoadFences(client, function () { geoSyncTicketFences(client); geoSyncHomeFences(client); geoRenderOwnerSections(); }); } catch (e) {}
+        });
+      });
+    });
+  }
+
+  function mlLoadProfiles(client, done) {
+    client.from('employee_profiles').select('id, name, role, home_address').order('name', { ascending: true }).limit(200)
+      .then(function (res) {
+        if (res.error) {
+          return client.from('employee_profiles').select('id, name, role').order('name', { ascending: true }).limit(200)
+            .then(function (res2) { mlProfiles = res2.error ? [] : (res2.data || []); mlHomeKnown = false; done(); })
+            .catch(function () { mlProfiles = []; done(); });
+        }
+        mlProfiles = res.data || [];
+        mlHomeKnown = true;
+        done();
+      })
+      .catch(function () { mlProfiles = []; done(); });
+  }
+
+  function mlProfileById(id) {
+    for (var i = 0; i < mlProfiles.length; i++) if (mlProfiles[i].id === id) return mlProfiles[i];
+    return null;
+  }
+
+  function mlPopulateTech() {
+    var sel = $('ml-tech'); if (!sel) return;
+    var owner = isPortalOwner();
+    var people = owner ? mlProfiles : mlProfiles.filter(function (p) { return p.id === state.user.id; });
+    if (!people.length && !owner) people = [{ id: state.user.id, name: (state.profile && state.profile.name) || 'Me' }];
+    sel.innerHTML = people.map(function (p) { return '<option value="' + esc(p.id) + '"' + (p.id === state.user.id ? ' selected' : '') + '>' + esc(p.name || 'Associate') + '</option>'; }).join('');
+    if (!owner) sel.disabled = true;
+    var d = $('ml-date'); if (d && !d.value) d.value = tcDateStr(new Date());
+    var s = $('ml-start'); if (s && !s.value) s.value = tcTimeStr(new Date());
+    mlApplyTechDefaults();
+  }
+
+  function mlApplyTechDefaults() {
+    var sel = $('ml-tech'); if (!sel) return;
+    var p = mlProfileById(sel.value);
+    var home = '';
+    if (p) home = (mlHomeKnown && p.home_address) || (p.id === state.user.id ? ownHomeAddress : '') || '';
+    var fromEl = $('ml-from');
+    if (fromEl && (fromEl.value === '' || fromEl.value === mlLastDefaultFrom)) {
+      fromEl.value = home;
+      mlLastDefaultFrom = home;
+      mlFromCoords = null;
+    }
+  }
+
+  function mlPopulatePicks(client) {
+    var pick = $('ml-to-pick'); if (!pick) return;
+    var html = '<option value="">Store, or a job address&hellip;</option>';
+    if (geoBaseFence && geoBaseFence.address) {
+      html += '<option value="' + esc(geoBaseFence.address) + '">Store — ' + esc(geoBaseFence.address) + '</option>';
+    }
+    pick.innerHTML = html;
+    client.from('tickets').select('id, status, service_address').limit(200)
+      .then(function (res) {
+        if (res.error) return;
+        var opts = '';
+        (res.data || []).forEach(function (t) {
+          if (!trim(t.service_address) || t.status === 'Job Complete') return;
+          opts += '<option value="' + esc(t.service_address) + '">Job — ' + esc(t.service_address) + ' (' + esc(t.status || '') + ')</option>';
+        });
+        pick.innerHTML = html + opts;
+      })
+      .catch(function () {});
+  }
+
+  function mlEndpoints() {
+    return {
+      from: { text: trim($('ml-from').value), lat: mlFromCoords ? mlFromCoords.lat : null, lng: mlFromCoords ? mlFromCoords.lng : null },
+      to: { text: trim($('ml-to').value), lat: mlToCoords ? mlToCoords.lat : null, lng: mlToCoords ? mlToCoords.lng : null }
+    };
+  }
+
+  function mlCalculate() {
+    var info = $('ml-route-info');
+    var ep = mlEndpoints();
+    if (!ep.from.text || !ep.to.text) { if (info) info.textContent = 'Fill in From and To first.'; return; }
+    if (info) info.textContent = 'Working out the route&hellip;';
+    computeRouteMiles(ep.from, ep.to, function (res) {
+      if (res.error) { if (info) info.textContent = res.error; return; }
+      $('ml-miles').value = res.miles;
+      $('ml-minutes').value = res.minutes;
+      mlFromCoords = { lat: res.fromLat, lng: res.fromLng };
+      mlToCoords = { lat: res.toLat, lng: res.toLng };
+      if (info) info.textContent = 'Route: ' + res.miles + ' mi · about ' + res.minutes + ' min of driving (OpenStreetMap). Adjust either number if your odometer disagrees.';
+    });
+  }
+
+  function mlSaveTrip() {
+    if (!mlClientRef || !state.user) return;
+    var msg = $('ml-msg'), info = $('ml-route-info');
+    var empId = $('ml-tech').value;
+    var prof = mlProfileById(empId);
+    var name = prof ? (prof.name || 'Associate') : ((state.profile && state.profile.name) || 'Associate');
+    var ep = mlEndpoints();
+    var startD = tcParseLocal($('ml-date').value, $('ml-start').value || tcTimeStr(new Date()));
+    if (!empId) { if (msg) msg.textContent = 'Pick the technician first.'; return; }
+    if (!startD) { if (msg) msg.textContent = 'The date and start time need both halves.'; return; }
+    if (!ep.from.text || !ep.to.text) { if (msg) msg.textContent = 'Fill in From and To.'; return; }
+    var milesV = $('ml-miles').value, minV = $('ml-minutes').value;
+    function doInsert(miles, minutes, coords) {
+      var row = {
+        employee_id: empId, employee_name: name,
+        clock_in: startD.toISOString(),
+        clock_out: new Date(startD.getTime() + (minutes || 0) * 60000).toISOString(),
+        entry_type: 'driving', miles: miles,
+        from_location: ep.from.text, to_location: ep.to.text,
+        from_lat: coords && coords.fromLat != null ? coords.fromLat : (mlFromCoords ? mlFromCoords.lat : null),
+        from_lng: coords && coords.fromLng != null ? coords.fromLng : (mlFromCoords ? mlFromCoords.lng : null),
+        to_lat: coords && coords.toLat != null ? coords.toLat : (mlToCoords ? mlToCoords.lat : null),
+        to_lng: coords && coords.toLng != null ? coords.toLng : (mlToCoords ? mlToCoords.lng : null)
+      };
+      mlClientRef.from('time_entries').insert(row).then(function (res) {
+        if (res.error) { if (msg) msg.textContent = 'Could not save that trip. Try again.'; return; }
+        if (msg) msg.textContent = 'Trip saved — it is on ' + (empId === state.user.id ? 'your' : name + "'s") + ' time card as a Driving entry.';
+        $('ml-miles').value = ''; $('ml-minutes').value = '';
+        if (info) info.textContent = '';
+        try { geoCapture('trip_end'); } catch (e) {}
+        mlLoadTrips(mlClientRef);
+      }).catch(function () { if (msg) msg.textContent = 'Could not save that trip. Try again.'; });
+    }
+    if (milesV !== '' && minV !== '') { doInsert(parseFloat(milesV), parseInt(minV, 10), null); return; }
+    if (msg) msg.textContent = 'Working out the route&hellip;';
+    computeRouteMiles(ep.from, ep.to, function (res) {
+      if (res.error) { if (info) info.textContent = res.error; if (msg) msg.textContent = ''; return; }
+      if (msg) msg.textContent = '';
+      doInsert(milesV !== '' ? parseFloat(milesV) : res.miles, minV !== '' ? parseInt(minV, 10) : res.minutes, res);
+    });
+  }
+
+  function mlLoadTrips(client) {
+    var q = client.from('time_entries').select('*').eq('entry_type', 'driving').order('clock_in', { ascending: false }).limit(300);
+    if (!isManager()) q = q.eq('employee_id', state.user.id);
+    q.then(function (res) {
+      mlTrips = res.error ? [] : (res.data || []);
+      mlRenderTrips();
+    }).catch(function () { mlTrips = []; mlRenderTrips(); });
+  }
+
+  function mlRenderTrips() {
+    var wrap = $('ml-list'); if (!wrap) return;
+    var ws = weekStart(), we = new Date(ws); we.setDate(we.getDate() + 7);
+    var inWeek = mlTrips.filter(function (r) { var d = new Date(r.clock_in); return d >= ws && d < we; });
+    if (!inWeek.length) { wrap.innerHTML = '<p class="portal-muted">No trips logged this pay week yet.</p>'; return; }
+    var groups = [], byKey = {};
+    inWeek.forEach(function (r) {
+      var key = r.employee_id || r.employee_name || 'tech';
+      if (!byKey[key]) { byKey[key] = { id: r.employee_id || null, name: r.employee_name || 'Associate', rows: [], miles: 0, amt: 0 }; groups.push(byKey[key]); }
+      byKey[key].rows.push(r);
+    });
+    wrap.innerHTML = groups.map(function (g) {
+      var prof = g.id ? mlProfileById(g.id) : null;
+      var isOwnerRow = prof ? trim(prof.role).toLowerCase() === 'owner' : (g.id === (state.user && state.user.id) && isPortalOwner());
+      var rowsHtml = g.rows.map(function (r) {
+        var ci = new Date(r.clock_in), co = r.clock_out ? new Date(r.clock_out) : null;
+        var durMin = co ? Math.max(0, Math.round((co - ci) / 60000)) : 0;
+        var mi = Number(r.miles) || 0;
+        var rate = mileageRateFor(ci);
+        var amt = mi * rate.rate;
+        if (!isOwnerRow) { g.miles += mi; g.amt += amt; }
+        var canReturn = isPortalOwner() || r.employee_id === state.user.id;
+        return '<div class="tc-row"><span>' + esc(ci.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })) + ' &middot; ' + esc(r.from_location || '?') + ' &rarr; ' + esc(r.to_location || '?') + '</span>' +
+          '<span class="tc-row-end"><span>' + mi.toFixed(1) + ' mi &middot; ' + durMin + ' min' + (isOwnerRow ? ' &middot; owner — unpaid' : ' &middot; ' + esc(fmtMoney(amt)) + ' @ ' + fmtRate(rate.rate)) + '</span>' +
+          (canReturn ? '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-ml-return="' + esc(r.id) + '">Return trip</button>' : '') + '</span></div>';
+      }).join('');
+      var totalLine = isOwnerRow
+        ? '<span class="ml-trip-total">Week: ' + g.rows.reduce(function (s, r) { return s + (Number(r.miles) || 0); }, 0).toFixed(1) + ' mi (owner — unpaid)</span>'
+        : '<span class="ml-trip-total">Week total: ' + g.miles.toFixed(1) + ' mi &middot; ' + esc(fmtMoney(g.amt)) + '</span>';
+      return '<div class="tc-card"><div class="tc-card-head"><strong>' + esc(g.name) + '</strong>' + totalLine + '</div>' + rowsHtml + '</div>';
+    }).join('');
+    wrap.querySelectorAll('[data-ml-return]').forEach(function (b) {
+      b.addEventListener('click', function () { mlReturnTrip(b.getAttribute('data-ml-return')); });
+    });
+  }
+
+  function mlReturnTrip(id) {
+    var t = null;
+    mlTrips.forEach(function (r) { if (r.id === id) t = r; });
+    if (!t || !mlClientRef) return;
+    var msg = $('ml-msg');
+    var ci = new Date(t.clock_in), co = t.clock_out ? new Date(t.clock_out) : null;
+    var origDur = co ? Math.max(0, Math.round((co - ci) / 60000)) : 0;
+    var startD = co || ci;
+    function doInsert(miles, minutes) {
+      var row = {
+        employee_id: t.employee_id, employee_name: t.employee_name,
+        clock_in: startD.toISOString(),
+        clock_out: new Date(startD.getTime() + (minutes || 0) * 60000).toISOString(),
+        entry_type: 'driving', miles: miles,
+        from_location: t.to_location, to_location: t.from_location,
+        from_lat: t.to_lat, from_lng: t.to_lng, to_lat: t.from_lat, to_lng: t.from_lng,
+        note: 'Return trip'
+      };
+      mlClientRef.from('time_entries').insert(row).then(function (res) {
+        if (res.error) { if (msg) msg.textContent = 'Could not file the return trip. Try again.'; return; }
+        if (msg) msg.textContent = 'Return trip filed — ' + (Number(miles) || 0).toFixed(1) + ' mi back.';
+        mlLoadTrips(mlClientRef);
+      }).catch(function () { if (msg) msg.textContent = 'Could not file the return trip. Try again.'; });
+    }
+    computeRouteMiles(
+      { text: t.to_location || '', lat: t.to_lat != null ? Number(t.to_lat) : null, lng: t.to_lng != null ? Number(t.to_lng) : null },
+      { text: t.from_location || '', lat: t.from_lat != null ? Number(t.from_lat) : null, lng: t.from_lng != null ? Number(t.from_lng) : null },
+      function (res) {
+        if (res.error) { doInsert(Number(t.miles) || 0, origDur); return; }
+        doInsert(res.miles, res.minutes);
+      });
+  }
+  /* end PORTAL_MILEAGE_2026_11_02 */
+
+  /* ================= PORTAL_LOCATION_2026_11_02 =================
+   * (Austin, Nov 2, 2026, as corrected the same night — "No, we're
+   * just using geofencing"): place-based automation, NOT device
+   * tracking. There is no continuous track, no background capture,
+   * and no silent anything:
+   *
+   * CONSENT: on a tech's first login (and any login where the
+   * answer is still unrecorded) the portal asks in its own words —
+   * "Allow location tracking" — and only then triggers the
+   * browser's Geolocation prompt. The answer (granted / denied /
+   * not_asked) is stored on the tech's employee_profiles row
+   * (location-geofence.sql). Denied means the feature stays off and
+   * nobody is asked again in the app.
+   *
+   * CAPTURES: with permission granted, a location snapshot is saved
+   * only at named work events — login, clock in, clock out, mileage
+   * trip start/end — plus a lightweight position watch runs WHILE
+   * THE PORTAL IS OPEN so fence crossings are noticed. Snapshots
+   * are work records (location_snapshots), each tied to its event.
+   *
+   * FENCES: a ~150 m circle (owner-adjustable) around the store /
+   * business base (set once by the owner), one around each tech's
+   * home, and one auto-created around the service address of any
+   * ticket that goes En Route to Customer. Each device evaluates
+   * only its own fence set (base + ticket fences + its OWN home
+   * fence). The first position after sign-in sets the baseline —
+   * crossings after that log one fence_events row (enter/exit,
+   * timestamp, position) and drive the paperwork offers:
+   *   leaving base/home  → offer to start a Driving entry
+   *   entering a job fence → the open Driving entry is ended and
+   *                        its miles computed by routing between
+   *                        the entry's endpoints; an offer (never
+   *                        silent) to flip the ticket In Progress —
+   *                        arrival means In Progress in this portal,
+   *                        and the fence asks for the same tap the
+   *                        tech would make by hand
+   *   leaving a job fence → offer to start the return trip
+   * Offers render in the prompt strip above the panels and always
+   * wait for a tap.
+   *
+   * OWNER VIEW: the Mileage panel carries the fence setup, who is
+   * inside each fence now, and the arrivals/departures feed. There
+   * is deliberately NO "last known location" map — the correction
+   * dropped it; the feed shows fence events only.
+   *
+   * Until location-geofence.sql runs, every read/write here fails
+   * quietly and the whole feature stays dark — no prompts, no
+   * captures, no errors on screen. */
+  var geoClientRef = null;
+  var geoConsentKnown = false;
+  var geoConsentState = null;
+  var geoFences = [];
+  var geoFencesKnown = false;
+  var geoBaseFence = null;
+  var geoInside = {};
+  var geoWatchId = null;
+  var geoLastEvalPos = null;
+  var geoLastEvalAt = 0;
+
+  function geoInitAfterLogin() {
+    if (!state.user) return;
+    withClient(function (client) {
+      if (!client) return;
+      geoClientRef = client;
+      client.from('employee_profiles').select('location_consent').eq('id', state.user.id).maybeSingle()
+        .then(function (res) {
+          if (res.error || !res.data) { geoConsentKnown = false; return; }
+          geoConsentKnown = true;
+          geoConsentState = res.data.location_consent || 'not_asked';
+          geoLoadFences(client, function () { geoSyncTicketFences(client); geoSyncHomeFences(client); });
+          if (geoConsentState === 'not_asked') geoShowConsentBanner();
+          else if (geoConsentState === 'granted') { geoCapture('login'); geoStartWatch(); }
+        })
+        .catch(function () { geoConsentKnown = false; });
+    });
+  }
+
+  function geoShowConsentBanner() {
+    var b = $('portal-loc-banner'); if (!b) return;
+    b.innerHTML = '<span class="loc-banner-text"><strong>Allow location tracking?</strong> With it on, the portal clocks your arrivals and departures at the store and job sites for you — starting and ending mileage trips automatically. Location is only checked at work moments (signing in, clocking in or out, trips) and while the portal is open on your device. Never in the background, never off the clock.</span>' +
+      '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="loc-allow-btn">Allow location tracking</button>' +
+      '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="loc-dismiss-btn">Not now</button>';
+    b.hidden = false;
+    var allow = $('loc-allow-btn'); if (allow) allow.addEventListener('click', geoAllowClicked);
+    var dis = $('loc-dismiss-btn'); if (dis) dis.addEventListener('click', function () { b.hidden = true; });
+  }
+
+  function geoHideBanner() { var b = $('portal-loc-banner'); if (b) { b.hidden = true; b.innerHTML = ''; } }
+
+  function geoAllowClicked() {
+    if (!navigator.geolocation) { geoSetConsent('denied'); geoHideBanner(); return; }
+    navigator.geolocation.getCurrentPosition(function (pos) {
+      geoSetConsent('granted');
+      geoHideBanner();
+      geoStoreSnapshot('login', pos);
+      geoHandlePosition(pos.coords.latitude, pos.coords.longitude);
+      geoStartWatch();
+    }, function () { geoSetConsent('denied'); geoHideBanner(); }, { timeout: 10000 });
+  }
+
+  function geoSetConsent(v) {
+    geoConsentState = v;
+    if (!geoClientRef || !state.user) return;
+    geoClientRef.from('employee_profiles').update({ location_consent: v, location_consent_at: new Date().toISOString() }).eq('id', state.user.id)
+      .then(function () {}).catch(function () {});
+  }
+
+  function geoCapture(eventName) {
+    if (geoConsentState !== 'granted' || !navigator.geolocation || !state.user) return;
+    navigator.geolocation.getCurrentPosition(function (pos) {
+      geoStoreSnapshot(eventName, pos);
+      geoHandlePosition(pos.coords.latitude, pos.coords.longitude);
+    }, function () {}, { timeout: 10000, maximumAge: 60000 });
+  }
+
+  function geoStoreSnapshot(eventName, pos) {
+    if (!geoClientRef || !state.user || !pos || !pos.coords) return;
+    geoClientRef.from('location_snapshots').insert({
+      user_id: state.user.id, event: eventName,
+      lat: pos.coords.latitude, lng: pos.coords.longitude,
+      accuracy_m: pos.coords.accuracy ? Math.round(pos.coords.accuracy) : null
+    }).then(function () {}).catch(function () {});
+  }
+
+  function geoStartWatch() {
+    if (geoWatchId != null || geoConsentState !== 'granted' || !navigator.geolocation) return;
+    geoWatchId = navigator.geolocation.watchPosition(function (pos) {
+      var now = Date.now();
+      if (geoLastEvalPos && (now - geoLastEvalAt) < 60000 &&
+          geoDistanceM(pos.coords.latitude, pos.coords.longitude, geoLastEvalPos.lat, geoLastEvalPos.lng) < 50) return;
+      geoLastEvalPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      geoLastEvalAt = now;
+      geoHandlePosition(pos.coords.latitude, pos.coords.longitude);
+    }, function () {}, { enableHighAccuracy: false, maximumAge: 30000, timeout: 20000 });
+  }
+
+  function geoDistanceM(lat1, lng1, lat2, lng2) {
+    var R = 6371000, rad = Math.PI / 180;
+    var dLat = (lat2 - lat1) * rad, dLng = (lng2 - lng1) * rad;
+    var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    return 2 * R * Math.asin(Math.sqrt(a));
+  }
+
+  function geoLoadFences(client, done) {
+    if (!client) { if (done) done(); return; }
+    client.from('geofences').select('*').eq('active', true).limit(500)
+      .then(function (res) {
+        if (!res.error) {
+          geoFences = res.data || [];
+          geoFencesKnown = true;
+          geoBaseFence = null;
+          geoFences.forEach(function (f) { if (f.kind === 'base') geoBaseFence = f; });
+        }
+        if (done) done();
+      })
+      .catch(function () { if (done) done(); });
+  }
+
+  /* The fences THIS device answers to: the base, every ticket
+   * fence, and the signed-in tech's own home fence (newest, if an
+   * address change left more than one). */
+  function geoMyFences() {
+    var mine = [], homeBest = null;
+    geoFences.forEach(function (f) {
+      if (f.kind === 'home') {
+        if (!state.user || f.employee_id !== state.user.id) return;
+        if (!homeBest || String(f.created_at) > String(homeBest.created_at)) homeBest = f;
+        return;
+      }
+      mine.push(f);
+    });
+    if (homeBest) mine.push(homeBest);
+    return mine;
+  }
+
+  function geoHandlePosition(lat, lng) {
+    if (!geoFencesKnown || !state.user) return;
+    geoMyFences().forEach(function (f) {
+      var inside = geoDistanceM(lat, lng, Number(f.lat), Number(f.lng)) <= (Number(f.radius_m) || 150);
+      var prev = geoInside[f.id];
+      geoInside[f.id] = inside;
+      if (prev === undefined || prev === inside) return;
+      geoLogEvent(f, inside ? 'enter' : 'exit', lat, lng);
+      geoOnFenceEvent(f, inside ? 'enter' : 'exit');
+    });
+  }
+
+  function geoLogEvent(f, ev, lat, lng) {
+    if (!geoClientRef || !state.user) return;
+    geoClientRef.from('fence_events').insert({ fence_id: f.id, user_id: state.user.id, event: ev, lat: lat, lng: lng })
+      .then(function () {}).catch(function () {});
+  }
+
+  function geoOnFenceEvent(f, ev) {
+    if (ev === 'exit' && (f.kind === 'base' || f.kind === 'home')) {
+      geoShowPrompt('You left ' + f.label + '. Start a driving trip?', 'Start driving entry', function () { geoStartOpenTrip(f); });
+    } else if (ev === 'enter' && f.kind === 'ticket') {
+      geoEndOpenTrip(f);
+      if (f.ticket_id) {
+        geoShowPrompt('You arrived at ' + f.label + '. Mark the job In Progress?', 'Mark In Progress', function () { geoMarkInProgress(f); });
+      } else {
+        geoShowPrompt('You arrived at ' + f.label + '.', null, null);
+      }
+    } else if (ev === 'exit' && f.kind === 'ticket') {
+      geoShowPrompt('You left ' + f.label + '. Start the return trip?', 'Start return trip', function () { geoStartOpenTrip(f); });
+    } else if (ev === 'enter' && (f.kind === 'base' || f.kind === 'home')) {
+      geoEndOpenTrip(f);
+    }
+  }
+
+  function geoShowPrompt(text, btnLabel, onBtn) {
+    var p = $('portal-geo-prompt'); if (!p) return;
+    p.innerHTML = '<span class="loc-banner-text">' + esc(text) + '</span>' +
+      (btnLabel ? '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="geo-prompt-btn">' + esc(btnLabel) + '</button>' : '') +
+      '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="geo-prompt-dismiss">Dismiss</button>';
+    p.hidden = false;
+    var d = $('geo-prompt-dismiss'); if (d) d.addEventListener('click', function () { p.hidden = true; p.innerHTML = ''; });
+    var b = $('geo-prompt-btn');
+    if (b && onBtn) b.addEventListener('click', function () { p.hidden = true; p.innerHTML = ''; onBtn(); });
+  }
+
+  function geoStartOpenTrip(f) {
+    if (!geoClientRef || !state.user) return;
+    tcProbeFields(geoClientRef, function (known) {
+      if (!known) { geoShowPrompt('Trip tracking needs the staged time-entries update first — no entry was started.', null, null); return; }
+      geoClientRef.from('time_entries').insert({
+        employee_id: state.user.id,
+        employee_name: (state.profile && state.profile.name) || state.user.email,
+        clock_in: new Date().toISOString(), clock_out: null,
+        entry_type: 'driving',
+        from_location: f.address || f.label,
+        from_lat: Number(f.lat), from_lng: Number(f.lng)
+      }).then(function (res) {
+        if (res.error) { geoShowPrompt('Could not start the driving entry. You can log the trip on the Mileage panel instead.', null, null); return; }
+        geoShowPrompt('Driving entry started from ' + f.label + ' — it is on your time card, and arriving will end it.', null, null);
+        try { tcReloadCards(); } catch (e) {}
+        try { geoCapture('trip_start'); } catch (e) {}
+      }).catch(function () { geoShowPrompt('Could not start the driving entry. You can log the trip on the Mileage panel instead.', null, null); });
+    });
+  }
+
+  function geoEndOpenTrip(f) {
+    if (!geoClientRef || !state.user) return;
+    tcProbeFields(geoClientRef, function (known) {
+      if (!known) return;
+      geoClientRef.from('time_entries').select('*')
+        .eq('employee_id', state.user.id).eq('entry_type', 'driving').is('clock_out', null)
+        .order('clock_in', { ascending: false }).limit(1)
+        .then(function (res) {
+          if (res.error || !res.data || !res.data.length) return;
+          var entry = res.data[0];
+          var upd = { clock_out: new Date().toISOString(), to_location: f.address || f.label, to_lat: Number(f.lat), to_lng: Number(f.lng) };
+          geoClientRef.from('time_entries').update(upd).eq('id', entry.id).then(function () {
+            try { tcReloadCards(); } catch (e) {}
+            if (entry.from_location) {
+              computeRouteMiles(
+                { text: entry.from_location, lat: entry.from_lat != null ? Number(entry.from_lat) : null, lng: entry.from_lng != null ? Number(entry.from_lng) : null },
+                { text: f.address || f.label, lat: Number(f.lat), lng: Number(f.lng) },
+                function (rt) {
+                  if (rt.error) return;
+                  geoClientRef.from('time_entries').update({ miles: rt.miles }).eq('id', entry.id).then(function () { try { tcReloadCards(); } catch (e) {} }).catch(function () {});
+                });
+            }
+          }).catch(function () {});
+        })
+        .catch(function () {});
+    });
+  }
+
+  function geoMarkInProgress(f) {
+    if (!geoClientRef || !f.ticket_id) return;
+    geoClientRef.from('tickets').update({ status: 'In Progress' }).eq('id', f.ticket_id)
+      .then(function (res) {
+        if (res.error) { geoShowPrompt('Could not mark the job In Progress — open the ticket and set it there.', null, null); return; }
+        geoShowPrompt('Job marked In Progress. Welcome to ' + f.label + '.', null, null);
+      })
+      .catch(function () { geoShowPrompt('Could not mark the job In Progress — open the ticket and set it there.', null, null); });
+  }
+
+  /* Auto-create a fence for every En Route ticket that lacks one,
+   * from the ticket's own service address. Runs when fences load —
+   * idempotent, and geocodes at the throttled Nominatim pace. */
+  function geoSyncTicketFences(client) {
+    if (!client || !geoFencesKnown) return;
+    client.from('tickets').select('id, status, service_address').eq('status', 'En Route to Customer').limit(50)
+      .then(function (res) {
+        if (res.error) return;
+        (res.data || []).forEach(function (t) {
+          if (!trim(t.service_address)) return;
+          var has = geoFences.some(function (f) { return f.kind === 'ticket' && f.ticket_id === t.id; });
+          if (has) return;
+          nominatimGeocode(t.service_address).then(function (g) {
+            if (!g) return;
+            client.from('geofences').insert({
+              label: 'Job — ' + t.service_address, address: t.service_address,
+              lat: g.lat, lng: g.lng, radius_m: 150, kind: 'ticket', ticket_id: t.id,
+              created_by: state.user ? state.user.id : null
+            }).then(function (r2) { if (!r2.error) geoLoadFences(client, null); }).catch(function () {});
+          });
+        });
+      })
+      .catch(function () {});
+  }
+
+  function geoEnsureHomeFence(client, empId, address, name) {
+    if (!client || !empId || !trim(address)) return;
+    nominatimGeocode(address).then(function (g) {
+      if (!g) return;
+      client.from('geofences').select('id, address, created_at').eq('kind', 'home').eq('employee_id', empId).eq('active', true)
+        .order('created_at', { ascending: false })
+        .then(function (res) {
+          if (res.error) return;
+          var rows = res.data || [];
+          if (rows.length && rows[0].address === address) return;
+          client.from('geofences').insert({
+            label: (name ? name + ' — home' : 'Home'), address: address,
+            lat: g.lat, lng: g.lng, radius_m: 150, kind: 'home', employee_id: empId,
+            created_by: state.user ? state.user.id : null
+          }).then(function (r2) { if (!r2.error && geoFencesKnown) geoLoadFences(client, null); }).catch(function () {});
+        })
+        .catch(function () {});
+    });
+  }
+
+  function geoSyncHomeFences(client) {
+    if (!client || !geoFencesKnown) return;
+    client.from('employee_profiles').select('id, name, home_address').limit(200)
+      .then(function (res) {
+        if (res.error) return;
+        (res.data || []).forEach(function (p) { if (trim(p.home_address)) geoEnsureHomeFence(client, p.id, p.home_address, p.name); });
+      })
+      .catch(function () {});
+  }
+
+  /* "Use my current location" on the Mileage form: fills the field
+   * with the reverse-geocoded address and keeps the raw coordinates
+   * riding along, so routing can use them directly. */
+  function geoFillFromGps(which) {
+    var info = $('ml-route-info');
+    if (!navigator.geolocation) { if (info) info.textContent = 'This device has no location available — type the address instead.'; return; }
+    if (info) info.textContent = 'Getting your location&hellip;';
+    navigator.geolocation.getCurrentPosition(function (pos) {
+      var lat = pos.coords.latitude, lng = pos.coords.longitude;
+      if (which === 'from') { mlFromCoords = { lat: lat, lng: lng }; try { geoStoreSnapshot('trip_start', pos); } catch (e) {} }
+      else { mlToCoords = { lat: lat, lng: lng }; }
+      geoHandlePosition(lat, lng);
+      nominatimReverse(lat, lng).then(function (r) {
+        var el = $(which === 'from' ? 'ml-from' : 'ml-to');
+        if (el) el.value = (r && r.label) ? r.label : (lat.toFixed(5) + ', ' + lng.toFixed(5));
+        if (info) info.textContent = 'Location set from this device. Routing will use the exact coordinates.';
+      });
+    }, function () { if (info) info.textContent = 'Could not get your location — check the permission, or type the address instead.'; }, { timeout: 10000 });
+  }
+
+  /* ---------- owner view in the Mileage panel ---------- */
+  function geoNameFor(id) {
+    var p = mlProfileById(id);
+    if (p) return p.name || 'Associate';
+    return tcProfileName(id);
+  }
+
+  function geoRenderOwnerSections() {
+    var wrap = $('ml-owner-sections'); if (!wrap) return;
+    if (!isPortalOwner()) { wrap.innerHTML = ''; return; }
+    if (!geoFencesKnown) {
+      wrap.innerHTML = '<div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Geofences</h3></div>' +
+        '<p class="portal-muted">Geofences turn on once the staged location update runs: a fence around the store, one around each tech&rsquo;s home, and one around each job address — arrivals and departures log themselves here, and trips start and end on their own.</p>';
+      return;
+    }
+    var html = '<div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Geofences</h3></div>';
+    if (geoBaseFence) {
+      html += '<p><strong>Store / base:</strong> ' + esc(geoBaseFence.address || geoBaseFence.label) + ' &middot; fence ' + esc(String(geoBaseFence.radius_m || 150)) + ' m</p>';
+    } else {
+      html += '<p class="portal-muted">No store fence yet — set the store address once and trips, arrivals and the quick-pick all key off it.</p>';
+    }
+    html += '<div class="tc-manual-grid">' +
+      '<label>Store address <input type="text" id="geo-base-addr" placeholder="Store address" value="' + (geoBaseFence ? esc(geoBaseFence.address || '') : '') + '"></label>' +
+      '<label>Radius (m) <input type="number" id="geo-base-radius" min="25" step="25" value="' + (geoBaseFence ? esc(String(geoBaseFence.radius_m || 150)) : '150') + '"></label>' +
+      '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="geo-base-save">' + (geoBaseFence ? 'Save store fence' : 'Set store fence') + '</button></div>' +
+      '<p class="portal-small" id="geo-base-msg"></p>';
+    html += '<div id="geo-fence-status"><p class="portal-muted">Loading fence status&hellip;</p></div>';
+    html += '<div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Arrivals &amp; departures</h3></div><div id="geo-feed"><p class="portal-muted">Loading&hellip;</p></div>';
+    wrap.innerHTML = html;
+    var save = $('geo-base-save');
+    if (save) save.addEventListener('click', geoSaveBaseFence);
+    geoLoadFeed();
+  }
+
+  function geoSaveBaseFence() {
+    var client = mlClientRef || geoClientRef;
+    var msg = $('geo-base-msg');
+    if (!client) return;
+    var addr = trim($('geo-base-addr').value);
+    var radius = parseInt($('geo-base-radius').value, 10);
+    if (!isFinite(radius) || radius < 25) radius = 150;
+    function apply(lat, lng) {
+      if (geoBaseFence) {
+        client.from('geofences').update({ address: addr || geoBaseFence.address, lat: lat != null ? lat : Number(geoBaseFence.lat), lng: lng != null ? lng : Number(geoBaseFence.lng), radius_m: radius }).eq('id', geoBaseFence.id)
+          .then(function (res) {
+            if (res.error) { if (msg) msg.textContent = 'Could not save the store fence.'; return; }
+            geoLoadFences(client, function () { geoRenderOwnerSections(); });
+          }).catch(function () { if (msg) msg.textContent = 'Could not save the store fence.'; });
+      } else {
+        client.from('geofences').insert({ label: 'Store', address: addr, lat: lat, lng: lng, radius_m: radius, kind: 'base', created_by: state.user.id })
+          .then(function (res) {
+            if (res.error) { if (msg) msg.textContent = 'Could not save the store fence.'; return; }
+            geoLoadFences(client, function () { geoRenderOwnerSections(); mlPopulatePicks(client); });
+          }).catch(function () { if (msg) msg.textContent = 'Could not save the store fence.'; });
+      }
+    }
+    if (addr && (!geoBaseFence || addr !== geoBaseFence.address)) {
+      if (msg) msg.textContent = 'Finding that address&hellip;';
+      nominatimGeocode(addr).then(function (g) {
+        if (!g) { if (msg) msg.textContent = 'Could not find that address — check it and try again.'; return; }
+        apply(g.lat, g.lng);
+      });
+    } else if (geoBaseFence) { apply(null, null); }
+    else if (msg) { msg.textContent = 'Type the store address first.'; }
+  }
+
+  function geoLoadFeed() {
+    var client = mlClientRef || geoClientRef;
+    var feed = $('geo-feed'), status = $('geo-fence-status');
+    if (!client || !feed) return;
+    client.from('fence_events').select('*').order('occurred_at', { ascending: false }).limit(200)
+      .then(function (res) {
+        if (res.error) {
+          feed.innerHTML = '<p class="portal-muted">No fence events yet.</p>';
+          if (status) status.innerHTML = '';
+          return;
+        }
+        var events = res.data || [];
+        var fenceById = {};
+        geoFences.forEach(function (f) { fenceById[f.id] = f; });
+        var lastByKey = {};
+        events.forEach(function (e) {
+          var k = e.fence_id + '|' + e.user_id;
+          if (!lastByKey[k]) lastByKey[k] = e;
+        });
+        if (status) {
+          status.innerHTML = geoFences.map(function (f) {
+            var insideNames = [];
+            Object.keys(lastByKey).forEach(function (k) {
+              var e = lastByKey[k];
+              if (e.fence_id === f.id && e.event === 'enter') insideNames.push(geoNameFor(e.user_id));
+            });
+            return '<div class="tc-row"><span><strong>' + esc(f.label) + '</strong> <span class="portal-muted">' + esc(f.kind) + ' &middot; ' + esc(String(f.radius_m || 150)) + ' m</span></span><span>' + (insideNames.length ? 'Inside now: ' + esc(insideNames.join(', ')) : '<span class="portal-muted">Nobody inside</span>') + '</span></div>';
+          }).join('') || '<p class="portal-muted">No fences yet.</p>';
+        }
+        if (!events.length) { feed.innerHTML = '<p class="portal-muted">No arrivals or departures logged yet — they appear as techs cross fences with the portal open.</p>'; return; }
+        feed.innerHTML = events.slice(0, 30).map(function (e) {
+          var f = fenceById[e.fence_id];
+          var when = new Date(e.occurred_at).toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+          return '<div class="tc-row"><span><strong>' + esc(geoNameFor(e.user_id)) + '</strong> ' + (e.event === 'enter' ? 'arrived at' : 'left') + ' ' + esc(f ? f.label : 'a fence') + '</span><span class="portal-muted">' + esc(when) + '</span></div>';
+        }).join('');
+      })
+      .catch(function () { feed.innerHTML = '<p class="portal-muted">No fence events yet.</p>'; });
+  }
+  /* end PORTAL_LOCATION_2026_11_02 */
 
   /* ================= CHECK-IN CONSENT =================
    * PORTAL_CHECKIN_CONSENT_2026_10_30 (Austin, Oct 30, 2026): the

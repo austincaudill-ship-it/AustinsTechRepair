@@ -656,6 +656,56 @@ body.portal-scroll-locked{position:fixed;left:0;right:0;width:100%;overflow:hidd
 }
 /* end PORTAL_IPHONE_DUO_2026_11_02 */
 
+/* PORTAL_FINANCIALS_PAYROLL_2026_11_02 (Austin, Nov 2, 2026): the
+ * Financials bottom-line block — payroll/processing settings row and
+ * the prominent Net figure. Reuses .fin-card / .fin-card-label /
+ * .fin-card-value above; only the net card and the settings inputs
+ * need their own rules. */
+.fin-settings{display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;margin:.4rem 0 .2rem}
+.fin-settings label{display:flex;flex-direction:column;gap:.25rem;font-size:.78rem;font-weight:700;color:var(--muted,#7D6C5B);text-transform:uppercase;letter-spacing:.05em}
+.fin-settings input{width:8.5rem;padding:.45rem .6rem;border:1px solid var(--line,#E6D9C0);border-radius:9px;font-size:1rem;background:var(--surface,#FFFDF8);color:var(--ink,#2C231A)}
+.fin-net-card{border:2px solid var(--brand,#D9540D)}
+.fin-net-value{font-size:1.9rem}
+/* end PORTAL_FINANCIALS_PAYROLL_2026_11_02 */
+
+/* PORTAL_TIMECARDS_2026_11_02 (Austin, Nov 2, 2026): the owner's
+ * manual time-entry forms (add bar + inline row editor) and the
+ * weekly approval area on time cards. Forms reuse .tc-card rows and
+ * portal inputs; only layout glue is added here. */
+.tc-owner-bar{border:1px dashed var(--line,#e5d9c8);border-radius:14px;padding:10px 12px;margin-bottom:14px;background:var(--surface,#fff)}
+.tc-manual-grid{display:flex;gap:.5rem;flex-wrap:wrap;align-items:flex-end;margin:.4rem 0}
+.tc-manual-grid label{display:flex;flex-direction:column;gap:.2rem;font-size:.72rem;font-weight:700;color:var(--muted,#7D6C5B);text-transform:uppercase;letter-spacing:.04em}
+.tc-manual-grid input,.tc-manual-grid select{padding:.42rem .55rem;border:1px solid var(--line,#e5d9c8);border-radius:9px;font-size:.95rem;background:var(--surface,#fff);color:var(--ink,#2C231A)}
+.tc-manual-msg{margin:.3rem 0 0}
+.tc-edit-form{width:100%}
+.tc-approval{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:2px 0 6px}
+.tc-note-line{flex-basis:100%;font-size:.82rem;color:var(--muted,#7D6C5B);padding:0 4px 6px}
+/* end PORTAL_TIMECARDS_2026_11_02 */
+
+/* PORTAL_MILEAGE_2026_11_02 (Austin, Nov 2, 2026): the Mileage
+ * panel's trip form and trip list. */
+.ml-form{margin:.6rem 0 1rem}
+.ml-grid{display:flex;gap:.6rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:.55rem}
+.ml-field{display:flex;flex-direction:column;gap:.22rem;font-size:.74rem;font-weight:700;color:var(--muted,#7D6C5B);text-transform:uppercase;letter-spacing:.04em;flex:1 1 180px}
+.ml-field input,.ml-field select{padding:.48rem .6rem;border:1px solid var(--line,#E6D9C0);border-radius:9px;font-size:1rem;background:var(--surface,#FFFDF8);color:var(--ink,#2C231A);text-transform:none;letter-spacing:normal;font-weight:400}
+.ml-gps{flex:none;margin-bottom:.1rem}
+.ml-trip-total{font-weight:700}
+/* end PORTAL_MILEAGE_2026_11_02 */
+
+/* PORTAL_LOCATION_2026_11_02 (Austin, Nov 2, 2026): the geofencing
+ * consent banner and the fence-action prompt strip. Both sit above
+ * the panels and stay hidden unless portal.js fills them. */
+.loc-banner{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;border:1px solid var(--brand,#D9540D);background:#fdf3ea;border-radius:12px;padding:.65rem .9rem;margin:0 0 .8rem;font-size:.95rem}
+.loc-banner[hidden]{display:none}
+.loc-prompt{border-color:var(--line,#E6D9C0);background:var(--surface,#FFFDF8)}
+.loc-banner .loc-banner-text{flex:1 1 240px}
+/* end PORTAL_LOCATION_2026_11_02 */
+
+/* MERGE_2026_11_03: the PORTAL_HEADER_CLEANUP_2026_11_02 block below is grafted
+ * verbatim from the live portal.css (lines 659-710 of the Nov 3 download).
+ * The staged stack branched before the header cleanup published; without
+ * this graft the duplicate Associate Hub brand band would return and the
+ * centered greeting line would lose its styles. See MERGE-REPORT.md. */
 /* PORTAL_HEADER_CLEANUP_2026_11_02 (Austin, Nov 2, 2026, late evening;
    all-layouts extension added the same night): two moves, finished to
    an Apple-grade design bar — simple, calm, generous whitespace, no

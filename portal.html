@@ -102,6 +102,7 @@
     <!-- ==================== DASHBOARD VIEW ==================== -->
     <section id="portal-dash-view" hidden>
       <div class="portal-dash-head">
+        <!-- MERGE_2026_11_03: the brand div + PORTAL_HEADER_CLEANUP_2026_11_02 block below is grafted verbatim from the live portal.html; the staged stack branched before the header cleanup published and still carried the old in-column greeting/clock paragraphs. See MERGE-REPORT.md. -->
         <div class="portal-head-brand">
           <p class="portal-eyebrow">Austin's Tech Repair Group</p>
           <h1 class="portal-h1"><i class="fas fa-briefcase"></i> Associate Hub</h1>
@@ -178,6 +179,10 @@
         <button class="portal-tab" id="portal-tab-timeclock" type="button" role="tab" data-tab="timeclock">
           <i class="fas fa-clock"></i> Time Clock
         </button>
+        <!-- PORTAL_MILEAGE_2026_11_02 (Austin, Nov 2, 2026): a Mileage Action Button in the Associates group. Technicians log trips (From / To — road miles and drive time are calculated automatically) and each saved trip lands on their time card as a Driving entry that pays mileage reimbursement. Panel: portal-panel-mileage, loader in portal.js (extra tab, same wiring as Time Clock). -->
+        <button class="portal-tab" id="portal-tab-mileage" type="button" role="tab" data-tab="mileage">
+          <i class="fas fa-route"></i> Mileage
+        </button>
         <button class="portal-tab" id="portal-tab-newhires" type="button" role="tab" data-tab="newhires">
           <i class="fas fa-user-plus"></i> Employee Onboarding
         </button>
@@ -203,6 +208,10 @@
         </button>
       </nav>
       </div>
+
+      <!-- PORTAL_LOCATION_2026_11_02 (Austin, Nov 2, 2026): the geofencing consent banner and fence-action prompt strip. Both are filled/shown by portal.js only when relevant — the banner asks, in the portal's own words, to allow location (shown until the tech answers); the prompt strip carries fence offers ("You left the base — start a driving trip?") that always wait for a tap. Hidden and empty otherwise. -->
+      <div class="loc-banner" id="portal-loc-banner" hidden></div>
+      <div class="loc-banner loc-prompt" id="portal-geo-prompt" hidden></div>
 
       <!-- TICKETS -->
       <div class="portal-panel" id="portal-panel-tickets" role="tabpanel">
@@ -768,8 +777,57 @@
         <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">My birthday</h3></div>
         <p class="portal-muted portal-small">Birthdays are a big deal here &mdash; we honor our team&rsquo;s and our customers&rsquo;. Add yours:</p>
         <p class="tc-bday-row"><input type="date" id="tc-birthday" aria-label="Your birthday" /> <button class="portal-btn portal-btn-outline portal-btn-sm" id="tc-birthday-save" type="button">Save birthday</button> <span class="portal-muted portal-small" id="tc-birthday-msg"></span></p>
+        <!-- PORTAL_MILEAGE_2026_11_02 (Austin, Nov 2, 2026): the associate's home address lives on their employee profile (employee-home-address.sql). It is the default From on their mileage trips and the center of their home geofence. The row is filled and wired in portal.js; it stays hidden until the column exists. Only the associate and the owner ever see it. -->
+        <div id="tc-home-wrap" hidden>
+          <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">My home address</h3></div>
+          <p class="portal-muted portal-small">Where your work trips start. It pre-fills the From on your mileage trips, and only you and the owner can see it.</p>
+          <p class="tc-bday-row"><input type="text" id="tc-home-address" aria-label="Your home address" placeholder="Street, City, State ZIP" style="flex:1 1 260px" /> <button class="portal-btn portal-btn-outline portal-btn-sm" id="tc-home-save" type="button">Save home address</button> <span class="portal-muted portal-small" id="tc-home-msg"></span></p>
+        </div>
         <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Team birthdays coming up</h3></div>
         <div id="tc-birthdays"><p class="portal-muted">Loading&hellip;</p></div>
+      </div>
+
+      <!-- MILEAGE — PORTAL_MILEAGE_2026_11_02 (Austin, Nov 2, 2026): technicians log trips here. From / To are free text (or the device's current location, PORTAL_LOCATION_2026_11_02); road miles and drive time are calculated automatically over the free OpenStreetMap stack (Nominatim geocoding + OSRM routing, behind computeRouteMiles in portal.js). A saved trip files a Driving time entry — miles and duration land on the tech's time card and pay out as mileage reimbursement in Financials. If an address cannot be found, miles can be typed by hand and the trip still saves. The Geofences section (owner) is PORTAL_LOCATION_2026_11_02. -->
+      <div class="portal-panel" id="portal-panel-mileage" role="tabpanel" hidden>
+        <div class="portal-panel-head">
+          <h2 class="portal-h2">Mileage</h2>
+          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="ml-refresh">
+            <i class="fas fa-rotate-right"></i> Refresh
+          </button>
+        </div>
+        <p class="portal-muted portal-small">Log a trip and the road miles and drive time are worked out for you. Saving files it on the time card as a Driving entry — driving pays mileage, not hourly. Wrong numbers? The owner can adjust the entry on the time card afterwards.</p>
+        <div id="ml-setup-note"></div>
+        <form class="ml-form" id="ml-form">
+          <div class="ml-grid">
+            <label class="ml-field"><span>Technician</span><select id="ml-tech" aria-label="Technician"></select></label>
+            <label class="ml-field"><span>Date</span><input type="date" id="ml-date" aria-label="Trip date" /></label>
+            <label class="ml-field"><span>Start time</span><input type="time" id="ml-start" aria-label="Trip start time" /></label>
+          </div>
+          <div class="ml-grid">
+            <label class="ml-field"><span>From</span><input type="text" id="ml-from" placeholder="Starting address or place" autocomplete="off" /></label>
+            <button class="portal-btn portal-btn-outline portal-btn-sm ml-gps" type="button" id="ml-from-gps"><i class="fas fa-location-crosshairs"></i> Use my current location</button>
+          </div>
+          <div class="ml-grid">
+            <label class="ml-field"><span>Quick pick a destination</span><select id="ml-to-pick"><option value="">Store, or a job address&hellip;</option></select></label>
+          </div>
+          <div class="ml-grid">
+            <label class="ml-field"><span>To</span><input type="text" id="ml-to" placeholder="Destination address or place" autocomplete="off" /></label>
+            <button class="portal-btn portal-btn-outline portal-btn-sm ml-gps" type="button" id="ml-to-gps"><i class="fas fa-location-crosshairs"></i> Use my current location</button>
+          </div>
+          <div class="ml-grid">
+            <label class="ml-field"><span>Miles (auto — or type them)</span><input type="number" id="ml-miles" min="0" step="0.1" inputmode="decimal" placeholder="Calculated on save if left blank" /></label>
+            <label class="ml-field"><span>Drive time, minutes (auto)</span><input type="number" id="ml-minutes" min="0" step="1" inputmode="numeric" placeholder="Calculated on save if left blank" /></label>
+          </div>
+          <p class="portal-muted portal-small" id="ml-route-info" aria-live="polite"></p>
+          <div class="p2-actions">
+            <button class="portal-btn portal-btn-outline" type="button" id="ml-route-btn"><i class="fas fa-route"></i> Calculate route</button>
+            <button class="portal-btn portal-btn-primary" type="submit" id="ml-save"><i class="fas fa-save"></i> Save trip</button>
+          </div>
+          <p class="portal-small" id="ml-msg" aria-live="polite"></p>
+        </form>
+        <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Trips this pay week</h3></div>
+        <div id="ml-list"><p class="portal-muted">Loading trips&hellip;</p></div>
+        <div id="ml-owner-sections"></div>
       </div>
 
       <!-- TOOLS & LINKS -->
@@ -917,6 +975,8 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- PORTAL_RECEIPT_SEND_2026_11_02: vendored html2pdf (html2canvas + jsPDF in one self-contained bundle, loaded locally, no CDN) — Download receipt and Email receipt render the PDF from the exact receipt markup. -->
+  <script src="html2pdf.bundle.min.js"></script>
   <script src="portal.js"></script>
   <script>
   /* ================= NEW HIRES (employee onboarding) =================
@@ -3644,7 +3704,13 @@
     .rc-sig-img { display: block; max-width: 280px; max-height: 90px; border-bottom: 2px solid #000; padding-bottom: 2pt; }
     .rc-sig-cap { font-size: 9.5pt; color: #333; margin: 3pt 0 0; }
     .rc-auth { font-size: 9.5pt; margin: 7pt 0 0; line-height: 1.45; }
-    .rc-auth-url { font-size: 7.5pt; color: #555; word-break: break-all; }
+    /* RECEIPT_SIG_FIX_2026_11_03: mirror of RECEIPT_DOC_CSS in portal.js — .rc-auth-url removed (it styled the raw signed URL printed as text); the short typeable line and "What you signed" summary styles added */
+    .rc-auth-short { font-size: 9.5pt; margin: 3pt 0 0; line-height: 1.45; color: #333; }
+    .rc-signed { margin-top: 10pt; }
+    .rc-signed-head { font-size: 10pt; font-weight: 700; margin: 0 0 2pt; }
+    .rc-signed-intro { font-size: 9pt; color: #333; margin: 0 0 4pt; line-height: 1.45; }
+    .rc-signed ul { margin: 0; padding-left: 12pt; font-size: 9pt; color: #333; line-height: 1.45; }
+    .rc-signed li { margin-bottom: 2pt; }
     .rc-terms { margin-top: 12pt; border-top: 1px solid #bbb; padding-top: 8pt; }
     .rc-terms-head { font-size: 10pt; font-weight: 700; margin: 0 0 4pt; }
     .rc-terms ul { margin: 0; padding-left: 12pt; font-size: 9pt; color: #333; line-height: 1.45; }
