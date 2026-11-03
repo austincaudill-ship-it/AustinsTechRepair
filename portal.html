@@ -185,9 +185,9 @@
         </button>
         <!-- ACCOUNT_CONTROLS_2026_11_03 (Austin, Nov 3, 2026): Employee Onboarding, Documents and Job Applications moved OUT of this group into the Admin group below — they are owner-side tools, not associate tools. Buttons only: ids, data-tab values and panels are unchanged, so every handler keyed to them works exactly as before. -->
         <div class="portal-nav-group">Admin</div>
-        <!-- PORTAL_SIDEBAR_ROSTER_2026_11_02 (Austin, Nov 2, 2026): the Associates group had Requests, Time Clock, Employee Onboarding, Documents and Job Applications but no list of the associates themselves. This "Associates" Action Button opens the roster panel (portal-panel-associates): every employee_profiles row — name, role, active status at a glance. TEAMCHAT_CHANNELS_2026_11_03 (Austin, Nov 3, 2026): the button moved out of the Associates group into Admin, FIRST in the group — the roster is the people directory and the management tools are Admin's; button, id, data-tab, panel and loader are unchanged, and the Associates group keeps Team Chat, Requests, Time Clock and Mileage. -->
-        <button class="portal-tab" id="portal-tab-associates" type="button" role="tab" data-tab="associates">
-          <i class="fas fa-user-group"></i> Associates
+        <!-- ASSOCIATE_ACCOUNTS_2026_11_03 (Austin, Nov 3, 2026): the Associates roster (PORTAL_SIDEBAR_ROSTER_2026_11_02 — every employee_profiles row as a profile card; TEAMCHAT_CHANNELS_2026_11_03 moved its button into Admin, first in the group) and Account Controls (ACCOUNT_CONTROLS_2026_11_03 — the same people as logins) were "kinda the same thing", so Austin merged them: ONE "Associate Accounts" Action Button, first in the Admin group, opening portal-panel-associateaccounts — each person's card carries their profile AND their login in one place. Austin's chosen name for the merged panel: "Associate Accounts". -->
+        <button class="portal-tab" id="portal-tab-associateaccounts" type="button" role="tab" data-tab="associateaccounts">
+          <i class="fas fa-users-gear"></i> Associate Accounts
         </button>
         <button class="portal-tab" id="portal-tab-investors" type="button" role="tab" data-tab="investors">
           <i class="fas fa-handshake"></i> Investors <span class="portal-count" id="portal-count-applications2" hidden></span>
@@ -197,10 +197,6 @@
         </button>
         <button class="portal-tab" id="portal-tab-square" type="button" role="tab" data-tab="square">
           <i class="fas fa-square"></i> Square &amp; ATR One
-        </button>
-        <!-- ACCOUNT_CONTROLS_2026_11_03 (Austin, Nov 3, 2026): "I need a button to be able to change and edit people logins — change login, deactivate, activate accounts and all that." Account Controls is an Admin-group Action Button opening portal-panel-accountcontrols: every staff login with Edit login / Set password / Deactivate-Activate, plus Add staff login. The panel talks to the staff-admin Edge Function, which re-checks the owner role server-side on every call; portal.js also guards the render with isPortalOwner(). Below it, Employee Onboarding, Documents and Job Applications moved here from the Associates group the same day (Austin's placement call) — the three buttons are byte-identical to what sat under Associates; only their group changed. -->
-        <button class="portal-tab" id="portal-tab-accountcontrols" type="button" role="tab" data-tab="accountcontrols">
-          <i class="fas fa-user-gear"></i> Account Controls
         </button>
         <button class="portal-tab" id="portal-tab-newhires" type="button" role="tab" data-tab="newhires">
           <i class="fas fa-user-plus"></i> Employee Onboarding
@@ -319,18 +315,18 @@
         <div id="portal-feedback-list"><p class="portal-muted">Loading feedback&hellip;</p></div>
       </div>
 
-      <!-- ACCOUNT CONTROLS — ACCOUNT_CONTROLS_2026_11_03 (Austin, Nov 3, 2026): the owner's front-end for staff logins — change a login email, set a password, deactivate / activate an account, add a new staff login. All work runs through the staff-admin Edge Function (functions/staff-admin/index.ts in this build folder): the function holds the service role and re-checks that the caller is the owner on every call; this panel renders only for the owner (portal.js loadAccountControls guards on isPortalOwner()). Rows, inline Edit login / Set password forms and the confirm-arm buttons are rendered and wired in portal.js. -->
-      <div class="portal-panel" id="portal-panel-accountcontrols" role="tabpanel" hidden>
+      <!-- ASSOCIATE ACCOUNTS — ASSOCIATE_ACCOUNTS_2026_11_03 (Austin, Nov 3, 2026): the Associates roster (PORTAL_SIDEBAR_ROSTER_2026_11_02) and ACCOUNT CONTROLS (ACCOUNT_CONTROLS_2026_11_03) merged into one panel, per Austin: they were "kinda the same thing" — the same people, one as profiles, one as logins. Each person is ONE card here: the summary carries the status dot, name, role, Active / Deactivated chip and login email; tapping opens the full record — the roster's profile half (status, birthday, owner-only pay rate and home-address editors, clock state and View time card) above the login half (login email and created date, Edit login / Set password / Deactivate-Activate, all through the staff-admin Edge Function, which re-checks the owner role server-side on every call). The Add staff login form and the Account activity card below are unchanged from the Account Controls and account-audit builds. This panel renders only for the owner (portal.js loadAssociateAccounts guards on isPortalOwner()). -->
+      <div class="portal-panel" id="portal-panel-associateaccounts" role="tabpanel" hidden>
         <div class="portal-panel-head">
-          <h2 class="portal-h2">Account Controls</h2>
-          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="accountcontrols">
+          <h2 class="portal-h2">Associate Accounts</h2>
+          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="associateaccounts">
             <i class="fas fa-rotate-right"></i> Refresh
           </button>
         </div>
-        <p class="portal-muted portal-small">Every staff login for this portal. Change a login email, set a new password, or deactivate an account that should not sign in anymore &mdash; deactivated accounts can be activated again here. Changes take effect right away. Owner only.</p>
+        <p class="portal-muted portal-small">Profiles and logins for everyone who can sign in to this portal, managed in one place. Tap a person to open their full record &mdash; their profile on top, their login below it: change a login email, set a new password, or deactivate an account that should not sign in anymore (deactivated accounts can be activated again here). Changes take effect right away. Owner only.</p>
         <p class="portal-error" id="portal-acct-error" hidden></p>
         <p class="portal-muted" id="portal-acct-note" hidden></p>
-        <div id="portal-acct-list"><p class="portal-muted">Loading staff logins&hellip;</p></div>
+        <div id="portal-acct-list"><p class="portal-muted">Loading associate accounts&hellip;</p></div>
         <div class="portal-panel-head portal-subhead">
           <h2 class="portal-h2">Add staff login</h2>
         </div>
@@ -480,18 +476,6 @@
           <h2 class="portal-h2">Purchase Orders <span class="portal-muted portal-small">(restock orders, not ticket part orders)</span></h2>
         </div>
         <div id="portal-po-list"><p class="portal-muted">Loading purchase orders&hellip;</p></div>
-      </div>
-
-      <!-- ASSOCIATES ROSTER — PORTAL_SIDEBAR_ROSTER_2026_11_02 (Austin, Nov 2, 2026): the roster behind the Associates group's first Action Button. Lists every employee_profiles row (the portal sign-in list) — name, role and active status at a glance, in the same card style as the other lists. Tapping a row expands it in place to the profile fields the record holds; there is no separate employee-card surface for employee_profiles anywhere in the portal (see CHANGES.md), so nothing else is opened. -->
-      <div class="portal-panel" id="portal-panel-associates" role="tabpanel" hidden>
-        <div class="portal-panel-head">
-          <h2 class="portal-h2">Associates</h2>
-          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="associates">
-            <i class="fas fa-rotate-right"></i> Refresh
-          </button>
-        </div>
-        <p class="portal-muted portal-small">Everyone who can sign in to this portal. Green dot: active &mdash; their sign-in profile is on file. Tap an associate to see their profile.</p>
-        <div id="portal-associates-list"><p class="portal-muted">Loading associates&hellip;</p></div>
       </div>
 
       <!-- TEAM CHAT — TEAMCHAT_2026_11_03 (Austin, Nov 3, 2026): the internal staff channel — Alfred, Pepper and every associate in one thread inside the portal, so staff talk never rides a personal account. Messages live in public.team_messages (team-chat.sql in this build folder); portal.js loadTeamChat renders them oldest at top, newest at bottom, and the composer posts as the signed-in associate. -->

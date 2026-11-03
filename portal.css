@@ -934,7 +934,7 @@ body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-logout{displa
 .acct-form { border-top: 1px dashed var(--line, #E5D9C8); margin-top: 0.7rem; padding-top: 0.8rem; }
 .acct-card-off { opacity: 0.72; }
 .acct-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0 1rem; max-width: 760px; }
-#portal-panel-accountcontrols .portal-field select {
+#portal-panel-associateaccounts .portal-field select {
   width: 100%; box-sizing: border-box; padding: 0.65rem 0.8rem;
   border: 1px solid var(--line, #E6D9C0); border-radius: 8px;
   background: var(--bg, #FAF6EE); color: var(--ink, #2C231A);
@@ -957,3 +957,15 @@ body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-logout{displa
 .acct-audit-row:last-child { border-bottom: none; }
 .acct-audit-when { white-space: nowrap; font-size: 0.85rem; }
 /* end ACCOUNT_AUDIT_2026_11_03 */
+
+/* ---------- ASSOCIATE_ACCOUNTS_2026_11_03 ----------
+ * The merged Associate Accounts panel: inside an expanded person
+ * card, the login half gets the same quiet dashed divider and
+ * small caps head as the owner-only section (PORTAL_ROSTER_DETAIL).
+ * Everything else in the merged cards reuses what the two parent
+ * panels already styled: .assoc-card / .assoc-detail from the
+ * roster and .acct-form / .acct-card-off / .acct-grid from
+ * Account Controls. */
+.assoc-login-sec { border-top: 1px dashed var(--line, #E5D9C8); margin-top: .7rem; padding-top: .7rem; }
+.assoc-login-head { font-size: .78rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted, #8A7A63); margin: 0 0 .5rem; }
+/* end ASSOCIATE_ACCOUNTS_2026_11_03 */

@@ -221,7 +221,7 @@
   var state = {
     user: null,
     profile: null,
-    loaded: { tickets: false, applications: false, investors: false, feedback: false, customers: false, members: false, inventory: false, financials: false, associates: false },
+    loaded: { tickets: false, applications: false, investors: false, feedback: false, customers: false, members: false, inventory: false, financials: false, associateaccounts: false }, /* ASSOCIATE_ACCOUNTS_2026_11_03: one loaded flag for the merged panel (was 'associates' + the Account Controls loads) */
     customersCache: [], inventoryCache: []
   };
 
@@ -270,6 +270,10 @@
      * it can never block or delay the sign-in flow. */
     try { geoInitAfterLogin(); } catch (e) {}
     var startTab = savedTab();
+    /* ASSOCIATE_ACCOUNTS_2026_11_03: a tab remembered from before the
+     * merge names a panel that no longer exists — land on the merged
+     * Associate Accounts panel instead of falling back to the queue. */
+    if (startTab === 'associates' || startTab === 'accountcontrols') startTab = 'associateaccounts';
     var startBtn = startTab ? $('portal-tab-' + startTab) : null;
     if (startBtn && startTab !== 'tickets') { startBtn.click(); }
     else { activateTab('tickets'); }
@@ -926,12 +930,13 @@
     documents: loadDocumentsTab, financials: loadFinancials,
     /* PAYROLL_SPLIT_2026_11_03: Payroll is its own tab now (see loadPayroll). */
     payroll: loadPayroll,
-    /* PORTAL_SIDEBAR_ROSTER_2026_11_02: the Associates roster panel. */
-    associates: loadAssociates,
+    /* ASSOCIATE_ACCOUNTS_2026_11_03: the merged Associate Accounts panel
+     * (Admin group) — one loader where PORTAL_SIDEBAR_ROSTER_2026_11_02's
+     * roster and ACCOUNT_CONTROLS_2026_11_03's Account Controls used to
+     * register separately. */
+    associateaccounts: loadAssociateAccounts,
     /* TEAMCHAT_2026_11_03: the internal Team Chat panel. */
     teamchat: loadTeamChat,
-    /* ACCOUNT_CONTROLS_2026_11_03: the Admin group's Account Controls panel. */
-    accountcontrols: loadAccountControls,
   };
 
   /* PORTAL_TAB_MEMORY_2026_10_30: remember the last active tab across
@@ -950,7 +955,7 @@
     var nav = $('portal-nav'); if (nav) nav.classList.remove('open');
     var tabs = document.querySelectorAll('.portal-tab');
     tabs.forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === name); });
-    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'documents', 'financials', 'payroll', 'associates', 'mileage', 'teamchat', 'accountcontrols'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too; ACCOUNT_CONTROLS_2026_11_03: 'accountcontrols' hides and shows with the rest too */
+    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'documents', 'financials', 'payroll', 'mileage', 'teamchat', 'associateaccounts'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too; ASSOCIATE_ACCOUNTS_2026_11_03: 'associateaccounts' hides and shows with the rest too (it absorbed ACCOUNT_CONTROLS_2026_11_03's 'accountcontrols' and the roster's 'associates') */
       $('portal-panel-' + n).hidden = n !== name;
     });
     closeDrawer();
@@ -5754,7 +5759,20 @@ function loadTicketThread(client, ticketId) {
    * PAYROLL_SPLIT_2026_11_03: the jump now lands on the Payroll
    * panel (the time cards' post-split home), and the port is wired
    * the rest of the way — renderTimeCards highlights the tapped
-   * associate's card and scrolls it into view. */
+   * associate's card and scrolls it into view.
+   *
+   * ASSOCIATE_ACCOUNTS_2026_11_03 (Austin, Nov 3, 2026): this roster
+   * and Account Controls merged into ONE panel — Austin: they were
+   * "kinda the same thing", the same people, one as profiles and one
+   * as logins. renderAssociates below now draws the MERGED person
+   * cards into the Associate Accounts panel (the list element is
+   * portal-acct-list, the Account Controls panel's old list): the
+   * roster card is the card, and its expansion carries this profile
+   * half above the login half (assocLoginSection, in the Account
+   * Controls section) rendered from the staff-admin cache. Profiles
+   * still load through loadAssociates; the merged panel's loader,
+   * loadAssociateAccounts, runs it together with loadAccountControls,
+   * and every re-render goes through renderAssociates. */
   function roleLabel(role) {
     var r = trim(role);
     if (!r) return '';
@@ -5762,60 +5780,106 @@ function loadTicketThread(client, ticketId) {
   }
 
   var associatesCache = [];
+  var assocListLoaded = false;  /* ASSOCIATE_ACCOUNTS_2026_11_03: the profile half has landed */
   var assocExpandedId = null;
   var assocPayKnown = false;   /* the owner's load got pay_rate back (column exists) */
   var assocTimeCache = {};     /* employee id -> { loading:true } | { open:Date|null, weekMs:Number } */
 
-  function renderAssociates(rows) {
-    var list = $('portal-associates-list');
+  /* ASSOCIATE_ACCOUNTS_2026_11_03: one joined list of people for
+   * the merged panel — profile rows (associatesCache) joined with
+   * login rows (acctStaffCache) by id. Profiles set the order (the
+   * roster query sorts by name); a login row with no profile row is
+   * appended so nobody silently vanishes, and a profile with no
+   * login row keeps its card with the login half noted as missing. */
+  function mergedPeople() {
+    var byId = {};
+    acctStaffCache.forEach(function (s) { byId[s.id] = s; });
+    var seen = {};
+    var people = associatesCache.map(function (a) {
+      seen[a.id] = true;
+      return { profile: a, login: byId[a.id] || null };
+    });
+    acctStaffCache.forEach(function (s) {
+      if (!seen[s.id]) people.push({ profile: null, login: s });
+    });
+    return people;
+  }
+
+  function renderAssociates() {
+    var list = $('portal-acct-list');
     if (!list) return;
-    if (!rows.length) { emptyState(list, 'No associates on file yet. When someone is added as an employee and can sign in to the portal, they will show up here.'); return; }
-    list.innerHTML = rows.map(function (a) {
-      var open = assocExpandedId === a.id;
+    if (!isPortalOwner()) { list.innerHTML = ''; return; }
+    var people = mergedPeople();
+    if (!people.length) {
+      if (assocListLoaded && acctListLoaded) emptyState(list, 'No associate accounts yet. Add the first staff login with the form below.');
+      return;
+    }
+    list.innerHTML = people.map(function (p) {
+      var a = p.profile, s = p.login;
+      var id = a ? a.id : s.id;
+      var isSelf = !!(state.user && id === state.user.id);
+      var banned = !!(s && s.banned);
+      var role = (a && a.role) || (s && s.role) || '';
+      var open = assocExpandedId === id;
       var detail = '';
       if (open) {
-        detail = '<div class="assoc-detail">' + kvRows([
-          ['Name', valOrDash(a.name)],
-          ['Role', valOrDash(roleLabel(a.role))],
-          ['Status', '<span class="mem-status-dot mem-dot-on"></span>Active &mdash; sign-in profile on file'],
-          ['Birthday', a.birthday ? esc(fmtJobDate(a.birthday) || fmtDate(a.birthday)) : '&mdash;']
-        ]);
-        /* PORTAL_ROSTER_DETAIL_2026_11_02: the owner-only full record
-         * (pay + time + time-card jump) exists in the markup ONLY for
-         * the owner — see the section comment above. */
-        if (isPortalOwner()) detail += assocOwnerSection(a);
-        detail +=
-        '<p class="portal-muted portal-small">This is their portal sign-in profile. Onboarding paperwork (I-9, W-4, signed agreements) lives on their card in Employee Onboarding, under Documents.</p></div>';
+        detail = '<div class="assoc-detail">';
+        /* The profile half — the roster's expansion fields, unchanged. */
+        if (a) {
+          detail += kvRows([
+            ['Name', valOrDash(a.name)],
+            ['Role', valOrDash(roleLabel(a.role))],
+            ['Status', banned
+              ? '<span class="mem-status-dot mem-dot-off"></span>Deactivated &mdash; their login is turned off (see Portal login below)'
+              : '<span class="mem-status-dot mem-dot-on"></span>Active &mdash; sign-in profile on file'],
+            ['Birthday', a.birthday ? esc(fmtJobDate(a.birthday) || fmtDate(a.birthday)) : '&mdash;']
+          ]);
+          /* PORTAL_ROSTER_DETAIL_2026_11_02: the owner-only full record
+           * (pay + home address + time + time-card jump) exists in the
+           * markup ONLY for the owner — see the section comment above. */
+          if (isPortalOwner()) detail += assocOwnerSection(a);
+          detail +=
+          '<p class="portal-muted portal-small">This is their portal sign-in profile. Onboarding paperwork (I-9, W-4, signed agreements) lives on their card in Employee Onboarding, under Documents.</p>';
+        } else {
+          detail += '<p class="portal-muted portal-small">No sign-in profile is on file for this login yet &mdash; the profile half of this card fills in once their employee profile exists.</p>';
+        }
+        /* The login half — Account Controls, inside the same card. */
+        detail += assocLoginSection(p);
+        detail += '</div>';
       }
-      return '<article class="portal-card assoc-card" data-assoc-toggle="' + esc(a.id) + '" style="cursor:pointer" title="Tap to ' + (open ? 'close' : 'view') + ' this associate&rsquo;s profile">' +
-        '<div class="portal-card-top"><p class="portal-card-title"><span class="mem-status-dot mem-dot-on" title="Active" aria-label="Active"></span>' + esc(a.name || 'Associate') + '</p>' +
+      return '<article class="portal-card assoc-card' + (banned ? ' acct-card-off' : '') + '" data-assoc-toggle="' + esc(id) + '" style="cursor:pointer" title="Tap to ' + (open ? 'close' : 'view') + ' this associate&rsquo;s account">' +
+        '<div class="portal-card-top"><p class="portal-card-title"><span class="mem-status-dot ' + (banned ? 'mem-dot-off' : 'mem-dot-on') + '" title="' + (banned ? 'Deactivated' : 'Active') + '" aria-label="' + (banned ? 'Deactivated' : 'Active') + '"></span>' + esc((a && a.name) || (s && s.name) || 'Associate') + (isSelf ? ' <span class="portal-muted portal-small">(you)</span>' : '') + '</p>' +
         '<span class="portal-card-topright">' +
-        (a.role ? '<span class="portal-badge portal-badge-role">' + esc(roleLabel(a.role)) + '</span>' : '') +
-        '<span class="portal-badge portal-st-ready">Active</span></span></div>' +
-        '<p class="portal-card-meta"><i class="fas fa-user"></i> ' + esc(roleLabel(a.role) || 'Associate') + ' &middot; Active' +
-        (a.birthday ? ' &middot; <i class="fas fa-cake-candles"></i> ' + esc(fmtJobDate(a.birthday) || fmtDate(a.birthday)) : '') + '</p>' +
-        '<p class="portal-card-meta portal-muted">' + (open ? 'Tap to close' : 'Tap to view profile') + '</p>' +
+        (role ? '<span class="portal-badge portal-badge-role">' + esc(roleLabel(role)) + '</span>' : '') +
+        (banned
+          ? '<span class="portal-badge portal-st-cancelled">Deactivated</span>'
+          : '<span class="portal-badge portal-st-ready">Active</span>') + '</span></div>' +
+        (s
+          ? '<p class="portal-card-meta"><i class="fas fa-envelope"></i> ' + esc(s.email || 'No login email') + '</p>'
+          : '<p class="portal-card-meta"><i class="fas fa-envelope"></i> ' + (acctListLoaded ? 'No login on file' : 'Loading login&hellip;') + '</p>') +
+        '<p class="portal-card-meta portal-muted">' + (open ? 'Tap to close' : 'Tap to view') + '</p>' +
         detail +
         '</article>';
     }).join('');
     /* PORTAL_ROSTER_DETAIL_2026_11_02: an open owner card whose time
-     * summary has not been fetched yet (first expansion, or a roster
-     * refresh while a card is open) fetches it once; loadAssocTime
-     * re-renders when the rows land. */
+     * summary has not been fetched yet (first expansion, or a refresh
+     * while a card is open) fetches it once; loadAssocTime re-renders
+     * when the rows land. */
     if (assocExpandedId && isPortalOwner() && !assocTimeCache[assocExpandedId]) loadAssocTime(assocExpandedId);
   }
 
   function loadAssociates(force) {
-    var list = $('portal-associates-list');
+    var list = $('portal-acct-list'); /* ASSOCIATE_ACCOUNTS_2026_11_03: the merged panel's one list */
     if (!list) return;
     if (!force) list.innerHTML = '<p class="portal-muted">Loading associates&hellip;</p>';
     withClient(function (client) {
       if (!client) { listError(list, 'associates'); return; }
       var finish = function (rows) {
-        state.loaded.associates = true;
+        state.loaded.associateaccounts = true; /* ASSOCIATE_ACCOUNTS_2026_11_03 */
+        assocListLoaded = true;
         associatesCache = rows;
         assocTimeCache = {};
-        renderAssociates(associatesCache);
+        renderAssociates();
       };
       /* Only fields the record is known to hold (see the gate's own
        * selects at sign-in, and the team-birthdays select). Ordered
@@ -5849,7 +5913,23 @@ function loadTicketThread(client, ticketId) {
 
   function toggleAssociateCard(id) {
     assocExpandedId = assocExpandedId === id ? null : id;
-    renderAssociates(associatesCache);
+    renderAssociates();
+  }
+
+  /* ASSOCIATE_ACCOUNTS_2026_11_03: the merged panel's loader — it
+   * runs the loads both parent panels did (the roster's profile load
+   * and Account Controls' staff-admin list, which also pulls the
+   * Account activity trail) behind the panel's one Refresh. Both
+   * sub-loaders render into the same list through renderAssociates
+   * as their halves land. */
+  function loadAssociateAccounts(force) {
+    var list = $('portal-acct-list');
+    if (!list) return;
+    if (!isPortalOwner()) { list.innerHTML = ''; return; }
+    state.loaded.associateaccounts = true;
+    if (!force) list.innerHTML = '<p class="portal-muted">Loading associate accounts&hellip;</p>';
+    loadAssociates(true);
+    loadAccountControls(true);
   }
 
   /* ================= ACCOUNT_CONTROLS_2026_11_03: Account Controls =================
@@ -5858,7 +5938,8 @@ function loadTicketThread(client, ticketId) {
    * button. I can change login, deactivate, activate accounts and
    * all that."
    *
-   * The panel (portal-panel-accountcontrols) sits in the ADMIN
+   * The panel (portal-panel-associateaccounts since the
+   * ASSOCIATE_ACCOUNTS_2026_11_03 merge) sits in the ADMIN
    * sidebar group and lists every staff login: name, role, login
    * email, an Active / Deactivated chip, and Edit login / Set
    * password / Deactivate-or-Activate per row, plus an Add staff
@@ -5887,9 +5968,21 @@ function loadTicketThread(client, ticketId) {
    * client — the table's RLS lets owners read and nobody else, so
    * no function action exists for reads. loadAccountControls loads
    * the trail right after the staff list, and acctRun's reload
-   * after any change brings the new row straight into view. */
+   * after any change brings the new row straight into view.
+   *
+   * ASSOCIATE_ACCOUNTS_2026_11_03 (Austin, Nov 3, 2026): this panel
+   * merged with the Associates roster (see the roster section) into
+   * Associate Accounts. loadAccountControls still runs the
+   * staff-admin list (and the audit read below); the rows it used to
+   * draw itself are now the login half of the merged person cards,
+   * rendered by assocLoginSection inside renderAssociates. The old
+   * standalone renderer is gone; the helpers below — callStaffAdmin,
+   * the confirm-arm, the form toggles and saves, the Add staff login
+   * action — are unchanged and serve the merged cards. */
 
   var acctStaffCache = [];
+  var acctListLoaded = false;  /* ASSOCIATE_ACCOUNTS_2026_11_03: the login half has landed */
+  var acctListFailed = false;  /* ASSOCIATE_ACCOUNTS_2026_11_03: the staff-admin list call failed */
   var acctExpand = null; /* { id, mode: 'email' | 'password' } | null */
 
   function acctNote(text) {
@@ -5933,14 +6026,21 @@ function loadTicketThread(client, ticketId) {
     var list = $('portal-acct-list');
     if (!list) return;
     if (!isPortalOwner()) { list.innerHTML = ''; return; }
+    /* ASSOCIATE_ACCOUNTS_2026_11_03: on its own (before the merge)
+     * this loader painted its own "Loading staff logins" line; the
+     * merged loader paints the panel's one loading line, and a
+     * failed list call now marks the login half failed instead of
+     * wiping the shared list — the profile cards stay up and the
+     * login half says so (see assocLoginSection). */
     if (!force) list.innerHTML = '<p class="portal-muted">Loading staff logins&hellip;</p>';
     callStaffAdmin({ action: 'list' }, function (out) {
-      if (!out) { listError(list, 'staff logins'); return; }
-      if (!out.ok) { list.innerHTML = ''; acctError(out.error || 'Could not load the staff logins.'); return; }
+      if (!out) { acctListFailed = true; acctListLoaded = true; acctError('Could not load the staff logins — check the connection and try again.'); renderAssociates(); return; }
+      if (!out.ok) { acctListFailed = true; acctListLoaded = true; acctError(out.error || 'Could not load the staff logins.'); renderAssociates(); return; }
       acctError('');
-      state.loaded.accountcontrols = true;
+      acctListFailed = false;
+      acctListLoaded = true;
       acctStaffCache = out.staff || [];
-      renderAccountControls();
+      renderAssociates();
       loadAccountAudit();
     });
   }
@@ -6000,50 +6100,56 @@ function loadTicketThread(client, ticketId) {
     }).join('');
   }
 
-  function renderAccountControls() {
-    var list = $('portal-acct-list');
-    if (!list) return;
-    if (!isPortalOwner()) { list.innerHTML = ''; return; }
-    if (!acctStaffCache.length) { emptyState(list, 'No staff logins yet. Add the first one with the form below.'); return; }
-    list.innerHTML = acctStaffCache.map(function (s) {
-      var isSelf = !!(state.user && s.id === state.user.id);
-      var open = !!(acctExpand && acctExpand.id === s.id);
-      var chip = s.banned
-        ? '<span class="portal-badge portal-st-cancelled">Deactivated</span>'
-        : '<span class="portal-badge portal-st-ready">Active</span>';
-      var form = '';
-      if (open && acctExpand.mode === 'email') {
-        form = '<div class="acct-form"><div class="portal-field"><label for="acct-email-' + esc(s.id) + '">Login email</label>' +
-          '<input type="email" id="acct-email-' + esc(s.id) + '" value="' + esc(s.email || '') + '" autocomplete="off" /></div>' +
-          '<div class="portal-card-actions">' +
-          '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-acct-email-save="' + esc(s.id) + '">Save login email</button>' +
-          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-acct-cancel="1">Cancel</button>' +
-          '</div></div>';
-      } else if (open && acctExpand.mode === 'password') {
-        form = '<div class="acct-form"><div class="portal-field"><label for="acct-pass-' + esc(s.id) + '">New password</label>' +
-          '<span class="pw-wrap"><input type="password" id="acct-pass-' + esc(s.id) + '" placeholder="At least 8 characters" autocomplete="new-password" />' +
-          '<button class="pw-eye" type="button" data-acct-eye="acct-pass-' + esc(s.id) + '" aria-label="Show password"><i class="fas fa-eye"></i></button></span></div>' +
-          '<div class="portal-card-actions">' +
-          '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-acct-pass-save="' + esc(s.id) + '">Set password</button>' +
-          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-acct-cancel="1">Cancel</button>' +
-          '</div></div>';
-      }
-      return '<article class="portal-card acct-card' + (s.banned ? ' acct-card-off' : '') + '">' +
-        '<div class="portal-card-top"><p class="portal-card-title"><span class="mem-status-dot ' + (s.banned ? 'mem-dot-off' : 'mem-dot-on') + '"></span>' + esc(s.name || 'Staff member') + (isSelf ? ' <span class="portal-muted portal-small">(you)</span>' : '') + '</p>' +
-        '<span class="portal-card-topright">' +
-        (s.role ? '<span class="portal-badge portal-badge-role">' + esc(roleLabel(s.role)) + '</span>' : '') +
-        chip + '</span></div>' +
-        '<p class="portal-card-meta"><i class="fas fa-envelope"></i> ' + esc(s.email || 'No login email') + '</p>' +
-        (s.created_at ? '<p class="portal-card-meta portal-muted">Login created ' + esc(fmtDate(s.created_at)) + '</p>' : '') +
+  /* ASSOCIATE_ACCOUNTS_2026_11_03: the login half of a merged
+   * person card — what the Account Controls row used to draw as its
+   * own card (login email, created date, Edit login / Set password /
+   * Deactivate-or-Activate and the inline forms) now renders inside
+   * the roster card's expansion. The markup, the data-acct-* hooks,
+   * the confirm-arm flow and the self-row rules are the old row's,
+   * unchanged: "(you)" rides the card title now (renderAssociates),
+   * and the caller's own Deactivate stays disabled. A profile with
+   * no login row — or a login whose list call failed — gets a plain
+   * note instead of controls. */
+  function assocLoginSection(p) {
+    var out = '<div class="assoc-login-sec"><p class="assoc-login-head"><i class="fas fa-key"></i> Portal login</p>';
+    var s = p.login;
+    if (!s) {
+      out += '<p class="portal-muted portal-small">' +
+        (!acctListLoaded ? 'Loading login details&hellip;'
+          : acctListFailed ? 'Login details could not be loaded — tap Refresh to try again.'
+          : 'No portal login is on file for this profile — add one with the Add staff login form below.') +
+        '</p>';
+      return out + '</div>';
+    }
+    var isSelf = !!(state.user && s.id === state.user.id);
+    var open = !!(acctExpand && acctExpand.id === s.id);
+    var form = '';
+    if (open && acctExpand.mode === 'email') {
+      form = '<div class="acct-form"><div class="portal-field"><label for="acct-email-' + esc(s.id) + '">Login email</label>' +
+        '<input type="email" id="acct-email-' + esc(s.id) + '" value="' + esc(s.email || '') + '" autocomplete="off" /></div>' +
         '<div class="portal-card-actions">' +
-        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-acct-edit="' + esc(s.id) + '"><i class="fas fa-pen"></i> Edit login</button>' +
-        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-acct-pass="' + esc(s.id) + '"><i class="fas fa-key"></i> Set password</button>' +
-        (isSelf
-          ? '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" disabled title="You cannot deactivate your own account">Deactivate</button>'
-          : '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-acct-ban="' + esc(s.id) + '"><i class="fas fa-' + (s.banned ? 'circle-check' : 'ban') + '"></i> ' + (s.banned ? 'Activate' : 'Deactivate') + '</button>') +
-        '</div>' + form +
-        '</article>';
-    }).join('');
+        '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-acct-email-save="' + esc(s.id) + '">Save login email</button>' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-acct-cancel="1">Cancel</button>' +
+        '</div></div>';
+    } else if (open && acctExpand.mode === 'password') {
+      form = '<div class="acct-form"><div class="portal-field"><label for="acct-pass-' + esc(s.id) + '">New password</label>' +
+        '<span class="pw-wrap"><input type="password" id="acct-pass-' + esc(s.id) + '" placeholder="At least 8 characters" autocomplete="new-password" />' +
+        '<button class="pw-eye" type="button" data-acct-eye="acct-pass-' + esc(s.id) + '" aria-label="Show password"><i class="fas fa-eye"></i></button></span></div>' +
+        '<div class="portal-card-actions">' +
+        '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-acct-pass-save="' + esc(s.id) + '">Set password</button>' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-acct-cancel="1">Cancel</button>' +
+        '</div></div>';
+    }
+    out += '<p class="portal-card-meta"><i class="fas fa-envelope"></i> ' + esc(s.email || 'No login email') + '</p>' +
+      (s.created_at ? '<p class="portal-card-meta portal-muted">Login created ' + esc(fmtDate(s.created_at)) + '</p>' : '') +
+      '<div class="portal-card-actions">' +
+      '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-acct-edit="' + esc(s.id) + '"><i class="fas fa-pen"></i> Edit login</button>' +
+      '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-acct-pass="' + esc(s.id) + '"><i class="fas fa-key"></i> Set password</button>' +
+      (isSelf
+        ? '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" disabled title="You cannot deactivate your own account">Deactivate</button>'
+        : '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-acct-ban="' + esc(s.id) + '"><i class="fas fa-' + (s.banned ? 'circle-check' : 'ban') + '"></i> ' + (s.banned ? 'Activate' : 'Deactivate') + '</button>') +
+      '</div>' + form;
+    return out + '</div>';
   }
 
   /* Confirm-arm, the inventory-delete shape: the first tap arms the
@@ -6071,8 +6177,10 @@ function loadTicketThread(client, ticketId) {
       acctExpand = null;
       acctNote(successText);
       if (onOk) onOk();
-      state.loaded.accountcontrols = false;
-      loadAccountControls(true);
+      /* ASSOCIATE_ACCOUNTS_2026_11_03: reload BOTH halves — a created
+       * or changed login also changes the person's merged card. */
+      state.loaded.associateaccounts = false;
+      loadAssociateAccounts(true);
     });
   }
 
@@ -6080,7 +6188,7 @@ function loadTicketThread(client, ticketId) {
     if (acctExpand && acctExpand.id === id && acctExpand.mode === mode) acctExpand = null;
     else acctExpand = { id: id, mode: mode };
     acctError('');
-    renderAccountControls();
+    renderAssociates(); /* ASSOCIATE_ACCOUNTS_2026_11_03: the merged renderer */
     if (acctExpand) {
       var input = $(mode === 'email' ? 'acct-email-' + id : 'acct-pass-' + id);
       if (input) { input.focus(); if (mode === 'email' && input.select) input.select(); }
@@ -6231,7 +6339,7 @@ function loadTicketThread(client, ticketId) {
          * this one rebuild — the summary is cached and shows on
          * the next render (the save's own re-render included). */
         if (assocOwnerInputsDirty(id)) return;
-        renderAssociates(associatesCache);
+        renderAssociates();
       };
       if (!client) { settle({ open: null, weekMs: 0 }); return; }
       client.from('time_entries').select('*').eq('employee_id', id).order('clock_in', { ascending: false }).limit(100)
@@ -6282,7 +6390,7 @@ function loadTicketThread(client, ticketId) {
           var savedRate = res.data[0].pay_rate;
           associatesCache.forEach(function (r) { if (r.id === id) r.pay_rate = savedRate; });
           if (msg) msg.textContent = 'Saved.';
-          setTimeout(function () { if (assocExpandedId === id) renderAssociates(associatesCache); }, 900);
+          setTimeout(function () { if (assocExpandedId === id) renderAssociates(); }, 900);
         })
         .catch(function () { if (msg) msg.textContent = 'Could not save. Try again.'; });
     });
@@ -8064,7 +8172,7 @@ function loadTicketThread(client, ticketId) {
           var acb = t.getAttribute('data-acct-ban');
           if (acb) { acctToggleBan(t, acb); return; }
           var accx = t.getAttribute('data-acct-cancel');
-          if (accx) { acctExpand = null; renderAccountControls(); return; }
+          if (accx) { acctExpand = null; renderAssociates(); return; } /* ASSOCIATE_ACCOUNTS_2026_11_03 */
           var acad = t.getAttribute('data-acct-add');
           if (acad) { acctAddUser(t); return; }
           /* PORTAL_SIDEBAR_ROSTER_2026_11_02: roster row tap expands/collapses that associate's profile in place. */
@@ -8745,7 +8853,7 @@ function loadTicketThread(client, ticketId) {
         assocHomeKnown = true;
         assocHomeById = {};
         (res.data || []).forEach(function (r) { assocHomeById[r.id] = r.home_address || ''; });
-        if (assocExpandedId) renderAssociates(associatesCache);
+        if (assocExpandedId) renderAssociates();
       })
       .catch(function () { assocHomeKnown = false; });
   }
@@ -8771,7 +8879,7 @@ function loadTicketThread(client, ticketId) {
           assocHomeById[id] = val;
           if (msg) msg.textContent = 'Saved.';
           try { geoEnsureHomeFence(client, id, val, tcProfileName(id)); } catch (e) {}
-          setTimeout(function () { if (assocExpandedId === id) renderAssociates(associatesCache); }, 900);
+          setTimeout(function () { if (assocExpandedId === id) renderAssociates(); }, 900);
         })
         .catch(function () { if (msg) msg.textContent = 'Could not save. Try again.'; });
     });
