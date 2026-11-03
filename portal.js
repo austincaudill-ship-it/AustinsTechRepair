@@ -771,6 +771,20 @@
   var TRUST_TOKEN_KEY = 'atrg-portal-trusted-device';
   var PASSWORD_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
   var pwGateState = { forced: false };
+  /* PORTAL_SIGNIN_LAYOUT_2026_11_03: state for the visible
+   * "Remember this device for 30 days" checkbox on the sign-in
+   * card (portal.html, directly under Forgot your password —
+   * Austin's layout, Nov 3, 2026). wanted = the box was checked
+   * when the sign-in form was submitted (snapshotted by
+   * noteSignInTrustChoice in the submit handler, before
+   * signInWithPassword runs). applied = a trust token has
+   * already been issued for this sign-in by ANY path (the
+   * checkbox path in afterMfaGate, or the pre-existing
+   * authenticator-verify / enrollment calls to
+   * createDeviceTrust, which set it), so a sign-in never issues
+   * two tokens. Both start false on every page load, so a
+   * restored session (no form submit) never creates trust. */
+  var signInTrustState = { wanted: false, applied: false };
 
   function readTrustToken() {
     try { return window.localStorage.getItem(TRUST_TOKEN_KEY) || ''; }
@@ -826,11 +840,45 @@
   }
 
   function createDeviceTrust(client) {
+    /* PORTAL_SIGNIN_LAYOUT_2026_11_03: any trust issuance marks
+     * this sign-in's remember choice as handled, so the checkbox
+     * path in afterMfaGate never issues a second token on top of
+     * the authenticator-verify / enrollment issuance below. */
+    signInTrustState.applied = true;
     var label = '';
     try { label = window.navigator.userAgent || ''; } catch (e) {}
     callDeviceTrust(client, { action: 'create', label: label }, function (out) {
       if (out && out.token) storeTrustToken(out.token);
     });
+  }
+
+  /* PORTAL_SIGNIN_LAYOUT_2026_11_03: read the visible checkbox.
+   * Called by the sign-in submit handler BEFORE
+   * signInWithPassword, so the state reflects the box exactly as
+   * it stood for THIS sign-in attempt. An absent element (older
+   * cached portal.html) reads as unchecked — the pre-checkbox
+   * behavior, never an error. */
+  function noteSignInTrustChoice() {
+    var box = $('portal-remember-device');
+    signInTrustState.wanted = !!(box && box.checked);
+    signInTrustState.applied = false;
+  }
+
+  /* PORTAL_SIGNIN_LAYOUT_2026_11_03: honor the checkbox once the
+   * sign-in has fully passed its gates. Called at the top of
+   * afterMfaGate — the one function every completed sign-in
+   * passes through (no factor, trusted device, AAL2 session,
+   * challenge verify). Checked + not yet issued -> create the
+   * same 30-day trust the authenticator path creates, reusing
+   * createDeviceTrust unchanged (same Edge Function, same
+   * hashed-token row in portal_trusted_devices, same localStorage
+   * token). Unchecked -> nothing happens: no trust is created,
+   * and an existing token on this device is left exactly as it
+   * was (never silently deleted). Best-effort like every trust
+   * call: a failure changes nothing about the sign-in itself. */
+  function applySignInTrustChoice(client) {
+    if (!signInTrustState.wanted || signInTrustState.applied) return;
+    createDeviceTrust(client);
   }
 
   /* The challenge fork in mfaGate: trust first, challenge second.
@@ -855,6 +903,11 @@
    * diverts, into the forced set-a-new-password step; everyone else
    * lands exactly where they landed before this build. */
   function afterMfaGate(client) {
+    /* PORTAL_SIGNIN_LAYOUT_2026_11_03: the sign-in's gates have
+     * all passed — honor the "Remember this device" checkbox
+     * before the (possibly diverting) password-age check, so a
+     * forced rotation does not eat the choice. */
+    applySignInTrustChoice(client);
     if (passwordIsStale()) { showForcedPasswordChange(); return; }
     proceedToDashboard();
   }
@@ -939,6 +992,12 @@
           err.hidden = false;
           return;
         }
+        /* PORTAL_SIGNIN_LAYOUT_2026_11_03: snapshot the visible
+         * "Remember this device for 30 days" checkbox for this
+         * attempt before the password goes out; if the sign-in
+         * fails, the gates never run and the snapshot is simply
+         * never used. */
+        noteSignInTrustChoice();
         var btn = $('portal-login-btn');
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in&hellip;';
