@@ -569,3 +569,89 @@ body.portal-scroll-locked{position:fixed;left:0;right:0;width:100%;overflow:hidd
 .mem-dot-on { background: #16a34a; }
 .mem-dot-off { background: #dc2626; }
 /* end PORTAL_TIER_SET_FINISH_2026_11_02 */
+
+/* PORTAL_SIZEUP_2026_11_02 (Austin, Nov 2, 2026, evening): the portal
+   "looks a little funny" and he wants it "a little bit bigger for the
+   scrolling" — a modest overall size-up so the two scroll panes feel
+   roomier. Nothing structural changes: the fixed frame, the pinned
+   Action Button label, the groups, and every existing behavior stay as
+   they are. Only sizes move, each by a small step:
+   - Action Buttons get taller padding and slightly larger text
+     (9px 11px / .92rem -> 13px 14px / 1rem), so each button is a bigger
+     finger target and the sidebar list reads less cramped.
+   - The sidebar column widens (228px -> 256px on wide screens,
+     200px -> 220px in the 641-900px band that covers iPad portrait),
+     with the column gap 20px -> 24px, so labels stop feeling squeezed
+     against the panel.
+   - The sidebar card padding grows 10px -> 13px, group headers get a
+     touch more air above them, and the open panel gains inner padding
+     (border-box, so the fixed-frame pane size cannot grow and overflow
+     the row) instead of content running edge to edge while scrolling. */
+.portal-tab{padding:13px 14px;font-size:1rem}
+.portal-nav-col{padding:13px}
+.portal-nav-group{margin-top:18px}
+@media screen and (min-width:641px){
+  #portal-dash-view .portal-panel{padding:.5rem .75rem .75rem;box-sizing:border-box}
+}
+@media (min-width:901px){
+  #portal-dash-view{grid-template-columns:256px 1fr;column-gap:24px}
+}
+@media (min-width:641px) and (max-width:900px){
+  #portal-dash-view{grid-template-columns:220px 1fr;column-gap:24px}
+}
+/* end PORTAL_SIZEUP_2026_11_02 */
+
+/* PORTAL_IPHONE_DUO_2026_11_02 (Austin, Nov 2, 2026, evening): "if it was
+   on the iPhone duo, make it to where on the iPhone duo one side is the
+   potato and the other side is meat" — on an iPhone in LANDSCAPE he
+   wants the true two-pane split: Action Button sidebar on one side,
+   the open panel on the other, each scrolling on its own, header fixed.
+   Today an iPhone landscape either falls into the 640px-and-down phone
+   collapse (nav hidden behind the Menu button, single stacked column)
+   or, on wider models, into the generic two-column grid without the
+   phone-height fixed frame — neither is the duo he described.
+   The trigger is the landscape phone shape itself: orientation
+   landscape + a short viewport (max-height:520px) + phone-class width
+   (max-width:1024px). iPhone landscape viewports run 320-430px tall and
+   568-932px wide, so every current iPhone matches; iPad landscape
+   (820px tall and up) and desktop windows do not, and iPhone PORTRAIT
+   keeps today's single-column Menu-button behavior untouched.
+   Inside the query the duo reuses the exact fixed-frame recipe the
+   Nov 2 touch shell proved on iPad (body locked to 100dvh as a flex
+   column, topbar pinned, grid rows auto/auto/auto/minmax(0,1fr), panes
+   at definite height with their own momentum scroll and overscroll
+   containment), and adds the phone-specific rescues:
+   - .portal-nav-col returns to display:flex (the <=640px rule turns it
+     into display:contents) and the pinned Action Button label is shown
+     again (the <=640px rule hides it) — the label stays fixed above the
+     buttons in the duo, same as everywhere else.
+   - The nav is forced visible as a column scroller (the <=640px rule
+     hides .portal-tabs behind the Menu toggle) and the Menu toggle
+     itself is hidden — in the duo the sidebar is simply there.
+   - Columns are minmax(180px,40%) / 1fr: the sidebar takes about 40%
+     of the landscape width (the "potato"), the panel takes the rest
+     (the "meat"), and neither can squeeze the other out.
+   - .portal-main keeps the touch shell's overflow-y:auto: with the
+     dashboard grid flexed to a definite height its panes are the only
+     dashboard scrollers, and the login card can still scroll if it is
+     ever taller than a short landscape screen.
+   - The greeting head is compacted (smaller H1, tighter margin) so the
+     short landscape screen gives its height to the two panes. */
+@media screen and (orientation:landscape) and (max-height:520px) and (max-width:1024px){
+  .portal-body{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+  .portal-topbar{flex:none}
+  .portal-main{flex:1 1 auto;min-height:0;width:100%;box-sizing:border-box;display:flex;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:.6rem .75rem}
+  #portal-dash-view{flex:1 1 auto;min-width:0;min-height:0;grid-template-columns:minmax(180px,40%) minmax(0,1fr);grid-template-rows:auto auto auto minmax(0,1fr);column-gap:12px;align-items:stretch}
+  #portal-dash-view .portal-dash-head{grid-row:1;grid-column:1/-1;margin-bottom:.5rem}
+  #portal-dash-view .portal-dash-head .portal-h1{font-size:1.3rem}
+  #portal-dash-view .portal-error{grid-row:2;grid-column:1/-1}
+  #portal-dash-view #portal-mfa-banner{grid-row:3;grid-column:1/-1}
+  #portal-dash-view .portal-nav-col{grid-row:4;grid-column:1;position:static;height:100%;max-height:none;min-height:0}
+  .portal-nav-col{display:flex}
+  .portal-nav-col .portal-nav-label{display:block}
+  #portal-nav-toggle{display:none}
+  #portal-dash-view .portal-tabs{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+  #portal-dash-view .portal-tabs>*{flex:none}
+  #portal-dash-view .portal-panel{grid-row:4;grid-column:2;position:static;height:100%;max-height:none;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;margin-bottom:0;box-sizing:border-box;padding:.4rem .6rem}
+}
+/* end PORTAL_IPHONE_DUO_2026_11_02 */
