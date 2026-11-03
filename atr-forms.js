@@ -229,7 +229,9 @@
         'contact': 'Thanks ' + first + '! Your message is in &mdash; we typically reply within the hour during business hours.',
         'job-application': 'Thanks ' + first + '! Your application is in. We&rsquo;ll review it and reach out if it&rsquo;s a fit.',
         'investors': 'Thanks ' + first + '! Your inquiry is in &mdash; Austin will follow up with you personally.',
-        'feedback': 'Thanks for telling us how we did &mdash; feedback like yours helps local folks find us.'
+        'feedback': 'Thanks for telling us how we did &mdash; feedback like yours helps local folks find us.',
+        /* WARRANTY_FORM_2026_11_03 */
+        'warranty-request': 'Thanks ' + first + '! Your warranty request is in. Your repair is covered by our 1-year warranty on the parts we supplied, and we&rsquo;ll reach out using your preferred contact method to go over the next steps.'
       }[kind];
       if (text) msg.innerHTML = text;
     }
@@ -245,7 +247,9 @@
       'contact': 'Send another message',
       'job-application': 'Submit another application',
       'investors': 'Send another inquiry',
-      'feedback': 'Send more feedback'
+      'feedback': 'Send more feedback',
+      /* WARRANTY_FORM_2026_11_03 */
+      'warranty-request': 'Submit another warranty request'
     }[kind];
     if (againLabel && !success.querySelector('[data-send-another]')) {
       var againP = document.createElement('p');
@@ -999,13 +1003,98 @@
     });
   }
 
+  /* ================= WARRANTY REQUEST — WARRANTY_FORM_2026_11_03 =================
+   * Customer warranty replacement requests from the site's Warranty
+   * Request page (#warranty-request). Writes to public.warranty_requests;
+   * that table is the system of record (staff work the requests from
+   * the portal). Addressed to the business's warranty mailbox
+   * (warrantyandreplacement@austinstechrepairgroup.com) — see the
+   * REPORT in website-warranty-form-2026-11-03 for the gated email leg;
+   * the FormSubmit alert below follows the same pattern as every other
+   * form here and is best-effort only. The ticket number from the
+   * customer's receipt is optional on purpose: a customer who lost the
+   * receipt can still file, and staff can look them up. */
+  function handleWarrantyRequest(form) {
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      clearErrors(form);
+      if (isSpam(form)) { showSuccess(form, 'warranty-request', {}); return; }
+
+      var v = {
+        customer_name: field(form, 'customer_name'),
+        phone: field(form, 'phone'),
+        email: field(form, 'email'),
+        device: field(form, 'device'),
+        ticket_ref: field(form, 'ticket_ref'),
+        repair_date: field(form, 'repair_date'),
+        part_service: field(form, 'part_service'),
+        problem: field(form, 'problem'),
+        contact_pref: field(form, 'contact_pref')
+      };
+      v.first_name = v.customer_name ? v.customer_name.split(' ')[0] : '';
+
+      var errors = {};
+      if (!v.customer_name) errors.customer_name = 'Please tell us your name.';
+      if (!v.phone) errors.phone = 'Please add a phone number so we can reach you.';
+      else if (!validPhone(v.phone)) errors.phone = 'That phone number doesn&rsquo;t look right.';
+      if (!v.email) errors.email = 'Please add your email address.';
+      else if (!validEmail(v.email)) errors.email = 'That email address doesn&rsquo;t look right.';
+      if (!v.device) errors.device = 'Please tell us the device brand and model.';
+      if (!v.repair_date) errors.repair_date = 'Please pick the closest date you can.';
+      if (!v.part_service) errors.part_service = 'Please tell us which part or service this is about.';
+      if (!v.problem) errors.problem = 'Please describe what is happening with the device.';
+      if (!v.contact_pref) errors.contact_pref = 'Please choose how you would like us to reach you.';
+      if (applyErrors(form, errors)) return;
+
+      var row = {
+        customer_name: v.customer_name,
+        phone: v.phone,
+        email: v.email,
+        device: v.device,
+        repair_date: v.repair_date || null,
+        ticket_ref: v.ticket_ref || null,
+        part_service: v.part_service,
+        problem: v.problem,
+        contact_pref: v.contact_pref
+      };
+
+      setBusy(form, true);
+      sendAlert('New warranty request: ' + v.device, [
+        ['Name', v.customer_name],
+        ['Phone', v.phone],
+        ['Email', v.email],
+        ['Device', v.device],
+        ['Ticket number (on your receipt)', v.ticket_ref],
+        ['Date of original repair (approx.)', v.repair_date],
+        ['Part or service under warranty', v.part_service],
+        ['Problem', v.problem],
+        ['Preferred contact method', v.contact_pref]
+      ]);
+
+      withClient(function (client) {
+        if (!client) { setBusy(form, false); showFormError(form, dbFailMessage()); return; }
+        // No .select() — see the return=minimal note at the top of this file.
+        client.from('warranty_requests').insert(row).then(function (res) {
+          setBusy(form, false);
+          if (res.error) { showFormError(form, dbFailMessage()); return; }
+          showSuccess(form, 'warranty-request', v);
+        }).catch(function () {
+          setBusy(form, false);
+          showFormError(form, dbFailMessage());
+        });
+      });
+    });
+  }
+
   /* ---------------- binding ---------------- */
   var HANDLERS = {
     'service-request': handleServiceRequest,
     'contact': handleContact,
     'job-application': handleJobApplication,
     'investors': handleInvestors,
-    'feedback': handleFeedback
+    'feedback': handleFeedback,
+    /* WARRANTY_FORM_2026_11_03 */
+    'warranty-request': handleWarrantyRequest
   };
 
   function init() {

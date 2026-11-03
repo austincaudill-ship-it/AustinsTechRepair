@@ -2100,6 +2100,108 @@
       </div>
     </section>
 
+    <!-- WARRANTY_FORM_2026_11_03: Warranty Request page. Austin ordered a
+         form so customers can file a warranty replacement request without
+         calling or texting. Mirrors the Review page's native form pattern
+         (atr-forms.js, data-form="warranty-request" -> public.warranty_requests).
+         BEGIN SECTION: warranty-request -->
+    <section id="warranty-request" class="page">
+      <div class="section">
+        <div class="container">
+          <div class="section-header center">
+            <p class="eyebrow">Warranty</p>
+            <h2 class="section-title">Warranty Request</h2>
+            <p>Something we repaired not working the way it should? Every repair we do carries our 1-year warranty on the parts we supplied and the labor we performed. Fill out this form and we will reach out &mdash; no need to call or text. Have your receipt handy if you can; the ticket number on it helps us pull up your repair fast. Full terms are in our <a href="#warranty" data-page="warranty">Warranty Policy</a>.</p>
+          </div>
+<!-- BEGIN SNIPPET: warranty-request -->
+<div class="atr-form-wrap" data-form-wrap="warranty-request">
+  <form class="atr-form" data-form="warranty-request" novalidate>
+    <div class="atr-form-error" role="alert" hidden></div>
+
+    <div class="atr-field">
+      <label class="field-label" for="wr-name">Full name *</label>
+      <input class="form-field" type="text" id="wr-name" name="customer_name" autocomplete="name" placeholder="Your full name">
+      <span class="atr-field-error" data-error-for="customer_name"></span>
+    </div>
+
+    <div class="atr-row">
+      <div class="atr-field">
+        <label class="field-label" for="wr-phone">Phone *</label>
+        <input class="form-field" type="tel" id="wr-phone" name="phone" autocomplete="tel" placeholder="937-555-0123">
+        <span class="atr-field-error" data-error-for="phone"></span>
+      </div>
+      <div class="atr-field">
+        <label class="field-label" for="wr-email">Email *</label>
+        <input class="form-field" type="email" id="wr-email" name="email" autocomplete="email" placeholder="you@example.com">
+        <span class="atr-field-error" data-error-for="email"></span>
+      </div>
+    </div>
+
+    <div class="atr-field">
+      <label class="field-label" for="wr-device">Device brand and model *</label>
+      <input class="form-field" type="text" id="wr-device" name="device" placeholder="e.g., iPhone 13 Pro Max, Galaxy S23, HP Pavilion laptop">
+      <span class="atr-field-error" data-error-for="device"></span>
+    </div>
+
+    <div class="atr-row">
+      <div class="atr-field">
+        <label class="field-label" for="wr-ticket">Ticket number (on your receipt) <span class="atr-optional">(optional)</span></label>
+        <input class="form-field" type="text" id="wr-ticket" name="ticket_ref" placeholder="Ticket number, if you have it">
+        <p class="atr-help">You will find it on the receipt from your original repair.</p>
+        <span class="atr-field-error" data-error-for="ticket_ref"></span>
+      </div>
+      <div class="atr-field">
+        <label class="field-label" for="wr-date">Approximate date of the original repair *</label>
+        <input class="form-field" type="date" id="wr-date" name="repair_date">
+        <p class="atr-help">An approximate date is fine &mdash; the closest you can remember.</p>
+        <span class="atr-field-error" data-error-for="repair_date"></span>
+      </div>
+    </div>
+
+    <div class="atr-field">
+      <label class="field-label" for="wr-part">Which part or service is under warranty? *</label>
+      <input class="form-field" type="text" id="wr-part" name="part_service" placeholder="e.g., Screen replacement, battery, charging port">
+      <span class="atr-field-error" data-error-for="part_service"></span>
+    </div>
+
+    <div class="atr-field">
+      <label class="field-label" for="wr-problem">Describe the problem *</label>
+      <textarea class="form-field" id="wr-problem" name="problem" rows="4" placeholder="Tell us what the device is doing now &mdash; what stopped working, and when you first noticed it."></textarea>
+      <span class="atr-field-error" data-error-for="problem"></span>
+    </div>
+
+    <div class="atr-field">
+      <label class="field-label" for="wr-contact">Preferred contact method *</label>
+      <select class="form-field" id="wr-contact" name="contact_pref">
+        <option value="">Choose one&hellip;</option>
+        <option value="Call">Call</option>
+        <option value="Text">Text</option>
+        <option value="Email">Email</option>
+      </select>
+      <span class="atr-field-error" data-error-for="contact_pref"></span>
+    </div>
+
+    <div class="atr-honeypot" aria-hidden="true">
+      <label>Leave this field empty<input type="text" name="_honey" tabindex="-1" autocomplete="off"></label>
+    </div>
+
+    <button class="btn btn-primary btn-block btn-lg" type="submit">
+      <i class="fas fa-shield-halved"></i> Submit warranty request
+    </button>
+  </form>
+  <div class="form-success atr-success" hidden>
+    <h3><i class="fas fa-circle-check"></i> Request received</h3>
+    <p data-success-msg>Your warranty request is in. Your repair is covered by our 1-year warranty on the parts we supplied, and we will reach out to you to go over the next steps.</p>
+    <p style="margin-bottom:0;"><a class="btn btn-outline" href="#warranty" data-page="warranty">Read the full Warranty Policy</a></p>
+  </div>
+</div>
+<!-- END SNIPPET: warranty-request -->
+          <p style="margin-top:1.5rem;"><a class="btn btn-outline" href="#warranty" data-page="warranty">Back to Warranty Policy</a></p>
+        </div>
+      </div>
+    </section>
+    <!-- END SECTION: warranty-request (WARRANTY_FORM_2026_11_03) -->
+
     <!-- ==================== SERVICE AGREEMENT ==================== -->
     <section id="service-agreement" class="page">
       <div class="section">
@@ -2385,6 +2487,8 @@
           <a class="footer-link" href="#privacy" data-page="privacy">Privacy Policy</a>
           <a class="footer-link" href="#terms" data-page="terms">Terms of Service</a>
           <a class="footer-link" href="#warranty" data-page="warranty">1-Year Warranty</a>
+          <!-- WARRANTY_FORM_2026_11_03 -->
+          <a class="footer-link" href="#warranty-request" data-page="warranty-request">Warranty Request</a>
           <a class="footer-link" href="#service-agreement" data-page="service-agreement">Service Agreement &amp; Waiver</a>
           <a class="footer-link" href="portal.html">Employee Portal</a>
         </div>
@@ -2396,8 +2500,9 @@
         </div>
       </div>
 
-      <div class="footer-payments"><span class="footer-payments-label">We accept</span><span class="pay-badge pay-mark-wrap" title="Visa"><img class="pay-mark-img" src="images/visa-mark.png" alt="Visa" /></span><span class="pay-badge pay-mark-wrap" title="Mastercard"><img class="pay-mark-img" src="images/mastercard-symbol.svg" alt="Mastercard" /></span><span class="pay-badge pay-mark-wrap" title="American Express"><img class="pay-mark-img" src="images/amex-mark.svg" alt="American Express" /></span><span class="pay-badge pay-mark-wrap" title="Discover"><img class="pay-mark-img" src="images/discover-mark.png" alt="Discover" /></span><img class="apple-pay-mark" src="images/apple-pay-mark.svg" alt="Apple Pay" title="Apple Pay" /><span class="pay-badge pay-mark-wrap" title="Google Pay"><img class="google-pay-mark" src="images/google-pay-mark.svg" alt="Google Pay" /></span><span class="pay-badge pay-mark-wrap" title="Samsung Pay"><img class="pay-mark-img" src="images/samsung-pay-mark.png" alt="Samsung Pay" /></span><span class="pay-badge pay-mark-wrap" title="PayPal"><img class="pay-mark-img" src="images/paypal-mark.svg" alt="PayPal" /></span><span class="pay-badge pay-mark-wrap" title="Venmo"><img class="pay-mark-img" src="images/venmo-mark.svg" alt="Venmo" /></span><span class="pay-badge pay-mark-wrap" title="Cash App Pay"><img class="pay-mark-img" src="images/cash-app-pay.svg" alt="Cash App Pay" /></span><span class="pay-badge pay-mark-wrap" title="Square"><img class="pay-mark-img" src="images/square.svg" alt="Square" /></span><span class="pay-badge pay-text" title="Cash"><i class="fas fa-money-bill-wave"></i> Cash</span></div><p class="footer-disclaimer">
-        <strong>Disclaimer:</strong> Austin's Tech Repair Group is an <strong>independent repair provider</strong> operating as a sole proprietorship in Ohio. We are <strong>not</strong> an authorized service provider for any manufacturer, and we are <strong>not affiliated with, sponsored by, or endorsed by</strong> Apple, Samsung, Google, Microsoft, Sony, Nintendo, Motorola, or any other company or brand named on this site. All trademarks, service marks, logos, and brand names are the property of their respective owners, and all rights in them are reserved by those owners. Apple, the Apple logo, Apple Pay, Apple Watch, Face ID, iPad, iPhone, and Touch ID are trademarks of Apple Inc., registered in the U.S. and other countries and regions. Samsung, Galaxy, and Samsung Pay are trademarks of Samsung Electronics Co., Ltd. Google, Pixel, Google Pay, and Android are trademarks of Google LLC. Microsoft, Windows, and Xbox are trademarks of the Microsoft group of companies. PlayStation is a trademark of Sony Interactive Entertainment Inc. Nintendo is a trademark of Nintendo Co., Ltd. Motorola is a trademark of Motorola Trademark Holdings, LLC. Visa is a trademark of Visa Inc. Mastercard is a trademark of Mastercard International Incorporated. Austin's Tech Repair Group is <strong>not</strong> an insurance company. We do not provide quotes for insurance claims, and we do not file, approve, or get involved with insurance claims &mdash; all repairs are paid directly by the customer. Estimates shown on this site are approximate and confirmed after inspection. 1-year warranty covers parts and labor for the serviced issue; see Terms of Service for full details.
+      <div class="footer-payments"><span class="footer-payments-label">We accept</span><span class="pay-badge pay-mark-wrap" title="Visa"><img class="pay-mark-img" src="images/visa-mark.png" alt="Visa" /></span><span class="pay-badge pay-mark-wrap" title="Mastercard"><img class="pay-mark-img" src="images/mastercard-symbol.svg" alt="Mastercard" /></span><span class="pay-badge pay-mark-wrap" title="American Express"><img class="pay-mark-img" src="images/amex-mark.svg" alt="American Express" /></span><span class="pay-badge pay-mark-wrap" title="Discover"><img class="pay-mark-img" src="images/discover-mark.png" alt="Discover" /></span><img class="apple-pay-mark" src="images/apple-pay-mark.svg" alt="Apple Pay" title="Apple Pay" /><span class="pay-badge pay-mark-wrap" title="Google Pay"><img class="google-pay-mark" src="images/google-pay-mark.svg" alt="Google Pay" /></span><span class="pay-badge pay-mark-wrap" title="Samsung Pay"><img class="pay-mark-img" src="images/samsung-pay-mark.png" alt="Samsung Pay" /></span><span class="pay-badge pay-mark-wrap" title="PayPal"><img class="pay-mark-img" src="images/paypal-mark.svg" alt="PayPal" /></span><span class="pay-badge pay-mark-wrap" title="Venmo"><img class="pay-mark-img" src="images/venmo-mark.svg" alt="Venmo" /></span><span class="pay-badge pay-mark-wrap" title="Cash App Pay"><img class="pay-mark-img" src="images/cash-app-pay.svg" alt="Cash App Pay" /></span><span class="pay-badge pay-mark-wrap" title="Square"><img class="pay-mark-img" src="images/square.svg" alt="Square" /></span><span class="pay-badge pay-text" title="Cash"><i class="fas fa-money-bill-wave"></i> Cash</span></div><!-- WARRANTY_FORM_2026_11_03: the warranty sentence in the disclaimer below links to the new Warranty Request form -->
+      <p class="footer-disclaimer">
+        <strong>Disclaimer:</strong> Austin's Tech Repair Group is an <strong>independent repair provider</strong> operating as a sole proprietorship in Ohio. We are <strong>not</strong> an authorized service provider for any manufacturer, and we are <strong>not affiliated with, sponsored by, or endorsed by</strong> Apple, Samsung, Google, Microsoft, Sony, Nintendo, Motorola, or any other company or brand named on this site. All trademarks, service marks, logos, and brand names are the property of their respective owners, and all rights in them are reserved by those owners. Apple, the Apple logo, Apple Pay, Apple Watch, Face ID, iPad, iPhone, and Touch ID are trademarks of Apple Inc., registered in the U.S. and other countries and regions. Samsung, Galaxy, and Samsung Pay are trademarks of Samsung Electronics Co., Ltd. Google, Pixel, Google Pay, and Android are trademarks of Google LLC. Microsoft, Windows, and Xbox are trademarks of the Microsoft group of companies. PlayStation is a trademark of Sony Interactive Entertainment Inc. Nintendo is a trademark of Nintendo Co., Ltd. Motorola is a trademark of Motorola Trademark Holdings, LLC. Visa is a trademark of Visa Inc. Mastercard is a trademark of Mastercard International Incorporated. Austin's Tech Repair Group is <strong>not</strong> an insurance company. We do not provide quotes for insurance claims, and we do not file, approve, or get involved with insurance claims &mdash; all repairs are paid directly by the customer. Estimates shown on this site are approximate and confirmed after inspection. 1-year warranty covers parts and labor for the serviced issue &mdash; to request warranty service, use our <a href="#warranty-request" data-page="warranty-request">warranty request form</a>; see Terms of Service for full details.
       </p>
       <!-- SITE_ATRONE_DISCLAIMER_2026_11_02: ATR One membership disclaimer in the footer disclaimer area (Austin, Nov 2, 2026) -->
       <p class="footer-disclaimer">

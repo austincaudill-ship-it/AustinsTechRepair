@@ -1980,3 +1980,12 @@ span.acct-tech-disc { display:inline-flex; align-items:center; justify-content:c
 .acct-tech-text { display:flex; flex-direction:column; }
 .acct-tech-label { font-size:.72rem; font-weight:700; letter-spacing:.04em;
   text-transform:uppercase; color:#8A7A63; }
+
+/* WARRANTY_FORM_2026_11_03: Warranty Request page (#warranty-request).
+   All form controls reuse the existing .atr-form / .form-field /
+   .field-label styles (styles.css + atr-forms.css); the only additions
+   are a comfortable reading width for the form column and a legible
+   link style inside the footer disclaimer (which sets no link style
+   of its own) for the new warranty-request link. */
+#warranty-request .atr-form-wrap { max-width: 720px; margin: 0 auto; }
+.footer-disclaimer a { color: #c9a86a; font-weight: 700; text-decoration: underline; }
