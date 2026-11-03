@@ -903,6 +903,8 @@
     tickets: loadTickets, applications: loadApplications, investors: loadInvestors,
     feedback: loadFeedback, customers: loadCustomers, members: loadAtrOneMembers, inventory: loadInventory,
     documents: loadDocumentsTab, financials: loadFinancials,
+    /* PAYROLL_SPLIT_2026_11_03: Payroll is its own tab now (see loadPayroll). */
+    payroll: loadPayroll,
     /* PORTAL_SIDEBAR_ROSTER_2026_11_02: the Associates roster panel. */
     associates: loadAssociates,
   };
@@ -923,7 +925,7 @@
     var nav = $('portal-nav'); if (nav) nav.classList.remove('open');
     var tabs = document.querySelectorAll('.portal-tab');
     tabs.forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === name); });
-    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'documents', 'financials', 'associates', 'mileage'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest */
+    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'documents', 'financials', 'payroll', 'associates', 'mileage'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too */
       $('portal-panel-' + n).hidden = n !== name;
     });
     closeDrawer();
@@ -5255,6 +5257,7 @@ function loadTicketThread(client, ticketId) {
     html += finBottomLineHtml(t);
     body.innerHTML = html;
     wireFinSettings(body);
+    renderPayrollSummary(); /* PAYROLL_SPLIT_2026_11_03: the Payroll panel's totals ride the same render — same finCache, same figures */
   }
 
   function loadFinancials(force) {
@@ -5348,9 +5351,14 @@ function loadTicketThread(client, ticketId) {
    *
    *   MONEY IN  = Collected (paid) — the panel's own collected
    *               figure (deposit_credit lines), labeled as such.
-   *   PARTS     = the panel's own parts cost (part_orders.our_cost —
-   *               see the audit note in REPORT.md for why this basis
-   *               is kept instead of ticket_charges.unit_cost).
+   *   PARTS     = NOT a bottom-line cost. FIN_GUESTPARTS_2026_11_03
+   *               (Austin, Nov 3, 2026: "Guest pays for parts") —
+   *               guests pay for their parts upfront, before ATRG
+   *               orders, so parts money is a pass-through, never a
+   *               business cost, and is NOT subtracted in the NET
+   *               below. The parts-cost figure itself still shows up
+   *               top with the cards/donut/months, on its original
+   *               basis (part_orders.our_cost), as information only.
    *   PAYROLL   = time_entries hours x employee_profiles.pay_rate,
    *               computed with the time clock's own rules: closed
    *               entries only, duration = clock_out - clock_in,
@@ -5382,8 +5390,9 @@ function loadTicketThread(client, ticketId) {
    *               payments are hand-recorded lines). Card payments
    *               are therefore identified by description keywords,
    *               and the base used is printed on the line itself.
-   *   NET       = Collected − Parts − Payroll (approved + awaiting)
-   *               − Processing.
+   *   NET       = Collected − Payroll (approved + awaiting)
+   *               − Processing. (Parts removed by
+   *               FIN_GUESTPARTS_2026_11_03 — see PARTS above.)
    *
    * SETTINGS: the portal has no settings table or key-value store
    * anywhere (verified across portal.js and portal.html), so the
@@ -5499,10 +5508,74 @@ function loadTicketThread(client, ticketId) {
     var pct = finFeePct();
     var cardBase = finCardCollected(finCache.charges, finCache.jobByTicket);
     var processing = Math.round(cardBase * pct) / 100;
-    var net = t.collected - t.partsCost - pay.total - processing;
+    var net = t.collected - pay.total - processing; /* FIN_GUESTPARTS_2026_11_03: no parts subtraction — guests pay for parts (pass-through) */
+    var html = '';
+    /* PAYROLL_SPLIT_2026_11_03: the per-associate payroll table,
+     * its explanatory notes, and the mileage-rate setting moved out
+     * of Financials into the Payroll panel (finPayrollTableHtml,
+     * below). Financials keeps ONLY the payroll summary figures its
+     * bottom line subtracts — approved and awaiting totals — so
+     * what-we-made and payroll are no longer the same screen. */
+    html += '<p>Payroll — approved (final): <strong>' + esc(fmtMoney(pay.approved)) + '</strong> &middot; Payroll — awaiting approval: <strong>' + esc(fmtMoney(pay.pending)) + '</strong></p>';
+    html += '<div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Processing &amp; bottom line</h3></div>';
+    html += '<div class="fin-settings">' +
+      '<label>Card processing fee %<input type="number" id="fin-fee-pct" min="0" step="0.01" inputmode="decimal" placeholder="0" value="' + (pct > 0 ? esc(String(pct)) : '') + '"></label>' +
+      '</div>' +
+      '<p class="portal-muted portal-small">Your rate, kept on this device. The processing % is an estimate, applied to the card payments collected in the period — identified from the payment notes (' + esc(fmtMoney(cardBase)) + ' of card payments in this period), because the portal records how a payment was described, not a method field. The mileage rate lives in the Payroll panel now, with the rest of payroll.</p>';
+    html += '<div class="portal-table-wrap"><table class="portal-table"><tbody>' +
+      '<tr><td>Collected (paid)</td><td>' + esc(fmtMoney(t.collected)) + '</td></tr>' +
+      '<tr><td>Payroll — approved</td><td>&minus;' + esc(fmtMoney(pay.approved)) + '</td></tr>' +
+      '<tr><td>Payroll — awaiting approval</td><td>&minus;' + esc(fmtMoney(pay.pending)) + '</td></tr>' +
+      '<tr><td>Processing (est.)</td><td>&minus;' + esc(fmtMoney(processing)) + '</td></tr>' +
+      '</tbody></table></div>';
+    html += '<div class="fin-cards"><div class="fin-card fin-net-card"><p class="fin-card-label">Net for this period</p><p class="fin-card-value fin-net-value">' + esc(fmtMoney(net)) + '</p></div></div>';
+    html += '<p class="portal-muted portal-small">Net = collected &minus; payroll &minus; processing. Parts are not subtracted — guests pay for their parts. Billed-but-unpaid work is in the cards at the top, not down here — this is the money that actually moved.</p>';
+    return html;
+  }
+
+  function wireFinSettings(body) {
+    var fee = body.querySelector('#fin-fee-pct');
+    if (fee) fee.addEventListener('change', function () {
+      var v = parseFloat(fee.value);
+      finStoreNumber(FIN_FEE_KEY, isFinite(v) && v > 0 ? Math.round(v * 100) / 100 : 0);
+      renderFinancials();
+    });
+    /* PAYROLL_SPLIT_2026_11_03: the mileage-rate input is wired by
+     * wirePaySettings in the Payroll panel now — it no longer
+     * renders inside this panel at all. */
+  }
+
+  /* ================= PAYROLL_SPLIT_2026_11_03 =================
+   * (Austin, Nov 3, 2026): "right now you've got payroll and you've
+   * got what we made in the same thing. Payroll needs to be its own
+   * separate financial action button." The Payroll panel (sidebar,
+   * Financials group, directly under Financials) now hosts ALL the
+   * payroll work:
+   *   - the per-associate payroll totals table below — the exact
+   *     block that used to render inside the Financials bottom
+   *     line, computed by the SAME finPayroll() pass over the SAME
+   *     finCache loadFinancials fetches, so the table here and the
+   *     approved / awaiting summary lines left in Financials are
+   *     one set of figures, never two;
+   *   - the time cards (week stepper + #tc-cards, moved out of the
+   *     Time Clock panel in portal.html — ids unchanged, so
+   *     renderTimeCards / the weekly approval / the owner's manual
+   *     entry tools work untouched from their new home);
+   *   - the mileage-rate setting, which prices payroll driving.
+   * The totals follow the Financials period (finPeriod — the
+   * period buttons on the Financials panel), and the table says so
+   * on its face. Nothing here recomputes anything: finPayroll(),
+   * mileageRateFor(), and the localStorage settings keys are the
+   * same helpers Financials always used. */
+
+  function finPayrollPeriodLabel() {
+    return finPeriod === 'month' ? 'This month' : finPeriod === '30d' ? 'Last 30 days' : 'All time';
+  }
+
+  function finPayrollTableHtml(pay) {
     var ovr = finMileageOverride();
     var html = '';
-    html += '<div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Payroll</h3></div>';
+    html += '<p class="portal-muted portal-small">Totals for the Financials period &mdash; currently ' + esc(finPayrollPeriodLabel()) + ' (change it with the period buttons on the Financials panel). These are the same figures the Financials bottom line subtracts.</p>';
     if (!pay.rows.length) {
       html += '<p class="portal-muted">No time logged in this period, so no payroll.</p>';
     } else {
@@ -5535,40 +5608,47 @@ function loadTicketThread(client, ticketId) {
     if (!finApprovalsKnown) {
       html += '<p class="portal-muted portal-small">Week approvals are not set up yet (they arrive with the staged approvals table) — until then all payroll counts as awaiting approval.</p>';
     } else {
-      html += '<p class="portal-muted portal-small">Approved payroll is final — ready for Friday pay. The rest is waiting on the Tuesday approval, on the Time cards.</p>';
+      html += '<p class="portal-muted portal-small">Approved payroll is final — ready for Friday pay. The rest is waiting on the Tuesday approval, on the Time cards below.</p>';
     }
-    html += '<p>Payroll — approved (final): <strong>' + esc(fmtMoney(pay.approved)) + '</strong> &middot; Payroll — awaiting approval: <strong>' + esc(fmtMoney(pay.pending)) + '</strong></p>';
-    html += '<div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Processing &amp; bottom line</h3></div>';
     html += '<div class="fin-settings">' +
-      '<label>Card processing fee %<input type="number" id="fin-fee-pct" min="0" step="0.01" inputmode="decimal" placeholder="0" value="' + (pct > 0 ? esc(String(pct)) : '') + '"></label>' +
       '<label>Mileage rate $ / mi (blank = IRS)<input type="number" id="fin-miles-rate" min="0" step="0.01" inputmode="decimal" placeholder="IRS rate" value="' + (ovr != null ? esc(String(ovr)) : '') + '"></label>' +
       '</div>' +
-      '<p class="portal-muted portal-small">Your two rates, kept on this device. The processing % is an estimate, applied to the card payments collected in the period — identified from the payment notes (' + esc(fmtMoney(cardBase)) + ' of card payments in this period), because the portal records how a payment was described, not a method field.</p>';
-    html += '<div class="portal-table-wrap"><table class="portal-table"><tbody>' +
-      '<tr><td>Collected (paid)</td><td>' + esc(fmtMoney(t.collected)) + '</td></tr>' +
-      '<tr><td>Parts cost (ours)</td><td>&minus;' + esc(fmtMoney(t.partsCost)) + '</td></tr>' +
-      '<tr><td>Payroll — approved</td><td>&minus;' + esc(fmtMoney(pay.approved)) + '</td></tr>' +
-      '<tr><td>Payroll — awaiting approval</td><td>&minus;' + esc(fmtMoney(pay.pending)) + '</td></tr>' +
-      '<tr><td>Processing (est.)</td><td>&minus;' + esc(fmtMoney(processing)) + '</td></tr>' +
-      '</tbody></table></div>';
-    html += '<div class="fin-cards"><div class="fin-card fin-net-card"><p class="fin-card-label">Net for this period</p><p class="fin-card-value fin-net-value">' + esc(fmtMoney(net)) + '</p></div></div>';
-    html += '<p class="portal-muted portal-small">Net = collected &minus; parts &minus; payroll &minus; processing. Billed-but-unpaid work is in the cards at the top, not down here — this is the money that actually moved.</p>';
+      '<p class="portal-muted portal-small">Your mileage rate, kept on this device. It prices the driving entries here, on the time cards, and in the Financials totals.</p>';
     return html;
   }
 
-  function wireFinSettings(body) {
-    var fee = body.querySelector('#fin-fee-pct');
-    if (fee) fee.addEventListener('change', function () {
-      var v = parseFloat(fee.value);
-      finStoreNumber(FIN_FEE_KEY, isFinite(v) && v > 0 ? Math.round(v * 100) / 100 : 0);
-      renderFinancials();
-    });
-    var mi = body.querySelector('#fin-miles-rate');
+  function renderPayrollSummary() {
+    var wrap = $('portal-payroll-summary');
+    if (!wrap || !finCache) return;
+    wrap.innerHTML = finPayrollTableHtml(finPayroll());
+    wirePaySettings(wrap);
+  }
+
+  function wirePaySettings(scope) {
+    var mi = scope.querySelector('#fin-miles-rate');
     if (mi) mi.addEventListener('change', function () {
       var v = parseFloat(mi.value);
       finStoreNumber(FIN_MILES_KEY, isFinite(v) && v > 0 ? Math.round(v * 1000) / 1000 : 0);
-      renderFinancials();
+      renderFinancials(); /* re-renders the Payroll summary too (renderPayrollSummary runs at its tail) */
     });
+  }
+
+  /* The Payroll panel loader: two halves, both borrowed machinery.
+   * The time cards load through loadTimeCards — the same loader the
+   * Time Clock panel uses — because the cards live here now. The
+   * totals come from the Financials fetch: loadFinancials fills
+   * finCache and renderFinancials re-renders the summary at its
+   * tail; when Financials already loaded this session, the summary
+   * renders straight from that cache. */
+  function loadPayroll(force) {
+    state.loaded.payroll = true;
+    withClient(function (client) {
+      if (!client || !state.user) return;
+      tcClientRef = client;
+      loadTimeCards(client);
+    });
+    if (force || !state.loaded.financials) loadFinancials(force);
+    else renderPayrollSummary();
   }
   /* end PORTAL_FINANCIALS_2026_11_02 */
 
@@ -5641,7 +5721,11 @@ function loadTicketThread(client, ticketId) {
    * per-associate time-cards panel (portal-time-cards-2026-11-02,
    * earlier in the publish chain) exposes a way to select one
    * associate's card, the port wires the jump to it — until then
-   * the panel simply opens on the tapped associate's behalf. */
+   * the panel simply opens on the tapped associate's behalf.
+   * PAYROLL_SPLIT_2026_11_03: the jump now lands on the Payroll
+   * panel (the time cards' post-split home), and the port is wired
+   * the rest of the way — renderTimeCards highlights the tapped
+   * associate's card and scrolls it into view. */
   function roleLabel(role) {
     var r = trim(role);
     if (!r) return '';
@@ -5789,12 +5873,40 @@ function loadTicketThread(client, ticketId) {
    * (no clock_out), if any, and the closed hours inside the current
    * Monday-start pay week — weekStart() and the closed-only total
    * are the time clock's own math (loadTimeClock). */
+  /* PAYRATE_FIX_2026_11_03: does the expanded card's owner section
+   * hold typing that has not been saved yet? The pay box is compared
+   * against the roster row's cached pay_rate, the home-address box
+   * against assocHomeById — the same values the section renders
+   * from, so a box the owner has not touched never reads dirty. */
+  function assocOwnerInputsDirty(id) {
+    var row = null;
+    associatesCache.forEach(function (r) { if (r.id === id) row = r; });
+    var payIn = document.querySelector('[data-assoc-pay-input="' + id + '"]');
+    if (payIn) {
+      var typed = trim(payIn.value);
+      var saved = (row && row.pay_rate != null && row.pay_rate !== '' && !isNaN(Number(row.pay_rate))) ? Number(row.pay_rate) : null;
+      if (typed === '') { if (saved !== null) return true; }
+      else if (isNaN(Number(typed)) || Number(typed) !== saved) return true;
+    }
+    var homeIn = document.querySelector('[data-assoc-home-input="' + id + '"]');
+    if (homeIn && trim(homeIn.value) !== trim(assocHomeById[id] || '')) return true;
+    return false;
+  }
+
   function loadAssocTime(id) {
     assocTimeCache[id] = { loading: true };
     withClient(function (client) {
       var settle = function (summary) {
         assocTimeCache[id] = summary;
-        if (assocExpandedId === id) renderAssociates(associatesCache);
+        if (assocExpandedId !== id) return;
+        /* PAYRATE_FIX_2026_11_03: this settle used to rebuild the
+         * whole roster the moment the time summary landed, wiping
+         * whatever the owner was mid-typing in the pay or
+         * home-address box. With unsaved edits in either box, skip
+         * this one rebuild — the summary is cached and shows on
+         * the next render (the save's own re-render included). */
+        if (assocOwnerInputsDirty(id)) return;
+        renderAssociates(associatesCache);
       };
       if (!client) { settle({ open: null, weekMs: 0 }); return; }
       client.from('time_entries').select('*').eq('employee_id', id).order('clock_in', { ascending: false }).limit(100)
@@ -5832,10 +5944,18 @@ function loadTicketThread(client, ticketId) {
     if (msg) msg.textContent = 'Saving&hellip;';
     withClient(function (client) {
       if (!client) { if (msg) msg.textContent = 'Could not save. Try again.'; return; }
-      client.from('employee_profiles').update({ pay_rate: val }).eq('id', id)
+      /* PAYRATE_FIX_2026_11_03: .select() asks for the written row
+       * back. Under RLS a policy-blocked update comes back as
+       * success with zero rows affected — the old code read that
+       * as "Saved." and patched the cache while nothing had
+       * persisted, so the rate reverted to Not set on the next
+       * fresh load. Zero rows back now means the save did not
+       * land: say so, and leave the cache untouched. */
+      client.from('employee_profiles').update({ pay_rate: val }).eq('id', id).select('id, pay_rate')
         .then(function (res) {
-          if (res.error) { if (msg) msg.textContent = 'Could not save that rate.'; return; }
-          associatesCache.forEach(function (r) { if (r.id === id) r.pay_rate = val; });
+          if (res.error || !res.data || !res.data.length) { if (msg) msg.textContent = 'Could not save that rate.'; return; }
+          var savedRate = res.data[0].pay_rate;
+          associatesCache.forEach(function (r) { if (r.id === id) r.pay_rate = savedRate; });
           if (msg) msg.textContent = 'Saved.';
           setTimeout(function () { if (assocExpandedId === id) renderAssociates(associatesCache); }, 900);
         })
@@ -5843,14 +5963,17 @@ function loadTicketThread(client, ticketId) {
     });
   }
 
-  /* Opens the Time Clocks panel exactly the way its own Action
-   * Button does, after recording whose card the owner was looking
-   * at (see the section comment for the port-forward wire). */
+  /* Opens the panel that hosts the time cards, after recording
+   * whose card the owner was looking at (see the section comment
+   * for the port-forward wire). PAYROLL_SPLIT_2026_11_03: the time
+   * cards live in the Payroll panel now, so the jump lands there —
+   * and renderTimeCards now spends the focus id on a highlight +
+   * scroll, completing the wire the original build left open. */
   function openAssocTimeCard(id) {
     window.portalTcFocusEmployeeId = id;
-    var tab = $('portal-tab-timeclock');
+    var tab = $('portal-tab-payroll');
     if (tab) { tab.click(); return; }
-    showExtraPanel('timeclock');
+    activateTab('payroll');
   }
   /* end PORTAL_SIDEBAR_ROSTER_2026_11_02 (associates roster) + PORTAL_ROSTER_DETAIL_2026_11_02 (owner's full record) */
 
@@ -7393,10 +7516,28 @@ function loadTicketThread(client, ticketId) {
     var next = $('tc-week-next'); if (next) next.disabled = tcWeekOffset >= 0;
     var inWeek = tcCardRows.filter(function (r) { var d = new Date(r.clock_in); return d >= ws && d < we; });
     if (!inWeek.length) { wrap.innerHTML = tcOwnerBarHtml() + '<p class="portal-muted">No time logged for this week.</p>'; wireTcManual(wrap); return; } /* PORTAL_TIMECARDS_2026_11_02: the owner can still add the week's first entry */
+    var focusId = window.portalTcFocusEmployeeId || null; /* PAYROLL_SPLIT_2026_11_03: the roster's View time card jump lands here now — highlight that associate's card on this render, then clear the flag */
+    if (focusId) window.portalTcFocusEmployeeId = null;
     var groups = [], byKey = {};
     inWeek.forEach(function (r) {
       var key = r.employee_id || r.employee_name || 'tech';
-      if (!byKey[key]) { byKey[key] = { id: r.employee_id || null, name: r.employee_name || 'Tech', rows: [], workMs: 0, driveMs: 0 }; groups.push(byKey[key]); }
+      if (!byKey[key]) {
+        /* PAYROLL_SPLIT_2026_11_03: the group carries the profile's
+         * role and pay rate so the card can price its own week
+         * (rate + week pay, below). rateKnown is false when the
+         * profiles load never got a pay_rate column back, in which
+         * case the card renders exactly as it did before the split. */
+        var prof = tcProfileById(r.employee_id);
+        byKey[key] = {
+          id: r.employee_id || null,
+          name: (prof && prof.name) || r.employee_name || 'Tech',
+          rows: [], workMs: 0, driveMs: 0, miles: 0, milesAmt: 0,
+          rate: (prof && prof.pay_rate != null && prof.pay_rate !== '' && !isNaN(Number(prof.pay_rate))) ? Number(prof.pay_rate) : null,
+          rateKnown: !!(prof && ('pay_rate' in prof)),
+          isOwner: !!(prof && trim(prof.role).toLowerCase() === 'owner')
+        };
+        groups.push(byKey[key]);
+      }
       byKey[key].rows.push(r);
     });
     var mgr = isManager();
@@ -7418,13 +7559,39 @@ function loadTicketThread(client, ticketId) {
         var driveBadge = isDriving ? '<span class="tc-badge"><i class="fas fa-car"></i> Driving</span>' : '';
         if (!co) return '<div class="tc-row"><span>' + when + '<strong>On the clock</strong></span><span class="tc-row-end">' + driveBadge + editBtn + '</span></div>' + tripLine + noteLine;
         total += (co - ci);
-        if (isDriving) g.driveMs += (co - ci); else g.workMs += (co - ci);
+        if (isDriving) {
+          g.driveMs += (co - ci);
+          /* PAYROLL_SPLIT_2026_11_03: price the miles as the rows
+           * land — per-date rate from the shared mileageRateFor(),
+           * and never for the owner (house rule: his driving is
+           * recorded, not paid). Mirrors finPayroll()'s driving math
+           * exactly, per week instead of per period. */
+          var rowMiles = tcFieldsKnown ? (Number(r.miles) || 0) : 0;
+          g.miles += rowMiles;
+          if (!g.isOwner && rowMiles > 0) g.milesAmt += rowMiles * mileageRateFor(ci).rate;
+        } else g.workMs += (co - ci);
         var badge = r.approved ? '<span class="tc-badge">Approved</span>' : '<span class="tc-badge tc-badge-pending">Pending approval</span>';
         var approve = (!r.approved && mgr) ? '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-approve="' + r.id + '">Approve</button>' : '';
         return '<div class="tc-row"><span>' + when + esc(co.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })) + ' (' + fmtHours(co - ci) + ')</span><span class="tc-row-end">' + driveBadge + badge + approve + editBtn + '</span></div>' + tripLine + noteLine;
       }).join('');
       var driveNote = g.driveMs > 0 ? ' <span class="portal-muted">(incl. ' + esc(fmtHours(g.driveMs)) + ' driving — mileage only)</span>' : '';
-      return '<div class="tc-card"><div class="tc-card-head"><strong>' + esc(g.name) + '</strong><span class="tc-card-total">Pay-week total: ' + fmtHours(total) + driveNote + '</span></div>' + tcWeekApprovalHtml(g) + rowsHtml + '</div>'; /* PORTAL_TIMECARDS_2026_11_02: driving breakout + the weekly approval */
+      /* PAYROLL_SPLIT_2026_11_03: the card prices its own week —
+       * work hours x the profile rate, plus priced mileage for
+       * non-owners — the same rules finPayroll() applies per
+       * period. Shown only when the rate actually came back with
+       * the profiles; a known-but-unset rate says so plainly. */
+      var payLine = '';
+      if (g.rateKnown) {
+        if (g.rate == null) {
+          payLine = '<div class="tc-card-pay">Pay rate not set — these hours are not priced yet. Set the rate on the Associates card.</div>';
+        } else {
+          var weekPay = (g.workMs / 3600000) * g.rate + g.milesAmt;
+          payLine = '<div class="tc-card-pay">Rate ' + esc(fmtMoney(g.rate)) + ' / hr &middot; Week pay: <strong>' + esc(fmtMoney(weekPay)) + '</strong>' +
+            (g.milesAmt > 0 ? ' <span class="portal-muted">(incl. ' + esc(fmtMoney(g.milesAmt)) + ' mileage on ' + esc(String(Math.round(g.miles * 10) / 10)) + ' mi)</span>' : '') +
+            '</div>';
+        }
+      }
+      return '<div class="tc-card' + (focusId && g.id === focusId ? ' tc-card-focus' : '') + '"><div class="tc-card-head"><strong>' + esc(g.name) + '</strong><span class="tc-card-total">Pay-week total: ' + fmtHours(total) + driveNote + '</span></div>' + payLine + tcWeekApprovalHtml(g) + rowsHtml + '</div>'; /* PORTAL_TIMECARDS_2026_11_02: driving breakout + the weekly approval */
     }).join('');
     wrap.querySelectorAll('[data-approve]').forEach(function (b) {
       b.addEventListener('click', function () {
@@ -7433,6 +7600,9 @@ function loadTicketThread(client, ticketId) {
       });
     });
     wireTcManual(wrap); /* PORTAL_TIMECARDS_2026_11_02 */
+    /* PAYROLL_SPLIT_2026_11_03: if the roster's View time card jump
+     * brought us here, bring that associate's card into view. */
+    if (focusId) { var fc = wrap.querySelector('.tc-card-focus'); if (fc && fc.scrollIntoView) { try { fc.scrollIntoView({ block: 'nearest' }); } catch (e) {} } }
   }
   function toggleClock() {
     withClient(function (client) {
@@ -7500,8 +7670,24 @@ function loadTicketThread(client, ticketId) {
     if (tcMetaLoaded || !client) return;
     tcMetaLoaded = true;
     tcProbeFields(client, function () { if (tcCardRows) renderTimeCards(); });
-    client.from('employee_profiles').select('id, name').order('name', { ascending: true }).limit(200)
-      .then(function (res) { if (!res.error) { tcProfiles = res.data || []; if (tcCardRows) renderTimeCards(); } })
+    /* PAYROLL_SPLIT_2026_11_03: profiles are asked for role and
+     * pay_rate too, so each time card can show the associate's rate
+     * and week pay (the Payroll panel is where pay lives now). Same
+     * graceful fallback shape as the Financials profile load: if a
+     * column is not there yet, the ask narrows instead of failing,
+     * and the card simply renders without a rate line. */
+    client.from('employee_profiles').select('id, name, role, pay_rate').order('name', { ascending: true }).limit(200)
+      .then(function (res) {
+        if (!res.error) { tcProfiles = res.data || []; if (tcCardRows) renderTimeCards(); return; }
+        return client.from('employee_profiles').select('id, name, role').order('name', { ascending: true }).limit(200)
+          .then(function (res2) {
+            if (!res2.error) { tcProfiles = res2.data || []; if (tcCardRows) renderTimeCards(); return; }
+            return client.from('employee_profiles').select('id, name').order('name', { ascending: true }).limit(200)
+              .then(function (res3) { if (!res3.error) { tcProfiles = res3.data || []; if (tcCardRows) renderTimeCards(); } })
+              .catch(function () {});
+          })
+          .catch(function () {});
+      })
       .catch(function () {});
     client.from('time_card_approvals').select('employee_id, week_start, approved_by, approved_at').limit(500)
       .then(function (res) {
@@ -7526,6 +7712,13 @@ function loadTicketThread(client, ticketId) {
     for (var i = 0; i < tcProfiles.length; i++) if (tcProfiles[i].id === id) return tcProfiles[i].name || 'Associate';
     if (id === (state.user && state.user.id)) return (state.profile && state.profile.name) || 'Associate';
     return 'Associate';
+  }
+  /* PAYROLL_SPLIT_2026_11_03: the whole profile row (role, pay_rate)
+   * for a time-card group — renderTimeCards prices the card from it. */
+  function tcProfileById(id) {
+    if (!id) return null;
+    for (var i = 0; i < tcProfiles.length; i++) if (tcProfiles[i].id === id) return tcProfiles[i];
+    return null;
   }
   function tcReloadCards() {
     assocTimeCache = {};
@@ -7806,9 +7999,13 @@ function loadTicketThread(client, ticketId) {
     if (msg) msg.textContent = 'Saving&hellip;';
     withClient(function (client) {
       if (!client) { if (msg) msg.textContent = 'Could not save. Try again.'; return; }
-      client.from('employee_profiles').update({ home_address: val || null }).eq('id', id)
+      /* PAYRATE_FIX_2026_11_03: same land-or-fail guard as
+       * saveAssocPay — a blocked update returns zero rows, which
+       * must not read as "Saved." or touch the cached address. */
+      client.from('employee_profiles').update({ home_address: val || null }).eq('id', id).select('id, home_address')
         .then(function (res) {
-          if (res.error) { if (msg) msg.textContent = 'Could not save that address.'; return; }
+          if (res.error || !res.data || !res.data.length) { if (msg) msg.textContent = 'Could not save that address.'; return; }
+          val = res.data[0].home_address || '';
           assocHomeById[id] = val;
           if (msg) msg.textContent = 'Saved.';
           try { geoEnsureHomeFence(client, id, val, tcProfileName(id)); } catch (e) {}
@@ -7838,9 +8035,13 @@ function loadTicketThread(client, ticketId) {
     if (msg) msg.textContent = 'Saving&hellip;';
     withClient(function (client) {
       if (!client) { if (msg) msg.textContent = 'Could not save. Try again.'; return; }
-      client.from('employee_profiles').update({ home_address: val || null }).eq('id', state.user.id)
+      /* PAYRATE_FIX_2026_11_03: same land-or-fail guard as
+       * saveAssocPay — zero rows back means the address did not
+       * persist; do not update ownHomeAddress off a phantom save. */
+      client.from('employee_profiles').update({ home_address: val || null }).eq('id', state.user.id).select('id, home_address')
         .then(function (res) {
-          if (res.error) { if (msg) msg.textContent = 'Could not save that address.'; return; }
+          if (res.error || !res.data || !res.data.length) { if (msg) msg.textContent = 'Could not save that address.'; return; }
+          val = res.data[0].home_address || '';
           ownHomeAddress = val;
           if (msg) msg.textContent = 'Saved.';
           try { geoEnsureHomeFence(client, state.user.id, val, (state.profile && state.profile.name) || ''); } catch (e) {}
@@ -8280,10 +8481,29 @@ function loadTicketThread(client, ticketId) {
   }
 
   function geoSetConsent(v) {
+    var prevConsent = geoConsentState;
     geoConsentState = v;
     if (!geoClientRef || !state.user) return;
-    geoClientRef.from('employee_profiles').update({ location_consent: v, location_consent_at: new Date().toISOString() }).eq('id', state.user.id)
-      .then(function () {}).catch(function () {});
+    /* PAYRATE_FIX_2026_11_03: land-or-fail, adapted to this site's
+     * shape. There is no message line here — the write was
+     * fire-and-forget — so .select() asks for the written row back
+     * and a blocked write (zero rows) rolls the local state back
+     * instead of letting the portal act on a consent choice that
+     * was never stored: a failed 'granted' stops the watch its
+     * caller just started, and falling back to 'not_asked' brings
+     * the banner back so the choice can be made again honestly. */
+    geoClientRef.from('employee_profiles').update({ location_consent: v, location_consent_at: new Date().toISOString() }).eq('id', state.user.id).select('id, location_consent')
+      .then(function (res) {
+        if (!res.error && res.data && res.data.length) return;
+        geoConsentState = prevConsent;
+        if (v === 'granted' && geoWatchId != null && navigator.geolocation) { navigator.geolocation.clearWatch(geoWatchId); geoWatchId = null; }
+        if (prevConsent === 'not_asked') geoShowConsentBanner();
+      })
+      .catch(function () {
+        geoConsentState = prevConsent;
+        if (v === 'granted' && geoWatchId != null && navigator.geolocation) { navigator.geolocation.clearWatch(geoWatchId); geoWatchId = null; }
+        if (prevConsent === 'not_asked') geoShowConsentBanner();
+      });
   }
 
   function geoCapture(eventName) {
@@ -9036,10 +9256,15 @@ function loadTicketThread(client, ticketId) {
         var val = $('tc-birthday').value || null;
         var msg = $('tc-birthday-msg');
         if (msg) msg.textContent = 'Saving\u2026';
-        client.from('employee_profiles').update({ birthday: val }).eq('id', state.user.id).then(function (res2) {
+        /* PAYRATE_FIX_2026_11_03: land-or-fail — .select() asks for
+         * the written row back, and zero rows back (a policy-blocked
+         * update reports success) counts as not saved, same as an
+         * error: no success message, no board reload. */
+        client.from('employee_profiles').update({ birthday: val }).eq('id', state.user.id).select('id, birthday').then(function (res2) {
+          var landed = !res2.error && !!res2.data && res2.data.length > 0;
           if (!msg) return;
-          msg.textContent = res2.error ? 'Couldn\'t save \u2014 try again.' : 'Saved. Your day is on the board.';
-          if (!res2.error) loadBirthdays(client);
+          msg.textContent = !landed ? 'Couldn\'t save \u2014 try again.' : 'Saved. Your day is on the board.';
+          if (landed) loadBirthdays(client);
         });
       });
     }

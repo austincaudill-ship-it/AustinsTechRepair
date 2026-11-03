@@ -758,3 +758,60 @@ body.portal-scroll-locked{position:fixed;left:0;right:0;width:100%;overflow:hidd
   #portal-dash-view .portal-dash-head .portal-head-status{margin-top:0}
 }
 /* end PORTAL_HEADER_CLEANUP_2026_11_02 */
+
+/* HEADER_TWEAK_2026_11_03 (Austin, Nov 3, 2026, morning — from his
+   iPad look at the published portal: "move it up a bit and put
+   logout next to back to site"):
+   (1) LOG OUT DOCKS IN THE TOP BAR. In portal.html the #portal-logout
+   button MOVED out of .portal-head-actions — where it floated alone
+   down the right edge of the dashboard head, a full row under the
+   top bar — and into .portal-topbar-actions, the new wrapper that
+   pairs it with the Back to site pill (flex, .55rem gap, both the
+   same .portal-btn-outline pill). Same element, same id, same click
+   handler in portal.js (the handler binds by id, so the move needs
+   no JS change). The top bar renders on every view, so the button
+   is hidden whenever the dashboard view carries [hidden] — the
+   sign-in, reset, and authenticator screens never offer a Log Out.
+   :has() is supported by every browser the portal targets; on an
+   ancient browser without it the fallback is merely that the button
+   also shows on the sign-in screen, where its handler is a harmless
+   signOut() call.
+   (2) THE HEAD TUCKS UP A BIT. With Log Out gone, .portal-head-actions
+   holds only the phone-width Menu toggle, which is display:none at
+   641px and up — so at those widths the container itself is hidden
+   instead of leaving an empty flex row (plus its 1rem row gap)
+   floating above the greeting. The greeting line's own top margin
+   eases from .55rem to .3rem (.45rem to .3rem on narrow phones).
+   Net geometry at desktop / iPad widths: the greeting rises about
+   one pill row (~2.9rem) plus the dead row gap (1rem) plus the
+   margin trim (.25rem) and sits closer under the top bar, still
+   breathing — no other spacing changes. At phone widths the Menu
+   row stays exactly as it was and only the .15rem margin trim
+   applies. The fixed frame is untouched: the top bar is still
+   flex:none in both frame shells (and gains no height — it already
+   held a pill of the same size), the dash head still spans row 1,
+   and the sidebar and panel panes keep their own heights and
+   independent scrolling. The short-landscape (iPhone duo) shell
+   already zeroes this margin; its rule is restated last, at winning
+   specificity, so this block never loosens it. */
+.portal-topbar-actions{display:flex;align-items:center;gap:.55rem}
+body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-logout{display:none}
+@media (min-width:641px){
+  #portal-dash-view .portal-head-actions{display:none}
+}
+#portal-dash-view .portal-head-status{margin-top:.3rem}
+@media screen and (orientation:landscape) and (max-height:520px) and (max-width:1024px){
+  #portal-dash-view .portal-head-status{margin-top:0}
+}
+/* end HEADER_TWEAK_2026_11_03 */
+
+/* ================= PAYROLL_SPLIT_2026_11_03 =================
+ * The Payroll panel reuses the time-card rules (.tc-weekbar,
+ * .tc-card, .tc-row, .fin-settings, .portal-table) unchanged from
+ * their original homes — the move was markup, not styling. Only
+ * two additions: the rate / week-pay line each time card now
+ * carries under its head, and the highlight ring on the card the
+ * roster's "View time card" jump lands on. */
+.tc-card-pay { padding: 2px 0 4px; font-size: .92rem; color: var(--ink,#2C231A); }
+.tc-card-focus { outline: 2px solid var(--brand,#D9540D); outline-offset: 2px; }
+/* end PAYROLL_SPLIT_2026_11_03 */

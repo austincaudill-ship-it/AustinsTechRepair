@@ -35,7 +35,8 @@
   <header class="portal-topbar">
     <div class="portal-topbar-inner">
       <span class="portal-brand"><i class="fas fa-screwdriver-wrench"></i> Austin's Tech Repair Group</span>
-      <span class="portal-topbar-tag">Associate Hub</span> <a class="portal-btn portal-btn-outline" href="https://austinstechrepairgroup.com/">Back to site</a>
+      <span class="portal-topbar-tag">Associate Hub</span> <!-- HEADER_TWEAK_2026_11_03: the Log Out button was MOVED here from the dashboard head (see the note left in .portal-head-actions) so it docks beside Back to site as a matched pair in the fixed top bar. Same element, same id, same click handler in portal.js (it binds by id, so the move changes nothing in JS). portal.css hides it whenever the dashboard is not the showing view, so the sign-in screens never offer a Log Out. -->
+      <span class="portal-topbar-actions"><a class="portal-btn portal-btn-outline" href="https://austinstechrepairgroup.com/">Back to site</a> <button class="portal-btn portal-btn-outline" id="portal-logout" type="button"><i class="fas fa-sign-out-alt"></i> Log Out</button></span>
     </div>
   </header>
 
@@ -111,9 +112,7 @@
         <p class="portal-muted portal-head-status"><span class="portal-head-status-greet"><span id="portal-greeting">Welcome back</span>, <span id="portal-emp-name">teammate</span> <span class="portal-badge portal-badge-role" id="portal-emp-role"></span></span> <span class="portal-head-status-sep" aria-hidden="true">&middot;</span> <span class="portal-head-status-clock"><i class="far fa-clock"></i> <span id="portal-clock"></span> &middot; <span id="portal-date"></span></span></p>
         <div class="portal-head-actions">
           <button class="portal-btn portal-btn-outline" id="portal-nav-toggle" type="button" aria-label="Open menu"><i class="fas fa-bars"></i> Menu</button>
-          <button class="portal-btn portal-btn-outline" id="portal-logout" type="button">
-            <i class="fas fa-sign-out-alt"></i> Log Out
-          </button>
+          <!-- HEADER_TWEAK_2026_11_03: the Log Out button that used to sit here was MOVED (not copied) into the top bar beside Back to site — it is the #portal-logout in .portal-topbar-actions above. Do NOT add another one here: exactly one #portal-logout may exist in this file. This container now holds only the phone-width Menu toggle, and portal.css hides the container outright at 641px and up, where the toggle is display:none anyway, so no empty row is left above the greeting. -->
         </div>
       </div>
 
@@ -205,6 +204,10 @@
         <div class="portal-nav-group">Financials</div>
         <button class="portal-tab" id="portal-tab-financials" type="button" role="tab" data-tab="financials">
           <i class="fas fa-chart-pie"></i> Financials
+        </button>
+        <!-- PAYROLL_SPLIT_2026_11_03 (Austin, Nov 3, 2026): "you've got payroll and you've got what we made in the same thing. Payroll needs to be its own separate financial action button." Payroll is now its own Action Button directly under Financials in the Financials group, opening portal-panel-payroll: the time cards (moved out of the Time Clock panel), the weekly approval, the owner's manual time entries, and the per-associate payroll totals (moved out of the Financials panel). Financials keeps only the money picture; its bottom line still reads payroll's approved / awaiting totals as summary figures. -->
+        <button class="portal-tab" id="portal-tab-payroll" type="button" role="tab" data-tab="payroll">
+          <i class="fas fa-money-check-dollar"></i> Payroll
         </button>
       </nav>
       </div>
@@ -767,13 +770,8 @@
           <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">On the clock now</h3></div>
           <div id="tc-onnow-list"><p class="portal-muted">Loading&hellip;</p></div>
         </div>
-        <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Time cards</h3></div>
-        <div class="tc-weekbar">
-          <button class="portal-btn portal-btn-outline portal-btn-sm" id="tc-week-prev" type="button">&larr; Previous week</button>
-          <span class="tc-week-label" id="tc-week-label"></span>
-          <button class="portal-btn portal-btn-outline portal-btn-sm" id="tc-week-next" type="button">Next week &rarr;</button>
-        </div>
-        <div id="tc-cards"><p class="portal-muted">Loading&hellip;</p></div>
+        <!-- PAYROLL_SPLIT_2026_11_03: the Time cards block (week stepper + #tc-cards) moved OUT of this panel into the new Payroll panel (portal-panel-payroll) — same element ids, same portal.js renderers and wiring, new home. This panel keeps the clock itself: clock in / out, the on-the-clock board, birthday, and home address. -->
+        <p class="portal-muted portal-small">Time cards, week approvals, and manual entries live in the <strong>Payroll</strong> panel now (Financials group, under Financials).</p>
         <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">My birthday</h3></div>
         <p class="portal-muted portal-small">Birthdays are a big deal here &mdash; we honor our team&rsquo;s and our customers&rsquo;. Add yours:</p>
         <p class="tc-bday-row"><input type="date" id="tc-birthday" aria-label="Your birthday" /> <button class="portal-btn portal-btn-outline portal-btn-sm" id="tc-birthday-save" type="button">Save birthday</button> <span class="portal-muted portal-small" id="tc-birthday-msg"></span></p>
@@ -836,11 +834,21 @@
         <p class="portal-muted portal-small">Parts suppliers, our price sheet, and printer tools &mdash; everything a tech needs, one tap away.</p>
         <div class="link-grid">
           <a class="link-card" href="https://www.mobilesentrix.com" target="_blank" rel="noopener"><i class="fas fa-mobile-screen"></i><strong>Mobile Sentrix</strong><span>Primary parts supplier</span></a>
+          <!-- IMEI_LOOKUP_2026_11_03: IMEI lookup card added to Tools & Links so a tech can pin the exact Samsung model/variant before ordering variant-specific parts. Sickw chosen over imei.info and IMEICheck.com after a head-to-head (only Sickw's Samsung check returns the full model-number SKU + carrier/CSC from Samsung's records) -- see REPORT.md in the portal-imei-2026-11-03 folder. Staged, not published. -->
+          <a class="link-card" href="https://www.sickw.com/" target="_blank" rel="noopener"><i class="fas fa-barcode"></i><strong>Sickw</strong><span>Exact model &amp; variant by IMEI</span></a>
           <a class="link-card" href="https://www.amazon.com/business" target="_blank" rel="noopener"><i class="fab fa-amazon"></i><strong>Amazon Business</strong><span>Accessories &amp; general</span></a>
           <a class="link-card" href="https://www.ebay.com" target="_blank" rel="noopener"><i class="fab fa-ebay"></i><strong>eBay</strong><span>Computer parts</span></a>
           <a class="link-card" href="https://www.ifixit.com" target="_blank" rel="noopener"><i class="fas fa-screwdriver-wrench"></i><strong>iFixit</strong><span>Guides &amp; genuine Pixel parts</span></a>
           <a class="link-card" href="https://austinstechrepairgroup.com/#prices" target="_blank" rel="noopener"><i class="fas fa-tags"></i><strong>Our Price Sheet</strong><span>Website price wizard</span></a>
           <a class="link-card" href="https://support.apple.com/iphone/repair" target="_blank" rel="noopener"><i class="fab fa-apple"></i><strong>Apple&rsquo;s Prices</strong><span>Official repair price anchor</span></a>
+          <!-- SAMSUNG_PRICES_2026_11_03: Samsung's Prices card added to Tools & Links to pair with Apple's Prices as the second manufacturer price anchor (Samsung's official suggested repair prices, so ATRG can check its prices against the manufacturer's and stay competitive) and to keep the card grid even at 10 -- see REPORT.md in the portal-samsung-prices-2026-11-03 folder. Staged, not published. -->
+          <a class="link-card" href="https://www.samsung.com/us/support/cracked-screen-repair/" target="_blank" rel="noopener"><i class="fab fa-android"></i><strong>Samsung&rsquo;s Prices</strong><span>Official repair price anchor</span></a>
+          <!-- GOOGLE_PRICES_2026_11_03: Google's Prices card added to Tools & Links to complete the manufacturer price-anchor trio with Apple's Prices and Samsung's Prices (Google's official Pixel Repair Cost Estimator, so ATRG can check its Pixel prices against Google's own mail-in repair pricing mid-call instead of digging for it) -- see REPORT.md in the portal-google-prices-2026-11-03 folder. Staged, not published. -->
+          <a class="link-card" href="https://store.google.com/us/repair-cost-estimator" target="_blank" rel="noopener"><i class="fab fa-google"></i><strong>Google&rsquo;s Prices</strong><span>Official repair price anchor</span></a>
+          <!-- PHONEARENA_2026_11_03: phone-compare card added to Tools & Links so a tech can answer "which phone is better to buy" mid-call. GSMArena chosen over PhoneArena after a head-to-head (deeper phone coverage + exact band support) -- see REPORT.md in the portal-phonearena-2026-11-03 folder. Staged, not published. -->
+          <a class="link-card" href="https://www.gsmarena.com/compare.php3" target="_blank" rel="noopener"><i class="fas fa-scale-balanced"></i><strong>GSMArena</strong><span>Compare phones side by side</span></a>
+          <!-- SWAPPA_2026_11_03: Swappa card added to Tools & Links as the balancing 12th card under Austin's even-grid rule, completing the advice cluster (GSMArena compares specs, Swappa prices the used phone) so a tech can answer "repair it or replace it" with the phone's current used value next to the repair price -- see REPORT.md in the portal-google-prices-2026-11-03 folder. Staged, not published. -->
+          <a class="link-card" href="https://swappa.com/prices" target="_blank" rel="noopener"><i class="fas fa-dollar-sign"></i><strong>Swappa</strong><span>Used phone values</span></a>
           <a class="link-card" href="https://squareup.com/dashboard" target="_blank" rel="noopener"><i class="fas fa-square"></i><strong>Square Dashboard</strong><span>Sales, payouts, settings</span></a>
         </div>
         <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Live tracking</h3></div>
@@ -897,6 +905,26 @@
           <button class="portal-btn portal-btn-outline portal-btn-sm fin-period" type="button" data-fin-period="30d">Last 30 days</button>
         </div>
         <div id="portal-financials-body"><p class="portal-muted">Loading financials&hellip;</p></div>
+      </div>
+
+      <!-- PAYROLL — PAYROLL_SPLIT_2026_11_03 (Austin, Nov 3, 2026): payroll is its own panel now, split out of Financials ("you've got payroll and you've got what we made in the same thing"). Contents: (1) Payroll totals — the per-associate hours / rate / pay table that used to render inside the Financials bottom line, rendered by portal.js finPayrollTableHtml() into #portal-payroll-summary from the same finCache data, so the figures here and the approved / awaiting lines in Financials can never disagree; the mileage-rate setting moved here with it. (2) Time cards — the week stepper and #tc-cards moved here out of the Time Clock panel, element ids unchanged, so renderTimeCards / wireTcManual / the weekly approval / the owner manual-entry bar all work exactly as before from their new home. Loader: loadPayroll in portal.js. -->
+      <div class="portal-panel" id="portal-panel-payroll" role="tabpanel" hidden>
+        <div class="portal-panel-head">
+          <h2 class="portal-h2">Payroll</h2>
+          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="payroll">
+            <i class="fas fa-rotate-right"></i> Refresh
+          </button>
+        </div>
+        <p class="portal-muted portal-small">The payroll workspace: what each associate worked, what it pays, and the Tuesday approval for Friday pay. Financials keeps the money picture &mdash; its bottom line reads the approved and awaiting totals from right here.</p>
+        <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Payroll totals</h3></div>
+        <div id="portal-payroll-summary"><p class="portal-muted">Loading payroll&hellip;</p></div>
+        <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Time cards</h3></div>
+        <div class="tc-weekbar">
+          <button class="portal-btn portal-btn-outline portal-btn-sm" id="tc-week-prev" type="button">&larr; Previous week</button>
+          <span class="tc-week-label" id="tc-week-label"></span>
+          <button class="portal-btn portal-btn-outline portal-btn-sm" id="tc-week-next" type="button">Next week &rarr;</button>
+        </div>
+        <div id="tc-cards"><p class="portal-muted">Loading&hellip;</p></div>
       </div>
 
       <div class="portal-panel" id="portal-panel-requests" role="tabpanel" hidden>
