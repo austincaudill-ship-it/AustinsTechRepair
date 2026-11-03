@@ -102,13 +102,12 @@
     <!-- ==================== DASHBOARD VIEW ==================== -->
     <section id="portal-dash-view" hidden>
       <div class="portal-dash-head">
-        <div>
+        <div class="portal-head-brand">
           <p class="portal-eyebrow">Austin's Tech Repair Group</p>
           <h1 class="portal-h1"><i class="fas fa-briefcase"></i> Associate Hub</h1>
-          <p class="portal-muted portal-dash-sub"><span id="portal-greeting">Welcome back</span>, <span id="portal-emp-name">teammate</span>
-            <span class="portal-badge portal-badge-role" id="portal-emp-role"></span></p>
-          <p class="portal-clock-line"><i class="far fa-clock"></i> <span id="portal-clock"></span> &middot; <span id="portal-date"></span></p>
         </div>
+        <!-- PORTAL_HEADER_CLEANUP_2026_11_02 (Austin, Nov 2, 2026, late evening): the greeting + name + role + clock/date line moved OUT of the left title column into one centered line of its own, directly under the title row (styled .portal-head-status in portal.css). Same ids in the same order — portal.js writes greeting/name/role/clock/date by id only, so nothing in JS changed. -->
+        <p class="portal-muted portal-head-status"><span class="portal-head-status-greet"><span id="portal-greeting">Welcome back</span>, <span id="portal-emp-name">teammate</span> <span class="portal-badge portal-badge-role" id="portal-emp-role"></span></span> <span class="portal-head-status-sep" aria-hidden="true">&middot;</span> <span class="portal-head-status-clock"><i class="far fa-clock"></i> <span id="portal-clock"></span> &middot; <span id="portal-date"></span></span></p>
         <div class="portal-head-actions">
           <button class="portal-btn portal-btn-outline" id="portal-nav-toggle" type="button" aria-label="Open menu"><i class="fas fa-bars"></i> Menu</button>
           <button class="portal-btn portal-btn-outline" id="portal-logout" type="button">

@@ -655,3 +655,56 @@ body.portal-scroll-locked{position:fixed;left:0;right:0;width:100%;overflow:hidd
   #portal-dash-view .portal-panel{grid-row:4;grid-column:2;position:static;height:100%;max-height:none;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;margin-bottom:0;box-sizing:border-box;padding:.4rem .6rem}
 }
 /* end PORTAL_IPHONE_DUO_2026_11_02 */
+
+/* PORTAL_HEADER_CLEANUP_2026_11_02 (Austin, Nov 2, 2026, late evening;
+   all-layouts extension added the same night): two moves, finished to
+   an Apple-grade design bar — simple, calm, generous whitespace, no
+   borders or boxes added, and nothing duplicated.
+   (1) THE GREETING LINE MOVES UP TO THE CENTER TOP — all layouts.
+   The greeting + name + role + clock/date used to sit in the left
+   column under the "Associate Hub" title (the old .portal-dash-sub and
+   .portal-clock-line paragraphs). In portal.html they now form ONE
+   line of their own (.portal-head-status), the third flex child of
+   .portal-dash-head (which is already display:flex with wrap), pinned
+   to a full-width row of its own directly under the top row and
+   centered. One type size (.95rem) and one calm rhythm carry the whole
+   line: weight 500 overall, the name at 600 for a whisper of emphasis,
+   and the role simplified from a chunky pill to plain brand-deep text
+   behind a middot separator. The clock half never wraps internally
+   (nowrap) so time + date cannot split or overlap; on narrow portrait
+   widths the whole line may wrap BETWEEN its greeting half and its
+   clock half (the middot separator hides under 481px), which is
+   stacked centered text — never an overlap.
+   (2) THE DUPLICATED BRAND TEXT IS GONE — ALL layouts.
+   The fixed topbar directly above already reads "Austin's Tech
+   Repair Group" + an "Associate Hub" tag, and the dash head then
+   repeated the same eyebrow + "Associate Hub" title — Austin called
+   it a duplicate and directed it hidden everywhere: phone, iPad, and
+   desktop. The brand wrapper collapses completely (no orphaned gap),
+   Log Out stays cleanly at the top right, and the dash head's bottom
+   margin tightens from 1.25rem to .85rem so the rhythm above and
+   below the centered greeting line reads even and intentional; the
+   freed height flows to the panes below. The header stays inside the
+   fixed frame, and the sidebar and panel panes keep their own
+   heights and independent scrolling. The rules are scoped to
+   #portal-dash-view .portal-dash-head, so the sign-in and
+   authenticator screens keep their own eyebrow + H1 untouched. */
+#portal-dash-view .portal-dash-head{align-items:center;margin-bottom:.85rem}
+#portal-dash-view .portal-dash-head .portal-head-brand{display:none}
+#portal-dash-view .portal-head-actions{margin-left:auto;align-items:center}
+.portal-dash-head .portal-head-status{flex:0 0 100%;order:3;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:.4rem .65rem;text-align:center;margin:.55rem 0 .1rem;font-size:.95rem;font-weight:500;line-height:1.45;letter-spacing:.01em;min-width:0}
+.portal-dash-head .portal-head-status-greet{display:inline-flex;align-items:center;gap:.45rem}
+.portal-dash-head .portal-head-status-greet #portal-emp-name{font-weight:600;color:var(--ink,#2C231A)}
+.portal-dash-head .portal-head-status-greet #portal-emp-role{display:inline;padding:0;border-radius:0;background:transparent;color:var(--brand-deep,#A63E06);font-size:inherit;font-weight:600;letter-spacing:0;text-transform:capitalize;white-space:nowrap}
+.portal-dash-head .portal-head-status-greet #portal-emp-role:not(:empty)::before{content:"\00B7";margin-right:.45rem;color:var(--muted,#7D6C5B);font-weight:500}
+.portal-dash-head .portal-head-status-clock{display:inline-flex;align-items:center;gap:.4rem;white-space:nowrap}
+.portal-dash-head .portal-head-status-clock i{color:var(--brand-deep,#A63E06);font-size:.88em}
+@media (max-width:480px){
+  .portal-dash-head .portal-head-status{font-size:.88rem;margin-top:.45rem}
+  .portal-dash-head .portal-head-status-sep{display:none}
+}
+@media screen and (orientation:landscape) and (max-height:520px) and (max-width:1024px){
+  #portal-dash-view .portal-dash-head{margin-bottom:.35rem}
+  #portal-dash-view .portal-dash-head .portal-head-status{margin-top:0}
+}
+/* end PORTAL_HEADER_CLEANUP_2026_11_02 */
