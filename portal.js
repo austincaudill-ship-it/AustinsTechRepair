@@ -1393,7 +1393,302 @@ function loadTicketThread(client, ticketId) {
       .catch(function () { renderTicketThread([]); });
   }
 
-  function renderRepairLog(notes) { var box = $("portal-repair-log-list"); if (!box) { return; } if (!notes || !notes.length) { box.innerHTML = "<p class=\"portal-muted\">No repair log updates yet.</p>"; return; } box.innerHTML = notes.map(function (n) { return "<div class=\"portal-msg portal-msg-tech\"><span class=\"portal-msg-meta\">" + esc(n.author || "Tech") + " · " + esc(fmtDateTime(n.created_at)) + "</span>" + esc(n.note) + "</div>"; }).join(""); } function loadRepairLog(client, ticketId) { client.from("ticket_notes").select("*").eq("ticket_id", ticketId).order("created_at", { ascending: true }).then(function (res) { renderRepairLog(res.error ? [] : (res.data || [])); }).catch(function () { renderRepairLog([]); }); }
+  /* ================= TICKET_MENTIONS_2026_11_03 =================
+   * Austin, Nov 3, 2026: the ticket's internal notes work like a
+   * chat and tag teammates — "add a chat right in a customers
+   * ticket and tag other people so if I want to get your attention,
+   * I can tag @Jarvis or @Pepper or at whoever." Three pieces:
+   *   1. The Repair log renders as chat rows (face, name, time,
+   *      words) in the Team Chat pattern — avatarHtml beside the
+   *      note, the author's stored name snapshot matched to the
+   *      staff directory for their picture (ticket_notes carries
+   *      the author's name only — the Repair log's shape since
+   *      Oct 27 — so the picture match is by full name).
+   *   2. The composer grows an @mention picker fed by the staff
+   *      directory (team_directory, down the same fallback ladder
+   *      fetchTeamDirectory uses), loaded fresh each time a drawer
+   *      opens, so the log never depends on the Team Chat panel
+   *      having been opened first.
+   *   3. A saved note stores its tag set on the new
+   *      ticket_notes.mentions column (ticket-mentions.sql) and
+   *      posts ONE surfacing message to the Office channel, so a
+   *      tagged person sees it in Team Chat. The tag set is
+   *      recomputed from the final note text at save time — full
+   *      directory names first, then a first name that belongs to
+   *      exactly one person on staff — so deleting a token before
+   *      saving drops the tag, and a hand-typed @Name still
+   *      counts; if the directory never loaded, the picker's own
+   *      picks stand in. If the mentions column is not live yet
+   *      the note still saves in its old shape: a note must never
+   *      fail over a tag.
+   *   Highlighting runs on the ALREADY-escaped note text and only
+   *   ever wraps a known directory name in our own span, so a note
+   *   body still cannot carry HTML into the page (the renderRepairLog
+   *   esc() discipline, unchanged). Notes stay staff-only:
+   *   ticket_notes is read by portal.js alone, never by a customer
+   *   surface. */
+  var ticketDirCache = [];     /* [{id, name, role, avatar_url}] for the open drawer */
+  var repairLogLastNotes = []; /* the notes last loaded, for a re-render when the directory lands */
+  var repairLogLoaded = false;
+  var rlPickedMentions = {};   /* id -> person, picked in this composer since the drawer opened */
+  var rlMenu = { items: [], active: 0, start: -1 };
+
+  function loadTicketDirectory(client) {
+    var apply = function (rows) {
+      ticketDirCache = rows || [];
+      if (repairLogLoaded) renderRepairLog(repairLogLastNotes);
+    };
+    client.from('team_directory').select('id, name, role, avatar_url').order('name', { ascending: true }).limit(200)
+      .then(function (res) { if (res.error) throw res.error; apply(res.data || []); })
+      .catch(function () {
+        client.from('team_directory').select('id, name, role').order('name', { ascending: true }).limit(200)
+          .then(function (res) { if (res.error) throw res.error; apply(res.data || []); })
+          .catch(function () {
+            client.from('employee_profiles').select('id, name, role').order('name', { ascending: true }).limit(200)
+              .then(function (res) { apply(res.data || []); })
+              .catch(function () { apply([]); });
+          });
+      });
+  }
+
+  function ticketDirByName(name) {
+    var want = trim(name || '').toLowerCase();
+    if (!want) return null;
+    for (var i = 0; i < ticketDirCache.length; i++) {
+      if (trim(ticketDirCache[i].name || '').toLowerCase() === want) return ticketDirCache[i];
+    }
+    return null;
+  }
+
+  /* The labels a mention can wear, longest first: every full name,
+   * then any first name that belongs to exactly one person on
+   * staff (a typed @Austin finds Austin Caudill; a first name two
+   * people share tags nobody by itself). escFn maps a label into
+   * the text being scanned — the identity for a plain note body,
+   * esc() for the already-escaped render pass. */
+  function mentionLabels(dir, escFn) {
+    var labels = [];
+    var firstCount = {}, firstPerson = {}, firstRaw = {};
+    (dir || []).forEach(function (p) {
+      var full = trim(p.name || '');
+      if (!full) return;
+      labels.push({ person: p, label: escFn(full) });
+      var first = full.split(/\s+/)[0];
+      var k = first.toLowerCase();
+      firstCount[k] = (firstCount[k] || 0) + 1;
+      if (!firstPerson[k]) { firstPerson[k] = p; firstRaw[k] = first; }
+    });
+    Object.keys(firstPerson).forEach(function (k) {
+      if (firstCount[k] !== 1) return;
+      var p = firstPerson[k];
+      if (firstRaw[k].toLowerCase() === trim(p.name || '').toLowerCase()) return;
+      labels.push({ person: p, label: escFn(firstRaw[k]) });
+    });
+    labels.sort(function (a, b) { return b.label.length - a.label.length; });
+    return labels;
+  }
+
+  /* Every @mention in str: at each '@', the longest label that
+   * starts there and ends at a non-name character (or the end of
+   * the text), so "@Pepper," and "@Pepper" tag, "@Peppermint"
+   * does not. */
+  function mentionMatches(str, labels) {
+    var out = [];
+    var text = String(str == null ? '' : str);
+    var lower = text.toLowerCase();
+    var i = 0;
+    while (i < text.length) {
+      if (text.charAt(i) === '@') {
+        var hit = null;
+        for (var j = 0; j < labels.length; j++) {
+          var lab = labels[j].label;
+          if (!lab) continue;
+          if (lower.substr(i + 1, lab.length) === lab.toLowerCase()) {
+            var after = text.charAt(i + 1 + lab.length);
+            if (!after || !/[A-Za-z0-9]/.test(after)) { hit = labels[j]; break; }
+          }
+        }
+        if (hit) { out.push({ person: hit.person, start: i, end: i + 1 + hit.label.length }); i = i + 1 + hit.label.length; continue; }
+      }
+      i++;
+    }
+    return out;
+  }
+
+  function computeNoteTags(text) {
+    var dir = ticketDirCache.length ? ticketDirCache : Object.keys(rlPickedMentions).map(function (k) { return rlPickedMentions[k]; });
+    if (!dir.length) return [];
+    var seen = {}, out = [];
+    mentionMatches(text, mentionLabels(dir, function (s) { return s; })).forEach(function (m) {
+      if (!seen[m.person.id]) { seen[m.person.id] = true; out.push(m.person); }
+    });
+    return out;
+  }
+
+  /* Highlight on escaped text only: the body went through esc()
+   * before this runs, the directory names are esc()'d the same
+   * way before matching, and the only markup added is our own
+   * span around a matched token — nothing a note contains can
+   * become an element. */
+  function highlightMentionsHtml(escapedBody) {
+    if (!ticketDirCache.length) return escapedBody;
+    var matches = mentionMatches(escapedBody, mentionLabels(ticketDirCache, esc));
+    if (!matches.length) return escapedBody;
+    var out = '', last = 0;
+    matches.forEach(function (m) {
+      out += escapedBody.slice(last, m.start) + '<span class="mention-tag">' + escapedBody.slice(m.start, m.end) + '</span>';
+      last = m.end;
+    });
+    return out + escapedBody.slice(last);
+  }
+
+  function repairLogMsgHtml(n) {
+    var name = n.author || 'Tech';
+    var person = ticketDirByName(name);
+    var pic = avatarHtml(name, person ? person.avatar_url : '', 'sm');
+    return '<div class="teamchat-msg">' +
+      '<span class="teamchat-msg-pic">' + pic + '</span>' +
+      '<span class="teamchat-msg-main"><span class="teamchat-msg-meta">' + esc(name) + ' &middot; ' + esc(fmtDateTime(n.created_at)) + '</span>' +
+      '<span class="teamchat-msg-body">' + highlightMentionsHtml(esc(n.note || '')) + '</span></span></div>';
+  }
+
+  function renderRepairLog(notes) { var box = $("portal-repair-log-list"); repairLogLastNotes = notes || []; repairLogLoaded = true; if (!box) { return; } if (!notes || !notes.length) { box.innerHTML = "<p class=\"portal-muted\">No repair log updates yet.</p>"; return; } box.innerHTML = notes.map(repairLogMsgHtml).join(""); }
+  function loadRepairLog(client, ticketId) { client.from("ticket_notes").select("*").eq("ticket_id", ticketId).order("created_at", { ascending: true }).then(function (res) { renderRepairLog(res.error ? [] : (res.data || [])); }).catch(function () { renderRepairLog([]); }); }
+
+  /* ---- the @mention picker on the note composer ---- */
+  function hideMentionMenu() { var m = $("portal-repair-log-mentions"); if (m) { m.hidden = true; m.innerHTML = ""; } rlMenu.items = []; rlMenu.active = 0; rlMenu.start = -1; }
+
+  /* The tag being typed at the caret: an '@' with only tag text
+   * (no newline, at most 30 chars) between it and the caret, and
+   * not glued to a word character before it (an email address is
+   * not a tag). */
+  function mentionQueryAt(input) {
+    var pos = (input && typeof input.selectionStart === 'number') ? input.selectionStart : -1;
+    if (pos < 0) return null;
+    var upto = input.value.slice(0, pos);
+    var at = upto.lastIndexOf('@');
+    if (at < 0) return null;
+    if (at > 0 && /[A-Za-z0-9._%+-]/.test(upto.charAt(at - 1))) return null;
+    var q = upto.slice(at + 1);
+    if (q.length > 30 || q.indexOf('\n') >= 0) return null;
+    return { start: at, query: q };
+  }
+
+  function renderMentionMenu(input, info) {
+    var menu = $("portal-repair-log-mentions");
+    if (!menu) return;
+    var q = info.query.toLowerCase();
+    var found = ticketDirCache.filter(function (p) {
+      var n = trim(p.name || '').toLowerCase();
+      if (!n) return false;
+      if (!q) return true;
+      if (n.indexOf(q) >= 0) return true;
+      return n.split(/\s+/).some(function (w) { return w.indexOf(q) === 0; });
+    }).slice(0, 6);
+    rlMenu.items = found;
+    rlMenu.start = info.start;
+    if (rlMenu.active >= found.length) rlMenu.active = 0;
+    if (!found.length) {
+      menu.innerHTML = '<p class="portal-muted portal-small rlog-mention-none">No one on staff matches that.</p>';
+      menu.hidden = false;
+      return;
+    }
+    menu.innerHTML = found.map(function (p, i) {
+      return '<button type="button" class="rlog-mention-item' + (i === rlMenu.active ? ' rlog-mention-item-active' : '') + '" data-mention-idx="' + i + '">' +
+        avatarHtml(p.name, p.avatar_url, 'sm') +
+        '<span class="rlog-mention-name">' + esc(p.name || 'Associate') + '</span>' +
+        (p.role ? '<span class="portal-muted portal-small">' + esc(roleLabel(p.role)) + '</span>' : '') + '</button>';
+    }).join('');
+    menu.hidden = false;
+    Array.prototype.forEach.call(menu.querySelectorAll('[data-mention-idx]'), function (btn) {
+      btn.addEventListener('mousedown', function (e) { e.preventDefault(); pickMention(rlMenu.items[Number(btn.getAttribute('data-mention-idx'))], input); });
+    });
+    var act = menu.querySelector('.rlog-mention-item-active');
+    if (act && act.scrollIntoView) act.scrollIntoView({ block: 'nearest' });
+  }
+
+  function refreshMentionMenu(input) {
+    var info = mentionQueryAt(input);
+    if (!info) { hideMentionMenu(); return; }
+    renderMentionMenu(input, info);
+  }
+
+  function pickMention(person, input) {
+    if (!person || !input) { hideMentionMenu(); return; }
+    var info = mentionQueryAt(input);
+    var start = info ? info.start : (rlMenu.start >= 0 ? rlMenu.start : input.value.length);
+    var caret = (typeof input.selectionStart === 'number') ? input.selectionStart : input.value.length;
+    var before = input.value.slice(0, start);
+    var after = input.value.slice(caret);
+    var token = '@' + (person.name || 'Associate');
+    var sep = /^\s/.test(after) ? '' : ' ';
+    input.value = before + token + sep + after;
+    var pos = before.length + token.length + sep.length;
+    input.focus();
+    if (input.setSelectionRange) input.setSelectionRange(pos, pos);
+    rlPickedMentions[person.id] = person;
+    hideMentionMenu();
+  }
+
+  function wireMentionPicker() {
+    var input = $("portal-repair-log-input");
+    if (!input) return;
+    rlPickedMentions = {};
+    hideMentionMenu();
+    input.addEventListener('input', function () { refreshMentionMenu(input); });
+    input.addEventListener('click', function () { refreshMentionMenu(input); });
+    input.addEventListener('blur', function () { setTimeout(hideMentionMenu, 150); });
+    input.addEventListener('keydown', function (e) {
+      var menu = $("portal-repair-log-mentions");
+      if (!menu || menu.hidden) return;
+      if (e.key === 'Escape') { e.preventDefault(); hideMentionMenu(); return; }
+      if (!rlMenu.items.length) return;
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        rlMenu.active = (e.key === 'ArrowDown')
+          ? Math.min(rlMenu.active + 1, rlMenu.items.length - 1)
+          : Math.max(rlMenu.active - 1, 0);
+        var info = mentionQueryAt(input);
+        if (info) renderMentionMenu(input, info);
+      } else if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault();
+        pickMention(rlMenu.items[rlMenu.active], input);
+      }
+    });
+  }
+
+  /* One surfacing message in the Office channel per tagged note,
+   * in the exact sendTeamChat insert shape (author_id is the
+   * signed-in user, author_name their profile snapshot). A
+   * failure here never touches the saved note — it only changes
+   * what the composer's status line honestly says. TEAM_OFFICE_ID
+   * is the Team Chat section's constant for the Office channel;
+   * every associate is a member of it. */
+  function postNoteTagToTeamChat(client, t, noteText, tags, statusEl) {
+    var showStatus = function (msg, isErr) {
+      if (!statusEl) return;
+      statusEl.textContent = msg;
+      statusEl.className = isErr ? 'portal-error portal-small rlog-status' : 'portal-muted portal-small rlog-status';
+      statusEl.hidden = false;
+    };
+    var names = tags.map(function (p) { return p.name || 'Associate'; }).join(', ');
+    if (!state.user) { showStatus('Note saved. The tag post to Team Chat did not go through.', true); return; }
+    var authorName = (state.profile && state.profile.name) || 'Associate';
+    var cust = trim(t.customer_name || '') || 'a customer';
+    var ref = deviceLabel(t) || trim(t.issue || '').slice(0, 40) || 'repair';
+    var excerpt = String(noteText || '').replace(/\s+/g, ' ');
+    if (excerpt.length > 140) excerpt = excerpt.slice(0, 140).replace(/\s+\S*$/, '') + '\u2026';
+    var body = authorName + ' tagged ' + names + ' in a note on ' + cust + "'s ticket (" + ref + '): "' + excerpt + '"';
+    client.from('team_messages').insert({
+      author_id: state.user.id,
+      author_name: authorName,
+      body: body,
+      channel_id: TEAM_OFFICE_ID
+    }).then(function (res) {
+      if (res.error) { showStatus('Note saved. The tag post to Team Chat did not go through.', true); return; }
+      showStatus('Note saved \u2014 ' + names + ' tagged in Team Chat.', false);
+    }).catch(function () { showStatus('Note saved. The tag post to Team Chat did not go through.', true); });
+  }
 
   /* PORTAL_DRAWER_DOCS_2026_10_30 (Austin, Oct 30, 2026): proof
    * photos on the Repair Log. A proof photo is an ordinary
@@ -1686,9 +1981,16 @@ function loadTicketThread(client, ticketId) {
           (t.status === 'In Progress' ? '<p class="portal-muted"><strong>This repair is in progress. Please log what is happening here.</strong></p>' : '') +
           '<div class="portal-thread" id="portal-repair-log-list"><p class="portal-muted">Loading repair log&hellip;</p></div>' +
           '<form id="portal-repair-log-form"><div class="portal-field"><label for="portal-repair-log-input">What is happening with this repair?</label></div>' +
-          '<div class="portal-note-row"><textarea id="portal-repair-log-input" placeholder="What is happening with this repair?" maxlength="2000" aria-label="What is happening with this repair?"></textarea>' +
+          /* TICKET_MENTIONS_2026_11_03: a plain hint that @ is how
+           * you reach a teammate, the composer wrap the @mention
+           * dropdown anchors to (it opens upward over the log), and
+           * a status line for the save + tag outcome. */
+          '<p class="portal-muted portal-small">Type @ and a name to tag a teammate &mdash; they will see the note in Team Chat.</p>' +
+          '<div class="rlog-composer-wrap"><div class="portal-note-row"><textarea id="portal-repair-log-input" placeholder="What is happening with this repair?" maxlength="2000" aria-label="What is happening with this repair?"></textarea>' +
           '<button class="portal-btn portal-btn-primary" type="submit">Save update</button></div>' +
-          '<p class="portal-error" id="portal-repair-log-error" hidden></p></form>' +
+          '<div class="rlog-mention-menu" id="portal-repair-log-mentions" hidden></div></div>' +
+          '<p class="portal-error" id="portal-repair-log-error" hidden></p>' +
+          '<p class="portal-muted portal-small rlog-status" id="portal-repair-log-status" hidden></p></form>' +
           '<div id="portal-repair-log-photos"></div>' +
           '<div class="p2-actions"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="portal-repair-log-photo-btn"><i class="fas fa-camera"></i> Attach a photo</button>' +
           '<span class="portal-muted portal-small" id="portal-repair-log-photo-msg"></span></div>' +
@@ -1762,7 +2064,7 @@ function loadTicketThread(client, ticketId) {
 
         $('portal-drawer-body').innerHTML = body;
         wireTicketAccordion(); /* PORTAL_TICKET_ACCORDION_2026_11_02 */
-        loadTicketThread(client, t.id); resolveGvPhone(client, t); /* PORTAL_GV_TEXTS_2026_11_02 */ loadRepairLog(client, t.id); loadRepairLogPhotos(client, t); wireRepairLogPhotos(client, t); var repairForm = $("portal-repair-log-form"); if (repairForm) { repairForm.addEventListener("submit", function (e) { e.preventDefault(); var input = $("portal-repair-log-input"); var err = $("portal-repair-log-error"); if (err) { err.hidden = true; err.textContent = ""; } var text = input ? trim(input.value) : ""; if (!text) { return; } client.from("ticket_notes").insert({ ticket_id: t.id, author: (state.profile && state.profile.name) || null, note: text }).then(function (res2) { if (res2.error) { if (err) { err.textContent = "Could not save that update. Try again."; err.hidden = false; } return; } if (input) { input.value = ""; } loadRepairLog(client, t.id); }).catch(function () { if (err) { err.textContent = "Could not save that update. Try again."; err.hidden = false; } }); }); } 
+        loadTicketThread(client, t.id); resolveGvPhone(client, t); /* PORTAL_GV_TEXTS_2026_11_02 */ loadRepairLog(client, t.id); loadTicketDirectory(client); loadRepairLogPhotos(client, t); wireRepairLogPhotos(client, t); var repairForm = $("portal-repair-log-form"); if (repairForm) { repairForm.addEventListener("submit", function (e) { e.preventDefault(); var input = $("portal-repair-log-input"); var err = $("portal-repair-log-error"); var status = $("portal-repair-log-status"); if (err) { err.hidden = true; err.textContent = ""; } if (status) { status.hidden = true; status.textContent = ""; } var text = input ? trim(input.value) : ""; if (!text) { return; } /* TICKET_MENTIONS_2026_11_03: the tag set is recomputed from the final text (computeNoteTags), stored on the note, and surfaced to Team Chat only after the note itself is safely saved. */ var tags = computeNoteTags(text); var authorName = (state.profile && state.profile.name) || null; var saveErr = function () { if (err) { err.textContent = "Could not save that update. Try again."; err.hidden = false; } }; var finishSave = function () { if (input) { input.value = ""; } rlPickedMentions = {}; hideMentionMenu(); loadRepairLog(client, t.id); if (tags.length) { postNoteTagToTeamChat(client, t, text, tags, status); } }; client.from("ticket_notes").insert({ ticket_id: t.id, author: authorName, note: text, mentions: tags.map(function (p) { return p.id; }) }).then(function (res2) { if (res2.error) { /* The mentions column is not live yet - the note still saves in its old shape rather than failing over a tag. */ client.from("ticket_notes").insert({ ticket_id: t.id, author: authorName, note: text }).then(function (res3) { if (res3.error) { saveErr(); return; } finishSave(); }).catch(function () { saveErr(); }); return; } finishSave(); }).catch(function () { saveErr(); }); }); } wireMentionPicker();
         loadCharges(client, t);
         loadParts(client, t);
         loadDocuments(client, t);
