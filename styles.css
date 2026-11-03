@@ -1969,3 +1969,14 @@ a.trustbar-item:focus-visible {
   outline: 2px solid #FFF8EC;
   outline-offset: 3px;
 }
+
+/* AVATARS_2026_11_03: "Your technician" in the customer's repair view */
+.acct-tech { display:flex; align-items:center; gap:.6rem; margin-top:.7rem;
+  padding:.55rem .7rem; border:1px solid #E6D9C0; border-radius:10px; background:#FFFAF2; }
+.acct-tech-live { border-color:#B4551F; background:#FBEADB; }
+.acct-tech-pic { width:44px; height:44px; border-radius:50%; object-fit:cover; flex:none; background:#EFE6D8; }
+span.acct-tech-disc { display:inline-flex; align-items:center; justify-content:center;
+  background:#B4551F; color:#FFFAF2; font-weight:700; }
+.acct-tech-text { display:flex; flex-direction:column; }
+.acct-tech-label { font-size:.72rem; font-weight:700; letter-spacing:.04em;
+  text-transform:uppercase; color:#8A7A63; }

@@ -1477,6 +1477,13 @@
         return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
       });
     }
+    function initialsOf(name) {
+      var parts = String(name == null ? '' : name).trim().split(/\s+/).filter(Boolean);
+      if (!parts.length) return '';
+      var first = parts[0].charAt(0);
+      var last = parts.length > 1 ? parts[parts.length - 1].charAt(0) : '';
+      return (first + last).toUpperCase();
+    }
     function fmtDate(iso) {
       try {
         var d = new Date(iso);
@@ -1566,6 +1573,28 @@
           threadInfo.innerHTML = '<strong>' + esc(dev || 'Repair') + '</strong> ' +
             '<span class="acct-status ' + cls + '">' + esc(t.status) + '</span><br>' +
             esc(t.issue) + '<br><span style="color:var(--muted)">Opened ' + fmtDate(t.created_at) + '</span>';
+          /* AVATARS_2026_11_03: "Your technician" — who is on this repair.
+           * The RPC returns a row only for the signed-in customer's own
+           * ticket with someone assigned; anything else shows nobody. */
+          sb.rpc('ticket_technician', { p_ticket_id: t.id })
+            .then(function (r) {
+              var tech = (!r.error && r.data && r.data[0]) || null;
+              var old = document.getElementById('acct-tech');
+              if (old) old.remove();
+              if (!tech) return;
+              var live = (t.status === 'En Route to Customer' || t.status === 'In Progress');
+              var pic = tech.tech_avatar_url
+                ? '<img class="acct-tech-pic" src="' + esc(tech.tech_avatar_url) + '" alt="" loading="lazy">'
+                : '<span class="acct-tech-pic acct-tech-disc">' + esc(initialsOf(tech.tech_name)) + '</span>';
+              var box = document.createElement('div');
+              box.id = 'acct-tech';
+              box.className = 'acct-tech' + (live ? ' acct-tech-live' : '');
+              box.innerHTML = pic +
+                '<span class="acct-tech-text"><span class="acct-tech-label">Your technician</span>' +
+                '<strong>' + esc(tech.tech_name) + '</strong></span>';
+              threadInfo.appendChild(box);
+            })
+            .catch(function () { /* no technician block — never break the thread over it */ });
           showThread();
           loadMessages();
           startPolling();
@@ -1739,7 +1768,7 @@
 (function () {
   'use strict';
   var VARIANTS = {
-    original: { img: 'images/atr-logo.png', fav: 'favicon-32x32.png' },
+    original: { img: 'logo-duo.png', fav: 'favicon-32.png' },
     teal: { img: 'images/atr-logo-teal.png', fav: 'images/atr-logo-teal-64.png' },
     orange: { img: 'images/atr-logo-orange.png', fav: 'images/atr-logo-orange-64.png' },
     violet: { img: 'images/atr-logo-violet.png', fav: 'images/atr-logo-violet-64.png' }
