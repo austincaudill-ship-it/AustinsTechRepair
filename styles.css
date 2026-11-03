@@ -1989,3 +1989,23 @@ span.acct-tech-disc { display:inline-flex; align-items:center; justify-content:c
    of its own) for the new warranty-request link. */
 #warranty-request .atr-form-wrap { max-width: 720px; margin: 0 auto; }
 .footer-disclaimer a { color: #c9a86a; font-weight: 700; text-decoration: underline; }
+
+/* ==========================================================================
+   MILO_MASCOT_2026_11_03: "Meet Milo" home-page mascot section — the photo
+   and talking-video cards use the house card treatment (surface fill, line
+   border, radius-xl, shadow-md: the same recipe as .feature-media), and
+   every color comes from the theme variables, so the section follows the
+   site's dark/light handling automatically. Two cards side by side on
+   desktop, stacked on phones. The video is controls-on, click to play —
+   the site has no autoplay media convention.
+   ========================================================================== */
+.milo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start; }
+.milo-figure { margin: 0; }
+.milo-card { border-radius: var(--radius-xl); overflow: hidden; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow-md); }
+.milo-card img, .milo-card video { width: 100%; height: auto; display: block; }
+.milo-caption { text-align: center; color: var(--muted); font-size: 0.95rem; margin-top: 0.9rem; }
+.milo-cta { text-align: center; margin-top: 2.4rem; }
+.milo-cta p { color: var(--ink-soft); font-size: 1.05rem; margin-bottom: 1.1rem; }
+@media (max-width: 820px) {
+  .milo-grid { grid-template-columns: 1fr; }
+}
