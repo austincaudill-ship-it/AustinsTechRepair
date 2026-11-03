@@ -907,6 +907,8 @@
     payroll: loadPayroll,
     /* PORTAL_SIDEBAR_ROSTER_2026_11_02: the Associates roster panel. */
     associates: loadAssociates,
+    /* TEAMCHAT_2026_11_03: the internal Team Chat panel. */
+    teamchat: loadTeamChat,
   };
 
   /* PORTAL_TAB_MEMORY_2026_10_30: remember the last active tab across
@@ -925,10 +927,14 @@
     var nav = $('portal-nav'); if (nav) nav.classList.remove('open');
     var tabs = document.querySelectorAll('.portal-tab');
     tabs.forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === name); });
-    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'documents', 'financials', 'payroll', 'associates', 'mileage'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too */
+    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'documents', 'financials', 'payroll', 'associates', 'mileage', 'teamchat'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too */
       $('portal-panel-' + n).hidden = n !== name;
     });
     closeDrawer();
+    /* TEAMCHAT_2026_11_03: reopening Team Chat restarts its refresh
+     * poll and pulls anything new; switching to any other tab stops
+     * the poll so a closed panel is never polled. */
+    if (name === 'teamchat') resumeTeamChat(); else stopTeamChatPoll();
     if (!state.loaded[name] && LOADERS[name]) LOADERS[name](false);
   }
 
@@ -5976,6 +5982,120 @@ function loadTicketThread(client, ticketId) {
     activateTab('payroll');
   }
   /* end PORTAL_SIDEBAR_ROSTER_2026_11_02 (associates roster) + PORTAL_ROSTER_DETAIL_2026_11_02 (owner's full record) */
+
+  /* ================= TEAM CHAT =================
+   * TEAMCHAT_2026_11_03 (Austin, Nov 3, 2026): "build the internal
+   * team chat in associates action button." Alfred, Pepper and every
+   * associate share one thread inside the portal (public.team_messages,
+   * see team-chat.sql in this build folder), so staff talk never
+   * rides a personal account. Wiring follows the house patterns:
+   * LOADERS registration like Payroll, the repair-log insert shape
+   * (client.from(...).insert carrying the signed-in profile's name),
+   * esc() on every rendered field exactly like renderRepairLog,
+   * emptyState()/listError() for the quiet and broken states, and a
+   * start/stop poll pair shaped like the scanner timers. The poll
+   * runs every 20 seconds ONLY while the panel is open: activateTab
+   * stops it on any other tab, resumeTeamChat restarts it on return,
+   * and the tick itself refuses to fetch for a hidden panel, so a
+   * closed chat is never polled. Messages render oldest at top,
+   * newest at bottom; a poll refresh keeps the reader's scroll place
+   * unless they were already at the bottom. Every field is rendered
+   * through esc() — a chat body can never carry HTML into the page. */
+  var teamChatTimer = null;
+  var teamChatClient = null;
+  var teamChatWired = false;
+
+  function teamChatMsgHtml(m) {
+    var mine = !!(state.user && m.author_id === state.user.id);
+    return '<div class="teamchat-msg' + (mine ? ' teamchat-msg-mine' : '') + '">' +
+      '<span class="teamchat-msg-meta">' + esc(m.author_name || 'Associate') + ' &middot; ' + esc(fmtDateTime(m.created_at)) + '</span>' +
+      '<span class="teamchat-msg-body">' + esc(m.body || '') + '</span></div>';
+  }
+
+  function fetchTeamChat(stick) {
+    if (!teamChatClient || !state.user) return;
+    teamChatClient.from('team_messages').select('id, author_id, author_name, body, created_at')
+      .order('created_at', { ascending: false }).limit(100)
+      .then(function (res) {
+        var box = $('portal-teamchat-list');
+        if (!box) return;
+        if (res.error) { listError(box, 'team chat'); stopTeamChatPoll(); return; }
+        var rows = (res.data || []).slice().reverse(); /* newest last */
+        if (!rows.length) { emptyState(box, 'No messages yet. Say hello to the team.'); return; }
+        var prevTop = box.scrollTop;
+        var wasNearBottom = (box.scrollHeight - prevTop - box.clientHeight) < 140;
+        box.innerHTML = rows.map(teamChatMsgHtml).join('');
+        box.scrollTop = (stick || wasNearBottom) ? box.scrollHeight : prevTop;
+      })
+      .catch(function () {
+        var box = $('portal-teamchat-list');
+        if (box) listError(box, 'team chat');
+        stopTeamChatPoll();
+      });
+  }
+
+  function startTeamChatPoll() {
+    if (teamChatTimer) return;
+    teamChatTimer = setInterval(function () {
+      var panel = $('portal-panel-teamchat');
+      if (!panel || panel.hidden) { stopTeamChatPoll(); return; }
+      fetchTeamChat(false);
+    }, 20000);
+  }
+  function stopTeamChatPoll() {
+    if (teamChatTimer) { clearInterval(teamChatTimer); teamChatTimer = null; }
+  }
+  function resumeTeamChat() {
+    fetchTeamChat(true);
+    startTeamChatPoll();
+  }
+
+  function sendTeamChat(client) {
+    var input = $('portal-teamchat-input'), err = $('portal-teamchat-error'), btn = $('portal-teamchat-send');
+    if (!input || !state.user) return;
+    var text = trim(input.value);
+    if (!text) return;
+    if (err) { err.hidden = true; err.textContent = ''; }
+    if (btn) btn.disabled = true;
+    client.from('team_messages').insert({
+      author_id: state.user.id,
+      author_name: (state.profile && state.profile.name) || 'Associate',
+      body: text
+    }).then(function (res) {
+      if (btn) btn.disabled = false;
+      if (res.error) { if (err) { err.textContent = 'Could not send that message. Try again.'; err.hidden = false; } return; }
+      input.value = '';
+      fetchTeamChat(true);
+    }).catch(function () {
+      if (btn) btn.disabled = false;
+      if (err) { err.textContent = 'Could not send that message. Try again.'; err.hidden = false; }
+    });
+  }
+
+  function wireTeamChat(client) {
+    if (teamChatWired) return;
+    var form = $('portal-teamchat-form');
+    if (!form) return;
+    teamChatWired = true;
+    form.addEventListener('submit', function (e) { e.preventDefault(); sendTeamChat(client); });
+    /* Enter sends, Shift+Enter makes a new line (desktop nicety). */
+    var input = $('portal-teamchat-input');
+    if (input) input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendTeamChat(client); }
+    });
+  }
+
+  function loadTeamChat(force) {
+    state.loaded.teamchat = true;
+    withClient(function (client) {
+      if (!client || !state.user) return;
+      teamChatClient = client;
+      wireTeamChat(client);
+      fetchTeamChat(true);
+      startTeamChatPoll();
+    });
+  }
+  /* end TEAMCHAT_2026_11_03 */
 
   /* ================= CUSTOMERS ================= */
   function renderCustomers(rows) {

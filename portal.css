@@ -815,3 +815,37 @@ body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-logout{displa
 .tc-card-pay { padding: 2px 0 4px; font-size: .92rem; color: var(--ink,#2C231A); }
 .tc-card-focus { outline: 2px solid var(--brand,#D9540D); outline-offset: 2px; }
 /* end PAYROLL_SPLIT_2026_11_03 */
+
+/* ================= TEAMCHAT_2026_11_03 =================
+ * Team Chat panel: the internal staff channel. Takes the drawer's
+ * thread language (.portal-thread / .portal-msg) up to panel scale:
+ * a tall scrolling list, generous spacing and big tap targets for a
+ * phone in one hand, and the signed-in associate's own messages
+ * tinted with the soft brand orange so your side of the
+ * conversation is easy to spot. Cream + burnt orange vars match
+ * the rest of the portal (brand orange #B4551F via --brand). */
+.teamchat-list {
+  border: 1px solid var(--line, #E6D9C0); border-radius: 10px; padding: 0.9rem;
+  height: 52vh; min-height: 260px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.55rem;
+  background: var(--surface, #FFFDF8); margin-bottom: 0.75rem;
+}
+.teamchat-msg {
+  max-width: 88%; padding: 0.55rem 0.8rem; border-radius: 12px; font-size: 0.95rem;
+  align-self: flex-start; background: var(--bg, #FFFAF2);
+  border: 1px solid var(--line, #E6D9C0); border-bottom-left-radius: 4px;
+}
+.teamchat-msg-mine {
+  align-self: flex-end; background: var(--brand-soft, #FBEADB);
+  border-color: var(--brand, #B4551F); border-bottom-left-radius: 12px; border-bottom-right-radius: 4px;
+}
+.teamchat-msg-meta { display: block; font-size: 0.7rem; font-weight: 700; opacity: 0.75; margin-bottom: 0.2rem; }
+.teamchat-msg-body { display: block; white-space: pre-wrap; word-break: break-word; }
+.teamchat-composer { display: flex; gap: 0.6rem; align-items: flex-end; }
+.teamchat-field { flex: 1; margin-bottom: 0; }
+.teamchat-field textarea {
+  width: 100%; box-sizing: border-box; padding: 0.65rem 0.8rem; min-height: 3rem; resize: vertical;
+  border: 1px solid var(--line, #E6D9C0); border-radius: 8px;
+  background: var(--bg, #FFFAF2); color: var(--ink, #2C231A); font-family: inherit; font-size: 0.95rem;
+}
+.teamchat-composer .portal-btn { min-height: 3rem; padding-left: 1.3rem; padding-right: 1.3rem; }
+/* end TEAMCHAT_2026_11_03 */

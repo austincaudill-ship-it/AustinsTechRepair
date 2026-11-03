@@ -171,6 +171,10 @@
         <button class="portal-tab" id="portal-tab-associates" type="button" role="tab" data-tab="associates">
           <i class="fas fa-user-group"></i> Associates
         </button>
+        <!-- TEAMCHAT_2026_11_03 (Austin, Nov 3, 2026): "build the internal team chat in associates action button." An internal Team Chat Action Button directly under the Associates roster button — the office channel where Alfred, Pepper and the associates talk inside the portal, never on a personal account. Panel: portal-panel-teamchat, loader loadTeamChat in portal.js (same LOADERS wiring as Payroll); messages live in public.team_messages (see team-chat.sql in this build folder). -->
+        <button class="portal-tab" id="portal-tab-teamchat" type="button" role="tab" data-tab="teamchat">
+          <i class="fas fa-comments"></i> Team Chat
+        </button>
         <!-- PORTAL_CUSTOMER_PROFILE_2026_11_02 (Austin correction, Nov 2, 2026): the Requests button moved out of the first group into this group — Requests is the associates' queue (shop requests plus the change requests the owner approves). The button, its count span and the panel are otherwise byte-identical; group headings are NOT renamed here (the rename pass owns them). -->
         <button class="portal-tab" id="portal-tab-requests" type="button" role="tab" data-tab="requests">
           <i class="fas fa-clipboard-list"></i> Requests <span class="portal-count" id="portal-count-requests" hidden></span>
@@ -434,6 +438,26 @@
         </div>
         <p class="portal-muted portal-small">Everyone who can sign in to this portal. Green dot: active &mdash; their sign-in profile is on file. Tap an associate to see their profile.</p>
         <div id="portal-associates-list"><p class="portal-muted">Loading associates&hellip;</p></div>
+      </div>
+
+      <!-- TEAM CHAT — TEAMCHAT_2026_11_03 (Austin, Nov 3, 2026): the internal staff channel — Alfred, Pepper and every associate in one thread inside the portal, so staff talk never rides a personal account. Messages live in public.team_messages (team-chat.sql in this build folder); portal.js loadTeamChat renders them oldest at top, newest at bottom, and the composer posts as the signed-in associate. -->
+      <div class="portal-panel" id="portal-panel-teamchat" role="tabpanel" hidden>
+        <div class="portal-panel-head">
+          <h2 class="portal-h2">Team Chat</h2>
+          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="teamchat">
+            <i class="fas fa-rotate-right"></i> Refresh
+          </button>
+        </div>
+        <p class="portal-muted portal-small">The office channel: every associate, Alfred and Pepper in one thread. Staff only &mdash; guests never see this.</p>
+        <div class="teamchat-list" id="portal-teamchat-list"><p class="portal-muted">Loading messages&hellip;</p></div>
+        <p class="portal-error" id="portal-teamchat-error" hidden></p>
+        <form class="teamchat-composer" id="portal-teamchat-form" novalidate>
+          <div class="portal-field teamchat-field">
+            <label for="portal-teamchat-input">Message the team</label>
+            <textarea id="portal-teamchat-input" rows="2" maxlength="2000" placeholder="Write a message&hellip;"></textarea>
+          </div>
+          <button class="portal-btn portal-btn-primary" type="submit" id="portal-teamchat-send"><i class="fas fa-paper-plane"></i> Send</button>
+        </form>
       </div>
 
       <!-- NEW HIRES (EMPLOYEE ONBOARDING) — PORTAL_NEWHIRE_RELABEL_2026_10_30 -->
