@@ -65,10 +65,38 @@
   var sb = null;
   var sbWaiters = [];
 
+  /* PORTAL_RECEIPT_SESSION_FIX_2026_11_03: the portal client gets
+   * its OWN auth storage key. Until now it used the supabase-js
+   * default key — the same localStorage slot the public website's
+   * customer sign-in uses (same origin, same project) — so signing
+   * in or out on the website silently replaced or destroyed the
+   * staff session, and the next portal load signed the staffer out
+   * at the employee gate. The options below are the library
+   * defaults (persist in localStorage, auto-refresh) made explicit;
+   * only the key changes behavior. Migration: if this browser still
+   * holds a session under the old default key and the portal key is
+   * empty, copy it across once (the old key is left in place — the
+   * website still uses it) so nobody is signed out by the fix
+   * itself. */
+  var PORTAL_AUTH_STORAGE_KEY = 'sb-atrg-portal-auth-token';
+  function migrateLegacyAuthStorage() {
+    try {
+      if (!window.localStorage.getItem(PORTAL_AUTH_STORAGE_KEY)) {
+        var legacy = window.localStorage.getItem('sb-lyujxpuicarblpkdzuuc-auth-token');
+        if (legacy) window.localStorage.setItem(PORTAL_AUTH_STORAGE_KEY, legacy);
+      }
+    } catch (e) {}
+  }
+
   function createClient() {
     if (sb) return sb;
     if (window.supabase && window.supabase.createClient) {
-      try { sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); }
+      try {
+        migrateLegacyAuthStorage();
+        sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+          auth: { storageKey: PORTAL_AUTH_STORAGE_KEY, persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+        });
+      }
       catch (e) { sb = null; }
     }
     return sb;
@@ -289,23 +317,44 @@
      * SQL ran), fall back to the original select so nobody is locked
      * out over deploy order; the age gate then sees no date and lets
      * this sign-in through unrotated. */
+    /* PORTAL_RECEIPT_SESSION_FIX_2026_11_03: done(profile, readFailed).
+     * A read that FAILS (offline blip on a hotspot, request error)
+     * is not the same as a read that succeeds and finds no row.
+     * Only the second means "not an employee". Reporting a failure
+     * as done(null) made enterIfEmployee sign the staffer out over
+     * a network hiccup — the stored session itself was still valid.
+     * Failures now report readFailed=true and keep the session. */
     client.from('employee_profiles').select('id, name, role, password_changed_at').eq('id', user.id).maybeSingle()
       .then(function (res) {
         if (res.error) {
           return client.from('employee_profiles').select('id, name, role').eq('id', user.id).maybeSingle()
             .then(function (res2) {
-              if (res2.error || !res2.data) { done(null); return; }
-              done(res2.data);
-            });
+              if (res2.error) { done(null, true); return; }
+              if (!res2.data) { done(null, false); return; }
+              done(res2.data, false);
+            })
+            .catch(function () { done(null, true); });
         }
-        if (!res.data) { done(null); return; }
-        done(res.data);
+        if (!res.data) { done(null, false); return; }
+        done(res.data, false);
       })
-      .catch(function () { done(null); });
+      .catch(function () { done(null, true); });
   }
 
   function enterIfEmployee(client, user) {
-    verifyEmployee(client, user, function (profile) {
+    verifyEmployee(client, user, function (profile, readFailed) {
+      if (!profile && readFailed) {
+        /* PORTAL_RECEIPT_SESSION_FIX_2026_11_03: the profile could
+         * not be read at all — keep the session (do NOT signOut:
+         * the stored session is still good) and say what happened.
+         * Reloading once the connection is back re-runs this gate
+         * and lands on the dashboard; signing in again on the form
+         * below also works — it mints a fresh session that passes
+         * through this same gate. */
+        state.user = null; state.profile = null;
+        showLogin('You are signed in, but the portal could not check your employee profile — this is usually a connection hiccup. Check your connection, then reload the page.');
+        return;
+      }
       if (!profile) {
         client.auth.signOut().then(function () {
           state.user = null; state.profile = null;
@@ -3907,20 +3956,50 @@ function loadTicketThread(client, ticketId) {
     function fail(text) { if (btn) btn.disabled = false; note(text); }
     if (btn) btn.disabled = true;
     note('Building receipt\u2026');
-    loadFreshReceiptCharges(client, t, fail, function (auth) {
-      buildReceiptPdfBlob(t, auth, fail, function (blob, fileName) {
+    /* PORTAL_RECEIPT_SESSION_FIX_2026_11_03: Safari (iPhone, iPad,
+     * and desktop) does not honor the download attribute on a
+     * blob-anchor click: it navigates to the blob URL instead —
+     * and because the click below happens deep in async callbacks,
+     * the old 800 ms revokeObjectURL destroyed the blob before the
+     * new tab could render the PDF, so the owner got a blank page.
+     * Fix: on those browsers, open the preview window NOW, inside
+     * the tap's own call stack (popup blockers allow it here; they
+     * would block a window opened after the async PDF build), then
+     * point it at the finished blob. The blob lives for 60 s so the
+     * preview can always load. Other browsers keep the exact anchor
+     * download they had. */
+    var ua = '';
+    try { ua = window.navigator.userAgent || ''; } catch (e) {}
+    var isIOSLike = /iP(hone|ad|od)/i.test(ua) || (/Macintosh/i.test(ua) && 'ontouchend' in document);
+    var isSafariUA = /safari/i.test(ua) && !/chrome|chromium|android|edg/i.test(ua);
+    var previewWin = null;
+    if (isIOSLike || isSafariUA) {
+      try { previewWin = window.open('', '_blank'); } catch (e) { previewWin = null; }
+    }
+    function failAndClose(text) {
+      if (previewWin && !previewWin.closed) { try { previewWin.close(); } catch (e) {} }
+      fail(text);
+    }
+    loadFreshReceiptCharges(client, t, failAndClose, function (auth) {
+      buildReceiptPdfBlob(t, auth, failAndClose, function (blob, fileName) {
         var url = URL.createObjectURL(blob);
-        var a = document.createElement('a');
-        a.href = url;
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(function () {
-          if (a.parentNode) a.parentNode.removeChild(a);
-          URL.revokeObjectURL(url);
-        }, 800);
+        var usedPreview = false;
+        if (previewWin && !previewWin.closed) {
+          try { previewWin.location.href = url; usedPreview = true; } catch (e) { usedPreview = false; }
+        }
+        if (!usedPreview) {
+          var a = document.createElement('a');
+          a.href = url;
+          a.download = fileName;
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(function () {
+            if (a.parentNode) a.parentNode.removeChild(a);
+          }, 800);
+        }
+        setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
         if (btn) btn.disabled = false;
-        note('Receipt PDF downloaded.');
+        note(usedPreview ? 'Receipt opened — use Share to save the PDF.' : 'Receipt PDF downloaded.');
       });
     });
   }
