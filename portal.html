@@ -3802,10 +3802,21 @@
     .p2-check { display: flex; gap: 0.5rem; align-items: center; font-size: 0.9rem; cursor: pointer; }
     .p2-check input { width: 1.1rem; height: 1.1rem; margin: 0; flex: none; }
     .p2-line { display: flex; gap: 0.6rem; align-items: center; padding: 0.55rem 0; border-bottom: 1px solid var(--line-soft, #e7dcc8); }
-    .p2-line-main { flex: 1; min-width: 0; }
+    /* DOCROW_FIX_2026_11_03 (Austin, Nov 3, 2026): document rows broke at
+       phone width — the row title (.p2-line-amt, an inline nowrap span)
+       overflowed its shrinkable .p2-line-main box and painted underneath
+       the row's Sign / View buttons ("Repair Authorizat[Sign]…"). The main
+       now flexes 1 1 auto with min-width 0, a row's buttons can never
+       shrink (flex 0 0 auto; the row gap keeps clear space beside the
+       title), and .p2-line-amt below is a block box that truncates with
+       an ellipsis instead of sliding under the buttons. The same class
+       change also fixes the Signed & filed list, whose customer name is
+       the same span. */
+    .p2-line-main { flex: 1 1 auto; min-width: 0; }
+    .p2-line > .portal-btn { flex: 0 0 auto; }
     .p2-kind { display: inline-block; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
       background: var(--surface-warm, #f7f0e1); border: 1px solid var(--line, #d8cbb6); border-radius: 999px; padding: 0.1rem 0.5rem; margin-right: 0.35rem; }
-    .p2-line-amt { font-weight: 700; white-space: nowrap; }
+    .p2-line-amt { font-weight: 700; white-space: nowrap; display: block; overflow: hidden; text-overflow: ellipsis; }
     .p2-x { background: none; border: none; color: #b3382e; font-size: 1.25rem; line-height: 1; cursor: pointer; padding: 0.2rem 0.4rem; flex: none; }
     /* PORTAL_LIVE_TRACKING_2026_11_01: little Live tracking box on a ticket part + Tools tracker result */
     .p2-live-track { flex: 1 1 100%; margin: 0.35rem 0 0.55rem; padding: 0.55rem 0.7rem; border: 1px solid var(--line, #d8cbb6); border-left: 4px solid var(--brand, #E07B2A); border-radius: 8px; background: var(--surface-warm, #f7f0e1); }
