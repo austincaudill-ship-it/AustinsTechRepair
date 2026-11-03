@@ -487,6 +487,13 @@
           </button>
         </div>
         <p class="portal-muted portal-small">The office channel: every associate, Alfred and Pepper in one thread. Staff only &mdash; guests never see this.</p>
+        <!-- AVATARS_2026_11_03 (Austin, Nov 3, 2026): "My picture" — Pepper asked for a profile picture through Requests and Austin approved. Every associate manages their OWN portrait here (upload in wireTeamChat, portal.js): the picture rides beside their name in this chat, on their Associate Accounts card, and — through the ticket_technician route in avatars.sql — in the customer's own repair view as "Your technician". -->
+        <div class="teamchat-me" id="portal-teamchat-me">
+          <span id="portal-teamchat-me-pic"></span>
+          <span class="teamchat-me-text"><span class="teamchat-me-name" id="portal-teamchat-me-name">My picture</span><span class="portal-muted portal-small" id="portal-teamchat-me-msg">The picture beside your name &mdash; for the team, and for customers checking their repair.</span></span>
+          <label class="portal-btn portal-btn-outline portal-btn-sm" for="portal-teamchat-me-file"><i class="fas fa-camera"></i> <span id="portal-teamchat-me-btn">Upload picture</span></label>
+          <input type="file" id="portal-teamchat-me-file" accept="image/*" hidden />
+        </div>
         <!-- TEAMCHAT_CHANNELS_2026_11_03 (Austin, Nov 3, 2026): "type an associate name and it pulls it up and we can press chat" + "Make a group chat." The panel grows a channel bar (Office + your direct chats and groups), a find-someone search that opens a direct chat, and a New group form; the message list and composer below now work per open channel (public.team_channels / team_channel_members, see team-channels.sql in this build folder). -->
         <div class="teamchat-channels" id="portal-teamchat-channels" aria-label="Chat channels"><p class="portal-muted portal-small">Loading channels&hellip;</p></div>
         <div class="teamchat-find">

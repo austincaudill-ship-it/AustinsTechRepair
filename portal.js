@@ -1460,7 +1460,15 @@ function loadTicketThread(client, ticketId) {
           '<div class="portal-status-row"><select id="portal-ticket-status" aria-label="Ticket status">' +
           statusOptions(TICKET_STATUSES, t.status) + '</select>' +
           '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="portal-ticket-status-save">Save status</button>' +
-          '<span class="portal-muted portal-small" id="portal-ticket-status-msg"></span></div></div>' +
+          '<span class="portal-muted portal-small" id="portal-ticket-status-msg"></span></div>' +
+          /* AVATARS_2026_11_03: who is on this job. The assignee is
+           * the person the customer sees in their repair view —
+           * picture + name as "Your technician" (ticket_technician
+           * in avatars.sql). Options load in loadTicketAssignees. */
+          '<div class="portal-status-row"><label for="portal-ticket-assignee">Assigned to</label>' +
+          '<select id="portal-ticket-assignee" aria-label="Assigned technician"><option value="">Unassigned</option></select>' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="portal-ticket-assignee-save">Save assignment</button>' +
+          '<span class="portal-muted portal-small" id="portal-ticket-assignee-msg"></span></div></div>' +
           '<div class="portal-card-top"><p class="portal-card-title">' + esc(deviceLabel(t)) + '</p>' + badge(t.status) + '</div>' +
           kvRows([
             ['Customer', valOrDash(t.customer_name)],
@@ -1712,6 +1720,24 @@ function loadTicketThread(client, ticketId) {
             state.loaded.tickets = false;
             loadTickets(true);
           }).catch(function () { msg.textContent = 'Couldn&rsquo;t save — try again.'; });
+        });
+
+        /* AVATARS_2026_11_03: the Assigned to picker beside the
+         * status control — options from the staff directory, the
+         * write is the plain ticket update the drawer already uses. */
+        loadTicketAssignees(client, t);
+        var asgSave = $('portal-ticket-assignee-save');
+        if (asgSave) asgSave.addEventListener('click', function () {
+          var sel = $('portal-ticket-assignee');
+          var msg = $('portal-ticket-assignee-msg');
+          if (!sel) return;
+          var val = sel.value || null;
+          if (msg) msg.textContent = 'Saving…';
+          client.from('tickets').update({ assigned_to: val }).eq('id', t.id).then(function (res2) {
+            if (res2.error) { if (msg) msg.textContent = 'Couldn’t save — try again.'; return; }
+            t.assigned_to = val;
+            if (msg) msg.textContent = val ? 'Saved.' : 'Saved — nobody assigned.';
+          }).catch(function () { if (msg) msg.textContent = 'Couldn’t save — try again.'; });
         });
 
         $('portal-note-form').addEventListener('submit', function (e) {
@@ -5773,6 +5799,73 @@ function loadTicketThread(client, ticketId) {
    * still load through loadAssociates; the merged panel's loader,
    * loadAssociateAccounts, runs it together with loadAccountControls,
    * and every re-render goes through renderAssociates. */
+  /* ================= AVATARS_2026_11_03 =================
+   * Austin, Nov 3, 2026: Pepper asked for a profile picture through
+   * Requests; Austin approved building it — and the picture also
+   * faces the customer ("the customers can see what you look like —
+   * who's arriving today... the customer can see who is coming to
+   * their house"). employee_profiles.avatar_url holds the public
+   * URL of the person's square portrait in the staff-avatars
+   * storage bucket (avatars.sql in this build folder: public read;
+   * each person writes ONLY the file named for their own auth
+   * uid). Until someone uploads, every surface falls back to an
+   * initials disc in brand colors — nobody is ever a broken image.
+   * The surfaces: Team Chat (the "My picture" upload row, message
+   * rows, find-someone, the group picker), the merged Associate
+   * Accounts cards, the ticket drawer's Assigned to picker, and —
+   * through the ticket_technician RPC in avatars.sql — the
+   * customer's own repair view on the website. */
+  var AVATAR_BUCKET = 'staff-avatars';
+
+  function avatarInitials(name) {
+    var parts = trim(name || '').split(/\s+/).filter(function (w) { return !!w; });
+    if (!parts.length) return '?';
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+  }
+
+  /* One person's portrait: their picture when a URL is set, an
+   * initials disc otherwise. size is 'sm' | 'md' | 'lg'. */
+  function avatarHtml(name, url, size) {
+    var cls = 'avatar avatar-' + (size || 'md');
+    if (url) return '<img class="' + cls + ' avatar-img" src="' + esc(url) + '" alt="" loading="lazy" />';
+    return '<span class="' + cls + ' avatar-disc" aria-hidden="true">' + esc(avatarInitials(name)) + '</span>';
+  }
+
+  function teamChatDirPerson(id) {
+    for (var i = 0; i < teamChatDirectory.length; i++) {
+      if (teamChatDirectory[i].id === id) return teamChatDirectory[i];
+    }
+    return null;
+  }
+
+  /* The ticket drawer's Assigned to options: the staff directory
+   * (team_directory view; the plain profiles select as fallback,
+   * the fetchTeamDirectory shape). Selects t.assigned_to, and keeps
+   * a saved assignee selectable even if the directory lost them. */
+  function loadTicketAssignees(client, t) {
+    var sel = $('portal-ticket-assignee');
+    if (!sel) return;
+    var fill = function (rows) {
+      var cur = t.assigned_to || '';
+      var seen = {};
+      var html = '<option value="">Unassigned</option>';
+      (rows || []).forEach(function (p) {
+        seen[p.id] = true;
+        html += '<option value="' + esc(p.id) + '"' + (p.id === cur ? ' selected' : '') + '>' + esc(p.name || 'Associate') + '</option>';
+      });
+      if (cur && !seen[cur]) html += '<option value="' + esc(cur) + '" selected>Assigned (not in directory)</option>';
+      sel.innerHTML = html;
+    };
+    client.from('team_directory').select('id, name').order('name', { ascending: true }).limit(200)
+      .then(function (res) { if (res.error) throw res.error; fill(res.data || []); })
+      .catch(function () {
+        client.from('employee_profiles').select('id, name').order('name', { ascending: true }).limit(200)
+          .then(function (res) { fill(res.data || []); })
+          .catch(function () { fill([]); });
+      });
+  }
+
   function roleLabel(role) {
     var r = trim(role);
     if (!r) return '';
@@ -5832,7 +5925,11 @@ function loadTicketThread(client, ticketId) {
             ['Status', banned
               ? '<span class="mem-status-dot mem-dot-off"></span>Deactivated &mdash; their login is turned off (see Portal login below)'
               : '<span class="mem-status-dot mem-dot-on"></span>Active &mdash; sign-in profile on file'],
-            ['Birthday', a.birthday ? esc(fmtJobDate(a.birthday) || fmtDate(a.birthday)) : '&mdash;']
+            ['Birthday', a.birthday ? esc(fmtJobDate(a.birthday) || fmtDate(a.birthday)) : '&mdash;'],
+            /* AVATARS_2026_11_03: the portrait as the team and the
+             * customers see it; the Remove control itself lives in
+             * the owner section below (assocOwnerSection). */
+            ['Profile picture', assocAvatarById[a.id] ? avatarHtml(a.name, assocAvatarById[a.id], 'lg') : '<span class="portal-muted">No picture yet &mdash; they add their own in Team Chat.</span>']
           ]);
           /* PORTAL_ROSTER_DETAIL_2026_11_02: the owner-only full record
            * (pay + home address + time + time-card jump) exists in the
@@ -5848,7 +5945,7 @@ function loadTicketThread(client, ticketId) {
         detail += '</div>';
       }
       return '<article class="portal-card assoc-card' + (banned ? ' acct-card-off' : '') + '" data-assoc-toggle="' + esc(id) + '" style="cursor:pointer" title="Tap to ' + (open ? 'close' : 'view') + ' this associate&rsquo;s account">' +
-        '<div class="portal-card-top"><p class="portal-card-title"><span class="mem-status-dot ' + (banned ? 'mem-dot-off' : 'mem-dot-on') + '" title="' + (banned ? 'Deactivated' : 'Active') + '" aria-label="' + (banned ? 'Deactivated' : 'Active') + '"></span>' + esc((a && a.name) || (s && s.name) || 'Associate') + (isSelf ? ' <span class="portal-muted portal-small">(you)</span>' : '') + '</p>' +
+        '<div class="portal-card-top"><p class="portal-card-title"><span class="assoc-card-id">' + avatarHtml((a && a.name) || (s && s.name) || 'Associate', a ? (assocAvatarById[a.id] || '') : '', 'md') + '<span><span class="mem-status-dot ' + (banned ? 'mem-dot-off' : 'mem-dot-on') + '" title="' + (banned ? 'Deactivated' : 'Active') + '" aria-label="' + (banned ? 'Deactivated' : 'Active') + '"></span>' + esc((a && a.name) || (s && s.name) || 'Associate') + (isSelf ? ' <span class="portal-muted portal-small">(you)</span>' : '') + '</span></span></p>' +
         '<span class="portal-card-topright">' +
         (role ? '<span class="portal-badge portal-badge-role">' + esc(roleLabel(role)) + '</span>' : '') +
         (banned
@@ -5896,6 +5993,7 @@ function loadTicketThread(client, ticketId) {
       };
       if (!isPortalOwner()) { plain(); return; }
       loadAssocHome(client); /* PORTAL_MILEAGE_2026_11_02: independent home_address probe — never disturbs the pay fallback below */
+      loadAssocAvatars(client); /* AVATARS_2026_11_03: independent avatar_url probe — same never-disturb rule */
       /* PORTAL_ROSTER_DETAIL_2026_11_02: the owner's load also asks
        * for pay_rate. If the column is not live yet the select
        * errors and the roster quietly loads without it — the same
@@ -6264,6 +6362,16 @@ function loadTicketThread(client, ticketId) {
 
   function assocOwnerSection(a) {
     var out = '<div class="assoc-owner-sec"><p class="assoc-owner-head"><i class="fas fa-lock"></i> Owner only</p>';
+    /* AVATARS_2026_11_03: owner moderation for the portrait.
+     * Upload is self-service only (the storage policy lets a
+     * person write just their own file); the owner's lever is
+     * clearing avatar_url, which hides the picture on every
+     * surface at once — see removeAssocAvatar. */
+    if (assocAvatarKnown && assocAvatarById[a.id]) {
+      out += '<div class="assoc-pay-row"><span class="assoc-pay-label">Profile picture<span class="assoc-pay-cur">Shown to the team and to customers</span></span>' +
+        '<span class="assoc-pay-edit"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-assoc-avatar-remove="' + esc(a.id) + '">Remove picture</button></span></div>' +
+        '<p class="portal-small assoc-pay-msg" data-assoc-avatar-msg="' + esc(a.id) + '"></p>';
+    }
     if (assocPayKnown) {
       var has = a.pay_rate != null && a.pay_rate !== '' && !isNaN(Number(a.pay_rate));
       out += '<div class="assoc-pay-row"><span class="assoc-pay-label">Pay rate' +
@@ -6460,13 +6568,20 @@ function loadTicketThread(client, ticketId) {
   var TEAM_OFFICE_ID = '00000000-0000-4000-8000-000000000001';
   var teamChatOpenId = TEAM_OFFICE_ID;
   var teamChatChannels = [];  /* [{id, kind, name, label, lastAt}] */
-  var teamChatDirectory = []; /* [{id, name, role}] — everyone on staff */
+  var teamChatDirectory = []; /* [{id, name, role, avatar_url}] — everyone on staff (AVATARS_2026_11_03: avatar_url rides along) */
 
   function teamChatMsgHtml(m) {
     var mine = !!(state.user && m.author_id === state.user.id);
+    /* AVATARS_2026_11_03: the author's portrait (or initials disc)
+     * beside their words — the picture comes from the directory
+     * entry for author_id; the name snapshot on the message is the
+     * fallback identity when the author is not in the directory. */
+    var person = teamChatDirPerson(m.author_id);
+    var pic = avatarHtml(m.author_name || (person && person.name) || 'Associate', person ? person.avatar_url : '', 'sm');
     return '<div class="teamchat-msg' + (mine ? ' teamchat-msg-mine' : '') + '">' +
-      '<span class="teamchat-msg-meta">' + esc(m.author_name || 'Associate') + ' &middot; ' + esc(fmtDateTime(m.created_at)) + '</span>' +
-      '<span class="teamchat-msg-body">' + esc(m.body || '') + '</span></div>';
+      '<span class="teamchat-msg-pic">' + pic + '</span>' +
+      '<span class="teamchat-msg-main"><span class="teamchat-msg-meta">' + esc(m.author_name || 'Associate') + ' &middot; ' + esc(fmtDateTime(m.created_at)) + '</span>' +
+      '<span class="teamchat-msg-body">' + esc(m.body || '') + '</span></span></div>';
   }
 
   function teamChatErr(text) {
@@ -6525,18 +6640,31 @@ function loadTicketThread(client, ticketId) {
     var apply = function (rows) {
       teamChatDirectory = rows || [];
       renderTeamChatGroupMembers();
+      renderMyAvatarRow(); /* AVATARS_2026_11_03: my picture row reads the same directory */
       if (done) done();
     };
-    teamChatClient.from('team_directory').select('id, name, role').order('name', { ascending: true }).limit(200)
+    /* AVATARS_2026_11_03: ask for avatar_url with the directory;
+     * if that column is not live yet (SQL not run), fall back to
+     * the plain directory, then to the plain profiles select —
+     * names must never break over a missing picture column. */
+    var plain = function () {
+      teamChatClient.from('team_directory').select('id, name, role').order('name', { ascending: true }).limit(200)
+        .then(function (res) {
+          if (res.error) throw res.error;
+          apply(res.data || []);
+        })
+        .catch(function () {
+          teamChatClient.from('employee_profiles').select('id, name, role').order('name', { ascending: true }).limit(200)
+            .then(function (res) { apply(res.data || []); })
+            .catch(function () { apply([]); });
+        });
+    };
+    teamChatClient.from('team_directory').select('id, name, role, avatar_url').order('name', { ascending: true }).limit(200)
       .then(function (res) {
         if (res.error) throw res.error;
         apply(res.data || []);
       })
-      .catch(function () {
-        teamChatClient.from('employee_profiles').select('id, name, role').order('name', { ascending: true }).limit(200)
-          .then(function (res) { apply(res.data || []); })
-          .catch(function () { apply([]); });
-      });
+      .catch(plain);
   }
 
   /* TEAMCHAT_CHANNELS_2026_11_03: rebuild the channel bar — the
@@ -6715,7 +6843,7 @@ function loadTicketThread(client, ticketId) {
       return;
     }
     box.innerHTML = hits.map(function (p) {
-      return '<div class="teamchat-person"><span class="teamchat-person-name">' + esc(p.name || 'Associate') + '</span>' +
+      return '<div class="teamchat-person">' + avatarHtml(p.name, p.avatar_url, 'sm') + '<span class="teamchat-person-name">' + esc(p.name || 'Associate') + '</span>' +
         '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-tc-chat="' + esc(p.id) + '"><i class="fas fa-comment"></i> Chat</button></div>';
     }).join('');
   }
@@ -6730,7 +6858,7 @@ function loadTicketThread(client, ticketId) {
       return;
     }
     box.innerHTML = others.map(function (p) {
-      return '<label class="teamchat-group-member"><input type="checkbox" data-tc-member="' + esc(p.id) + '" /> ' + esc(p.name || 'Associate') + '</label>';
+      return '<label class="teamchat-group-member"><input type="checkbox" data-tc-member="' + esc(p.id) + '" /> ' + avatarHtml(p.name, p.avatar_url, 'sm') + ' ' + esc(p.name || 'Associate') + '</label>';
     }).join('');
   }
 
@@ -6766,6 +6894,85 @@ function loadTicketThread(client, ticketId) {
         if (btn) btn.disabled = false;
         teamChatErr('Could not create that group. Try again.');
       });
+  }
+
+  /* AVATARS_2026_11_03: "My picture" — every staff member manages
+   * their OWN portrait in the Team Chat panel. The pick is squared
+   * and shrunk in the browser (canvas, center-crop, max 512x512,
+   * JPEG), uploaded to the staff-avatars bucket under the one file
+   * name the storage policy lets this person write — their own
+   * auth uid — and employee_profiles.avatar_url is pointed at the
+   * public URL with a ?v= cache-buster, so the new face replaces
+   * the old one everywhere at once instead of haunting a cache. */
+  function renderMyAvatarRow() {
+    var pic = $('portal-teamchat-me-pic'), name = $('portal-teamchat-me-name'), btn = $('portal-teamchat-me-btn');
+    if (!pic || !state.user) return;
+    var me = teamChatDirPerson(state.user.id);
+    var url = (me && me.avatar_url) || '';
+    var myName = (state.profile && state.profile.name) || (me && me.name) || 'My picture';
+    pic.innerHTML = avatarHtml(myName, url, 'md');
+    if (name) name.textContent = myName;
+    if (btn) btn.textContent = url ? 'Change picture' : 'Upload picture';
+  }
+
+  function myAvatarMsg(text) {
+    var msg = $('portal-teamchat-me-msg');
+    if (msg) msg.textContent = text || '';
+  }
+
+  function processAvatarFile(file, done) {
+    var url = URL.createObjectURL(file);
+    var img = new Image();
+    img.onload = function () {
+      try {
+        var w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+        var side = Math.min(w, h);
+        var out = Math.min(512, side);
+        var canvas = document.createElement('canvas');
+        canvas.width = out; canvas.height = out;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, (w - side) / 2, (h - side) / 2, side, side, 0, 0, out, out);
+        URL.revokeObjectURL(url);
+        if (canvas.toBlob) canvas.toBlob(function (b) { done(b); }, 'image/jpeg', 0.85);
+        else done(null);
+      } catch (e) { URL.revokeObjectURL(url); done(null); }
+    };
+    img.onerror = function () { URL.revokeObjectURL(url); done(null); };
+    img.src = url;
+  }
+
+  function uploadMyAvatar(file) {
+    if (!teamChatClient || !state.user || !file) return;
+    myAvatarMsg('Preparing your picture…');
+    processAvatarFile(file, function (blob) {
+      if (!blob) { myAvatarMsg('That picture could not be read. Try another one.'); return; }
+      myAvatarMsg('Uploading…');
+      var path = state.user.id + '.jpg';
+      teamChatClient.storage.from(AVATAR_BUCKET).upload(path, blob, { contentType: 'image/jpeg', upsert: true })
+        .then(function (up) {
+          if (up.error) throw up.error;
+          var pub = teamChatClient.storage.from(AVATAR_BUCKET).getPublicUrl(path);
+          var base = pub && pub.data ? pub.data.publicUrl : '';
+          if (!base) throw new Error('no public url');
+          var fresh = base + '?v=' + Date.now();
+          return teamChatClient.from('employee_profiles').update({ avatar_url: fresh }).eq('id', state.user.id).select('id')
+            .then(function (res) {
+              /* .select() for the written row: a policy-refused
+               * update returns success with zero rows — that is a
+               * failure here, not a saved picture. */
+              if (res.error || !res.data || !res.data.length) throw res.error || new Error('profile update refused');
+              var me = teamChatDirPerson(state.user.id);
+              if (me) me.avatar_url = fresh;
+              assocAvatarById[state.user.id] = fresh;
+              renderMyAvatarRow();
+              renderTeamChatGroupMembers();
+              renderTeamChatFind();
+              fetchTeamChat(true);
+              myAvatarMsg('Picture updated — this is the face the team and your customers see.');
+            });
+        })
+        .catch(function () { myAvatarMsg('Upload failed. Check your connection and try again.'); });
+    });
   }
 
   function wireTeamChat(client) {
@@ -6813,6 +7020,15 @@ function loadTicketThread(client, ticketId) {
       if (!gform.hidden) renderTeamChatGroupMembers();
     });
     if (gform) gform.addEventListener('submit', function (e) { e.preventDefault(); createTeamChatGroup(); });
+    /* AVATARS_2026_11_03: the My picture file pick. The input is
+     * reset after every pick so choosing the same photo twice in
+     * a row still fires the change. */
+    var meFile = $('portal-teamchat-me-file');
+    if (meFile) meFile.addEventListener('change', function () {
+      var f = meFile.files && meFile.files[0];
+      meFile.value = '';
+      if (f) uploadMyAvatar(f);
+    });
   }
 
   function loadTeamChat(force) {
@@ -6821,6 +7037,7 @@ function loadTicketThread(client, ticketId) {
       if (!client || !state.user) return;
       teamChatClient = client;
       wireTeamChat(client);
+      renderMyAvatarRow(); /* AVATARS_2026_11_03: paint my picture row now; the directory fetch below refreshes it with my stored picture */
       fetchTeamDirectory(function () { fetchTeamChannels(); });
       fetchTeamChat(true);
       startTeamChatPoll();
@@ -8154,6 +8371,8 @@ function loadTicketThread(client, ticketId) {
           if (aps) { saveAssocPay(aps); return; }
           var ahs = t.getAttribute('data-assoc-home-save');
           if (ahs) { saveAssocHome(ahs); return; } /* PORTAL_MILEAGE_2026_11_02 */
+          var aar = t.getAttribute('data-assoc-avatar-remove');
+          if (aar) { removeAssocAvatar(aar); return; } /* AVATARS_2026_11_03 */
           var atc = t.getAttribute('data-assoc-timecard');
           if (atc) { openAssocTimeCard(atc); return; }
           /* ACCOUNT_CONTROLS_2026_11_03: Account Controls panel
@@ -8840,6 +9059,55 @@ function loadTicketThread(client, ticketId) {
    * with zero extra plumbing. The columns arrive with
    * time-entries-fields.sql; until then the panel says so and the
    * form waits. */
+
+  /* ---------- profile pictures (AVATARS_2026_11_03) ---------- */
+  var assocAvatarById = {};
+  var assocAvatarKnown = false;
+
+  /* Independent column probe, the loadAssocHome rule: if the
+   * avatar_url column is not live yet the select errors, the
+   * pictures quietly stay initials discs, and the roster load is
+   * never disturbed. The summaries wear pictures, so a landed
+   * probe re-renders even with no card open. */
+  function loadAssocAvatars(client) {
+    client.from('employee_profiles').select('id, avatar_url').limit(200)
+      .then(function (res) {
+        if (res.error) { assocAvatarKnown = false; return; }
+        assocAvatarKnown = true;
+        assocAvatarById = {};
+        (res.data || []).forEach(function (r) { assocAvatarById[r.id] = r.avatar_url || ''; });
+        renderAssociates();
+      })
+      .catch(function () { assocAvatarKnown = false; });
+  }
+
+  /* Owner moderation, the one clean rule: clearing avatar_url
+   * hides the picture everywhere at once (Associate Accounts
+   * cards, Team Chat, the customer's "Your technician" view).
+   * The stored file itself is NOT deleted — the storage policy
+   * reserves file writes and deletes to the picture's owner, so
+   * the file simply sits unreferenced in the bucket until the
+   * person uploads a new one (their next upload overwrites the
+   * same file name and re-points the field at it). */
+  function removeAssocAvatar(id) {
+    var msg = document.querySelector('[data-assoc-avatar-msg="' + id + '"]');
+    if (msg) msg.textContent = 'Removing…';
+    withClient(function (client) {
+      if (!client) { if (msg) msg.textContent = 'Could not remove it. Try again.'; return; }
+      client.from('employee_profiles').update({ avatar_url: null }).eq('id', id).select('id')
+        .then(function (res) {
+          /* .select() asks for the written row back: under RLS a
+           * refused update returns success with zero rows, and
+           * that must read as failure, not "Removed." */
+          if (res.error || !res.data || !res.data.length) { if (msg) msg.textContent = 'Could not remove it. Try again.'; return; }
+          assocAvatarById[id] = '';
+          var dp = teamChatDirPerson(id);
+          if (dp) dp.avatar_url = '';
+          renderAssociates();
+        })
+        .catch(function () { if (msg) msg.textContent = 'Could not remove it. Try again.'; });
+    });
+  }
 
   /* ---------- home addresses (profile field) ---------- */
   var assocHomeById = {};
