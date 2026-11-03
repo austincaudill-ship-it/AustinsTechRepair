@@ -849,3 +849,24 @@ body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-logout{displa
 }
 .teamchat-composer .portal-btn { min-height: 3rem; padding-left: 1.3rem; padding-right: 1.3rem; }
 /* end TEAMCHAT_2026_11_03 */
+
+/* ---------- LOC_SETTINGS_2026_11_03 ----------
+ * The Location tracking settings card (top of the Mileage panel —
+ * the consent choice as a normal setting now that the sign-in
+ * pop-up banner is retired) and the password show/hide eye
+ * toggles on the sign-in and reset password fields. House palette:
+ * cream surfaces, burnt-orange accents, the portal's own vars. */
+#ml-loc-settings { margin-bottom: 1rem; }
+.loc-settings-card .p2-actions { margin-top: 0.6rem; }
+.pw-wrap { position: relative; display: block; }
+.portal-field .pw-wrap input { padding-right: 2.9rem; }
+.pw-eye {
+  position: absolute; right: 0.3rem; top: 50%; transform: translateY(-50%);
+  min-width: 2.6rem; min-height: 2.6rem; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; border: 0; border-radius: 8px;
+  color: var(--brand, #B4551F); font-size: 1rem; cursor: pointer;
+}
+.pw-eye:hover { background: var(--brand-soft, #FBEADB); }
+.pw-eye:focus-visible { outline: 2px solid var(--brand, #B4551F); outline-offset: 1px; }
+/* end LOC_SETTINGS_2026_11_03 */

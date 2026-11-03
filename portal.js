@@ -854,6 +854,27 @@
       }
     });
 
+      /* LOC_SETTINGS_2026_11_03: show/hide password eye toggles —
+       * the sign-in field plus the reset view's two fields, which
+       * share the same .portal-field + .pw-wrap markup pattern.
+       * The buttons are type="button" (they never submit), the
+       * icon and aria-label always describe the action's result,
+       * and focus returns to the field after a tap. */
+      function wirePwEye(btnId, inputId) {
+        var btn = $(btnId), input = $(inputId);
+        if (!btn || !input) return;
+        btn.addEventListener('click', function () {
+          var show = input.type === 'password';
+          input.type = show ? 'text' : 'password';
+          btn.innerHTML = '<i class="fas ' + (show ? 'fa-eye-slash' : 'fa-eye') + '"></i>';
+          btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+          try { input.focus(); } catch (e) {}
+        });
+      }
+      wirePwEye('portal-login-pw-eye', 'portal-login-password');
+      wirePwEye('portal-reset-pw-eye', 'portal-reset-password');
+      wirePwEye('portal-reset-confirm-pw-eye', 'portal-reset-confirm');
+
       $('portal-login-form').addEventListener('submit', function (e) {
         e.preventDefault();
         var email = trim($('portal-login-email').value);
@@ -8270,6 +8291,10 @@ function loadTicketThread(client, ticketId) {
   function loadMileage() {
     var list = $('ml-list');
     if (list) list.innerHTML = '<p class="portal-muted">Loading trips&hellip;</p>';
+    /* LOC_SETTINGS_2026_11_03: the Location tracking settings card
+     * lives at the top of this panel — render it on every load so
+     * its state line is never stale. */
+    try { geoRenderLocSettings(); } catch (e) {}
     withClient(function (client) {
       if (!client || !state.user) return;
       mlClientRef = client;
@@ -8339,9 +8364,9 @@ function loadTicketThread(client, ticketId) {
 
   function mlPopulatePicks(client) {
     var pick = $('ml-to-pick'); if (!pick) return;
-    var html = '<option value="">Store, or a job address&hellip;</option>';
+    var html = '<option value="">Home base, or a job address&hellip;</option>';
     if (geoBaseFence && geoBaseFence.address) {
-      html += '<option value="' + esc(geoBaseFence.address) + '">Store — ' + esc(geoBaseFence.address) + '</option>';
+      html += '<option value="' + esc(geoBaseFence.address) + '">Home base — ' + esc(geoBaseFence.address) + '</option>';
     }
     pick.innerHTML = html;
     client.from('tickets').select('id, status, service_address').limit(200)
@@ -8547,7 +8572,20 @@ function loadTicketThread(client, ticketId) {
    *
    * Until location-geofence.sql runs, every read/write here fails
    * quietly and the whole feature stays dark — no prompts, no
-   * captures, no errors on screen. */
+   * captures, no errors on screen.
+   *
+   * LOC_SETTINGS_2026_11_03 (Austin, Nov 3, 2026): the consent
+   * banner is retired. It popped up at sign-in whenever the answer
+   * was still 'not_asked' and shoved the whole layout down, so the
+   * first-login ask described above no longer happens: 'not_asked'
+   * simply means captures stay off. The tracking choice is now a
+   * normal setting at the top of the Mileage panel
+   * (geoRenderLocSettings), saving through the same geoSetConsent
+   * write. Also: there is no store — the base fence is the HOME
+   * BASE. Visible language changed only (kind 'base', the stored
+   * schema, and the consent values are untouched), and the fence
+   * form pre-fills from the signed-in profile's home address when
+   * no base fence exists yet. */
   var geoClientRef = null;
   var geoConsentKnown = false;
   var geoConsentState = null;
@@ -8570,22 +8608,23 @@ function loadTicketThread(client, ticketId) {
           geoConsentKnown = true;
           geoConsentState = res.data.location_consent || 'not_asked';
           geoLoadFences(client, function () { geoSyncTicketFences(client); geoSyncHomeFences(client); });
-          if (geoConsentState === 'not_asked') geoShowConsentBanner();
-          else if (geoConsentState === 'granted') { geoCapture('login'); geoStartWatch(); }
+          /* LOC_SETTINGS_2026_11_03: no banner at login anymore —
+           * 'not_asked' just leaves captures off until the tech
+           * turns tracking on in the Mileage panel setting. */
+          if (geoConsentState === 'granted') { geoCapture('login'); geoStartWatch(); }
+          try { geoRenderLocSettings(); } catch (e) {}
         })
         .catch(function () { geoConsentKnown = false; });
     });
   }
 
-  function geoShowConsentBanner() {
-    var b = $('portal-loc-banner'); if (!b) return;
-    b.innerHTML = '<span class="loc-banner-text"><strong>Allow location tracking?</strong> With it on, the portal clocks your arrivals and departures at the store and job sites for you — starting and ending mileage trips automatically. Location is only checked at work moments (signing in, clocking in or out, trips) and while the portal is open on your device. Never in the background, never off the clock.</span>' +
-      '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="loc-allow-btn">Allow location tracking</button>' +
-      '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="loc-dismiss-btn">Not now</button>';
-    b.hidden = false;
-    var allow = $('loc-allow-btn'); if (allow) allow.addEventListener('click', geoAllowClicked);
-    var dis = $('loc-dismiss-btn'); if (dis) dis.addEventListener('click', function () { b.hidden = true; });
-  }
+  /* LOC_SETTINGS_2026_11_03: geoShowConsentBanner() is removed and
+   * nothing calls it — the pop-up consent banner is retired for
+   * good. The #portal-loc-banner element stays in the markup,
+   * permanently hidden, and geoHideBanner() below remains as the
+   * harmless closer geoAllowClicked still calls. The consent
+   * choice itself lives in the Mileage panel now
+   * (geoRenderLocSettings, after geoSetConsent). */
 
   function geoHideBanner() { var b = $('portal-loc-banner'); if (b) { b.hidden = true; b.innerHTML = ''; } }
 
@@ -8600,10 +8639,10 @@ function loadTicketThread(client, ticketId) {
     }, function () { geoSetConsent('denied'); geoHideBanner(); }, { timeout: 10000 });
   }
 
-  function geoSetConsent(v) {
+  function geoSetConsent(v, done) {
     var prevConsent = geoConsentState;
     geoConsentState = v;
-    if (!geoClientRef || !state.user) return;
+    if (!geoClientRef || !state.user) { if (done) done(false); return; }
     /* PAYRATE_FIX_2026_11_03: land-or-fail, adapted to this site's
      * shape. There is no message line here — the write was
      * fire-and-forget — so .select() asks for the written row back
@@ -8614,16 +8653,89 @@ function loadTicketThread(client, ticketId) {
      * the banner back so the choice can be made again honestly. */
     geoClientRef.from('employee_profiles').update({ location_consent: v, location_consent_at: new Date().toISOString() }).eq('id', state.user.id).select('id, location_consent')
       .then(function (res) {
-        if (!res.error && res.data && res.data.length) return;
+        if (!res.error && res.data && res.data.length) { if (done) done(true); return; }
         geoConsentState = prevConsent;
         if (v === 'granted' && geoWatchId != null && navigator.geolocation) { navigator.geolocation.clearWatch(geoWatchId); geoWatchId = null; }
-        if (prevConsent === 'not_asked') geoShowConsentBanner();
+        /* LOC_SETTINGS_2026_11_03: a rolled-back first choice used
+         * to bring the banner back; now the Mileage settings card
+         * simply re-renders with the true (unchanged) state. */
+        try { geoRenderLocSettings(); } catch (e) {}
+        if (done) done(false);
       })
       .catch(function () {
         geoConsentState = prevConsent;
         if (v === 'granted' && geoWatchId != null && navigator.geolocation) { navigator.geolocation.clearWatch(geoWatchId); geoWatchId = null; }
-        if (prevConsent === 'not_asked') geoShowConsentBanner();
+        try { geoRenderLocSettings(); } catch (e) {}
+        if (done) done(false);
       });
+  }
+
+  /* ---------- LOC_SETTINGS_2026_11_03: the Mileage panel setting ----------
+   * The Location tracking card at the top of the Mileage panel —
+   * the consent choice as a normal setting, replacing the retired
+   * sign-in banner. The state line reads the same geoConsentState
+   * the banner used; the buttons save through geoSetConsent (the
+   * hardened, .select()-verified write above) and the card
+   * re-renders with the stored result: a saved confirmation on
+   * success, an honest failure line when the write rolls back. */
+  function geoRenderLocSettings(msg) {
+    var wrap = $('ml-loc-settings'); if (!wrap) return;
+    var st = geoConsentState;
+    var stateText = st === 'granted' ? 'On' : (st === 'denied' ? 'Off' : 'Not set yet');
+    wrap.innerHTML = '<div class="portal-card loc-settings-card">' +
+      '<div class="portal-card-top"><p class="portal-card-title">Location tracking</p>' +
+      '<span class="portal-badge ' + (st === 'granted' ? 'portal-st-ready' : 'portal-badge-role') + '">' + stateText + '</span></div>' +
+      '<p class="portal-muted portal-small">With it on, the portal clocks your arrivals and departures at the home base and job sites for you — starting and ending mileage trips automatically. Location is only checked at work moments (signing in, clocking in or out, trip start and end) and only while the portal is open on your device. Never in the background, never off the clock.</p>' +
+      '<div class="p2-actions">' +
+      '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="geo-loc-on"' + (st === 'granted' ? ' disabled' : '') + '>Turn on location tracking</button>' +
+      '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="geo-loc-off"' + (st === 'denied' ? ' disabled' : '') + '>Turn off</button>' +
+      '</div>' +
+      '<p class="portal-small" id="geo-loc-msg" aria-live="polite">' + (msg ? esc(msg) : '') + '</p>' +
+      '</div>';
+    var onBtn = $('geo-loc-on'); if (onBtn) onBtn.addEventListener('click', geoLocSettingsAllow);
+    var offBtn = $('geo-loc-off'); if (offBtn) offBtn.addEventListener('click', geoLocSettingsOff);
+  }
+
+  /* "Turn on" mirrors the old banner's Allow flow (geoAllowClicked):
+   * the browser's own Geolocation prompt comes first, then the
+   * choice is stored — and the first snapshot plus the watch start
+   * only once the store is confirmed, so the portal never acts on
+   * an unsaved yes. */
+  function geoLocSettingsAllow() {
+    var msg = $('geo-loc-msg');
+    if (!geoClientRef) { geoRenderLocSettings('Location settings are not connected yet — reopen the portal and try again.'); return; }
+    if (!navigator.geolocation) {
+      geoSetConsent('denied', function (ok) {
+        geoRenderLocSettings(ok ? 'This device has no location available, so tracking was set to Off.' : 'That did not save — no change was stored. Try again.');
+      });
+      return;
+    }
+    if (msg) msg.textContent = 'Asking this device for its location…';
+    navigator.geolocation.getCurrentPosition(function (pos) {
+      geoSetConsent('granted', function (ok) {
+        if (!ok) { geoRenderLocSettings('That did not save — no change was stored. Try again.'); return; }
+        geoStoreSnapshot('login', pos);
+        geoHandlePosition(pos.coords.latitude, pos.coords.longitude);
+        geoStartWatch();
+        geoRenderLocSettings('Saved — location tracking is on.');
+      });
+    }, function () {
+      geoSetConsent('denied', function (ok) {
+        geoRenderLocSettings(ok ? 'This device would not share its location, so tracking was set to Off.' : 'That did not save — no change was stored. Try again.');
+      });
+    }, { timeout: 10000 });
+  }
+
+  function geoLocSettingsOff() {
+    if (!geoClientRef) { geoRenderLocSettings('Location settings are not connected yet — reopen the portal and try again.'); return; }
+    if (geoWatchId != null && navigator.geolocation) { navigator.geolocation.clearWatch(geoWatchId); geoWatchId = null; }
+    geoSetConsent('denied', function (ok) {
+      if (ok) { geoRenderLocSettings('Saved — location tracking is off.'); return; }
+      /* The write rolled back: if the stored choice is still
+       * 'granted', the watch has to be running again to match it. */
+      if (geoConsentState === 'granted') geoStartWatch();
+      geoRenderLocSettings('That did not save — no change was stored. Try again.');
+    });
   }
 
   function geoCapture(eventName) {
@@ -8885,19 +8997,29 @@ function loadTicketThread(client, ticketId) {
     if (!isPortalOwner()) { wrap.innerHTML = ''; return; }
     if (!geoFencesKnown) {
       wrap.innerHTML = '<div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Geofences</h3></div>' +
-        '<p class="portal-muted">Geofences turn on once the staged location update runs: a fence around the store, one around each tech&rsquo;s home, and one around each job address — arrivals and departures log themselves here, and trips start and end on their own.</p>';
+        '<p class="portal-muted">Geofences turn on once the staged location update runs: a fence around the home base, one around each tech&rsquo;s home, and one around each job address — arrivals and departures log themselves here, and trips start and end on their own.</p>';
       return;
     }
     var html = '<div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Geofences</h3></div>';
+    /* LOC_SETTINGS_2026_11_03: the base is the HOME BASE (there is
+     * no store). When no base fence exists yet, the address box
+     * pre-fills from the signed-in profile's home address on file —
+     * the same home_address the Time Clock panel keeps — and stays
+     * editable before saving. */
+    var basePrefill = '';
+    if (!geoBaseFence) {
+      var ownProf = state.user ? mlProfileById(state.user.id) : null;
+      basePrefill = (ownProf && mlHomeKnown && ownProf.home_address) || ownHomeAddress || '';
+    }
     if (geoBaseFence) {
-      html += '<p><strong>Store / base:</strong> ' + esc(geoBaseFence.address || geoBaseFence.label) + ' &middot; fence ' + esc(String(geoBaseFence.radius_m || 150)) + ' m</p>';
+      html += '<p><strong>Home base:</strong> ' + esc(geoBaseFence.address || geoBaseFence.label) + ' &middot; fence ' + esc(String(geoBaseFence.radius_m || 150)) + ' m</p>';
     } else {
-      html += '<p class="portal-muted">No store fence yet — set the store address once and trips, arrivals and the quick-pick all key off it.</p>';
+      html += '<p class="portal-muted">No home base set yet — set your home address once and trips, arrivals and the quick-pick all key off it.</p>';
     }
     html += '<div class="tc-manual-grid">' +
-      '<label>Store address <input type="text" id="geo-base-addr" placeholder="Store address" value="' + (geoBaseFence ? esc(geoBaseFence.address || '') : '') + '"></label>' +
+      '<label>Home base address <input type="text" id="geo-base-addr" placeholder="Home base address" value="' + (geoBaseFence ? esc(geoBaseFence.address || '') : esc(basePrefill)) + '"></label>' +
       '<label>Radius (m) <input type="number" id="geo-base-radius" min="25" step="25" value="' + (geoBaseFence ? esc(String(geoBaseFence.radius_m || 150)) : '150') + '"></label>' +
-      '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="geo-base-save">' + (geoBaseFence ? 'Save store fence' : 'Set store fence') + '</button></div>' +
+      '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="geo-base-save">' + (geoBaseFence ? 'Save home base' : 'Set home base') + '</button></div>' +
       '<p class="portal-small" id="geo-base-msg"></p>';
     html += '<div id="geo-fence-status"><p class="portal-muted">Loading fence status&hellip;</p></div>';
     html += '<div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Arrivals &amp; departures</h3></div><div id="geo-feed"><p class="portal-muted">Loading&hellip;</p></div>';
@@ -8918,15 +9040,15 @@ function loadTicketThread(client, ticketId) {
       if (geoBaseFence) {
         client.from('geofences').update({ address: addr || geoBaseFence.address, lat: lat != null ? lat : Number(geoBaseFence.lat), lng: lng != null ? lng : Number(geoBaseFence.lng), radius_m: radius }).eq('id', geoBaseFence.id)
           .then(function (res) {
-            if (res.error) { if (msg) msg.textContent = 'Could not save the store fence.'; return; }
+            if (res.error) { if (msg) msg.textContent = 'Could not save the home base.'; return; }
             geoLoadFences(client, function () { geoRenderOwnerSections(); });
-          }).catch(function () { if (msg) msg.textContent = 'Could not save the store fence.'; });
+          }).catch(function () { if (msg) msg.textContent = 'Could not save the home base.'; });
       } else {
-        client.from('geofences').insert({ label: 'Store', address: addr, lat: lat, lng: lng, radius_m: radius, kind: 'base', created_by: state.user.id })
+        client.from('geofences').insert({ label: 'Home base', address: addr, lat: lat, lng: lng, radius_m: radius, kind: 'base', created_by: state.user.id })
           .then(function (res) {
-            if (res.error) { if (msg) msg.textContent = 'Could not save the store fence.'; return; }
+            if (res.error) { if (msg) msg.textContent = 'Could not save the home base.'; return; }
             geoLoadFences(client, function () { geoRenderOwnerSections(); mlPopulatePicks(client); });
-          }).catch(function () { if (msg) msg.textContent = 'Could not save the store fence.'; });
+          }).catch(function () { if (msg) msg.textContent = 'Could not save the home base.'; });
       }
     }
     if (addr && (!geoBaseFence || addr !== geoBaseFence.address)) {
@@ -8936,7 +9058,7 @@ function loadTicketThread(client, ticketId) {
         apply(g.lat, g.lng);
       });
     } else if (geoBaseFence) { apply(null, null); }
-    else if (msg) { msg.textContent = 'Type the store address first.'; }
+    else if (msg) { msg.textContent = 'Type the home base address first.'; }
   }
 
   function geoLoadFeed() {
