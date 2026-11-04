@@ -5502,7 +5502,20 @@ function loadTicketThread(client, ticketId) {
    * Until warranty-requests-linking.sql runs, the linking columns do
    * not exist: link updates then error, and the card says so ("Linking
    * needs the database step first") without changing anything, while
-   * the plain status control keeps working as before. */
+   * the plain status control keeps working as before.
+   *
+   * WARRANTY_DELETE_2026_11_04 (Austin, Nov 4, 2026): "If we get a
+   * warranty request there just needs to be a delete button on each
+   * ticket." Every card's status row now carries a Delete button —
+   * Admin-or-above only, because this panel is worked by all staff
+   * while deleting a claim is a management act (the handler
+   * re-checks the tier itself). The confirm is the portal's
+   * confirm-arm shape (the Setup panel's delete): first tap arms,
+   * second tap deletes. The table shipped with SELECT/UPDATE
+   * policies only, so the delete leans on warranty-delete-policy.sql
+   * (DELETE grant + an is_admin_or_above() DELETE policy); until
+   * that runs, the delete removes no row and the card says so —
+   * the card is never dropped from the screen on a failed delete. */
   var WARRANTY_STATUSES = ['New', 'Contacted', 'Approved', 'Denied', 'Completed'];
   function warrantyStatusOf(r) {
     var s = String((r && r.status) || '').toLowerCase();
@@ -5542,6 +5555,55 @@ function loadTicketThread(client, ticketId) {
     var list = $('portal-warranty-list');
     var m = list ? list.querySelector('[data-warranty-rmsg="' + id + '"]') : null;
     if (m) m.textContent = text;
+  }
+
+  /* WARRANTY_DELETE_2026_11_04 (Austin, Nov 4, 2026): the card
+   * Delete handler. First tap arms the button (the portal's
+   * confirm-arm shape, as in setupDelete) and names the request in
+   * the card's own message line, so the wrong card is never deleted
+   * by accident; only the second tap runs the delete. The delete
+   * chains .select('id') so a delete the database refuses — no
+   * DELETE policy exists until warranty-delete-policy.sql runs —
+   * reads as zero rows back and is treated as a failure: the button
+   * resets and the card stays on screen with the error, it is never
+   * silently dropped. On success the row leaves the cache, the
+   * list re-renders without the card, the New count is refreshed,
+   * and a one-line "Deleted." note sits at the top of the list
+   * until the next render. */
+  function warrantyDeleteRequest(btn) {
+    var id = btn.getAttribute('data-warranty-del');
+    var list = $('portal-warranty-list');
+    var msg = list ? list.querySelector('[data-warranty-msg="' + id + '"]') : null;
+    if (!isAdminOrAbove()) { if (msg) msg.textContent = 'Deletes sit with Admin and above.'; return; }
+    if (btn.getAttribute('data-confirm') !== '1') {
+      var row = warrantyRowById(id);
+      var who = row ? (trim(row.customer_name) || 'Customer') : 'Customer';
+      var ref = row ? trim(row.ticket_ref) : '';
+      btn.setAttribute('data-confirm', '1');
+      btn.innerHTML = '<i class="fas fa-trash"></i> Confirm delete?';
+      if (msg) msg.textContent = 'Delete ' + who + '’s warranty request' + (ref ? ' (ticket ' + ref + ')' : '') + '? Tap Confirm delete — this cannot be undone.';
+      return;
+    }
+    btn.disabled = true;
+    if (msg) msg.textContent = 'Deleting…';
+    var fail = function () {
+      btn.disabled = false;
+      btn.removeAttribute('data-confirm');
+      btn.innerHTML = '<i class="fas fa-trash"></i> Delete';
+      if (msg) msg.textContent = 'Couldn’t delete — try again.';
+    };
+    withClient(function (client) {
+      if (!client) { fail(); return; }
+      client.from('warranty_requests').delete().eq('id', id).select('id').then(function (res) {
+        if (res.error || !res.data || !res.data.length) { fail(); return; }
+        warrantyRowsCache = warrantyRowsCache.filter(function (r) { return String(r.id) !== String(id); });
+        state.loaded.warranty = false;
+        renderWarrantyRequests(warrantyRowsCache);
+        setCount('portal-count-warranty', warrantyRowsCache.filter(function (r) { return warrantyStatusOf(r) === 'New'; }).length);
+        var l2 = $('portal-warranty-list');
+        if (l2) l2.insertAdjacentHTML('afterbegin', '<p class="portal-muted portal-small">Deleted.</p>');
+      }).catch(fail);
+    });
   }
 
   /* The number on the customer's receipt is shortCode(ticket) — the
@@ -5609,6 +5671,10 @@ function loadTicketThread(client, ticketId) {
         '<select id="portal-warranty-status-' + esc(r.id) + '" data-warranty-status="' + esc(r.id) + '" aria-label="Warranty request status">' +
         statusOptions(WARRANTY_STATUSES, st) + '</select>' +
         '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-warranty-save="' + esc(r.id) + '">Save status</button>' +
+        /* WARRANTY_DELETE_2026_11_04: Delete on every card, rendered
+         * for Admin-or-above only (the panel is worked by all staff;
+         * warrantyDeleteRequest re-checks the tier on every tap). */
+        (isAdminOrAbove() ? '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-warranty-del="' + esc(r.id) + '"><i class="fas fa-trash"></i> Delete</button>' : '') +
         '<span class="portal-muted portal-small" data-warranty-msg="' + esc(r.id) + '"></span></div>' +
         '</article>';
     }).join('');
@@ -5638,6 +5704,10 @@ function loadTicketThread(client, ticketId) {
     });
     list.querySelectorAll('[data-warranty-open]').forEach(function (btn) {
       btn.addEventListener('click', function () { openTicket(btn.getAttribute('data-warranty-open')); });
+    });
+    /* WARRANTY_DELETE_2026_11_04: card Delete (Admin-or-above). */
+    list.querySelectorAll('[data-warranty-del]').forEach(function (btn) {
+      btn.addEventListener('click', function () { warrantyDeleteRequest(btn); });
     });
   }
 
@@ -7669,6 +7739,7 @@ function loadTicketThread(client, ticketId) {
   var assocExpandedId = null;
   var assocPayKnown = false;   /* the owner's load got pay_rate back (column exists) */
   var assocTimeCache = {};     /* employee id -> { loading:true } | { open:Date|null, weekMs:Number } */
+  var assocBirthdayEditId = null; /* BIRTHDAY_EDIT_2026_11_04: profile id whose birthday editor is open, or null */
 
   /* ASSOCIATE_ACCOUNTS_2026_11_03: one joined list of people for
    * the merged panel — profile rows (associatesCache) joined with
@@ -7721,6 +7792,9 @@ function loadTicketThread(client, ticketId) {
       var a = p.profile, s = p.login;
       var id = a ? a.id : s.id;
       var isSelf = !!(state.user && id === state.user.id);
+      /* BIRTHDAY_EDIT_2026_11_04: the birthday editor's reach —
+       * Admin-or-above on any card, the viewer on their own. */
+      var canEditBday = adminAbove || isSelf;
       var banned = !!(s && s.banned);
       var role = (a && a.role) || (s && s.role) || '';
       var open = assocExpandedId === id;
@@ -7735,12 +7809,22 @@ function loadTicketThread(client, ticketId) {
             ['Status', banned
               ? '<span class="mem-status-dot mem-dot-off"></span>Deactivated &mdash; their login is turned off (see Portal login below)'
               : '<span class="mem-status-dot mem-dot-on"></span>Active &mdash; sign-in profile on file'],
-            ['Birthday', a.birthday ? esc(fmtJobDate(a.birthday) || fmtDate(a.birthday)) : '&mdash;'],
+            /* BIRTHDAY_EDIT_2026_11_04: the displayed birthday
+             * carries its Edit button for everyone allowed to
+             * change it (canEditBday); the editor itself renders
+             * below these rows — see assocBirthdayEditor. */
+            ['Birthday', (a.birthday ? esc(fmtJobDate(a.birthday) || fmtDate(a.birthday)) : '&mdash;') +
+              (canEditBday && assocBirthdayEditId !== id
+                ? ' <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-assoc-bday-edit="' + esc(id) + '">Edit</button>'
+                : '')],
             /* AVATARS_2026_11_03: the portrait as the team and the
              * customers see it; the Remove control itself lives in
              * the owner section below (assocOwnerSection). */
             ['Profile picture', assocAvatarById[a.id] ? avatarHtml(a.name, assocAvatarById[a.id], 'lg') : '<span class="portal-muted">No picture yet &mdash; ' + (isSelf ? 'add yours below, or in Team Chat.' : 'they add their own in Team Chat.') + '</span>']
           ]);
+          /* BIRTHDAY_EDIT_2026_11_04: the open birthday editor
+           * sits directly under the profile rows it edits. */
+          if (canEditBday && assocBirthdayEditId === id) detail += assocBirthdayEditor(a);
           /* PORTAL_ROSTER_DETAIL_2026_11_02: the owner-only full record
            * (pay + home address + time + time-card jump) exists in the
            * markup ONLY for the owner — see the section comment above. */
@@ -7850,6 +7934,7 @@ function loadTicketThread(client, ticketId) {
 
   function toggleAssociateCard(id) {
     assocExpandedId = assocExpandedId === id ? null : id;
+    assocBirthdayEditId = null; /* BIRTHDAY_EDIT_2026_11_04: an open birthday editor never survives a card switch */
     renderAssociates();
   }
 
@@ -8430,6 +8515,113 @@ function loadTicketThread(client, ticketId) {
     });
   }
 
+  /* ================= BIRTHDAY_EDIT_2026_11_04 =================
+   * Austin, Nov 4, 2026 (his own eyes on the published portal):
+   * an associate's birthday SHOWED on their Associate Accounts
+   * card but nothing anywhere could set or change it — the
+   * column (employee_profiles.birthday) exists and displays, and
+   * the Time Clock's old "My birthday" self-editor went away in
+   * the cleanup without a replacement landing on the card. This
+   * is that replacement: an Edit button beside the displayed
+   * birthday (rendered only for a viewer allowed to change it)
+   * opens a date editor directly under the profile rows,
+   * prefilled with the current value, with Save / Cancel.
+   *
+   * WHO CAN EDIT follows the ladder plus the pass-4 self-service
+   * pattern: Admin-or-above may edit any card's birthday; anyone
+   * may edit their OWN on their own card (the only card a
+   * below-tier viewer ever renders). canEditAssocBirthday is
+   * re-checked inside the open and save handlers, so no path
+   * through them can aim at a card the viewer may not touch.
+   *
+   * ROUTE — a direct client update, deliberately NOT the
+   * staff-admin function, so this pass needs no function change
+   * and no redeploy. The project's RLS source of truth
+   * (supabase-phaseout-hardening.sql) gives employee_profiles an
+   * employee-wide FOR ALL policy (USING / WITH CHECK: the caller
+   * holds an employee_profiles row), and this file already
+   * writes the table exactly this way on shipped surfaces:
+   * saveAssocPay and saveAssocHome update ANOTHER person's row
+   * directly, and the avatar_url self-update
+   * (uploadAssocSelfPicture) writes the caller's OWN row
+   * directly — the tier line is held in the UI, as it already is
+   * for pay rate. The save below mirrors saveAssocPay, including
+   * its .select() written-row check, so a refused update reports
+   * instead of pretending to save. Clearing the field clears the
+   * birthday (back to Not set), same as the pay editor's empty
+   * box. After a save the associatesCache row is patched and the
+   * card re-renders, so the row, the "Team birthdays coming up"
+   * list on the next panel load, and every other birthday
+   * surface read the new date from the one column. */
+  function assocBdayValue(v) {
+    var m = /^(\d{4}-\d{2}-\d{2})/.exec(String(v == null ? '' : v));
+    return m ? m[1] : '';
+  }
+
+  function assocBirthdayEditor(a) {
+    var cur = a.birthday ? (fmtJobDate(a.birthday) || fmtDate(a.birthday)) : '';
+    return '<div class="assoc-owner-sec"><p class="assoc-owner-head"><i class="fas fa-calendar"></i> Edit birthday</p>' +
+      '<div class="assoc-pay-row"><span class="assoc-pay-label">Birthday<span class="assoc-pay-cur">' + (cur ? esc(cur) : 'Not set') + '</span></span>' +
+      '<span class="assoc-pay-edit"><input type="date" aria-label="Birthday" data-assoc-bday-input="' + esc(a.id) + '" value="' + esc(assocBdayValue(a.birthday)) + '">' +
+      '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-assoc-bday-save="' + esc(a.id) + '">Save</button>' +
+      '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-assoc-bday-cancel="' + esc(a.id) + '">Cancel</button></span></div>' +
+      '<p class="portal-small assoc-pay-msg" data-assoc-bday-msg="' + esc(a.id) + '"></p></div>';
+  }
+
+  function canEditAssocBirthday(id) {
+    return isAdminOrAbove() || !!(state.user && id === state.user.id);
+  }
+
+  function openAssocBirthdayEdit(id) {
+    if (!canEditAssocBirthday(id)) return;
+    assocBirthdayEditId = id;
+    renderAssociates();
+  }
+
+  function cancelAssocBirthdayEdit() {
+    assocBirthdayEditId = null;
+    renderAssociates();
+  }
+
+  function saveAssocBirthday(id) {
+    /* Belt and braces on top of the render condition, same as
+     * pickAssocSelfPicture: the save only ever proceeds for a
+     * card this viewer may edit. */
+    if (!canEditAssocBirthday(id)) return;
+    var input = document.querySelector('[data-assoc-bday-input="' + id + '"]');
+    var msg = document.querySelector('[data-assoc-bday-msg="' + id + '"]');
+    if (!input) return;
+    var raw = trim(input.value);
+    var val = null;
+    if (raw !== '') {
+      var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
+      var d = m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : null;
+      if (!d || isNaN(d.getTime()) || d.getFullYear() !== Number(m[1]) || d.getMonth() !== Number(m[2]) - 1 || d.getDate() !== Number(m[3])) {
+        if (msg) msg.textContent = 'Pick a valid date, or clear the field to remove the birthday.';
+        return;
+      }
+      val = raw;
+    }
+    if (msg) msg.textContent = 'Saving&hellip;';
+    withClient(function (client) {
+      if (!client) { if (msg) msg.textContent = 'Could not save. Try again.'; return; }
+      client.from('employee_profiles').update({ birthday: val }).eq('id', id).select('id, birthday')
+        .then(function (res) {
+          /* Written-row check, same as saveAssocPay: a
+           * policy-refused update returns success with zero
+           * rows — that is a failure here, not a saved
+           * birthday, and the cache stays untouched. */
+          if (res.error || !res.data || !res.data.length) { if (msg) msg.textContent = 'Could not save that birthday.'; return; }
+          var savedBday = res.data[0].birthday;
+          associatesCache.forEach(function (r) { if (r.id === id) r.birthday = savedBday; });
+          if (msg) msg.textContent = 'Saved.';
+          assocBirthdayEditId = null;
+          setTimeout(function () { if (assocExpandedId === id) renderAssociates(); }, 900);
+        })
+        .catch(function () { if (msg) msg.textContent = 'Could not save. Try again.'; });
+    });
+  }
+
   /* ================= PORTAL_ROSTER_DETAIL_2026_11_02: the owner's full record =================
    * Everything below renders ONLY inside an expansion the owner
    * opened (renderAssociates gates on isPortalOwner() before any of
@@ -8578,6 +8770,11 @@ function loadTicketThread(client, ticketId) {
     }
     var homeIn = document.querySelector('[data-assoc-home-input="' + id + '"]');
     if (homeIn && trim(homeIn.value) !== trim(assocHomeById[id] || '')) return true;
+    /* BIRTHDAY_EDIT_2026_11_04: an open birthday editor holding
+     * an unsaved pick counts as typing too — the time settle
+     * must not rebuild it away mid-edit. */
+    var bdayIn = document.querySelector('[data-assoc-bday-input="' + id + '"]');
+    if (bdayIn && trim(bdayIn.value) !== assocBdayValue(row ? row.birthday : null)) return true;
     return false;
   }
 
@@ -10667,6 +10864,12 @@ function loadTicketThread(client, ticketId) {
           if (aac) { pickAssocAvatar(aac); return; } /* PORTAL_ADMIN_CONTROLS_2026_11_04 */
           var asp = t.getAttribute('data-assoc-selfpic-change');
           if (asp) { pickAssocSelfPicture(asp); return; } /* SELF_PICTURE_ACCOUNTS_2026_11_04 */
+          var abe = t.getAttribute('data-assoc-bday-edit');
+          if (abe) { openAssocBirthdayEdit(abe); return; } /* BIRTHDAY_EDIT_2026_11_04 */
+          var absv = t.getAttribute('data-assoc-bday-save');
+          if (absv) { saveAssocBirthday(absv); return; } /* BIRTHDAY_EDIT_2026_11_04 */
+          var abcn = t.getAttribute('data-assoc-bday-cancel');
+          if (abcn) { cancelAssocBirthdayEdit(); return; } /* BIRTHDAY_EDIT_2026_11_04 */
           var pru = t.getAttribute('data-po-receipt-upload');
           if (pru) { pickPoReceipt(pru); return; } /* PO_RECEIPT_UPLOAD_2026_11_04 */
           var prv = t.getAttribute('data-po-receipt-view');
@@ -10787,13 +10990,49 @@ function loadTicketThread(client, ticketId) {
     var nav = $('portal-nav'); if (nav) nav.classList.remove('open');
     if (!extraLoaded[name] && EXTRA_LOADERS[name]) { extraLoaded[name] = true; EXTRA_LOADERS[name](false); }
   }
+  /* MENU_CLEAR_PANEL_2026_11_04 (Austin, Nov 4, 2026): "If I push a
+   * button and then I hit menu, that button should go away
+   * completely." The Menu button (#portal-nav-toggle) used to only
+   * toggle the nav list's 'open' class, so on the stacked phone
+   * layout the still-active panel rendered right below the menu
+   * buttons (open Check-In, hit Menu, scroll — Check-In was still
+   * there under the list). Now, opening the menu hides every panel
+   * so only the menu list shows; the panel that was open is
+   * stashed, and closing the menu from the same button without
+   * picking a panel brings it back. Picking a panel runs
+   * activateTab / showExtraPanel exactly as before — both close the
+   * menu and show the chosen panel — and the next Menu tap
+   * re-stashes whatever is then visible, so the stash can never
+   * resurrect a stale panel. This handler is the ONLY code that
+   * adds the nav's 'open' class, and the toggle button itself is
+   * display:none above 640px (portal.css), so desktop — where the
+   * sidebar and panel sit side by side — cannot regress: no
+   * panel-selection code changed at all. */
+  var menuStashedPanelId = null;
+  function menuToggleNav() {
+    var nav = $('portal-nav'); if (!nav) return;
+    if (nav.classList.contains('open')) {
+      nav.classList.remove('open');
+      if (menuStashedPanelId) {
+        var stashed = $(menuStashedPanelId);
+        if (stashed) stashed.hidden = false;
+        menuStashedPanelId = null;
+      }
+      return;
+    }
+    var visible = null;
+    document.querySelectorAll('.portal-panel').forEach(function (pn) { if (!pn.hidden) visible = pn; });
+    menuStashedPanelId = visible ? visible.id : null;
+    document.querySelectorAll('.portal-panel').forEach(function (pn) { pn.hidden = true; });
+    nav.classList.add('open');
+  }
   function initExtraTabs() {
     ['timeclock', 'links', 'square', 'checkin', 'mileage'].forEach(function (name) { /* PORTAL_MILEAGE_2026_11_02 */
       var tab = $('portal-tab-' + name);
       if (tab) tab.addEventListener('click', function () { showExtraPanel(name); });
     });
     var toggle = $('portal-nav-toggle');
-    if (toggle) toggle.addEventListener('click', function () { var nav = $('portal-nav'); if (nav) nav.classList.toggle('open'); });
+    if (toggle) toggle.addEventListener('click', menuToggleNav); /* MENU_CLEAR_PANEL_2026_11_04: was a bare nav 'open' toggle that left the active panel rendered under the menu — see menuToggleNav above */
     initCheckin();
     var rb = $('tc-test-receipt'); if (rb) rb.addEventListener('click', function () { printTest(false); });
     var lb = $('tc-test-label'); if (lb) lb.addEventListener('click', function () { printTest(true); });
