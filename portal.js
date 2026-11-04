@@ -296,9 +296,14 @@
     /* PORTAL_ROSTER_DETAIL_2026_11_02: display-only role label —
      * roleLabel() maps the stored 'owner' to "Admin" for rendering;
      * state.profile.role itself is never rewritten, so every check
-     * downstream keeps reading the stored value. */
+     * downstream keeps reading the stored value.
+     * PORTAL_ROLE_LADDER_2026_11_04: roleLabel now renders the
+     * ladder labels (legacy 'owner' shows as Super Admin until
+     * the migration renames the stored values), and applyRoleNav
+     * hides the sidebar buttons the signed-in tier may not use. */
     roleEl.textContent = roleLabel(state.profile.role);
     roleEl.style.display = state.profile.role ? '' : 'none';
+    applyRoleNav();
     /* PORTAL_TAB_MEMORY_2026_10_30: reopen on the tab Austin last used.
      * Clicking the saved tab's button replays exactly what a tap does,
      * whichever script handles that tab. No saved tab (or a stale one
@@ -313,7 +318,7 @@
      * Associate Accounts panel instead of falling back to the queue. */
     if (startTab === 'associates' || startTab === 'accountcontrols') startTab = 'associateaccounts';
     var startBtn = startTab ? $('portal-tab-' + startTab) : null;
-    if (startBtn && startTab !== 'tickets') { startBtn.click(); }
+    if (startBtn && startTab !== 'tickets' && tabAllowed(startTab)) { startBtn.click(); }
     else { activateTab('tickets'); }
   }
 
@@ -1058,6 +1063,9 @@
     /* WARRANTY_PORTAL_2026_11_03: the Warranty panel (Guest group) —
      * warranty requests from the website form, worked by all staff. */
     warranty: loadWarrantyRequests,
+    /* PORTAL_SETUP_2026_11_04: the Admin Setup panel — custom buttons
+     * from templates plus the printers & devices registry. */
+    setup: loadSetup,
   };
 
   /* PORTAL_TAB_MEMORY_2026_10_30: remember the last active tab across
@@ -1072,11 +1080,16 @@
   function savedTab() { try { return window.localStorage.getItem(TAB_KEY) || ''; } catch (e) { return ''; } }
 
   function activateTab(name) {
+    /* PORTAL_ROLE_LADDER_2026_11_04: a gated tab (the Admin
+     * group, the money surfaces) never opens for a tier that may
+     * not see it — a remembered tab or a stale click lands on
+     * the ticket queue instead. */
+    if (!tabAllowed(name)) name = 'tickets';
     saveActiveTab(name);
     var nav = $('portal-nav'); if (nav) nav.classList.remove('open');
     var tabs = document.querySelectorAll('.portal-tab');
     tabs.forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === name); });
-    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'documents', 'financials', 'payroll', 'mileage', 'teamchat', 'associateaccounts', 'warranty'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too; ASSOCIATE_ACCOUNTS_2026_11_03: 'associateaccounts' hides and shows with the rest too (it absorbed ACCOUNT_CONTROLS_2026_11_03's 'accountcontrols' and the roster's 'associates'); WARRANTY_PORTAL_2026_11_03: 'warranty' hides and shows with the rest too */
+    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'documents', 'financials', 'payroll', 'mileage', 'teamchat', 'associateaccounts', 'warranty', 'setup'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too; ASSOCIATE_ACCOUNTS_2026_11_03: 'associateaccounts' hides and shows with the rest too (it absorbed ACCOUNT_CONTROLS_2026_11_03's 'accountcontrols' and the roster's 'associates'); WARRANTY_PORTAL_2026_11_03: 'warranty' hides and shows with the rest too; PORTAL_SETUP_2026_11_04: 'setup' hides and shows with the rest too */
       $('portal-panel-' + n).hidden = n !== name;
     });
     closeDrawer();
@@ -2042,7 +2055,13 @@ function loadTicketThread(client, ticketId) {
            * kind === 'deposit_credit', so a tip counts into the
            * subtotal and balance due, lands in Financials as revenue,
            * and prints on the receipt from its description, "Tip". */
-          '<select id="p2-charge-kind" aria-label="Charge type"><option value="part">Part</option><option value="labor">Labor</option><option value="one_off">Other charge</option><option value="dispatch">House-call fee</option><option value="tip">Tip</option><option value="deposit_credit">Deposit received (credit)</option></select>' +
+          '<select id="p2-charge-kind" aria-label="Charge type"><option value="part">Part</option><option value="labor">Labor</option><option value="one_off">Other charge</option><option value="dispatch">House-call fee</option><option value="tip">Tip</option>' +
+          /* PORTAL_ROLE_LADDER_2026_11_04: "Deposit received"
+           * records money IN — an Admin session never sees the
+           * kind (her money line is transactional: canMoveMoney).
+           * Waiving a charge stays for everyone: a waiver moves
+           * no money, it records that none is owed. */
+          (canMoveMoney() ? '<option value="deposit_credit">Deposit received (credit)</option>' : '') + '</select>' +
           '<input id="p2-charge-desc" type="text" placeholder="Description" maxlength="200" aria-label="Charge description" />' +
           '<div class="p2-form-row"><input id="p2-charge-qty" type="number" step="0.5" min="0" value="1" aria-label="Quantity" />' +
           '<input id="p2-charge-price" type="number" step="0.01" min="0" placeholder="Price $" aria-label="Unit price" />' +
@@ -2057,9 +2076,18 @@ function loadTicketThread(client, ticketId) {
            * The help paragraph stays with the charges it explains. */
           '<p class="portal-muted portal-small">Generate receipt files a receipt built from these charges into Documents. If the charges change afterwards, generate again and it replaces the filed copy. Download receipt saves that same receipt as a PDF file. Email receipt sends the PDF to the customer&rsquo;s email on file &mdash; the fallback when a portal message or text does not reach them.</p></div></div>' +
           '<div class="portal-drawer-section tk-acc" data-acc="payment">' + tkAccHead('payment', 'Payment') + tkAccBodyOpen('payment') +
-          '<div class="p2-actions"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p3-checkout-btn"><i class="fas fa-credit-card"></i> Charge / Check out</button>' +
-          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p3-cash-btn"><i class="fas fa-money-bill-wave"></i> Mark paid — cash</button>' +
-          '<span class="portal-muted portal-small" id="p3-pay-msg"></span></div>' +
+          /* PORTAL_ROLE_LADDER_2026_11_04: the Payment section is
+           * money MOVEMENT — Charge / Check out sends a Square
+           * charge, Mark paid — cash records cash received. An
+           * Admin session gets neither button (Austin's
+           * transactional line: she never spends, sends, receives
+           * or processes a payment), just the note. The ticket's
+           * charges, balance and receipt stay fully visible. */
+          (canMoveMoney()
+            ? '<div class="p2-actions"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p3-checkout-btn"><i class="fas fa-credit-card"></i> Charge / Check out</button>' +
+              '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p3-cash-btn"><i class="fas fa-money-bill-wave"></i> Mark paid — cash</button>' +
+              '<span class="portal-muted portal-small" id="p3-pay-msg"></span></div>'
+            : '<p class="portal-muted portal-small">Payments on this ticket are handled by Austin or Jeremiah.</p>') +
           '<div id="p3-checkout-link" hidden></div></div></div>' +
           '<div class="portal-drawer-section tk-acc" data-acc="parts">' + tkAccHead('parts', 'Parts on this ticket') + tkAccBodyOpen('parts') +
           '<div id="p2-parts"><p class="portal-muted">Loading parts&hellip;</p></div>' +
@@ -5122,6 +5150,11 @@ function loadTicketThread(client, ticketId) {
   }
 
   function wirePaymentActions(client, t) {
+    /* PORTAL_ROLE_LADDER_2026_11_04: second lock behind the
+     * markup gate — a session that may not move money wires
+     * nothing here at all. (For an Admin the buttons were never
+     * rendered; this keeps it true even if the markup changes.) */
+    if (!canMoveMoney()) return;
     var checkoutBtn = $('p3-checkout-btn');
     var cashBtn = $('p3-cash-btn');
     var msg = $('p3-pay-msg');
@@ -5380,11 +5413,26 @@ function loadTicketThread(client, ticketId) {
       var contact = trim(f.customer_email) ? ' · ' + esc(f.customer_email) : '';
       var comments = trim(f.comments) ? '<p class="portal-card-issue">&ldquo;' + esc(f.comments) + '&rdquo;</p>' : '';
       var exp = trim(f.experience) ? '<p class="portal-card-meta">Experience: ' + esc(f.experience) + '</p>' : '';
+      /* FEEDBACK_RESPOND_2026_11_04 (Austin, Nov 4, 2026): answer
+       * feedback right from the panel. This is a mailto compose,
+       * not an in-portal send: the reply opens in the mail app and
+       * goes from Austin's own mailbox, per the house mail rules.
+       * True in-portal sending waits on the same Zoho SMTP wiring
+       * as the receipt emails — no pipeline is built here, and
+       * there is no schema change. */
+      var email = trim(f.customer_email);
+      /* The compose carries Austin's fixed subject and an EMPTY
+       * body \u2014 he writes his own reply (customer comms stay
+       * human-written; no auto-send, no mail function). Cards
+       * without a customer email get no button at all. */
+      var respond = email
+        ? '<a class="portal-btn portal-btn-outline portal-btn-sm" href="mailto:' + esc(email) + '?subject=' + encodeURIComponent('Thank you for your feedback \u2014 Austin\u2019s Tech Repair Group') + '"><i class="fas fa-reply"></i> Respond</a>'
+        : '';
       return '<article class="portal-card">' +
         '<div class="portal-card-top"><p class="portal-card-title">' + esc(who) + '</p>' + starsHtml(f.rating) + '</div>' +
         '<p class="portal-card-meta">' + esc(fmtDateTime(f.created_at)) + contact + '</p>' +
         exp + comments +
-        '<div class="portal-card-actions">' + rec + '</div>' +
+        '<div class="portal-card-actions">' + rec + respond + '</div>' +
         '</article>';
     }).join('');
   }
@@ -5879,6 +5927,346 @@ function loadTicketThread(client, ticketId) {
     });
   }
 
+  /* ================= PORTAL SETUP =================
+   * PORTAL_SETUP_2026_11_04 (Austin, Nov 4, 2026): "Printers needs to
+   * be in admin like a button that says set up or something where we
+   * can add new action buttons and set up our printers and iPads etc
+   * — our internal tech set up button." / "That way I don't have to
+   * ask you to make them every time, and we get a template for what we
+   * want inside the button." / "I want the portal fully customizable."
+   *
+   * One table, public.portal_setup_items (portal-setup-items.sql):
+   * one row per item, with a template name, a location, and a config
+   * jsonb — so new templates and new places to show them slot in
+   * later without reshaping storage.
+   *   template 'link'   — a custom button. v1 location: 'tools', the
+   *                       Tools & Links grid; label / icon / url plus
+   *                       config.sub (the card's small second line)
+   *                       render as a .link-card identical to the
+   *                       built-in cards.
+   *   template 'device' — a printers & devices registry entry,
+   *                       location 'setup' (shows only in this
+   *                       panel); config carries kind / connection /
+   *                       notes. Printer entries reuse printTest —
+   *                       the exact function the Tools & Links
+   *                       Printers block's test buttons call — never
+   *                       a second print pipeline.
+   * If the table is not there yet (the SQL runs separately, before
+   * publish), reads fail soft: the panel shows "Setup needs the
+   * database step first" and the Tools grid renders without custom
+   * buttons; nothing else in the portal is touched. */
+  var SETUP_ICONS = [
+    { v: 'fas fa-link', n: 'Link' },
+    { v: 'fas fa-globe', n: 'Globe / website' },
+    { v: 'fas fa-store', n: 'Store' },
+    { v: 'fas fa-tags', n: 'Price tags' },
+    { v: 'fas fa-dollar-sign', n: 'Dollar sign' },
+    { v: 'fas fa-credit-card', n: 'Card' },
+    { v: 'fas fa-cart-shopping', n: 'Cart' },
+    { v: 'fas fa-barcode', n: 'Barcode' },
+    { v: 'fas fa-mobile-screen', n: 'Phone' },
+    { v: 'fas fa-tablet-screen-button', n: 'Tablet' },
+    { v: 'fas fa-computer', n: 'Computer' },
+    { v: 'fas fa-print', n: 'Printer' },
+    { v: 'fas fa-tag', n: 'Label tag' },
+    { v: 'fas fa-truck-fast', n: 'Delivery truck' },
+    { v: 'fas fa-screwdriver-wrench', n: 'Tools' },
+    { v: 'fas fa-gear', n: 'Gear' },
+    { v: 'fas fa-book-open', n: 'Book' },
+    { v: 'fas fa-calculator', n: 'Calculator' },
+    { v: 'fas fa-chart-line', n: 'Chart' },
+    { v: 'fas fa-star', n: 'Star' }
+  ];
+  var SETUP_DEVICE_KINDS = {
+    receipt_printer: { label: 'Receipt printer', icon: 'fas fa-print', printer: true },
+    label_printer: { label: 'Label printer', icon: 'fas fa-tag', printer: true },
+    ipad: { label: 'iPad', icon: 'fas fa-tablet-screen-button', printer: false },
+    phone: { label: 'Phone', icon: 'fas fa-mobile-screen', printer: false },
+    computer: { label: 'Computer', icon: 'fas fa-computer', printer: false },
+    other: { label: 'Other', icon: 'fas fa-gear', printer: false }
+  };
+  var setupRows = null;
+  var setupDbMissing = false;
+  var setupWired = false;
+
+  function setupCfg(r) {
+    var c = r && r.config;
+    if (typeof c === 'string') { try { c = JSON.parse(c); } catch (e) { c = null; } }
+    return (c && typeof c === 'object') ? c : {};
+  }
+  function setupIconClass(v) {
+    for (var i = 0; i < SETUP_ICONS.length; i++) { if (SETUP_ICONS[i].v === v) return v; }
+    return 'fas fa-link';
+  }
+  function setupIsMissing(err) {
+    return !!err && /portal_setup_items|does not exist|schema cache|relation/i.test(String((err && err.message) || err));
+  }
+  function setupFetch(done) {
+    withClient(function (client) {
+      if (!client) { setupRows = setupRows || []; if (done) done(); return; }
+      client.from('portal_setup_items').select('*')
+        .order('sort', { ascending: true }).order('created_at', { ascending: true })
+        .then(function (res) {
+          if (res.error) { if (setupIsMissing(res.error)) setupDbMissing = true; setupRows = []; }
+          else { setupDbMissing = false; setupRows = res.data || []; }
+          if (done) done();
+        })
+        .catch(function () { setupRows = setupRows || []; if (done) done(); });
+    });
+  }
+  function loadSetup(force) {
+    /* PORTAL_ROLE_LADDER_2026_11_04: Setup is a management
+     * surface — Admin-or-above. Only this panel locks; the
+     * read-only custom buttons in the Tools grid
+     * (loadToolsCustomButtons) stay open to every staffer, and
+     * the table itself is RLS-gated the same way. */
+    if (!isAdminOrAbove()) { state.loaded.setup = true; return; }
+    wireSetup();
+    state.loaded.setup = true;
+    if (setupRows && !force) { renderSetupPanel(); renderToolsCustomButtons(); return; }
+    setupFetch(function () { renderSetupPanel(); renderToolsCustomButtons(); });
+  }
+  /* EXTRA_LOADERS hook: the first time Tools & Links opens, pull the
+   * custom buttons into the grid (after that, Setup saves and deletes
+   * keep the grid current). Fails soft when the table is missing. */
+  function loadToolsCustomButtons() {
+    if (setupRows) { renderToolsCustomButtons(); return; }
+    setupFetch(function () { renderToolsCustomButtons(); });
+  }
+  function renderToolsCustomButtons() {
+    var grid = $('portal-tools-grid');
+    if (!grid) return;
+    var old = grid.querySelectorAll('[data-setup-custom]');
+    for (var i = old.length - 1; i >= 0; i--) old[i].parentNode.removeChild(old[i]);
+    if (!setupRows || setupDbMissing) return;
+    setupRows.forEach(function (r) {
+      if (!r || r.template !== 'link' || r.location !== 'tools' || r.active === false) return;
+      var sub = setupCfg(r).sub;
+      var a = document.createElement('a');
+      a.className = 'link-card';
+      a.setAttribute('data-setup-custom', r.id);
+      a.setAttribute('href', r.url || '#');
+      a.setAttribute('target', '_blank');
+      a.setAttribute('rel', 'noopener');
+      a.innerHTML = '<i class="' + esc(setupIconClass(r.icon)) + '"></i><strong>' + esc(r.label) + '</strong>' +
+        (sub ? '<span>' + esc(sub) + '</span>' : '');
+      grid.appendChild(a);
+    });
+  }
+  function renderSetupPanel() {
+    var note = $('portal-setup-db-note');
+    if (note) note.hidden = !setupDbMissing;
+    renderSetupButtonList();
+    renderSetupDeviceList();
+  }
+  function setupEmpty(el, text) { if (el) el.innerHTML = '<div class="portal-empty">' + esc(text) + '</div>'; }
+  function renderSetupButtonList() {
+    var box = $('portal-setup-btn-list');
+    if (!box) return;
+    if (setupDbMissing) { setupEmpty(box, 'Buttons will appear here once the database step is done.'); return; }
+    var rows = (setupRows || []).filter(function (r) { return r.template === 'link'; });
+    if (!rows.length) { setupEmpty(box, 'No custom buttons yet. Add the first one with the button above.'); return; }
+    box.innerHTML = rows.map(function (r) {
+      var sub = setupCfg(r).sub;
+      return '<article class="portal-card">' +
+        '<div class="portal-card-top"><p class="portal-card-title"><i class="' + esc(setupIconClass(r.icon)) + '"></i> ' + esc(r.label) + '</p>' +
+        '<span style="display:inline-flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-setup-edit-btn="' + esc(r.id) + '"><i class="fas fa-pen"></i> Edit</button>' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-setup-del-btn="' + esc(r.id) + '"><i class="fas fa-trash"></i> Delete</button></span></div>' +
+        (sub ? '<p class="portal-card-meta">' + esc(sub) + '</p>' : '') +
+        '<p class="portal-card-meta">' + esc(r.url || '') + '</p>' +
+        '<p class="portal-card-meta">Link button template \u00b7 shows in the Tools &amp; Links grid</p>' +
+        '</article>';
+    }).join('');
+  }
+  function renderSetupDeviceList() {
+    var box = $('portal-setup-dev-list');
+    if (!box) return;
+    if (setupDbMissing) { setupEmpty(box, 'Devices will appear here once the database step is done.'); return; }
+    var rows = (setupRows || []).filter(function (r) { return r.template === 'device'; });
+    if (!rows.length) { setupEmpty(box, 'No devices yet. Add the first one with the button above.'); return; }
+    box.innerHTML = rows.map(function (r) {
+      var cfg = setupCfg(r);
+      var kind = SETUP_DEVICE_KINDS[cfg.kind] || SETUP_DEVICE_KINDS.other;
+      var meta = [kind.label];
+      if (cfg.connection) meta.push(cfg.connection);
+      var html = '<article class="portal-card">' +
+        '<div class="portal-card-top"><p class="portal-card-title"><i class="' + esc(kind.icon) + '"></i> ' + esc(r.label) + '</p>' +
+        '<span style="display:inline-flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-setup-edit-dev="' + esc(r.id) + '"><i class="fas fa-pen"></i> Edit</button>' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-setup-del-dev="' + esc(r.id) + '"><i class="fas fa-trash"></i> Delete</button></span></div>' +
+        '<p class="portal-card-meta">' + esc(meta.join(' \u00b7 ')) + '</p>' +
+        (cfg.notes ? '<p class="portal-card-meta">' + esc(cfg.notes) + '</p>' : '');
+      if (kind.printer) {
+        html += '<p style="margin-top:0.5rem;">' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-setup-test="receipt"><i class="fas fa-print"></i> Print test receipt</button> ' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-setup-test="label"><i class="fas fa-tag"></i> Print test label</button></p>';
+      }
+      return html + '</article>';
+    }).join('');
+  }
+  function setupRowById(id) {
+    var rows = setupRows || [];
+    for (var i = 0; i < rows.length; i++) { if (rows[i].id === id) return rows[i]; }
+    return null;
+  }
+  function setupNextSort(template) {
+    var n = 0;
+    (setupRows || []).forEach(function (r) { if (r.template === template) n++; });
+    return n;
+  }
+  function setupNormalizeUrl(raw) {
+    var u = String(raw == null ? '' : raw).trim();
+    if (!u) return '';
+    if (/^(javascript|data|vbscript):/i.test(u)) return '';
+    if (!/^[a-z][a-z0-9+.-]*:/i.test(u)) u = 'https://' + u;
+    return u;
+  }
+  function setupSaveError(msgEl, err) {
+    if (!msgEl) return;
+    if (setupIsMissing(err)) msgEl.textContent = 'Setup needs the database step first — nothing was saved.';
+    else msgEl.textContent = 'Could not save: ' + ((err && err.message) || 'try again.');
+  }
+  function setupShowBtnForm(row) {
+    var form = $('portal-setup-btn-form'); if (!form) return;
+    $('portal-setup-btn-id').value = row ? row.id : '';
+    $('portal-setup-btn-form-title').textContent = row ? 'Edit button' : 'Add a button';
+    $('portal-setup-btn-template').value = 'link';
+    $('portal-setup-btn-label').value = row ? (row.label || '') : '';
+    $('portal-setup-btn-sub').value = row ? (setupCfg(row).sub || '') : '';
+    $('portal-setup-btn-icon').value = row ? setupIconClass(row.icon) : 'fas fa-link';
+    $('portal-setup-btn-url').value = row ? (row.url || '') : '';
+    $('portal-setup-btn-location').value = 'tools';
+    $('portal-setup-btn-msg').textContent = '';
+    form.hidden = false;
+  }
+  function setupShowDevForm(row) {
+    var form = $('portal-setup-dev-form'); if (!form) return;
+    var cfg = row ? setupCfg(row) : {};
+    $('portal-setup-dev-id').value = row ? row.id : '';
+    $('portal-setup-dev-form-title').textContent = row ? 'Edit device' : 'Add a device';
+    $('portal-setup-dev-name').value = row ? (row.label || '') : '';
+    $('portal-setup-dev-kind').value = SETUP_DEVICE_KINDS[cfg.kind] ? cfg.kind : 'receipt_printer';
+    $('portal-setup-dev-conn').value = cfg.connection || 'Bluetooth';
+    $('portal-setup-dev-notes').value = cfg.notes || '';
+    $('portal-setup-dev-msg').textContent = '';
+    form.hidden = false;
+  }
+  function setupSaveButton() {
+    var msg = $('portal-setup-btn-msg');
+    var label = $('portal-setup-btn-label').value.trim();
+    var url = setupNormalizeUrl($('portal-setup-btn-url').value);
+    if (!label) { msg.textContent = 'Give the button a label.'; return; }
+    if (!url) { msg.textContent = 'Give the button a web address (URL).'; return; }
+    var id = $('portal-setup-btn-id').value;
+    var row = {
+      template: 'link',
+      label: label,
+      icon: $('portal-setup-btn-icon').value,
+      url: url,
+      config: { sub: $('portal-setup-btn-sub').value.trim() },
+      location: $('portal-setup-btn-location').value || 'tools',
+      active: true
+    };
+    var btn = $('portal-setup-btn-save'); btn.disabled = true;
+    withClient(function (client) {
+      if (!client) { btn.disabled = false; msg.textContent = 'Could not reach the database.'; return; }
+      var q;
+      if (id) { q = client.from('portal_setup_items').update(row).eq('id', id); }
+      else { row.sort = setupNextSort('link'); q = client.from('portal_setup_items').insert(row); }
+      q.then(function (res) {
+        btn.disabled = false;
+        if (res.error) { setupSaveError(msg, res.error); return; }
+        $('portal-setup-btn-form').hidden = true;
+        setupFetch(function () { renderSetupPanel(); renderToolsCustomButtons(); });
+      }).catch(function () { btn.disabled = false; msg.textContent = 'Could not save. Try again.'; });
+    });
+  }
+  function setupSaveDevice() {
+    var msg = $('portal-setup-dev-msg');
+    var name = $('portal-setup-dev-name').value.trim();
+    if (!name) { msg.textContent = 'Give the device a name.'; return; }
+    var kindKey = $('portal-setup-dev-kind').value;
+    var kind = SETUP_DEVICE_KINDS[kindKey] || SETUP_DEVICE_KINDS.other;
+    var id = $('portal-setup-dev-id').value;
+    var row = {
+      template: 'device',
+      label: name,
+      icon: kind.icon,
+      url: null,
+      config: {
+        kind: kindKey,
+        connection: $('portal-setup-dev-conn').value,
+        notes: $('portal-setup-dev-notes').value.trim()
+      },
+      location: 'setup',
+      active: true
+    };
+    var btn = $('portal-setup-dev-save'); btn.disabled = true;
+    withClient(function (client) {
+      if (!client) { btn.disabled = false; msg.textContent = 'Could not reach the database.'; return; }
+      var q;
+      if (id) { q = client.from('portal_setup_items').update(row).eq('id', id); }
+      else { row.sort = setupNextSort('device'); q = client.from('portal_setup_items').insert(row); }
+      q.then(function (res) {
+        btn.disabled = false;
+        if (res.error) { setupSaveError(msg, res.error); return; }
+        $('portal-setup-dev-form').hidden = true;
+        setupFetch(function () { renderSetupPanel(); });
+      }).catch(function () { btn.disabled = false; msg.textContent = 'Could not save. Try again.'; });
+    });
+  }
+  function setupDelete(id, btnEl) {
+    if (!btnEl.getAttribute('data-confirm')) {
+      btnEl.setAttribute('data-confirm', '1');
+      btnEl.innerHTML = '<i class="fas fa-trash"></i> Confirm delete?';
+      return;
+    }
+    withClient(function (client) {
+      if (!client) return;
+      client.from('portal_setup_items').delete().eq('id', id).then(function (res) {
+        if (res.error) { btnEl.removeAttribute('data-confirm'); btnEl.innerHTML = '<i class="fas fa-trash"></i> Delete'; return; }
+        setupFetch(function () { renderSetupPanel(); renderToolsCustomButtons(); });
+      }).catch(function () { btnEl.removeAttribute('data-confirm'); });
+    });
+  }
+  function setupListClick(e) {
+    var t = e.target;
+    while (t && t !== document.body) {
+      if (t.getAttribute) {
+        var test = t.getAttribute('data-setup-test');
+        if (test) { printTest(test === 'label'); return; }
+        var eb = t.getAttribute('data-setup-edit-btn');
+        if (eb) { var r1 = setupRowById(eb); if (r1) setupShowBtnForm(r1); return; }
+        var db = t.getAttribute('data-setup-del-btn');
+        if (db) { setupDelete(db, t); return; }
+        var ed = t.getAttribute('data-setup-edit-dev');
+        if (ed) { var r2 = setupRowById(ed); if (r2) setupShowDevForm(r2); return; }
+        var dd = t.getAttribute('data-setup-del-dev');
+        if (dd) { setupDelete(dd, t); return; }
+      }
+      t = t.parentNode;
+    }
+  }
+  function wireSetup() {
+    if (setupWired) return;
+    setupWired = true;
+    var iconSel = $('portal-setup-btn-icon');
+    if (iconSel && !iconSel.options.length) {
+      iconSel.innerHTML = SETUP_ICONS.map(function (ic) {
+        return '<option value="' + esc(ic.v) + '">' + esc(ic.n) + '</option>';
+      }).join('');
+    }
+    var addBtn = $('portal-setup-add-btn'); if (addBtn) addBtn.addEventListener('click', function () { setupShowBtnForm(null); });
+    var addDev = $('portal-setup-add-dev'); if (addDev) addDev.addEventListener('click', function () { setupShowDevForm(null); });
+    var bSave = $('portal-setup-btn-save'); if (bSave) bSave.addEventListener('click', setupSaveButton);
+    var bCancel = $('portal-setup-btn-cancel'); if (bCancel) bCancel.addEventListener('click', function () { $('portal-setup-btn-form').hidden = true; });
+    var dSave = $('portal-setup-dev-save'); if (dSave) dSave.addEventListener('click', setupSaveDevice);
+    var dCancel = $('portal-setup-dev-cancel'); if (dCancel) dCancel.addEventListener('click', function () { $('portal-setup-dev-form').hidden = true; });
+    var bl = $('portal-setup-btn-list'); if (bl) bl.addEventListener('click', setupListClick);
+    var dl = $('portal-setup-dev-list'); if (dl) dl.addEventListener('click', setupListClick);
+  }
+
   /* ================= ATR ONE ON THE TICKET =================
    * PORTAL_ATRONE_TICKET_2026_10_30 (Austin, Oct 30, 2026): everything
    * for a job lives in the ticket. When a customer signs up for ATR
@@ -6222,7 +6610,15 @@ function loadTicketThread(client, ticketId) {
     if (!body || !memEditCurrent) return;
     var m = memEditCurrent;
     $('portal-drawer-title').textContent = m.name || 'Member';
-    var owner = isPortalOwner();
+    /* PORTAL_ROLE_LADDER_2026_11_04: membership RECORD-KEEPING
+     * (tier corrections, active/cancelled status) is operations,
+     * not money movement — the money itself moves in Square,
+     * which an Admin session cannot reach (the Square panel is
+     * top-tier only). So this editor follows the same rule as the
+     * customer-profile flow: Admin-or-above edits directly, the
+     * working tiers file change requests. Flagged in the build
+     * report as an interpretation. */
+    var owner = isAdminOrAbove();
     var active = m.status === 'active';
     var tier = atroneDisplayTier(m.tier);
     var tierText = tier ? (tier.name + ' &middot; ' + fmtMoney(tier.price) + '/mo') : atroneDisplayName(m.tier);
@@ -6290,7 +6686,7 @@ function loadTicketThread(client, ticketId) {
   }
 
   function saveMembershipTier(memberId) {
-    if (!isPortalOwner()) return;
+    if (!isAdminOrAbove()) return; /* PORTAL_ROLE_LADDER_2026_11_04 */
     var m = memEditCurrent;
     if (!m || m.id !== memberId) return;
     var sel = $('mem-edit-tier');
@@ -6320,9 +6716,10 @@ function loadTicketThread(client, ticketId) {
     var change = turningOff
       ? { status: 'cancelled', cancelled_on: todayDateOnly() }
       : { status: 'active', cancelled_on: null };
-    if (isPortalOwner()) {
-      /* Owner: straight to the membership row. A tier correction
-       * still sitting in the select rides along on the same save. */
+    if (isAdminOrAbove()) {
+      /* Admin-or-above (PORTAL_ROLE_LADDER_2026_11_04): straight
+       * to the membership row. A tier correction still sitting in
+       * the select rides along on the same save. */
       var sel = $('mem-edit-tier');
       if (sel && sel.value && sel.value !== m.tier) change.tier = sel.value;
       if (msg) msg.textContent = 'Saving…';
@@ -6497,6 +6894,15 @@ function loadTicketThread(client, ticketId) {
   function renderFinancials() {
     var body = $('portal-financials-body');
     if (!body || !finCache) return;
+    /* PORTAL_ROLE_LADDER_2026_11_04: the Financials PANEL is the
+     * bottom-line money view — top tier only (canSeeMoney).
+     * Payroll's totals ride this same finCache (renderPayrollSummary
+     * at the tail) and Payroll IS Admin-or-above, so for an Admin
+     * the fetch still ran and her payroll totals still draw —
+     * only the money view itself is withheld. Flagged in the
+     * build report: the panel render is gated, the shared fetch
+     * is not. */
+    if (!canSeeMoney()) { body.innerHTML = ''; renderPayrollSummary(); return; }
     var t = finSum(finCache.charges, finCache.parts, finCache.jobByTicket, true);
     var margin = t.revenue > 0 ? (t.gross / t.revenue * 100) : null;
     var html = '';
@@ -6534,6 +6940,10 @@ function loadTicketThread(client, ticketId) {
   }
 
   function loadFinancials(force) {
+    /* PORTAL_ROLE_LADDER_2026_11_04: below Admin this loader
+     * never runs — both panels it feeds are gated (Financials
+     * top-tier, Payroll Admin-or-above). */
+    if (!isAdminOrAbove()) return;
     var body = $('portal-financials-body');
     if (!finWired) {
       finWired = true;
@@ -6759,7 +7169,7 @@ function loadTicketThread(client, ticketId) {
         if (p && p.pay_rate != null && p.pay_rate !== '' && !isNaN(Number(p.pay_rate))) rate = Number(p.pay_rate);
         g = byId[id] = {
           id: id, name: (p && p.name) || r.employee_name || 'Associate',
-          isOwner: !!(p && trim(p.role).toLowerCase() === 'owner'),
+          isOwner: roleIsTopTier(p && p.role), /* PORTAL_ROLE_LADDER_2026_11_04: the unpaid-driving seat is the top tier (was: stored 'owner') */
           rate: rate, workMs: 0, apprWorkMs: 0, drivingMs: 0,
           miles: 0, milesAmt: 0, apprMilesAmt: 0, ownerMiles: 0
         };
@@ -6929,6 +7339,11 @@ function loadTicketThread(client, ticketId) {
    * tail; when Financials already loaded this session, the summary
    * renders straight from that cache. */
   function loadPayroll(force) {
+    /* PORTAL_ROLE_LADDER_2026_11_04: Payroll is Admin-or-above
+     * (Austin's refinement: Abigail runs payroll). Below Admin
+     * the button is hidden and activateTab bounces; this is the
+     * loader lock behind them. */
+    if (!isAdminOrAbove()) { state.loaded.payroll = true; return; }
     state.loaded.payroll = true;
     withClient(function (client) {
       if (!client || !state.user) return;
@@ -7094,10 +7509,159 @@ function loadTicketThread(client, ticketId) {
       });
   }
 
+  /* ================= PORTAL_ROLE_LADDER_2026_11_04 =================
+   * Austin, Nov 4, 2026: the two-value owner/associate model is
+   * replaced by his ladder — Super Admin (Austin alone at the top,
+   * everything including money), Co-Super Admin (Jeremiah, his
+   * stand-in: full reach including money, but he cannot modify the
+   * Super Admin's account or role), Admin (Abigail — "everything I
+   * can do except money"), then Technician 1, 2, 3, 4 (seniority
+   * ranks for future tech hires — ONE access class at v1, the
+   * standard working view) and Customer Service Associate (the
+   * front-office tier; it replaces the generic 'associate' for new
+   * front-office hires and carries that same working view at v1).
+   *
+   * THE ADMIN MONEY LINE IS TRANSACTIONAL (Austin's refinement,
+   * Nov 4, 2026): "she can do all of that and find parts and
+   * everything, but she can't spend or send or receive money
+   * payments. She can run payroll." So Admin keeps the full
+   * operation — Payroll included — and is blocked only where
+   * money MOVES or the bottom line shows: no charging, refunds,
+   * payouts or order checkout (canMoveMoney), and no Financials
+   * panel (canSeeMoney). Finding and researching parts and cart
+   * prep were always her lane and stay hers.
+   *
+   * Stored values: 'super_admin', 'co_super_admin', 'admin',
+   * 'technician_1'..'technician_4', 'customer_service'.
+   * LEGACY TOLERANCE: until role-ladder.sql runs, stored rows
+   * still say 'owner' / 'associate'. normRole() maps 'owner' ->
+   * 'super_admin' and 'associate' -> 'customer_service' at every
+   * read, so a pre-migration session never breaks; the migration
+   * then rewrites the stored values per person (Austin ->
+   * super_admin, Jeremiah -> co_super_admin, Abigail -> admin)
+   * and the legacy arms simply stop matching.
+   *
+   * Every gate in the portal reads roles through the helpers
+   * below, never by comparing a raw stored string:
+   *   isTopTier()      — Super or Co-Super: full reach, money in.
+   *   isAdminOrAbove() — top tier or Admin: the management tiers.
+   *   canSeeMoney()    — top tier ONLY (Financials, Square &
+   *                      ATR One doors, card pay-rate editing).
+   *   canMoveMoney()   — false ONLY for the Admin tier (see the
+   *                      transactional line above); the top tier
+   *                      can, and the working tiers keep the
+   *                      ticket payment controls they have today.
+   * isPortalOwner() further down survives as the top-tier check
+   * for the surfaces this ladder does not specifically reassign. */
+  var ROLE_LADDER = [
+    { value: 'super_admin', label: 'Super Admin' },
+    { value: 'co_super_admin', label: 'Co-Super Admin' },
+    { value: 'admin', label: 'Admin' },
+    { value: 'technician_1', label: 'Technician 1' },
+    { value: 'technician_2', label: 'Technician 2' },
+    { value: 'technician_3', label: 'Technician 3' },
+    { value: 'technician_4', label: 'Technician 4' },
+    { value: 'customer_service', label: 'Customer Service Associate' }
+  ];
+  var ROLE_LABELS = {};
+  ROLE_LADDER.forEach(function (r) { ROLE_LABELS[r.value] = r.label; });
+
+  function normRole(role) {
+    var r = trim(role).toLowerCase();
+    if (r === 'owner') return 'super_admin';         /* legacy, pre-migration */
+    if (r === 'associate') return 'customer_service'; /* legacy, pre-migration */
+    return r;
+  }
+  function myRole() { return normRole(state.profile && state.profile.role); }
+  function isSuperAdmin() { return myRole() === 'super_admin'; }
+  function isCoSuperAdmin() { return myRole() === 'co_super_admin'; }
+  function isTopTier() { var r = myRole(); return r === 'super_admin' || r === 'co_super_admin'; }
+  function isAdminTier() { return myRole() === 'admin'; }
+  function isAdminOrAbove() { return isTopTier() || isAdminTier(); }
+  function canSeeMoney() { return isTopTier(); }
+  function canMoveMoney() { return myRole() !== 'admin'; }
+  function roleIsTopTier(role) { var r = normRole(role); return r === 'super_admin' || r === 'co_super_admin'; }
+  function roleIsAdminOrAbove(role) { return roleIsTopTier(role) || normRole(role) === 'admin'; }
+  function roleIsBelowAdmin(role) { return !roleIsAdminOrAbove(role); }
+
+  /* The tiers the signed-in user may GRANT (the role picker and
+   * the Add staff login select), mirroring the staff-admin
+   * function's ceilings — the UI mirrors, the function decides:
+   *   Super Admin — all eight.
+   *   Co-Super Admin — all except super_admin.
+   *   Admin — Technician 1-4 and Customer Service Associate.
+   *   Anyone else — none (they never see a picker). */
+  function grantableRoles() {
+    var r = myRole();
+    if (r === 'super_admin') return ROLE_LADDER.map(function (x) { return x.value; });
+    if (r === 'co_super_admin') return ROLE_LADDER.filter(function (x) { return x.value !== 'super_admin'; }).map(function (x) { return x.value; });
+    if (r === 'admin') return ['technician_1', 'technician_2', 'technician_3', 'technician_4', 'customer_service'];
+    return [];
+  }
+
+  /* May the signed-in user run ACCOUNT CONTROLS (login email,
+   * password, deactivate, picture) on an account holding
+   * targetRole? Mirrors the function: Super Admin — anyone;
+   * Co-Super Admin — anyone except the Super Admin; Admin —
+   * Technician / CSA accounts only. */
+  function canControlAccount(targetRole) {
+    var me = myRole(), t = normRole(targetRole);
+    if (me === 'super_admin') return true;
+    if (me === 'co_super_admin') return t !== 'super_admin';
+    if (me === 'admin') return roleIsBelowAdmin(t);
+    return false;
+  }
+
+  /* May the signed-in user change the ROLE of an account holding
+   * targetRole? Stricter than canControlAccount for the Co-Super
+   * seat: never the Super Admin's or a Co-Super Admin's role
+   * (the function also refuses every self-change, his included).
+   * Super Admin — anyone (his own card still shows the picker, as
+   * the owner build did; the function refuses a self-change and
+   * its message explains). Admin — accounts below Admin only. */
+  function canChangeRoleOf(targetRole) {
+    var me = myRole(), t = normRole(targetRole);
+    if (me === 'super_admin') return true;
+    if (me === 'co_super_admin') return t !== 'super_admin' && t !== 'co_super_admin';
+    if (me === 'admin') return roleIsBelowAdmin(t);
+    return false;
+  }
+
+  /* Sidebar / panel tier gates. The Admin group is a management
+   * surface (Admin-or-above); money surfaces are top-tier only,
+   * except Payroll, which Austin carved back to Admin-or-above
+   * (Abigail runs payroll — she just never moves money).
+   * activateTab, showExtraPanel and the remembered-tab restore
+   * all consult tabAllowed(), so a hidden button is never the
+   * only lock on a panel. */
+  var TAB_GATES = {
+    associateaccounts: 'adminAbove', investors: 'adminAbove', feedback: 'adminAbove',
+    newhires: 'adminAbove', teamdocs: 'adminAbove', applications: 'adminAbove',
+    setup: 'adminAbove', payroll: 'adminAbove',
+    square: 'money', financials: 'money'
+  };
+  function tabAllowed(name) {
+    var g = TAB_GATES[name];
+    if (!g) return true;
+    if (g === 'money') return canSeeMoney();
+    return isAdminOrAbove();
+  }
+  function applyRoleNav() {
+    document.querySelectorAll('.portal-tab').forEach(function (t) {
+      t.style.display = tabAllowed(t.getAttribute('data-tab')) ? '' : 'none';
+    });
+    var gAdmin = $('portal-nav-group-admin');
+    if (gAdmin) gAdmin.style.display = isAdminOrAbove() ? '' : 'none';
+    /* The Financials group heading lives while either of its
+     * panels does — Payroll keeps it on an Admin's sidebar. */
+    var gFin = $('portal-nav-group-financials');
+    if (gFin) gFin.style.display = isAdminOrAbove() ? '' : 'none';
+  }
+
   function roleLabel(role) {
-    var r = trim(role);
+    var r = normRole(role);
     if (!r) return '';
-    return r.toLowerCase() === 'owner' ? 'Admin' : r;
+    return ROLE_LABELS[r] || trim(role);
   }
 
   var associatesCache = [];
@@ -7129,11 +7693,29 @@ function loadTicketThread(client, ticketId) {
   function renderAssociates() {
     var list = $('portal-acct-list');
     if (!list) return;
-    if (!isPortalOwner()) { list.innerHTML = ''; return; }
+    /* PORTAL_ROLE_LADDER_2026_11_04: Associate Accounts is a
+     * management surface — Admin-or-above renders it (the card
+     * sections inside then split per tier; see assocOwnerSection
+     * and assocLoginSection). Technicians / CSA never build it.
+     * SELF_PICTURE_ACCOUNTS_2026_11_04: one exception — below the
+     * management tiers the list builds exactly ONE card, the
+     * viewer's own, so their own-picture control (below) is
+     * reachable at every tier. Nobody else's card exists in a
+     * non-management rendering, and the management sections
+     * inside the card stay Admin-or-above (see the detail
+     * build), so this widens no one's reach over anyone else. */
+    var adminAbove = isAdminOrAbove();
     var people = mergedPeople();
     if (!people.length) {
       if (assocListLoaded && acctListLoaded) emptyState(list, 'No associate accounts yet. Add the first staff login with the form below.');
       return;
+    }
+    if (!adminAbove) {
+      people = people.filter(function (p) {
+        var pid = p.profile ? p.profile.id : (p.login ? p.login.id : '');
+        return !!state.user && pid === state.user.id;
+      });
+      if (!people.length) { list.innerHTML = ''; return; }
     }
     list.innerHTML = people.map(function (p) {
       var a = p.profile, s = p.login;
@@ -7157,19 +7739,32 @@ function loadTicketThread(client, ticketId) {
             /* AVATARS_2026_11_03: the portrait as the team and the
              * customers see it; the Remove control itself lives in
              * the owner section below (assocOwnerSection). */
-            ['Profile picture', assocAvatarById[a.id] ? avatarHtml(a.name, assocAvatarById[a.id], 'lg') : '<span class="portal-muted">No picture yet &mdash; they add their own in Team Chat.</span>']
+            ['Profile picture', assocAvatarById[a.id] ? avatarHtml(a.name, assocAvatarById[a.id], 'lg') : '<span class="portal-muted">No picture yet &mdash; ' + (isSelf ? 'add yours below, or in Team Chat.' : 'they add their own in Team Chat.') + '</span>']
           ]);
           /* PORTAL_ROSTER_DETAIL_2026_11_02: the owner-only full record
            * (pay + home address + time + time-card jump) exists in the
            * markup ONLY for the owner — see the section comment above. */
-          if (isPortalOwner()) detail += assocOwnerSection(a);
-          detail +=
-          '<p class="portal-muted portal-small">This is their portal sign-in profile. Onboarding paperwork (I-9, W-4, signed agreements) lives on their card in Employee Onboarding, under Documents.</p>';
+          /* SELF_PICTURE_ACCOUNTS_2026_11_04: the viewer's OWN
+           * card carries their own-picture control at every
+           * tier — see assocSelfPictureSection. It is the one
+           * control in this card that is not management: it can
+           * only ever write the viewer's own picture. */
+          if (isSelf) detail += assocSelfPictureSection(a);
+          var ob = assocOnboardingFor(p);
+          if (isAdminOrAbove()) {
+            detail += assocOwnerSection(a, ob);
+            detail += assocOnboardingSection(ob);
+            detail +=
+            '<p class="portal-muted portal-small">This is their portal sign-in profile. Onboarding paperwork (I-9, W-4, signed agreements) lives on their card in Employee Onboarding, under Documents.</p>';
+          }
         } else {
           detail += '<p class="portal-muted portal-small">No sign-in profile is on file for this login yet &mdash; the profile half of this card fills in once their employee profile exists.</p>';
         }
-        /* The login half — Account Controls, inside the same card. */
-        detail += assocLoginSection(p);
+        /* The login half — Account Controls, inside the same card.
+         * SELF_PICTURE_ACCOUNTS_2026_11_04: management-only, as it
+         * effectively always was — a below-tier rendering (the
+         * viewer's own card only) never builds it. */
+        if (isAdminOrAbove()) detail += assocLoginSection(p);
         detail += '</div>';
       }
       return '<article class="portal-card assoc-card' + (banned ? ' acct-card-off' : '') + '" data-assoc-toggle="' + esc(id) + '" style="cursor:pointer" title="Tap to ' + (open ? 'close' : 'view') + ' this associate&rsquo;s account">' +
@@ -7181,7 +7776,9 @@ function loadTicketThread(client, ticketId) {
           : '<span class="portal-badge portal-st-ready">Active</span>') + '</span></div>' +
         (s
           ? '<p class="portal-card-meta"><i class="fas fa-envelope"></i> ' + esc(s.email || 'No login email') + '</p>'
-          : '<p class="portal-card-meta"><i class="fas fa-envelope"></i> ' + (acctListLoaded ? 'No login on file' : 'Loading login&hellip;') + '</p>') +
+          : (isSelf && state.user && state.user.email)
+            ? '<p class="portal-card-meta"><i class="fas fa-envelope"></i> ' + esc(state.user.email) + '</p>'
+            : '<p class="portal-card-meta"><i class="fas fa-envelope"></i> ' + (acctListLoaded ? 'No login on file' : 'Loading login&hellip;') + '</p>') +
         '<p class="portal-card-meta portal-muted">' + (open ? 'Tap to close' : 'Tap to view') + '</p>' +
         detail +
         '</article>';
@@ -7190,7 +7787,7 @@ function loadTicketThread(client, ticketId) {
      * summary has not been fetched yet (first expansion, or a refresh
      * while a card is open) fetches it once; loadAssocTime re-renders
      * when the rows land. */
-    if (assocExpandedId && isPortalOwner() && !assocTimeCache[assocExpandedId]) loadAssocTime(assocExpandedId);
+    if (assocExpandedId && isAdminOrAbove() && !assocTimeCache[assocExpandedId]) loadAssocTime(assocExpandedId);
   }
 
   function loadAssociates(force) {
@@ -7199,6 +7796,7 @@ function loadTicketThread(client, ticketId) {
     if (!force) list.innerHTML = '<p class="portal-muted">Loading associates&hellip;</p>';
     withClient(function (client) {
       if (!client) { listError(list, 'associates'); return; }
+      loadTeamBirthdays(client); /* TIME_CLOCK_CLEANUP_2026_11_04: the team birthdays list lives under this panel now */
       var finish = function (rows) {
         state.loaded.associateaccounts = true; /* ASSOCIATE_ACCOUNTS_2026_11_03 */
         assocListLoaded = true;
@@ -7219,9 +7817,22 @@ function loadTicketThread(client, ticketId) {
           })
           .catch(function () { listError(list, 'associates'); });
       };
-      if (!isPortalOwner()) { plain(); return; }
+      /* PORTAL_ROLE_LADDER_2026_11_04: the management tiers get
+       * the home / avatar / onboarding probes, but the PAY probe
+       * below stays top-tier only — pay rates are money, so an
+       * Admin session loads the roster plain and the pay column
+       * never reaches her browser (payroll still reads rates for
+       * its own math; EDITING them is a top-tier decision).
+       * SELF_PICTURE_ACCOUNTS_2026_11_04: the AVATAR probe also
+       * runs below the management tiers — it reads a staff-visible
+       * column, and the one card a below-tier session renders
+       * (their own) should show their current picture, not an
+       * initials disc. */
+      if (!isAdminOrAbove()) { loadAssocAvatars(client); plain(); return; }
       loadAssocHome(client); /* PORTAL_MILEAGE_2026_11_02: independent home_address probe — never disturbs the pay fallback below */
       loadAssocAvatars(client); /* AVATARS_2026_11_03: independent avatar_url probe — same never-disturb rule */
+      loadAssocOnboarding(client); /* ONBOARDING_MERGE_2026_11_04: independent new_hires probe — same never-disturb rule */
+      if (!canSeeMoney()) { plain(); return; }
       /* PORTAL_ROSTER_DETAIL_2026_11_02: the owner's load also asks
        * for pay_rate. If the column is not live yet the select
        * errors and the roster quietly loads without it — the same
@@ -7248,11 +7859,33 @@ function loadTicketThread(client, ticketId) {
    * Account activity trail) behind the panel's one Refresh. Both
    * sub-loaders render into the same list through renderAssociates
    * as their halves land. */
+  /* PORTAL_ROLE_LADDER_2026_11_04: the Add staff login role
+   * select offers only the tiers the signed-in user may grant
+   * (grantableRoles mirrors the function's create_user ceilings);
+   * the new-hire default is Customer Service Associate. */
+  function fillAddRoleOptions() {
+    var sel = $('portal-acct-add-role');
+    if (!sel) return;
+    sel.innerHTML = grantableRoles().map(function (v) {
+      return '<option value="' + v + '"' + (v === 'customer_service' ? ' selected' : '') + '>' + esc(ROLE_LABELS[v]) + '</option>';
+    }).join('');
+  }
+
   function loadAssociateAccounts(force) {
     var list = $('portal-acct-list');
     if (!list) return;
-    if (!isPortalOwner()) { list.innerHTML = ''; return; }
+    if (!isAdminOrAbove()) {
+      /* SELF_PICTURE_ACCOUNTS_2026_11_04: below the management
+       * tiers the panel loads ONLY the profile half — enough for
+       * the viewer's own card and its picture control to render.
+       * The staff-admin list, the account activity trail and the
+       * Add-login wiring stay management-only, exactly as before;
+       * renderAssociates builds nobody else's card for them. */
+      loadAssociates(true);
+      return;
+    }
     state.loaded.associateaccounts = true;
+    fillAddRoleOptions();
     if (!force) list.innerHTML = '<p class="portal-muted">Loading associate accounts&hellip;</p>';
     loadAssociates(true);
     loadAccountControls(true);
@@ -7351,7 +7984,7 @@ function loadTicketThread(client, ticketId) {
   function loadAccountControls(force) {
     var list = $('portal-acct-list');
     if (!list) return;
-    if (!isPortalOwner()) { list.innerHTML = ''; return; }
+    if (!isAdminOrAbove()) { list.innerHTML = ''; return; }
     /* ASSOCIATE_ACCOUNTS_2026_11_03: on its own (before the merge)
      * this loader painted its own "Loading staff logins" line; the
      * merged loader paints the panel's one loading line, and a
@@ -7372,13 +8005,16 @@ function loadTicketThread(client, ticketId) {
   }
 
   /* ACCOUNT_AUDIT_2026_11_03: the activity trail. Read directly
-   * from staff_admin_audit with the signed-in session — RLS on the
-   * table answers owners only, and loadAccountControls has already
-   * gated this whole panel on isPortalOwner(). */
+   * from staff_admin_audit with the signed-in session.
+   * PORTAL_ROLE_LADDER_2026_11_04: the trail is a management
+   * record, so the gate moves to Admin-or-above — and
+   * role-ladder.sql widens the table's SELECT policy to
+   * is_admin_or_above() to match, so an Admin's read lands rows
+   * instead of silence. */
   function loadAccountAudit() {
     var box = $('portal-acct-audit-list');
     if (!box) return;
-    if (!isPortalOwner()) { box.innerHTML = ''; return; }
+    if (!isAdminOrAbove()) { box.innerHTML = ''; return; }
     withClient(function (client) {
       if (!client) { listError(box, 'account activity'); return; }
       client.from('staff_admin_audit')
@@ -7413,10 +8049,11 @@ function loadTicketThread(client, ticketId) {
           (r.detail ? ' (' + roleLabel(r.detail) + ')' : '');
       case 'role_changed':
         /* PORTAL_ADMIN_CONTROLS_2026_11_04: detail carries the NEW
-         * stored role; roleLabel turns 'owner' into Admin, and the
-         * raw 'associate' is capitalized for the sentence. */
+         * stored role. PORTAL_ROLE_LADDER_2026_11_04: roleLabel
+         * now maps every stored value — new ladder values and the
+         * legacy 'owner' / 'associate' alike — to its display
+         * label, so the sentence reads the tier plainly. */
         var newRole = roleLabel(r.detail);
-        if (newRole && newRole !== 'Admin') newRole = newRole.charAt(0).toUpperCase() + newRole.slice(1);
         return actor + ' changed ' + target + '\u2019s role' +
           (newRole ? ' to ' + newRole : '');
       case 'picture_changed':
@@ -7459,6 +8096,13 @@ function loadTicketThread(client, ticketId) {
       return out + '</div>';
     }
     var isSelf = !!(state.user && s.id === state.user.id);
+    /* PORTAL_ROLE_LADDER_2026_11_04: the login CONTROLS render
+     * only when the viewer may run account controls on this
+     * card's tier (canControlAccount mirrors the function) — the
+     * Admin sees them on Technician / CSA cards and never on an
+     * Admin-or-above card; the Co-Super Admin never sees them on
+     * the Super Admin's card. The login facts still show. */
+    var canControl = canControlAccount((p.profile && p.profile.role) || s.role || '');
     var open = !!(acctExpand && acctExpand.id === s.id);
     var form = '';
     if (open && acctExpand.mode === 'email') {
@@ -7479,13 +8123,15 @@ function loadTicketThread(client, ticketId) {
     }
     out += '<p class="portal-card-meta"><i class="fas fa-envelope"></i> ' + esc(s.email || 'No login email') + '</p>' +
       (s.created_at ? '<p class="portal-card-meta portal-muted">Login created ' + esc(fmtDate(s.created_at)) + '</p>' : '') +
-      '<div class="portal-card-actions">' +
-      '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-acct-edit="' + esc(s.id) + '"><i class="fas fa-pen"></i> Edit login</button>' +
-      '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-acct-pass="' + esc(s.id) + '"><i class="fas fa-key"></i> Set password</button>' +
-      (isSelf
-        ? '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" disabled title="You cannot deactivate your own account">Deactivate</button>'
-        : '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-acct-ban="' + esc(s.id) + '"><i class="fas fa-' + (s.banned ? 'circle-check' : 'ban') + '"></i> ' + (s.banned ? 'Activate' : 'Deactivate') + '</button>') +
-      '</div>' + form;
+      (canControl
+        ? '<div class="portal-card-actions">' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-acct-edit="' + esc(s.id) + '"><i class="fas fa-pen"></i> Edit login</button>' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-acct-pass="' + esc(s.id) + '"><i class="fas fa-key"></i> Set password</button>' +
+          (isSelf
+            ? '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" disabled title="You cannot deactivate your own account">Deactivate</button>'
+            : '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-acct-ban="' + esc(s.id) + '"><i class="fas fa-' + (s.banned ? 'circle-check' : 'ban') + '"></i> ' + (s.banned ? 'Activate' : 'Deactivate') + '</button>') +
+          '</div>' + form
+        : '<p class="portal-muted portal-small">Login changes for this account sit with the top tier.</p>');
     return out + '</div>';
   }
 
@@ -7578,10 +8224,14 @@ function loadTicketThread(client, ticketId) {
     var name = nameEl ? trim(nameEl.value) : '';
     var email = emailEl ? trim(emailEl.value) : '';
     var pw = pwEl ? pwEl.value : '';
-    var role = roleEl ? roleEl.value : 'associate';
+    var role = roleEl ? roleEl.value : 'customer_service';
     if (!name) { acctError('Enter the new staff member\u2019s name first.'); return; }
     if (!email) { acctError('Enter a login email first.'); return; }
     if (!pw || pw.length < 8) { acctError('The password must be at least 8 characters.'); return; }
+    /* PORTAL_ROLE_LADDER_2026_11_04: only a tier this caller may
+     * grant — the select already offers nothing else
+     * (fillAddRoleOptions), and the function checks again. */
+    if (grantableRoles().indexOf(role) === -1) { acctError('Pick a role you can grant first.'); return; }
     if (!acctArm(btn, 'Tap again to add')) return;
     acctRun(btn, { action: 'create_user', email: email, password: pw, name: name, role: role },
       'Staff login added for ' + name + ' — they can sign in now.',
@@ -7589,7 +8239,7 @@ function loadTicketThread(client, ticketId) {
         if (nameEl) nameEl.value = '';
         if (emailEl) emailEl.value = '';
         if (pwEl) pwEl.value = '';
-        if (roleEl) roleEl.value = 'associate';
+        if (roleEl) roleEl.value = 'customer_service';
       });
   }
 
@@ -7598,12 +8248,16 @@ function loadTicketThread(client, ticketId) {
    * shape as the login actions above: first tap arms the button,
    * second tap sends { action: 'set_role' } to the staff-admin
    * function, and acctRun's reload redraws the card with the new
-   * role badge. The function's own refusals (your own role, the
-   * last owner) land in the panel error line as-is. */
+   * role badge.
+   * PORTAL_ROLE_LADDER_2026_11_04: the picker offers any of the
+   * eight ladder tiers the viewer may grant, and the function's
+   * own tier refusals (your own role, a target above your tier, a
+   * grant above your ceiling, the last top-tier account) land in
+   * the panel error line as-is — the function is the wall. */
   function acctSaveRole(btn, id) {
     var sel = document.querySelector('[data-assoc-role-select="' + id + '"]');
     var role = sel ? sel.value : '';
-    if (role !== 'owner' && role !== 'associate') { acctError('Pick a role first.'); return; }
+    if (!ROLE_LABELS[role]) { acctError('Pick a role first.'); return; }
     if (!acctArm(btn, 'Tap again to save role')) return;
     acctRun(btn, { action: 'set_role', user_id: id, role: role }, 'Role updated.');
   }
@@ -7675,31 +8329,161 @@ function loadTicketThread(client, ticketId) {
     });
   }
 
+  /* ================= SELF_PICTURE_ACCOUNTS_2026_11_04 =================
+   * Austin, Nov 4, 2026: an associate changes their OWN picture
+   * from Associate Accounts too — on their own card — not only in
+   * Team Chat. The control (assocSelfPictureSection) renders in
+   * the expanded detail of the card whose profile id IS the
+   * signed-in user, at every tier: it carries no tier check of
+   * its own, because it can only ever write the viewer's own
+   * picture. The upload (uploadAssocSelfPicture) is Team Chat's
+   * "My picture" flow (uploadMyAvatar) step for step — the same
+   * processAvatarFile crop, the same staff-avatars bucket
+   * (AVATAR_BUCKET), the same own-uid file path, the same
+   * getPublicUrl + ?v= cache-buster, the same update of the
+   * caller's OWN employee_profiles row with the written-row
+   * check, and the same cache updates (the Team Chat directory
+   * entry and assocAvatarById) — because the storage policy
+   * already lets each person write their own file. It
+   * deliberately does NOT ride the staff-admin function's
+   * set_avatar: that route exists for the owner writing SOMEONE
+   * ELSE'S picture. The one adaptation is the client handle:
+   * Team Chat uses its cached teamChatClient; here withClient
+   * supplies the same shared client, as every other Associate
+   * Accounts action does. After a save, renderAssociates
+   * re-renders so the card shows the new face at once, and
+   * renderMyAvatarRow keeps Team Chat's own row in step. */
+  function assocSelfPictureSection(a) {
+    return '<div class="assoc-owner-sec"><p class="assoc-owner-head"><i class="fas fa-camera"></i> Your picture</p>' +
+      '<div class="assoc-pay-row"><span class="assoc-pay-label">Profile picture<span class="assoc-pay-cur">Shown to the team and to customers</span></span>' +
+      '<span class="assoc-pay-edit"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-assoc-selfpic-change="' + esc(a.id) + '">Change my picture</button></span></div>' +
+      '<p class="portal-small assoc-pay-msg" data-assoc-selfpic-msg="' + esc(a.id) + '"></p></div>';
+  }
+
+  function pickAssocSelfPicture(id) {
+    /* The button carries its card's id; the pick only ever
+     * proceeds for the viewer's OWN card — belt and braces on
+     * top of the render condition, so no path through this
+     * handler can aim the self-upload at anyone else. */
+    if (!state.user || id !== state.user.id) return;
+    var input = $('portal-acct-selfpic-file');
+    if (!input) return;
+    input.click();
+  }
+
+  function assocSelfPicMsg(text) {
+    if (!state.user) return;
+    var msg = document.querySelector('[data-assoc-selfpic-msg="' + state.user.id + '"]');
+    if (msg) msg.textContent = text || '';
+  }
+
+  function uploadAssocSelfPicture(file) {
+    if (!state.user || !file) return;
+    withClient(function (client) {
+      if (!client) { assocSelfPicMsg('Upload failed. Check your connection and try again.'); return; }
+      assocSelfPicMsg('Preparing your picture\u2026');
+      processAvatarFile(file, function (blob) {
+        if (!blob) { assocSelfPicMsg('That picture could not be read. Try another one.'); return; }
+        assocSelfPicMsg('Uploading\u2026');
+        var path = state.user.id + '.jpg';
+        client.storage.from(AVATAR_BUCKET).upload(path, blob, { contentType: 'image/jpeg', upsert: true })
+          .then(function (up) {
+            if (up.error) throw up.error;
+            var pub = client.storage.from(AVATAR_BUCKET).getPublicUrl(path);
+            var base = pub && pub.data ? pub.data.publicUrl : '';
+            if (!base) throw new Error('no public url');
+            var fresh = base + '?v=' + Date.now();
+            return client.from('employee_profiles').update({ avatar_url: fresh }).eq('id', state.user.id).select('id')
+              .then(function (res) {
+                /* Same written-row check as uploadMyAvatar: a
+                 * policy-refused update returns success with zero
+                 * rows — that is a failure here, not a saved
+                 * picture. */
+                if (res.error || !res.data || !res.data.length) throw res.error || new Error('profile update refused');
+                var me = teamChatDirPerson(state.user.id);
+                if (me) me.avatar_url = fresh;
+                assocAvatarById[state.user.id] = fresh;
+                assocAvatarKnown = true;
+                renderAssociates();
+                renderMyAvatarRow();
+                assocSelfPicMsg('Picture updated — this is the face the team and your customers see.');
+              });
+          })
+          .catch(function () { assocSelfPicMsg('Upload failed. Check your connection and try again.'); });
+      });
+    });
+  }
+
+  /* The self-picture picker input's change wiring — called once
+   * from initDelegation beside wireAssocAvatarPicker (the input
+   * is static panel markup). Reset after every pick, same as the
+   * Team Chat and owner pickers, so choosing the same photo
+   * twice in a row still fires the change. */
+  function wireAssocSelfPicturePicker() {
+    var input = $('portal-acct-selfpic-file');
+    if (!input || input.getAttribute('data-wired')) return;
+    input.setAttribute('data-wired', '1');
+    input.addEventListener('change', function () {
+      var f = input.files && input.files[0];
+      input.value = '';
+      if (f) uploadAssocSelfPicture(f);
+    });
+  }
+
   /* ================= PORTAL_ROSTER_DETAIL_2026_11_02: the owner's full record =================
    * Everything below renders ONLY inside an expansion the owner
    * opened (renderAssociates gates on isPortalOwner() before any of
    * this markup exists), and the pay data behind it was only ever
-   * requested on the owner's load. */
+   * requested on the owner's load.
+   * PORTAL_ROLE_LADDER_2026_11_04: renderAssociates now gates the
+   * panel Admin-or-above and this section splits per viewer/target
+   * tier (see the assocOwnerSection comment); the pay data is only
+   * ever requested on a TOP-TIER load, exactly as before. */
 
-  function assocOwnerSection(a) {
-    var out = '<div class="assoc-owner-sec"><p class="assoc-owner-head"><i class="fas fa-lock"></i> Owner only</p>';
+  function assocOwnerSection(a, ob) {
+    /* PORTAL_ROLE_LADDER_2026_11_04: what this section holds now
+     * depends on BOTH seats — the viewer's tier and the card's:
+     *   - Top tier: everything, as the owner build had it.
+     *   - Admin: on Technician / CSA cards, everything EXCEPT the
+     *     pay-rate editor (money — top tier only); on an
+     *     Admin-or-above card, no section at all — she sees the
+     *     card without any account controls.
+     *   - Co-Super Admin: no section on the Super Admin's card
+     *     (he cannot modify the Super Admin's account); on another
+     *     Co-Super card the rest renders but the role picker is
+     *     omitted (he cannot change a Co-Super Admin's role).
+     * The picker only ever OFFERS tiers the viewer may grant
+     * (grantableRoles), plus the card's current tier when it is
+     * not among them, so the select always shows the truth; the
+     * staff-admin function re-checks every ceiling server-side. */
+    var targetRole = normRole(a.role);
+    if (isAdminTier() && roleIsAdminOrAbove(targetRole)) return '';
+    if (isCoSuperAdmin() && targetRole === 'super_admin') return '';
+    var out = '<div class="assoc-owner-sec"><p class="assoc-owner-head"><i class="fas fa-lock"></i> Management only</p>';
     /* PORTAL_ADMIN_CONTROLS_2026_11_04 (Austin, Nov 4, 2026): the
      * role can be changed right here. It used to be written once,
      * at account creation, and never again — if someone's role
-     * changed, there was no way to fix it. The select carries the
-     * STORED values ('owner' / 'associate'); the stored value is
-     * never renamed — roleLabel renders 'owner' as Admin. Saving
-     * goes through the staff-admin function (action 'set_role'),
-     * which re-checks the owner server-side, refuses a change to
-     * your own role and refuses demoting the last owner, and signs
-     * the change in the account activity trail — see acctSaveRole. */
-    var curRole = trim(a.role || '').toLowerCase() === 'owner' ? 'owner' : 'associate';
-    out += '<div class="assoc-pay-row"><span class="assoc-pay-label">Role<span class="assoc-pay-cur">' + esc(roleLabel(a.role)) + '</span></span>' +
-      '<span class="assoc-pay-edit"><select aria-label="Role" data-assoc-role-select="' + esc(a.id) + '">' +
-      '<option value="associate"' + (curRole === 'associate' ? ' selected' : '') + '>Associate</option>' +
-      '<option value="owner"' + (curRole === 'owner' ? ' selected' : '') + '>Admin</option></select>' +
-      '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-assoc-role-save="' + esc(a.id) + '">Save role</button></span></div>' +
-      '<p class="portal-small assoc-pay-msg" data-assoc-role-msg="' + esc(a.id) + '"></p>';
+     * changed, there was no way to fix it. Saving goes through the
+     * staff-admin function (action 'set_role'), which re-checks
+     * the caller server-side, refuses a change to your own role
+     * and refuses demoting the last top-tier account, and signs
+     * the change in the account activity trail — acctSaveRole. */
+    if (canChangeRoleOf(targetRole)) {
+      var optHtml = '';
+      var curOffered = false;
+      grantableRoles().forEach(function (v) {
+        if (v === targetRole) curOffered = true;
+        optHtml += '<option value="' + v + '"' + (v === targetRole ? ' selected' : '') + '>' + esc(ROLE_LABELS[v]) + '</option>';
+      });
+      if (!curOffered && targetRole) {
+        optHtml = '<option value="' + esc(targetRole) + '" selected>' + esc(roleLabel(targetRole)) + '</option>' + optHtml;
+      }
+      out += '<div class="assoc-pay-row"><span class="assoc-pay-label">Role<span class="assoc-pay-cur">' + esc(roleLabel(a.role)) + '</span></span>' +
+        '<span class="assoc-pay-edit"><select aria-label="Role" data-assoc-role-select="' + esc(a.id) + '">' +
+        optHtml + '</select>' +
+        '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-assoc-role-save="' + esc(a.id) + '">Save role</button></span></div>' +
+        '<p class="portal-small assoc-pay-msg" data-assoc-role-msg="' + esc(a.id) + '"></p>';
+    }
     /* AVATARS_2026_11_03: owner moderation for the portrait —
      * clearing avatar_url hides the picture on every surface at
      * once (see removeAssocAvatar).
@@ -7710,17 +8494,30 @@ function loadTicketThread(client, ticketId) {
      * the cropped photo through the staff-admin function (action
      * 'set_avatar', service role) instead; see uploadAssocAvatar.
      * The row renders whenever the avatar probe has landed,
-     * whether or not a picture exists yet. */
-    if (assocAvatarKnown) {
+     * whether or not a picture exists yet.
+     * PORTAL_ROLE_LADDER_2026_11_04: picture controls follow the
+     * account-control ceilings (canControlAccount). */
+    if (assocAvatarKnown && canControlAccount(a.role)) {
       out += '<div class="assoc-pay-row"><span class="assoc-pay-label">Profile picture<span class="assoc-pay-cur">Shown to the team and to customers</span></span>' +
         '<span class="assoc-pay-edit"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-assoc-avatar-change="' + esc(a.id) + '">Change picture</button>' +
         (assocAvatarById[a.id] ? '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-assoc-avatar-remove="' + esc(a.id) + '">Remove picture</button>' : '') + '</span></div>' +
         '<p class="portal-small assoc-pay-msg" data-assoc-avatar-msg="' + esc(a.id) + '"></p>';
     }
-    if (assocPayKnown) {
+    /* PORTAL_ROLE_LADDER_2026_11_04: the pay-rate EDITOR is money
+     * — top tier only. (An Admin session never even loads the
+     * column — loadAssociates — so this is the second lock.) */
+    if (assocPayKnown && canSeeMoney()) {
       var has = a.pay_rate != null && a.pay_rate !== '' && !isNaN(Number(a.pay_rate));
+      /* ONBOARDING_MERGE_2026_11_04: when the profile has no pay rate
+       * yet, the current-value line borrows the onboarding form's —
+       * labeled, display only; the box beside it still edits (and
+       * wins for) the profile. */
+      var payCur = has ? esc(fmtMoney(a.pay_rate)) + ' / hr' : 'Not set';
+      if (!has && ob && ob.pay_rate != null && ob.pay_rate !== '' && !isNaN(Number(ob.pay_rate))) {
+        payCur = esc(fmtMoney(ob.pay_rate)) + (ob.pay_type === 'per_job' ? ' / job' : ob.pay_type === 'flat_rate' ? ' flat rate' : ' / hr') + ' <span class="portal-muted">(from onboarding)</span>';
+      }
       out += '<div class="assoc-pay-row"><span class="assoc-pay-label">Pay rate' +
-        '<span class="assoc-pay-cur">' + (has ? esc(fmtMoney(a.pay_rate)) + ' / hr' : 'Not set') + '</span></span>' +
+        '<span class="assoc-pay-cur">' + payCur + '</span></span>' +
         '<span class="assoc-pay-edit"><input type="number" min="0" step="0.01" inputmode="decimal" placeholder="$ / hr" aria-label="Pay rate in dollars per hour" data-assoc-pay-input="' + esc(a.id) + '" value="' + (has ? esc(String(Number(a.pay_rate))) : '') + '">' +
         '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-assoc-pay-save="' + esc(a.id) + '">Save</button></span></div>' +
         '<p class="portal-small assoc-pay-msg" data-assoc-pay-msg="' + esc(a.id) + '"></p>';
@@ -7729,7 +8526,12 @@ function loadTicketThread(client, ticketId) {
      * same owner-only section, independent column probe. */
     if (assocHomeKnown) {
       var homeVal = assocHomeById[a.id] || '';
-      out += '<div class="assoc-pay-row"><span class="assoc-pay-label">Home address<span class="assoc-pay-cur">' + (homeVal ? esc(homeVal) : 'Not set') + '</span></span>' +
+      /* ONBOARDING_MERGE_2026_11_04: same fill as pay rate — an unset
+       * profile address borrows the onboarding form's, labeled; the
+       * box beside it still edits (and wins for) the profile. */
+      var homeCur = homeVal ? esc(homeVal) : 'Not set';
+      if (!homeVal && ob && trim(ob.address)) homeCur = esc(trim(ob.address)) + ' <span class="portal-muted">(from onboarding)</span>';
+      out += '<div class="assoc-pay-row"><span class="assoc-pay-label">Home address<span class="assoc-pay-cur">' + homeCur + '</span></span>' +
         '<span class="assoc-pay-edit"><input type="text" placeholder="Street, City, State ZIP" aria-label="Home address" data-assoc-home-input="' + esc(a.id) + '" value="' + esc(homeVal) + '">' +
         '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-assoc-home-save="' + esc(a.id) + '">Save</button></span></div>' +
         '<p class="portal-small assoc-pay-msg" data-assoc-home-msg="' + esc(a.id) + '"></p>';
@@ -8588,9 +9390,15 @@ function loadTicketThread(client, ticketId) {
 
   /* The exact role check for this feature (see the block comment):
    * Austin is the owner; everyone else on staff is an associate for
-   * customer-info purposes. */
+   * customer-info purposes.
+   * PORTAL_ROLE_LADDER_2026_11_04: isPortalOwner() now answers the
+   * TOP-TIER question (Super Admin or Co-Super Admin — a legacy
+   * stored 'owner' reads as Super Admin until role-ladder.sql
+   * runs). The surfaces the ladder specifically reassigns call
+   * isAdminOrAbove() / canSeeMoney() directly; the surfaces it
+   * does not mention keep this top-tier meaning, unchanged. */
   function isPortalOwner() {
-    return trim(state.profile && state.profile.role).toLowerCase() === 'owner';
+    return isTopTier();
   }
 
   function custRowById(customerId) {
@@ -8713,7 +9521,7 @@ function loadTicketThread(client, ticketId) {
   function renderCustEditPanel(notice) {
     var box = $('portal-cust-edit-requests');
     if (!box) return;
-    if (!isPortalOwner() || !custEditRequests.length) { box.innerHTML = ''; return; }
+    if (!isAdminOrAbove() || !custEditRequests.length) { box.innerHTML = ''; return; } /* PORTAL_ROLE_LADDER_2026_11_04: customer edits/approvals are front-office operations — Admin-or-above decides; the working tiers keep filing requests */
     /* PORTAL_MEMBERS_EDIT_2026_11_02: once membership requests ride
      * this section too, the heading stops calling everything a
      * customer update; each row's badge carries its kind. */
@@ -8812,7 +9620,7 @@ function loadTicketThread(client, ticketId) {
       totalInvested += amt;
     });
     var pending = custEditByCustomer[cust.id] || [];
-    var owner = isPortalOwner();
+    var owner = isAdminOrAbove(); /* PORTAL_ROLE_LADDER_2026_11_04: "owner" here means edits write directly (vs filing a request) — Admin-or-above */
     var html = '';
 
     html += '<div class="portal-drawer-section"><h3>Contact</h3>' + kvRows([
@@ -9016,11 +9824,11 @@ function loadTicketThread(client, ticketId) {
     if (!hasContact && !memChange) { if (msg) msg.textContent = 'No changes to save.'; return; }
     if (changes.name !== undefined && !changes.name) { if (msg) msg.textContent = 'Name cannot be empty.'; return; }
     if (changes.email !== undefined && !changes.email) { if (msg) msg.textContent = 'Email cannot be empty.'; return; }
-    if (msg) msg.textContent = isPortalOwner() ? 'Saving\u2026' : 'Submitting\u2026';
+    if (msg) msg.textContent = isAdminOrAbove() ? 'Saving\u2026' : 'Submitting\u2026';
     withClient(function (client) {
       if (!client) { if (msg) msg.textContent = 'No connection.'; return; }
-      if (isPortalOwner()) {
-        /* Owner: straight to the rows. */
+      if (isAdminOrAbove()) {
+        /* Admin-or-above (PORTAL_ROLE_LADDER_2026_11_04): straight to the rows. */
         var chain = Promise.resolve();
         if (hasContact) {
           chain = chain.then(function () {
@@ -9105,7 +9913,7 @@ function loadTicketThread(client, ticketId) {
   }
 
   function decideCustEdit(requestId, approve) {
-    if (!isPortalOwner()) return;
+    if (!isAdminOrAbove()) return; /* PORTAL_ROLE_LADDER_2026_11_04 */
     var req = null;
     custEditRequests.forEach(function (r) { if (r.id === requestId) req = r; });
     if (!req) { loadCustEditRequests(function () { renderCustEditPanel(); }); return; }
@@ -9679,6 +10487,8 @@ function loadTicketThread(client, ticketId) {
 
   function renderPurchaseOrders(rows) {
     var list = $('portal-po-list');
+    poRowsById = {};
+    rows.forEach(function (po) { poRowsById[po.id] = po; });
     if (!rows.length) { emptyState(list, 'No purchase orders yet.'); return; }
     list.innerHTML = rows.map(function (po) {
       return '<article class="portal-card">' +
@@ -9687,8 +10497,107 @@ function loadTicketThread(client, ticketId) {
         ' · Ordered: ' + esc(fmtDate(po.ordered_at)) + ' · Received: ' + esc(fmtDate(po.received_at)) + '</p>' +
         itemLines(po.items) +
         (trim(po.notes) ? '<p class="portal-card-meta">' + esc(po.notes) + '</p>' : '') +
+        /* PO_RECEIPT_UPLOAD_2026_11_04: the supplier receipt for
+         * this order, filed in the ticket-documents bucket (see
+         * uploadPoReceipt below). receipt_path arrives with
+         * po-receipt.sql; until that column exists it is simply
+         * undefined here and every card offers the upload. */
+        '<div class="p2-actions">' +
+          (po.receipt_path
+            ? '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-po-receipt-view="' + esc(po.id) + '"><i class="fas fa-eye"></i> View receipt</button>' +
+              '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-po-receipt-upload="' + esc(po.id) + '"><i class="fas fa-upload"></i> Replace receipt</button>'
+            : '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-po-receipt-upload="' + esc(po.id) + '"><i class="fas fa-upload"></i> Upload receipt</button>') +
+          '<span class="portal-muted portal-small" data-po-receipt-msg="' + esc(po.id) + '" hidden></span>' +
+        '</div>' +
         '</article>';
     }).join('');
+  }
+
+  /* ================= PURCHASE ORDER RECEIPTS =================
+   * PO_RECEIPT_UPLOAD_2026_11_04 (Austin, Nov 4, 2026): "It already
+   * says purchase orders. We just need a button to be able to upload
+   * those" — the supplier receipts for restock purchase orders. The
+   * file rides the SAME private bucket as ticket and hire documents
+   * (DOC_BUCKET, 'ticket-documents': hire/<id>/… and <ticket-id>/…
+   * already live there side by side, all staff-only, all viewed
+   * through signed URLs) under purchase-orders/<po-id>/…, and the
+   * order row remembers the path in purchase_orders.receipt_path
+   * (po-receipt.sql — a new column, riding the table's existing
+   * grants). Until that SQL runs, the save fails on the missing
+   * column and the card says so in place; the uploaded file is
+   * removed again so nothing is half-filed. */
+  var poRowsById = {};
+  var poReceiptTargetId = null;
+  function poReceiptMsg(id, text) {
+    var list = $('portal-po-list');
+    if (!list) return;
+    var el = list.querySelector('[data-po-receipt-msg="' + id + '"]');
+    if (!el) return;
+    if (text) { el.textContent = text; el.hidden = false; }
+    else { el.hidden = true; el.textContent = ''; }
+  }
+  function poReceiptMissingColumn(err) {
+    return !!err && /receipt_path/.test(String(err.message || '') + ' ' + String(err.code || ''));
+  }
+  function pickPoReceipt(id) {
+    poReceiptTargetId = id;
+    var input = $('portal-po-receipt-file');
+    if (input) input.click();
+    else poReceiptTargetId = null;
+  }
+  function viewPoReceipt(id) {
+    var po = poRowsById[id];
+    if (!po || !po.receipt_path) return;
+    poReceiptMsg(id, '');
+    withClient(function (client) {
+      if (!client) { poReceiptMsg(id, 'Couldn\u2019t reach the database.'); return; }
+      client.storage.from(DOC_BUCKET).createSignedUrl(po.receipt_path, SIGNED_URL_SECONDS).then(function (res) {
+        if (res.error || !res.data || !res.data.signedUrl) { poReceiptMsg(id, 'Could not open that receipt — try again.'); return; }
+        window.open(res.data.signedUrl, '_blank');
+      }).catch(function () { poReceiptMsg(id, 'Could not open that receipt — try again.'); });
+    });
+  }
+  function uploadPoReceipt(file) {
+    var id = poReceiptTargetId;
+    poReceiptTargetId = null;
+    if (!id || !file) return;
+    var po = poRowsById[id];
+    poReceiptMsg(id, '');
+    if (file.size > 15 * 1024 * 1024) { poReceiptMsg(id, 'That file is over 15 MB — try a smaller scan or photo.'); return; }
+    poReceiptMsg(id, 'Uploading receipt…');
+    withClient(function (client) {
+      if (!client) { poReceiptMsg(id, 'Couldn\u2019t reach the database. Check your connection and try again.'); return; }
+      var path = 'purchase-orders/' + id + '/receipt-' + docStamp() + '-' + safeFileName(file.name);
+      client.storage.from(DOC_BUCKET).upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: false }).then(function (up) {
+        if (up.error) { poReceiptMsg(id, 'Upload failed — check the connection and try again.'); return; }
+        client.from('purchase_orders').update({ receipt_path: path }).eq('id', id).then(function (res) {
+          if (res.error) {
+            try { client.storage.from(DOC_BUCKET).remove([path]); } catch (e) {}
+            if (poReceiptMissingColumn(res.error)) poReceiptMsg(id, 'Receipt uploads need the database step first (po-receipt.sql) — nothing was saved.');
+            else poReceiptMsg(id, 'The file uploaded but could not be saved on the order — try again.');
+            return;
+          }
+          var old = po && po.receipt_path;
+          if (old && old !== path) { try { client.storage.from(DOC_BUCKET).remove([old]); } catch (e) {} }
+          state.loaded.inventory = false;
+          loadInventory(true);
+        }).catch(function () {
+          try { client.storage.from(DOC_BUCKET).remove([path]); } catch (e) {}
+          poReceiptMsg(id, 'The file uploaded but could not be saved on the order — try again.');
+        });
+      }).catch(function () { poReceiptMsg(id, 'Upload failed — check the connection and try again.'); });
+    });
+  }
+  function wirePoReceiptInput() {
+    var input = $('portal-po-receipt-file');
+    if (!input || input.getAttribute('data-wired')) return;
+    input.setAttribute('data-wired', '1');
+    input.addEventListener('change', function () {
+      var f = input.files && input.files[0];
+      input.value = '';
+      if (f) uploadPoReceipt(f);
+      else poReceiptTargetId = null;
+    });
   }
 
   function loadInventory(force) {
@@ -9756,6 +10665,12 @@ function loadTicketThread(client, ticketId) {
           if (ars) { acctSaveRole(t, ars); return; } /* PORTAL_ADMIN_CONTROLS_2026_11_04 */
           var aac = t.getAttribute('data-assoc-avatar-change');
           if (aac) { pickAssocAvatar(aac); return; } /* PORTAL_ADMIN_CONTROLS_2026_11_04 */
+          var asp = t.getAttribute('data-assoc-selfpic-change');
+          if (asp) { pickAssocSelfPicture(asp); return; } /* SELF_PICTURE_ACCOUNTS_2026_11_04 */
+          var pru = t.getAttribute('data-po-receipt-upload');
+          if (pru) { pickPoReceipt(pru); return; } /* PO_RECEIPT_UPLOAD_2026_11_04 */
+          var prv = t.getAttribute('data-po-receipt-view');
+          if (prv) { viewPoReceipt(prv); return; } /* PO_RECEIPT_UPLOAD_2026_11_04 */
           var atc = t.getAttribute('data-assoc-timecard');
           if (atc) { openAssocTimeCard(atc); return; }
           /* ACCOUNT_CONTROLS_2026_11_03: Account Controls panel
@@ -9793,6 +10708,7 @@ function loadTicketThread(client, ticketId) {
     });
 
     wireAssocAvatarPicker(); /* PORTAL_ADMIN_CONTROLS_2026_11_04: the Associate Accounts Change picture file input */
+    wireAssocSelfPicturePicker(); /* SELF_PICTURE_ACCOUNTS_2026_11_04: the own-card Change my picture file input */
 
     /* PORTAL_CUSTOMER_PROFILE_2026_11_02 (Austin correction): the
      * approvals section lives in the Requests panel — refresh the
@@ -9834,6 +10750,7 @@ function loadTicketThread(client, ticketId) {
     initExtraTabs();
     initDrawer();
     initDelegation();
+    wirePoReceiptInput(); /* PO_RECEIPT_UPLOAD_2026_11_04 */
     initAuth(); initPasswordReset();
   }
 
@@ -9854,9 +10771,13 @@ function loadTicketThread(client, ticketId) {
   }
 
   /* ================= EXTRA TABS (timeclock / links / square) ================= */
-  var EXTRA_LOADERS = { timeclock: loadTimeClock, checkin: loadCheckinCustomers, mileage: loadMileage /* PORTAL_MILEAGE_2026_11_02 */ };
+  var EXTRA_LOADERS = { timeclock: loadTimeClock, checkin: loadCheckinCustomers, mileage: loadMileage /* PORTAL_MILEAGE_2026_11_02 */, /* PORTAL_SETUP_2026_11_04: the first open of Tools & Links also pulls Austin's custom buttons (Admin → Setup) into the grid */ links: loadToolsCustomButtons };
   var extraLoaded = {};
   function showExtraPanel(name) {
+    /* PORTAL_ROLE_LADDER_2026_11_04: same tier gate as
+     * activateTab — Square & ATR One is money (memberships and
+     * payment links), so it stays top-tier only. */
+    if (!tabAllowed(name)) name = 'tickets';
     saveActiveTab(name);
     document.querySelectorAll('.portal-panel').forEach(function (pn) { pn.hidden = true; });
     var panel = $('portal-panel-' + name);
@@ -9876,11 +10797,15 @@ function loadTicketThread(client, ticketId) {
     initCheckin();
     var rb = $('tc-test-receipt'); if (rb) rb.addEventListener('click', function () { printTest(false); });
     var lb = $('tc-test-label'); if (lb) lb.addEventListener('click', function () { printTest(true); });
-    var act = $('tc-action'); if (act) act.addEventListener('click', toggleClock);
-    /* PORTAL_MILEAGE_2026_11_02: mileage panel wiring, plus the
-     * associate's own home-address save on the Time Clock panel. */
+    var actIn = $('tc-action-in'); if (actIn) actIn.addEventListener('click', toggleClock);
+    var actOut = $('tc-action-out'); if (actOut) actOut.addEventListener('click', toggleClock);
+    var pBreak = $('tc-period-break'); if (pBreak) pBreak.addEventListener('click', function () { tcTogglePeriod('break'); });
+    var pLunch = $('tc-period-lunch'); if (pLunch) pLunch.addEventListener('click', function () { tcTogglePeriod('lunch'); });
+    /* PORTAL_MILEAGE_2026_11_02: mileage panel wiring. (The
+     * associate's own home-address save that used to wire here left
+     * with the Time Clock cleanup — the address is edited on the
+     * Associate Accounts card now: TIME_CLOCK_CLEANUP_2026_11_04.) */
     initMileage();
-    var hsb = $('tc-home-save'); if (hsb) hsb.addEventListener('click', saveOwnHome);
     /* PORTAL_TIME_CARDS_2026_11_02: week stepper for the time cards. */
     var wp = $('tc-week-prev'); if (wp) wp.addEventListener('click', function () { tcWeekOffset -= 1; renderTimeCards(); });
     var wn = $('tc-week-next'); if (wn) wn.addEventListener('click', function () { if (tcWeekOffset < 0) { tcWeekOffset += 1; renderTimeCards(); } });
@@ -9897,7 +10822,10 @@ function loadTicketThread(client, ticketId) {
 
   /* ================= TIME CLOCK ================= */
   var tcOpenEntry = null;
-  function isManager() { return /owner|admin|manager/i.test((state.profile && state.profile.role) || ''); }
+  /* PORTAL_ROLE_LADDER_2026_11_04: "manager" in the time-card /
+   * mileage code means the management tiers — Admin-or-above
+   * (was: a regex over the stored role string). */
+  function isManager() { return isAdminOrAbove(); }
   function fmtHours(ms) { return (ms / 3600000).toFixed(2) + ' hrs'; }
   function weekStart() { var d = new Date(); d.setHours(0, 0, 0, 0); var day = (d.getDay() + 6) % 7; d.setDate(d.getDate() - day); return d; }
   /* PORTAL_TIME_CARDS_2026_11_02 (Austin, Nov 2, 2026): "time clock. I
@@ -9932,21 +10860,20 @@ function loadTicketThread(client, ticketId) {
       tcClientRef = client;
       client.from('time_entries').select('*').eq('employee_id', state.user.id).order('clock_in', { ascending: false }).limit(60)
         .then(function (res) {
-          var status = $('tc-status'), btn = $('tc-action');
+          var status = $('tc-status');
           if (res.error) { if (status) status.textContent = 'Time clock is not set up yet.'; var cardsErr = $('tc-cards'); if (cardsErr) cardsErr.innerHTML = ''; return; }
           var rows = res.data || [];
           tcOpenEntry = null;
           rows.forEach(function (r) { if (!r.clock_out) tcOpenEntry = r; });
           if (tcOpenEntry) {
             if (status) status.innerHTML = 'You are <strong>on the clock</strong> since ' + esc(new Date(tcOpenEntry.clock_in).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })) + '.';
-            if (btn) btn.textContent = 'Clock Out';
           } else {
             if (status) status.textContent = 'You are off the clock.';
-            if (btn) btn.textContent = 'Clock In';
           }
-          loadBirthdays(client);
+          renderTcBreakUi(); /* BREAK_LUNCH_2026_11_04: the four buttons' states follow the shift */
           loadTimeCards(client);
-          loadOwnHome(client); /* PORTAL_MILEAGE_2026_11_02: the associate's own home-address row */
+          loadOwnHome(client); /* PORTAL_MILEAGE_2026_11_02: loads the associate's home address for Mileage — the Time Clock editor moved to the Associate Accounts card (TIME_CLOCK_CLEANUP_2026_11_04); this read feeds the mileage default + home geofence */
+          tcProbeBreaks(client, function () { renderTcBreakUi(); }); /* BREAK_LUNCH_2026_11_04 */
         });
     });
   }
@@ -10008,7 +10935,7 @@ function loadTicketThread(client, ticketId) {
           rows: [], workMs: 0, driveMs: 0, miles: 0, milesAmt: 0,
           rate: (prof && prof.pay_rate != null && prof.pay_rate !== '' && !isNaN(Number(prof.pay_rate))) ? Number(prof.pay_rate) : null,
           rateKnown: !!(prof && ('pay_rate' in prof)),
-          isOwner: !!(prof && trim(prof.role).toLowerCase() === 'owner')
+          isOwner: roleIsTopTier(prof && prof.role) /* PORTAL_ROLE_LADDER_2026_11_04 */
         };
         groups.push(byKey[key]);
       }
@@ -10024,14 +10951,25 @@ function loadTicketThread(client, ticketId) {
          * row outright while it is open. */
         if (tcEditId === r.id) return tcEditFormHtml(r);
         var isDriving = tcFieldsKnown && r.entry_type === 'driving';
-        var editBtn = isPortalOwner() ? '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-tc-edit="' + r.id + '">Edit</button>' : '';
+        var editBtn = isAdminOrAbove() ? '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-tc-edit="' + r.id + '">Edit</button>' : ''; /* PORTAL_ROLE_LADDER_2026_11_04: time-card edits ride payroll — Admin-or-above */
         var tripLine = '';
         if (isDriving && (r.from_location || r.to_location)) {
           tripLine = '<div class="tc-note-line"><i class="fas fa-route"></i> ' + esc(r.from_location || '?') + ' &rarr; ' + esc(r.to_location || '?') + (r.miles != null && r.miles !== '' ? ' &middot; ' + esc(String(Number(r.miles))) + ' mi' : '') + '</div>';
         }
         var noteLine = (tcFieldsKnown && r.note) ? '<div class="tc-note-line">' + esc(r.note) + '</div>' : '';
+        /* BREAK_LUNCH_2026_11_04: the day's break / lunch windows,
+         * compliance at a glance — "Break 10:02–10:17 · Lunch
+         * 12:05–12:35". Paid: shown for the record only; the totals
+         * on this card never subtract them. */
+        var breakLine = '';
+        if (tcBreaksKnown && Array.isArray(r.breaks) && r.breaks.length) {
+          var wins = r.breaks.filter(function (p) { return p && p.start; }).map(function (p) {
+            return (p.type === 'lunch' ? 'Lunch ' : 'Break ') + tcPeriodTime(p.start) + '\u2013' + (p.end ? tcPeriodTime(p.end) : 'now');
+          });
+          if (wins.length) breakLine = '<div class="tc-note-line"><i class="fas fa-mug-hot"></i> ' + esc(wins.join(' \u00b7 ')) + ' <span class="portal-muted">(paid)</span></div>';
+        }
         var driveBadge = isDriving ? '<span class="tc-badge"><i class="fas fa-car"></i> Driving</span>' : '';
-        if (!co) return '<div class="tc-row"><span>' + when + '<strong>On the clock</strong></span><span class="tc-row-end">' + driveBadge + editBtn + '</span></div>' + tripLine + noteLine;
+        if (!co) return '<div class="tc-row"><span>' + when + '<strong>On the clock</strong></span><span class="tc-row-end">' + driveBadge + editBtn + '</span></div>' + tripLine + breakLine + noteLine;
         total += (co - ci);
         if (isDriving) {
           g.driveMs += (co - ci);
@@ -10046,7 +10984,7 @@ function loadTicketThread(client, ticketId) {
         } else g.workMs += (co - ci);
         var badge = r.approved ? '<span class="tc-badge">Approved</span>' : '<span class="tc-badge tc-badge-pending">Pending approval</span>';
         var approve = (!r.approved && mgr) ? '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-approve="' + r.id + '">Approve</button>' : '';
-        return '<div class="tc-row"><span>' + when + esc(co.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })) + ' (' + fmtHours(co - ci) + ')</span><span class="tc-row-end">' + driveBadge + badge + approve + editBtn + '</span></div>' + tripLine + noteLine;
+        return '<div class="tc-row"><span>' + when + esc(co.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })) + ' (' + fmtHours(co - ci) + ')</span><span class="tc-row-end">' + driveBadge + badge + approve + editBtn + '</span></div>' + tripLine + breakLine + noteLine;
       }).join('');
       var driveNote = g.driveMs > 0 ? ' <span class="portal-muted">(incl. ' + esc(fmtHours(g.driveMs)) + ' driving — mileage only)</span>' : '';
       /* PAYROLL_SPLIT_2026_11_03: the card prices its own week —
@@ -10081,15 +11019,127 @@ function loadTicketThread(client, ticketId) {
   function toggleClock() {
     withClient(function (client) {
       if (!client || !state.user) return;
-      var btn = $('tc-action'); if (btn) btn.disabled = true;
+      var btnIn = $('tc-action-in'), btnOut = $('tc-action-out');
+      if (btnIn) btnIn.disabled = true;
+      if (btnOut) btnOut.disabled = true;
       var wasOpenTc = !!tcOpenEntry; /* PORTAL_LOCATION_2026_11_02: which snapshot this clock action files */
-      var done = function () { if (btn) btn.disabled = false; extraLoaded.timeclock = true; loadTimeClock(); try { geoCapture(wasOpenTc ? 'clock_out' : 'clock_in'); } catch (e) {} };
+      var done = function () { extraLoaded.timeclock = true; loadTimeClock(); try { geoCapture(wasOpenTc ? 'clock_out' : 'clock_in'); } catch (e) {} };
       if (tcOpenEntry) {
-        client.from('time_entries').update({ clock_out: new Date().toISOString() }).eq('id', tcOpenEntry.id).then(done).catch(done);
+        /* BREAK_LUNCH_2026_11_04: clocking out closes any break or
+         * lunch still open, stamping it with the clock-out time, so
+         * no period is ever left dangling. */
+        var clockPatch = { clock_out: new Date().toISOString() };
+        if (tcBreaksKnown && tcOpenPeriod(tcOpenEntry)) {
+          clockPatch.breaks = tcPeriods(tcOpenEntry).map(function (p) {
+            return (p && !p.end) ? { type: p.type, start: p.start, end: clockPatch.clock_out } : p;
+          });
+        }
+        client.from('time_entries').update(clockPatch).eq('id', tcOpenEntry.id).then(done).catch(done);
       } else {
         client.from('time_entries').insert({ employee_id: state.user.id, employee_name: (state.profile && state.profile.name) || state.user.email }).then(done).catch(done);
       }
     });
+  }
+
+  /* ================= BREAK_LUNCH_2026_11_04 =================
+   * (Austin, Nov 4, 2026): Start Break / Start Lunch buttons on the
+   * Time Clock, flipping to End Break / End Lunch — the panel's
+   * four actions are Clock In, Start Break, Start Lunch, Clock Out.
+   * Breaks and lunch are PAID — never deducted: payroll totals are
+   * pure clock_out minus clock_in (renderTimeCards above, and
+   * finPayroll for the period), and nothing here touches that math.
+   * The periods live on the shift row itself, in time_entries.breaks
+   * — a jsonb array of { type: 'break' | 'lunch', start, end } — so
+   * one shift holds the handbook's two breaks plus lunch (and any
+   * extras) with no extra columns and no child table; the array
+   * arrives with time-entries-breaks.sql. Until that column exists,
+   * tcBreaksKnown stays false, the Start Break / Start Lunch
+   * buttons stay disabled, and the clock behaves exactly as
+   * before. Location snapshots stay clock-in /
+   * clock-out only, exactly as today: geoCapture is wired by hand
+   * inside toggleClock, not generically per write, so break and
+   * lunch events deliberately take no snapshot. */
+  var tcBreaksProbed = false;
+  var tcBreaksKnown = false;
+  function tcProbeBreaks(client, done) {
+    if (tcBreaksProbed) { if (done) done(tcBreaksKnown); return; }
+    client.from('time_entries').select('id, breaks').limit(1)
+      .then(function (res) { tcBreaksProbed = true; tcBreaksKnown = !res.error; if (done) done(tcBreaksKnown); })
+      .catch(function () { tcBreaksProbed = true; tcBreaksKnown = false; if (done) done(false); });
+  }
+  function tcPeriods(entry) { return (entry && Array.isArray(entry.breaks)) ? entry.breaks : []; }
+  function tcOpenPeriod(entry) {
+    var ps = tcPeriods(entry);
+    for (var i = ps.length - 1; i >= 0; i--) { if (ps[i] && ps[i].start && !ps[i].end) return ps[i]; }
+    return null;
+  }
+  function tcPeriodTime(iso) { return new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); }
+  function renderTcBreakUi() {
+    /* BREAK_LUNCH_2026_11_04 — the four-button shape (Austin,
+     * Nov 4, 2026): the panel's buttons are static in the markup —
+     * Clock In, Clock Out, Start Break, Start Lunch — and this
+     * renderer only sets their labels and disabled states. Start
+     * Break reads End Break while a break is open; Start Lunch
+     * reads End Lunch while lunch is open (and highlights); the
+     * other period's button disables meanwhile. Clock In disables
+     * on the clock, Clock Out disables off it, and the period
+     * buttons stay disabled until clocked in. Pre-SQL (the breaks
+     * column missing) the period buttons stay disabled — no extra
+     * control ever appears, and there are never more than four. */
+    var inBtn = $('tc-action-in'), outBtn = $('tc-action-out');
+    var bBtn = $('tc-period-break'), lBtn = $('tc-period-lunch');
+    var onClock = !!tcOpenEntry;
+    var open = onClock ? tcOpenPeriod(tcOpenEntry) : null;
+    if (inBtn) inBtn.disabled = onClock;
+    if (outBtn) outBtn.disabled = !onClock;
+    var ready = onClock && tcBreaksKnown;
+    if (bBtn) {
+      var onBreak = !!(open && open.type === 'break');
+      bBtn.disabled = !ready || (!!open && !onBreak);
+      bBtn.innerHTML = onBreak ? '<i class="fas fa-mug-hot"></i> End Break' : '<i class="fas fa-mug-hot"></i> Start Break';
+      bBtn.classList.toggle('portal-btn-primary', onBreak);
+      bBtn.classList.toggle('portal-btn-outline', !onBreak);
+    }
+    if (lBtn) {
+      var onLunch = !!(open && open.type === 'lunch');
+      lBtn.disabled = !ready || (!!open && !onLunch);
+      lBtn.innerHTML = onLunch ? '<i class="fas fa-utensils"></i> End Lunch' : '<i class="fas fa-utensils"></i> Start Lunch';
+      lBtn.classList.toggle('portal-btn-primary', onLunch);
+      lBtn.classList.toggle('portal-btn-outline', !onLunch);
+    }
+    if (open && tcOpenEntry.clock_in) {
+      var status = $('tc-status');
+      if (status) status.innerHTML = 'You are <strong>on the clock</strong> since ' + esc(tcPeriodTime(tcOpenEntry.clock_in)) + ' &mdash; on ' + (open.type === 'lunch' ? 'lunch' : 'break') + ' since ' + esc(tcPeriodTime(open.start)) + '.';
+    }
+  }
+  function tcTogglePeriod(type) {
+    if (!tcOpenEntry || !tcBreaksKnown) return;
+    var open = tcOpenPeriod(tcOpenEntry);
+    if (open) { if (open.type === type) tcEndPeriod(); return; }
+    tcStartPeriod(type);
+  }
+  function tcSavePeriods(periods) {
+    if (!tcOpenEntry) return;
+    withClient(function (client) {
+      if (!client) return;
+      client.from('time_entries').update({ breaks: periods }).eq('id', tcOpenEntry.id)
+        .then(function (res) { if (!res.error) tcOpenEntry.breaks = periods; loadTimeClock(); })
+        .catch(function () { loadTimeClock(); });
+    });
+  }
+  function tcStartPeriod(type) {
+    if (!tcOpenEntry || tcOpenPeriod(tcOpenEntry)) return;
+    var periods = tcPeriods(tcOpenEntry).slice();
+    periods.push({ type: type, start: new Date().toISOString(), end: null });
+    tcSavePeriods(periods);
+  }
+  function tcEndPeriod() {
+    if (!tcOpenEntry) return;
+    var periods = tcPeriods(tcOpenEntry).slice();
+    for (var i = periods.length - 1; i >= 0; i--) {
+      if (periods[i] && !periods[i].end) { periods[i] = { type: periods[i].type, start: periods[i].start, end: new Date().toISOString() }; break; }
+    }
+    tcSavePeriods(periods);
   }
 
   /* ================= PORTAL_TIMECARDS_2026_11_02 =================
@@ -10144,6 +11194,7 @@ function loadTicketThread(client, ticketId) {
     if (tcMetaLoaded || !client) return;
     tcMetaLoaded = true;
     tcProbeFields(client, function () { if (tcCardRows) renderTimeCards(); });
+    tcProbeBreaks(client, function () { if (tcCardRows) renderTimeCards(); }); /* BREAK_LUNCH_2026_11_04: card rows gain their break / lunch lines once the column is known */
     /* PAYROLL_SPLIT_2026_11_03: profiles are asked for role and
      * pay_rate too, so each time card can show the associate's rate
      * and week pay (the Payroll panel is where pay lives now). Same
@@ -10208,7 +11259,9 @@ function loadTicketThread(client, ticketId) {
   }
 
   function tcOwnerBarHtml() {
-    if (!isPortalOwner()) return '';
+    /* PORTAL_ROLE_LADDER_2026_11_04: manual time entries are a
+     * payroll control — Admin-or-above (Abigail runs payroll). */
+    if (!isAdminOrAbove()) return '';
     var people = tcProfiles.length ? tcProfiles : [];
     if (!people.length && tcCardRows) {
       var seen = {};
@@ -10216,7 +11269,7 @@ function loadTicketThread(client, ticketId) {
     }
     var opts = people.map(function (p) { return '<option value="' + esc(p.id) + '">' + esc(p.name || 'Associate') + '</option>'; }).join('');
     var today = tcDateStr(new Date());
-    return '<div class="tc-owner-bar"><p class="assoc-owner-head"><i class="fas fa-lock"></i> Owner — add a time entry</p>' +
+    return '<div class="tc-owner-bar"><p class="assoc-owner-head"><i class="fas fa-lock"></i> Payroll — add a time entry</p>' +
       '<div class="tc-manual-grid">' +
       '<label>Associate <select id="tc-add-emp">' + opts + '</select></label>' +
       '<label>Date in <input type="date" id="tc-add-indate" value="' + today + '"></label>' +
@@ -10259,9 +11312,9 @@ function loadTicketThread(client, ticketId) {
       var who = a.approved_by ? tcProfileName(a.approved_by) : 'the owner';
       var when = a.approved_at ? new Date(a.approved_at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
       return '<div class="tc-approval"><span class="tc-badge">Week approved</span><span class="portal-muted portal-small">by ' + esc(who) + (when ? ' &middot; ' + esc(when) : '') + ' — ready for Friday pay</span>' +
-        (isPortalOwner() ? '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-tc-unapprove-week="' + esc(g.id) + '">Undo approval</button>' : '') + '</div>';
+        (isAdminOrAbove() ? '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-tc-unapprove-week="' + esc(g.id) + '">Undo approval</button>' : '') + '</div>';
     }
-    if (isPortalOwner()) {
+    if (isAdminOrAbove()) { /* PORTAL_ROLE_LADDER_2026_11_04: week approvals ride payroll — Admin-or-above */
       return '<div class="tc-approval"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-tc-approve-week="' + esc(g.id) + '">Approve week</button><span class="portal-muted portal-small">Approving is for the completed Mon–Sun week — Tuesdays, for Friday pay.</span></div>';
     }
     return '<div class="tc-approval"><span class="tc-badge tc-badge-pending">Week not yet approved</span></div>';
@@ -10494,6 +11547,76 @@ function loadTicketThread(client, ticketId) {
     });
   }
 
+  /* ---------- onboarding records, merged onto the cards ----------
+   * ONBOARDING_MERGE_2026_11_04 (Austin, Nov 4, 2026): "All this stuff
+   * gets saved to the associate account — right under here." What a
+   * person types into Employee Onboarding lands in new_hires; this
+   * probe reads those rows through the portal's own client (the same
+   * independent-probe shape as loadAssocHome / loadAssocAvatars: a
+   * failure just leaves the merge off, never disturbs the roster) and
+   * renderAssociates joins them onto the Associate Accounts cards by
+   * login email — the latest row wins when several match. Display
+   * merge only: the card's profile fields and their Save controls
+   * stay the editors, and an onboarding value only ever fills a gap
+   * (see assocOwnerSection), never replaces a profile value. */
+  var assocOnboardingByEmail = {};
+  var assocOnboardingKnown = false;
+
+  function loadAssocOnboarding(client) {
+    client.from('new_hires').select('*').order('created_at', { ascending: false }).limit(200)
+      .then(function (res) {
+        if (res.error) { assocOnboardingKnown = false; return; }
+        assocOnboardingKnown = true;
+        assocOnboardingByEmail = {};
+        (res.data || []).forEach(function (r) {
+          var email = trim(r.email || '').toLowerCase();
+          if (email && !assocOnboardingByEmail[email]) assocOnboardingByEmail[email] = r;
+        });
+        if (assocExpandedId) renderAssociates();
+      })
+      .catch(function () { assocOnboardingKnown = false; });
+  }
+
+  function assocOnboardingFor(p) {
+    if (!assocOnboardingKnown || !p || !p.login) return null;
+    var email = trim(p.login.email || '').toLowerCase();
+    if (!email) return null;
+    return assocOnboardingByEmail[email] || null;
+  }
+
+  function assocPayTypeLabel(v) {
+    if (v === 'per_job') return 'Per job';
+    if (v === 'hourly') return 'Hourly';
+    if (v === 'flat_rate') return 'Flat rate';
+    return v || '';
+  }
+
+  /* The card's Onboarding section: the onboarding fields the card
+   * does not already present from the profile. Pay rate and home
+   * address are deliberately NOT repeated here — they surface as
+   * labeled fills on their own rows in assocOwnerSection when the
+   * profile field is empty (and pay type rides along with the pay
+   * fill, so it is listed here only when there is no rate to carry
+   * it). No matching row — or a row with nothing to show — renders
+   * nothing at all. */
+  function assocOnboardingSection(ob) {
+    if (!ob) return '';
+    var rows = [];
+    if (trim(ob.business_name)) rows.push(['Business name', esc(ob.business_name)]);
+    if (ob.start_date) rows.push(['Start date', esc(fmtDate(ob.start_date))]);
+    if (trim(ob.status)) rows.push(['Onboarding status', esc(ob.status)]);
+    if (trim(ob.pay_type) && (ob.pay_rate == null || ob.pay_rate === '')) rows.push(['Pay type', esc(assocPayTypeLabel(ob.pay_type))]);
+    var ec = [trim(ob.emergency_contact_name), trim(ob.emergency_contact_phone)].filter(function (x) { return !!x; }).join(' \u00b7 ');
+    if (ec) rows.push(['Emergency contact', esc(ec)]);
+    if (ob.w9_on_file != null) rows.push(['W-9 on file', ob.w9_on_file ? 'Yes' : 'No']);
+    if (ob.agreement_signed != null) rows.push(['Agreement signed', ob.agreement_signed ? 'Yes' : 'No']);
+    if (trim(ob.notes)) rows.push(['Notes', esc(ob.notes)]);
+    if (!rows.length) return '';
+    return '<div class="assoc-owner-sec"><p class="assoc-owner-head"><i class="fas fa-clipboard-list"></i> Onboarding</p>' +
+      kvRows(rows) +
+      '<p class="portal-muted portal-small">From their Employee Onboarding form &mdash; shown here so everything about an employee lives on this one card.</p></div>';
+  }
+
   /* ---------- home addresses (profile field) ---------- */
   var assocHomeById = {};
   var assocHomeKnown = false;
@@ -10538,6 +11661,14 @@ function loadTicketThread(client, ticketId) {
     });
   }
 
+  /* TIME_CLOCK_CLEANUP_2026_11_04: this stays a pure DATA load —
+   * ownHomeAddress is Mileage's default From and the home geofence
+   * center, so the clock still reads it on load. The Time Clock's
+   * own address editor is gone (the panel block was removed); the
+   * address is edited on the Associate Accounts card, whose save
+   * also refreshes the home geofence (saveAssocHome). The DOM pokes
+   * below are null-guarded leftovers — the elements no longer
+   * exist, so they no-op. */
   function loadOwnHome(client) {
     if (!state.user) return;
     client.from('employee_profiles').select('home_address').eq('id', state.user.id).maybeSingle()
@@ -10551,27 +11682,11 @@ function loadTicketThread(client, ticketId) {
       .catch(function () {});
   }
 
-  function saveOwnHome() {
-    var input = $('tc-home-address'), msg = $('tc-home-msg');
-    if (!input || !state.user) return;
-    var val = trim(input.value);
-    if (msg) msg.textContent = 'Saving&hellip;';
-    withClient(function (client) {
-      if (!client) { if (msg) msg.textContent = 'Could not save. Try again.'; return; }
-      /* PAYRATE_FIX_2026_11_03: same land-or-fail guard as
-       * saveAssocPay — zero rows back means the address did not
-       * persist; do not update ownHomeAddress off a phantom save. */
-      client.from('employee_profiles').update({ home_address: val || null }).eq('id', state.user.id).select('id, home_address')
-        .then(function (res) {
-          if (res.error || !res.data || !res.data.length) { if (msg) msg.textContent = 'Could not save that address.'; return; }
-          val = res.data[0].home_address || '';
-          ownHomeAddress = val;
-          if (msg) msg.textContent = 'Saved.';
-          try { geoEnsureHomeFence(client, state.user.id, val, (state.profile && state.profile.name) || ''); } catch (e) {}
-        })
-        .catch(function () { if (msg) msg.textContent = 'Could not save. Try again.'; });
-    });
-  }
+  /* TIME_CLOCK_CLEANUP_2026_11_04: saveOwnHome (the Time Clock
+   * panel's own address save) was removed with its panel block.
+   * The address is edited on the Associate Accounts card now —
+   * saveAssocHome carries the same land-or-fail guard and the
+   * geoEnsureHomeFence refresh, so nothing was lost in the move. */
 
   /* ---------- routing (the swap point) ---------- */
   var geoCache = {};
@@ -10721,7 +11836,7 @@ function loadTicketThread(client, ticketId) {
 
   function mlPopulateTech() {
     var sel = $('ml-tech'); if (!sel) return;
-    var owner = isPortalOwner();
+    var owner = isAdminOrAbove(); /* PORTAL_ROLE_LADDER_2026_11_04: "owner" here = may log/view trips for anyone — Admin-or-above (payroll runs the mileage too) */
     var people = owner ? mlProfiles : mlProfiles.filter(function (p) { return p.id === state.user.id; });
     if (!people.length && !owner) people = [{ id: state.user.id, name: (state.profile && state.profile.name) || 'Me' }];
     sel.innerHTML = people.map(function (p) { return '<option value="' + esc(p.id) + '"' + (p.id === state.user.id ? ' selected' : '') + '>' + esc(p.name || 'Associate') + '</option>'; }).join('');
@@ -10850,7 +11965,7 @@ function loadTicketThread(client, ticketId) {
     });
     wrap.innerHTML = groups.map(function (g) {
       var prof = g.id ? mlProfileById(g.id) : null;
-      var isOwnerRow = prof ? trim(prof.role).toLowerCase() === 'owner' : (g.id === (state.user && state.user.id) && isPortalOwner());
+      var isOwnerRow = prof ? roleIsTopTier(prof.role) : (g.id === (state.user && state.user.id) && isPortalOwner()); /* PORTAL_ROLE_LADDER_2026_11_04: top-tier rows are the unpaid-driving rows */
       var rowsHtml = g.rows.map(function (r) {
         var ci = new Date(r.clock_in), co = r.clock_out ? new Date(r.clock_out) : null;
         var durMin = co ? Math.max(0, Math.round((co - ci) / 60000)) : 0;
@@ -10858,7 +11973,7 @@ function loadTicketThread(client, ticketId) {
         var rate = mileageRateFor(ci);
         var amt = mi * rate.rate;
         if (!isOwnerRow) { g.miles += mi; g.amt += amt; }
-        var canReturn = isPortalOwner() || r.employee_id === state.user.id;
+        var canReturn = isAdminOrAbove() || r.employee_id === state.user.id; /* PORTAL_ROLE_LADDER_2026_11_04 */
         return '<div class="tc-row"><span>' + esc(ci.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })) + ' &middot; ' + esc(r.from_location || '?') + ' &rarr; ' + esc(r.to_location || '?') + '</span>' +
           '<span class="tc-row-end"><span>' + mi.toFixed(1) + ' mi &middot; ' + durMin + ' min' + (isOwnerRow ? ' &middot; owner — unpaid' : ' &middot; ' + esc(fmtMoney(amt)) + ' @ ' + fmtRate(rate.rate)) + '</span>' +
           (canReturn ? '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-ml-return="' + esc(r.id) + '">Return trip</button>' : '') + '</span></div>';
@@ -11376,7 +12491,10 @@ function loadTicketThread(client, ticketId) {
 
   function geoRenderOwnerSections() {
     var wrap = $('ml-owner-sections'); if (!wrap) return;
-    if (!isPortalOwner()) { wrap.innerHTML = ''; return; }
+    /* PORTAL_ROLE_LADDER_2026_11_04: geofence oversight follows
+     * the mileage management view — Admin-or-above. Flagged in
+     * the build report as an interpretation. */
+    if (!isAdminOrAbove()) { wrap.innerHTML = ''; return; }
     if (!geoFencesKnown) {
       wrap.innerHTML = '<div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Geofences</h3></div>' +
         '<p class="portal-muted">Geofences turn on once the staged location update runs: a fence around the home base, one around each tech&rsquo;s home, and one around each job address — arrivals and departures log themselves here, and trips start and end on their own.</p>';
@@ -11883,14 +13001,24 @@ function loadTicketThread(client, ticketId) {
     });
   }
 
-  /* ================= BIRTHDAYS (team) ================= */
-  function loadBirthdays(client) {
-    var box = $('tc-birthdays'); if (!box) return;
+  /* ================= BIRTHDAYS (team) =================
+   * TIME_CLOCK_CLEANUP_2026_11_04 (Austin, Nov 4, 2026): the team
+   * birthdays list moved OUT of the Time Clock panel into
+   * Associate Accounts — birthdays are profile data, and profiles
+   * live there. This is the same 60-day upcoming list the Time
+   * Clock used to render, same rows, same order; only the home
+   * (#assoc-birthdays) and the loader's name changed. The old
+   * "My birthday" self-editor went with the move and was NOT
+   * duplicated: each person's birthday already shows on their
+   * Associate Accounts card (the card detail's Birthday row,
+   * fed by the same employee_profiles.birthday column), and the
+   * card's management section already edits the home address.
+   * Customer birthdays are a different thing — the Celebrations
+   * module in portal.html, on the Customers panel — untouched. */
+  function loadTeamBirthdays(client) {
+    var box = $('assoc-birthdays'); if (!box) return;
     client.from('employee_profiles').select('id, name, birthday').then(function (res) {
       if (res.error || !res.data) { box.innerHTML = '<p class="portal-muted">Birthdays are not set up yet.</p>'; return; }
-      var mine = res.data.filter(function (x) { return state.user && x.id === state.user.id; })[0];
-      var input = $('tc-birthday');
-      if (mine && input && mine.birthday) input.value = mine.birthday;
       var now = new Date(); now.setHours(0, 0, 0, 0);
       var ups = res.data.filter(function (x) { return x.birthday; }).map(function (x) {
         var parts = String(x.birthday).split('-');
@@ -11902,24 +13030,5 @@ function loadTicketThread(client, ticketId) {
         return '<div class="tc-row"><span><i class="fas fa-cake-candles"></i> <strong>' + esc(x.name) + '</strong></span><span>' + esc(x.date.toLocaleDateString([], { month: 'long', day: 'numeric' })) + (x.days === 0 ? ' &mdash; <strong>today!</strong>' : ' &middot; in ' + x.days + ' day' + (x.days === 1 ? '' : 's')) + '</span></div>';
       }).join('') : '<p class="portal-muted">No team birthdays in the next 60 days.</p>';
     });
-    var save = $('tc-birthday-save');
-    if (save && !save.getAttribute('data-wired')) {
-      save.setAttribute('data-wired', '1');
-      save.addEventListener('click', function () {
-        var val = $('tc-birthday').value || null;
-        var msg = $('tc-birthday-msg');
-        if (msg) msg.textContent = 'Saving\u2026';
-        /* PAYRATE_FIX_2026_11_03: land-or-fail — .select() asks for
-         * the written row back, and zero rows back (a policy-blocked
-         * update reports success) counts as not saved, same as an
-         * error: no success message, no board reload. */
-        client.from('employee_profiles').update({ birthday: val }).eq('id', state.user.id).select('id, birthday').then(function (res2) {
-          var landed = !res2.error && !!res2.data && res2.data.length > 0;
-          if (!msg) return;
-          msg.textContent = !landed ? 'Couldn\'t save \u2014 try again.' : 'Saved. Your day is on the board.';
-          if (landed) loadBirthdays(client);
-        });
-      });
-    }
   }
 })();
