@@ -800,6 +800,13 @@
               <label for="portal-nh-notes">Notes</label>
               <textarea id="portal-nh-notes" rows="3" placeholder="Anything else about this employee&hellip;"></textarea>
             </div>
+            <!-- ONBOARDING_PHOTO_2026_11_04 (Austin, Nov 4, 2026): the first-day picture — an admin takes the new associate's picture as part of onboarding, with the rest of their information. Only admins change pictures (they are customer-facing and approved), so the picture starts here, taken by the admin on day one. The pick is optional; the save below crops it square, files it in the hire's documents folder, and saves its path on the hire row (new_hires.photo_path). -->
+            <div class="portal-field portal-nh-wide">
+              <label for="portal-nh-photo">First-day picture</label>
+              <input type="file" id="portal-nh-photo" accept="image/*" capture="environment" />
+              <p class="portal-muted portal-small">Take their picture on their first day. This becomes the picture the team and customers see.</p>
+              <img id="portal-nh-photo-preview" alt="First-day picture preview" hidden style="width:72px;height:72px;object-fit:cover;border-radius:10px;margin-top:0.4rem;" />
+            </div>
           </div>
           <p class="portal-error" id="portal-nh-error" hidden></p>
           <p class="portal-muted" id="portal-nh-success" hidden><i class="fas fa-circle-check"></i> New hire saved.</p>
@@ -3203,9 +3210,65 @@
       });
     }
 
+    /* ONBOARDING_PHOTO_2026_11_04 (Austin, Nov 4, 2026): the
+     * first-day picture. The admin taking the onboarding takes the
+     * new associate's picture with the rest of their information;
+     * it is cropped square (the same canvas treatment the portal's
+     * profile pictures get), filed in the hire-documents bucket
+     * under the hire's own folder, and its path is saved on the
+     * hire row (new_hires.photo_path) so Associate Accounts can
+     * show it as the person's picture until an admin sets one on
+     * their account. A picture problem never blocks the hire:
+     * done(false) just reports it in the success line. */
+    function nhCropPhotoFile(file, done) {
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function () {
+        try {
+          var w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+          var side = Math.min(w, h);
+          var out = Math.min(512, side);
+          var canvas = document.createElement('canvas');
+          canvas.width = out; canvas.height = out;
+          var ctx = canvas.getContext('2d');
+          ctx.drawImage(img, (w - side) / 2, (h - side) / 2, side, side, 0, 0, out, out);
+          URL.revokeObjectURL(url);
+          if (canvas.toBlob) canvas.toBlob(function (b) { done(b); }, 'image/jpeg', 0.85);
+          else done(null);
+        } catch (e) { URL.revokeObjectURL(url); done(null); }
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); done(null); };
+      img.src = url;
+    }
+
+    function nhSaveHirePhoto(client, hireId, file, done) {
+      nhCropPhotoFile(file, function (blob) {
+        if (!blob) { done(false); return; }
+        var path = 'hire/' + hireId + '/photo-' + nhDocStamp() + '.jpg';
+        client.storage.from(NH_DOC_BUCKET).upload(path, blob, { contentType: 'image/jpeg', upsert: false }).then(function (up) {
+          if (up.error) { done(false); return; }
+          client.from('new_hires').update({ photo_path: path }).eq('id', hireId).select('id').then(function (res) {
+            done(!(res.error || !res.data || !res.data.length));
+          }).catch(function () { done(false); });
+        }).catch(function () { done(false); });
+      });
+    }
+
     function initNewHireForm() {
       var form = $('portal-newhire-form');
       if (!form) return;
+      /* ONBOARDING_PHOTO_2026_11_04: the first-day picture pick
+       * and its preview; the file rides the save below. */
+      var nhPhotoFile = null;
+      var photoInput = $('portal-nh-photo');
+      if (photoInput) photoInput.addEventListener('change', function () {
+        nhPhotoFile = (photoInput.files && photoInput.files[0]) || null;
+        var pv = $('portal-nh-photo-preview');
+        if (pv) {
+          if (nhPhotoFile) { pv.src = URL.createObjectURL(nhPhotoFile); pv.hidden = false; }
+          else { pv.hidden = true; pv.removeAttribute('src'); }
+        }
+      });
       form.addEventListener('submit', function (e) {
         e.preventDefault();
         var err = $('portal-nh-error');
@@ -3288,12 +3351,27 @@
            * the one being onboarded — Team Documents' Attach now
            * files straight to them, no picking. */
           var saved = (res.data && res.data[0]) || null;
-          if (saved && saved.id) {
-            tdSetCurrentHire(saved);
-            ok.innerHTML = '<i class="fas fa-circle-check"></i> New hire saved — you are now onboarding ' + esc(saved.full_name || fullName) + '. In Team Documents, Attach files straight to them.';
+          /* ONBOARDING_PHOTO_2026_11_04: when a first-day picture
+           * was picked, file it against the hire just saved, then
+           * finish; the hire itself is already saved either way. */
+          var finishNhSave = function (photoNote) {
+            if (saved && saved.id) {
+              tdSetCurrentHire(saved);
+              ok.innerHTML = '<i class="fas fa-circle-check"></i> New hire saved — you are now onboarding ' + esc(saved.full_name || fullName) + '. In Team Documents, Attach files straight to them.' + (photoNote || '');
+            }
+            form.reset();
+            nhPhotoFile = null;
+            var pv2 = $('portal-nh-photo-preview');
+            if (pv2) { pv2.hidden = true; pv2.removeAttribute('src'); }
+            ok.hidden = false;
+          };
+          if (saved && saved.id && nhPhotoFile) {
+            nhSaveHirePhoto(client, saved.id, nhPhotoFile, function (photoOk) {
+              finishNhSave(photoOk ? ' Their first-day picture is saved.' : ' The picture did not save — the hire is saved without it.');
+            });
+          } else {
+            finishNhSave('');
           }
-          form.reset();
-          ok.hidden = false;
         }).catch(function () {
           btn.disabled = false;
           btn.innerHTML = '<i class="fas fa-user-plus"></i> Add new hire';

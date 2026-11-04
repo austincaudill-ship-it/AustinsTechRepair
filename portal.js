@@ -8163,11 +8163,14 @@ function loadTicketThread(client, ticketId) {
            * (pay + home address + time + time-card jump) exists in the
            * markup ONLY for the owner — see the section comment above. */
           /* SELF_PICTURE_ACCOUNTS_2026_11_04: the viewer's OWN
-           * card carries their own-picture control at every
-           * tier — see assocSelfPictureSection. It is the one
-           * control in this card that is not management: it can
-           * only ever write the viewer's own picture. */
-          if (isSelf) detail += assocSelfPictureSection(a);
+           * card carries their own-picture control — see
+           * assocSelfPictureSection.
+           * PICTURE_ADMIN_LOCK_2026_11_04: Austin's rule later the
+           * same day — only Admin-and-above may change ANY profile
+           * picture, because the pictures are customer-facing and
+           * must be approved. The control renders for the viewer's
+           * own card only when the viewer is Admin-or-above. */
+          if (isSelf && isAdminOrAbove()) detail += assocSelfPictureSection(a);
           var ob = assocOnboardingFor(p);
           if (isAdminOrAbove()) {
             detail += assocOwnerSection(a, ob);
@@ -8186,7 +8189,7 @@ function loadTicketThread(client, ticketId) {
         detail += '</div>';
       }
       return '<article class="portal-card assoc-card' + (banned ? ' acct-card-off' : '') + '" data-assoc-toggle="' + esc(id) + '" style="cursor:pointer" title="Tap to ' + (open ? 'close' : 'view') + ' this associate&rsquo;s account">' +
-        '<div class="portal-card-top"><p class="portal-card-title"><span class="assoc-card-id">' + avatarHtml((a && a.name) || (s && s.name) || 'Associate', a ? (assocAvatarById[a.id] || '') : '', 'md') + '<span><span class="mem-status-dot ' + (banned ? 'mem-dot-off' : 'mem-dot-on') + '" title="' + (banned ? 'Deactivated' : 'Active') + '" aria-label="' + (banned ? 'Deactivated' : 'Active') + '"></span>' + esc((a && a.name) || (s && s.name) || 'Associate') + (isSelf ? ' <span class="portal-muted portal-small">(you)</span>' : '') + '</span></span></p>' +
+        '<div class="portal-card-top"><p class="portal-card-title"><span class="assoc-card-id">' + avatarHtml((a && a.name) || (s && s.name) || 'Associate', (a && assocAvatarById[a.id]) || (ob ? (assocObPhotoByEmail[trim((p.login && p.login.email) || '').toLowerCase()] || '') : ''), 'md') /* ONBOARDING_PHOTO_2026_11_04: fall back to the first-day onboarding picture when no account picture is set */ + '<span><span class="mem-status-dot ' + (banned ? 'mem-dot-off' : 'mem-dot-on') + '" title="' + (banned ? 'Deactivated' : 'Active') + '" aria-label="' + (banned ? 'Deactivated' : 'Active') + '"></span>' + esc((a && a.name) || (s && s.name) || 'Associate') + (isSelf ? ' <span class="portal-muted portal-small">(you)</span>' : '') + '</span></span></p>' +
         '<span class="portal-card-topright">' +
         (role ? '<span class="portal-badge portal-badge-role">' + esc(roleLabel(role)) + '</span>' : '') +
         (banned
@@ -8754,9 +8757,11 @@ function loadTicketThread(client, ticketId) {
    * from Associate Accounts too — on their own card — not only in
    * Team Chat. The control (assocSelfPictureSection) renders in
    * the expanded detail of the card whose profile id IS the
-   * signed-in user, at every tier: it carries no tier check of
-   * its own, because it can only ever write the viewer's own
-   * picture. The upload (uploadAssocSelfPicture) is Team Chat's
+   * signed-in user. PICTURE_ADMIN_LOCK_2026_11_04: Austin's
+   * later rule the same day supersedes the every-tier reach —
+   * only Admin-and-above change any picture (customer-facing,
+   * approved), so the control renders Admin-and-above only and
+   * both the pick and the upload re-check the tier. The upload (uploadAssocSelfPicture) is Team Chat's
    * "My picture" flow (uploadMyAvatar) step for step — the same
    * processAvatarFile crop, the same staff-avatars bucket
    * (AVATAR_BUCKET), the same own-uid file path, the same
@@ -8786,6 +8791,7 @@ function loadTicketThread(client, ticketId) {
      * top of the render condition, so no path through this
      * handler can aim the self-upload at anyone else. */
     if (!state.user || id !== state.user.id) return;
+    if (!isAdminOrAbove()) return; /* PICTURE_ADMIN_LOCK_2026_11_04 */
     var input = $('portal-acct-selfpic-file');
     if (!input) return;
     input.click();
@@ -8799,6 +8805,7 @@ function loadTicketThread(client, ticketId) {
 
   function uploadAssocSelfPicture(file) {
     if (!state.user || !file) return;
+    if (!isAdminOrAbove()) { assocSelfPicMsg('Only an admin can change profile pictures.'); return; } /* PICTURE_ADMIN_LOCK_2026_11_04 */
     withClient(function (client) {
       if (!client) { assocSelfPicMsg('Upload failed. Check your connection and try again.'); return; }
       assocSelfPicMsg('Preparing your picture\u2026');
@@ -9625,6 +9632,8 @@ function loadTicketThread(client, ticketId) {
    * the old one everywhere at once instead of haunting a cache. */
   function renderMyAvatarRow() {
     var pic = $('portal-teamchat-me-pic'), name = $('portal-teamchat-me-name'), btn = $('portal-teamchat-me-btn');
+    var card = $('portal-teamchat-me');
+    if (card) card.hidden = !isAdminOrAbove(); /* PICTURE_ADMIN_LOCK_2026_11_04: the moved card is an admin control — associates never see a picture changer; an admin takes and sets pictures (onboarding, Associate Accounts) */
     if (!pic || !state.user) return;
     var me = teamChatDirPerson(state.user.id);
     var url = (me && me.avatar_url) || (state.user ? assocAvatarById[state.user.id] : '') || ''; /* PICTURE_MOVE_2026_11_04: fall back to the Accounts avatar probe, so the moved card paints even when Team Chat was never opened */
@@ -9662,6 +9671,7 @@ function loadTicketThread(client, ticketId) {
 
   function uploadMyAvatar(file) {
     if (!teamChatClient || !state.user || !file) return;
+    if (!isAdminOrAbove()) { myAvatarMsg('Only an admin can change profile pictures.'); return; } /* PICTURE_ADMIN_LOCK_2026_11_04 */
     myAvatarMsg('Preparing your picture…');
     processAvatarFile(file, function (blob) {
       if (!blob) { myAvatarMsg('That picture could not be read. Try another one.'); return; }
@@ -12170,6 +12180,7 @@ function loadTicketThread(client, ticketId) {
    * (see assocOwnerSection), never replaces a profile value. */
   var assocOnboardingByEmail = {};
   var assocOnboardingKnown = false;
+  var assocObPhotoByEmail = {}; /* ONBOARDING_PHOTO_2026_11_04: signed view URLs for first-day pictures (new_hires.photo_path), by hire email */
 
   function loadAssocOnboarding(client) {
     client.from('new_hires').select('*').order('created_at', { ascending: false }).limit(200)
@@ -12182,6 +12193,23 @@ function loadTicketThread(client, ticketId) {
           if (email && !assocOnboardingByEmail[email]) assocOnboardingByEmail[email] = r;
         });
         if (assocExpandedId) renderAssociates();
+        /* ONBOARDING_PHOTO_2026_11_04: hires whose first-day
+         * picture is on file (photo_path in the documents bucket)
+         * get a signed view URL cached by email, so their card
+         * can wear that picture until an admin sets an account
+         * picture of their own. */
+        var photoHires = Object.keys(assocOnboardingByEmail).map(function (k) { return assocOnboardingByEmail[k]; }).filter(function (r) { return r && r.photo_path; });
+        if (photoHires.length) {
+          var pending = photoHires.length;
+          photoHires.forEach(function (r) {
+            var em = trim(r.email || '').toLowerCase();
+            if (assocObPhotoByEmail[em]) { pending--; if (!pending) renderAssociates(); return; }
+            client.storage.from(DOC_BUCKET).createSignedUrl(r.photo_path, 3600).then(function (su) {
+              if (su && su.data && su.data.signedUrl) assocObPhotoByEmail[em] = su.data.signedUrl;
+              pending--; if (!pending) renderAssociates();
+            }).catch(function () { pending--; if (!pending) renderAssociates(); });
+          });
+        }
       })
       .catch(function () { assocOnboardingKnown = false; });
   }
