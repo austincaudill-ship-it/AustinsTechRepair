@@ -293,11 +293,16 @@
     panel.hidden = false;
   }
 
-  /* Honeypot: a hidden field real people never fill. If it has a value,
-   * treat the submit as spam: fake a success, write nothing. */
+  /* Honeypot: a hidden field real people never fill.
+   * HONEYPOT_FAKESUCCESS_REMOVED_2026_11_04: the old trap faked a
+   * success and wrote nothing when the field had any value — but
+   * browser autofill can fill it for real people, and on Nov 4, 2026
+   * it silently ate the owner's own warranty test submission
+   * (success screen, no database row, no alert email). The Cloudflare
+   * human check (Turnstile) already gates every form, so the trap is
+   * retired: isSpam always returns false and the field is ignored. */
   function isSpam(form) {
-    var hp = form.querySelector('.atr-honeypot input, input[name="_honey"]');
-    return !!(hp && trim(hp.value) !== '');
+    return false;
   }
 
   /* ---------------- email alert (fire-and-forget) ----------------
