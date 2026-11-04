@@ -8206,6 +8206,7 @@ function loadTicketThread(client, ticketId) {
      * while a card is open) fetches it once; loadAssocTime re-renders
      * when the rows land. */
     if (assocExpandedId && isAdminOrAbove() && !assocTimeCache[assocExpandedId]) loadAssocTime(assocExpandedId);
+    renderMyAvatarRow(); /* PICTURE_MOVE_2026_11_04: the My picture card lives in this panel now — keep it painted on every Accounts render */
   }
 
   function loadAssociates(force) {
@@ -8846,6 +8847,30 @@ function loadTicketThread(client, ticketId) {
       var f = input.files && input.files[0];
       input.value = '';
       if (f) uploadAssocSelfPicture(f);
+    });
+  }
+
+  /* PICTURE_MOVE_2026_11_04: the moved My picture card's picker —
+   * wired once from initDelegation beside the other Associate
+   * Accounts pickers. The upload is uploadMyAvatar unchanged; it
+   * rides teamChatClient, so when Team Chat has not been opened
+   * yet this session the shared client is fetched first
+   * (withClient, the uploadAssocSelfPicture pattern). The input
+   * resets after every pick, same as the other pickers. */
+  function wireMyAvatarPicker() {
+    var input = $('portal-teamchat-me-file');
+    if (!input || input.getAttribute('data-wired')) return;
+    input.setAttribute('data-wired', '1');
+    input.addEventListener('change', function () {
+      var f = input.files && input.files[0];
+      input.value = '';
+      if (!f) return;
+      if (teamChatClient) { uploadMyAvatar(f); return; }
+      withClient(function (client) {
+        if (!client) { myAvatarMsg('Upload failed. Check your connection and try again.'); return; }
+        teamChatClient = client;
+        uploadMyAvatar(f);
+      });
     });
   }
 
@@ -9589,7 +9614,9 @@ function loadTicketThread(client, ticketId) {
   }
 
   /* AVATARS_2026_11_03: "My picture" — every staff member manages
-   * their OWN portrait in the Team Chat panel. The pick is squared
+   * their OWN portrait. PICTURE_MOVE_2026_11_04: the card moved
+   * out of Team Chat into Associate Accounts (same ids; painted
+   * from either panel’s load). The pick is squared
    * and shrunk in the browser (canvas, center-crop, max 512x512,
    * JPEG), uploaded to the staff-avatars bucket under the one file
    * name the storage policy lets this person write — their own
@@ -9600,7 +9627,7 @@ function loadTicketThread(client, ticketId) {
     var pic = $('portal-teamchat-me-pic'), name = $('portal-teamchat-me-name'), btn = $('portal-teamchat-me-btn');
     if (!pic || !state.user) return;
     var me = teamChatDirPerson(state.user.id);
-    var url = (me && me.avatar_url) || '';
+    var url = (me && me.avatar_url) || (state.user ? assocAvatarById[state.user.id] : '') || ''; /* PICTURE_MOVE_2026_11_04: fall back to the Accounts avatar probe, so the moved card paints even when Team Chat was never opened */
     var myName = (state.profile && state.profile.name) || (me && me.name) || 'My picture';
     pic.innerHTML = avatarHtml(myName, url, 'md');
     if (name) name.textContent = myName;
@@ -9712,15 +9739,9 @@ function loadTicketThread(client, ticketId) {
       if (!gform.hidden) renderTeamChatGroupMembers();
     });
     if (gform) gform.addEventListener('submit', function (e) { e.preventDefault(); createTeamChatGroup(); });
-    /* AVATARS_2026_11_03: the My picture file pick. The input is
-     * reset after every pick so choosing the same photo twice in
-     * a row still fires the change. */
-    var meFile = $('portal-teamchat-me-file');
-    if (meFile) meFile.addEventListener('change', function () {
-      var f = meFile.files && meFile.files[0];
-      meFile.value = '';
-      if (f) uploadMyAvatar(f);
-    });
+    /* PICTURE_MOVE_2026_11_04: the My picture file pick is wired
+     * by wireMyAvatarPicker (initDelegation) now — the card lives
+     * in Associate Accounts, not in this panel anymore. */
   }
 
   function loadTeamChat(force) {
@@ -11260,6 +11281,7 @@ function loadTicketThread(client, ticketId) {
 
     wireAssocAvatarPicker(); /* PORTAL_ADMIN_CONTROLS_2026_11_04: the Associate Accounts Change picture file input */
     wireAssocSelfPicturePicker(); /* SELF_PICTURE_ACCOUNTS_2026_11_04: the own-card Change my picture file input */
+    wireMyAvatarPicker(); /* PICTURE_MOVE_2026_11_04: the My picture card, now in Associate Accounts */
 
     /* PORTAL_CUSTOMER_PROFILE_2026_11_02 (Austin correction): the
      * approvals section lives in the Requests panel — refresh the

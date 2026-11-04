@@ -1014,7 +1014,7 @@ span.avatar-disc {
 .avatar-md { width: 40px; height: 40px; font-size: 0.92rem; }
 .avatar-lg { width: 64px; height: 64px; font-size: 1.3rem; }
 
-/* The My picture row at the top of Team Chat. */
+/* The My picture row — PICTURE_MOVE_2026_11_04: lives in Associate Accounts now (moved out of Team Chat). */
 .teamchat-me {
   display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap;
   padding: 0.6rem 0.75rem; margin-bottom: 0.75rem;
