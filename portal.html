@@ -163,7 +163,11 @@
           <i class="fas fa-boxes"></i> Inventory &amp; Orders
         </button>
         <button class="portal-tab" id="portal-tab-links" type="button" role="tab" data-tab="links">
-          <i class="fas fa-link"></i> Tools &amp; Links
+          <i class="fas fa-link"></i> Links
+        </button>
+        <!-- LINKS_TRACKING_2026_11_04 (Austin, Nov 4, 2026): "we're adding four more boxes to links and then we're putting the live tracking action button in parts and tools" — Live Tracking gets its own Action Button here in Parts & Tools, opening portal-panel-tracking (the lookup that used to live inside the Links panel). -->
+        <button class="portal-tab" id="portal-tab-tracking" type="button" role="tab" data-tab="tracking">
+          <i class="fas fa-truck-fast"></i> Live Tracking
         </button>
         <button class="portal-tab" id="portal-tab-prices" type="button" role="tab" data-tab="prices">
           <i class="fas fa-tags"></i> Price Book
@@ -444,7 +448,7 @@
           <h3 class="portal-h3">Custom buttons</h3>
           <button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="portal-setup-add-btn"><i class="fas fa-plus"></i> Add a button</button>
         </div>
-        <p class="portal-muted portal-small">Buttons you add appear at the end of the Tools &amp; Links grid, right alongside the built-in cards.</p>
+        <p class="portal-muted portal-small">Buttons you add appear at the end of the Links grid, right alongside the built-in cards.</p>
         <div id="portal-setup-btn-form" hidden>
           <div class="portal-card">
             <p class="portal-card-title" id="portal-setup-btn-form-title">Add a button</p>
@@ -460,7 +464,7 @@
             <div class="portal-field"><label for="portal-setup-btn-url">Web address (URL) *</label>
               <input type="text" id="portal-setup-btn-url" placeholder="e.g. https://www.fedex.com" autocomplete="off" /></div>
             <div class="portal-field"><label for="portal-setup-btn-location">Where it shows</label>
-              <select id="portal-setup-btn-location"><option value="tools">Tools &amp; Links grid</option></select></div>
+              <select id="portal-setup-btn-location"><option value="tools">Links grid</option></select></div>
             <input type="hidden" id="portal-setup-btn-id" value="" />
             <div class="portal-status-row">
               <button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="portal-setup-btn-save">Save button</button>
@@ -474,7 +478,12 @@
           <h3 class="portal-h3">Printers &amp; devices</h3>
           <button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="portal-setup-add-dev"><i class="fas fa-plus"></i> Add a device</button>
         </div>
-        <p class="portal-muted portal-small">The shop&rsquo;s internal tech: printers, iPads, phones, computers. Printer entries carry the same test prints as the Printers block in Tools &amp; Links &mdash; the print dialog still lets you pick which printer.</p>
+        <p class="portal-muted portal-small">The shop&rsquo;s internal tech: printers, iPads, phones, computers. Receipts and Zebra part labels print through your device&rsquo;s printer list &mdash; Bluetooth, USB, or Wi-Fi printers your phone, tablet, or computer can already see. Pick the printer in the print dialog.</p>
+        <!-- LINKS_TRACKING_2026_11_04: the two test prints moved here from the old Links-panel Printers block (same button ids, so the printTest wiring in portal.js is untouched) — printer setup lives in Setup now. -->
+        <p>
+          <button class="portal-btn portal-btn-outline" id="tc-test-receipt" type="button"><i class="fas fa-print"></i> Print test receipt</button>
+          <button class="portal-btn portal-btn-outline" id="tc-test-label" type="button"><i class="fas fa-tag"></i> Print test label</button>
+        </p>
         <div id="portal-setup-dev-form" hidden>
           <div class="portal-card">
             <p class="portal-card-title" id="portal-setup-dev-form-title">Add a device</p>
@@ -1121,10 +1130,10 @@
         <div id="ml-owner-sections"></div>
       </div>
 
-      <!-- TOOLS & LINKS -->
+      <!-- LINKS (LINKS_TRACKING_2026_11_04, Austin, Nov 4, 2026: "there is no tool in there... you can just rename it to just links" — the panel formerly called Tools & Links holds links only; the Printers block moved to Admin → Setup and Live tracking became its own panel) -->
       <div class="portal-panel" id="portal-panel-links" role="tabpanel" hidden>
-        <div class="portal-panel-head"><h2 class="portal-h2">Tools &amp; Links</h2></div>
-        <p class="portal-muted portal-small">Parts suppliers, our price sheet, and printer tools &mdash; everything a tech needs, one tap away.</p>
+        <div class="portal-panel-head"><h2 class="portal-h2">Links</h2></div>
+        <p class="portal-muted portal-small">Parts suppliers, our price sheet, and carrier tracking &mdash; everything a tech needs, one tap away.</p>
         <!-- PORTAL_SETUP_2026_11_04: buttons Austin adds in Admin → Setup (Link button template) render at the end of this grid as the same link-cards (renderToolsCustomButtons in portal.js). -->
         <div class="link-grid" id="portal-tools-grid">
           <a class="link-card" href="https://www.mobilesentrix.com" target="_blank" rel="noopener"><i class="fas fa-mobile-screen"></i><strong>Mobile Sentrix</strong><span>Primary parts supplier</span></a>
@@ -1144,18 +1153,21 @@
           <!-- SWAPPA_2026_11_03: Swappa card added to Tools & Links as the balancing 12th card under Austin's even-grid rule, completing the advice cluster (GSMArena compares specs, Swappa prices the used phone) so a tech can answer "repair it or replace it" with the phone's current used value next to the repair price -- see REPORT.md in the portal-google-prices-2026-11-03 folder. Staged, not published. -->
           <a class="link-card" href="https://swappa.com/prices" target="_blank" rel="noopener"><i class="fas fa-dollar-sign"></i><strong>Swappa</strong><span>Used phone values</span></a>
           <a class="link-card" href="https://squareup.com/dashboard" target="_blank" rel="noopener"><i class="fas fa-square"></i><strong>Square Dashboard</strong><span>Sales, payouts, settings</span></a>
+          <!-- TRACKING_LINKS_2026_11_04 (Austin, Nov 4, 2026): four carrier tracking boxes added to the Links grid — "you can just have a link to live tracking button for FedEx UPS USPS DHL. And then tap it and it goes right to those shippers websites" — each opens the carrier's own tracking page in a new tab. Grid goes 12 → 16 cards, keeping Austin's even-count rule. -->
+          <a class="link-card" href="https://www.fedex.com/fedextrack/" target="_blank" rel="noopener"><i class="fas fa-truck-fast"></i><strong>FedEx</strong><span>Track a package</span></a>
+          <a class="link-card" href="https://www.ups.com/track" target="_blank" rel="noopener"><i class="fas fa-truck"></i><strong>UPS</strong><span>Track a package</span></a>
+          <a class="link-card" href="https://tools.usps.com/go/TrackConfirmAction_input" target="_blank" rel="noopener"><i class="fas fa-envelope"></i><strong>USPS</strong><span>Track a package</span></a>
+          <a class="link-card" href="https://www.dhl.com/us-en/home/tracking.html" target="_blank" rel="noopener"><i class="fas fa-globe"></i><strong>DHL</strong><span>Track a package</span></a>
         </div>
-        <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Live tracking</h3></div>
+      </div>
+
+      <!-- LIVE TRACKING (own panel — LINKS_TRACKING_2026_11_04, Austin, Nov 4, 2026: "we're putting the live tracking action button in parts and tools." The lookup block moved here unchanged from the Links panel — the inline module in this file wires #p2-track-btn / #p2-track-number by id with delegated listeners, and its styles key off the same ids, so the lookup works exactly as before.) -->
+      <div class="portal-panel" id="portal-panel-tracking" role="tabpanel" hidden>
+        <div class="portal-panel-head"><h2 class="portal-h2">Live Tracking</h2></div>
         <p class="portal-muted portal-small">Type any tracking number &mdash; FedEx, UPS, USPS, DHL &mdash; and tap Track. The live status shows right here.</p>
         <div class="p2-form-row"><input type="text" id="p2-track-number" placeholder="Tracking number" aria-label="Tracking number" />
         <button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-track-btn"><i class="fas fa-truck-fast"></i> Track</button></div>
         <div id="p2-track-result" hidden></div>
-        <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Printers</h3></div>
-        <p class="portal-muted portal-small">Receipts and Zebra part labels print through your device&rsquo;s printer list &mdash; Bluetooth, USB, or Wi-Fi printers your phone, tablet, or computer can already see. Pick the printer in the print dialog.</p>
-        <p>
-          <button class="portal-btn portal-btn-outline" id="tc-test-receipt" type="button"><i class="fas fa-print"></i> Print test receipt</button>
-          <button class="portal-btn portal-btn-outline" id="tc-test-label" type="button"><i class="fas fa-tag"></i> Print test label</button>
-        </p>
       </div>
 
       <!-- PRICE BOOK -->

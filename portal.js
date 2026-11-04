@@ -1089,7 +1089,7 @@
     var nav = $('portal-nav'); if (nav) nav.classList.remove('open');
     var tabs = document.querySelectorAll('.portal-tab');
     tabs.forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === name); });
-    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'documents', 'financials', 'payroll', 'mileage', 'teamchat', 'associateaccounts', 'warranty', 'setup'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too; ASSOCIATE_ACCOUNTS_2026_11_03: 'associateaccounts' hides and shows with the rest too (it absorbed ACCOUNT_CONTROLS_2026_11_03's 'accountcontrols' and the roster's 'associates'); WARRANTY_PORTAL_2026_11_03: 'warranty' hides and shows with the rest too; PORTAL_SETUP_2026_11_04: 'setup' hides and shows with the rest too */
+    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'members', 'inventory', 'timeclock', 'links', 'tracking', 'square', 'checkin', 'requests', 'prices', 'documents', 'financials', 'payroll', 'mileage', 'teamchat', 'associateaccounts', 'warranty', 'setup'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too; ASSOCIATE_ACCOUNTS_2026_11_03: 'associateaccounts' hides and shows with the rest too (it absorbed ACCOUNT_CONTROLS_2026_11_03's 'accountcontrols' and the roster's 'associates'); WARRANTY_PORTAL_2026_11_03: 'warranty' hides and shows with the rest too; PORTAL_SETUP_2026_11_04: 'setup' hides and shows with the rest too */
       $('portal-panel-' + n).hidden = n !== name;
     });
     closeDrawer();
@@ -6145,7 +6145,7 @@ function loadTicketThread(client, ticketId) {
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-setup-del-btn="' + esc(r.id) + '"><i class="fas fa-trash"></i> Delete</button></span></div>' +
         (sub ? '<p class="portal-card-meta">' + esc(sub) + '</p>' : '') +
         '<p class="portal-card-meta">' + esc(r.url || '') + '</p>' +
-        '<p class="portal-card-meta">Link button template \u00b7 shows in the Tools &amp; Links grid</p>' +
+        '<p class="portal-card-meta">Link button template \u00b7 shows in the Links grid</p>' +
         '</article>';
     }).join('');
   }
@@ -11027,7 +11027,7 @@ function loadTicketThread(client, ticketId) {
     nav.classList.add('open');
   }
   function initExtraTabs() {
-    ['timeclock', 'links', 'square', 'checkin', 'mileage'].forEach(function (name) { /* PORTAL_MILEAGE_2026_11_02 */
+    ['timeclock', 'links', 'tracking', 'square', 'checkin', 'mileage'].forEach(function (name) { /* PORTAL_MILEAGE_2026_11_02; LINKS_TRACKING_2026_11_04: 'tracking' is an extra tab too — its sidebar button opens the standalone Live Tracking panel via showExtraPanel */
       var tab = $('portal-tab-' + name);
       if (tab) tab.addEventListener('click', function () { showExtraPanel(name); });
     });
