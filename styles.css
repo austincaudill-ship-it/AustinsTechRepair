@@ -2107,3 +2107,12 @@ html[data-theme="dark"] {
 /* BLUE_ACCENTS_2026_11_04 — form fields focus blue */
 .form-field:focus { border-color: var(--blue-bright); }
 .drop-zone:hover { border-color: var(--blue); }
+
+/* ABOUT_PHOTO_WHOLE_2026_11_04 — Austin's chosen About photo (his full-body
+   picture, picked Nov 4, 2026) displays WHOLE, never cropped: his direction
+   was "don't crop it, just put the whole picture on there." The base
+   .feature-media rule crops to a fixed height with object-fit: cover; this
+   scoped override lets this one image keep its natural shape, and the
+   hover zoom is off for it so it can never clip the edges either. */
+.feature-media img.photo-whole { height: auto; object-fit: contain; }
+.feature-media:hover img.photo-whole { transform: none; }
