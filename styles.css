@@ -2012,53 +2012,98 @@ span.acct-tech-disc { display:inline-flex; align-items:center; justify-content:c
   .milo-grid { grid-template-columns: 1fr; }
 }
 
+
 /* ==========================================================================
-   BLUE_ACCENTS_2026_11_04 — company colors: black, brown, orange, BLUE.
-   Austin's direction (Nov 4, 2026): the site leaned too brown/orange, so
-   blue becomes a real balancing color — blue highlights and black-and-blue
-   outlines on pictures, customer reviews, device choices, cards and steps.
-   Orange stays the primary action color. Every rule below is additive.
+   BLUE_ACCENTS_2026_11_04 — Blue accent pass (Nov 4, 2026, Austin)
+   Company colors are black, brown, orange AND blue. The warm cream/brown/
+   orange theme stays primary; blue joins as the balancing accent color:
+   outlines on review cards and photos, the device-picker tiles, selected
+   and focus states, and small highlights. This block is appended last so
+   its rules win at equal specificity; the earlier R-/S- contrast fixes
+   that use html[data-theme="dark"] selectors still win in dark mode.
+   Palette (Port Authority "Imperial Blue" family, matching the badges
+   and the J318 jacket):
+     --blue        #0057B8  primary blue accent
+     --blue-bright #1B6AC9  hover / selected blue
+     --blue-soft   #E4EFFB  pale blue tint (selected fills, icon chips)
+     --blue-line   #A9C6E8  soft blue border at rest
+     --blue-pale   #7FB3EC  light blue for dark surfaces
    ========================================================================== */
+
+/* BLUE_ACCENTS_2026_11_04 — blue variables (light + dark) */
 :root {
-  --blue: #1050A0;
-  --blue-bright: #2E7CD6;
-  --blue-line: #9DBEDE;
-  --blue-soft: #E4EEF9;
+  --blue: #0057B8;
+  --blue-bright: #1B6AC9;
+  --blue-soft: #E4EFFB;
+  --blue-line: #A9C6E8;
+  --blue-pale: #7FB3EC;
 }
 html[data-theme="dark"] {
-  --blue: #5EA0E8;
-  --blue-bright: #7FB2EE;
-  --blue-line: #3D6390;
-  --blue-soft: #16283F;
+  --blue: #2E7CD6;
+  --blue-bright: #5EA0E6;
+  --blue-soft: #16283D;
+  --blue-line: #27567F;
+  --blue-pale: #A9CBF2;
 }
 
-/* Header and footer pick up a blue edge */
-.header { border-bottom: 2px solid var(--blue); }
+/* BLUE_ACCENTS_2026_11_04 — text selection highlight */
+::selection { background: var(--blue); color: #FFFFFF; }
+
+/* BLUE_ACCENTS_2026_11_04 — header hairline + footer top rule in blue */
+.header { border-bottom: 1px solid var(--blue-line); }
 .footer { border-top: 3px solid var(--blue); }
 
-/* Pictures: black border with a blue ring */
-.hero-photo, .feature-media { border: 2px solid #17120C; box-shadow: 0 0 0 3px var(--blue), var(--shadow-md); }
-.service-card-img, .work-card img { border: 2px solid #17120C; box-shadow: 0 0 0 3px var(--blue); }
-.page-photo-contain { border: 2px solid #17120C; box-shadow: 0 0 0 3px var(--blue); }
+/* BLUE_ACCENTS_2026_11_04 — nav underline + mobile menu hover go blue */
+.nav-link::after { background: var(--blue); }
+.menu-link:hover, .menu-link.active { color: var(--blue-bright); }
 
-/* Customer reviews: black border with a blue ring, blue ring on the avatar */
-.testimonial-card { border: 2px solid #17120C; box-shadow: 0 0 0 3px var(--blue), var(--shadow-sm); }
-.testimonial-avatar { box-shadow: 0 0 0 3px var(--blue); }
+/* BLUE_ACCENTS_2026_11_04 — section dividers + eyebrow pill border */
+.section-alt { border-top-color: var(--blue-line); border-bottom-color: var(--blue-line); }
+.eyebrow { border-color: var(--blue-line); }
 
-/* Cards get blue edges; service, repair and pricing cards get a blue top bar */
-.service-card, .repair-card, .pricing-card, .perk-card, .step-card, .work-card { border-color: var(--blue-line); }
-.service-card, .repair-card, .pricing-card { border-top: 4px solid var(--blue); }
-.pricing-card.featured { border-top-color: var(--brand); }
+/* BLUE_ACCENTS_2026_11_04 — review (testimonial) cards: black border, blue outline */
+.testimonial-card {
+  border: 1px solid #17130E;
+  outline: 2px solid var(--blue);
+  outline-offset: 3px;
+}
+.testimonial-card:hover { outline-color: var(--blue-bright); }
+.testimonial-avatar { background: var(--blue-soft); color: var(--blue); }
 
-/* Booking progress steps: blue-edged dots, blue ring on the current step */
-.progress-step .progress-dot { border-color: var(--blue-line); }
-.progress-step.active .progress-dot { box-shadow: 0 0 0 3px var(--blue), 0 4px 14px rgba(16, 80, 160, 0.35); }
+/* BLUE_ACCENTS_2026_11_04 — blue outlines on pictures and photos */
+.hero-photo { border: 2px solid var(--blue); }
+.feature-media { border: 2px solid var(--blue); }
+.work-card { border: 2px solid var(--blue); }
+.service-card-img { outline: 2px solid var(--blue); outline-offset: -2px; }
+.product-media { outline: 2px solid var(--blue); outline-offset: -2px; }
+.page-photo-contain { border: 2px solid var(--blue); }
+.values-hero img { outline: 2px solid var(--blue); outline-offset: -2px; }
 
-/* Big option buttons in the estimate flow: blue icons and edges */
+/* BLUE_ACCENTS_2026_11_04 — service cards: blue hover frame, blue into the icon rotation */
+.service-card:hover { border-color: var(--blue); }
+.service-card:nth-child(2n) .service-icon { background: var(--blue-soft); color: var(--blue); }
+
+/* BLUE_ACCENTS_2026_11_04 — price-match card top bar: orange, gold, blue (was teal) */
+.price-match::before { background: linear-gradient(90deg, var(--brand), var(--gold), var(--blue)); }
+
+/* BLUE_ACCENTS_2026_11_04 — device-picker tiles (repair wizard .option-btn) */
 .option-btn { border-color: var(--blue-line); }
 .option-btn i { color: var(--blue); }
-.option-btn:hover { border-color: var(--blue); }
-.option-btn.selected { border-color: var(--blue); background: var(--blue-soft); box-shadow: 0 0 0 2px var(--blue); }
+.option-btn:hover { border-color: var(--blue); box-shadow: 0 4px 14px rgba(0, 87, 184, 0.18); }
+.option-btn.selected { border-color: var(--blue); background: var(--blue-soft); }
+.option-btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 
-/* Trust pills get the blue edge too */
-.pill { border-color: var(--blue-line); }
+/* BLUE_ACCENTS_2026_11_04 — wizard progress: done steps go blue, active step gets a blue halo */
+.progress-step.done .progress-dot { background: var(--blue); border-color: var(--blue); }
+.progress-step.active .progress-dot { box-shadow: 0 0 0 3px var(--blue-line), 0 4px 14px rgba(217, 84, 13, 0.4); }
+.progress-step.nav-enabled:focus-visible { outline-color: var(--blue); }
+
+/* BLUE_ACCENTS_2026_11_04 — secondary (outline) buttons highlight blue on hover */
+.btn-outline:hover { border-color: var(--blue); color: var(--blue); }
+
+/* BLUE_ACCENTS_2026_11_04 — hero carousel controls highlight blue on hover */
+.hero-arrow:hover, .hero-playpause:hover { border-color: var(--blue); color: var(--blue); }
+
+/* BLUE_ACCENTS_2026_11_04 — form fields focus blue */
+.form-field:focus { border-color: var(--blue-bright); }
+.drop-zone:hover { border-color: var(--blue); }
