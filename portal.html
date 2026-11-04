@@ -1162,7 +1162,17 @@
       <!-- PORTAL_PRICEBOOK_V2_2026_10_30: Price Book data swapped to the rebuilt Oct 30, 2026 book. PORTAL_PRICEBOOK_WORDING_2026_11_03: header reworded to Austin's flat-labor model (part cost + $50 flat standard, $100 soldering/folding, $25/hr service work only, + $35 house call once per job). PRICE_BOOK_FLAT_2026_11_04: the PB data itself now follows that model — every priced row recomputed as round(Oct 30 verified part cost) + $50 flat (or $100 for soldering/board/folding/console work); the old part + hours x $25 math (e.g. 1.5 hr = $37.50 labor) is gone. Before/after record: price-book-recompute-2026-11-04.json in this folder. -->
       <div class="portal-panel" id="portal-panel-prices" role="tabpanel" hidden>
         <div class="portal-panel-head"><h2 class="portal-h2">Price Book</h2></div>
-        <p class="portal-muted portal-small">Updated Nov 4, 2026: repair prices are part cost plus flat labor - $50 for standard repairs, $100 for soldering and folding devices. Service work that is not a repair is billed at $25/hr. The $35 house-call fee is added once per job (ATR One members pay no house-call fee on covered devices, and member tier discounts apply to the repair price). Lines marked Price on request have no verified part price yet - check the part before quoting.</p>
+        <!-- PRICEBOOK_CLEANUP_2026_11_04: Price Book header cleaned up at Austin's direction (Nov 4, 2026, iPad walkthrough: "This needs cleaned up more"). The old single run-on paragraph is now a short Updated line plus a "How pricing works" rule list, one rule per line, in the panel idiom (subhead + muted small lines). Presentation only — every fact from the old paragraph is preserved; the Google Sheet button, search field, brand filter, results rendering, and all price data are untouched. -->
+        <p class="portal-muted portal-small">Updated Nov 4, 2026</p>
+        <div class="portal-panel-head portal-subhead" style="margin-top:0.5rem;"><h3 class="portal-h3">How pricing works</h3></div>
+        <ul class="portal-muted portal-small" style="margin:0 0 4px; padding-left:1.25rem; line-height:2;">
+          <li>Repair prices are part cost plus flat labor &mdash; <strong>$50</strong> for standard repairs</li>
+          <li><strong>$100</strong> for soldering and folding devices</li>
+          <li>Service work that is not a repair is billed at <strong>$25/hr</strong></li>
+          <li>The <strong>$35</strong> house-call fee is added once per job &mdash; ATR One members pay no house-call fee on covered devices</li>
+          <li>Member tier discounts apply to the repair price</li>
+          <li>Lines marked <strong>Price on request</strong> have no verified part price yet &mdash; check the part before quoting</li>
+        </ul>
         <p style="margin:12px 0 16px;"><a class="portal-btn portal-btn-primary" href="https://docs.google.com/spreadsheets/d/1EquiqzZUvjoxLiJ-yE446HgiFFsKKHP3a9fVLggRyxo/edit?usp=drivesdk" target="_blank" rel="noopener"><i class="fas fa-file-excel"></i> Open master price list (Google Sheet)</a></p>
         <div class="p2-form-row"><input type="text" id="p2-price-search" placeholder="Search device or repair, e.g. iPhone 13 screen" aria-label="Search price book" />
         <select id="p2-price-brand" aria-label="Filter by brand"><option value="">All brands</option><option>Apple</option><option>Samsung</option><option>Google</option><option>Microsoft</option><option>Gaming Consoles</option><option>Computers</option><option>Smartwatches</option><option>Services</option></select></div>
