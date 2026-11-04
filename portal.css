@@ -562,6 +562,32 @@ body.portal-scroll-locked{position:fixed;left:0;right:0;width:100%;overflow:hidd
 .tk-acc-body[hidden] { display: none; }
 /* end PORTAL_TICKET_ACCORDION_2026_11_02 */
 
+/* CHECKIN_COLLAPSE_2026_11_04: the Check-In form's folding sections.
+ * A parallel pattern to the ticket accordion above (the drawer's
+ * wiring is scoped to the drawer, so the check-in could not reuse
+ * its classes): same look — display-font title, 48px tap target,
+ * chevron that turns when open — under ci-acc names. The head is a
+ * real button inside the form (type="button", so it never submits),
+ * and a closed body is display:none via [hidden]. */
+.ci-acc { margin: 0 0 .4rem; }
+.ci-acc-head { display: flex; align-items: center; gap: .55rem; width: 100%; min-height: 48px; padding: .3rem .15rem; margin: 0 0 .6rem; background: none; border: none; border-bottom: 1px solid var(--line, #E6D9C0); color: var(--ink, #2C231A); cursor: pointer; text-align: left; -webkit-appearance: none; appearance: none; -webkit-tap-highlight-color: transparent; }
+.ci-acc-title { font-family: var(--font-display, 'Fraunces', Georgia, serif); font-size: 1.05rem; font-weight: 700; }
+.ci-acc-chev { margin-left: auto; color: var(--brand, #D9540D); font-size: .85rem; flex: none; transition: transform .22s ease; }
+.ci-acc-head.ci-acc-open .ci-acc-chev { transform: rotate(180deg); }
+.ci-acc-body[hidden] { display: none; }
+/* end CHECKIN_COLLAPSE_2026_11_04 */
+
+/* PORTAL_ADMIN_CONTROLS_2026_11_04: the role select in the owner
+ * section of an Associate Accounts card sits in .assoc-pay-edit,
+ * whose styling covered only its text/number inputs — give the
+ * select the same box so the row reads as one control set. */
+.assoc-pay-edit select {
+  box-sizing: border-box; padding: 0.45rem 0.6rem;
+  border: 1px solid var(--line, #E6D9C0); border-radius: 8px;
+  background: var(--bg, #FAF6EE); color: var(--ink, #2C231A);
+}
+/* end PORTAL_ADMIN_CONTROLS_2026_11_04 */
+
 /* PORTAL_TIER_SET_FINISH_2026_11_02: ATR One status on the customer
    profile — the membership dot (green active / red not active). */
 .cust-prof-mem { display: flex; align-items: center; gap: .5rem; margin: 0 0 .3rem; }

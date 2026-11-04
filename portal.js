@@ -1891,7 +1891,31 @@ function loadTicketThread(client, ticketId) {
           '<select id="portal-ticket-assignee" aria-label="Assigned technician"><option value="">Unassigned</option></select>' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="portal-ticket-assignee-save">Save assignment</button>' +
           '<span class="portal-muted portal-small" id="portal-ticket-assignee-msg"></span></div></div>' +
-          /* PORTAL_TICKET_DETAILS_COLLAPSE_2026_11_03: Ticket details
+          /* DRAWER_ACTIONS_TOP_2026_11_04 (Austin, Nov 4, 2026):
+           * the receipt and delete actions live up here now,
+           * right under Assigned to, beside Status — Print
+           * receipt, Generate receipt, Download receipt, Email
+           * receipt and Delete ticket, where the person working
+           * the ticket can reach them without opening a single
+           * section. The row used to render below Edit details.
+           * Same markup, same ids, same by-id wiring — only
+           * the seat moved. */
+'<div class="portal-drawer-section p2-actions"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-receipt-btn"><i class="fas fa-receipt"></i> Print receipt</button>' +
+          /* PORTAL_RECEIPT_TOP_2026_11_03: the receipt actions live
+           * together at the top of the ticket, beside Print receipt —
+           * Generate / Download / Email moved up here out of Charges
+           * (Austin, Nov 3, 2026). Same IDs, same handlers, same
+           * status line beside the buttons; only the location moved. */
+          '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-gen-receipt-btn"><i class="fas fa-file"></i> Generate receipt</button>' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-download-receipt-btn"><i class="fas fa-download"></i> Download receipt</button>' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-email-receipt-btn"><i class="fas fa-envelope"></i> Email receipt</button>' +
+          '<span class="portal-muted portal-small" id="p2-gen-receipt-msg"></span>' +
+          '<button class="portal-btn p2-btn-danger portal-btn-sm" type="button" id="p2-delete-btn"><i class="fas fa-trash"></i> Delete ticket</button>' +
+          '<span class="portal-muted portal-small" id="p2-action-msg"></span>' +
+          '<div id="p2-delete-confirm" hidden><p class="portal-error">Permanently delete this ticket? Its charges and messages go with it. Part orders stay on file but detach from the ticket. This cannot be undone.</p>' +
+          '<button class="portal-btn p2-btn-danger portal-btn-sm" type="button" id="p2-delete-yes">Yes, delete it</button> ' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-delete-no">Keep ticket</button></div></div>' +
+                    /* PORTAL_TICKET_DETAILS_COLLAPSE_2026_11_03: Ticket details
            * is an accordion section like Edit details and Documents;
            * it is not in TK_ACC_DEFAULT_OPEN, so it starts collapsed. */
           '<div class="portal-drawer-section tk-acc" data-acc="details">' + tkAccHead('details', 'Ticket details') + tkAccBodyOpen('details') +
@@ -1940,22 +1964,10 @@ function loadTicketThread(client, ticketId) {
           '<div class="portal-field"><label for="p2-edit-marketing">Marketing opt-in</label><select id="p2-edit-marketing"><option value="true"' + (t.marketing_opt_in ? ' selected' : '') + '>Yes</option><option value="false"' + (!t.marketing_opt_in ? ' selected' : '') + '>No</option></select></div></div>' +
           '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-edit-save">Save details</button> ' +
           '<span class="portal-muted portal-small" id="p2-edit-msg"></span></div></div>' +
-          '<div class="portal-drawer-section p2-actions"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-receipt-btn"><i class="fas fa-receipt"></i> Print receipt</button>' +
-          /* PORTAL_RECEIPT_TOP_2026_11_03: the receipt actions live
-           * together at the top of the ticket, beside Print receipt —
-           * Generate / Download / Email moved up here out of Charges
-           * (Austin, Nov 3, 2026). Same IDs, same handlers, same
-           * status line beside the buttons; only the location moved. */
-          '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-gen-receipt-btn"><i class="fas fa-file"></i> Generate receipt</button>' +
-          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-download-receipt-btn"><i class="fas fa-download"></i> Download receipt</button>' +
-          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-email-receipt-btn"><i class="fas fa-envelope"></i> Email receipt</button>' +
-          '<span class="portal-muted portal-small" id="p2-gen-receipt-msg"></span>' +
-          '<button class="portal-btn p2-btn-danger portal-btn-sm" type="button" id="p2-delete-btn"><i class="fas fa-trash"></i> Delete ticket</button>' +
-          '<span class="portal-muted portal-small" id="p2-action-msg"></span>' +
-          '<div id="p2-delete-confirm" hidden><p class="portal-error">Permanently delete this ticket? Its charges and messages go with it. Part orders stay on file but detach from the ticket. This cannot be undone.</p>' +
-          '<button class="portal-btn p2-btn-danger portal-btn-sm" type="button" id="p2-delete-yes">Yes, delete it</button> ' +
-          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-delete-no">Keep ticket</button></div></div>' +
-          '<div class="portal-drawer-section tk-acc" data-acc="documents">' + tkAccHead('documents', 'Documents') + tkAccBodyOpen('documents') +
+                    /* DRAWER_ACTIONS_TOP_2026_11_04: the receipt/delete
+           * actions row that used to sit here now renders up
+           * beside Status, under Assigned to. */
+'<div class="portal-drawer-section tk-acc" data-acc="documents">' + tkAccHead('documents', 'Documents') + tkAccBodyOpen('documents') +
           '<div id="p4-docs"><p class="portal-muted">Loading documents&hellip;</p></div>' +
           '<div class="p2-actions"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p4-sign-btn"><i class="fas fa-pen-nib"></i> Sign repair authorization</button>' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p4-media-btn"><i class="fas fa-camera"></i> Sign media release</button>' +
@@ -5413,7 +5425,36 @@ function loadTicketThread(client, ticketId) {
    * value is matched case-insensitively (the website form's column
    * default is lowercase 'new'), and saving writes the canonical
    * value, so the panel behaves the same whichever shape the row
-   * arrived in. */
+   * arrived in.
+   *
+   * WARRANTY_CONTROLS_2026_11_04 (Austin, Nov 4, 2026): "Instead of
+   * telling a tech how to do, let them do right there and attach the
+   * request to a customer in the database." Each unlinked card now
+   * carries a Start rework button that does the whole job in place:
+   * it resolves the original ticket from ticket_ref — the receipt's
+   * ticket number is shortCode(ticket), the first 8 characters of
+   * the ticket id, uppercased (see the receipt builders) — links the
+   * request to that ticket and its customer (the customer_id /
+   * ticket_id columns from warranty-requests-linking.sql), marks the
+   * request Approved, flips the ticket to 'Rework / Warranty', and
+   * applies the same warranty_exempt field update the drawer's
+   * Warranty exemption button performs (wireWarrantyExemptButton —
+   * that handler is bound to the open drawer ticket, so it cannot be
+   * called from here; the field write is identical). If the receipt
+   * number matches no ticket or more than one, staff pick the repair
+   * from a search instead — the panel never guesses silently.
+   *
+   * The panel head's "New claim — we fill it in" button is the
+   * internal intake for customers who call, text, or email instead
+   * of using the website form: staff pick the customer and their
+   * original repair, and saving files a fully linked request
+   * (source = call / text / email) and starts the rework on that
+   * ticket in the same step. Cards show a small source tag so a
+   * staff-filed claim reads apart from a website form submission.
+   * Until warranty-requests-linking.sql runs, the linking columns do
+   * not exist: link updates then error, and the card says so ("Linking
+   * needs the database step first") without changing anything, while
+   * the plain status control keeps working as before. */
   var WARRANTY_STATUSES = ['New', 'Contacted', 'Approved', 'Denied', 'Completed'];
   function warrantyStatusOf(r) {
     var s = String((r && r.status) || '').toLowerCase();
@@ -5423,9 +5464,68 @@ function loadTicketThread(client, ticketId) {
     return 'New';
   }
 
+  /* WARRANTY_CONTROLS_2026_11_04: where a claim came in from. Rows
+   * filed on the website form carry source 'website' (the column
+   * default); staff-filed claims carry call / text / email. The tag
+   * is display only. */
+  var WARRANTY_SOURCE_TAGS = { website: 'Website form', call: 'Phone claim', phone: 'Phone claim', text: 'Text claim', email: 'Email claim' };
+  function warrantySourceTag(r) {
+    var s = String((r && r.source) || 'website').toLowerCase();
+    return WARRANTY_SOURCE_TAGS[s] || 'Website form';
+  }
+
+  /* WARRANTY_CONTROLS_2026_11_04: the rows currently on screen, the
+   * tickets the picker has fetched (by id, so a pick button always
+   * resolves to the full row), and the last Start-rework confirmation
+   * to show on a card after it re-renders in its linked state. */
+  var warrantyRowsCache = [];
+  var warrantyTicketById = {};
+  var warrantyConfirm = null;
+  var WARRANTY_TICKET_COLS = 'id, customer_id, customer_name, customer_phone, device_type, brand, model, status, job_date, created_at';
+
+  function warrantyRowById(id) {
+    for (var i = 0; i < warrantyRowsCache.length; i++) {
+      if (String(warrantyRowsCache[i].id) === String(id)) return warrantyRowsCache[i];
+    }
+    return null;
+  }
+
+  function warrantySay(id, text) {
+    var list = $('portal-warranty-list');
+    var m = list ? list.querySelector('[data-warranty-rmsg="' + id + '"]') : null;
+    if (m) m.textContent = text;
+  }
+
+  /* The number on the customer's receipt is shortCode(ticket) — the
+   * first 8 characters of the ticket id. Customers type it into the
+   * website form freehand, so normalize hard before comparing:
+   * uppercase, strip anything that is not a letter or digit (spaces,
+   * a leading "Ticket #", a stray hyphen), and keep the first 8. */
+  function warrantyNormalizeRef(ref) {
+    var n = String(ref || '').toUpperCase().replace(/[^0-9A-Z]/g, '');
+    return n.length > 8 ? n.slice(0, 8) : n;
+  }
+
+  function warrantyTicketLine(t) {
+    return '#' + shortCode(t) + ' · ' + deviceLabel(t) + ' · ' + (t.customer_name || 'Customer') +
+      ' · ' + (fmtJobDate(t.job_date) || fmtDate(t.created_at) || '') + ' · ' + (t.status || '');
+  }
+
+  function warrantyFetchTickets(client, cb) {
+    client.from('tickets').select(WARRANTY_TICKET_COLS)
+      .order('created_at', { ascending: false }).limit(500)
+      .then(function (res) {
+        var rows = res.error ? null : (res.data || []);
+        if (rows) rows.forEach(function (t) { warrantyTicketById[t.id] = t; });
+        cb(rows);
+      })
+      .catch(function () { cb(null); });
+  }
+
   function renderWarrantyRequests(rows) {
     var list = $('portal-warranty-list');
-    if (!rows.length) { emptyState(list, 'No warranty requests yet. Requests filed from the website warranty form will show up here.'); return; }
+    warrantyRowsCache = rows;
+    if (!rows.length) { emptyState(list, 'No warranty requests yet. Requests from the website form — and claims staff file with New claim — will show up here.'); return; }
     list.innerHTML = rows.map(function (r) {
       var st = warrantyStatusOf(r);
       var ref = trim(r.ticket_ref)
@@ -5435,14 +5535,28 @@ function loadTicketThread(client, ticketId) {
       if (trim(r.phone)) contactBits.push(esc(r.phone));
       if (trim(r.email)) contactBits.push(esc(r.email));
       var repairDate = r.repair_date ? (fmtJobDate(r.repair_date) || fmtDate(r.repair_date)) : '';
+      /* WARRANTY_CONTROLS_2026_11_04: a linked row says so and offers
+       * the ticket itself; an unlinked row carries Start rework, its
+       * message span, and the (initially hidden) repair picker. */
+      var confirmText = (warrantyConfirm && String(warrantyConfirm.id) === String(r.id)) ? warrantyConfirm.text : '';
+      var action = r.ticket_id
+        ? '<div class="portal-status-row warranty-action-row"><span class="portal-small"><i class="fas fa-link"></i> Linked to ticket <strong>#' + esc(warrantyNormalizeRef(r.ticket_ref) || shortCode({ id: r.ticket_id })) + '</strong> &middot; ' + esc(r.customer_name || 'Customer') + '</span>' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-warranty-open="' + esc(r.ticket_id) + '">Open ticket</button>' +
+          '<span class="portal-muted portal-small" data-warranty-rmsg="' + esc(r.id) + '">' + esc(confirmText) + '</span></div>'
+        : '<div class="portal-status-row warranty-action-row">' +
+          '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-warranty-rework="' + esc(r.id) + '"><i class="fas fa-screwdriver-wrench"></i> Start rework</button>' +
+          '<span class="portal-muted portal-small" data-warranty-rmsg="' + esc(r.id) + '">' + esc(confirmText) + '</span></div>' +
+          '<div data-warranty-picker="' + esc(r.id) + '" hidden></div>';
       return '<article class="portal-card">' +
         '<div class="portal-card-top"><p class="portal-card-title">' + esc(r.customer_name || 'Customer') + '</p><span data-warranty-badge="' + esc(r.id) + '">' + badge(st) + '</span></div>' +
         ref +
+        '<p class="portal-card-meta"><span class="portal-badge portal-st-reviewed">' + esc(warrantySourceTag(r)) + '</span></p>' +
         (contactBits.length ? '<p class="portal-card-meta">' + contactBits.join(' &middot; ') + '</p>' : '') +
         '<p class="portal-card-meta">Device: ' + valOrDash(r.device) + (repairDate ? ' &middot; Original repair: ' + esc(repairDate) : '') + '</p>' +
         '<p class="portal-card-meta">Under warranty: ' + valOrDash(r.part_service) + '</p>' +
         (trim(r.problem) ? '<p class="portal-card-issue">' + esc(r.problem).replace(/\n/g, '<br>') + '</p>' : '') +
         '<p class="portal-card-meta">Preferred contact: ' + valOrDash(r.contact_pref) + ' &middot; Submitted ' + esc(fmtDateTime(r.created_at)) + '</p>' +
+        action +
         '<div class="portal-status-row warranty-status-row"><label class="portal-small" for="portal-warranty-status-' + esc(r.id) + '">Status</label>' +
         '<select id="portal-warranty-status-' + esc(r.id) + '" data-warranty-status="' + esc(r.id) + '" aria-label="Warranty request status">' +
         statusOptions(WARRANTY_STATUSES, st) + '</select>' +
@@ -5470,11 +5584,19 @@ function loadTicketThread(client, ticketId) {
         });
       });
     });
+    /* WARRANTY_CONTROLS_2026_11_04: Start rework and Open ticket. */
+    list.querySelectorAll('[data-warranty-rework]').forEach(function (btn) {
+      btn.addEventListener('click', function () { warrantyStartRework(btn.getAttribute('data-warranty-rework')); });
+    });
+    list.querySelectorAll('[data-warranty-open]').forEach(function (btn) {
+      btn.addEventListener('click', function () { openTicket(btn.getAttribute('data-warranty-open')); });
+    });
   }
 
   function loadWarrantyRequests(force) {
     var list = $('portal-warranty-list');
     if (!list) return;
+    wireWarrantyClaimForm();
     if (!force) list.innerHTML = '<p class="portal-muted">Loading warranty requests&hellip;</p>';
     withClient(function (client) {
       if (!client) { listError(list, 'warranty requests'); return; }
@@ -5482,10 +5604,278 @@ function loadTicketThread(client, ticketId) {
         .then(function (res) {
           if (res.error) { listError(list, 'warranty requests'); return; }
           state.loaded.warranty = true;
+          warrantyConfirm = null; /* WARRANTY_CONTROLS_2026_11_04: a fresh load drops the one-time Start-rework confirmation. */
           renderWarrantyRequests(res.data || []);
           setCount('portal-count-warranty', (res.data || []).filter(function (r) { return warrantyStatusOf(r) === 'New'; }).length);
         })
         .catch(function () { listError(list, 'warranty requests'); });
+    });
+  }
+
+  /* WARRANTY_CONTROLS_2026_11_04: the in-card repair picker, shown
+   * when the receipt number does not settle the original ticket on
+   * its own. preset carries any ambiguous matches; below it, staff
+   * search repairs by customer name or phone. Picking a repair runs
+   * the same link as an exact match — never a silent guess. */
+  function warrantyShowPicker(row, preset) {
+    var list = $('portal-warranty-list');
+    var box = list ? list.querySelector('[data-warranty-picker="' + row.id + '"]') : null;
+    if (!box) return;
+    box.hidden = false;
+    var html = '<p class="portal-small"><strong>Which repair is this claim for?</strong></p>';
+    (preset || []).forEach(function (t) {
+      html += '<div class="portal-status-row"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-warranty-pick="' + esc(t.id) + '">' + esc(warrantyTicketLine(t)) + '</button></div>';
+    });
+    html += '<div class="portal-status-row"><input type="search" data-warranty-pick-q="' + esc(row.id) + '" placeholder="Search repairs by customer name or phone" aria-label="Search repairs by customer name or phone" />' +
+      '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-warranty-pick-go="' + esc(row.id) + '">Search</button></div>' +
+      '<div data-warranty-pick-results="' + esc(row.id) + '"></div>';
+    box.innerHTML = html;
+    box.querySelectorAll('[data-warranty-pick]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var t = warrantyTicketById[btn.getAttribute('data-warranty-pick')];
+        if (t) warrantyLinkTicket(row, t);
+      });
+    });
+    var go = box.querySelector('[data-warranty-pick-go]');
+    if (go) go.addEventListener('click', function () {
+      var input = box.querySelector('[data-warranty-pick-q]');
+      var results = box.querySelector('[data-warranty-pick-results]');
+      var q = trim(input ? input.value : '').toLowerCase();
+      if (results) results.innerHTML = '<p class="portal-muted portal-small">Searching&hellip;</p>';
+      withClient(function (client) {
+        if (!client) { if (results) results.innerHTML = '<p class="portal-muted portal-small">Couldn&rsquo;t search &mdash; try again.</p>'; return; }
+        warrantyFetchTickets(client, function (tickets) {
+          if (!results) return;
+          if (!tickets) { results.innerHTML = '<p class="portal-muted portal-small">Couldn&rsquo;t search &mdash; try again.</p>'; return; }
+          var hits = tickets.filter(function (t) {
+            if (!q) return true;
+            return String(t.customer_name || '').toLowerCase().indexOf(q) !== -1 ||
+              String(t.customer_phone || '').indexOf(q) !== -1;
+          }).slice(0, 25);
+          if (!hits.length) { results.innerHTML = '<p class="portal-muted portal-small">No repairs match that search.</p>'; return; }
+          results.innerHTML = hits.map(function (t) {
+            return '<div class="portal-status-row"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-warranty-pick="' + esc(t.id) + '">' + esc(warrantyTicketLine(t)) + '</button></div>';
+          }).join('');
+          results.querySelectorAll('[data-warranty-pick]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+              var t = warrantyTicketById[btn.getAttribute('data-warranty-pick')];
+              if (t) warrantyLinkTicket(row, t);
+            });
+          });
+        });
+      });
+    });
+  }
+
+  function warrantyStartRework(id) {
+    var row = warrantyRowById(id);
+    if (!row || row.ticket_id) return;
+    withClient(function (client) {
+      if (!client) { warrantySay(id, 'Couldn’t start — try again.'); return; }
+      var ref = warrantyNormalizeRef(row.ticket_ref);
+      if (!ref) { warrantySay(id, 'No ticket number on this request — pick the original repair below.'); warrantyShowPicker(row, []); return; }
+      warrantySay(id, 'Finding the original ticket…');
+      warrantyFetchTickets(client, function (tickets) {
+        if (!tickets) { warrantySay(id, 'Couldn’t look up tickets — try again.'); return; }
+        var matches = tickets.filter(function (t) { return shortCode(t) === ref; });
+        if (matches.length === 1) { warrantyLinkNow(client, row, matches[0]); return; }
+        warrantySay(id, matches.length
+          ? 'That ticket number matches more than one repair — pick the right one below.'
+          : 'No repair matches that ticket number — search for it below.');
+        warrantyShowPicker(row, matches);
+      });
+    });
+  }
+
+  function warrantyLinkTicket(row, ticket) {
+    withClient(function (client) {
+      if (!client) { warrantySay(row.id, 'Couldn’t start — try again.'); return; }
+      warrantyLinkNow(client, row, ticket);
+    });
+  }
+
+  /* The link itself, in dependency order: the request first — that
+   * update names the new columns, so it is the one that fails until
+   * warranty-requests-linking.sql runs, and in that case nothing
+   * else is touched — then the ticket flip and the exemption in one
+   * update, the same fields the drawer's Warranty exemption button
+   * writes (tickets.warranty_exempt) plus the status. */
+  function warrantyLinkNow(client, row, ticket) {
+    warrantySay(row.id, 'Starting rework…');
+    client.from('warranty_requests').update({
+      customer_id: ticket.customer_id || null,
+      ticket_id: ticket.id,
+      status: 'Approved'
+    }).eq('id', row.id).then(function (res) {
+      if (res.error) { warrantySay(row.id, 'Linking needs the database step first — nothing was changed.'); return; }
+      row.customer_id = ticket.customer_id || null;
+      row.ticket_id = ticket.id;
+      row.status = 'Approved';
+      client.from('tickets').update({ status: 'Rework / Warranty', warranty_exempt: true }).eq('id', ticket.id).then(function (tres) {
+        if (tres.error) {
+          renderWarrantyRequests(warrantyRowsCache);
+          warrantySay(row.id, 'Claim linked, but the ticket itself could not be updated — open it and set Rework / Warranty plus the Warranty exemption.');
+          return;
+        }
+        warrantyConfirm = { id: row.id, text: 'Rework started on ticket #' + shortCode(ticket) + ' — customer owes $0.' };
+        state.loaded.warranty = false;
+        renderWarrantyRequests(warrantyRowsCache);
+        setCount('portal-count-warranty', warrantyRowsCache.filter(function (r) { return warrantyStatusOf(r) === 'New'; }).length);
+      }).catch(function () {
+        renderWarrantyRequests(warrantyRowsCache);
+        warrantySay(row.id, 'Claim linked, but the ticket itself could not be updated — open it and set Rework / Warranty plus the Warranty exemption.');
+      });
+    }).catch(function () { warrantySay(row.id, 'Linking needs the database step first — nothing was changed.'); });
+  }
+
+  /* WARRANTY_CONTROLS_2026_11_04: the internal claim form (markup in
+   * portal.html, #portal-warranty-claim). Wired once, the first time
+   * the Warranty panel loads. Customers are loaded once and filtered
+   * as staff type; picking one loads their repairs into the select. */
+  var warrantyClaimWired = false;
+  var warrantyClaimCustomers = null;
+  var warrantyClaimCustomer = null;
+
+  function wireWarrantyClaimForm() {
+    if (warrantyClaimWired) return;
+    var btn = $('portal-warranty-new-claim');
+    if (!btn) return;
+    warrantyClaimWired = true;
+    btn.addEventListener('click', function () {
+      var wrap = $('portal-warranty-claim');
+      if (!wrap) return;
+      wrap.hidden = !wrap.hidden;
+      if (!wrap.hidden) warrantyLoadClaimCustomers();
+    });
+    var cancel = $('portal-wc-cancel');
+    if (cancel) cancel.addEventListener('click', function () {
+      var wrap = $('portal-warranty-claim');
+      if (wrap) wrap.hidden = true;
+    });
+    var search = $('portal-wc-cust-search');
+    if (search) search.addEventListener('input', function () { warrantyRenderClaimCustomers(); });
+    var save = $('portal-wc-save');
+    if (save) save.addEventListener('click', warrantySaveClaim);
+  }
+
+  function warrantyLoadClaimCustomers() {
+    if (warrantyClaimCustomers) { warrantyRenderClaimCustomers(); return; }
+    withClient(function (client) {
+      if (!client) { warrantyClaimCustomers = []; warrantyRenderClaimCustomers(); return; }
+      client.from('customers').select('id, name, email, phone')
+        .order('name', { ascending: true }).limit(500)
+        .then(function (res) {
+          warrantyClaimCustomers = res.error ? [] : (res.data || []);
+          warrantyRenderClaimCustomers();
+        })
+        .catch(function () { warrantyClaimCustomers = []; warrantyRenderClaimCustomers(); });
+    });
+  }
+
+  function warrantyRenderClaimCustomers() {
+    var box = $('portal-wc-cust-results');
+    if (!box) return;
+    if (!warrantyClaimCustomers) { box.innerHTML = '<p class="portal-muted portal-small">Loading customers&hellip;</p>'; return; }
+    var input = $('portal-wc-cust-search');
+    var q = trim(input ? input.value : '').toLowerCase();
+    var rows = warrantyClaimCustomers.filter(function (c) {
+      if (!q) return true;
+      return String(c.name || '').toLowerCase().indexOf(q) !== -1 ||
+        String(c.phone || '').indexOf(q) !== -1;
+    }).slice(0, 8);
+    if (!rows.length) { box.innerHTML = '<p class="portal-muted portal-small">No customers match.</p>'; return; }
+    box.innerHTML = rows.map(function (c) {
+      return '<div class="portal-status-row"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-wc-cust="' + esc(c.id) + '">' +
+        esc(c.name || 'Customer') + (c.phone ? ' &middot; ' + esc(c.phone) : '') + '</button></div>';
+    }).join('');
+    box.querySelectorAll('[data-wc-cust]').forEach(function (b) {
+      b.addEventListener('click', function () { warrantyPickClaimCustomer(b.getAttribute('data-wc-cust')); });
+    });
+  }
+
+  function warrantyPickClaimCustomer(id) {
+    var cust = null;
+    (warrantyClaimCustomers || []).forEach(function (c) { if (String(c.id) === String(id)) cust = c; });
+    if (!cust) return;
+    warrantyClaimCustomer = cust;
+    var picked = $('portal-wc-cust-picked');
+    if (picked) {
+      picked.hidden = false;
+      picked.innerHTML = 'Customer: <strong>' + esc(cust.name || 'Customer') + '</strong>' +
+        (cust.phone ? ' &middot; ' + esc(cust.phone) : '') + (cust.email ? ' &middot; ' + esc(cust.email) : '');
+    }
+    var sel = $('portal-wc-ticket');
+    if (!sel) return;
+    sel.disabled = true;
+    sel.innerHTML = '<option value="">Loading their repairs&hellip;</option>';
+    withClient(function (client) {
+      if (!client) { sel.innerHTML = '<option value="">Couldn&rsquo;t load repairs</option>'; return; }
+      client.from('tickets').select(WARRANTY_TICKET_COLS).eq('customer_id', cust.id)
+        .order('created_at', { ascending: false }).limit(100)
+        .then(function (res) {
+          var tickets = res.error ? [] : (res.data || []);
+          tickets.forEach(function (t) { warrantyTicketById[t.id] = t; });
+          if (!tickets.length) { sel.innerHTML = '<option value="">No repairs on file for this customer</option>'; return; }
+          sel.innerHTML = tickets.map(function (t) {
+            return '<option value="' + esc(t.id) + '">' + esc(warrantyTicketLine(t)) + '</option>';
+          }).join('');
+          sel.disabled = false;
+        })
+        .catch(function () { sel.innerHTML = '<option value="">Couldn&rsquo;t load repairs</option>'; });
+    });
+  }
+
+  function warrantySaveClaim() {
+    var msg = $('portal-wc-msg');
+    var say = function (t) { if (msg) msg.textContent = t; };
+    var cust = warrantyClaimCustomer;
+    var sel = $('portal-wc-ticket');
+    var ticket = (sel && sel.value) ? warrantyTicketById[sel.value] : null;
+    var problemEl = $('portal-wc-problem');
+    var problem = trim(problemEl ? problemEl.value : '');
+    if (!cust) { say('Pick the customer first.'); return; }
+    if (!ticket) { say('Pick the original repair.'); return; }
+    if (!problem) { say('Add what’s wrong — the problem the customer described.'); return; }
+    var viaEl = $('portal-wc-via');
+    var via = viaEl ? viaEl.value : 'call';
+    var contactEl = $('portal-wc-contact');
+    var contact = contactEl ? contactEl.value : 'Call';
+    var partEl = $('portal-wc-part');
+    var part = trim(partEl ? partEl.value : '');
+    say('Saving…');
+    withClient(function (client) {
+      if (!client) { say('Couldn’t save — try again.'); return; }
+      var row = {
+        customer_name: cust.name || ticket.customer_name || 'Customer',
+        phone: cust.phone || ticket.customer_phone || null,
+        email: cust.email || null,
+        device: deviceLabel(ticket),
+        repair_date: ticket.job_date || (ticket.created_at ? String(ticket.created_at).slice(0, 10) : null),
+        ticket_ref: shortCode(ticket),
+        part_service: part || null,
+        problem: problem,
+        contact_pref: contact,
+        status: 'Approved',
+        source: via,
+        customer_id: cust.id,
+        ticket_id: ticket.id
+      };
+      client.from('warranty_requests').insert(row).then(function (res) {
+        if (res.error) { say('Couldn’t save the claim — if the linking columns are not live yet, the database step has to run first.'); return; }
+        client.from('tickets').update({ status: 'Rework / Warranty', warranty_exempt: true }).eq('id', ticket.id).then(function (tres) {
+          if (tres.error) {
+            say('Claim saved, but the ticket could not be flipped — open ticket #' + shortCode(ticket) + ' and set Rework / Warranty plus the Warranty exemption.');
+            state.loaded.warranty = false;
+            loadWarrantyRequests(true);
+            return;
+          }
+          say('Claim saved — rework started on ticket #' + shortCode(ticket) + '. The customer owes $0 on it.');
+          state.loaded.warranty = false;
+          loadWarrantyRequests(true);
+        }).catch(function () {
+          say('Claim saved, but the ticket could not be flipped — open it and set Rework / Warranty plus the Warranty exemption.');
+        });
+      }).catch(function () { say('Couldn’t save the claim — try again.'); });
     });
   }
 
@@ -7021,6 +7411,17 @@ function loadTicketThread(client, ticketId) {
       case 'account_created':
         return actor + ' created the account for ' + target +
           (r.detail ? ' (' + roleLabel(r.detail) + ')' : '');
+      case 'role_changed':
+        /* PORTAL_ADMIN_CONTROLS_2026_11_04: detail carries the NEW
+         * stored role; roleLabel turns 'owner' into Admin, and the
+         * raw 'associate' is capitalized for the sentence. */
+        var newRole = roleLabel(r.detail);
+        if (newRole && newRole !== 'Admin') newRole = newRole.charAt(0).toUpperCase() + newRole.slice(1);
+        return actor + ' changed ' + target + '\u2019s role' +
+          (newRole ? ' to ' + newRole : '');
+      case 'picture_changed':
+        /* PORTAL_ADMIN_CONTROLS_2026_11_04 */
+        return actor + ' changed ' + target + '\u2019s profile picture';
       default:
         return actor + ' updated ' + target;
     }
@@ -7192,6 +7593,88 @@ function loadTicketThread(client, ticketId) {
       });
   }
 
+  /* PORTAL_ADMIN_CONTROLS_2026_11_04: save a role change from the
+   * owner section of a person's card. Same confirm-arm + acctRun
+   * shape as the login actions above: first tap arms the button,
+   * second tap sends { action: 'set_role' } to the staff-admin
+   * function, and acctRun's reload redraws the card with the new
+   * role badge. The function's own refusals (your own role, the
+   * last owner) land in the panel error line as-is. */
+  function acctSaveRole(btn, id) {
+    var sel = document.querySelector('[data-assoc-role-select="' + id + '"]');
+    var role = sel ? sel.value : '';
+    if (role !== 'owner' && role !== 'associate') { acctError('Pick a role first.'); return; }
+    if (!acctArm(btn, 'Tap again to save role')) return;
+    acctRun(btn, { action: 'set_role', user_id: id, role: role }, 'Role updated.');
+  }
+
+  /* PORTAL_ADMIN_CONTROLS_2026_11_04: the owner's Change picture
+   * flow. One hidden file input serves every card (it lives in
+   * the Associate Accounts panel markup); the Change picture
+   * button records WHOSE picture is being picked and opens the
+   * picker. The picked file goes through the SAME crop as the
+   * Team Chat self-service upload (processAvatarFile — center
+   * square, at most 512x512, JPEG), then rides to the staff-admin
+   * function as base64, because the storage policy only lets a
+   * person write their own file and this write is the owner's,
+   * on someone else's card. */
+  var assocAvatarTargetId = null;
+
+  function pickAssocAvatar(id) {
+    var input = $('portal-acct-avatar-file');
+    if (!input) { acctError('The picture picker is not available here.'); return; }
+    assocAvatarTargetId = id;
+    input.click();
+  }
+
+  function uploadAssocAvatar(id, file) {
+    var msg = document.querySelector('[data-assoc-avatar-msg="' + id + '"]');
+    if (msg) msg.textContent = 'Preparing picture\u2026';
+    processAvatarFile(file, function (blob) {
+      if (!blob) { if (msg) msg.textContent = 'That picture could not be read. Try another one.'; return; }
+      var reader = new FileReader();
+      reader.onload = function () {
+        var dataUrl = String(reader.result || '');
+        var b64 = dataUrl.indexOf(',') >= 0 ? dataUrl.split(',')[1] : '';
+        if (!b64) { if (msg) msg.textContent = 'That picture could not be read. Try another one.'; return; }
+        if (msg) msg.textContent = 'Uploading\u2026';
+        callStaffAdmin({ action: 'set_avatar', user_id: id, image_base64: b64 }, function (out) {
+          if (!out) { acctError('That did not go through — check the connection and try again.'); if (msg) msg.textContent = ''; return; }
+          if (!out.ok) { acctError(out.error || 'That did not go through.'); if (msg) msg.textContent = ''; return; }
+          if (out.avatar_url) {
+            assocAvatarById[id] = out.avatar_url;
+            var dp = teamChatDirPerson(id);
+            if (dp) dp.avatar_url = out.avatar_url;
+          }
+          acctNote('Picture updated.');
+          /* Reload the panel so the card, the roster and every
+           * other surface redraw with the new face. */
+          state.loaded.associateaccounts = false;
+          loadAssociateAccounts(true);
+        });
+      };
+      reader.onerror = function () { if (msg) msg.textContent = 'That picture could not be read. Try another one.'; };
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  /* The picker input's change wiring — called once from
+   * initDelegation (the input is static panel markup). The input
+   * is reset after every pick so choosing the same photo twice in
+   * a row still fires the change, same as the Team Chat picker. */
+  function wireAssocAvatarPicker() {
+    var input = $('portal-acct-avatar-file');
+    if (!input || input.getAttribute('data-wired')) return;
+    input.setAttribute('data-wired', '1');
+    input.addEventListener('change', function () {
+      var f = input.files && input.files[0];
+      input.value = '';
+      var id = assocAvatarTargetId;
+      assocAvatarTargetId = null;
+      if (f && id) uploadAssocAvatar(id, f);
+    });
+  }
+
   /* ================= PORTAL_ROSTER_DETAIL_2026_11_02: the owner's full record =================
    * Everything below renders ONLY inside an expansion the owner
    * opened (renderAssociates gates on isPortalOwner() before any of
@@ -7200,14 +7683,38 @@ function loadTicketThread(client, ticketId) {
 
   function assocOwnerSection(a) {
     var out = '<div class="assoc-owner-sec"><p class="assoc-owner-head"><i class="fas fa-lock"></i> Owner only</p>';
-    /* AVATARS_2026_11_03: owner moderation for the portrait.
-     * Upload is self-service only (the storage policy lets a
-     * person write just their own file); the owner's lever is
-     * clearing avatar_url, which hides the picture on every
-     * surface at once — see removeAssocAvatar. */
-    if (assocAvatarKnown && assocAvatarById[a.id]) {
+    /* PORTAL_ADMIN_CONTROLS_2026_11_04 (Austin, Nov 4, 2026): the
+     * role can be changed right here. It used to be written once,
+     * at account creation, and never again — if someone's role
+     * changed, there was no way to fix it. The select carries the
+     * STORED values ('owner' / 'associate'); the stored value is
+     * never renamed — roleLabel renders 'owner' as Admin. Saving
+     * goes through the staff-admin function (action 'set_role'),
+     * which re-checks the owner server-side, refuses a change to
+     * your own role and refuses demoting the last owner, and signs
+     * the change in the account activity trail — see acctSaveRole. */
+    var curRole = trim(a.role || '').toLowerCase() === 'owner' ? 'owner' : 'associate';
+    out += '<div class="assoc-pay-row"><span class="assoc-pay-label">Role<span class="assoc-pay-cur">' + esc(roleLabel(a.role)) + '</span></span>' +
+      '<span class="assoc-pay-edit"><select aria-label="Role" data-assoc-role-select="' + esc(a.id) + '">' +
+      '<option value="associate"' + (curRole === 'associate' ? ' selected' : '') + '>Associate</option>' +
+      '<option value="owner"' + (curRole === 'owner' ? ' selected' : '') + '>Admin</option></select>' +
+      '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-assoc-role-save="' + esc(a.id) + '">Save role</button></span></div>' +
+      '<p class="portal-small assoc-pay-msg" data-assoc-role-msg="' + esc(a.id) + '"></p>';
+    /* AVATARS_2026_11_03: owner moderation for the portrait —
+     * clearing avatar_url hides the picture on every surface at
+     * once (see removeAssocAvatar).
+     * PORTAL_ADMIN_CONTROLS_2026_11_04: the owner can also SET the
+     * picture from here now. The Team Chat upload stays each
+     * person's own path — the storage policy lets a person write
+     * just their own file — so this Change picture button sends
+     * the cropped photo through the staff-admin function (action
+     * 'set_avatar', service role) instead; see uploadAssocAvatar.
+     * The row renders whenever the avatar probe has landed,
+     * whether or not a picture exists yet. */
+    if (assocAvatarKnown) {
       out += '<div class="assoc-pay-row"><span class="assoc-pay-label">Profile picture<span class="assoc-pay-cur">Shown to the team and to customers</span></span>' +
-        '<span class="assoc-pay-edit"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-assoc-avatar-remove="' + esc(a.id) + '">Remove picture</button></span></div>' +
+        '<span class="assoc-pay-edit"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-assoc-avatar-change="' + esc(a.id) + '">Change picture</button>' +
+        (assocAvatarById[a.id] ? '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-assoc-avatar-remove="' + esc(a.id) + '">Remove picture</button>' : '') + '</span></div>' +
         '<p class="portal-small assoc-pay-msg" data-assoc-avatar-msg="' + esc(a.id) + '"></p>';
     }
     if (assocPayKnown) {
@@ -8262,10 +8769,24 @@ function loadTicketThread(client, ticketId) {
               var tickets = tres.error ? [] : (tres.data || []);
               var ids = tickets.map(function (t) { return t.id; });
               function render(charges) {
-                loadCustEditRequests(function () {
-                  renderCustProfile(cust, tickets, charges);
-                  renderCustEditPanel();
-                });
+                /* WARRANTY_CONTROLS_2026_11_04: the customer's
+                 * linked warranty requests ride along with the
+                 * profile, listed under Repair history. A request
+                 * links when staff start its rework or file the
+                 * claim for the customer; until the linking columns
+                 * exist the query errors and the profile simply
+                 * renders without the section — the same tolerance
+                 * as the membership load above. */
+                client.from('warranty_requests').select('*').eq('customer_id', customerId)
+                  .order('created_at', { ascending: false }).limit(50)
+                  .then(function (wres) { finish(wres.error ? [] : (wres.data || [])); })
+                  .catch(function () { finish([]); });
+                function finish(wreqs) {
+                  loadCustEditRequests(function () {
+                    renderCustProfile(cust, tickets, charges, wreqs);
+                    renderCustEditPanel();
+                  });
+                }
               }
               if (!ids.length) { render([]); return; }
               client.from('ticket_charges').select('ticket_id, kind, qty, unit_price').in('ticket_id', ids)
@@ -8279,7 +8800,7 @@ function loadTicketThread(client, ticketId) {
     });
   }
 
-  function renderCustProfile(cust, tickets, charges) {
+  function renderCustProfile(cust, tickets, charges, warrantyReqs) {
     var body = $('portal-drawer-body');
     if (!body) return;
     var investedByTicket = {};
@@ -8347,6 +8868,26 @@ function loadTicketThread(client, ticketId) {
       }).join('');
     }
     html += '</div>';
+
+    /* WARRANTY_CONTROLS_2026_11_04: this customer's warranty claims —
+     * website submissions staff linked by starting the rework, and
+     * claims staff filed for them by call, text, or email. */
+    var wreqs = warrantyReqs || [];
+    if (wreqs.length) {
+      html += '<div class="portal-drawer-section"><h3>Warranty requests</h3>';
+      html += wreqs.map(function (r) {
+        var tk = null;
+        (tickets || []).forEach(function (t) { if (String(t.id) === String(r.ticket_id)) tk = t; });
+        return '<div class="cust-prof-ticket">' +
+          '<div class="cust-prof-ticket-top"><span class="cust-prof-ticket-date">' + esc(fmtDate(r.created_at) || '') + '</span>' +
+          '<span class="portal-badge portal-st-reviewed">' + esc(warrantyStatusOf(r)) + '</span></div>' +
+          '<p class="cust-prof-ticket-device">' + esc(trim(r.device) || (tk ? deviceLabel(tk) : 'Device')) + (trim(r.part_service) ? ' &middot; ' + esc(r.part_service) : '') + '</p>' +
+          (trim(r.problem) ? '<p class="portal-card-issue">' + esc(r.problem) + '</p>' : '') +
+          '<p class="portal-muted portal-small">' + esc(warrantySourceTag(r)) + (tk ? ' &middot; Ticket #' + shortCode(tk) : (trim(r.ticket_ref) ? ' &middot; Ticket #' + esc(warrantyNormalizeRef(r.ticket_ref)) : '')) + '</p>' +
+          '</div>';
+      }).join('');
+      html += '</div>';
+    }
 
     if (pending.length) {
       html += '<div class="portal-drawer-section"><h3>Changes waiting for approval</h3>' + pending.map(function (r) {
@@ -9211,6 +9752,10 @@ function loadTicketThread(client, ticketId) {
           if (ahs) { saveAssocHome(ahs); return; } /* PORTAL_MILEAGE_2026_11_02 */
           var aar = t.getAttribute('data-assoc-avatar-remove');
           if (aar) { removeAssocAvatar(aar); return; } /* AVATARS_2026_11_03 */
+          var ars = t.getAttribute('data-assoc-role-save');
+          if (ars) { acctSaveRole(t, ars); return; } /* PORTAL_ADMIN_CONTROLS_2026_11_04 */
+          var aac = t.getAttribute('data-assoc-avatar-change');
+          if (aac) { pickAssocAvatar(aac); return; } /* PORTAL_ADMIN_CONTROLS_2026_11_04 */
           var atc = t.getAttribute('data-assoc-timecard');
           if (atc) { openAssocTimeCard(atc); return; }
           /* ACCOUNT_CONTROLS_2026_11_03: Account Controls panel
@@ -9246,6 +9791,8 @@ function loadTicketThread(client, ticketId) {
         t = t.parentNode;
       }
     });
+
+    wireAssocAvatarPicker(); /* PORTAL_ADMIN_CONTROLS_2026_11_04: the Associate Accounts Change picture file input */
 
     /* PORTAL_CUSTOMER_PROFILE_2026_11_02 (Austin correction): the
      * approvals section lives in the Requests panel — refresh the
@@ -11117,7 +11664,36 @@ function loadTicketThread(client, ticketId) {
         .then(function (res) { if (!res.error) ciCustomersCache = res.data || []; });
     });
   }
+  /* CHECKIN_COLLAPSE_2026_11_04 (Austin, Nov 4, 2026): the Check-In
+   * form folds into sections like the ticket drawer's do (the
+   * tk-acc pattern in the drawer) — but that wiring is scoped to
+   * the drawer body, so the check-in carries its own parallel
+   * pattern: ci-acc markup in portal.html, ci-acc classes in
+   * portal.css, and this wiring. Customer starts open, the rest
+   * closed; state is per-section in ciAccState. Nothing inside a
+   * section changed — same fields, same ids, same submit flow —
+   * and the Create ticket / Clear check-in row sits outside the
+   * sections entirely, always visible. */
+  var ciAccState = { customer: true };
+  function wireCiAccordions() {
+    var panel = $('portal-panel-checkin');
+    if (!panel || panel.getAttribute('data-ci-acc-wired')) return;
+    panel.setAttribute('data-ci-acc-wired', '1');
+    panel.querySelectorAll('[data-ci-acc-toggle]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var key = btn.getAttribute('data-ci-acc-toggle');
+        var open = !ciAccState[key];
+        ciAccState[key] = open;
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        btn.classList.toggle('ci-acc-open', open);
+        var body = panel.querySelector('[data-ci-acc-body="' + key + '"]');
+        if (body) body.hidden = !open;
+      });
+    });
+  }
+
   function initCheckin() {
+    wireCiAccordions(); /* CHECKIN_COLLAPSE_2026_11_04 */
     var search = $('ci-search');
     if (!search || search.getAttribute('data-wired')) return;
     search.setAttribute('data-wired', '1');

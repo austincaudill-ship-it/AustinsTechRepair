@@ -288,15 +288,43 @@
         </div>
       </div>
 
-      <!-- WARRANTY — WARRANTY_PORTAL_2026_11_03 (Austin, Nov 3, 2026): warranty requests customers file from the website's warranty form land in public.warranty_requests and are worked here by any staff role — owner and associates alike; this is Pepper's lane, so there is deliberately no owner gate. Each card leads with the "Original ticket" reference the customer copied from their receipt: staff use it to pull up the original job, set that ticket's status to Rework / Warranty, and press the Warranty exemption button in its Charges so the rework costs the customer $0 while the charges stay on record. -->
+      <!-- WARRANTY — WARRANTY_PORTAL_2026_11_03 (Austin, Nov 3, 2026): warranty requests customers file from the website's warranty form land in public.warranty_requests and are worked here by any staff role — owner and associates alike; this is Pepper's lane, so there is deliberately no owner gate. Each card leads with the "Original ticket" reference the customer copied from their receipt: staff use it to pull up the original job, set that ticket's status to Rework / Warranty, and press the Warranty exemption button in its Charges so the rework costs the customer $0 while the charges stay on record. WARRANTY_CONTROLS_2026_11_04 (Austin, Nov 4, 2026): the card now does that work in place — Start rework resolves the original ticket from the receipt number (or a staff pick), links the request to the ticket and its customer (warranty_requests.customer_id / ticket_id, warranty-requests-linking.sql), flips the ticket to Rework / Warranty, and applies the exemption; and New claim lets staff file the claim FOR a customer who reached us by call, text, or email instead of the website form (warranty_requests.source records how they reached us). -->
       <div class="portal-panel" id="portal-panel-warranty" role="tabpanel" hidden>
         <div class="portal-panel-head">
           <h2 class="portal-h2">Warranty Requests</h2>
+          <button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="portal-warranty-new-claim">
+            <i class="fas fa-pen-to-square"></i> New claim &mdash; we fill it in
+          </button>
           <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="warranty">
             <i class="fas fa-rotate-right"></i> Refresh
           </button>
         </div>
-        <p class="portal-muted portal-small">Requests from the website&rsquo;s warranty form, newest first. Open the original ticket named on a card, set its status to Rework / Warranty, and use the Warranty exemption button in its Charges &mdash; the charges stay recorded and the customer owes $0.</p>
+        <p class="portal-muted portal-small">Warranty requests, newest first. Start rework right on a card &mdash; it links the original ticket, sets it to Rework / Warranty, and exempts its charges, so the customer owes $0.</p>
+        <!-- WARRANTY_CONTROLS_2026_11_04: internal claim intake. The website form is not the only door — when a customer calls, texts, or emails instead, staff file the claim for them here. The pickers attach the claim to the customer and their original repair in the database, and saving starts the rework on that ticket exactly like Start rework does on a card. Wired in portal.js (wireWarrantyClaimForm). -->
+        <div id="portal-warranty-claim" hidden>
+          <div class="portal-card">
+            <p class="portal-card-title">New claim &mdash; we fill it in</p>
+            <p class="portal-muted portal-small">For a customer who reached us by call, text, or email instead of the website form. Pick the customer and their original repair; saving files the claim, starts the rework on that ticket, and exempts its charges.</p>
+            <div class="portal-field"><label for="portal-wc-via">How did they reach us?</label>
+              <select id="portal-wc-via"><option value="call">Call</option><option value="text">Text</option><option value="email">Email</option></select></div>
+            <div class="portal-field"><label for="portal-wc-cust-search">Customer</label>
+              <input type="search" id="portal-wc-cust-search" placeholder="Search by name or phone" autocomplete="off" />
+              <div id="portal-wc-cust-results"></div>
+              <p class="portal-small" id="portal-wc-cust-picked" hidden></p></div>
+            <div class="portal-field"><label for="portal-wc-ticket">Original repair</label>
+              <select id="portal-wc-ticket" disabled><option value="">Pick the customer first</option></select></div>
+            <div class="portal-field"><label for="portal-wc-part">Part or service under warranty</label>
+              <input type="text" id="portal-wc-part" placeholder="e.g. Screen" autocomplete="off" /></div>
+            <div class="portal-field"><label for="portal-wc-problem">What&rsquo;s wrong?</label>
+              <textarea id="portal-wc-problem" rows="3" placeholder="What the customer told us"></textarea></div>
+            <div class="portal-field"><label for="portal-wc-contact">Preferred contact</label>
+              <select id="portal-wc-contact"><option>Call</option><option>Text</option><option>Email</option></select></div>
+            <div class="portal-status-row">
+              <button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="portal-wc-save">Save claim &amp; start rework</button>
+              <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="portal-wc-cancel">Cancel</button>
+              <span class="portal-muted portal-small" id="portal-wc-msg"></span></div>
+          </div>
+        </div>
         <div id="portal-warranty-list"><p class="portal-muted">Loading warranty requests&hellip;</p></div>
       </div>
 
@@ -341,9 +369,11 @@
             <i class="fas fa-rotate-right"></i> Refresh
           </button>
         </div>
-        <p class="portal-muted portal-small">Profiles and logins for everyone who can sign in to this portal, managed in one place. Tap a person to open their full record &mdash; their profile on top, their login below it: change a login email, set a new password, or deactivate an account that should not sign in anymore (deactivated accounts can be activated again here). Changes take effect right away. Owner only.</p>
+        <p class="portal-muted portal-small">Profiles and logins for everyone who can sign in to this portal, managed in one place. Tap a person to open their full record &mdash; their profile on top, their login below it: change a login email, set a new password, or deactivate an account that should not sign in anymore (deactivated accounts can be activated again here) &mdash; and from the owner section of a card, change a role or a profile picture. Changes take effect right away. Owner only.</p>
         <p class="portal-error" id="portal-acct-error" hidden></p>
         <p class="portal-muted" id="portal-acct-note" hidden></p>
+        <!-- PORTAL_ADMIN_CONTROLS_2026_11_04: one hidden file picker serves every card's Change picture button — portal.js pickAssocAvatar records whose picture is being picked, then uploadAssocAvatar crops it and sends it through the staff-admin function. -->
+        <input type="file" id="portal-acct-avatar-file" accept="image/*" hidden />
         <div id="portal-acct-list"><p class="portal-muted">Loading associate accounts&hellip;</p></div>
         <div class="portal-panel-head portal-subhead">
           <h2 class="portal-h2">Add staff login</h2>
@@ -778,7 +808,10 @@
         <div class="portal-panel-head"><h2 class="portal-h2">Check-In &mdash; Triage</h2></div>
         <p class="portal-muted portal-small">Walk-in and phone check-ins. Find the customer (or add them), pick the device and the reason, run the power test, and the ticket lands straight in the Repair Queue. Confirm the $35 house-call fee with the customer before submitting.</p>
         <form id="ci-form" novalidate>
-          <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Customer</h3></div>
+          <!-- CHECKIN_COLLAPSE_2026_11_04 (Austin, Nov 4, 2026): the check-in form folds into tappable sections, like the ticket drawer's sections in the Repair Queue — Customer starts open, the rest start closed, and the Create ticket button and Clear check-in stay outside the sections at the bottom, always visible. Every field id is exactly as it was; only the folding wrappers were added. -->
+          <div class="ci-acc" data-ci-acc="customer">
+          <button type="button" class="ci-acc-head ci-acc-open" data-ci-acc-toggle="customer" aria-expanded="true"><span class="ci-acc-title">Customer</span><i class="fas fa-chevron-down ci-acc-chev" aria-hidden="true"></i></button>
+          <div class="ci-acc-body" data-ci-acc-body="customer">
           <div class="portal-field">
             <label for="ci-search">Find existing customer</label>
             <input type="search" id="ci-search" placeholder="Start typing a name&hellip;" autocomplete="off" />
@@ -807,7 +840,11 @@
               <a class="link-card" href="https://square.link/u/V8WCkjbW" target="_blank" rel="noopener"><i class="fas fa-building"></i><strong>ATR One &mdash; Business Pro</strong><span>$99.99/mo signup link</span></a>
             </div>
           </div>
-          <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Device</h3></div>
+          </div>
+          </div>
+          <div class="ci-acc" data-ci-acc="device">
+          <button type="button" class="ci-acc-head" data-ci-acc-toggle="device" aria-expanded="false"><span class="ci-acc-title">Device and issue</span><i class="fas fa-chevron-down ci-acc-chev" aria-hidden="true"></i></button>
+          <div class="ci-acc-body" data-ci-acc-body="device" hidden>
           <div class="portal-nh-grid">
             <div class="portal-field"><label for="ci-type">Device type</label>
               <select id="ci-type"><option>Phone</option><option>Tablet</option><option>Laptop</option><option>Desktop</option><option>Game Console</option><option>Smartwatch</option><option>Earbuds / Hearable</option><option>Other</option></select></div>
@@ -831,7 +868,11 @@
             <button type="button" class="ci-tile" data-label="Software issue" aria-pressed="false"><i class="fas fa-bug" aria-hidden="true"></i><span>Software issue</span></button>
             <button type="button" class="ci-tile" data-label="Other" aria-pressed="false"><i class="fas fa-ellipsis" aria-hidden="true"></i><span>Other</span></button>
           </div>
-          <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Power test &amp; condition</h3></div>
+          </div>
+          </div>
+          <div class="ci-acc" data-ci-acc="power">
+          <button type="button" class="ci-acc-head" data-ci-acc-toggle="power" aria-expanded="false"><span class="ci-acc-title">Power test</span><i class="fas fa-chevron-down ci-acc-chev" aria-hidden="true"></i></button>
+          <div class="ci-acc-body" data-ci-acc-body="power" hidden>
           <div class="portal-nh-grid">
             <div class="portal-field"><label for="ci-volts">Voltage at power source (V)</label><input type="text" id="ci-volts" inputmode="decimal" placeholder="e.g. 5.1" /></div>
             <div class="portal-field"><label for="ci-amps">Draw (A)</label><input type="text" id="ci-amps" inputmode="decimal" placeholder="e.g. 0.8" /></div>
@@ -844,6 +885,11 @@
             <div class="portal-field"><label for="ci-warranty">Under manufacturer warranty?</label>
               <select id="ci-warranty"><option value="">Unknown</option><option>Yes &mdash; customer told our work may void it</option><option>No</option></select></div>
           </div>
+          </div>
+          </div>
+          <div class="ci-acc" data-ci-acc="notes">
+          <button type="button" class="ci-acc-head" data-ci-acc-toggle="notes" aria-expanded="false"><span class="ci-acc-title">Notes and agreements</span><i class="fas fa-chevron-down ci-acc-chev" aria-hidden="true"></i></button>
+          <div class="ci-acc-body" data-ci-acc-body="notes" hidden>
           <div class="portal-field">
             <label for="ci-notes">Check-in notes &mdash; the symptom, and how you verified it</label>
             <textarea id="ci-notes" rows="3" placeholder="e.g. Left bud silent; swapped buds in case, fault follows the bud. Case charges fine."></textarea>
@@ -859,7 +905,10 @@
             <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="ci-consent-clear" hidden>Clear agreement</button>
           </div>
           <label class="ci-consent-verbal"><input type="checkbox" id="ci-verbal-check" /> <span>Verbal agreement by phone &mdash; I read the statement above to the customer and they verbally agreed</span></label>
-          <p class="portal-muted portal-small" id="ci-consent-status">No agreement captured yet.</p><p class="portal-error" id="ci-error" hidden></p>
+          <p class="portal-muted portal-small" id="ci-consent-status">No agreement captured yet.</p>
+          </div>
+          </div>
+          <p class="portal-error" id="ci-error" hidden></p>
           <button class="portal-btn portal-btn-primary" id="ci-submit" type="submit"><i class="fas fa-arrow-right"></i> Create ticket &amp; add to queue</button>
           <!-- PORTAL_DEADEND_MINORS_2026_10_30: whole-form start-over for a half-finished check-in (wired in portal.js, initCheckin) -->
           <div class="p2-actions" style="margin-top:0.6rem;">
@@ -1189,7 +1238,17 @@
 
     function getClient() {
       if (window.supabase && window.supabase.createClient) {
-        try { return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); }
+        /* SESSION FIX (Nov 4, 2026): New Hires reads and writes
+         * (new_hires, employee_documents) are staff-only data — run as
+         * signed-in staff (the portal's own session storage key, same
+         * auth options as portal.js), not as the anonymous default-key
+         * client, whose writes staff RLS refuses. Same root cause as
+         * the Guides panel. */
+        try {
+          return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: { storageKey: 'sb-atrg-portal-auth-token', persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+          });
+        }
         catch (e) { return null; }
       }
       return null;
@@ -3029,7 +3088,16 @@
 
     function getClient() {
       if (window.supabase && window.supabase.createClient) {
-        try { return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); }
+        /* Guides queries must run as signed-in staff (the portal's own
+         * session storage key, same auth options as portal.js):
+         * public.guides RLS only serves employee_profiles members, so a
+         * default-key client queries as anonymous and silently gets
+         * zero rows back. */
+        try {
+          return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: { storageKey: 'sb-atrg-portal-auth-token', persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+          });
+        }
         catch (e) { return null; }
       }
       return null;
@@ -3277,7 +3345,19 @@
 
     function getClient() {
       if (window.supabase && window.supabase.createClient) {
-        try { return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); }
+        /* REQUESTS SESSION FIX (Nov 4, 2026): this module's reads and
+         * its tech_requests insert must run as signed-in staff (the
+         * portal's own session storage key, same auth options as
+         * portal.js). The default-key client queried as anonymous, and
+         * tech_requests RLS refuses anonymous writes outright —
+         * Austin hit "new row violates row-level security policy for
+         * table tech_requests" adding a request (Nov 4). Same root
+         * cause as the Guides panel's silent zero rows. */
+        try {
+          return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: { storageKey: 'sb-atrg-portal-auth-token', persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+          });
+        }
         catch (e) { return null; }
       }
       return null;
@@ -3516,7 +3596,16 @@
 
     function getClient() {
       if (window.supabase && window.supabase.createClient) {
-        try { return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); }
+        /* SESSION FIX (Nov 4, 2026): Celebrations reads the customers
+         * table (birthdays) for staff — run as signed-in staff (the
+         * portal's own session storage key, same auth options as
+         * portal.js), not as the anonymous default-key client. Same
+         * root cause as the Guides panel. */
+        try {
+          return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: { storageKey: 'sb-atrg-portal-auth-token', persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+          });
+        }
         catch (e) { return null; }
       }
       return null;
@@ -3620,7 +3709,17 @@
 
     function getClient() {
       if (window.supabase && window.supabase.createClient) {
-        try { return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); }
+        /* SESSION FIX (Nov 4, 2026): Scan-to-attach reads and writes
+         * staff data (inventory, part_orders, tickets) — run as
+         * signed-in staff (the portal's own session storage key, same
+         * auth options as portal.js), not as the anonymous default-key
+         * client, whose writes staff RLS refuses. Same root cause as
+         * the Guides panel. */
+        try {
+          return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: { storageKey: 'sb-atrg-portal-auth-token', persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+          });
+        }
         catch (e) { return null; }
       }
       return null;
@@ -3950,7 +4049,16 @@
 
   function getClient() {
     if (window.supabase && window.supabase.createClient) {
-      try { return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); }
+      /* Guides queries must run as signed-in staff (the portal's own
+       * session storage key, same auth options as portal.js):
+       * public.guides RLS only serves employee_profiles members, so a
+       * default-key client queries as anonymous and silently gets
+       * zero rows back. */
+      try {
+        return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+          auth: { storageKey: 'sb-atrg-portal-auth-token', persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+        });
+      }
       catch (e) { return null; }
     }
     return null;
@@ -4264,7 +4372,7 @@ document.addEventListener('input',function(e){if(e.target&&e.target.id==='p2-pri
 document.addEventListener('change',function(e){if(e.target&&e.target.id==='p2-price-brand')render();});
 /* PORTAL_LIVE_TRACKING_2026_11_01: Tools Live tracking box — any carrier, result renders in place */
 function p2EscT(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function p2TrackRun(){var n=document.getElementById('p2-track-number');var box=document.getElementById('p2-track-result');var v=n?n.value.trim():'';if(!v||!box)return;box.hidden=false;box.innerHTML='<p class="portal-muted portal-small">Checking live status&hellip;</p>';var url='https://lyujxpuicarblpkdzuuc.supabase.co';var anon='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';var client=null;try{client=window.supabase.createClient(url,anon);}catch(e){}if(!client){box.innerHTML='<p class="portal-error">Live tracking is unavailable right now.</p>';return;}client.auth.getSession().then(function(s){var t=s&&s.data&&s.data.session?s.data.session.access_token:'';return fetch(url+'/functions/v1/track-shipment',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+t,'apikey':anon},body:JSON.stringify({tracking_number:v})});}).then(function(r){return r.json();}).then(function(out){if(!out||!out.ok){box.innerHTML='<p class="portal-error">No live status found for that number. Check the number and try again.</p>';return;}if(!out.connected){box.innerHTML='<p class="portal-muted portal-small">Live tracking for ' + p2EscT(out.carrier || 'this carrier') + ' turns on once its developer keys are added. Until then: <a href="https://www.fedex.com/fedextrack/?trknbr='+encodeURIComponent(v)+'" target="_blank" rel="noopener">FedEx</a> &middot; <a href="https://www.ups.com/track?tracknum='+encodeURIComponent(v)+'" target="_blank" rel="noopener">UPS</a> &middot; <a href="https://tools.usps.com/go/TrackConfirmAction?tLabels='+encodeURIComponent(v)+'" target="_blank" rel="noopener">USPS</a></p>';return;}var h='<strong>'+p2EscT(out.status||'')+'</strong>';if(out.detail)h+=' &middot; '+p2EscT(out.detail);var meta=[];if(out.carrier)meta.push(p2EscT(out.carrier));if(out.eta)meta.push('Arriving '+p2EscT(String(out.eta).slice(0,10)));if(out.updated_at)meta.push('Updated '+p2EscT(new Date(out.updated_at).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})));if(meta.length)h+='<div class="portal-muted portal-small">'+meta.join(' &middot; ')+'</div>';if(out.events&&out.events.length){h+='<ul>'+out.events.map(function(ev){return '<li>'+p2EscT(ev.text)+(ev.location?' &mdash; '+p2EscT(ev.location):'')+(ev.time?' <span class="portal-muted">('+p2EscT(new Date(ev.time).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}))+')</span>':'')+'</li>';}).join('')+'</ul>';}box.innerHTML=h;}).catch(function(){box.innerHTML='<p class="portal-error">Couldn&rsquo;t get live status. Try again.</p>';});}
+function p2TrackRun(){var n=document.getElementById('p2-track-number');var box=document.getElementById('p2-track-result');var v=n?n.value.trim():'';if(!v||!box)return;box.hidden=false;box.innerHTML='<p class="portal-muted portal-small">Checking live status&hellip;</p>';var url='https://lyujxpuicarblpkdzuuc.supabase.co';var anon='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';var client=null;try{client=window.supabase.createClient(url,anon,{auth:{storageKey:'sb-atrg-portal-auth-token',persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});}catch(e){}if(!client){box.innerHTML='<p class="portal-error">Live tracking is unavailable right now.</p>';return;}client.auth.getSession().then(function(s){var t=s&&s.data&&s.data.session?s.data.session.access_token:'';return fetch(url+'/functions/v1/track-shipment',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+t,'apikey':anon},body:JSON.stringify({tracking_number:v})});}).then(function(r){return r.json();}).then(function(out){if(!out||!out.ok){box.innerHTML='<p class="portal-error">No live status found for that number. Check the number and try again.</p>';return;}if(!out.connected){box.innerHTML='<p class="portal-muted portal-small">Live tracking for ' + p2EscT(out.carrier || 'this carrier') + ' turns on once its developer keys are added. Until then: <a href="https://www.fedex.com/fedextrack/?trknbr='+encodeURIComponent(v)+'" target="_blank" rel="noopener">FedEx</a> &middot; <a href="https://www.ups.com/track?tracknum='+encodeURIComponent(v)+'" target="_blank" rel="noopener">UPS</a> &middot; <a href="https://tools.usps.com/go/TrackConfirmAction?tLabels='+encodeURIComponent(v)+'" target="_blank" rel="noopener">USPS</a></p>';return;}var h='<strong>'+p2EscT(out.status||'')+'</strong>';if(out.detail)h+=' &middot; '+p2EscT(out.detail);var meta=[];if(out.carrier)meta.push(p2EscT(out.carrier));if(out.eta)meta.push('Arriving '+p2EscT(String(out.eta).slice(0,10)));if(out.updated_at)meta.push('Updated '+p2EscT(new Date(out.updated_at).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})));if(meta.length)h+='<div class="portal-muted portal-small">'+meta.join(' &middot; ')+'</div>';if(out.events&&out.events.length){h+='<ul>'+out.events.map(function(ev){return '<li>'+p2EscT(ev.text)+(ev.location?' &mdash; '+p2EscT(ev.location):'')+(ev.time?' <span class="portal-muted">('+p2EscT(new Date(ev.time).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}))+')</span>':'')+'</li>';}).join('')+'</ul>';}box.innerHTML=h;}).catch(function(){box.innerHTML='<p class="portal-error">Couldn&rsquo;t get live status. Try again.</p>';});}
 document.addEventListener('click',function(e){if(e.target&&e.target.closest&&e.target.closest('#p2-track-btn'))p2TrackRun();});
 document.addEventListener('keydown',function(e){if(e.target&&e.target.id==='p2-track-number'&&e.key==='Enter'){e.preventDefault();p2TrackRun();}});
 })();
