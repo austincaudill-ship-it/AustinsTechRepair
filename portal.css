@@ -1080,3 +1080,76 @@ span.avatar-disc {
 .warranty-exempt-bar.on { background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 10px; padding: 0.65rem 0.8rem; }
 .warranty-exempt-note { margin: 0 0 0.55rem; color: #115e59; }
 /* end WARRANTY_PORTAL_2026_11_03 */
+
+/* ==========================================================================
+   PASS9_2026_11_04 — Price Book: search bar + in-panel book
+   (Austin, Nov 4, 2026: the search box "just looks like generic
+   text box" — bigger, better looking, rounded edges; and the
+   price sheet belongs inside the Price Book, flipped through
+   like a book, instead of clicking out to another thing.)
+   ========================================================================== */
+
+/* The search bar: a large pill with an inset search icon, the
+   brand select beside it at the same height and radius. */
+.p2-price-searchbar { align-items: stretch; margin: 0.25rem 0 1rem; }
+.p2-price-searchbar .p2-search-wrap { position: relative; flex: 2 1 0; display: flex; min-width: 0; }
+.p2-price-searchbar .p2-search-wrap > i {
+  position: absolute; left: 1.1rem; top: 50%; transform: translateY(-50%);
+  color: var(--muted, #7D6C5B); font-size: 1.05rem; pointer-events: none;
+}
+.p2-price-searchbar #p2-price-search {
+  width: 100%; box-sizing: border-box; min-height: 3.4rem;
+  padding: 0.85rem 1.2rem 0.85rem 2.95rem;
+  font-family: inherit; font-size: 1.08rem; color: var(--ink, #2C231A);
+  background: var(--surface, #FFFDF8);
+  border: 2px solid var(--line, #E6D9C0); border-radius: 999px;
+  box-shadow: 0 1px 3px rgba(44, 35, 26, 0.06);
+  outline: none; -webkit-appearance: none; appearance: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.p2-price-searchbar #p2-price-search::placeholder { color: var(--muted, #7D6C5B); }
+.p2-price-searchbar #p2-price-search:focus {
+  border-color: var(--brand, #D9540D);
+  box-shadow: 0 0 0 4px var(--brand-soft, #FBEADB);
+}
+.p2-price-searchbar #p2-price-brand {
+  flex: 1 1 0; min-width: 0; min-height: 3.4rem;
+  padding: 0.85rem 1rem;
+  font-family: inherit; font-size: 1rem; color: var(--ink, #2C231A);
+  background: var(--surface, #FFFDF8);
+  border: 2px solid var(--line, #E6D9C0); border-radius: 999px;
+  outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+}
+.p2-price-searchbar #p2-price-brand:focus {
+  border-color: var(--brand, #D9540D);
+  box-shadow: 0 0 0 4px var(--brand-soft, #FBEADB);
+}
+@media (max-width: 560px) {
+  .p2-price-searchbar { flex-direction: column; }
+  .p2-price-searchbar .p2-search-wrap, .p2-price-searchbar #p2-price-brand { flex: none; width: 100%; }
+}
+
+/* The book's page tabs: one pill per brand section, the open
+   page filled with the brand color. */
+.p2-book-tabs { display: flex; flex-wrap: wrap; gap: 0.45rem; margin: 0 0 0.9rem; }
+.p2-book-tab {
+  font-family: inherit; font-size: 0.9rem; font-weight: 700;
+  padding: 0.55rem 1rem; border-radius: 999px; cursor: pointer;
+  border: 2px solid var(--line, #E6D9C0);
+  background: var(--surface, #FFFDF8); color: var(--ink, #2C231A);
+  transition: border-color 0.2s, background 0.2s;
+}
+.p2-book-tab:hover { border-color: var(--brand, #D9540D); }
+.p2-book-tab.active { background: var(--brand, #D9540D); border-color: var(--brand, #D9540D); color: #fff; }
+.p2-book-tab .p2-book-tab-count { color: var(--muted, #7D6C5B); font-weight: 600; margin-left: 0.25rem; }
+.p2-book-tab.active .p2-book-tab-count { color: var(--brand-soft, #FBEADB); }
+
+/* Prev / Next under a brand page — flipping the book's pages. */
+.p2-book-pager { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; margin: 0.6rem 0; }
+
+/* The live sheet embed, when Austin publishes the sheet to the
+   web and hands over its embed URL (slot marked in portal.html). */
+.p2-sheet-embed {
+  width: 100%; height: 560px; border: 2px solid var(--line, #E6D9C0);
+  border-radius: 12px; background: var(--surface, #FFFDF8); margin: 0 0 1rem;
+}

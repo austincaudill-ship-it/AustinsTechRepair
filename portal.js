@@ -304,6 +304,12 @@
     roleEl.textContent = roleLabel(state.profile.role);
     roleEl.style.display = state.profile.role ? '' : 'none';
     applyRoleNav();
+    /* CUSTOM_ACTION_BUTTONS_2026_11_04: Austin's custom action
+     * buttons render into the sidebar at sign-in, for every
+     * staffer their gates allow (not just when an admin opens
+     * Setup). The fetch lands after the tab restore below, so
+     * cabBootRestore re-opens a remembered custom tab. */
+    loadCustomActionButtons();
     /* PORTAL_TAB_MEMORY_2026_10_30: reopen on the tab Austin last used.
      * Clicking the saved tab's button replays exactly what a tap does,
      * whichever script handles that tab. No saved tab (or a stale one
@@ -1089,7 +1095,8 @@
     var nav = $('portal-nav'); if (nav) nav.classList.remove('open');
     var tabs = document.querySelectorAll('.portal-tab');
     tabs.forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === name); });
-    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'members', 'inventory', 'timeclock', 'links', 'tracking', 'square', 'checkin', 'requests', 'prices', 'documents', 'financials', 'payroll', 'mileage', 'teamchat', 'associateaccounts', 'warranty', 'setup'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too; ASSOCIATE_ACCOUNTS_2026_11_03: 'associateaccounts' hides and shows with the rest too (it absorbed ACCOUNT_CONTROLS_2026_11_03's 'accountcontrols' and the roster's 'associates'); WARRANTY_PORTAL_2026_11_03: 'warranty' hides and shows with the rest too; PORTAL_SETUP_2026_11_04: 'setup' hides and shows with the rest too */
+    /* PASS10_2026_11_04: 'tracking' (the Live Tracking panel) hides and shows with the rest too */
+    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'tracking', 'documents', 'financials', 'payroll', 'mileage', 'teamchat', 'associateaccounts', 'warranty', 'setup'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too; ASSOCIATE_ACCOUNTS_2026_11_03: 'associateaccounts' hides and shows with the rest too (it absorbed ACCOUNT_CONTROLS_2026_11_03's 'accountcontrols' and the roster's 'associates'); WARRANTY_PORTAL_2026_11_03: 'warranty' hides and shows with the rest too; PORTAL_SETUP_2026_11_04: 'setup' hides and shows with the rest too */
       $('portal-panel-' + n).hidden = n !== name;
     });
     closeDrawer();
@@ -6009,11 +6016,16 @@ function loadTicketThread(client, ticketId) {
    * one row per item, with a template name, a location, and a config
    * jsonb — so new templates and new places to show them slot in
    * later without reshaping storage.
-   *   template 'link'   — a custom button. v1 location: 'tools', the
-   *                       Tools & Links grid; label / icon / url plus
-   *                       config.sub (the card's small second line)
-   *                       render as a .link-card identical to the
-   *                       built-in cards.
+   *   template 'link'   — RETIRED by CUSTOM_ACTION_BUTTONS_2026_11_04
+   *                       (below): the old link-card buttons. No
+   *                       longer created or rendered anywhere.
+   *   templates 'links' / 'info' / 'checklist' — CUSTOM ACTION
+   *                       BUTTONS (CUSTOM_ACTION_BUTTONS_2026_11_04):
+   *                       real sidebar action buttons; location
+   *                       carries the sidebar group key and config
+   *                       carries the template's content. The whole
+   *                       design lives in the CUSTOM ACTION BUTTONS
+   *                       block further down this section.
    *   template 'device' — a printers & devices registry entry,
    *                       location 'setup' (shows only in this
    *                       panel); config carries kind / connection /
@@ -6086,41 +6098,252 @@ function loadTicketThread(client, ticketId) {
   }
   function loadSetup(force) {
     /* PORTAL_ROLE_LADDER_2026_11_04: Setup is a management
-     * surface — Admin-or-above. Only this panel locks; the
-     * read-only custom buttons in the Tools grid
-     * (loadToolsCustomButtons) stay open to every staffer, and
-     * the table itself is RLS-gated the same way. */
+     * surface — Admin-or-above. Only this panel locks; the custom
+     * action buttons it creates render in the sidebar for every
+     * staffer their gates allow (loadCustomActionButtons, called
+     * at sign-in), and the table itself is RLS-gated the same way. */
     if (!isAdminOrAbove()) { state.loaded.setup = true; return; }
     wireSetup();
     state.loaded.setup = true;
-    if (setupRows && !force) { renderSetupPanel(); renderToolsCustomButtons(); return; }
-    setupFetch(function () { renderSetupPanel(); renderToolsCustomButtons(); });
+    if (setupRows && !force) { renderSetupPanel(); renderCustomActionButtons(); return; }
+    setupFetch(function () { renderSetupPanel(); renderCustomActionButtons(); });
   }
-  /* EXTRA_LOADERS hook: the first time Tools & Links opens, pull the
-   * custom buttons into the grid (after that, Setup saves and deletes
-   * keep the grid current). Fails soft when the table is missing. */
-  function loadToolsCustomButtons() {
-    if (setupRows) { renderToolsCustomButtons(); return; }
-    setupFetch(function () { renderToolsCustomButtons(); });
+
+  /* ============ CUSTOM ACTION BUTTONS ============
+   * CUSTOM_ACTION_BUTTONS_2026_11_04 (Austin, Nov 4, 2026): "No
+   * that's not what I meant." Setup's custom buttons are no longer
+   * link cards appended to the Links grid — they are real sidebar
+   * ACTION BUTTONS, like Check-In, that Austin creates himself: he
+   * picks the sidebar GROUP the button lives in (guest /
+   * parts_tools / associates / admin / financials), a TEMPLATE for
+   * what is inside the panel it opens (links / info / checklist),
+   * who can see it, and the label and icon. Storage extends the
+   * same portal_setup_items table (custom-action-buttons.sql):
+   * template is 'links' | 'info' | 'checklist', location carries
+   * the group key, config (jsonb) carries the template's content,
+   * and the min_role column carries the optional visibility tier
+   * (NULL = the group's own gate). Legacy template 'link' rows are
+   * retired: nothing renders them anymore (Austin's panel had zero
+   * of them; device rows are untouched).
+   *
+   * Visibility is BOTH gates, always: the group's own audience —
+   * Admin group Admin-or-above, Financials top tier, the rest all
+   * staff, the same audiences TAB_GATES enforces for built-ins —
+   * AND the button's min_role on the role ladder; a button never
+   * shows below either one, so the group gate wins whenever it is
+   * stricter. Clicking one runs showCustomPanel, which mirrors
+   * showExtraPanel (hide every .portal-panel, show this one, set
+   * the active button, close the menu) — the pass-7 menu-clear
+   * behavior works over .portal-panel generically, so it treats a
+   * custom panel like any other. activateTab only knows its
+   * built-in panel list, so a capture listener (cabWire) hides
+   * custom panels again whenever a built-in tab is tapped. */
+  var CAB_TEMPLATES = { links: 'Links', info: 'Info page', checklist: 'Checklist' };
+  var CAB_GROUPS = {
+    guest: 'Guest', parts_tools: 'Parts & Tools', associates: 'Associates',
+    admin: 'Admin', financials: 'Financials'
+  };
+  var CAB_MINROLE_LABELS = {
+    '': 'Same as the group', customer_service: 'Any staff member',
+    technician_1: 'Technician and up', admin: 'Admin and up',
+    co_super_admin: 'Co-Super Admin and up', super_admin: 'Super Admin only'
+  };
+  /* Rank on Austin's role ladder (the Nov 4 ladder build); the
+   * four Technician ranks are one access class, as everywhere
+   * else in the portal. */
+  function cabRank(role) {
+    var r = normRole(role);
+    if (r === 'super_admin') return 5;
+    if (r === 'co_super_admin') return 4;
+    if (r === 'admin') return 3;
+    if (r.indexOf('technician') === 0) return 2;
+    if (r === 'customer_service') return 1;
+    return 0;
   }
-  function renderToolsCustomButtons() {
-    var grid = $('portal-tools-grid');
-    if (!grid) return;
-    var old = grid.querySelectorAll('[data-setup-custom]');
-    for (var i = old.length - 1; i >= 0; i--) old[i].parentNode.removeChild(old[i]);
+  function cabGroupAllowed(groupKey) {
+    if (groupKey === 'admin') return isAdminOrAbove();
+    if (groupKey === 'financials') return canSeeMoney();
+    return true;
+  }
+  function cabIsActionRow(r) {
+    return !!r && !!CAB_TEMPLATES[r.template] && !!CAB_GROUPS[r.location] && r.active !== false;
+  }
+  function cabVisible(r) {
+    if (!cabGroupAllowed(r.location)) return false;
+    if (r.min_role) return cabRank(myRole()) >= cabRank(r.min_role);
+    return true;
+  }
+  function cabRowById(id) {
+    var rows = setupRows || [];
+    for (var i = 0; i < rows.length; i++) { if (rows[i].id === id && cabIsActionRow(rows[i])) return rows[i]; }
+    return null;
+  }
+  /* Boot + Setup hook: fetch the shared setup rows and render the
+   * sidebar buttons for EVERY staffer (loadSetup above is
+   * Admin-gated; this is not — it is called from showDashboard).
+   * setupFetch fails soft when the table is missing, so a portal
+   * published before the SQL simply shows no custom buttons. */
+  var cabBootTab = null;
+  var cabBootRestoreDone = false;
+  var cabWired = false;
+  function loadCustomActionButtons() {
+    cabWire();
+    if (cabBootTab === null) cabBootTab = savedTab();
+    if (setupRows) { renderCustomActionButtons(); cabBootRestore(); return; }
+    setupFetch(function () { renderCustomActionButtons(); cabBootRestore(); });
+  }
+  function cabBootRestore() {
+    /* PORTAL_TAB_MEMORY: if the remembered tab is a custom button
+     * that rendered and is visible to this staffer, open it — the
+     * dashboard's own restore ran before this fetch landed, so it
+     * could not find the button. Once per sign-in, and the tab
+     * name was captured before activateTab('tickets') could
+     * overwrite it. */
+    if (cabBootRestoreDone) return;
+    cabBootRestoreDone = true;
+    if (cabBootTab && cabBootTab.indexOf('cab-') === 0) {
+      var btn = $('portal-tab-' + cabBootTab);
+      if (btn) btn.click();
+    }
+  }
+  function cabWire() {
+    if (cabWired) return;
+    cabWired = true;
+    document.addEventListener('change', function (e) {
+      var t = e.target;
+      if (t && t.getAttribute && t.getAttribute('data-cab-check')) cabChecklistToggle(t);
+    });
+    document.addEventListener('click', function (e) {
+      var el = e.target;
+      while (el && el !== document) {
+        if (el.classList && el.classList.contains('portal-tab')) {
+          if (!el.getAttribute('data-custom-tab')) {
+            document.querySelectorAll('[data-custom-panel]').forEach(function (pn) { pn.hidden = true; });
+          }
+          return;
+        }
+        el = el.parentNode;
+      }
+    }, true);
+  }
+  function cabGroupAnchor(nav, groupKey) {
+    /* The node the group's custom buttons go BEFORE: the next
+     * group's heading, so the built-ins keep the top of their
+     * group and custom buttons follow them. Financials is the last
+     * group — its buttons append at the end of the nav. */
+    var next = { guest: 'Parts & Tools', parts_tools: 'Associates', associates: 'Admin', admin: 'Financials' }[groupKey];
+    if (!next) return null;
+    var kids = nav.children;
+    for (var i = 0; i < kids.length; i++) {
+      if (kids[i].classList && kids[i].classList.contains('portal-nav-group') &&
+          (kids[i].textContent || '').trim() === next) return kids[i];
+    }
+    return null;
+  }
+  function renderCustomActionButtons() {
+    var nav = $('portal-nav');
+    var linksPanel = $('portal-panel-links');
+    if (!nav || !linksPanel) return;
+    var oldBtns = nav.querySelectorAll('[data-custom-tab]');
+    for (var i = oldBtns.length - 1; i >= 0; i--) oldBtns[i].parentNode.removeChild(oldBtns[i]);
+    var container = linksPanel.parentNode;
+    var oldPanels = container.querySelectorAll('[data-custom-panel]');
+    for (var j = oldPanels.length - 1; j >= 0; j--) oldPanels[j].parentNode.removeChild(oldPanels[j]);
     if (!setupRows || setupDbMissing) return;
     setupRows.forEach(function (r) {
-      if (!r || r.template !== 'link' || r.location !== 'tools' || r.active === false) return;
-      var sub = setupCfg(r).sub;
-      var a = document.createElement('a');
-      a.className = 'link-card';
-      a.setAttribute('data-setup-custom', r.id);
-      a.setAttribute('href', r.url || '#');
-      a.setAttribute('target', '_blank');
-      a.setAttribute('rel', 'noopener');
-      a.innerHTML = '<i class="' + esc(setupIconClass(r.icon)) + '"></i><strong>' + esc(r.label) + '</strong>' +
-        (sub ? '<span>' + esc(sub) + '</span>' : '');
-      grid.appendChild(a);
+      if (!cabIsActionRow(r) || !cabVisible(r)) return;
+      var btn = document.createElement('button');
+      btn.className = 'portal-tab';
+      btn.id = 'portal-tab-cab-' + r.id;
+      btn.type = 'button';
+      btn.setAttribute('role', 'tab');
+      btn.setAttribute('data-tab', 'cab-' + r.id);
+      btn.setAttribute('data-custom-tab', r.id);
+      btn.innerHTML = '<i class="' + esc(setupIconClass(r.icon)) + '"></i> ' + esc(r.label);
+      btn.addEventListener('click', function () { showCustomPanel(r.id); });
+      var anchor = cabGroupAnchor(nav, r.location);
+      if (anchor) nav.insertBefore(btn, anchor); else nav.appendChild(btn);
+      container.appendChild(cabBuildPanel(r));
+    });
+  }
+  function cabBuildPanel(r) {
+    var cfg = setupCfg(r);
+    var panel = document.createElement('div');
+    panel.className = 'portal-panel';
+    panel.id = 'portal-panel-cab-' + r.id;
+    panel.setAttribute('role', 'tabpanel');
+    panel.setAttribute('data-custom-panel', r.id);
+    panel.hidden = true;
+    var html = '<div class="portal-panel-head"><h2 class="portal-h2">' + esc(r.label) + '</h2></div>';
+    if (r.template === 'links') {
+      var links = Array.isArray(cfg.links) ? cfg.links : [];
+      var cards = links.map(function (l) {
+        var url = setupNormalizeUrl(l && l.url);
+        if (!url || !l || !l.title) return '';
+        return '<a class="link-card" href="' + esc(url) + '" target="_blank" rel="noopener"><strong>' + esc(l.title) + '</strong>' +
+          (l.sub ? '<span>' + esc(l.sub) + '</span>' : '') + '</a>';
+      }).join('');
+      html += cards ? '<div class="link-grid">' + cards + '</div>'
+        : '<p class="portal-muted">No links in here yet. An admin can add boxes in Admin &rarr; Setup &rarr; Custom action buttons.</p>';
+    } else if (r.template === 'info') {
+      if (cfg.heading) html += '<div class="portal-panel-head portal-subhead"><h3 class="portal-h3">' + esc(cfg.heading) + '</h3></div>';
+      var paras = String(cfg.body || '').split(/\n\s*\n/).map(function (p) { return p.trim(); }).filter(Boolean);
+      if (!paras.length && !cfg.heading) html += '<p class="portal-muted">Nothing written here yet. An admin can fill this page in Admin &rarr; Setup &rarr; Custom action buttons.</p>';
+      html += paras.map(function (p) { return '<p>' + esc(p).replace(/\n/g, '<br>') + '</p>'; }).join('');
+    } else if (r.template === 'checklist') {
+      var items = Array.isArray(cfg.items) ? cfg.items : [];
+      var checks = (cfg.checks && typeof cfg.checks === 'object') ? cfg.checks : {};
+      if (!items.length) {
+        html += '<p class="portal-muted">No items on this checklist yet. An admin can add them in Admin &rarr; Setup &rarr; Custom action buttons.</p>';
+      } else {
+        html += items.map(function (item, idx) {
+          return '<p style="margin:0.35rem 0;"><label style="display:flex;gap:0.6rem;align-items:flex-start;cursor:pointer;">' +
+            '<input type="checkbox" data-cab-check="' + esc(r.id) + '" data-cab-idx="' + idx + '"' + (checks[String(idx)] ? ' checked' : '') +
+            ' style="width:1.25rem;height:1.25rem;margin-top:0.1rem;flex:none;"> <span>' + esc(item) + '</span></label></p>';
+        }).join('') +
+        '<p class="portal-muted portal-small" data-cab-check-msg="' + esc(r.id) + '">Checked boxes save as you tap them.</p>';
+      }
+    }
+    panel.innerHTML = html;
+    return panel;
+  }
+  function showCustomPanel(id) {
+    var r = cabRowById(id);
+    if (!r || !cabVisible(r)) { activateTab('tickets'); return; }
+    saveActiveTab('cab-' + id);
+    document.querySelectorAll('.portal-panel').forEach(function (pn) { pn.hidden = true; });
+    var panel = $('portal-panel-cab-' + id);
+    if (panel) panel.hidden = false;
+    document.querySelectorAll('.portal-tab').forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === 'cab-' + id); });
+    closeDrawer();
+    if (typeof stopTeamChatPoll === 'function') stopTeamChatPoll();
+    var nav = $('portal-nav'); if (nav) nav.classList.remove('open');
+  }
+  /* Checking a box persists through ONE narrow door: the
+   * portal_set_checklist_state function (custom-action-buttons.sql)
+   * merges only the checks object into the row's config, after
+   * checking the caller is staff and the row is a checklist — so
+   * any staffer can save checklist state, while button definitions
+   * stay Admin-write under RLS. The local cache updates first, so
+   * a re-render never resurrects a stale check. */
+  function cabChecklistToggle(box) {
+    var id = box.getAttribute('data-cab-check');
+    var idx = box.getAttribute('data-cab-idx');
+    var r = cabRowById(id);
+    if (!r) return;
+    var cfg = setupCfg(r);
+    var checks = (cfg.checks && typeof cfg.checks === 'object') ? cfg.checks : {};
+    if (box.checked) checks[String(idx)] = true; else delete checks[String(idx)];
+    cfg.checks = checks;
+    r.config = cfg;
+    var msg = document.querySelector('[data-cab-check-msg="' + id + '"]');
+    if (msg) msg.textContent = 'Saving\u2026';
+    withClient(function (client) {
+      if (!client) { if (msg) msg.textContent = 'Could not save — check your connection and tap again.'; return; }
+      client.rpc('portal_set_checklist_state', { p_id: id, p_checks: checks }).then(function (res) {
+        if (res.error) { if (msg) msg.textContent = 'Could not save that check — try again.'; return; }
+        if (msg) msg.textContent = 'Saved.';
+      }).catch(function () { if (msg) msg.textContent = 'Could not save that check — try again.'; });
     });
   }
   function renderSetupPanel() {
@@ -6134,18 +6357,21 @@ function loadTicketThread(client, ticketId) {
     var box = $('portal-setup-btn-list');
     if (!box) return;
     if (setupDbMissing) { setupEmpty(box, 'Buttons will appear here once the database step is done.'); return; }
-    var rows = (setupRows || []).filter(function (r) { return r.template === 'link'; });
-    if (!rows.length) { setupEmpty(box, 'No custom buttons yet. Add the first one with the button above.'); return; }
+    var rows = (setupRows || []).filter(cabIsActionRow);
+    if (!rows.length) { setupEmpty(box, 'No custom action buttons yet. Add the first one with the button above.'); return; }
     box.innerHTML = rows.map(function (r) {
-      var sub = setupCfg(r).sub;
+      var cfg = setupCfg(r);
+      var detail = '';
+      if (r.template === 'links') detail = (Array.isArray(cfg.links) ? cfg.links.length : 0) + ' link box(es)';
+      else if (r.template === 'info') detail = cfg.heading ? esc(cfg.heading) : 'Info page';
+      else if (r.template === 'checklist') detail = (Array.isArray(cfg.items) ? cfg.items.length : 0) + ' item(s)';
       return '<article class="portal-card">' +
         '<div class="portal-card-top"><p class="portal-card-title"><i class="' + esc(setupIconClass(r.icon)) + '"></i> ' + esc(r.label) + '</p>' +
         '<span style="display:inline-flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">' +
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-setup-edit-btn="' + esc(r.id) + '"><i class="fas fa-pen"></i> Edit</button>' +
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-setup-del-btn="' + esc(r.id) + '"><i class="fas fa-trash"></i> Delete</button></span></div>' +
-        (sub ? '<p class="portal-card-meta">' + esc(sub) + '</p>' : '') +
-        '<p class="portal-card-meta">' + esc(r.url || '') + '</p>' +
-        '<p class="portal-card-meta">Link button template \u00b7 shows in the Links grid</p>' +
+        '<p class="portal-card-meta">' + esc(CAB_TEMPLATES[r.template]) + ' template \u00b7 ' + esc(CAB_GROUPS[r.location]) + ' group \u00b7 ' + detail + '</p>' +
+        '<p class="portal-card-meta">Seen by: ' + esc(CAB_MINROLE_LABELS[r.min_role || ''] || 'Same as the group') + ' (the group rule still applies)</p>' +
         '</article>';
     }).join('');
   }
@@ -6199,16 +6425,53 @@ function loadTicketThread(client, ticketId) {
   }
   function setupShowBtnForm(row) {
     var form = $('portal-setup-btn-form'); if (!form) return;
+    var cfg = row ? setupCfg(row) : {};
     $('portal-setup-btn-id').value = row ? row.id : '';
-    $('portal-setup-btn-form-title').textContent = row ? 'Edit button' : 'Add a button';
-    $('portal-setup-btn-template').value = 'link';
+    $('portal-setup-btn-form-title').textContent = row ? 'Edit action button' : 'Add a button';
     $('portal-setup-btn-label').value = row ? (row.label || '') : '';
-    $('portal-setup-btn-sub').value = row ? (setupCfg(row).sub || '') : '';
     $('portal-setup-btn-icon').value = row ? setupIconClass(row.icon) : 'fas fa-link';
-    $('portal-setup-btn-url').value = row ? (row.url || '') : '';
-    $('portal-setup-btn-location').value = 'tools';
+    $('portal-setup-btn-group').value = row && CAB_GROUPS[row.location] ? row.location : 'guest';
+    $('portal-setup-btn-minrole').value = row && row.min_role ? row.min_role : '';
+    $('portal-setup-btn-template').value = row && CAB_TEMPLATES[row.template] ? row.template : 'links';
+    cabFillLinkRows(row && row.template === 'links' ? (cfg.links || []) : []);
+    $('portal-setup-cab-info-heading').value = row && row.template === 'info' ? (cfg.heading || '') : '';
+    $('portal-setup-cab-info-body').value = row && row.template === 'info' ? (cfg.body || '') : '';
+    $('portal-setup-cab-items').value = row && row.template === 'checklist' ? (cfg.items || []).join('\n') : '';
+    cabSyncTemplateEditor();
     $('portal-setup-btn-msg').textContent = '';
     form.hidden = false;
+  }
+  /* CUSTOM_ACTION_BUTTONS_2026_11_04: the template picker swaps
+   * which content editor shows under it. */
+  function cabSyncTemplateEditor() {
+    var t = $('portal-setup-btn-template').value;
+    $('portal-setup-cab-edit-links').hidden = t !== 'links';
+    $('portal-setup-cab-edit-info').hidden = t !== 'info';
+    $('portal-setup-cab-edit-checklist').hidden = t !== 'checklist';
+  }
+  function cabLinkRowHtml(l) {
+    l = l || {};
+    return '<div class="portal-card" data-cab-link-row style="margin-bottom:0.5rem;">' +
+      '<div class="portal-field"><label>Box title *</label><input type="text" data-cab-link-title placeholder="e.g. FedEx" autocomplete="off" value="' + esc(l.title || '') + '"></div>' +
+      '<div class="portal-field"><label>Subtitle (optional)</label><input type="text" data-cab-link-sub placeholder="The small second line on the box" autocomplete="off" value="' + esc(l.sub || '') + '"></div>' +
+      '<div class="portal-field"><label>Web address (URL) *</label><input type="text" data-cab-link-url placeholder="e.g. https://www.fedex.com" autocomplete="off" value="' + esc(l.url || '') + '"></div>' +
+      '<p style="margin:0;"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-cab-link-remove><i class="fas fa-trash"></i> Remove box</button></p></div>';
+  }
+  function cabFillLinkRows(links) {
+    var box = $('portal-setup-cab-link-rows'); if (!box) return;
+    var rows = (links && links.length) ? links : [{}];
+    box.innerHTML = rows.map(cabLinkRowHtml).join('');
+  }
+  function cabReadLinkRows() {
+    var out = [];
+    document.querySelectorAll('#portal-setup-cab-link-rows [data-cab-link-row]').forEach(function (rowEl) {
+      var title = rowEl.querySelector('[data-cab-link-title]').value.trim();
+      var sub = rowEl.querySelector('[data-cab-link-sub]').value.trim();
+      var url = setupNormalizeUrl(rowEl.querySelector('[data-cab-link-url]').value);
+      if (!title && !url) return;
+      out.push({ title: title, sub: sub, url: url, bad: !title || !url });
+    });
+    return out;
   }
   function setupShowDevForm(row) {
     var form = $('portal-setup-dev-form'); if (!form) return;
@@ -6225,32 +6488,72 @@ function loadTicketThread(client, ticketId) {
   function setupSaveButton() {
     var msg = $('portal-setup-btn-msg');
     var label = $('portal-setup-btn-label').value.trim();
-    var url = setupNormalizeUrl($('portal-setup-btn-url').value);
     if (!label) { msg.textContent = 'Give the button a label.'; return; }
-    if (!url) { msg.textContent = 'Give the button a web address (URL).'; return; }
+    var template = $('portal-setup-btn-template').value;
     var id = $('portal-setup-btn-id').value;
+    var existing = id ? setupRowById(id) : null;
+    var cfg = {};
+    if (template === 'links') {
+      var links = cabReadLinkRows();
+      if (!links.length) { msg.textContent = 'Add at least one link box — a title and a web address.'; return; }
+      if (links.some(function (l) { return l.bad; })) { msg.textContent = 'Every link box needs a title and a web address.'; return; }
+      cfg.links = links.map(function (l) { return { title: l.title, sub: l.sub, url: l.url }; });
+    } else if (template === 'info') {
+      cfg.heading = $('portal-setup-cab-info-heading').value.trim();
+      cfg.body = $('portal-setup-cab-info-body').value.trim();
+      if (!cfg.heading && !cfg.body) { msg.textContent = 'Write something for the page — a heading or some text.'; return; }
+    } else if (template === 'checklist') {
+      var items = $('portal-setup-cab-items').value.split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
+      if (!items.length) { msg.textContent = 'Give the checklist at least one item — one per line.'; return; }
+      cfg.items = items;
+      /* Keep the team's saved checks when the items themselves
+       * did not change; a changed list starts unchecked. */
+      if (existing && existing.template === 'checklist') {
+        var oldCfg = setupCfg(existing);
+        if (JSON.stringify(oldCfg.items || []) === JSON.stringify(items)) cfg.checks = oldCfg.checks || {};
+      }
+    }
     var row = {
-      template: 'link',
+      template: template,
       label: label,
       icon: $('portal-setup-btn-icon').value,
-      url: url,
-      config: { sub: $('portal-setup-btn-sub').value.trim() },
-      location: $('portal-setup-btn-location').value || 'tools',
+      url: null,
+      config: cfg,
+      location: $('portal-setup-btn-group').value,
       active: true
     };
+    var minRole = $('portal-setup-btn-minrole').value;
+    if (minRole) row.min_role = minRole;
     var btn = $('portal-setup-btn-save'); btn.disabled = true;
-    withClient(function (client) {
-      if (!client) { btn.disabled = false; msg.textContent = 'Could not reach the database.'; return; }
-      var q;
-      if (id) { q = client.from('portal_setup_items').update(row).eq('id', id); }
-      else { row.sort = setupNextSort('link'); q = client.from('portal_setup_items').insert(row); }
-      q.then(function (res) {
-        btn.disabled = false;
-        if (res.error) { setupSaveError(msg, res.error); return; }
-        $('portal-setup-btn-form').hidden = true;
-        setupFetch(function () { renderSetupPanel(); renderToolsCustomButtons(); });
-      }).catch(function () { btn.disabled = false; msg.textContent = 'Could not save. Try again.'; });
-    });
+    /* Until custom-action-buttons.sql runs, the table has no
+     * min_role column: if the save bounces off that, retry once
+     * without it — the button still saves, gated by its group
+     * alone (the form's "who can see it" choice just does not
+     * persist yet). A button can never be blocked by the missing
+     * column. */
+    function runSave(stripped) {
+      withClient(function (client) {
+        if (!client) { btn.disabled = false; msg.textContent = 'Could not reach the database.'; return; }
+        var q;
+        if (id) { q = client.from('portal_setup_items').update(row).eq('id', id); }
+        else {
+          row.sort = setupNextSort('links') + setupNextSort('info') + setupNextSort('checklist');
+          q = client.from('portal_setup_items').insert(row);
+        }
+        q.then(function (res) {
+          if (res.error && !stripped && row.min_role && /min_role/i.test(String(res.error.message || res.error))) {
+            delete row.min_role;
+            runSave(true);
+            return;
+          }
+          btn.disabled = false;
+          if (res.error) { setupSaveError(msg, res.error); return; }
+          $('portal-setup-btn-form').hidden = true;
+          setupFetch(function () { renderSetupPanel(); renderCustomActionButtons(); });
+        }).catch(function () { btn.disabled = false; msg.textContent = 'Could not save. Try again.'; });
+      });
+    }
+    runSave(false);
   }
   function setupSaveDevice() {
     var msg = $('portal-setup-dev-msg');
@@ -6296,7 +6599,7 @@ function loadTicketThread(client, ticketId) {
       if (!client) return;
       client.from('portal_setup_items').delete().eq('id', id).then(function (res) {
         if (res.error) { btnEl.removeAttribute('data-confirm'); btnEl.innerHTML = '<i class="fas fa-trash"></i> Delete'; return; }
-        setupFetch(function () { renderSetupPanel(); renderToolsCustomButtons(); });
+        setupFetch(function () { renderSetupPanel(); renderCustomActionButtons(); });
       }).catch(function () { btnEl.removeAttribute('data-confirm'); });
     });
   }
@@ -6327,6 +6630,27 @@ function loadTicketThread(client, ticketId) {
         return '<option value="' + esc(ic.v) + '">' + esc(ic.n) + '</option>';
       }).join('');
     }
+    /* CUSTOM_ACTION_BUTTONS_2026_11_04: the template picker swaps
+     * its content editor; the links editor grows/shrinks box rows. */
+    var tmplSel = $('portal-setup-btn-template');
+    if (tmplSel) tmplSel.addEventListener('change', cabSyncTemplateEditor);
+    var linkAdd = $('portal-setup-cab-link-add');
+    if (linkAdd) linkAdd.addEventListener('click', function () {
+      var box = $('portal-setup-cab-link-rows');
+      if (box) box.insertAdjacentHTML('beforeend', cabLinkRowHtml(null));
+    });
+    var linkRows = $('portal-setup-cab-link-rows');
+    if (linkRows) linkRows.addEventListener('click', function (e) {
+      var t = e.target;
+      while (t && t !== linkRows) {
+        if (t.getAttribute && t.getAttribute('data-cab-link-remove') !== null) {
+          var rowEl = t.closest ? t.closest('[data-cab-link-row]') : null;
+          if (rowEl && rowEl.parentNode) rowEl.parentNode.removeChild(rowEl);
+          return;
+        }
+        t = t.parentNode;
+      }
+    });
     var addBtn = $('portal-setup-add-btn'); if (addBtn) addBtn.addEventListener('click', function () { setupShowBtnForm(null); });
     var addDev = $('portal-setup-add-dev'); if (addDev) addDev.addEventListener('click', function () { setupShowDevForm(null); });
     var bSave = $('portal-setup-btn-save'); if (bSave) bSave.addEventListener('click', setupSaveButton);
@@ -7803,6 +8127,11 @@ function loadTicketThread(client, ticketId) {
         detail = '<div class="assoc-detail">';
         /* The profile half — the roster's expansion fields, unchanged. */
         if (a) {
+          /* PASS9_2026_11_04: the matched onboarding row is fetched
+           * here, ahead of the profile rows, because the Birthday
+           * row gap-fills from its date_of_birth (the fuller fetch
+           * below feeds the owner and onboarding sections). */
+          var obBday = assocOnboardingFor(p);
           detail += kvRows([
             ['Name', valOrDash(a.name)],
             ['Role', valOrDash(roleLabel(a.role))],
@@ -7812,8 +8141,13 @@ function loadTicketThread(client, ticketId) {
             /* BIRTHDAY_EDIT_2026_11_04: the displayed birthday
              * carries its Edit button for everyone allowed to
              * change it (canEditBday); the editor itself renders
-             * below these rows — see assocBirthdayEditor. */
-            ['Birthday', (a.birthday ? esc(fmtJobDate(a.birthday) || fmtDate(a.birthday)) : '&mdash;') +
+             * below these rows — see assocBirthdayEditor.
+             * PASS9_2026_11_04: with no profile birthday yet, the
+             * row gap-fills from the onboarding form's date of
+             * birth (obBday), labeled "(from onboarding)" — the
+             * same fill-never-replace rule as pay and home
+             * address in assocOwnerSection. */
+            ['Birthday', (a.birthday ? esc(fmtJobDate(a.birthday) || fmtDate(a.birthday)) : (obBday && obBday.date_of_birth ? esc(fmtJobDate(obBday.date_of_birth) || fmtDate(obBday.date_of_birth)) + ' <span class="portal-muted">(from onboarding)</span>' : '&mdash;')) +
               (canEditBday && assocBirthdayEditId !== id
                 ? ' <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-assoc-bday-edit="' + esc(id) + '">Edit</button>'
                 : '')],
@@ -7824,7 +8158,7 @@ function loadTicketThread(client, ticketId) {
           ]);
           /* BIRTHDAY_EDIT_2026_11_04: the open birthday editor
            * sits directly under the profile rows it edits. */
-          if (canEditBday && assocBirthdayEditId === id) detail += assocBirthdayEditor(a);
+          if (canEditBday && assocBirthdayEditId === id) detail += assocBirthdayEditor(a, obBday && obBday.date_of_birth ? obBday.date_of_birth : null); /* PASS9_2026_11_04: prefill from the onboarding DOB when the profile has none */
           /* PORTAL_ROSTER_DETAIL_2026_11_02: the owner-only full record
            * (pay + home address + time + time-card jump) exists in the
            * markup ONLY for the owner — see the section comment above. */
@@ -8558,11 +8892,15 @@ function loadTicketThread(client, ticketId) {
     return m ? m[1] : '';
   }
 
-  function assocBirthdayEditor(a) {
-    var cur = a.birthday ? (fmtJobDate(a.birthday) || fmtDate(a.birthday)) : '';
+  function assocBirthdayEditor(a, gapDob) {
+    /* PASS9_2026_11_04: gapDob is the onboarding form's date of
+     * birth, passed when the profile has none — the editor opens
+     * showing it (labeled) and prefilled with it, so pressing Save
+     * is what lands it on employee_profiles.birthday for good. */
+    var cur = a.birthday ? (fmtJobDate(a.birthday) || fmtDate(a.birthday)) : (gapDob ? (fmtJobDate(gapDob) || fmtDate(gapDob)) : '');
     return '<div class="assoc-owner-sec"><p class="assoc-owner-head"><i class="fas fa-calendar"></i> Edit birthday</p>' +
-      '<div class="assoc-pay-row"><span class="assoc-pay-label">Birthday<span class="assoc-pay-cur">' + (cur ? esc(cur) : 'Not set') + '</span></span>' +
-      '<span class="assoc-pay-edit"><input type="date" aria-label="Birthday" data-assoc-bday-input="' + esc(a.id) + '" value="' + esc(assocBdayValue(a.birthday)) + '">' +
+      '<div class="assoc-pay-row"><span class="assoc-pay-label">Birthday<span class="assoc-pay-cur">' + (cur ? esc(cur) + (!a.birthday && gapDob ? ' (from onboarding)' : '') : 'Not set') + '</span></span>' +
+      '<span class="assoc-pay-edit"><input type="date" aria-label="Birthday" data-assoc-bday-input="' + esc(a.id) + '" value="' + esc(assocBdayValue(a.birthday) || assocBdayValue(gapDob)) + '">' +
       '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-assoc-bday-save="' + esc(a.id) + '">Save</button>' +
       '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-assoc-bday-cancel="' + esc(a.id) + '">Cancel</button></span></div>' +
       '<p class="portal-small assoc-pay-msg" data-assoc-bday-msg="' + esc(a.id) + '"></p></div>';
@@ -8774,7 +9112,17 @@ function loadTicketThread(client, ticketId) {
      * an unsaved pick counts as typing too — the time settle
      * must not rebuild it away mid-edit. */
     var bdayIn = document.querySelector('[data-assoc-bday-input="' + id + '"]');
-    if (bdayIn && trim(bdayIn.value) !== assocBdayValue(row ? row.birthday : null)) return true;
+    /* PASS9_2026_11_04: the editor renders prefilled from the
+     * profile birthday OR the onboarding gap fill, so the
+     * untouched comparison uses that same rendered value — an
+     * editor the viewer has not touched never reads dirty. */
+    if (bdayIn) {
+      var bdayPerson = null;
+      mergedPeople().forEach(function (pp) { var ppid = pp.profile ? pp.profile.id : (pp.login ? pp.login.id : ''); if (ppid === id) bdayPerson = pp; });
+      var bdayOb = bdayPerson ? assocOnboardingFor(bdayPerson) : null;
+      var bdayShown = assocBdayValue(row ? row.birthday : null) || assocBdayValue(bdayOb ? bdayOb.date_of_birth : null);
+      if (trim(bdayIn.value) !== bdayShown) return true;
+    }
     return false;
   }
 
@@ -10974,7 +11322,7 @@ function loadTicketThread(client, ticketId) {
   }
 
   /* ================= EXTRA TABS (timeclock / links / square) ================= */
-  var EXTRA_LOADERS = { timeclock: loadTimeClock, checkin: loadCheckinCustomers, mileage: loadMileage /* PORTAL_MILEAGE_2026_11_02 */, /* PORTAL_SETUP_2026_11_04: the first open of Tools & Links also pulls Austin's custom buttons (Admin → Setup) into the grid */ links: loadToolsCustomButtons };
+  var EXTRA_LOADERS = { timeclock: loadTimeClock, checkin: loadCheckinCustomers, mileage: loadMileage /* PORTAL_MILEAGE_2026_11_02 */ }; /* CUSTOM_ACTION_BUTTONS_2026_11_04: the Links panel no longer pulls anything in — custom buttons render in the sidebar at sign-in (loadCustomActionButtons), so the old links loader entry is gone. */
   var extraLoaded = {};
   function showExtraPanel(name) {
     /* PORTAL_ROLE_LADDER_2026_11_04: same tier gate as
@@ -11027,7 +11375,7 @@ function loadTicketThread(client, ticketId) {
     nav.classList.add('open');
   }
   function initExtraTabs() {
-    ['timeclock', 'links', 'tracking', 'square', 'checkin', 'mileage'].forEach(function (name) { /* PORTAL_MILEAGE_2026_11_02; LINKS_TRACKING_2026_11_04: 'tracking' is an extra tab too — its sidebar button opens the standalone Live Tracking panel via showExtraPanel */
+    ['timeclock', 'links', 'square', 'checkin', 'mileage'].forEach(function (name) { /* PORTAL_MILEAGE_2026_11_02 */
       var tab = $('portal-tab-' + name);
       if (tab) tab.addEventListener('click', function () { showExtraPanel(name); });
     });
