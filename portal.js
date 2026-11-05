@@ -8366,6 +8366,8 @@ function loadTicketThread(client, ticketId) {
   var acctListLoaded = false;  /* ASSOCIATE_ACCOUNTS_2026_11_03: the login half has landed */
   var acctListFailed = false;  /* ASSOCIATE_ACCOUNTS_2026_11_03: the staff-admin list call failed */
   var acctExpand = null; /* { id, mode: 'email' | 'password' } | null */
+  var acctMfaCache = null;   /* AUTHENTICATOR_ADMIN_2026_11_05: { userId: { enrolled, pending } } once mfa_status lands, null until then */
+  var acctMfaFailed = false; /* AUTHENTICATOR_ADMIN_2026_11_05: the mfa_status call failed */
 
   function acctNote(text) {
     var n = $('portal-acct-note');
@@ -8424,6 +8426,26 @@ function loadTicketThread(client, ticketId) {
       acctStaffCache = out.staff || [];
       renderAssociates();
       loadAccountAudit();
+      loadMfaStatus(); /* AUTHENTICATOR_ADMIN_2026_11_05 */
+    });
+  }
+
+  /* AUTHENTICATOR_ADMIN_2026_11_05: each manageable card's
+   * authenticator state, from the staff-admin function's
+   * mfa_status action (rows arrive already limited to the cards
+   * this viewer may manage, plus their own). Cached by user id;
+   * renderAssociates paints from the cache, so a slow status
+   * call never blocks the cards themselves. */
+  function loadMfaStatus() {
+    if (!isAdminOrAbove()) return;
+    callStaffAdmin({ action: 'mfa_status' }, function (out) {
+      if (!out || !out.ok) { acctMfaFailed = true; renderAssociates(); return; }
+      acctMfaFailed = false;
+      acctMfaCache = {};
+      (out.mfa || []).forEach(function (r) {
+        acctMfaCache[r.id] = { enrolled: !!r.enrolled, pending: !!r.pending };
+      });
+      renderAssociates();
     });
   }
 
@@ -8479,6 +8501,9 @@ function loadTicketThread(client, ticketId) {
         var newRole = roleLabel(r.detail);
         return actor + ' changed ' + target + '\u2019s role' +
           (newRole ? ' to ' + newRole : '');
+      case 'authenticator_reset':
+        /* AUTHENTICATOR_ADMIN_2026_11_05 */
+        return actor + ' reset ' + target + '\u2019s authenticator';
       case 'picture_changed':
         /* PORTAL_ADMIN_CONTROLS_2026_11_04 */
         return actor + ' changed ' + target + '\u2019s profile picture';
@@ -8555,6 +8580,38 @@ function loadTicketThread(client, ticketId) {
             : '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-acct-ban="' + esc(s.id) + '"><i class="fas fa-' + (s.banned ? 'circle-check' : 'ban') + '"></i> ' + (s.banned ? 'Activate' : 'Deactivate') + '</button>') +
           '</div>' + form
         : '<p class="portal-muted portal-small">Login changes for this account sit with the top tier.</p>');
+    /* AUTHENTICATOR_ADMIN_2026_11_05 (Austin, Nov 5, 2026): the
+     * Authenticator block on the same card — status for every
+     * card this viewer manages (plus their own), a reset for
+     * when somebody changes phones, and setup on the viewer's
+     * own card. The staff-admin function re-checks the same
+     * ceilings server-side; this render only mirrors them. */
+    if (isAdminOrAbove() && (canControl || isSelf)) {
+      var mfaRow = acctMfaCache ? acctMfaCache[s.id] : null;
+      out += '<p class="assoc-login-head"><i class="fas fa-shield-halved"></i> Authenticator</p>';
+      if (!acctMfaCache && !acctMfaFailed) {
+        out += '<p class="portal-muted portal-small">Checking authenticator status&hellip;</p>';
+      } else if (acctMfaFailed) {
+        out += '<p class="portal-muted portal-small">Authenticator status could not be loaded.</p>';
+      } else if (mfaRow && mfaRow.enrolled) {
+        out += '<p class="portal-card-meta"><i class="fas fa-circle-check"></i> Set up — a code is asked for after the password.</p>' +
+          '<div class="portal-card-actions">' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-acct-mfa-reset="' + esc(s.id) + '"><i class="fas fa-rotate-left"></i> Reset authenticator</button>' +
+          '</div>';
+      } else if (mfaRow && mfaRow.pending) {
+        out += '<p class="portal-card-meta"><i class="fas fa-triangle-exclamation"></i> Setup was started but never finished.</p>' +
+          '<div class="portal-card-actions">' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-acct-mfa-reset="' + esc(s.id) + '"><i class="fas fa-rotate-left"></i> Reset authenticator</button>' +
+          '</div>';
+      } else {
+        out += '<p class="portal-card-meta">Not set up.</p>';
+        if (isSelf) {
+          out += '<div class="portal-card-actions">' +
+            '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-acct-mfa-setup="1"><i class="fas fa-mobile-screen"></i> Set up my authenticator</button>' +
+            '</div>';
+        }
+      }
+    }
     return out + '</div>';
   }
 
@@ -8637,6 +8694,27 @@ function loadTicketThread(client, ticketId) {
       target
         ? (row.name || 'That account') + ' is deactivated — they cannot sign in now.'
         : (row.name || 'That account') + ' is active again — they can sign in.');
+  }
+
+  /* AUTHENTICATOR_ADMIN_2026_11_05: the reset deletes the
+   * person's authenticator factors through the staff-admin
+   * function; their next sign-in runs the fresh setup with a
+   * new QR code. Same confirm-arm as the other card controls. */
+  function acctResetMfa(btn, id) {
+    var row = null;
+    acctStaffCache.forEach(function (s) { if (s.id === id) row = s; });
+    if (!acctArm(btn, 'Tap again to reset')) return;
+    acctRun(btn, { action: 'mfa_reset', user_id: id },
+      (row && row.name ? row.name : 'That account') + '\u2019s authenticator was reset — they will set it up fresh at their next sign-in.');
+  }
+
+  /* AUTHENTICATOR_ADMIN_2026_11_05: the viewer's own setup —
+   * the same enrollment the sign-in banner opens. */
+  function acctSetupMfa(btn) {
+    withClient(function (client) {
+      if (!client) { acctError('That did not go through — check the connection and try again.'); return; }
+      startMfaEnroll(client);
+    });
   }
 
   function acctAddUser(btn) {
@@ -11270,6 +11348,10 @@ function loadTicketThread(client, ticketId) {
           if (acps) { acctSavePassword(t, acps); return; }
           var acb = t.getAttribute('data-acct-ban');
           if (acb) { acctToggleBan(t, acb); return; }
+          var acmr = t.getAttribute('data-acct-mfa-reset');
+          if (acmr) { acctResetMfa(t, acmr); return; } /* AUTHENTICATOR_ADMIN_2026_11_05 */
+          var acms = t.getAttribute('data-acct-mfa-setup');
+          if (acms) { acctSetupMfa(t); return; } /* AUTHENTICATOR_ADMIN_2026_11_05 */
           var accx = t.getAttribute('data-acct-cancel');
           if (accx) { acctExpand = null; renderAssociates(); return; } /* ASSOCIATE_ACCOUNTS_2026_11_03 */
           var acad = t.getAttribute('data-acct-add');
