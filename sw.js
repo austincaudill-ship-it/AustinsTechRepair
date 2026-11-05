@@ -1,10 +1,11 @@
 // ATRG service worker — enables Add to Home Screen / app install.
 // Network-first for everything: visitors always get the freshest site,
 // cache is only a fallback when offline.
-// SITE_TURNSTILE_2026_11_02 (staged): cache bumped to atrg-v5 (check-in dropdowns) and kept at atrg-v5 for REPAIR_FLOW_UPDATE_2026_11_05 — v5 has never shipped, so no further bump is needed; live is still atrg-v4 and
+// SITE_TURNSTILE_2026_11_02 (staged): cache bumped to atrg-v5 (check-in dropdowns) and kept at atrg-v5 for REPAIR_FLOW_UPDATE_2026_11_05 (shipped live in 6cf016a).
+// ATRONE_QR_2026_11_05: bumped to atrg-v6 for the account card / member QR release, and
 // /turnstile.js added to the shell so no visitor can be served the
 // pre-Turnstile script.js / atr-forms.js from an old cache.
-const CACHE = "atrg-v5";
+const CACHE = "atrg-v6";
 const CORE = [
   "/",
   "/index.html",

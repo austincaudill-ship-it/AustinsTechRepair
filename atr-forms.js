@@ -702,6 +702,15 @@
                filing above landed or not — filing is best-effort and
                the ticket insert already decided success. */
             showPayStep(form);
+            /* ATRONE_QR_2026_11_05: one-time create-a-password offer for
+               guests, so this repair lands in an account they can track.
+               The account module in index.html owns the offer and
+               decides who sees it — signed-in customers never do.
+               Best-effort like the alert email: the ticket insert above
+               already decided success. */
+            if (window.atrOfferAccountSignup) {
+              try { window.atrOfferAccountSignup({ email: v.email, name: row.customer_name, phone: v.phone }); } catch (e) {}
+            }
           });
         }).catch(function () {
           setBusy(form, false);

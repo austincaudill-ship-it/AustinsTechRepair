@@ -326,6 +326,8 @@
     var startBtn = startTab ? $('portal-tab-' + startTab) : null;
     if (startBtn && startTab !== 'tickets' && tabAllowed(startTab)) { startBtn.click(); }
     else { activateTab('tickets'); }
+    /* ATRONE_QR_2026_11_05: a scanned account code beats the remembered tab. */
+    try { routePendingScan(); } catch (e) {}
   }
 
   /* The employee gate: signed-in is NOT enough — the auth user's id
@@ -449,6 +451,264 @@
     var totp = (listData && listData.totp) || [];
     return totp.length ? totp[0] : null;
   }
+
+  /* ================= ATRONE_QR_2026_11_05: account QR scan routing =====
+   * A member's account card QR encodes their account number:
+   *   ATR-<account_number>            (pass 4 — the code is the shop's
+   *   hook into the account; the number itself is internal only and is
+   *   never printed on the member's card or popup)
+   * A card rendered before numbers existed falls back to the deep link:
+   *   https://austinstechrepairgroup.com/portal.html?scan=<customers.id>
+   * The link's id is captured at boot and stashed in sessionStorage so
+   * it survives the staff sign-in (and the authenticator step); the URL
+   * is cleaned immediately. Boot routing runs ONLY from
+   * showDashboard(), which is reached after the employee gate — a
+   * customer session is signed back out by verifyEmployee before ever
+   * getting here, so a scan link can never route a non-staff session
+   * into staff data. The Scan In panel (below) lives inside the
+   * signed-in portal for the same reason.
+   * Landing (Austin, Nov 5, 2026): "it picks based on what they have
+   * going on — mainly should go to their guest tab." So: the
+   * customer's OPEN ticket drawer first — most recently updated when
+   * several are open — over their record in the Guest tab (the
+   * customers view; its sidebar button is labeled Guest), which is
+   * where the landing goes when no job is open, and where closing the
+   * ticket drawer lands. A clear not-found message when the code
+   * matches nobody. Every read — deep link, camera scan, typed
+   * number — converges on routeToScannedCustomer below. */
+  var SCAN_STASH_KEY = 'atr-scan-customer';
+  var scanBehindCustomerId = null; /* customer whose profile opens when a scan-opened ticket drawer closes */
+  function captureScanParam() {
+    try {
+      var id = new window.URLSearchParams(window.location.search).get('scan');
+      if (id) {
+        window.sessionStorage.setItem(SCAN_STASH_KEY, id);
+        var clean = window.location.pathname + window.location.hash;
+        if (window.history && window.history.replaceState) window.history.replaceState(null, '', clean);
+      }
+    } catch (e) {}
+  }
+  captureScanParam();
+  function routePendingScan() {
+    var id = null;
+    try { id = window.sessionStorage.getItem(SCAN_STASH_KEY); } catch (e) {}
+    if (!id) return;
+    try { window.sessionStorage.removeItem(SCAN_STASH_KEY); } catch (e) {}
+    routeToScannedCustomer(id);
+  }
+  function routeToScannedCustomer(customerId) {
+    withClient(function (client) {
+      if (!client) return;
+      client.from('customers').select('id, name').eq('id', customerId).maybeSingle()
+        .then(function (res) {
+          if (res.error || !res.data) { showScanNotFound(customerId); return; }
+          activateTab('customers');
+          client.from('tickets').select('id, status, updated_at')
+            .eq('customer_id', customerId).neq('status', 'Job Complete')
+            .order('updated_at', { ascending: false }).limit(1)
+            .then(function (tres) {
+              var open = (!tres.error && tres.data && tres.data.length) ? tres.data[0] : null;
+              if (open) {
+                scanBehindCustomerId = customerId;
+                openTicket(open.id);
+              } else {
+                openCustomerProfile(customerId);
+                appendScanNote(customerId, false);
+              }
+            })
+            .catch(function () { openCustomerProfile(customerId); appendScanNote(customerId, false); });
+        })
+        .catch(function () { showScanNotFound(customerId); });
+    });
+  }
+  /* One resolver for every form a scan can arrive in — the Scan In
+   * camera, the Scan In account-number entry, and (via the stash) the
+   * ?scan= deep link all end at routeToScannedCustomer. */
+  function routeScanPayload(raw) {
+    var s = String(raw == null ? '' : raw).trim();
+    if (!s) { showScanNotFound(''); return; }
+    var m = /^ATR-(\d+)$/i.exec(s);
+    if (m) { routeScanAccountNumber(parseInt(m[1], 10)); return; }
+    var scanId = null;
+    try { scanId = new window.URL(s).searchParams.get('scan'); } catch (e) {}
+    if (!scanId) { var m2 = /[?&]scan=([^&#]+)/.exec(s); if (m2) { try { scanId = decodeURIComponent(m2[1]); } catch (e) { scanId = m2[1]; } } }
+    if (!scanId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)) scanId = s;
+    if (scanId) { routeToScannedCustomer(scanId); return; }
+    showScanNotFound(s);
+  }
+  function routeScanAccountNumber(n) {
+    withClient(function (client) {
+      if (!client) return;
+      client.from('customers').select('id').eq('account_number', n).maybeSingle()
+        .then(function (res) {
+          if (res.error || !res.data || !res.data.id) { showScanNotFound('ATR-' + n); return; }
+          routeToScannedCustomer(res.data.id);
+        })
+        .catch(function () { showScanNotFound('ATR-' + n); });
+    });
+  }
+  function appendScanNote(customerId, notFound) {
+    var tries = 0;
+    var iv = setInterval(function () {
+      tries++;
+      var body = $('portal-drawer-body');
+      if (!body) { if (tries > 25) clearInterval(iv); return; }
+      var ready = notFound || body.innerHTML.indexOf('portal-drawer-section') !== -1;
+      if (!ready && tries <= 25) return;
+      clearInterval(iv);
+      if (document.getElementById('scan-note')) return;
+      var note = document.createElement('div');
+      note.id = 'scan-note';
+      note.className = 'portal-gate';
+      note.style.marginBottom = '12px';
+      note.innerHTML = notFound
+        ? '<strong>Scan lookup:</strong> no customer matches that account code. Check the code and try again, or find them in Customers.'
+        : '<strong>Scanned in.</strong> This customer has no open job right now — their account is below, and their repair history is here too.';
+      body.insertBefore(note, body.firstChild);
+    }, 200);
+  }
+  function showScanNotFound(customerId) {
+    activateTab('customers');
+    drawerLoading('Customer lookup');
+    appendScanNote(customerId, true);
+  }
+
+  /* ---------- Scan In: the in-portal receiving end (pass 4) ----------
+   * Austin: "Now we have to build the receiving end into the portal —
+   * goes under Check-In, says Scan In." The sidebar item (Guest group,
+   * directly under Check-In) opens portal-panel-scanin. The camera
+   * decodes fully on-device with the vendored jsQR (jsqr.js,
+   * Apache-2.0), lazy-loaded on first open — no CDN and no outside
+   * service ever sees a scanned code. The account-number entry under
+   * the preview is the fallback for glare, a cracked screen, or a
+   * denied camera: a denial lands the staffer on that entry with a
+   * plain message, never a dead end. A successful read — camera or
+   * typed — releases the camera BEFORE routing, and routing is the
+   * one shared path above (routeScanPayload → routeToScannedCustomer).
+   * activateTab starts the camera when the panel opens and stops it
+   * whenever any other tab takes over, so the camera is never left
+   * hot. Scan In is an action, not a resting place: it is kept out of
+   * the remembered-tab restore so the camera never auto-starts at
+   * sign-in. */
+  var lastPortalTab = 'tickets';
+  var scanInReturnTab = 'tickets';
+  var scanInStream = null, scanInTimer = 0, scanInDecoding = false, scanInWired = false;
+  var jsqrState = 0, jsqrWaiters = []; /* 0 idle, 1 loading, 2 ready, 3 failed */
+  function scanInSetStatus(msg) { var el = $('portal-scanin-status'); if (el) el.textContent = msg || ''; }
+  function ensureJsQr(cb) {
+    if (typeof window.jsQR === 'function') { jsqrState = 2; cb(true); return; }
+    if (jsqrState === 3) { cb(false); return; }
+    jsqrWaiters.push(cb);
+    if (jsqrState === 1) return;
+    jsqrState = 1;
+    var sc = document.createElement('script');
+    sc.src = 'jsqr.js';
+    sc.onload = function () { jsqrState = (typeof window.jsQR === 'function') ? 2 : 3; flushJsQr(); };
+    sc.onerror = function () { jsqrState = 3; flushJsQr(); };
+    (document.head || document.documentElement).appendChild(sc);
+  }
+  function flushJsQr() {
+    var w = jsqrWaiters; jsqrWaiters = [];
+    for (var i = 0; i < w.length; i++) { try { w[i](jsqrState === 2); } catch (e) {} }
+  }
+  function scanInCameraFallback(msg) {
+    scanInSetStatus(msg);
+    var inp = $('portal-scanin-acct');
+    if (inp) { try { inp.focus(); } catch (e) {} }
+  }
+  function startScanInCamera() {
+    wireScanIn();
+    scanInSetStatus('Starting the camera…');
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      scanInCameraFallback('This device has no camera the portal can use. Type the account number below instead.');
+      return;
+    }
+    ensureJsQr(function (ok) {
+      if (!ok) { scanInCameraFallback('The code reader could not load. Type the account number below instead.'); return; }
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+        .then(function (stream) {
+          var panel = $('portal-panel-scanin');
+          if (!panel || panel.hidden) { /* staffer already moved on — release it untouched */
+            try { stream.getTracks().forEach(function (t) { try { t.stop(); } catch (e) {} }); } catch (e) {}
+            return;
+          }
+          scanInStream = stream;
+          var video = $('portal-scanin-video');
+          if (!video) { stopScanInCamera(); return; }
+          try { video.srcObject = stream; } catch (e) {}
+          var p = null;
+          try { p = video.play(); } catch (e) {}
+          if (p && p.catch) p.catch(function () {});
+          scanInSetStatus('Point the camera at the member’s code.');
+          scanInDecoding = true;
+          if (scanInTimer) window.clearInterval(scanInTimer);
+          scanInTimer = window.setInterval(scanInTick, 250);
+        })
+        .catch(function () {
+          scanInCameraFallback('Camera is off or not allowed. Type the account number below instead.');
+        });
+    });
+  }
+  function scanInTick() {
+    if (!scanInDecoding) return;
+    var video = $('portal-scanin-video'), canvas = $('portal-scanin-canvas');
+    if (!video || !canvas || typeof window.jsQR !== 'function') return;
+    var w = video.videoWidth || 0, h = video.videoHeight || 0;
+    if (!w || !h) return;
+    var ctx = null;
+    try { ctx = canvas.getContext('2d'); } catch (e) {}
+    if (!ctx) return;
+    if (canvas.width !== w) canvas.width = w;
+    if (canvas.height !== h) canvas.height = h;
+    try { ctx.drawImage(video, 0, 0, w, h); } catch (e) { return; }
+    var img = null;
+    try { img = ctx.getImageData(0, 0, w, h); } catch (e) { return; }
+    if (!img) return;
+    var code = null;
+    try { code = window.jsQR(img.data, img.width, img.height); } catch (e) {}
+    if (code && code.data) {
+      var raw = code.data;
+      stopScanInCamera();
+      routeScanPayload(raw);
+    }
+  }
+  function stopScanInCamera() {
+    scanInDecoding = false;
+    if (scanInTimer) { window.clearInterval(scanInTimer); scanInTimer = 0; }
+    if (scanInStream) {
+      try { scanInStream.getTracks().forEach(function (t) { try { t.stop(); } catch (e) {} }); } catch (e) {}
+      scanInStream = null;
+    }
+    var video = null;
+    try { video = $('portal-scanin-video'); } catch (e) {}
+    if (video) {
+      try { video.pause(); } catch (e) {}
+      try { video.srcObject = null; } catch (e) {}
+    }
+  }
+  function wireScanIn() {
+    if (scanInWired) return;
+    var go = $('portal-scanin-go'), inp = $('portal-scanin-acct'), cancel = $('portal-scanin-cancel');
+    if (!go || !inp) return;
+    scanInWired = true;
+    function submit() {
+      var digits = String(inp.value || '').replace(/[^0-9]/g, '');
+      if (!digits) {
+        scanInSetStatus('Type the account number, then tap Go.');
+        try { inp.focus(); } catch (e) {}
+        return;
+      }
+      stopScanInCamera();
+      routeScanPayload('ATR-' + parseInt(digits, 10));
+    }
+    go.addEventListener('click', submit);
+    inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); submit(); } });
+    if (cancel) cancel.addEventListener('click', function () {
+      stopScanInCamera();
+      activateTab(scanInReturnTab || 'tickets');
+    });
+  }
+  /* ================= end ATRONE_QR_2026_11_05 ================= */
 
   function proceedToDashboard() {
     showDashboard();
@@ -1091,15 +1351,23 @@
      * not see it — a remembered tab or a stale click lands on
      * the ticket queue instead. */
     if (!tabAllowed(name)) name = 'tickets';
-    saveActiveTab(name);
+    /* ATRONE_QR_2026_11_05 (pass 4): Scan In is never the remembered
+     * tab — it is a camera action, and remembering it would start the
+     * camera on the next sign-in's tab restore. */
+    saveActiveTab(name === 'scanin' ? lastPortalTab : name);
     var nav = $('portal-nav'); if (nav) nav.classList.remove('open');
     var tabs = document.querySelectorAll('.portal-tab');
     tabs.forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === name); });
     /* PASS10_2026_11_04: 'tracking' (the Live Tracking panel) hides and shows with the rest too */
-    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'tracking', 'documents', 'financials', 'payroll', 'mileage', 'teamchat', 'associateaccounts', 'warranty', 'setup'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too; ASSOCIATE_ACCOUNTS_2026_11_03: 'associateaccounts' hides and shows with the rest too (it absorbed ACCOUNT_CONTROLS_2026_11_03's 'accountcontrols' and the roster's 'associates'); WARRANTY_PORTAL_2026_11_03: 'warranty' hides and shows with the rest too; PORTAL_SETUP_2026_11_04: 'setup' hides and shows with the rest too */
+    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'scanin', 'requests', 'prices', 'tracking', 'documents', 'financials', 'payroll', 'mileage', 'teamchat', 'associateaccounts', 'warranty', 'setup'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too; ASSOCIATE_ACCOUNTS_2026_11_03: 'associateaccounts' hides and shows with the rest too (it absorbed ACCOUNT_CONTROLS_2026_11_03's 'accountcontrols' and the roster's 'associates'); WARRANTY_PORTAL_2026_11_03: 'warranty' hides and shows with the rest too; PORTAL_SETUP_2026_11_04: 'setup' hides and shows with the rest too; ATRONE_QR_2026_11_05 (pass 4): 'scanin' hides and shows with the rest too */
       $('portal-panel-' + n).hidden = n !== name;
     });
     closeDrawer();
+    /* ATRONE_QR_2026_11_05 (pass 4): the Scan In camera runs only
+     * while its panel is on screen. Arriving starts it (and remembers
+     * where Cancel lands); leaving for any other tab releases it. */
+    if (name === 'scanin') { scanInReturnTab = lastPortalTab; startScanInCamera(); }
+    else { stopScanInCamera(); lastPortalTab = name; }
     /* TEAMCHAT_2026_11_03: reopening Team Chat restarts its refresh
      * poll and pulls anything new; switching to any other tab stops
      * the poll so a closed panel is never polled. */
@@ -1117,7 +1385,10 @@
     document.addEventListener('click', function (e) {
       var el = e.target;
       while (el && el !== document) {
-        if (el.classList && el.classList.contains('portal-tab')) { saveActiveTab(el.getAttribute('data-tab')); return; }
+        /* ATRONE_QR_2026_11_05 (pass 4): Scan In clicks are not
+         * remembered either (see activateTab) — the camera must never
+         * auto-start from the tab restore. */
+        if (el.classList && el.classList.contains('portal-tab')) { var dt = el.getAttribute('data-tab'); if (dt !== 'scanin') saveActiveTab(dt); return; }
         el = el.parentNode;
       }
     }, true);
@@ -1177,11 +1448,16 @@
   }
 
   function closeDrawer() {
+    /* ATRONE_QR_2026_11_05: closing a scan-opened ticket lands on the
+     * customer behind it — their account was the point of the scan. */
+    var scanCid = scanBehindCustomerId;
+    scanBehindCustomerId = null;
     $('portal-drawer-overlay').hidden = true;
     var d = $('portal-drawer');
     d.classList.remove('open');
     d.setAttribute('aria-hidden', 'true');
     unlockBodyScroll(); /* PORTAL_DRAWER_SCROLL_LOCK_2026_11_02 */
+    if (scanCid) setTimeout(function () { openCustomerProfile(scanCid); }, 30);
   }
 
   function initDrawer() {
@@ -12211,6 +12487,7 @@ function loadTicketThread(client, ticketId) {
      * payment links), so it stays top-tier only. */
     if (!tabAllowed(name)) name = 'tickets';
     saveActiveTab(name);
+    stopScanInCamera(); /* ATRONE_QR_2026_11_05 (pass 4): an extra panel taking over releases the Scan In camera too */
     document.querySelectorAll('.portal-panel').forEach(function (pn) { pn.hidden = true; });
     var panel = $('portal-panel-' + name);
     if (panel) panel.hidden = false;

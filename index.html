@@ -1289,8 +1289,34 @@
             <i class="fas fa-ticket"></i> <span id="acct-voucher-strip-text"></span>
           </button>
 
-          <!-- My Account menu: Repairs, Account Settings, Sign Out -->
+          <!-- ATRONE_QR_2026_11_05: the all-in-one account card. Every signed-in
+               customer gets it: name + account QR that pulls them up in the
+               Associate Hub, with ATR One status riding on the same card. -->
+          <div class="acct-cardbox" id="acct-qr-card" hidden>
+            <div class="acct-cardbox-head">
+              <span class="acct-cardbox-title"><i class="fas fa-id-card"></i> My ATR One Card</span>
+              <span class="acct-cardbox-status" id="acct-qr-status">Loading…</span>
+            </div>
+            <div class="acct-cardbox-name" id="acct-qr-name"></div>
+            <div class="acct-cardbox-tier" id="acct-qr-tier"></div>
+            <div class="acct-cardbox-since" id="acct-qr-since"></div>
+            <div class="acct-cardbox-qr" id="acct-qr-box" aria-label="Your ATR One member QR code"></div>
+            <button class="btn btn-primary btn-lg acct-submit" id="acct-qr-show" type="button"><i class="fas fa-qrcode"></i> Show to Tech</button>
+            <p class="acct-muted acct-cardbox-note" id="acct-qr-note">Tap Show to Tech at your appointment and hold up your code — it pulls up your ATR One membership right away.</p>
+          </div>
+
+          <!-- ATRONE_QR_2026_11_05: schedule entry point. Jumps to the site's
+               repair flow (which prefills a signed-in customer's contact
+               details) and closes this account view behind it. The
+               in-account New Request form in My Repairs is untouched. -->
+          <a class="btn btn-primary btn-lg acct-submit" id="acct-schedule-btn" href="#repair" data-page="repair" style="display:block;text-align:center;margin:0 0 1rem;"><i class="fas fa-calendar-check"></i> Schedule a repair</a>
+
+          <!-- My Account menu: Check In, Repairs, Rewards & Vouchers, Cart,
+               Account Settings, Sign Out. ATRONE_QR_2026_11_05 (pass 3):
+               Check In sits first, above Repairs (Austin's placement), and
+               opens the same Show to Tech member QR popup as the card. -->
           <div class="acct-menu" role="group" aria-label="My Account">
+            <button class="acct-menu-item" type="button" id="acct-menu-checkin"><i class="fas fa-qrcode"></i> Check In</button>
             <button class="acct-menu-item is-active" type="button" data-acct-menu="repairs"><i class="fas fa-tools"></i> Repairs</button>
             <button class="acct-menu-item" type="button" data-acct-menu="rewards"><i class="fas fa-ticket"></i> Rewards &amp; Vouchers</button>
             <button class="acct-menu-item" type="button" id="acct-menu-cart"><i class="fas fa-shopping-cart"></i> Cart <span class="acct-cart-count" id="acct-cart-count" hidden>0</span></button>
@@ -1511,6 +1537,40 @@
       </div>
     </div>
 
+    <!-- ATRONE_QR_2026_11_05: Show to Tech popup — the member's own device shows
+         their account QR big enough to scan across a room. Display only. -->
+    <div class="acct-qr-overlay" id="acct-qr-overlay" hidden></div>
+    <div class="acct-qr-modal" id="acct-qr-modal" role="dialog" aria-modal="true" aria-label="Show this code to your technician" hidden>
+      <button class="acct-qr-close" id="acct-qr-close" type="button" aria-label="Close QR code"><i class="fas fa-times"></i></button>
+      <div class="acct-qr-brand"><img src="logo-duo.png" alt="Austin's Tech Repair Group" class="acct-qr-logo"><div class="acct-qr-brandname">Austin's Tech Repair Group</div></div>
+      <div class="acct-qr-big" id="acct-qr-big"></div>
+      <div class="acct-qr-mname" id="acct-qr-mname"></div>
+      <div class="acct-qr-mtier" id="acct-qr-mtier"></div>
+      <div class="acct-qr-msince" id="acct-qr-msince"></div>
+      <p class="acct-qr-hint">Show this code to your technician to pull up your ATR One membership.</p>
+    </div>
+
+    <!-- ATRONE_QR_2026_11_05: post-submit create-a-password offer. Shown only to
+         a guest who just submitted a repair request (atr-forms.js calls
+         window.atrOfferAccountSignup); it rides the existing signup form —
+         there is no second signup. Easy out: Not now, X, overlay tap, Esc. -->
+    <div class="acct-signup-overlay" id="acct-signup-overlay" hidden></div>
+    <div class="acct-signup-modal" id="acct-signup-modal" role="dialog" aria-modal="true" aria-label="Create a password" hidden>
+      <button class="acct-qr-close" id="acct-signup-close" type="button" aria-label="Close"><i class="fas fa-times"></i></button>
+      <h3 class="acct-signup-title">Create a password</h3>
+      <p class="acct-signup-line">Create a password to track this repair and keep your ATR One membership in your account.</p>
+      <label class="acct-signup-label">Email
+        <input type="email" id="acct-signup-email" readonly tabindex="-1">
+      </label>
+      <label class="acct-signup-label">Password
+        <input type="password" id="acct-signup-password" placeholder="At least 8 characters" autocomplete="new-password">
+      </label>
+      <p class="acct-error" id="acct-signup-error" hidden></p>
+      <p class="acct-muted" id="acct-signup-done" hidden></p>
+      <button class="btn btn-primary btn-lg acct-submit" id="acct-signup-create" type="button">Create account</button>
+      <button class="btn btn-outline acct-signup-notnow" id="acct-signup-notnow" type="button">Not now</button>
+    </div>
+
 
     <!-- ==================== B2B ==================== -->
     <section id="b2b" class="page">
@@ -1560,13 +1620,13 @@
             </div>
             <div class="step-card">
               <div class="step-num">2</div>
-              <h4>Get your wallet card</h4>
-              <p>We make your ATR One wallet card for you and send it over — nothing you need to do.</p>
+              <h4>Your member QR code</h4>
+              <p>Your ATR One member QR code lives in your My Account — nothing to carry and nothing to wait on. It is there the moment your membership is active.</p>
             </div>
             <div class="step-card">
               <div class="step-num">3</div>
               <h4>Show &amp; save</h4>
-              <p>Flash your wallet card at every visit or mention you're a member on the phone. Discounts apply automatically.</p>
+              <p>At your visit, tap Show to Tech in My Account and hold up your member QR code, or mention you're a member on the phone. Discounts apply automatically. Your technician can help you pull it up when we arrive.</p>
             </div>
           </div>
 
@@ -1649,7 +1709,7 @@
                 <tr><td>Same-day diagnostics</td><td class="no">When available</td><td class="yes compare-hl"><i class="fas fa-check"></i> Priority</td></tr>
                 <tr><td>House-call fee</td><td class="no">$35 per visit</td><td class="yes compare-hl"><i class="fas fa-check"></i> Free on covered devices</td></tr>
                 <tr><td>Remote customer service</td><td class="no">Billed per call</td><td class="yes compare-hl"><i class="fas fa-check"></i> Free</td></tr>
-                <tr><td>Wallet membership card</td><td class="no"><i class="fas fa-xmark"></i></td><td class="yes compare-hl"><i class="fas fa-check"></i></td></tr>
+                <tr><td>Member QR code in My Account</td><td class="no"><i class="fas fa-xmark"></i></td><td class="yes compare-hl"><i class="fas fa-check"></i></td></tr>
               </tbody>
             </table>
           </div>
@@ -1690,7 +1750,7 @@
           </div>
 
           <div class="text-center" style="margin-top:2.5rem;">
-            <p style="color:var(--muted); font-size:0.95rem;">Pick your plan above to join — secure checkout through Square. Cancel anytime. We set up your wallet card for you right after signup.</p>
+            <p style="color:var(--muted); font-size:0.95rem;">Pick your plan above to join — secure checkout through Square. Cancel anytime. Your member QR code appears in My Account as soon as your membership is active.</p>
           </div>
         </div>
       </div>
@@ -3638,8 +3698,43 @@
   .acct-line-meta{color:var(--muted,#8a7a68);font-size:.88rem}
   .acct-line-meta a{color:var(--brand);font-weight:700}
   .acct-line-amt{font-weight:700;white-space:nowrap}
+  /* ATRONE_QR_2026_11_05: account card + Show to Tech popup */
+  .acct-cardbox{border:2px solid var(--brand,#e8720c);border-radius:14px;padding:1rem;margin:0 0 1rem;background:rgba(232,114,12,.06);text-align:center}
+  .acct-cardbox-head{display:flex;justify-content:space-between;align-items:center;gap:.5rem}
+  .acct-cardbox-title{font-weight:800;font-size:.95rem}
+  .acct-cardbox-status{font-size:.72rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:.2rem .55rem;border-radius:999px;background:#6b7280;color:#fff}
+  .acct-cardbox-status.is-active{background:#1d9d60}
+  .acct-cardbox-name{font-size:1.15rem;font-weight:800;margin-top:.45rem}
+  .acct-cardbox-tier{font-weight:700;color:var(--brand,#e8720c)}
+  .acct-cardbox-since{font-size:.82rem;opacity:.75}
+  .acct-cardbox-qr{display:flex;justify-content:center;margin:.7rem auto .4rem}
+  .acct-cardbox-qr table{border-collapse:collapse;background:#fff;padding:8px;border-radius:8px}
+  .acct-cardbox-note{padding:.4rem 0 0}
+  .acct-qr-overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:1200}
+  .acct-qr-modal{position:fixed;inset:0;z-index:1201;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#fff;color:#111;padding:1.2rem;text-align:center}
+  .acct-qr-modal[hidden]{display:none}
+  .acct-qr-close{position:absolute;top:.9rem;right:.9rem;width:52px;height:52px;border-radius:50%;border:2px solid #111;background:#fff;font-size:1.3rem;cursor:pointer}
+  .acct-qr-logo{height:54px;width:auto;margin:0 auto}
+  .acct-qr-brandname{font-weight:900;font-size:1.05rem;margin-top:.3rem}
+  .acct-qr-big{margin:1rem auto .6rem;display:flex;justify-content:center}
+  .acct-qr-big table{border-collapse:collapse}
+  .acct-qr-mname{font-size:1.5rem;font-weight:900}
+  .acct-qr-mtier{font-size:1.05rem;font-weight:700;color:#b45a08}
+  .acct-qr-msince{font-size:.95rem;opacity:.75}
+  .acct-qr-hint{font-size:.95rem;opacity:.7;margin-top:.3rem}
+  /* ATRONE_QR_2026_11_05: post-submit create-a-password popup */
+  .acct-signup-overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:1210}
+  .acct-signup-modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:1211;background:#fff;color:#111;border-radius:16px;padding:1.6rem 1.4rem 1.3rem;width:min(92vw,420px);text-align:left;box-shadow:0 18px 50px rgba(0,0,0,.35)}
+  .acct-signup-modal[hidden]{display:none}
+  .acct-signup-title{font-size:1.3rem;font-weight:900;margin:0 2.6rem .4rem 0}
+  .acct-signup-line{font-size:.95rem;opacity:.8;margin:0 0 1rem}
+  .acct-signup-label{display:block;font-weight:700;font-size:.85rem;margin:0 0 .7rem}
+  .acct-signup-label input{display:block;width:100%;margin-top:.3rem;padding:.65rem .7rem;border:1.5px solid #cbd5e1;border-radius:10px;font-size:1rem}
+  .acct-signup-modal .acct-submit{width:100%}
+  .acct-signup-notnow{margin-top:.6rem;width:100%}
   .acct-total-row{border-bottom:none}
 </style>
+<script src="qrcode.js"></script>
 <script>
 /* ===== ATRG Account Rebuild: real sign-in + legacy link + profile =====
    Replaces the old email-lookup "login". Sign-in is real Supabase Auth:
@@ -3711,6 +3806,7 @@
     if (ptsEl) ptsEl.textContent = pts || 0;
     renderHeader(cust, pts);
     showDash();
+    renderAccountCard(cust, pts);
     currentCust = cust;
     wireRepairs();
     loadMyRepairs(cust);
@@ -3746,6 +3842,294 @@
         cb(pts);
       })
       .catch(function () { cb(0); });
+  }
+
+  /* ---------- ATRONE_QR_2026_11_05: the all-in-one account card ----------
+     Every signed-in customer gets the card. The QR encodes the member's
+     account number as ATR-<account_number> (Austin's ruling, pass 4) —
+     the code is the shop's hook into the account after a scan. The
+     number itself is INTERNAL ONLY: it is never printed on the card or
+     the popup; the member sees name, tier, status, member since, and
+     the code. If the row carries no account_number, the QR falls back
+     to the portal deep link carrying ONLY the customers row id (no
+     email, no phone, no name):
+       https://austinstechrepairgroup.com/portal.html?scan=<customers.id>
+     Either way a staff scan lands on that customer's open ticket (or
+     their customer view when no job is open). ATR One status rides on
+     the same card via the my_membership() RPC (see my-membership.sql)
+     — the customer's own row only; customer_memberships itself stays
+     staff-only under RLS. If the RPC is not deployed yet the card still
+     renders with the account QR and a neutral membership line — it
+     never guesses. */
+  var TIER_NAMES = { single: 'Individual', family: 'Family', business: 'Business', business_plus: 'Business', business_pro: 'Business Pro' };
+  var acctCardWired = false, acctCardPayload = '', acctCardName = '', acctCardTierLine = '', acctCardSince = '';
+  var acctCardPoints = null, acctCardCustSince = '';
+  var CARD_NOTE_DEFAULT = 'Tap Show to Tech at your appointment and hold up your code \u2014 it pulls up your ATR One membership right away.';
+  var CARD_NOTE_FREE = 'Free members earn points on every repair and get surprise member discounts along the way. Tap Show to Tech at your appointment and hold up your code.';
+  function scanPayload(customerId) { return 'https://austinstechrepairgroup.com/portal.html?scan=' + encodeURIComponent(customerId); }
+  /* Pass 4 (Austin): the code encodes the account number — ATR-<n> —
+     whenever the customers row carries one (account-number.sql is live;
+     every existing customer is numbered and new accounts get a number
+     by default). The number is the internal hook only and is never
+     displayed. A row without a number falls back to the portal deep
+     link so the code still scans with any camera. */
+  function memberQrPayload(cust) {
+    var n = cust ? cust.account_number : null;
+    if (n != null && n !== '' && isFinite(Number(n))) return 'ATR-' + Number(n);
+    return scanPayload(cust.id);
+  }
+  function drawQrInto(el, text, px) {
+    if (!el) return false;
+    el.innerHTML = '';
+    if (typeof window.qrcode !== 'function' || !text) return false;
+    try {
+      var qr = window.qrcode(0, 'M');
+      qr.addData(text);
+      qr.make();
+      el.innerHTML = qr.createSvgTag({ cellSize: 8, margin: 12, scalable: true });
+      var svg = el.querySelector('svg');
+      if (svg) { svg.style.width = px + 'px'; svg.style.height = px + 'px'; svg.style.background = '#fff'; }
+      return !!svg;
+    } catch (e) { return false; }
+  }
+  function fmtMemberSince(iso) {
+    if (!iso) return '';
+    var d = new Date(String(iso).length <= 10 ? iso + 'T12:00:00' : iso);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  }
+  function renderAccountCard(cust, pts) {
+    var card = $('acct-qr-card');
+    if (!card || !cust || !cust.id) return;
+    acctCardPayload = memberQrPayload(cust);
+    acctCardName = cust.name || 'Account holder';
+    /* Points ride in from renderDash (already read from rewards — no new
+       query), and the account's own created date covers "member since"
+       for Free members when the row carries it. Either may be absent;
+       both are simply omitted then, never invented. */
+    acctCardPoints = (typeof pts === 'number' && isFinite(pts)) ? pts : null;
+    acctCardCustSince = fmtMemberSince(cust.created_at);
+    /* Account number (account-number.sql is live): it feeds ONLY the
+       QR payload above. Austin's correction (pass 4): the number is
+       internal only — "they never see the account number; that's a way
+       our system hooks to the account after scan" — so nothing on the
+       card or the popup ever prints it. */
+    $('acct-qr-name').textContent = acctCardName;
+    drawQrInto($('acct-qr-box'), acctCardPayload, 148);
+    card.hidden = false;
+    if (!acctCardWired) {
+      acctCardWired = true;
+      var schedBtn = $('acct-schedule-btn');
+      if (schedBtn) schedBtn.addEventListener('click', function () { var cb = $('acct-close'); if (cb) { try { cb.click(); } catch (e) {} } });
+      $('acct-qr-show').addEventListener('click', openQrPopup);
+      /* Pass 3: the account menu's Check In button (first item, above
+         Repairs) opens the very same popup. The menu only exists inside
+         the signed-in dashboard, and this wiring runs on first card
+         render, so signed-out visitors never get a live button. */
+      var checkinBtn = $('acct-menu-checkin');
+      if (checkinBtn) checkinBtn.addEventListener('click', openQrPopup);
+      $('acct-qr-close').addEventListener('click', closeQrPopup);
+      $('acct-qr-overlay').addEventListener('click', closeQrPopup);
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeQrPopup(); });
+    }
+    setMembershipLine(null); /* loading state */
+    if (!sb) { setMembershipLine(undefined); return; }
+    sb.rpc('my_membership').then(function (res) {
+      if (res.error) { setMembershipLine(undefined); return; }
+      var row = (res.data && res.data.length) ? res.data[0] : (res.data && !Array.isArray(res.data) ? res.data : false);
+      /* false = the lookup worked and there is no membership row at all:
+         a Free member (see setMembershipLine). */
+      setMembershipLine(row);
+    }).catch(function () { setMembershipLine(undefined); });
+  }
+  /* membership === null: still loading. undefined: lookup unavailable.
+     false: lookup worked, no membership row exists. A row object: the
+     customer's latest membership row (any status). Austin's ruling
+     (Nov 5, 2026): EVERYONE with an account is an ATR One member — paid
+     tiers ride on top, and everyone else is a Free member (points on
+     every repair, surprise member discounts along the way). A cancelled
+     paid plan falls back to Free the same way. Only the paid branch may
+     name a paid tier, and only the unavailable branch may stay neutral —
+     the card never dead-ends a customer as "not a member." */
+  function setMembershipLine(membership) {
+    var statusEl = $('acct-qr-status'), tierEl = $('acct-qr-tier'), sinceEl = $('acct-qr-since'), noteEl = $('acct-qr-note');
+    if (!statusEl) return;
+    if (membership === null) {
+      statusEl.textContent = 'Checking membership…';
+      statusEl.classList.remove('is-active');
+      tierEl.textContent = '';
+      sinceEl.textContent = '';
+      acctCardTierLine = '';
+      if (noteEl) noteEl.textContent = CARD_NOTE_DEFAULT;
+      return;
+    }
+    if (membership && membership.status === 'active') {
+      var tierName = TIER_NAMES[membership.tier] || 'ATR One';
+      statusEl.textContent = 'ATR One · Active';
+      statusEl.classList.add('is-active');
+      tierEl.textContent = 'ATR One ' + tierName + ' member';
+      var since = fmtMemberSince(membership.started_on);
+      sinceEl.textContent = since ? 'Member since ' + since : '';
+      acctCardSince = sinceEl.textContent;
+      acctCardTierLine = 'ATR One ' + tierName + ' · Active';
+      if (noteEl) noteEl.textContent = CARD_NOTE_DEFAULT;
+      return;
+    }
+    if (membership === undefined) {
+      /* Lookup unavailable (the my_membership RPC is not deployed yet):
+         honest neutral line — no membership state claimed either way. */
+      statusEl.textContent = 'ATR One';
+      statusEl.classList.remove('is-active');
+      tierEl.textContent = 'Membership status is on file at the shop — ask us at your visit.';
+      sinceEl.textContent = '';
+      acctCardSince = '';
+      acctCardTierLine = 'ATR One';
+      if (noteEl) noteEl.textContent = CARD_NOTE_DEFAULT;
+      return;
+    }
+    /* FREE STATE: no active paid row — no row at all, or a cancelled
+       plan. Free with the account; points ride along when renderDash
+       already had them; "member since" is the account's own created
+       date when the row carries one, omitted when it does not. */
+    statusEl.textContent = 'ATR One · Active';
+    statusEl.classList.add('is-active');
+    tierEl.textContent = 'ATR One Free' + (acctCardPoints != null ? ' · Points: ' + acctCardPoints : '');
+    sinceEl.textContent = acctCardCustSince ? 'Member since ' + acctCardCustSince : '';
+    acctCardSince = sinceEl.textContent;
+    acctCardTierLine = 'ATR One Free · Active';
+    if (noteEl) noteEl.textContent = CARD_NOTE_FREE;
+  }
+  function openQrPopup() {
+    var modal = $('acct-qr-modal'), ov = $('acct-qr-overlay');
+    if (!modal) return;
+    var px = Math.max(240, Math.min(430, Math.floor(window.innerWidth * 0.8)));
+    drawQrInto($('acct-qr-big'), acctCardPayload, px);
+    $('acct-qr-mname').textContent = acctCardName;
+    $('acct-qr-mtier').textContent = acctCardTierLine || '';
+    var ms = $('acct-qr-msince'); if (ms) ms.textContent = acctCardSince || '';
+    if (ov) ov.hidden = false;
+    modal.hidden = false;
+  }
+  function closeQrPopup() {
+    var modal = $('acct-qr-modal'), ov = $('acct-qr-overlay');
+    if (modal) modal.hidden = true;
+    if (ov) ov.hidden = true;
+  }
+
+  /* ---------- ATRONE_QR_2026_11_05: post-submit create-a-password offer ----
+     After a GUEST submits a repair request, atr-forms.js calls
+     window.atrOfferAccountSignup({email, name, phone}) with what they
+     just typed, and this quick popup offers them a password. It rides
+     the existing account system end to end: the popup's Create button
+     fills the REAL signup form below and submits it, so the module's
+     own signup handler (validation, human check, signUp, link step)
+     does all the work — there is no second signup here. Signed-in
+     customers never see it; it fires once per submission success,
+     never on page load; and it is never a trap — Not now, the X, the
+     overlay, and Esc all close it and leave the normal submission
+     success state exactly as it was. A free account never requires a
+     repair: the normal My Account Sign Up stays open to everyone at
+     any time, and this popup is only a convenience entry point. */
+  var signupOfferInfo = null, signupOfferWired = false, signupOfferWatch = null;
+  window.atrOfferAccountSignup = function (info) {
+    if (!info || !info.email || !sb) return;
+    if (currentCustomer || linkedUid || linkInFlightFor) return; /* already signed in (or signing in) */
+    sb.auth.getSession().then(function (res) {
+      if (res && res.data && res.data.session) return; /* signed in */
+      if (currentCustomer || linkedUid) return;
+      openSignupOffer(info);
+    }).catch(function () {});
+  };
+  function openSignupOffer(info) {
+    var modal = $('acct-signup-modal'), ov = $('acct-signup-overlay');
+    if (!modal) return;
+    signupOfferInfo = info;
+    var em = $('acct-signup-email'); if (em) em.value = info.email || '';
+    var pw = $('acct-signup-password'); if (pw) pw.value = '';
+    showErr($('acct-signup-error'), '');
+    var done = $('acct-signup-done'); if (done) { done.textContent = ''; done.hidden = true; }
+    var create = $('acct-signup-create'); if (create) { create.disabled = false; create.innerHTML = 'Create account'; }
+    if (!signupOfferWired) {
+      signupOfferWired = true;
+      $('acct-signup-create').addEventListener('click', submitSignupOffer);
+      $('acct-signup-notnow').addEventListener('click', closeSignupOffer);
+      $('acct-signup-close').addEventListener('click', closeSignupOffer);
+      if (ov) ov.addEventListener('click', closeSignupOffer);
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeSignupOffer(); });
+    }
+    if (ov) ov.hidden = false;
+    modal.hidden = false;
+    if (pw) { try { pw.focus(); } catch (e) {} }
+  }
+  function closeSignupOffer() {
+    var modal = $('acct-signup-modal'), ov = $('acct-signup-overlay');
+    if (modal) modal.hidden = true;
+    if (ov) ov.hidden = true;
+    if (signupOfferWatch) { clearInterval(signupOfferWatch); signupOfferWatch = null; }
+  }
+  function submitSignupOffer() {
+    var info = signupOfferInfo || {};
+    var pwEl = $('acct-signup-password');
+    var pass = pwEl ? pwEl.value || '' : '';
+    showErr($('acct-signup-error'), '');
+    if (!pass || pass.length < 8) { showErr($('acct-signup-error'), 'Please use a password of at least 8 characters.'); return; }
+    /* Fill the real signup form — its own submit handler does the
+       validation, the human check, the signUp call, and the account
+       link. Clear its outcome slots first so the watch below only
+       reads THIS attempt's result. */
+    var nf = $('authx-signup-name'), ef = $('authx-signup-email'), pf = $('authx-signup-phone'), sf = $('authx-signup-password');
+    var form = $('authx-signup-form');
+    if (!ef || !sf || !form) { showErr($('acct-signup-error'), 'Something went wrong. Please try again.'); return; }
+    if (nf) nf.value = info.name || '';
+    ef.value = info.email || '';
+    if (pf) pf.value = info.phone || '';
+    sf.value = pass;
+    showErr($('authx-signup-error'), '');
+    var sn = $('authx-signup-note'); if (sn) { sn.textContent = ''; sn.hidden = true; }
+    var create = $('acct-signup-create');
+    if (create) { create.disabled = true; create.innerHTML = 'Creating account\u2026'; }
+    if (window.atrTurnstile) window.atrTurnstile.mount($('ts-signup'));
+    if (form.requestSubmit) form.requestSubmit();
+    else form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    /* Mirror the existing handler's own outcomes into the popup. */
+    var ticks = 0;
+    if (signupOfferWatch) clearInterval(signupOfferWatch);
+    signupOfferWatch = setInterval(function () {
+      ticks++;
+      if (currentCustomer || linkedUid) {
+        closeSignupOffer();
+        var ob = $('account-open-btn'); if (ob) { try { ob.click(); } catch (e) {} } /* land them in their new account */
+        return;
+      }
+      var note = $('authx-signup-note');
+      if (note && !note.hidden && note.textContent) {
+        var done = $('acct-signup-done');
+        if (done) { done.textContent = note.textContent; done.hidden = false; }
+        if (create) { create.disabled = false; create.innerHTML = 'Create account'; }
+        clearInterval(signupOfferWatch); signupOfferWatch = null;
+        return;
+      }
+      var err = $('authx-signup-error');
+      if (err && !err.hidden && err.textContent) {
+        clearInterval(signupOfferWatch); signupOfferWatch = null;
+        if (create) { create.disabled = false; create.innerHTML = 'Create account'; }
+        if (/human check/i.test(err.textContent)) {
+          /* The quick human check has to happen in the account box —
+             hand them over with every field already filled in. */
+          closeSignupOffer();
+          var ob2 = $('account-open-btn'); if (ob2) { try { ob2.click(); } catch (e) {} }
+          selectTab('signup');
+          return;
+        }
+        showErr($('acct-signup-error'), err.textContent);
+        return;
+      }
+      if (ticks >= 40) {
+        clearInterval(signupOfferWatch); signupOfferWatch = null;
+        if (create) { create.disabled = false; create.innerHTML = 'Create account'; }
+        showErr($('acct-signup-error'), 'That is taking a while \u2014 tap Not now and use Sign Up in My Account to finish.');
+      }
+    }, 200);
   }
 
   /* ---------- My Repairs: customer status view + messages ---------- */

@@ -140,6 +140,10 @@
         <button class="portal-tab" id="portal-tab-checkin" type="button" role="tab" data-tab="checkin">
           <i class="fas fa-clipboard-check"></i> Check-In
         </button>
+        <!-- ATRONE_QR_2026_11_05 (pass 4, Austin, Nov 5, 2026): "Now we have to build the receiving end into the portal — goes under Check-In, says Scan In." Scan In is the staff side of the member QR: it sits directly under Check-In in the Guest group and opens portal-panel-scanin — camera scan of the member's code (or the account number typed by hand) routes through the very same scan routing as the ?scan= deep link, straight to the guest's open job or their Guest record. -->
+        <button class="portal-tab" id="portal-tab-scanin" type="button" role="tab" data-tab="scanin">
+          <i class="fas fa-qrcode"></i> Scan In
+        </button>
         <button class="portal-tab active" id="portal-tab-tickets" type="button" role="tab" data-tab="tickets">
           <i class="fas fa-list-ol"></i> Repair Queue <span class="portal-count" id="portal-count-tickets" hidden></span>
         </button>
@@ -1107,6 +1111,32 @@
             <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="ci-clear"><i class="fas fa-eraser"></i> Clear check-in</button>
           </div>
         </form>
+      </div>
+
+      <!-- SCAN IN — ATRONE_QR_2026_11_05 (pass 4): the receiving end of the
+           member QR. The member shows the code from their account (Check In
+           on their side); staff scan it here. The camera preview decodes
+           on-device with the vendored jsQR (jsqr.js, lazy-loaded by
+           portal.js on first open — no outside service ever sees a code),
+           and the account-number entry underneath covers glare, a cracked
+           screen, or a denied camera. Either way the read routes through
+           routeScanPayload in portal.js: the guest's open job first, their
+           Guest record behind it. -->
+      <div class="portal-panel" id="portal-panel-scanin" role="tabpanel" hidden>
+        <div class="portal-panel-head"><h2 class="portal-h2">Scan In</h2></div>
+        <p class="portal-muted portal-small">The guest taps Check In in their account and holds up their member code. Scan it here &mdash; or type their account number instead &mdash; and you land on their open job, with their Guest record right behind it.</p>
+        <video id="portal-scanin-video" playsinline muted style="display:block;width:100%;max-width:420px;aspect-ratio:4/3;object-fit:cover;background:#111;border-radius:12px;"></video>
+        <canvas id="portal-scanin-canvas" hidden></canvas>
+        <p class="portal-muted" id="portal-scanin-status" role="status"></p>
+        <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Account number instead</h3></div>
+        <div class="p2-form-row">
+          <label class="portal-muted portal-small" for="portal-scanin-acct">Account #</label>
+          <input type="text" id="portal-scanin-acct" inputmode="numeric" autocomplete="off" placeholder="e.g. 1001" aria-label="Account number" />
+          <button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="portal-scanin-go"><i class="fas fa-arrow-right"></i> Go</button>
+        </div>
+        <div class="p2-actions" style="margin-top:0.6rem;">
+          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="portal-scanin-cancel"><i class="fas fa-xmark"></i> Cancel</button>
+        </div>
       </div>
 
       <div class="portal-panel" id="portal-panel-timeclock" role="tabpanel" hidden>
