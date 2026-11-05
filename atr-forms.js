@@ -55,6 +55,8 @@
   var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
   var SUPABASE_CDN = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
   var ALERT_ENDPOINT = 'https://formsubmit.co/ajax/austin.caudill@austinstechrepairgroup.com';
+  /* WARRANTY_ALERT_WARRANTY_2026_11_05 (Austin, Nov 5, 2026): warranty form alerts go to the warranty mailbox he created, warranty@. Every other form keeps the shared endpoint above. */
+  var WARRANTY_ALERT_ENDPOINT = 'https://formsubmit.co/ajax/warranty@austinstechrepairgroup.com';
   var BUSINESS_PHONE_DISPLAY = '937-280-6243';
   var BUSINESS_PHONE_TEL = 'tel:9372806243';
   var MAX_RESUME_BYTES = 10 * 1024 * 1024; // 10 MB client-side guard
@@ -308,11 +310,11 @@
   /* ---------------- email alert (fire-and-forget) ----------------
    * Runs in parallel with the database insert and is never awaited:
    * the database insert alone decides success or failure. */
-  function sendAlert(subject, rows) {
+  function sendAlert(subject, rows, endpoint) {
     var payload = { _subject: subject, _template: 'table' };
     rows.forEach(function (r) { payload[r[0]] = r[1] === '' || r[1] == null ? '(not provided)' : r[1]; });
     try {
-      fetch(ALERT_ENDPOINT, {
+      fetch(endpoint || ALERT_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(payload)
@@ -1013,7 +1015,7 @@
    * Request page (#warranty-request). Writes to public.warranty_requests;
    * that table is the system of record (staff work the requests from
    * the portal). Addressed to the business's warranty mailbox
-   * (warrantyandreplacement@austinstechrepairgroup.com) — see the
+   * (warranty@austinstechrepairgroup.com) — see the
    * REPORT in website-warranty-form-2026-11-03 for the gated email leg;
    * the FormSubmit alert below follows the same pattern as every other
    * form here and is best-effort only. The ticket number from the
@@ -1074,7 +1076,7 @@
         ['Part or service under warranty', v.part_service],
         ['Problem', v.problem],
         ['Preferred contact method', v.contact_pref]
-      ]);
+      ], WARRANTY_ALERT_ENDPOINT);
 
       withClient(function (client) {
         if (!client) { setBusy(form, false); showFormError(form, dbFailMessage()); return; }
