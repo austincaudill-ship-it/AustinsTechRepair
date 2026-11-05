@@ -892,7 +892,7 @@
         <div id="portal-guides-list"><p class="portal-muted">Loading guides&hellip;</p></div>
 
         <div class="portal-panel-head portal-subhead">
-          <h3 class="portal-h3">Add a guide</h3>
+          <h3 class="portal-h3" id="portal-guide-form-title">Add a guide</h3>
         </div>
         <form id="portal-guide-form" novalidate>
           <div class="portal-nh-grid">
@@ -946,6 +946,7 @@
           <button class="portal-btn portal-btn-primary" id="portal-guide-submit" type="submit">
             <i class="fas fa-plus"></i> Add guide
           </button>
+          <button class="portal-btn portal-btn-outline" id="portal-guide-cancel-edit" type="button" hidden>Cancel edit</button>
         </form>
 
         <!-- GUIDE_PDF_UPLOAD_2026_11_04 (Austin, Nov 4, 2026): "Where it says add a guide, we also need an upload button to be able to upload the guide. If we find a PDF, we need to be able to upload that." The file itself is filed in the ticket-documents bucket and the guides row carries its path (guides-file.sql); the list above opens it with View PDF. -->
@@ -1181,30 +1182,34 @@
       <div class="portal-panel" id="portal-panel-links" role="tabpanel" hidden>
         <div class="portal-panel-head"><h2 class="portal-h2">Links</h2></div>
         <p class="portal-muted portal-small">Parts suppliers, price anchors, and carrier tracking &mdash; everything a tech needs, one tap away.</p>
-        <!-- CUSTOM_ACTION_BUTTONS_2026_11_04: this grid is built-in cards only. Austin's custom buttons no longer render into it — they are real sidebar action buttons now (Admin → Setup → Custom action buttons). -->
-        <div class="link-grid" id="portal-tools-grid">
-          <a class="link-card" href="https://www.mobilesentrix.com" target="_blank" rel="noopener"><i class="fas fa-mobile-screen"></i><strong>Mobile Sentrix</strong><span>Primary parts supplier</span></a>
-          <!-- IMEI_LOOKUP_2026_11_03: IMEI lookup card added to Tools & Links so a tech can pin the exact Samsung model/variant before ordering variant-specific parts. Sickw chosen over imei.info and IMEICheck.com after a head-to-head (only Sickw's Samsung check returns the full model-number SKU + carrier/CSC from Samsung's records) -- see REPORT.md in the portal-imei-2026-11-03 folder. Staged, not published. -->
-          <a class="link-card" href="https://www.sickw.com/" target="_blank" rel="noopener"><i class="fas fa-barcode"></i><strong>Sickw</strong><span>Exact model &amp; variant by IMEI</span></a>
-          <a class="link-card" href="https://www.amazon.com/business" target="_blank" rel="noopener"><i class="fab fa-amazon"></i><strong>Amazon Business</strong><span>Accessories &amp; general</span></a>
-          <a class="link-card" href="https://www.ebay.com" target="_blank" rel="noopener"><i class="fab fa-ebay"></i><strong>eBay</strong><span>Computer parts</span></a>
-          <a class="link-card" href="https://www.ifixit.com" target="_blank" rel="noopener"><i class="fas fa-screwdriver-wrench"></i><strong>iFixit</strong><span>Guides &amp; genuine Pixel parts</span></a>
-          <a class="link-card" href="https://austinstechrepairgroup.com/#prices" target="_blank" rel="noopener"><i class="fas fa-tags"></i><strong>Our Price Sheet</strong><span>Website price wizard</span></a>
-          <a class="link-card" href="https://support.apple.com/iphone/repair" target="_blank" rel="noopener"><i class="fab fa-apple"></i><strong>Apple&rsquo;s Prices</strong><span>Official repair price anchor</span></a>
-          <!-- SAMSUNG_PRICES_2026_11_03: Samsung's Prices card added to Tools & Links to pair with Apple's Prices as the second manufacturer price anchor (Samsung's official suggested repair prices, so ATRG can check its prices against the manufacturer's and stay competitive) and to keep the card grid even at 10 -- see REPORT.md in the portal-samsung-prices-2026-11-03 folder. Staged, not published. -->
-          <a class="link-card" href="https://www.samsung.com/us/support/cracked-screen-repair/" target="_blank" rel="noopener"><i class="fab fa-android"></i><strong>Samsung&rsquo;s Prices</strong><span>Official repair price anchor</span></a>
-          <!-- GOOGLE_PRICES_2026_11_03: Google's Prices card added to Tools & Links to complete the manufacturer price-anchor trio with Apple's Prices and Samsung's Prices (Google's official Pixel Repair Cost Estimator, so ATRG can check its Pixel prices against Google's own mail-in repair pricing mid-call instead of digging for it) -- see REPORT.md in the portal-google-prices-2026-11-03 folder. Staged, not published. -->
-          <a class="link-card" href="https://store.google.com/us/repair-cost-estimator" target="_blank" rel="noopener"><i class="fab fa-google"></i><strong>Google&rsquo;s Prices</strong><span>Official repair price anchor</span></a>
-          <!-- PHONEARENA_2026_11_03: phone-compare card added to Tools & Links so a tech can answer "which phone is better to buy" mid-call. GSMArena chosen over PhoneArena after a head-to-head (deeper phone coverage + exact band support) -- see REPORT.md in the portal-phonearena-2026-11-03 folder. Staged, not published. -->
-          <a class="link-card" href="https://www.gsmarena.com/compare.php3" target="_blank" rel="noopener"><i class="fas fa-scale-balanced"></i><strong>GSMArena</strong><span>Compare phones side by side</span></a>
-          <!-- SWAPPA_2026_11_03: Swappa card added to Tools & Links as the balancing 12th card under Austin's even-grid rule, completing the advice cluster (GSMArena compares specs, Swappa prices the used phone) so a tech can answer "repair it or replace it" with the phone's current used value next to the repair price -- see REPORT.md in the portal-google-prices-2026-11-03 folder. Staged, not published. -->
-          <a class="link-card" href="https://swappa.com/prices" target="_blank" rel="noopener"><i class="fas fa-dollar-sign"></i><strong>Swappa</strong><span>Used phone values</span></a>
-          <a class="link-card" href="https://squareup.com/dashboard" target="_blank" rel="noopener"><i class="fas fa-square"></i><strong>Square Dashboard</strong><span>Sales, payouts, settings</span></a>
-          <!-- PASS10_2026_11_04 (Austin, Nov 4, 2026): four carrier boxes join the grid — FedEx, UPS, USPS, DHL, each opening that carrier's official tracking page in a new tab (the quick door; typing a number and seeing the status in-portal is the Live Tracking button's job now). The grid goes 12 → 16 cards, still even under Austin's even-grid rule. FedEx uses the fedextrack route, the same canonical form the portal's own tracking fallback links use. -->
-          <a class="link-card" href="https://www.fedex.com/fedextrack/" target="_blank" rel="noopener"><i class="fas fa-truck-fast"></i><strong>FedEx</strong><span>Track a package</span></a>
-          <a class="link-card" href="https://www.ups.com/track" target="_blank" rel="noopener"><i class="fas fa-truck"></i><strong>UPS</strong><span>Track a package</span></a>
-          <a class="link-card" href="https://tools.usps.com/go/TrackConfirmAction_input" target="_blank" rel="noopener"><i class="fas fa-envelope"></i><strong>USPS</strong><span>Track a package</span></a>
-          <a class="link-card" href="https://www.dhl.com/us-en/home/tracking.html" target="_blank" rel="noopener"><i class="fas fa-plane"></i><strong>DHL</strong><span>Track a package</span></a>
+        <!-- CUSTOM_ACTION_BUTTONS_2026_11_04: Austin's custom buttons do not render into this grid — they are real sidebar action buttons now (Admin → Setup → Custom action buttons). PORTAL_CRUD_BATCH_B_2026_11_05: the cards themselves are no longer hardcoded either. The LINKS module at the bottom of this file renders this grid from public.portal_links (links-table.sql seeds the table with the same 16 cards; the module mirrors them as an offline fallback), and Admin tier and above get Add / Edit / Delete controls. -->
+        <div class="link-grid" id="portal-tools-grid"><p class="portal-muted">Loading links&hellip;</p></div>
+        <div id="portal-links-manage" hidden>
+          <div class="portal-panel-head portal-subhead">
+            <h3 class="portal-h3" id="portal-links-form-title">Add a link</h3>
+          </div>
+          <form id="portal-link-form" novalidate>
+            <div class="portal-nh-grid">
+              <div class="portal-field">
+                <label for="portal-link-label">Label <span aria-hidden="true">*</span></label>
+                <input type="text" id="portal-link-label" placeholder="e.g. Mobile Sentrix" required />
+              </div>
+              <div class="portal-field">
+                <label for="portal-link-url">Link (URL) <span aria-hidden="true">*</span></label>
+                <input type="url" id="portal-link-url" placeholder="https://&hellip;" required />
+              </div>
+              <div class="portal-field portal-nh-wide">
+                <label for="portal-link-note">Note (optional)</label>
+                <input type="text" id="portal-link-note" placeholder="e.g. Primary parts supplier" />
+              </div>
+            </div>
+            <p class="portal-error" id="portal-link-error" hidden></p>
+            <p class="portal-success" id="portal-link-success" hidden>Link saved.</p>
+            <button class="portal-btn portal-btn-primary" id="portal-link-submit" type="submit">
+              <i class="fas fa-plus"></i> Add link
+            </button>
+            <button class="portal-btn portal-btn-outline" id="portal-link-cancel-edit" type="button" hidden>Cancel edit</button>
+          </form>
         </div>
       </div>
 
@@ -1628,6 +1633,16 @@
       offer: 'Offer letter', other: 'Other document'
     };
     var nhDocHire = null;
+    /* PORTAL_CRUD_BATCH_B_2026_11_05 (scope additions): this
+     * module's two deletes — a hire (the attach picker's list)
+     * and a hire's document (the Documents modal) — are gated
+     * to Admin tier and above. nhIsAdmin resolves from the
+     * caller's own employee_profiles row in resolveNhRole(). */
+    var nhIsAdmin = false;
+    var nhDocRowsById = {};
+    var confirmDocDeleteId = null;
+    var confirmHireDeleteId = null;
+    var tdAttachKind = null;
 
     /* Gov forms update (Austin, Oct 31, 2026): the government forms
      * are the ACTUAL official PDFs, hosted next to this portal at
@@ -1786,8 +1801,107 @@
         .then(function () { loadNewHires(true); }).catch(function () {});
     }
 
+    /* PORTAL_CRUD_BATCH_B_2026_11_05: role gate for this
+     * module's deletes — same lookup shape as the Guides and
+     * Requests gates: the module's own client (portal session
+     * key), auth user, then their employee_profiles role. Legacy
+     * 'owner' maps to super_admin. On any doubt the gate stays
+     * closed. When the flag lands after a surface has rendered,
+     * that surface re-renders so the buttons appear. */
+    function nhIsAdminRole(role) {
+      if (role === 'owner') role = 'super_admin';
+      return role === 'super_admin' || role === 'co_super_admin' || role === 'admin';
+    }
+
+    function resolveNhRole() {
+      var client = getClient();
+      if (!client || !client.auth || !client.auth.getUser) return;
+      client.auth.getUser().then(function (res) {
+        var user = res && res.data ? res.data.user : null;
+        if (!user) return null;
+        return client.from('employee_profiles').select('role').eq('id', user.id).maybeSingle();
+      }).then(function (roleRes) {
+        if (!roleRes || !roleRes.data) return;
+        var was = nhIsAdmin;
+        nhIsAdmin = nhIsAdminRole(roleRes.data.role);
+        if (nhIsAdmin === was) return;
+        if ($('nhd-list') && nhDocHire) loadHireDocs();
+        var box = $('td-attach-list');
+        if (box && tdAttachKind) {
+          tdRenderAttachList(tdAttachKind, Object.keys(nhRowsById).map(function (k) { return nhRowsById[k]; }));
+        }
+      }).catch(function () { /* gate stays closed */ });
+    }
+
+    /* PORTAL_CRUD_BATCH_B_2026_11_05: delete one of a hire's
+     * documents — the row AND its file. Filed documents live in
+     * the bucket under hire/<id>/, so the file goes first
+     * (storage.remove, the shape the Guides PDF cleanup uses),
+     * then the employee_documents row. Team Documents attach
+     * rows point at the blank form's own source — no bucket
+     * file of their own — so they skip storage entirely and
+     * only the row is deleted. */
+    function deleteHireDoc(id) {
+      var d = nhDocRowsById[id];
+      if (!d) return;
+      var client = getClient();
+      if (!client) { nhDocMsg('Couldn\u2019t reach the database.'); return; }
+      nhDocMsg(''); nhDocOk('');
+      var finish = function () {
+        client.from('employee_documents').delete().eq('id', id).then(function (res) {
+          confirmDocDeleteId = null;
+          if (res.error) { nhDocMsg('Couldn\u2019t delete that document: ' + res.error.message); loadHireDocs(); return; }
+          nhDocOk('Document deleted.');
+          loadHireDocs();
+        }).catch(function () { nhDocMsg('Couldn\u2019t delete that document. Try again.'); });
+      };
+      var path = d.storage_path || '';
+      if (path.indexOf('hire/') === 0) {
+        client.storage.from(NH_DOC_BUCKET).remove([path]).then(function (res) {
+          if (res.error) { nhDocMsg('Couldn\u2019t delete that document file: ' + res.error.message); confirmDocDeleteId = null; loadHireDocs(); return; }
+          finish();
+        }).catch(function () { nhDocMsg('Couldn\u2019t delete that document file. Try again.'); });
+      } else {
+        finish();
+      }
+    }
+
+    /* PORTAL_CRUD_BATCH_B_2026_11_05: delete a hire from the
+     * attach picker's list (deletes the new_hires row). The
+     * two-tap confirm names the person (see tdRenderAttachList).
+     * If the deleted hire was the one being onboarded, the
+     * Team Documents attach context clears with them. Their
+     * filed documents are removed one by one from the hire's
+     * Documents view (deleteHireDoc above) — if the database
+     * refuses the delete because documents still reference the
+     * hire, the refusal shows as a plain error line here. */
+    function deleteHire(id) {
+      var hire = nhRowsById[id];
+      if (!hire) return;
+      var client = getClient();
+      if (!client) return;
+      client.from('new_hires').delete().eq('id', id).then(function (res) {
+        confirmHireDeleteId = null;
+        if (res.error) {
+          tdRenderAttachList(tdAttachKind, Object.keys(nhRowsById).map(function (k) { return nhRowsById[k]; }));
+          var box = $('td-attach-list');
+          if (box) box.insertAdjacentHTML('afterbegin', '<p class="portal-error">Couldn\u2019t delete ' + esc(hire.full_name || 'that employee') + ': ' + esc(res.error.message) + '</p>');
+          return;
+        }
+        delete nhRowsById[id];
+        if (tdCurrentHire && tdCurrentHire.id === id) {
+          tdCurrentHire = null;
+          tdAttachedKinds = {};
+          try { sessionStorage.removeItem(TD_CTX_KEY); } catch (e) {}
+          tdRefreshAttachButtons();
+        }
+        tdRenderAttachList(tdAttachKind, Object.keys(nhRowsById).map(function (k) { return nhRowsById[k]; }));
+      }).catch(function () { confirmHireDeleteId = null; });
+    }
+
     function openHireDocs(hire) {
       nhDocHire = hire;
+      resolveNhRole();
       /* TD_ATTACH_CURRENT_2026_11_04: opening a hire's Documents is
        * working on that hire — Team Documents attach targets them. */
       tdSetCurrentHire(hire);
@@ -1849,7 +1963,9 @@
         if (res.error) { box.innerHTML = '<p class="portal-muted">Documents are not set up for the portal yet.</p>'; return; }
         var rows = res.data || [];
         if (!rows.length) { box.innerHTML = '<p class="portal-muted">No documents on file yet. Add one below, or have them fill out a form.</p>'; return; }
+        nhDocRowsById = {};
         box.innerHTML = rows.map(function (d) {
+          nhDocRowsById[d.id] = d;
           var meta = esc(fmtDate(d.created_at));
           /* TD_ATTACH_CURRENT_2026_11_04: a Team Documents attach
            * row points at the blank form's own source, not a file
@@ -1862,9 +1978,15 @@
           return '<div style="display:flex;justify-content:space-between;align-items:center;gap:0.75rem;padding:0.45rem 0;border-bottom:1px solid #E6D9C0;">' +
             '<div><span style="font-weight:600;">' + esc(d.label || NH_DOC_KIND_LABELS[d.kind] || 'Document') + '</span><br />' +
             '<span class="portal-muted portal-small">' + meta + '</span></div>' +
+            '<span style="display:inline-flex;gap:0.6rem;align-items:center;">' +
             (isAttach
-              ? '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-nhd-blank="' + esc(d.kind) + '"><i class="fas fa-eye"></i> View blank</button></div>'
-              : '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-nhd-view="' + esc(d.storage_path) + '"><i class="fas fa-eye"></i> View</button></div>');
+              ? '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-nhd-blank="' + esc(d.kind) + '"><i class="fas fa-eye"></i> View blank</button>'
+              : '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-nhd-view="' + esc(d.storage_path) + '"><i class="fas fa-eye"></i> View</button>') +
+            (nhIsAdmin
+              ? '<button class="portal-guide-del' + (confirmDocDeleteId === d.id ? ' confirming' : '') + '" type="button" data-nhd-del="' + esc(d.id) + '">' +
+                (confirmDocDeleteId === d.id ? 'Confirm delete?' : 'Delete') + '</button>'
+              : '') +
+            '</span></div>';
         }).join('');
         var btns = box.querySelectorAll('[data-nhd-view]');
         for (var i = 0; i < btns.length; i++) {
@@ -1873,6 +1995,17 @@
         var blanks = box.querySelectorAll('[data-nhd-blank]');
         for (var j = 0; j < blanks.length; j++) {
           blanks[j].addEventListener('click', function () { openBlankDoc(this.getAttribute('data-nhd-blank'), false); });
+        }
+        var delBtns = box.querySelectorAll('[data-nhd-del]');
+        for (var q = 0; q < delBtns.length; q++) {
+          delBtns[q].addEventListener('click', function () {
+            var id = this.getAttribute('data-nhd-del');
+            if (confirmDocDeleteId !== id) { confirmDocDeleteId = id; loadHireDocs(); return; }
+            confirmDocDeleteId = null;
+            this.disabled = true;
+            this.textContent = 'Deleting\u2026';
+            deleteHireDoc(id);
+          });
         }
       }).catch(function () { box.innerHTML = '<p class="portal-muted">Documents could not be loaded.</p>'; });
     }
@@ -3154,6 +3287,7 @@
     function tdRenderAttachList(kind, rows) {
       var box = $('td-attach-list');
       if (!box) return;
+      tdAttachKind = kind;
       if (!rows.length) {
         box.innerHTML = '<p class="portal-muted">No employees yet \u2014 a form can only be filed for a person who is on file.</p>' +
           '<p class="portal-muted portal-small">Add the employee first with the form in Employee Onboarding. Once they are added, the Documents button on their card is where this form gets completed and filed.</p>' +
@@ -3171,7 +3305,9 @@
         return '<div style="display:flex;justify-content:space-between;align-items:center;gap:0.75rem;padding:0.45rem 0;border-bottom:1px solid #E6D9C0;">' +
           '<div><span style="font-weight:600;">' + esc(h.full_name || 'Employee') + '</span>' +
           (h.status ? '<br /><span class="portal-muted portal-small">' + esc(h.status) + '</span>' : '') + '</div>' +
-          '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-td-pick="' + esc(h.id) + '">Attach</button></div>';
+          '<span style="display:inline-flex;gap:0.6rem;align-items:center;"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-td-pick="' + esc(h.id) + '">Attach</button>' +
+          (nhIsAdmin ? '<button class="portal-guide-del' + (confirmHireDeleteId === h.id ? ' confirming' : '') + '" type="button" data-td-del="' + esc(h.id) + '">' +
+          (confirmHireDeleteId === h.id ? 'Confirm: delete ' + esc(h.full_name || 'this employee') + '?' : 'Delete') + '</button>' : '') + '</span></div>';
       }).join('');
       var btns = box.querySelectorAll('[data-td-pick]');
       for (var i = 0; i < btns.length; i++) {
@@ -3182,6 +3318,17 @@
           showNewHires();
           openHireDocs(hire);
           openHireForm(kind);
+        });
+      }
+      var delHireBtns = box.querySelectorAll('[data-td-del]');
+      for (var di = 0; di < delHireBtns.length; di++) {
+        delHireBtns[di].addEventListener('click', function () {
+          var id = this.getAttribute('data-td-del');
+          if (confirmHireDeleteId !== id) { confirmHireDeleteId = id; tdRenderAttachList(kind, rows); return; }
+          confirmHireDeleteId = null;
+          this.disabled = true;
+          this.textContent = 'Deleting\u2026';
+          deleteHire(id);
         });
       }
     }
@@ -3451,6 +3598,7 @@
         }
       });
       initNewHireForm();
+      resolveNhRole();
       /* TD_ATTACH_CURRENT_2026_11_04: restore the hire being
        * onboarded (survives an accidental reload mid-onboarding)
        * and label the Team Documents attach buttons for them. */
@@ -3479,6 +3627,12 @@
     var loaded = false;
     var allGuides = [];
     var confirmDeleteId = null;
+    /* PORTAL_CRUD_BATCH_B_2026_11_05: Edit state, plus the admin
+     * gate on Delete (Austin's Nov 5, 2026 rule: deletes sit with
+     * Admin tier and above). guidesIsAdmin resolves from the
+     * caller's own employee_profiles row in resolveGuideRole(). */
+    var guidesIsAdmin = false;
+    var editingGuideId = null;
 
     /* GUIDE_PDF_UPLOAD_2026_11_04: uploaded PDF guides live in the
      * SAME private bucket as the ticket and hire documents
@@ -3562,6 +3716,78 @@
       return '';
     }
 
+    /* PORTAL_CRUD_BATCH_B_2026_11_05: role gate for the Delete
+     * button. Same lookup the Price Book module uses: the caller's
+     * own client (portal session key), auth user, then the role on
+     * their employee_profiles row. Legacy role names map the way
+     * portal.js normRole maps them ('owner' counts as super_admin).
+     * On any doubt the gate stays closed. */
+    function guideIsAdminRole(role) {
+      if (role === 'owner') role = 'super_admin';
+      return role === 'super_admin' || role === 'co_super_admin' || role === 'admin';
+    }
+
+    function resolveGuideRole() {
+      var client = getClient();
+      if (!client || !client.auth || !client.auth.getUser) return;
+      client.auth.getUser().then(function (res) {
+        var user = res && res.data ? res.data.user : null;
+        if (!user) return null;
+        return client.from('employee_profiles').select('role').eq('id', user.id).maybeSingle();
+      }).then(function (roleRes) {
+        if (!roleRes || !roleRes.data) return;
+        var was = guidesIsAdmin;
+        guidesIsAdmin = guideIsAdminRole(roleRes.data.role);
+        if (guidesIsAdmin !== was && loaded) renderGuides();
+      }).catch(function () { /* gate stays closed */ });
+    }
+
+    /* PORTAL_CRUD_BATCH_B_2026_11_05: Edit loads the guide into the
+     * Add form below the list and switches its submit to an UPDATE
+     * (title / device / category / kind / url / tags / notes — the
+     * same columns the insert already writes; file_path is never
+     * touched, so PDF guides keep their file). */
+    function guideSubmitHtml() {
+      return editingGuideId
+        ? '<i class="fas fa-check"></i> Save changes'
+        : '<i class="fas fa-plus"></i> Add guide';
+    }
+
+    function resetGuideEdit() {
+      editingGuideId = null;
+      var form = $('portal-guide-form');
+      if (form) form.reset();
+      var cat = $('portal-guide-category'); if (cat) cat.value = 'Battery';
+      var kind = $('portal-guide-kind'); if (kind) kind.value = 'ifixit';
+      var btn = $('portal-guide-submit');
+      if (btn) { btn.disabled = false; btn.innerHTML = guideSubmitHtml(); }
+      var title = $('portal-guide-form-title'); if (title) title.textContent = 'Add a guide';
+      var cancel = $('portal-guide-cancel-edit'); if (cancel) cancel.hidden = true;
+    }
+
+    function startGuideEdit(id) {
+      var g = null;
+      for (var i = 0; i < allGuides.length; i++) { if (allGuides[i].id === id) { g = allGuides[i]; break; } }
+      if (!g) return;
+      editingGuideId = id;
+      confirmDeleteId = null;
+      $('portal-guide-title').value = g.title || '';
+      $('portal-guide-device').value = g.device || '';
+      var cat = $('portal-guide-category'); if (cat) cat.value = g.category || 'General';
+      var kind = $('portal-guide-kind'); if (kind) kind.value = g.kind || 'ifixit';
+      $('portal-guide-url').value = g.url || '';
+      $('portal-guide-tags').value = g.tags || '';
+      $('portal-guide-notes').value = g.notes || '';
+      var err = $('portal-guide-error'); if (err) { err.hidden = true; err.textContent = ''; }
+      var ok = $('portal-guide-success'); if (ok) ok.hidden = true;
+      var btn = $('portal-guide-submit'); if (btn) btn.innerHTML = guideSubmitHtml();
+      var title = $('portal-guide-form-title'); if (title) title.textContent = 'Edit guide';
+      var cancel = $('portal-guide-cancel-edit'); if (cancel) cancel.hidden = false;
+      renderGuides();
+      var form = $('portal-guide-form');
+      if (form && form.scrollIntoView) { try { form.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {} }
+    }
+
     function renderGuides() {
       var list = $('portal-guides-list');
       var count = $('portal-guides-count');
@@ -3592,8 +3818,9 @@
           '<p class="portal-card-meta portal-guide-actions">' +
             (g.file_path ? '<button type="button" class="portal-guide-pdf" data-guide-pdf="' + esc(g.file_path) + '"><i class="fas fa-file-pdf"></i> View PDF</button>'
               : (url ? '<a href="' + esc(url) + '" target="_blank" rel="noopener"><i class="fas fa-arrow-up-right-from-square"></i> Open guide</a>' : '<span class="portal-muted">Internal how-to</span>')) +
-            '<button type="button" class="portal-guide-del' + (confirming ? ' confirming' : '') + '" data-guide-del="' + esc(g.id) + '">' +
-            (confirming ? 'Confirm delete?' : 'Delete') + '</button>' +
+            '<button type="button" class="portal-guide-edit" data-guide-edit="' + esc(g.id) + '">Edit</button>' +
+            (guidesIsAdmin ? '<button type="button" class="portal-guide-del' + (confirming ? ' confirming' : '') + '" data-guide-del="' + esc(g.id) + '">' +
+            (confirming ? 'Confirm delete?' : 'Delete') + '</button>' : '') +
           '</p></article>';
       }).join('');
     }
@@ -3665,24 +3892,29 @@
         var client = getClient();
         if (!client) {
           btn.disabled = false;
-          btn.innerHTML = '<i class="fas fa-plus"></i> Add guide';
+          btn.innerHTML = guideSubmitHtml();
           err.textContent = 'Couldn&rsquo;t reach the database. Check your connection and try again.';
           err.hidden = false;
           return;
         }
-        client.from('guides').insert(row).then(function (res) {
+        var saveReq = editingGuideId
+          ? client.from('guides').update(row).eq('id', editingGuideId)
+          : client.from('guides').insert(row);
+        saveReq.then(function (res) {
           btn.disabled = false;
-          btn.innerHTML = '<i class="fas fa-plus"></i> Add guide';
+          btn.innerHTML = guideSubmitHtml();
           if (res.error) { err.textContent = 'Couldn&rsquo;t save that guide: ' + res.error.message; err.hidden = false; return; }
-          form.reset();
-          $('portal-guide-category').value = 'Battery';
-          $('portal-guide-kind').value = 'ifixit';
+          if (editingGuideId) { resetGuideEdit(); } else {
+            form.reset();
+            $('portal-guide-category').value = 'Battery';
+            $('portal-guide-kind').value = 'ifixit';
+          }
           ok.hidden = false;
           loaded = false;
           loadGuides(true);
         }).catch(function () {
           btn.disabled = false;
-          btn.innerHTML = '<i class="fas fa-plus"></i> Add guide';
+          btn.innerHTML = guideSubmitHtml();
           err.textContent = 'Couldn&rsquo;t save that guide. Try again.';
           err.hidden = false;
         });
@@ -3781,6 +4013,9 @@
       });
       var refresh = document.querySelector('[data-refresh="guides"]');
       if (refresh) refresh.addEventListener('click', function () { loaded = false; loadGuides(true); });
+      var guideCancelEdit = $('portal-guide-cancel-edit');
+      if (guideCancelEdit) guideCancelEdit.addEventListener('click', function () { resetGuideEdit(); });
+      resolveGuideRole();
       var search = $('portal-guide-search');
       if (search) search.addEventListener('input', renderGuides);
       var catFilter = $('portal-guide-category-filter');
@@ -3789,6 +4024,8 @@
       if (list) list.addEventListener('click', function (e) {
         var pdfBtn = e.target.closest ? e.target.closest('[data-guide-pdf]') : null;
         if (pdfBtn) { openGuidePdf(pdfBtn); return; }
+        var editBtn = e.target.closest ? e.target.closest('[data-guide-edit]') : null;
+        if (editBtn) { startGuideEdit(editBtn.getAttribute('data-guide-edit')); return; }
         var btn = e.target.closest ? e.target.closest('[data-guide-del]') : null;
         if (!btn) return;
         var id = btn.getAttribute('data-guide-del');
@@ -3800,6 +4037,7 @@
         if (!client) { renderGuides(); return; }
         client.from('guides').delete().eq('id', id).then(function (res) {
           if (res.error) { renderGuides(); return; }
+          if (id === editingGuideId) resetGuideEdit();
           loaded = false;
           loadGuides(true);
         }).catch(function () { renderGuides(); });
@@ -3819,6 +4057,7 @@
     .portal-guide-tools { display: grid; grid-template-columns: 1fr; gap: 0 1rem; margin-bottom: 0.4rem; }
     @media (min-width: 720px) { .portal-guide-tools { grid-template-columns: 2fr 1fr; } }
     .portal-guide-actions { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+    .portal-guide-edit { background: none; border: none; color: var(--brand-deep, #A63E06); cursor: pointer; font: inherit; font-size: 0.85rem; padding: 0; }
     .portal-guide-del { background: none; border: none; color: #b3382e; cursor: pointer; font: inherit; font-size: 0.85rem; padding: 0; }
     .portal-guide-pdf { background: none; border: none; color: var(--brand-deep, #A63E06); cursor: pointer; font: inherit; font-size: 0.85rem; padding: 0; }
     .portal-guide-del.confirming { font-weight: 700; text-decoration: underline; }
@@ -3836,6 +4075,283 @@
     #portal-newhire-form .portal-btn-primary { margin-top: 0.25rem; }
   </style>
   <script>
+  /* ================= LINKS (portal_links) =================
+   * PORTAL_CRUD_BATCH_B_2026_11_05 (Austin, Nov 5, 2026): the Links
+   * grid used to be 16 hardcoded cards — every change was a website
+   * publish, and there was no Add / Edit / Delete anywhere (his
+   * portal-wide rule: every list panel gets both). The cards now
+   * live in public.portal_links and this module renders the grid
+   * from the table, ordered by sort then label, through its own
+   * client on the portal session key like the other inline modules.
+   * Admin tier and above (super_admin / co_super_admin / admin)
+   * additionally get an Add link form and per-card Edit / Delete
+   * (two-tap confirm); the table's RLS matches (links-table.sql).
+   * FALLBACK: if the table read errors — links-table.sql has not
+   * run yet, or the connection is down — the module renders
+   * LINKS_SEED, an exact copy of the seed rows, so the panel is
+   * never empty. Fallback cards carry no row id, so they render
+   * without Edit / Delete. A successful read of an EMPTY table is
+   * not a fallback: the grid honestly shows that there are no
+   * links (an admin can then add the first one). */
+  (function () {
+    'use strict';
+
+    var SUPABASE_URL = 'https://lyujxpuicarblpkdzuuc.supabase.co';
+    var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
+
+    var LINKS_SEED = [
+      { label: 'Mobile Sentrix', url: 'https://www.mobilesentrix.com', note: 'Primary parts supplier', icon: 'fas fa-mobile-screen', sort: 10 },
+      { label: 'Sickw', url: 'https://www.sickw.com/', note: 'Exact model & variant by IMEI', icon: 'fas fa-barcode', sort: 20 },
+      { label: 'Amazon Business', url: 'https://www.amazon.com/business', note: 'Accessories & general', icon: 'fab fa-amazon', sort: 30 },
+      { label: 'eBay', url: 'https://www.ebay.com', note: 'Computer parts', icon: 'fab fa-ebay', sort: 40 },
+      { label: 'iFixit', url: 'https://www.ifixit.com', note: 'Guides & genuine Pixel parts', icon: 'fas fa-screwdriver-wrench', sort: 50 },
+      { label: 'Our Price Sheet', url: 'https://austinstechrepairgroup.com/#prices', note: 'Website price wizard', icon: 'fas fa-tags', sort: 60 },
+      { label: 'Apple\u2019s Prices', url: 'https://support.apple.com/iphone/repair', note: 'Official repair price anchor', icon: 'fab fa-apple', sort: 70 },
+      { label: 'Samsung\u2019s Prices', url: 'https://www.samsung.com/us/support/cracked-screen-repair/', note: 'Official repair price anchor', icon: 'fab fa-android', sort: 80 },
+      { label: 'Google\u2019s Prices', url: 'https://store.google.com/us/repair-cost-estimator', note: 'Official repair price anchor', icon: 'fab fa-google', sort: 90 },
+      { label: 'GSMArena', url: 'https://www.gsmarena.com/compare.php3', note: 'Compare phones side by side', icon: 'fas fa-scale-balanced', sort: 100 },
+      { label: 'Swappa', url: 'https://swappa.com/prices', note: 'Used phone values', icon: 'fas fa-dollar-sign', sort: 110 },
+      { label: 'Square Dashboard', url: 'https://squareup.com/dashboard', note: 'Sales, payouts, settings', icon: 'fas fa-square', sort: 120 },
+      { label: 'FedEx', url: 'https://www.fedex.com/fedextrack/', note: 'Track a package', icon: 'fas fa-truck-fast', sort: 130 },
+      { label: 'UPS', url: 'https://www.ups.com/track', note: 'Track a package', icon: 'fas fa-truck', sort: 140 },
+      { label: 'USPS', url: 'https://tools.usps.com/go/TrackConfirmAction_input', note: 'Track a package', icon: 'fas fa-envelope', sort: 150 },
+      { label: 'DHL', url: 'https://www.dhl.com/us-en/home/tracking.html', note: 'Track a package', icon: 'fas fa-plane', sort: 160 }
+    ];
+
+    var allLinks = [];
+    var linksLoaded = false;
+    var linksIsAdmin = false;
+    var confirmLinkDeleteId = null;
+    var editingLinkId = null;
+
+    function $(id) { return document.getElementById(id); }
+
+    function esc(v) {
+      return String(v == null ? '' : v)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function trim(v) { return String(v == null ? '' : v).trim(); }
+
+    function safeUrl(u) {
+      var s = trim(u);
+      if (/^https:\/\//i.test(s) || /^http:\/\//i.test(s)) return s;
+      return '';
+    }
+
+    function getClient() {
+      if (window.supabase && window.supabase.createClient) {
+        /* Same reasoning as the Guides module: queries must run as
+         * signed-in staff on the portal's own session storage key,
+         * or RLS serves zero rows to an anonymous client. */
+        try {
+          return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: { storageKey: 'sb-atrg-portal-auth-token', persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+          });
+        }
+        catch (e) { return null; }
+      }
+      return null;
+    }
+
+    /* Legacy role names map the way portal.js normRole maps them. */
+    function linkIsAdminRole(role) {
+      if (role === 'owner') role = 'super_admin';
+      return role === 'super_admin' || role === 'co_super_admin' || role === 'admin';
+    }
+
+    function resolveLinksRole() {
+      var client = getClient();
+      if (!client || !client.auth || !client.auth.getUser) return;
+      client.auth.getUser().then(function (res) {
+        var user = res && res.data ? res.data.user : null;
+        if (!user) return null;
+        return client.from('employee_profiles').select('role').eq('id', user.id).maybeSingle();
+      }).then(function (roleRes) {
+        if (!roleRes || !roleRes.data) return;
+        var was = linksIsAdmin;
+        linksIsAdmin = linkIsAdminRole(roleRes.data.role);
+        if (linksIsAdmin) { var m = $('portal-links-manage'); if (m) m.hidden = false; }
+        if (linksIsAdmin !== was) renderLinks();
+      }).catch(function () { /* gate stays closed on any doubt */ });
+    }
+
+    function renderLinks() {
+      var grid = $('portal-tools-grid');
+      if (!grid) return;
+      if (!allLinks.length) {
+        grid.innerHTML = '<p class="portal-muted">No links yet.' + (linksIsAdmin ? ' Add the first one with the form below.' : '') + '</p>';
+        return;
+      }
+      grid.innerHTML = allLinks.map(function (l) {
+        var url = safeUrl(l.url);
+        var card = '<a class="link-card" href="' + esc(url || '#') + '" target="_blank" rel="noopener">' +
+          '<i class="' + esc(l.icon || 'fas fa-link') + '"></i><strong>' + esc(l.label) + '</strong>' +
+          (l.note ? '<span>' + esc(l.note) + '</span>' : '') + '</a>';
+        if (!linksIsAdmin || !l.id) return '<div class="link-card-cell">' + card + '</div>';
+        var confirming = confirmLinkDeleteId === l.id;
+        return '<div class="link-card-cell">' + card +
+          '<p class="portal-link-actions">' +
+            '<button type="button" class="portal-link-edit" data-link-edit="' + esc(l.id) + '">Edit</button>' +
+            '<button type="button" class="portal-link-del' + (confirming ? ' confirming' : '') + '" data-link-del="' + esc(l.id) + '">' +
+            (confirming ? 'Confirm delete?' : 'Delete') + '</button>' +
+          '</p></div>';
+      }).join('');
+    }
+
+    function loadLinks() {
+      var client = getClient();
+      if (!client) { allLinks = LINKS_SEED.slice(); linksLoaded = true; renderLinks(); return; }
+      client.from('portal_links').select('*').order('sort', { ascending: true }).order('label', { ascending: true })
+        .then(function (res) {
+          linksLoaded = true;
+          if (res.error) { allLinks = LINKS_SEED.slice(); renderLinks(); return; }
+          allLinks = res.data || [];
+          renderLinks();
+        })
+        .catch(function () { linksLoaded = true; allLinks = LINKS_SEED.slice(); renderLinks(); });
+    }
+
+    function linkSubmitHtml() {
+      return editingLinkId
+        ? '<i class="fas fa-check"></i> Save changes'
+        : '<i class="fas fa-plus"></i> Add link';
+    }
+
+    function resetLinkEdit() {
+      editingLinkId = null;
+      var form = $('portal-link-form');
+      if (form) form.reset();
+      var btn = $('portal-link-submit');
+      if (btn) { btn.disabled = false; btn.innerHTML = linkSubmitHtml(); }
+      var title = $('portal-links-form-title'); if (title) title.textContent = 'Add a link';
+      var cancel = $('portal-link-cancel-edit'); if (cancel) cancel.hidden = true;
+    }
+
+    function startLinkEdit(id) {
+      var l = null;
+      for (var i = 0; i < allLinks.length; i++) { if (allLinks[i].id === id) { l = allLinks[i]; break; } }
+      if (!l) return;
+      editingLinkId = id;
+      confirmLinkDeleteId = null;
+      $('portal-link-label').value = l.label || '';
+      $('portal-link-url').value = l.url || '';
+      $('portal-link-note').value = l.note || '';
+      var err = $('portal-link-error'); if (err) { err.hidden = true; err.textContent = ''; }
+      var ok = $('portal-link-success'); if (ok) ok.hidden = true;
+      var btn = $('portal-link-submit'); if (btn) btn.innerHTML = linkSubmitHtml();
+      var title = $('portal-links-form-title'); if (title) title.textContent = 'Edit link';
+      var cancel = $('portal-link-cancel-edit'); if (cancel) cancel.hidden = false;
+      renderLinks();
+      var form = $('portal-link-form');
+      if (form && form.scrollIntoView) { try { form.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {} }
+    }
+
+    function initLinkForm() {
+      var form = $('portal-link-form');
+      if (!form) return;
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var err = $('portal-link-error');
+        var ok = $('portal-link-success');
+        err.hidden = true; err.textContent = '';
+        ok.hidden = true;
+        var label = trim($('portal-link-label').value);
+        if (!label) { err.textContent = 'Label is required.'; err.hidden = false; return; }
+        var url = trim($('portal-link-url').value);
+        if (!url || !safeUrl(url)) { err.textContent = 'That link doesn\u2019t look right \u2014 links must start with https://'; err.hidden = false; return; }
+        var note = trim($('portal-link-note').value) || null;
+        var btn = $('portal-link-submit');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving&hellip;';
+        var client = getClient();
+        if (!client) {
+          btn.disabled = false;
+          btn.innerHTML = linkSubmitHtml();
+          err.textContent = 'Couldn\u2019t reach the database. Check your connection and try again.';
+          err.hidden = false;
+          return;
+        }
+        var wasEditing = editingLinkId;
+        var req;
+        if (wasEditing) {
+          req = client.from('portal_links').update({ label: label, url: url, note: note }).eq('id', wasEditing);
+        } else {
+          var nextSort = 10;
+          allLinks.forEach(function (l) { if (typeof l.sort === 'number' && l.sort >= nextSort) nextSort = l.sort + 10; });
+          req = client.from('portal_links').insert({ label: label, url: url, note: note, icon: null, sort: nextSort });
+        }
+        req.then(function (res) {
+          btn.disabled = false;
+          btn.innerHTML = linkSubmitHtml();
+          if (res.error) { err.textContent = 'Couldn\u2019t save that link: ' + res.error.message; err.hidden = false; return; }
+          if (wasEditing) { resetLinkEdit(); } else { form.reset(); }
+          ok.hidden = false;
+          loadLinks();
+        }).catch(function () {
+          btn.disabled = false;
+          btn.innerHTML = linkSubmitHtml();
+          err.textContent = 'Couldn\u2019t save that link. Try again.';
+          err.hidden = false;
+        });
+      });
+      var cancel = $('portal-link-cancel-edit');
+      if (cancel) cancel.addEventListener('click', function () { resetLinkEdit(); });
+    }
+
+    function initLinks() {
+      var grid = $('portal-tools-grid');
+      if (grid) grid.addEventListener('click', function (e) {
+        var editBtn = e.target.closest ? e.target.closest('[data-link-edit]') : null;
+        if (editBtn) { startLinkEdit(editBtn.getAttribute('data-link-edit')); return; }
+        var btn = e.target.closest ? e.target.closest('[data-link-del]') : null;
+        if (!btn) return;
+        var id = btn.getAttribute('data-link-del');
+        if (confirmLinkDeleteId !== id) { confirmLinkDeleteId = id; renderLinks(); return; }
+        confirmLinkDeleteId = null;
+        btn.disabled = true;
+        btn.textContent = 'Deleting\u2026';
+        var client = getClient();
+        if (!client) { renderLinks(); return; }
+        client.from('portal_links').delete().eq('id', id).then(function (res) {
+          if (res.error) {
+            var err = $('portal-link-error');
+            if (err) { err.textContent = 'Couldn\u2019t delete that link: ' + res.error.message; err.hidden = false; }
+            renderLinks();
+            return;
+          }
+          if (id === editingLinkId) resetLinkEdit();
+          loadLinks();
+        }).catch(function () { renderLinks(); });
+      });
+      var tab = $('portal-tab-links');
+      if (tab) tab.addEventListener('click', function () { loadLinks(); });
+      initLinkForm();
+      resolveLinksRole();
+      loadLinks();
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initLinks);
+    } else {
+      initLinks();
+    }
+  })();
+  </script>
+  <style>
+    .link-card-cell { display: flex; flex-direction: column; }
+    .link-card-cell .link-card { flex: 1; }
+    .portal-link-actions { display: flex; gap: 1rem; align-items: center; margin: 0.35rem 0.2rem 0; }
+    .portal-link-edit { background: none; border: none; color: var(--brand-deep, #A63E06); cursor: pointer; font: inherit; font-size: 0.85rem; padding: 0; }
+    .portal-link-del { background: none; border: none; color: #b3382e; cursor: pointer; font: inherit; font-size: 0.85rem; padding: 0; }
+    .portal-link-del.confirming { font-weight: 700; text-decoration: underline; }
+    #portal-link-form .portal-btn-primary { margin-top: 0.25rem; }
+  </style>
+  <script>
   /* ================= REQUESTS (tech request queue) =================
    * Phase 3: the shop's ask-for-it queue — swag/merch, tools, parts and
    * anything else the team needs, backed by public.tech_requests.
@@ -3851,6 +4367,13 @@
     var loaded = false;
     var allRequests = [];
     var confirmDeleteId = null;
+    /* PORTAL_CRUD_BATCH_B_2026_11_05: Delete is gated to Admin
+     * tier and above (Austin's Nov 5, 2026 rule). reqIsAdmin
+     * resolves from the caller's own employee_profiles row in
+     * resolveReqRole(); adds and status edits stay open to staff.
+     * The matching RLS policy (tech_requests_admin_delete) ships
+     * in Batch A's SQL — see the Batch B REPORT. */
+    var reqIsAdmin = false;
     var STATUSES = ['New', 'Ordered', 'Done', 'Denied'];
     /* REQUESTS_KINDS_2026_11_04 (Austin, Nov 4, 2026): the form now
      * stores Austin's eight kinds as their own label strings ('Swag
@@ -3950,6 +4473,32 @@
       el.hidden = !n;
     }
 
+    /* PORTAL_CRUD_BATCH_B_2026_11_05: role gate for the Delete
+     * button — same lookup shape as the Guides gate in this file:
+     * the module's own client (portal session key), auth user,
+     * then the role on their employee_profiles row. Legacy
+     * 'owner' maps to super_admin (portal.js normRole parity).
+     * On any doubt the gate stays closed. */
+    function reqIsAdminRole(role) {
+      if (role === 'owner') role = 'super_admin';
+      return role === 'super_admin' || role === 'co_super_admin' || role === 'admin';
+    }
+
+    function resolveReqRole() {
+      var client = getClient();
+      if (!client || !client.auth || !client.auth.getUser) return;
+      client.auth.getUser().then(function (res) {
+        var user = res && res.data ? res.data.user : null;
+        if (!user) return null;
+        return client.from('employee_profiles').select('role').eq('id', user.id).maybeSingle();
+      }).then(function (roleRes) {
+        if (!roleRes || !roleRes.data) return;
+        var was = reqIsAdmin;
+        reqIsAdmin = reqIsAdminRole(roleRes.data.role);
+        if (reqIsAdmin !== was && loaded) renderRequests();
+      }).catch(function () { /* gate stays closed */ });
+    }
+
     function renderRequests() {
       var list = $('portal-request-list');
       if (!list) return;
@@ -3984,8 +4533,8 @@
           photoHtml + linkHtml +
           '<div class="p3-req-actions"><label class="portal-muted portal-small">Status ' +
           '<select class="p3-mini-select" data-req-status="' + esc(r.id) + '" aria-label="Request status">' + opts + '</select></label>' +
-          '<button class="portal-guide-del' + (confirmDeleteId === r.id ? ' confirming' : '') + '" type="button" data-req-del="' + esc(r.id) + '">' +
-          (confirmDeleteId === r.id ? 'Confirm delete?' : 'Delete') + '</button></div>' +
+          (reqIsAdmin ? '<button class="portal-guide-del' + (confirmDeleteId === r.id ? ' confirming' : '') + '" type="button" data-req-del="' + esc(r.id) + '">' +
+          (confirmDeleteId === r.id ? 'Confirm delete?' : 'Delete') + '</button>' : '') + '</div>' +
           '</article>';
       }).join('');
       /* REQUESTS_ATTACH_2026_11_04: resolve each photo's signed URL
@@ -4229,6 +4778,7 @@
         });
       }
       initRequestForm();
+      resolveReqRole();
       preloadCount();
       window.setTimeout(preloadCount, 2500);
     }
