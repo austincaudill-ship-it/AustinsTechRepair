@@ -125,7 +125,41 @@
     }
 
     /* ---------------- Repair wizard ---------------- */
-    var repairState = { device: '', brand: '', model: '', issue: '', priceRange: '$50 \u2013 $150', priceExact: null };
+    var repairState = { device: '', brand: '', model: '', issue: '', issues: [], atrOne: '', describe: '', modelState: 'pending', priceRange: '$50 \u2013 $150', priceExact: null };
+
+    /* REPAIR_FLOW_UPDATE_2026_11_05: persistent summary panel + step-2 gating.
+       The summary is clean text rows only — NO device picture. Austin ruled
+       Nov 5, 2026 (~1:51 PM): "leave the pics out, just keep the standard
+       flow." The category-photo map from the earlier draft was removed
+       entirely; nothing renders an image from flow selections. */
+    function rfVal(id) { var el = document.getElementById(id); return el ? String(el.value || '').trim() : ''; }
+    function rfSet(id, txt) { var el = document.getElementById(id); if (el) el.textContent = txt; }
+    function rfRenderSummary() {
+      rfSet('rf-sum-device', repairState.device || 'Not picked yet');
+      rfSet('rf-sum-brand', repairState.brand || '\u2014');
+      rfSet('rf-sum-model', repairState.model || (repairState.modelState === 'notlisted' ? 'Not listed' : (repairState.modelState === 'na' ? 'Not applicable' : '\u2014')));
+      var repairs = repairState.issues.length ? repairState.issues.map(function (i) { return i.name; }).join(', ') : (repairState.issue || '\u2014');
+      rfSet('rf-sum-repair', repairs);
+      rfSet('rf-sum-estimate', repairState.issues.length ? (repairState.priceExact !== null && repairState.priceExact !== undefined ? 'Starting at ' + repairState.priceRange : 'Confirmed up front') : '\u2014');
+      rfSet('rf-sum-atrone', repairState.atrOne ? ('Covered by ATR One: ' + repairState.atrOne) : 'Not answered yet');
+      var loc = [rfVal('sr-address-street'), rfVal('sr-address-line2'), rfVal('sr-address-city'), rfVal('sr-address-state'), rfVal('sr-address-zip')].filter(Boolean).join(', ');
+      rfSet('rf-sum-location', loc || '\u2014');
+      var when = [rfVal('sr-visit-date'), rfVal('sr-arrival-window')].filter(Boolean).join(' \u00b7 ');
+      rfSet('rf-sum-visit', when || '\u2014');
+      var contact = [[rfVal('sr-first-name'), rfVal('sr-last-name')].filter(Boolean).join(' '), rfVal('sr-phone'), rfVal('sr-email')].filter(Boolean).join(' \u00b7 ');
+      rfSet('rf-sum-contact', contact || '\u2014');
+    }
+    function rfGate() {
+      var cont = document.getElementById('bk-continue');
+      if (!cont) return;
+      var modelOk = repairState.modelState === 'chosen' || repairState.modelState === 'notlisted' || repairState.modelState === 'na';
+      var ready = !!(repairState.device && repairState.brand && modelOk && repairState.issues.length && repairState.atrOne);
+      cont.disabled = !ready;
+    }
+    function rfShowFlowExtras() {
+      var d = document.getElementById('bk-describe-wrap'); if (d) d.hidden = false;
+      var a = document.getElementById('bk-atrone-wrap'); if (a) a.hidden = false;
+    }
     var DEFAULT_ESTIMATE_NOTE = '';
 
     /* SITE_FORM_BACKNAV_2026_10_30: step-navigation state. currentRepairStep
@@ -200,7 +234,12 @@
           repairState.brand = '';
           repairState.model = '';
           repairState.issue = '';
+          repairState.issues = [];
+          repairState.atrOne = '';
+          repairState.modelState = 'pending';
           repairState.priceExact = null;
+          document.querySelectorAll('input[name="bk-atrone"]').forEach(function (r) { r.checked = false; });
+          rfRenderSummary(); rfGate();
           document.querySelectorAll('[data-device]').forEach(function (b) { b.classList.remove('selected'); });
           btn.classList.add('selected');
           populateBookingOrFallback(repairState.device);
@@ -217,6 +256,46 @@
           goToRepairStep(parseInt(btn.getAttribute('data-back'), 10));
         });
       });
+
+      /* REPAIR_FLOW_UPDATE_2026_11_05: step-2 Continue, describe box, ATR One radios, summary
+         Change links, and live summary updates from the step-4 fields. */
+      var bkContinue = document.getElementById('bk-continue');
+      if (bkContinue) {
+        bkContinue.addEventListener('click', function () {
+          rfUpdateEstimate();
+          furthestRepairStep = Math.max(furthestRepairStep, 3);
+          goToRepairStep(3);
+        });
+      }
+      var bkDescribe = document.getElementById('bk-describe');
+      if (bkDescribe) {
+        bkDescribe.addEventListener('input', function () {
+          repairState.describe = bkDescribe.value.trim();
+        });
+      }
+      document.querySelectorAll('input[name="bk-atrone"]').forEach(function (r) {
+        r.addEventListener('change', function () {
+          if (r.checked) { repairState.atrOne = r.value; rfRenderSummary(); rfGate(); }
+        });
+      });
+      var srAtrOneSel = document.getElementById('sr-atr-one');
+      if (srAtrOneSel) {
+        srAtrOneSel.addEventListener('change', function () {
+          repairState.atrOne = srAtrOneSel.value || repairState.atrOne;
+          rfRenderSummary();
+        });
+      }
+      document.querySelectorAll('[data-rf-change]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          var n = parseInt(b.getAttribute('data-rf-change'), 10);
+          if (n) { furthestRepairStep = Math.max(furthestRepairStep, n); goToRepairStep(n); }
+        });
+      });
+      ['sr-first-name','sr-last-name','sr-phone','sr-email','sr-address-street','sr-address-line2','sr-address-city','sr-address-state','sr-address-zip','sr-visit-date','sr-arrival-window'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) { el.addEventListener('input', rfRenderSummary); el.addEventListener('change', rfRenderSummary); }
+      });
+      rfRenderSummary(); rfGate();
 
       var contBtn = document.querySelector('[data-action="continue-contact"]');
       if (contBtn) {
@@ -268,29 +347,24 @@
 
     function populateBrandsAndIssues(deviceKey) {
       var data = deviceData[deviceKey] || { brands: ['Standard'], issues: [{ name: 'General repair', price: '$50 \u2013 $150' }] };
-      var makeGrid = document.getElementById('make-grid');
+      var brandSel = document.getElementById('bk-brand-select');
       var issueList = document.getElementById('issue-list');
       var bkMW = document.getElementById('bk-model-wrap');
       var bkRW = document.getElementById('bk-repair-wrap');
       if (bkMW) bkMW.hidden = true;
       if (bkRW) bkRW.hidden = true;
 
-      if (makeGrid) {
-        makeGrid.innerHTML = '';
-        data.brands.forEach(function (brand) {
-          var bBtn = document.createElement('button');
-          bBtn.type = 'button';
-          bBtn.className = 'option-btn';
-          bBtn.style.padding = '0.85rem 0.5rem';
-          bBtn.innerHTML = '<span>' + escapeHtml(brand) + '</span>';
-          bBtn.addEventListener('click', function () {
-            makeGrid.querySelectorAll('.option-btn').forEach(function (b) { b.classList.remove('selected'); });
-            bBtn.classList.add('selected');
-            repairState.brand = brand;
-          });
-          makeGrid.appendChild(bBtn);
-        });
+      /* CHECKIN_DROPDOWNS_2026_11_05: fallback brands use the same single dropdown. */
+      if (brandSel) {
+        bkFillSelect(brandSel,
+          data.brands.map(function (brand) { return [brand, brand]; }),
+          'Choose your brand\u2026');
+        brandSel.onchange = function () {
+          if (brandSel.value) { repairState.brand = brandSel.value; repairState.modelState = 'na'; rfRenderSummary(); rfGate(); }
+        };
       }
+      repairState.modelState = 'na';
+      rfShowFlowExtras();
 
       if (issueList) {
         issueList.innerHTML = '';
@@ -303,24 +377,10 @@
           iBtn.style.alignItems = 'flex-start';
           iBtn.style.textAlign = 'left';
           iBtn.innerHTML = '<strong>' + escapeHtml(issue.name) + '</strong><span style="font-size:0.78rem; color: var(--brand-deep); font-weight:800;">' + escapeHtml(issue.price) + '</span>';
+          /* REPAIR_FLOW_UPDATE_2026_11_05: fallback issues are multi-select too; the step-2
+             Continue button (gated on brand + issue + ATR One) advances. */
           iBtn.addEventListener('click', function () {
-            grid.querySelectorAll('.option-btn').forEach(function (b) { b.classList.remove('selected'); });
-            iBtn.classList.add('selected');
-            repairState.issue = issue.name;
-            repairState.priceRange = issue.price;
-            repairState.model = '';
-            repairState.priceExact = null;
-            document.getElementById('estimate-price').textContent = issue.price;
-            var estLbl = document.getElementById('estimate-label');
-            if (estLbl) estLbl.textContent = 'Estimated price range';
-            var estNt = document.getElementById('estimate-note');
-            if (estNt && DEFAULT_ESTIMATE_NOTE) estNt.innerHTML = DEFAULT_ESTIMATE_NOTE;
-            document.getElementById('estimate-summary').innerHTML =
-              '<span class="pill"><i class="fas fa-mobile-screen"></i> ' + escapeHtml(repairState.device) + '</span>' +
-              '<span class="pill"><i class="fas fa-tag"></i> ' + escapeHtml(repairState.brand || 'Any brand') + '</span>' +
-              '<span class="pill"><i class="fas fa-wrench"></i> ' + escapeHtml(repairState.issue) + '</span>';
-            furthestRepairStep = Math.max(furthestRepairStep, 3);
-            goToRepairStep(3);
+            rfToggleIssue(issue.name, null, iBtn, issue.price);
           });
           grid.appendChild(iBtn);
         });
@@ -356,6 +416,21 @@
       }
       return b;
     }
+    /* CHECKIN_DROPDOWNS_2026_11_05: fill a Brand/Model <select> — placeholder first, then
+       [value,label] pairs. Programmatic fill never fires change. */
+    function bkFillSelect(sel, pairs, placeholder) {
+      if (!sel) return;
+      sel.innerHTML = '';
+      var ph = document.createElement('option');
+      ph.value = ''; ph.textContent = placeholder;
+      sel.appendChild(ph);
+      pairs.forEach(function (pr) {
+        var o = document.createElement('option');
+        o.value = pr[0]; o.textContent = pr[1];
+        sel.appendChild(o);
+      });
+      sel.value = '';
+    }
     function bkSelect(container, btn) {
       container.querySelectorAll('.option-btn').forEach(function (x) { x.classList.remove('selected'); });
       btn.classList.add('selected');
@@ -368,48 +443,52 @@
     function populateBookingPicker(device) {
       var DATA = bkData();
       var typeKey = bkTypeKey(device);
-      var makeGrid = document.getElementById('make-grid');
+      var brandSel = document.getElementById('bk-brand-select');
       var issueList = document.getElementById('issue-list');
       var modelWrap = document.getElementById('bk-model-wrap');
       var repairWrap = document.getElementById('bk-repair-wrap');
       if (issueList) issueList.innerHTML = '';
       if (modelWrap) modelWrap.hidden = true;
       if (repairWrap) repairWrap.hidden = true;
-      if (!makeGrid) { populateBrandsAndIssues(device); return; }
-      makeGrid.innerHTML = '';
-      Object.keys(DATA[typeKey]).concat(['__other__']).forEach(function (brandKey) {
-        var b = bkTile(brandKey === '__other__' ? 'Other brand' : brandKey);
-        b.addEventListener('click', function () {
-          bkSelect(makeGrid, b);
-          repairState.brand = brandKey === '__other__' ? 'Other' : brandKey;
-          repairState.model = '';
-          repairState.issue = '';
-          repairState.priceExact = null;
-          renderBkModels(typeKey, brandKey);
-        });
-        makeGrid.appendChild(b);
-      });
+      if (!brandSel) { populateBrandsAndIssues(device); return; }
+      bkFillSelect(brandSel,
+        Object.keys(DATA[typeKey]).map(function (k) { return [k, k]; }).concat([['__other__', 'Other brand']]),
+        'Choose your brand\u2026');
+      brandSel.onchange = function () {
+        if (!brandSel.value) return;
+        var brandKey = brandSel.value;
+        repairState.brand = brandKey === '__other__' ? 'Other' : brandKey;
+        repairState.model = '';
+        repairState.issue = '';
+        repairState.issues = [];
+        repairState.modelState = 'pending';
+        repairState.priceExact = null;
+        rfRenderSummary(); rfGate();
+        renderBkModels(typeKey, brandKey);
+      };
     }
     function renderBkModels(typeKey, brandKey) {
       var DATA = bkData();
       var modelWrap = document.getElementById('bk-model-wrap');
       var repairWrap = document.getElementById('bk-repair-wrap');
-      var modelGrid = document.getElementById('bk-model-grid');
-      if (!modelGrid) return;
+      var modelSel = document.getElementById('bk-model-select');
+      if (!modelSel) return;
       if (repairWrap) repairWrap.hidden = true;
-      modelGrid.innerHTML = '';
       var names = brandKey === '__other__' ? [] : Object.keys(DATA[typeKey][brandKey]);
-      names.concat(['__notlisted__']).forEach(function (modelKey) {
-        var b = bkTile(modelKey === '__notlisted__' ? "My model isn't listed" : modelKey);
-        b.addEventListener('click', function () {
-          bkSelect(modelGrid, b);
-          repairState.model = modelKey === '__notlisted__' ? '' : modelKey;
-          repairState.issue = '';
-          repairState.priceExact = null;
-          renderBkRepairs(typeKey, brandKey, modelKey);
-        });
-        modelGrid.appendChild(b);
-      });
+      bkFillSelect(modelSel,
+        names.map(function (k) { return [k, k]; }).concat([['__notlisted__', "My model isn't listed"]]),
+        'Choose your model\u2026');
+      modelSel.onchange = function () {
+        if (!modelSel.value) return;
+        var modelKey = modelSel.value;
+        repairState.model = modelKey === '__notlisted__' ? '' : modelKey;
+        repairState.modelState = modelKey === '__notlisted__' ? 'notlisted' : 'chosen';
+        repairState.issue = '';
+        repairState.issues = [];
+        repairState.priceExact = null;
+        rfRenderSummary(); rfGate();
+        renderBkRepairs(typeKey, brandKey, modelKey);
+      };
       if (modelWrap) { modelWrap.hidden = false; try { modelWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {} }
     }
     function bkGenericRepairs(typeKey) {
@@ -439,27 +518,48 @@
       repairs.forEach(function (r) {
         var price = priceOf(r);
         var b = bkTile(BK_FRIENDLY[r] || r, (typeof price === 'number') ? bkFmt(price) : 'Price confirmed up front');
+        /* REPAIR_FLOW_UPDATE_2026_11_05: repairs are multi-select — tapping toggles, nothing
+           auto-advances; Continue is gated below the ATR One question. */
         b.addEventListener('click', function () {
-          bkSelect(repairGrid, b);
-          pickBkRepair(r, price);
+          rfToggleIssue(BK_FRIENDLY[r] || r, (typeof price === 'number') ? price : null, b, null);
         });
         repairGrid.appendChild(b);
       });
+      rfShowFlowExtras();
       if (repairWrap) { repairWrap.hidden = false; try { repairWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {} }
     }
-    function pickBkRepair(repairKey, price) {
-      var friendly = BK_FRIENDLY[repairKey] || repairKey;
-      repairState.issue = friendly;
-      repairState.priceExact = (typeof price === 'number') ? price : null;
+    /* REPAIR_FLOW_UPDATE_2026_11_05: multi-select issue toggling. The estimate is driven by the
+       FIRST selected repair (its book price, or confirmed-up-front when
+       unpriced); every selected repair rides the ticket. No prices are
+       summed or invented here. */
+    function rfToggleIssue(name, price, btn, priceRangeText) {
+      var found = -1;
+      repairState.issues.forEach(function (it, i) { if (it.name === name) found = i; });
+      if (found >= 0) { repairState.issues.splice(found, 1); if (btn) btn.classList.remove('selected'); }
+      else { repairState.issues.push({ name: name, price: (typeof price === 'number') ? price : null, priceRange: priceRangeText || null }); if (btn) btn.classList.add('selected'); }
+      var first = repairState.issues[0] || null;
+      repairState.issue = first ? first.name : '';
+      repairState.priceExact = first ? first.price : null;
+      if (first && first.priceRange) repairState.priceRange = first.priceRange;
+      rfRenderSummary(); rfGate();
+    }
+    function rfUpdateEstimate() {
+      var friendly = repairState.issue;
+      if (!friendly) return;
       var modelLabel = repairState.model || ((repairState.brand && repairState.brand !== 'Other') ? repairState.brand : repairState.device);
       var lbl = document.getElementById('estimate-label');
       var amt = document.getElementById('estimate-price');
       var note = document.getElementById('estimate-note');
-      if (repairState.priceExact !== null) {
+      var allIssues = repairState.issues.map(function (i) { return i.name; }).join(', ');
+      if (repairState.priceExact !== null && repairState.priceExact !== undefined) {
         repairState.priceRange = bkFmt(repairState.priceExact);
         if (lbl) lbl.textContent = 'Your flat price';
         if (amt) amt.textContent = repairState.priceRange;
         if (note) note.innerHTML = escapeHtml(friendly) + ' for ' + escapeHtml(modelLabel) + ' &mdash; flat price, parts and labor included. A separate $35 house-call fee applies to the visit &mdash; due at booking, non-refundable, and it covers travel and a full diagnosis. Estimates are always free. ATR One members pay no house-call fee for devices covered under their subscription.';
+      } else if (repairState.issues[0] && repairState.issues[0].priceRange) {
+        if (lbl) lbl.textContent = 'Estimated price range';
+        if (amt) amt.textContent = repairState.issues[0].priceRange;
+        if (note && DEFAULT_ESTIMATE_NOTE) note.innerHTML = DEFAULT_ESTIMATE_NOTE;
       } else {
         repairState.priceRange = 'Flat price confirmed before booking';
         if (lbl) lbl.textContent = 'Your price';
@@ -471,10 +571,10 @@
         summary.innerHTML =
           '<span class="pill"><i class="fas fa-mobile-screen"></i> ' + escapeHtml(repairState.device) + '</span>' +
           '<span class="pill"><i class="fas fa-tag"></i> ' + escapeHtml(repairState.model ? (repairState.brand + ' ' + repairState.model) : (repairState.brand || 'Any brand')) + '</span>' +
-          '<span class="pill"><i class="fas fa-wrench"></i> ' + escapeHtml(repairState.issue) + '</span>';
+          '<span class="pill"><i class="fas fa-wrench"></i> ' + escapeHtml(allIssues) + '</span>' +
+          (repairState.atrOne ? '<span class="pill"><i class="fas fa-shield-halved"></i> ATR One: ' + escapeHtml(repairState.atrOne) + '</span>' : '');
       }
-      furthestRepairStep = Math.max(furthestRepairStep, 3);
-      goToRepairStep(3);
+      rfRenderSummary();
     }
 
     /* SITE_AUDIT_FIXES_2026_10_30: the guided selections (steps 1-3)
@@ -518,6 +618,9 @@
         brand: repairState.brand || '',
         model: repairState.model || '',
         issue: repairState.issue || '',
+        issues: repairState.issues.map(function (i) { return i.name; }),
+        atrOne: repairState.atrOne || '',
+        describe: repairState.describe || '',
         priceRange: repairState.priceRange || '',
         price: (typeof repairState.priceExact === 'number') ? repairState.priceExact : null
       };
@@ -528,6 +631,34 @@
       if (info && !info.value && (g.model || g.brand)) info.value = g.model || g.brand;
       var needSel = document.getElementById('sr-repair-needed');
       if (needSel && !needSel.value && REPAIR_NEEDED_MAP[g.issue]) needSel.value = REPAIR_NEEDED_MAP[g.issue];
+      /* REPAIR_FLOW_UPDATE_2026_11_05: ATR One answer + describe text carry
+         into the intake; signed-in My Account customers (localStorage
+         'atr-account' mirror written by the account module in index.html:
+         id/name/email/phone) get contact fields prefilled — never
+         overwriting anything already typed. The account mirror carries no
+         street address; the profile form's address field is used when it
+         has been populated, otherwise address stays a follow-on (REPORT). */
+      var atrSel = document.getElementById('sr-atr-one');
+      if (atrSel && !atrSel.value && g.atrOne) atrSel.value = g.atrOne;
+      var prob = document.getElementById('sr-problem');
+      if (prob && !prob.value && g.describe) prob.value = g.describe;
+      try {
+        var acct = JSON.parse(localStorage.getItem('atr-account') || 'null');
+        if (acct) {
+          var fn = document.getElementById('sr-first-name'), ln = document.getElementById('sr-last-name');
+          var nm = String(acct.name || '').trim().split(/\s+/);
+          if (fn && !fn.value && nm[0]) fn.value = nm[0];
+          if (ln && !ln.value && nm.length > 1) ln.value = nm.slice(1).join(' ');
+          var ph = document.getElementById('sr-phone');
+          if (ph && !ph.value && acct.phone) ph.value = acct.phone;
+          var em = document.getElementById('sr-email');
+          if (em && !em.value && acct.email) em.value = acct.email;
+          var profAddr = document.getElementById('authx-profile-address');
+          var street = document.getElementById('sr-address-street');
+          if (street && !street.value && profAddr && profAddr.value) street.value = profAddr.value;
+        }
+      } catch (e) {}
+      rfRenderSummary();
       var recap = document.getElementById('estimate-recap');
       if (recap && g.issue) {
         recap.hidden = false;
@@ -535,7 +666,8 @@
           '<span class="pill"><i class="fas fa-mobile-screen"></i> ' + escapeHtml(g.device) + '</span>' +
           '<span class="pill"><i class="fas fa-tag"></i> ' + escapeHtml(g.model ? (g.brand + ' ' + g.model) : (g.brand || 'Any brand')) + '</span>' +
           '<span class="pill"><i class="fas fa-wrench"></i> ' + escapeHtml(g.issue) + '</span>' +
-          '<span class="pill"><i class="fas fa-dollar-sign"></i> ' + (g.price !== null && g.price !== undefined ? 'Flat ' : 'Est. ') + escapeHtml(g.priceRange) + '</span>';
+          '<span class="pill"><i class="fas fa-dollar-sign"></i> ' + (g.price !== null && g.price !== undefined ? 'Flat ' : 'Est. ') + escapeHtml(g.priceRange) + '</span>' +
+          (g.atrOne ? '<span class="pill"><i class="fas fa-shield-halved"></i> ATR One: ' + escapeHtml(g.atrOne) + '</span>' : '');
       }
     }
 

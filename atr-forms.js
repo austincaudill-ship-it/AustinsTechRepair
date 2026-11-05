@@ -591,12 +591,25 @@
       if (applyErrors(form, errors)) return;
 
       var address = composeAddress(form, 'address');
+      /* REPAIR_FLOW_UPDATE_2026_11_05: the form now collects a visit date + 2-hour arrival window
+         instead of an exact time. The stored appointment_at is the window
+         START on that date, so the portal timeline keeps working; the
+         window itself rides the alert below. The legacy appointment_at
+         field is still honored if a cached page submits it. */
       var appointmentRaw = field(form, 'appointment_at');
       var appointmentAt = null;
       if (appointmentRaw) {
         var d = new Date(appointmentRaw);
         if (!isNaN(d.getTime())) appointmentAt = d.toISOString();
       }
+      var visitDate = field(form, 'visit_date');
+      var arrivalWindow = field(form, 'arrival_window');
+      if (!appointmentAt && visitDate) {
+        var startHour = { '8:00 AM \u2013 10:00 AM': 8, '10:00 AM \u2013 12:00 PM': 10, '12:00 PM \u2013 2:00 PM': 12, '2:00 PM \u2013 4:00 PM': 14, '4:00 PM \u2013 6:00 PM': 16, '6:00 PM \u2013 8:00 PM': 18 }[arrivalWindow];
+        var vd = new Date(visitDate + 'T' + (typeof startHour === 'number' ? String(startHour).padStart(2, '0') : '09') + ':00:00');
+        if (!isNaN(vd.getTime())) appointmentAt = vd.toISOString();
+      }
+      var atrOneCovered = field(form, 'atr_one_covered');
       var issue = v.repair_needed
         ? (v.problem ? v.repair_needed + ' — ' + v.problem : v.repair_needed)
         : v.problem;
@@ -610,8 +623,14 @@
          (the anon role cannot read the row back). */
       var guided = window.atrGuidedSelection || null;
       if (guided && guided.issue) {
-        issue = guided.issue + ' — ' + issue + ' (Estimate shown: ' + guided.priceRange + ')';
+        var guidedIssues = (guided.issues && guided.issues.length) ? guided.issues.join(', ') : guided.issue;
+        issue = guidedIssues + ' \u2014 ' + issue + ' (Estimate shown: ' + guided.priceRange + ')';
       }
+      /* REPAIR_FLOW_UPDATE_2026_11_05: no atr_one column exists on tickets and none is invented —
+         the answer (form field first, guided flow as fallback) is recorded
+         in the ticket's issue text, where staff see it on the ticket. */
+      if (!atrOneCovered && guided && guided.atrOne) atrOneCovered = guided.atrOne;
+      if (atrOneCovered) issue = issue + ' (ATR One covered: ' + atrOneCovered + ')';
       var ticketId = newTicketId();
 
       var row = {
@@ -648,6 +667,9 @@
         ['Preferred contact method', row.contact_method],
         ['Service address', address],
         ['Appointment requested', appointmentAt ? new Date(appointmentAt).toLocaleString() : ''],
+        ['Preferred visit date', visitDate],
+        ['Arrival window (2-hour)', arrivalWindow],
+        ['Covered by ATR One', atrOneCovered],
         ['Device category', v.device_type],
         ['Device information', v.device_info],
         ['Repair needed', v.repair_needed],

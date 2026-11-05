@@ -513,6 +513,8 @@
             <p class="eyebrow">Repair request</p>
             <h2 class="section-title">Start your repair</h2>
             <p class="section-copy">Pick your device, brand and model, see your exact price &mdash; then send it straight to us.</p>
+            <!-- CHECKIN_DROPDOWNS_2026_11_05: honest trust line in place of UBIF-style volume claims (no invented repair counts). Austin to approve wording. -->
+            <p class="section-copy">You&rsquo;re in good hands &mdash; we come to you, and every repair is backed by our 1-year warranty.</p>
           </div>
 
           <div class="repair-card">
@@ -525,6 +527,33 @@
               <div class="progress-step" data-step="3"><div class="progress-dot">3</div><span class="progress-label">Estimate</span></div>
               <div class="progress-step" data-step="4"><div class="progress-dot">4</div><span class="progress-label">Contact</span></div>
             </div>
+
+            <!-- REPAIR_FLOW_UPDATE_2026_11_05: persistent live summary panel, text rows
+                 only with Change links. NO device picture: Austin ruled Nov 5, 2026
+                 (~1:51 PM) "leave the pics out, just keep the standard flow" — the
+                 category bench-photo that an earlier draft of this build carried in
+                 the summary was removed entirely, with nothing in its place.
+                 Layout (Austin, Nov 5, ~1:53 PM): two-sided like the portal — this
+                 summary sits in its own side pane beside the picker steps and
+                 updates live as the customer picks (styles.css); on narrow
+                 screens it stacks as a visible block below the picker. -->
+            <aside class="rf-summary" id="rf-summary" aria-label="Your repair summary">
+              <div class="rf-summary-body">
+                <h4>Your summary</h4>
+                <ul class="rf-summary-list">
+                  <li><span>Device</span><strong id="rf-sum-device">Not picked yet</strong><button type="button" class="rf-change" data-rf-change="1">Change</button></li>
+                  <li><span>Brand</span><strong id="rf-sum-brand">&mdash;</strong><button type="button" class="rf-change" data-rf-change="2">Change</button></li>
+                  <li><span>Model</span><strong id="rf-sum-model">&mdash;</strong><button type="button" class="rf-change" data-rf-change="2">Change</button></li>
+                  <li><span>Repair</span><strong id="rf-sum-repair">&mdash;</strong><button type="button" class="rf-change" data-rf-change="2">Change</button></li>
+                  <li><span>Estimate</span><strong id="rf-sum-estimate">&mdash;</strong><button type="button" class="rf-change" data-rf-change="3">Change</button></li>
+                  <li><span>ATR One</span><strong id="rf-sum-atrone">Not answered yet</strong><button type="button" class="rf-change" data-rf-change="2">Change</button></li>
+                  <li><span>Visit &mdash; where</span><strong id="rf-sum-location">&mdash;</strong><button type="button" class="rf-change" data-rf-change="4">Change</button></li>
+                  <li><span>Visit &mdash; when</span><strong id="rf-sum-visit">&mdash;</strong><button type="button" class="rf-change" data-rf-change="4">Change</button></li>
+                  <li><span>Contact</span><strong id="rf-sum-contact">&mdash;</strong><button type="button" class="rf-change" data-rf-change="4">Change</button></li>
+                </ul>
+                <p class="rf-summary-note">Estimates are always free. Your exact price is confirmed after a full diagnostics.</p>
+              </div>
+            </aside>
 
             <div class="repair-step active" id="step-device">
               <p class="eyebrow">Step 1 of 4</p>
@@ -547,17 +576,40 @@
                    the shared price book (window.ATR_PRICE_DATA). The
                    #issue-list below serves only the Business / Other
                    fallback path in script.js. -->
-              <p class="field-label">Pick your device brand</p>
-              <div class="option-grid" id="make-grid" style="margin-bottom: 1.4rem;"></div>
+              <!-- CHECKIN_DROPDOWNS_2026_11_05: Brand and Model are single dropdowns (UBIF pattern Austin directed Nov 5, 2026) instead of a wall of tiles. Repair stays a short tappable list because it carries per-repair prices. -->
+              <label class="field-label" for="bk-brand-select">Brand &mdash; pick your brand</label>
+              <select class="form-field" id="bk-brand-select" style="margin-bottom: 1.4rem;">
+                <option value="">Choose your brand&hellip;</option>
+              </select>
               <div id="bk-model-wrap" hidden>
-                <p class="field-label">Pick your model</p>
-                <div class="option-grid" id="bk-model-grid" style="margin-bottom: 1.4rem;"></div>
+                <label class="field-label" for="bk-model-select">Model</label>
+                <select class="form-field" id="bk-model-select" style="margin-bottom: 1.4rem;">
+                  <option value="">Choose your model&hellip;</option>
+                </select>
               </div>
               <div id="bk-repair-wrap" hidden>
                 <p class="field-label">What's wrong with it?</p>
                 <div class="option-grid" id="bk-repair-grid"></div>
               </div>
               <div id="issue-list"></div>
+              <!-- REPAIR_FLOW_UPDATE_2026_11_05: Step 3 of Austin's flow — what is wrong (multi-select
+                   tiles above), a describe box, and the ATR One membership
+                   question. ATR One is a membership, not insurance and not a
+                   warranty; this is a coverage question, never a claim. -->
+              <div id="bk-describe-wrap" hidden>
+                <label class="field-label" for="bk-describe">Anything else we should know? <span class="atr-optional">(optional)</span></label>
+                <textarea class="form-field" id="bk-describe" rows="3" placeholder="What happened, and what is the device doing (or not doing)?" style="margin-bottom: 1.4rem;"></textarea>
+              </div>
+              <div id="bk-atrone-wrap" hidden>
+                <p class="field-label" id="bk-atrone-q">Is this device covered by ATR One?</p>
+                <div class="rf-radio-row" role="radiogroup" aria-labelledby="bk-atrone-q">
+                  <label class="rf-radio"><input type="radio" name="bk-atrone" value="Yes"><span>Yes</span></label>
+                  <label class="rf-radio"><input type="radio" name="bk-atrone" value="No"><span>No</span></label>
+                  <label class="rf-radio"><input type="radio" name="bk-atrone" value="Not sure"><span>Not sure</span></label>
+                </div>
+                <p class="atr-help" style="margin-bottom: 1.2rem;">ATR One is our membership &mdash; members pay no house-call fee on covered devices.</p>
+              </div>
+              <button class="btn btn-primary" type="button" id="bk-continue" disabled><i class="fas fa-arrow-right"></i> Continue</button>
               <button class="back-btn" type="button" data-back="1" style="margin-top: 1.2rem;"><i class="fas fa-arrow-left"></i> Back</button>
             </div>
 
@@ -578,7 +630,7 @@
 
             <div class="repair-step" id="step-contact">
               <p class="eyebrow">Step 4 of 4</p>
-              <h3>Contact</h3>
+              <h3>Your visit &amp; contact details</h3>
               <div id="estimate-recap" style="margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.6rem;" hidden></div>
                 <!-- BEGIN SNIPPET: service-request -->
 <div class="atr-form-wrap" id="full-intake" data-form-wrap="service-request">
@@ -641,8 +693,23 @@
         </select>
       </div>
       <div class="atr-field">
-        <label class="field-label" for="sr-appointment">Appointment scheduling <span class="atr-optional">(pick a time to talk)</span></label>
-        <input class="form-field" type="datetime-local" id="sr-appointment" name="appointment_at">
+        <!-- REPAIR_FLOW_UPDATE_2026_11_05: a visit is a date plus a 2-hour arrival window — appointments
+             are never booked to an exact time. atr-forms.js derives the stored
+             appointment_at from the window start so the portal keeps working. -->
+        <label class="field-label" for="sr-visit-date">Preferred visit date</label>
+        <input class="form-field" type="date" id="sr-visit-date" name="visit_date">
+      </div>
+      <div class="atr-field">
+        <label class="field-label" for="sr-arrival-window">Arrival window <span class="atr-optional">(we arrive within this 2-hour window)</span></label>
+        <select class="form-field" id="sr-arrival-window" name="arrival_window">
+          <option value="">Choose a window&hellip;</option>
+          <option value="8:00 AM &ndash; 10:00 AM">8:00 AM &ndash; 10:00 AM</option>
+          <option value="10:00 AM &ndash; 12:00 PM">10:00 AM &ndash; 12:00 PM</option>
+          <option value="12:00 PM &ndash; 2:00 PM">12:00 PM &ndash; 2:00 PM</option>
+          <option value="2:00 PM &ndash; 4:00 PM">2:00 PM &ndash; 4:00 PM</option>
+          <option value="4:00 PM &ndash; 6:00 PM">4:00 PM &ndash; 6:00 PM</option>
+          <option value="6:00 PM &ndash; 8:00 PM">6:00 PM &ndash; 8:00 PM</option>
+        </select>
       </div>
     </div>
 
@@ -724,6 +791,19 @@
           <option value="Not sure">Not sure</option>
         </select>
       </div>
+    </div>
+
+    <!-- REPAIR_FLOW_UPDATE_2026_11_05: the guided flow's ATR One answer lands here (prefilled by
+         script.js) and rides the ticket through atr-forms.js. -->
+    <div class="atr-field">
+      <label class="field-label" for="sr-atr-one">Is this device covered by ATR One?</label>
+      <select class="form-field" id="sr-atr-one" name="atr_one_covered">
+        <option value="">Choose one&hellip;</option>
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+        <option value="Not sure">Not sure</option>
+      </select>
+      <p class="atr-help">ATR One is our membership. Members pay no house-call fee on covered devices.</p>
     </div>
 
     <div class="atr-field">
@@ -846,6 +926,7 @@
             .dt-tile.active { border-color: #0B1F3A; background: linear-gradient(135deg, #1050A0, #2E7CD6); color: #fff; }
             .dt-tile.active i { color: #fff; }
             .dt-tile i { width: 1.1rem; text-align: center; color: var(--blue, #1050A0); }
+            .dt-select { width: 100%; max-width: 560px; }
             .dt-reset { background: none; border: none; padding: 0.25rem 0; margin-top: 0.75rem; color: var(--brand); font-family: var(--font-body); font-size: 0.9rem; font-weight: 700; text-decoration: underline; cursor: pointer; }
             @media (min-width: 720px) { .dt-tiles-types { grid-template-columns: repeat(5, 1fr); } .dt-tiles-types .dt-tile { flex-direction: column; text-align: center; justify-content: center; } }
             .price-disclaimer { font-size: 0.82rem; color: var(--muted); margin: 0.6rem auto 0; max-width: 640px; }
@@ -858,11 +939,13 @@
             </div>
             <div class="dt-step" id="dt-step-brand" hidden>
               <span class="dt-step-label" id="dt-label-brand">2. Brand</span>
-              <div class="dt-tiles" id="dt-brands" role="group" aria-labelledby="dt-label-brand"></div>
+              <!-- CHECKIN_DROPDOWNS_2026_11_05: Brand is a single dropdown, not tiles. -->
+              <select class="form-field dt-select" id="dt-brands" aria-labelledby="dt-label-brand"><option value="">Choose your brand&hellip;</option></select>
             </div>
             <div class="dt-step" id="dt-step-model" hidden>
               <span class="dt-step-label" id="dt-label-model">3. Model</span>
-              <div class="dt-tiles" id="dt-models" role="group" aria-labelledby="dt-label-model"></div>
+              <!-- CHECKIN_DROPDOWNS_2026_11_05: Model is a single dropdown populated only from the chosen brand. -->
+              <select class="form-field dt-select" id="dt-models" aria-labelledby="dt-label-model"><option value="">Choose your model&hellip;</option></select>
             </div>
             <div class="dt-step" id="dt-step-repair" hidden>
               <span class="dt-step-label" id="dt-label-repair">4. Repair</span>
@@ -4316,6 +4399,15 @@
     if (!typeBox || !brandBox || !modelBox || !repairBox || !result) return;
     var state = { type: null, brand: null, model: null, repair: null };
     function scrollTo(el) { try { el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {} }
+    /* CHECKIN_DROPDOWNS_2026_11_05: dropdown filler for Brand / Model steps. */
+    function fillSelect(box, names, placeholder, current) {
+      box.innerHTML = '';
+      var ph = document.createElement('option'); ph.value = ''; ph.textContent = placeholder; box.appendChild(ph);
+      names.forEach(function (name) {
+        var o = document.createElement('option'); o.value = name; o.textContent = name; box.appendChild(o);
+      });
+      box.value = current || '';
+    }
     function tiles(box, names, current, onPick, icons) {
       box.innerHTML = '';
       names.forEach(function (name, i) {
@@ -4335,22 +4427,22 @@
     function pickType(name) {
       state = { type: name, brand: null, model: null, repair: null };
       renderTypes();
-      tiles(brandBox, Object.keys(DATA[name]), null, pickBrand, null);
+      fillSelect(brandBox, Object.keys(DATA[name]), 'Choose your brand\u2026', null);
       brandStep.hidden = false; modelStep.hidden = true; repairStep.hidden = true;
       result.hidden = true; result.classList.remove('show'); if (disc) disc.hidden = true; reset.hidden = false;
       scrollTo(brandStep);
     }
     function pickBrand(name) {
       state.brand = name; state.model = null; state.repair = null;
-      tiles(brandBox, Object.keys(DATA[state.type]), name, pickBrand, null);
-      tiles(modelBox, Object.keys(DATA[state.type][name]), null, pickModel, null);
+      fillSelect(brandBox, Object.keys(DATA[state.type]), 'Choose your brand\u2026', name);
+      fillSelect(modelBox, Object.keys(DATA[state.type][name]), 'Choose your model\u2026', null);
       modelStep.hidden = false; repairStep.hidden = true;
       result.hidden = true; result.classList.remove('show'); if (disc) disc.hidden = true;
       scrollTo(modelStep);
     }
     function pickModel(name) {
       state.model = name; state.repair = null;
-      tiles(modelBox, Object.keys(DATA[state.type][state.brand]), name, pickModel, null);
+      fillSelect(modelBox, Object.keys(DATA[state.type][state.brand]), 'Choose your model\u2026', name);
       tiles(repairBox, Object.keys(DATA[state.type][state.brand][name]), null, pickRepair, null);
       repairStep.hidden = false;
       result.hidden = true; result.classList.remove('show'); if (disc) disc.hidden = true;
@@ -4380,6 +4472,9 @@
       result.hidden = false; result.classList.add('show');
       scrollTo(result);
     }
+    /* CHECKIN_DROPDOWNS_2026_11_05: dropdown change wiring (once). */
+    brandBox.addEventListener('change', function () { if (brandBox.value) pickBrand(brandBox.value); });
+    modelBox.addEventListener('change', function () { if (modelBox.value) pickModel(modelBox.value); });
     reset.addEventListener('click', function () {
       state = { type: null, brand: null, model: null, repair: null };
       renderTypes();
