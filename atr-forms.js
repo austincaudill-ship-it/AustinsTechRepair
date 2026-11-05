@@ -34,9 +34,17 @@
  *
  * SITE_PAYSTEP_2026_10_30: after a successful service-request submit,
  * the success panel gains a payment step — the customer pays the
- * $35 house-call fee through Square and the appointment counts as
- * fully booked once the fee is paid. Display + link only; it runs
- * after the ticket insert has already decided success.
+ * visit fee through Square and the appointment counts as fully
+ * booked once the fee is paid. Display + link only; it runs after
+ * the ticket insert has already decided success.
+ * FEE_SPLIT_2026_11_05: the visit fee is now two-tier — $15 when the
+ * repair is already known, $35 when the job needs diagnostics. The
+ * submit path carries no reliable diagnostics signal, so the panel
+ * states both tiers: the button below still collects the $35
+ * diagnosis tier (the only Square link that exists); the $15 tier
+ * is confirmed by staff and its payment link is texted, the same
+ * pattern the panel's closing note already promises. A dedicated
+ * $15 Square link is the follow-up that makes the panel branch.
  *
  * SITE_TURNSTILE_2026_11_02 (staged): every form below is gated by
  * Cloudflare Turnstile. init() injects the widget container and
@@ -60,10 +68,11 @@
   var BUSINESS_PHONE_DISPLAY = '937-280-6243';
   var BUSINESS_PHONE_TEL = 'tel:9372806243';
   var MAX_RESUME_BYTES = 10 * 1024 * 1024; // 10 MB client-side guard
-  /* SITE_PAYSTEP_2026_10_30: Square payment link for the house-call
-   * fee — "House-Call Fee" link in the business Square account.
-   * $36.32 total = $35.00 house-call fee + $1.32 card processing
-   * (Square online rate 2.9% + 30 cents). */
+  /* SITE_PAYSTEP_2026_10_30: Square payment link for the visit fee
+   * — "House-Call Fee" link in the business Square account.
+   * $36.32 total = $35.00 visit fee (the with-diagnostics tier,
+   * FEE_SPLIT_2026_11_05) + $1.32 card processing (Square online
+   * rate 2.9% + 30 cents). */
   var SQUARE_HOUSECALL_LINK = 'https://square.link/u/GNUAO63Y';
 
   /* ---------------- Supabase client bootstrap ----------------
@@ -285,9 +294,10 @@
     if (!panel) return;
     panel.innerHTML =
       '<h4>One last step to fully book your appointment</h4>' +
-      '<p>Your appointment is fully booked once the $35.00 house-call fee is paid. ' +
-      'The fee covers travel to you plus a full diagnosis of your device, and it is non-refundable. ' +
-      'Paying by card adds Square&rsquo;s processing fee of $1.32, so the total due now is $36.32.</p>' +
+      '<p>Your appointment is fully booked once your visit fee is paid. ' +
+      'The visit fee is $15.00 when your repair is already known, or $35.00 if your device needs a full diagnosis first &mdash; either way it covers travel to you and is non-refundable. ' +
+      'If your device needs the full diagnosis, you can pay that fee now: $35.00 plus Square&rsquo;s processing fee of $1.32, a total of $36.32. ' +
+      'If your repair is already known, your fee is the $15.00 one &mdash; we will confirm it and text you the payment link for that amount.</p>' +
       '<p><a class="btn btn-primary btn-lg" href="' + SQUARE_HOUSECALL_LINK + '" target="_blank" rel="noopener">' +
       '<i class="fas fa-lock"></i> Pay $36.32 with Square</a></p>' +
       '<p class="atr-paystep-note">If you close this page before paying, your request is still saved ' +
@@ -698,7 +708,7 @@
           fileWebSignature(client, ticketId, { customerName: row.customer_name, phone: v.phone, device: [v.device_type, v.device_info].filter(Boolean).join(' \u00b7 ') }, function () {
             showSuccess(form, 'service-request', v);
             /* SITE_PAYSTEP_2026_10_30: route the customer to Square
-               to pay the house-call fee. Runs whether the signature
+               to pay the visit fee. Runs whether the signature
                filing above landed or not — filing is best-effort and
                the ticket insert already decided success. */
             showPayStep(form);

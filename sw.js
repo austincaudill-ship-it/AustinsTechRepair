@@ -5,7 +5,8 @@
 // ATRONE_QR_2026_11_05: bumped to atrg-v6 for the account card / member QR release, and
 // /turnstile.js added to the shell so no visitor can be served the
 // pre-Turnstile script.js / atr-forms.js from an old cache.
-const CACHE = "atrg-v6";
+// FEE_SPLIT_2026_11_05: bumped to atrg-v7 for the $15 / $35 visit-fee split.
+const CACHE = "atrg-v7";
 const CORE = [
   "/",
   "/index.html",

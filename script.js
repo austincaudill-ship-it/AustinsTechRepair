@@ -555,7 +555,7 @@
         repairState.priceRange = bkFmt(repairState.priceExact);
         if (lbl) lbl.textContent = 'Your flat price';
         if (amt) amt.textContent = repairState.priceRange;
-        if (note) note.innerHTML = escapeHtml(friendly) + ' for ' + escapeHtml(modelLabel) + ' &mdash; flat price, parts and labor included. A separate $35 house-call fee applies to the visit &mdash; due at booking, non-refundable, and it covers travel and a full diagnosis. Estimates are always free. ATR One members pay no house-call fee for devices covered under their subscription.';
+        if (note) note.innerHTML = escapeHtml(friendly) + ' for ' + escapeHtml(modelLabel) + ' &mdash; flat price, parts and labor included. A separate visit fee applies to the visit &mdash; $15 when the repair is already known, or $35 if your device needs diagnostics first &mdash; due at booking and non-refundable. Estimates are always free. ATR One members pay no visit fee for devices covered under their subscription.';
       } else if (repairState.issues[0] && repairState.issues[0].priceRange) {
         if (lbl) lbl.textContent = 'Estimated price range';
         if (amt) amt.textContent = repairState.issues[0].priceRange;
@@ -564,7 +564,7 @@
         repairState.priceRange = 'Flat price confirmed before booking';
         if (lbl) lbl.textContent = 'Your price';
         if (amt) amt.textContent = 'Confirmed up front';
-        if (note) note.innerHTML = 'There is no set price for ' + escapeHtml(friendly.toLowerCase()) + ' on the ' + escapeHtml(modelLabel) + ' yet. Book the visit and we confirm one flat price for your exact device before any work starts. The $35 house-call fee covers the trip and a full diagnosis &mdash; due at booking, non-refundable. Estimates are always free. ATR One members pay no house-call fee for devices covered under their subscription.';
+        if (note) note.innerHTML = 'There is no set price for ' + escapeHtml(friendly.toLowerCase()) + ' on the ' + escapeHtml(modelLabel) + ' yet. Book the visit and we confirm one flat price for your exact device before any work starts. The visit fee covers the trip &mdash; $15 when the repair is already known, or $35 if your device needs diagnostics first &mdash; due at booking, non-refundable. Estimates are always free. ATR One members pay no visit fee for devices covered under their subscription.';
       }
       var summary = document.getElementById('estimate-summary');
       if (summary) {
@@ -1264,7 +1264,7 @@
       }
       var price = PRICES[brand][repair];
       if (amount) amount.textContent = 'From $' + price;
-      if (note) note.textContent = REPAIR_LABELS[repair] + ' for ' + PRICES[brand].label + ' — starting price, parts and labor included. Your final flat price is confirmed for your exact model before booking. A separate $35 house-call fee applies to the visit — due at booking, non-refundable, and it covers travel and a full diagnosis.';
+      if (note) note.textContent = REPAIR_LABELS[repair] + ' for ' + PRICES[brand].label + ' — starting price, parts and labor included. Your final flat price is confirmed for your exact model before booking. A separate visit fee applies to the visit — $15 for a known repair, or $35 if diagnostics are needed first — due at booking, non-refundable.';
       if (result) { result.hidden = false; result.classList.add('show'); }
       // Store the quote for the repair form
       try {
