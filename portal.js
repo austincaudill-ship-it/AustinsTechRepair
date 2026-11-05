@@ -1930,6 +1930,22 @@ function loadTicketThread(client, ticketId) {
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-download-receipt-btn"><i class="fas fa-download"></i> Download receipt</button>' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-email-receipt-btn"><i class="fas fa-envelope"></i> Email receipt</button>' +
           '<span class="portal-muted portal-small" id="p2-gen-receipt-msg"></span>' +
+          /* PORTAL_DOCUMENTS_SET_2026_11_05: the Estimate and
+           * Invoice rows — same four actions as the receipt,
+           * generated from the same charges (see the document
+           * engine below). Each row carries its own status line. */
+          '<div class="p2-doc-row"><span class="portal-muted portal-small">Estimate</span>' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-print-estimate-btn"><i class="fas fa-print"></i> Print estimate</button>' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-gen-estimate-btn"><i class="fas fa-file"></i> Generate estimate</button>' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-download-estimate-btn"><i class="fas fa-download"></i> Download estimate</button>' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-email-estimate-btn"><i class="fas fa-envelope"></i> Email estimate</button>' +
+          '<span class="portal-muted portal-small" id="p2-doc-estimate-msg"></span></div>' +
+          '<div class="p2-doc-row"><span class="portal-muted portal-small">Invoice</span>' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-print-invoice-btn"><i class="fas fa-print"></i> Print invoice</button>' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-gen-invoice-btn"><i class="fas fa-file"></i> Generate invoice</button>' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-download-invoice-btn"><i class="fas fa-download"></i> Download invoice</button>' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-email-invoice-btn"><i class="fas fa-envelope"></i> Email invoice</button>' +
+          '<span class="portal-muted portal-small" id="p2-doc-invoice-msg"></span></div>' +
           '<button class="portal-btn p2-btn-danger portal-btn-sm" type="button" id="p2-delete-btn"><i class="fas fa-trash"></i> Delete ticket</button>' +
           '<span class="portal-muted portal-small" id="p2-action-msg"></span>' +
           '<div id="p2-delete-confirm" hidden><p class="portal-error">Permanently delete this ticket? Its charges and messages go with it. Part orders stay on file but detach from the ticket. This cannot be undone.</p>' +
@@ -2081,7 +2097,7 @@ function loadTicketThread(client, ticketId) {
            * Email receipt row that used to sit here moved to the top
            * of the ticket, beside Print receipt (Austin, Nov 3, 2026).
            * The help paragraph stays with the charges it explains. */
-          '<p class="portal-muted portal-small">Generate receipt files a receipt built from these charges into Documents. If the charges change afterwards, generate again and it replaces the filed copy. Download receipt saves that same receipt as a PDF file. Email receipt sends the PDF to the customer&rsquo;s email on file &mdash; the fallback when a portal message or text does not reach them.</p></div></div>' +
+          '<p class="portal-muted portal-small">Generate receipt files a receipt built from these charges into Documents. If the charges change afterwards, generate again and it replaces the filed copy. Download receipt saves that same receipt as a PDF file. Email receipt sends the PDF to the customer&rsquo;s email on file &mdash; the fallback when a portal message or text does not reach them. The Estimate and Invoice buttons at the top of the ticket work the same way, built from these same charges &mdash; the estimate for after a diagnosis, before the customer approves; the invoice when a balance is due.</p></div></div>' +
           '<div class="portal-drawer-section tk-acc" data-acc="payment">' + tkAccHead('payment', 'Payment') + tkAccBodyOpen('payment') +
           /* PORTAL_ROLE_LADDER_2026_11_04: the Payment section is
            * money MOVEMENT — Charge / Check out sends a Square
@@ -2756,7 +2772,8 @@ function loadTicketThread(client, ticketId) {
    * 'part_order' through the runbook SQL in this build's
    * CHANGES.md; until that SQL runs, filing a Part order fails the
    * insert exactly like any other bad type, so run the SQL first. */
-  var DOC_TYPE_LABELS = { repair_authorization: 'Repair authorization', receipt: 'Receipt', part_order: 'Part order', other: 'Other document' };
+  var DOC_TYPE_LABELS = { repair_authorization: 'Repair authorization', receipt: 'Receipt', part_order: 'Part order', other: 'Other document', estimate: 'Estimate', invoice: 'Invoice' };
+  /* PORTAL_DOCUMENTS_SET_2026_11_05: 'estimate' and 'invoice' join the labels — their ticket_documents CHECK widening is documents-set.sql in this build folder. */
   var AUTH_TERMS_TEXT = "Repair Authorization & Service Agreement\nAustin's Tech Repair Group \u2014 State of Ohio, USA \u2014 Last updated October 23, 2026\nPLEASE READ THIS DOCUMENT CAREFULLY. By scheduling an appointment, submitting a repair request, or handing us your device, you (\"Customer,\" \"you\") authorize the services below and agree to these terms with Austin's Tech Repair Group (\"Company,\" \"we,\" \"us,\" \"our\"), a sole proprietorship operating in the State of Ohio.\n1. Authorization to Perform Services\nBy requesting service, you authorize Austin's Tech Repair Group to:\nReceive, handle, open, disassemble, diagnose, test, and repair your device;\nOrder and install the replacement parts you approve;\nRun software diagnostics and updates, and access device functions \u2014 using any passcode you provide \u2014 only as needed to complete and verify the repair;\nTake the device to our bench for advanced work (such as board-level repair) when on-site repair is not possible, and return it when finished.\nYou confirm that you own the device or have the owner's permission to authorize service on it. We service consumer and business electronics only; we do not service medical devices or equipment.\n2. Fees, Parts & Payment\nHouse-call fee: A $35.00 house-call fee applies to every mobile visit, covering travel and a full diagnosis. It is non-refundable in all cases, is due at scheduling, is charged separately from the repair price, and is never credited toward a repair. ATR One members pay no house-call fee for devices covered under their subscription.\nDiagnostics: Estimates are free. A full diagnosis \u2014 including disassembly or deep board-level diagnostics when required \u2014 is included in the house-call fee.\nFlat-rate repairs: Common repairs (screens, batteries, charging ports, back glass) are quoted at one flat rate \u2014 parts and labor included. No hourly billing.\nCustom repairs: Repairs outside the standard list are quoted individually as one flat price and begin only with your approval.\nParts: Parts for your job are ordered by us through our suppliers and delivered to us. Because parts are ordered for your specific job, the parts cost is paid upfront before we order. If you cancel after parts are ordered, we keep the part and refund what you paid for the part.\nReplaced parts: Parts we remove during a repair are taken with us and disposed of properly to protect the environment. Some original manufacturer parts must be returned to the manufacturer.\nParts you supply: If you supply your own part, we will install it as-is; our 1-Year Limited Warranty does not cover customer-supplied parts.\nContact about your repair: You agree we may call and text you at the number you provide about your repair \u2014 scheduling, status updates, and completion.\nEstimate approval: We confirm your price before beginning work. If hidden damage, corrosion, or additional failures are found during disassembly, we notify you and obtain your approval before proceeding with any extra work.\nPayment due: The balance is due upon completion, before the device is released. We accept Visa, Mastercard, American Express, Discover, Apple Pay, Google Pay, Samsung Pay, Cash App Pay, PayPal, Venmo, and cash.\nCard processing fee: If you pay by credit or debit card, a processing fee is added to your total. Card payments are processed through Square, and the fee is exactly what Square charges for the transaction \u2014 passed through at Square's actual rate, never more than Square charges.\n3. Repair Risks You Accept\nData: Diagnostics and repair can result in data loss or corruption. Back up your device before service. We are not responsible for lost data, files, photos, accounts, or settings.\nPre-existing damage: Devices with prior liquid exposure, corrosion, structural damage, or earlier repair attempts are fragile and can fail during normal handling. We are not responsible for a device that stops working because of a pre-existing condition.\nAlready-cracked parts: Removing a cracked screen or back glass can cause it to break further. If a damaged part cannot survive disassembly, replacing it becomes part of the repair and is quoted to you before we proceed.\nCosmetics: Minor marks from opening a device are a normal risk of repair work.\nManufacturer warranties & seals: Third-party repair can affect a manufacturer's warranty; unless the manufacturer explicitly states that opening the device does not void the warranty, our work may void it. A device's water-resistance rating cannot be guaranteed after any repair.\n4. Liability Waiver\nExcept in cases of gross negligence or willful misconduct, you release Austin's Tech Repair Group, its owner, and its representatives from liability for claims or damages arising from the repair services, and you agree that our total liability is limited to the amount you paid for the service. We are not liable for incidental, indirect, or consequential damages, including loss of data, loss of use, or loss of business.\n5. Warranty\nStandard repairs include a one (1) year limited warranty on the parts installed and labor performed, under our Warranty Policy.\nThe warranty is void for the affected repair if the device later suffers physical damage, liquid exposure, or is opened or repaired by another party.\nWarranty service requires your original repair invoice or receipt.\n6. Unclaimed Devices\nWe will notify you when your repair is complete. Equipment left unclaimed for more than sixty (60) days after that notice will be considered abandoned and may be disposed of, recycled, or sold to recover costs, as permitted by Ohio law.\n7. Governing Law & Entire Agreement\nThis Agreement is governed by the laws of the State of Ohio. Disputes will first be addressed through good-faith negotiation; if unresolved, they will be submitted to a court of competent jurisdiction in Greene County, Ohio. This document is the entire agreement between you and Austin's Tech Repair Group for repair services. If any provision is found unenforceable, the rest remain in effect.\nAustin's Tech Repair Group\nAustin Tyler Caudill, Owner\nState of Ohio, USA \u2014 (937) 280-6243";
 
   function docStamp() { return new Date().toISOString().replace(/[:.]/g, '-'); }
@@ -4769,6 +4786,361 @@ function loadTicketThread(client, ticketId) {
     }).catch(function () { fail('Couldn\u2019t prepare the receipt \u2014 try again.'); });
   }
 
+  /* PORTAL_DOCUMENTS_SET_2026_11_05 (Austin, Nov 5, 2026: "Yes
+   * make all the documents you think we need"): the Estimate and
+   * the Invoice join the Receipt. All three are built from the
+   * ticket's charges — Generate files one live copy per ticket
+   * in Documents, Download delivers the filed copy, Email hands
+   * it to the device's mail app the way Email receipt does, and
+   * Print renders it. The receipt's own functions above are
+   * untouched; this engine mirrors them, driven by one spec
+   * table so the two new documents can never drift apart.
+   *
+   * The split, in the business's own terms:
+   *   Estimate — after diagnosis, before approval: the proposed
+   *     charges and the estimated total, with the estimate
+   *     terms (free estimate, price confirmed before work,
+   *     hidden damage stops for approval) and how to approve.
+   *   Invoice — the bill: the charges, deposits received, and
+   *     the balance due, with the payment terms. The Receipt
+   *     stays the paid document of record — the signature and
+   *     the signed-terms summary ride on it alone. */
+  var TICKET_DOC_SPECS = {
+    estimate: {
+      label: 'Estimate', lower: 'estimate',
+      genBtn: 'p2-gen-estimate-btn', dlBtn: 'p2-download-estimate-btn',
+      emailBtn: 'p2-email-estimate-btn', msg: 'p2-doc-estimate-msg',
+      subject: 'Your estimate from Austin\u2019s Tech Repair Group'
+    },
+    invoice: {
+      label: 'Invoice', lower: 'invoice',
+      genBtn: 'p2-gen-invoice-btn', dlBtn: 'p2-download-invoice-btn',
+      emailBtn: 'p2-email-invoice-btn', msg: 'p2-doc-invoice-msg',
+      subject: 'Your invoice from Austin\u2019s Tech Repair Group'
+    }
+  };
+
+  function ticketDocPath(t, kind) { return t.id + '/' + kind + '-generated.html'; }
+
+  /* The charge rows, the receipt composer's own rules (deposit
+   * credits signed, waived lines struck through at $0) — shared
+   * by the two new composers so a charge prints the same way on
+   * every document the ticket produces. */
+  function ticketDocChargeLines(rows) {
+    var lines = rows.map(function (c) {
+      var amt = Number(c.qty || 0) * Number(c.unit_price || 0);
+      var label = c.kind === 'deposit_credit' ? esc(c.description) + ' (deposit)' : esc(c.description);
+      var sign = c.kind === 'deposit_credit' ? '&minus;' : '';
+      var face = waivedFace(c);
+      if (face != null) {
+        return '<tr><td>' + esc(waivedName(c)) + ' &mdash; waived</td><td class="rc-num">' + esc(c.qty) + '</td><td class="rc-num"><s>' + fmtMoney(face) + '</s> ' + fmtMoney(0) + '</td></tr>';
+      }
+      return '<tr><td>' + label + '</td><td class="rc-num">' + esc(c.qty) + '</td><td class="rc-num">' + sign + fmtMoney(Math.abs(amt)) + '</td></tr>';
+    }).join('');
+    if (!rows.length) lines = '<tr><td colspan="3">No charges recorded.</td></tr>';
+    return lines;
+  }
+
+  function composeTicketDocHtml(t, kind) {
+    var spec = TICKET_DOC_SPECS[kind];
+    var rows = t._charges || [];
+    var tot = chargeTotals(rows);
+    var noteHtml = '';
+    if (kind === 'estimate') {
+      noteHtml = '<div class="rc-terms"><p class="rc-terms-head">About this estimate</p><ul>' +
+        '<li>This estimate is free. The price above is the price we confirm with you before any work begins.</li>' +
+        '<li>If we find hidden damage or extra failures during the repair, we stop and get your approval before doing anything more.</li>' +
+        '<li>Parts are paid upfront before we order them. The $35 house-call fee is charged separately at scheduling and is non-refundable; ATR One members pay no house-call fee on covered devices.</li>' +
+        '</ul></div>' +
+        '<p class="rc-auth">To approve this estimate, or if you have any questions, call or text <strong>(937) 280-6243</strong>.</p>';
+    } else {
+      noteHtml = '<div class="rc-terms"><p class="rc-terms-head">Payment</p><ul>' +
+        '<li>Payment is due upon completion, before the device is released.</li>' +
+        '<li>We accept Visa, Mastercard, American Express, Discover, Apple Pay, Google Pay, Samsung Pay, Cash App Pay, PayPal, Venmo, and cash.</li>' +
+        '<li>Card payments are processed through Square; the processing fee is exactly what Square charges, passed through at their rate.</li>' +
+        '</ul></div>';
+    }
+    var html = '<div class="rc">' +
+      '<h1>Austin&rsquo;s Tech Repair Group</h1>' +
+      '<p class="rc-sub">Mobile Repair — Ohio · (937) 280-6243<br/>austinstechrepairgroup.com</p>' +
+      '<p class="rc-meta">' + spec.label + ' · Ticket #' + shortCode(t) + '<br/>' + esc(fmtDateTime(t.created_at)) + '</p>' +
+      '<p class="rc-meta"><strong>' + esc(t.customer_name || '') + '</strong><br/>' + esc(deviceLabel(t)) + '<br/>' + esc(t.issue || '') + '</p>' +
+      '<table class="rc-table"><thead><tr><th>Description</th><th class="rc-num">Qty</th><th class="rc-num">Amount</th></tr></thead><tbody>' + ticketDocChargeLines(rows) + '</tbody></table>' +
+      '<table class="rc-table rc-totals"><tbody>' +
+      '<tr><td>Subtotal</td><td class="rc-num">' + fmtMoney(tot.subtotal) + '</td></tr>' +
+      (tot.deposits ? '<tr><td>Deposits received</td><td class="rc-num">&minus;' + fmtMoney(tot.deposits) + '</td></tr>' : '') +
+      '<tr class="rc-grand"><td>' + (kind === 'estimate' ? 'Estimated total' : 'Balance due') + '</td><td class="rc-num">' + fmtMoney(tot.balance) + '</td></tr>' +
+      '</tbody></table>' +
+      (kind === 'invoice' && tot.balance <= 0 && tot.subtotal > 0 ? '<p class="rc-paid">PAID IN FULL — thank you!</p>' : '') +
+      noteHtml +
+      '<p class="rc-foot">' +
+      (kind === 'estimate'
+        ? 'Thank you for choosing Austin&rsquo;s Tech Repair Group.'
+        : 'Repairs are backed by our 1-Year Limited Warranty (parts &amp; labor). Thank you for your business!') +
+      '</p>' +
+      '</div>';
+    return html;
+  }
+
+  /* The filed document: the same standalone shell and styles
+   * as the filed receipt (RECEIPT_DOC_CSS), titled for its kind. */
+  function ticketDocDocumentHtml(t, kind) {
+    var spec = TICKET_DOC_SPECS[kind];
+    return '<!DOCTYPE html>\n<html lang="en"><head><meta charset="utf-8">' +
+      '<meta name="viewport" content="width=device-width, initial-scale=1">' +
+      '<title>' + spec.label + ' \u2014 Austin\u2019s Tech Repair Group</title>' +
+      '<style>body { margin: 0; background: #fff; padding: 18pt 10pt; }' + RECEIPT_DOC_CSS + '</style></head>' +
+      '<body>' + composeTicketDocHtml(t, kind) + '</body></html>';
+  }
+
+  /* Generate <kind>: the same one-live-copy filing as
+   * generateReceipt — fixed storage path, one ticket_documents
+   * row (doc_type '<kind>', widened by documents-set.sql),
+   * refreshed on regenerate so copies never pile up. No
+   * authorization is fetched: the signature and the signed
+   * paperwork belong to the receipt alone. */
+  function generateTicketDoc(client, t, kind, onFiled) {
+    var spec = TICKET_DOC_SPECS[kind];
+    var btn = $(spec.genBtn);
+    var msg = $(spec.msg);
+    function note(text) { if (msg) msg.textContent = text; }
+    var filedReported = false;
+    function reportFiled(ok) {
+      if (filedReported) return;
+      filedReported = true;
+      if (onFiled) { try { onFiled(ok); } catch (e) {} }
+    }
+    function fail(text) { if (btn) btn.disabled = false; note(text); reportFiled(false); }
+    if (btn) btn.disabled = true;
+    note('Building ' + spec.lower + '\u2026');
+    client.from('ticket_charges').select('*').eq('ticket_id', t.id).order('created_at', { ascending: true }).then(function (res) {
+      if (res.error) { fail('Couldn\u2019t read the charges \u2014 try again.'); return; }
+      t._charges = res.data || [];
+      if (!t._charges.length) { fail('Add the charges first \u2014 the ' + spec.lower + ' is built from them.'); return; }
+      var path = ticketDocPath(t, kind);
+      var html = ticketDocDocumentHtml(t, kind);
+      client.storage.from(DOC_BUCKET).upload(path, html, { contentType: 'text/html', upsert: true }).then(function (up) {
+        if (up.error) { fail('Saving the ' + spec.lower + ' failed \u2014 try again.'); return; }
+        var fileName = spec.label + ' \u2014 generated ' + fmtDate(new Date().toISOString()) + '.html';
+        var noteText = 'Generated from the ticket charges \u2014 generating again after a charge change replaces this copy.';
+        function filed() {
+          if (btn) btn.disabled = false;
+          note(spec.label + ' saved to Documents.');
+          loadDocuments(client, t);
+          reportFiled(true);
+        }
+        client.from('ticket_documents').select('id').eq('ticket_id', t.id).eq('storage_path', path).limit(1).then(function (q) {
+          if (!q.error && q.data && q.data.length) {
+            client.from('ticket_documents').update({ file_name: fileName, note: noteText, created_at: new Date().toISOString() }).eq('id', q.data[0].id).then(function (u) {
+              if (u.error) { fail('The ' + spec.lower + ' file saved but could not be listed \u2014 try again.'); return; }
+              filed();
+            }).catch(function () { fail('The ' + spec.lower + ' file saved but could not be listed \u2014 try again.'); });
+          } else {
+            client.from('ticket_documents').insert({ ticket_id: t.id, doc_type: kind, storage_path: path, file_name: fileName, note: noteText }).then(function (ins) {
+              if (ins.error) { fail('The ' + spec.lower + ' file saved but could not be filed \u2014 try again.'); return; }
+              filed();
+            }).catch(function () { fail('The ' + spec.lower + ' file saved but could not be filed \u2014 try again.'); });
+          }
+        }).catch(function () { fail('Saving the ' + spec.lower + ' failed \u2014 try again.'); });
+      }).catch(function () { fail('Saving the ' + spec.lower + ' failed \u2014 try again.'); });
+    }).catch(function () { fail('Couldn\u2019t read the charges \u2014 try again.'); });
+  }
+
+  /* Print <kind>: fresh charges, then the shared print area —
+   * the same .rc print styles the receipt prints with. */
+  function printTicketDoc(client, t, kind) {
+    var spec = TICKET_DOC_SPECS[kind];
+    var msg = $(spec.msg);
+    function fail(text) { if (msg) msg.textContent = text; }
+    client.from('ticket_charges').select('*').eq('ticket_id', t.id).order('created_at', { ascending: true }).then(function (res) {
+      if (res.error) { fail('Couldn\u2019t read the charges \u2014 try again.'); return; }
+      t._charges = res.data || [];
+      printArea(composeTicketDocHtml(t, kind), 'receipt');
+    }).catch(function () { fail('Couldn\u2019t read the charges \u2014 try again.'); });
+  }
+
+  /* Download <kind>: Download receipt v2's delivery, word for
+   * word in shape — the filed HTML of record through a signed
+   * URL, the pre-opened preview window on iOS / Safari pointed
+   * at the view-doc viewer, a download-disposition anchor
+   * everywhere else, and generate-on-the-spot when no copy is
+   * filed yet. */
+  function downloadTicketDoc(client, t, kind) {
+    var spec = TICKET_DOC_SPECS[kind];
+    var btn = $(spec.dlBtn);
+    var msg = $(spec.msg);
+    function note(text) { if (msg) msg.textContent = text; }
+    function fail(text) { if (btn) btn.disabled = false; note(text); }
+    if (btn) btn.disabled = true;
+    note('Building ' + spec.lower + '\u2026');
+    var ua = '';
+    try { ua = window.navigator.userAgent || ''; } catch (e) {}
+    var isIOSLike = /iP(hone|ad|od)/i.test(ua) || (/Macintosh/i.test(ua) && 'ontouchend' in document);
+    var isSafariUA = /safari/i.test(ua) && !/chrome|chromium|android|edg/i.test(ua);
+    var previewWin = null;
+    if (isIOSLike || isSafariUA) {
+      try { previewWin = window.open('', '_blank'); } catch (e) { previewWin = null; }
+    }
+    function failAndClose(text) {
+      if (previewWin && !previewWin.closed) { try { previewWin.close(); } catch (e) {} }
+      fail(text);
+    }
+    var path = ticketDocPath(t, kind);
+    var fileName = spec.label + '-' + shortCode(t) + '.html';
+    function deliver() {
+      var wantPreview = isIOSLike || isSafariUA;
+      var signOpts = wantPreview ? undefined : { download: fileName };
+      client.storage.from(DOC_BUCKET).createSignedUrl(path, SIGNED_URL_SECONDS, signOpts).then(function (res) {
+        if (res.error || !res.data || !res.data.signedUrl) { failAndClose('Couldn\u2019t open the ' + spec.lower + ' \u2014 try again.'); return; }
+        var signedUrl = res.data.signedUrl;
+        if (wantPreview) {
+          var target = DOC_VIEWER_URL + encodeURIComponent(signedUrl);
+          var usedPreview = false;
+          if (previewWin && !previewWin.closed) {
+            try { previewWin.location.href = target; usedPreview = true; } catch (e) { usedPreview = false; }
+          }
+          if (!usedPreview) {
+            var w = null;
+            try { w = window.open(target, '_blank'); } catch (e) { w = null; }
+            usedPreview = !!w;
+          }
+          if (btn) btn.disabled = false;
+          note(usedPreview ? spec.label + ' opened \u2014 use Share to save or print it.' : spec.label + ' is ready in Documents \u2014 use View to open it.');
+          return;
+        }
+        var a = document.createElement('a');
+        a.href = signedUrl;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function () {
+          if (a.parentNode) a.parentNode.removeChild(a);
+        }, 800);
+        if (btn) btn.disabled = false;
+        note(spec.label + ' downloaded.');
+      }).catch(function () { failAndClose('Couldn\u2019t open the ' + spec.lower + ' \u2014 try again.'); });
+    }
+    client.from('ticket_documents').select('id').eq('ticket_id', t.id).eq('storage_path', path).limit(1).then(function (q) {
+      if (!q.error && q.data && q.data.length) { deliver(); return; }
+      generateTicketDoc(client, t, kind, function (ok) {
+        if (!ok) {
+          if (previewWin && !previewWin.closed) { try { previewWin.close(); } catch (e) {} }
+          if (btn) btn.disabled = false;
+          return;
+        }
+        deliver();
+      });
+    }).catch(function () { failAndClose('Couldn\u2019t open the ' + spec.lower + ' \u2014 try again.'); });
+  }
+
+  /* Email <kind>: Email receipt's handoff (PORTAL_EMAIL_
+   * RECEIPT_MAILTO_2026_11_03, Austin's direction) in the new
+   * document's words — the portal sends nothing itself; the
+   * device's own mail app does, with the filed document really
+   * attached where the share sheet can carry files, and a
+   * one-year view link plus a plain summary in the mailto body
+   * everywhere else. A cancelled share is reported, never
+   * silently rerouted. */
+  function emailTicketDoc(client, t, kind) {
+    var spec = TICKET_DOC_SPECS[kind];
+    var btn = $(spec.emailBtn);
+    var msg = $(spec.msg);
+    function note(text) { if (msg) msg.textContent = text; }
+    function fail(text) { if (btn) btn.disabled = false; note(text); }
+    function done(text) { if (btn) btn.disabled = false; note(text); }
+    if (btn) btn.disabled = true;
+    note('Preparing ' + spec.lower + '\u2026');
+    var path = ticketDocPath(t, kind);
+    var fileName = spec.label + '-' + shortCode(t) + '.html';
+    var subject = spec.subject;
+
+    function signAndSummarize() {
+      client.storage.from(DOC_BUCKET).createSignedUrl(path, RECEIPT_AUTH_URL_SECONDS).then(function (res) {
+        if (res.error || !res.data || !res.data.signedUrl) { fail('Couldn\u2019t prepare the ' + spec.lower + ' \u2014 try again.'); return; }
+        var signedUrl = res.data.signedUrl;
+        var viewLink = DOC_VIEWER_URL + encodeURIComponent(signedUrl);
+        client.from('ticket_charges').select('*').eq('ticket_id', t.id).order('created_at', { ascending: true }).then(function (cres) {
+          if (cres.error) { fail('Couldn\u2019t read the charges \u2014 try again.'); return; }
+          t._charges = cres.data || [];
+          if (!t._charges.length) { fail('Add the charges first \u2014 the ' + spec.lower + ' is built from them.'); return; }
+          handOff(signedUrl, viewLink);
+        }).catch(function () { fail('Couldn\u2019t read the charges \u2014 try again.'); });
+      }).catch(function () { fail('Couldn\u2019t prepare the ' + spec.lower + ' \u2014 try again.'); });
+    }
+
+    function summaryText(viewLink) {
+      var tot = chargeTotals(t._charges || []);
+      var lines = [
+        'Your ' + spec.lower + ' from Austin\u2019s Tech Repair Group',
+        '',
+        'Ticket #' + shortCode(t),
+        'Device: ' + deviceLabel(t),
+        'Subtotal: ' + fmtMoney(tot.subtotal)
+      ];
+      if (tot.deposits) lines.push('Deposits received: -' + fmtMoney(tot.deposits));
+      if (kind === 'estimate') lines.push('Estimated total: ' + fmtMoney(tot.balance));
+      else if (tot.balance <= 0 && tot.subtotal > 0) lines.push('Paid in full \u2014 thank you!');
+      else lines.push('Balance due: ' + fmtMoney(tot.balance));
+      lines.push('');
+      lines.push('View or print your ' + spec.lower + ':');
+      lines.push(viewLink);
+      lines.push('');
+      lines.push('Thank you for your business!');
+      lines.push('Austin\u2019s Tech Repair Group \u00b7 (937) 280-6243');
+      return lines.join('\n');
+    }
+
+    function handOff(signedUrl, viewLink) {
+      var body = summaryText(viewLink);
+      function openMailto() {
+        var to = trim(t.customer_email || '');
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) to = '';
+        var href = 'mailto:' + to +
+          '?subject=' + encodeURIComponent(subject) +
+          '&body=' + encodeURIComponent(body);
+        var a = document.createElement('a');
+        a.href = href;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function () { if (a.parentNode) a.parentNode.removeChild(a); }, 800);
+        done(to
+          ? 'Mail opened with your ' + spec.lower + ' \u2014 review it and send from your mail app.'
+          : 'Mail opened \u2014 add the customer\u2019s email address in the To line (none on file for this ticket).');
+      }
+      var shareApis = false;
+      try { shareApis = !!(navigator.share && navigator.canShare && typeof File !== 'undefined'); } catch (e) { shareApis = false; }
+      if (!shareApis) { openMailto(); return; }
+      fetch(signedUrl).then(function (r) { return r.blob(); }).then(function (blob) {
+        var file = null;
+        try { file = new File([blob], fileName, { type: 'text/html' }); } catch (e) { file = null; }
+        var canFiles = false;
+        if (file) { try { canFiles = !!navigator.canShare({ files: [file] }); } catch (e) { canFiles = false; } }
+        if (!canFiles) { openMailto(); return; }
+        var shareText = 'Your ' + spec.lower + ' from Austin\u2019s Tech Repair Group \u2014 Ticket #' + shortCode(t) + '. View it here: ' + viewLink;
+        var p = null;
+        try { p = navigator.share({ files: [file], title: subject, text: shareText }); } catch (e) { p = null; }
+        if (p && p.then) {
+          p.then(function () {
+            done('Share sheet closed \u2014 if you picked Mail, send it from your mail app.');
+          }, function (err) {
+            if (err && err.name === 'AbortError') { done('Sharing cancelled \u2014 tap Email ' + spec.lower + ' to try again.'); return; }
+            openMailto();
+          });
+        } else {
+          done('Share sheet opened \u2014 pick Mail to send the ' + spec.lower + '.');
+        }
+      }).catch(function () { openMailto(); });
+    }
+
+    client.from('ticket_documents').select('id').eq('ticket_id', t.id).eq('storage_path', path).limit(1).then(function (q) {
+      if (!q.error && q.data && q.data.length) { signAndSummarize(); return; }
+      generateTicketDoc(client, t, kind, function (ok) {
+        if (!ok) { if (btn) btn.disabled = false; return; }
+        signAndSummarize();
+      });
+    }).catch(function () { fail('Couldn\u2019t prepare the ' + spec.lower + ' \u2014 try again.'); });
+  }
+
   function printPartLabel(t, p) {
     var partUrl = 'https://austinstechrepairgroup.com/portal.html?part=' + p.id;
     var html = '<div class="lbl"><div class="lbl-flex"><div class="lbl-text">' +
@@ -4802,6 +5174,27 @@ function loadTicketThread(client, ticketId) {
     if (dlReceiptBtn) dlReceiptBtn.addEventListener('click', function () { downloadReceipt(client, t); });
     var emailReceiptBtn = $('p2-email-receipt-btn');
     if (emailReceiptBtn) emailReceiptBtn.addEventListener('click', function () { emailReceipt(client, t); });
+
+    /* PORTAL_DOCUMENTS_SET_2026_11_05: the Estimate and Invoice
+     * actions, wired beside the receipt's (see the document
+     * engine: generateTicketDoc / downloadTicketDoc /
+     * emailTicketDoc / printTicketDoc). */
+    var genEstimateBtn = $('p2-gen-estimate-btn');
+    if (genEstimateBtn) genEstimateBtn.addEventListener('click', function () { generateTicketDoc(client, t, 'estimate'); });
+    var dlEstimateBtn = $('p2-download-estimate-btn');
+    if (dlEstimateBtn) dlEstimateBtn.addEventListener('click', function () { downloadTicketDoc(client, t, 'estimate'); });
+    var emailEstimateBtn = $('p2-email-estimate-btn');
+    if (emailEstimateBtn) emailEstimateBtn.addEventListener('click', function () { emailTicketDoc(client, t, 'estimate'); });
+    var printEstimateBtn = $('p2-print-estimate-btn');
+    if (printEstimateBtn) printEstimateBtn.addEventListener('click', function () { printTicketDoc(client, t, 'estimate'); });
+    var genInvoiceBtn = $('p2-gen-invoice-btn');
+    if (genInvoiceBtn) genInvoiceBtn.addEventListener('click', function () { generateTicketDoc(client, t, 'invoice'); });
+    var dlInvoiceBtn = $('p2-download-invoice-btn');
+    if (dlInvoiceBtn) dlInvoiceBtn.addEventListener('click', function () { downloadTicketDoc(client, t, 'invoice'); });
+    var emailInvoiceBtn = $('p2-email-invoice-btn');
+    if (emailInvoiceBtn) emailInvoiceBtn.addEventListener('click', function () { emailTicketDoc(client, t, 'invoice'); });
+    var printInvoiceBtn = $('p2-print-invoice-btn');
+    if (printInvoiceBtn) printInvoiceBtn.addEventListener('click', function () { printTicketDoc(client, t, 'invoice'); });
 
     var delBtn = $('p2-delete-btn'), confirmBox = $('p2-delete-confirm');
     if (delBtn && confirmBox) {
