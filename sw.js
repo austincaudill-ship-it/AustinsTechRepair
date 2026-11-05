@@ -8,7 +8,10 @@
 // FEE_SPLIT_2026_11_05: bumped to atrg-v7 for the $15 / $35 visit-fee split.
 // QR_FIX_PASS_2026_11_05: bumped to atrg-v8 for the account drop-down,
 // no-QR-at-rest card, tap-to-enlarge popup, and Scan In popup fixes.
-const CACHE = "atrg-v8";
+// QR_FIX_PASS_2_2026_11_05: bumped to atrg-v9 — account overlay retired
+// for a page, flat portal-style drop-downs, card QR restored by the
+// member's name, and the quick-glance header drop-down.
+const CACHE = "atrg-v9";
 const CORE = [
   "/",
   "/index.html",

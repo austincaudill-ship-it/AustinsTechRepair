@@ -1295,10 +1295,9 @@
 
   document.addEventListener('DOMContentLoaded', function () {
 
-    var overlay = document.getElementById('acct-overlay');
-    var modal = document.getElementById('acct-modal');
+    /* QR_FIX_PASS_2_2026_11_05: the account overlay/modal elements are
+       retired — My Account is a page (#account) now. */
     var openBtn = document.getElementById('account-open-btn');
-    var closeBtn = document.getElementById('acct-close');
     var acctLabel = document.getElementById('account-label');
 
     var authView = document.getElementById('acct-auth-view');
@@ -1318,7 +1317,7 @@
     var pointsNum = document.getElementById('acct-points-num');
     var logoutBtn = document.getElementById('acct-logout');
 
-    if (!overlay || !modal) return; // account UI not present
+    if (!authView || !dashView) return; // account UI not present
 
     var sb = null;
     if (window.supabase && window.supabase.createClient) {
@@ -1359,19 +1358,19 @@
       }
     }
 
-    /* ---------- modal open/close ---------- */
-    function openModal() {
+    /* ---------- account page open --------------------------------
+       QR_FIX_PASS_2_2026_11_05: My Account is a page now, not an
+       overlay — "opening" it shows the right view and switches to the
+       #account page like any other navigation. There is nothing to
+       close and no scroll to lock or restore. closeModal survives as a
+       harmless error-clear for its one remaining caller (logout). */
+    function goAccount() {
       var s = getSession();
       if (s) { showDashboard(s); }
       else { showAuth(); }
-      overlay.hidden = false;
-      modal.hidden = false;
-      document.body.style.overflow = 'hidden';
+      if (window.location.hash !== '#account') { window.location.hash = '#account'; }
     }
     function closeModal() {
-      overlay.hidden = true;
-      modal.hidden = true;
-      document.body.style.overflow = '';
       showError(loginError, '');
       showError(signupError, '');
       showError(dashError, '');
@@ -1388,12 +1387,10 @@
       pointsNum.textContent = (typeof s.points === 'number') ? s.points : 0;
     }
 
-    if (openBtn) openBtn.addEventListener('click', openModal);
-    if (closeBtn) closeBtn.addEventListener('click', closeModal);
-    if (overlay) overlay.addEventListener('click', closeModal);
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && !modal.hidden) closeModal();
-    });
+    if (openBtn) openBtn.addEventListener('click', goAccount);
+    /* QR_FIX_PASS_2_2026_11_05: no close button, no overlay, and no
+       Escape-to-close — a page is left by navigating, like every other
+       page on the site. */
 
     /* ---------- tabs ---------- */
     function selectTab(which) {
@@ -2196,7 +2193,7 @@ if ("serviceWorker" in navigator) {
 })();
 
 /* ==================== MY ACCOUNT MENU ==================== */
-/* The logged-in account modal is one My Account tab with a menu:
+/* The logged-in account page is one My Account tab with a menu:
    Repairs, Rewards & Vouchers, Cart, Account Settings, Sign Out.
    Repairs shows the repair list, thread, and new-request views;
    Account Settings shows profile, birthday, and password. Sign Out
@@ -2644,20 +2641,15 @@ if ("serviceWorker" in navigator) {
 
   document.addEventListener('DOMContentLoaded', function () {
     /* Tappable points balance -> the Shop. The anchor carries
-     * data-page="shop", so the router navigates; we just close the
-     * account modal first (its own close button restores scroll). */
+     * data-page="shop", so the router navigates — and since
+     * QR_FIX_PASS_2_2026_11_05 the account is a page, that navigation
+     * is all it takes to leave it; there is no sheet to close first. */
     var ptsLink = $('acct-points-link');
-    if (ptsLink) ptsLink.addEventListener('click', function () {
-      var c = $('acct-close');
-      if (c) c.click();
-    });
+    if (ptsLink) ptsLink.addEventListener('click', function () { /* navigation only — see above */ });
 
-    /* Account-box Cart row: close the account, go to the Shop, open
-     * the cart drawer. */
+    /* Account-page Cart row: go to the Shop, open the cart drawer. */
     var cartBtn = $('acct-menu-cart');
     if (cartBtn) cartBtn.addEventListener('click', function () {
-      var c = $('acct-close');
-      if (c) c.click();
       var link = document.querySelector('.nav-link[data-page="shop"], .menu-link[data-page="shop"]');
       if (link) link.click();
       else if (window.location.hash !== '#shop') window.location.hash = '#shop';
@@ -2745,14 +2737,17 @@ if ("serviceWorker" in navigator) {
       if (amt) amt.hidden = !usePts.checked;
     });
 
-    /* Refresh the account surfaces whenever the account modal opens
-     * (covers sign-in, when renderDash swaps the views in). */
-    var modal = $('acct-modal');
-    if (modal && window.MutationObserver) {
+    /* Refresh the account surfaces whenever the account page becomes
+     * the active page (QR_FIX_PASS_2_2026_11_05: this watched the old
+     * modal's hidden attribute; the page system marks the visible page
+     * with .active instead). Covers sign-in, when renderDash swaps the
+     * views in. */
+    var acctPage = $('account');
+    if (acctPage && window.MutationObserver) {
       var mo = new MutationObserver(function () {
-        if (!modal.hidden && getSession()) refreshAccountSurfaces();
+        if (acctPage.classList.contains('active') && getSession()) refreshAccountSurfaces();
       });
-      mo.observe(modal, { attributes: true, attributeFilter: ['hidden'] });
+      mo.observe(acctPage, { attributes: true, attributeFilter: ['class'] });
     }
     var openBtn = $('account-open-btn');
     if (openBtn) openBtn.addEventListener('click', function () {

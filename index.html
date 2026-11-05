@@ -87,10 +87,20 @@
       <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark/light mode">
         <i class="fas fa-moon" id="theme-icon"></i>
       </button>
-      <button class="account-btn" id="account-open-btn" aria-label="Your account" title="Account & rewards">
-        <i class="fas fa-user-circle"></i>
-        <span class="account-label" id="account-label">My Account</span>
-      </button>
+      <span class="acct-glance-anchor">
+        <button class="account-btn" id="account-open-btn" aria-label="Your account" title="Account & rewards">
+          <i class="fas fa-user-circle"></i>
+          <span class="account-label" id="account-label">My Account</span>
+        </button>
+        <button class="acct-glance-toggle" id="acct-glance-toggle" type="button" aria-label="Quick glance at your account" aria-haspopup="true" aria-expanded="false" title="Quick glance"><i class="fas fa-chevron-down" aria-hidden="true"></i></button>
+        <div class="acct-glance" id="acct-glance" hidden>
+          <p class="acct-glance-name" id="acct-glance-name">Welcome</p>
+          <p class="acct-glance-plan" id="acct-glance-plan">Log in to see your membership, points, and code.</p>
+          <p class="acct-glance-points" id="acct-glance-points"></p>
+          <button class="acct-glance-qr" id="acct-glance-qr" type="button" aria-label="Show your membership code" hidden></button>
+          <button class="acct-glance-open" id="acct-glance-open" type="button">Open my account <i class="fas fa-arrow-right" aria-hidden="true"></i></button>
+        </div>
+      </span>
       <a class="btn btn-outline btn-sm emp-dash-link" id="emp-dash-link" href="portal.html" data-page="employee-dashboard"><i class="fas fa-briefcase"></i> <span class="account-label">Portal</span></a>
       <a class="btn btn-primary header-cta" href="#repair" data-page="repair"><i class="fas fa-wrench"></i> Book a Repair</a>
     </div>
@@ -1216,11 +1226,13 @@
       </div>
     </aside>
 
-    <!-- ACCOUNT MODAL -->
-    <div class="acct-overlay" id="acct-overlay" hidden></div>
-    <div class="acct-modal" id="acct-modal" role="dialog" aria-modal="true" aria-label="Your account" hidden>
+    <!-- ACCOUNT PAGE — QR_FIX_PASS_2_2026_11_05: the account overlay/sheet
+         was retired by owner decision ("the account button can be its own
+         page instead of an overlay"). My Account is a normal page in the
+         site's page system, reached with #account; leaving it is the
+         ordinary page switch, so nothing can layer over another page. -->
+    <section id="account" class="page">
       <div class="acct-card">
-        <button class="acct-close" id="acct-close" aria-label="Close account"><i class="fas fa-times"></i></button>
 
         <!-- Login / signup view -->
         <div id="acct-auth-view">
@@ -1298,22 +1310,29 @@
                since only. The one and only customer-side QR lives inside
                the Check In / Show to Tech popup. -->
           <div class="acct-cardbox" id="acct-qr-card" hidden>
-            <div class="acct-cardbox-head">
-              <span class="acct-cardbox-title"><i class="fas fa-id-card"></i> My ATR One Card</span>
-              <span class="acct-cardbox-status" id="acct-qr-status">Loading…</span>
+            <div class="acct-cardbox-top">
+              <div class="acct-cardbox-id">
+                <div class="acct-cardbox-head">
+                  <span class="acct-cardbox-title"><i class="fas fa-id-card"></i> My ATR One Card</span>
+                  <span class="acct-cardbox-status" id="acct-qr-status">Loading…</span>
+                </div>
+                <div class="acct-cardbox-name" id="acct-qr-name"></div>
+                <div class="acct-cardbox-tier" id="acct-qr-tier"></div>
+                <div class="acct-cardbox-since" id="acct-qr-since"></div>
+              </div>
+              <button class="acct-cardbox-qr" id="acct-qr-box" type="button" aria-label="Show your membership code"></button>
             </div>
-            <div class="acct-cardbox-name" id="acct-qr-name"></div>
-            <div class="acct-cardbox-tier" id="acct-qr-tier"></div>
-            <div class="acct-cardbox-since" id="acct-qr-since"></div>
             <button class="btn btn-primary btn-lg acct-submit" id="acct-qr-show" type="button"><i class="fas fa-qrcode"></i> Show to Tech</button>
             <p class="acct-muted acct-cardbox-note" id="acct-qr-note">Tap Show to Tech at your appointment and hold up your code — it pulls up your ATR One membership right away.</p>
           </div>
 
           <!-- ATRONE_QR_2026_11_05: schedule entry point. Jumps to the site's
                repair flow (which prefills a signed-in customer's contact
-               details) and closes this account view behind it. The
-               in-account New Request form in My Repairs is untouched. -->
-          <a class="btn btn-primary btn-lg acct-submit" id="acct-schedule-btn" href="#repair" data-page="repair" style="display:block;text-align:center;margin:0 0 1rem;"><i class="fas fa-calendar-check"></i> Schedule a repair</a>
+               details). QR_FIX_PASS_2_2026_11_05: the account is a page
+               now, so the jump is an ordinary page switch — nothing stays
+               layered behind it. The in-account New Request form in My
+               Repairs is untouched. -->
+          <a class="acct-menu-item acct-flat-row" id="acct-schedule-btn" href="#repair" data-page="repair"><i class="fas fa-calendar-check"></i> Schedule a repair</a>
 
           <!-- My Account menu — QR_FIX_PASS_2026_11_05 (Austin, Nov 5, 2026):
                the sections are a simple drop-down, like the rest of the
@@ -1324,8 +1343,8 @@
                the same Show to Tech member QR popup as the card; Cart and
                Sign Out are actions, not sections. -->
           <div class="acct-menu" role="group" aria-label="My Account">
-            <button class="acct-menu-item" type="button" id="acct-menu-checkin"><i class="fas fa-qrcode"></i> Check In</button>
-            <button class="acct-menu-item is-active" type="button" data-acct-menu="repairs" aria-expanded="true"><i class="fas fa-tools"></i> Repairs <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
+            <button class="acct-menu-item acct-flat-row" type="button" id="acct-menu-checkin"><i class="fas fa-qrcode"></i> Check In</button>
+            <button class="acct-menu-item acct-flat-row is-active" type="button" data-acct-menu="repairs" aria-expanded="true"><i class="fas fa-tools"></i> Repairs <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
             <div id="acct-view-repairs">
             <!-- My Repairs -->
             <div class="acct-repairs" id="acct-repairs">
@@ -1421,7 +1440,7 @@
             </div>
 
             </div>
-            <button class="acct-menu-item" type="button" data-acct-menu="rewards" aria-expanded="false"><i class="fas fa-ticket"></i> Rewards &amp; Vouchers <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
+            <button class="acct-menu-item acct-flat-row" type="button" data-acct-menu="rewards" aria-expanded="false"><i class="fas fa-ticket"></i> Rewards &amp; Vouchers <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
 
             <!-- Rewards & Vouchers (SITE_POINTS_SPEND_2026_10_30) -->
             <div id="acct-view-rewards" hidden>
@@ -1444,8 +1463,8 @@
                 <div id="pts-voucher-list"><p class="acct-muted">Loading&hellip;</p></div>
               </div>
             </div>
-            <button class="acct-menu-item" type="button" id="acct-menu-cart"><i class="fas fa-shopping-cart"></i> Cart <span class="acct-cart-count" id="acct-cart-count" hidden>0</span></button>
-            <button class="acct-menu-item" type="button" data-acct-menu="settings" aria-expanded="false"><i class="fas fa-gear"></i> Account Settings <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
+            <button class="acct-menu-item acct-flat-row" type="button" id="acct-menu-cart"><i class="fas fa-shopping-cart"></i> Cart <span class="acct-cart-count" id="acct-cart-count" hidden>0</span></button>
+            <button class="acct-menu-item acct-flat-row" type="button" data-acct-menu="settings" aria-expanded="false"><i class="fas fa-gear"></i> Account Settings <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
 
             <div id="acct-view-settings" hidden>
             <!-- My profile -->
@@ -1537,12 +1556,12 @@
               <p><i class="fas fa-tag"></i> <strong>Redeem:</strong> every 100 points = $5 off your next repair. Just mention your points when you book.</p>
             </div>
             </div>
-            <button class="acct-menu-item" type="button" id="authx-logout"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+            <button class="acct-menu-item acct-flat-row" type="button" id="authx-logout"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
           </div>
           <p class="acct-error" id="acct-dash-error" hidden></p>
         </div>
       </div>
-    </div>
+    </section>
 
     <!-- ATRONE_QR_2026_11_05: Show to Tech popup — the member's own device shows
          their account QR big enough to scan across a room. Display only. -->
@@ -2798,8 +2817,8 @@
       badge.hidden = !(qty > 0);
     }
     function openCartFromAccount() {
-      var close = $('acct-close');
-      if (close) close.click();
+      /* QR_FIX_PASS_2_2026_11_05: no sheet to close anymore — the nav
+         link's own page switch leaves the account page behind. */
       var link = document.querySelector('.nav-link[data-page="shop"], .menu-link[data-page="shop"]');
       if (link) link.click();
       else if (window.location.hash !== '#shop') window.location.hash = '#shop';
@@ -3724,6 +3743,33 @@
      points down when closed, flips when its section is the open one. */
   .acct-menu-item .acct-menu-chev{margin-left:auto;font-size:.8rem}
   .acct-menu-item.is-active .acct-menu-chev{transform:rotate(180deg)}
+  /* QR_FIX_PASS_2_2026_11_05 (owner amendment): a modest QR sits at the
+     top of the member card, next to the member's name — not a
+     centerpiece. It is a button: tapping it opens the Check In popup. */
+  .acct-cardbox-top{display:flex;align-items:flex-start;gap:.8rem;text-align:left}
+  .acct-cardbox-id{flex:1;min-width:0}
+  .acct-cardbox-qr{flex:none;width:76px;height:76px;padding:5px;margin:0;background:#fff;border:1.5px solid var(--line,#e5d9c8);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .acct-cardbox-qr svg{width:100%;height:auto;display:block}
+  .acct-cardbox-qr:empty{display:none}
+  /* QR_FIX_PASS_2_2026_11_05 (owner idea): quick-glance drop-down
+     anchored to the header account button. The button itself goes to
+     the account page; the chevron toggles this compact panel — name,
+     plan + status, points, the member QR, and an Open row. It carries
+     no sections and no forms and closes on any navigation. */
+  .acct-glance-anchor{position:relative;display:inline-flex;align-items:stretch}
+  .acct-glance-anchor .account-btn{border-radius:var(--radius-md) 0 0 var(--radius-md)}
+  .acct-glance-toggle{border:2px solid var(--line);border-left:none;background:transparent;color:var(--ink);border-radius:0 var(--radius-md) var(--radius-md) 0;padding:0 .55rem;cursor:pointer;font-size:.8rem;font-family:inherit}
+  .acct-glance-toggle i{transition:transform .2s ease}
+  .acct-glance-toggle[aria-expanded="true"] i{transform:rotate(180deg)}
+  .acct-glance{position:absolute;top:calc(100% + 8px);right:0;width:250px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-lg);padding:.9rem;z-index:1300;text-align:left}
+  .acct-glance[hidden]{display:none}
+  .acct-glance-name{font-weight:800;font-size:1rem;margin:0;color:var(--ink)}
+  .acct-glance-plan{margin:.15rem 0 0;font-weight:700;color:var(--brand,#e8720c);font-size:.88rem}
+  .acct-glance-points{margin:.15rem 0 0;font-size:.88rem;color:var(--muted,#8a7a68)}
+  .acct-glance-qr{display:flex;margin:.7rem auto .2rem;width:96px;height:96px;padding:6px;background:#fff;border:1.5px solid var(--line,#e5d9c8);border-radius:8px;cursor:pointer;align-items:center;justify-content:center}
+  .acct-glance-qr[hidden]{display:none}
+  .acct-glance-qr svg{width:100%;height:auto;display:block}
+  .acct-glance-open{display:flex;align-items:center;gap:.5rem;width:100%;margin-top:.6rem;padding:.55rem .15rem .1rem;background:none;border:none;border-top:1px solid var(--line,#e5d9c8);color:var(--ink);font:inherit;font-weight:700;cursor:pointer;text-align:left}
   .acct-qr-overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:1200}
   .acct-qr-modal{position:fixed;inset:0;z-index:1201;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#fff;color:#111;padding:1.2rem;text-align:center}
   .acct-qr-modal[hidden]{display:none}
@@ -3883,6 +3929,7 @@
      never guesses. */
   var TIER_NAMES = { single: 'Individual', family: 'Family', business: 'Business', business_plus: 'Business', business_pro: 'Business Pro' };
   var acctCardWired = false, acctCardPayload = '', acctCardName = '', acctCardTierLine = '', acctCardSince = '';
+  var glanceWired = false; /* QR_FIX_PASS_2_2026_11_05: one-shot wiring guard, same pattern as acctCardWired */
   var acctCardPoints = null, acctCardCustSince = '';
   var CARD_NOTE_DEFAULT = 'Tap Show to Tech at your appointment and hold up your code \u2014 it pulls up your ATR One membership right away.';
   var CARD_NOTE_FREE = 'Free members earn points on every repair and get surprise member discounts along the way. Tap Show to Tech at your appointment and hold up your code.';
@@ -3935,13 +3982,23 @@
        our system hooks to the account after scan" — so nothing on the
        card or the popup ever prints it. */
     $('acct-qr-name').textContent = acctCardName;
-    /* QR_FIX_PASS_2026_11_05: no QR is drawn on the card anymore — the
-       payload is only rendered inside the Check In popup, on demand. */
+    /* QR_FIX_PASS_2_2026_11_05 (owner amendment): a modest QR sits at
+       the top of the card next to the member's name — drawn here from
+       the same payload the Check In popup uses. Tapping it opens the
+       popup (wired below). */
+    drawQrInto($('acct-qr-box'), acctCardPayload, 66);
+    renderGlance();
     card.hidden = false;
     if (!acctCardWired) {
       acctCardWired = true;
-      var schedBtn = $('acct-schedule-btn');
-      if (schedBtn) schedBtn.addEventListener('click', function () { var cb = $('acct-close'); if (cb) { try { cb.click(); } catch (e) {} } });
+      /* QR_FIX_PASS_2_2026_11_05: the pass-1 close-the-sheet crutch on
+         the Schedule anchor is gone with the sheet — the anchor's own
+         data-page routing switches pages by itself. The card QR and
+         the quick-glance QR open the same Check In popup. */
+      var cardQrBtn = $('acct-qr-box');
+      if (cardQrBtn) cardQrBtn.addEventListener('click', openQrPopup);
+      var glanceQrBtn = $('acct-glance-qr');
+      if (glanceQrBtn) glanceQrBtn.addEventListener('click', function () { closeGlance(); openQrPopup(); });
       $('acct-qr-show').addEventListener('click', openQrPopup);
       /* Pass 3: the account menu's Check In button (first item, above
          Repairs) opens the very same popup. The menu only exists inside
@@ -3972,7 +4029,10 @@
       /* false = the lookup worked and there is no membership row at all:
          a Free member (see setMembershipLine). */
       setMembershipLine(row);
-    }).catch(function () { setMembershipLine(undefined); });
+    }).catch(function () { setMembershipLine(undefined); })
+      /* QR_FIX_PASS_2_2026_11_05: the glance reads the same tier line —
+         refresh it once the membership answer lands, either way. */
+      .then(function () { renderGlance(); });
   }
   /* membership === null: still loading. undefined: lookup unavailable.
      false: lookup worked, no membership row exists. A row object: the
@@ -4065,6 +4125,40 @@
     var modal = $('acct-qr-modal'), ov = $('acct-qr-overlay');
     if (modal) { modal.classList.remove('is-enlarged'); modal.hidden = true; }
     if (ov) ov.hidden = true;
+  }
+
+  /* ---------- QR_FIX_PASS_2_2026_11_05: quick glance ------------------
+     A compact header drop-down with just the essentials — member name,
+     plan + status, reward points, the small member QR — plus an "Open
+     my account" row. It renders from the same state the member card
+     uses, never routes anywhere by itself, and is NOT the old account
+     sheet: no sections, no forms. */
+  function renderGlance() {
+    var nameEl = $('acct-glance-name'), planEl = $('acct-glance-plan'),
+        ptsEl = $('acct-glance-points'), qrBtn = $('acct-glance-qr');
+    if (!nameEl || !planEl || !ptsEl || !qrBtn) return;
+    if (currentCust) {
+      nameEl.textContent = acctCardName || currentCust.name || '';
+      planEl.textContent = acctCardTierLine || 'ATR One';
+      ptsEl.textContent = (acctCardPoints != null) ? acctCardPoints + ' points' : '';
+      qrBtn.hidden = false;
+      drawQrInto(qrBtn, acctCardPayload, 84);
+    } else {
+      nameEl.textContent = 'Welcome';
+      planEl.textContent = 'Log in to see your membership, points, and code.';
+      ptsEl.textContent = '';
+      qrBtn.hidden = true;
+    }
+  }
+  function openGlance() {
+    var p = $('acct-glance'), t = $('acct-glance-toggle');
+    if (p) p.hidden = false;
+    if (t) t.setAttribute('aria-expanded', 'true');
+  }
+  function closeGlance() {
+    var p = $('acct-glance'), t = $('acct-glance-toggle');
+    if (p) p.hidden = true;
+    if (t) t.setAttribute('aria-expanded', 'false');
   }
 
   /* ---------- ATRONE_QR_2026_11_05: post-submit create-a-password offer ----
@@ -4463,13 +4557,10 @@
           writeLocalSession(cust, pts);
           renderDash(cust, pts);
           fillProfile(cust);
-          /* If the account modal is already open, nudge the legacy
-             script.js open-hook so My Repairs loads right away. */
-          var modal = $('acct-modal');
-          if (modal && !modal.hidden) {
-            var openBtn = $('account-open-btn');
-            if (openBtn) { try { openBtn.click(); } catch (e) {} }
-          }
+          /* QR_FIX_PASS_2_2026_11_05: the old "nudge the open hook when
+             the modal is already open" block is gone with the modal —
+             renderDash above already loaded My Repairs, and there is no
+             sheet left to nudge. */
         });
       })
       .catch(function () {
@@ -4481,8 +4572,10 @@
   function exitAccount() {
     linkedUid = null;
     currentCustomer = null;
+    currentCust = null; /* QR_FIX_PASS_2_2026_11_05: the glance keys off this too */
     clearLocalSession();
     renderHeader(null, 0);
+    renderGlance();
     showAuth();
   }
 
@@ -4522,7 +4615,40 @@
         window.atrTurnstile.mount($('ts-login'));
         window.atrTurnstile.mount($('ts-signup'));
       }
+      /* QR_FIX_PASS_2_2026_11_05: My Account is a page — the account
+         button navigates to it like any other page switch. Wired here
+         as well as in script.js so the button works even against a
+         stale cached script.js; setting the same hash twice is a
+         no-op, and the glance always closes on the way. */
+      closeGlance();
+      if (window.location.hash !== '#account') { window.location.hash = '#account'; }
     });
+
+    /* QR_FIX_PASS_2_2026_11_05: quick-glance wiring — the chevron
+       toggles the panel (and never triggers the button's navigation),
+       a tap anywhere outside closes it, any navigation closes it, and
+       the Open row goes to the full account page. */
+    if (!glanceWired) { glanceWired = true;
+    var glanceToggle = $('acct-glance-toggle');
+    if (glanceToggle) glanceToggle.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var p = $('acct-glance'); if (!p) return;
+      if (p.hidden) { renderGlance(); openGlance(); } else { closeGlance(); }
+    });
+    var glanceOpenRow = $('acct-glance-open');
+    if (glanceOpenRow) glanceOpenRow.addEventListener('click', function () {
+      closeGlance();
+      if (window.location.hash !== '#account') { window.location.hash = '#account'; }
+    });
+    document.addEventListener('click', function (e) {
+      var p = $('acct-glance'); if (!p || p.hidden) return;
+      var anchor = document.querySelector('.acct-glance-anchor');
+      if (anchor && !anchor.contains(e.target)) closeGlance();
+    });
+    window.addEventListener('hashchange', function () { closeGlance(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeGlance(); });
+    }
+    renderGlance();
 
     var googleBtn = $('authx-google-btn');
     if (googleBtn) googleBtn.addEventListener('click', function () {
@@ -4631,9 +4757,7 @@
     var logoutBtn = $('authx-logout');
     if (logoutBtn) logoutBtn.addEventListener('click', function () {
       if (sb) sb.auth.signOut().catch(function () {});
-      exitAccount();
-      var closeBtn = $('acct-close');
-      if (closeBtn) { try { closeBtn.click(); } catch (e) {} }
+      exitAccount(); /* QR_FIX_PASS_2_2026_11_05: no sheet to close — the auth view simply replaces the dashboard on the same page */
     });
 
     function refreshPasskeys(){ var list=$('authx-passkey-list'); if(!list) return; if(!sb||!sb.auth||!sb.auth.passkey||!sb.auth.passkey.list) return; sb.auth.passkey.list().then(function(res){ if(res.error) return; var arr=(res.data&&res.data.passkeys)||res.data||[]; list.textContent=''; if(!arr.length){ var em=document.createElement('p'); em.className='acct-muted'; em.textContent='No passkeys yet.'; list.appendChild(em); return; } arr.forEach(function(pk){ var row=document.createElement('div'); var nm=document.createElement('span'); nm.textContent=pk.friendly_name||pk.friendlyName||'Passkey'; row.appendChild(nm); var rm=document.createElement('button'); rm.type='button'; rm.className='btn btn-outline btn-sm'; rm.textContent='Remove'; rm.addEventListener('click',function(){ sb.auth.passkey.delete({passkeyId:pk.id}).then(function(){ refreshPasskeys(); }).catch(function(){}); }); row.appendChild(rm); list.appendChild(row); }); }).catch(function(){}); } var pkSetup=$('authx-passkey-setup-btn'); if(pkSetup)pkSetup.addEventListener('click',function(){ var msg=$('authx-profile-msg'); if(!sb||!sb.auth||!sb.auth.registerPasskey){ if(msg)msg.textContent='Passkeys are not available in this browser.'; return; } sb.auth.registerPasskey().then(function(res){ if(msg)msg.textContent=res.error?(res.error.message||'Could not set up a passkey.'):'Passkey set up.'; if(!res.error) refreshPasskeys(); }).catch(function(err){ if(msg)msg.textContent=(err&&err.message)||'Passkey setup was cancelled or failed.'; }); }); refreshPasskeys(); var profileSave = $('authx-profile-save');
@@ -4781,15 +4905,9 @@
   });
 })();
 </script>
-<script>
-(function () {
-  function wire(overlayId, closeId) {
-    var o = document.getElementById(overlayId), b = document.getElementById(closeId);
-    if (o && b) o.addEventListener('click', function () { b.click(); });
-  }
-  wire('acct-overlay', 'acct-close');
-})();
-</script>
+<!-- QR_FIX_PASS_2_2026_11_05: the overlay click-to-close wiring that
+     lived here is gone with the account sheet — there is no overlay left
+     to forward clicks from. -->
 <script>
 /* SITE_DEVICE_LOOKUP_2026_10_31: Prices lookup rebuilt the way Austin directed —
    device type first, then brand, then model, then repair. Prices are the exact

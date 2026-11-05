@@ -674,27 +674,19 @@ html[data-theme="dark"] .header {
 .account-btn.logged-in { border-color: var(--teal); color: var(--teal); }
 .account-btn.logged-in:hover { border-color: var(--teal); color: var(--teal); opacity: 0.85; }
 
-.acct-overlay {
-  position: fixed; inset: 0; background: rgba(20, 14, 8, 0.55); z-index: 9998;
-}
-.acct-overlay[hidden] { display: none; }
-.acct-modal {
-  position: fixed; inset: 0; z-index: 9999;
-  display: flex; align-items: center; justify-content: center; padding: 1rem;
-}
-.acct-modal[hidden] { display: none; }
+/* QR_FIX_PASS_2_2026_11_05: the account overlay/sheet was retired by
+   owner decision — My Account is a normal page (#account) in the site's
+   page system. The card keeps its look but flows with the page: no
+   fixed positioning, no internal scroll cap, nothing layered. */
 .acct-card {
-  position: relative; width: min(440px, 100%);
+  position: relative; width: min(440px, 100%); margin: 0 auto;
   background: var(--surface); border: 1px solid var(--line);
   border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
-  padding: 2rem 1.75rem; max-height: 92vh; overflow-y: auto;
+  padding: 2rem 1.75rem;
 }
-.acct-close {
-  position: absolute; top: 0.9rem; right: 0.9rem;
-  background: transparent; border: none; color: var(--muted);
-  font-size: 1.2rem; cursor: pointer; padding: 0.4rem; line-height: 1;
-}
-.acct-close:hover { color: var(--ink); }
+/* Buttons inside the account page use the portal's 8px radius, not the
+   home screen's 999px pill shape (owner: no pills anywhere in it). */
+#account .btn { border-radius: 8px; }
 .acct-card h3 { font-family: var(--font-display); font-size: 1.5rem; margin-bottom: 0.4rem; color: var(--ink); }
 .acct-card h3 i { color: var(--brand); margin-right: 0.35rem; }
 .acct-sub { color: var(--muted); font-size: 0.92rem; margin-bottom: 1.2rem; }
@@ -708,16 +700,25 @@ html[data-theme="dark"] .header {
 .acct-tab.active { border-color: var(--brand); color: var(--brand); background: var(--brand-soft); }
 
 /* My Account menu: Repairs, Account Settings, Sign Out, Apple style list */
-.acct-menu { display: flex; flex-direction: column; gap: 0.5rem; margin: 1rem 0 1.25rem; }
-.acct-menu-item {
-  display: flex; align-items: center; gap: 0.7rem; width: 100%;
-  padding: 0.8rem 1rem; border: 1px solid var(--line); border-radius: var(--radius-sm);
-  background: var(--surface); color: var(--ink); font-weight: 700; font-size: 0.95rem;
+/* QR_FIX_PASS_2_2026_11_05 (owner: "regular drop downs… just like an
+   associate portal"): the account menu is a flat accordion in the
+   portal's own pattern (portal.css .tk-acc-head / .ci-acc-head) — no
+   boxes, no fill, no pill radius; rows are separated by a hairline and
+   each panel drops directly under its own row. */
+.acct-menu { display: flex; flex-direction: column; gap: 0; margin: 1rem 0 1.25rem; }
+.acct-menu-item, .acct-flat-row {
+  display: flex; align-items: center; gap: 0.55rem; width: 100%;
+  min-height: 48px; padding: 0.3rem 0.15rem;
+  background: none; border: none; border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  color: var(--ink); font-weight: 700; font-size: 0.95rem;
   font-family: var(--font-body); cursor: pointer; text-align: left;
+  text-decoration: none;
 }
 .acct-menu-item i { color: var(--brand); width: 1.2rem; text-align: center; }
-.acct-menu-item.is-active { border-color: var(--brand); background: var(--brand-soft); color: var(--brand-deep); }
+.acct-menu-item.is-active { color: var(--brand-deep); }
 .acct-menu-item.is-active i { color: var(--brand-deep); }
+.acct-menu > [id^="acct-view-"] { border-bottom: 1px solid var(--line); padding-bottom: 1rem; }
 .acct-password { border-top: 1px solid var(--line); margin-top: 1.25rem; padding-top: 1rem; }
 .acct-password h4 { margin: 0 0 0.4rem; }
 
