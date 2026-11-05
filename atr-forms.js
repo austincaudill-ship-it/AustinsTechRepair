@@ -229,7 +229,7 @@
       var text = {
         'service-request': 'Thanks ' + first + '! Your service request is in. We&rsquo;ll reach out shortly to confirm your appointment.',
         'contact': 'Thanks ' + first + '! Your message is in &mdash; we typically reply within the hour during business hours.',
-        'job-application': 'Thanks ' + first + '! Your application is in. We&rsquo;ll review it and reach out if it&rsquo;s a fit.',
+        'job-application': 'Thank you for submitting your application. One of our HR associates will be with you shortly.',
         'investors': 'Thanks ' + first + '! Your inquiry is in &mdash; Austin will follow up with you personally.',
         'feedback': 'Thanks for telling us how we did &mdash; feedback like yours helps local folks find us.',
         /* WARRANTY_FORM_2026_11_03 */
