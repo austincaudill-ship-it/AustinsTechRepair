@@ -2788,12 +2788,64 @@ function loadTicketThread(client, ticketId) {
     else { m.hidden = true; m.textContent = ''; }
   }
 
+  /* PORTAL_CRUD_BATCH_A_2026_11_05 (Austin, Nov 5, 2026): document
+   * deletion. Austin's portal-wide rule — every list gets Add and
+   * Delete in the UI, and deletes sit with Admin and above. A
+   * ticket_documents row can now be deleted from both places it
+   * renders (the ticket drawer's Documents section and the
+   * Documents tab): the row goes, and its file goes with it (the
+   * storage.remove shape from the profile-picture flow — the row
+   * delete is authoritative; file removal is best-effort, so a
+   * refused file removal never resurrects the row). The delete
+   * chains .select('id') so a database refusal (no DELETE policy
+   * until crud-batch-a.sql runs) reads as zero rows back and is
+   * treated as a failure — the row is never dropped from the
+   * screen on a failed delete. Both handlers re-check the tier
+   * on every tap, the warranty-delete pattern. */
+  var p4DocRows = [];
+  function deleteTicketDocumentRow(client, row, done) {
+    client.from('ticket_documents').delete().eq('id', row.id).select('id').then(function (res) {
+      if (res.error || !res.data || !res.data.length) { done(false); return; }
+      if (row.storage_path) { try { client.storage.from(DOC_BUCKET).remove([row.storage_path]); } catch (e) {} }
+      done(true);
+    }).catch(function () { done(false); });
+  }
+  function p4DocRowById(id) {
+    for (var i = 0; i < p4DocRows.length; i++) { if (String(p4DocRows[i].id) === String(id)) return p4DocRows[i]; }
+    return null;
+  }
+  function deleteDrawerDocument(client, t, btn) {
+    var row = p4DocRowById(btn.getAttribute('data-p4-doc-del'));
+    if (!row) return;
+    if (!isAdminOrAbove()) { docMsg('Deletes sit with Admin and above.'); return; }
+    if (btn.getAttribute('data-confirm') !== '1') {
+      btn.setAttribute('data-confirm', '1');
+      btn.innerHTML = '<i class="fas fa-trash"></i> Confirm delete?';
+      docMsg('Delete ' + (row.file_name || 'this document') + '? Tap Confirm delete — this cannot be undone.');
+      return;
+    }
+    btn.disabled = true;
+    docMsg('Deleting…');
+    deleteTicketDocumentRow(client, row, function (ok) {
+      if (!ok) {
+        btn.disabled = false;
+        btn.removeAttribute('data-confirm');
+        btn.innerHTML = '<i class="fas fa-trash"></i> Delete';
+        docMsg('Couldn’t delete that document — try again.');
+        return;
+      }
+      docMsg('Document deleted.');
+      loadDocuments(client, t);
+    });
+  }
+
   function loadDocuments(client, t) {
     var box = $('p4-docs');
     if (!box) return;
     client.from('ticket_documents').select('*').eq('ticket_id', t.id).order('created_at', { ascending: false }).then(function (res) {
       if (res.error) { box.innerHTML = '<p class="portal-muted">Documents are not set up for this portal yet.</p>'; return; }
       var rows = res.data || [];
+      p4DocRows = rows;
       if (!rows.length) { box.innerHTML = '<p class="portal-muted">No documents on this ticket yet. Sign the repair authorization or attach one below.</p>'; tkAccSetHint('documents', 'Authorization not signed'); return; }
       box.innerHTML = rows.map(function (d) {
         var when = d.signed_at || d.created_at;
@@ -2803,11 +2855,16 @@ function loadTicketThread(client, ticketId) {
         if (d.note) meta += ' &middot; ' + esc(d.note);
         return '<div class="p2-line"><div class="p2-line-main"><span class="p2-kind">' + esc(DOC_TYPE_LABELS[d.doc_type] || 'Document') + '</span>' +
           '<span class="portal-muted portal-small">' + meta + '</span></div>' +
-          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-p4-view="' + esc(d.storage_path) + '" data-p4-view-name="' + esc(d.file_name || '') + '"><i class="fas fa-eye"></i> View</button></div>';
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-p4-view="' + esc(d.storage_path) + '" data-p4-view-name="' + esc(d.file_name || '') + '"><i class="fas fa-eye"></i> View</button>' +
+          (isAdminOrAbove() ? ' <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-p4-doc-del="' + esc(d.id) + '"><i class="fas fa-trash"></i> Delete</button>' : '') + '</div>';
       }).join('');
       var btns = box.querySelectorAll('[data-p4-view]');
       for (var i = 0; i < btns.length; i++) {
         btns[i].addEventListener('click', function () { viewDocument(client, this.getAttribute('data-p4-view'), this.getAttribute('data-p4-view-name')); });
+      }
+      var delBtns = box.querySelectorAll('[data-p4-doc-del]');
+      for (var j = 0; j < delBtns.length; j++) {
+        delBtns[j].addEventListener('click', function () { deleteDrawerDocument(client, t, this); });
       }
       /* PORTAL_TICKET_ACCORDION_2026_11_02: an unsigned repair
        * authorization flags itself on the closed Documents header. */
@@ -3831,6 +3888,10 @@ function loadTicketThread(client, ticketId) {
       if (!d.ticket_id) {
         html += ' <button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-doc-attach="' + esc(d.id) + '"><i class="fas fa-paperclip"></i> Attach</button>';
       }
+      /* PORTAL_CRUD_BATCH_A_2026_11_05: per-row Delete, Admin-or-above. */
+      if (isAdminOrAbove()) {
+        html += ' <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-doc-del="' + esc(d.id) + '"><i class="fas fa-trash"></i> Delete</button>';
+      }
       html += '</div>';
       if (!d.ticket_id) {
         html += '<div class="p2-form" id="picker-' + esc(d.id) + '" hidden><div class="p2-form-row">' +
@@ -3851,6 +3912,43 @@ function loadTicketThread(client, ticketId) {
     for (var k = 0; k < confirms.length; k++) {
       confirms[k].addEventListener('click', function () { confirmDocAttach(client, this.getAttribute('data-attach-confirm')); });
     }
+    var dels = box.querySelectorAll('[data-doc-del]');
+    for (var m = 0; m < dels.length; m++) {
+      dels[m].addEventListener('click', function () { deleteDocTabDocument(client, this); });
+    }
+  }
+
+  /* PORTAL_CRUD_BATCH_A_2026_11_05: the Documents tab half of
+   * document deletion — same row+file helper and confirm-arm
+   * shape as the ticket drawer (deleteDrawerDocument above). On
+   * success the row leaves docTabRows and the list re-renders
+   * without it. */
+  function deleteDocTabDocument(client, btn) {
+    var id = btn.getAttribute('data-doc-del');
+    var row = null;
+    (docTabRows || []).forEach(function (d) { if (String(d.id) === String(id)) row = d; });
+    if (!row) return;
+    if (!isAdminOrAbove()) { docTabListMsg('Deletes sit with Admin and above.'); return; }
+    if (btn.getAttribute('data-confirm') !== '1') {
+      btn.setAttribute('data-confirm', '1');
+      btn.innerHTML = '<i class="fas fa-trash"></i> Confirm delete?';
+      docTabListMsg('Delete ' + (row.file_name || 'this document') + '? Tap Confirm delete — this cannot be undone.');
+      return;
+    }
+    btn.disabled = true;
+    docTabListMsg('Deleting…');
+    deleteTicketDocumentRow(client, row, function (ok) {
+      if (!ok) {
+        btn.disabled = false;
+        btn.removeAttribute('data-confirm');
+        btn.innerHTML = '<i class="fas fa-trash"></i> Delete';
+        docTabListMsg('Couldn’t delete that document — try again.');
+        return;
+      }
+      docTabRows = (docTabRows || []).filter(function (d) { return String(d.id) !== String(id); });
+      renderDocTabList(client);
+      docTabListMsg('Document deleted.');
+    });
   }
 
   function viewDocTab(client, path, fileName) {
@@ -5616,8 +5714,16 @@ function loadTicketThread(client, ticketId) {
   }
 
   /* ================= JOB APPLICATIONS ================= */
+  /* PORTAL_CRUD_BATCH_A_2026_11_05: the rows on screen, so the
+   * card Delete handler can name the applicant in its confirm. */
+  var appRowsCache = [];
+  function appRowById(id) {
+    for (var i = 0; i < appRowsCache.length; i++) { if (String(appRowsCache[i].id) === String(id)) return appRowsCache[i]; }
+    return null;
+  }
   function renderApplications(rows) {
     var list = $('portal-application-list');
+    appRowsCache = rows || [];
     if (!rows.length) { emptyState(list, 'No job applications yet. Applications from the Careers section of the website will show up here.'); return; }
     list.innerHTML = rows.map(function (a) {
       var bits = [];
@@ -5628,9 +5734,48 @@ function loadTicketThread(client, ticketId) {
         '<div class="portal-card-top"><p class="portal-card-title">' + esc(a.full_name || 'Applicant') + '</p>' + badge(a.status) + '</div>' +
         '<p class="portal-card-meta">' + bits.join(' · ') + '</p>' +
         '<p class="portal-card-meta">Applied ' + esc(fmtDateTime(a.created_at)) + '</p>' +
-        '<div class="portal-card-actions"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-view-application="' + esc(a.id) + '"><i class="fas fa-eye"></i> View details</button></div>' +
+        '<div class="portal-card-actions"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-view-application="' + esc(a.id) + '"><i class="fas fa-eye"></i> View details</button>' +
+        (isAdminOrAbove() ? ' <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-app-del="' + esc(a.id) + '"><i class="fas fa-trash"></i> Delete</button> <span class="portal-muted portal-small" data-app-del-msg="' + esc(a.id) + '"></span>' : '') +
+        '</div>' +
         '</article>';
     }).join('');
+  }
+
+  /* PORTAL_CRUD_BATCH_A_2026_11_05 (Austin, Nov 5, 2026): delete a
+   * job application — a test or junk application can finally be
+   * cleared. Admin-or-above only, two-tap confirm-arm, and the
+   * handler re-checks the tier itself (the warranty-delete
+   * pattern). The delete chains .select('id'): until
+   * crud-batch-a.sql adds the DELETE policy, a refused delete
+   * comes back as zero rows and the card stays with the error. */
+  function deleteApplication(btn) {
+    var id = btn.getAttribute('data-app-del');
+    var msg = document.querySelector('[data-app-del-msg="' + id + '"]');
+    if (!isAdminOrAbove()) { if (msg) msg.textContent = 'Deletes sit with Admin and above.'; return; }
+    if (btn.getAttribute('data-confirm') !== '1') {
+      var row = appRowById(id);
+      var who = row ? (trim(row.full_name) || 'Applicant') : 'Applicant';
+      btn.setAttribute('data-confirm', '1');
+      btn.innerHTML = '<i class="fas fa-trash"></i> Confirm delete?';
+      if (msg) msg.textContent = 'Delete ' + who + '’s application? Tap Confirm delete — this cannot be undone.';
+      return;
+    }
+    btn.disabled = true;
+    if (msg) msg.textContent = 'Deleting…';
+    var fail = function () {
+      btn.disabled = false;
+      btn.removeAttribute('data-confirm');
+      btn.innerHTML = '<i class="fas fa-trash"></i> Delete';
+      if (msg) msg.textContent = 'Couldn’t delete — try again.';
+    };
+    withClient(function (client) {
+      if (!client) { fail(); return; }
+      client.from('job_applications').delete().eq('id', id).select('id').then(function (res) {
+        if (res.error || !res.data || !res.data.length) { fail(); return; }
+        state.loaded.applications = false;
+        loadApplications(true);
+      }).catch(fail);
+    });
   }
 
   function loadApplications(force) {
@@ -5721,8 +5866,16 @@ function loadTicketThread(client, ticketId) {
   }
 
   /* ================= INVESTORS ================= */
+  /* PORTAL_CRUD_BATCH_A_2026_11_05: the rows on screen, for the
+   * card Delete handler's confirm message. */
+  var invRowsCache = [];
+  function invRowById(id) {
+    for (var i = 0; i < invRowsCache.length; i++) { if (String(invRowsCache[i].id) === String(id)) return invRowsCache[i]; }
+    return null;
+  }
   function renderInvestors(rows) {
     var list = $('portal-investor-list');
+    invRowsCache = rows || [];
     if (!rows.length) { emptyState(list, 'No investor inquiries yet. Inquiries from the Investors section of the website will show up here.'); return; }
     list.innerHTML = rows.map(function (v) {
       var bits = [];
@@ -5733,9 +5886,44 @@ function loadTicketThread(client, ticketId) {
         '<div class="portal-card-top"><p class="portal-card-title">' + esc(v.full_name || 'Investor') + '</p>' + badge(v.status) + '</div>' +
         '<p class="portal-card-meta">' + bits.join(' · ') + '</p>' +
         '<p class="portal-card-meta">' + esc(v.email || '') + ' · Received ' + esc(fmtDateTime(v.created_at)) + '</p>' +
-        '<div class="portal-card-actions"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-view-investor="' + esc(v.id) + '"><i class="fas fa-eye"></i> View details</button></div>' +
+        '<div class="portal-card-actions"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-view-investor="' + esc(v.id) + '"><i class="fas fa-eye"></i> View details</button>' +
+        (isAdminOrAbove() ? ' <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-inv-del="' + esc(v.id) + '"><i class="fas fa-trash"></i> Delete</button> <span class="portal-muted portal-small" data-inv-del-msg="' + esc(v.id) + '"></span>' : '') +
+        '</div>' +
         '</article>';
     }).join('');
+  }
+
+  /* PORTAL_CRUD_BATCH_A_2026_11_05: delete an investor inquiry —
+   * same shape as deleteApplication (admin-only, confirm-arm,
+   * .select('id') so a refused delete keeps the card). */
+  function deleteInvestor(btn) {
+    var id = btn.getAttribute('data-inv-del');
+    var msg = document.querySelector('[data-inv-del-msg="' + id + '"]');
+    if (!isAdminOrAbove()) { if (msg) msg.textContent = 'Deletes sit with Admin and above.'; return; }
+    if (btn.getAttribute('data-confirm') !== '1') {
+      var row = invRowById(id);
+      var who = row ? (trim(row.full_name) || 'Investor') : 'Investor';
+      btn.setAttribute('data-confirm', '1');
+      btn.innerHTML = '<i class="fas fa-trash"></i> Confirm delete?';
+      if (msg) msg.textContent = 'Delete ' + who + '’s inquiry? Tap Confirm delete — this cannot be undone.';
+      return;
+    }
+    btn.disabled = true;
+    if (msg) msg.textContent = 'Deleting…';
+    var fail = function () {
+      btn.disabled = false;
+      btn.removeAttribute('data-confirm');
+      btn.innerHTML = '<i class="fas fa-trash"></i> Delete';
+      if (msg) msg.textContent = 'Couldn’t delete — try again.';
+    };
+    withClient(function (client) {
+      if (!client) { fail(); return; }
+      client.from('investor_inquiries').delete().eq('id', id).select('id').then(function (res) {
+        if (res.error || !res.data || !res.data.length) { fail(); return; }
+        state.loaded.investors = false;
+        loadInvestors(true);
+      }).catch(fail);
+    });
   }
 
   function loadInvestors(force) {
@@ -5802,8 +5990,16 @@ function loadTicketThread(client, ticketId) {
   }
 
   /* ================= FEEDBACK ================= */
+  /* PORTAL_CRUD_BATCH_A_2026_11_05: the rows on screen, for the
+   * card Delete handler's confirm message. */
+  var fbRowsCache = [];
+  function fbRowById(id) {
+    for (var i = 0; i < fbRowsCache.length; i++) { if (String(fbRowsCache[i].id) === String(id)) return fbRowsCache[i]; }
+    return null;
+  }
   function renderFeedback(rows) {
     var list = $('portal-feedback-list');
+    fbRowsCache = rows || [];
     if (!rows.length) { emptyState(list, 'No feedback yet. “How Did We Do” responses will show up here.'); return; }
     list.innerHTML = rows.map(function (f) {
       var rec = trim(f.would_recommend)
@@ -5828,13 +6024,54 @@ function loadTicketThread(client, ticketId) {
       var respond = email
         ? '<a class="portal-btn portal-btn-outline portal-btn-sm" href="mailto:' + esc(email) + '?subject=' + encodeURIComponent('Thank you for your feedback \u2014 Austin\u2019s Tech Repair Group') + '"><i class="fas fa-reply"></i> Respond</a>'
         : '';
+      /* PORTAL_CRUD_BATCH_A_2026_11_05: per-card Delete — the
+       * panel was read-only before this. Admin-or-above only. */
+      var del = isAdminOrAbove()
+        ? ' <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-fb-del="' + esc(f.id) + '"><i class="fas fa-trash"></i> Delete</button> <span class="portal-muted portal-small" data-fb-del-msg="' + esc(f.id) + '"></span>'
+        : '';
       return '<article class="portal-card">' +
         '<div class="portal-card-top"><p class="portal-card-title">' + esc(who) + '</p>' + starsHtml(f.rating) + '</div>' +
         '<p class="portal-card-meta">' + esc(fmtDateTime(f.created_at)) + contact + '</p>' +
         exp + comments +
-        '<div class="portal-card-actions">' + rec + respond + '</div>' +
+        '<div class="portal-card-actions">' + rec + respond + del + '</div>' +
         '</article>';
     }).join('');
+    var delBtns = list.querySelectorAll('[data-fb-del]');
+    delBtns.forEach(function (btn) { btn.addEventListener('click', function () { deleteFeedback(btn); }); });
+  }
+
+  /* PORTAL_CRUD_BATCH_A_2026_11_05: delete a feedback submission —
+   * same admin-only, confirm-arm, .select('id') shape as the
+   * applications and investors deletes; on success the panel
+   * reloads without the card. */
+  function deleteFeedback(btn) {
+    var id = btn.getAttribute('data-fb-del');
+    var msg = document.querySelector('[data-fb-del-msg="' + id + '"]');
+    if (!isAdminOrAbove()) { if (msg) msg.textContent = 'Deletes sit with Admin and above.'; return; }
+    if (btn.getAttribute('data-confirm') !== '1') {
+      var row = fbRowById(id);
+      var who = row ? (trim(row.customer_name) || 'Anonymous customer') : 'Anonymous customer';
+      btn.setAttribute('data-confirm', '1');
+      btn.innerHTML = '<i class="fas fa-trash"></i> Confirm delete?';
+      if (msg) msg.textContent = 'Delete ' + who + '’s feedback? Tap Confirm delete — this cannot be undone.';
+      return;
+    }
+    btn.disabled = true;
+    if (msg) msg.textContent = 'Deleting…';
+    withClient(function (client) {
+      var fail = function () {
+        btn.disabled = false;
+        btn.removeAttribute('data-confirm');
+        btn.innerHTML = '<i class="fas fa-trash"></i> Delete';
+        if (msg) msg.textContent = 'Couldn’t delete — try again.';
+      };
+      if (!client) { fail(); return; }
+      client.from('feedback').delete().eq('id', id).select('id').then(function (res) {
+        if (res.error || !res.data || !res.data.length) { fail(); return; }
+        state.loaded.feedback = false;
+        loadFeedback(true);
+      }).catch(fail);
+    });
   }
 
   function loadFeedback(force) {
@@ -10317,7 +10554,11 @@ function loadTicketThread(client, ticketId) {
          * "View details" — the RepairQ pattern (the ticket card says
          * "View details", and inside, an "Edit details" button). */
         '<p><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-cust-profile="' + esc(c.id) + '"><i class="fas fa-id-card"></i> View details</button> ' +
-        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-cust-delete="' + esc(c.id) + '">Delete customer</button> ' +
+        /* PORTAL_CRUD_BATCH_A_2026_11_05: the Delete customer button
+         * used to render for EVERY role. Deletes now sit with Admin
+         * and above, so only they see it (and deleteCustomer()
+         * re-checks the tier before doing anything). */
+        (isAdminOrAbove() ? '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-cust-delete="' + esc(c.id) + '">Delete customer</button> ' : '') +
         '<span class="portal-muted portal-small" data-cust-delete-msg="' + esc(c.id) + '"></span></p>' +
         '</article>';
     }).join('');
@@ -10403,6 +10644,15 @@ function loadTicketThread(client, ticketId) {
   }
 
   function deleteCustomer(customerId) {
+    /* PORTAL_CRUD_BATCH_A_2026_11_05: tier gate. The button no
+     * longer renders below Admin (renderCustomers), and this
+     * re-check stops a stale or hand-built click before the
+     * confirm even opens. */
+    if (!isAdminOrAbove()) {
+      var gateMsg = document.querySelector('[data-cust-delete-msg="' + customerId + '"]');
+      if (gateMsg) gateMsg.textContent = 'Deletes sit with Admin and above.';
+      return;
+    }
     var row = null;
     state.customersCache.forEach(function (c) { if (c.id === customerId) row = c; });
     var name = row ? (row.name || 'this customer') : 'this customer';
@@ -10412,11 +10662,71 @@ function loadTicketThread(client, ticketId) {
     if (msg) msg.textContent = 'Deleting\u2026';
     withClient(function (client) {
       if (!client) { if (msg) msg.textContent = 'Could not delete \u2014 try again.'; return; }
-      client.from('customers').delete().eq('id', customerId).then(function (res) {
-        if (res.error) { if (msg) msg.textContent = 'Could not delete \u2014 this customer may have tickets or orders linked.'; return; }
+      /* PORTAL_CRUD_BATCH_A_2026_11_05: .select('id') chained so a
+       * database refusal (no matching DELETE policy) comes back as
+       * zero rows and reads as the failure it is — before this, a
+       * refused delete returned no error and the card vanished
+       * from the screen while the row stayed in the database. */
+      client.from('customers').delete().eq('id', customerId).select('id').then(function (res) {
+        if (res.error || !res.data || !res.data.length) { if (msg) msg.textContent = 'Could not delete \u2014 this customer may have tickets or orders linked.'; return; }
         state.customersCache = state.customersCache.filter(function (c) { return c.id !== customerId; });
         applyCustomerSearch();
       }).catch(function () { if (msg) msg.textContent = 'Could not delete \u2014 try again.'; });
+    });
+  }
+
+  /* PORTAL_CRUD_BATCH_A_2026_11_05 (Austin, Nov 5, 2026): ADD
+   * CUSTOMER. Until now a customer row could only be born on the
+   * website — a walk-in or phone customer Austin took by hand had
+   * nowhere to be added in the portal. This form sits at the top
+   * of the Customers list: name, phone, email, and an optional
+   * address, inserted straight into public.customers. Adding is
+   * front-office work, so the form is NOT tier-gated (same call
+   * as Check-In ticket creation); only deletes are Admin-gated.
+   * The insert rides crud-batch-a.sql's staff INSERT policy on
+   * customers. */
+  function buildCustAddForm() {
+    var list = $('portal-customer-list');
+    if (!list || !list.parentNode) return;
+    if (document.getElementById('portal-cust-add-form')) return;
+    var form = document.createElement('form');
+    form.id = 'portal-cust-add-form';
+    form.className = 'p2-form';
+    form.setAttribute('autocomplete', 'off');
+    form.innerHTML =
+      '<p class="portal-card-title" style="margin:0 0 0.5rem;"><i class="fas fa-user-plus"></i> Add customer</p>' +
+      '<div class="portal-field"><label for="portal-cust-add-name">Name</label><input id="portal-cust-add-name" type="text" placeholder="Customer name" /></div>' +
+      '<div class="portal-field"><label for="portal-cust-add-phone">Phone</label><input id="portal-cust-add-phone" type="tel" placeholder="(937) 555-0100" /></div>' +
+      '<div class="portal-field"><label for="portal-cust-add-email">Email</label><input id="portal-cust-add-email" type="email" placeholder="name@example.com" /></div>' +
+      '<div class="portal-field"><label for="portal-cust-add-address">Address <span class="portal-muted">(optional)</span></label><input id="portal-cust-add-address" type="text" placeholder="Street, city, ZIP" /></div>' +
+      '<p style="margin:0.5rem 0 0;"><button class="portal-btn portal-btn-primary portal-btn-sm" type="submit"><i class="fas fa-plus"></i> Add customer</button> ' +
+      '<span class="portal-muted portal-small" id="portal-cust-add-msg"></span></p>';
+    list.parentNode.insertBefore(form, list);
+    form.addEventListener('submit', function (e) { e.preventDefault(); addCustomer(); });
+  }
+
+  function addCustomer() {
+    var msg = $('portal-cust-add-msg');
+    var name = trim(($('portal-cust-add-name') || {}).value);
+    var phone = trim(($('portal-cust-add-phone') || {}).value);
+    var email = trim(($('portal-cust-add-email') || {}).value);
+    var address = trim(($('portal-cust-add-address') || {}).value);
+    if (!name) { if (msg) msg.textContent = 'A name is required.'; return; }
+    if (msg) msg.textContent = 'Adding…';
+    withClient(function (client) {
+      if (!client) { if (msg) msg.textContent = 'Couldn’t add — try again.'; return; }
+      var row = { name: name };
+      if (phone) row.phone = phone;
+      if (email) row.email = email;
+      if (address) row.address = address;
+      client.from('customers').insert(row).select('id').then(function (res) {
+        if (res.error || !res.data || !res.data.length) { if (msg) msg.textContent = 'Couldn’t add — try again.'; return; }
+        var form = document.getElementById('portal-cust-add-form');
+        if (form) form.reset();
+        if (msg) msg.textContent = name + ' added.';
+        state.loaded.customers = false;
+        loadCustomers(true);
+      }).catch(function () { if (msg) msg.textContent = 'Couldn’t add — try again.'; });
     });
   }
 
@@ -11743,6 +12053,12 @@ function loadTicketThread(client, ticketId) {
           if (aid) { openApplication(aid); return; }
           var iid = t.getAttribute('data-view-investor');
           if (iid) { openInvestor(iid); return; }
+          /* PORTAL_CRUD_BATCH_A_2026_11_05: applications and
+           * investors card deletes (admin-only, handlers re-check). */
+          var adel = t.getAttribute('data-app-del');
+          if (adel) { deleteApplication(t); return; }
+          var idel = t.getAttribute('data-inv-del');
+          if (idel) { deleteInvestor(t); return; }
           var del = t.getAttribute('data-cust-delete');
           if (del) { deleteCustomer(del); return; }
           /* PORTAL_CUSTOMER_PROFILE_2026_11_02: customer profile + edit-approval actions (cards, drawer profile, approvals section). */
@@ -11759,6 +12075,8 @@ function loadTicketThread(client, ticketId) {
            * they sit in, so they act instead of toggling it. */
           var aps = t.getAttribute('data-assoc-pay-save');
           if (aps) { saveAssocPay(aps); return; }
+          var aod = t.getAttribute('data-assoc-ob-del');
+          if (aod) { assocDeleteOnboarding(t); return; } /* PORTAL_CRUD_BATCH_A_2026_11_05 */
           var ahs = t.getAttribute('data-assoc-home-save');
           if (ahs) { saveAssocHome(ahs); return; } /* PORTAL_MILEAGE_2026_11_02 */
           var aar = t.getAttribute('data-assoc-avatar-remove');
@@ -11839,6 +12157,7 @@ function loadTicketThread(client, ticketId) {
       loadTickets(true);
     });
     $('portal-cust-search').addEventListener('input', applyCustomerSearch);
+    buildCustAddForm(); /* PORTAL_CRUD_BATCH_A_2026_11_05: Add customer form above the list */
     var invFilterEl = $('portal-inv-filter');
     if (invFilterEl) invFilterEl.addEventListener('change', function () { renderInventory(state.inventoryCache); });
     var invFormEl = $('portal-inv-form');
@@ -12766,6 +13085,46 @@ function loadTicketThread(client, ticketId) {
    * fill, so it is listed here only when there is no rate to carry
    * it). No matching row — or a row with nothing to show — renders
    * nothing at all. */
+  /* PORTAL_CRUD_BATCH_A_2026_11_05: delete a new_hires row from
+   * the Associate Accounts card. Two-tap confirm-arm naming the
+   * hire (the warranty-delete pattern); tier re-checked on every
+   * tap. On success the record leaves the onboarding cache and
+   * the roster re-renders without the section. The delete chains
+   * .select('id') so a database refusal (no DELETE policy until
+   * crud-batch-a.sql runs) reads as zero rows back = failure. */
+  function assocDeleteOnboarding(btn) {
+    var id = btn.getAttribute('data-assoc-ob-del');
+    var msg = document.querySelector('[data-assoc-ob-del-msg="' + id + '"]');
+    if (!isAdminOrAbove()) { if (msg) msg.textContent = 'Deletes sit with Admin and above.'; return; }
+    var ob = null, obEmail = null;
+    Object.keys(assocOnboardingByEmail).forEach(function (k) {
+      if (String(assocOnboardingByEmail[k].id) === String(id)) { ob = assocOnboardingByEmail[k]; obEmail = k; }
+    });
+    var who = ob ? (trim(ob.full_name) || 'this hire') : 'this hire';
+    if (btn.getAttribute('data-confirm') !== '1') {
+      btn.setAttribute('data-confirm', '1');
+      btn.innerHTML = '<i class="fas fa-trash"></i> Confirm delete?';
+      if (msg) msg.textContent = 'Delete ' + who + '’s onboarding record? Tap Confirm delete — this cannot be undone. Their login account is not affected.';
+      return;
+    }
+    btn.disabled = true;
+    if (msg) msg.textContent = 'Deleting…';
+    withClient(function (client) {
+      var fail = function () {
+        btn.disabled = false;
+        btn.removeAttribute('data-confirm');
+        btn.innerHTML = '<i class="fas fa-trash"></i> Delete onboarding record';
+        if (msg) msg.textContent = 'Couldn’t delete — try again.';
+      };
+      if (!client) { fail(); return; }
+      client.from('new_hires').delete().eq('id', id).select('id').then(function (res) {
+        if (res.error || !res.data || !res.data.length) { fail(); return; }
+        if (obEmail) delete assocOnboardingByEmail[obEmail];
+        renderAssociates();
+      }).catch(fail);
+    });
+  }
+
   function assocOnboardingSection(ob) {
     if (!ob) return '';
     var rows = [];
@@ -12781,6 +13140,18 @@ function loadTicketThread(client, ticketId) {
     if (!rows.length) return '';
     return '<div class="assoc-owner-sec"><p class="assoc-owner-head"><i class="fas fa-clipboard-list"></i> Onboarding</p>' +
       kvRows(rows) +
+      /* PORTAL_CRUD_BATCH_A_2026_11_05: delete this new_hires
+       * record from the card it surfaces on. Admin-or-above only;
+       * the handler (assocDeleteOnboarding) confirms with the
+       * hire's name. This removes the onboarding record only —
+       * the person's login account is NOT touched; accounts stay
+       * deactivation-only by design. Note the section renders
+       * only when the record has displayable fields, so a
+       * field-less record has no card section to hang this on —
+       * see REPORT.md. */
+      (isAdminOrAbove()
+        ? '<p><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-assoc-ob-del="' + esc(ob.id) + '"><i class="fas fa-trash"></i> Delete onboarding record</button> <span class="portal-muted portal-small" data-assoc-ob-del-msg="' + esc(ob.id) + '"></span></p>'
+        : '') +
       '<p class="portal-muted portal-small">From their Employee Onboarding form &mdash; shown here so everything about an employee lives on this one card.</p></div>';
   }
 
@@ -12934,6 +13305,7 @@ function loadTicketThread(client, ticketId) {
   var mlProfiles = [];
   var mlHomeKnown = false;
   var mlTrips = [];
+  var mlEditTripId = null; /* PORTAL_CRUD_BATCH_A_2026_11_05: trip row with its inline edit form open (admin-only) */
   var mlFromCoords = null;
   var mlToCoords = null;
   var mlLastDefaultFrom = '';
@@ -13141,9 +13513,30 @@ function loadTicketThread(client, ticketId) {
         var amt = mi * rate.rate;
         if (!isOwnerRow) { g.miles += mi; g.amt += amt; }
         var canReturn = isAdminOrAbove() || r.employee_id === state.user.id; /* PORTAL_ROLE_LADDER_2026_11_04 */
-        return '<div class="tc-row"><span>' + esc(ci.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })) + ' &middot; ' + esc(r.from_location || '?') + ' &rarr; ' + esc(r.to_location || '?') + '</span>' +
+        var rowHtml = '<div class="tc-row"><span>' + esc(ci.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })) + ' &middot; ' + esc(r.from_location || '?') + ' &rarr; ' + esc(r.to_location || '?') + '</span>' +
           '<span class="tc-row-end"><span>' + mi.toFixed(1) + ' mi &middot; ' + durMin + ' min' + (isOwnerRow ? ' &middot; owner — unpaid' : ' &middot; ' + esc(fmtMoney(amt)) + ' @ ' + fmtRate(rate.rate)) + '</span>' +
-          (canReturn ? '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-ml-return="' + esc(r.id) + '">Return trip</button>' : '') + '</span></div>';
+          (canReturn ? '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-ml-return="' + esc(r.id) + '">Return trip</button>' : '') +
+          /* PORTAL_CRUD_BATCH_A_2026_11_05: Edit in the Mileage
+           * panel itself — trips used to be fixable only by
+           * detouring through the Time Clock panel. Admin-or-above
+           * (trip edits ride payroll, same gate as Time Clock). */
+          (isAdminOrAbove() ? '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-ml-edit="' + esc(r.id) + '"><i class="fas fa-pen"></i> Edit</button>' : '') + '</span></div>';
+        if (isAdminOrAbove() && mlEditTripId === r.id) {
+          rowHtml += '<div class="tc-manual" style="margin:0.5rem 0;">' +
+            '<div class="tc-manual-grid">' +
+            '<label>Date<input type="date" id="ml-edit-date-' + esc(r.id) + '" value="' + esc(tcDateStr(ci)) + '" /></label>' +
+            '<label>Start time<input type="time" id="ml-edit-time-' + esc(r.id) + '" value="' + esc(tcTimeStr(ci)) + '" /></label>' +
+            '<label>From<input type="text" id="ml-edit-from-' + esc(r.id) + '" value="' + esc(r.from_location || '') + '" /></label>' +
+            '<label>To<input type="text" id="ml-edit-to-' + esc(r.id) + '" value="' + esc(r.to_location || '') + '" /></label>' +
+            '<label>Miles<input type="number" step="0.1" min="0" id="ml-edit-miles-' + esc(r.id) + '" value="' + (Number(r.miles) || 0) + '" /></label>' +
+            '<label>Minutes<input type="number" step="1" min="0" id="ml-edit-min-' + esc(r.id) + '" value="' + durMin + '" /></label>' +
+            '</div>' +
+            '<p style="margin:0.5rem 0 0;"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-ml-edit-save="' + esc(r.id) + '">Save changes</button> ' +
+            '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-ml-edit-cancel="1">Cancel</button> ' +
+            '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-ml-del="' + esc(r.id) + '"><i class="fas fa-trash"></i> Delete trip</button></p>' +
+            '</div>';
+        }
+        return rowHtml;
       }).join('');
       var totalLine = isOwnerRow
         ? '<span class="ml-trip-total">Week: ' + g.rows.reduce(function (s, r) { return s + (Number(r.miles) || 0); }, 0).toFixed(1) + ' mi (owner — unpaid)</span>'
@@ -13152,6 +13545,86 @@ function loadTicketThread(client, ticketId) {
     }).join('');
     wrap.querySelectorAll('[data-ml-return]').forEach(function (b) {
       b.addEventListener('click', function () { mlReturnTrip(b.getAttribute('data-ml-return')); });
+    });
+    /* PORTAL_CRUD_BATCH_A_2026_11_05: mileage edit/delete wiring. */
+    wrap.querySelectorAll('[data-ml-edit]').forEach(function (b) {
+      b.addEventListener('click', function () { mlEditTripId = b.getAttribute('data-ml-edit'); mlRenderTrips(); });
+    });
+    wrap.querySelectorAll('[data-ml-edit-cancel]').forEach(function (b) {
+      b.addEventListener('click', function () { mlEditTripId = null; mlRenderTrips(); });
+    });
+    wrap.querySelectorAll('[data-ml-edit-save]').forEach(function (b) {
+      b.addEventListener('click', function () { mlSaveTripEdit(b.getAttribute('data-ml-edit-save')); });
+    });
+    wrap.querySelectorAll('[data-ml-del]').forEach(function (b) {
+      b.addEventListener('click', function () { mlDeleteTrip(b); });
+    });
+  }
+
+  /* PORTAL_CRUD_BATCH_A_2026_11_05 (Austin, Nov 5, 2026): trip
+   * edit + delete inside the Mileage panel. Trips are time_entries
+   * rows (entry_type 'driving'); the Time Clock already edits and
+   * deletes them (tcEditFormHtml / tcDeleteEntry), but those ride
+   * tcClientRef and re-render the Time Cards — Austin had to leave
+   * the Mileage panel to fix a trip. These two are the direct
+   * equivalents on the mileage module's own client (mlClientRef),
+   * re-rendering the trip list. Both re-check Admin-or-above; the
+   * delete is a two-tap confirm-arm, and both chain .select('id')
+   * so a database refusal reads as failure. The delete leans on
+   * the same time_entries DELETE policy the working Time Clock
+   * delete uses — no new SQL (see REPORT.md). */
+  function mlSaveTripEdit(id) {
+    var msg = $('ml-msg');
+    if (!isAdminOrAbove()) { if (msg) msg.textContent = 'Trip edits sit with Admin and above.'; return; }
+    if (!mlClientRef) return;
+    var ci = tcParseLocal((($('ml-edit-date-' + id) || {}).value || ''), (($('ml-edit-time-' + id) || {}).value || ''));
+    if (!ci) { if (msg) msg.textContent = 'Pick a valid date and start time.'; return; }
+    var minutes = Math.max(0, parseInt((($('ml-edit-min-' + id) || {}).value || '0'), 10) || 0);
+    var miles = Math.max(0, parseFloat((($('ml-edit-miles-' + id) || {}).value || '0')) || 0);
+    var upd = {
+      clock_in: ci.toISOString(),
+      clock_out: new Date(ci.getTime() + minutes * 60000).toISOString(),
+      from_location: trim((($('ml-edit-from-' + id) || {}).value || '')) || null,
+      to_location: trim((($('ml-edit-to-' + id) || {}).value || '')) || null,
+      miles: miles
+    };
+    mlClientRef.from('time_entries').update(upd).eq('id', id).select('id').then(function (res) {
+      if (res.error || !res.data || !res.data.length) { if (msg) msg.textContent = 'Could not save that trip. Try again.'; return; }
+      mlEditTripId = null;
+      if (msg) msg.textContent = 'Trip updated.';
+      mlLoadTrips(mlClientRef);
+    }).catch(function () { if (msg) msg.textContent = 'Could not save that trip. Try again.'; });
+  }
+
+  function mlDeleteTrip(btn) {
+    var id = btn.getAttribute('data-ml-del');
+    var msg = $('ml-msg');
+    if (!isAdminOrAbove()) { if (msg) msg.textContent = 'Deletes sit with Admin and above.'; return; }
+    if (!mlClientRef) return;
+    if (btn.getAttribute('data-confirm') !== '1') {
+      btn.setAttribute('data-confirm', '1');
+      btn.innerHTML = '<i class="fas fa-trash"></i> Confirm delete?';
+      if (msg) msg.textContent = 'Delete this trip? Tap Confirm delete — this cannot be undone.';
+      return;
+    }
+    btn.disabled = true;
+    if (msg) msg.textContent = 'Deleting…';
+    mlClientRef.from('time_entries').delete().eq('id', id).select('id').then(function (res) {
+      if (res.error || !res.data || !res.data.length) {
+        btn.disabled = false;
+        btn.removeAttribute('data-confirm');
+        btn.innerHTML = '<i class="fas fa-trash"></i> Delete trip';
+        if (msg) msg.textContent = 'Couldn’t delete that trip — try again.';
+        return;
+      }
+      mlEditTripId = null;
+      if (msg) msg.textContent = 'Trip deleted.';
+      mlLoadTrips(mlClientRef);
+    }).catch(function () {
+      btn.disabled = false;
+      btn.removeAttribute('data-confirm');
+      btn.innerHTML = '<i class="fas fa-trash"></i> Delete trip';
+      if (msg) msg.textContent = 'Couldn’t delete that trip — try again.';
     });
   }
 
