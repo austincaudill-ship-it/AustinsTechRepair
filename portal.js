@@ -9809,8 +9809,15 @@ function loadTicketThread(client, ticketId) {
     }
     bar.innerHTML = teamChatChannels.map(function (ch) {
       var icon = ch.kind === 'office' ? 'fa-house' : (ch.kind === 'group' ? 'fa-users' : 'fa-user');
+      /* TEAMCHAT_CHANNEL_DELETE_2026_11_05: group channels carry a
+       * small delete (trash) button for Admin tier and above only
+       * (isAdminOrAbove — super_admin / co_super_admin / admin).
+       * The Office channel and DM channels never get one. */
+      var del = (ch.kind === 'group' && isAdminOrAbove())
+        ? '<button class="teamchat-chan teamchat-chan-del" type="button" data-tc-del="' + esc(ch.id) + '" title="Delete channel" aria-label="Delete channel"><i class="fas fa-trash"></i></button>'
+        : '';
       return '<button class="teamchat-chan' + (ch.id === teamChatOpenId ? ' teamchat-chan-active' : '') + '" type="button" data-tc-open="' + esc(ch.id) + '">' +
-        '<i class="fas ' + icon + '"></i> ' + esc(ch.label || ch.name || 'Chat') + '</button>';
+        '<i class="fas ' + icon + '"></i> ' + esc(ch.label || ch.name || 'Chat') + '</button>' + del;
     }).join('');
   }
 
@@ -9825,6 +9832,50 @@ function loadTicketThread(client, ticketId) {
     renderTeamChatChannels();
     updateTeamChatComposerLabel();
     fetchTeamChat(true);
+  }
+
+  /* TEAMCHAT_CHANNEL_DELETE_2026_11_05 (Austin, Nov 5, 2026):
+   * an Admin-tier user can delete a group channel. The gate is
+   * doubled on purpose: the button only renders for group channels
+   * when isAdminOrAbove(), and this function re-checks the tier and
+   * the kind before doing anything. The Office channel and DMs can
+   * never be deleted here. The database side is channel-delete.sql:
+   * DELETE policies on the three team tables, admin tiers only.
+   * Order matters: messages first, then memberships, then the
+   * channel row itself. Any error stops the chain and leaves a
+   * plain note in the panel. */
+  function deleteTeamChannel(id) {
+    if (!teamChatClient || !state.user || !isAdminOrAbove()) return;
+    var ch = null;
+    for (var i = 0; i < teamChatChannels.length; i++) {
+      if (teamChatChannels[i].id === id) ch = teamChatChannels[i];
+    }
+    if (!ch || ch.kind !== 'group' || ch.id === TEAM_OFFICE_ID) return;
+    var name = ch.label || ch.name || 'this group';
+    if (!window.confirm('Delete the channel "' + name + '"? This removes the channel and all of its messages for everyone, and it cannot be undone.')) return;
+    var wasOpen = teamChatOpenId === id;
+    teamChatErr('');
+    teamChatClient.from('team_messages').delete().eq('channel_id', id)
+      .then(function (res) {
+        if (res.error) throw res.error;
+        return teamChatClient.from('team_channel_members').delete().eq('channel_id', id);
+      })
+      .then(function (res) {
+        if (res.error) throw res.error;
+        return teamChatClient.from('team_channels').delete().eq('id', id);
+      })
+      .then(function (res) {
+        if (res.error) throw res.error;
+        if (wasOpen) teamChatOpenId = TEAM_OFFICE_ID;
+        fetchTeamChannels(function () {
+          renderTeamChatChannels();
+          updateTeamChatComposerLabel();
+          if (wasOpen) fetchTeamChat(true);
+        });
+      })
+      .catch(function () {
+        teamChatErr('That channel could not be deleted. Check your connection and try again.');
+      });
   }
 
   /* The staff directory: names for the find-someone search, the
@@ -10193,6 +10244,10 @@ function loadTicketThread(client, ticketId) {
     if (bar) bar.addEventListener('click', function (e) {
       var el = e.target;
       while (el && el !== bar) {
+        /* TEAMCHAT_CHANNEL_DELETE_2026_11_05: a delete tap is
+         * handled first, so it can never fall through and open
+         * the channel instead. */
+        if (el.getAttribute && el.getAttribute('data-tc-del')) { deleteTeamChannel(el.getAttribute('data-tc-del')); return; }
         if (el.getAttribute && el.getAttribute('data-tc-open')) { openTeamChannel(el.getAttribute('data-tc-open')); return; }
         el = el.parentNode;
       }
