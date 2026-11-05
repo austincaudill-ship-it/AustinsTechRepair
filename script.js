@@ -2229,7 +2229,12 @@ if ("serviceWorker" in navigator) {
       /* SITE_POINTS_SPEND_2026_10_30: third view — Rewards & Vouchers. */
       if (rewardsView) rewardsView.hidden = view !== 'rewards';
       menuItems.forEach(function (btn) {
-        btn.classList.toggle('is-active', btn.getAttribute('data-acct-menu') === view);
+        var on = btn.getAttribute('data-acct-menu') === view;
+        btn.classList.toggle('is-active', on);
+        /* QR_FIX_PASS_2026_11_05: the sections are a simple drop-down
+           now (each panel sits directly under its row in the menu),
+           so the row also reports itself expanded/collapsed. */
+        btn.setAttribute('aria-expanded', on ? 'true' : 'false');
       });
       if (view === 'repairs') {
         var r = document.getElementById('acct-repairs');

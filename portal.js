@@ -576,7 +576,7 @@
   /* ---------- Scan In: the in-portal receiving end (pass 4) ----------
    * Austin: "Now we have to build the receiving end into the portal —
    * goes under Check-In, says Scan In." The sidebar item (Guest group,
-   * directly under Check-In) opens portal-panel-scanin. The camera
+   * directly under Check-In) opens the scanner. The camera
    * decodes fully on-device with the vendored jsQR (jsqr.js,
    * Apache-2.0), lazy-loaded on first open — no CDN and no outside
    * service ever sees a scanned code. The account-number entry under
@@ -585,14 +585,44 @@
    * plain message, never a dead end. A successful read — camera or
    * typed — releases the camera BEFORE routing, and routing is the
    * one shared path above (routeScanPayload → routeToScannedCustomer).
-   * activateTab starts the camera when the panel opens and stops it
-   * whenever any other tab takes over, so the camera is never left
-   * hot. Scan In is an action, not a resting place: it is kept out of
+   * Scan In is an action, not a resting place: it is kept out of
    * the remembered-tab restore so the camera never auto-starts at
-   * sign-in. */
+   * sign-in.
+   * QR_FIX_PASS_2026_11_05 (Austin, Nov 5, 2026): "You push Scan and
+   * it pops up the scanner." The scanner is a modal POPUP over the
+   * current view now (portal-scanin-modal, by the drawer markup in
+   * portal.html) — the same interaction as the customer's Check In
+   * popup — instead of a panel that replaced the whole view. The
+   * sidebar item no longer switches tabs at all: activateTab hands
+   * 'scanin' straight to openScanInPopup. Closing the popup — Cancel,
+   * the X, the overlay, Esc, a successful route, any tab switch, an
+   * extra-panel takeover, or sign-out — always releases the camera
+   * (closeScanInPopup funnels through stopScanInCamera), and the
+   * staffer lands back on exactly the view they were on. */
   var lastPortalTab = 'tickets';
-  var scanInReturnTab = 'tickets';
   var scanInStream = null, scanInTimer = 0, scanInDecoding = false, scanInWired = false;
+  var scanInScrollLocked = false;
+  function openScanInPopup() {
+    wireScanIn();
+    var ov = $('portal-scanin-overlay'), modal = $('portal-scanin-modal');
+    if (ov) ov.hidden = false;
+    if (modal) modal.hidden = false;
+    /* The drawer's pattern: the page behind a popup does not scroll.
+       Only release the lock on close if this popup is the one holding
+       it (a ticket drawer open behind the popup keeps its own). */
+    scanInScrollLocked = (drawerScrollY === null);
+    if (scanInScrollLocked) lockBodyScroll();
+    var inp = $('portal-scanin-acct');
+    if (inp) inp.value = '';
+    startScanInCamera();
+  }
+  function closeScanInPopup() {
+    stopScanInCamera();
+    var ov = $('portal-scanin-overlay'), modal = $('portal-scanin-modal');
+    if (modal) modal.hidden = true;
+    if (ov) ov.hidden = true;
+    if (scanInScrollLocked) { scanInScrollLocked = false; unlockBodyScroll(); }
+  }
   var jsqrState = 0, jsqrWaiters = []; /* 0 idle, 1 loading, 2 ready, 3 failed */
   function scanInSetStatus(msg) { var el = $('portal-scanin-status'); if (el) el.textContent = msg || ''; }
   function ensureJsQr(cb) {
@@ -627,8 +657,8 @@
       if (!ok) { scanInCameraFallback('The code reader could not load. Type the account number below instead.'); return; }
       navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
         .then(function (stream) {
-          var panel = $('portal-panel-scanin');
-          if (!panel || panel.hidden) { /* staffer already moved on — release it untouched */
+          var modal = $('portal-scanin-modal');
+          if (!modal || modal.hidden) { /* staffer already closed the popup — release it untouched */
             try { stream.getTracks().forEach(function (t) { try { t.stop(); } catch (e) {} }); } catch (e) {}
             return;
           }
@@ -668,7 +698,7 @@
     try { code = window.jsQR(img.data, img.width, img.height); } catch (e) {}
     if (code && code.data) {
       var raw = code.data;
-      stopScanInCamera();
+      closeScanInPopup(); /* QR_FIX_PASS_2026_11_05: popup closes (camera off) before the route lands */
       routeScanPayload(raw);
     }
   }
@@ -698,14 +728,24 @@
         try { inp.focus(); } catch (e) {}
         return;
       }
-      stopScanInCamera();
+      closeScanInPopup();
       routeScanPayload('ATR-' + parseInt(digits, 10));
     }
     go.addEventListener('click', submit);
     inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); submit(); } });
-    if (cancel) cancel.addEventListener('click', function () {
-      stopScanInCamera();
-      activateTab(scanInReturnTab || 'tickets');
+    /* QR_FIX_PASS_2026_11_05: every close path just dismisses the
+       popup — the view underneath never changed, so there is nowhere
+       to "go back" to. Cancel, the X, the overlay, and Esc all land
+       the staffer exactly where they were, camera off. */
+    if (cancel) cancel.addEventListener('click', closeScanInPopup);
+    var closeBtn = $('portal-scanin-close');
+    if (closeBtn) closeBtn.addEventListener('click', closeScanInPopup);
+    var ov = $('portal-scanin-overlay');
+    if (ov) ov.addEventListener('click', closeScanInPopup);
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape') return;
+      var modal = $('portal-scanin-modal');
+      if (modal && !modal.hidden) closeScanInPopup();
     });
   }
   /* ================= end ATRONE_QR_2026_11_05 ================= */
@@ -1236,6 +1276,7 @@
           client.auth.onAuthStateChange(function (event) {
       if (event === 'PASSWORD_RECOVERY') { showResetView(null); return; }
       if (event === 'SIGNED_OUT') {
+        closeScanInPopup(); /* QR_FIX_PASS_2026_11_05: any sign-out path releases the Scan In camera and dismisses its popup */
         state.user = null; state.profile = null;
         if (resetSuccessMessage) { showLogin(resetSuccessMessage); resetSuccessMessage = null; } else { showLogin(null); }
       }
@@ -1303,6 +1344,7 @@
       });
 
       $('portal-logout').addEventListener('click', function () {
+        closeScanInPopup(); /* QR_FIX_PASS_2026_11_05: signing out releases the Scan In camera and dismisses its popup */
         client.auth.signOut();
       });
 
@@ -1351,23 +1393,30 @@
      * not see it — a remembered tab or a stale click lands on
      * the ticket queue instead. */
     if (!tabAllowed(name)) name = 'tickets';
-    /* ATRONE_QR_2026_11_05 (pass 4): Scan In is never the remembered
-     * tab — it is a camera action, and remembering it would start the
-     * camera on the next sign-in's tab restore. */
-    saveActiveTab(name === 'scanin' ? lastPortalTab : name);
+    /* QR_FIX_PASS_2026_11_05: Scan In is a popup, not a tab — hand it
+     * to openScanInPopup and leave the current view, the active-tab
+     * marker, and the remembered tab exactly as they are. (Pass 4's
+     * rule still holds: Scan In is never the remembered tab, so the
+     * camera never auto-starts at sign-in.) */
+    if (name === 'scanin') {
+      var nav0 = $('portal-nav'); if (nav0) nav0.classList.remove('open');
+      openScanInPopup();
+      return;
+    }
+    saveActiveTab(name);
     var nav = $('portal-nav'); if (nav) nav.classList.remove('open');
     var tabs = document.querySelectorAll('.portal-tab');
     tabs.forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === name); });
     /* PASS10_2026_11_04: 'tracking' (the Live Tracking panel) hides and shows with the rest too */
-    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'scanin', 'requests', 'prices', 'tracking', 'documents', 'financials', 'payroll', 'mileage', 'teamchat', 'associateaccounts', 'warranty', 'setup'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too; ASSOCIATE_ACCOUNTS_2026_11_03: 'associateaccounts' hides and shows with the rest too (it absorbed ACCOUNT_CONTROLS_2026_11_03's 'accountcontrols' and the roster's 'associates'); WARRANTY_PORTAL_2026_11_03: 'warranty' hides and shows with the rest too; PORTAL_SETUP_2026_11_04: 'setup' hides and shows with the rest too; ATRONE_QR_2026_11_05 (pass 4): 'scanin' hides and shows with the rest too */
+    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'tracking', 'documents', 'financials', 'payroll', 'mileage', 'teamchat', 'associateaccounts', 'warranty', 'setup'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too; ASSOCIATE_ACCOUNTS_2026_11_03: 'associateaccounts' hides and shows with the rest too (it absorbed ACCOUNT_CONTROLS_2026_11_03's 'accountcontrols' and the roster's 'associates'); WARRANTY_PORTAL_2026_11_03: 'warranty' hides and shows with the rest too; PORTAL_SETUP_2026_11_04: 'setup' hides and shows with the rest too; QR_FIX_PASS_2026_11_05: 'scanin' is GONE from this list — the scanner is a popup now, there is no scanin panel to hide or show */
       $('portal-panel-' + n).hidden = n !== name;
     });
     closeDrawer();
-    /* ATRONE_QR_2026_11_05 (pass 4): the Scan In camera runs only
-     * while its panel is on screen. Arriving starts it (and remembers
-     * where Cancel lands); leaving for any other tab releases it. */
-    if (name === 'scanin') { scanInReturnTab = lastPortalTab; startScanInCamera(); }
-    else { stopScanInCamera(); lastPortalTab = name; }
+    /* QR_FIX_PASS_2026_11_05: any real tab switch dismisses the Scan
+     * In popup and releases its camera — the scanner only ever lives
+     * inside its popup, and the popup never survives a tab change. */
+    closeScanInPopup();
+    lastPortalTab = name;
     /* TEAMCHAT_2026_11_03: reopening Team Chat restarts its refresh
      * poll and pulls anything new; switching to any other tab stops
      * the poll so a closed panel is never polled. */
@@ -12499,7 +12548,7 @@ function loadTicketThread(client, ticketId) {
      * payment links), so it stays top-tier only. */
     if (!tabAllowed(name)) name = 'tickets';
     saveActiveTab(name);
-    stopScanInCamera(); /* ATRONE_QR_2026_11_05 (pass 4): an extra panel taking over releases the Scan In camera too */
+    closeScanInPopup(); /* QR_FIX_PASS_2026_11_05: an extra panel taking over dismisses the Scan In popup and releases its camera too (was stopScanInCamera, ATRONE_QR_2026_11_05 pass 4) */
     document.querySelectorAll('.portal-panel').forEach(function (pn) { pn.hidden = true; });
     var panel = $('portal-panel-' + name);
     if (panel) panel.hidden = false;

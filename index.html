@@ -1291,7 +1291,12 @@
 
           <!-- ATRONE_QR_2026_11_05: the all-in-one account card. Every signed-in
                customer gets it: name + account QR that pulls them up in the
-               Associate Hub, with ATR One status riding on the same card. -->
+               Associate Hub, with ATR One status riding on the same card.
+               QR_FIX_PASS_2026_11_05 (Austin, Nov 5, 2026): "There's no QR
+               code that's just visibly there all the time." The card no
+               longer renders a QR at rest — name, tier, status, and member
+               since only. The one and only customer-side QR lives inside
+               the Check In / Show to Tech popup. -->
           <div class="acct-cardbox" id="acct-qr-card" hidden>
             <div class="acct-cardbox-head">
               <span class="acct-cardbox-title"><i class="fas fa-id-card"></i> My ATR One Card</span>
@@ -1300,7 +1305,6 @@
             <div class="acct-cardbox-name" id="acct-qr-name"></div>
             <div class="acct-cardbox-tier" id="acct-qr-tier"></div>
             <div class="acct-cardbox-since" id="acct-qr-since"></div>
-            <div class="acct-cardbox-qr" id="acct-qr-box" aria-label="Your ATR One member QR code"></div>
             <button class="btn btn-primary btn-lg acct-submit" id="acct-qr-show" type="button"><i class="fas fa-qrcode"></i> Show to Tech</button>
             <p class="acct-muted acct-cardbox-note" id="acct-qr-note">Tap Show to Tech at your appointment and hold up your code — it pulls up your ATR One membership right away.</p>
           </div>
@@ -1311,226 +1315,229 @@
                in-account New Request form in My Repairs is untouched. -->
           <a class="btn btn-primary btn-lg acct-submit" id="acct-schedule-btn" href="#repair" data-page="repair" style="display:block;text-align:center;margin:0 0 1rem;"><i class="fas fa-calendar-check"></i> Schedule a repair</a>
 
-          <!-- My Account menu: Check In, Repairs, Rewards & Vouchers, Cart,
-               Account Settings, Sign Out. ATRONE_QR_2026_11_05 (pass 3):
-               Check In sits first, above Repairs (Austin's placement), and
-               opens the same Show to Tech member QR popup as the card. -->
+          <!-- My Account menu — QR_FIX_PASS_2026_11_05 (Austin, Nov 5, 2026):
+               the sections are a simple drop-down, like the rest of the
+               site: each section panel sits directly under its own row
+               inside this menu, one open at a time, tap a row to open it,
+               tap another to switch, the rest stay hidden. Check In sits
+               first, above Repairs (ATRONE_QR_2026_11_05 pass 3), and opens
+               the same Show to Tech member QR popup as the card; Cart and
+               Sign Out are actions, not sections. -->
           <div class="acct-menu" role="group" aria-label="My Account">
             <button class="acct-menu-item" type="button" id="acct-menu-checkin"><i class="fas fa-qrcode"></i> Check In</button>
-            <button class="acct-menu-item is-active" type="button" data-acct-menu="repairs"><i class="fas fa-tools"></i> Repairs</button>
-            <button class="acct-menu-item" type="button" data-acct-menu="rewards"><i class="fas fa-ticket"></i> Rewards &amp; Vouchers</button>
-            <button class="acct-menu-item" type="button" id="acct-menu-cart"><i class="fas fa-shopping-cart"></i> Cart <span class="acct-cart-count" id="acct-cart-count" hidden>0</span></button>
-            <button class="acct-menu-item" type="button" data-acct-menu="settings"><i class="fas fa-gear"></i> Account Settings</button>
-            <button class="acct-menu-item" type="button" id="authx-logout"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
-          </div>
-
-          <div id="acct-view-repairs">
-          <!-- My Repairs -->
-          <div class="acct-repairs" id="acct-repairs">
-            <div class="acct-repairs-head">
-              <h4><i class="fas fa-tools"></i> My Repairs</h4>
-              <button class="btn btn-primary btn-sm" id="acct-new-ticket-btn" type="button"><i class="fas fa-plus"></i> New Request</button>
+            <button class="acct-menu-item is-active" type="button" data-acct-menu="repairs" aria-expanded="true"><i class="fas fa-tools"></i> Repairs <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
+            <div id="acct-view-repairs">
+            <!-- My Repairs -->
+            <div class="acct-repairs" id="acct-repairs">
+              <div class="acct-repairs-head">
+                <h4><i class="fas fa-tools"></i> My Repairs</h4>
+                <button class="btn btn-primary btn-sm" id="acct-new-ticket-btn" type="button"><i class="fas fa-plus"></i> New Request</button>
+              </div>
+              <div id="acct-ticket-list"><p class="acct-muted">Loading your repairs…</p></div>
             </div>
-            <div id="acct-ticket-list"><p class="acct-muted">Loading your repairs…</p></div>
-          </div>
 
-          <!-- Ticket thread view -->
-          <div class="acct-thread" id="acct-thread" hidden>
-            <button class="btn btn-outline btn-sm" id="acct-thread-back" type="button"><i class="fas fa-arrow-left"></i> Back to repairs</button>
-            <div class="acct-thread-info" id="acct-thread-info"></div>
-            <div id="acct-parts"></div>
-            <div id="acct-charges"></div>
-            <div class="acct-messages" id="acct-messages"></div>
-            <form id="acct-msg-form" novalidate>
-              <div class="acct-msg-row">
-                <input type="text" id="acct-msg-input" placeholder="Write a message…" autocomplete="off" maxlength="1000" aria-label="Write a message">
-                <button class="btn btn-primary btn-sm" type="submit" aria-label="Send message"><i class="fas fa-paper-plane"></i></button>
-              </div>
-              <div class="atr-turnstile" id="ts-acct-msg"></div>
-              <p class="acct-error" id="acct-msg-error" hidden></p>
-            </form>
-          </div>
-
-          <!-- New ticket form -->
-          <div class="acct-newticket" id="acct-newticket" hidden>
-            <button class="btn btn-outline btn-sm" id="acct-newticket-back" type="button"><i class="fas fa-arrow-left"></i> Back to repairs</button>
-            <h4><i class="fas fa-plus-circle"></i> New Repair Request</h4>
-            <form id="acct-ticket-form" novalidate>
-              <label class="acct-field">
-                <span>Device type</span>
-                <select id="acct-t-device" required>
-                  <option value="Phone">Phone</option>
-                  <option value="Tablet">Tablet</option>
-                  <option value="Laptop">Laptop</option>
-                  <option value="Desktop">Desktop</option>
-                  <option value="Game Console">Game Console</option>
-                  <option value="Smartwatch">Smartwatch</option>
-                  <option value="Other">Other</option>
-                </select>
-              </label>
-              <div class="acct-row2">
-                <label class="acct-field">
-                  <span>Brand</span>
-                  <input type="text" id="acct-t-brand" placeholder="e.g. Apple" autocomplete="off">
-                </label>
-                <label class="acct-field">
-                  <span>Model</span>
-                  <input type="text" id="acct-t-model" placeholder="e.g. iPhone 13" autocomplete="off">
-                </label>
-              </div>
-              <label class="acct-field">
-                <span>What's wrong?</span>
-                <textarea id="acct-t-issue" placeholder="Describe the problem…" rows="3" required></textarea>
-              </label>
-              <label class="atr-check">
-                <input type="checkbox" id="acct-t-marketing">
-                <span>Email me occasional offers and repair tips. <em>(Optional — no spam, ever.)</em></span>
-              </label>
-              <label class="atr-check">
-                <input type="checkbox" id="acct-t-terms">
-                <span>I agree to the <strong>Terms and Conditions</strong> of service. *</span>
-              </label>
-              <label class="atr-check">
-                <input type="checkbox" id="acct-t-dispatch">
-                <span>I understand the <strong>visit fee</strong> &mdash; <strong>$15</strong> if my repair is already known, or <strong>$35</strong> if my device needs a full diagnosis &mdash; covers the trip to me, is due at scheduling, and is <strong>non-refundable</strong>. *</span>
-              </label>
-              <label class="atr-check">
-                <input type="checkbox" id="acct-t-work-auth">
-                <span>I <strong>authorize</strong> Austin&rsquo;s Tech Repair Group to perform the requested diagnostic and repair work on my device. *</span>
-              </label>
-              <!-- SITE_POINTS_SPEND_2026_10_30: intent only — nothing
-                   is deducted at booking; the discount lands at the
-                   visit. The block stays hidden without a balance. -->
-              <div class="acct-ticket-points" id="acct-t-points-wrap" hidden>
-                <label class="atr-check">
-                  <input type="checkbox" id="acct-t-use-points">
-                  <span><strong>Use my reward points toward this repair.</strong> <span id="acct-t-points-detail"></span></span>
-                </label>
-                <label class="acct-field" id="acct-t-points-amount" hidden>
-                  <span>How much? (100 points = $5)</span>
-                  <select id="acct-t-points-blocks"></select>
-                </label>
-                <p class="acct-muted" style="text-align:left;padding:0;">Nothing is deducted now — we apply the discount at your visit.</p>
-              </div>
-              <div class="atr-turnstile" id="ts-acct-ticket"></div>
-              <p class="acct-error" id="acct-ticket-error" hidden></p>
-              <button class="btn btn-primary btn-lg acct-submit" type="submit">Submit Request <i class="fas fa-arrow-right"></i></button>
-            </form>
-          </div>
-
-          </div>
-
-          <!-- Rewards & Vouchers (SITE_POINTS_SPEND_2026_10_30) -->
-          <div id="acct-view-rewards" hidden>
-            <div class="acct-rewards">
-              <h4><i class="fas fa-ticket"></i> Rewards &amp; Vouchers</h4>
-              <p class="acct-muted" style="text-align:left;padding:0;">You earn 1 point for every $1 of a completed repair. Trade points for a voucher — 100 points = $5 — and use it at your next visit, or pay for accessories with points right in the Shop.</p>
-              <div id="pts-exchange">
-                <p class="pts-balance-line">Your balance: <strong id="pts-balance-num">0</strong> points</p>
-                <div class="pts-stepper">
-                  <button type="button" class="pts-step-btn" id="pts-minus" aria-label="One block fewer">&minus;</button>
-                  <div class="pts-step-val"><span id="pts-blocks">1</span> &times; $5 block<br><span class="acct-muted" id="pts-blocks-sub" style="padding:0;">100 points = $5</span></div>
-                  <button type="button" class="pts-step-btn" id="pts-plus" aria-label="One block more">+</button>
+            <!-- Ticket thread view -->
+            <div class="acct-thread" id="acct-thread" hidden>
+              <button class="btn btn-outline btn-sm" id="acct-thread-back" type="button"><i class="fas fa-arrow-left"></i> Back to repairs</button>
+              <div class="acct-thread-info" id="acct-thread-info"></div>
+              <div id="acct-parts"></div>
+              <div id="acct-charges"></div>
+              <div class="acct-messages" id="acct-messages"></div>
+              <form id="acct-msg-form" novalidate>
+                <div class="acct-msg-row">
+                  <input type="text" id="acct-msg-input" placeholder="Write a message…" autocomplete="off" maxlength="1000" aria-label="Write a message">
+                  <button class="btn btn-primary btn-sm" type="submit" aria-label="Send message"><i class="fas fa-paper-plane"></i></button>
                 </div>
-                <button class="btn btn-primary btn-lg acct-submit" type="button" id="pts-exchange-btn"><i class="fas fa-ticket"></i> Exchange for a voucher</button>
-                <p class="acct-error" id="pts-exchange-error" hidden></p>
-                <p class="pts-success" id="pts-exchange-success" hidden></p>
-              </div>
-              <p class="acct-muted" id="pts-exchange-unavailable" hidden>Points exchange is not available online yet — text us at (937) 280-6243 and we will apply your points for you.</p>
-              <h4 class="acct-detail-h"><i class="fas fa-ticket"></i> My vouchers</h4>
-              <div id="pts-voucher-list"><p class="acct-muted">Loading&hellip;</p></div>
+                <div class="atr-turnstile" id="ts-acct-msg"></div>
+                <p class="acct-error" id="acct-msg-error" hidden></p>
+              </form>
             </div>
-          </div>
 
-          <div id="acct-view-settings" hidden>
-          <!-- My profile -->
-          <div class="acct-profile" id="authx-profile">
-            <h4><i class="fas fa-id-card"></i> My Profile</h4>
-            <p class="acct-profile-line"><strong id="authx-profile-name"></strong><br>
-            <span class="acct-muted" id="authx-profile-email"></span></p>
-            <label class="acct-field">
-              <span>Phone</span>
-              <input type="tel" id="authx-profile-phone" placeholder="(937) 555-1234" autocomplete="tel" aria-label="Phone number">
-            </label>
-            <label class="acct-field">
-              <span>Service address</span>
-              <input type="text" id="authx-profile-address" placeholder="Street, City, OH ZIP" autocomplete="street-address" aria-label="Service address">
-            </label>
-            <button class="btn btn-outline btn-sm" id="authx-profile-save" type="button"><i class="fas fa-save"></i> Save profile</button>
-            <button class="btn btn-outline btn-sm" id="authx-passkey-setup-btn" type="button"><i class="fas fa-fingerprint"></i> Set up a passkey</button><span class="acct-muted" id="authx-profile-msg"></span><div id="authx-passkey-list"></div>
-          </div>
+            <!-- New ticket form -->
+            <div class="acct-newticket" id="acct-newticket" hidden>
+              <button class="btn btn-outline btn-sm" id="acct-newticket-back" type="button"><i class="fas fa-arrow-left"></i> Back to repairs</button>
+              <h4><i class="fas fa-plus-circle"></i> New Repair Request</h4>
+              <form id="acct-ticket-form" novalidate>
+                <label class="acct-field">
+                  <span>Device type</span>
+                  <select id="acct-t-device" required>
+                    <option value="Phone">Phone</option>
+                    <option value="Tablet">Tablet</option>
+                    <option value="Laptop">Laptop</option>
+                    <option value="Desktop">Desktop</option>
+                    <option value="Game Console">Game Console</option>
+                    <option value="Smartwatch">Smartwatch</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </label>
+                <div class="acct-row2">
+                  <label class="acct-field">
+                    <span>Brand</span>
+                    <input type="text" id="acct-t-brand" placeholder="e.g. Apple" autocomplete="off">
+                  </label>
+                  <label class="acct-field">
+                    <span>Model</span>
+                    <input type="text" id="acct-t-model" placeholder="e.g. iPhone 13" autocomplete="off">
+                  </label>
+                </div>
+                <label class="acct-field">
+                  <span>What's wrong?</span>
+                  <textarea id="acct-t-issue" placeholder="Describe the problem…" rows="3" required></textarea>
+                </label>
+                <label class="atr-check">
+                  <input type="checkbox" id="acct-t-marketing">
+                  <span>Email me occasional offers and repair tips. <em>(Optional — no spam, ever.)</em></span>
+                </label>
+                <label class="atr-check">
+                  <input type="checkbox" id="acct-t-terms">
+                  <span>I agree to the <strong>Terms and Conditions</strong> of service. *</span>
+                </label>
+                <label class="atr-check">
+                  <input type="checkbox" id="acct-t-dispatch">
+                  <span>I understand the <strong>visit fee</strong> &mdash; <strong>$15</strong> if my repair is already known, or <strong>$35</strong> if my device needs a full diagnosis &mdash; covers the trip to me, is due at scheduling, and is <strong>non-refundable</strong>. *</span>
+                </label>
+                <label class="atr-check">
+                  <input type="checkbox" id="acct-t-work-auth">
+                  <span>I <strong>authorize</strong> Austin&rsquo;s Tech Repair Group to perform the requested diagnostic and repair work on my device. *</span>
+                </label>
+                <!-- SITE_POINTS_SPEND_2026_10_30: intent only — nothing
+                     is deducted at booking; the discount lands at the
+                     visit. The block stays hidden without a balance. -->
+                <div class="acct-ticket-points" id="acct-t-points-wrap" hidden>
+                  <label class="atr-check">
+                    <input type="checkbox" id="acct-t-use-points">
+                    <span><strong>Use my reward points toward this repair.</strong> <span id="acct-t-points-detail"></span></span>
+                  </label>
+                  <label class="acct-field" id="acct-t-points-amount" hidden>
+                    <span>How much? (100 points = $5)</span>
+                    <select id="acct-t-points-blocks"></select>
+                  </label>
+                  <p class="acct-muted" style="text-align:left;padding:0;">Nothing is deducted now — we apply the discount at your visit.</p>
+                </div>
+                <div class="atr-turnstile" id="ts-acct-ticket"></div>
+                <p class="acct-error" id="acct-ticket-error" hidden></p>
+                <button class="btn btn-primary btn-lg acct-submit" type="submit">Submit Request <i class="fas fa-arrow-right"></i></button>
+              </form>
+            </div>
 
-          <!-- My birthday (optional) -->
-          <div class="acct-birthday" id="acct-birthday-wrap" hidden>
-            <div class="acct-field">
-              <span><i class="fas fa-cake-candles"></i> My birthday (optional) &mdash; month and day only, no year</span>
-              <div class="acct-row2">
-                <select id="acct-birthday-month" aria-label="Birth month">
-                  <option value="">Month</option>
-                  <option value="01">January</option>
-                  <option value="02">February</option>
-                  <option value="03">March</option>
-                  <option value="04">April</option>
-                  <option value="05">May</option>
-                  <option value="06">June</option>
-                  <option value="07">July</option>
-                  <option value="08">August</option>
-                  <option value="09">September</option>
-                  <option value="10">October</option>
-                  <option value="11">November</option>
-                  <option value="12">December</option>
-                </select>
-                <select id="acct-birthday-day" aria-label="Birth day">
-                  <option value="">Day</option>
-                  <option value="01">1</option>
-                  <option value="02">2</option>
-                  <option value="03">3</option>
-                  <option value="04">4</option>
-                  <option value="05">5</option>
-                  <option value="06">6</option>
-                  <option value="07">7</option>
-                  <option value="08">8</option>
-                  <option value="09">9</option>
-                  <option value="10">10</option>
-                  <option value="11">11</option>
-                  <option value="12">12</option>
-                  <option value="13">13</option>
-                  <option value="14">14</option>
-                  <option value="15">15</option>
-                  <option value="16">16</option>
-                  <option value="17">17</option>
-                  <option value="18">18</option>
-                  <option value="19">19</option>
-                  <option value="20">20</option>
-                  <option value="21">21</option>
-                  <option value="22">22</option>
-                  <option value="23">23</option>
-                  <option value="24">24</option>
-                  <option value="25">25</option>
-                  <option value="26">26</option>
-                  <option value="27">27</option>
-                  <option value="28">28</option>
-                  <option value="29">29</option>
-                  <option value="30">30</option>
-                  <option value="31">31</option>
-                </select>
+            </div>
+            <button class="acct-menu-item" type="button" data-acct-menu="rewards" aria-expanded="false"><i class="fas fa-ticket"></i> Rewards &amp; Vouchers <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
+
+            <!-- Rewards & Vouchers (SITE_POINTS_SPEND_2026_10_30) -->
+            <div id="acct-view-rewards" hidden>
+              <div class="acct-rewards">
+                <h4><i class="fas fa-ticket"></i> Rewards &amp; Vouchers</h4>
+                <p class="acct-muted" style="text-align:left;padding:0;">You earn 1 point for every $1 of a completed repair. Trade points for a voucher — 100 points = $5 — and use it at your next visit, or pay for accessories with points right in the Shop.</p>
+                <div id="pts-exchange">
+                  <p class="pts-balance-line">Your balance: <strong id="pts-balance-num">0</strong> points</p>
+                  <div class="pts-stepper">
+                    <button type="button" class="pts-step-btn" id="pts-minus" aria-label="One block fewer">&minus;</button>
+                    <div class="pts-step-val"><span id="pts-blocks">1</span> &times; $5 block<br><span class="acct-muted" id="pts-blocks-sub" style="padding:0;">100 points = $5</span></div>
+                    <button type="button" class="pts-step-btn" id="pts-plus" aria-label="One block more">+</button>
+                  </div>
+                  <button class="btn btn-primary btn-lg acct-submit" type="button" id="pts-exchange-btn"><i class="fas fa-ticket"></i> Exchange for a voucher</button>
+                  <p class="acct-error" id="pts-exchange-error" hidden></p>
+                  <p class="pts-success" id="pts-exchange-success" hidden></p>
+                </div>
+                <p class="acct-muted" id="pts-exchange-unavailable" hidden>Points exchange is not available online yet — text us at (937) 280-6243 and we will apply your points for you.</p>
+                <h4 class="acct-detail-h"><i class="fas fa-ticket"></i> My vouchers</h4>
+                <div id="pts-voucher-list"><p class="acct-muted">Loading&hellip;</p></div>
               </div>
             </div>
-            <p class="acct-muted">Add it and we&rsquo;ll have a little something for you on your day &mdash; 15% off your next repair. Totally optional.</p>
-            <button class="btn btn-outline btn-sm" id="acct-birthday-save" type="button"><i class="fas fa-save"></i> Save birthday</button>
-            <span class="acct-muted" id="acct-birthday-msg"></span>
-          </div>
-          <!-- Password -->
-          <div class="acct-password">
-            <h4><i class="fas fa-lock"></i> Password</h4>
-            <p class="acct-muted">Change your password by email.</p>
-            <button class="btn btn-outline btn-sm" id="acct-change-password" type="button">Change password</button>
-            <span class="acct-muted" id="acct-password-msg"></span>
-          </div>
-          <div class="acct-earn">
-            <p><i class="fas fa-gift"></i> <strong>How to earn:</strong> 1 point for every $1 you spend on repairs.</p>
-            <p><i class="fas fa-tag"></i> <strong>Redeem:</strong> every 100 points = $5 off your next repair. Just mention your points when you book.</p>
-          </div>
+            <button class="acct-menu-item" type="button" id="acct-menu-cart"><i class="fas fa-shopping-cart"></i> Cart <span class="acct-cart-count" id="acct-cart-count" hidden>0</span></button>
+            <button class="acct-menu-item" type="button" data-acct-menu="settings" aria-expanded="false"><i class="fas fa-gear"></i> Account Settings <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
+
+            <div id="acct-view-settings" hidden>
+            <!-- My profile -->
+            <div class="acct-profile" id="authx-profile">
+              <h4><i class="fas fa-id-card"></i> My Profile</h4>
+              <p class="acct-profile-line"><strong id="authx-profile-name"></strong><br>
+              <span class="acct-muted" id="authx-profile-email"></span></p>
+              <label class="acct-field">
+                <span>Phone</span>
+                <input type="tel" id="authx-profile-phone" placeholder="(937) 555-1234" autocomplete="tel" aria-label="Phone number">
+              </label>
+              <label class="acct-field">
+                <span>Service address</span>
+                <input type="text" id="authx-profile-address" placeholder="Street, City, OH ZIP" autocomplete="street-address" aria-label="Service address">
+              </label>
+              <button class="btn btn-outline btn-sm" id="authx-profile-save" type="button"><i class="fas fa-save"></i> Save profile</button>
+              <button class="btn btn-outline btn-sm" id="authx-passkey-setup-btn" type="button"><i class="fas fa-fingerprint"></i> Set up a passkey</button><span class="acct-muted" id="authx-profile-msg"></span><div id="authx-passkey-list"></div>
+            </div>
+
+            <!-- My birthday (optional) -->
+            <div class="acct-birthday" id="acct-birthday-wrap" hidden>
+              <div class="acct-field">
+                <span><i class="fas fa-cake-candles"></i> My birthday (optional) &mdash; month and day only, no year</span>
+                <div class="acct-row2">
+                  <select id="acct-birthday-month" aria-label="Birth month">
+                    <option value="">Month</option>
+                    <option value="01">January</option>
+                    <option value="02">February</option>
+                    <option value="03">March</option>
+                    <option value="04">April</option>
+                    <option value="05">May</option>
+                    <option value="06">June</option>
+                    <option value="07">July</option>
+                    <option value="08">August</option>
+                    <option value="09">September</option>
+                    <option value="10">October</option>
+                    <option value="11">November</option>
+                    <option value="12">December</option>
+                  </select>
+                  <select id="acct-birthday-day" aria-label="Birth day">
+                    <option value="">Day</option>
+                    <option value="01">1</option>
+                    <option value="02">2</option>
+                    <option value="03">3</option>
+                    <option value="04">4</option>
+                    <option value="05">5</option>
+                    <option value="06">6</option>
+                    <option value="07">7</option>
+                    <option value="08">8</option>
+                    <option value="09">9</option>
+                    <option value="10">10</option>
+                    <option value="11">11</option>
+                    <option value="12">12</option>
+                    <option value="13">13</option>
+                    <option value="14">14</option>
+                    <option value="15">15</option>
+                    <option value="16">16</option>
+                    <option value="17">17</option>
+                    <option value="18">18</option>
+                    <option value="19">19</option>
+                    <option value="20">20</option>
+                    <option value="21">21</option>
+                    <option value="22">22</option>
+                    <option value="23">23</option>
+                    <option value="24">24</option>
+                    <option value="25">25</option>
+                    <option value="26">26</option>
+                    <option value="27">27</option>
+                    <option value="28">28</option>
+                    <option value="29">29</option>
+                    <option value="30">30</option>
+                    <option value="31">31</option>
+                  </select>
+                </div>
+              </div>
+              <p class="acct-muted">Add it and we&rsquo;ll have a little something for you on your day &mdash; 15% off your next repair. Totally optional.</p>
+              <button class="btn btn-outline btn-sm" id="acct-birthday-save" type="button"><i class="fas fa-save"></i> Save birthday</button>
+              <span class="acct-muted" id="acct-birthday-msg"></span>
+            </div>
+            <!-- Password -->
+            <div class="acct-password">
+              <h4><i class="fas fa-lock"></i> Password</h4>
+              <p class="acct-muted">Change your password by email.</p>
+              <button class="btn btn-outline btn-sm" id="acct-change-password" type="button">Change password</button>
+              <span class="acct-muted" id="acct-password-msg"></span>
+            </div>
+            <div class="acct-earn">
+              <p><i class="fas fa-gift"></i> <strong>How to earn:</strong> 1 point for every $1 you spend on repairs.</p>
+              <p><i class="fas fa-tag"></i> <strong>Redeem:</strong> every 100 points = $5 off your next repair. Just mention your points when you book.</p>
+            </div>
+            </div>
+            <button class="acct-menu-item" type="button" id="authx-logout"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
           </div>
           <p class="acct-error" id="acct-dash-error" hidden></p>
         </div>
@@ -1547,7 +1554,7 @@
       <div class="acct-qr-mname" id="acct-qr-mname"></div>
       <div class="acct-qr-mtier" id="acct-qr-mtier"></div>
       <div class="acct-qr-msince" id="acct-qr-msince"></div>
-      <p class="acct-qr-hint">Show this code to your technician to pull up your ATR One membership.</p>
+      <p class="acct-qr-hint">Show this code to your technician to pull up your ATR One membership. Tap the code to make it bigger.</p>
     </div>
 
     <!-- ATRONE_QR_2026_11_05: post-submit create-a-password offer. Shown only to
@@ -2768,7 +2775,9 @@
       if (s) s.hidden = view !== 'settings';
       if (w) w.hidden = view !== 'rewards';
       document.querySelectorAll('[data-acct-menu]').forEach(function (b) {
-        b.classList.toggle('is-active', b.getAttribute('data-acct-menu') === view);
+        var on = b.getAttribute('data-acct-menu') === view;
+        b.classList.toggle('is-active', on);
+        b.setAttribute('aria-expanded', on ? 'true' : 'false'); /* QR_FIX_PASS_2026_11_05: drop-down rows report their state, same as script.js */
       });
       if (view === 'repairs') {
         var list = $('acct-repairs'), th = $('acct-thread'), nt = $('acct-newticket');
@@ -3707,21 +3716,32 @@
   .acct-cardbox-name{font-size:1.15rem;font-weight:800;margin-top:.45rem}
   .acct-cardbox-tier{font-weight:700;color:var(--brand,#e8720c)}
   .acct-cardbox-since{font-size:.82rem;opacity:.75}
-  .acct-cardbox-qr{display:flex;justify-content:center;margin:.7rem auto .4rem}
-  .acct-cardbox-qr table{border-collapse:collapse;background:#fff;padding:8px;border-radius:8px}
   .acct-cardbox-note{padding:.4rem 0 0}
+  /* QR_FIX_PASS_2026_11_05: the account panels are a strict show/hide
+     set — a hidden panel must never render, whatever else styles it. */
+  #acct-view-repairs[hidden],#acct-view-rewards[hidden],#acct-view-settings[hidden]{display:none}
+  /* QR_FIX_PASS_2026_11_05: drop-down chevron on the section rows —
+     points down when closed, flips when its section is the open one. */
+  .acct-menu-item .acct-menu-chev{margin-left:auto;font-size:.8rem}
+  .acct-menu-item.is-active .acct-menu-chev{transform:rotate(180deg)}
   .acct-qr-overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:1200}
   .acct-qr-modal{position:fixed;inset:0;z-index:1201;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#fff;color:#111;padding:1.2rem;text-align:center}
   .acct-qr-modal[hidden]{display:none}
   .acct-qr-close{position:absolute;top:.9rem;right:.9rem;width:52px;height:52px;border-radius:50%;border:2px solid #111;background:#fff;font-size:1.3rem;cursor:pointer}
   .acct-qr-logo{height:54px;width:auto;margin:0 auto}
   .acct-qr-brandname{font-weight:900;font-size:1.05rem;margin-top:.3rem}
-  .acct-qr-big{margin:1rem auto .6rem;display:flex;justify-content:center}
+  .acct-qr-big{margin:1rem auto .6rem;display:flex;justify-content:center;cursor:pointer}
   .acct-qr-big table{border-collapse:collapse}
   .acct-qr-mname{font-size:1.5rem;font-weight:900}
   .acct-qr-mtier{font-size:1.05rem;font-weight:700;color:#b45a08}
   .acct-qr-msince{font-size:.95rem;opacity:.75}
   .acct-qr-hint{font-size:.95rem;opacity:.7;margin-top:.3rem}
+  /* QR_FIX_PASS_2026_11_05: tap-to-enlarge — the code goes near
+     full-viewport on the same plain background, brand block and hint
+     step aside, name + tier stay on screen small. */
+  .acct-qr-modal.is-enlarged .acct-qr-brand,.acct-qr-modal.is-enlarged .acct-qr-hint,.acct-qr-modal.is-enlarged .acct-qr-msince{display:none}
+  .acct-qr-modal.is-enlarged .acct-qr-mname{font-size:1.05rem}
+  .acct-qr-modal.is-enlarged .acct-qr-mtier{font-size:.9rem}
   /* ATRONE_QR_2026_11_05: post-submit create-a-password popup */
   .acct-signup-overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:1210}
   .acct-signup-modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:1211;background:#fff;color:#111;border-radius:16px;padding:1.6rem 1.4rem 1.3rem;width:min(92vw,420px);text-align:left;box-shadow:0 18px 50px rgba(0,0,0,.35)}
@@ -3915,7 +3935,8 @@
        our system hooks to the account after scan" — so nothing on the
        card or the popup ever prints it. */
     $('acct-qr-name').textContent = acctCardName;
-    drawQrInto($('acct-qr-box'), acctCardPayload, 148);
+    /* QR_FIX_PASS_2026_11_05: no QR is drawn on the card anymore — the
+       payload is only rendered inside the Check In popup, on demand. */
     card.hidden = false;
     if (!acctCardWired) {
       acctCardWired = true;
@@ -3930,7 +3951,18 @@
       if (checkinBtn) checkinBtn.addEventListener('click', openQrPopup);
       $('acct-qr-close').addEventListener('click', closeQrPopup);
       $('acct-qr-overlay').addEventListener('click', closeQrPopup);
-      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeQrPopup(); });
+      /* QR_FIX_PASS_2026_11_05: tapping the code itself toggles the
+         enlarged presentation; Esc steps back out of enlarged first,
+         then closes — the X always closes outright. */
+      var bigBox = $('acct-qr-big');
+      if (bigBox) bigBox.addEventListener('click', toggleQrEnlarge);
+      document.addEventListener('keydown', function (e) {
+        if (e.key !== 'Escape') return;
+        var m = $('acct-qr-modal');
+        if (!m || m.hidden) return;
+        if (m.classList.contains('is-enlarged')) setQrEnlarged(false);
+        else closeQrPopup();
+      });
     }
     setMembershipLine(null); /* loading state */
     if (!sb) { setMembershipLine(undefined); return; }
@@ -3999,20 +4031,39 @@
     acctCardTierLine = 'ATR One Free · Active';
     if (noteEl) noteEl.textContent = CARD_NOTE_FREE;
   }
+  function qrPopupPx(enlarged) {
+    if (enlarged) return Math.max(240, Math.floor(Math.min(window.innerWidth, window.innerHeight) * 0.9));
+    return Math.max(240, Math.min(430, Math.floor(window.innerWidth * 0.8)));
+  }
   function openQrPopup() {
     var modal = $('acct-qr-modal'), ov = $('acct-qr-overlay');
     if (!modal) return;
-    var px = Math.max(240, Math.min(430, Math.floor(window.innerWidth * 0.8)));
-    drawQrInto($('acct-qr-big'), acctCardPayload, px);
+    modal.classList.remove('is-enlarged');
+    drawQrInto($('acct-qr-big'), acctCardPayload, qrPopupPx(false));
     $('acct-qr-mname').textContent = acctCardName;
     $('acct-qr-mtier').textContent = acctCardTierLine || '';
     var ms = $('acct-qr-msince'); if (ms) ms.textContent = acctCardSince || '';
     if (ov) ov.hidden = false;
     modal.hidden = false;
   }
+  /* QR_FIX_PASS_2026_11_05: tap-to-enlarge. The enlarged state is a
+     class on the modal plus a redraw at the bigger size (drawQrInto
+     sets the svg's inline size, so a redraw is the honest way to
+     resize); the payload never changes, only its presentation. */
+  function setQrEnlarged(on) {
+    var modal = $('acct-qr-modal');
+    if (!modal || modal.hidden) return;
+    modal.classList.toggle('is-enlarged', !!on);
+    drawQrInto($('acct-qr-big'), acctCardPayload, qrPopupPx(!!on));
+  }
+  function toggleQrEnlarge() {
+    var modal = $('acct-qr-modal');
+    if (!modal || modal.hidden) return;
+    setQrEnlarged(!modal.classList.contains('is-enlarged'));
+  }
   function closeQrPopup() {
     var modal = $('acct-qr-modal'), ov = $('acct-qr-overlay');
-    if (modal) modal.hidden = true;
+    if (modal) { modal.classList.remove('is-enlarged'); modal.hidden = true; }
     if (ov) ov.hidden = true;
   }
 

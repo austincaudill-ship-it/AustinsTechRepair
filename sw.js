@@ -6,7 +6,9 @@
 // /turnstile.js added to the shell so no visitor can be served the
 // pre-Turnstile script.js / atr-forms.js from an old cache.
 // FEE_SPLIT_2026_11_05: bumped to atrg-v7 for the $15 / $35 visit-fee split.
-const CACHE = "atrg-v7";
+// QR_FIX_PASS_2026_11_05: bumped to atrg-v8 for the account drop-down,
+// no-QR-at-rest card, tap-to-enlarge popup, and Scan In popup fixes.
+const CACHE = "atrg-v8";
 const CORE = [
   "/",
   "/index.html",
