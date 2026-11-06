@@ -137,8 +137,9 @@
         <nav class="portal-tabs" id="portal-nav" role="tablist" aria-label="Portal sections">
 
         <div class="portal-nav-group">Guest</div>
+        <!-- CUSTOMER_INBOX_2026_11_05 (owner naming ruling, Nov 5, 2026): this tab's visible label is "New Service Request" now — the customer's side dropped its own "Check In" name the same day, so the two no longer collide. Ids, data-tab, handlers, and behavior are unchanged; Scan In below keeps its name. -->
         <button class="portal-tab" id="portal-tab-checkin" type="button" role="tab" data-tab="checkin">
-          <i class="fas fa-clipboard-check"></i> Check-In
+          <i class="fas fa-clipboard-check"></i> New Service Request
         </button>
         <!-- ATRONE_QR_2026_11_05 (pass 4, Austin, Nov 5, 2026): "Now we have to build the receiving end into the portal — goes under Check-In, says Scan In." Scan In is the staff side of the member QR: it sits directly under Check-In in the Guest group — camera scan of the member's code (or the account number typed by hand) routes through the very same scan routing as the ?scan= deep link, straight to the guest's open job or their Guest record. QR_FIX_PASS_2026_11_05: it opens the Scan In popup (portal-scanin-modal, by the drawer markup below), not a panel — the button itself is unchanged, a visual peer of Check-In. -->
         <button class="portal-tab" id="portal-tab-scanin" type="button" role="tab" data-tab="scanin">
@@ -461,7 +462,7 @@
           <h3 class="portal-h3">Custom action buttons</h3>
           <button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="portal-setup-add-btn"><i class="fas fa-plus"></i> Add a button</button>
         </div>
-        <p class="portal-muted portal-small">These are real action buttons in the sidebar &mdash; the row of buttons down the side of the portal, like Check-In. You name the button, pick the group it lives in, and pick a template for what is inside it. It shows up in the sidebar as soon as you save, no rebuild, no asking anybody.</p>
+        <p class="portal-muted portal-small">These are real action buttons in the sidebar &mdash; the row of buttons down the side of the portal, like New Service Request. You name the button, pick the group it lives in, and pick a template for what is inside it. It shows up in the sidebar as soon as you save, no rebuild, no asking anybody.</p>
         <div id="portal-setup-btn-form" hidden>
           <div class="portal-card">
             <p class="portal-card-title" id="portal-setup-btn-form-title">Add a button</p>
@@ -1001,7 +1002,7 @@
       
       <!-- CHECK-IN / TRIAGE -->
       <div class="portal-panel" id="portal-panel-checkin" role="tabpanel" hidden>
-        <div class="portal-panel-head"><h2 class="portal-h2">Check-In &mdash; Triage</h2></div>
+        <div class="portal-panel-head"><h2 class="portal-h2">New Service Request &mdash; Triage</h2></div>
         <p class="portal-muted portal-small">Walk-in and phone check-ins. Find the customer (or add them), pick the device and the reason, run the power test, and the ticket lands straight in the Repair Queue. Confirm the visit fee with the customer before submitting &mdash; $15 for a known repair, $35 if the job needs diagnostics.</p>
         <form id="ci-form" novalidate>
           <!-- CHECKIN_COLLAPSE_2026_11_04 (Austin, Nov 4, 2026): the check-in form folds into tappable sections, like the ticket drawer's sections in the Repair Queue — Customer starts open, the rest start closed, and the Create ticket button and Clear check-in stay outside the sections at the bottom, always visible. Every field id is exactly as it was; only the folding wrappers were added. -->
@@ -1415,7 +1416,7 @@
           <i class="fas fa-times"></i>
         </button>
       </div>
-      <p class="portal-muted portal-small">The guest taps Check In in their account and holds up their member code. Scan it here &mdash; or type their account number instead &mdash; and you land on their open job, with their Guest record right behind it.</p>
+      <p class="portal-muted portal-small">The guest taps the member code in their account and holds it up big. Scan it here &mdash; or type their account number instead &mdash; and you land on their open job, with their Guest record right behind it.</p>
       <video id="portal-scanin-video" playsinline muted style="display:block;width:100%;max-width:420px;aspect-ratio:4/3;object-fit:cover;background:#111;border-radius:12px;"></video>
       <canvas id="portal-scanin-canvas" hidden></canvas>
       <p class="portal-muted" id="portal-scanin-status" role="status"></p>

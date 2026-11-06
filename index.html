@@ -1308,7 +1308,7 @@
                code that's just visibly there all the time." The card no
                longer renders a QR at rest — name, tier, status, and member
                since only. The one and only customer-side QR lives inside
-               the Check In / Show to Tech popup. -->
+               the member code popup. -->
           <div class="acct-cardbox" id="acct-qr-card" hidden>
             <div class="acct-cardbox-top">
               <div class="acct-cardbox-id">
@@ -1322,8 +1322,12 @@
               </div>
               <button class="acct-cardbox-qr" id="acct-qr-box" type="button" aria-label="Show your membership code"></button>
             </div>
-            <button class="btn btn-primary btn-lg acct-submit" id="acct-qr-show" type="button"><i class="fas fa-qrcode"></i> Show to Tech</button>
-            <p class="acct-muted acct-cardbox-note" id="acct-qr-note">Tap Show to Tech at your appointment and hold up your code — it pulls up your ATR One membership right away.</p>
+            <!-- CUSTOMER_INBOX_2026_11_05 (owner rulings, Nov 5, 2026):
+                 the big button that used to sit here is GONE, and so
+                 is the menu's old Check In row. Customers open their
+                 code by tapping the code itself — here on the card, or
+                 in the quick glance — and both open the same popup. -->
+            <p class="acct-muted acct-cardbox-note" id="acct-qr-note">Tap the code to make it bigger, and hold it up at your appointment — it pulls up your ATR One membership right away.</p>
           </div>
 
           <!-- ATRONE_QR_2026_11_05: schedule entry point. Jumps to the site's
@@ -1338,19 +1342,23 @@
                the sections are a simple drop-down, like the rest of the
                site: each section panel sits directly under its own row
                inside this menu, one open at a time, tap a row to open it,
-               tap another to switch, the rest stay hidden. Check In sits
-               first, above Repairs (ATRONE_QR_2026_11_05 pass 3), and opens
-               the same Show to Tech member QR popup as the card; Cart and
-               Sign Out are actions, not sections. -->
+               tap another to switch, the rest stay hidden. Cart and
+               Sign Out are actions, not sections.
+               CUSTOMER_INBOX_2026_11_05 (owner ruling): there is no
+               Check In row in this menu anymore — the two "Check-In"s
+               collided (here, and the portal's intake tab), so the
+               customer side dropped the name entirely: members open
+               their code by tapping the code itself, on the card above
+               or in the quick glance. -->
           <div class="acct-menu" role="group" aria-label="My Account">
-            <button class="acct-menu-item acct-flat-row" type="button" id="acct-menu-checkin"><i class="fas fa-qrcode"></i> Check In</button>
             <button class="acct-menu-item acct-flat-row is-active" type="button" data-acct-menu="repairs" aria-expanded="true"><i class="fas fa-tools"></i> Repairs <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
             <div id="acct-view-repairs">
             <!-- My Repairs -->
             <div class="acct-repairs" id="acct-repairs">
               <div class="acct-repairs-head">
                 <h4><i class="fas fa-tools"></i> My Repairs</h4>
-                <button class="btn btn-primary btn-sm" id="acct-new-ticket-btn" type="button"><i class="fas fa-plus"></i> New Request</button>
+                <!-- CUSTOMER_INBOX_2026_11_05 (owner vocabulary rule): on the customer side, starting a repair is always called "Schedule a repair" — one name everywhere. This button opens the same in-account form it always did. -->
+                <button class="btn btn-primary btn-sm" id="acct-new-ticket-btn" type="button"><i class="fas fa-calendar-check"></i> Schedule a repair</button>
               </div>
               <div id="acct-ticket-list"><p class="acct-muted">Loading your repairs…</p></div>
             </div>
@@ -1375,7 +1383,7 @@
             <!-- New ticket form -->
             <div class="acct-newticket" id="acct-newticket" hidden>
               <button class="btn btn-outline btn-sm" id="acct-newticket-back" type="button"><i class="fas fa-arrow-left"></i> Back to repairs</button>
-              <h4><i class="fas fa-plus-circle"></i> New Repair Request</h4>
+              <h4><i class="fas fa-calendar-check"></i> Schedule a Repair</h4>
               <form id="acct-ticket-form" novalidate>
                 <label class="acct-field">
                   <span>Device type</span>
@@ -1439,6 +1447,26 @@
               </form>
             </div>
 
+            </div>
+            <button class="acct-menu-item acct-flat-row" type="button" data-acct-menu="messages" aria-expanded="false"><i class="fas fa-envelope"></i> Messages <span class="acct-msg-badge" id="acct-msg-badge" hidden>0</span> <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
+
+            <!-- Messages inbox — CUSTOMER_INBOX_2026_11_05 (owner,
+                 Nov 5, 2026): "our message to them goes to their
+                 message/inbox button on their account page… and vice
+                 versa." One conversation per repair that has messages,
+                 newest activity first; the badge on the row counts the
+                 conversations with something new from the shop, and a
+                 New marker rides on each of those rows. Opening a
+                 conversation shows the same thread and reply box the
+                 Repairs section uses — one thread, two doors. -->
+            <div id="acct-view-messages" hidden>
+              <div class="acct-inbox" id="acct-inbox">
+                <div class="acct-repairs-head">
+                  <h4><i class="fas fa-envelope"></i> Messages</h4>
+                </div>
+                <p class="acct-muted" style="text-align:left;padding:0;">Messages between you and our shop about your repairs. Tap a conversation to read it or reply.</p>
+                <div id="acct-inbox-list"><p class="acct-muted">Loading your messages…</p></div>
+              </div>
             </div>
             <button class="acct-menu-item acct-flat-row" type="button" data-acct-menu="rewards" aria-expanded="false"><i class="fas fa-ticket"></i> Rewards &amp; Vouchers <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
 
@@ -1563,7 +1591,7 @@
       </div>
     </section>
 
-    <!-- ATRONE_QR_2026_11_05: Show to Tech popup — the member's own device shows
+    <!-- ATRONE_QR_2026_11_05: member code popup — the member's own device shows
          their account QR big enough to scan across a room. Display only. -->
     <div class="acct-qr-overlay" id="acct-qr-overlay" hidden></div>
     <div class="acct-qr-modal" id="acct-qr-modal" role="dialog" aria-modal="true" aria-label="Show this code to your technician" hidden>
@@ -1652,7 +1680,7 @@
             <div class="step-card">
               <div class="step-num">3</div>
               <h4>Show &amp; save</h4>
-              <p>At your visit, tap Show to Tech in My Account and hold up your member QR code, or mention you're a member on the phone. Discounts apply automatically. Your technician can help you pull it up when we arrive.</p>
+              <p>At your visit, tap the member QR code in My Account to make it big and hold it up, or mention you're a member on the phone. Discounts apply automatically. Your technician can help you pull it up when we arrive.</p>
             </div>
           </div>
 
@@ -2789,20 +2817,33 @@
     'use strict';
     function $(id) { return document.getElementById(id); }
     function showAcctView(view) {
-      var r = $('acct-view-repairs'), s = $('acct-view-settings'), w = $('acct-view-rewards');
-      if (r) r.hidden = view !== 'repairs';
-      if (s) s.hidden = view !== 'settings';
-      if (w) w.hidden = view !== 'rewards';
+      var r = $('acct-view-repairs'), s = $('acct-view-settings'), w = $('acct-view-rewards'), m = $('acct-view-messages');
+      /* CUSTOMER_INBOX_2026_11_05: the Messages view joins the set,
+         and the switch is a TOGGLE, same as the script.js module —
+         owner bug fix (Nov 5, 2026): tapping a closed row opens it
+         and closes the others; tapping the OPEN row closes it and
+         leaves every section closed. */
+      var panels = { repairs: r, settings: s, rewards: w, messages: m };
+      var target = (panels[view] && !panels[view].hidden) ? null : view;
+      if (r) r.hidden = target !== 'repairs';
+      if (s) s.hidden = target !== 'settings';
+      if (w) w.hidden = target !== 'rewards';
+      if (m) m.hidden = target !== 'messages';
       document.querySelectorAll('[data-acct-menu]').forEach(function (b) {
-        var on = b.getAttribute('data-acct-menu') === view;
+        var on = b.getAttribute('data-acct-menu') === target;
         b.classList.toggle('is-active', on);
         b.setAttribute('aria-expanded', on ? 'true' : 'false'); /* QR_FIX_PASS_2026_11_05: drop-down rows report their state, same as script.js */
       });
-      if (view === 'repairs') {
+      if (target === 'repairs') {
         var list = $('acct-repairs'), th = $('acct-thread'), nt = $('acct-newticket');
         if (list) list.hidden = false;
         if (th) th.hidden = true;
         if (nt) nt.hidden = true;
+      }
+      if (target === 'messages') {
+        var ib = $('acct-inbox'), th2 = $('acct-thread');
+        if (ib) ib.hidden = false;
+        if (th2) th2.hidden = true;
       }
     }
     function paintBadge() {
@@ -2831,9 +2872,21 @@
         if (++tries < 8) setTimeout(attempt, 200);
       })();
     }
+    /* CUSTOMER_INBOX_2026_11_05 (owner Bug 1, root cause): the net's
+       arm() could run twice — DOMContentLoaded can reach it by more
+       than one path — and it had no guard of its own, so it attached
+       its click handlers twice. While showAcctView only ever opened,
+       a double handling was invisible; with the toggle, one tap fired
+       open-then-close and the row looked dead. The net is one-shot
+       now, and it raises the same wired flag the script.js module
+       raises, so the two wirings can never both be live. */
+    var netArmed = false;
     function arm() {
+      if (netArmed) return;
+      netArmed = true;
       setTimeout(function () {
         if (!window.__atrAcctMenuWired) {
+          window.__atrAcctMenuWired = true;
           document.querySelectorAll('[data-acct-menu]').forEach(function (btn) {
             btn.addEventListener('click', function () { showAcctView(btn.getAttribute('data-acct-menu')); });
           });
@@ -3726,7 +3779,7 @@
   .acct-line-meta{color:var(--muted,#8a7a68);font-size:.88rem}
   .acct-line-meta a{color:var(--brand);font-weight:700}
   .acct-line-amt{font-weight:700;white-space:nowrap}
-  /* ATRONE_QR_2026_11_05: account card + Show to Tech popup */
+  /* ATRONE_QR_2026_11_05: account card + member code popup */
   .acct-cardbox{border:2px solid var(--brand,#e8720c);border-radius:14px;padding:1rem;margin:0 0 1rem;background:rgba(232,114,12,.06);text-align:center}
   .acct-cardbox-head{display:flex;justify-content:space-between;align-items:center;gap:.5rem}
   .acct-cardbox-title{font-weight:800;font-size:.95rem}
@@ -3738,14 +3791,14 @@
   .acct-cardbox-note{padding:.4rem 0 0}
   /* QR_FIX_PASS_2026_11_05: the account panels are a strict show/hide
      set — a hidden panel must never render, whatever else styles it. */
-  #acct-view-repairs[hidden],#acct-view-rewards[hidden],#acct-view-settings[hidden]{display:none}
+  #acct-view-repairs[hidden],#acct-view-rewards[hidden],#acct-view-settings[hidden],#acct-view-messages[hidden]{display:none}
   /* QR_FIX_PASS_2026_11_05: drop-down chevron on the section rows —
      points down when closed, flips when its section is the open one. */
   .acct-menu-item .acct-menu-chev{margin-left:auto;font-size:.8rem}
   .acct-menu-item.is-active .acct-menu-chev{transform:rotate(180deg)}
   /* QR_FIX_PASS_2_2026_11_05 (owner amendment): a modest QR sits at the
      top of the member card, next to the member's name — not a
-     centerpiece. It is a button: tapping it opens the Check In popup. */
+     centerpiece. It is a button: tapping it opens the member code popup. */
   .acct-cardbox-top{display:flex;align-items:flex-start;gap:.8rem;text-align:left}
   .acct-cardbox-id{flex:1;min-width:0}
   .acct-cardbox-qr{flex:none;width:76px;height:76px;padding:5px;margin:0;background:#fff;border:1.5px solid var(--line,#e5d9c8);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center}
@@ -3876,6 +3929,7 @@
     currentCust = cust;
     wireRepairs();
     loadMyRepairs(cust);
+    loadInbox(cust); /* CUSTOMER_INBOX_2026_11_05: conversations + unread badge */
   }
   function fillProfile(cust) {
     var n = $('authx-profile-name'), e = $('authx-profile-email'),
@@ -3931,8 +3985,8 @@
   var acctCardWired = false, acctCardPayload = '', acctCardName = '', acctCardTierLine = '', acctCardSince = '';
   var glanceWired = false; /* QR_FIX_PASS_2_2026_11_05: one-shot wiring guard, same pattern as acctCardWired */
   var acctCardPoints = null, acctCardCustSince = '';
-  var CARD_NOTE_DEFAULT = 'Tap Show to Tech at your appointment and hold up your code \u2014 it pulls up your ATR One membership right away.';
-  var CARD_NOTE_FREE = 'Free members earn points on every repair and get surprise member discounts along the way. Tap Show to Tech at your appointment and hold up your code.';
+  var CARD_NOTE_DEFAULT = 'Tap the code on this card to make it bigger, and hold it up at your appointment \u2014 it pulls up your ATR One membership right away.';
+  var CARD_NOTE_FREE = 'Free members earn points on every repair and get surprise member discounts along the way. Tap the code on this card to make it bigger and hold it up at your appointment.';
   function scanPayload(customerId) { return 'https://austinstechrepairgroup.com/portal.html?scan=' + encodeURIComponent(customerId); }
   /* Pass 4 (Austin): the code encodes the account number — ATR-<n> —
      whenever the customers row carries one (account-number.sql is live;
@@ -3984,7 +4038,7 @@
     $('acct-qr-name').textContent = acctCardName;
     /* QR_FIX_PASS_2_2026_11_05 (owner amendment): a modest QR sits at
        the top of the card next to the member's name — drawn here from
-       the same payload the Check In popup uses. Tapping it opens the
+       the same payload the member code popup uses. Tapping it opens the
        popup (wired below). */
     drawQrInto($('acct-qr-box'), acctCardPayload, 66);
     renderGlance();
@@ -3994,18 +4048,16 @@
       /* QR_FIX_PASS_2_2026_11_05: the pass-1 close-the-sheet crutch on
          the Schedule anchor is gone with the sheet — the anchor's own
          data-page routing switches pages by itself. The card QR and
-         the quick-glance QR open the same Check In popup. */
+         the quick-glance QR open the same member code popup. */
       var cardQrBtn = $('acct-qr-box');
       if (cardQrBtn) cardQrBtn.addEventListener('click', openQrPopup);
       var glanceQrBtn = $('acct-glance-qr');
       if (glanceQrBtn) glanceQrBtn.addEventListener('click', function () { closeGlance(); openQrPopup(); });
-      $('acct-qr-show').addEventListener('click', openQrPopup);
-      /* Pass 3: the account menu's Check In button (first item, above
-         Repairs) opens the very same popup. The menu only exists inside
-         the signed-in dashboard, and this wiring runs on first card
-         render, so signed-out visitors never get a live button. */
-      var checkinBtn = $('acct-menu-checkin');
-      if (checkinBtn) checkinBtn.addEventListener('click', openQrPopup);
+      /* CUSTOMER_INBOX_2026_11_05 (owner rulings): the card's big
+         button is gone, and so is the menu row that used to sit
+         here — exactly TWO controls open this popup, both through
+         the single opener: the code on this card and the code in
+         the quick glance, wired just above. */
       $('acct-qr-close').addEventListener('click', closeQrPopup);
       $('acct-qr-overlay').addEventListener('click', closeQrPopup);
       /* QR_FIX_PASS_2026_11_05: tapping the code itself toggles the
@@ -4336,15 +4388,44 @@
         list.innerHTML = '<p class="acct-muted">We couldn\'t load your repairs just now \u2014 pull this page up again in a moment, or call or text (937) 280-6243.</p>';
       });
   }
-  function openThread(t) {
+  /* CUSTOMER_INBOX_2026_11_05: one thread view, two doors. The thread
+     element keeps a home inside the Repairs panel; opening a
+     conversation from the Messages inbox moves that same element
+     into the Messages panel (and back again for Repairs), so there
+     is only ever ONE thread, ONE message list, and ONE reply box —
+     the Repairs "View messages" and the inbox row render and send
+     through the identical code path. */
+  var threadOrigin = 'repairs', threadHomeParent = null, threadHomeNext = null;
+  function placeThread(origin) {
+    var th = $('acct-thread');
+    if (!th) return;
+    if (!threadHomeParent) { threadHomeParent = th.parentNode; threadHomeNext = th.nextSibling; }
+    if (origin === 'messages') {
+      var mv = $('acct-view-messages');
+      if (mv && th.parentNode !== mv) mv.appendChild(th);
+    } else if (threadHomeParent && th.parentNode !== threadHomeParent) {
+      threadHomeParent.insertBefore(th, threadHomeNext);
+    }
+  }
+  function openThread(t, origin) {
     openTicket = t;
-    var r = $('acct-repairs'), th = $('acct-thread'), nt = $('acct-newticket');
-    if (r) r.hidden = true; if (nt) nt.hidden = true; if (th) th.hidden = false;
+    threadOrigin = origin === 'messages' ? 'messages' : 'repairs';
+    placeThread(threadOrigin);
+    var r = $('acct-repairs'), th = $('acct-thread'), nt = $('acct-newticket'), ib = $('acct-inbox');
+    if (r) r.hidden = true; if (nt) nt.hidden = true; if (ib) ib.hidden = true; if (th) th.hidden = false;
+    var back = $('acct-thread-back');
+    if (back) back.innerHTML = '<i class="fas fa-arrow-left"></i> Back to ' + (threadOrigin === 'messages' ? 'messages' : 'repairs');
     var info = $('acct-thread-info');
     if (info) info.innerHTML = '<strong>' + escX(ticketDevice(t)) + '</strong> ' + statusPill(t.status) + '<br><span class="acct-muted">' + escX(t.issue || '') + '</span>';
     loadTicketParts(t);
     loadTicketCharges(t);
     loadThreadMessages(t);
+    markThreadRead(t); /* CUSTOMER_INBOX_2026_11_05: opening a conversation marks it read */
+  }
+  function showInboxList() {
+    var th = $('acct-thread'), ib = $('acct-inbox');
+    if (th) th.hidden = true; if (ib) ib.hidden = false;
+    renderInboxList();
   }
   function fmtMoneyX(n) { var v = Number(n); if (isNaN(v)) v = 0; return '$' + v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
   function fmtDayX(iso) { try { return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }); } catch (e) { return ''; } }
@@ -4430,9 +4511,131 @@
       })
       .catch(function () { box.innerHTML = '<p class="acct-muted">Messages couldn\'t load \u2014 try again in a moment.</p>'; });
   }
+
+  /* ---------- CUSTOMER_INBOX_2026_11_05: the Messages inbox ----------
+     The conversations are the same public.messages threads the
+     Repairs section already reads and writes — this section is a
+     message-first door into them, not a second store. Unread state
+     lives in public.customer_thread_reads (one row per customer +
+     ticket, written when a conversation opens). FAIL SOFT by design:
+     if that table is not there yet, or a read fails, the inbox still
+     lists and opens conversations — the badge and the New markers
+     simply do not render, because an unread count we cannot back up
+     is worse than none. */
+  var inboxTickets = [], inboxMsgs = {}, inboxReads = {}, inboxReadsOk = false, inboxLoaded = false;
+  function inboxUnreadCount(ticketId) {
+    if (!inboxReadsOk) return 0;
+    var rows = inboxMsgs[ticketId] || [], last = inboxReads[ticketId], n = 0;
+    rows.forEach(function (m) {
+      if (m.sender === 'tech' && (!last || String(m.created_at) > String(last))) n++;
+    });
+    return n;
+  }
+  function paintInboxBadge() {
+    var badge = $('acct-msg-badge');
+    if (!badge) return;
+    var count = 0;
+    if (inboxReadsOk) {
+      Object.keys(inboxMsgs).forEach(function (tid) { if (inboxUnreadCount(tid) > 0) count++; });
+    }
+    badge.textContent = count;
+    badge.hidden = !(count > 0);
+  }
+  function fmtConvoTime(iso) {
+    try { return new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); } catch (e) { return ''; }
+  }
+  function renderInboxList() {
+    var list = $('acct-inbox-list');
+    if (!list || !inboxLoaded) return;
+    var convos = inboxTickets
+      .filter(function (t) { return (inboxMsgs[t.id] || []).length > 0; })
+      .map(function (t) {
+        var rows = inboxMsgs[t.id]; /* loaded newest-first: row 0 is the latest message */
+        return { t: t, last: rows[0], unread: inboxUnreadCount(t.id) };
+      })
+      .sort(function (a, b) { return String(b.last.created_at).localeCompare(String(a.last.created_at)); });
+    if (!convos.length) {
+      list.innerHTML = '<p class="acct-muted">No messages yet \u2014 when we write to you about a repair, it will show up here, and you can reply right from this page.</p>';
+      return;
+    }
+    list.innerHTML = convos.map(function (c) {
+      var preview = (c.last.sender === 'customer' ? 'You: ' : '') + (c.last.message || '');
+      if (preview.length > 90) preview = preview.slice(0, 90) + '\u2026';
+      return '<button type="button" class="acct-convo-card" data-convo="' + c.t.id + '">' +
+        '<span class="acct-ticket-top"><strong>' + escX(ticketDevice(c.t)) + '</strong>' +
+        (c.unread > 0 ? '<span class="acct-new-chip">New</span>' : '') + statusPill(c.t.status) + '</span>' +
+        '<span class="acct-convo-preview">' + escX(preview) + '</span>' +
+        '<span class="acct-ticket-meta">' + escX(fmtConvoTime(c.last.created_at)) + '</span>' +
+      '</button>';
+    }).join('');
+    Array.prototype.forEach.call(list.querySelectorAll('[data-convo]'), function (btn) {
+      btn.addEventListener('click', function () {
+        var t = inboxTickets.filter(function (r) { return String(r.id) === btn.getAttribute('data-convo'); })[0];
+        if (t) openThread(t, 'messages');
+      });
+    });
+  }
+  function loadInbox(cust) {
+    if (!sb || !cust) return;
+    sb.from('tickets').select('id, created_at, device_type, brand, model, issue, status')
+      .eq('customer_id', cust.id).order('created_at', { ascending: false }).limit(50)
+      .then(function (res) {
+        if (res.error) throw res.error;
+        var tickets = res.data || [];
+        inboxTickets = tickets;
+        if (!tickets.length) { inboxMsgs = {}; inboxLoaded = true; renderInboxList(); paintInboxBadge(); return; }
+        var ids = tickets.map(function (t) { return t.id; });
+        return sb.from('messages').select('id, ticket_id, sender, message, created_at')
+          .in('ticket_id', ids).order('created_at', { ascending: false }).limit(500)
+          .then(function (mres) {
+            if (mres.error) throw mres.error;
+            var byT = {};
+            (mres.data || []).forEach(function (m) { (byT[m.ticket_id] = byT[m.ticket_id] || []).push(m); });
+            inboxMsgs = byT;
+            inboxLoaded = true;
+            renderInboxList();
+            /* The reads are a separate, best-effort step: the list
+               above is already on screen either way. */
+            return sb.from('customer_thread_reads').select('ticket_id, last_read_at').eq('customer_id', cust.id)
+              .then(function (rres) {
+                if (rres.error) throw rres.error;
+                var map = {};
+                (rres.data || []).forEach(function (r) { map[r.ticket_id] = r.last_read_at; });
+                inboxReads = map;
+                inboxReadsOk = true;
+                renderInboxList();
+                paintInboxBadge();
+              })
+              .catch(function () { inboxReadsOk = false; paintInboxBadge(); });
+          });
+      })
+      .catch(function () {
+        var list = $('acct-inbox-list');
+        if (list && !inboxLoaded) list.innerHTML = '<p class="acct-muted">We couldn\'t load your messages just now \u2014 pull this page up again in a moment, or call or text (937) 280-6243.</p>';
+      });
+  }
+  function markThreadRead(t) {
+    if (!t) return;
+    var nowIso = new Date().toISOString();
+    inboxReads[t.id] = nowIso;
+    renderInboxList(); /* the New marker clears in place */
+    paintInboxBadge();
+    if (!sb || !currentCust) return;
+    try {
+      var q = sb.from('customer_thread_reads').upsert(
+        { customer_id: currentCust.id, ticket_id: t.id, last_read_at: nowIso },
+        { onConflict: 'customer_id,ticket_id' });
+      if (q && typeof q.then === 'function') q.then(function () {}, function () {});
+    } catch (e) { /* best-effort only — a failed marker never breaks the thread */ }
+  }
+
   function wireRepairs() {
     if (repairsWired) return; repairsWired = true;
-    var back = $('acct-thread-back'); if (back) back.addEventListener('click', showRepairsView);
+    var back = $('acct-thread-back'); if (back) back.addEventListener('click', function () {
+      /* CUSTOMER_INBOX_2026_11_05: the thread's Back returns to
+         whichever list opened it — the inbox or My Repairs. */
+      if (threadOrigin === 'messages') showInboxList(); else showRepairsView();
+    });
     var ntBack = $('acct-newticket-back'); if (ntBack) ntBack.addEventListener('click', showRepairsView);
     var ntBtn = $('acct-new-ticket-btn'); if (ntBtn) ntBtn.addEventListener('click', function () {
       var r = $('acct-repairs'), th = $('acct-thread'), nt = $('acct-newticket');
@@ -4449,6 +4652,7 @@
         if (res.error) { err.textContent = 'Couldn\'t send \u2014 try again.'; err.hidden = false; return; }
         input.value = '';
         loadThreadMessages(openTicket);
+        if (currentCust) loadInbox(currentCust); /* CUSTOMER_INBOX_2026_11_05: keep the inbox preview + badge current */
       }).catch(function () { err.textContent = 'Couldn\'t send \u2014 try again.'; err.hidden = false; });
     });
     var tForm = $('acct-ticket-form');

@@ -1673,6 +1673,23 @@ a.acct-points:hover { border-color: var(--gold); }
   margin-left: auto; background: var(--brand); color: #fff; border-radius: 999px;
   padding: 0.08rem 0.55rem; font-size: 0.8rem; font-weight: 800; line-height: 1.4;
 }
+/* CUSTOMER_INBOX_2026_11_05: the Messages row's unread badge rides the
+   same pill shape as the cart counter (the row's chevron still closes
+   the row out); a New chip marks each unread conversation, and the
+   conversation rows mirror the repair ticket cards so the inbox feels
+   like the rest of the account. */
+.acct-msg-badge {
+  margin-left: auto; background: var(--brand); color: #fff; border-radius: 999px;
+  padding: 0.08rem 0.55rem; font-size: 0.8rem; font-weight: 800; line-height: 1.4;
+}
+.acct-msg-badge[hidden] { display: none; }
+.acct-new-chip {
+  background: var(--brand); color: #fff; border-radius: 999px;
+  padding: 0.05rem 0.5rem; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.02em;
+}
+.acct-convo-card{display:block;width:100%;text-align:left;background:var(--surface,#fff);border:1px solid var(--line,#e5d9c8);border-radius:14px;padding:14px 16px;margin:0 0 10px;cursor:pointer;font-family:inherit;color:var(--text,#2b2118)}
+.acct-convo-card:hover{border-color:var(--brand,#b4551f)}
+.acct-convo-preview{display:block;margin-top:2px}
 .acct-voucher-strip {
   display: flex; align-items: center; gap: 0.6rem; width: 100%;
   padding: 0.75rem 1rem; margin: -0.5rem 0 1.25rem;

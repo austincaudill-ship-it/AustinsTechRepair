@@ -2217,29 +2217,46 @@ if ("serviceWorker" in navigator) {
     var repairsView = document.getElementById('acct-view-repairs');
     var settingsView = document.getElementById('acct-view-settings');
     var rewardsView = document.getElementById('acct-view-rewards');
+    var messagesView = document.getElementById('acct-view-messages');
     if (!menuItems.length || !repairsView || !settingsView) return;
     acctMenuWired = true;
     window.__atrAcctMenuWired = true;
+    /* CUSTOMER_INBOX_2026_11_05: a fourth view — Messages.
+       Owner bug fix (Nov 5, 2026): show() is a TOGGLE. Tapping a
+       closed row opens it and closes the others; tapping the OPEN
+       row closes it and leaves every section closed. Before this,
+       show() only ever opened, so a section could not be closed by
+       tapping its own row — it took a tap on a different row. The
+       safety net in index.html carries the identical toggle. */
     function show(view) {
-      repairsView.hidden = view !== 'repairs';
-      settingsView.hidden = view !== 'settings';
+      var panels = { repairs: repairsView, settings: settingsView, rewards: rewardsView, messages: messagesView };
+      var target = (panels[view] && !panels[view].hidden) ? null : view;
+      repairsView.hidden = target !== 'repairs';
+      settingsView.hidden = target !== 'settings';
       /* SITE_POINTS_SPEND_2026_10_30: third view — Rewards & Vouchers. */
-      if (rewardsView) rewardsView.hidden = view !== 'rewards';
+      if (rewardsView) rewardsView.hidden = target !== 'rewards';
+      if (messagesView) messagesView.hidden = target !== 'messages';
       menuItems.forEach(function (btn) {
-        var on = btn.getAttribute('data-acct-menu') === view;
+        var on = btn.getAttribute('data-acct-menu') === target;
         btn.classList.toggle('is-active', on);
         /* QR_FIX_PASS_2026_11_05: the sections are a simple drop-down
            now (each panel sits directly under its row in the menu),
            so the row also reports itself expanded/collapsed. */
         btn.setAttribute('aria-expanded', on ? 'true' : 'false');
       });
-      if (view === 'repairs') {
+      if (target === 'repairs') {
         var r = document.getElementById('acct-repairs');
         var th = document.getElementById('acct-thread');
         var nt = document.getElementById('acct-newticket');
         if (r) r.hidden = false;
         if (th) th.hidden = true;
         if (nt) nt.hidden = true;
+      }
+      if (target === 'messages') {
+        var ib = document.getElementById('acct-inbox');
+        var th2 = document.getElementById('acct-thread');
+        if (ib) ib.hidden = false;
+        if (th2) th2.hidden = true;
       }
     }
     menuItems.forEach(function (btn) {

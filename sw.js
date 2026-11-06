@@ -11,7 +11,9 @@
 // QR_FIX_PASS_2_2026_11_05: bumped to atrg-v9 — account overlay retired
 // for a page, flat portal-style drop-downs, card QR restored by the
 // member's name, and the quick-glance header drop-down.
-const CACHE = "atrg-v9";
+// CUSTOMER_INBOX_2026_11_05: bumped to atrg-v10 — the Messages inbox
+// drop-down on the account page with the unread notification.
+const CACHE = "atrg-v10";
 const CORE = [
   "/",
   "/index.html",
