@@ -1595,6 +1595,76 @@
                their code by tapping the code itself, on the card above
                or in the quick glance. -->
           <div class="acct-menu" role="group" aria-label="My Account">
+            <button class="acct-menu-item acct-flat-row" type="button" data-acct-menu="devices" aria-expanded="false"><i class="fas fa-laptop"></i> My Devices <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
+
+            <!-- My Devices — MY_DEVICES_2026_11_06 (Austin, Nov 6, 2026):
+                 his expansion of the device-list idea ("that is
+                 genius"): the customer adds every device in their
+                 home and picks which ones their ATR One plan covers —
+                 exactly 1 on Individual, up to 5 on Family, up to 25
+                 on Business, up to 50 on Business Pro (caps set by
+                 Austin, Nov 6, 2026) — so the shop already knows what
+                 it is protecting. The row sits directly ABOVE the
+                 Services row (Austin's settled placement, Nov 6,
+                 2026). Reads and writes ride the narrow
+                 my_devices() / save_my_device() / delete_my_device() /
+                 set_my_device_coverage() doors (my-devices.sql in
+                 this build's folder, DRAFT — not run yet); the devices
+                 table itself stays staff-only. Until that script runs
+                 this section fails soft with honest wording and never
+                 invents a device. -->
+            <div id="acct-view-devices" hidden>
+              <div class="acct-devices">
+                <div class="acct-repairs-head">
+                  <h4><i class="fas fa-laptop"></i> My Devices</h4>
+                </div>
+                <p class="acct-muted" style="text-align:left;padding:0;">Every device in your home, in one place. Add them once — the next repair starts faster, and you choose which ones your ATR One plan covers.</p>
+                <p class="acct-muted" style="text-align:left;padding:0;" id="md-coverage-note" hidden></p>
+                <div id="md-list"><p class="acct-muted">Loading your devices…</p></div>
+                <p class="acct-muted" id="md-unavailable" hidden>My Devices is not available online yet — nothing is lost: your plan and your repairs are on file at the shop. Text us at (937) 280-6243 and we will help with your devices.</p>
+                <div id="md-form-wrap">
+                  <h4 class="acct-detail-h" id="md-form-title"><i class="fas fa-plus"></i> Add a device</h4>
+                  <form id="md-form" novalidate>
+                    <label class="acct-field">
+                      <span>Type</span>
+                      <select id="md-type">
+                        <option value="phone">Phone</option>
+                        <option value="tablet">Tablet</option>
+                        <option value="computer">Computer</option>
+                        <option value="console">Console</option>
+                        <option value="watch">Watch</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </label>
+                    <div class="acct-row2">
+                      <label class="acct-field">
+                        <span>Brand</span>
+                        <input type="text" id="md-brand" placeholder="e.g. Apple" autocomplete="off" maxlength="60">
+                      </label>
+                      <label class="acct-field">
+                        <span>Model</span>
+                        <input type="text" id="md-model" placeholder="e.g. iPhone 13" autocomplete="off" maxlength="80">
+                      </label>
+                    </div>
+                    <label class="acct-field">
+                      <span>Nickname (optional)</span>
+                      <input type="text" id="md-nickname" placeholder="e.g. Kitchen iPad" autocomplete="off" maxlength="60">
+                    </label>
+                    <label class="acct-field">
+                      <span>Serial number (optional)</span>
+                      <input type="text" id="md-serial" placeholder="Only if you want it on file" autocomplete="off" maxlength="80">
+                    </label>
+                    <label class="acct-field">
+                      <span>Notes (optional)</span>
+                      <textarea id="md-notes" rows="2" maxlength="500" placeholder="Anything we should know about this one?"></textarea>
+                    </label>
+                    <p class="acct-error" id="md-form-error" hidden></p>
+                    <button class="btn btn-primary btn-lg acct-submit" type="submit" id="md-save-btn">Add device</button>
+                    <button class="btn btn-outline btn-sm" type="button" id="md-cancel-edit" hidden>Cancel edit</button>
+                  </form>
+                </div>
+              </div>
+            </div>
             <button class="acct-menu-item acct-flat-row" type="button" data-acct-menu="repairs" aria-expanded="false"><i class="fas fa-tools"></i> Services <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
             <div id="acct-view-repairs" hidden>
             <!-- My Repairs -->
@@ -3520,7 +3590,7 @@
     'use strict';
     function $(id) { return document.getElementById(id); }
     function showAcctView(view) {
-      var r = $('acct-view-repairs'), s = $('acct-view-settings'), w = $('acct-view-rewards'), m = $('acct-view-messages'), o = $('acct-view-orders'), c = $('acct-view-cart'), mmv = $('acct-view-membership');
+      var r = $('acct-view-repairs'), s = $('acct-view-settings'), w = $('acct-view-rewards'), m = $('acct-view-messages'), o = $('acct-view-orders'), c = $('acct-view-cart'), mmv = $('acct-view-membership'), dv = $('acct-view-devices');
       /* CUSTOMER_INBOX_2026_11_05: the Messages view joins the set,
          and the switch is a TOGGLE, same as the script.js module —
          owner bug fix (Nov 5, 2026): tapping a closed row opens it
@@ -3529,7 +3599,7 @@
          ACCOUNT_FIX_PASS_3_2_2026_11_06 (ITEM C): the Orders view
          joins the set the same way.
          ACCOUNT_FIX_PASS_3_3_2026_11_06: the Cart view joins too. */
-      var panels = { repairs: r, settings: s, rewards: w, messages: m, orders: o, cart: c, membership: mmv };
+      var panels = { repairs: r, settings: s, rewards: w, messages: m, orders: o, cart: c, membership: mmv, devices: dv };
       var target = (panels[view] && !panels[view].hidden) ? null : view;
       if (r) r.hidden = target !== 'repairs';
       if (s) s.hidden = target !== 'settings';
@@ -3538,6 +3608,7 @@
       if (o) o.hidden = target !== 'orders';
       if (c) c.hidden = target !== 'cart';
       if (mmv) mmv.hidden = target !== 'membership';
+      if (dv) dv.hidden = target !== 'devices';
       document.querySelectorAll('[data-acct-menu]').forEach(function (b) {
         var on = b.getAttribute('data-acct-menu') === target;
         b.classList.toggle('is-active', on);
@@ -4490,7 +4561,7 @@
   .acct-cardbox-since{font-size:.82rem;opacity:.75}
   /* QR_FIX_PASS_2026_11_05: the account panels are a strict show/hide
      set — a hidden panel must never render, whatever else styles it. */
-  #acct-view-repairs[hidden],#acct-view-rewards[hidden],#acct-view-settings[hidden],#acct-view-messages[hidden],#acct-view-orders[hidden],#acct-view-cart[hidden]{display:none}
+  #acct-view-repairs[hidden],#acct-view-rewards[hidden],#acct-view-settings[hidden],#acct-view-messages[hidden],#acct-view-orders[hidden],#acct-view-cart[hidden],#acct-view-devices[hidden]{display:none}
   /* QR_FIX_PASS_2026_11_05: drop-down chevron on the section rows —
      points down when closed, flips when its section is the open one. */
   .acct-menu-item .acct-menu-chev{margin-left:auto;font-size:.8rem}
@@ -4633,6 +4704,7 @@
     loadMyRepairs(cust);
     loadInbox(cust); /* CUSTOMER_INBOX_2026_11_05: conversations + unread badge */
     loadMyOrders(cust); /* ACCOUNT_FIX_PASS_3_2_2026_11_06 ITEM C */
+    loadMyDevices(cust); /* MY_DEVICES_2026_11_06 */
   }
   function fillProfile(cust) {
     var n = $('authx-profile-name'), e = $('authx-profile-email'),
@@ -4888,6 +4960,7 @@
       a.textContent = cur ? 'Current plan' : (paid ? 'Switch' : 'Join');
     });
     wireManageMembership();
+    paintMyDevicesCoverage(); /* MY_DEVICES_2026_11_06: coverage repaints ride the same membership answer */
   }
   function paintEarnRate() {
     var el = $('pts-earn-rate');
@@ -4944,6 +5017,275 @@
         }).catch(function () {});
       }).catch(failSoft);
     });
+  }
+
+
+  /* ---------- MY_DEVICES_2026_11_06: My Devices ----------
+     The customer's own device list, in a drop-down row directly above
+     the Services row. They add the devices in their home once (type, brand,
+     model, an optional nickname, notes, and an optional serial), edit
+     or delete them, and — on a paid ATR One Plus plan — choose which
+     devices their plan covers. The caps are Austin's (Nov 6, 2026):
+     exactly 1 on Individual, up to 5 on Family, up to 25 on Business,
+     up to 50 on Business Pro. Free members save devices the same way;
+     coverage choices only appear with a paid plan.
+     Reads and writes ride four narrow SECURITY DEFINER doors
+     (my-devices.sql in this build's folder, DRAFT — not run yet):
+     my_devices(), save_my_device(...), delete_my_device(id),
+     set_my_device_coverage(id, covered). Each resolves the caller
+     from the sign-in and can only touch the caller's own rows; the
+     coverage cap is enforced in the function too, not only here.
+     Until that script runs, every call errors and this section fails
+     soft with honest wording — no device is ever invented here.
+     The repairs count under a device is a best-effort match against
+     the customer's own repairs already on file (brand + model text);
+     a repair that could belong to more than one saved device is
+     counted for none of them, so the number never guesses. */
+  var MD_TYPE_LABEL = { phone: 'Phone', tablet: 'Tablet', computer: 'Computer', console: 'Console', watch: 'Watch', other: 'Other' };
+  var MD_TYPE_ICON = { phone: 'fa-mobile-screen-button', tablet: 'fa-tablet-screen-button', computer: 'fa-laptop', console: 'fa-gamepad', watch: 'fa-clock', other: 'fa-microchip' };
+  var mdDevices = null;   /* null = not loaded yet */
+  var mdTickets = null;   /* the customer's own repairs, for the count */
+  var mdEditingId = null;
+  var mdWired = false;
+  var mdUnavailable = false;
+  var mdErrors = {};      /* per-device inline error text, by device id */
+
+  function mdEsc(x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function mdNorm(s) { return String(s == null ? '' : s).toLowerCase().replace(/[^a-z0-9]+/g, ''); }
+  /* Coverage cap for the signed-in customer's plan, read from the same
+     mmPlan the member card uses (Austin, Nov 6, 2026): a number, 0 for
+     Free / no paid plan, undefined while the membership answer has not
+     landed yet. */
+  function mdCoverageCap() {
+    if (mmPlan === undefined) return undefined;
+    if (!mmPlan || !mmPlan.tier) return 0;
+    if (mmPlan.tier === 'single') return 1;
+    if (mmPlan.tier === 'family') return 5;
+    if (mmPlan.tier === 'business') return 25;
+    if (mmPlan.tier === 'business_plus') return 25;
+    if (mmPlan.tier === 'business_pro') return 50;
+    return 0;
+  }
+  function mdDeviceName(d) {
+    if (d.nickname) return String(d.nickname);
+    var bm = [d.brand, d.model].filter(Boolean).join(' ');
+    return bm || MD_TYPE_LABEL[d.type] || 'Device';
+  }
+  function mdTicketMatches(t, d) {
+    var dm = mdNorm(d.model), tm = mdNorm(t.model);
+    if (!dm || dm.length < 3 || !tm) return false;
+    var modelHit = (tm === dm) || (Math.min(tm.length, dm.length) >= 4 && (tm.indexOf(dm) !== -1 || dm.indexOf(tm) !== -1));
+    if (!modelHit) return false;
+    var db = mdNorm(d.brand), tb = mdNorm(t.brand);
+    if (db && tb) return Math.min(tb.length, db.length) >= 3 && (tb.indexOf(db) !== -1 || db.indexOf(tb) !== -1);
+    return dm.length >= 5; /* brand missing on one side: the model alone must be specific */
+  }
+  function mdRepairCounts() {
+    var counts = {};
+    if (!mdTickets || !mdDevices) return counts;
+    mdTickets.forEach(function (t) {
+      var hits = [];
+      mdDevices.forEach(function (d) { if (mdTicketMatches(t, d)) hits.push(d); });
+      if (hits.length === 1) counts[hits[0].id] = (counts[hits[0].id] || 0) + 1;
+    });
+    return counts;
+  }
+  function loadMyDevices(cust) {
+    wireMyDevices();
+    if (!sb || !cust || !cust.id) { mdUnavailable = true; paintMyDevices(); return; }
+    sb.rpc('my_devices').then(function (res) {
+      if (res.error) { mdUnavailable = true; mdDevices = []; paintMyDevices(); return; }
+      mdUnavailable = false;
+      mdDevices = (res.data || []).map(function (r) {
+        return { id: r.id, type: r.type || 'other', brand: r.brand || '', model: r.model || '', nickname: r.nickname || '', notes: r.notes || '', serial: r.serial || '', covered: !!r.covered };
+      });
+      paintMyDevices();
+    }).catch(function () { mdUnavailable = true; paintMyDevices(); });
+    sb.from('tickets').select('id, brand, model').eq('customer_id', cust.id)
+      .then(function (res) { if (!res.error) { mdTickets = res.data || []; paintMyDevices(); } })
+      .catch(function () { /* the count is a bonus — never break the list over it */ });
+  }
+  function paintMyDevicesCoverage() { paintMyDevices(); }
+  function paintMyDevices() {
+    var list = $('md-list'), note = $('md-coverage-note'), formWrap = $('md-form-wrap'), unav = $('md-unavailable');
+    if (!list) return;
+    if (mdUnavailable) {
+      list.innerHTML = '';
+      if (note) note.hidden = true;
+      if (formWrap) formWrap.hidden = true;
+      if (unav) unav.hidden = false;
+      return;
+    }
+    if (unav) unav.hidden = true;
+    if (formWrap) formWrap.hidden = false;
+    var cap = mdCoverageCap();
+    if (note) {
+      if (cap === undefined) { note.hidden = false; note.textContent = 'Checking your membership…'; }
+      else if (cap === 0) { note.hidden = false; note.textContent = 'ATR One Plus covers the devices on your plan — Individual covers 1 device, Family covers up to 5, Business up to 25, and Business Pro up to 50. Your devices are saved here either way.'; }
+      else if (cap === 1) { note.hidden = false; note.textContent = 'Your plan covers 1 device — swap it anytime. Mark the one you want covered below.'; }
+      else { note.hidden = false; note.textContent = 'Your plan covers up to ' + cap + ' devices. Mark the ones you want covered below — you can change them anytime.'; }
+    }
+    if (mdDevices === null) { list.innerHTML = '<p class="acct-muted">Loading your devices…</p>'; return; }
+    if (!mdDevices.length) {
+      list.innerHTML = '<p class="acct-muted" style="text-align:left;padding:0;">No devices saved yet. Add the phones, computers, tablets, consoles, and watches in your home below — the next repair starts faster, and your coverage picks are remembered.</p>';
+      return;
+    }
+    var counts = mdRepairCounts();
+    var coveredCount = 0;
+    mdDevices.forEach(function (d) { if (d.covered) coveredCount++; });
+    list.innerHTML = mdDevices.map(function (d) {
+      var h = '<div class="md-device" data-md-id="' + mdEsc(d.id) + '">';
+      h += '<div class="md-device-top"><i class="fas ' + (MD_TYPE_ICON[d.type] || MD_TYPE_ICON.other) + '"></i> <strong>' + mdEsc(mdDeviceName(d)) + '</strong>';
+      /* The badge only shows while a paid plan is in place — a plan
+         that ended never leaves a device looking covered. */
+      if (d.covered && cap !== 0 && cap !== undefined) h += ' <span class="md-badge"><i class="fas fa-shield-halved"></i> Covered by ATR One</span>';
+      h += '</div>';
+      var meta = [MD_TYPE_LABEL[d.type] || 'Device', [d.brand, d.model].filter(Boolean).join(' ')].filter(Boolean).join(' · ');
+      if (d.serial) meta += ' · Serial …' + mdEsc(String(d.serial).slice(-4));
+      h += '<div class="md-device-meta">' + mdEsc(meta) + '</div>';
+      if (d.notes) h += '<div class="md-device-notes">' + mdEsc(d.notes) + '</div>';
+      if (counts[d.id]) h += '<div class="md-device-repairs">Repairs with us: ' + counts[d.id] + '</div>';
+      h += '<div class="md-device-actions">';
+      if (cap !== undefined && cap !== 0) {
+        if (d.covered) h += '<button type="button" class="btn btn-outline btn-sm" data-md-action="uncover">Remove coverage</button> ';
+        else if (coveredCount < cap) h += '<button type="button" class="btn btn-primary btn-sm" data-md-action="cover">Mark as covered</button> ';
+        else if (cap === 1) h += '<button type="button" class="btn btn-primary btn-sm" data-md-action="cover">Move coverage here</button> ';
+        else h += '<span class="acct-muted" style="padding:0;">Your plan covers up to ' + cap + ' devices — take coverage off one first.</span> ';
+      }
+      h += '<button type="button" class="btn btn-outline btn-sm" data-md-action="edit">Edit</button> ';
+      h += '<button type="button" class="btn btn-outline btn-sm" data-md-action="del">Delete</button>';
+      h += '</div>';
+      if (mdErrors[d.id]) h += '<p class="acct-error" style="margin:.5rem 0 0;">' + mdEsc(mdErrors[d.id]) + '</p>';
+      h += '</div>';
+      return h;
+    }).join('');
+  }
+  function mdShowError(id, msg) { mdErrors[id] = msg; paintMyDevices(); }
+  function mdApplyCoverage(d, want, done) {
+    if (!sb) { mdShowError(d.id, 'Coverage could not be updated online just yet — nothing was changed.'); if (done) done(false); return; }
+    sb.rpc('set_my_device_coverage', { p_id: d.id, p_covered: want }).then(function (res) {
+      var data = res && res.data;
+      if (res.error || !data || data.ok !== true) {
+        var reason = data && data.reason;
+        if (reason === 'cap_reached') mdShowError(d.id, 'That is more than your plan covers — take coverage off another device first.');
+        else if (reason === 'no_paid_plan') mdShowError(d.id, 'Coverage comes with ATR One Plus — see Manage Membership in your account.');
+        else mdShowError(d.id, 'Coverage could not be updated online just yet — nothing was changed.');
+        if (done) done(false);
+        return;
+      }
+      delete mdErrors[d.id];
+      d.covered = !!data.covered;
+      paintMyDevices();
+      if (done) done(true);
+    }).catch(function () { mdShowError(d.id, 'Coverage could not be updated online just yet — nothing was changed.'); if (done) done(false); });
+  }
+  function mdSetCoverage(d, want) {
+    if (!want) { mdApplyCoverage(d, false); return; }
+    var cap = mdCoverageCap();
+    var others = (mdDevices || []).filter(function (x) { return x.covered && x.id !== d.id; });
+    if (cap !== undefined && cap !== 0 && others.length >= cap) {
+      if (cap === 1 && others.length === 1) {
+        /* one-tap move: free the covered device first, then cover this one */
+        mdApplyCoverage(others[0], false, function (ok) { if (ok) mdApplyCoverage(d, true); });
+        return;
+      }
+      mdShowError(d.id, 'Your plan covers up to ' + cap + ' devices — take coverage off one first.');
+      return;
+    }
+    mdApplyCoverage(d, true);
+  }
+  function mdDelete(d, btn) {
+    if (btn.getAttribute('data-armed') !== '1') {
+      btn.setAttribute('data-armed', '1');
+      btn.textContent = 'Tap again to delete';
+      return;
+    }
+    btn.disabled = true;
+    if (!sb) { mdShowError(d.id, 'That did not go through — nothing was deleted.'); return; }
+    sb.rpc('delete_my_device', { p_id: d.id }).then(function (res) {
+      var data = res && res.data;
+      if (res.error || !data || data.ok !== true) { mdShowError(d.id, 'That did not go through — nothing was deleted.'); return; }
+      mdDevices = (mdDevices || []).filter(function (x) { return x.id !== d.id; });
+      delete mdErrors[d.id];
+      if (mdEditingId === d.id) mdResetForm();
+      paintMyDevices();
+    }).catch(function () { mdShowError(d.id, 'That did not go through — nothing was deleted.'); });
+  }
+  function mdStartEdit(d) {
+    mdEditingId = d.id;
+    $('md-type').value = d.type || 'other';
+    $('md-brand').value = d.brand || '';
+    $('md-model').value = d.model || '';
+    $('md-nickname').value = d.nickname || '';
+    $('md-serial').value = d.serial || '';
+    $('md-notes').value = d.notes || '';
+    var t = $('md-form-title'); if (t) t.innerHTML = '<i class="fas fa-pen"></i> Edit device';
+    var s = $('md-save-btn'); if (s) s.textContent = 'Save changes';
+    var c = $('md-cancel-edit'); if (c) c.hidden = false;
+    var fe = $('md-form-error'); if (fe) fe.hidden = true;
+    var f = $('md-form'); if (f && f.scrollIntoView) f.scrollIntoView({ block: 'nearest' });
+  }
+  function mdResetForm() {
+    mdEditingId = null;
+    var form = $('md-form'); if (form && form.reset) form.reset();
+    ['md-brand', 'md-model', 'md-nickname', 'md-serial', 'md-notes'].forEach(function (id) { var el = $(id); if (el) el.value = ''; });
+    var ty = $('md-type'); if (ty) ty.value = 'phone';
+    var t = $('md-form-title'); if (t) t.innerHTML = '<i class="fas fa-plus"></i> Add a device';
+    var s = $('md-save-btn'); if (s) s.textContent = 'Add device';
+    var c = $('md-cancel-edit'); if (c) c.hidden = true;
+    var fe = $('md-form-error'); if (fe) fe.hidden = true;
+  }
+  function mdSaveDevice() {
+    var errEl = $('md-form-error');
+    function fail(msg) { if (errEl) { errEl.textContent = msg; errEl.hidden = false; } }
+    if (errEl) errEl.hidden = true;
+    var typeEl = $('md-type'), brandEl = $('md-brand'), modelEl = $('md-model'), nickEl = $('md-nickname'), notesEl = $('md-notes'), serialEl = $('md-serial');
+    var vals = {
+      p_id: mdEditingId,
+      p_type: (typeEl && typeEl.value) || 'other',
+      p_brand: String((brandEl && brandEl.value) || '').trim(),
+      p_model: String((modelEl && modelEl.value) || '').trim(),
+      p_nickname: String((nickEl && nickEl.value) || '').trim(),
+      p_notes: String((notesEl && notesEl.value) || '').trim(),
+      p_serial: String((serialEl && serialEl.value) || '').trim()
+    };
+    if (!vals.p_brand && !vals.p_model && !vals.p_nickname) { fail('Give the device a brand, a model, or a nickname so we know which one it is.'); return; }
+    if (!sb) { fail('My Devices is not switched on yet — nothing was saved. Please try again soon.'); return; }
+    var btn = $('md-save-btn'); if (btn) btn.disabled = true;
+    sb.rpc('save_my_device', vals).then(function (res) {
+      if (btn) btn.disabled = false;
+      var row = res && res.data;
+      if (res.error || !row || !row.id) { fail('That did not save — please check your connection and try again.'); return; }
+      var nd = { id: row.id, type: row.type || vals.p_type, brand: row.brand || '', model: row.model || '', nickname: row.nickname || '', notes: row.notes || '', serial: row.serial || '', covered: !!row.covered };
+      var found = false;
+      mdDevices = (mdDevices || []).map(function (x) { if (x.id === nd.id) { found = true; return nd; } return x; });
+      if (!found) mdDevices.push(nd);
+      mdResetForm();
+      paintMyDevices();
+    }).catch(function () { if (btn) btn.disabled = false; fail('That did not save — please check your connection and try again.'); });
+  }
+  function wireMyDevices() {
+    if (mdWired) return;
+    var list = $('md-list'), form = $('md-form');
+    if (!list || !form) return;
+    mdWired = true;
+    list.addEventListener('click', function (e) {
+      var btn = e.target && e.target.closest ? e.target.closest('[data-md-action]') : null;
+      if (!btn) return;
+      var card = btn.closest ? btn.closest('[data-md-id]') : null;
+      var id = card ? card.getAttribute('data-md-id') : null;
+      var d = null;
+      (mdDevices || []).forEach(function (x) { if (x.id === id) d = x; });
+      if (!d) return;
+      var action = btn.getAttribute('data-md-action');
+      if (action === 'cover') mdSetCoverage(d, true);
+      else if (action === 'uncover') mdSetCoverage(d, false);
+      else if (action === 'edit') mdStartEdit(d);
+      else if (action === 'del') mdDelete(d, btn);
+    });
+    form.addEventListener('submit', function (e) { if (e.preventDefault) e.preventDefault(); mdSaveDevice(); });
+    var cancel = $('md-cancel-edit');
+    if (cancel) cancel.addEventListener('click', function () { mdResetForm(); paintMyDevices(); });
   }
 
   function qrPopupPx(enlarged) {

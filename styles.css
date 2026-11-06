@@ -2591,3 +2591,15 @@ button.footer-link.a11y-footer-link {
 .repair-card.oneonone-mode .oo-only { display: block; }
 .repair-card.oneonone-mode .oo-repair-only { display: none !important; }
 .acct-support-chip { display: inline-block; padding: 0.1rem 0.5rem; border-radius: 999px; background: var(--blue, #1050A0); color: #fff; font-size: 0.72rem; font-weight: 700; vertical-align: middle; }
+
+/* ================= MY_DEVICES_2026_11_06 =================
+   My Devices in the customer account: one card per device, the
+   coverage badge in the ATR One blue, quiet action buttons. */
+.md-device { border:1px solid var(--line, #e3ddd2); border-radius:14px; padding:.8rem .9rem; margin:0 0 .7rem; background:var(--card, #fff); text-align:left; }
+.md-device-top { display:flex; align-items:center; gap:.45rem; flex-wrap:wrap; color:var(--ink); }
+.md-device-top i { color:var(--brand); }
+.md-badge { display:inline-flex; align-items:center; gap:.3rem; background:var(--blue-soft, #E4EEF9); color:var(--blue, #1050A0); border:1px solid var(--blue-line, #9DBEDE); border-radius:999px; padding:.12rem .55rem; font-size:.78rem; font-weight:600; }
+.md-device-meta { color:var(--muted); font-size:.9rem; margin-top:.25rem; }
+.md-device-notes { color:var(--ink); font-size:.92rem; margin-top:.35rem; white-space:pre-wrap; }
+.md-device-repairs { color:var(--muted); font-size:.88rem; margin-top:.35rem; }
+.md-device-actions { display:flex; gap:.45rem; flex-wrap:wrap; margin-top:.6rem; align-items:center; }

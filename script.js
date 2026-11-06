@@ -3300,6 +3300,8 @@ if ("serviceWorker" in navigator) {
     var cartView = document.getElementById('acct-view-cart');
     /* ATRONE_POINTS_TIERS_2026_11_06: the Manage Membership view joins the toggle set. */
     var membershipView = document.getElementById('acct-view-membership');
+    /* MY_DEVICES_2026_11_06: the My Devices view joins the toggle set. */
+    var devicesView = document.getElementById('acct-view-devices');
     if (!menuItems.length || !repairsView || !settingsView) return;
     acctMenuWired = true;
     window.__atrAcctMenuWired = true;
@@ -3311,7 +3313,7 @@ if ("serviceWorker" in navigator) {
        tapping its own row — it took a tap on a different row. The
        safety net in index.html carries the identical toggle. */
     function show(view) {
-      var panels = { repairs: repairsView, settings: settingsView, rewards: rewardsView, messages: messagesView, orders: ordersView, cart: cartView, membership: membershipView };
+      var panels = { repairs: repairsView, settings: settingsView, rewards: rewardsView, messages: messagesView, orders: ordersView, cart: cartView, membership: membershipView, devices: devicesView };
       var target = (panels[view] && !panels[view].hidden) ? null : view;
       repairsView.hidden = target !== 'repairs';
       settingsView.hidden = target !== 'settings';
@@ -3321,6 +3323,7 @@ if ("serviceWorker" in navigator) {
       if (ordersView) ordersView.hidden = target !== 'orders';
       if (cartView) cartView.hidden = target !== 'cart';
       if (membershipView) membershipView.hidden = target !== 'membership';
+      if (devicesView) devicesView.hidden = target !== 'devices';
       menuItems.forEach(function (btn) {
         var on = btn.getAttribute('data-acct-menu') === target;
         btn.classList.toggle('is-active', on);
