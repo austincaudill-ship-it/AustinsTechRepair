@@ -59,7 +59,9 @@
 // the account links), and a site-wide search (pages, repairs &
 // prices, shop items) lands in the header.
 /* FOOTER_PUBLISH_MERGE_2026_11_06: bumped to atrg-v21 — nine-column footer (Account / For Business / For Organizations), Education / Healthcare / Government audience pages, refreshed Business page, About Leadership section, centered footer bottom strip. */
-const CACHE = "atrg-v25";
+/* GIFT_CARDS_2026_11_06 (publish merge onto 63635d2): bumped to atrg-v26 — Rewards & Vouchers becomes Rewards & Gift Cards; e-gift cards live in the account (own-cards list, add-a-code claim, Square buy link slot). */
+/* VOUCHER_TAP_FIX_2026_11_06: rides atrg-v26 — the voucher strip tap is open-only behind the shared __atrVoucherStripWired flag (no more double-toggle with the safety net), and voucher/gift cards in the panel answer taps with a show-at-the-visit state. */
+const CACHE = "atrg-v26";
 const CORE = [
   "/",
   "/index.html",

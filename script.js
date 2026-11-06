@@ -3267,7 +3267,7 @@ if ("serviceWorker" in navigator) {
 
 /* ==================== MY ACCOUNT MENU ==================== */
 /* The logged-in account page is one My Account tab with a menu:
-   Repairs, Rewards & Vouchers, Cart, Account Settings, Sign Out.
+   Repairs, Rewards & Gift Cards, Cart, Account Settings, Sign Out.
    Repairs shows the repair list, thread, and new-request views;
    Account Settings shows profile, birthday, and password. Sign Out
    is the existing logout button, moved into the menu, so its wiring
@@ -3315,7 +3315,7 @@ if ("serviceWorker" in navigator) {
       var target = (panels[view] && !panels[view].hidden) ? null : view;
       repairsView.hidden = target !== 'repairs';
       settingsView.hidden = target !== 'settings';
-      /* SITE_POINTS_SPEND_2026_10_30: third view — Rewards & Vouchers. */
+      /* SITE_POINTS_SPEND_2026_10_30: third view — Rewards & Gift Cards. */
       if (rewardsView) rewardsView.hidden = target !== 'rewards';
       if (messagesView) messagesView.hidden = target !== 'messages';
       if (ordersView) ordersView.hidden = target !== 'orders';
@@ -3771,20 +3771,68 @@ if ("serviceWorker" in navigator) {
        [data-acct-menu] handling like every other row, and its Open
        cart row opens the drawer from inside the panel. */
 
-    /* Voucher strip -> the Rewards view. ACCOUNT_FIX_PASS_3:
-       after the row opens the section, bring it into view — the
-       strip sits at the top of the dashboard and the Rewards panel
-       is far below it in the menu, so on a phone the open panel
-       could land entirely off-screen and the tap still looked
-       dead even with the wiring right. */
-    var strip = $('acct-voucher-strip');
-    if (strip) strip.addEventListener('click', function () {
-      var item = document.querySelector('[data-acct-menu="rewards"]');
-      if (item) item.click();
-      var rewardsView = $('acct-view-rewards');
-      if (rewardsView && !rewardsView.hidden && rewardsView.scrollIntoView) {
-        try { rewardsView.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
-      }
+    /* Voucher strip -> the Rewards view. ACCOUNT_FIX_PASS_3 first
+       added the scroll-into-view here; VOUCHER_TAP_FIX_2026_11_06
+       (owner, Nov 6, 2026: "Keep both, just fix the voucher tap")
+       fixes the two ways the tap still failed:
+       (1) NO SHARED ONE-SHOT FLAG. Every sibling wiring on this
+       page guards itself with a window flag (__atrCartGlanceWired,
+       __atrAcctMenuWired) because two live wirings cancel out —
+       but the strip was wired HERE and again by the index.html
+       safety net with no flag in common. Whenever the net is the
+       wiring that arms (its whole reason to exist: a device whose
+       script.js menu module never raised its flag), the strip
+       carried both handlers, and since the account rows TOGGLE,
+       one tap opened and instantly closed the view — the tap
+       looked dead. The strip now has its own shared flag,
+       window.__atrVoucherStripWired: whichever wiring runs first
+       owns the strip and the other stands down.
+       (2) THE TAP INHERITED THE ROW'S TOGGLE. The old handler
+       clicked the row unconditionally, so a second tap — or a tap
+       while the view was already open — closed the very view the
+       strip exists to reveal. The tap now only ever OPENS: it
+       clicks the row solely when the view is closed, then scrolls
+       the view into view (the strip sits far above the panel, so
+       without the scroll an opened panel can sit off-screen and
+       the tap still looks dead).
+       The listener is DELEGATED from document, so if the account
+       markup is ever re-rendered and the strip node is replaced,
+       the tap keeps working — no handler dies with the old node. */
+    if (!window.__atrVoucherStripWired) {
+      window.__atrVoucherStripWired = true;
+      document.addEventListener('click', function (e) {
+        var t = e.target;
+        var stripEl = (t && t.closest) ? t.closest('#acct-voucher-strip')
+          : (t && t.id === 'acct-voucher-strip' ? t : null);
+        if (!stripEl) return;
+        var rewardsView = $('acct-view-rewards');
+        if (rewardsView && rewardsView.hidden) {
+          var item = document.querySelector('[data-acct-menu="rewards"]');
+          if (item) item.click();
+        }
+        if (rewardsView && !rewardsView.hidden && rewardsView.scrollIntoView) {
+          try { rewardsView.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (err) {}
+        }
+      });
+    }
+
+    /* VOUCHER_TAP_FIX_2026_11_06: voucher cards in the panel answer
+       taps too. The list is repainted with innerHTML on every
+       refresh, so the tap is delegated from the stable
+       #pts-voucher-list container (a listener on a card itself
+       would die at the next repaint): tapping a card raises its
+       show-at-the-visit state — big code, highlighted card, the
+       state the customer holds up at the visit; tapping it again
+       puts it back, and raising one card lowers any other. */
+    var voucherList = $('pts-voucher-list');
+    if (voucherList) voucherList.addEventListener('click', function (e) {
+      var t = e.target;
+      var card = (t && t.closest) ? t.closest('.pts-voucher-card') : null;
+      if (!card || !voucherList.contains(card)) return;
+      var wasShown = card.classList.contains('pts-voucher-card--show');
+      var shown = voucherList.querySelectorAll('.pts-voucher-card--show');
+      for (var vi = 0; vi < shown.length; vi++) shown[vi].classList.remove('pts-voucher-card--show');
+      if (!wasShown) card.classList.add('pts-voucher-card--show');
     });
 
     /* Rewards view: refresh every time it is opened. */
@@ -4271,4 +4319,212 @@ if ("serviceWorker" in navigator) {
     if (btn) { btn.click(); }
     else if (window.location.hash !== '#account') { window.location.hash = '#account'; }
   });
+})();
+
+/* ==================== GIFT CARDS ====================
+   GIFT_CARDS_2026_11_06 (Austin, Nov 6, 2026). E-gift cards only —
+   no plastic, nothing to print, mail, or carry. A gift card lives
+   in the customer's account in the Rewards & Gift Cards panel,
+   right under their points vouchers, and works the same way: the
+   code and the balance show there, and at the visit the customer
+   shows the code and WE apply it. Redemption in v1 is in person,
+   by staff, on the ticket — the Square checkout prices
+   server-side, so this page never pretends a gift card discounts
+   an online checkout (the points build established the browser
+   cannot do that).
+   Reads and the claim run through two narrow SECURITY DEFINER
+   functions (gift-cards.sql in this build's folder — DRAFT, NOT
+   RUN yet): my_gift_cards() returns only the caller's own cards,
+   and claim_gift_card(code) attaches an unclaimed card to the
+   caller and nothing else. Until that SQL runs, every surface
+   here fails soft with honest wording — the same degradation
+   pattern as points vouchers and the membership card.
+   Buying runs through Square, like everything else we sell: the
+   shop's Square eGift Card selling link goes in the ONE constant
+   below and the Buy button appears; while it is empty, the panel
+   routes buyers to Contact ("Ask us about gift cards") instead of
+   showing a dead button. No placeholder link, ever. */
+(function () {
+  'use strict';
+
+  /* THE ONE LINE TO FILL IN: the Square eGift Card selling link
+     (Square Dashboard -> Gift Cards). Empty = buying is ask-us
+     only for now; the list and add-a-code flows work either way. */
+  var SQUARE_GIFT_CARD_URL = '';
+
+  var SUPABASE_URL = 'https://lyujxpuicarblpkdzuuc.supabase.co';
+  var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg'; // apply-edits.js fills this from the points module in script.js — never retyped by hand
+  var PHONE_TEXT = '(937) 280-6243';
+
+  var sb = null;
+  function client() {
+    if (sb) return sb;
+    if (window.supabase && window.supabase.createClient) {
+      try { sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch (e) { sb = null; }
+    }
+    return sb;
+  }
+  function $(id) { return document.getElementById(id); }
+  function escX(x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function fmtMoney(cents) { return '$' + (Number(cents || 0) / 100).toFixed(2); }
+  function getSession() {
+    try { return JSON.parse(localStorage.getItem('atr-account') || 'null'); } catch (e) { return null; }
+  }
+
+  var giftKnown = null; // null = unprobed, true/false after first read
+  var giftCards = [];
+
+  function fetchGiftCards() {
+    var c = client();
+    if (!c) return Promise.resolve(null);
+    return c.rpc('my_gift_cards').then(function (res) {
+      if (res.error) throw res.error;
+      return res.data || [];
+    }).catch(function () { return null; }); // null = not switched on yet
+  }
+
+  function paintGiftCards() {
+    /* Buy side: a real Square link or an honest ask-us route —
+       never a button that goes nowhere. */
+    var buyWrap = $('gc-buy-wrap'), buyAsk = $('gc-buy-ask'), buyBtn = $('gc-buy-btn');
+    if (SQUARE_GIFT_CARD_URL) {
+      if (buyWrap) buyWrap.hidden = false;
+      if (buyAsk) buyAsk.hidden = true;
+      if (buyBtn) buyBtn.setAttribute('href', SQUARE_GIFT_CARD_URL);
+    } else {
+      if (buyWrap) buyWrap.hidden = true;
+      if (buyAsk) buyAsk.hidden = false;
+    }
+    var list = $('gc-list');
+    if (list) {
+      if (giftKnown === false) {
+        list.innerHTML = '<p class="acct-muted">Gift cards are not available online yet.</p>';
+      } else if (!giftCards.length) {
+        list.innerHTML = '<p class="acct-muted">No gift cards yet. If somebody gives you one, add its code below and it will live here.</p>';
+      } else {
+        list.innerHTML = giftCards.map(function (g) {
+          var bal = Number(g.balance_cents || 0);
+          var st = bal <= 0 ? 'Used up' : 'Active';
+          return '<div class="pts-voucher-card"><div><div class="pts-voucher-code">' + escX(g.code) + '</div>' +
+            '<div class="acct-muted" style="text-align:left;padding:0;">Show this code at your visit and we apply it. Status: ' + st + '</div></div>' +
+            '<div class="pts-voucher-value">' + fmtMoney(bal) + '</div></div>';
+        }).join('');
+      }
+    }
+    /* Until the gift-cards.sql doors exist, the add-a-code form
+       hides behind the honest note — the points pattern. */
+    var claimWrap = $('gc-claim-wrap'), un = $('gc-unavailable');
+    if (claimWrap && un && giftKnown !== null) {
+      claimWrap.hidden = giftKnown === false;
+      un.hidden = giftKnown !== false;
+    }
+  }
+
+  function refreshGiftCards() {
+    if (!getSession()) { giftCards = []; paintGiftCards(); return Promise.resolve(); }
+    return fetchGiftCards().then(function (list) {
+      if (list === null) { giftKnown = false; giftCards = []; }
+      else { giftKnown = true; giftCards = list; }
+      paintGiftCards();
+    });
+  }
+
+  function claimGiftCard(code) {
+    var c = client();
+    if (!c) return Promise.resolve({ ok: false, reason: 'unavailable' });
+    return c.rpc('claim_gift_card', { p_code: code }).then(function (res) {
+      if (res.error) throw res.error;
+      var d = res.data || {};
+      if (d.claimed) return { ok: true, balance: d.balance_cents };
+      return { ok: false, reason: d.reason || 'error' };
+    }).catch(function () { return { ok: false, reason: 'unavailable' }; });
+  }
+
+  /* One-shot wiring, guarded like every sibling on this page: a
+     doubled handler here would make one tap fire the claim twice. */
+  var giftWired = false;
+  function wireGiftCards() {
+    if (giftWired) return;
+    var listEl = $('gc-list');
+    if (!listEl) return;
+    giftWired = true;
+
+    /* VOUCHER_TAP_FIX_2026_11_06: gift cards answer taps exactly
+       like points vouchers — delegated from the stable #gc-list
+       container, because paintGiftCards repaints it with innerHTML
+       (a listener on a card itself would die at the next repaint):
+       a tap raises the card's show-at-the-visit state, a second
+       tap puts it back, and only one card is raised at a time. */
+    listEl.addEventListener('click', function (e) {
+      var t = e.target;
+      var card = (t && t.closest) ? t.closest('.pts-voucher-card') : null;
+      if (!card || !listEl.contains(card)) return;
+      var wasShown = card.classList.contains('pts-voucher-card--show');
+      var shown = listEl.querySelectorAll('.pts-voucher-card--show');
+      for (var gi = 0; gi < shown.length; gi++) shown[gi].classList.remove('pts-voucher-card--show');
+      if (!wasShown) card.classList.add('pts-voucher-card--show');
+    });
+
+    var rewardsItem = document.querySelector('[data-acct-menu="rewards"]');
+    if (rewardsItem) rewardsItem.addEventListener('click', function () { refreshGiftCards(); });
+    var openBtn = $('account-open-btn');
+    if (openBtn) openBtn.addEventListener('click', function () { if (getSession()) refreshGiftCards(); });
+    var acctPage = $('account');
+    if (acctPage && window.MutationObserver) {
+      var mo = new MutationObserver(function () {
+        if (acctPage.classList.contains('active') && getSession()) refreshGiftCards();
+      });
+      mo.observe(acctPage, { attributes: true, attributeFilter: ['class'] });
+    }
+
+    var btn = $('gc-claim-btn');
+    if (btn) btn.addEventListener('click', function () {
+      var input = $('gc-claim-input');
+      var err = $('gc-claim-error'), ok = $('gc-claim-success');
+      if (err) err.hidden = true;
+      if (ok) ok.hidden = true;
+      var code = input ? String(input.value || '').trim().toUpperCase() : '';
+      if (!code) {
+        if (err) { err.textContent = 'Enter the gift card code first.'; err.hidden = false; }
+        return;
+      }
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding&hellip;';
+      claimGiftCard(code).then(function (res) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-gift"></i> Add gift card';
+        if (res.ok) {
+          if (ok) {
+            ok.hidden = false;
+            ok.innerHTML = '<strong>Gift card added — ' + fmtMoney(res.balance) + ' is on your account.</strong><br>Show the code at your visit and we will apply it.';
+          }
+          if (input) input.value = '';
+          refreshGiftCards();
+        } else if (res.reason === 'unavailable') {
+          giftKnown = false;
+          paintGiftCards();
+        } else if (res.reason === 'already_yours') {
+          if (ok) { ok.hidden = false; ok.textContent = 'That gift card is already on your account — it is in the list above.'; }
+        } else {
+          var msgs = {
+            not_found: 'We could not find that code. Check it and try again — nothing was changed.',
+            already_claimed: 'That code has already been added to an account. If it was a gift meant for you, text us at ' + PHONE_TEXT + ' and we will sort it out.',
+            used_up: 'That gift card has no balance left on it.',
+            void: 'That gift card is no longer valid. Text us at ' + PHONE_TEXT + ' if you think that is wrong.',
+            no_account: 'Your account is not fully set up yet. Sign out and back in once, then try again.',
+            not_signed_in: 'Please sign in first.'
+          };
+          if (err) { err.textContent = msgs[res.reason] || 'That did not go through — please try again. Nothing was changed.'; err.hidden = false; }
+        }
+      });
+    });
+
+    paintGiftCards();
+    if (getSession()) refreshGiftCards();
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', wireGiftCards);
+  } else {
+    wireGiftCards();
+  }
 })();
