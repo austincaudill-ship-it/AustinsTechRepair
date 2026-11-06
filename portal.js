@@ -64,7 +64,7 @@
    * — a warranty rework ticket is active work that still flows
    * Quality Control -> Ready -> Job Complete. No existing status is
    * renamed or removed. */
-  var TICKET_STATUSES = ['Awaiting Estimate', 'Awaiting Diagnostics', 'Awaiting Customer Response', 'Awaiting Parts', 'Awaiting Repair', 'En Route to Customer', 'Rework / Warranty', 'In Progress', 'Quality Control', 'Ready', 'Job Complete'];
+  var TICKET_STATUSES = ['Awaiting Estimate', 'Awaiting Scheduling', 'Support Requested', 'Awaiting Diagnostics', 'Awaiting Customer Response', 'Awaiting Parts', 'Awaiting Repair', 'En Route to Customer', 'Rework / Warranty', 'In Progress', 'Quality Control', 'Ready', 'Job Complete'];
   var APPLICATION_STATUSES = ['New', 'Reviewed', 'Contacted', 'Rejected'];
   var INVESTOR_STATUSES = ['New', 'Reviewed', 'Contacted', 'Closed'];
 
@@ -244,7 +244,7 @@
       waiting: 'portal-st-waiting', new: 'portal-st-new',
       inprogress: 'portal-st-inprogress', processing: 'portal-st-inprogress',
       waitingforparts: 'portal-st-waitingparts',
-      awaitingdiagnostics: 'portal-st-waiting', awaitingestimate: 'portal-st-waiting',
+      awaitingdiagnostics: 'portal-st-waiting', awaitingestimate: 'portal-st-waiting', awaitingscheduling: 'portal-st-waiting', supportrequested: 'portal-st-waiting',
       awaitingcustomerresponse: 'portal-st-contacted', awaitingparts: 'portal-st-waitingparts',
       awaitingrepair: 'portal-st-waitingparts',
       enroutetocustomer: 'portal-st-inprogress', qualitycontrol: 'portal-st-reviewed',
@@ -360,7 +360,7 @@
     /* PORTAL_TAB_MEMORY_2026_10_30: reopen on the tab Austin last used.
      * Clicking the saved tab's button replays exactly what a tap does,
      * whichever script handles that tab. No saved tab (or a stale one
-     * with no matching button) keeps the old behavior: Repair Queue. */
+     * with no matching button) keeps the old behavior: Service Queue. */
     /* PORTAL_LOCATION_2026_11_02: geofencing consent check + the
      * login snapshot, once the dashboard is up. Fully guarded —
      * it can never block or delay the sign-in flow. */
@@ -1601,10 +1601,65 @@
     return parts.length ? parts.join(' · ') : 'Device not specified';
   }
 
+  /* PORTAL_SERVICE_QUEUE_2026_11_06 (Austin, Nov 6, 2026): service
+   * tickets — one-on-one help, setup, and lessons — live in the same
+   * tickets table and the same Service Queue as repairs. With no new
+   * column, a service ticket carries the [SERVICE] marker at the head
+   * of its issue text (the bracket-prefix convention repairs already
+   * use for [ATR One member]) plus device_type 'Service'; detection
+   * reads either signal so a ticket marked one way is never missed by
+   * the other. The two builders compose a service ticket's issue text
+   * and its intake charges: the $15 visit fee (the no-diagnostics
+   * tier — never $35; a service job has no diagnostics) plus $25 an
+   * hour for the time booked. ATR One members pay no visit fee. The
+   * fee is always stated and charged as its own separate line —
+   * never folded into the hourly price or an all-in total (owner
+   * correction, Nov 6, 2026). Pure
+   * functions — the harness proves the payloads without a database. */
+  var SERVICE_ISSUE_PREFIX = '[SERVICE] ';
+  function isServiceTicket(t) {
+    if (!t) return false;
+    if (String(t.device_type || '') === 'Service') return true;
+    return String(t.issue || '').indexOf(SERVICE_ISSUE_PREFIX) === 0;
+  }
+  function serviceBadgeHtml() {
+    return ' <span class="portal-badge portal-badge-service">SERVICE</span>';
+  }
+  function ticketTitle(t) {
+    return isServiceTicket(t) ? (t.issue_reason || 'Service visit') : deviceLabel(t);
+  }
+  function ciServiceIssueText(kindLabel, goal, hoursVal, atrVal) {
+    var text = SERVICE_ISSUE_PREFIX;
+    if (atrVal === 'member') text += '[ATR One member] ';
+    else if (atrVal === 'signup') text += '[Wants ATR One signup] ';
+    text += kindLabel + ' — ' + goal;
+    var n = parseInt(hoursVal, 10);
+    if (n) {
+      var time = n * 25;
+      text += ' · Time booked: ' + n + ' hour' + (n === 1 ? '' : 's') + ' at $25/hr — $' + time + ' for the time' +
+        (atrVal === 'member' ? ' · No visit fee (ATR One member)' : ' · Visit fee: $15, charged separately');
+    } else {
+      text += ' · Time not set yet — billed at $25/hr' + (atrVal === 'member' ? ' · No visit fee (ATR One member)' : ' · Visit fee: $15, charged separately');
+    }
+    return text;
+  }
+  function ciServiceChargeRows(ticketId, kindLabel, hoursVal, atrVal) {
+    var rows = [];
+    if (atrVal !== 'member') {
+      rows.push({ ticket_id: ticketId, kind: 'visit', description: 'Visit fee — no diagnostics', qty: 1, unit_price: 15, unit_cost: null });
+    }
+    var n = parseInt(hoursVal, 10);
+    if (n) {
+      rows.push({ ticket_id: ticketId, kind: 'labor', description: 'Service — ' + kindLabel + ' (' + n + ' hour' + (n === 1 ? '' : 's') + ' at $25/hr)', qty: n, unit_price: 25, unit_cost: null });
+    }
+    return rows;
+  }
+  /* /PORTAL_SERVICE_QUEUE_2026_11_06 helpers */
+
   /* WARRANTY_PORTAL_2026_11_03: 'Rework / Warranty' gets the calm
    * teal queue treatment (portal.css q-rework) — active work, but
    * visually distinct from the yellow In Progress. */
-  var QCLASS = { 'Awaiting Diagnostics': 'q-red', 'Awaiting Estimate': 'q-red', 'Awaiting Customer Response': 'q-yellow', 'Awaiting Parts': 'q-orange', 'Awaiting Repair': 'q-orange', 'En Route to Customer': 'q-yellow', 'Rework / Warranty': 'q-rework', 'In Progress': 'q-yellow', 'Quality Control': 'q-lime', 'Ready': 'q-green', 'Job Complete': 'q-done' };
+  var QCLASS = { 'Awaiting Diagnostics': 'q-red', 'Awaiting Estimate': 'q-red', 'Awaiting Scheduling': 'q-red', 'Support Requested': 'q-red', 'Awaiting Customer Response': 'q-yellow', 'Awaiting Parts': 'q-orange', 'Awaiting Repair': 'q-orange', 'En Route to Customer': 'q-yellow', 'Rework / Warranty': 'q-rework', 'In Progress': 'q-yellow', 'Quality Control': 'q-lime', 'Ready': 'q-green', 'Job Complete': 'q-done' };
   function renderTickets(rows) {
     var list = $('portal-ticket-list');
     if (!rows.length) { emptyState(list, 'No tickets match. New service requests from the website will show up here.'); return; }
@@ -1619,8 +1674,8 @@
       var email = trim(t.customer_email);
       var emailHtml = email ? '<p class="portal-card-meta"><i class="fas fa-envelope"></i> ' + esc(email) + '</p>' : '';
       return '<article class="portal-card ' + (QCLASS[t.status] || '') + '" data-view-ticket="' + esc(t.id) + '" style="cursor:pointer">' +
-        '<div class="portal-card-top"><p class="portal-card-title">' + esc(deviceLabel(t)) + '</p><span class="portal-card-topright">' + qchip + badge(t.status) + '</span></div>' +
-        '<p class="portal-card-meta"><i class="fas fa-user"></i> ' + esc(t.customer_name || 'No name given') + phoneHtml + src + '</p>' +
+        '<div class="portal-card-top"><p class="portal-card-title">' + esc(ticketTitle(t)) + '</p><span class="portal-card-topright">' + qchip + badge(t.status) + '</span></div>' +
+        '<p class="portal-card-meta"><i class="fas fa-user"></i> ' + esc(t.customer_name || 'No name given') + phoneHtml + src + (isServiceTicket(t) ? serviceBadgeHtml() : '') + '</p>' +
         emailHtml + appt +
         '<p class="portal-card-issue">' + esc(t.issue || '') + '</p>' +
         '<p class="portal-card-meta">Received ' + esc(fmtDateTime(t.created_at)) + '</p>' +
@@ -2327,8 +2382,9 @@ function loadTicketThread(client, ticketId) {
            * is an accordion section like Edit details and Documents;
            * it is not in TK_ACC_DEFAULT_OPEN, so it starts collapsed. */
           '<div class="portal-drawer-section tk-acc" data-acc="details">' + tkAccHead('details', 'Ticket details') + tkAccBodyOpen('details') +
-          '<div class="portal-card-top"><p class="portal-card-title">' + esc(deviceLabel(t)) + '</p>' + badge(t.status) + '</div>' +
+          '<div class="portal-card-top"><p class="portal-card-title">' + esc(ticketTitle(t)) + '</p><span>' + (isServiceTicket(t) ? '<span class="portal-badge portal-badge-service">SERVICE</span> ' : '') + badge(t.status) + '</span></div>' +
           kvRows([
+            ['Request type', isServiceTicket(t) ? 'Service' : 'Repair'],
             ['Customer', valOrDash(t.customer_name)],
             ['Phone', valOrDash(t.customer_phone)],
             ['Email', valOrDash(t.customer_email)],
@@ -3294,7 +3350,7 @@ function loadTicketThread(client, ticketId) {
     var wrap = document.createElement('div');
     wrap.id = 'doc-preview-modal';
     wrap.setAttribute('style', 'position:fixed;inset:0;background:rgba(44,35,26,0.55);z-index:3000;display:flex;align-items:center;justify-content:center;padding:1rem;');
-    wrap.innerHTML = '<div style="background:#FAF6EE;color:#2C231A;border-radius:14px;max-width:860px;width:100%;height:92vh;display:flex;flex-direction:column;padding:1rem;box-shadow:0 18px 50px rgba(0,0,0,0.35);">' +
+    wrap.innerHTML = '<div style="background:#FFFFFF;color:#2C231A;border-radius:14px;max-width:860px;width:100%;height:92vh;display:flex;flex-direction:column;padding:1rem;box-shadow:0 18px 50px rgba(0,0,0,0.35);">' +
       '<div class="p2-actions" style="margin:0 0 0.75rem;">' +
       '<span class="p2-kind" style="margin-right:auto;">Document</span>' +
       '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="doc-preview-open" disabled>Open in new tab</button> ' +
@@ -3562,7 +3618,7 @@ function loadTicketThread(client, ticketId) {
     var wrap = document.createElement('div');
     wrap.id = 'p4-sign-modal';
     wrap.setAttribute('style', 'position:fixed;inset:0;background:rgba(44,35,26,0.55);z-index:3000;display:flex;align-items:center;justify-content:center;padding:1rem;');
-    wrap.innerHTML = '<div style="background:#FAF6EE;color:#2C231A;border-radius:14px;max-width:600px;width:100%;max-height:92vh;overflow:auto;padding:1.25rem;box-shadow:0 18px 50px rgba(0,0,0,0.35);">' +
+    wrap.innerHTML = '<div style="background:#FFFFFF;color:#2C231A;border-radius:14px;max-width:600px;width:100%;max-height:92vh;overflow:auto;padding:1.25rem;box-shadow:0 18px 50px rgba(0,0,0,0.35);">' +
       '<h3 style="margin:0 0 0.5rem;">' + esc(sigTitle) + '</h3>' +
       '<p class="portal-muted portal-small" style="margin:0 0 0.75rem;">' + esc(sigIntro) + '</p>' +
       '<div style="max-height:36vh;overflow:auto;border:1px solid #E6D9C0;border-radius:8px;padding:0.75rem;background:#FFFDF8;white-space:pre-wrap;font-size:0.85rem;line-height:1.45;">' + esc(sigDocText) + '</div>' +
@@ -3972,7 +4028,7 @@ function loadTicketThread(client, ticketId) {
       var wrap = document.createElement('div');
       wrap.id = 'p4-doc-pick-modal';
       wrap.setAttribute('style', 'position:fixed;inset:0;background:rgba(44,35,26,0.55);z-index:3000;display:flex;align-items:center;justify-content:center;padding:1rem;');
-      wrap.innerHTML = '<div style="background:#FAF6EE;color:#2C231A;border-radius:14px;max-width:520px;width:100%;max-height:92vh;overflow:auto;padding:1.25rem;box-shadow:0 18px 50px rgba(0,0,0,0.35);">' +
+      wrap.innerHTML = '<div style="background:#FFFFFF;color:#2C231A;border-radius:14px;max-width:520px;width:100%;max-height:92vh;overflow:auto;padding:1.25rem;box-shadow:0 18px 50px rgba(0,0,0,0.35);">' +
         '<h3 style="margin:0 0 0.5rem;">' + esc(doc.signer.pickTitle) + '</h3>' +
         '<p class="portal-muted portal-small" style="margin:0 0 0.75rem;">' + esc(doc.signer.pickBlurb) + '</p>' +
         '<div class="portal-field"><label for="p4-doc-pick-select">Ticket</label><select id="p4-doc-pick-select"><option value="">Loading tickets&hellip;</option></select></div>' +
@@ -4173,7 +4229,7 @@ function loadTicketThread(client, ticketId) {
     var wrap = document.createElement('div');
     wrap.id = 'p4-text-modal';
     wrap.setAttribute('style', 'position:fixed;inset:0;background:rgba(44,35,26,0.55);z-index:3000;display:flex;align-items:center;justify-content:center;padding:1rem;');
-    wrap.innerHTML = '<div style="background:#FAF6EE;color:#2C231A;border-radius:14px;max-width:600px;width:100%;max-height:92vh;overflow:auto;padding:1.25rem;box-shadow:0 18px 50px rgba(0,0,0,0.35);">' +
+    wrap.innerHTML = '<div style="background:#FFFFFF;color:#2C231A;border-radius:14px;max-width:600px;width:100%;max-height:92vh;overflow:auto;padding:1.25rem;box-shadow:0 18px 50px rgba(0,0,0,0.35);">' +
       '<h3 style="margin:0 0 0.75rem;">' + esc(title) + '</h3>' +
       '<div style="max-height:62vh;overflow:auto;border:1px solid #E6D9C0;border-radius:8px;padding:0.75rem;background:#FFFDF8;white-space:pre-wrap;font-size:0.88rem;line-height:1.5;">' + esc(text) + '</div>' +
       '<div class="p2-actions" style="margin-top:0.75rem;"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p4-text-close">Close</button></div></div>';
@@ -4463,7 +4519,7 @@ function loadTicketThread(client, ticketId) {
     var wrap = document.createElement('div');
     wrap.id = 'p2-track-popup';
     wrap.setAttribute('style', 'position:fixed;inset:0;background:rgba(44,35,26,0.55);z-index:3000;display:flex;align-items:center;justify-content:center;padding:1rem;');
-    var card = '<div style="background:#FAF6EE;color:#2C231A;border-radius:14px;max-width:430px;width:100%;padding:1.25rem;box-shadow:0 18px 50px rgba(0,0,0,0.35);">' +
+    var card = '<div style="background:#FFFFFF;color:#2C231A;border-radius:14px;max-width:430px;width:100%;padding:1.25rem;box-shadow:0 18px 50px rgba(0,0,0,0.35);">' +
       '<h3 style="margin:0 0 0.5rem;">Part tracking</h3>';
     if (part) {
       card += '<p class="portal-muted portal-small" style="margin:0 0 0.75rem;">This ticket is now Awaiting Parts. Add the shipping details for <strong>' + esc(part.description) + '</strong> and the customer can follow the package. No tracking yet? Tap N.A. and add it later from the part&rsquo;s Tracking button.</p>' +
@@ -11470,7 +11526,7 @@ function loadTicketThread(client, ticketId) {
    * page behind stays frozen, only the profile scrolls):
    *   - Contact info (name, email, phone, address, customer since).
    *   - REPAIR HISTORY: the customer's own tickets (date, device,
-   *     issue, status) — no more hunting the Repair Queue for a past
+   *     issue, status) — no more hunting the Service Queue for a past
    *     repair.
    *   - REPAIR INVESTMENTS: the money that customer has actually put
    *     into ATRG through repairs. Austin's language rule: customers
@@ -12487,7 +12543,7 @@ function loadTicketThread(client, ticketId) {
    * Austin, Nov 2, 2026: the inventory flow is parts and stock first —
    * a part gets stocked, then from the stock list it attaches to a
    * job. "Attach to repair" on a stock row opens a ticket picker in
-   * the shared drawer: the open repair queue (everything not Job
+   * the shared drawer: the open service queue (everything not Job
    * Complete, queue order), searchable by customer, device or issue,
    * mirroring the check-in customer picker (search input + .ci-result
    * buttons). Picking a ticket attaches the part with the SAME code
@@ -12527,10 +12583,10 @@ function loadTicketThread(client, ticketId) {
       q = q.order('job_date', { ascending: false });
       q = q.order('created_at', { ascending: false }).limit(200);
       q.then(function (res) {
-        if (res.error) { $('inv-attach-results').innerHTML = '<p class="portal-error">Couldn&rsquo;t load the repair queue.</p>'; return; }
+        if (res.error) { $('inv-attach-results').innerHTML = '<p class="portal-error">Couldn&rsquo;t load the service queue.</p>'; return; }
         invAttachTickets = res.data || [];
         renderInvAttachResults();
-      }).catch(function () { $('inv-attach-results').innerHTML = '<p class="portal-error">Couldn&rsquo;t load the repair queue.</p>'; });
+      }).catch(function () { $('inv-attach-results').innerHTML = '<p class="portal-error">Couldn&rsquo;t load the service queue.</p>'; });
     });
   }
   function renderInvAttachResults() {
@@ -15035,7 +15091,7 @@ function loadTicketThread(client, ticketId) {
       return '<h4 style="margin:1rem 0 0.4rem;">' + esc(d.title) + '</h4>' +
         '<div style="border:1px solid #E6D9C0;border-radius:8px;padding:0.75rem;background:#FFFDF8;white-space:pre-wrap;font-size:0.85rem;line-height:1.45;">' + esc(d.text) + '</div>';
     }).join('');
-    wrap.innerHTML = '<div style="background:#FAF6EE;color:#2C231A;border-radius:14px;max-width:640px;width:100%;max-height:92vh;overflow:auto;padding:1.25rem;box-shadow:0 18px 50px rgba(0,0,0,0.35);">' +
+    wrap.innerHTML = '<div style="background:#FFFFFF;color:#2C231A;border-radius:14px;max-width:640px;width:100%;max-height:92vh;overflow:auto;padding:1.25rem;box-shadow:0 18px 50px rgba(0,0,0,0.35);">' +
       '<h3 style="margin:0 0 0.5rem;">Agreements &mdash; full text</h3>' +
       '<p class="portal-muted portal-small" style="margin:0;">The Repair Authorization, the 1-Year Limited Warranty, and the Terms &amp; Conditions \u2014 the same texts as the Documents tab, exactly as published.</p>' +
       docs +
@@ -15137,6 +15193,12 @@ function loadTicketThread(client, ticketId) {
 
   /* ================= CHECK-IN / TRIAGE ================= */
   var ciCustomerId = null, ciCustomersCache = null;
+  /* PORTAL_SERVICE_QUEUE_2026_11_06: which kind of request the
+   * check-in form is entering — 'repair' (the original flow) or
+   * 'service' (a one-on-one picked in the Service tile grid) — and
+   * the hours picked there ('' until an hour button is tapped). */
+  var ciRequestType = 'repair';
+  var ciServiceHours = '';
   /* PORTAL_ATRONE_PER_TIER_2026_11_02: the tier picked at check-in
    * — set when a Square tier card in the signup box is tapped (each
    * card's plan link identifies its tier), read at submit so the
@@ -15146,7 +15208,7 @@ function loadTicketThread(client, ticketId) {
   function loadCheckinCustomers() {
     withClient(function (client) {
       if (!client) return;
-      client.from('customers').select('id, name, email, phone').order('name', { ascending: true }).limit(500)
+      client.from('customers').select('id, name, email, phone, address').order('name', { ascending: true }).limit(500)
         .then(function (res) { if (!res.error) ciCustomersCache = res.data || []; });
     });
   }
@@ -15196,7 +15258,7 @@ function loadTicketThread(client, ticketId) {
           var cu = ciCustomersCache.filter(function (x) { return String(x.id) === b.getAttribute('data-ci-pick'); })[0];
           if (!cu) return;
           ciCustomerId = cu.id;
-          $('ci-name').value = cu.name || ''; $('ci-phone').value = cu.phone || ''; $('ci-email').value = cu.email || '';
+          $('ci-name').value = cu.name || ''; $('ci-phone').value = cu.phone || ''; $('ci-email').value = cu.email || ''; $('ci-address').value = cu.address || '';
           box.innerHTML = '<p class="portal-muted portal-small">Customer linked &mdash; their account will see this repair.</p>';
         });
       });
@@ -15225,8 +15287,69 @@ function loadTicketThread(client, ticketId) {
         });
       });
     }
+    /* PORTAL_SERVICE_QUEUE_2026_11_06 (intake refinements): the
+     * Service grid carries the One-on-One tile — there is no
+     * separate Repair/Service switch. Tapping One-on-One switches
+     * this intake to a one-on-one and opens the three hour buttons
+     * in the grid (Power test hides — a lesson has no power test —
+     * and Service details shows for the kind and the goal). The
+     * hour buttons set the booked time; tapping the picked hour
+     * again unsets it. Tapping a repair tile, or tapping One-on-One
+     * back off, returns the form to a repair intake. */
+    var ciOneOnOne = $('ci-oneonone'), ciHoursBox = $('ci-hours');
+    var ciHourBtns = ciHoursBox ? Array.prototype.slice.call(ciHoursBox.querySelectorAll('.ci-hour-btn')) : [];
+    function ciPaintHours() {
+      ciHourBtns.forEach(function (b) {
+        var on = b.getAttribute('data-hours') === ciServiceHours;
+        b.classList.toggle('on', on);
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+    }
+    function ciSetRequestType(type) {
+      ciRequestType = type === 'service' ? 'service' : 'repair';
+      var svc = ciRequestType === 'service';
+      var pow = document.querySelector('[data-ci-acc="power"]');
+      var svcSec = $('ci-service-section');
+      if (pow) pow.hidden = svc;
+      if (svcSec) svcSec.hidden = !svc;
+      if (svc) ciAccState.service = true;
+      if (!svc) {
+        ciServiceHours = '';
+        ciPaintHours();
+        if (ciHoursBox) ciHoursBox.hidden = true;
+        if (ciOneOnOne) { ciOneOnOne.classList.remove('on'); ciOneOnOne.setAttribute('aria-pressed', 'false'); }
+      }
+    }
+    function ciLeaveService() {
+      if (ciRequestType === 'service' || (ciOneOnOne && ciOneOnOne.classList.contains('on'))) ciSetRequestType('repair');
+    }
+    if (ciOneOnOne && !ciOneOnOne.getAttribute('data-wired')) {
+      ciOneOnOne.setAttribute('data-wired', '1');
+      ciOneOnOne.addEventListener('click', function () {
+        if (ciOneOnOne.classList.contains('on')) { ciSetRequestType('repair'); return; }
+        document.querySelectorAll('#ci-reasons .ci-tile.on').forEach(function (c) { if (c !== ciOneOnOne) { c.classList.remove('on'); c.setAttribute('aria-pressed', 'false'); } });
+        ciOneOnOne.classList.add('on'); ciOneOnOne.setAttribute('aria-pressed', 'true');
+        if (ciHoursBox) ciHoursBox.hidden = false;
+        ciSetRequestType('service');
+      });
+    }
+    ciHourBtns.forEach(function (b) {
+      if (b.getAttribute('data-wired')) return;
+      b.setAttribute('data-wired', '1');
+      b.addEventListener('click', function () {
+        var h = b.getAttribute('data-hours');
+        if (ciServiceHours === h) { ciServiceHours = ''; ciPaintHours(); return; }
+        ciServiceHours = h;
+        ciPaintHours();
+        ciSetRequestType('service');
+      });
+    });
+    document.querySelectorAll('#ci-reasons .ci-tile:not([data-oneonone])').forEach(function (t) {
+      t.addEventListener('click', ciLeaveService);
+    });
+    ciSetRequestType('repair');
     /* PORTAL_ISSUE_TILES_2026_10_30: issue picker tiles toggle .on */
-    document.querySelectorAll('#ci-reasons .ci-tile').forEach(function (tile) {
+    document.querySelectorAll('#ci-reasons .ci-tile:not([data-oneonone])').forEach(function (tile) {
       tile.addEventListener('click', function () {
         var on = tile.classList.toggle('on');
         tile.setAttribute('aria-pressed', on ? 'true' : 'false');
@@ -15252,11 +15375,13 @@ function loadTicketThread(client, ticketId) {
     }
     function ciFormDirty() {
       if (ciCustomerId || ciConsent) return true;
+      if (ciRequestType === 'service') return true; /* PORTAL_SERVICE_QUEUE_2026_11_06: entering a service request counts as entered, like any other field */
       if (document.querySelector('#ci-reasons .ci-tile.on')) return true;
       return ciFieldSnapshot() !== ciPristine;
     }
     function ciResetForm() {
       $('ci-form').reset();
+      ciSetRequestType('repair'); /* PORTAL_SERVICE_QUEUE_2026_11_06 */
       ciCustomerId = null;
       ciAtroneTier = null;
       document.querySelectorAll('#ci-reasons .ci-tile.on').forEach(function (c) { c.classList.remove('on'); c.setAttribute('aria-pressed', 'false'); });
@@ -15277,12 +15402,53 @@ function loadTicketThread(client, ticketId) {
     $('ci-form').addEventListener('submit', function (e) {
       e.preventDefault();
       var err = $('ci-error'); err.hidden = true;
-      var reasons = Array.prototype.map.call(document.querySelectorAll('#ci-reasons .ci-tile.on'), function (c) { return c.getAttribute('data-label') || c.textContent.trim(); }).join(', ');
-      var row = {
+      var reasons = Array.prototype.map.call(document.querySelectorAll('#ci-reasons .ci-tile.on:not([data-oneonone])'), function (c) { return c.getAttribute('data-label') || c.textContent.trim(); }).join(', ');
+      /* PORTAL_SERVICE_QUEUE_2026_11_06 (intake refinements): a
+       * one-on-one picked in the Service grid composes a service
+       * row instead — the kind of help and the goal come from
+       * Service details, the hours from the grid buttons ('' when
+       * no hour button is tapped — the time is not set yet), and
+       * the device fields ride along exactly as a repair records
+       * them, because a lesson is on a device; identity is the
+       * [SERVICE] issue lead. The ticket starts at Awaiting
+       * Scheduling (build of record, with the one-time insert
+       * fallback below). Both rows carry the service address
+       * (tickets.service_address). */
+      var isSvc = ciRequestType === 'service' || !!(ciOneOnOne && ciOneOnOne.classList.contains('on'));
+      var svcKind = isSvc ? $('ci-svc-kind').value : '';
+      var svcGoal = isSvc ? $('ci-svc-goal').value.trim() : '';
+      var svcHours = isSvc ? ciServiceHours : '';
+      var ciAddress = $('ci-address').value.trim();
+      var row = isSvc ? {
         customer_id: ciCustomerId || null,
         customer_name: $('ci-name').value.trim(),
         customer_phone: $('ci-phone').value.trim(),
         customer_email: $('ci-email').value.trim() || null,
+        service_address: ciAddress || null,
+        device_type: $('ci-type').value,
+        brand: $('ci-brand').value.trim() || null,
+        model: $('ci-model').value.trim() || null,
+        serial_imei: $('ci-serial').value.trim() || null,
+        issue_reason: svcKind || null,
+        issue: svcKind ? ciServiceIssueText(svcKind, svcGoal, svcHours, $('ci-atrone') ? $('ci-atrone').value : '') : '',
+        triage_volts: null,
+        triage_amps: null,
+        power_on: null,
+        backed_up: null,
+        prior_repair: null,
+        warranty_status: null,
+        source: 'check-in',
+        status: 'Awaiting Scheduling',
+        terms_accepted: true,
+        dispatch_acknowledged: true,
+        work_auth_accepted: false,
+        marketing_opt_in: false
+      } : {
+        customer_id: ciCustomerId || null,
+        customer_name: $('ci-name').value.trim(),
+        customer_phone: $('ci-phone').value.trim(),
+        customer_email: $('ci-email').value.trim() || null,
+        service_address: ciAddress || null,
         device_type: $('ci-type').value,
         brand: $('ci-brand').value.trim() || null,
         model: $('ci-model').value.trim() || null,
@@ -15313,8 +15479,12 @@ function loadTicketThread(client, ticketId) {
         work_auth_accepted: false,
         marketing_opt_in: false
       };
-      if (!row.customer_name || !row.customer_phone || !row.issue) {
-        err.textContent = 'Name, phone, and an issue are required — tap an issue tile or write check-in notes.'; err.hidden = false; return;
+      if (isSvc) {
+        if (!row.customer_name || !row.customer_phone || !row.customer_email || !row.service_address || !svcKind || !svcGoal) {
+          err.textContent = 'Name, phone, email, service address, the kind of help, and what they want to get done are required for a service request.'; err.hidden = false; return;
+        }
+      } else if (!row.customer_name || !row.customer_phone || !row.customer_email || !row.service_address || !row.issue) {
+        err.textContent = 'Name, phone, email, service address, and an issue are required — tap an issue tile or write check-in notes.'; err.hidden = false; return;
       }
       var btn = $('ci-submit'); btn.disabled = true;
       var consent = ciConsent;
@@ -15324,12 +15494,21 @@ function loadTicketThread(client, ticketId) {
       var signupTier = wantsAtrOneSignup ? ciAtroneTier : null;
       withClient(function (client) {
         if (!client) { btn.disabled = false; return; }
-        client.from('tickets').insert(row).select('id').single().then(function (res) {
+        var insertRow = function (r) { return client.from('tickets').insert(r).select('id').single(); };
+        insertRow(row).then(function (res) {
+          if (res.error && isSvc && row.status === 'Awaiting Scheduling') {
+            var retryRow = {}; for (var rk in row) retryRow[rk] = row[rk]; retryRow.status = 'Awaiting Estimate';
+            return insertRow(retryRow).then(function (res2) { row.status = retryRow.status; return res2; });
+          }
+          return res;
+        }).then(function (res) {
           if (res.error) { btn.disabled = false; err.textContent = 'Could not create the ticket — try again.'; err.hidden = false; return; }
           var newId = res.data && res.data.id;
-          var proceed = function (consentFailed, atroneAttachFailed) {
+          /* PORTAL_SERVICE_QUEUE_2026_11_06: charges ride the row's final status — the receipt and agreement builders read row.status. */
+          var proceed = function (consentFailed, atroneAttachFailed, svcChargeFailed) {
             btn.disabled = false;
             $('ci-form').reset(); ciCustomerId = null; ciAtroneTier = null;
+            ciSetRequestType('repair'); /* PORTAL_SERVICE_QUEUE_2026_11_06 */
             document.querySelectorAll('#ci-reasons .ci-tile.on').forEach(function (c) { c.classList.remove('on'); c.setAttribute('aria-pressed', 'false'); });
             ciConsentReset();
             state.loaded.tickets = false;
@@ -15338,6 +15517,7 @@ function loadTicketThread(client, ticketId) {
             if (newId) setTimeout(function () { openTicket(newId); }, 450);
             if (consentFailed) setTimeout(function () { docMsg('The ticket was created, but the check-in agreement could not be filed — take the signature here in Documents.'); }, 900);
             if (atroneAttachFailed) setTimeout(function () { docMsg('The ticket was created, but the ATR One membership agreement could not be attached — take the signature here in Documents.'); }, 900);
+            if (svcChargeFailed) setTimeout(function () { docMsg('The service ticket was created, but its charges could not be added — add the $15 visit fee and the $25/hr service time in Charges.'); }, 900);
           };
           /* PORTAL_CHECKIN_CONSENT_2026_10_30: consent captured on the
            * form files itself on the new ticket, in the drawer flow's
@@ -15352,17 +15532,32 @@ function loadTicketThread(client, ticketId) {
            * staff never fetch it from Documents by hand. No tier
            * picked → nothing attached, never a guess. Every other
            * check-in follows the exact path it always has. */
-          var afterConsent = function (consentFailed) {
+          var afterConsent = function (consentFailed, svcChargeFailed) {
             if (wantsAtrOneSignup && newId) {
-              attachAtrOneAgreementAtCheckin(client, newId, row, function (attachErr) { proceed(consentFailed, !!attachErr); }, signupTier);
+              attachAtrOneAgreementAtCheckin(client, newId, row, function (attachErr) { proceed(consentFailed, !!attachErr, svcChargeFailed); }, signupTier);
             } else {
-              proceed(consentFailed, false);
+              proceed(consentFailed, false, svcChargeFailed);
             }
           };
-          if (consent && newId) {
-            fileCiConsent(client, newId, row, consent, function (fileErr) { afterConsent(!!fileErr); });
+          /* PORTAL_SERVICE_QUEUE_2026_11_06: a service ticket gets
+           * its charges at intake — the $15 visit fee plus $25 an
+           * hour for the time booked (no fee row for ATR One
+           * members). A failed charge never blocks the ticket; it
+           * surfaces as a note so staff add it in Charges. */
+          var startChain = function (svcChargeFailed) {
+            if (consent && newId) {
+              fileCiConsent(client, newId, row, consent, function (fileErr) { afterConsent(!!fileErr, svcChargeFailed); });
+            } else {
+              afterConsent(!!consent, svcChargeFailed);
+            }
+          };
+          if (isSvc && newId) {
+            var svcRows = ciServiceChargeRows(newId, svcKind, svcHours, $('ci-atrone') ? $('ci-atrone').value : '');
+            if (svcRows.length) {
+              client.from('ticket_charges').insert(svcRows).then(function (cres) { startChain(!!cres.error); }).catch(function () { startChain(true); });
+            } else { startChain(false); }
           } else {
-            afterConsent(!!consent);
+            startChain(false);
           }
         }).catch(function () { btn.disabled = false; err.textContent = 'Could not create the ticket — try again.'; err.hidden = false; });
       });

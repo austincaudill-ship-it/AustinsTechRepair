@@ -146,7 +146,7 @@
           <i class="fas fa-qrcode"></i> Scan In
         </button>
         <button class="portal-tab active" id="portal-tab-tickets" type="button" role="tab" data-tab="tickets">
-          <i class="fas fa-list-ol"></i> Repair Queue <span class="portal-count" id="portal-count-tickets" hidden></span>
+          <i class="fas fa-list-ol"></i> Service Queue <span class="portal-count" id="portal-count-tickets" hidden></span>
         </button>
         <!-- PORTAL_SIDEBAR_ROSTER_2026_11_02 (Austin, Nov 2, 2026): this button's display label is "Guest" — his word for customers. Display text ONLY: the tab id (portal-tab-customers) and data-tab="customers" are unchanged, and every handler stays keyed to those ids, never to the label text. -->
         <button class="portal-tab" id="portal-tab-customers" type="button" role="tab" data-tab="customers">
@@ -243,11 +243,13 @@
       <!-- TICKETS -->
       <div class="portal-panel" id="portal-panel-tickets" role="tabpanel">
         <div class="portal-panel-head">
-          <h2 class="portal-h2">Repair Queue</h2>
+          <h2 class="portal-h2">Service Queue</h2>
           <div class="portal-panel-tools">
             <select id="portal-ticket-filter" aria-label="Filter tickets by status">
               <option value="all">All statuses</option>
               <option value="Awaiting Estimate">Awaiting Estimate</option>
+              <option value="Awaiting Scheduling">Awaiting Scheduling</option>
+              <option value="Support Requested">Support Requested</option>
               <option value="Awaiting Diagnostics">Awaiting Diagnostics</option>
               <option value="Awaiting Customer Response">Awaiting Customer Response</option>
               <option value="Awaiting Parts">Awaiting Parts</option>
@@ -1007,9 +1009,9 @@
       <!-- CHECK-IN / TRIAGE -->
       <div class="portal-panel" id="portal-panel-checkin" role="tabpanel" hidden>
         <div class="portal-panel-head"><h2 class="portal-h2">New Service Request &mdash; Triage</h2></div>
-        <p class="portal-muted portal-small">Walk-in and phone check-ins. Find the customer (or add them), pick the device and the reason, run the power test, and the ticket lands straight in the Repair Queue. Confirm the visit fee with the customer before submitting &mdash; $15 for a known repair, $35 if the job needs diagnostics.</p>
+        <p class="portal-muted portal-small">Walk-in and phone check-ins. Find the customer (or add them) &mdash; email and service address are required, because we come to them. For a repair, pick the device and the reason and run the power test. For a one-on-one lesson, tap One-on-One in the Service tiles, pick 1, 2, or 3 hours, and write what they want to get done. Either way the ticket lands straight in the Service Queue. Confirm the money with the customer before submitting &mdash; repairs: $15 visit fee for a known repair, $35 if the job needs diagnostics. One-on-one: $25 an hour for the time booked, and the $15 visit fee charged separately. ATR One members pay no visit fee.</p>
         <form id="ci-form" novalidate>
-          <!-- CHECKIN_COLLAPSE_2026_11_04 (Austin, Nov 4, 2026): the check-in form folds into tappable sections, like the ticket drawer's sections in the Repair Queue — Customer starts open, the rest start closed, and the Create ticket button and Clear check-in stay outside the sections at the bottom, always visible. Every field id is exactly as it was; only the folding wrappers were added. -->
+          <!-- CHECKIN_COLLAPSE_2026_11_04 (Austin, Nov 4, 2026): the check-in form folds into tappable sections, like the ticket drawer's sections in the Service Queue — Customer starts open, the rest start closed, and the Create ticket button and Clear check-in stay outside the sections at the bottom, always visible. Every field id is exactly as it was; only the folding wrappers were added. -->
           <div class="ci-acc" data-ci-acc="customer">
           <button type="button" class="ci-acc-head ci-acc-open" data-ci-acc-toggle="customer" aria-expanded="true"><span class="ci-acc-title">Customer</span><i class="fas fa-chevron-down ci-acc-chev" aria-hidden="true"></i></button>
           <div class="ci-acc-body" data-ci-acc-body="customer">
@@ -1021,7 +1023,8 @@
           <div class="portal-nh-grid">
             <div class="portal-field"><label for="ci-name">Name *</label><input type="text" id="ci-name" required /></div>
             <div class="portal-field"><label for="ci-phone">Phone *</label><input type="tel" id="ci-phone" required /></div>
-            <div class="portal-field"><label for="ci-email">Email</label><input type="email" id="ci-email" /></div>
+            <div class="portal-field"><label for="ci-email">Email *</label><input type="email" id="ci-email" required /></div>
+            <div class="portal-field"><label for="ci-address">Service address *</label><input type="text" id="ci-address" required placeholder="Street, city, ZIP" /></div>
           </div>
           <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">ATR One</h3></div>
           <div class="portal-field">
@@ -1053,7 +1056,8 @@
             <div class="portal-field"><label for="ci-model">Model</label><input type="text" id="ci-model" placeholder="e.g. Galaxy Buds2 Pro" /></div>
             <div class="portal-field"><label for="ci-serial">Serial / IMEI</label><input type="text" id="ci-serial" /></div>
           </div>
-          <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Issue &mdash; tap all that apply</h3></div>
+          <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">What service does it need?</h3></div>
+          <p class="portal-muted portal-small">Tap all that apply</p>
           <!-- PORTAL_ISSUE_TILES_2026_10_30: touch-friendly issue picker — big tappable tiles with icons replace the old text chips. Selected tile labels (data-label) feed issue_reason and lead the ticket's issue text; the check-in notes box below stays for detail (see portal.js check-in submit). -->
           <div class="ci-tiles" id="ci-reasons" role="group" aria-label="Issue picker">
             <button type="button" class="ci-tile" data-label="Cracked display" aria-pressed="false"><i class="fas fa-mobile-screen" aria-hidden="true"></i><span>Cracked display</span></button>
@@ -1067,6 +1071,14 @@
             <button type="button" class="ci-tile" data-label="Back glass" aria-pressed="false"><i class="fas fa-mobile" aria-hidden="true"></i><span>Back glass</span></button>
             <button type="button" class="ci-tile" data-label="Buttons" aria-pressed="false"><i class="fas fa-toggle-on" aria-hidden="true"></i><span>Buttons</span></button>
             <button type="button" class="ci-tile" data-label="Software issue" aria-pressed="false"><i class="fas fa-bug" aria-hidden="true"></i><span>Software issue</span></button>
+            <!-- PORTAL_SERVICE_QUEUE_2026_11_06 (intake refinements): the One-on-One tile lives in the Service grid itself. Tapping it opens the three hour buttons under it; Other stays last, underneath them. Wired in portal.js. -->
+            <button type="button" class="ci-tile ci-tile-oneonone" id="ci-oneonone" data-oneonone="1" aria-pressed="false"><i class="fas fa-chalkboard-user" aria-hidden="true"></i><span>One-on-One</span></button>
+            <div class="ci-hours" id="ci-hours" hidden role="group" aria-label="One-on-One time">
+              <button type="button" class="ci-hour-btn" data-hours="1" aria-pressed="false">One-on-One &mdash; 1 hour &middot; $25</button>
+              <button type="button" class="ci-hour-btn" data-hours="2" aria-pressed="false">One-on-One &mdash; 2 hours &middot; $50</button>
+              <button type="button" class="ci-hour-btn" data-hours="3" aria-pressed="false">One-on-One &mdash; 3 hours &middot; $75</button>
+              <p class="portal-muted portal-small ci-hours-note">Time is $25 an hour, picked here. The $15 visit fee is charged separately &mdash; never folded into the hourly price &mdash; and ATR One members pay no visit fee. Runs over the booked time? Extra time is $25 an hour, settled at the visit.</p>
+            </div>
             <button type="button" class="ci-tile" data-label="Other" aria-pressed="false"><i class="fas fa-ellipsis" aria-hidden="true"></i><span>Other</span></button>
           </div>
           </div>
@@ -1086,6 +1098,29 @@
             <div class="portal-field"><label for="ci-warranty">Under manufacturer warranty?</label>
               <select id="ci-warranty"><option value="">Unknown</option><option>Yes &mdash; customer told our work may void it</option><option>No</option></select></div>
           </div>
+          </div>
+          </div>
+          <div class="ci-acc" data-ci-acc="service" id="ci-service-section" hidden>
+          <button type="button" class="ci-acc-head ci-acc-open" data-ci-acc-toggle="service" aria-expanded="true"><span class="ci-acc-title">Service details</span><i class="fas fa-chevron-down ci-acc-chev" aria-hidden="true"></i></button>
+          <div class="ci-acc-body" data-ci-acc-body="service">
+          <div class="portal-field">
+            <label for="ci-svc-kind">Kind of help *</label>
+            <select id="ci-svc-kind">
+              <option value="">Pick one&hellip;</option>
+              <option>Set up a device</option>
+              <option>Learn my device</option>
+              <option>Wi-Fi or internet help</option>
+              <option>Printer or accessories</option>
+              <option>Move to a new device</option>
+              <option>Computer clean-up</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="portal-field">
+            <label for="ci-svc-goal">What do they want to get done? *</label>
+            <textarea id="ci-svc-goal" rows="3" placeholder="e.g. Show her how to use the new iPad &mdash; mail, photos, and FaceTime with the grandkids."></textarea>
+          </div>
+          <p class="portal-muted portal-small">A one-on-one is booked from the One-on-One tile in the Service grid above: pick 1, 2, or 3 hours there. Time is $25 an hour and the $15 visit fee is charged separately &mdash; never the $35, because a lesson has no diagnostics. Both charges are added to the ticket as their own lines when you submit. ATR One members pay no visit fee, same as repairs.</p>
           </div>
           </div>
           <div class="ci-acc" data-ci-acc="notes">
