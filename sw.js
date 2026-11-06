@@ -75,7 +75,10 @@
 /* REPAIR_OR_REPLACE_2026_11_06: bumped to atrg-v32 — the Repair
    or Replace helper page lands (same price book, customer-entered
    replacement cost, one printed rule of thumb; no invented values). */
-const CACHE = "atrg-v32";
+/* SUPPORT_PACKAGES_2026_11_06: bumped to atrg-v33 — five ready-made
+   one-on-one help packages land on the classes page (time quoted
+   pure at $25/hr; the $15 visit fee stays a separate line). */
+const CACHE = "atrg-v33";
 const CORE = [
   "/",
   "/index.html",
