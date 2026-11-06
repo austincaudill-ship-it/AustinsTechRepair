@@ -2567,6 +2567,7 @@ function loadTicketThread(client, ticketId) {
           client.from('tickets').update({ status: next }).eq('id', t.id).then(function (res2) {
             if (res2.error) { msg.textContent = 'Couldn&rsquo;t save — try again.'; return; }
             msg.textContent = 'Saved.';
+            notifyStatusEmail(client, t, next); /* STATUS_UPDATE_EMAILS_2026_11_06: automatic customer status email (no-reply), fire-and-forget */
             if (next === 'Job Complete') {
               /* PORTAL_POINTS_EARN_2026_10_30: credit the customer's
                * loyalty points for this job (once per ticket — see
@@ -5080,6 +5081,44 @@ function loadTicketThread(client, ticketId) {
       }).then(function (out) { finish(out || null); })
       .catch(function () { finish(null); });
     } catch (e) { finish(null); }
+  }
+
+  /* STATUS_UPDATE_EMAILS_2026_11_06 (Austin, Nov 6, 2026: "every
+   * time we change a status update those emails need to go out"):
+   * after a ticket status change saves in the drawer, the customer
+   * gets an automatic status email from the no-reply system
+   * mailbox, sent by the status-update Edge Function (Zoho SMTP
+   * server-side; the wording lives in the function, one plain line
+   * per pipeline status). Same fetch shape as callSendReceipt —
+   * the caller's own session JWT plus the anon key, JSON in, JSON
+   * out. FIRE-AND-FORGET by design: every failure is swallowed, so
+   * a dead email path can never block or fail the status change
+   * itself. No email fires when the status did not actually change
+   * (a re-save of the same status is not a change) or when the
+   * ticket has no usable customer email on file. */
+  function notifyStatusEmail(client, t, next) {
+    try {
+      if (!client || !t || !next || next === t.status) return;
+      var to = trim(t.customer_email || '');
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) return;
+      var device = [t.device_type, t.brand, t.model].map(trim).filter(function (x) { return x !== ''; }).join(' ') || 'device';
+      var payload = {
+        ticket_id: t.id,
+        customer_email: to,
+        customer_name: trim(t.customer_name || ''),
+        device: device,
+        status: next
+      };
+      client.auth.getSession().then(function (sres) {
+        var token = sres && sres.data && sres.data.session ? sres.data.session.access_token : '';
+        if (!token) return null;
+        return fetch(SUPABASE_URL + '/functions/v1/status-update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'apikey': SUPABASE_ANON_KEY },
+          body: JSON.stringify(payload)
+        });
+      }).catch(function () { /* fire-and-forget: never surface */ });
+    } catch (e) { /* fire-and-forget: never surface */ }
   }
 
   /* PORTAL_EMAIL_RECEIPT_MAILTO_2026_11_03 (Austin, Nov 3, 2026:
