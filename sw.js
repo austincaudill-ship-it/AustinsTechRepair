@@ -29,7 +29,10 @@
 // composer right in the Messages panel for every customer (general
 // messages land in the same public.messages store), and the header
 // gains its own cart button with the quick-glance drop-down.
-const CACHE = "atrg-v13";
+// DISCLAIMER_BRANDS_2026_11_06: bumped to atrg-v14 — the footer
+// trademark disclaimer now names every brand used on the site
+// (informational use only, no affiliation).
+const CACHE = "atrg-v14";
 const CORE = [
   "/",
   "/index.html",
