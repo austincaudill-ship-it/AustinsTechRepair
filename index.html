@@ -1258,11 +1258,23 @@
             <input class="shop-search" id="shop-search" type="search" placeholder="Search cases, chargers, cables, storage…" autocomplete="off">
           </div>
 
+          <!-- STORE_SET_MERGE_2026_11_06: Apple-style featured
+               swipe rail — big rounded cards in a row, next card
+               peeking, above the category tiles. Cards are built
+               by script.js from the featured listings. -->
+          <div class="shop-rail-wrap" id="shop-rail-wrap">
+            <div class="shop-rail-head">
+              <h3>Featured deals</h3>
+              <p>Swipe or drag through a few favorites — tap a card for the bigger view.</p>
+            </div>
+            <div class="shop-rail" id="shop-rail"></div>
+          </div>
+
           <div class="shop-category-grid" id="shop-categories">
             <button class="shop-category-tile" type="button" data-shop-block="phone"><i class="fas fa-mobile-screen-button" aria-hidden="true"></i><span class="shop-tile-title">Phone accessories</span><span class="shop-tile-copy">Protectors, cases, cables and charging</span></button>
             <button class="shop-category-tile" type="button" data-shop-block="computer"><i class="fas fa-desktop" aria-hidden="true"></i><span class="shop-tile-title">Computer accessories</span><span class="shop-tile-copy">Mice, hubs, adapters, storage and desktop gear</span></button>
             <button class="shop-category-tile" type="button" data-shop-block="tablet"><i class="fas fa-tablet-screen-button" aria-hidden="true"></i><span class="shop-tile-title">Tablet accessories</span><span class="shop-tile-copy">Cases and screen protection</span></button>
-            <button class="shop-category-tile" type="button" data-shop-block="gaming"><i class="fas fa-gamepad" aria-hidden="true"></i><span class="shop-tile-title">Gaming accessories</span><span class="shop-tile-copy">Coolers and console gear for your setup</span></button>
+            <button class="shop-category-tile" type="button" data-shop-block="gaming"><i class="fas fa-gamepad" aria-hidden="true"></i><span class="shop-tile-title">Gaming accessories</span><span class="shop-tile-copy">Cooling, charging, controllers and more</span></button>
             <button class="shop-category-tile" type="button" data-shop-block="smartwatch"><i class="fas fa-clock" aria-hidden="true"></i><span class="shop-tile-title">Smartwatch accessories</span><span class="shop-tile-copy">Bands, chargers and everyday watch gear</span></button>
             <button class="shop-category-tile" type="button" data-shop-block="other"><i class="fas fa-shapes" aria-hidden="true"></i><span class="shop-tile-title">Other</span><span class="shop-tile-copy">Car charging, stations and more</span></button>
             <button class="shop-category-tile" type="button" data-shop-block="refurbished"><i class="fas fa-mobile-screen" aria-hidden="true"></i><span class="shop-tile-title">Refurbished phones</span><span class="shop-tile-copy">Tested pre-owned phones — ask what&rsquo;s in stock</span></button>
@@ -1347,7 +1359,7 @@
         <button class="cart-close" id="product-detail-close" aria-label="Close product details"><i class="fas fa-times"></i></button>
       </div>
       <div class="product-detail-body">
-        <div class="product-detail-media"><img id="product-detail-img" src="" alt=""></div>
+        <div class="product-detail-media"><img id="product-detail-img" src="" alt=""><div class="product-detail-media-icon" id="product-detail-icon" hidden><i class="fas fa-box-open" aria-hidden="true"></i></div></div>
         <span class="product-cat" id="product-detail-cat"></span>
         <h4 class="product-detail-name" id="product-detail-name"></h4>
         <p class="product-detail-price" id="product-detail-price"></p>

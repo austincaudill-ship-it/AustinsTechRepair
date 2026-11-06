@@ -985,7 +985,7 @@
           { label: 'USB-C to HDMI Adapter (4K)', price: 19.99, pts: 2500, sku: 'dng-usbc-hdmi' }
         ] },
       { id: 'sto-ssd-512', name: 'Storage Drive', cat: 'Storage', block: 'computer', price: 129.99, pts: 3500, featured: true, imageId: 'sto-ssd-512', defaultVariant: 'SSD — 512GB (2.5" SATA)',
-        desc: 'Internal upgrade drives. The stocked listings are Apollo 2.5-inch SATA SSDs; hard-drive and M.2 options are sourced per machine, so ask us before ordering those.',
+        desc: 'Internal upgrade drives. The stocked listings are Apollo 2.5-inch SATA SSDs; hard-drive and M.2 options are not stocked listings, so ask us before ordering those.',
         variants: [
           { label: 'SSD — 512GB (2.5" SATA)', price: 129.99, pts: 3500, sku: 'sto-ssd-512' },
           { label: 'SSD — 1TB (2.5" SATA)', price: 189.99, pts: 3500, sku: 'sto-ssd-1tb' },
@@ -995,7 +995,69 @@
       { id: 'car-dual-usb', name: 'Dual USB Car Charger (Fast Charge)', cat: 'Car Chargers', block: 'other', price: 14.99, pts: 3500, imageId: 'car-dual-usb',
         desc: 'Two USB ports for charging in the car, with fast-charge support for the drive.' },
       { id: 'station-3in1', name: '3-in-1 Wireless Charging Station', cat: 'Wireless Chargers', block: 'other', price: 44.99, pts: 3500, imageId: 'station-3in1',
-        desc: 'A three-in-one wireless charging station for a nightstand or desk — one spot that charges your everyday carry together.' }
+        desc: 'A three-in-one wireless charging station for a nightstand or desk — one spot that charges your everyday carry together.' },
+      /* STORE_SET_MERGE_2026_11_06 (Austin, Nov 6, 2026): GAMING and
+         SMARTWATCH stop being ask-us panels and get real listings.
+         Prices and points are DERIVED from the nearest comparable
+         listing already in this catalog (the same tier method the
+         3.4 pass used: protectors 1,000 pts, case-family 2,500 pts,
+         chargers and premium gear 3,500 pts) — every derived value
+         is listed in REPORT.md for owner review. New listings carry
+         an icon instead of a photo: no product photo exists for them
+         and a fake one would be worse than none. */
+      { id: 'game-cooling-station', name: 'Console Cooling Station', cat: 'Gaming Accessories', block: 'gaming', price: 39.99, pts: 3500, icon: 'fa-fan', defaultVariant: 'PlayStation 5',
+        desc: 'A cooling stand that pulls heat away from your console while you play, with a charging spot for a controller on the side. Pick your console.',
+        variants: [
+          { label: 'PlayStation 5', price: 39.99, pts: 3500, sku: 'game-cooling-ps5' },
+          { label: 'Xbox Series X|S', price: 39.99, pts: 3500, sku: 'game-cooling-xbox' },
+          { label: 'Nintendo Switch', price: 39.99, pts: 3500, sku: 'game-cooling-switch' }
+        ] },
+      { id: 'game-charge-dock', name: 'Dual Controller Charging Dock', cat: 'Gaming Accessories', block: 'gaming', price: 29.99, pts: 3500, icon: 'fa-battery-full', defaultVariant: 'PlayStation 5',
+        desc: 'Charge two controllers at once and park them on the dock between sessions \u2014 no hunting for a cable mid-game. Pick your console.',
+        variants: [
+          { label: 'PlayStation 5', price: 29.99, pts: 3500, sku: 'game-dock-ps5' },
+          { label: 'Xbox Series X|S', price: 29.99, pts: 3500, sku: 'game-dock-xbox' }
+        ] },
+      { id: 'game-controller', name: 'Wireless Controller', cat: 'Gaming Accessories', block: 'gaming', price: 69.99, pts: 3500, icon: 'fa-gamepad', defaultVariant: 'For PlayStation 5',
+        desc: 'A spare or replacement wireless controller, matched to your console. Pick your platform.',
+        variants: [
+          { label: 'For PlayStation 5', price: 69.99, pts: 3500, sku: 'game-controller-ps5' },
+          { label: 'For Xbox Series X|S', price: 64.99, pts: 3500, sku: 'game-controller-xbox' },
+          { label: 'For Nintendo Switch', price: 59.99, pts: 3500, sku: 'game-controller-switch' }
+        ] },
+      { id: 'game-keyboard', name: 'Gaming Keyboard', cat: 'Gaming Accessories', block: 'gaming', price: 49.99, pts: 3500, icon: 'fa-keyboard', defaultVariant: 'Mechanical \u2014 wired',
+        desc: 'A mechanical gaming keyboard with clicky, responsive keys. Go wired for zero lag, or wireless to clear the cables off the desk.',
+        variants: [
+          { label: 'Mechanical \u2014 wired', price: 49.99, pts: 3500, sku: 'game-keyboard-wired' },
+          { label: 'Mechanical \u2014 wireless', price: 69.99, pts: 3500, sku: 'game-keyboard-wireless' }
+        ] },
+      { id: 'game-ps5-plates', name: 'PlayStation 5 Side Panels', cat: 'Gaming Accessories', block: 'gaming', price: 49.99, pts: 2500, icon: 'fa-layer-group', defaultVariant: 'Disc Edition',
+        desc: 'Click-on replacement side panels for the PS5 \u2014 swap the look of the console in minutes, no tools needed. Pick your edition.',
+        variants: [
+          { label: 'Disc Edition', price: 49.99, pts: 2500, sku: 'game-ps5-plates-disc' },
+          { label: 'Digital Edition', price: 49.99, pts: 2500, sku: 'game-ps5-plates-digital' }
+        ] },
+      { id: 'game-decal-skin', name: 'Console Decal Skin', cat: 'Gaming Accessories', block: 'gaming', price: 14.99, pts: 1000, icon: 'fa-shapes', defaultVariant: 'PlayStation 5',
+        desc: 'A precision-cut decal skin that wraps your console in a new look and guards the shell against scuffs. Pick your console.',
+        variants: [
+          { label: 'PlayStation 5', price: 14.99, pts: 1000, sku: 'game-decal-ps5' },
+          { label: 'Xbox Series X|S', price: 14.99, pts: 1000, sku: 'game-decal-xbox' },
+          { label: 'Nintendo Switch', price: 14.99, pts: 1000, sku: 'game-decal-switch' }
+        ] },
+      { id: 'watch-glass', name: 'Apple Watch Screen Protector', cat: 'Smartwatch Accessories', block: 'smartwatch', price: 14.99, pts: 1000, icon: 'fa-shield-halved', fit: 'Smartwatch', defaultVariant: 'Apple Watch',
+        desc: 'Tempered glass sized for your Apple Watch \u2014 it takes the knocks so the watch face does not have to. Pick your watch model so we bring the right size.',
+        variants: [
+          { label: 'Apple Watch', price: 14.99, pts: 1000, sku: 'watch-glass-apple', deviceBrands: ['Apple'] }
+        ] },
+      { id: 'watch-band', name: 'Apple Watch Band', cat: 'Smartwatch Accessories', block: 'smartwatch', price: 19.99, pts: 2500, icon: 'fa-clock', fit: 'Smartwatch', defaultVariant: 'Sport band',
+        desc: 'Fresh bands for Apple Watch \u2014 a soft sport band for every day, a braided band for a dressier look, or a metal link band. Pick your watch model so the fit is right.',
+        variants: [
+          { label: 'Sport band', price: 19.99, pts: 2500, sku: 'watch-band-sport', deviceBrands: ['Apple'] },
+          { label: 'Braided band', price: 29.99, pts: 2500, sku: 'watch-band-braided', deviceBrands: ['Apple'] },
+          { label: 'Metal link band', price: 39.99, pts: 2500, sku: 'watch-band-metal', deviceBrands: ['Apple'] }
+        ] },
+      { id: 'watch-charger', name: 'Apple Watch Magnetic Charger', cat: 'Smartwatch Accessories', block: 'smartwatch', price: 24.99, pts: 3500, icon: 'fa-magnet',
+        desc: 'The magnetic charging puck for Apple Watch \u2014 snap it on the back of the watch and it charges. A good spare for the nightstand or the car.' }
     ];
 
     /* NAV_SEARCH_CLEANUP_2026_11_06: the site-wide search module at
@@ -1182,8 +1244,8 @@
       phone: { title: 'Phone accessories', copy: 'Protectors, cases, cables and charging for your phone.' },
       computer: { title: 'Computer accessories', copy: 'Mice, hubs, adapters, storage and desktop gear.' },
       tablet: { title: 'Tablet accessories', copy: 'Cases and screen protection for your tablet.' },
-      gaming: { title: 'Gaming accessories', special: 'gaming' },
-      smartwatch: { title: 'Smartwatch accessories', special: 'smartwatch' },
+      gaming: { title: 'Gaming accessories', copy: 'Cooling, charging, controllers, keyboards and console extras.' },
+      smartwatch: { title: 'Smartwatch accessories', copy: 'Screen protection, bands and charging for Apple Watch.' },
       other: { title: 'Other', copy: 'Car charging, charging stations, and the rest of the gear shelf.' },
       refurbished: { title: 'Refurbished phones', special: 'refurbished' },
       featured: { title: 'Featured deals', copy: 'A short list of shop favorites at their regular fair prices.' },
@@ -1191,8 +1253,6 @@
     };
     var SHOP_SPECIAL_HTML = {
       refurbished: '<h4>Refurbished phones, when they\u2019re on the shelf</h4><p>We sell pre-owned and refurbished phones — tested, checked over, and ready to use. Stock changes as devices come in, so there\u2019s no fixed list here: <a href="#contact" data-page="contact">ask us what\u2019s in stock</a> and we\u2019ll tell you exactly what we have.</p>',
-      gaming: '<h4>Sourced for your setup</h4><p>Gaming coolers and console accessories depend on the console and the setup you run, so we source them per setup instead of listing one-size-fits-all versions. <a href="#contact" data-page="contact">Tell us what you\u2019re playing on</a> and we\u2019ll line up the right gear.</p>',
-      smartwatch: '<h4>Matched to your watch</h4><p>Watch bands, chargers and protection are model-specific — the right one depends on your watch\u2019s brand, model and size. <a href="#contact" data-page="contact">Tell us your watch</a> and we\u2019ll line up accessories that fit it.</p>'
     };
     var shopTiles = document.getElementById('shop-categories');
     var shopHead = document.getElementById('shop-listing-head');
@@ -1202,12 +1262,14 @@
     var shopSearch = document.getElementById('shop-search');
 
     function shopShowHome() {
+      if (shopRailWrap) shopRailWrap.hidden = false;
       if (shopTiles) shopTiles.hidden = false;
       if (shopHead) shopHead.hidden = true;
       if (shopSpecial) shopSpecial.hidden = true;
       if (grid) grid.hidden = true;
     }
     function shopShowListing(title, copy) {
+      if (shopRailWrap) shopRailWrap.hidden = true;
       if (shopTiles) shopTiles.hidden = true;
       if (shopHead) shopHead.hidden = false;
       if (shopBlockTitle) shopBlockTitle.textContent = title;
@@ -1267,7 +1329,7 @@
         card.setAttribute('tabindex', '0');
         card.setAttribute('aria-label', p.name + ' — view details');
         card.innerHTML =
-          '<div class="product-media"><img src="images/products/' + (p.imageId || p.id) + '.jpg" alt="' + p.name + '" loading="lazy"></div>' +
+          '<div class="product-media">' + (p.icon ? '<span class="product-media-icon"><i class="fas ' + p.icon + '" aria-hidden="true"></i></span>' : '<img src="images/products/' + (p.imageId || p.id) + '.jpg" alt="' + p.name + '" loading="lazy">') + '</div>' +
           '<div class="product-body">' +
             '<span class="product-cat">' + p.cat + '</span>' +
             '<h3 class="product-name">' + p.name + '</h3>' +
@@ -1292,6 +1354,108 @@
         grid.appendChild(card);
       });
     }
+    /* STORE_SET_MERGE_2026_11_06 (Austin, Nov 6, 2026): the
+       Apple-style swipe rail at the top of the Store — big rounded
+       cards in a horizontal row over the featured listings, the
+       next card peeking at the edge. Native scroll gives the swipe
+       on touch; pointer drag covers the desktop. Dots under a card
+       step through that product's variants and the price follows;
+       Add on a rail card adds the dotted variant (a fit product
+       still opens the pop-up, same rule as the grid). Tapping a
+       card opens the same pop-up detail view. This style lives in
+       the Store only. */
+    var shopRailWrap = document.getElementById('shop-rail-wrap');
+    var shopRail = document.getElementById('shop-rail');
+    var railDragMoved = false;
+    function railVariant(p, card) {
+      if (!p.variants) return null;
+      var idx = parseInt(card.getAttribute('data-variant-idx') || '0', 10);
+      return p.variants[isNaN(idx) ? 0 : idx] || p.variants[0];
+    }
+    function railPaintPrice(p, card) {
+      var priceEl = card.querySelector('.rail-price');
+      var ptsEl = card.querySelector('.rail-pts');
+      var v = railVariant(p, card);
+      var unit = v && v.price != null ? v.price : p.price;
+      var pts = v && v.pts != null ? v.pts : p.pts;
+      if (priceEl) priceEl.textContent = v && v.unavailable ? 'Ask us' : money(unit);
+      if (ptsEl) ptsEl.textContent = pts ? 'or ' + fmtPts(pts) + ' pts' : '';
+      card.querySelectorAll('.rail-dot').forEach(function (d, i) {
+        d.classList.toggle('is-on', i === (parseInt(card.getAttribute('data-variant-idx') || '0', 10) || 0));
+      });
+    }
+    function renderShopRail() {
+      if (!shopRail) return;
+      shopRail.innerHTML = '';
+      PRODUCTS.filter(function (p) { return !!p.featured; }).forEach(function (p) {
+        var card = document.createElement('article');
+        card.className = 'rail-card';
+        card.setAttribute('data-id', p.id);
+        card.setAttribute('data-variant-idx', '0');
+        card.setAttribute('tabindex', '0');
+        card.setAttribute('aria-label', p.name + ' \u2014 view details');
+        var dots = '';
+        if (p.variants && p.variants.length > 1) {
+          dots = '<div class="rail-dots">' + p.variants.map(function (v, i) {
+            return '<button class="rail-dot' + (i === 0 ? ' is-on' : '') + '" type="button" data-dot-idx="' + i + '" aria-label="Option: ' + v.label + '"></button>';
+          }).join('') + '</div>';
+        }
+        card.innerHTML =
+          '<div class="product-media rail-media">' + (p.icon ? '<span class="product-media-icon"><i class="fas ' + p.icon + '" aria-hidden="true"></i></span>' : '<img src="images/products/' + (p.imageId || p.id) + '.jpg" alt="' + p.name + '" loading="lazy">') + '</div>' +
+          '<div class="rail-body">' +
+            '<span class="product-cat">' + p.cat + '</span>' +
+            '<h3 class="rail-name">' + p.name + '</h3>' +
+            '<div class="product-price-row"><span class="product-price rail-price">' + cardPriceHtml(p) + '</span></div>' +
+            '<div class="product-points-row"><span class="product-pts rail-pts">or ' + fmtPts(p.pts) + ' pts</span></div>' +
+            dots +
+            '<div class="product-card-actions">' +
+              '<span class="product-view-hint">View details <i class="fas fa-arrow-right"></i></span>' +
+              '<button class="add-btn" type="button" data-rail-add="' + p.id + '">Add</button>' +
+            '</div>' +
+          '</div>';
+        card.addEventListener('click', function () {
+          if (railDragMoved) { railDragMoved = false; return; }
+          openProductDetail(p.id);
+        });
+        card.addEventListener('keydown', function (e) {
+          if (e.target !== card) return;
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openProductDetail(p.id); }
+        });
+        card.querySelectorAll('.rail-dot').forEach(function (d) {
+          d.addEventListener('click', function (e) {
+            e.stopPropagation();
+            card.setAttribute('data-variant-idx', d.getAttribute('data-dot-idx'));
+            railPaintPrice(p, card);
+          });
+        });
+        var addBtn = card.querySelector('[data-rail-add]');
+        if (addBtn) addBtn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          if (p.fit) { openProductDetail(p.id); return; }
+          var v = railVariant(p, card);
+          if (v && v.unavailable) { openProductDetail(p.id); return; }
+          addToCart(v ? makeCartKey(p, v, '') : p.id);
+          flashAdded(addBtn, 'Added');
+        });
+        shopRail.appendChild(card);
+      });
+      /* Desktop drag-to-scroll. A real drag suppresses the click
+         that follows it, so dragging never opens a pop-up. */
+      var drag = { down: false, x: 0, scroll: 0 };
+      shopRail.addEventListener('pointerdown', function (e) {
+        drag.down = true; drag.x = e.clientX; drag.scroll = shopRail.scrollLeft;
+      });
+      shopRail.addEventListener('pointermove', function (e) {
+        if (!drag.down) return;
+        var dx = e.clientX - drag.x;
+        if (Math.abs(dx) > 6) railDragMoved = true;
+        shopRail.scrollLeft = drag.scroll - dx;
+      });
+      ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (t) {
+        shopRail.addEventListener(t, function () { drag.down = false; });
+      });
+    }
+
     /* Kept name/signature for any older caller: a category name now
        resolves to its landing block; 'all' opens the all view. */
     function renderProducts(filter) {
@@ -1399,7 +1563,14 @@
       pdCurrent = p;
       pdShowError('');
       var img = pdEl('product-detail-img');
-      if (img) { img.src = 'images/products/' + (p.imageId || p.id) + '.jpg'; img.alt = p.name; }
+      var pdIcon = pdEl('product-detail-icon');
+      if (p.icon) {
+        if (img) { img.hidden = true; img.removeAttribute('src'); }
+        if (pdIcon) { pdIcon.hidden = false; pdIcon.innerHTML = '<i class="fas ' + p.icon + '" aria-hidden="true"></i>'; }
+      } else {
+        if (img) { img.hidden = false; img.src = 'images/products/' + (p.imageId || p.id) + '.jpg'; img.alt = p.name; }
+        if (pdIcon) pdIcon.hidden = true;
+      }
       var cat = pdEl('product-detail-cat');
       if (cat) cat.textContent = p.cat;
       var name = pdEl('product-detail-name');
@@ -1485,6 +1656,7 @@
       document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape' && pdPanel && !pdPanel.hidden) closeProductDetail();
       });
+      renderShopRail();
       if (shopTiles) shopTiles.querySelectorAll('[data-shop-block]').forEach(function (tile) {
         tile.addEventListener('click', function () { openShopBlock(tile.getAttribute('data-shop-block')); });
       });

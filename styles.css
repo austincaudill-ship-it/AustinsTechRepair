@@ -2558,3 +2558,26 @@ button.footer-link.a11y-footer-link {
 .footer .footer-bottom { flex-direction: column; flex-wrap: nowrap; align-items: center; justify-content: center; text-align: center; gap: 0.85rem; padding-right: 0; }
 .footer-bottom .footer-copy, .footer-bottom .footer-proud, .footer-bottom .footer-wordmark { text-align: center; }
 .footer-bottom .footer-share-btn { align-self: center; }
+
+/* STORE_SET_MERGE_2026_11_06: Store swipe rail + icon media.
+   The rail is Store-only: big rounded cards, native swipe on
+   touch, drag on desktop, next card peeking at the edge. */
+.shop-rail-wrap { margin: 0 0 1.75rem; }
+.shop-rail-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
+.shop-rail-head h3 { margin: 0; font-size: 1.35rem; }
+.shop-rail-head p { margin: 0; color: var(--ink-soft); font-size: 0.95rem; }
+.shop-rail { display: flex; gap: 1rem; overflow-x: auto; scroll-snap-type: x mandatory; padding: 0.25rem 0.25rem 1rem; scrollbar-width: none; cursor: grab; }
+.shop-rail::-webkit-scrollbar { display: none; }
+.shop-rail:active { cursor: grabbing; }
+.rail-card { flex: 0 0 78%; max-width: 330px; scroll-snap-align: start; background: var(--surface); border: 1px solid var(--blue-line); border-radius: 22px; overflow: hidden; display: flex; flex-direction: column; }
+@media (min-width: 760px) { .rail-card { flex-basis: 330px; } }
+.rail-media { border-radius: 0; }
+.rail-body { padding: 1rem 1.1rem 1.15rem; display: flex; flex-direction: column; gap: 0.35rem; flex: 1; }
+.rail-name { margin: 0; font-size: 1.12rem; }
+.rail-dots { display: flex; gap: 0.45rem; padding: 0.35rem 0 0.15rem; }
+.rail-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--blue-line); background: transparent; padding: 0; cursor: pointer; }
+.rail-dot.is-on { background: var(--blue); border-color: var(--blue); }
+.rail-card .product-card-actions { margin-top: auto; }
+.product-media-icon { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; min-height: 120px; font-size: 3rem; color: var(--blue); }
+.product-detail-media-icon { display: flex; align-items: center; justify-content: center; min-height: 160px; font-size: 4rem; color: var(--blue); }
+.product-detail-media-icon[hidden] { display: none; }
