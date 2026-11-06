@@ -1690,6 +1690,11 @@
             <div class="acct-thread" id="acct-thread" hidden>
               <button class="btn btn-outline btn-sm" id="acct-thread-back" type="button"><i class="fas fa-arrow-left"></i> Back to repairs</button>
               <div class="acct-thread-info" id="acct-thread-info"></div>
+              <!-- REPAIR_TIMELINE_2026_11_06: the job timeline paints
+                   here — stage states from the ticket's real status
+                   plus its own part rows; repairs only, never for
+                   support bookings or the general conversation. -->
+              <div id="acct-timeline"></div>
               <div id="acct-parts"></div>
               <div id="acct-charges"></div>
               <div class="acct-messages" id="acct-messages"></div>
@@ -5681,6 +5686,7 @@
     if (info) info.innerHTML = t.__general
       ? '<strong>General conversation</strong><br><span class="acct-muted">Not tied to a repair \u2014 write us here any time.</span>'
       : '<strong>' + escX(ticketDevice(t)) + '</strong> ' + statusPill(t.status) + '<br><span class="acct-muted">' + escX(t.issue || '') + '</span>';
+    renderTicketTimeline(t); /* REPAIR_TIMELINE_2026_11_06: paint from status now; the parts read refines it */
     loadTicketParts(t);
     loadTicketCharges(t);
     loadThreadMessages(t);
@@ -5713,6 +5719,7 @@
       .then(function (res) {
         if (res.error) throw res.error;
         var rows = res.data || [];
+        refineTimelineParts(t, rows); /* REPAIR_TIMELINE_2026_11_06: parts signals refine the timeline */
         if (!rows.length) { box.innerHTML = ''; return; }
         box.innerHTML = '<h4 class="acct-detail-h"><i class="fas fa-box-open"></i> Parts for this repair</h4>' + rows.map(function (p) {
           var meta = escX(PART_STATUS_COPY[p.status] || p.status || '') + ' \u00b7 Qty ' + escX(p.qty == null ? 1 : p.qty) +
@@ -5729,7 +5736,7 @@
           return html;
         }).join('');
       })
-      .catch(function () { box.innerHTML = ''; });
+      .catch(function () { box.innerHTML = ''; refineTimelineParts(t, null); /* REPAIR_TIMELINE_2026_11_06: parts unknown — timeline stays status-only */ });
   }
   function loadTicketCharges(t) {
     var box = $('acct-charges');
@@ -5759,6 +5766,112 @@
         box.innerHTML = '<h4 class="acct-detail-h"><i class="fas fa-receipt"></i> Charges</h4>' + lines + totals;
       })
       .catch(function () { box.innerHTML = ''; });
+  }
+  /* ---------- REPAIR_TIMELINE_2026_11_06: the job timeline ----------
+     Roadmap build (Austin approved, Nov 6, 2026): the repair detail
+     — the view a My Repairs card opens — gains a vertical TIMELINE
+     above Parts, Charges, and Messages, so the whole job lives in
+     one place: where it stands, what already happened, what is next.
+     HONESTY RULES, by design:
+       * Stage states derive ONLY from the ticket's real current
+         status (the tlModel map below) plus the ticket's own part
+         rows (customer_part_orders — the same read Parts uses). A
+         part counts as on its way only when an Ordered row carries
+         a tracking number; arrived only when a row reads Received
+         with a received date.
+       * Dates print only from real fields: the ticket's created_at
+         (request received), the part rows' created_at (ordered) and
+         received_at (arrived). No other stage ever shows a date.
+       * The sentence under the heading is the shop's existing
+         STATUS_COPY note for the status — the raw status value is
+         never printed here, and no new claims are invented.
+       * Estimate / Invoice / Receipt FILES are not listed:
+         public.ticket_documents is staff-only under RLS
+         (portal-documents-2026-10-30 — "customers signed into the
+         website get nothing here"), so the account can neither read
+         nor open them today. The itemized Charges in this same view
+         are the customer's live bill. A draft view that would list
+         document presence rides in this build's folder — NOT run,
+         and this build does not depend on it.
+       * Support ([SERVICE]) bookings and the general conversation
+         get NO timeline — repairs only. */
+  var TL_STAGES = ['Request received', 'Diagnosed', 'Part ordered', 'Part on the way', 'On the way to you', 'Quality check', 'Complete', 'Warranty active'];
+  var TL_STATE_TAG = { done: 'Done', current: 'Now', next: 'Up next', todo: '' };
+  function tlModel(status) {
+    var S = ['todo', 'todo', 'todo', 'todo', 'todo', 'todo', 'todo', 'todo'];
+    function doneTo(i) { for (var k = 0; k <= i; k++) S[k] = 'done'; }
+    switch (status) {
+      case 'Awaiting Estimate': doneTo(0); S[1] = 'current'; break;
+      case 'Awaiting Diagnostics': doneTo(0); S[1] = 'current'; break;
+      case 'Awaiting Customer Response': doneTo(1); S[2] = 'next'; break;
+      case 'Awaiting Parts': doneTo(2); S[3] = 'current'; break;
+      case 'Awaiting Repair': doneTo(3); S[4] = 'next'; break;
+      case 'En Route to Customer': doneTo(3); S[4] = 'current'; break;
+      case 'In Progress': doneTo(3); S[4] = 'current'; break;
+      case 'Quality Control': doneTo(4); S[5] = 'current'; break;
+      case 'Ready': doneTo(5); S[6] = 'current'; break;
+      case 'Job Complete': doneTo(6); S[7] = 'current'; break;
+      case 'Rework / Warranty': doneTo(6); S[7] = 'current'; break;
+      default: doneTo(0); S[1] = 'current'; break;
+    }
+    return S;
+  }
+  var tlTicketId = null, tlParts = undefined; /* tlParts: undefined = parts not read yet, null = read failed, [] = read, none */
+  function renderTicketTimeline(t) {
+    var box = $('acct-timeline');
+    if (!box) return;
+    tlTicketId = (t && t.id) || null; tlParts = undefined;
+    if (!t || t.__general || /^\[SERVICE\]/.test(t.issue || '')) { box.innerHTML = ''; return; }
+    paintTimeline(t);
+  }
+  function refineTimelineParts(t, rows) {
+    if (!t || tlTicketId == null || String(t.id) !== String(tlTicketId)) return;
+    if (!openTicket || String(openTicket.id) !== String(t.id)) return;
+    tlParts = rows;
+    paintTimeline(t);
+  }
+  function paintTimeline(t) {
+    var box = $('acct-timeline');
+    if (!box) return;
+    /* The guard lives HERE, not only in renderTicketTimeline: the
+       parts refinement repaints through this same door, and support
+       bookings must stay timeline-free on every path. */
+    if (!t || t.__general || /^\[SERVICE\]/.test(t.issue || '')) { box.innerHTML = ''; return; }
+    var states = tlModel(t.status);
+    var copy = STATUS_COPY[t.status] || null;
+    var note = (copy && copy.note) ? copy.note : 'We got your request — we will update this page as your repair moves along.';
+    var parts = (tlParts === undefined || tlParts === null) ? null : tlParts;
+    var live = parts ? parts.filter(function (p) { return p && p.status !== 'Cancelled'; }) : [];
+    var extras = ['', '', '', '', '', '', '', ''];
+    if (t.created_at) extras[0] = fmtDayX(t.created_at);
+    if (parts && live.length) {
+      var orderedDates = live.map(function (p) { return p.created_at; }).filter(Boolean).sort();
+      if (orderedDates.length) extras[2] = 'Ordered ' + fmtDayX(orderedDates[0]);
+      var received = live.filter(function (p) { return p.status === 'Received' && p.received_at; });
+      var inTransit = live.filter(function (p) { return p.status === 'Ordered' && p.tracking_number && String(p.tracking_number).trim() !== ''; });
+      var awaitingShip = live.filter(function (p) { return p.status === 'Ordered' && !(p.tracking_number && String(p.tracking_number).trim() !== ''); });
+      if (received.length && received.length === live.length) {
+        extras[3] = 'Arrived ' + fmtDayX(received.map(function (p) { return p.received_at; }).sort().slice(-1)[0]);
+        if (t.status === 'Awaiting Parts') { states[3] = 'done'; if (states[4] === 'todo') states[4] = 'next'; }
+      } else if (states[3] === 'current') {
+        if (inTransit.length) extras[3] = 'On its way to us — tracking is in Parts below.';
+        else if (awaitingShip.length) extras[3] = 'Ordered — tracking shows in Parts below as soon as it ships.';
+      } else if (received.length && states[3] === 'done') {
+        extras[3] = 'Arrived ' + fmtDayX(received.map(function (p) { return p.received_at; }).sort().slice(-1)[0]);
+      }
+    }
+    if (t.status === 'Job Complete') extras[7] = 'Covered by our 1-Year Limited Warranty on parts and labor.';
+    if (t.status === 'Rework / Warranty') extras[7] = 'We are taking another look at your device under warranty.';
+    var steps = TL_STAGES.map(function (label, i) {
+      var st = states[i];
+      var tag = TL_STATE_TAG[st] ? '<span class="acct-tl-tag">' + TL_STATE_TAG[st] + '</span>' : '';
+      var extra = extras[i] ? '<span class="acct-tl-extra">' + escX(extras[i]) + '</span>' : '';
+      return '<li class="acct-tl-step is-' + st + '"><span class="acct-tl-dot" aria-hidden="true"></span>' +
+        '<div class="acct-tl-main"><span class="acct-tl-label">' + escX(label) + '</span>' + tag + extra + '</div></li>';
+    }).join('');
+    box.innerHTML = '<h4 class="acct-detail-h"><i class="fas fa-route"></i> Repair progress</h4>' +
+      '<p class="acct-tl-note">' + escX(note) + '</p>' +
+      '<ol class="acct-tl">' + steps + '</ol>';
   }
   function loadThreadMessages(t) {
     var box = $('acct-messages');

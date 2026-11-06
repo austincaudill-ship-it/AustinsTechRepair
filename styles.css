@@ -794,6 +794,25 @@ html[data-theme="dark"] .header {
   padding: 0.85rem 1rem; margin-bottom: 0.9rem; font-size: 0.88rem; color: var(--ink-soft);
 }
 .acct-thread-info strong { color: var(--ink); }
+/* REPAIR_TIMELINE_2026_11_06: vertical job timeline in the repair detail —
+   states ride the existing palette: done fills brand, current rings brand,
+   next dashes brand, upcoming stays muted. */
+.acct-tl-note { font-size: 0.88rem; color: var(--ink-soft); margin: 0 0 0.85rem; }
+.acct-tl { list-style: none; margin: 0 0 0.4rem; padding: 0; }
+.acct-tl-step { position: relative; display: flex; gap: 0.7rem; padding-bottom: 1rem; }
+.acct-tl-step::before { content: ''; position: absolute; left: 8px; top: 20px; bottom: 0; width: 2px; background: var(--line); }
+.acct-tl-step:last-child { padding-bottom: 0.25rem; }
+.acct-tl-step:last-child::before { display: none; }
+.acct-tl-step.is-done::before { background: var(--brand, #b4551f); }
+.acct-tl-dot { flex: none; width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--line); background: var(--surface, #fff); margin-top: 1px; position: relative; z-index: 1; }
+.acct-tl-step.is-done .acct-tl-dot { background: var(--brand, #b4551f); border-color: var(--brand, #b4551f); }
+.acct-tl-step.is-current .acct-tl-dot { border-color: var(--brand, #b4551f); box-shadow: 0 0 0 3px rgba(180, 85, 31, 0.22); }
+.acct-tl-step.is-next .acct-tl-dot { border-style: dashed; border-color: var(--brand, #b4551f); }
+.acct-tl-main { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.15rem 0.55rem; }
+.acct-tl-label { font-weight: 700; color: var(--ink); font-size: 0.92rem; }
+.acct-tl-step.is-todo .acct-tl-label { color: var(--muted, #8a7a68); font-weight: 600; }
+.acct-tl-tag { font-size: 0.68rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--brand, #b4551f); }
+.acct-tl-extra { font-size: 0.82rem; color: var(--ink-soft); flex-basis: 100%; }
 .acct-messages {
   max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.55rem;
   padding: 0.25rem 0.1rem; margin-bottom: 0.9rem;

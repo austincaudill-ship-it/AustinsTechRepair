@@ -66,7 +66,10 @@
    gains two X controls: the small in-field X clears (and exits on a
    second tap once empty); a bigger circled X at the far right end of
    the search row closes search outright. */
-const CACHE = "atrg-v29";
+/* REPAIR_TIMELINE_2026_11_06: bumped to atrg-v30 — the repair
+   detail in My Account gains the job timeline (stage states from
+   the ticket's real status + its own part rows; no invented data). */
+const CACHE = "atrg-v30";
 const CORE = [
   "/",
   "/index.html",
