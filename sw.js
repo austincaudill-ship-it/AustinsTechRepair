@@ -20,7 +20,11 @@
 // account human checks render when their view opens instead of at
 // page load inside hidden views, and the footer gains the plain
 // Cloudflare line.
-const CACHE = "atrg-v11";
+// ACCOUNT_FIX_PASS_3_1_2026_11_06: bumped to atrg-v12 — the Messages
+// panel's "Send us a message" button no longer dead-ends on an
+// account with no repairs: the tap routes straight to Schedule a
+// repair instead of only un-hiding a quiet note in place.
+const CACHE = "atrg-v12";
 const CORE = [
   "/",
   "/index.html",

@@ -1501,7 +1501,15 @@
                      repair (the same thread element and insert path the
                      conversation rows use); with no repairs yet, the
                      note below shows instead and points at Schedule a
-                     repair — no record is created by tapping it. -->
+                     repair — no record is created by tapping it.
+                     ACCOUNT_FIX_PASS_3_1_2026_11_06: the no-repairs tap
+                     no longer stops at that note — un-hiding it was the
+                     tap's only effect and read as a dead button on the
+                     owner's own zero-repair account. The tap now routes
+                     straight to Schedule a repair (the repair flow)
+                     through the note's own link; the note stays in the
+                     markup as that link's carrier and as the no-script
+                     explanation of where messages live. -->
                 <button class="btn btn-primary btn-sm" id="acct-inbox-new" type="button" style="margin:0 0 .6rem;"><i class="fas fa-pen"></i> Send us a message</button>
                 <div id="acct-inbox-notickets" hidden>
                   <p class="acct-muted" style="text-align:left;padding:0;">You can message us about a repair once you have one. Book a repair first, and your messages with us will live right here.</p>
@@ -4700,13 +4708,36 @@
        shows — the tap creates nothing. */
     var inboxNew = $('acct-inbox-new');
     if (inboxNew) inboxNew.addEventListener('click', function () {
+      /* ACCOUNT_FIX_PASS_3_1_2026_11_06 (owner live bug, Nov 6, 2026):
+         with no repairs on file, pass 3 only un-hid the quiet note
+         under this button — no navigation, no scroll, nothing a
+         customer can see happen — so the tap read as completely dead
+         on the owner's own zero-repair account ("the button doesn't
+         work"). The tap now routes straight to Schedule a repair
+         (the repair flow), through the note's own repair link so it
+         rides the site's existing router; the hash set is the
+         fallback if that link is ever missing. If the inbox is
+         still loading, wait for it (up to ~2s) before deciding, so
+         a customer WITH repairs who taps early still lands in
+         their thread and never gets bounced to booking by mistake.
+         The button must never be a dead tap. */
       var note = $('acct-inbox-notickets');
-      if (inboxTickets && inboxTickets.length) {
-        if (note) note.hidden = true;
-        openThread(inboxTickets[0], 'messages');
-      } else if (note) {
-        note.hidden = false;
+      function inboxNewGo() {
+        if (inboxTickets && inboxTickets.length) {
+          if (note) note.hidden = true;
+          openThread(inboxTickets[0], 'messages');
+          return;
+        }
+        var link = note ? note.querySelector('a[data-page="repair"]') : null;
+        if (link) link.click();
+        else if (window.location.hash !== '#repair') window.location.hash = '#repair';
       }
+      if (inboxLoaded) { inboxNewGo(); return; }
+      var tries = 0;
+      var iv = setInterval(function () {
+        tries++;
+        if (inboxLoaded || tries >= 20) { clearInterval(iv); inboxNewGo(); }
+      }, 100);
     });
     var back = $('acct-thread-back'); if (back) back.addEventListener('click', function () {
       /* CUSTOMER_INBOX_2026_11_05: the thread's Back returns to
