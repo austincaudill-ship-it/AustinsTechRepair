@@ -345,7 +345,7 @@
           'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
           'apikey': SUPABASE_ANON_KEY
         },
-        body: JSON.stringify({ form: formKey, subject: subject, rows: clean })
+        body: JSON.stringify({ kind: formKey, subject: subject, rows: clean })
       }).catch(function () { /* alert is best-effort; DB is the record */ });
     } catch (e) { /* ignore */ }
   }

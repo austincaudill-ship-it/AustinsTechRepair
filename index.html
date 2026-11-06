@@ -3066,7 +3066,7 @@
   'use strict';
   var SUPABASE_URL = 'https://lyujxpuicarblpkdzuuc.supabase.co';
   var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
-  var ALERT_ENDPOINT = 'https://formsubmit.co/ajax/austin.caudill@austinstechrepairgroup.com';
+  var ALERT_ENDPOINT = 'https://lyujxpuicarblpkdzuuc.supabase.co/functions/v1/form-alert';
   var PHONE_DISPLAY = '(937) 280-6243';
 
   var PRICES = {
@@ -3299,7 +3299,7 @@
       fetch(ALERT_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({ _subject: 'New chat lead: ' + row.device_type + ' — ' + (lead.repairLabel || 'Repair'), _template: 'table', Name: row.customer_name, Phone: row.customer_phone, Email: row.customer_email || '(not provided)', Device: row.model || row.device_type, Issue: issue })
+        body: JSON.stringify({ kind: 'service-request', subject: 'New chat lead: ' + row.device_type + ' — ' + (lead.repairLabel || 'Repair'), fields: { Name: row.customer_name, Phone: row.customer_phone, Email: row.customer_email || '(not provided)', Device: row.model || row.device_type, Issue: issue } })
       }).catch(function () {});
     } catch (e) { /* alert is best-effort; the database insert is the record */ }
     getClient(function (client) {
