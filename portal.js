@@ -84,11 +84,53 @@
    * website still uses it) so nobody is signed out by the fix
    * itself. */
   var PORTAL_AUTH_STORAGE_KEY = 'sb-atrg-portal-auth-token';
+  var WEBSITE_AUTH_STORAGE_KEY = 'sb-lyujxpuicarblpkdzuuc-auth-token';
+
+  /* PORTAL_AUTO_UNLOCK_2026_11_06: the owner's ruling (Nov 6, 2026)
+   * — an employee signed into My Account on the website should find
+   * the portal already unlocked; the copy above becomes a standing
+   * adoption, not just a one-time migration. The Nov 3 copy fired
+   * only when the portal key was completely empty, which made the
+   * unlock unreliable in the cases that actually recur:
+   *   - a shared device where the portal key still holds ANOTHER
+   *     staffer's older session (the fresher website sign-in was
+   *     ignored and the portal opened as the wrong person, or not
+   *     at all once that session died);
+   *   - the same staffer's portal copy being an older refresh of
+   *     the very session the website has since refreshed (the two
+   *     copies share one refresh token; the stale side's refresh
+   *     then fails and can get the session family revoked).
+   * The adoption now compares the two stored sessions and takes the
+   * website session whenever the portal copy is missing, unreadable,
+   * or older (by expires_at). A portal session that is fresher than
+   * the website's is never clobbered. Adoption changes only WHICH
+   * stored session the portal client starts from — the session
+   * still has to pass verifyEmployee (employee_profiles) and the
+   * MFA gate before any dashboard exists, and a non-staff session
+   * is signed back out by that gate exactly as before. The website
+   * key is left in place; the website still uses it. */
+  function storedSessionMeta(raw) {
+    if (!raw) return null;
+    try {
+      var s = JSON.parse(raw);
+      if (!s || !s.user || !s.user.id) return null;
+      return { userId: s.user.id, expiresAt: Number(s.expires_at) || 0 };
+    } catch (e) { return null; }
+  }
+
   function migrateLegacyAuthStorage() {
     try {
-      if (!window.localStorage.getItem(PORTAL_AUTH_STORAGE_KEY)) {
-        var legacy = window.localStorage.getItem('sb-lyujxpuicarblpkdzuuc-auth-token');
-        if (legacy) window.localStorage.setItem(PORTAL_AUTH_STORAGE_KEY, legacy);
+      var legacyRaw = window.localStorage.getItem(WEBSITE_AUTH_STORAGE_KEY);
+      var legacy = storedSessionMeta(legacyRaw);
+      if (!legacy) return;
+      var portalRaw = window.localStorage.getItem(PORTAL_AUTH_STORAGE_KEY);
+      if (!portalRaw) {
+        window.localStorage.setItem(PORTAL_AUTH_STORAGE_KEY, legacyRaw);
+        return;
+      }
+      var portal = storedSessionMeta(portalRaw);
+      if (!portal || legacy.expiresAt > portal.expiresAt) {
+        window.localStorage.setItem(PORTAL_AUTH_STORAGE_KEY, legacyRaw);
       }
     } catch (e) {}
   }
