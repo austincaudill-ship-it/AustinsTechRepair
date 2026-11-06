@@ -609,6 +609,7 @@
             <div class="hero-cta-group">
               <a class="btn btn-cream btn-lg" href="#repair" data-page="repair"><i class="fas fa-wrench"></i> Start a Repair</a>
               <a class="btn btn-ghostlight btn-lg" href="#prices" data-page="prices"><i class="fas fa-tag"></i> See Prices</a>
+              <a class="btn btn-ghostlight btn-lg" href="#repair-or-replace" data-page="repair-or-replace"><i class="fas fa-scale-balanced"></i> Repair or Replace</a>
             </div>
           </div>
         </div>
@@ -1121,6 +1122,13 @@
             <button type="button" class="dt-reset" id="dt-reset" hidden>Start over</button>
           </div>
 
+          <!-- REPAIR_OR_REPLACE_2026_11_06: entry to the helper page -->
+          <div class="text-center" style="margin:0 auto 1.75rem; max-width:640px;">
+            <h3>Not sure it is worth fixing?</h3>
+            <p class="section-copy">If a repair costs most of what the device is worth, replacing it can be the smarter money. Our Repair or Replace helper does that math with you &mdash; honestly, using the same price book as the lookup above.</p>
+            <a class="btn btn-outline" href="#repair-or-replace" data-page="repair-or-replace">Repair or Replace? <i class="fas fa-arrow-right"></i></a>
+          </div>
+
           <div class="pricing-grid">
             <div class="pricing-card">
               <h3>Visit Fee</h3>
@@ -1146,6 +1154,97 @@
           </div>
           <div class="text-center mt-2">
             <a class="btn btn-primary btn-lg" href="#repair" data-page="repair"><i class="fas fa-wrench"></i> Get My Estimate</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== REPAIR OR REPLACE ==================== -->
+    <!-- REPAIR_OR_REPLACE_2026_11_06 (Austin roadmap, Nov 6, 2026):
+         honest worth-fixing guidance. The picker reads the SAME
+         window.ATR_PRICE_DATA the Prices lookup and the wizard use
+         (no forked price data). The replacement cost is the
+         customer's own number - the site suggests nothing and stores
+         no device values. The verdict is ONE printed rule of thumb;
+         it never blocks booking. -->
+    <section id="repair-or-replace" class="page">
+      <div class="section">
+        <div class="container">
+          <div class="section-header center">
+            <p class="eyebrow">Straight answers</p>
+            <h1 class="section-title">Repair or Replace?</h1>
+            <p class="section-copy">Sometimes a repair costs so much of what a device is worth that replacing it is the smarter money &mdash; and we would rather tell you that up front than sell you a repair that does not make sense. Pick your device and repair below, tell us what a replacement would cost you, and see the same math we use.</p>
+          </div>
+          <style>
+            .ror-help { font-size: 0.9rem; color: var(--muted); max-width: 560px; margin: 0 0 0.6rem; }
+            .ror-input-row { display: flex; align-items: center; gap: 0.45rem; }
+            .ror-dollar { font-weight: 800; font-size: 1.15rem; color: var(--ink); }
+            .ror-input { max-width: 220px; }
+            .ror-verdict { margin-top: 1.3rem; padding: 1.25rem 1.1rem; border: 2px solid var(--blue-line, #9DBEDE); border-radius: var(--radius-sm); background: var(--blue-soft, #E4EEF9); text-align: center; }
+            .ror-verdict[hidden] { display: none; }
+            .ror-verdict-title { font-family: var(--font-display); font-size: 1.45rem; font-weight: 800; color: var(--ink); margin-bottom: 0.35rem; }
+            .ror-verdict-math { font-size: 1rem; font-weight: 700; color: var(--ink); margin: 0 auto 0.5rem; max-width: 540px; }
+            .ror-verdict-note { font-size: 0.9rem; color: var(--muted); margin: 0 auto 1rem; max-width: 540px; }
+            .ror-actions { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+            .ror-setup { margin-top: 1.1rem; }
+            .ror-setup[hidden] { display: none; }
+            .ror-setup-note { font-size: 0.9rem; color: var(--muted); margin: 0 auto 0.8rem; max-width: 540px; }
+            .ror-rule { margin-top: 1.75rem; padding: 1.1rem; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); }
+            .ror-rule h3 { margin: 0 0 0.5rem; font-size: 1.05rem; }
+            .ror-rule p { font-size: 0.92rem; color: var(--muted); margin: 0 0 0.5rem; }
+            .ror-rule p:last-child { margin-bottom: 0; }
+          </style>
+          <div class="price-lookup" id="ror-lookup">
+            <div class="dt-step" id="ror-step-type">
+              <span class="dt-step-label" id="ror-label-type">1. Device type</span>
+              <div class="dt-tiles dt-tiles-types" id="ror-types" role="group" aria-labelledby="ror-label-type"></div>
+            </div>
+            <div class="dt-step" id="ror-step-brand" hidden>
+              <span class="dt-step-label" id="ror-label-brand">2. Brand</span>
+              <select class="form-field dt-select" id="ror-brands" aria-labelledby="ror-label-brand"><option value="">Choose your brand&hellip;</option></select>
+            </div>
+            <div class="dt-step" id="ror-step-model" hidden>
+              <span class="dt-step-label" id="ror-label-model">3. Model</span>
+              <select class="form-field dt-select" id="ror-models" aria-labelledby="ror-label-model"><option value="">Choose your model&hellip;</option></select>
+            </div>
+            <div class="dt-step" id="ror-step-repair" hidden>
+              <span class="dt-step-label" id="ror-label-repair">4. Repair</span>
+              <div class="dt-tiles" id="ror-repairs" role="group" aria-labelledby="ror-label-repair"></div>
+            </div>
+            <div class="price-result" id="ror-result" hidden>
+              <div class="price-result-label" id="ror-result-label">Your estimated repair price &mdash; starting at</div>
+              <div class="price-result-amount" id="ror-amount">$0</div>
+              <p class="price-result-note" id="ror-note"></p>
+              <a class="btn btn-primary" href="#repair" data-page="repair" id="ror-book-result">Book This Repair <i class="fas fa-arrow-right"></i></a>
+            </div>
+            <p class="price-disclaimer dt-disclaimer" id="ror-disclaimer" hidden>Estimate only. Your exact price is confirmed after a full diagnostics.</p>
+            <div class="dt-step" id="ror-step-replace" hidden>
+              <span class="dt-step-label" id="ror-label-replace">5. What would a replacement cost you?</span>
+              <p class="ror-help">Check what the same device sells for used &mdash; Swappa is the price reference we use ourselves &mdash; or use the price of the replacement you would actually buy. It is your money, so it is your number: we do not guess it for you, and the box starts empty.</p>
+              <div class="ror-input-row">
+                <span class="ror-dollar" aria-hidden="true">$</span>
+                <input class="form-field ror-input" id="ror-replacement" type="number" min="0" step="any" inputmode="decimal" placeholder="Replacement cost" aria-labelledby="ror-label-replace">
+              </div>
+            </div>
+            <div class="ror-verdict" id="ror-verdict" hidden>
+              <div class="ror-verdict-title" id="ror-verdict-title"></div>
+              <p class="ror-verdict-math" id="ror-verdict-math"></p>
+              <p class="ror-verdict-note" id="ror-verdict-note"></p>
+              <div class="ror-actions">
+                <a class="btn btn-primary" href="#repair" data-page="repair" id="ror-book">Schedule a repair <i class="fas fa-arrow-right"></i></a>
+              </div>
+              <div class="ror-setup" id="ror-setup" hidden>
+                <p class="ror-setup-note">Buying a replacement instead? We can set the new device up at your home, move you onto it, and teach you on it &mdash; one-on-one help is $25 an hour.</p>
+                <a class="btn btn-outline" href="#repair" data-page="repair" data-open-oneonone id="ror-setup-btn">Book a one-on-one setup <i class="fas fa-arrow-right"></i></a>
+              </div>
+            </div>
+            <button type="button" class="dt-reset" id="ror-reset" hidden>Start over</button>
+          </div>
+          <div class="ror-rule">
+            <h3>Our rule of thumb, in the open</h3>
+            <p>If your estimated repair price is <strong>40% or less</strong> of what a replacement would cost you, fixing it is usually worth it. <strong>Over 40% and up to 65%</strong> is borderline &mdash; the device&rsquo;s age and shape decide it, and we will tell you straight after diagnostics. <strong>Over 65%</strong>, our honest advice is to put the money toward a replacement.</p>
+            <p>ATR One members get a discount on repairs, which can change this math &mdash; the percentages here use our standard prices.</p>
+            <p>Already know you want the repair? <a href="#repair" data-page="repair">Schedule a repair</a>, or check the <a href="#prices" data-page="prices">price lookup</a> for starting prices on their own.</p>
           </div>
         </div>
       </div>
@@ -3476,6 +3575,7 @@
           <span class="footer-col-title">Services</span>
           <a class="footer-link" href="#repair" data-page="repair">Start a Service</a>
           <a class="footer-link" href="#prices" data-page="prices">Pricing</a>
+          <a class="footer-link" href="#repair-or-replace" data-page="repair-or-replace">Repair or Replace</a>
           <a class="footer-link" href="#whatwedo" data-page="whatwedo">What We Service</a>
           <a class="footer-link" href="#atr-one" data-page="atr-one">ATR One Membership</a>
           <a class="footer-link" href="#shop" data-page="shop">Store</a> <!-- FOOTER_AUDIENCE_PAGES_2026_11_06 addendum: owner renamed the storefront "Shop" -> "Store" in customer-facing labels (Nov 6, 2026); data-page="shop" is internal and unchanged. -->
@@ -6922,6 +7022,166 @@
       brandStep.hidden = true; modelStep.hidden = true; repairStep.hidden = true;
       result.hidden = true; result.classList.remove('show'); reset.hidden = true; if (disc) disc.hidden = true;
       scrollTo($('dt-lookup'));
+    });
+    renderTypes();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wire);
+  else wire();
+})();
+</script>
+
+<script>
+/* ==================== REPAIR_OR_REPLACE_2026_11_06 ====================
+   The Repair or Replace helper. Reads the SAME price book the Prices
+   lookup and the repair wizard read (window.ATR_PRICE_DATA, defined
+   by the script directly above) - the price data is never forked.
+   The replacement cost is typed by the customer; nothing about a
+   device's value is stored, suggested, or prefilled here. One rule
+   of thumb, printed on the page itself: estimated repair price at
+   or under 40% of the replacement cost -> usually worth fixing;
+   over 40% and up to 65% -> borderline; over 65% -> put the money
+   toward a replacement. The verdict never blocks booking. */
+(function () {
+  var TYPES = [
+    { name: 'Phone', icon: 'fas fa-mobile-screen' },
+    { name: 'Tablet', icon: 'fas fa-tablet-screen-button' },
+    { name: 'Computer', icon: 'fas fa-laptop' },
+    { name: 'Smartwatch', icon: 'fas fa-clock' },
+    { name: 'Game Console', icon: 'fas fa-gamepad' }
+  ];
+  function $(id) { return document.getElementById(id); }
+  function fmt(p) { return (p % 1 === 0) ? '$' + p : '$' + p.toFixed(2); }
+  function wire() {
+    var D = window.ATR_PRICE_DATA || {};
+    var typeBox = $('ror-types'), brandBox = $('ror-brands'), modelBox = $('ror-models'), repairBox = $('ror-repairs');
+    var brandStep = $('ror-step-brand'), modelStep = $('ror-step-model'), repairStep = $('ror-step-repair'), replaceStep = $('ror-step-replace');
+    var result = $('ror-result'), amount = $('ror-amount'), note = $('ror-note'), label = $('ror-result-label'), bookResult = $('ror-book-result'), disc = $('ror-disclaimer'), reset = $('ror-reset');
+    var replInput = $('ror-replacement');
+    var verdict = $('ror-verdict'), vTitle = $('ror-verdict-title'), vMath = $('ror-verdict-math'), vNote = $('ror-verdict-note'), setup = $('ror-setup');
+    if (!typeBox || !brandBox || !modelBox || !repairBox || !result || !replInput || !verdict) return;
+    var state = { type: null, brand: null, model: null, repair: null, price: null };
+    function scrollTo(el) { try { el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {} }
+    function fillSelect(box, names, placeholder, current) {
+      box.innerHTML = '';
+      var ph = document.createElement('option'); ph.value = ''; ph.textContent = placeholder; box.appendChild(ph);
+      names.forEach(function (name) {
+        var o = document.createElement('option'); o.value = name; o.textContent = name; box.appendChild(o);
+      });
+      box.value = current || '';
+    }
+    function tiles(box, names, current, onPick, icons) {
+      box.innerHTML = '';
+      names.forEach(function (name, i) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'dt-tile' + (name === current ? ' active' : '');
+        b.setAttribute('aria-pressed', name === current ? 'true' : 'false');
+        if (icons && icons[i]) { var ic = document.createElement('i'); ic.className = icons[i]; ic.setAttribute('aria-hidden', 'true'); b.appendChild(ic); }
+        var s = document.createElement('span'); s.textContent = name; b.appendChild(s);
+        b.addEventListener('click', function () { onPick(name); });
+        box.appendChild(b);
+      });
+    }
+    function hideVerdict() { verdict.hidden = true; verdict.removeAttribute('data-band'); setup.hidden = true; }
+    function hideResult() {
+      result.hidden = true; result.classList.remove('show');
+      if (disc) disc.hidden = true;
+      replaceStep.hidden = true; hideVerdict();
+    }
+    function renderTypes() {
+      tiles(typeBox, TYPES.map(function (t) { return t.name; }), state.type, pickType, TYPES.map(function (t) { return t.icon; }));
+    }
+    function pickType(name) {
+      state = { type: name, brand: null, model: null, repair: null, price: null };
+      renderTypes();
+      fillSelect(brandBox, Object.keys(D[name] || {}), 'Choose your brand\u2026', null);
+      brandStep.hidden = false; modelStep.hidden = true; repairStep.hidden = true;
+      hideResult(); reset.hidden = false;
+      scrollTo(brandStep);
+    }
+    function pickBrand(name) {
+      state.brand = name; state.model = null; state.repair = null; state.price = null;
+      fillSelect(brandBox, Object.keys(D[state.type] || {}), 'Choose your brand\u2026', name);
+      fillSelect(modelBox, Object.keys((D[state.type] || {})[name] || {}), 'Choose your model\u2026', null);
+      modelStep.hidden = false; repairStep.hidden = true;
+      hideResult();
+      scrollTo(modelStep);
+    }
+    function pickModel(name) {
+      state.model = name; state.repair = null; state.price = null;
+      fillSelect(modelBox, Object.keys(((D[state.type] || {})[state.brand]) || {}), 'Choose your model\u2026', name);
+      tiles(repairBox, Object.keys((((D[state.type] || {})[state.brand]) || {})[name] || {}), null, pickRepair, null);
+      repairStep.hidden = false;
+      hideResult();
+      scrollTo(repairStep);
+    }
+    function pickRepair(name) {
+      state.repair = name;
+      tiles(repairBox, Object.keys(((D[state.type] || {})[state.brand] || {})[state.model] || {}), name, pickRepair, null);
+      var price = (((D[state.type] || {})[state.brand] || {})[state.model] || {})[name];
+      state.price = (typeof price === 'number') ? price : null;
+      replInput.value = '';
+      hideVerdict();
+      if (state.price !== null) {
+        /* Same wording law as the Prices lookup: an estimated,
+           starting-at price; the exact price is confirmed after
+           a full diagnostics. Never flat, never final. */
+        label.textContent = 'Your estimated repair price \u2014 starting at';
+        amount.style.display = ''; amount.textContent = fmt(state.price);
+        note.textContent = name + ' for ' + state.model + ' \u2014 estimate covering parts and labor. Your exact price is confirmed after a full diagnostics.';
+        if (disc) disc.hidden = false;
+        bookResult.innerHTML = 'Book This Repair <i class="fas fa-arrow-right"></i>';
+        replaceStep.hidden = false;
+      } else {
+        /* No set price in the book: no verdict, honest confirmed-
+           up-front state, booking path still open (mirrors the
+           Prices lookup's own no-price wording). */
+        if (disc) disc.hidden = true;
+        label.textContent = 'We fix that \u2014 price confirmed up front';
+        amount.style.display = 'none';
+        note.textContent = 'There is no set price for ' + name + ' on the ' + state.model + ' yet, so there is no honest percentage to show you. Book the visit and we confirm the exact price for your exact device before any work starts \u2014 and we will tell you straight if it is not worth fixing. The visit fee covers the trip \u2014 $15 for a known repair, or $35 if a full diagnosis is needed.';
+        bookResult.innerHTML = 'Book This Visit <i class="fas fa-arrow-right"></i>';
+        replaceStep.hidden = true;
+      }
+      try { sessionStorage.setItem('atr-quote', JSON.stringify({ device: state.model, repair: name, price: state.price })); } catch (e) {}
+      result.hidden = false; result.classList.add('show');
+      scrollTo(result);
+    }
+    function updateVerdict() {
+      if (state.price === null) { hideVerdict(); return; }
+      var raw = String(replInput.value || '').replace(/[^0-9.]/g, '');
+      var repl = parseFloat(raw);
+      if (!isFinite(repl) || repl <= 0) { hideVerdict(); return; }
+      var pct = (state.price / repl) * 100;
+      var band = (pct <= 40) ? 'fix' : (pct <= 65) ? 'borderline' : 'replace';
+      verdict.setAttribute('data-band', band);
+      vMath.textContent = 'Your estimated repair price of ' + fmt(state.price) + ' is about ' + Math.round(pct) + '% of the ' + fmt(repl) + ' replacement cost you entered.';
+      if (band === 'fix') {
+        vTitle.textContent = 'Usually worth fixing';
+        vNote.textContent = 'When you are ready, book the repair \u2014 your exact price is confirmed after a full diagnostics, before any work starts.';
+        setup.hidden = true;
+      } else if (band === 'borderline') {
+        vTitle.textContent = 'Borderline \u2014 it depends on the device\u2019s age and shape, and we will tell you straight after diagnostics';
+        vNote.textContent = 'Start with diagnostics and we will give you our straight call before any repair work starts. The choice stays yours either way.';
+        setup.hidden = true;
+      } else {
+        vTitle.textContent = 'Put the money toward a replacement';
+        vNote.textContent = 'No hard feelings \u2014 that is exactly what this page is for. A repair that costs this much of a replacement rarely pays you back.';
+        setup.hidden = false;
+      }
+      verdict.hidden = false;
+    }
+    brandBox.addEventListener('change', function () { if (brandBox.value) pickBrand(brandBox.value); });
+    modelBox.addEventListener('change', function () { if (modelBox.value) pickModel(modelBox.value); });
+    replInput.addEventListener('input', updateVerdict);
+    replInput.addEventListener('change', updateVerdict);
+    reset.addEventListener('click', function () {
+      state = { type: null, brand: null, model: null, repair: null, price: null };
+      renderTypes();
+      brandStep.hidden = true; modelStep.hidden = true; repairStep.hidden = true;
+      replInput.value = '';
+      hideResult(); reset.hidden = true;
+      scrollTo($('ror-lookup'));
     });
     renderTypes();
   }

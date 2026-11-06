@@ -72,7 +72,10 @@
 /* THREE_DOORS_2026_11_06: bumped to atrg-v31 — the home page
    gains three intent doors under the hero (Repair It / Set It Up /
    Teach Me) riding the shared booking-form entry wiring. */
-const CACHE = "atrg-v31";
+/* REPAIR_OR_REPLACE_2026_11_06: bumped to atrg-v32 — the Repair
+   or Replace helper page lands (same price book, customer-entered
+   replacement cost, one printed rule of thumb; no invented values). */
+const CACHE = "atrg-v32";
 const CORE = [
   "/",
   "/index.html",
