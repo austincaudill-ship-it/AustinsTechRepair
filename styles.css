@@ -2195,3 +2195,67 @@ html[data-theme="dark"] {
    disclaimer sentence — a compact pill in the footer's muted tones,
    text and a shield icon only. */
 .cf-badge { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.12rem 0.55rem; margin-left: 0.4rem; border: 1px solid rgba(185, 169, 143, 0.55); border-radius: 999px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.02em; white-space: nowrap; vertical-align: middle; }
+
+/* ================= FOOTER_THEME_FOLLOW_2026_11_06 =================
+   The footer now follows the dark/light theme like the rest of the
+   page. History: the base footer colors were hardcoded light-on-dark
+   (base color #D8CBB4, titles/wordmark #FAF6EE, links #B9A98F,
+   disclaimer/copy #8d7d66, borders #3d3226) and the background was
+   var(--ink), which flips cream in dark mode — so the Oct 26 patch
+   (R1, above) pinned the dark-mode background to a hard #2C231A.
+   Net effect: a dark block in BOTH modes that ignored the toggle.
+   Fix: colors only (no layout, spacing, or content changes), driven
+   by the same theme variables the page uses — --ink headings,
+   --ink-soft body, --muted secondary, --line borders — so the
+   footer flips with everything else. Light: --surface background,
+   dark text (headings 15.2:1, body/links 10.3:1, secondary 5.0:1).
+   Dark: --surface-warm background (the variable twin of the pinned
+   #2C231A), light text at today's pairings (headings 13.0:1, body
+   9.7:1, links/disclaimer/copy 5.6:1). Deliberately untouched: the
+   .pay-badge chips (white chips with brand-colored marks read
+   identically on both themes, 5.1:1-14.2:1 on the chip) and the
+   .r2r-band (a self-contained brand band defined in index.html). */
+
+/* Both modes — variable-driven; the variables flip with the theme. */
+.footer { background: var(--surface); color: var(--ink-soft); }
+.footer-col-title, .footer-wordmark { color: var(--ink); }
+.footer-link { color: var(--ink-soft); }
+.footer-value { color: var(--ink-soft); }
+.footer-value strong { color: var(--ink); }
+.footer-disclaimer { color: var(--muted); border-top-color: var(--line); }
+.footer-bottom { border-top-color: var(--line); }
+.footer-copy { color: var(--muted); }
+.footer-legal-links a { color: var(--ink-soft); }
+.footer-payments-label { color: var(--muted); }
+.footer-share-btn { color: var(--ink); }
+
+/* Light mode only — accents deepen from gold to brand-deep (gold is
+   2.9:1 on the light footer; brand-deep is 6.2:1), and the two
+   inline-styled spots are corrected with the R6 technique
+   (attribute selector + !important, light mode only; in dark mode
+   the inline #B9A98F / var(--gold) are correct as-is). */
+html:not([data-theme="dark"]) .footer-link:hover { color: var(--brand-deep); }
+html:not([data-theme="dark"]) .footer-legal-links a:hover { color: var(--brand-deep); }
+html:not([data-theme="dark"]) a.footer-value:hover { color: var(--brand-deep); }
+html:not([data-theme="dark"]) a.footer-value:hover strong { color: var(--brand-deep); }
+html:not([data-theme="dark"]) .footer-value i { color: var(--brand-deep); }
+html:not([data-theme="dark"]) .footer-disclaimer strong { color: var(--brand-deep); }
+html:not([data-theme="dark"]) .footer-disclaimer a { color: var(--brand-deep); }
+html:not([data-theme="dark"]) .cf-badge { border-color: var(--line); }
+html:not([data-theme="dark"]) .footer p[style*="B9A98F"] { color: var(--ink-soft) !important; }
+html:not([data-theme="dark"]) .footer a[style*="--gold"] { color: var(--brand-deep) !important; }
+
+/* Dark mode only — replaces the Oct 26 hard pin (same specificity,
+   later in the file) and restores today's muted link/value tones
+   and gold accents on the dark footer. */
+html[data-theme="dark"] .footer { background: var(--surface-warm); }
+html[data-theme="dark"] .footer-link { color: var(--muted); }
+html[data-theme="dark"] .footer-legal-links a { color: var(--muted); }
+html[data-theme="dark"] .footer-value { color: var(--muted); }
+html[data-theme="dark"] .footer-link:hover { color: var(--gold); }
+html[data-theme="dark"] .footer-legal-links a:hover { color: var(--gold); }
+html[data-theme="dark"] a.footer-value:hover { color: var(--gold); }
+html[data-theme="dark"] a.footer-value:hover strong { color: var(--gold); }
+html[data-theme="dark"] .footer-value i { color: var(--gold); }
+html[data-theme="dark"] .footer-disclaimer strong { color: #c9a86a; }
+html[data-theme="dark"] .footer-disclaimer a { color: #c9a86a; }
