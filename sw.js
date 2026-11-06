@@ -69,7 +69,10 @@
 /* REPAIR_TIMELINE_2026_11_06: bumped to atrg-v30 — the repair
    detail in My Account gains the job timeline (stage states from
    the ticket's real status + its own part rows; no invented data). */
-const CACHE = "atrg-v30";
+/* THREE_DOORS_2026_11_06: bumped to atrg-v31 — the home page
+   gains three intent doors under the hero (Repair It / Set It Up /
+   Teach Me) riding the shared booking-form entry wiring. */
+const CACHE = "atrg-v31";
 const CORE = [
   "/",
   "/index.html",
