@@ -58,7 +58,7 @@
 // Shop page itself stays, reachable by search, the footer, and
 // the account links), and a site-wide search (pages, repairs &
 // prices, shop items) lands in the header.
-const CACHE = "atrg-v19";
+const CACHE = "atrg-v20";
 const CORE = [
   "/",
   "/index.html",
