@@ -585,7 +585,8 @@
             <i class="fas fa-rotate-right"></i> Refresh
           </button>
         </div>
-        <p class="portal-muted portal-small">Everyone with an ATR One membership on file. Green dot: the membership is on (good standing). Red dot: it is off. Tap a member to turn their membership off or on, or to correct their tier. New memberships are still added from a customer&rsquo;s ticket.</p>
+        <!-- ATRONE_POINTS_TIERS_2026_11_06: the intro below states the tiered points rates -->
+        <p class="portal-muted portal-small">Everyone with an ATR One membership on file. Green dot: the membership is on (good standing). Red dot: it is off. Tap a member to turn their membership off or on, or to correct their tier. New memberships are still added from a customer&rsquo;s ticket. Points: ATR One Free earns 1 point per $1 of a completed repair; ATR One Plus earns 5 points per $1 (Individual, Family) or 10 points per $1 (Business, Business Pro), credited at Job Complete.</p>
         <div id="portal-members-list"><p class="portal-muted">Loading members&hellip;</p></div>
       </div>
 
@@ -1024,20 +1025,20 @@
           </div>
           <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">ATR One</h3></div>
           <div class="portal-field">
-            <label for="ci-atrone">Is this customer an ATR One member?</label>
+            <label for="ci-atrone">Is this customer an ATR One Plus (paid) member?</label>
             <select id="ci-atrone">
-              <option value="">Not an ATR One member</option>
-              <option value="member">Yes &mdash; ATR One member</option>
-              <option value="signup">Wants to sign up for ATR One</option>
+              <option value="">No paid plan (ATR One Free)</option>
+              <option value="member">Yes &mdash; ATR One Plus member</option>
+              <option value="signup">Wants to sign up for ATR One Plus</option>
             </select>
           </div>
           <div id="ci-atrone-signup" hidden>
             <p class="portal-muted portal-small">Internal signup &mdash; use these links to sign the customer up on the spot, same signup links as the Square &amp; ATR One panel.</p>
             <div class="link-grid">
-              <a class="link-card" href="https://square.link/u/eFKxDvyo" target="_blank" rel="noopener"><i class="fas fa-user"></i><strong>ATR One &mdash; Individual</strong><span>$9.99/mo signup link</span></a>
-              <a class="link-card" href="https://square.link/u/ZA7502vD" target="_blank" rel="noopener"><i class="fas fa-users"></i><strong>ATR One &mdash; Family</strong><span>$19.99/mo signup link</span></a>
-              <a class="link-card" href="https://square.link/u/HtnQBIG1" target="_blank" rel="noopener"><i class="fas fa-briefcase"></i><strong>ATR One &mdash; Business</strong><span>$49.99/mo signup link</span></a>
-              <a class="link-card" href="https://square.link/u/V8WCkjbW" target="_blank" rel="noopener"><i class="fas fa-building"></i><strong>ATR One &mdash; Business Pro</strong><span>$99.99/mo signup link</span></a>
+              <a class="link-card" href="https://square.link/u/eFKxDvyo" target="_blank" rel="noopener"><i class="fas fa-user"></i><strong>ATR One Plus &mdash; Individual</strong><span>$9.99/mo signup link</span></a>
+              <a class="link-card" href="https://square.link/u/ZA7502vD" target="_blank" rel="noopener"><i class="fas fa-users"></i><strong>ATR One Plus &mdash; Family</strong><span>$19.99/mo signup link</span></a>
+              <a class="link-card" href="https://square.link/u/HtnQBIG1" target="_blank" rel="noopener"><i class="fas fa-briefcase"></i><strong>ATR One Plus &mdash; Business</strong><span>$49.99/mo signup link</span></a>
+              <a class="link-card" href="https://square.link/u/V8WCkjbW" target="_blank" rel="noopener"><i class="fas fa-building"></i><strong>ATR One Plus &mdash; Business Pro</strong><span>$99.99/mo signup link</span></a>
             </div>
           </div>
           </div>
@@ -1266,10 +1267,10 @@
           <a class="link-card" href="https://squareup.com/dashboard" target="_blank" rel="noopener"><i class="fas fa-square"></i><strong>Square Dashboard</strong><span>Sales, payouts, settings</span></a>
           <!-- PORTAL_SHOP_LINK_2026_11_02: this card pointed at the bare home page, so it felt dead (Austin, Nov 2, 2026). It now lands on the shop page itself, same new-tab behavior as its sibling cards. -->
           <a class="link-card" href="https://austinstechrepairgroup.com/#shop" target="_blank" rel="noopener"><i class="fas fa-store"></i><strong>Website Shop</strong><span>Accessories storefront</span></a>
-          <a class="link-card" href="https://square.link/u/eFKxDvyo" target="_blank" rel="noopener"><i class="fas fa-user"></i><strong>ATR One &mdash; Individual</strong><span>$9.99/mo signup link</span></a>
-          <a class="link-card" href="https://square.link/u/ZA7502vD" target="_blank" rel="noopener"><i class="fas fa-users"></i><strong>ATR One &mdash; Family</strong><span>$19.99/mo signup link</span></a>
-          <a class="link-card" href="https://square.link/u/HtnQBIG1" target="_blank" rel="noopener"><i class="fas fa-briefcase"></i><strong>ATR One &mdash; Business</strong><span>$49.99/mo signup link</span></a>
-          <a class="link-card" href="https://square.link/u/V8WCkjbW" target="_blank" rel="noopener"><i class="fas fa-building"></i><strong>ATR One &mdash; Business Pro</strong><span>$99.99/mo signup link</span></a>
+          <a class="link-card" href="https://square.link/u/eFKxDvyo" target="_blank" rel="noopener"><i class="fas fa-user"></i><strong>ATR One Plus &mdash; Individual</strong><span>$9.99/mo signup link</span></a>
+          <a class="link-card" href="https://square.link/u/ZA7502vD" target="_blank" rel="noopener"><i class="fas fa-users"></i><strong>ATR One Plus &mdash; Family</strong><span>$19.99/mo signup link</span></a>
+          <a class="link-card" href="https://square.link/u/HtnQBIG1" target="_blank" rel="noopener"><i class="fas fa-briefcase"></i><strong>ATR One Plus &mdash; Business</strong><span>$49.99/mo signup link</span></a>
+          <a class="link-card" href="https://square.link/u/V8WCkjbW" target="_blank" rel="noopener"><i class="fas fa-building"></i><strong>ATR One Plus &mdash; Business Pro</strong><span>$99.99/mo signup link</span></a>
         </div>
       </div>
 

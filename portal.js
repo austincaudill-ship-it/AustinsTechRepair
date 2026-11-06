@@ -37,12 +37,17 @@
   var DOC_VIEWER_URL = 'https://austinstechrepairgroup.com/view-doc.html?u=';
 
   /* PORTAL_POINTS_EARN_2026_10_30: loyalty points earning rate —
-   * customers earn POINTS_PER_DOLLAR points per whole dollar of a
-   * ticket's total when the job is marked Job Complete (see
-   * awardPointsOnComplete). pointsMultiplierFor() below is the ATR One
-   * boost hook: it returns 1 today, and a member multiplier later is a
-   * one-line change inside that function only. */
+   * customers earn points per whole dollar of a ticket's total when
+   * the job is marked Job Complete (see awardPointsOnComplete).
+   * ATRONE_POINTS_TIERS_2026_11_06 (Austin, Nov 6, 2026): the rate is
+   * PER TIER now. ATR One Free (and no membership row at all) earns
+   * POINTS_PER_DOLLAR = 1; ATR One Plus Individual/Family earn 5;
+   * Business/Business Pro earn 10. Stored tier values are the legacy
+   * ones (single/family/business_plus/business_pro) — they never
+   * change; only this mapping interprets them. */
   var POINTS_PER_DOLLAR = 1;
+  var POINTS_RATE_BY_TIER = { single: 5, family: 5, business: 10, business_plus: 10, business_pro: 10 };
+  function pointsRateForTier(tier) { return POINTS_RATE_BY_TIER[tier] || POINTS_PER_DOLLAR; }
 
   /* Ticket statuses: EXACT values from the tickets.status check
    * constraint (supabase-phase2-tickets.sql). Do not add values here
@@ -2698,12 +2703,14 @@ function loadTicketThread(client, ticketId) {
     return m ? m[1] : String((c && c.description) || '');
   }
 
-  /* PORTAL_POINTS_EARN_2026_10_30: ATR One member-multiplier hook.
-   * Returns 1 for everyone today — no boost rate exists yet. It takes
-   * the ticket (which carries customer_id) so a future member lookup
-   * plugs in here and nowhere else. */
-  function pointsMultiplierFor(t) {
-    return 1;
+  /* ATRONE_POINTS_TIERS_2026_11_06: the member multiplier IS the tier's
+   * earn rate (Free / no membership = 1, Individual/Family = 5,
+   * Business/Business Pro = 10). awardPointsOnComplete looks the
+   * customer's ACTIVE membership up fresh at completion time and
+   * passes its stored tier value here — this function stays the one
+   * place the rate is interpreted. */
+  function pointsMultiplierFor(tier) {
+    return pointsRateForTier(tier);
   }
 
   /* Short display name for the points note: "Janae Saunders" -> "Janae S." */
@@ -2713,13 +2720,17 @@ function loadTicketThread(client, ticketId) {
     return parts.length > 1 ? parts[0] + ' ' + parts[1].charAt(0).toUpperCase() + '.' : parts[0];
   }
 
-  /* PORTAL_POINTS_EARN_2026_10_30: award loyalty points when a ticket
-   * reaches Job Complete. Amount: floor(ticket total) x
-   * POINTS_PER_DOLLAR x pointsMultiplierFor(t), where the ticket total
-   * is the charges subtotal from chargeTotals() — the same figure the
-   * receipt is built from — read fresh from ticket_charges at
-   * completion time. Deposit credits are payments toward that subtotal,
-   * so they are not added on top of it.
+  /* PORTAL_POINTS_EARN_2026_10_30 + ATRONE_POINTS_TIERS_2026_11_06:
+   * award loyalty points when a ticket reaches Job Complete. Amount:
+   * floor(ticket total) x the customer's tier rate (pointsRateForTier:
+   * 1 Free/none, 5 Individual/Family, 10 Business/Business Pro), where
+   * the ticket total is the charges subtotal from chargeTotals() — the
+   * same figure the receipt is built from — read fresh from
+   * ticket_charges at completion time. Deposit credits are payments
+   * toward that subtotal, so they are not added on top of it. The
+   * membership is read fresh from customer_memberships (latest ACTIVE
+   * row) at completion time; a failed lookup falls back to the Free
+   * rate instead of blocking the award.
    * Exactly once per ticket: the award is claimed atomically by
    * stamping tickets.points_awarded (added by
    * award-points-migration.sql) only where it is still NULL. If the
@@ -2736,31 +2747,37 @@ function loadTicketThread(client, ticketId) {
     client.from('ticket_charges').select('*').eq('ticket_id', t.id).then(function (res) {
       if (res.error) return;
       var wholeDollars = Math.floor(chargeTotals(res.data || []).subtotal);
-      var pts = Math.floor(wholeDollars * POINTS_PER_DOLLAR * pointsMultiplierFor(t));
-      if (!(pts > 0)) return;
-      client.from('tickets').update({ points_awarded: pts }).eq('id', t.id).is('points_awarded', null).select('id').then(function (claim) {
-        if (claim.error || !claim.data || !claim.data.length) return;
-        t.points_awarded = pts;
-        function rollback() {
-          client.from('tickets').update({ points_awarded: null }).eq('id', t.id).eq('points_awarded', pts).then(function () {}).catch(function () {});
-        }
-        client.from('rewards').select('points').eq('customer_id', t.customer_id).limit(1).then(function (r) {
-          if (r.error) { rollback(); return; }
-          var rows = r.data || [];
-          if (rows.length) {
-            var next = (Number(rows[0].points) || 0) + pts;
-            client.from('rewards').update({ points: next }).eq('customer_id', t.customer_id).then(function (u) {
-              if (u.error) { rollback(); return; }
-              if (onAwarded) onAwarded(pts);
-            }).catch(function () { rollback(); });
-          } else {
-            client.from('rewards').insert({ customer_id: t.customer_id, points: pts }).then(function (ins) {
-              if (ins.error) { rollback(); return; }
-              if (onAwarded) onAwarded(pts);
-            }).catch(function () { rollback(); });
+      client.from('customer_memberships').select('tier').eq('customer_id', t.customer_id).eq('status', 'active')
+        .order('started_on', { ascending: false }).limit(1).then(function (mem) {
+          var tier = (!mem.error && mem.data && mem.data[0]) ? mem.data[0].tier : null;
+          claimAndCredit(Math.floor(wholeDollars * pointsMultiplierFor(tier)));
+        }).catch(function () { claimAndCredit(Math.floor(wholeDollars * pointsMultiplierFor(null))); });
+      function claimAndCredit(pts) {
+        if (!(pts > 0)) return;
+        client.from('tickets').update({ points_awarded: pts }).eq('id', t.id).is('points_awarded', null).select('id').then(function (claim) {
+          if (claim.error || !claim.data || !claim.data.length) return;
+          t.points_awarded = pts;
+          function rollback() {
+            client.from('tickets').update({ points_awarded: null }).eq('id', t.id).eq('points_awarded', pts).then(function () {}).catch(function () {});
           }
-        }).catch(function () { rollback(); });
-      }).catch(function () {});
+          client.from('rewards').select('points').eq('customer_id', t.customer_id).limit(1).then(function (r) {
+            if (r.error) { rollback(); return; }
+            var rows = r.data || [];
+            if (rows.length) {
+              var next = (Number(rows[0].points) || 0) + pts;
+              client.from('rewards').update({ points: next }).eq('customer_id', t.customer_id).then(function (u) {
+                if (u.error) { rollback(); return; }
+                if (onAwarded) onAwarded(pts);
+              }).catch(function () { rollback(); });
+            } else {
+              client.from('rewards').insert({ customer_id: t.customer_id, points: pts }).then(function (ins) {
+                if (ins.error) { rollback(); return; }
+                if (onAwarded) onAwarded(pts);
+              }).catch(function () { rollback(); });
+            }
+          }).catch(function () { rollback(); });
+        }).catch(function () {});
+      }
     }).catch(function () {});
   }
 
@@ -4554,7 +4571,7 @@ function loadTicketThread(client, ticketId) {
    *    never prints a code that cannot resolve. */
   var RECEIPT_SIGNED_SUMMARY = [
     'You authorized us to receive, open, disassemble, diagnose, test, and repair your device, and to order and install the replacement parts you approved.',
-    'The visit fee — $15 when the repair is already known, or $35 when the job needs a full diagnosis — covers travel, plus the diagnosis when one is needed; it is non-refundable, due at scheduling, charged separately from the repair price, and never credited toward a repair. ATR One members pay no visit fee for covered devices.',
+    'The visit fee — $15 when the repair is already known, or $35 when the job needs a full diagnosis — covers travel, plus the diagnosis when one is needed; it is non-refundable, due at scheduling, charged separately from the repair price, and never credited toward a repair. ATR One Plus (paid) members pay no visit fee for covered devices.',
     'We confirm your price before work begins, and if hidden damage or extra failures are found, we get your approval before any extra work. Parts are ordered for your job and paid upfront; if you cancel after parts are ordered, we keep the part and refund what you paid for it.',
     'The balance is due on completion, before your device is released. Card payments carry a processing fee at Square&rsquo;s actual rate.',
     'Back up your device before service — diagnostics and repair can cause data loss, and we are not responsible for lost data, files, photos, accounts, or settings.',
@@ -5354,7 +5371,7 @@ function loadTicketThread(client, ticketId) {
       noteHtml = '<div class="rc-terms"><p class="rc-terms-head">About this estimate</p><ul>' +
         '<li>This estimate is free. The price above is the price we confirm with you before any work begins.</li>' +
         '<li>If we find hidden damage or extra failures during the repair, we stop and get your approval before doing anything more.</li>' +
-        '<li>Parts are paid upfront before we order them. The visit fee ($15 for a known repair, $35 with diagnostics) is charged separately at scheduling and is non-refundable; ATR One members pay no visit fee on covered devices.</li>' +
+        '<li>Parts are paid upfront before we order them. The visit fee ($15 for a known repair, $35 with diagnostics) is charged separately at scheduling and is non-refundable; ATR One Plus (paid) members pay no visit fee on covered devices.</li>' +
         '</ul></div>' +
         '<p class="rc-auth">To approve this estimate, or if you have any questions, call or text <strong>(937) 280-6243</strong>.</p>';
     } else {
@@ -8031,12 +8048,12 @@ function loadTicketThread(client, ticketId) {
    * NOTE: Square still bills the old business prices until its
    * plans are updated — see CHANGES.md publish preconditions. */
   var ATRONE_TIERS = {
-    single: { name: 'Individual', price: 9.99 },
-    family: { name: 'Family', price: 19.99 },
-    business_plus: { name: 'Business', price: 49.99 },
-    business_pro: { name: 'Business Pro', price: 99.99 }
+    single: { name: 'Individual', price: 9.99, rate: 5 },
+    family: { name: 'Family', price: 19.99, rate: 5 },
+    business_plus: { name: 'Business', price: 49.99, rate: 10 },
+    business_pro: { name: 'Business Pro', price: 99.99, rate: 10 }
   };
-  var ATRONE_BENEFIT_LINE = 'Member benefit: ATR One members pay no visit fee for devices covered under their subscription. Do not add the visit fee for a covered device.';
+  var ATRONE_BENEFIT_LINE = 'Member benefit: ATR One Plus members pay no visit fee for devices covered under their plan. Do not add the visit fee for a covered device.';
 
   function atroneTierName(key) {
     var tr = ATRONE_TIERS[key];
@@ -8078,14 +8095,15 @@ function loadTicketThread(client, ticketId) {
     if (m) {
       var tier = ATRONE_TIERS[m.tier] || null;
       box.innerHTML =
-        '<p style="margin:0 0 .35rem"><span class="portal-badge portal-badge-atrone"><i class="fas fa-star"></i> ATR One member</span></p>' +
+        '<p style="margin:0 0 .35rem"><span class="portal-badge portal-badge-atrone"><i class="fas fa-star"></i> ATR One Plus member</span></p>' +
         '<p style="margin:.2rem 0"><strong>' + esc(atroneTierName(m.tier)) + '</strong>' +
         (tier ? ' &middot; ' + fmtMoney(tier.price) + '/mo' : '') +
         ' &middot; member since ' + esc(fmtJobDate(m.started_on) || fmtDate(m.started_on)) + '</p>' +
+        '<p class="portal-muted portal-small" style="margin:.2rem 0">Earns ' + pointsRateForTier(m.tier) + ' points per $1 on completed repairs, credited at Job Complete.</p>' +
         (m.note ? '<p class="portal-muted portal-small" style="margin:.2rem 0">' + esc(m.note) + '</p>' : '') +
         '<p class="portal-muted portal-small" style="margin:.35rem 0">' + ATRONE_BENEFIT_LINE + '</p>' +
         '<div class="p2-actions"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p5-atr-cancel">Cancel membership</button></div>' +
-        '<div id="p5-atr-cancel-confirm" hidden><p class="portal-error">Cancel this ATR One membership? The membership record and its signup charge stay on file; the member benefits stop. Normally this matches a cancellation in Square too.</p>' +
+        '<div id="p5-atr-cancel-confirm" hidden><p class="portal-error">Cancel this ATR One Plus membership? The membership record and its signup charge stay on file; the member benefits stop. Normally this matches a cancellation in Square too.</p>' +
         '<button class="portal-btn p2-btn-danger portal-btn-sm" type="button" id="p5-atr-cancel-yes">Yes, cancel membership</button> ' +
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p5-atr-cancel-no">Keep membership</button></div>';
       var cancelBtn = $('p5-atr-cancel'), confirmBox = $('p5-atr-cancel-confirm');
@@ -8107,7 +8125,7 @@ function loadTicketThread(client, ticketId) {
       return '<option value="' + k + '">' + esc(tr.name) + ' — ' + fmtMoney(tr.price) + '/mo</option>';
     }).join('');
     box.innerHTML =
-      '<p class="portal-muted" style="margin-top:0">No ATR One membership on this customer. If they sign up during this visit (through the Square signup links), record it here so it lives on the ticket.</p>' +
+      '<p class="portal-muted" style="margin-top:0">No ATR One Plus membership on this customer — they are on ATR One Free (1 point per $1). If they sign up during this visit (through the Square signup links), record it here so it lives on the ticket.</p>' +
       '<div class="p2-form-row"><select id="p5-atr-tier" aria-label="ATR One tier">' + opts + '</select>' +
       '<input id="p5-atr-note" type="text" placeholder="Note (optional)" maxlength="200" aria-label="Membership note" /></div>' +
       '<div class="p2-actions" style="margin-top:.5rem"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p5-atr-add"><i class="fas fa-plus"></i> Add ATR One membership</button></div>' +
@@ -8191,10 +8209,10 @@ function loadTicketThread(client, ticketId) {
    * the same no-members wording instead of breaking — the pattern
    * the drawer block and the Customers badge already use. */
   var ATRONE_DISPLAY_TIERS = {
-    single: { name: 'Individual', price: 9.99 },
-    family: { name: 'Family', price: 19.99 },
-    business_plus: { name: 'Business', price: 49.99 },
-    business_pro: { name: 'Business Pro', price: 99.99 }
+    single: { name: 'Individual', price: 9.99, rate: 5 },
+    family: { name: 'Family', price: 19.99, rate: 5 },
+    business_plus: { name: 'Business', price: 49.99, rate: 10 },
+    business_pro: { name: 'Business Pro', price: 99.99, rate: 10 }
   };
   var atrMembersCache = [];   /* mapped member rows from the last panel load */
 
@@ -8265,7 +8283,7 @@ function loadTicketThread(client, ticketId) {
     html += rows.map(function (m) {
       var tier = atroneDisplayTier(m.tier);
       var tierLine = tier
-        ? tier.name + ' &middot; ' + esc(fmtMoney(tier.price)) + '/mo'
+        ? tier.name + ' &middot; ' + esc(fmtMoney(tier.price)) + '/mo &middot; earns ' + pointsRateForTier(m.tier) + ' pts per $1'
         : esc(atroneDisplayName(m.tier));
       var statusLine = m.status === 'active'
         ? 'Member since ' + esc(fmtJobDate(m.startedOn) || '—')
@@ -8276,7 +8294,7 @@ function loadTicketThread(client, ticketId) {
       return '<article class="portal-card mem-card" data-member-edit="' + esc(m.id) + '" title="Tap to view or edit this membership">' +
         '<div class="portal-card-top"><p class="portal-card-title">' + dot + esc(m.name || 'Customer') + '</p>' +
         (active
-          ? '<span class="portal-badge portal-badge-atrone"><i class="fas fa-star"></i> ATR One &middot; ' + esc(tier ? tier.name : atroneDisplayName(m.tier)) + '</span>'
+          ? '<span class="portal-badge portal-badge-atrone"><i class="fas fa-star"></i> ATR One Plus &middot; ' + esc(tier ? tier.name : atroneDisplayName(m.tier)) + '</span>'
           : '<span class="portal-badge portal-st-cancelled">Cancelled</span>') + '</div>' +
         '<p class="portal-card-meta"><i class="fas fa-star"></i> ' + tierLine + '</p>' +
         '<p class="portal-card-meta">' + statusLine + '</p>' +

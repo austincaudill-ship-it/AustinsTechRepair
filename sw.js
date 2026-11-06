@@ -48,7 +48,8 @@
 // SUM the selected repairs under "Your estimated repair price",
 // and the iPad Pro 12.9-inch wizard row carries its generation
 // qualifier.
-const CACHE = "atrg-v17";
+/* ATRONE_POINTS_TIERS_2026_11_06: bumped to atrg-v18 — ATR One Free/Plus naming, tiered points rates, the centered Free plan block, and the Manage Membership row. */
+const CACHE = "atrg-v18";
 const CORE = [
   "/",
   "/index.html",

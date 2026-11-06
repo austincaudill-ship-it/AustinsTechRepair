@@ -625,7 +625,7 @@
                   <label class="rf-radio"><input type="radio" name="bk-atrone" value="No"><span>No</span></label>
                   <label class="rf-radio"><input type="radio" name="bk-atrone" value="Not sure"><span>Not sure</span></label>
                 </div>
-                <p class="atr-help" style="margin-bottom: 1.2rem;">ATR One is our membership &mdash; members pay no visit fee on covered devices.</p>
+                <p class="atr-help" style="margin-bottom: 1.2rem;">ATR One is our membership. ATR One Plus (paid) members pay no visit fee on covered devices &mdash; ATR One Free is pay per visit.</p>
               </div>
               <button class="btn btn-primary" type="button" id="bk-continue" disabled><i class="fas fa-arrow-right"></i> Continue</button>
               <button class="back-btn" type="button" data-back="1" style="margin-top: 1.2rem;"><i class="fas fa-arrow-left"></i> Back</button>
@@ -638,7 +638,7 @@
               <div class="estimate-box">
                 <p class="label" id="estimate-label">Estimated price range</p>
                 <p class="price" id="estimate-price">$50 &ndash; $150</p>
-                <p class="note" id="estimate-note">Final pricing is confirmed once we've inspected the device. Estimates are always free. A non-refundable visit fee secures your mobile appointment &mdash; $15 when your repair is already known, or $35 if your device needs diagnostics first. It covers the trip to you, plus the diagnosis when one is needed, and it&rsquo;s due when you book. ATR One members pay no visit fee for devices covered under their subscription.</p>
+                <p class="note" id="estimate-note">Final pricing is confirmed once we've inspected the device. Estimates are always free. A non-refundable visit fee secures your mobile appointment &mdash; $15 when your repair is already known, or $35 if your device needs diagnostics first. It covers the trip to you, plus the diagnosis when one is needed, and it&rsquo;s due when you book. ATR One Plus (paid) members pay no visit fee for devices covered under their plan.</p>
               </div>
               <!-- REPAIR_WIZARD_ESTIMATE_FIX_2026_11_06: standing estimate
                    disclaimer (owner, Nov 6, 2026) — a proper, visible
@@ -825,7 +825,7 @@
         <option value="No">No</option>
         <option value="Not sure">Not sure</option>
       </select>
-      <p class="atr-help">ATR One is our membership. Members pay no visit fee on covered devices.</p>
+      <p class="atr-help">ATR One is our membership. ATR One Plus (paid) members pay no visit fee on covered devices &mdash; ATR One Free is pay per visit.</p>
     </div>
 
     <div class="atr-field">
@@ -1004,7 +1004,7 @@
               <h3>Diagnostics</h3>
               <div class="amount">Included</div>
               <p>Free estimates &mdash; always. And when your device needs a diagnosis, it is covered by the $35 visit fee: even if we have to open your device to find the problem, there&rsquo;s no extra diagnostic fee.</p>
-              <p class="note">*Estimates are always free. The visit fee covers the trip to you &mdash; $15 for a known repair, $35 when a full diagnosis is needed &mdash; and it is never credited toward a repair. ATR One members pay no visit fee for devices covered under their subscription.</p>
+              <p class="note">*Estimates are always free. The visit fee covers the trip to you &mdash; $15 for a known repair, $35 when a full diagnosis is needed &mdash; and it is never credited toward a repair. ATR One Plus (paid) members pay no visit fee for devices covered under their plan.</p>
             </div>
           </div>
           <div class="text-center mt-2">
@@ -1626,7 +1626,7 @@
             <div id="acct-view-rewards" hidden>
               <div class="acct-rewards">
                 <h4><i class="fas fa-ticket"></i> Rewards &amp; Vouchers</h4>
-                <p class="acct-muted" style="text-align:left;padding:0;">You earn 1 point for every $1 of a completed repair. Trade points for a voucher — 100 points = $5 — and use it at your next visit, or pay for accessories with points right in the Shop.</p>
+                <p class="acct-muted" style="text-align:left;padding:0;"><span id="pts-earn-rate">You earn 1 point for every $1 of a completed repair.</span> ATR One Plus members earn more &mdash; 5 points per $1 on Individual &amp; Family, 10 points per $1 on Business plans. Trade points for a voucher — 100 points = $5 — and use it at your next visit, or pay for accessories with points right in the Shop.</p>
                 <div id="pts-exchange">
                   <p class="pts-balance-line">Your balance: <strong id="pts-balance-num">0</strong> points</p>
                   <div class="pts-stepper">
@@ -1655,7 +1655,7 @@
                  the Shop and opened the drawer, count badge and all;
                  this drop-down replaces it), giving the owner's row
                  order: Repairs, Messages, Orders, Rewards & Vouchers,
-                 Cart, Account Settings. The panel is painted by the
+                 Cart, Manage Membership, Account Settings. The panel is painted by the
                  shop module in script.js from the SAME cart state as
                  the Shop glance and the drawer (one source of truth,
                  the same painter), it repaints on every cart change,
@@ -1674,6 +1674,55 @@
                 <div class="cart-glance-actions" id="acct-cart-actions">
                   <button type="button" class="cart-glance-view" id="acct-cart-open">Open cart</button>
                 </div>
+              </div>
+            </div>
+            <button class="acct-menu-item acct-flat-row" type="button" data-acct-menu="membership" aria-expanded="false"><i class="fas fa-crown"></i> Manage Membership <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
+
+            <!-- Manage Membership — ATRONE_POINTS_TIERS_2026_11_06 (Austin, Nov 6, 2026):
+                 he asked where a customer upgrades, changes, or cancels
+                 — the member card only ever SHOWED the plan. This row
+                 sits directly under Cart (his placement call) and holds
+                 the controls: the customer's own plan + points rate,
+                 join/switch links for every paid tier (the same Square
+                 checkouts the plan cards use), billing handled by
+                 Square (we never take card info), and a REAL self-serve
+                 cancel — his correction later the same morning: no
+                 calling, texting, emailing, or messaging us to cancel.
+                 The button calls the narrow cancel_my_membership() RPC
+                 (draft SQL in this build's folder, NOT run yet): our
+                 record cancels on the spot and the account drops back
+                 to Free. The Square subscription itself is stopped by
+                 the customer on Square's own side, through the Manage
+                 Subscription link in their Square subscription emails. -->
+            <div id="acct-view-membership" hidden>
+              <div class="acct-membership">
+                <div class="acct-repairs-head">
+                  <h4><i class="fas fa-crown"></i> Manage Membership</h4>
+                </div>
+                <p class="acct-muted" style="text-align:left;padding:0;">Your plan: <strong id="mm-plan-line">ATR One Free</strong></p>
+                <p class="acct-muted" style="text-align:left;padding:0;" id="mm-rate-line">You earn 1 point for every $1 of a completed repair.</p>
+                <h4 class="acct-detail-h"><i class="fas fa-arrow-up"></i> Upgrade or switch to ATR One Plus</h4>
+                <p class="acct-muted" style="text-align:left;padding:0;">Paid plans are billed monthly through Square. Switching plans starts the new plan at checkout &mdash; if you are switching mid-month, text us at (937) 280-6243 and we will make sure you are not double-billed.</p>
+                <div class="mm-tier-list">
+                  <div class="mm-tier-row"><div class="mm-tier-info"><strong>Individual &mdash; 1 Device</strong><span>$9.99/mo &middot; Earn 5 points per $1</span></div><a class="btn btn-outline btn-sm mm-join" data-mm-tier="single" href="https://square.link/u/eFKxDvyo" target="_blank" rel="noopener">Join</a></div>
+                  <div class="mm-tier-row"><div class="mm-tier-info"><strong>Family &mdash; 5 Devices</strong><span>$19.99/mo &middot; Earn 5 points per $1</span></div><a class="btn btn-outline btn-sm mm-join" data-mm-tier="family" href="https://square.link/u/ZA7502vD" target="_blank" rel="noopener">Join</a></div>
+                  <div class="mm-tier-row"><div class="mm-tier-info"><strong>Business</strong><span>$49.99/mo &middot; Earn 10 points per $1</span></div><a class="btn btn-outline btn-sm mm-join" data-mm-tier="business_plus" href="https://square.link/u/HtnQBIG1" target="_blank" rel="noopener">Join</a></div>
+                  <div class="mm-tier-row"><div class="mm-tier-info"><strong>Business Pro</strong><span>$99.99/mo &middot; Earn 10 points per $1</span></div><a class="btn btn-outline btn-sm mm-join" data-mm-tier="business_pro" href="https://square.link/u/V8WCkjbW" target="_blank" rel="noopener">Join</a></div>
+                </div>
+                <div id="mm-cancel-wrap" hidden>
+                  <h4 class="acct-detail-h"><i class="fas fa-ban"></i> Cancel ATR One Plus</h4>
+                  <p class="acct-muted" style="text-align:left;padding:0;">You can cancel anytime, right here &mdash; no call, text, or email to us, ever. Cancel at least 3 days before your next billing date and that charge never happens. If a payment just went through and you cancel within 3 days of it, that payment is refunded in full. Your paid benefits run to the end of the current billing period, and you keep ATR One Free either way.</p>
+                  <p class="acct-muted" style="text-align:left;padding:0;"><strong>Step 1 &mdash; cancel with us:</strong> the button below ends your Plus membership on our side the moment you confirm. You drop back to ATR One Free and the free points rate (1 point per $1).</p>
+                  <p class="acct-muted" style="text-align:left;padding:0;"><strong>Step 2 &mdash; stop the billing at Square:</strong> Square runs the payments, so stop the subscription there too &mdash; open any of your Square subscription emails and tap <strong>Manage Subscription</strong>. Do both steps and nothing is charged again.</p>
+                  <button class="btn btn-outline btn-sm" type="button" id="mm-cancel-btn">Cancel membership with us</button>
+                  <p class="acct-error" id="mm-cancel-error" hidden></p>
+                  <p class="pts-success" id="mm-cancel-success" hidden></p>
+                </div>
+                <div id="mm-billing">
+                  <h4 class="acct-detail-h"><i class="fas fa-credit-card"></i> Billing &mdash; handled by Square</h4>
+                  <p class="acct-muted" style="text-align:left;padding:0;">We never take or store card information &mdash; not here, not anywhere. Square runs the payments for ATR One Plus. To update your card, pause, or manage the billing, open any of your Square subscription emails and tap <strong>Manage Subscription</strong> &mdash; that is Square&rsquo;s own page for your plan.</p>
+                </div>
+                <p class="acct-muted" id="mm-free-note" style="text-align:left;padding:0;">You are on the free plan &mdash; there is nothing to cancel. Upgrade anytime above.</p>
               </div>
             </div>
             <button class="acct-menu-item acct-flat-row" type="button" data-acct-menu="settings" aria-expanded="false"><i class="fas fa-gear"></i> Account Settings <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
@@ -1764,7 +1813,7 @@
               <span class="acct-muted" id="acct-password-msg"></span>
             </div>
             <div class="acct-earn">
-              <p><i class="fas fa-gift"></i> <strong>How to earn:</strong> 1 point for every $1 you spend on repairs.</p>
+              <p><i class="fas fa-gift"></i> <strong>How to earn:</strong> points on every completed repair &mdash; 1 point per $1 on ATR One Free, 5 points per $1 on ATR One Plus Individual &amp; Family, 10 points per $1 on ATR One Plus Business plans.</p>
               <p><i class="fas fa-tag"></i> <strong>Redeem:</strong> every 100 points = $5 off your next repair. Just mention your points when you book.</p>
             </div>
             </div>
@@ -1843,7 +1892,7 @@
             <h2 class="section-title">One membership. Every perk.</h2>
             <p class="section-copy">ATR One is our membership for people who want their tech handled — priority service, real discounts, and free remote support whenever you need it.</p>
             <!-- SITE_MEMBERSHIP_COPY_2026_11_02 -->
-            <p class="section-copy">Membership starts free: create a free account and earn 1 point for every $1 spent &mdash; 100 points = $5 toward repairs, accessories, and vouchers. Paid plans add every perk below, including wholesale pricing on parts.</p>
+            <p class="section-copy">Every customer starts on ATR One Free: earn 1 point for every $1 of a completed repair &mdash; 100 points = $5 toward repairs, accessories, and vouchers. ATR One Plus plans earn faster &mdash; 5 points per $1 on Individual and Family, 10 points per $1 on Business and Business Pro &mdash; and add every perk below, including wholesale pricing on parts.</p>
           </div>
 
           <!-- How it works -->
@@ -1853,8 +1902,8 @@
           <div class="steps-grid">
             <div class="step-card">
               <div class="step-num">1</div>
-              <h4>Subscribe</h4>
-              <p>Join ATR One in under a minute with our secure checkout.</p>
+              <h4>Start free, upgrade anytime</h4>
+              <p>Every customer is on ATR One Free automatically &mdash; nothing to join and nothing to pay. Upgrade to ATR One Plus in under a minute with our secure checkout whenever you&rsquo;re ready.</p>
             </div>
             <div class="step-card">
               <div class="step-num">2</div>
@@ -1876,13 +1925,13 @@
             <div class="perk-card perk-featured">
               <i class="fas fa-headset"></i>
               <h4>Free Remote Customer Service</h4>
-              <p>Stuck on something? Members get free remote help — troubleshooting, setup, and tech questions answered without a service call.</p>
+              <p>Stuck on something? ATR One Plus members get free remote help — troubleshooting, setup, and tech questions answered without a service call.</p>
               <span class="perk-tag">Most loved</span>
             </div>
             <div class="perk-card">
               <i class="fas fa-shield-halved"></i>
               <h4>Free Screen Protector With Every Repair</h4>
-              <p>Every time we repair your device, members get a screen protector installed free &mdash; cut to fit your exact device on the spot.</p>
+              <p>Every time we repair your device, ATR One Plus members get a screen protector installed free &mdash; cut to fit your exact device on the spot.</p>
             </div>
             <!-- SITE_ATRONE_TIERS_2026_11_02 -->
             <!-- SITE_ATRONE_NAMES_2026_11_02 -->
@@ -1911,31 +1960,33 @@
             <div class="perk-card">
               <i class="fas fa-bolt"></i>
               <h4>Priority Queue Access</h4>
-              <p>Jump to the front of the line. Members get scheduled before non-members, every time.</p>
+              <p>Jump to the front of the line. ATR One Plus members get scheduled first, every time.</p>
             </div>
             <div class="perk-card">
               <i class="fas fa-truck-fast"></i>
               <h4>Same-Day Diagnostics</h4>
-              <p>When schedule allows, members get priority same-day diagnostics. We come to you, fast. Repairs follow once parts arrive.</p>
+              <p>When schedule allows, ATR One Plus members get priority same-day diagnostics. We come to you, fast. Repairs follow once parts arrive.</p>
             </div>
             <div class="perk-card">
               <i class="fas fa-house"></i>
               <h4>Free Diagnostics &mdash; No Visit Fee</h4>
-              <p>Members pay no visit fee on covered devices &mdash; the visit and the full diagnosis are included with your membership.</p>
+              <p>ATR One Plus members pay no visit fee on covered devices &mdash; the visit and the full diagnosis are included with the paid membership.</p>
             </div>
           </div>
 
           <!-- Comparison -->
           <div class="section-header center" style="margin:3rem 0 1.8rem;">
-            <h3 style="font-family:var(--font-display); font-size:1.5rem;">With vs. without ATR One</h3>
+            <h3 style="font-family:var(--font-display); font-size:1.5rem;">ATR One Free vs. ATR One Plus</h3>
           </div>
           <div class="compare-wrap">
             <table class="compare-table">
               <thead>
-                <tr><th></th><th>Pay-per-visit</th><th class="compare-hl">ATR One</th></tr>
+                <tr><th></th><th>ATR One Free (pay per visit)</th><th class="compare-hl">ATR One Plus (paid)</th></tr>
               </thead>
               <tbody>
                 <!-- SITE_ATRONE_TIERS_2026_11_02 -->
+                <!-- ATRONE_POINTS_TIERS_2026_11_06: points row — the earn rate IS the free tier -->
+                <tr><td>Reward points on completed repairs</td><td>1 point per $1</td><td class="yes compare-hl">5 points per $1 on Individual &amp; Family &middot; 10 points per $1 on Business plans</td></tr>
                 <tr><td>Repair discounts</td><td class="no"><i class="fas fa-minus"></i> Full price</td><td class="yes compare-hl"><i class="fas fa-check"></i> 20&ndash;50% off, by plan</td></tr>
                 <tr><td>Accessory discounts</td><td class="no"><i class="fas fa-minus"></i> Full price</td><td class="yes compare-hl"><i class="fas fa-check"></i> 25&ndash;65% off, by plan</td></tr>
                 <tr><td>Free screen protector with every repair</td><td class="no"><i class="fas fa-xmark"></i></td><td class="yes compare-hl"><i class="fas fa-check"></i> Free, installed</td></tr>
@@ -1947,7 +1998,7 @@
                 <tr><td>Same-day diagnostics</td><td class="no">When available</td><td class="yes compare-hl"><i class="fas fa-check"></i> Priority</td></tr>
                 <tr><td>Visit fee</td><td class="no">$15 or $35 per visit</td><td class="yes compare-hl"><i class="fas fa-check"></i> Free on covered devices</td></tr>
                 <tr><td>Remote customer service</td><td class="no">Billed per call</td><td class="yes compare-hl"><i class="fas fa-check"></i> Free</td></tr>
-                <tr><td>Member QR code in My Account</td><td class="no"><i class="fas fa-xmark"></i></td><td class="yes compare-hl"><i class="fas fa-check"></i></td></tr>
+                <tr><td>Member QR code in My Account</td><td class="yes"><i class="fas fa-check"></i></td><td class="yes compare-hl"><i class="fas fa-check"></i></td></tr>
               </tbody>
             </table>
           </div>
@@ -1956,19 +2007,21 @@
           <div class="section-header center" style="margin:3rem 0 1.8rem;">
             <h3 style="font-family:var(--font-display); font-size:1.5rem;">Pick your plan</h3>
             <!-- SITE_ATRONE_TIERS_2026_11_02 -->
-            <p class="section-copy">Every plan includes all ATR One benefits, with bigger discounts on the business plans. Cancel anytime.</p>
+            <p class="section-copy">Every ATR One Plus plan includes all the paid benefits, with bigger discounts on the business plans. Cancel anytime.</p>
           </div>
           <!-- SITE_ATRONE_NAMES_2026_11_02 -->
           <div class="pricing-grid">
             <div class="pricing-card">
               <h3>Individual — 1 Device</h3>
               <div class="amount">$9.99<small style="font-size:1rem; color: var(--muted);">/mo</small></div>
+              <p class="plan-points"><i class="fas fa-star"></i> ATR One Plus &middot; Earn 5 points per $1 on completed repairs</p>
               <p>Covers 1 device. Perfect if you've got one phone or laptop you depend on. 20% off repairs and 25% off accessories.</p>
               <a href="https://square.link/u/eFKxDvyo" target="_blank" rel="noopener" class="btn btn-primary" style="margin-top:1rem;">Join Individual</a>
             </div>
             <div class="pricing-card" style="border:2px solid var(--brand);">
               <h3>Family — 5 Devices</h3>
               <div class="amount">$19.99<small style="font-size:1rem; color: var(--muted);">/mo</small></div>
+              <p class="plan-points"><i class="fas fa-star"></i> ATR One Plus &middot; Earn 5 points per $1 on completed repairs</p>
               <p>Covers 5 devices. The whole family — phones, tablets, laptops, all of it. 20% off repairs and 25% off accessories.</p>
               <a href="https://square.link/u/ZA7502vD" target="_blank" rel="noopener" class="btn btn-primary" style="margin-top:1rem;">Join Family</a>
             </div>
@@ -1976,15 +2029,28 @@
             <div class="pricing-card">
               <h3>Business</h3>
               <div class="amount">$49.99<small style="font-size:1rem; color: var(--muted);">/mo</small></div>
+              <p class="plan-points"><i class="fas fa-star"></i> ATR One Plus &middot; Earn 10 points per $1 on completed repairs</p>
               <p>All your business hardware covered — computers, printers, receipt printers, cash drawers, and more. 45% off repairs and 55% off accessories. We come out and set up your point of sale — Square, cash drawers, and your systems. We help with the setup; we do not process payments. Requires your business EIN at signup.</p>
               <a href="https://square.link/u/HtnQBIG1" target="_blank" rel="noopener" class="btn btn-primary" style="margin-top:1rem;">Join Business</a>
             </div>
             <div class="pricing-card">
               <h3>Business Pro</h3>
               <div class="amount">$99.99<small style="font-size:1rem; color: var(--muted);">/mo</small></div>
+              <p class="plan-points"><i class="fas fa-star"></i> ATR One Plus &middot; Earn 10 points per $1 on completed repairs</p>
               <p>We handle all of your IT. Full tech management for your business, including server setup — you focus on running it. 50% off repairs and 65% off accessories. We come out and set up your point of sale — Square, cash drawers, and your systems. We help with the setup; we do not process payments. Requires your business EIN at signup.</p>
               <a href="https://square.link/u/V8WCkjbW" target="_blank" rel="noopener" class="btn btn-primary" style="margin-top:1rem;">Join Business Pro</a>
             </div>
+          </div>
+
+          <!-- ATRONE_POINTS_TIERS_2026_11_06 (Austin, Nov 6, 2026): the fifth block —
+               the FREE tier, centered under the four paid cards. Every
+               customer is already on it; it promises only the basic
+               points reward system, and there is no signup or Square
+               link for it because there is nothing to buy. -->
+          <div class="pricing-free-card">
+            <h3>Free</h3>
+            <div class="amount">$0<small style="font-size:1rem; color: var(--muted);">/mo</small></div>
+            <p>ATR One Free &mdash; every customer is on it automatically. The basic points reward system: earn 1 point for every $1 of a completed repair, and 100 points = $5 toward a future repair or accessory.</p>
           </div>
 
           <div class="text-center" style="margin-top:2.5rem;">
@@ -2402,7 +2468,7 @@
             <h3>3. Visit Fee</h3>
             <ul>
               <li>A <strong>visit fee</strong> applies to every mobile visit, and it is due at scheduling: <strong>$15.00</strong> when the repair is already known, or <strong>$35.00</strong> when the job needs a full diagnosis of the problem. It covers travel to your location, plus the diagnosis when one is needed.</li>
-              <li><strong>ATR One members:</strong> Members pay no visit fee for devices covered under their subscription.</li>
+              <li><strong>ATR One Plus members:</strong> Paid members pay no visit fee for devices covered under their plan. ATR One Free is pay per visit.</li>
               <li>The visit fee is <strong>non-refundable in all cases</strong> and is charged separately from the repair price. It is never credited toward a repair.</li>
             </ul>
 
@@ -2643,7 +2709,7 @@
 
             <h3>2. Fees, Parts &amp; Payment</h3>
             <ul>
-              <li><strong>Visit fee:</strong> A visit fee applies to every mobile visit &mdash; $15.00 when the repair is already known, or $35.00 when the job needs a full diagnosis &mdash; covering travel, plus the diagnosis when one is needed. It is <strong>non-refundable in all cases</strong>, is due at scheduling, is charged separately from the repair price, and is never credited toward a repair. ATR One members pay no visit fee for devices covered under their subscription.</li>
+              <li><strong>Visit fee:</strong> A visit fee applies to every mobile visit &mdash; $15.00 when the repair is already known, or $35.00 when the job needs a full diagnosis &mdash; covering travel, plus the diagnosis when one is needed. It is <strong>non-refundable in all cases</strong>, is due at scheduling, is charged separately from the repair price, and is never credited toward a repair. ATR One Plus (paid) members pay no visit fee for devices covered under their plan.</li>
               <li><strong>Diagnostics:</strong> Estimates are free. A full diagnosis &mdash; including disassembly or deep board-level diagnostics when required &mdash; is included in the $35.00 visit fee.</li>
               <li><strong>Flat-rate repairs:</strong> Common repairs (screens, batteries, charging ports, back glass) are quoted at one flat rate &mdash; parts and labor included. No hourly billing.</li>
               <li><strong>Custom repairs:</strong> Repairs outside the standard list are quoted individually as one flat price and begin only with your approval.</li>
@@ -3006,7 +3072,7 @@
     'use strict';
     function $(id) { return document.getElementById(id); }
     function showAcctView(view) {
-      var r = $('acct-view-repairs'), s = $('acct-view-settings'), w = $('acct-view-rewards'), m = $('acct-view-messages'), o = $('acct-view-orders'), c = $('acct-view-cart');
+      var r = $('acct-view-repairs'), s = $('acct-view-settings'), w = $('acct-view-rewards'), m = $('acct-view-messages'), o = $('acct-view-orders'), c = $('acct-view-cart'), mmv = $('acct-view-membership');
       /* CUSTOMER_INBOX_2026_11_05: the Messages view joins the set,
          and the switch is a TOGGLE, same as the script.js module —
          owner bug fix (Nov 5, 2026): tapping a closed row opens it
@@ -3015,7 +3081,7 @@
          ACCOUNT_FIX_PASS_3_2_2026_11_06 (ITEM C): the Orders view
          joins the set the same way.
          ACCOUNT_FIX_PASS_3_3_2026_11_06: the Cart view joins too. */
-      var panels = { repairs: r, settings: s, rewards: w, messages: m, orders: o, cart: c };
+      var panels = { repairs: r, settings: s, rewards: w, messages: m, orders: o, cart: c, membership: mmv };
       var target = (panels[view] && !panels[view].hidden) ? null : view;
       if (r) r.hidden = target !== 'repairs';
       if (s) s.hidden = target !== 'settings';
@@ -3023,6 +3089,7 @@
       if (m) m.hidden = target !== 'messages';
       if (o) o.hidden = target !== 'orders';
       if (c) c.hidden = target !== 'cart';
+      if (mmv) mmv.hidden = target !== 'membership';
       document.querySelectorAll('[data-acct-menu]').forEach(function (b) {
         var on = b.getAttribute('data-acct-menu') === target;
         b.classList.toggle('is-active', on);
@@ -3192,7 +3259,7 @@
     howlong: 'Most common repairs (screens, batteries, charge ports) are finished in a single visit once your part is in. If a job needs bench or board-level work, we will tell you the timeline upfront before you commit.',
     /* SITE_ATRONE_TIERS_2026_11_02 */
     /* SITE_ATRONE_NAMES_2026_11_02 */
-    membership: 'ATR One membership: $9.99/mo Individual (1 device), $19.99/mo Family (5 devices), $49.99/mo Business, $99.99/mo Business Pro. Members get 20% off repairs and 25% off accessories on Individual and Family, 45% off repairs and 55% off accessories on Business, and 50% off repairs and 65% off accessories on Business Pro, plus wholesale parts pricing, a free screen protector installed with every repair, free priority shipping on parts, priority scheduling, same-day diagnostics, free remote support, and 14 days to exchange or return accessories bought from us &mdash; every accessory carries its manufacturer&rsquo;s warranty, and we add 90 days on top of it. Business and Business Pro memberships require your business EIN at signup. On a business plan, we come out and set up your point of sale — Square, cash drawers, your systems; we help with the setup, we do not process payments.',
+    membership: 'ATR One membership: $9.99/mo Individual (1 device), $19.99/mo Family (5 devices), $49.99/mo Business, $99.99/mo Business Pro. Members get 20% off repairs and 25% off accessories on Individual and Family, 45% off repairs and 55% off accessories on Business, and 50% off repairs and 65% off accessories on Business Pro, plus wholesale parts pricing, a free screen protector installed with every repair, free priority shipping on parts, priority scheduling, same-day diagnostics, free remote support, and 14 days to exchange or return accessories bought from us &mdash; every accessory carries its manufacturer&rsquo;s warranty, and we add 90 days on top of it. Business and Business Pro memberships require your business EIN at signup. On a business plan, we come out and set up your point of sale — Square, cash drawers, your systems; we help with the setup, we do not process payments. Points: every completed repair earns points — 1 point per $1 on ATR One Free, 5 points per $1 on ATR One Plus Individual and Family, and 10 points per $1 on ATR One Plus Business and Business Pro; 100 points = $5.',
     services: 'We repair phones, tablets, computers & laptops, game consoles, and smartwatches — including board-level diagnostics most shops will not touch. We also build websites for local businesses, install home and small-business networks and Wi-Fi equipment, and run internet cabling. We do not repair automotive electronics, vintage radios, home stereo systems, major appliances, or medical devices or equipment, and we are not an internet service provider (though we can recommend one and help you get set up).',
     hours: 'Our hours are Monday\u2013Friday 5:30 AM\u201310:00 PM, Saturday 8:30 AM\u20139:00 PM, and Sunday 9:00 AM\u20135:00 PM. We book by appointment \u2014 send a request here or through the Repair page and we will confirm your time. For anything urgent, call or text ' + PHONE_DISPLAY + '.',
     human: 'No problem — you can call or text Austin directly at ' + PHONE_DISPLAY + '. Or tap "Book a repair" and leave your number here, and he will reach out to you.'
@@ -4150,6 +4217,10 @@
      renders with the account QR and a neutral membership line — it
      never guesses. */
   var TIER_NAMES = { single: 'Individual', family: 'Family', business: 'Business', business_plus: 'Business', business_pro: 'Business Pro' };
+  /* ATRONE_POINTS_TIERS_2026_11_06: points earn rate per paid tier (Free = 1). */
+  var TIER_POINTS_RATE = { single: 5, family: 5, business: 10, business_plus: 10, business_pro: 10 };
+  var TIER_PRICES = { single: '9.99', family: '19.99', business: '49.99', business_plus: '49.99', business_pro: '99.99' };
+  var mmPlan = null; /* the signed-in customer's paid plan: {tier, name} | null (Free) | undefined (lookup unavailable) */
   var acctCardWired = false, acctCardPayload = '', acctCardName = '', acctCardTierLine = '', acctCardSince = '';
   var glanceWired = false; /* QR_FIX_PASS_2_2026_11_05: one-shot wiring guard, same pattern as acctCardWired */
   var acctCardPoints = null, acctCardCustSince = '';
@@ -4277,13 +4348,16 @@
     }
     if (membership && membership.status === 'active') {
       var tierName = TIER_NAMES[membership.tier] || 'ATR One';
-      statusEl.textContent = 'ATR One · Active';
+      statusEl.textContent = 'ATR One Plus · Active';
       statusEl.classList.add('is-active');
-      tierEl.textContent = 'ATR One ' + tierName + ' member';
+      tierEl.textContent = 'ATR One Plus ' + tierName + ' member';
       var since = fmtMemberSince(membership.started_on);
       sinceEl.textContent = since ? 'Member since ' + since : '';
       acctCardSince = sinceEl.textContent;
-      acctCardTierLine = 'ATR One ' + tierName + ' · Active';
+      acctCardTierLine = 'ATR One Plus ' + tierName + ' · Active';
+      mmPlan = { tier: membership.tier, name: tierName };
+      paintManageMembership();
+      paintEarnRate();
       return;
     }
     if (membership === undefined) {
@@ -4295,6 +4369,8 @@
       sinceEl.textContent = '';
       acctCardSince = '';
       acctCardTierLine = 'ATR One';
+      mmPlan = undefined;
+      paintManageMembership();
       return;
     }
     /* FREE STATE: no active paid row — no row at all, or a cancelled
@@ -4307,7 +4383,101 @@
     sinceEl.textContent = acctCardCustSince ? 'Member since ' + acctCardCustSince : '';
     acctCardSince = sinceEl.textContent;
     acctCardTierLine = 'ATR One Free · Active';
+    mmPlan = null;
+    paintManageMembership();
+    paintEarnRate();
   }
+  /* ---------- ATRONE_POINTS_TIERS_2026_11_06: Manage Membership panel ----------
+     Painted from the same membership answer the member card uses
+     (mmPlan). Join/switch ride the Square checkout links. Cancel is a
+     REAL self-serve action (owner correction, Nov 6): one confirm tap
+     calls cancel_my_membership() and our record cancels on the spot;
+     the Square billing side is stopped by the customer through
+     Square's own Manage Subscription link in their Square emails.
+     Nothing in this panel asks the customer to contact us. */
+  function paintManageMembership() {
+    var planEl = $('mm-plan-line'), rateEl = $('mm-rate-line'),
+        cancelWrap = $('mm-cancel-wrap'), freeNote = $('mm-free-note');
+    if (!planEl) return;
+    var paid = !!(mmPlan && mmPlan.tier);
+    if (mmPlan === undefined) {
+      planEl.textContent = 'On file at the shop';
+      if (rateEl) rateEl.textContent = 'Ask us at your visit and we will confirm your plan and your points rate.';
+    } else if (paid) {
+      var rate = TIER_POINTS_RATE[mmPlan.tier] || 1;
+      var price = TIER_PRICES[mmPlan.tier];
+      planEl.textContent = 'ATR One Plus · ' + mmPlan.name + (price ? ' — $' + price + '/mo' : '');
+      if (rateEl) rateEl.textContent = 'You earn ' + rate + ' points for every $1 of a completed repair.';
+    } else {
+      planEl.textContent = 'ATR One Free — $0/mo';
+      if (rateEl) rateEl.textContent = 'You earn 1 point for every $1 of a completed repair.';
+    }
+    if (cancelWrap) cancelWrap.hidden = !paid;
+    if (freeNote) freeNote.hidden = paid || mmPlan === undefined;
+    document.querySelectorAll('.mm-join').forEach(function (a) {
+      var cur = paid && mmPlan.tier === a.getAttribute('data-mm-tier');
+      a.classList.toggle('mm-current', cur);
+      a.textContent = cur ? 'Current plan' : (paid ? 'Switch' : 'Join');
+    });
+    wireManageMembership();
+  }
+  function paintEarnRate() {
+    var el = $('pts-earn-rate');
+    if (!el) return;
+    if (mmPlan && mmPlan.tier) {
+      var rate = TIER_POINTS_RATE[mmPlan.tier] || 1;
+      el.textContent = 'You earn ' + rate + ' points for every $1 of a completed repair on your ATR One Plus ' + mmPlan.name + ' plan.';
+    } else if (mmPlan !== undefined) {
+      el.textContent = 'You earn 1 point for every $1 of a completed repair.';
+    }
+  }
+  var mmWired = false;
+  function wireManageMembership() {
+    if (mmWired) return;
+    var btn = $('mm-cancel-btn');
+    if (!btn) return;
+    mmWired = true;
+    btn.addEventListener('click', function () {
+      var errEl = $('mm-cancel-error'), okEl = $('mm-cancel-success');
+      if (errEl) errEl.hidden = true;
+      if (btn.getAttribute('data-armed') !== '1') {
+        btn.setAttribute('data-armed', '1');
+        btn.textContent = 'Tap again to confirm — cancel my ATR One Plus';
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = 'Cancelling\u2026';
+      function failSoft() {
+        btn.disabled = false;
+        btn.removeAttribute('data-armed');
+        btn.textContent = 'Cancel membership with us';
+        if (errEl) { errEl.textContent = 'Online cancellation is not switched on yet — nothing was changed. To stop the billing today, tap Manage Subscription in any of your Square subscription emails.'; errEl.hidden = false; }
+      }
+      if (!sb || !sb.rpc) { failSoft(); return; }
+      /* The narrow server-side door (cancel-my-membership.sql, DRAFT —
+         not run yet): SECURITY DEFINER, acts only on the caller's own
+         latest ACTIVE membership, stamps it cancelled with today's
+         date. Until that SQL runs, the call errors and this fails soft
+         with the honest wording above. No message to the shop is sent
+         on either path — cancelling never requires contacting us. */
+      sb.rpc('cancel_my_membership').then(function (res) {
+        var d = res && res.data;
+        if (res.error || !d || (d.cancelled !== true && d.reason !== 'no_active_membership')) { failSoft(); return; }
+        btn.hidden = true;
+        /* Our record is cancelled: reflect Free locally at once (the
+           member card, the plan line, and the rewards rate all read
+           the same state), then re-read the membership to confirm. */
+        setMembershipLine({ status: 'cancelled', tier: d.tier || (mmPlan && mmPlan.tier) || null });
+        if (okEl) { okEl.textContent = 'Cancelled — you are back on ATR One Free (1 point per $1), and your paid benefits run to the end of the current billing period. Now stop the billing at Square: tap Manage Subscription in any of your Square subscription emails.'; okEl.hidden = false; }
+        sb.rpc('my_membership').then(function (r2) {
+          if (r2.error) return;
+          var row = (r2.data && r2.data.length) ? r2.data[0] : (r2.data && !Array.isArray(r2.data) ? r2.data : false);
+          setMembershipLine(row);
+        }).catch(function () {});
+      }).catch(failSoft);
+    });
+  }
+
   function qrPopupPx(enlarged) {
     if (enlarged) return Math.max(240, Math.floor(Math.min(window.innerWidth, window.innerHeight) * 0.9));
     return Math.max(240, Math.min(430, Math.floor(window.innerWidth * 0.8)));
