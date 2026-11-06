@@ -2169,3 +2169,29 @@ html[data-theme="dark"] {
   #repair .repair-step { grid-column: 1; grid-row: 2; }
   #repair .rf-summary { grid-column: 1; grid-row: 3; position: static; margin-top: 1.5rem; margin-bottom: 0; }
 }
+
+/* ACCOUNT_FIX_PASS_3_2026_11_06 (owner add-on 7, Nov 6, 2026): the cart
+   quick glance — a compact panel under the shop cart button, styled
+   after the header account glance. Items, subtotal, View cart and
+   Checkout; the full cart drawer keeps its own styles above. */
+.cart-glance-anchor { position: relative; display: inline-flex; }
+.cart-glance { position: absolute; top: calc(100% + 8px); right: 0; width: 270px; max-width: 86vw; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow-lg); padding: 0.9rem; z-index: 1250; text-align: left; }
+.cart-glance[hidden] { display: none; }
+.cart-glance-row { display: flex; align-items: baseline; gap: 0.5rem; padding: 0.3rem 0; border-bottom: 1px solid var(--line, #e5d9c8); }
+.cart-glance-name { flex: 1; min-width: 0; font-size: 0.88rem; font-weight: 600; color: var(--ink); }
+.cart-glance-qty { color: var(--muted, #8a7a68); font-size: 0.85rem; }
+.cart-glance-price { font-size: 0.88rem; white-space: nowrap; color: var(--ink); }
+.cart-glance-total { display: flex; justify-content: space-between; align-items: baseline; padding: 0.55rem 0 0.1rem; font-size: 0.92rem; color: var(--ink); }
+.cart-glance-empty { margin: 0.2rem 0 0.4rem; font-size: 0.9rem; color: var(--ink); }
+.cart-glance-empty[hidden] { display: none; }
+.cart-glance-total[hidden], .cart-glance-actions[hidden] { display: none; }
+.cart-glance-actions { display: flex; gap: 0.5rem; margin-top: 0.6rem; }
+.cart-glance-view, .cart-glance-checkout { flex: 1; padding: 0.5rem 0.4rem; border-radius: 8px; font: inherit; font-weight: 700; font-size: 0.88rem; cursor: pointer; }
+.cart-glance-view { background: none; border: 1.5px solid var(--line); color: var(--ink); }
+.cart-glance-checkout { background: var(--brand, #e8720c); border: 1.5px solid var(--brand, #e8720c); color: #fff; }
+
+/* ACCOUNT_FIX_PASS_3_2026_11_06 (owner add-on 11, Nov 6, 2026): the
+   small "Protected by Cloudflare" footer badge beside the Cloudflare
+   disclaimer sentence — a compact pill in the footer's muted tones,
+   text and a shield icon only. */
+.cf-badge { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.12rem 0.55rem; margin-left: 0.4rem; border: 1px solid rgba(185, 169, 143, 0.55); border-radius: 999px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.02em; white-space: nowrap; vertical-align: middle; }

@@ -16,6 +16,14 @@
 
     function switchPage(targetId) {
       var cleanId = String(targetId || '').replace('#', '');
+      /* ACCOUNT_FIX_PASS_3_2026_11_06: remember the page the visitor
+         was on when they step onto the account page, so the header
+         account button can take them back to it (its toggle — see
+         window.atrAccountToggleLeave in the accounts module). */
+      if (cleanId === 'account') {
+        var curPage = document.querySelector('.page.active');
+        if (curPage && curPage.id && curPage.id !== 'account') window.__atrAcctReturn = curPage.id;
+      }
       var found = false;
       pages.forEach(function (page) {
         if (page.id === cleanId) { page.classList.add('active'); found = true; }
@@ -1069,6 +1077,9 @@
           savePtsMap(map);
         });
       });
+      /* ACCOUNT_FIX_PASS_3_2026_11_06 (owner add-on 7): keep an open
+         cart glance truthful — it re-renders from the same state. */
+      renderCartGlance();
     }
 
     function openCart() {
@@ -1082,9 +1093,104 @@
       document.body.style.overflow = '';
     }
 
+    /* ACCOUNT_FIX_PASS_3_2026_11_06 (owner add-on 7, Nov 6, 2026):
+       the cart button opens a quick glance first — a compact panel
+       with the cart's current items (name, qty, line price), the
+       subtotal, View cart, and Checkout — instead of going straight
+       to the full cart drawer. It renders from this module's own
+       getCart() / PRODUCTS / points state, the same source of truth
+       renderCart() paints (no second cart store), and renderCart()
+       re-renders it on every cart change. It closes on an outside
+       tap, on Esc, and on any navigation, and never navigates by
+       itself: View cart opens the drawer exactly as the button used
+       to, and Checkout fires the drawer's own checkout button, so
+       the payment flow is the existing one end to end. An empty cart
+       shows the plain empty note with a Browse the shop link instead
+       of items. window.atrOpenCart lets the account page's Cart row
+       keep opening the full drawer directly, as it always has. */
+    var cartGlance = document.getElementById('cart-glance');
+    var cartGlanceItems = document.getElementById('cart-glance-items');
+    function renderCartGlance() {
+      if (!cartGlance || !cartGlanceItems) return;
+      var totalRow = document.getElementById('cart-glance-total-row');
+      var totalEl = document.getElementById('cart-glance-total');
+      var totalLabel = document.getElementById('cart-glance-total-label');
+      var emptyEl = document.getElementById('cart-glance-empty');
+      var actionsEl = document.getElementById('cart-glance-actions');
+      var cart = getCart();
+      var ids = Object.keys(cart);
+      if (!ids.length) {
+        cartGlanceItems.innerHTML = '';
+        if (totalRow) totalRow.hidden = true;
+        if (actionsEl) actionsEl.hidden = true;
+        if (emptyEl) emptyEl.hidden = false;
+        return;
+      }
+      if (emptyEl) emptyEl.hidden = true;
+      if (totalRow) totalRow.hidden = false;
+      if (actionsEl) actionsEl.hidden = false;
+      var ptsMap = getPtsMap();
+      cartGlanceItems.innerHTML = '';
+      ids.forEach(function (id) {
+        var p = PRODUCTS.find(function (x) { return x.id === id; });
+        if (!p) return;
+        var row = document.createElement('div');
+        row.className = 'cart-glance-row';
+        row.innerHTML = '<span class="cart-glance-name">' + p.name + '</span>' +
+          '<span class="cart-glance-qty">&times;' + cart[id] + '</span>' +
+          '<strong class="cart-glance-price">' + (ptsMap[id] ? fmtPts(p.pts * cart[id]) + ' pts' : money(p.price * cart[id])) + '</strong>';
+        cartGlanceItems.appendChild(row);
+      });
+      var lines = ptsLines();
+      if (totalEl) totalEl.textContent = money(lines.length ? cashSum() : cartSum());
+      if (totalLabel) totalLabel.textContent = lines.length ? 'Due at checkout' : 'Subtotal';
+    }
+    function openCartGlance() {
+      renderCartGlance();
+      if (cartGlance) cartGlance.hidden = false;
+      if (openBtn) openBtn.setAttribute('aria-expanded', 'true');
+    }
+    function closeCartGlance() {
+      if (cartGlance) cartGlance.hidden = true;
+      if (openBtn) openBtn.setAttribute('aria-expanded', 'false');
+    }
+    function toggleCartGlance() {
+      if (!cartGlance) { openCart(); return; }
+      if (cartGlance.hidden) openCartGlance(); else closeCartGlance();
+    }
+    window.atrOpenCart = openCart;
+
     var openBtn = document.getElementById('cart-open-btn');
     var closeBtn = document.getElementById('cart-close');
-    if (openBtn) openBtn.addEventListener('click', openCart);
+    /* One-shot (same pattern as the points wiring below): if this
+       module's init ever runs twice, a second toggle listener would
+       undo the first inside the same tap — the glance would open and
+       close in one click and look dead. Wire once. */
+    if (!window.__atrCartGlanceWired) {
+      window.__atrCartGlanceWired = true;
+      if (openBtn) openBtn.addEventListener('click', toggleCartGlance);
+      var cartGlanceView = document.getElementById('cart-glance-view');
+      if (cartGlanceView) cartGlanceView.addEventListener('click', function () { closeCartGlance(); openCart(); });
+      var cartGlanceCheckout = document.getElementById('cart-glance-checkout');
+      if (cartGlanceCheckout) cartGlanceCheckout.addEventListener('click', function () {
+        closeCartGlance();
+        var co = document.getElementById('cart-checkout');
+        if (co) co.click();
+      });
+      document.addEventListener('click', function (e) {
+        if (!cartGlance || cartGlance.hidden) return;
+        var anchor = document.querySelector('.cart-glance-anchor');
+        if (anchor && anchor.contains(e.target)) {
+          /* a navigation link inside the panel (Browse the shop)
+             still closes the glance on its way through */
+          if (e.target.closest && e.target.closest('[data-page]')) closeCartGlance();
+          return;
+        }
+        closeCartGlance();
+      });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeCartGlance(); });
+      window.addEventListener('hashchange', closeCartGlance);
+    }
     if (closeBtn) closeBtn.addEventListener('click', closeCart);
     if (overlay) overlay.addEventListener('click', closeCart);
 
@@ -1364,7 +1470,36 @@
        #account page like any other navigation. There is nothing to
        close and no scroll to lock or restore. closeModal survives as a
        harmless error-clear for its one remaining caller (logout). */
+    /* ACCOUNT_FIX_PASS_3_2026_11_06 (owner, Nov 6, 2026): the header
+       account button is a toggle. From any other page it opens the
+       account page (goAccount below, unchanged); tapped while the
+       account page is already showing, it LEAVES — back to the page
+       the visitor came from (recorded by the router in
+       window.__atrAcctReturn), or Home when there is none. Before
+       this, the tap re-set the hash to the value it already had, so
+       nothing happened at all and the button looked dead.
+       The button carries TWO click handlers (this module's goAccount
+       and the account-box handler in index.html, kept in step since
+       QR_FIX_PASS_2) — the leave stamps window.__atrAcctLeaveAt so
+       the twin handler, firing on the same tap a moment later, sees
+       the leave already happened and does not undo it by navigating
+       straight back. */
+    window.atrAccountToggleLeave = function () {
+      var now = Date.now();
+      var sec = document.getElementById('account');
+      var onAcct = (window.location.hash === '#account') || (sec && sec.classList.contains('active'));
+      if (!onAcct) return false; // not on the account page: this tap is an open, never a leave
+      if (now - (window.__atrAcctLeaveAt || 0) < 60) return true; // twin handler already left (doubled handlers fire inside the same dispatch, a few ms apart — the window only has to cover that, so a deliberate second tap still reads as a toggle)
+      if (now - (window.__atrAcctEnterAt || 0) < 60) return false; // this very tap is the one opening it (a doubled handler must not read the just-set hash as "already here" and bounce back)
+      window.__atrAcctLeaveAt = now;
+      var back = window.__atrAcctReturn;
+      if (!back || back === 'account' || !document.getElementById(back)) back = 'home';
+      if (window.location.hash !== '#' + back) { window.location.hash = '#' + back; }
+      return true;
+    };
     function goAccount() {
+      if (window.atrAccountToggleLeave()) return; // already on the account page: this tap leaves it
+      window.__atrAcctEnterAt = Date.now();
       var s = getSession();
       if (s) { showDashboard(s); }
       else { showAuth(); }
@@ -1634,6 +1769,11 @@
       repairsSection.hidden = true;
       newTicketView.hidden = true;
       threadView.hidden = false;
+      /* ACCOUNT_FIX_PASS_3_2026_11_06: the thread is on screen now —
+         this is the moment the message form's human check renders,
+         so it is born visible (see the gate wiring below). mount()
+         is idempotent: later opens are no-ops. */
+      if (window.atrTurnstile) window.atrTurnstile.mount(document.getElementById('ts-acct-msg'));
     }
     function showNewTicket() {
       stopPolling();
@@ -1641,6 +1781,10 @@
       threadView.hidden = true;
       newTicketView.hidden = false;
       showError(ticketError, '');
+      /* ACCOUNT_FIX_PASS_3_2026_11_06: same as showThread — the
+         new-request human check renders when its view opens, not at
+         page load inside the hidden view. */
+      if (window.atrTurnstile) window.atrTurnstile.mount(document.getElementById('ts-acct-ticket'));
     }
 
     /* ---------- ticket list ---------- */
@@ -1784,7 +1928,17 @@
       };
       var tsMsgSlot = document.getElementById('ts-acct-msg');
       if (msgForm && tsMsgSlot) {
-        window.atrTurnstile.mount(tsMsgSlot);
+        /* ACCOUNT_FIX_PASS_3_2026_11_06: no eager mount here any
+           more. This block runs at page load, when the message form
+           sits inside the hidden thread view, inside the hidden
+           dashboard, inside the not-yet-active account page — and
+           turnstile.js mount() renders exactly once and can never
+           re-render, so the widget was born inside a display:none
+           stack and never recovered when the thread opened (owner,
+           Nov 6, 2026: the human check "is not popping up… waiting
+           for Cloudflare"). The mount now happens when the view
+           opens (showThread / showNewTicket below), and the gate
+           still mounts at submit time as a backstop. */
         window.atrTurnstile.gate(msgForm, tsMsgSlot, {
           getBearer: tsBearer,
           onBlocked: function () { showError(msgError, 'Please complete the quick human check, then send again.'); }
@@ -1792,7 +1946,6 @@
       }
       var tsTicketSlot = document.getElementById('ts-acct-ticket');
       if (ticketForm && tsTicketSlot) {
-        window.atrTurnstile.mount(tsTicketSlot);
         window.atrTurnstile.gate(ticketForm, tsTicketSlot, {
           getBearer: tsBearer,
           onBlocked: function () { showError(ticketError, 'Please complete the quick human check above the button, then submit again.'); }
@@ -2588,8 +2741,13 @@ if ("serviceWorker" in navigator) {
       var vl = $('pts-voucher-list');
       if (vl) {
         vl.innerHTML = list.length ? list.map(function (v) {
+          /* ACCOUNT_FIX_PASS_3_2026_11_06: the card names the status
+             too (this list only ever holds active vouchers — the
+             fetch filters on it — so the word is read from the row). */
+          var st = String(v.status || 'active');
+          st = st.charAt(0).toUpperCase() + st.slice(1);
           return '<div class="pts-voucher-card"><div><div class="pts-voucher-code">' + escX(v.code) + '</div>' +
-            '<div class="acct-muted" style="text-align:left;padding:0;">Show this code at your visit to use it.</div></div>' +
+            '<div class="acct-muted" style="text-align:left;padding:0;">Show this code at your visit to use it. Status: ' + escX(st) + '</div></div>' +
             '<div class="pts-voucher-value">$' + escX(v.value_dollars) + '</div></div>';
         }).join('') : '<p class="acct-muted">No vouchers yet — exchange points above and they will show up here.</p>';
       }
@@ -2656,7 +2814,21 @@ if ("serviceWorker" in navigator) {
     }
   };
 
+  /* ACCOUNT_FIX_PASS_3_2026_11_06: this wiring block is one-shot.
+     Every sibling wiring on the account page already guards itself
+     (wireAcctMenu, the index.html safety net) because a doubled
+     wiring is invisible until a handler's effect cancels itself —
+     and this block's strip handler was the one left unguarded: with
+     two copies attached, one tap on the voucher strip clicked the
+     Rewards row twice, and since CUSTOMER_INBOX_2026_11_05 made the
+     rows toggle, the section opened and instantly closed again.
+     The tap looked completely dead (owner, Nov 6, 2026: "they have
+     one voucher worth five dollars, tap to view — that's not
+     working"). The steppers double-stepped the same way. */
+  var pointsWired = false;
   document.addEventListener('DOMContentLoaded', function () {
+    if (pointsWired) return;
+    pointsWired = true;
     /* Tappable points balance -> the Shop. The anchor carries
      * data-page="shop", so the router navigates — and since
      * QR_FIX_PASS_2_2026_11_05 the account is a page, that navigation
@@ -2670,14 +2842,29 @@ if ("serviceWorker" in navigator) {
       var link = document.querySelector('.nav-link[data-page="shop"], .menu-link[data-page="shop"]');
       if (link) link.click();
       else if (window.location.hash !== '#shop') window.location.hash = '#shop';
-      setTimeout(function () { var ob = $('cart-open-btn'); if (ob) ob.click(); }, 450);
+      /* ACCOUNT_FIX_PASS_3_2026_11_06 (owner add-on 7): the cart
+         button toggles the quick glance now — this row still opens
+         the full drawer, through the shop module's own opener. */
+      setTimeout(function () {
+        if (window.atrOpenCart) { window.atrOpenCart(); return; }
+        var ob = $('cart-open-btn'); if (ob) ob.click();
+      }, 450);
     });
 
-    /* Voucher strip -> the Rewards view. */
+    /* Voucher strip -> the Rewards view. ACCOUNT_FIX_PASS_3:
+       after the row opens the section, bring it into view — the
+       strip sits at the top of the dashboard and the Rewards panel
+       is far below it in the menu, so on a phone the open panel
+       could land entirely off-screen and the tap still looked
+       dead even with the wiring right. */
     var strip = $('acct-voucher-strip');
     if (strip) strip.addEventListener('click', function () {
       var item = document.querySelector('[data-acct-menu="rewards"]');
       if (item) item.click();
+      var rewardsView = $('acct-view-rewards');
+      if (rewardsView && !rewardsView.hidden && rewardsView.scrollIntoView) {
+        try { rewardsView.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
+      }
     });
 
     /* Rewards view: refresh every time it is opened. */

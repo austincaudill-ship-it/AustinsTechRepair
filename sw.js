@@ -13,7 +13,14 @@
 // member's name, and the quick-glance header drop-down.
 // CUSTOMER_INBOX_2026_11_05: bumped to atrg-v10 — the Messages inbox
 // drop-down on the account page with the unread notification.
-const CACHE = "atrg-v10";
+// ACCOUNT_FIX_PASS_3_2026_11_06: bumped to atrg-v11 — the header
+// account button toggles (tap again to leave the account page), the
+// duplicate Schedule a repair row and the card instruction note are
+// removed, the voucher strip tap actually reveals the vouchers, the
+// account human checks render when their view opens instead of at
+// page load inside hidden views, and the footer gains the plain
+// Cloudflare line.
+const CACHE = "atrg-v11";
 const CORE = [
   "/",
   "/index.html",
