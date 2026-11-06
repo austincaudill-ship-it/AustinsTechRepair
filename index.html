@@ -611,6 +611,7 @@
               <a class="btn btn-cream btn-lg" href="#repair" data-page="repair"><i class="fas fa-wrench"></i> Start a Repair</a>
               <a class="btn btn-ghostlight btn-lg" href="#prices" data-page="prices"><i class="fas fa-tag"></i> See Prices</a>
               <a class="btn btn-ghostlight btn-lg" href="#repair-or-replace" data-page="repair-or-replace"><i class="fas fa-scale-balanced"></i> Repair or Replace</a>
+              <a class="btn btn-ghostlight btn-lg" href="#help-guides" data-page="help-guides"><i class="fas fa-book-open"></i> Help Guides</a>
             </div>
           </div>
         </div>
@@ -1247,6 +1248,167 @@
             <p>ATR One members get a discount on repairs, which can change this math &mdash; the percentages here use our standard prices.</p>
             <p>Already know you want the repair? <a href="#repair" data-page="repair">Schedule a repair</a>, or check the <a href="#prices" data-page="prices">price lookup</a> for starting prices on their own.</p>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== HELP GUIDES ==================== -->
+    <!-- HELP_GUIDES_2026_11_06 (Austin roadmap, Nov 6, 2026):
+         six free customer self-help guides on their own page: spot a
+         scam, phone storage full, Wi-Fi dead spots, printer won't
+         print, moving to a new phone, back up your photos. Each is a
+         native <details> block (expands with no JS, keyboard-safe),
+         real numbered steps, and the SAME closing offer line with a
+         one-on-one button. Guide 5 teaches the CUSTOMER to move
+         their own phone — ATRG does not offer data transfer as a
+         service; the session offer is framed as sitting WITH them
+         while they do it. Customer-facing only; no relation to the
+         staff portal's guides, and nothing here mentions a portal. -->
+    <section id="help-guides" class="page">
+      <div class="section">
+        <div class="container">
+          <div class="section-header center">
+            <p class="eyebrow">Free help, in plain words</p>
+            <h1 class="section-title">Help Guides</h1>
+            <p class="section-copy">Short, honest walk-throughs for the problems people ask us about most &mdash; written the way we would explain them at your kitchen table. Tap a guide to open it. And if a guide does not fix it, every one of them ends with the same offer: we will come do it with you.</p>
+          </div>
+          <style>
+            .hg-list { max-width: 780px; margin: 0 auto; }
+            .hg-guide { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm); margin-bottom: 1rem; }
+            .hg-guide summary { display: flex; align-items: center; gap: 0.7rem; padding: 1rem 1.1rem; cursor: pointer; list-style: none; }
+            .hg-guide summary::-webkit-details-marker { display: none; }
+            .hg-guide summary:focus-visible { outline: 2px solid var(--blue, #1050A0); outline-offset: 2px; }
+            .hg-guide summary > i { color: var(--blue, #1050A0); font-size: 1.15rem; }
+            .hg-guide summary h3 { margin: 0; font-size: 1.12rem; flex: 1; text-align: left; }
+            .hg-chev { color: var(--muted); transition: transform 0.2s ease; }
+            .hg-guide[open] .hg-chev { transform: rotate(180deg); }
+            .hg-body { padding: 0 1.1rem 1.15rem; }
+            .hg-intro { color: var(--muted); margin-top: 0; }
+            .hg-steps { padding-left: 1.3rem; margin: 0.6rem 0; }
+            .hg-steps li { margin-bottom: 0.5rem; }
+            .hg-note { font-size: 0.92rem; color: var(--muted); }
+            .hg-stuck { margin-top: 1.1rem; padding: 1rem; border: 1px solid var(--blue-line, #9DBEDE); border-radius: var(--radius-sm); background: var(--blue-soft, #E4EEF9); text-align: center; }
+            .hg-stuck p { font-weight: 700; margin: 0 0 0.7rem; }
+          </style>
+          <div class="hg-list">
+          <details class="hg-guide" id="guide-scam">
+            <summary><i class="fas fa-shield-halved"></i><h3>How to spot a scam</h3><span class="hg-chev" aria-hidden="true"><i class="fas fa-chevron-down"></i></span></summary>
+            <div class="hg-body">
+              <p class="hg-intro">Phone and computer scams all follow the same scripts. Learn the shapes once and they lose their power &mdash; including the scary pop-up that swears your device is infected.</p>
+              <ol class="hg-steps">
+                <li><strong>Spot the biggest tell: urgency.</strong> A pop-up, text, or call says your computer is infected, your account is locked, or money is about to leave your account unless you act right now. Real companies do not warn you this way. Slow down &mdash; that pressure is the scam.</li>
+                <li><strong>Never call the number on a warning.</strong> A phone number shown on a pop-up, or in a &ldquo;security alert&rdquo; text or email, rings the scammer &mdash; not the company it pretends to be.</li>
+                <li><strong>Never pay with gift cards.</strong> No real company, bank, or government office accepts gift cards, wire transfers, or cryptocurrency as payment. If someone demands gift cards, it is a scam &mdash; every single time.</li>
+                <li><strong>Never hand over your screen or your codes.</strong> Do not install remote-access software for a stranger, do not let a caller direct you around your own device, and never type a password or a bank code into a page that a pop-up, text, or caller sent you to.</li>
+                <li><strong>If a warning window will not close:</strong> on Windows, press Ctrl + Alt + Delete, open Task Manager, and end your browser. On a Mac, press Command + Option + Esc and Force Quit the browser. On a phone, close the browser app completely. It was only a web page &mdash; closing it ends it.</li>
+                <li><strong>Got a &ldquo;your account is locked&rdquo; text or email?</strong> Do not tap its link. Open the company&rsquo;s real app, type the real website address in yourself, or call the number printed on the back of your bank card.</li>
+                <li><strong>If you already paid or gave out information:</strong> call your bank right away using the number on your card, change the password from a device you trust, and file a report at reportfraud.ftc.gov.</li>
+              </ol>
+              <p class="hg-note">When in doubt, stop. Hang up, close the tab, and talk it over with someone you trust &mdash; a family member, your bank on its real number, or us &mdash; before you send anyone anything.</p>
+              <div class="hg-stuck">
+                <p>Still stuck? We will come do it with you for $25 an hour.</p>
+                <a class="btn btn-primary" href="#repair" data-page="repair" data-open-oneonone>Book a one-on-one</a>
+              </div>
+            </div>
+          </details>
+          <details class="hg-guide" id="guide-storage">
+            <summary><i class="fas fa-database"></i><h3>When your phone says storage is full</h3><span class="hg-chev" aria-hidden="true"><i class="fas fa-chevron-down"></i></span></summary>
+            <div class="hg-body">
+              <p class="hg-intro">That &ldquo;storage almost full&rdquo; warning makes a phone slow, blocks updates, and can stop new photos from saving. Here is how to see what is taking the room and clear it out safely.</p>
+              <ol class="hg-steps">
+                <li><strong>Look before you delete.</strong> iPhone: Settings &rarr; General &rarr; iPhone Storage. Samsung and most Android phones: Settings &rarr; Battery and device care &rarr; Storage. The list ranks exactly what is eating the space &mdash; usually photos and videos first, then the biggest apps.</li>
+                <li><strong>Back up photos and videos before removing any of them.</strong> The photo backup guide on this page walks through it. Only delete what you know also exists somewhere else.</li>
+                <li><strong>Start with videos.</strong> One long video can take more room than hundreds of photos. Delete duplicates, blurry shots, and screen recordings you do not need.</li>
+                <li><strong>Empty the trash.</strong> Deleted photos sit in a Recently Deleted folder for about 30 days before the space actually frees up. iPhone: Photos &rarr; Albums &rarr; Recently Deleted &rarr; Delete All. Android: open the trash in the Gallery or Google Photos app and empty it.</li>
+                <li><strong>Check your messages.</strong> Years of shared videos pile up inside text threads. On the iPhone storage screen, look under Messages for large attachments you can review and remove.</li>
+                <li><strong>Remove apps you never open.</strong> iPhone: turn on Offload Unused Apps on the storage screen &mdash; it removes the app but keeps its data and its icon. Android: Settings &rarr; Apps, pick one, and Uninstall.</li>
+                <li><strong>Know what is safe.</strong> Safe to clear: downloaded shows and podcasts inside streaming apps, files in your Downloads folder you no longer need, duplicate downloads. Not safe to delete: your authenticator app and your password manager &mdash; they hold the keys to your accounts.</li>
+                <li><strong>Leave breathing room.</strong> Keep about 10% of the storage free. A completely full phone cannot install security updates and will keep nagging you.</li>
+              </ol>
+              <div class="hg-stuck">
+                <p>Still stuck? We will come do it with you for $25 an hour.</p>
+                <a class="btn btn-primary" href="#repair" data-page="repair" data-open-oneonone>Book a one-on-one</a>
+              </div>
+            </div>
+          </details>
+          <details class="hg-guide" id="guide-wifi">
+            <summary><i class="fas fa-wifi"></i><h3>Wi-Fi dead spots at home</h3><span class="hg-chev" aria-hidden="true"><i class="fas fa-chevron-down"></i></span></summary>
+            <div class="hg-body">
+              <p class="hg-intro">One slow room is usually a signal problem, not an internet problem. Work through these in order before you spend a dime on new gear.</p>
+              <ol class="hg-steps">
+                <li><strong>Restart in the right order.</strong> Unplug both the modem and the router. Wait 30 seconds. Plug the modem back in first and let its lights settle &mdash; give it a few minutes &mdash; then plug the router back in.</li>
+                <li><strong>Give the router a better seat.</strong> Central in the home, up on a shelf, and out in the open beats a corner floor spot every time. Keep it out of closed cabinets, off the floor, and away from thick brick, big metal objects, and the kitchen microwave, which interferes with Wi-Fi.</li>
+                <li><strong>Use the right band.</strong> 5 GHz is faster but travels a shorter distance &mdash; best in the same room as the router or the next one over. 2.4 GHz is slower but reaches much farther and passes through walls better &mdash; better for far bedrooms. If a far room keeps buffering, the device may be hanging onto the weak 5 GHz signal: tell it to forget the network and rejoin, or connect it to the 2.4 GHz name if your router lists both.</li>
+                <li><strong>Test before you buy.</strong> Stand next to the router and run a speed test (search &ldquo;speed test&rdquo; in your browser). Then run it in the dead room. Slow everywhere means the problem is your internet service or your plan &mdash; call your provider. Fast near the router and slow far away means a coverage problem, which the next steps fix.</li>
+                <li><strong>Know when mesh helps.</strong> One well-placed router covers most single-story homes. For a big home, two stories, or brick and plaster walls, a mesh system (two or three matching units) works far better than a cheap plug-in extender: an extender creates a second, slower network, while mesh keeps one network name and hands your device off as you move from room to room.</li>
+                <li><strong>Place mesh units halfway.</strong> Put each unit halfway between the router and the dead zone &mdash; not inside the dead zone itself, where there is no signal for it to pass along.</li>
+              </ol>
+              <div class="hg-stuck">
+                <p>Still stuck? We will come do it with you for $25 an hour.</p>
+                <a class="btn btn-primary" href="#repair" data-page="repair" data-open-oneonone>Book a one-on-one</a>
+              </div>
+            </div>
+          </details>
+          <details class="hg-guide" id="guide-printer">
+            <summary><i class="fas fa-print"></i><h3>Printer won&rsquo;t print? Work this list in order</h3><span class="hg-chev" aria-hidden="true"><i class="fas fa-chevron-down"></i></span></summary>
+            <div class="hg-body">
+              <p class="hg-intro">Most &ldquo;broken&rdquo; printers are just disconnected, or stuck behind one bad job. This list fixes the large majority of them &mdash; in the order we check them.</p>
+              <ol class="hg-steps">
+                <li><strong>The basics.</strong> Power on, paper loaded flat, no blinking error light. Open the paper-path covers and check for a jam &mdash; pull stuck paper out slowly with both hands. Do not yank.</li>
+                <li><strong>Same network check.</strong> Your phone or computer and the printer must be on the same Wi-Fi. A printer that stopped working right after a router change has usually just lost its connection: reconnect it from the printer&rsquo;s own screen &mdash; Settings or Network &rarr; Wireless or Wi-Fi Setup &mdash; pick your network, and enter the password.</li>
+                <li><strong>Restart in order.</strong> Turn the printer off for 30 seconds, then restart the computer or phone you are printing from. Many stuck jobs clear right here.</li>
+                <li><strong>Clear the print queue.</strong> Windows: Settings &rarr; Bluetooth &amp; devices &rarr; Printers &amp; scanners &rarr; your printer &rarr; Open print queue, then cancel the stuck jobs (right-click a job and Cancel, or the Printer menu &rarr; Cancel All Documents). Mac: System Settings &rarr; Printers &amp; Scanners &rarr; your printer &rarr; Print Queue, and delete the stuck jobs.</li>
+                <li><strong>Make it the default.</strong> Windows: on the same Printers &amp; scanners screen, open your printer &rarr; Manage &rarr; Set as default printer (and if jobs keep going to a printer you do not own, turn off &ldquo;Let Windows manage my default printer&rdquo;). Mac: System Settings &rarr; Printers &amp; Scanners &rarr; set Default printer to yours.</li>
+                <li><strong>Re-add it fresh.</strong> Still nothing? Remove the printer and add it again &mdash; this reloads the driver cleanly. Windows: Remove device, then Add device. Mac: the minus button, then plus. For most home printers, the maker&rsquo;s own app (HP Smart, Epson Smart Panel, Brother&rsquo;s app) sets it up more reliably than a generic driver.</li>
+                <li><strong>Confirm with a test page</strong> from the printer settings screen. If the test page prints, the printer is fine and the problem is the app you are printing from &mdash; try printing the same thing from a different app.</li>
+              </ol>
+              <div class="hg-stuck">
+                <p>Still stuck? We will come do it with you for $25 an hour.</p>
+                <a class="btn btn-primary" href="#repair" data-page="repair" data-open-oneonone>Book a one-on-one</a>
+              </div>
+            </div>
+          </details>
+          <details class="hg-guide" id="guide-new-phone">
+            <summary><i class="fas fa-mobile-screen"></i><h3>Moving to a new phone &mdash; do it yourself</h3><span class="hg-chev" aria-hidden="true"><i class="fas fa-chevron-down"></i></span></summary>
+            <div class="hg-body">
+              <p class="hg-intro">You do not need to hand your phone &mdash; and every password on it &mdash; to a stranger to move to a new one. The phone makers built the mover right into the setup. You make the move; this guide walks you through it, and your accounts stay in your hands the whole time.</p>
+              <ol class="hg-steps">
+                <li><strong>Prep the old phone.</strong> Charge both phones, connect both to Wi-Fi, and run the software update if one is waiting (iPhone: Settings &rarr; General &rarr; Software Update; Android: Settings &rarr; Software update). Moves go smoother when the old phone is current.</li>
+                <li><strong>Back up the old phone first, no matter what.</strong> iPhone: Settings &rarr; your name at the top &rarr; iCloud &rarr; iCloud Backup &rarr; Back Up Now. Android: Settings &rarr; Google &rarr; Backup &rarr; Back up now (Samsung: Settings &rarr; Accounts and backup &rarr; Back up data).</li>
+                <li><strong>Start the new phone and say yes to copying.</strong> iPhone to iPhone: turn the new one on next to the old one and Quick Start appears on the old phone &mdash; follow it and choose &ldquo;Transfer from iPhone&rdquo;. Android to Android: setup offers to copy from your old phone, and a cable is the fastest way. Samsung phones include Smart Switch, which also moves from an iPhone. Switching sides: on a new iPhone, choose &ldquo;Move Data from Android&rdquo; with the free Move to iOS app on the old phone; on a new Android, choose to copy from an iPhone when setup asks.</li>
+                <li><strong>Switching from iPhone to Android?</strong> First turn off iMessage on the old iPhone (Settings &rarr; Messages &rarr; switch iMessage off) so your text messages keep arriving on the new phone.</li>
+                <li><strong>Do not erase the old phone yet.</strong> Keep it charged and untouched for a week or two, until you are certain everything arrived.</li>
+                <li><strong>Check the essentials on the new phone:</strong> the photo count matches, your messages are there, contacts are complete, and you can sign in to your email and your banking apps.</li>
+                <li><strong>Move your two-factor codes with care.</strong> Authenticator apps (Google Authenticator, Microsoft Authenticator, and the like) do not always move by themselves, and skipping this step can lock you out of your accounts. While you still have the old phone: in Google Authenticator, use Transfer accounts &rarr; Export on the old phone and Import on the new one. For other apps, use their transfer option, or re-add each account from that account&rsquo;s security settings. Test one code before you retire the old phone.</li>
+                <li><strong>Last step, only when everything checks out:</strong> sign out of your Apple or Google account on the old phone, then factory-reset it before it is sold, traded in, or given away.</li>
+              </ol>
+              <p class="hg-note">Rather have company while you do it? That is exactly what our one-on-ones are: we sit with you at your home while you make the move on your own phones &mdash; nobody takes your accounts or your passwords.</p>
+              <div class="hg-stuck">
+                <p>Still stuck? We will come do it with you for $25 an hour.</p>
+                <a class="btn btn-primary" href="#repair" data-page="repair" data-open-oneonone>Book a one-on-one</a>
+              </div>
+            </div>
+          </details>
+          <details class="hg-guide" id="guide-photos">
+            <summary><i class="fas fa-images"></i><h3>Back up your photos so they&rsquo;re never lost</h3><span class="hg-chev" aria-hidden="true"><i class="fas fa-chevron-down"></i></span></summary>
+            <div class="hg-body">
+              <p class="hg-intro">If the only copy of your photos lives on your phone, one lost, stolen, or broken phone takes them with it. A backup is simply a second copy somewhere else &mdash; here is how to set one up and prove it is working.</p>
+              <ol class="hg-steps">
+                <li><strong>iPhone &mdash; turn on iCloud Photos.</strong> Settings &rarr; your name at the top &rarr; iCloud &rarr; Photos &rarr; turn on Sync this iPhone (iCloud Photos). Free iCloud storage is only 5 GB, which fills fast &mdash; most people need iCloud+ (50 GB runs about a dollar a month). If phone space is tight, also turn on Optimize iPhone Storage: full-size originals live in iCloud and smaller copies stay on the phone.</li>
+                <li><strong>Android &mdash; turn on Google Photos backup.</strong> Open the Google Photos app &rarr; tap your profile picture &rarr; Photos settings &rarr; Backup &rarr; turn it on. Free Google storage is 15 GB, shared across Photos, Gmail, and Drive; Google One adds more when you need it.</li>
+                <li><strong>Prove it is running &mdash; do not just trust the switch.</strong> iPhone: open Photos, go to the Library, and scroll to the very bottom; it should say your photos are synced with iCloud (or show &ldquo;Just Updated&rdquo;). Android: the Backup screen in Google Photos settings should say &ldquo;Backup complete&rdquo;. On any computer, sign in to the iCloud website or the Google Photos website and look at the Photos there &mdash; seeing your newest pictures on a second screen is the real proof.</li>
+                <li><strong>The 3-2-1 idea, in one plain sentence:</strong> keep 3 copies of what matters, on 2 different kinds of storage, with 1 copy kept outside your home &mdash; your phone plus a cloud backup already gets you most of the way there.</li>
+                <li><strong>Add a cheap second copy now and then.</strong> Plug the phone into a computer and copy the photos over (the Photos app on a Mac; on Windows, File Explorer &rarr; the phone &rarr; the DCIM folder), or save them to a USB drive. Once or twice a year is plenty for most families.</li>
+                <li><strong>Check twice a year.</strong> Open the cloud website, scroll to your newest photos, and confirm they are there. A backup nobody checks is a hope, not a backup.</li>
+              </ol>
+              <div class="hg-stuck">
+                <p>Still stuck? We will come do it with you for $25 an hour.</p>
+                <a class="btn btn-primary" href="#repair" data-page="repair" data-open-oneonone>Book a one-on-one</a>
+              </div>
+            </div>
+          </details>
+          </div>
+          <p style="text-align:center; margin-top:1.5rem;"><a class="btn btn-outline" href="#whatwedo" data-page="whatwedo">Back to What We Service</a></p>
         </div>
       </div>
     </section>
@@ -3491,6 +3653,11 @@
               <a class="btn btn-primary btn-sm" href="#repair" data-page="repair" data-open-oneonone>Book</a>
             </div>
           </div>
+          <!-- HELP_GUIDES_2026_11_06: classes page points at the free
+               self-help guides — same problems, try-it-yourself form. -->
+          <h3>Try it yourself first</h3>
+          <p>Some help does not need a visit at all. Our free <a href="#help-guides" data-page="help-guides">Help Guides</a> walk through the problems people ask us about most &mdash; spotting scams, a phone that says storage is full, Wi-Fi dead spots, a printer that won&rsquo;t print, moving to a new phone, and backing up photos &mdash; in plain words, step by step. And every guide ends with the same offer, if you would rather have company while you do it.</p>
+          <a class="btn btn-outline" href="#help-guides" data-page="help-guides"><i class="fas fa-book-open"></i> Read the Help Guides</a>
         </div>
       </div>
     </section>
@@ -3627,6 +3794,7 @@
           <a class="footer-link" href="#repair-or-replace" data-page="repair-or-replace">Repair or Replace</a>
           <a class="footer-link" href="#whatwedo" data-page="whatwedo">What We Service</a>
           <a class="footer-link" href="#classes" data-page="classes">One-on-One Packages</a>
+          <a class="footer-link" href="#help-guides" data-page="help-guides">Help Guides</a>
           <a class="footer-link" href="#atr-one" data-page="atr-one">ATR One Membership</a>
           <a class="footer-link" href="#shop" data-page="shop">Store</a> <!-- FOOTER_AUDIENCE_PAGES_2026_11_06 addendum: owner renamed the storefront "Shop" -> "Store" in customer-facing labels (Nov 6, 2026); data-page="shop" is internal and unchanged. -->
           <a class="footer-link" href="#account" data-page="account">Gift Cards</a>

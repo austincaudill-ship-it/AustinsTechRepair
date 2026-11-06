@@ -78,7 +78,12 @@
 /* SUPPORT_PACKAGES_2026_11_06: bumped to atrg-v33 — five ready-made
    one-on-one help packages land on the classes page (time quoted
    pure at $25/hr; the $15 visit fee stays a separate line). */
-const CACHE = "atrg-v33";
+/* HELP_GUIDES_2026_11_06: bumped to atrg-v34 — six free customer
+   help guides land on their own page (scams, full storage, Wi-Fi
+   dead spots, printers, moving to a new phone, photo backups),
+   each ending with the one-on-one offer; script.js and styles.css
+   are unchanged. */
+const CACHE = "atrg-v34";
 const CORE = [
   "/",
   "/index.html",
