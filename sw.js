@@ -41,14 +41,14 @@
 // the cart lives inside My Account). This pass also folds in
 // CART_STORAGE_GUARD_2026_11_06: a non-object saved cart or points
 // map now self-heals to empty instead of silently blocking adds.
-// ACCOUNT_FIX_PASS_3_4_2026_11_06: bumped to atrg-v16 — shop
+// ACCOUNT_FIX_PASS_3_4_2026_11_06: bumped to atrg-v17 — shop
 // tap-to-detail (cards open a product detail view; Add to cart
 // lives there), the account page opens with every drop-down
 // closed (Repairs no longer starts expanded), wizard estimates
 // SUM the selected repairs under "Your estimated repair price",
 // and the iPad Pro 12.9-inch wizard row carries its generation
 // qualifier.
-const CACHE = "atrg-v16";
+const CACHE = "atrg-v17";
 const CORE = [
   "/",
   "/index.html",
