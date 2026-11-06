@@ -24,7 +24,12 @@
 // panel's "Send us a message" button no longer dead-ends on an
 // account with no repairs: the tap routes straight to Schedule a
 // repair instead of only un-hiding a quiet note in place.
-const CACHE = "atrg-v12";
+// ACCOUNT_FIX_PASS_3_2_2026_11_06: bumped to atrg-v13 — the owner's
+// final shape for that button supersedes the v12 routing: it opens a
+// composer right in the Messages panel for every customer (general
+// messages land in the same public.messages store), and the header
+// gains its own cart button with the quick-glance drop-down.
+const CACHE = "atrg-v13";
 const CORE = [
   "/",
   "/index.html",

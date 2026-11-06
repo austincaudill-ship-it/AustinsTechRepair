@@ -1018,6 +1018,8 @@
       var ids = Object.keys(cart);
       var lines = ptsLines();
       if (cartCount) cartCount.textContent = cartQty();
+      var hdrCartCount = document.getElementById('hdr-cart-count'); /* ACCOUNT_FIX_PASS_3_2_2026_11_06: the header cart button's badge mirrors the shop one */
+      if (hdrCartCount) hdrCartCount.textContent = cartQty();
       // #cart-total is always the amount the Square checkout will
       // charge: points-paid lines come off the cash bill entirely.
       if (cartTotal) {
@@ -1110,27 +1112,52 @@
        keep opening the full drawer directly, as it always has. */
     var cartGlance = document.getElementById('cart-glance');
     var cartGlanceItems = document.getElementById('cart-glance-items');
-    function renderCartGlance() {
-      if (!cartGlance || !cartGlanceItems) return;
-      var totalRow = document.getElementById('cart-glance-total-row');
-      var totalEl = document.getElementById('cart-glance-total');
-      var totalLabel = document.getElementById('cart-glance-total-label');
-      var emptyEl = document.getElementById('cart-glance-empty');
-      var actionsEl = document.getElementById('cart-glance-actions');
+    /* ACCOUNT_FIX_PASS_3_2_2026_11_06 (owner correction, Nov 6, 2026):
+       there are now TWO glance panels fed by this one painter — the
+       Shop toolbar's (pass 3) and the header cart button's, which is
+       the button the owner actually taps. Same state, same figures,
+       same empty wording; each panel keeps its own anchor element
+       for outside-tap math. (The pass-3 outside handler looked the
+       anchor up with querySelector('.cart-glance-anchor') — the
+       first match in the document. With the header anchor now ahead
+       of the shop's, that lookup would have made the SHOP button's
+       own tap count as "outside" and closed its glance inside the
+       same tap — the open-then-close dead button all over again.
+       Both handlers below use their own stored anchor instead.) */
+    var hdrCartGlance = document.getElementById('hdr-cart-glance');
+    var hdrCartGlanceItems = document.getElementById('hdr-cart-glance-items');
+    var shopGlanceEls = {
+      panel: cartGlance, items: cartGlanceItems,
+      totalRow: document.getElementById('cart-glance-total-row'),
+      totalEl: document.getElementById('cart-glance-total'),
+      totalLabel: document.getElementById('cart-glance-total-label'),
+      emptyEl: document.getElementById('cart-glance-empty'),
+      actionsEl: document.getElementById('cart-glance-actions')
+    };
+    var hdrGlanceEls = {
+      panel: hdrCartGlance, items: hdrCartGlanceItems,
+      totalRow: document.getElementById('hdr-cart-glance-total-row'),
+      totalEl: document.getElementById('hdr-cart-glance-total'),
+      totalLabel: document.getElementById('hdr-cart-glance-total-label'),
+      emptyEl: document.getElementById('hdr-cart-glance-empty'),
+      actionsEl: document.getElementById('hdr-cart-glance-actions')
+    };
+    function paintCartGlance(els) {
+      if (!els.panel || !els.items) return;
       var cart = getCart();
       var ids = Object.keys(cart);
       if (!ids.length) {
-        cartGlanceItems.innerHTML = '';
-        if (totalRow) totalRow.hidden = true;
-        if (actionsEl) actionsEl.hidden = true;
-        if (emptyEl) emptyEl.hidden = false;
+        els.items.innerHTML = '';
+        if (els.totalRow) els.totalRow.hidden = true;
+        if (els.actionsEl) els.actionsEl.hidden = true;
+        if (els.emptyEl) els.emptyEl.hidden = false;
         return;
       }
-      if (emptyEl) emptyEl.hidden = true;
-      if (totalRow) totalRow.hidden = false;
-      if (actionsEl) actionsEl.hidden = false;
+      if (els.emptyEl) els.emptyEl.hidden = true;
+      if (els.totalRow) els.totalRow.hidden = false;
+      if (els.actionsEl) els.actionsEl.hidden = false;
       var ptsMap = getPtsMap();
-      cartGlanceItems.innerHTML = '';
+      els.items.innerHTML = '';
       ids.forEach(function (id) {
         var p = PRODUCTS.find(function (x) { return x.id === id; });
         if (!p) return;
@@ -1139,11 +1166,15 @@
         row.innerHTML = '<span class="cart-glance-name">' + p.name + '</span>' +
           '<span class="cart-glance-qty">&times;' + cart[id] + '</span>' +
           '<strong class="cart-glance-price">' + (ptsMap[id] ? fmtPts(p.pts * cart[id]) + ' pts' : money(p.price * cart[id])) + '</strong>';
-        cartGlanceItems.appendChild(row);
+        els.items.appendChild(row);
       });
       var lines = ptsLines();
-      if (totalEl) totalEl.textContent = money(lines.length ? cashSum() : cartSum());
-      if (totalLabel) totalLabel.textContent = lines.length ? 'Due at checkout' : 'Subtotal';
+      if (els.totalEl) els.totalEl.textContent = money(lines.length ? cashSum() : cartSum());
+      if (els.totalLabel) els.totalLabel.textContent = lines.length ? 'Due at checkout' : 'Subtotal';
+    }
+    function renderCartGlance() {
+      paintCartGlance(shopGlanceEls);
+      paintCartGlance(hdrGlanceEls);
     }
     function openCartGlance() {
       renderCartGlance();
@@ -1157,6 +1188,25 @@
     function toggleCartGlance() {
       if (!cartGlance) { openCart(); return; }
       if (cartGlance.hidden) openCartGlance(); else closeCartGlance();
+    }
+    var hdrCartBtn = document.getElementById('hdr-cart-open-btn');
+    var hdrCartToggle = document.getElementById('hdr-cart-glance-toggle');
+    function setHdrCartExpanded(on) {
+      if (hdrCartBtn) hdrCartBtn.setAttribute('aria-expanded', on ? 'true' : 'false');
+      if (hdrCartToggle) hdrCartToggle.setAttribute('aria-expanded', on ? 'true' : 'false');
+    }
+    function openHdrCartGlance() {
+      renderCartGlance();
+      if (hdrCartGlance) hdrCartGlance.hidden = false;
+      setHdrCartExpanded(true);
+    }
+    function closeHdrCartGlance() {
+      if (hdrCartGlance) hdrCartGlance.hidden = true;
+      setHdrCartExpanded(false);
+    }
+    function toggleHdrCartGlance() {
+      if (!hdrCartGlance) { openCart(); return; }
+      if (hdrCartGlance.hidden) openHdrCartGlance(); else closeHdrCartGlance();
     }
     window.atrOpenCart = openCart;
 
@@ -1177,19 +1227,41 @@
         var co = document.getElementById('cart-checkout');
         if (co) co.click();
       });
-      document.addEventListener('click', function (e) {
-        if (!cartGlance || cartGlance.hidden) return;
-        var anchor = document.querySelector('.cart-glance-anchor');
-        if (anchor && anchor.contains(e.target)) {
-          /* a navigation link inside the panel (Browse the shop)
-             still closes the glance on its way through */
-          if (e.target.closest && e.target.closest('[data-page]')) closeCartGlance();
-          return;
-        }
-        closeCartGlance();
+      /* ACCOUNT_FIX_PASS_3_2_2026_11_06: the header cart button AND
+         its chevron both toggle the header glance; its Open cart row
+         closes the glance, rides the router to the Shop page, and
+         opens the full drawer — the drawer's own open, unchanged. */
+      if (hdrCartBtn) hdrCartBtn.addEventListener('click', toggleHdrCartGlance);
+      if (hdrCartToggle) hdrCartToggle.addEventListener('click', toggleHdrCartGlance);
+      var hdrCartOpen = document.getElementById('hdr-cart-glance-open');
+      if (hdrCartOpen) hdrCartOpen.addEventListener('click', function () {
+        closeHdrCartGlance();
+        var link = document.querySelector('.nav-link[data-page="shop"], .menu-link[data-page="shop"]');
+        if (link) link.click();
+        openCart();
       });
-      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeCartGlance(); });
-      window.addEventListener('hashchange', closeCartGlance);
+      document.addEventListener('click', function (e) {
+        /* Each panel judges "outside" against its OWN anchor (see
+           the note at the panel lookups above). A tap on one panel's
+           button is outside the other panel's anchor, so the two
+           glances also close each other — only one is ever open. */
+        var panels = [
+          { panel: cartGlance, anchor: cartGlance ? cartGlance.closest('.cart-glance-anchor') : null, close: closeCartGlance },
+          { panel: hdrCartGlance, anchor: hdrCartGlance ? hdrCartGlance.closest('.cart-glance-anchor') : null, close: closeHdrCartGlance }
+        ];
+        panels.forEach(function (p) {
+          if (!p.panel || p.panel.hidden) return;
+          if (p.anchor && p.anchor.contains(e.target)) {
+            /* a navigation link inside the panel (Browse the shop)
+               still closes the glance on its way through */
+            if (e.target.closest && e.target.closest('[data-page]')) p.close();
+            return;
+          }
+          p.close();
+        });
+      });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closeCartGlance(); closeHdrCartGlance(); } });
+      window.addEventListener('hashchange', function () { closeCartGlance(); closeHdrCartGlance(); });
     }
     if (closeBtn) closeBtn.addEventListener('click', closeCart);
     if (overlay) overlay.addEventListener('click', closeCart);
@@ -2371,6 +2443,9 @@ if ("serviceWorker" in navigator) {
     var settingsView = document.getElementById('acct-view-settings');
     var rewardsView = document.getElementById('acct-view-rewards');
     var messagesView = document.getElementById('acct-view-messages');
+    /* ACCOUNT_FIX_PASS_3_2_2026_11_06 (ITEM C): the Orders view joins
+       the toggle set, same as Messages did. */
+    var ordersView = document.getElementById('acct-view-orders');
     if (!menuItems.length || !repairsView || !settingsView) return;
     acctMenuWired = true;
     window.__atrAcctMenuWired = true;
@@ -2382,13 +2457,14 @@ if ("serviceWorker" in navigator) {
        tapping its own row — it took a tap on a different row. The
        safety net in index.html carries the identical toggle. */
     function show(view) {
-      var panels = { repairs: repairsView, settings: settingsView, rewards: rewardsView, messages: messagesView };
+      var panels = { repairs: repairsView, settings: settingsView, rewards: rewardsView, messages: messagesView, orders: ordersView };
       var target = (panels[view] && !panels[view].hidden) ? null : view;
       repairsView.hidden = target !== 'repairs';
       settingsView.hidden = target !== 'settings';
       /* SITE_POINTS_SPEND_2026_10_30: third view — Rewards & Vouchers. */
       if (rewardsView) rewardsView.hidden = target !== 'rewards';
       if (messagesView) messagesView.hidden = target !== 'messages';
+      if (ordersView) ordersView.hidden = target !== 'orders';
       menuItems.forEach(function (btn) {
         var on = btn.getAttribute('data-acct-menu') === target;
         btn.classList.toggle('is-active', on);
