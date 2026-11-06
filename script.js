@@ -2834,8 +2834,11 @@ if ("serviceWorker" in navigator) {
       showCopied();
     }
     btn.addEventListener('click', function () {
+      /* FOOTER_BOTTOM_DELTA_2026_11_06: both paths guarded — navigator.share may
+         return a non-promise or throw synchronously in some
+         browsers/jsdom; the click must never die on it. */
       if (navigator.share) {
-        navigator.share(shareData).catch(function () {});
+        try { var p = navigator.share(shareData); if (p && p.catch) p.catch(function () {}); } catch (e) {}
       } else if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(shareData.url).then(showCopied, fallbackCopy);
       } else {
@@ -3920,5 +3923,29 @@ if ("serviceWorker" in navigator) {
         });
       }
     } catch (e) { hide(); }
+  });
+})();
+
+/* ==================== FOOTER_AUDIENCE_PAGES_2026_11_06: FOOTER ACCOUNT LINK ====================
+   The footer Account column's "Manage Your ATR One Account" link
+   opens My Account through the header account button itself — it
+   clicks #account-open-btn, so the tap runs the exact routing that
+   button uses (script.js goAccount + the index.html twin handler:
+   signed-in visitors land on their dashboard, signed-out visitors
+   on the sign-in view, the quick glance closes, and the human
+   checks mount after the page switch). There is deliberately no
+   data-page attribute on the link: the generic router would switch
+   the page without choosing the right account view. If the header
+   button is ever missing, the fallback is a plain hash navigation
+   to the account page. */
+(function () {
+  'use strict';
+  document.addEventListener('click', function (e) {
+    var t = e.target && e.target.closest ? e.target.closest('#footer-account-link') : null;
+    if (!t) return;
+    e.preventDefault();
+    var btn = document.getElementById('account-open-btn');
+    if (btn) { btn.click(); }
+    else if (window.location.hash !== '#account') { window.location.hash = '#account'; }
   });
 })();

@@ -58,7 +58,8 @@
 // Shop page itself stays, reachable by search, the footer, and
 // the account links), and a site-wide search (pages, repairs &
 // prices, shop items) lands in the header.
-const CACHE = "atrg-v20";
+/* FOOTER_PUBLISH_MERGE_2026_11_06: bumped to atrg-v21 — nine-column footer (Account / For Business / For Organizations), Education / Healthcare / Government audience pages, refreshed Business page, About Leadership section, centered footer bottom strip. */
+const CACHE = "atrg-v21";
 const CORE = [
   "/",
   "/index.html",

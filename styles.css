@@ -446,7 +446,8 @@ a { color: var(--brand); }
 /* ---------- Footer ---------- */
 .footer { background: var(--ink); color: #D8CBB4; padding: 4rem 0 2rem; font-size: 0.9rem; margin-top: 2rem; }
 .footer-container { max-width: var(--content-wide); margin: 0 auto; padding: 0 1.5rem; }
-.footer-top { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 2.5rem; margin-bottom: 3rem; }
+/* FOOTER_AUDIENCE_PAGES_2026_11_06: denser minmax + tighter gap so the nine sitemap columns fill the wide footer evenly instead of stranding one short column under a dead band (owner spacing complaint, Nov 6, 2026). Layout only — colors/theme rules unchanged. */
+.footer-top { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 2.25rem; margin-bottom: 3rem; }
 .footer-col-title { font-family: var(--font-display); font-weight: 700; color: #FAF6EE; font-size: 1.05rem; margin-bottom: 1.1rem; display: block; }
 .footer-link { display: block; color: #B9A98F; text-decoration: none; margin-bottom: 0.7rem; transition: color var(--transition); font-size: 0.9rem; overflow-wrap: anywhere; }
 .footer-link:hover { color: var(--gold); }
@@ -2534,3 +2535,26 @@ button.footer-link.a11y-footer-link {
   .site-search-input { font-size: 1.02rem; }
   .site-search-item { flex-direction: column; gap: 0.1rem; }
 }
+
+/* ---------- FOOTER_BOTTOM_DELTA_2026_11_06 (owner, Nov 6, 2026) ----------
+   Center the footer's bottom strip. The owner: the copyright and
+   "Proudly American owned" sat to the left — ATRG needs to be
+   centered. Same treatment the We Accept block got in fix pass 3.4:
+   a centered stack. Alignment only — every word below is unchanged.
+   Scope: the three .footer-disclaimer small-print paragraphs above
+   the bar (trademark disclaimer, ATR One disclaimer, Cloudflare
+   line) and the .footer-bottom bar itself (copyright, Proudly
+   American owned, Share button, Accessibility button, ATR Group
+   wordmark). Higher-specificity selectors (.footer .footer-bottom)
+   so they win over the earlier footer-bottom rules at every width,
+   including the >=921px chat-clearance padding-right:190px — in a
+   centered column nothing sits in the right corner that padding
+   was protecting, so it goes to 0. The Accessibility BUTTON element
+   is not changed or removed here (the nav set owns replacing it
+   with a footer text link); it only inherits this centering from
+   its parent strip. The Share button keeps its existing pill style
+   and theme-following color; it just centers in the stack. */
+.footer-disclaimer { text-align: center; }
+.footer .footer-bottom { flex-direction: column; flex-wrap: nowrap; align-items: center; justify-content: center; text-align: center; gap: 0.85rem; padding-right: 0; }
+.footer-bottom .footer-copy, .footer-bottom .footer-proud, .footer-bottom .footer-wordmark { text-align: center; }
+.footer-bottom .footer-share-btn { align-self: center; }
