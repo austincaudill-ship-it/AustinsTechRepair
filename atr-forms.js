@@ -7,9 +7,10 @@
  *
  * Every submission is written to Austin's own Supabase database
  * (project atr-customer-accounts) — that insert is the system of
- * record and the success criterion. A parallel FormSubmit AJAX email
- * alert goes to the business inbox so Austin is notified instantly,
- * exactly like the old lead emails.
+ * record and the success criterion. A parallel email alert, sent by
+ * the business's own backend (the form-alert Edge Function, mailing
+ * through the business's own Zoho SMTP), goes to the business inbox
+ * so Austin is notified instantly, exactly like the old lead emails.
  *
  * IMPORTANT (return=minimal): all inserts below intentionally use
  * supabase-js .insert() WITHOUT .select(). With no .select(), the
@@ -18,12 +19,12 @@
  * no SELECT policy — so an insert that asks for the row back would
  * FAIL even though the row was written. Never chain .select() here.
  *
- * NOTE (FormSubmit activation): the email alert endpoint below only
- * starts delivering after FormSubmit's one-time activation for this
- * address is completed (activation email link click). The alert
- * activates on first successful delivery; until then the database
- * insert still succeeds silently, so verify the alert separately
- * during go-live testing.
+ * NOTE (in-house alert, FORM_ALERTS_INHOUSE_2026_11_05): the email
+ * alert is sent by the form-alert Edge Function on this same
+ * Supabase project, through the business's own Zoho mail. If that
+ * function's Zoho secrets are not configured it declines and no
+ * alert sends - the database insert still succeeds silently, so
+ * verify the alert separately during go-live testing.
  *
  * Style: ES5, matching the rest of script.js on the site.
  *
@@ -50,7 +51,7 @@
  * Cloudflare Turnstile. init() injects the widget container and
  * registers the shared submit gate (turnstile.js) BEFORE the real
  * handler: no token + no server confirmation from the
- * verify-turnstile Edge Function = no insert, and the FormSubmit
+ * verify-turnstile Edge Function = no insert, and the email
  * alert (which only runs inside the handlers) never fires either.
  * The honeypot check still runs first inside each handler — spam
  * that fills it gets the usual fake success without ever reaching
@@ -62,9 +63,10 @@
   var SUPABASE_URL = 'https://lyujxpuicarblpkdzuuc.supabase.co';
   var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
   var SUPABASE_CDN = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
-  var ALERT_ENDPOINT = 'https://formsubmit.co/ajax/austin.caudill@austinstechrepairgroup.com';
-  /* WARRANTY_ALERT_WARRANTY_2026_11_05 (Austin, Nov 5, 2026): warranty form alerts go to the warranty mailbox he created, warranty@. Every other form keeps the shared endpoint above. */
-  var WARRANTY_ALERT_ENDPOINT = 'https://formsubmit.co/ajax/warranty@austinstechrepairgroup.com';
+  /* FORM_ALERTS_INHOUSE_2026_11_05 (Austin, Nov 5, 2026): form alert
+   * email is sent by our own backend - the form-alert Edge Function
+   * on this same Supabase project - never by an outside form service. */
+  var FORM_ALERT_URL = SUPABASE_URL + '/functions/v1/form-alert';
   var BUSINESS_PHONE_DISPLAY = '937-280-6243';
   var BUSINESS_PHONE_TEL = 'tel:9372806243';
   var MAX_RESUME_BYTES = 10 * 1024 * 1024; // 10 MB client-side guard
@@ -318,16 +320,32 @@
   }
 
   /* ---------------- email alert (fire-and-forget) ----------------
-   * Runs in parallel with the database insert and is never awaited:
-   * the database insert alone decides success or failure. */
-  function sendAlert(subject, rows, endpoint) {
-    var payload = { _subject: subject, _template: 'table' };
-    rows.forEach(function (r) { payload[r[0]] = r[1] === '' || r[1] == null ? '(not provided)' : r[1]; });
+   * FORM_ALERTS_INHOUSE_2026_11_05 (Austin, Nov 5, 2026: form email
+   * leaves every outside form service - our own forms, our own
+   * server, our own backend): the alert is sent by the form-alert
+   * Edge Function on the project's own Supabase backend, which
+   * mails it through the business's own Zoho SMTP (From the
+   * no-reply system mailbox, Reply-To service@). The function
+   * picks the recipient from the form key server-side - the
+   * browser never names an address. The call carries the project's
+   * public anon key as the bearer, the same key the Supabase
+   * client above already uses. Runs in parallel with the database
+   * insert and is never awaited: the database insert alone decides
+   * success or failure. */
+  function sendAlert(subject, rows, formKey) {
+    var clean = rows.map(function (r) {
+      return [String(r[0]), r[1] === '' || r[1] == null ? '(not provided)' : String(r[1])];
+    });
     try {
-      fetch(endpoint || ALERT_ENDPOINT, {
+      fetch(FORM_ALERT_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify(payload)
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+          'apikey': SUPABASE_ANON_KEY
+        },
+        body: JSON.stringify({ form: formKey, subject: subject, rows: clean })
       }).catch(function () { /* alert is best-effort; DB is the record */ });
     } catch (e) { /* ignore */ }
   }
@@ -693,7 +711,7 @@
         ['Marketing emails opt-in', row.marketing_opt_in ? 'Yes' : 'No'],
         ['Authorization signed by', webSignature ? webSignature.signerName : ''],
         ['Guided estimate shown', guided ? guided.priceRange : '']
-      ]);
+      ], 'service-request');
 
       withClient(function (client) {
         if (!client) { setBusy(form, false); showFormError(form, dbFailMessage()); return; }
@@ -773,7 +791,7 @@
         ['Phone', v.phone],
         ['Email', v.email],
         ['Message', v.message]
-      ]);
+      ], 'contact');
 
       withClient(function (client) {
         if (!client) { setBusy(form, false); showFormError(form, dbFailMessage()); return; }
@@ -879,7 +897,7 @@
             ['Reference contact', v.reference_contact],
             ['Resume', resumePath ? 'Uploaded (storage path: ' + resumePath + ')' : 'Not provided'],
             ['Cover letter / additional info', v.cover_notes]
-          ]);
+          ], 'job-application');
 
           // No .select() — see the return=minimal note at the top of this file.
           client.from('job_applications').insert(row).then(function (res) {
@@ -971,7 +989,7 @@
         ['Email', v.email],
         ['Investment focus / interest', v.focus],
         ['Message / background', v.message]
-      ]);
+      ], 'investors');
 
       withClient(function (client) {
         if (!client) { setBusy(form, false); showFormError(form, dbFailMessage()); return; }
@@ -1034,7 +1052,7 @@
         ['Overall experience', v.experience],
         ['Would recommend us?', v.would_recommend],
         ['Comments', v.comments]
-      ]);
+      ], 'feedback');
 
       withClient(function (client) {
         if (!client) { setBusy(form, false); showFormError(form, dbFailMessage()); return; }
@@ -1058,7 +1076,7 @@
    * the portal). Addressed to the business's warranty mailbox
    * (warranty@austinstechrepairgroup.com) — see the
    * REPORT in website-warranty-form-2026-11-03 for the gated email leg;
-   * the FormSubmit alert below follows the same pattern as every other
+   * the in-house form-alert call below follows the same pattern as every other
    * form here and is best-effort only. The ticket number from the
    * customer's receipt is optional on purpose: a customer who lost the
    * receipt can still file, and staff can look them up. */
@@ -1117,7 +1135,7 @@
         ['Part or service under warranty', v.part_service],
         ['Problem', v.problem],
         ['Preferred contact method', v.contact_pref]
-      ], WARRANTY_ALERT_ENDPOINT);
+      ], 'warranty-request');
 
       withClient(function (client) {
         if (!client) { setBusy(form, false); showFormError(form, dbFailMessage()); return; }
