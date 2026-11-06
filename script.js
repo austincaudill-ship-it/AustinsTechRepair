@@ -3963,7 +3963,7 @@ if ("serviceWorker" in navigator) {
     if (!openBtn || !overlay || !input || !resultsBox) return;
 
     var PAGE_NAMES = {
-      home: 'Home', repair: 'Repair', prices: 'Prices', whatwedo: 'What We Fix',
+      home: 'Home', repair: 'Repair', prices: 'Prices', whatwedo: 'What We Service',
       about: 'About', shop: 'Store', b2b: 'B2B', 'atr-one': 'ATR One Membership',
       careers: 'Careers', investors: 'Investors', contact: 'Contact',
       warranty: 'Warranty', 'warranty-request': 'Warranty Request',
