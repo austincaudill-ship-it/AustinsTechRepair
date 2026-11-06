@@ -2372,3 +2372,165 @@ html[data-theme="dark"] .pricing-free-card .amount { color: var(--brand); }
 .mm-tier-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 .mm-tier-info span { display: block; color: var(--muted); font-size: 0.88rem; }
 .mm-join.mm-current { opacity: 0.55; pointer-events: none; }
+/* ===== NAV_SEARCH_CLEANUP_2026_11_06 =====
+   Owner direction (Nov 6, 2026, voice call, Apple's nav as the
+   example): the nav names lose their pills/bubbles — plain text
+   links, Apple-style, the current page carried by weight, color,
+   and the underline the base .nav-link already draws. This block
+   retires the bubble half of SITE_NAV_BLOCK_BUTTONS_2026_11_02
+   (desktop top nav) and SITE_NAV_DRAWER_PILLS_2026_11_02
+   (slide-out menu links) WITHOUT touching anything else those
+   passes built: the Book a Repair CTA, the drawer's call row, the
+   trust band, recap/status pills, and section eyebrows all keep
+   their shapes. Tap targets stay generous — the padding the pill
+   passes set is kept; only the fill, border, and 999px radius go.
+   Palette variables only, so dark mode follows and text contrast
+   stays on the site's normal ink/brand-deep pairings (>= 4.5:1).
+   The same block carries the site-wide search: a header icon
+   button beside the account button, and the overlay panel the
+   search module in script.js drives. */
+@media (min-width: 921px) {
+  .nav-desktop .nav-link {
+    background: transparent;
+    border-color: transparent;
+    border-radius: 0;
+  }
+  .nav-desktop .nav-link:hover { background: transparent; border-color: transparent; }
+  .nav-desktop .nav-link.active {
+    background: transparent; border-color: transparent;
+    color: var(--blue); font-weight: 800;
+  }
+  .nav-desktop .nav-link:hover { color: var(--blue); }
+  .nav-desktop .nav-link::after { display: block; background: var(--blue); }
+}
+.menu-link {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+}
+.menu-link:last-child { border-bottom: none; }
+.menu-link:hover { background: transparent; border-color: var(--line); color: var(--blue); }
+.menu-link.active { background: transparent; border-color: var(--line); color: var(--blue); font-weight: 800; }
+.menu-link.active:hover { background: transparent; border-color: var(--line); color: var(--blue); }
+
+/* ---------- Site-wide search ---------- */
+.site-search-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 42px; height: 42px; border-radius: 50%;
+  background: var(--surface); border: 2px solid var(--line);
+  color: var(--ink); cursor: pointer; font-size: 1.02rem;
+  transition: background var(--transition), border-color var(--transition);
+}
+.site-search-btn:hover { background: var(--surface-warm); border-color: var(--brand); }
+/* Addendum 2 (owner confirmed): nav text follows the theme ink — the
+ * resting color stays var(--ink-soft) from the base rule (#4A3D30 on
+ * light, #D6C9B4 on dark; 10.3:1 / 10.4:1 on the header surface), the
+ * accent is blue, never orange. In dark mode --blue (#2E7CD6) measures
+ * only 4.02:1 on the dark header surface, so dark active/hover text
+ * and the underline use --blue-bright (#5EA0E6, 6.19:1). Light-mode
+ * --blue (#0057B8) measures 6.76:1. All four states clear 4.5:1 —
+ * asserted from the file's own variables in the test suite. */
+html[data-theme="dark"] .nav-desktop .nav-link:hover,
+html[data-theme="dark"] .nav-desktop .nav-link.active,
+html[data-theme="dark"] .menu-link.active,
+html[data-theme="dark"] .menu-link:hover {
+  color: var(--blue-bright);
+}
+html[data-theme="dark"] .nav-link::after { background: var(--blue-bright); }
+
+/* Addendum 3 + 11: header labels and the account name. The account
+ * label rides along wherever the header fits it; icon-only only where
+ * space runs out. Addendum 11 removed the header Book a Repair CTA
+ * (~111px freed) and slimmed the nav to five text items, so from
+ * 1024px up BOTH labels fit: the account button shows the signed-in
+ * person's NAME (add. 11 — the word "Portal" rides the same class on
+ * the staff button), capped with an ellipsis so a long name truncates
+ * gracefully instead of wrapping or pushing items off. Budget (this
+ * stylesheet's own values, nav gap 0.6rem per the spread rule below):
+ *   1024px — fits: ~25px slack for staff with the owner's name;
+ *            a staff name at the 130px cap lands within ~3px of the
+ *            line (inside estimation error — the cap + space-between
+ *            absorb it; nothing can wrap, every header child is
+ *            flex:none with nowrap labels).
+ *   1180px — fits with ~130px slack even at the name cap.
+ *   1366px — fits with ~300px slack.
+ *   921–1023px and phones (<=920px): labels off, icon-only — on phones
+ *   the Portal button therefore stays icon-only (add. 11 asked which:
+ *   phones). Wide desktop (>1400px) keeps the labels as before. */
+@media (min-width: 1024px) and (max-width: 1400px) {
+  .account-label { display: inline; }
+}
+#account-label {
+  max-width: 130px; overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap; vertical-align: middle;
+}
+/* Addendum 11 (item 4): spread the five nav items a little more
+ * evenly in the tablet band with the room the CTA removal freed
+ * (base band gap was 0.3rem; wide desktop keeps its 1.4rem). */
+@media (min-width: 921px) and (max-width: 1400px) {
+  .nav-desktop { gap: 0.6rem; }
+}
+
+/* Addendum 6: the footer Accessibility control is a plain text link
+ * (a <button> carrying .footer-link so the a11y panel wiring, which
+ * binds by id, works unchanged) — strip the button chrome so it reads
+ * as a footer link like its neighbors. */
+button.footer-link.a11y-footer-link {
+  background: none; border: 0; padding: 0; font: inherit;
+  text-align: left; cursor: pointer; width: 100%;
+}
+/* The nav Reviews item scrolls to the home testimonials block. */
+#home-reviews { scroll-margin-top: 90px; }
+
+.site-search {
+  position: fixed; inset: 0; z-index: 1600;
+  background: rgba(44, 35, 26, 0.45); backdrop-filter: blur(6px);
+  overflow-y: auto; padding: 4.5rem 1rem 2rem;
+}
+.site-search[hidden] { display: none; }
+.site-search-panel {
+  max-width: 680px; margin: 0 auto;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius-xl); box-shadow: var(--shadow-md);
+  padding: 1.1rem 1.1rem 0.6rem;
+}
+.site-search-bar {
+  display: flex; align-items: center; gap: 0.7rem;
+  border-bottom: 2px solid var(--line); padding-bottom: 0.8rem;
+}
+.site-search-bar > i { color: var(--brand); font-size: 1.15rem; }
+.site-search-input {
+  flex: 1 1 auto; min-width: 0; border: none; background: transparent;
+  color: var(--ink); font: inherit; font-size: 1.15rem; font-weight: 600;
+}
+.site-search-input:focus { outline: none; }
+.site-search-close {
+  flex: none; display: inline-flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: var(--surface-warm); border: 1px solid var(--line);
+  color: var(--ink); cursor: pointer; font-size: 1rem;
+}
+.site-search-close:hover { border-color: var(--brand); color: var(--brand-deep); }
+.site-search-results { padding: 0.4rem 0 0.6rem; max-height: 60vh; overflow-y: auto; }
+.site-search-hint, .site-search-none { color: var(--muted); font-size: 0.95rem; padding: 0.6rem 0.2rem; }
+.site-search-group {
+  font-size: 0.75rem; font-weight: 800; letter-spacing: 1.2px;
+  text-transform: uppercase; color: var(--muted);
+  margin: 0.9rem 0.2rem 0.3rem;
+}
+.site-search-item {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 1rem;
+  width: 100%; text-align: left; background: transparent; border: none;
+  border-bottom: 1px solid var(--line); padding: 0.65rem 0.2rem;
+  cursor: pointer; font: inherit; color: var(--ink);
+}
+.site-search-item:last-child { border-bottom: none; }
+.site-search-item:hover, .site-search-item:focus-visible { color: var(--brand-deep); outline: none; }
+.site-search-item-title { font-weight: 700; font-size: 0.98rem; }
+.site-search-item-sub { flex: none; font-size: 0.82rem; font-weight: 700; color: var(--brand-deep); }
+@media (max-width: 560px) {
+  .site-search { padding-top: 2.5rem; }
+  .site-search-input { font-size: 1.02rem; }
+  .site-search-item { flex-direction: column; gap: 0.1rem; }
+}

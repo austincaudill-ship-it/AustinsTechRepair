@@ -998,6 +998,11 @@
         desc: 'A three-in-one wireless charging station for a nightstand or desk — one spot that charges your everyday carry together.' }
     ];
 
+    /* NAV_SEARCH_CLEANUP_2026_11_06: the site-wide search module at
+       the end of this file reads the same catalog through this one
+       handle — no second copy of the listings is kept anywhere. */
+    window.ATR_SHOP_PRODUCTS = PRODUCTS;
+
     var grid = document.getElementById('product-grid');
     var cartCount = document.getElementById('cart-count');
     var cartItems = document.getElementById('cart-items');
@@ -1737,7 +1742,10 @@
          drawer's own open. */
       var acctCartOpen = document.getElementById('acct-cart-open');
       if (acctCartOpen) acctCartOpen.addEventListener('click', function () {
-        var link = document.querySelector('.nav-link[data-page="shop"], .menu-link[data-page="shop"]');
+        /* NAV_SEARCH_CLEANUP_2026_11_06: the nav and menu Shop links
+           are gone (owner direction), so the ride to the Shop page
+           falls back to the footer Shop Accessories link. */
+        var link = document.querySelector('.nav-link[data-page="shop"], .menu-link[data-page="shop"], .footer-link[data-page="shop"]');
         if (link) link.click();
         openCart();
       });
@@ -2040,8 +2048,9 @@
     function renderHeader() {
       var s = getSession();
       if (s && acctLabel) {
-        var pts = (typeof s.points === 'number') ? s.points : 0;
-        acctLabel.textContent = firstName(s.name) + ' · ' + pts + ' pts';
+        /* NAV_SEARCH_CLEANUP_2026_11_06 (addendum 11): header account
+           button shows the signed-in person's full NAME (no points). */
+        acctLabel.textContent = String(s.name || '').trim() || firstName(s.name);
         if (openBtn) openBtn.classList.add('logged-in');
       } else if (acctLabel) {
         acctLabel.textContent = 'Account';
@@ -3084,7 +3093,9 @@ if ("serviceWorker" in navigator) {
     if (num) num.textContent = pts;
     var s2 = getSession();
     var label = $('account-label');
-    if (label && s2) label.textContent = firstName(s2.name) + ' · ' + pts + ' pts';
+    /* NAV_SEARCH_CLEANUP_2026_11_06 (addendum 11): keep the header
+       account button on the person's NAME when points refresh. */
+    if (label && s2) label.textContent = String(s2.name || '').trim() || firstName(s2.name);
   }
 
   function fetchBalance(customerId) {
@@ -3543,5 +3554,371 @@ if ("serviceWorker" in navigator) {
 
     paintCartPanel();
     if (getSession()) { refreshBalances(); refreshVoucherSurfaces(); }
+  });
+})();
+
+
+/* ==================== NAV_SEARCH_CLEANUP_2026_11_06: SITE-WIDE SEARCH ====================
+   Owner direction (Nov 6, 2026): a search button in the header that
+   searches ANYTHING on the website. The index is built at runtime
+   from what is actually on the page — nothing is invented:
+   - Pages: every section.page, titled with the site's own names,
+     keyed by the real headings inside that section.
+   - Repairs & prices: window.ATR_PRICE_DATA (the same book the
+     repair wizard and the Prices lookup read). A tap drives the
+     Prices lookup itself — type tile, brand and model dropdowns,
+     repair tile — so the visitor lands on the real starting price.
+   - Shop items: window.ATR_SHOP_PRODUCTS (the shop module's own
+     catalog, exposed above). A tap opens the Shop page with the
+     shop's own search applied to that item.
+   Navigation reuses the site's existing router: results carry the
+   same data-page anchors the nav uses, clicked through the normal
+   delegated handler. Escape, the close button, and a tap on the
+   dimmed area all close the panel — nobody is ever trapped. */
+(function () {
+  'use strict';
+  document.addEventListener('DOMContentLoaded', function () {
+    var openBtn = document.getElementById('site-search-open');
+    var overlay = document.getElementById('site-search');
+    var input = document.getElementById('site-search-input');
+    var resultsBox = document.getElementById('site-search-results');
+    var closeBtn = document.getElementById('site-search-close');
+    if (!openBtn || !overlay || !input || !resultsBox) return;
+
+    var PAGE_NAMES = {
+      home: 'Home', repair: 'Repair', prices: 'Prices', whatwedo: 'What We Fix',
+      about: 'About', shop: 'Store', b2b: 'B2B', 'atr-one': 'ATR One Membership',
+      careers: 'Careers', investors: 'Investors', contact: 'Contact',
+      warranty: 'Warranty', 'warranty-request': 'Warranty Request',
+      privacy: 'Privacy Policy', terms: 'Terms of Service',
+      'service-agreement': 'Service Agreement', review: 'Leave a Review',
+      values: 'Our Values', account: 'My Account', phones: 'Phones',
+      tablets: 'Tablets', computers: 'Computers', consoles: 'Game Consoles',
+      smartwatches: 'Smartwatches', websites: 'Websites',
+      network: 'Network Installs', cabling: 'Internet Cabling',
+      classes: 'One-on-One Classes'
+    };
+    var GROUP_LABELS = { page: 'Pages', repair: 'Repairs & prices', shop: 'Store items' };
+    var GROUP_CAPS = { page: 8, repair: 10, shop: 8 };
+    /* NAV_SEARCH_CLEANUP_2026_11_06 (addendum 4): the storefront's
+     * customer-facing name is "Store" (PAGE_NAMES above); "shop" stays
+     * behind as a search alias so the old word still finds the page.
+     * Internal ids (data-page="shop", section id) are unchanged. */
+    var PAGE_ALIASES = { shop: 'shop', b2b: 'business enterprise pos small business' };
+
+    function norm(s) { return String(s == null ? '' : s).toLowerCase(); }
+    function fmtPrice(p) { return (p % 1 === 0) ? '$' + p : '$' + p.toFixed(2); }
+
+    var index = null;
+    function buildIndex() {
+      if (index) return index;
+      index = [];
+      document.querySelectorAll('section.page').forEach(function (sec) {
+        if (!sec.id) return;
+        var heads = [];
+        sec.querySelectorAll('h1, h2, h3').forEach(function (h) {
+          var t = h.textContent.trim().replace(/\s+/g, ' ');
+          if (t) heads.push({ text: t, el: h });
+        });
+        var title = PAGE_NAMES[sec.id] || (heads.length ? heads[0].text : sec.id);
+        index.push({
+          kind: 'page', title: title, sub: 'Page', page: sec.id, heads: heads,
+          hay: norm(title + ' ' + (PAGE_ALIASES[sec.id] || '') + ' ' + heads.map(function (h) { return h.text; }).join(' '))
+        });
+      });
+      var D = window.ATR_PRICE_DATA || {};
+      Object.keys(D).forEach(function (type) {
+        Object.keys(D[type]).forEach(function (brand) {
+          Object.keys(D[type][brand]).forEach(function (model) {
+            var repairs = D[type][brand][model] || {};
+            Object.keys(repairs).forEach(function (rname) {
+              var price = repairs[rname];
+              var title = brand + ' ' + model + ' \u2014 ' + rname;
+              index.push({
+                kind: 'repair', title: title,
+                sub: (typeof price === 'number') ? 'Starting at ' + fmtPrice(price) : 'Price confirmed up front',
+                type: type, brand: brand, model: model, repair: rname,
+                price: (typeof price === 'number') ? price : null,
+                hay: norm(title + ' ' + type)
+              });
+            });
+          });
+        });
+      });
+      (window.ATR_SHOP_PRODUCTS || []).forEach(function (p) {
+        var hay = norm(p.name + ' ' + (p.cat || '') + ' ' + (p.desc || '') + ' ' +
+          (p.variants ? p.variants.map(function (v) { return v.label; }).join(' ') : ''));
+        index.push({
+          kind: 'shop', title: p.name, sub: 'Store item \u00B7 ' + (p.cat || 'Accessories'),
+          name: p.name, hay: hay
+        });
+      });
+      return index;
+    }
+
+    function runSearch(qRaw) {
+      var q = norm(qRaw).trim();
+      if (!q) return [];
+      var toks = q.split(/\s+/).filter(Boolean);
+      var scored = [];
+      buildIndex().forEach(function (e) {
+        var ok = true;
+        for (var i = 0; i < toks.length; i++) {
+          if (e.hay.indexOf(toks[i]) === -1) { ok = false; break; }
+        }
+        if (!ok) return;
+        var lt = norm(e.title);
+        var score = 0;
+        if (lt === q) score += 100;
+        if (lt.indexOf(q) === 0) score += 40;
+        if (lt.indexOf(q) > -1) score += 25;
+        toks.forEach(function (t) { if (lt.indexOf(t) > -1) score += 5; });
+        if (e.kind === 'page') score += 2;
+        scored.push({ e: e, score: score });
+      });
+      scored.sort(function (a, b) { return b.score - a.score; });
+      var counts = { page: 0, repair: 0, shop: 0 };
+      var out = [];
+      scored.forEach(function (s) {
+        if (counts[s.e.kind] < GROUP_CAPS[s.e.kind]) { counts[s.e.kind]++; out.push(s.e); }
+      });
+      return out;
+    }
+
+    function goToPage(pageId) {
+      var a = document.createElement('a');
+      a.setAttribute('href', '#' + pageId);
+      a.setAttribute('data-page', pageId);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+
+    function pickTileText(boxId, text) {
+      var box = document.getElementById(boxId);
+      if (!box) return false;
+      var tiles = box.querySelectorAll('button');
+      for (var i = 0; i < tiles.length; i++) {
+        if (tiles[i].textContent.trim().replace(/\s+/g, ' ') === text) { tiles[i].click(); return true; }
+      }
+      return false;
+    }
+    function setSelect(id, value) {
+      var sel = document.getElementById(id);
+      if (!sel) return false;
+      for (var i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value === value) {
+          sel.value = value;
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function openRepairResult(e) {
+      goToPage('prices');
+      var steps = [
+        function () { pickTileText('dt-types', e.type); },
+        function () { setSelect('dt-brands', e.brand); },
+        function () { setSelect('dt-models', e.model); },
+        function () {
+          pickTileText('dt-repairs', e.repair);
+          var r = document.getElementById('dt-result');
+          if (r) { try { r.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (err) {} }
+        }
+      ];
+      steps.forEach(function (fn, i) { setTimeout(fn, 200 + i * 150); });
+    }
+
+    function openShopResult(e) {
+      goToPage('shop');
+      setTimeout(function () {
+        var s = document.getElementById('shop-search');
+        if (s) {
+          s.value = e.name;
+          s.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        var sec = document.getElementById('shop');
+        if (sec) { try { sec.scrollIntoView({ behavior: 'auto', block: 'start' }); } catch (err) {} }
+      }, 250);
+    }
+
+    function openPageResult(e, q) {
+      goToPage(e.page);
+      var target = null;
+      var lq = norm(q).trim();
+      if (lq && norm(e.title) !== lq) {
+        for (var i = 0; i < e.heads.length; i++) {
+          if (norm(e.heads[i].text).indexOf(lq) > -1) { target = e.heads[i].el; break; }
+        }
+      }
+      if (target) {
+        setTimeout(function () { try { target.scrollIntoView({ behavior: 'auto', block: 'start' }); } catch (err) {} }, 850);
+      }
+    }
+
+    function activate(e, q) {
+      closeSearch();
+      if (e.kind === 'repair') openRepairResult(e);
+      else if (e.kind === 'shop') openShopResult(e);
+      else openPageResult(e, q);
+    }
+
+    function render(qRaw) {
+      var q = String(qRaw || '');
+      resultsBox.innerHTML = '';
+      if (!q.trim()) {
+        var hint = document.createElement('p');
+        hint.className = 'site-search-hint';
+        hint.textContent = 'Start typing \u2014 search looks across every page, the repair price book, and the store.';
+        resultsBox.appendChild(hint);
+        return;
+      }
+      var list = runSearch(q);
+      if (!list.length) {
+        var none = document.createElement('p');
+        none.className = 'site-search-none';
+        none.textContent = 'No matches for \u201C' + q.trim() + '\u201D. Try a shorter word \u2014 a device, a repair, or a page name \u2014 or close search and use the menu.';
+        resultsBox.appendChild(none);
+        return;
+      }
+      ['page', 'repair', 'shop'].forEach(function (kind) {
+        var items = list.filter(function (e) { return e.kind === kind; });
+        if (!items.length) return;
+        var h = document.createElement('p');
+        h.className = 'site-search-group';
+        h.textContent = GROUP_LABELS[kind];
+        resultsBox.appendChild(h);
+        items.forEach(function (e) {
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'site-search-item';
+          b.setAttribute('data-kind', e.kind);
+          var t = document.createElement('span');
+          t.className = 'site-search-item-title';
+          t.textContent = e.title;
+          var s = document.createElement('span');
+          s.className = 'site-search-item-sub';
+          s.textContent = e.sub;
+          b.appendChild(t); b.appendChild(s);
+          b.addEventListener('click', function () { activate(e, q); });
+          resultsBox.appendChild(b);
+        });
+      });
+    }
+
+    function lockScroll() {
+      document.documentElement.style.overflow = 'hidden';
+      document.body.style.overflow = 'hidden';
+    }
+    function unlockScroll() {
+      document.documentElement.style.overflow = '';
+      document.body.style.overflow = '';
+    }
+    function isOpen() { return !overlay.hidden; }
+    function openSearch() {
+      buildIndex();
+      overlay.hidden = false;
+      lockScroll();
+      render(input.value);
+      setTimeout(function () { try { input.focus(); } catch (e) {} }, 30);
+    }
+    function closeSearch() {
+      if (!isOpen()) return;
+      overlay.hidden = true;
+      unlockScroll();
+    }
+
+    openBtn.addEventListener('click', openSearch);
+    if (closeBtn) closeBtn.addEventListener('click', closeSearch);
+    overlay.addEventListener('click', function (ev) { if (ev.target === overlay) closeSearch(); });
+    document.addEventListener('keydown', function (ev) {
+      if (isOpen() && (ev.key === 'Escape' || ev.keyCode === 27)) closeSearch();
+    });
+    input.addEventListener('input', function () { render(input.value); });
+    input.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Enter') {
+        var first = resultsBox.querySelector('.site-search-item');
+        if (first) { ev.preventDefault(); first.click(); }
+      }
+    });
+
+    /* Test/verification handle (same pattern as the lookup's own
+       session hand-off): lets the harness drive the real module. */
+    window.atrSiteSearch = { open: openSearch, close: closeSearch, run: runSearch, isOpen: isOpen };
+  });
+})();
+
+/* =====================================================================
+   NAV_SEARCH_CLEANUP_2026_11_06 (addendum 2) — PORTAL BUTTON VISIBILITY
+   Owner's "second layer of security": the header Portal link
+   (#emp-dash-link) ships with the hidden attribute in index.html and is
+   unhidden ONLY after the website's own Supabase session verifies the
+   signed-in user is staff — the same employee_profiles row check
+   portal.html's verifyEmployee gate performs (portal.js reads
+   employee_profiles with the signed-in user's JWT; this module mirrors
+   that read with the website session's client). Fail CLOSED at every
+   step: no session, no client, a read error, or no row all leave the
+   button hidden, and sign-out hides it again. RLS check (verified
+   from the schema record, hidden_files/supabase-employee-hub.sql):
+   employee_profiles carries the SELECT policy "Employees read own
+   profile" (TO authenticated, USING auth.uid() = id), so the direct
+   read is allowed for the caller's own row from the website session.
+   If that read ever errors, the module falls back to the EXISTING
+   public.is_employee() SECURITY DEFINER boolean — no new SQL is
+   needed for this gate (see is_staff.sql in this build folder).
+   ===================================================================== */
+(function () {
+  'use strict';
+  document.addEventListener('DOMContentLoaded', function () {
+    var link = document.getElementById('emp-dash-link');
+    if (!link) return;
+    var SUPABASE_URL = 'https://lyujxpuicarblpkdzuuc.supabase.co';
+    var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
+    var sb = null;
+    function getClient() {
+      if (sb) return sb;
+      if (window.supabase && window.supabase.createClient) {
+        try { sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch (e) { sb = null; }
+      }
+      return sb;
+    }
+    function show() { link.hidden = false; }
+    function hide() { link.hidden = true; }
+    hide(); /* fail closed from the first frame */
+    function rpcFallback(client) {
+      if (!client || typeof client.rpc !== 'function') { hide(); return; }
+      try {
+        client.rpc('is_employee').then(function (res) {
+          if (res && !res.error && res.data === true) { show(); } else { hide(); }
+        }).catch(function () { hide(); });
+      } catch (e) { hide(); }
+    }
+    function check(user) {
+      var client = getClient();
+      if (!user || !client) { hide(); return; }
+      try {
+        client.from('employee_profiles').select('id').eq('id', user.id).maybeSingle()
+          .then(function (res) {
+            if (res && res.error) { rpcFallback(client); return; }
+            if (res && res.data && res.data.id) { show(); } else { hide(); }
+          })
+          .catch(function () { rpcFallback(client); });
+      } catch (e) { rpcFallback(client); }
+    }
+    var client = getClient();
+    if (!client) return;
+    try {
+      client.auth.getSession().then(function (res) {
+        var session = res && res.data ? res.data.session : null;
+        check(session ? session.user : null);
+      }).catch(function () { hide(); });
+      if (client.auth && typeof client.auth.onAuthStateChange === 'function') {
+        client.auth.onAuthStateChange(function (_event, session) {
+          check(session ? session.user : null);
+        });
+      }
+    } catch (e) { hide(); }
   });
 })();

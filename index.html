@@ -72,21 +72,28 @@
         <span class="brand-sub">Mobile Repair &mdash; Ohio</span>
       </div>
     </a>
-        <nav class="nav-desktop" aria-label="Main navigation">
-      <a class="nav-link active" href="#home" data-page="home">Home</a>
-      <a class="nav-link" href="#repair" data-page="repair">Repair</a>
-      <a class="nav-link" href="#prices" data-page="prices">Prices</a>
+        <!-- NAV_SEARCH_CLEANUP_2026_11_06 (addenda 5, 7, 8, 9, 10, 11):
+         FINAL desktop nav = What We Fix, Prices, About, ATR One,
+         Reviews. Out: Shop (brief), B2B (5), Careers + Investors +
+         Contact (9), the Home word (10 — the logo is the home button),
+         and Repair (11's final set; booking lives in page CTAs, the
+         mobile menu's own CTA, and the phone bottom bar). ATR One is
+         labeled just "ATR One" (8); Reviews targets the customer
+         reviews block on Home via data-guide. -->
+    <nav class="nav-desktop" aria-label="Main navigation">
       <a class="nav-link" href="#whatwedo" data-page="whatwedo">What We Fix</a>
+      <a class="nav-link" href="#prices" data-page="prices">Prices</a>
       <a class="nav-link" href="#about" data-page="about">About</a>
-      <a class="nav-link" href="#shop" data-page="shop">Shop</a>
-      <a class="nav-link" href="#b2b" data-page="b2b">B2B</a>
-      <a class="nav-link" href="#contact" data-page="contact">Contact</a>
+      <a class="nav-link" href="#atr-one" data-page="atr-one">ATR One</a>
+      <a class="nav-link" href="#home" data-page="home" data-guide="home-reviews">Reviews</a>
     </nav>
 
     <div class="header-actions">
       <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark/light mode">
         <i class="fas fa-moon" id="theme-icon"></i>
       </button>
+      <!-- NAV_SEARCH_CLEANUP_2026_11_06: site-wide search button, in the header on every layout -->
+      <button class="site-search-btn" id="site-search-open" type="button" aria-label="Search the site" title="Search the site"><i class="fas fa-search" aria-hidden="true"></i></button>
       <span class="acct-glance-anchor">
         <button class="account-btn" id="account-open-btn" aria-label="Your account" title="Account & rewards">
           <i class="fas fa-user-circle"></i>
@@ -109,8 +116,17 @@
            same cart state; the header keeps the account button only,
            and the Shop page keeps its own cart button, glance, and
            the full cart drawer. -->
-      <a class="btn btn-outline btn-sm emp-dash-link" id="emp-dash-link" href="portal.html" data-page="employee-dashboard"><i class="fas fa-screwdriver-wrench"></i> <span class="account-label">Portal</span></a>
-      <a class="btn btn-primary header-cta" href="#repair" data-page="repair"><i class="fas fa-wrench"></i> Book a Repair</a>
+      <!-- NAV_SEARCH_CLEANUP_2026_11_06 (addendum 2): the Portal link
+           ships HIDDEN. It is unhidden only after the site verifies the
+           signed-in user is staff (employee_profiles) — see the portal
+           visibility module at the end of script.js. Fail closed: no
+           session, no staff row, or any check error = it stays hidden. -->
+      <a class="btn btn-outline btn-sm emp-dash-link" id="emp-dash-link" href="portal.html" data-page="employee-dashboard" hidden><i class="fas fa-screwdriver-wrench"></i> <span class="account-label">Portal</span></a>
+      <!-- NAV_SEARCH_CLEANUP_2026_11_06 (addendum 11): the Book a Repair
+           button is REMOVED from the header (owner: tacky; frees room
+           for the account name + Portal word). Booking entry points
+           elsewhere are untouched: page CTAs, the mobile menu's own
+           Book a Repair button, and the phone bottom bar's Repair. -->
     </div>
   </header>
 
@@ -121,17 +137,18 @@
       <button class="menu-close" id="menu-close" type="button" aria-label="Close menu"><i class="fas fa-times"></i></button>
       <p id="menu-title" class="eyebrow">Navigation</p>
       <div class="menu-links">
+        <!-- NAV_SEARCH_CLEANUP_2026_11_06 (addenda 5, 7, 8, 9, 10, 11):
+             mobile menu = Home + the desktop five (What We Fix, Prices,
+             About, ATR One, Reviews). Home stays here only (add. 10);
+             B2B, Careers, Investors, Contact are out (5, 9) — footer +
+             search carry them; Repair is out (11) — the bottom touch
+             bar and this menu's own Book a Repair button carry booking. -->
         <a class="menu-link active" href="#home" data-page="home">Home</a>
-        <a class="menu-link" href="#repair" data-page="repair">Repair</a>
-        <a class="menu-link" href="#prices" data-page="prices">Prices</a>
         <a class="menu-link" href="#whatwedo" data-page="whatwedo">What We Fix</a>
+        <a class="menu-link" href="#prices" data-page="prices">Prices</a>
         <a class="menu-link" href="#about" data-page="about">About</a>
-        <a class="menu-link" href="#shop" data-page="shop">Shop</a>
-        <a class="menu-link" href="#b2b" data-page="b2b">B2B</a>
-        <a class="menu-link" href="#atr-one" data-page="atr-one">ATR One Membership</a>
-        <a class="menu-link" href="#careers" data-page="careers">Careers</a>
-        <a class="menu-link" href="#investors" data-page="investors">Investors</a>
-        <a class="menu-link" href="#contact" data-page="contact">Contact</a>
+        <a class="menu-link" href="#atr-one" data-page="atr-one">ATR One</a>
+        <a class="menu-link" href="#home" data-page="home" data-guide="home-reviews">Reviews</a>
       </div>
       <div class="menu-footer">
         <a class="btn btn-primary menu-cta" href="#repair" data-page="repair"><i class="fas fa-wrench"></i> Book a Repair</a>
@@ -140,6 +157,23 @@
       </div>
     </div>
   </nav>
+
+  <!-- NAV_SEARCH_CLEANUP_2026_11_06: site-wide search overlay. One
+       panel for the whole site: pages, repairs & prices, and shop
+       items. Opened from the header search button; Escape, the close
+       button, and a tap on the dimmed area all close it. -->
+  <div class="site-search" id="site-search" hidden role="dialog" aria-modal="true" aria-label="Search the site">
+    <div class="site-search-panel">
+      <div class="site-search-bar">
+        <i class="fas fa-search" aria-hidden="true"></i>
+        <input class="site-search-input" id="site-search-input" type="search" placeholder="Search austinstechrepairgroup.com" autocomplete="off" aria-label="Search the site">
+        <button class="site-search-close" id="site-search-close" type="button" aria-label="Close search"><i class="fas fa-times" aria-hidden="true"></i></button>
+      </div>
+      <div class="site-search-results" id="site-search-results">
+        <p class="site-search-hint">Start typing &mdash; search looks across every page, the repair price book, and the store.</p>
+      </div>
+    </div>
+  </div>
 
   <main>
     <!-- ==================== HOME ==================== -->
@@ -320,7 +354,8 @@
       </div>
 
       <!-- Testimonials -->
-      <div class="section section-alt">
+      <!-- NAV_SEARCH_CLEANUP_2026_11_06: id anchors the nav Reviews item (data-guide scroll). -->
+      <div class="section section-alt" id="home-reviews">
         <div class="container">
           <div class="section-header center">
             <p class="eyebrow">Customer reviews</p>
@@ -2973,7 +3008,17 @@
           <a class="footer-link" href="#terms" data-page="terms">Terms of Service</a>
           <a class="footer-link" href="#warranty" data-page="warranty">Warranty Terms &amp; Conditions</a>
           <a class="footer-link" href="#service-agreement" data-page="service-agreement">Service Agreement &amp; Waiver</a>
-          <a class="footer-link" href="portal.html">Employee Portal</a>
+          <!-- NAV_SEARCH_CLEANUP_2026_11_06 (addendum 2): the footer's
+               Employee Portal link is REMOVED entirely (owner's order).
+               Staff reach the portal via the header Portal button, which
+               appears only after a staff sign-in is verified. -->
+          <!-- NAV_SEARCH_CLEANUP_2026_11_06 (addendum 6): plain-text
+               Accessibility link in the Legal row, replacing the removed
+               floating pill. It carries the pill's id (a11y-btn) so the
+               existing script.js wiring opens the same panel with all
+               four settings (bigger text, high contrast, reduce motion,
+               underline links) exactly as before. -->
+          <button class="footer-link a11y-footer-link" id="a11y-btn" type="button" aria-label="Accessibility options" aria-haspopup="true" aria-expanded="false">Accessibility</button>
         </div>
         <div>
           <span class="footer-col-title">Find Us Online</span>
@@ -3002,7 +3047,11 @@
         <span class="footer-copy">&copy; 2010–2026 Austin's Tech Repair Group. All rights reserved.</span>
         <span class="footer-proud">Proudly American owned and operated in the United States. No outsourcing.</span>
         <button id="share-btn" class="footer-share-btn" type="button" aria-label="Share this page"><svg class="share-ico" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><circle cx="6" cy="12" r="2.6" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.5" cy="5.5" r="2.6" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.5" cy="18.5" r="2.6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8.3 10.8l6.9-4M8.3 13.2l6.9 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span class="share-label">Share</span></button>
-        <button id="a11y-btn" class="a11y-btn" type="button" aria-label="Accessibility options" aria-haspopup="true" aria-expanded="false"><svg class="a11y-ico" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><circle cx="12" cy="4.3" r="2.2" fill="#fff"/><path d="M4.6 9.4h14.8M12 9.4v4.8m0 0-3.1 6.2M12 14.2l3.1 6.2" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg><span class="a11y-label">Accessibility</span></button>
+        <!-- NAV_SEARCH_CLEANUP_2026_11_06 (addendum 6): the floating
+             accessibility pill that sat here is REMOVED (owner's order).
+             The same control now lives as a plain Accessibility text
+             link in the Legal column above, carrying this button's id
+             so the existing panel wiring works unchanged. -->
         <span class="footer-wordmark">ATR Group</span>
       </div>
     </div>
@@ -4146,7 +4195,10 @@
   function renderHeader(cust, pts) {
     var label = $('account-label'), btn = $('account-open-btn');
     if (cust) {
-      if (label) label.textContent = firstName(cust.name) + ' · ' + (pts || 0) + ' pts';
+      /* NAV_SEARCH_CLEANUP_2026_11_06 (addendum 11): the header account
+         button says the signed-in person's NAME — full name, no points
+         tally (points live in the glance + account page). */
+      if (label) label.textContent = String(cust.name || '').trim() || firstName(cust.name);
       if (btn) btn.classList.add('logged-in');
     } else {
       if (label) label.textContent = 'My Account';

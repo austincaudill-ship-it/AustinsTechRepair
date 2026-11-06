@@ -48,8 +48,17 @@
 // SUM the selected repairs under "Your estimated repair price",
 // and the iPad Pro 12.9-inch wizard row carries its generation
 // qualifier.
+/* NAV_PUBLISH_MERGE_2026_11_06: nav set hand-merged onto the ATR One
+   set (9dd096e); both parents claimed atrg-v18, so the merged cache
+   is bumped to atrg-v19. Network-first fetch handler unchanged. */
 /* ATRONE_POINTS_TIERS_2026_11_06: bumped to atrg-v18 — ATR One Free/Plus naming, tiered points rates, the centered Free plan block, and the Manage Membership row. */
-const CACHE = "atrg-v18";
+// NAV_SEARCH_CLEANUP_2026_11_06: bumped to atrg-v18 — nav names
+// lose their pill/bubble styling (Apple-style plain text links),
+// the Shop name leaves the top nav and the slide-out menu (the
+// Shop page itself stays, reachable by search, the footer, and
+// the account links), and a site-wide search (pages, repairs &
+// prices, shop items) lands in the header.
+const CACHE = "atrg-v19";
 const CORE = [
   "/",
   "/index.html",
