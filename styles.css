@@ -2496,8 +2496,12 @@ button.footer-link.a11y-footer-link {
   border-radius: var(--radius-xl); box-shadow: var(--shadow-md);
   padding: 1.1rem 1.1rem 0.6rem;
 }
+/* SEARCH_TWO_X_2026_11_06: the search row — the bubble flexes to
+   fill the row; the main circled X sits apart at its far right end. */
+.site-search-row { display: flex; align-items: center; gap: 0.7rem; }
 .site-search-bar {
   display: flex; align-items: center; gap: 0.7rem;
+  flex: 1 1 auto; min-width: 0;
   border-bottom: 2px solid var(--line); padding-bottom: 0.8rem;
 }
 .site-search-bar > i { color: var(--brand); font-size: 1.15rem; }
@@ -2513,6 +2517,16 @@ button.footer-link.a11y-footer-link {
   color: var(--ink); cursor: pointer; font-size: 1rem;
 }
 .site-search-close:hover { border-color: var(--brand); color: var(--brand-deep); }
+/* SEARCH_TWO_X_2026_11_06: the main X — a bigger circled X (44px vs
+   the in-field 38px), apart at the far right end of the search row,
+   in the overlay's existing palette. Always closes the overlay. */
+.site-search-exit {
+  flex: none; display: inline-flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px; border-radius: 50%;
+  background: transparent; border: 2px solid var(--line);
+  color: var(--ink); cursor: pointer; font-size: 1.1rem;
+}
+.site-search-exit:hover { border-color: var(--brand); color: var(--brand-deep); }
 .site-search-results { padding: 0.4rem 0 0.6rem; max-height: 60vh; overflow-y: auto; }
 .site-search-hint, .site-search-none { color: var(--muted); font-size: 0.95rem; padding: 0.6rem 0.2rem; }
 .site-search-group {

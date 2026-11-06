@@ -3950,8 +3950,13 @@ if ("serviceWorker" in navigator) {
      shop's own search applied to that item.
    Navigation reuses the site's existing router: results carry the
    same data-page anchors the nav uses, clicked through the normal
-   delegated handler. Escape, the close button, and a tap on the
-   dimmed area all close the panel — nobody is ever trapped. */
+   delegated handler. Escape and a tap on the dimmed area close the
+   panel — nobody is ever trapped.
+   SEARCH_TWO_X_2026_11_06 (owner, Nov 6, 2026): TWO X controls. The
+   small X inside the bubble clears the words and results and keeps
+   the panel open (cursor back in the box); tapped again on the
+   empty field it exits. A bigger circled X apart at the far right
+   end of the search row closes the panel outright, any time. */
 (function () {
   'use strict';
   document.addEventListener('DOMContentLoaded', function () {
@@ -3960,6 +3965,7 @@ if ("serviceWorker" in navigator) {
     var input = document.getElementById('site-search-input');
     var resultsBox = document.getElementById('site-search-results');
     var closeBtn = document.getElementById('site-search-close');
+    var exitBtn = document.getElementById('site-search-exit');
     if (!openBtn || !overlay || !input || !resultsBox) return;
 
     var PAGE_NAMES = {
@@ -4150,6 +4156,7 @@ if ("serviceWorker" in navigator) {
         hint.className = 'site-search-hint';
         hint.textContent = 'Start typing \u2014 search looks across every page, the repair price book, and the store.';
         resultsBox.appendChild(hint);
+        syncClearLabel();
         return;
       }
       var list = runSearch(q);
@@ -4158,6 +4165,7 @@ if ("serviceWorker" in navigator) {
         none.className = 'site-search-none';
         none.textContent = 'No matches for \u201C' + q.trim() + '\u201D. Try a shorter word \u2014 a device, a repair, or a page name \u2014 or close search and use the menu.';
         resultsBox.appendChild(none);
+        syncClearLabel();
         return;
       }
       ['page', 'repair', 'shop'].forEach(function (kind) {
@@ -4183,6 +4191,7 @@ if ("serviceWorker" in navigator) {
           resultsBox.appendChild(b);
         });
       });
+      syncClearLabel();
     }
 
     function lockScroll() {
@@ -4207,8 +4216,39 @@ if ("serviceWorker" in navigator) {
       unlockScroll();
     }
 
+    /* SEARCH_TWO_X_2026_11_06 (owner, Nov 6, 2026): the small X
+       inside the search bubble clears instead of closing. Words
+       typed, or results (or the no-matches note) on screen -> clear
+       them, restore the empty state via render(''), keep the
+       overlay open with the cursor back in the box. Already empty
+       (hint only) -> the same tap exits. The circled X at the row's
+       far right (#site-search-exit) is wired straight to
+       closeSearch. The in-field X's label follows what its next tap
+       will do, so it never lies: "Clear search" while content is
+       up, "Close search" on the empty field. */
+    function searchHasContent() {
+      if (input.value && input.value.trim()) return true;
+      return !!resultsBox.querySelector('.site-search-item, .site-search-none');
+    }
+    function syncClearLabel() {
+      if (!closeBtn) return;
+      var label = searchHasContent() ? 'Clear search' : 'Close search';
+      closeBtn.setAttribute('aria-label', label);
+      closeBtn.setAttribute('title', label);
+    }
+    function clearSearch() {
+      if (searchHasContent()) {
+        input.value = '';
+        render('');
+        try { input.focus(); } catch (e) {}
+      } else {
+        closeSearch();
+      }
+    }
+
     openBtn.addEventListener('click', openSearch);
-    if (closeBtn) closeBtn.addEventListener('click', closeSearch);
+    if (closeBtn) closeBtn.addEventListener('click', clearSearch);
+    if (exitBtn) exitBtn.addEventListener('click', closeSearch);
     overlay.addEventListener('click', function (ev) { if (ev.target === overlay) closeSearch(); });
     document.addEventListener('keydown', function (ev) {
       if (isOpen() && (ev.key === 'Escape' || ev.keyCode === 27)) closeSearch();
@@ -4223,7 +4263,7 @@ if ("serviceWorker" in navigator) {
 
     /* Test/verification handle (same pattern as the lookup's own
        session hand-off): lets the harness drive the real module. */
-    window.atrSiteSearch = { open: openSearch, close: closeSearch, run: runSearch, isOpen: isOpen };
+    window.atrSiteSearch = { open: openSearch, close: closeSearch, clear: clearSearch, exit: closeSearch, run: runSearch, isOpen: isOpen };
   });
 })();
 

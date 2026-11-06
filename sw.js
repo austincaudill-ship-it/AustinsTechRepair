@@ -62,7 +62,11 @@
 /* GIFT_CARDS_2026_11_06 (publish merge onto 63635d2): bumped to atrg-v26 — Rewards & Vouchers becomes Rewards & Gift Cards; e-gift cards live in the account (own-cards list, add-a-code claim, Square buy link slot). */
 /* VOUCHER_TAP_FIX_2026_11_06: rides atrg-v26 — the voucher strip tap is open-only behind the shared __atrVoucherStripWired flag (no more double-toggle with the safety net), and voucher/gift cards in the panel answer taps with a show-at-the-visit state. */
 /* MY_DEVICES_2026_11_06 (publish merge onto the gift-cards merge set): bumped to atrg-v27 — My Devices in the account. */
-const CACHE = "atrg-v28";
+/* SEARCH_TWO_X_2026_11_06: bumped to atrg-v29 — the search overlay
+   gains two X controls: the small in-field X clears (and exits on a
+   second tap once empty); a bigger circled X at the far right end of
+   the search row closes search outright. */
+const CACHE = "atrg-v29";
 const CORE = [
   "/",
   "/index.html",
