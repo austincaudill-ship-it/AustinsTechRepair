@@ -1153,3 +1153,35 @@ span.avatar-disc {
   width: 100%; height: 560px; border: 2px solid var(--line, #E6D9C0);
   border-radius: 12px; background: var(--surface, #FFFDF8); margin: 0 0 1rem;
 }
+
+/* PB_TILES_CLEANUP_2026_11_06: Price Book layout. Root cause of the
+ * "bubbles": the drill-down levels (book index, category list, device
+ * list) were rendered by pbListBtn as content-width .portal-btn pills
+ * (border-radius: 999px, portal.css .portal-btn) stacked in loose <p>
+ * wrappers — no container, no rows, no alignment. The brand tab bar
+ * (.p2-book-tabs, styled earlier in this file) is unchanged. The new
+ * brand tiles mirror .link-card so the book matches the Links page,
+ * and category / device levels become full-width nav rows. */
+.p2-book-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 14px; margin: 12px 0 6px; }
+.p2-book-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 148px; padding: 18px 12px; border: 1px solid var(--line, #e5d9c8); border-radius: 14px; background: var(--surface, #fff); color: var(--text, #2b2118); font: inherit; cursor: pointer; text-align: center; }
+.p2-book-tile:hover { border-color: var(--brand, #D9540D); }
+.p2-book-tile i { font-size: 2rem; color: var(--brand, #D9540D); margin-bottom: 4px; }
+.p2-book-tile strong { font-size: 1.05rem; }
+.p2-book-tile span { font-size: 0.82rem; color: var(--muted, #6f6152); }
+.pb-nav-list { border: 1px solid var(--line, #e5d9c8); border-radius: 12px; overflow: hidden; margin: 0 0 1rem; background: var(--surface, #fff); }
+.pb-nav-row { display: flex; align-items: center; gap: 10px; width: 100%; padding: 14px 16px; background: none; border: 0; border-bottom: 1px solid var(--line, #e5d9c8); font: inherit; font-size: 0.95rem; font-weight: 600; color: var(--text, #2b2118); cursor: pointer; text-align: left; }
+.pb-nav-row:last-child { border-bottom: 0; }
+.pb-nav-row:hover { background: rgba(0, 0, 0, 0.03); }
+.pb-nav-row .pb-nav-count { margin-left: auto; font-size: 0.8rem; font-weight: 700; color: var(--muted, #6f6152); background: rgba(0, 0, 0, 0.06); border-radius: 999px; padding: 2px 9px; }
+.pb-nav-row .pb-nav-chev { color: var(--muted, #6f6152); font-size: 0.8rem; }
+.pb-price-table th:nth-child(3), .pb-price-table td:nth-child(3) { text-align: right; font-variant-numeric: tabular-nums; }
+.pb-edit-row td { background: rgba(0, 0, 0, 0.03); }
+
+/* ================= TRAINING_PROGRAM_2026_11_06 =================
+ * Training program template (topics -> lessons -> quiz): per-topic
+ * progress bars and the lesson step list. Colors ride the portal
+ * theme variables, like the rest of this sheet. */
+.training-bar { background: var(--line, #E6D9C0); border-radius: 999px; height: 0.6rem; overflow: hidden; margin: 0.5rem 0 0.25rem; }
+.training-bar-fill { background: var(--blue, #1050A0); height: 100%; border-radius: 999px; }
+.training-steps { margin: 0.5rem 0 1rem 1.3rem; padding: 0; }
+.training-steps li { margin: 0.5rem 0; line-height: 1.45; }

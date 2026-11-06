@@ -7186,7 +7186,7 @@ function loadTicketThread(client, ticketId) {
    * custom panel like any other. activateTab only knows its
    * built-in panel list, so a capture listener (cabWire) hides
    * custom panels again whenever a built-in tab is tapped. */
-  var CAB_TEMPLATES = { links: 'Links', info: 'Info page', checklist: 'Checklist' };
+  var CAB_TEMPLATES = { links: 'Links', info: 'Info page', checklist: 'Checklist', training: 'Training program' }; /* PORTAL_TRAINING_PROGRAM_2026_11_06: 'training' template */
   var CAB_GROUPS = {
     guest: 'Guest', parts_tools: 'Parts & Tools', associates: 'Associates',
     admin: 'Admin', financials: 'Financials'
@@ -7261,6 +7261,7 @@ function loadTicketThread(client, ticketId) {
       var t = e.target;
       if (t && t.getAttribute && t.getAttribute('data-cab-check')) cabChecklistToggle(t);
     });
+    document.addEventListener('click', function (e) { trainingClick(e); }); /* PORTAL_TRAINING_PROGRAM_2026_11_06 */
     document.addEventListener('click', function (e) {
       var el = e.target;
       while (el && el !== document) {
@@ -7351,6 +7352,8 @@ function loadTicketThread(client, ticketId) {
         }).join('') +
         '<p class="portal-muted portal-small" data-cab-check-msg="' + esc(r.id) + '">Checked boxes save as you tap them.</p>';
       }
+    } else if (r.template === 'training') {
+      html += '<div data-training-root="' + esc(r.id) + '">' + trainingShellHtml(r) + '</div>';
     }
     panel.innerHTML = html;
     return panel;
@@ -7394,6 +7397,283 @@ function loadTicketThread(client, ticketId) {
       }).catch(function () { if (msg) msg.textContent = 'Could not save that check — try again.'; });
     });
   }
+  /* ============ TRAINING PROGRAM ============
+   * PORTAL_TRAINING_PROGRAM_2026_11_06 (Austin, Nov 6, 2026):
+   * "that's not really what I was looking for. These are just
+   * checkboxes with a bunch of text next to them. This needs to
+   * be like a training program." The checklist Training button
+   * becomes a real program under a new 'training' template:
+   * topics -> lessons (ordered teaching steps, finished with a
+   * Done tap on the lesson — never a bare checkbox list) -> a
+   * short quiz per topic, with a progress bar per topic.
+   * Content lives in the row's config.program (seeded by
+   * training-program.sql — the same table and config the
+   * checklist items lived in). Progress lives in
+   * config.progress, keyed by the staffer's own profile id, and
+   * is written ONLY through the portal_set_training_progress
+   * function (training-program.sql) — the same narrow-door
+   * pattern as portal_set_checklist_state: any staffer can save
+   * their own progress; the program and everyone else's
+   * progress stay out of reach. Promotion tests render from
+   * program.promotions as "coming" gates — no test questions
+   * ship until the owner activates them. */
+  var TRAINING_PASS_PCT = 80; /* flagged for the owner in the build report */
+  var trainingView = {}; /* button id -> {view, topicId, lessonIdx, result} */
+  function trainingProgram(r) {
+    var p = setupCfg(r).program;
+    return (p && Array.isArray(p.topics)) ? p : null;
+  }
+  function trainingMyId() { return (state.profile && state.profile.id) || (state.user && state.user.id) || ''; }
+  function trainingMyProgress(r) {
+    /* Write-through on the row's local config cache: the slice is
+     * stored under my id the moment it is created, so every caller
+     * in this session mutates the SAME object the save sends. */
+    var cfg = setupCfg(r);
+    if (!cfg.progress || typeof cfg.progress !== 'object') cfg.progress = {};
+    var mine = cfg.progress[trainingMyId()];
+    if (!mine || typeof mine !== 'object') { mine = {}; cfg.progress[trainingMyId()] = mine; }
+    if (!mine.lessons || typeof mine.lessons !== 'object') mine.lessons = {};
+    if (!mine.quizzes || typeof mine.quizzes !== 'object') mine.quizzes = {};
+    r.config = cfg;
+    return mine;
+  }
+  function trainingTopic(r, topicId) {
+    var p = trainingProgram(r); if (!p) return null;
+    for (var i = 0; i < p.topics.length; i++) { if (p.topics[i].id === topicId) return p.topics[i]; }
+    return null;
+  }
+  function trainingTopicState(r, t) {
+    var mine = trainingMyProgress(r);
+    var marks = mine.lessons[t.id] || {};
+    var done = 0;
+    t.lessons.forEach(function (l, i) { if (marks[String(i)]) done++; });
+    return {
+      done: done, total: t.lessons.length,
+      pct: t.lessons.length ? Math.round(100 * done / t.lessons.length) : 0,
+      marks: marks, quiz: mine.quizzes[t.id] || null
+    };
+  }
+  function trainingBar(pct) {
+    return '<div class="training-bar"><div class="training-bar-fill" style="width:' + pct + '%"></div></div>';
+  }
+  function trainingMsg(id) { return '<p class="portal-muted portal-small" data-training-msg="' + esc(id) + '"></p>'; }
+  function trainingShellHtml(r) {
+    var p = trainingProgram(r);
+    if (!p) return '<p class="portal-muted">The training program content has not been loaded yet. An admin runs the one-time program setup step, and then this fills in — topics, lessons, quizzes, and your own progress.</p>';
+    var view = trainingView[r.id] || { view: 'topics' };
+    if (view.topicId && view.view !== 'topics') {
+      var t = trainingTopic(r, view.topicId);
+      if (t) {
+        if (view.view === 'topic') return trainingTopicHtml(r, t);
+        if (view.view === 'lesson') return trainingLessonHtml(r, t, view.lessonIdx || 0);
+        if (view.view === 'quiz') return trainingQuizHtml(r, t, view);
+      }
+    }
+    return trainingTopicsHtml(r, p);
+  }
+  function trainingTopicsHtml(r, p) {
+    var mine = trainingMyProgress(r);
+    var doneTopics = 0;
+    var cards = p.topics.map(function (t, ti) {
+      var st = trainingTopicState(r, t);
+      if (st.pct === 100 && st.quiz && st.quiz.passed) doneTopics++;
+      var quizLine = st.quiz
+        ? (st.quiz.passed ? 'Quiz passed (' + st.quiz.best + '%)' : 'Quiz best so far: ' + st.quiz.best + '% — not passed yet')
+        : 'Quiz not taken yet';
+      return '<article class="portal-card">' +
+        '<div class="portal-card-top"><p class="portal-card-title">' + (ti + 1) + '. ' + esc(t.title) + '</p>' +
+        '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-training-btn="' + esc(r.id) + '" data-training-open="' + esc(t.id) + '">' + (st.done ? 'Continue' : 'Start') + '</button></div>' +
+        '<p class="portal-card-meta">' + esc(t.blurb || '') + '</p>' +
+        trainingBar(st.pct) +
+        '<p class="portal-card-meta">' + st.done + ' of ' + st.total + ' lessons done \u00b7 ' + esc(quizLine) + '</p>' +
+        '</article>';
+    }).join('');
+    var html = '<p class="portal-muted">Work through each topic in order: read the lessons, tap Done on each one, then pass the short quiz at the end of the topic. Your progress is yours — it saves as you go. ' + doneTopics + ' of ' + p.topics.length + ' topics complete.</p>' + cards;
+    var gates = Array.isArray(p.promotions) ? p.promotions : [];
+    if (gates.length) {
+      html += '<div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Promotion tests</h3></div>' +
+        '<p class="portal-muted portal-small">A 20-question test at each step of the ladder. These open once the owner activates them.</p>' +
+        gates.map(function (g) {
+          return '<article class="portal-card"><div class="portal-card-top"><p class="portal-card-title">' + esc(g.from) + ' \u2192 ' + esc(g.to) + '</p>' +
+            '<span class="portal-muted portal-small">Coming</span></div></article>';
+        }).join('');
+    }
+    return html + trainingMsg(r.id);
+  }
+  function trainingTopicHtml(r, t) {
+    var st = trainingTopicState(r, t);
+    var rows = t.lessons.map(function (l, i) {
+      var doneIt = !!st.marks[String(i)];
+      return '<article class="portal-card">' +
+        '<div class="portal-card-top"><p class="portal-card-title">Lesson ' + (i + 1) + ' \u2014 ' + esc(l.title) + (doneIt ? ' \u2713' : '') + '</p>' +
+        '<button class="portal-btn ' + (doneIt ? 'portal-btn-outline' : 'portal-btn-primary') + ' portal-btn-sm" type="button" data-training-btn="' + esc(r.id) + '" data-training-lesson="' + i + '">' + (doneIt ? 'Review' : 'Open') + '</button></div>' +
+        '<p class="portal-card-meta">' + esc(l.intro || '') + '</p></article>';
+    }).join('');
+    var allDone = st.done === st.total;
+    var quizCard = '<article class="portal-card"><div class="portal-card-top"><p class="portal-card-title">Topic quiz</p>' +
+      (allDone
+        ? '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-training-btn="' + esc(r.id) + '" data-training-quiz="1">' + (st.quiz ? 'Retake quiz' : 'Take the quiz') + '</button>'
+        : '<span class="portal-muted portal-small">Finish every lesson to unlock</span>') +
+      '</div><p class="portal-card-meta">' +
+      (st.quiz
+        ? (st.quiz.passed ? 'Passed — best score ' + st.quiz.best + '%.' : 'Best score so far ' + st.quiz.best + '% — ' + TRAINING_PASS_PCT + '% passes.')
+        : (t.quiz ? t.quiz.length : 0) + ' questions, drawn from the lessons above. ' + TRAINING_PASS_PCT + '% passes.') +
+      '</p></article>';
+    return '<p><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-training-btn="' + esc(r.id) + '" data-training-back="topics"><i class="fas fa-arrow-left"></i> All topics</button></p>' +
+      '<div class="portal-panel-head"><h3 class="portal-h3">' + esc(t.title) + '</h3></div>' +
+      trainingBar(st.pct) +
+      '<p class="portal-card-meta">' + st.done + ' of ' + st.total + ' lessons done</p>' +
+      rows + quizCard + trainingMsg(r.id);
+  }
+  function trainingLessonHtml(r, t, idx) {
+    var l = t.lessons[idx];
+    if (!l) return trainingTopicHtml(r, t);
+    var st = trainingTopicState(r, t);
+    var doneIt = !!st.marks[String(idx)];
+    var steps = (l.steps || []).map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('');
+    var next = idx + 1 < t.lessons.length
+      ? '<button class="portal-btn portal-btn-outline" type="button" data-training-btn="' + esc(r.id) + '" data-training-lesson="' + (idx + 1) + '">Next lesson</button>'
+      : '<button class="portal-btn portal-btn-outline" type="button" data-training-btn="' + esc(r.id) + '" data-training-back="topic">Back to the topic</button>';
+    return '<p><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-training-btn="' + esc(r.id) + '" data-training-back="topic"><i class="fas fa-arrow-left"></i> ' + esc(t.title) + '</button></p>' +
+      '<div class="portal-panel-head"><h3 class="portal-h3">Lesson ' + (idx + 1) + ' of ' + t.lessons.length + ' \u2014 ' + esc(l.title) + '</h3></div>' +
+      (l.intro ? '<p class="portal-muted">' + esc(l.intro) + '</p>' : '') +
+      '<ol class="training-steps">' + steps + '</ol>' +
+      '<p style="display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center;">' +
+      (doneIt
+        ? '<span class="portal-muted"><i class="fas fa-check"></i> Lesson done</span>'
+        : '<button class="portal-btn portal-btn-primary" type="button" data-training-btn="' + esc(r.id) + '" data-training-done="' + idx + '"><i class="fas fa-check"></i> Done \u2014 I read this lesson</button>') +
+      next + '</p>' + trainingMsg(r.id);
+  }
+  function trainingQuizHtml(r, t, view) {
+    var quiz = Array.isArray(t.quiz) ? t.quiz : [];
+    var head = '<p><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-training-btn="' + esc(r.id) + '" data-training-back="topic"><i class="fas fa-arrow-left"></i> ' + esc(t.title) + '</button></p>' +
+      '<div class="portal-panel-head"><h3 class="portal-h3">Quiz \u2014 ' + esc(t.title) + '</h3></div>';
+    if (view.result) {
+      var res = view.result;
+      var review = quiz.map(function (q, qi) {
+        var ok = res.answers[qi];
+        return '<article class="portal-card"><p class="portal-card-title">' + (qi + 1) + '. ' + esc(q.question) + ' ' + (ok ? '\u2713' : '\u2717') + '</p>' +
+          '<p class="portal-card-meta">Answer: ' + esc(q.options[q.correct_index]) + '</p>' +
+          (q.explanation ? '<p class="portal-card-meta">' + esc(q.explanation) + '</p>' : '') + '</article>';
+      }).join('');
+      return head +
+        '<p class="portal-muted">You scored ' + res.pct + '% (' + res.score + ' of ' + res.total + '). ' +
+        (res.passed ? 'That passes — this topic\u2019s quiz is recorded as passed.' : 'Passing is ' + TRAINING_PASS_PCT + '% — re-read the lessons and retake it when you are ready.') + '</p>' +
+        review +
+        '<p><button class="portal-btn portal-btn-outline" type="button" data-training-btn="' + esc(r.id) + '" data-training-quiz="1">Retake quiz</button></p>' +
+        trainingMsg(r.id);
+    }
+    var body = quiz.map(function (q, qi) {
+      var opts = q.options.map(function (o, oi) {
+        return '<p style="margin:0.3rem 0;"><label style="display:flex;gap:0.6rem;align-items:flex-start;cursor:pointer;">' +
+          '<input type="radio" name="tq-' + esc(t.id) + '-' + qi + '" value="' + oi + '" style="width:1.15rem;height:1.15rem;margin-top:0.15rem;flex:none;"> <span>' + esc(o) + '</span></label></p>';
+      }).join('');
+      return '<article class="portal-card"><p class="portal-card-title">' + (qi + 1) + '. ' + esc(q.question) + '</p>' + opts + '</article>';
+    }).join('');
+    return head + '<p class="portal-muted">' + quiz.length + ' questions from the lessons. ' + TRAINING_PASS_PCT + '% passes.</p>' + body +
+      '<p><button class="portal-btn portal-btn-primary" type="button" data-training-btn="' + esc(r.id) + '" data-training-grade="1">Grade my quiz</button></p>' +
+      trainingMsg(r.id);
+  }
+  function trainingRender(id) {
+    var root = document.querySelector('[data-training-root="' + id + '"]');
+    var r = cabRowById(id);
+    if (root && r) root.innerHTML = trainingShellHtml(r);
+  }
+  function trainingSave(id) {
+    var r = cabRowById(id);
+    if (!r) return;
+    var cfg = setupCfg(r);
+    if (!cfg.progress || typeof cfg.progress !== 'object') cfg.progress = {};
+    cfg.progress[trainingMyId()] = trainingMyProgress(r);
+    r.config = cfg;
+    var msg = document.querySelector('[data-training-msg="' + id + '"]');
+    if (msg) msg.textContent = 'Saving\u2026';
+    withClient(function (client) {
+      if (!client) { if (msg) msg.textContent = 'Could not save \u2014 check your connection and try again.'; return; }
+      client.rpc('portal_set_training_progress', { p_id: id, p_progress: cfg.progress[trainingMyId()] }).then(function (res) {
+        var m2 = document.querySelector('[data-training-msg="' + id + '"]');
+        if (m2) m2.textContent = res.error ? 'Could not save that \u2014 try again.' : 'Progress saved.';
+      }).catch(function () {
+        var m3 = document.querySelector('[data-training-msg="' + id + '"]');
+        if (m3) m3.textContent = 'Could not save that \u2014 try again.';
+      });
+    });
+  }
+  function trainingGrade(id, t) {
+    var r = cabRowById(id);
+    var root = document.querySelector('[data-training-root="' + id + '"]');
+    if (!r || !root) return;
+    var quiz = Array.isArray(t.quiz) ? t.quiz : [];
+    var answers = [];
+    var missing = false;
+    quiz.forEach(function (q, qi) {
+      var picked = root.querySelector('input[name="tq-' + t.id + '-' + qi + '"]:checked');
+      if (!picked) { missing = true; answers.push(false); return; }
+      answers.push(parseInt(picked.value, 10) === q.correct_index);
+    });
+    var msg = root.querySelector('[data-training-msg="' + id + '"]');
+    if (missing) { if (msg) msg.textContent = 'Answer every question, then grade it.'; return; }
+    var score = answers.filter(Boolean).length;
+    var pct = quiz.length ? Math.round(100 * score / quiz.length) : 0;
+    var passed = pct >= TRAINING_PASS_PCT;
+    var mine = trainingMyProgress(r);
+    var prev = mine.quizzes[t.id] || {};
+    mine.quizzes[t.id] = {
+      score: score, total: quiz.length, pct: pct,
+      best: Math.max(prev.best || 0, pct),
+      passed: !!(prev.passed || passed),
+      at: new Date().toISOString()
+    };
+    trainingView[id] = { view: 'quiz', topicId: t.id, result: { answers: answers, score: score, total: quiz.length, pct: pct, passed: passed } };
+    trainingSave(id);
+    trainingRender(id);
+  }
+  function trainingClick(e) {
+    var el = e.target;
+    var btn = null;
+    while (el && el !== document) {
+      if (el.getAttribute && el.getAttribute('data-training-btn')) { btn = el; break; }
+      el = el.parentNode;
+    }
+    if (!btn) return;
+    var id = btn.getAttribute('data-training-btn');
+    var r = cabRowById(id);
+    if (!r) return;
+    var view = trainingView[id] || { view: 'topics' };
+    if (btn.getAttribute('data-training-open')) {
+      trainingView[id] = { view: 'topic', topicId: btn.getAttribute('data-training-open') };
+      trainingRender(id); return;
+    }
+    if (btn.getAttribute('data-training-back')) {
+      trainingView[id] = btn.getAttribute('data-training-back') === 'topics' ? { view: 'topics' } : { view: 'topic', topicId: view.topicId };
+      trainingRender(id); return;
+    }
+    if (btn.getAttribute('data-training-lesson') !== null && btn.getAttribute('data-training-lesson') !== undefined && btn.hasAttribute('data-training-lesson')) {
+      trainingView[id] = { view: 'lesson', topicId: view.topicId, lessonIdx: parseInt(btn.getAttribute('data-training-lesson'), 10) || 0 };
+      trainingRender(id); return;
+    }
+    if (btn.hasAttribute('data-training-done')) {
+      var t = trainingTopic(r, view.topicId);
+      if (!t) return;
+      var idx = parseInt(btn.getAttribute('data-training-done'), 10) || 0;
+      var mine = trainingMyProgress(r);
+      if (!mine.lessons[t.id] || typeof mine.lessons[t.id] !== 'object') mine.lessons[t.id] = {};
+      mine.lessons[t.id][String(idx)] = true;
+      if (idx + 1 < t.lessons.length) trainingView[id] = { view: 'lesson', topicId: t.id, lessonIdx: idx + 1 };
+      else trainingView[id] = { view: 'topic', topicId: t.id };
+      trainingSave(id);
+      trainingRender(id); return;
+    }
+    if (btn.hasAttribute('data-training-quiz')) {
+      trainingView[id] = { view: 'quiz', topicId: view.topicId };
+      trainingRender(id); return;
+    }
+    if (btn.hasAttribute('data-training-grade')) {
+      var t2 = trainingTopic(r, view.topicId);
+      if (t2) trainingGrade(id, t2);
+      return;
+    }
+  }
   function renderSetupPanel() {
     var note = $('portal-setup-db-note');
     if (note) note.hidden = !setupDbMissing;
@@ -7413,6 +7693,7 @@ function loadTicketThread(client, ticketId) {
       if (r.template === 'links') detail = (Array.isArray(cfg.links) ? cfg.links.length : 0) + ' link box(es)';
       else if (r.template === 'info') detail = cfg.heading ? esc(cfg.heading) : 'Info page';
       else if (r.template === 'checklist') detail = (Array.isArray(cfg.items) ? cfg.items.length : 0) + ' item(s)';
+      else if (r.template === 'training') detail = (cfg.program && Array.isArray(cfg.program.topics) ? cfg.program.topics.length : 0) + ' topic(s) · training program';
       return '<article class="portal-card">' +
         '<div class="portal-card-top"><p class="portal-card-title"><i class="' + esc(setupIconClass(r.icon)) + '"></i> ' + esc(r.label) + '</p>' +
         '<span style="display:inline-flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">' +
@@ -7496,6 +7777,7 @@ function loadTicketThread(client, ticketId) {
     $('portal-setup-cab-edit-links').hidden = t !== 'links';
     $('portal-setup-cab-edit-info').hidden = t !== 'info';
     $('portal-setup-cab-edit-checklist').hidden = t !== 'checklist';
+    var trNote = $('portal-setup-cab-edit-training'); if (trNote) trNote.hidden = t !== 'training';
   }
   function cabLinkRowHtml(l) {
     l = l || {};
@@ -7560,6 +7842,15 @@ function loadTicketThread(client, ticketId) {
         var oldCfg = setupCfg(existing);
         if (JSON.stringify(oldCfg.items || []) === JSON.stringify(items)) cfg.checks = oldCfg.checks || {};
       }
+    } else if (template === 'training') {
+      /* PORTAL_TRAINING_PROGRAM_2026_11_06: program content and
+       * every staffer's progress live in the row's config and
+       * are never rebuilt from this form — an edit here changes
+       * label / icon / group / visibility only. A brand-new
+       * training button starts empty until the program setup
+       * step seeds its content. */
+      if (existing && existing.template === 'training') cfg = setupCfg(existing);
+      else cfg = { program: null, progress: {} };
     }
     var row = {
       template: template,
@@ -7585,7 +7876,7 @@ function loadTicketThread(client, ticketId) {
         var q;
         if (id) { q = client.from('portal_setup_items').update(row).eq('id', id); }
         else {
-          row.sort = setupNextSort('links') + setupNextSort('info') + setupNextSort('checklist');
+          row.sort = setupNextSort('links') + setupNextSort('info') + setupNextSort('checklist') + setupNextSort('training');
           q = client.from('portal_setup_items').insert(row);
         }
         q.then(function (res) {
