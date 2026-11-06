@@ -884,6 +884,18 @@
       var cart;
       try { cart = JSON.parse(localStorage.getItem('atr-cart') || '{}'); }
       catch (e) { return {}; }
+      /* CART_STORAGE_GUARD_2026_11_06: a stored value that parses but
+         is NOT a plain object (a number, a string, null, an array —
+         left behind by any older or interrupted write) makes every
+         later add a silent no-op: assigning a property on a primitive
+         does nothing, so the cart never changes and the badge sits
+         at 0 forever on that device, with no error anywhere. Treat
+         anything that is not a plain object as an empty cart and
+         store the clean shape back. */
+      if (!cart || typeof cart !== 'object' || Array.isArray(cart)) {
+        try { localStorage.setItem('atr-cart', '{}'); } catch (e) {}
+        return {};
+      }
       // Prune entries the current catalog no longer sells (e.g. left in
       // storage from an older catalog): they inflate the cart count, hide
       // from the drawer, and make checkout fail on an unknown item.
@@ -909,6 +921,11 @@
     function getPtsMap() {
       var map;
       try { map = JSON.parse(localStorage.getItem(PTS_KEY) || '{}'); } catch (e) { return {}; }
+      /* CART_STORAGE_GUARD_2026_11_06: same non-object guard as getCart. */
+      if (!map || typeof map !== 'object' || Array.isArray(map)) {
+        try { localStorage.setItem(PTS_KEY, '{}'); } catch (e) {}
+        return {};
+      }
       var cart = getCart();
       var changed = false;
       Object.keys(map).forEach(function (k) {
@@ -1018,8 +1035,6 @@
       var ids = Object.keys(cart);
       var lines = ptsLines();
       if (cartCount) cartCount.textContent = cartQty();
-      var hdrCartCount = document.getElementById('hdr-cart-count'); /* ACCOUNT_FIX_PASS_3_2_2026_11_06: the header cart button's badge mirrors the shop one */
-      if (hdrCartCount) hdrCartCount.textContent = cartQty();
       // #cart-total is always the amount the Square checkout will
       // charge: points-paid lines come off the cash bill entirely.
       if (cartTotal) {
@@ -1031,6 +1046,12 @@
       if (!cartItems) return;
       if (!ids.length) {
         cartItems.innerHTML = '<p class="cart-empty">Your cart is empty.<br>Add some accessories to get started.</p>';
+        /* ACCOUNT_FIX_PASS_3_3_2026_11_06: the glance-style panels
+           repaint on the empty transition too — this branch used to
+           return before renderCartGlance() ran, so emptying the cart
+           left stale rows standing in any open panel (the account
+           page's new Cart section made that visible). */
+        renderCartGlance();
         return;
       }
       cartItems.innerHTML = '';
@@ -1108,24 +1129,19 @@
        to, and Checkout fires the drawer's own checkout button, so
        the payment flow is the existing one end to end. An empty cart
        shows the plain empty note with a Browse the shop link instead
-       of items. window.atrOpenCart lets the account page's Cart row
-       keep opening the full drawer directly, as it always has. */
+       of items. window.atrOpenCart stays exported as this module's
+       public drawer opener; the account page's Cart section (pass
+       3.3) calls openCart() directly from inside this module. */
     var cartGlance = document.getElementById('cart-glance');
     var cartGlanceItems = document.getElementById('cart-glance-items');
-    /* ACCOUNT_FIX_PASS_3_2_2026_11_06 (owner correction, Nov 6, 2026):
-       there are now TWO glance panels fed by this one painter — the
-       Shop toolbar's (pass 3) and the header cart button's, which is
-       the button the owner actually taps. Same state, same figures,
-       same empty wording; each panel keeps its own anchor element
-       for outside-tap math. (The pass-3 outside handler looked the
-       anchor up with querySelector('.cart-glance-anchor') — the
-       first match in the document. With the header anchor now ahead
-       of the shop's, that lookup would have made the SHOP button's
-       own tap count as "outside" and closed its glance inside the
-       same tap — the open-then-close dead button all over again.
-       Both handlers below use their own stored anchor instead.) */
-    var hdrCartGlance = document.getElementById('hdr-cart-glance');
-    var hdrCartGlanceItems = document.getElementById('hdr-cart-glance-items');
+    /* ACCOUNT_FIX_PASS_3_3_2026_11_06 (owner correction, Nov 6, 2026):
+       the header cart glance pass 3.2 added is REMOVED again — the
+       owner ruled there is no separate cart button in the header.
+       Two panels remain fed by this one painter: the Shop toolbar's
+       glance (pass 3) and the Cart section inside My Account (this
+       pass, els below). Same state, same figures, same empty
+       wording; the shop panel keeps its own stored anchor element
+       for outside-tap math. */
     var shopGlanceEls = {
       panel: cartGlance, items: cartGlanceItems,
       totalRow: document.getElementById('cart-glance-total-row'),
@@ -1134,13 +1150,22 @@
       emptyEl: document.getElementById('cart-glance-empty'),
       actionsEl: document.getElementById('cart-glance-actions')
     };
-    var hdrGlanceEls = {
-      panel: hdrCartGlance, items: hdrCartGlanceItems,
-      totalRow: document.getElementById('hdr-cart-glance-total-row'),
-      totalEl: document.getElementById('hdr-cart-glance-total'),
-      totalLabel: document.getElementById('hdr-cart-glance-total-label'),
-      emptyEl: document.getElementById('hdr-cart-glance-empty'),
-      actionsEl: document.getElementById('hdr-cart-glance-actions')
+    /* ACCOUNT_FIX_PASS_3_3_2026_11_06 (owner correction, Nov 6, 2026):
+       another panel fed by this same painter — the Cart section
+       inside My Account, which the owner expected to find among the
+       account drop-downs all along. Same els shape, same figures,
+       same empty wording. It is not a glance: it sits in the account
+       menu's drop-down set (see wireAcctMenu) and is painted on every
+       cart change like the glances, so it is simply current whenever
+       its section is open. */
+    var acctCartEls = {
+      panel: document.getElementById('acct-view-cart'),
+      items: document.getElementById('acct-cart-items'),
+      totalRow: document.getElementById('acct-cart-total-row'),
+      totalEl: document.getElementById('acct-cart-total'),
+      totalLabel: document.getElementById('acct-cart-total-label'),
+      emptyEl: document.getElementById('acct-cart-empty'),
+      actionsEl: document.getElementById('acct-cart-actions')
     };
     function paintCartGlance(els) {
       if (!els.panel || !els.items) return;
@@ -1174,7 +1199,7 @@
     }
     function renderCartGlance() {
       paintCartGlance(shopGlanceEls);
-      paintCartGlance(hdrGlanceEls);
+      paintCartGlance(acctCartEls); /* ACCOUNT_FIX_PASS_3_3_2026_11_06: the account page's Cart section rides the same repaint */
     }
     function openCartGlance() {
       renderCartGlance();
@@ -1188,25 +1213,6 @@
     function toggleCartGlance() {
       if (!cartGlance) { openCart(); return; }
       if (cartGlance.hidden) openCartGlance(); else closeCartGlance();
-    }
-    var hdrCartBtn = document.getElementById('hdr-cart-open-btn');
-    var hdrCartToggle = document.getElementById('hdr-cart-glance-toggle');
-    function setHdrCartExpanded(on) {
-      if (hdrCartBtn) hdrCartBtn.setAttribute('aria-expanded', on ? 'true' : 'false');
-      if (hdrCartToggle) hdrCartToggle.setAttribute('aria-expanded', on ? 'true' : 'false');
-    }
-    function openHdrCartGlance() {
-      renderCartGlance();
-      if (hdrCartGlance) hdrCartGlance.hidden = false;
-      setHdrCartExpanded(true);
-    }
-    function closeHdrCartGlance() {
-      if (hdrCartGlance) hdrCartGlance.hidden = true;
-      setHdrCartExpanded(false);
-    }
-    function toggleHdrCartGlance() {
-      if (!hdrCartGlance) { openCart(); return; }
-      if (hdrCartGlance.hidden) openHdrCartGlance(); else closeHdrCartGlance();
     }
     window.atrOpenCart = openCart;
 
@@ -1227,27 +1233,34 @@
         var co = document.getElementById('cart-checkout');
         if (co) co.click();
       });
-      /* ACCOUNT_FIX_PASS_3_2_2026_11_06: the header cart button AND
-         its chevron both toggle the header glance; its Open cart row
-         closes the glance, rides the router to the Shop page, and
-         opens the full drawer — the drawer's own open, unchanged. */
-      if (hdrCartBtn) hdrCartBtn.addEventListener('click', toggleHdrCartGlance);
-      if (hdrCartToggle) hdrCartToggle.addEventListener('click', toggleHdrCartGlance);
-      var hdrCartOpen = document.getElementById('hdr-cart-glance-open');
-      if (hdrCartOpen) hdrCartOpen.addEventListener('click', function () {
-        closeHdrCartGlance();
+      /* ACCOUNT_FIX_PASS_3_3_2026_11_06: the account Cart section's
+         Open cart row — the glance rows' behavior: ride the router
+         to the Shop page and open the full drawer through the
+         drawer's own open. */
+      var acctCartOpen = document.getElementById('acct-cart-open');
+      if (acctCartOpen) acctCartOpen.addEventListener('click', function () {
         var link = document.querySelector('.nav-link[data-page="shop"], .menu-link[data-page="shop"]');
         if (link) link.click();
         openCart();
       });
+      /* ACCOUNT_FIX_PASS_3_3_2026_11_06: this judge listens in the
+         CAPTURE phase. The account glance's chevron stops
+         propagation on its own tap, so a bubble-phase judge never
+         saw that tap at all and the Shop glance stayed open behind
+         the account glance — two glances open at once. Judging on
+         the way down keeps one consistent rule (a tap outside a
+         glance's own anchor closes it) for every tap, the toggle
+         buttons' own handlers included: they run after, on the
+         target, and their own anchor math here leaves their taps
+         alone. */
       document.addEventListener('click', function (e) {
-        /* Each panel judges "outside" against its OWN anchor (see
-           the note at the panel lookups above). A tap on one panel's
-           button is outside the other panel's anchor, so the two
-           glances also close each other — only one is ever open. */
+        /* The panel judges "outside" against its OWN stored anchor
+           (see the note at the panel lookups above). Only the Shop
+           glance is in this registry — the account page's Cart
+           section is a menu drop-down with its own show/hide, not a
+           glance. */
         var panels = [
-          { panel: cartGlance, anchor: cartGlance ? cartGlance.closest('.cart-glance-anchor') : null, close: closeCartGlance },
-          { panel: hdrCartGlance, anchor: hdrCartGlance ? hdrCartGlance.closest('.cart-glance-anchor') : null, close: closeHdrCartGlance }
+          { panel: cartGlance, anchor: cartGlance ? cartGlance.closest('.cart-glance-anchor') : null, close: closeCartGlance }
         ];
         panels.forEach(function (p) {
           if (!p.panel || p.panel.hidden) return;
@@ -1259,9 +1272,9 @@
           }
           p.close();
         });
-      });
-      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closeCartGlance(); closeHdrCartGlance(); } });
-      window.addEventListener('hashchange', function () { closeCartGlance(); closeHdrCartGlance(); });
+      }, true);
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closeCartGlance(); } });
+      window.addEventListener('hashchange', function () { closeCartGlance(); });
     }
     if (closeBtn) closeBtn.addEventListener('click', closeCart);
     if (overlay) overlay.addEventListener('click', closeCart);
@@ -2446,6 +2459,10 @@ if ("serviceWorker" in navigator) {
     /* ACCOUNT_FIX_PASS_3_2_2026_11_06 (ITEM C): the Orders view joins
        the toggle set, same as Messages did. */
     var ordersView = document.getElementById('acct-view-orders');
+    /* ACCOUNT_FIX_PASS_3_3_2026_11_06: the Cart view joins the
+       toggle set too — the cart as a drop-down inside My Account,
+       directly before Account Settings. */
+    var cartView = document.getElementById('acct-view-cart');
     if (!menuItems.length || !repairsView || !settingsView) return;
     acctMenuWired = true;
     window.__atrAcctMenuWired = true;
@@ -2457,7 +2474,7 @@ if ("serviceWorker" in navigator) {
        tapping its own row — it took a tap on a different row. The
        safety net in index.html carries the identical toggle. */
     function show(view) {
-      var panels = { repairs: repairsView, settings: settingsView, rewards: rewardsView, messages: messagesView, orders: ordersView };
+      var panels = { repairs: repairsView, settings: settingsView, rewards: rewardsView, messages: messagesView, orders: ordersView, cart: cartView };
       var target = (panels[view] && !panels[view].hidden) ? null : view;
       repairsView.hidden = target !== 'repairs';
       settingsView.hidden = target !== 'settings';
@@ -2465,6 +2482,7 @@ if ("serviceWorker" in navigator) {
       if (rewardsView) rewardsView.hidden = target !== 'rewards';
       if (messagesView) messagesView.hidden = target !== 'messages';
       if (ordersView) ordersView.hidden = target !== 'orders';
+      if (cartView) cartView.hidden = target !== 'cart';
       menuItems.forEach(function (btn) {
         var on = btn.getAttribute('data-acct-menu') === target;
         btn.classList.toggle('is-active', on);
@@ -2719,12 +2737,9 @@ if ("serviceWorker" in navigator) {
   var exchangeBlocks = 1;
   var cartBlocks = 1;
 
-  function refreshCartBadge() {
-    var badge = $('acct-cart-count');
-    if (!badge) return;
-    badge.textContent = cartSnapshot.qty || 0;
-    badge.hidden = !(cartSnapshot.qty > 0);
-  }
+  /* ACCOUNT_FIX_PASS_3_3_2026_11_06: refreshCartBadge() retired with
+     the plain Cart row whose count badge it painted — the Cart
+     drop-down that replaced the row is painted by the shop module. */
 
   function paintExchange() {
     var balEl = $('pts-balance-num');
@@ -2842,7 +2857,6 @@ if ("serviceWorker" in navigator) {
   }
 
   function refreshAccountSurfaces() {
-    refreshCartBadge();
     return Promise.all([refreshBalances(), refreshVoucherSurfaces()]);
   }
 
@@ -2885,7 +2899,6 @@ if ("serviceWorker" in navigator) {
     refreshAccountSurfaces: refreshAccountSurfaces,
     cartChanged: function (snapshot) {
       if (snapshot) cartSnapshot = snapshot;
-      refreshCartBadge();
       paintCartPanel();
     }
   };
@@ -2912,20 +2925,11 @@ if ("serviceWorker" in navigator) {
     var ptsLink = $('acct-points-link');
     if (ptsLink) ptsLink.addEventListener('click', function () { /* navigation only — see above */ });
 
-    /* Account-page Cart row: go to the Shop, open the cart drawer. */
-    var cartBtn = $('acct-menu-cart');
-    if (cartBtn) cartBtn.addEventListener('click', function () {
-      var link = document.querySelector('.nav-link[data-page="shop"], .menu-link[data-page="shop"]');
-      if (link) link.click();
-      else if (window.location.hash !== '#shop') window.location.hash = '#shop';
-      /* ACCOUNT_FIX_PASS_3_2026_11_06 (owner add-on 7): the cart
-         button toggles the quick glance now — this row still opens
-         the full drawer, through the shop module's own opener. */
-      setTimeout(function () {
-        if (window.atrOpenCart) { window.atrOpenCart(); return; }
-        var ob = $('cart-open-btn'); if (ob) ob.click();
-      }, 450);
-    });
+    /* ACCOUNT_FIX_PASS_3_3_2026_11_06: the account page's old plain
+       Cart row (go to the Shop, open the drawer) is gone — the Cart
+       drop-down in the account menu replaced it, wired by the
+       [data-acct-menu] handling like every other row, and its Open
+       cart row opens the drawer from inside the panel. */
 
     /* Voucher strip -> the Rewards view. ACCOUNT_FIX_PASS_3:
        after the row opens the section, bring it into view — the
@@ -3034,7 +3038,6 @@ if ("serviceWorker" in navigator) {
       if (getSession()) refreshAccountSurfaces();
     });
 
-    refreshCartBadge();
     paintCartPanel();
     if (getSession()) { refreshBalances(); refreshVoucherSurfaces(); }
   });

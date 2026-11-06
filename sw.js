@@ -32,7 +32,16 @@
 // DISCLAIMER_BRANDS_2026_11_06: bumped to atrg-v14 — the footer
 // trademark disclaimer now names every brand used on the site
 // (informational use only, no affiliation).
-const CACHE = "atrg-v14";
+// ACCOUNT_FIX_PASS_3_3_2026_11_06: bumped to atrg-v15 — My Account
+// gains its own Cart drop-down row directly before Account
+// Settings (replacing the old plain Cart row in that slot), painted
+// from the same cart state as the Shop glance and the drawer, and
+// the header cart button and its glance pass 3.2 added are REMOVED
+// (the owner's final ruling: no separate cart button in the header;
+// the cart lives inside My Account). This pass also folds in
+// CART_STORAGE_GUARD_2026_11_06: a non-object saved cart or points
+// map now self-heals to empty instead of silently blocking adds.
+const CACHE = "atrg-v15";
 const CORE = [
   "/",
   "/index.html",

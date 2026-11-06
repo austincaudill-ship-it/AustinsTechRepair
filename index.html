@@ -101,27 +101,14 @@
           <button class="acct-glance-open" id="acct-glance-open" type="button">Open my account <i class="fas fa-arrow-right" aria-hidden="true"></i></button>
         </div>
       </span>
-      <!-- ACCOUNT_FIX_PASS_3_2_2026_11_06 (owner correction, Nov 6, 2026):
-           the header gets its own cart button, built exactly like the
-           account button beside it — the button (and its chevron) toggle
-           a quick-glance drop-down with the cart's items, quantities and
-           total, plus one Open cart row that goes to the full cart.
-           Pass 3 put a glance only on the Shop page's toolbar button,
-           which is not the button the owner taps; this is. The panel
-           reuses the shop glance's classes and is rendered by the shop
-           module from the same cart state — no second cart store. -->
-      <span class="cart-glance-anchor hdr-cart-anchor">
-        <button class="account-btn" id="hdr-cart-open-btn" type="button" aria-label="Your cart" title="Cart"><i class="fas fa-shopping-cart"></i><span class="account-label">Cart</span><span class="cart-count" id="hdr-cart-count">0</span></button>
-        <button class="acct-glance-toggle" id="hdr-cart-glance-toggle" type="button" aria-label="Quick glance at your cart" aria-haspopup="true" aria-expanded="false" title="Quick glance"><i class="fas fa-chevron-down" aria-hidden="true"></i></button>
-        <div class="cart-glance" id="hdr-cart-glance" hidden>
-          <div class="cart-glance-items" id="hdr-cart-glance-items"></div>
-          <div class="cart-glance-total" id="hdr-cart-glance-total-row"><span id="hdr-cart-glance-total-label">Subtotal</span><strong id="hdr-cart-glance-total">$0.00</strong></div>
-          <p class="cart-glance-empty" id="hdr-cart-glance-empty" hidden>Your cart is empty.<br><a href="#shop" data-page="shop">Browse the shop</a></p>
-          <div class="cart-glance-actions" id="hdr-cart-glance-actions">
-            <button type="button" class="cart-glance-view" id="hdr-cart-glance-open">Open cart</button>
-          </div>
-        </div>
-      </span>
+      <!-- ACCOUNT_FIX_PASS_3_3_2026_11_06 (owner correction, Nov 6, 2026):
+           the header cart button pass 3.2 added here is REMOVED — the
+           owner ruled there is no separate cart button in the header.
+           The cart lives inside My Account as its own drop-down row
+           (see #acct-view-cart), painted by the shop module from the
+           same cart state; the header keeps the account button only,
+           and the Shop page keeps its own cart button, glance, and
+           the full cart drawer. -->
       <a class="btn btn-outline btn-sm emp-dash-link" id="emp-dash-link" href="portal.html" data-page="employee-dashboard"><i class="fas fa-screwdriver-wrench"></i> <span class="account-label">Portal</span></a>
       <a class="btn btn-primary header-cta" href="#repair" data-page="repair"><i class="fas fa-wrench"></i> Book a Repair</a>
     </div>
@@ -1591,7 +1578,39 @@
                 <div id="pts-voucher-list"><p class="acct-muted">Loading&hellip;</p></div>
               </div>
             </div>
-            <button class="acct-menu-item acct-flat-row" type="button" id="acct-menu-cart"><i class="fas fa-shopping-cart"></i> Cart <span class="acct-cart-count" id="acct-cart-count" hidden>0</span></button>
+            <button class="acct-menu-item acct-flat-row" type="button" data-acct-menu="cart" aria-expanded="false"><i class="fas fa-shopping-cart"></i> Cart <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
+
+            <!-- Cart — ACCOUNT_FIX_PASS_3_3_2026_11_06 (owner correction,
+                 Nov 6, 2026): the owner expected the cart INSIDE My
+                 Account with the other drop-downs all along ("I thought
+                 the cart button was going to be inside of the my
+                 account with all the drop downs"). It joins the menu
+                 here, directly before Account Settings — the slot the
+                 old plain Cart row held (that row only navigated to
+                 the Shop and opened the drawer, count badge and all;
+                 this drop-down replaces it), giving the owner's row
+                 order: Repairs, Messages, Orders, Rewards & Vouchers,
+                 Cart, Account Settings. The panel is painted by the
+                 shop module in script.js from the SAME cart state as
+                 the Shop glance and the drawer (one source of truth,
+                 the same painter), it repaints on every cart change,
+                 and its Open cart row opens the full drawer exactly as
+                 the Shop glance's View cart row does. The header cart
+                 button pass 3.2 added is removed in this same pass —
+                 the header keeps the account button only. -->
+            <div id="acct-view-cart" hidden>
+              <div class="acct-cart">
+                <div class="acct-repairs-head">
+                  <h4><i class="fas fa-shopping-cart"></i> Cart</h4>
+                </div>
+                <div class="cart-glance-items" id="acct-cart-items"></div>
+                <div class="cart-glance-total" id="acct-cart-total-row"><span id="acct-cart-total-label">Subtotal</span><strong id="acct-cart-total">$0.00</strong></div>
+                <p class="cart-glance-empty" id="acct-cart-empty" hidden>Your cart is empty.<br><a href="#shop" data-page="shop">Browse the shop</a></p>
+                <div class="cart-glance-actions" id="acct-cart-actions">
+                  <button type="button" class="cart-glance-view" id="acct-cart-open">Open cart</button>
+                </div>
+              </div>
+            </div>
             <button class="acct-menu-item acct-flat-row" type="button" data-acct-menu="settings" aria-expanded="false"><i class="fas fa-gear"></i> Account Settings <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
 
             <div id="acct-view-settings" hidden>
@@ -2922,21 +2941,23 @@
     'use strict';
     function $(id) { return document.getElementById(id); }
     function showAcctView(view) {
-      var r = $('acct-view-repairs'), s = $('acct-view-settings'), w = $('acct-view-rewards'), m = $('acct-view-messages'), o = $('acct-view-orders');
+      var r = $('acct-view-repairs'), s = $('acct-view-settings'), w = $('acct-view-rewards'), m = $('acct-view-messages'), o = $('acct-view-orders'), c = $('acct-view-cart');
       /* CUSTOMER_INBOX_2026_11_05: the Messages view joins the set,
          and the switch is a TOGGLE, same as the script.js module —
          owner bug fix (Nov 5, 2026): tapping a closed row opens it
          and closes the others; tapping the OPEN row closes it and
          leaves every section closed.
          ACCOUNT_FIX_PASS_3_2_2026_11_06 (ITEM C): the Orders view
-         joins the set the same way. */
-      var panels = { repairs: r, settings: s, rewards: w, messages: m, orders: o };
+         joins the set the same way.
+         ACCOUNT_FIX_PASS_3_3_2026_11_06: the Cart view joins too. */
+      var panels = { repairs: r, settings: s, rewards: w, messages: m, orders: o, cart: c };
       var target = (panels[view] && !panels[view].hidden) ? null : view;
       if (r) r.hidden = target !== 'repairs';
       if (s) s.hidden = target !== 'settings';
       if (w) w.hidden = target !== 'rewards';
       if (m) m.hidden = target !== 'messages';
       if (o) o.hidden = target !== 'orders';
+      if (c) c.hidden = target !== 'cart';
       document.querySelectorAll('[data-acct-menu]').forEach(function (b) {
         var on = b.getAttribute('data-acct-menu') === target;
         b.classList.toggle('is-active', on);
@@ -2954,37 +2975,12 @@
         if (th2) th2.hidden = true;
       }
     }
-    function paintBadge() {
-      var badge = $('acct-cart-count');
-      if (!badge) return;
-      var qty = 0;
-      try {
-        var cart = JSON.parse(localStorage.getItem('atr-cart') || '{}');
-        Object.keys(cart).forEach(function (k) { var n = Number(cart[k]); if (n > 0) qty += n; });
-      } catch (e) {}
-      badge.textContent = qty;
-      badge.hidden = !(qty > 0);
-    }
-    function openCartFromAccount() {
-      /* QR_FIX_PASS_2_2026_11_05: no sheet to close anymore — the nav
-         link's own page switch leaves the account page behind. */
-      var link = document.querySelector('.nav-link[data-page="shop"], .menu-link[data-page="shop"]');
-      if (link) link.click();
-      else if (window.location.hash !== '#shop') window.location.hash = '#shop';
-      var tries = 0;
-      (function attempt() {
-        var drawer = $('cart-drawer');
-        if (drawer && !drawer.hidden) return;
-        /* ACCOUNT_FIX_PASS_3_2026_11_06 (owner add-on 7): the cart
-           button toggles the quick glance now, so this flow opens the
-           full drawer through the shop module's own opener instead of
-           clicking the button; the click remains as the fallback. */
-        if (window.atrOpenCart) { window.atrOpenCart(); return; }
-        var ob = $('cart-open-btn');
-        if (ob) ob.click();
-        if (++tries < 8) setTimeout(attempt, 200);
-      })();
-    }
+    /* ACCOUNT_FIX_PASS_3_3_2026_11_06: this net's old second job —
+       the plain Cart row's count badge (paintBadge) and its
+       navigate-and-open-the-drawer flow (openCartFromAccount) — is
+       retired with that row. The Cart drop-down that replaced it is
+       wired by the same [data-acct-menu] handling above (here and
+       in script.js), and its panel is painted by the shop module. */
     /* CUSTOMER_INBOX_2026_11_05 (owner Bug 1, root cause): the net's
        arm() could run twice — DOMContentLoaded can reach it by more
        than one path — and it had no guard of its own, so it attached
@@ -3005,18 +3001,6 @@
           });
           var strip = $('acct-voucher-strip');
           if (strip) strip.addEventListener('click', function () { showAcctView('rewards'); });
-        }
-        if (!window.atrPoints) {
-          var cartBtn = $('acct-menu-cart');
-          if (cartBtn) cartBtn.addEventListener('click', openCartFromAccount);
-          paintBadge();
-          document.addEventListener('click', function (e) {
-            var t = e.target;
-            if (t && t.closest && t.closest('#cart-drawer, #cart-open-btn, #account-open-btn, .product-grid')) {
-              setTimeout(paintBadge, 60);
-            }
-          });
-          window.addEventListener('storage', paintBadge);
         }
       }, 350);
     }
@@ -3909,7 +3893,7 @@
   .acct-cardbox-since{font-size:.82rem;opacity:.75}
   /* QR_FIX_PASS_2026_11_05: the account panels are a strict show/hide
      set — a hidden panel must never render, whatever else styles it. */
-  #acct-view-repairs[hidden],#acct-view-rewards[hidden],#acct-view-settings[hidden],#acct-view-messages[hidden],#acct-view-orders[hidden]{display:none}
+  #acct-view-repairs[hidden],#acct-view-rewards[hidden],#acct-view-settings[hidden],#acct-view-messages[hidden],#acct-view-orders[hidden],#acct-view-cart[hidden]{display:none}
   /* QR_FIX_PASS_2026_11_05: drop-down chevron on the section rows —
      points down when closed, flips when its section is the open one. */
   .acct-menu-item .acct-menu-chev{margin-left:auto;font-size:.8rem}
@@ -3941,13 +3925,6 @@
   .acct-glance-qr[hidden]{display:none}
   .acct-glance-qr svg{width:100%;height:auto;display:block}
   .acct-glance-open{display:flex;align-items:center;gap:.5rem;width:100%;margin-top:.6rem;padding:.55rem .15rem .1rem;background:none;border:none;border-top:1px solid var(--line,#e5d9c8);color:var(--ink);font:inherit;font-weight:700;cursor:pointer;text-align:left}
-  /* ACCOUNT_FIX_PASS_3_2_2026_11_06: the header cart button joins its
-     chevron exactly like the account button above (the anchor's
-     positioning comes from .cart-glance-anchor in styles.css, the
-     panel from .cart-glance there); the count badge flips to the
-     brand fill because this button is light, not orange. */
-  .hdr-cart-anchor .account-btn{border-radius:var(--radius-md) 0 0 var(--radius-md)}
-  .hdr-cart-anchor .cart-count{background:var(--brand,#e8720c);color:#fff}
   .acct-qr-overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:1200}
   .acct-qr-modal{position:fixed;inset:0;z-index:1201;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#fff;color:#111;padding:1.2rem;text-align:center}
   .acct-qr-modal[hidden]{display:none}
