@@ -290,10 +290,23 @@
    * real success path of handleServiceRequest (after the ticket
    * insert and the best-effort signature filing), never for the
    * honeypot fake success. Display only — nothing here writes data. */
-  function showPayStep(form) {
+  function showPayStep(form, isOneOnOne) {
     var wrap = form.closest('[data-form-wrap]') || form.parentNode;
     var panel = wrap.querySelector('[data-paystep]');
     if (!panel) return;
+    /* SUPPORT_BOOKING_2026_11_06: a one-on-one booking is always the
+       $15 tier (no diagnostics) — its panel is the $15 pattern only:
+       confirm the booking and text the payment link. The booked time
+       ($25 an hour) is settled at the visit. */
+    if (isOneOnOne) {
+      panel.innerHTML =
+        '<h4>One last step to fully book your visit</h4>' +
+        '<p>Your visit is fully booked once your $15.00 visit fee is paid. It covers the trip to you, is due at scheduling, and is non-refundable. ' +
+        'We will confirm your booking and text you the payment link for that amount &mdash; your one-on-one time ($25 an hour) is settled at the visit.</p>' +
+        '<p class="atr-paystep-note">If you close this page first, your booking is still saved and we will text you the payment link.</p>';
+      panel.hidden = false;
+      return;
+    }
     panel.innerHTML =
       '<h4>One last step to fully book your appointment</h4>' +
       '<p>Your appointment is fully booked once your visit fee is paid. ' +
@@ -605,17 +618,28 @@
         problem: field(form, 'problem')
       };
 
+      /* SUPPORT_BOOKING_2026_11_06 (design pivot): the same form, the
+         same submit — when the wizard is in One-on-One mode the guided
+         selection says so, and this handler writes the [SERVICE]
+         ticket instead of a repair ticket. */
+      var guidedEarly = window.atrGuidedSelection || null;
+      var isOO = !!(guidedEarly && guidedEarly.mode === 'oneonone');
+
       var errors = {};
       if (!v.first_name) errors.first_name = 'Please enter your first name.';
       if (!v.last_name) errors.last_name = 'Please enter your last name.';
       if (!validPhone(v.phone)) errors.phone = 'Please enter a valid phone number.';
       if (!validEmail(v.email)) errors.email = 'Please enter a valid email address.';
       if (!v.device_type) errors.device_type = 'Please choose a device category.';
-      if (!v.repair_needed && !v.problem) errors.problem = 'Tell us what repair you need, or describe the problem.';
+      if (!isOO && !v.repair_needed && !v.problem) errors.problem = 'Tell us what repair you need, or describe the problem.';
+      if (isOO && !guidedEarly.serviceKind) errors.problem = 'Please go back to step 2 and pick the kind of one-on-one help you need.';
       if (!field(form, 'terms_accepted')) errors.terms_accepted = 'Please accept the Terms and Conditions to continue.';
       if (!field(form, 'dispatch_acknowledged')) errors.dispatch_acknowledged = 'Please acknowledge the dispatch fee to continue.';
-      if (!field(form, 'work_auth_accepted')) errors.work_auth_accepted = 'Please authorize the work order to continue.';
-      if (!webSignature) errors.signature = 'Please tap "I authorize" and sign the Repair Authorization to continue.';
+      /* A one-on-one visit has no repair work to authorize, so the
+         work-order authorization and the Repair Authorization signature
+         are not gates in this mode (their rows are hidden too). */
+      if (!isOO && !field(form, 'work_auth_accepted')) errors.work_auth_accepted = 'Please authorize the work order to continue.';
+      if (!isOO && !webSignature) errors.signature = 'Please tap "I authorize" and sign the Repair Authorization to continue.';
       if (applyErrors(form, errors)) return;
 
       var address = composeAddress(form, 'address');
@@ -650,7 +674,21 @@
          authorization can be filed against the ticket afterwards
          (the anon role cannot read the row back). */
       var guided = window.atrGuidedSelection || null;
-      if (guided && guided.issue) {
+      if (isOO) {
+        /* SUPPORT_BOOKING_2026_11_06 ticket contract: the issue leads
+           with the [SERVICE] marker the portal and the account split
+           read, issue_reason carries the service kind (set on the row
+           below), and the composed line carries device/brand/model +
+           kind + hours at the pure price, with the visit fee as its
+           own segment. The goal text (the form's describe field, fed
+           by step 2's "What do you want to get done?") rides along. */
+        var brandModel = [guidedEarly.brand, guidedEarly.model].filter(Boolean).join(' ');
+        var ooHours = guidedEarly.ooHours || 1;
+        var ooTime = ooHours * 25;
+        issue = '[SERVICE] ' + guidedEarly.serviceKind + ' \u2014 ' + (brandModel || guidedEarly.device || v.device_type) +
+          ' \u00b7 ' + ooHours + (ooHours === 1 ? ' hour' : ' hours') + ' one-on-one ($' + ooTime + ') | Visit fee: $15';
+        if (v.problem) issue += ' \u00b7 ' + v.problem;
+      } else if (guided && guided.issue) {
         var guidedIssues = (guided.issues && guided.issues.length) ? guided.issues.join(', ') : guided.issue;
         issue = guidedIssues + ' \u2014 ' + issue + ' (Estimate shown: ' + guided.priceRange + ')';
       }
@@ -687,31 +725,62 @@
         // customer_id intentionally omitted: anonymous web submission.
       };
 
+      /* SUPPORT_BOOKING_2026_11_06: the [SERVICE] ticket's status and
+         reason. issue_reason is the service kind, verbatim. */
+      if (isOO) {
+        row.status = 'Support Requested';
+        row.issue_reason = guidedEarly.serviceKind;
+      }
+
       setBusy(form, true);
+      if (isOO) {
+        /* SUPPORT_BOOKING_2026_11_06: same form-alert, same existing
+           'service-request' kind (routes to service@) — rows carry the
+           one-on-one contract with the fee on its own line. */
+        sendAlert('New one-on-one booking: ' + guidedEarly.serviceKind, [
+          ['Name', row.customer_name],
+          ['Phone', v.phone],
+          ['Email', v.email],
+          ['Preferred contact method', row.contact_method],
+          ['Service address', address],
+          ['Appointment requested', appointmentAt ? new Date(appointmentAt).toLocaleString() : ''],
+          ['Preferred visit date', visitDate],
+          ['Arrival window (2-hour)', arrivalWindow],
+          ['Covered by ATR One', atrOneCovered],
+          ['Device', [guidedEarly.device, guidedEarly.brand, guidedEarly.model].filter(Boolean).join(' ')],
+          ['Service kind', guidedEarly.serviceKind],
+          ['What they want to get done', v.problem],
+          ['One-on-one time', ooHours + (ooHours === 1 ? ' hour' : ' hours') + ' \u2014 $' + ooTime],
+          ['Visit fee', '$15'],
+          ['Heard about us', row.source],
+          ['Marketing emails opt-in', row.marketing_opt_in ? 'Yes' : 'No']
+        ], 'service-request');
+      } else {
       sendAlert('New service request: ' + v.device_type + ' – ' + (v.repair_needed || 'Service request'), [
-        ['Name', row.customer_name],
-        ['Phone', v.phone],
-        ['Email', v.email],
-        ['Preferred contact method', row.contact_method],
-        ['Service address', address],
-        ['Appointment requested', appointmentAt ? new Date(appointmentAt).toLocaleString() : ''],
-        ['Preferred visit date', visitDate],
-        ['Arrival window (2-hour)', arrivalWindow],
-        ['Covered by ATR One', atrOneCovered],
-        ['Device category', v.device_type],
-        ['Device information', v.device_info],
-        ['Repair needed', v.repair_needed],
-        ['Describe the problem', v.problem],
-        ['Serial Number / IMEI', row.serial_imei],
-        ['Does it power on?', row.power_on],
-        ['Is it backed up?', row.backed_up],
-        ['Has it been repaired before?', row.prior_repair],
-        ['Under manufacturer warranty?', row.warranty_status],
-        ['Heard about us', row.source],
-        ['Marketing emails opt-in', row.marketing_opt_in ? 'Yes' : 'No'],
-        ['Authorization signed by', webSignature ? webSignature.signerName : ''],
-        ['Guided estimate shown', guided ? guided.priceRange : '']
-      ], 'service-request');
+          ['Name', row.customer_name],
+          ['Phone', v.phone],
+          ['Email', v.email],
+          ['Preferred contact method', row.contact_method],
+          ['Service address', address],
+          ['Appointment requested', appointmentAt ? new Date(appointmentAt).toLocaleString() : ''],
+          ['Preferred visit date', visitDate],
+          ['Arrival window (2-hour)', arrivalWindow],
+          ['Covered by ATR One', atrOneCovered],
+          ['Device category', v.device_type],
+          ['Device information', v.device_info],
+          ['Repair needed', v.repair_needed],
+          ['Describe the problem', v.problem],
+          ['Serial Number / IMEI', row.serial_imei],
+          ['Does it power on?', row.power_on],
+          ['Is it backed up?', row.backed_up],
+          ['Has it been repaired before?', row.prior_repair],
+          ['Under manufacturer warranty?', row.warranty_status],
+          ['Heard about us', row.source],
+          ['Marketing emails opt-in', row.marketing_opt_in ? 'Yes' : 'No'],
+          ['Authorization signed by', webSignature ? webSignature.signerName : ''],
+          ['Guided estimate shown', guided ? guided.priceRange : '']
+        ], 'service-request');
+      }
 
       withClient(function (client) {
         if (!client) { setBusy(form, false); showFormError(form, dbFailMessage()); return; }
@@ -723,29 +792,44 @@
              then the ticket_documents row), then show success. Filing
              is best-effort like the alert email: the ticket insert
              above is the record that decides success. */
-          fileWebSignature(client, ticketId, { customerName: row.customer_name, phone: v.phone, device: [v.device_type, v.device_info].filter(Boolean).join(' \u00b7 ') }, function () {
+          var afterInsert = function () {
             showSuccess(form, 'service-request', v);
             /* SITE_PAYSTEP_2026_10_30: route the customer to Square
                to pay the visit fee. Runs whether the signature
                filing above landed or not — filing is best-effort and
-               the ticket insert already decided success. */
-            showPayStep(form);
+               the ticket insert already decided success.
+               SUPPORT_BOOKING_2026_11_06: one-on-one bookings get the
+               $15-tier panel (no Square link for that tier). */
+            showPayStep(form, isOO);
             /* ATRONE_QR_2026_11_05: one-time create-a-password offer for
                guests, so this repair lands in an account they can track.
                The account module in index.html owns the offer and
                decides who sees it — signed-in customers never do.
                Best-effort like the alert email: the ticket insert above
-               already decided success. */
-            if (window.atrOfferAccountSignup) {
-              try { window.atrOfferAccountSignup({ email: v.email, name: row.customer_name, phone: v.phone }); } catch (e) {}
-            }
-          });
+               already decided success. SUPPORT_BOOKING_2026_11_06: routed
+               through the one shared helper so every booking path offers
+               it the same way. */
+            offerSignupAfterSubmit(v, row);
+          };
+          /* SUPPORT_BOOKING_2026_11_06: a one-on-one booking has no
+             signed authorization to file — it goes straight to the
+             success path. Repairs keep the filing exactly as before. */
+          if (isOO) afterInsert();
+          else fileWebSignature(client, ticketId, { customerName: row.customer_name, phone: v.phone, device: [v.device_type, v.device_info].filter(Boolean).join(' \u00b7 ') }, afterInsert);
         }).catch(function () {
           setBusy(form, false);
           showFormError(form, dbFailMessage());
         });
       });
     });
+  }
+
+  /* One shared post-submit account offer for every booking path
+   * (repair + support) — a single call site by design. */
+  function offerSignupAfterSubmit(v, row) {
+    if (window.atrOfferAccountSignup) {
+      try { window.atrOfferAccountSignup({ email: v.email, name: row.customer_name, phone: v.phone }); } catch (e) {}
+    }
   }
 
   /* ================= CONTACT =================

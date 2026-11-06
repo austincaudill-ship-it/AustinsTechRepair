@@ -133,7 +133,11 @@
     }
 
     /* ---------------- Repair wizard ---------------- */
-    var repairState = { device: '', brand: '', model: '', issue: '', issues: [], atrOne: '', describe: '', modelState: 'pending', priceRange: '$50 \u2013 $150', priceExact: null };
+    var repairState = { device: '', brand: '', model: '', issue: '', issues: [], atrOne: '', describe: '', modelState: 'pending', priceRange: '$50 \u2013 $150', priceExact: null,
+      /* SUPPORT_BOOKING_2026_11_06 (design pivot): One-on-One mode of this
+         same wizard — serviceKind is one of the eight service bubbles,
+         ooHours is 1 or 2 (pure $25/hr). */
+      mode: 'repair', serviceKind: '', ooHours: 0 };
 
     /* REPAIR_FLOW_UPDATE_2026_11_05: persistent summary panel + step-2 gating.
        The summary is clean text rows only — NO device picture. Austin ruled
@@ -147,13 +151,26 @@
       rfSet('rf-sum-brand', repairState.brand || '\u2014');
       rfSet('rf-sum-model', repairState.model || (repairState.modelState === 'notlisted' ? 'Not listed' : (repairState.modelState === 'na' ? 'Not applicable' : '\u2014')));
       var repairs = repairState.issues.length ? repairState.issues.map(function (i) { return i.name; }).join(', ') : (repairState.issue || '\u2014');
-      rfSet('rf-sum-repair', repairs);
+      if (repairState.mode === 'oneonone') {
+        /* SUPPORT_BOOKING_2026_11_06: the same two summary rows carry the
+           one-on-one instead — kind on the Service row, booked time on
+           the Time row, fee kept out of both (it is its own line at the
+           summary step and the pay step). */
+        rfSet('rf-sum-repair-label', 'Service');
+        rfSet('rf-sum-repair', repairState.serviceKind || '\u2014');
+        rfSet('rf-sum-estimate-label', 'Time');
+        rfSet('rf-sum-estimate', repairState.ooHours ? (repairState.ooHours + (repairState.ooHours === 1 ? ' hour' : ' hours') + ' one-on-one \u2014 $' + (repairState.ooHours * 25)) : '\u2014');
+      } else {
+        rfSet('rf-sum-repair-label', 'Repair');
+        rfSet('rf-sum-repair', repairs);
+        rfSet('rf-sum-estimate-label', 'Estimate');
+      }
       /* REPAIR_WIZARD_ESTIMATE_FIX_2026_11_06: with more than one
          repair picked, the summary shows the COMBINED estimate (the
          summed priceRange rfToggleIssue maintains) instead of
          "Starting at" a single repair's figure. One repair keeps the
          exact wording it always had. */
-      rfSet('rf-sum-estimate', repairState.issues.length ? (repairState.priceExact !== null && repairState.priceExact !== undefined ? (repairState.issues.length > 1 ? repairState.priceRange : 'Starting at ' + repairState.priceRange) : (repairState.issues.length > 1 && repairState.priceRange && (repairState.priceRange.charAt(0) === '$' || repairState.priceRange.indexOf('From ') === 0) ? repairState.priceRange : 'Confirmed up front')) : '\u2014');
+      if (repairState.mode !== 'oneonone') rfSet('rf-sum-estimate', repairState.issues.length ? (repairState.priceExact !== null && repairState.priceExact !== undefined ? (repairState.issues.length > 1 ? repairState.priceRange : 'Starting at ' + repairState.priceRange) : (repairState.issues.length > 1 && repairState.priceRange && (repairState.priceRange.charAt(0) === '$' || repairState.priceRange.indexOf('From ') === 0) ? repairState.priceRange : 'Confirmed up front')) : '\u2014');
       rfSet('rf-sum-atrone', repairState.atrOne ? ('Covered by ATR One: ' + repairState.atrOne) : 'Not answered yet');
       var loc = [rfVal('sr-address-street'), rfVal('sr-address-line2'), rfVal('sr-address-city'), rfVal('sr-address-state'), rfVal('sr-address-zip')].filter(Boolean).join(', ');
       rfSet('rf-sum-location', loc || '\u2014');
@@ -166,7 +183,11 @@
       var cont = document.getElementById('bk-continue');
       if (!cont) return;
       var modelOk = repairState.modelState === 'chosen' || repairState.modelState === 'notlisted' || repairState.modelState === 'na';
-      var ready = !!(repairState.device && repairState.brand && modelOk && repairState.issues.length && repairState.atrOne);
+      /* SUPPORT_BOOKING_2026_11_06: One-on-One mode gates on the service
+         kind + booked hours instead of repair tiles. */
+      var ready = repairState.mode === 'oneonone'
+        ? !!(repairState.device && repairState.brand && modelOk && repairState.serviceKind && repairState.ooHours && repairState.atrOne)
+        : !!(repairState.device && repairState.brand && modelOk && repairState.issues.length && repairState.atrOne);
       cont.disabled = !ready;
     }
     function rfShowFlowExtras() {
@@ -275,7 +296,10 @@
       var bkContinue = document.getElementById('bk-continue');
       if (bkContinue) {
         bkContinue.addEventListener('click', function () {
-          rfUpdateEstimate();
+          /* SUPPORT_BOOKING_2026_11_06: One-on-One mode renders its own
+             summary block at step 3 — no estimate in this mode. */
+          if (repairState.mode === 'oneonone') { if (window.atrOoRender) window.atrOoRender(); }
+          else rfUpdateEstimate();
           furthestRepairStep = Math.max(furthestRepairStep, 3);
           goToRepairStep(3);
         });
@@ -701,7 +725,14 @@
         atrOne: repairState.atrOne || '',
         describe: repairState.describe || '',
         priceRange: repairState.priceRange || '',
-        price: (typeof repairState.priceExact === 'number') ? repairState.priceExact : null
+        price: (typeof repairState.priceExact === 'number') ? repairState.priceExact : null,
+        /* SUPPORT_BOOKING_2026_11_06: the One-on-One contract the intake
+           submit (atr-forms.js) branches on — mode, service kind, booked
+           hours, and the pure time price. */
+        mode: repairState.mode || 'repair',
+        serviceKind: repairState.serviceKind || '',
+        ooHours: repairState.ooHours || 0,
+        ooTime: (repairState.ooHours || 0) * 25
       };
       var g = window.atrGuidedSelection;
       var typeSel = document.getElementById('sr-device-type');
@@ -709,7 +740,7 @@
       var info = document.getElementById('sr-device-info');
       if (info && !info.value && (g.model || g.brand)) info.value = g.model || g.brand;
       var needSel = document.getElementById('sr-repair-needed');
-      if (needSel && !needSel.value && REPAIR_NEEDED_MAP[g.issue]) needSel.value = REPAIR_NEEDED_MAP[g.issue];
+      if (needSel && !needSel.value && g.mode !== 'oneonone' && REPAIR_NEEDED_MAP[g.issue]) needSel.value = REPAIR_NEEDED_MAP[g.issue];
       /* REPAIR_FLOW_UPDATE_2026_11_05: ATR One answer + describe text carry
          into the intake; signed-in My Account customers (localStorage
          'atr-account' mirror written by the account module in index.html:
@@ -739,7 +770,15 @@
       } catch (e) {}
       rfRenderSummary();
       var recap = document.getElementById('estimate-recap');
-      if (recap && g.issue) {
+      if (recap && g.mode === 'oneonone' && g.serviceKind) {
+        recap.hidden = false;
+        recap.innerHTML =
+          '<span class="pill"><i class="fas fa-mobile-screen"></i> ' + escapeHtml(g.device) + '</span>' +
+          '<span class="pill"><i class="fas fa-tag"></i> ' + escapeHtml(g.model ? (g.brand + ' ' + g.model) : (g.brand || 'Any brand')) + '</span>' +
+          '<span class="pill"><i class="fas fa-graduation-cap"></i> ' + escapeHtml(g.serviceKind) + '</span>' +
+          '<span class="pill"><i class="fas fa-clock"></i> ' + g.ooHours + (g.ooHours === 1 ? ' hour' : ' hours') + ' one-on-one \u2014 $' + g.ooTime + '</span>' +
+          (g.atrOne ? '<span class="pill"><i class="fas fa-shield-halved"></i> ATR One: ' + escapeHtml(g.atrOne) + '</span>' : '');
+      } else if (recap && g.issue) {
         recap.hidden = false;
         recap.innerHTML =
           '<span class="pill"><i class="fas fa-mobile-screen"></i> ' + escapeHtml(g.device) + '</span>' +
@@ -773,6 +812,13 @@
       currentRepairStep = stepNum;
       var card = document.querySelector('.repair-card');
       if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      /* SUPPORT_BOOKING_2026_11_06: an entry point (Schedule a
+         one-on-one, classes page, account) asked for One-on-One mode —
+         it applies here, at the brand/model/service step, because the
+         device is always picked first. */
+      var ooRow = document.getElementById('bk-oo-row');
+      if (ooRow) ooRow.hidden = !(stepNum === 2 && repairState.device);
+      if (stepNum === 2 && pendingOneOnOne) { pendingOneOnOne = false; setOneOnOneMode(true); }
       if (stepNum === 4) prefillIntakeFromGuided();
     }
 
@@ -781,6 +827,109 @@
         return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
       });
     }
+
+    /* ================= SUPPORT_BOOKING_2026_11_06 =================
+       One-on-One mode (design pivot, Austin, Nov 6, 2026): the
+       one-on-one is a MODE inside this same Schedule a repair form,
+       not its own page — "we're using the same form, we're just adding
+       features." Device, brand, and model are picked first; at the
+       service step the One-on-One button swaps the repair tiles for
+       eight service bubbles and two even hour buttons (1 hour $25 /
+       2 hours $50, priced pure). The $15 visit fee stays its own
+       separate line in the summary and the pay step. The step heading
+       "What service does it need?" is universal — it never flips. */
+    var pendingOneOnOne = false;
+    function ooRender() {
+      var h = repairState.ooHours || 0;
+      var time = h * 25;
+      var priceEl = document.getElementById('oo-price');
+      if (priceEl) priceEl.textContent = h ? ('$' + time) : 'Pick a time';
+      var lines = document.getElementById('oo-lines');
+      if (lines) {
+        lines.innerHTML =
+          (repairState.serviceKind ? (escapeHtml(repairState.serviceKind) + ' for your ' + escapeHtml([repairState.brand, repairState.model].filter(Boolean).join(' ') || repairState.device || 'device') + '<br>') : '') +
+          'One-on-one time $25 per hour' + (h ? (' \u2014 ' + h + (h === 1 ? ' hour' : ' hours') + ' $' + time) : '') + '<br>' +
+          'Visit fee $15<br>' +
+          (h ? ('<strong>Total $' + (15 + time) + ' \u2014 the $' + time + ' time plus the $15 visit fee</strong><br>') : '') +
+          'If your session runs longer, the extra time is settled at the visit at $25 an hour.<br>' +
+          'ATR One Plus (paid) members pay no visit fee on covered devices.';
+      }
+    }
+    window.atrOoRender = ooRender;
+    function setOneOnOneMode(on) {
+      repairState.mode = on ? 'oneonone' : 'repair';
+      var card = document.querySelector('.repair-card');
+      if (card) card.classList.toggle('oneonone-mode', on);
+      var toggle = document.getElementById('bk-oo-toggle');
+      if (toggle) { toggle.setAttribute('aria-pressed', on ? 'true' : 'false'); toggle.classList.toggle('selected', on); }
+      var grid = document.getElementById('bk-repair-grid');
+      if (grid) grid.style.display = on ? 'none' : '';
+      var fallback = document.getElementById('issue-list');
+      if (fallback) fallback.style.display = on ? 'none' : '';
+      var svc = document.getElementById('bk-service-wrap');
+      if (svc) svc.hidden = !on;
+      var lbl = document.getElementById('bk-describe-label');
+      if (lbl) lbl.textContent = on ? 'What do you want to get done?' : 'Anything else we should know?';
+      var ta = document.getElementById('bk-describe');
+      if (ta) ta.placeholder = on ? 'Tell us what you want to learn or get done during your visit.' : 'What happened, and what is the device doing (or not doing)?';
+      var h3 = document.getElementById('step3-h3');
+      if (h3) h3.textContent = on ? 'Your one-on-one' : 'Your instant estimate';
+      var pl = document.getElementById('progress-label-3');
+      if (pl) pl.textContent = on ? 'Summary' : 'Estimate';
+      var note = document.getElementById('rf-summary-note');
+      if (note) note.textContent = on
+        ? 'One-on-one help is $25 an hour, plus the $15 visit fee. ATR One Plus (paid) members pay no visit fee on covered devices.'
+        : 'Estimates are always free. Your exact price is confirmed after a full diagnostics.';
+      /* A lesson or setup visit has no repair work to authorize: the
+         authorization row and the signature block step aside in this
+         mode, and atr-forms skips those gates for the [SERVICE] ticket. */
+      var wa = document.getElementById('sr-workauth-row');
+      if (wa) wa.hidden = on;
+      var sig = document.getElementById('sr-signature-block');
+      if (sig) sig.hidden = on;
+      ooRender(); rfRenderSummary(); rfGate();
+    }
+    window.atrSetOneOnOneMode = setOneOnOneMode;
+    (function wireOneOnOne() {
+      var toggle = document.getElementById('bk-oo-toggle');
+      if (!toggle) return;
+      toggle.addEventListener('click', function () { setOneOnOneMode(repairState.mode !== 'oneonone'); });
+      var off = document.getElementById('bk-oo-off');
+      if (off) off.addEventListener('click', function () { setOneOnOneMode(false); });
+      document.querySelectorAll('[data-service-kind]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          repairState.serviceKind = btn.getAttribute('data-service-kind');
+          document.querySelectorAll('[data-service-kind]').forEach(function (b) { b.classList.remove('selected'); });
+          btn.classList.add('selected');
+          ooRender(); rfRenderSummary(); rfGate();
+        });
+      });
+      document.querySelectorAll('[data-oo-hours]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          repairState.ooHours = parseInt(btn.getAttribute('data-oo-hours'), 10) || 0;
+          document.querySelectorAll('[data-oo-hours]').forEach(function (b) { b.classList.remove('selected'); });
+          btn.classList.add('selected');
+          ooRender(); rfRenderSummary(); rfGate();
+        });
+      });
+      /* Entry points (Schedule a one-on-one in the account, the classes
+         page button, the What We Service tile): they land on this same form;
+         the mode applies when the customer reaches the service step,
+         because the device is always picked first. */
+      document.addEventListener('click', function (e) {
+        var t = e.target && e.target.closest ? e.target.closest('[data-open-oneonone]') : null;
+        if (!t) return;
+        try { sessionStorage.setItem('atr-oneonone', '1'); } catch (err) {}
+        pendingOneOnOne = true;
+      });
+      try {
+        if (sessionStorage.getItem('atr-oneonone') === '1') {
+          sessionStorage.removeItem('atr-oneonone');
+          pendingOneOnOne = true;
+        }
+      } catch (err) {}
+    })();
+
   });
 })();
 
@@ -2576,6 +2725,7 @@
           }
           ticketList.innerHTML = tickets.map(function (t) {
             var dev = [t.device_type, t.brand, t.model].filter(Boolean).join(' ');
+            if (/^\[SERVICE\]/.test(t.issue || '')) dev = 'One-on-one — ' + (t.issue_reason || t.model || 'help');
             var cls = STATUS_CLASS[t.status] || 'acct-st-waiting';
             return '<div class="acct-ticket" data-ticket-id="' + t.id + '">' +
               '<div class="acct-ticket-top"><strong>' + esc(dev || 'Repair') + '</strong>' +
@@ -2608,6 +2758,7 @@
           if (res.error) throw res.error;
           var t = res.data;
           var dev = [t.device_type, t.brand, t.model].filter(Boolean).join(' ');
+            if (/^\[SERVICE\]/.test(t.issue || '')) dev = 'One-on-one — ' + (t.issue_reason || t.model || 'help');
           var cls = STATUS_CLASS[t.status] || 'acct-st-waiting';
           threadInfo.innerHTML = '<strong>' + esc(dev || 'Repair') + '</strong> ' +
             '<span class="acct-status ' + cls + '">' + esc(t.status) + '</span><br>' +

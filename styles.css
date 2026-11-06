@@ -2581,3 +2581,13 @@ button.footer-link.a11y-footer-link {
 .product-media-icon { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; min-height: 120px; font-size: 3rem; color: var(--blue); }
 .product-detail-media-icon { display: flex; align-items: center; justify-content: center; min-height: 160px; font-size: 4rem; color: var(--blue); }
 .product-detail-media-icon[hidden] { display: none; }
+
+/* SUPPORT_BOOKING_2026_11_06: One-on-One mode inside the booking form */
+.bk-oo-toggle { width: 100%; padding: 0.85rem 1rem; margin-top: 1.2rem; border-radius: 12px; border: 2px dashed var(--blue-line, #9DBEDE); background: var(--card, #fff); color: inherit; font-weight: 700; cursor: pointer; text-align: left; }
+.bk-oo-toggle span { display: block; font-weight: 400; font-size: 0.85rem; opacity: 0.8; margin-top: 0.15rem; }
+.bk-oo-toggle.selected { border-style: solid; border-color: var(--blue, #1050A0); background: var(--blue-soft, #E4EEF9); }
+.bk-hours-grid { grid-template-columns: 1fr 1fr; }
+.repair-card .oo-only { display: none; }
+.repair-card.oneonone-mode .oo-only { display: block; }
+.repair-card.oneonone-mode .oo-repair-only { display: none !important; }
+.acct-support-chip { display: inline-block; padding: 0.1rem 0.5rem; border-radius: 999px; background: var(--blue, #1050A0); color: #fff; font-size: 0.72rem; font-weight: 700; vertical-align: middle; }

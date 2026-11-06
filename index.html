@@ -199,7 +199,7 @@
               <h2 class="hero-headline">One-on-one tech support, <em>we come to you.</em></h2>
               <p class="hero-sub">We will set your electronics up, turn them on, and teach you how to work your computer, tablet, or phone &mdash; right at your home, at your pace, for as long as you need. One-on-one help is only $25 an hour, booked by the hour.</p>
               <div class="hero-cta-group">
-                <a class="btn btn-primary btn-lg" href="#classes" data-page="classes"><i class="fas fa-graduation-cap"></i> One-on-One Classes</a>
+                <a class="btn btn-primary btn-lg" href="#repair" data-page="repair" data-open-oneonone><i class="fas fa-graduation-cap"></i> One-on-One Classes</a>
                 <a class="btn btn-outline btn-lg" href="tel:+19372806243"><i class="fas fa-phone"></i> 937-280-6243</a>
               </div>
               <div class="hero-photo">
@@ -552,7 +552,7 @@
             <a class="service-card" href="#consoles" data-page="consoles"><img class="service-card-img" src="images/work/ps4-teardown.jpg" alt="Game console opened for teardown on a bench" loading="lazy" /><div class="service-icon"><i class="fas fa-gamepad"></i></div><h3>Game Consoles</h3><p>HDMI port repair, cooling fans, storage upgrades, and overheating fixes.</p></a>
             <a class="service-card" href="#websites" data-page="websites"><img class="service-card-img" src="images/values/values-hero-workbench.webp" alt="The workbench where websites are built and handled" loading="lazy" /><div class="service-icon"><i class="fas fa-globe"></i></div><h3>Websites for Businesses</h3><p>A professional website for your business, built and handled for you &mdash; design, setup, and launch, without the agency price tag.</p></a>
             <a class="service-card" href="#network" data-page="network"><img class="service-card-img svc-media-contain" src="images/work/cable-tester.jpg" alt="Cable tester used to verify network wiring" loading="lazy" /><div class="service-icon"><i class="fas fa-network-wired"></i></div><h3>Networking</h3><p>Routers, switches, and Wi-Fi access points hooked up and configured &mdash; verified working end to end at your home or office.</p></a>
-            <a class="service-card" href="#classes" data-page="classes"><img class="service-card-img" src="images/values/values-education-code.webp" alt="Learning a repair from the printed guide at the bench" loading="lazy" /><div class="service-icon"><i class="fas fa-graduation-cap"></i></div><h3>One-on-One Classes</h3><p>We teach you at your home &mdash; hands-on lessons on your own phone, tablet, or computer, at your pace. One-on-one help is $25 an hour.</p></a>
+            <a class="service-card" href="#repair" data-page="repair" data-open-oneonone><img class="service-card-img" src="images/values/values-education-code.webp" alt="Learning a repair from the printed guide at the bench" loading="lazy" /><div class="service-icon"><i class="fas fa-graduation-cap"></i></div><h3>One-on-One Classes</h3><p>We teach you at your home &mdash; hands-on lessons on your own phone, tablet, or computer, at your pace. One-on-one help is $25 an hour plus the $15 visit fee &mdash; tap to book a one-on-one.</p></a>
             <a class="service-card" href="#smartwatches" data-page="smartwatches"><img class="service-card-img" src="images/work/smartwatch-real.webp" alt="Cracked smartwatch on a wrist" loading="lazy" /><div class="service-icon"><i class="fas fa-clock"></i></div><h3>Smartwatches</h3><p>Screen and battery service for smartwatches of all kinds.</p></a>
           </div>
         </div>
@@ -576,8 +576,8 @@
       <div class="section">
         <div class="container">
           <div class="section-header center">
-            <p class="eyebrow">Repair request</p>
-            <h2 class="section-title">Start your repair</h2>
+            <p class="eyebrow">Service Request</p>
+            <h2 class="section-title">Start your service</h2>
             <p class="section-copy">Pick your device, brand and model, see your exact price &mdash; then send it straight to us.</p>
             <!-- CHECKIN_DROPDOWNS_2026_11_05: honest trust line in place of UBIF-style volume claims (no invented repair counts). Austin to approve wording. -->
             <p class="section-copy">You&rsquo;re in good hands &mdash; we come to you, and every repair is backed by our 1-year warranty.</p>
@@ -589,8 +589,8 @@
                  toggles .nav-enabled); unreached steps stay inert. -->
             <div class="repair-progress">
               <div class="progress-step active" data-step="1"><div class="progress-dot">1</div><span class="progress-label">Device</span></div>
-              <div class="progress-step" data-step="2"><div class="progress-dot">2</div><span class="progress-label">Model &amp; Issue</span></div>
-              <div class="progress-step" data-step="3"><div class="progress-dot">3</div><span class="progress-label">Estimate</span></div>
+              <div class="progress-step" data-step="2"><div class="progress-dot">2</div><span class="progress-label">Model &amp; Service</span></div>
+              <div class="progress-step" data-step="3"><div class="progress-dot">3</div><span class="progress-label" id="progress-label-3">Estimate</span></div>
               <div class="progress-step" data-step="4"><div class="progress-dot">4</div><span class="progress-label">Contact</span></div>
             </div>
 
@@ -610,14 +610,14 @@
                   <li><span>Device</span><strong id="rf-sum-device">Not picked yet</strong><button type="button" class="rf-change" data-rf-change="1">Change</button></li>
                   <li><span>Brand</span><strong id="rf-sum-brand">&mdash;</strong><button type="button" class="rf-change" data-rf-change="2">Change</button></li>
                   <li><span>Model</span><strong id="rf-sum-model">&mdash;</strong><button type="button" class="rf-change" data-rf-change="2">Change</button></li>
-                  <li><span>Repair</span><strong id="rf-sum-repair">&mdash;</strong><button type="button" class="rf-change" data-rf-change="2">Change</button></li>
-                  <li><span>Estimate</span><strong id="rf-sum-estimate">&mdash;</strong><button type="button" class="rf-change" data-rf-change="3">Change</button></li>
+                  <li><span id="rf-sum-repair-label">Repair</span><strong id="rf-sum-repair">&mdash;</strong><button type="button" class="rf-change" data-rf-change="2">Change</button></li>
+                  <li><span id="rf-sum-estimate-label">Estimate</span><strong id="rf-sum-estimate">&mdash;</strong><button type="button" class="rf-change" data-rf-change="3">Change</button></li>
                   <li><span>ATR One</span><strong id="rf-sum-atrone">Not answered yet</strong><button type="button" class="rf-change" data-rf-change="2">Change</button></li>
                   <li><span>Visit &mdash; where</span><strong id="rf-sum-location">&mdash;</strong><button type="button" class="rf-change" data-rf-change="4">Change</button></li>
                   <li><span>Visit &mdash; when</span><strong id="rf-sum-visit">&mdash;</strong><button type="button" class="rf-change" data-rf-change="4">Change</button></li>
                   <li><span>Contact</span><strong id="rf-sum-contact">&mdash;</strong><button type="button" class="rf-change" data-rf-change="4">Change</button></li>
                 </ul>
-                <p class="rf-summary-note">Estimates are always free. Your exact price is confirmed after a full diagnostics.</p>
+                <p class="rf-summary-note" id="rf-summary-note">Estimates are always free. Your exact price is confirmed after a full diagnostics.</p>
               </div>
             </aside>
 
@@ -654,8 +654,40 @@
                 </select>
               </div>
               <div id="bk-repair-wrap" hidden>
-                <p class="field-label">What's wrong with it?</p>
+                <!-- SUPPORT_BOOKING_2026_11_06 (label refinement, Austin,
+                     Nov 6, 2026): this heading is UNIVERSAL — it reads
+                     "What service does it need?" in repair mode and in
+                     One-on-One mode alike. Only the tiles change by mode. -->
+                <p class="field-label">What service does it need?</p>
                 <div class="option-grid" id="bk-repair-grid"></div>
+              </div>
+              <!-- SUPPORT_BOOKING_2026_11_06 (design pivot, Austin, Nov 6,
+                   2026): One-on-One is a MODE of this same form, not its
+                   own page. The button below flips step 2 between the
+                   repair tiles and the eight service bubbles; device,
+                   brand, and model are always picked first. -->
+              <div id="bk-oo-row" hidden>
+                <button type="button" class="bk-oo-toggle" id="bk-oo-toggle" aria-pressed="false"><i class="fas fa-graduation-cap"></i> One-on-One <span>Lessons &amp; help on this device &mdash; $25 an hour</span></button>
+              </div>
+              <div id="bk-service-wrap" hidden>
+                <div class="option-grid" id="bk-service-grid">
+                  <button class="option-btn" type="button" data-service-kind="Set up a new device"><i class="fas fa-box-open"></i> Set up a new device</button>
+                  <button class="option-btn" type="button" data-service-kind="Learn my phone, computer, or tablet"><i class="fas fa-graduation-cap"></i> Learn my phone, computer, or tablet</button>
+                  <button class="option-btn" type="button" data-service-kind="Wi-Fi or internet help"><i class="fas fa-wifi"></i> Wi-Fi or internet help</button>
+                  <button class="option-btn" type="button" data-service-kind="Printer or accessories"><i class="fas fa-print"></i> Printer or accessories</button>
+                  <button class="option-btn" type="button" data-service-kind="Move my stuff to a new device"><i class="fas fa-right-left"></i> Move my stuff to a new device</button>
+                  <button class="option-btn" type="button" data-service-kind="Computer clean-up"><i class="fas fa-broom"></i> Computer clean-up</button>
+                  <button class="option-btn" type="button" data-service-kind="Something else"><i class="fas fa-circle-question"></i> Something else</button>
+                  <button class="option-btn" type="button" data-service-kind="Not sure yet"><i class="fas fa-clipboard-question"></i> Not sure yet</button>
+                </div>
+                <p class="atr-help">Moving to a new device? We sit with you and help you move your photos, contacts, and apps over during the visit.</p>
+                <p class="field-label" style="margin-top: 1rem;">How much time?</p>
+                <div class="option-grid bk-hours-grid">
+                  <button class="option-btn" type="button" data-oo-hours="1">1 hour one-on-one <strong>$25</strong></button>
+                  <button class="option-btn" type="button" data-oo-hours="2">2 hour one-on-one <strong>$50</strong></button>
+                </div>
+                <p class="atr-help">If your session runs longer, the extra time is settled at the visit at $25 an hour.</p>
+                <button type="button" class="back-btn" id="bk-oo-off"><i class="fas fa-wrench"></i> Not a lesson &mdash; I need a repair instead</button>
               </div>
               <div id="issue-list"></div>
               <!-- REPAIR_FLOW_UPDATE_2026_11_05: Step 3 of Austin's flow — what is wrong (multi-select
@@ -663,7 +695,7 @@
                    question. ATR One is a membership, not insurance and not a
                    warranty; this is a coverage question, never a claim. -->
               <div id="bk-describe-wrap" hidden>
-                <label class="field-label" for="bk-describe">Anything else we should know? <span class="atr-optional">(optional)</span></label>
+                <label class="field-label" for="bk-describe"><span id="bk-describe-label">Anything else we should know?</span> <span class="atr-optional">(optional)</span></label>
                 <textarea class="form-field" id="bk-describe" rows="3" placeholder="What happened, and what is the device doing (or not doing)?" style="margin-bottom: 1.4rem;"></textarea>
               </div>
               <div id="bk-atrone-wrap" hidden>
@@ -681,9 +713,18 @@
 
             <div class="repair-step" id="step-estimate">
               <p class="eyebrow">Step 3 of 4</p>
-              <h3>Your instant estimate</h3>
-              <div id="estimate-summary" style="margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.6rem;"></div>
-              <div class="estimate-box">
+              <h3 id="step3-h3">Your instant estimate</h3>
+              <div id="estimate-summary" class="oo-repair-only" style="margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.6rem;"></div>
+              <!-- SUPPORT_BOOKING_2026_11_06: in One-on-One mode this block
+                   replaces the estimate box — no estimate, no diagnostics
+                   wording in this mode. Time is priced pure; the $15 visit
+                   fee is its own line; the total reads as their sum. -->
+              <div class="estimate-box oo-only" id="oo-summary-block" hidden>
+                <p class="label">Your one-on-one</p>
+                <p class="price" id="oo-price">$25</p>
+                <p class="note" id="oo-lines"></p>
+              </div>
+              <div class="estimate-box oo-repair-only">
                 <p class="label" id="estimate-label">Estimated price range</p>
                 <p class="price" id="estimate-price">$50 &ndash; $150</p>
                 <p class="note" id="estimate-note">Final pricing is confirmed once we've inspected the device. Estimates are always free. A non-refundable visit fee secures your mobile appointment &mdash; $15 when your repair is already known, or $35 if your device needs diagnostics first. It covers the trip to you, plus the diagnosis when one is needed, and it&rsquo;s due when you book. ATR One Plus (paid) members pay no visit fee for devices covered under their plan.</p>
@@ -691,7 +732,7 @@
               <!-- REPAIR_WIZARD_ESTIMATE_FIX_2026_11_06: standing estimate
                    disclaimer (owner, Nov 6, 2026) — a proper, visible
                    disclaimer at the estimate step, not fine print. -->
-              <p class="estimate-disclaimer" id="estimate-disclaimer"><strong>Estimate only:</strong> the prices shown here are estimates &mdash; not the finalized repair price. Your exact price is confirmed after diagnostics, and the final price may be smaller or larger than the estimate shown.</p>
+              <p class="estimate-disclaimer oo-repair-only" id="estimate-disclaimer"><strong>Estimate only:</strong> the prices shown here are estimates &mdash; not the finalized repair price. Your exact price is confirmed after diagnostics, and the final price may be smaller or larger than the estimate shown.</p>
               <div style="display: flex; gap: 0.8rem; flex-wrap: wrap;">
                 <button class="btn btn-primary" type="button" data-action="continue-contact"><i class="fas fa-arrow-right"></i> Continue</button>
                 <button class="back-btn" type="button" data-back="2"><i class="fas fa-arrow-left"></i> Back</button>
@@ -919,7 +960,10 @@
     </label>
     <span class="atr-field-error" data-error-for="dispatch_acknowledged"></span>
 
-    <label class="atr-check">
+    <!-- SUPPORT_BOOKING_2026_11_06: in One-on-One mode this authorization
+         row and the signature block below are hidden and not required —
+         a lesson or setup visit has no repair work to authorize. -->
+    <label class="atr-check" id="sr-workauth-row">
       <input type="checkbox" name="work_auth_accepted" value="yes" required>
       <span>I <strong>authorize</strong> Austin&rsquo;s Tech Repair Group to perform the requested diagnostic and repair work on my device. *</span>
     </label>
@@ -957,6 +1001,7 @@
                    can never submit the intake. -->
               <button class="back-btn" type="button" data-back="3" style="margin-top: 1rem;"><i class="fas fa-arrow-left"></i> Back</button>
             </div>
+
           </div>
 
           <div class="calendly-card mt-2">
@@ -1537,7 +1582,7 @@
                their code by tapping the code itself, on the card above
                or in the quick glance. -->
           <div class="acct-menu" role="group" aria-label="My Account">
-            <button class="acct-menu-item acct-flat-row" type="button" data-acct-menu="repairs" aria-expanded="false"><i class="fas fa-tools"></i> Repairs <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
+            <button class="acct-menu-item acct-flat-row" type="button" data-acct-menu="repairs" aria-expanded="false"><i class="fas fa-tools"></i> Services <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
             <div id="acct-view-repairs" hidden>
             <!-- My Repairs -->
             <div class="acct-repairs" id="acct-repairs">
@@ -1631,6 +1676,18 @@
                 <p class="acct-error" id="acct-ticket-error" hidden></p>
                 <button class="btn btn-primary btn-lg acct-submit" type="submit">Submit Request <i class="fas fa-arrow-right"></i></button>
               </form>
+            </div>
+
+            <!-- SUPPORT_BOOKING_2026_11_06 (Austin, Nov 6, 2026): the Service
+                 section holds two labeled groups — My Repairs above, and My
+                 One-on-Ones here: the customer's support bookings, each with
+                 its Support label, plus the door into the Support path. -->
+            <div class="acct-repairs" id="acct-oneonones" style="margin-top:1.5rem;">
+              <div class="acct-repairs-head">
+                <h4><i class="fas fa-graduation-cap"></i> My One-on-Ones</h4>
+                <a class="btn btn-primary btn-sm" href="#repair" data-page="repair" data-open-oneonone><i class="fas fa-calendar-check"></i> Schedule a one-on-one</a>
+              </div>
+              <div id="acct-support-list"><p class="acct-muted">Loading your one-on-ones…</p></div>
             </div>
 
             </div>
@@ -3112,8 +3169,10 @@
           <p>A class is one on one, at your home, on the device you actually use every day &mdash; not a classroom and not a video call. You bring the questions you have been saving up, we work through them together until they make sense, and you practice while we are there so it sticks. Classes are booked like any other visit, in a 2-hour arrival window.</p>
           <!-- ONE_ON_ONE_CAROUSEL_2026_11_06: one-on-one price set by the owner Nov 6, 2026 ($25/hr) -->
           <h3>What it costs</h3>
-          <p>One-on-one help is $25 per hour &mdash; the whole hour, right at your home. That covers setup help, troubleshooting guidance, and teaching: we set your electronics up, turn them on, show you how to use them, and stay as long as you need, booked by the hour.</p>
-          <a class="btn btn-primary" href="#contact" data-page="contact"><i class="fas fa-graduation-cap"></i> Ask About a Class</a>
+          <p>One-on-one help is $25 per hour &mdash; the whole hour, right at your home. That covers setup help, troubleshooting guidance, and teaching: we set your electronics up, turn them on, show you how to use them, and stay as long as you need, booked by the hour. A $15 visit fee covers the trip to you, charged separately from the hourly time.</p>
+          <!-- SUPPORT_BOOKING_2026_11_06: booking a class goes through the
+               Support path in the booking card now, not the Contact page. -->
+          <a class="btn btn-primary" href="#repair" data-page="repair" data-open-oneonone><i class="fas fa-graduation-cap"></i> Book a One-on-One</a>
           <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to What We Fix</a>
         </div>
       </div>
@@ -3246,7 +3305,7 @@
         </div>
         <div>
           <span class="footer-col-title">Services</span>
-          <a class="footer-link" href="#repair" data-page="repair">Start a Repair</a>
+          <a class="footer-link" href="#repair" data-page="repair">Start a Service</a>
           <a class="footer-link" href="#prices" data-page="prices">Pricing</a>
           <a class="footer-link" href="#whatwedo" data-page="whatwedo">What We Fix</a>
           <a class="footer-link" href="#atr-one" data-page="atr-one">ATR One Membership</a>
@@ -5009,6 +5068,7 @@
   var currentCust = null, repairsWired = false, openTicket = null;
   window.atrCustomer = function () { return currentCust; };
   var STATUS_COPY = {
+    'Support Requested': { label: 'Support requested', note: 'We got your support booking — we\'ll reach out shortly to confirm your visit.' },
     'Awaiting Diagnostics': { label: 'Awaiting diagnostics', note: "We'll diagnose it and text you to confirm your appointment window." },
     'Awaiting Estimate': { label: 'Awaiting estimate', note: 'We are working out your price and will text it to you.' },
     'Awaiting Customer Response': { label: 'Awaiting your response', note: 'We sent you an estimate. Reply to it and we will get your repair moving.' },
@@ -5073,29 +5133,48 @@
         repairsSettled = true;
         if (res.error) throw res.error;
         var rows = res.data || [];
-        if (!rows.length) {
-          list.innerHTML = '<p class="acct-muted">No repairs yet \u2014 when you book a repair, you\'ll see its progress here, step by step.</p>';
-          return;
-        }
-        list.innerHTML = rows.map(function (t) {
+        /* SUPPORT_BOOKING_2026_11_06: one read, two groups — repairs under
+           My Repairs, support tickets (device_type 'Support') under My
+           One-on-Ones with a Support label on every card. */
+        var repairRows = rows.filter(function (t) { return !/^\[SERVICE\]/.test(t.issue || ''); });
+        var supportRows = rows.filter(function (t) { return /^\[SERVICE\]/.test(t.issue || ''); });
+        function ticketCard(t, isSupport) {
           var c = STATUS_COPY[t.status] || { note: '' };
+          var dev = isSupport ? (t.model || 'One-on-one support') : ticketDevice(t);
+          var chip = isSupport ? '<span class="acct-support-chip">Support</span> ' : '';
           return '<button type="button" class="acct-ticket-card" data-ticket="' + t.id + '">' +
-            '<span class="acct-ticket-top"><strong>' + escX(ticketDevice(t)) + '</strong>' + statusPill(t.status) + '</span>' +
+            '<span class="acct-ticket-top"><strong>' + chip + escX(dev) + '</strong>' + statusPill(t.status) + '</span>' +
             '<span class="acct-ticket-issue">' + escX(t.issue || '') + '</span>' +
             '<span class="acct-ticket-meta">' + escX(ticketDate(t)) + ' \u00b7 ' + escX(c.note) + '</span>' +
             '<span class="acct-ticket-cta">View messages <i class="fas fa-arrow-right"></i></span>' +
           '</button>';
-        }).join('');
-        Array.prototype.forEach.call(list.querySelectorAll('[data-ticket]'), function (btn) {
-          btn.addEventListener('click', function () {
-            var t = rows.filter(function (r) { return String(r.id) === btn.getAttribute('data-ticket'); })[0];
-            if (t) openThread(t);
+        }
+        function wireCards(container) {
+          if (!container) return;
+          Array.prototype.forEach.call(container.querySelectorAll('[data-ticket]'), function (btn) {
+            btn.addEventListener('click', function () {
+              var t = rows.filter(function (r) { return String(r.id) === btn.getAttribute('data-ticket'); })[0];
+              if (t) openThread(t);
+            });
           });
-        });
+        }
+        list.innerHTML = repairRows.length
+          ? repairRows.map(function (t) { return ticketCard(t, false); }).join('')
+          : '<p class="acct-muted">No repairs yet \u2014 when you book a repair, you\'ll see its progress here, step by step.</p>';
+        wireCards(list);
+        var supList = $('acct-support-list');
+        if (supList) {
+          supList.innerHTML = supportRows.length
+            ? supportRows.map(function (t) { return ticketCard(t, true); }).join('')
+            : '<p class="acct-muted">No one-on-ones yet \u2014 book a support visit and it will show up here.</p>';
+          wireCards(supList);
+        }
       })
       .catch(function () {
         repairsSettled = true;
         list.innerHTML = '<p class="acct-muted">We couldn\'t load your repairs just now \u2014 pull this page up again in a moment, or call or text (937) 280-6243.</p>';
+        var supListErr = $('acct-support-list');
+        if (supListErr) supListErr.innerHTML = '<p class="acct-muted">We couldn\'t load your one-on-ones just now \u2014 try again in a moment.</p>';
       });
   }
   /* ACCOUNT_FIX_PASS_3_2_2026_11_06 (ITEM C): the customer's shop
