@@ -2259,3 +2259,96 @@ html[data-theme="dark"] a.footer-value:hover strong { color: var(--gold); }
 html[data-theme="dark"] .footer-value i { color: var(--gold); }
 html[data-theme="dark"] .footer-disclaimer strong { color: #c9a86a; }
 html[data-theme="dark"] .footer-disclaimer a { color: #c9a86a; }
+
+/* ================= ACCOUNT_FIX_PASS_3_4_2026_11_06 =================
+   Shop detail view (owner direction, Nov 6, 2026): the product
+   cards are the tap target, so they take a pointer and a visible
+   focus ring; the detail view rides the cart drawer's fixed-panel
+   shell (class cart-drawer in the markup) with its own body layout.
+   Footer-scoped rules above are untouched; everything here is
+   product-detail scoped. */
+#product-grid .product-card { cursor: pointer; }
+#product-grid .product-card:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.product-view-hint { font-size: 0.82rem; font-weight: 700; color: var(--brand-deep); white-space: nowrap; }
+.product-detail-body { padding: 1.1rem 1.25rem 1.4rem; overflow-y: auto; display: flex; flex-direction: column; gap: 0.55rem; }
+.product-detail-media { border-radius: var(--radius-md); overflow: hidden; background: var(--surface-warm); aspect-ratio: 4 / 3; flex: none; }
+.product-detail-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.product-detail .product-cat { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--teal); }
+.product-detail-name { font-size: 1.2rem; font-weight: 800; line-height: 1.3; color: var(--ink); margin: 0; }
+.product-detail-price { font-size: 1.15rem; font-weight: 800; color: var(--brand); margin: 0; }
+.product-detail-price .product-pts { font-size: 0.85rem; font-weight: 700; color: var(--muted); }
+.product-detail-desc { font-size: 0.92rem; line-height: 1.55; color: var(--ink-soft); margin: 0; }
+.product-detail-add { margin-top: 0.6rem; padding: 0.7rem 1.2rem; border-radius: 2rem; border: none; background: var(--teal); color: #fff; font-size: 0.95rem; font-weight: 700; cursor: pointer; align-self: flex-start; transition: transform var(--transition), opacity var(--transition); }
+.product-detail-add:hover { transform: scale(1.03); opacity: 0.92; }
+.product-detail-add.added { background: var(--gold); color: #20180e; }
+/* Item 5 — the "We accept" block: label centered on top, the badges
+   centered underneath as one group, and a blue divider line above
+   the block separating it from the footer columns. Layout and
+   alignment only — the chips keep the mode-safe white styling the
+   footer theme pass verified; nothing here recolors them. */
+.footer-payments { flex-direction: column; align-items: center; text-align: center; border-top-width: 2px; border-top-style: solid; border-top-color: var(--blue); padding-top: 1.25rem; }
+.footer-payments-label { margin-right: 0; margin-bottom: 0.65rem; }
+.footer-payments-badges { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0.6rem; }
+
+/* --- Shop redesign (owner, Nov 6, 2026 — supersedes the same-day
+   tap-to-detail-only shape): the shop lands on category tiles; cards
+   keep an Add button with the money price and the points value on
+   their OWN rows, above a separate actions row, so the points text
+   can never overlap or cover the button at any width; the pop-up
+   carries the variant and device pickers; cart lines show the
+   chosen variant/device under the product name. --- */
+.shop-search-wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 0.9rem; margin-bottom: 1.1rem; }
+.shop-search-label { font-weight: 700; color: var(--ink); font-size: 0.92rem; }
+.shop-search-label i { color: var(--brand); margin-right: 0.3rem; }
+.shop-search { flex: 1 1 220px; padding: 0.65rem 1rem; border-radius: 2rem; border: 2px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; font-size: 0.92rem; }
+.shop-search:focus { border-color: var(--blue); outline: none; }
+.shop-category-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+.shop-category-grid[hidden], .shop-listing-head[hidden], .shop-special[hidden], .product-grid[hidden] { display: none !important; }
+.shop-category-tile { display: flex; flex-direction: column; align-items: flex-start; gap: 0.35rem; text-align: left; padding: 1.15rem 1.2rem; min-height: 7.5rem; background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--blue); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); cursor: pointer; font: inherit; transition: transform var(--transition), box-shadow var(--transition); }
+.shop-category-tile:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+.shop-category-tile:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.shop-category-tile i { font-size: 1.45rem; color: var(--brand); }
+.shop-tile-title { font-family: var(--font-display); font-size: 1.05rem; font-weight: 700; color: var(--ink); line-height: 1.25; }
+.shop-tile-copy { font-size: 0.85rem; line-height: 1.4; color: var(--muted); }
+.shop-tile-all { border-top-color: var(--brand); }
+.shop-listing-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.8rem 1.2rem; margin-bottom: 1.1rem; }
+.shop-back { padding: 0.5rem 1rem; border-radius: 2rem; border: 2px solid var(--line); background: var(--surface); color: var(--ink-soft); font: inherit; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+.shop-back:hover { border-color: var(--brand); color: var(--brand); }
+.shop-listing-titles h3 { margin: 0; font-size: 1.25rem; color: var(--ink); }
+.shop-listing-titles p { margin: 0.15rem 0 0; color: var(--muted); font-size: 0.9rem; }
+.shop-special { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--blue); border-radius: var(--radius-md); padding: 1.2rem 1.35rem; margin-bottom: 1.25rem; }
+.shop-special h4 { margin: 0 0 0.45rem; color: var(--ink); font-size: 1.05rem; }
+.shop-special p { margin: 0; color: var(--ink-soft); line-height: 1.55; font-size: 0.93rem; }
+.product-price-row { margin-top: auto; padding-top: 0.55rem; }
+.product-points-row { display: block; width: 100%; padding-top: 0.15rem; }
+.product-points-row .product-pts { white-space: normal; }
+.product-card-actions { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; width: 100%; padding-top: 0.6rem; margin-top: 0.55rem; border-top: 1px solid var(--line-soft); }
+.product-card-actions .add-btn { flex: none; margin-left: auto; }
+.cart-item-options { font-size: 0.8rem; color: var(--brand-deep); font-weight: 600; margin-top: 0.1rem; }
+.cart-glance-options { display: block; font-size: 0.76rem; color: var(--brand-deep); font-weight: 600; }
+.product-detail-options { display: flex; flex-direction: column; gap: 0.7rem; }
+.pd-field { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.85rem; font-weight: 700; color: var(--ink-soft); }
+.pd-field select { padding: 0.6rem 0.8rem; border-radius: var(--radius-sm); border: 2px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; font-size: 0.92rem; font-weight: 600; width: 100%; }
+.pd-field select:focus { border-color: var(--blue); outline: none; }
+.pd-device { display: flex; flex-direction: column; gap: 0.6rem; background: var(--surface-warm); border: 1px solid var(--line-soft); border-radius: var(--radius-md); padding: 0.85rem 0.95rem; }
+.pd-device-title { margin: 0; font-weight: 800; color: var(--ink); font-size: 0.9rem; }
+.pd-error { margin: 0; color: #b3261e; font-size: 0.86rem; font-weight: 600; line-height: 1.45; }
+.product-detail-add[disabled] { opacity: 0.55; cursor: not-allowed; transform: none; }
+@media (max-width: 560px) {
+  .shop-category-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.8rem; }
+  .shop-category-tile { min-height: 6.5rem; padding: 0.95rem 1rem; }
+}
+
+/* ==========================================================================
+   REPAIR_WIZARD_ESTIMATE_FIX_2026_11_06: the estimate step's standing
+   disclaimer (#estimate-disclaimer, owner Nov 6, 2026). Styled to be
+   clearly visible — a real notice under the estimate box, not fine
+   print. Uses the page theme variables so it reads correctly in light
+   and dark mode.
+   ========================================================================== */
+.estimate-disclaimer {
+  background: var(--brand-soft); border: 1px solid var(--line); border-radius: var(--radius-md);
+  padding: 0.9rem 1.1rem; margin: 0 0 1.2rem; text-align: center;
+  font-size: 0.88rem; line-height: 1.55; color: var(--ink-soft);
+}
+.estimate-disclaimer strong { color: var(--brand-deep); }

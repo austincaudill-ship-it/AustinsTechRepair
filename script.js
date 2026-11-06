@@ -148,7 +148,12 @@
       rfSet('rf-sum-model', repairState.model || (repairState.modelState === 'notlisted' ? 'Not listed' : (repairState.modelState === 'na' ? 'Not applicable' : '\u2014')));
       var repairs = repairState.issues.length ? repairState.issues.map(function (i) { return i.name; }).join(', ') : (repairState.issue || '\u2014');
       rfSet('rf-sum-repair', repairs);
-      rfSet('rf-sum-estimate', repairState.issues.length ? (repairState.priceExact !== null && repairState.priceExact !== undefined ? 'Starting at ' + repairState.priceRange : 'Confirmed up front') : '\u2014');
+      /* REPAIR_WIZARD_ESTIMATE_FIX_2026_11_06: with more than one
+         repair picked, the summary shows the COMBINED estimate (the
+         summed priceRange rfToggleIssue maintains) instead of
+         "Starting at" a single repair's figure. One repair keeps the
+         exact wording it always had. */
+      rfSet('rf-sum-estimate', repairState.issues.length ? (repairState.priceExact !== null && repairState.priceExact !== undefined ? (repairState.issues.length > 1 ? repairState.priceRange : 'Starting at ' + repairState.priceRange) : (repairState.issues.length > 1 && repairState.priceRange && (repairState.priceRange.charAt(0) === '$' || repairState.priceRange.indexOf('From ') === 0) ? repairState.priceRange : 'Confirmed up front')) : '\u2014');
       rfSet('rf-sum-atrone', repairState.atrOne ? ('Covered by ATR One: ' + repairState.atrOne) : 'Not answered yet');
       var loc = [rfVal('sr-address-street'), rfVal('sr-address-line2'), rfVal('sr-address-city'), rfVal('sr-address-state'), rfVal('sr-address-zip')].filter(Boolean).join(', ');
       rfSet('rf-sum-location', loc || '\u2014');
@@ -399,7 +404,7 @@
     /* SITE_BOOKING_PICKER_2026_10_31: the booking flow now runs the
        same type -> brand -> model -> repair picker as the Prices page,
        fed by the shared price book the lookup exposes as
-       window.ATR_PRICE_DATA. Priced repairs show the exact flat price;
+       window.ATR_PRICE_DATA. Priced repairs show their book price;
        unpriced ones carry the confirmed-up-front wording, never an
        invented number. Business / Other keeps the brand + issue path
        above (custom-quoted work). */
@@ -536,10 +541,47 @@
       rfShowFlowExtras();
       if (repairWrap) { repairWrap.hidden = false; try { repairWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {} }
     }
-    /* REPAIR_FLOW_UPDATE_2026_11_05: multi-select issue toggling. The estimate is driven by the
-       FIRST selected repair (its book price, or confirmed-up-front when
-       unpriced); every selected repair rides the ticket. No prices are
-       summed or invented here. */
+    /* REPAIR_WIZARD_ESTIMATE_FIX_2026_11_06: the estimate now ADDS UP.
+       Until today it was driven by the FIRST selected repair only, so
+       picking screen + battery showed just the first repair's price
+       (owner, live tap-through Nov 6, 2026: MacBook Pro screen $547 +
+       battery $117 showed $547, never $664). rfEstimateTotals walks
+       every selected repair: an exact book price counts at face value;
+       a range figure ("$149 \u2013 $320" from the fallback lists) counts
+       at both ends, so ranges sum into a combined range on the same
+       basis the single-repair view uses. Repairs with no figure at
+       all count as unpriced and keep confirmed-after-diagnostics
+       wording \u2014 no number is ever invented for them. */
+    function rfParseRange(txt) {
+      if (!txt) return null;
+      var s = String(txt);
+      /* Only a bare price or price range counts as a figure. Anything
+         wordier ("$95/hr + house call", "Custom quote") is not a
+         figure and stays unpriced. */
+      if (!/^[\s$,.\d\u2013\u2014-]+$/.test(s)) return null;
+      var nums = s.replace(/[$,]/g, '').match(/\d+(?:\.\d+)?/g);
+      if (!nums || !nums.length) return null;
+      var lo = parseFloat(nums[0]);
+      var hi = nums.length > 1 ? parseFloat(nums[nums.length - 1]) : lo;
+      return { lo: lo, hi: hi };
+    }
+    function rfEstimateTotals() {
+      var lo = 0, hi = 0, any = false, unpriced = 0;
+      repairState.issues.forEach(function (it) {
+        if (typeof it.price === 'number') { lo += it.price; hi += it.price; any = true; return; }
+        var r = rfParseRange(it.priceRange);
+        if (r) { lo += r.lo; hi += r.hi; any = true; } else { unpriced++; }
+      });
+      return { any: any, unpriced: unpriced, lo: lo, hi: hi };
+    }
+    function rfCombinedText(t) {
+      return t.lo === t.hi ? bkFmt(t.lo) : bkFmt(t.lo) + ' \u2013 ' + bkFmt(t.hi);
+    }
+    /* Multi-select issue toggling (REPAIR_FLOW_UPDATE_2026_11_05).
+       REPAIR_WIZARD_ESTIMATE_FIX_2026_11_06: repairState's priceExact
+       / priceRange stay synced to the COMBINED estimate, so the live
+       summary, the estimate step, and the intake handoff
+       (window.atrGuidedSelection) all read the same total. */
     function rfToggleIssue(name, price, btn, priceRangeText) {
       var found = -1;
       repairState.issues.forEach(function (it, i) { if (it.name === name) found = i; });
@@ -547,8 +589,20 @@
       else { repairState.issues.push({ name: name, price: (typeof price === 'number') ? price : null, priceRange: priceRangeText || null }); if (btn) btn.classList.add('selected'); }
       var first = repairState.issues[0] || null;
       repairState.issue = first ? first.name : '';
-      repairState.priceExact = first ? first.price : null;
-      if (first && first.priceRange) repairState.priceRange = first.priceRange;
+      var t = rfEstimateTotals();
+      if (t.any && t.unpriced === 0 && t.lo === t.hi) {
+        repairState.priceExact = t.lo;
+        repairState.priceRange = bkFmt(t.lo);
+      } else if (t.any && t.unpriced === 0) {
+        repairState.priceExact = null;
+        repairState.priceRange = rfCombinedText(t);
+      } else if (t.any) {
+        repairState.priceExact = null;
+        repairState.priceRange = 'From ' + rfCombinedText(t);
+      } else {
+        repairState.priceExact = null;
+        if (first && first.priceRange) repairState.priceRange = first.priceRange;
+      }
       rfRenderSummary(); rfGate();
     }
     function rfUpdateEstimate() {
@@ -559,20 +613,37 @@
       var amt = document.getElementById('estimate-price');
       var note = document.getElementById('estimate-note');
       var allIssues = repairState.issues.map(function (i) { return i.name; }).join(', ');
-      if (repairState.priceExact !== null && repairState.priceExact !== undefined) {
-        repairState.priceRange = bkFmt(repairState.priceExact);
-        if (lbl) lbl.textContent = 'Your flat price';
-        if (amt) amt.textContent = repairState.priceRange;
-        if (note) note.innerHTML = escapeHtml(friendly) + ' for ' + escapeHtml(modelLabel) + ' &mdash; flat price, parts and labor included. A separate visit fee applies to the visit &mdash; $15 when the repair is already known, or $35 if your device needs diagnostics first &mdash; due at booking and non-refundable. Estimates are always free. ATR One members pay no visit fee for devices covered under their subscription.';
-      } else if (repairState.issues[0] && repairState.issues[0].priceRange) {
-        if (lbl) lbl.textContent = 'Estimated price range';
-        if (amt) amt.textContent = repairState.issues[0].priceRange;
-        if (note && DEFAULT_ESTIMATE_NOTE) note.innerHTML = DEFAULT_ESTIMATE_NOTE;
+      /* REPAIR_WIZARD_ESTIMATE_FIX_2026_11_06: the amount is the SUM
+         of every selected repair's figure (rfEstimateTotals), and the
+         wording is the owner's (Nov 6, 2026): it is "your estimated
+         repair price" \u2014 nothing in this flow may call an estimate
+         a flat price. The step also carries a standing disclaimer
+         (#estimate-disclaimer in index.html): estimates only, exact
+         price after diagnostics, final price may be smaller or
+         larger than the estimate. */
+      var feeNote = 'A separate visit fee applies to the visit &mdash; $15 when the repair is already known, or $35 if your device needs diagnostics first &mdash; due at booking and non-refundable. Estimates are always free. ATR One members pay no visit fee for devices covered under their subscription.';
+      var t = rfEstimateTotals();
+      if (lbl) lbl.textContent = 'Your estimated repair price';
+      if (t.any && t.unpriced === 0) {
+        var combined = rfCombinedText(t);
+        repairState.priceRange = combined;
+        repairState.priceExact = (t.lo === t.hi) ? t.lo : null;
+        if (amt) amt.textContent = combined;
+        if (note) note.innerHTML = escapeHtml(allIssues) + ' for ' + escapeHtml(modelLabel) + ' &mdash; ' + (repairState.issues.length > 1 ? 'estimated total for the repairs you picked' : 'estimated price') + ', parts and labor included. ' + feeNote;
+      } else if (t.any) {
+        var pricedNames = [], unpricedNames = [];
+        repairState.issues.forEach(function (it) {
+          if (typeof it.price === 'number' || rfParseRange(it.priceRange)) pricedNames.push(it.name); else unpricedNames.push(it.name);
+        });
+        var partial = rfCombinedText(t);
+        repairState.priceRange = 'From ' + partial;
+        repairState.priceExact = null;
+        if (amt) amt.textContent = 'From ' + partial;
+        if (note) note.innerHTML = escapeHtml(pricedNames.join(', ')) + ' for ' + escapeHtml(modelLabel) + ' &mdash; estimated from ' + escapeHtml(partial) + ', parts and labor included. ' + escapeHtml(unpricedNames.join(', ')) + ' ' + (unpricedNames.length > 1 ? 'do' : 'does') + ' not have a set price yet &mdash; we confirm the exact price after diagnostics, before any work starts. ' + feeNote;
       } else {
-        repairState.priceRange = 'Flat price confirmed before booking';
-        if (lbl) lbl.textContent = 'Your price';
-        if (amt) amt.textContent = 'Confirmed up front';
-        if (note) note.innerHTML = 'There is no set price for ' + escapeHtml(friendly.toLowerCase()) + ' on the ' + escapeHtml(modelLabel) + ' yet. Book the visit and we confirm one flat price for your exact device before any work starts. The visit fee covers the trip &mdash; $15 when the repair is already known, or $35 if your device needs diagnostics first &mdash; due at booking, non-refundable. Estimates are always free. ATR One members pay no visit fee for devices covered under their subscription.';
+        repairState.priceRange = 'Confirmed after diagnostics';
+        if (amt) amt.textContent = 'Confirmed after diagnostics';
+        if (note) note.innerHTML = 'There is no set price for ' + escapeHtml(allIssues.toLowerCase()) + ' on the ' + escapeHtml(modelLabel) + ' yet. Book the visit and we confirm your exact price after diagnostics, before any work starts. The visit fee covers the trip &mdash; $15 when the repair is already known, or $35 if your device needs diagnostics first &mdash; due at booking, non-refundable. Estimates are always free. ATR One members pay no visit fee for devices covered under their subscription.';
       }
       var summary = document.getElementById('estimate-summary');
       if (summary) {
@@ -674,7 +745,10 @@
           '<span class="pill"><i class="fas fa-mobile-screen"></i> ' + escapeHtml(g.device) + '</span>' +
           '<span class="pill"><i class="fas fa-tag"></i> ' + escapeHtml(g.model ? (g.brand + ' ' + g.model) : (g.brand || 'Any brand')) + '</span>' +
           '<span class="pill"><i class="fas fa-wrench"></i> ' + escapeHtml(g.issue) + '</span>' +
-          '<span class="pill"><i class="fas fa-dollar-sign"></i> ' + (g.price !== null && g.price !== undefined ? 'Flat ' : 'Est. ') + escapeHtml(g.priceRange) + '</span>' +
+          /* REPAIR_WIZARD_ESTIMATE_FIX_2026_11_06: the recap pill said
+             "Flat $X" for priced picks — an estimate is never flat.
+             It reads "Est." for every case now. */
+          '<span class="pill"><i class="fas fa-dollar-sign"></i> ' + 'Est. ' + escapeHtml(g.priceRange) + '</span>' +
           (g.atrOne ? '<span class="pill"><i class="fas fa-shield-halved"></i> ATR One: ' + escapeHtml(g.atrOne) + '</span>' : '');
       }
     }
@@ -837,37 +911,91 @@
 (function () {
   document.addEventListener('DOMContentLoaded', function () {
 
+    /* ACCOUNT_FIX_PASS_3_4_2026_11_06 (owner shop redesign, Nov 6,
+       2026): the catalog is CONSOLIDATED — the 24 per-device listings
+       became 13 generic listings, and the choices that used to be
+       separate listings (regular vs privacy glass, clear vs rugged
+       case, cable connector/length, wall-charger style, adapter
+       type, SSD capacity, iPad vs Galaxy Tab fit) now live in each
+       product's variants, chosen in the pop-up. Every variant keeps
+       the price/points of the listing it came from (variant.sku is
+       that original listing's id, so checkout keeps a real catalog
+       id). Every product carries BOTH a money price and a points
+       value; the ones the old catalog left points-less (cables,
+       mouse, hub, dongles, storage) got a points value from the
+       nearest sibling tier in Austin's existing points menu
+       (chargers 3,500; general accessories 2,500; premium gear
+       3,500) — flagged for owner review in REPORT.md. block assigns
+       each listing to one shop-landing block. Options with no
+       grounded price in the source data (a wired mouse; hard-drive
+       and M.2 storage) are present but marked unavailable rather
+       than priced by invention. */
     var PRODUCTS = [
-      { id: 'glass-iphone', name: 'Tempered Glass Screen Protector — iPhone', cat: 'Screen Protectors', price: 14.99, pts: 1000 },
-      { id: 'glass-samsung', name: 'Tempered Glass Screen Protector — Samsung Galaxy', cat: 'Screen Protectors', price: 14.99, pts: 1000 },
-      { id: 'glass-privacy', name: 'Privacy Tempered Glass Screen Protector — iPhone', cat: 'Screen Protectors', price: 19.99, pts: 1000 },
-      { id: 'case-clear-iphone', name: 'Clear TPU Case — iPhone', cat: 'Phone Cases', price: 14.99, pts: 2500 },
-      { id: 'case-rugged-iphone', name: 'Shockproof Rugged Case — iPhone', cat: 'Phone Cases', price: 24.99, pts: 2500 },
-      { id: 'case-clear-samsung', name: 'Clear TPU Case — Samsung Galaxy', cat: 'Phone Cases', price: 14.99, pts: 2500 },
-      { id: 'cable-lightning-usbc', name: 'Lightning to USB-C Charging Cable 1.2m', cat: 'Charging Cables', price: 14.99 },
-      { id: 'cable-lightning-usba', name: 'Lightning to USB-A Charging Cable 1.2m', cat: 'Charging Cables', price: 12.99 },
-      { id: 'cable-usbc-usbc', name: 'USB-C to USB-C 60W Fast-Charge Cable 1m', cat: 'Charging Cables', price: 12.99 },
-      { id: 'wall-dual-20w', name: '20W Dual-Port Wall Charger (USB-C + USB-A)', cat: 'Wall Chargers', price: 19.99, pts: 3500 },
-      { id: 'wall-pd-20w', name: '20W USB-C Fast Wall Charger', cat: 'Wall Chargers', price: 17.99, pts: 3500 },
-      { id: 'car-dual-usb', name: 'Dual USB Car Charger (Fast Charge)', cat: 'Car Chargers', price: 14.99, pts: 3500 },
-      { id: 'mag-pad-15w', name: 'Magnetic Wireless Charging Pad 15W', cat: 'Wireless Chargers', price: 29.99, pts: 3500 },
-      { id: 'station-3in1', name: '3-in-1 Wireless Charging Station', cat: 'Wireless Chargers', price: 44.99, pts: 3500 },
-      /* SITE_SHOP_EXPAND_2026_10_30: 10 new products, prices from the
-       * verified research shortlist (Sentrix list + named-retailer
-       * fallbacks). Points prices only where Austin's menu names them:
-       * protectors 1000, cases 2500. The square-checkout Edge Function
-       * carries the same ids/prices — it must be redeployed with the
-       * staged update before these can check out. */
-      { id: 'tab-case-ipad-pro129', name: 'Folio Case for iPad Pro 12.9" (White)', cat: 'Tablets', price: 29.99, pts: 2500, desc: 'Apple\u2019s own Smart Folio in white, made for iPad Pro 12.9-inch (3rd\u20136th generation).' },
-      { id: 'tab-case-galaxy-a9plus', name: 'Book Cover Case for Galaxy Tab A9+', cat: 'Tablets', price: 59.99, pts: 2500, desc: 'Samsung\u2019s own book cover case for the Galaxy Tab A9+ (11-inch).' },
-      { id: 'tab-glass-ipad-109', name: 'Tempered Glass for iPad 10.9" (10th/11th Gen)', cat: 'Tablets', price: 19.99, pts: 1000, desc: 'Casper Pro tempered glass for iPad 10 (2022) and iPad 11 (2025).' },
-      { id: 'tab-glass-galaxy-a9plus', name: 'Tempered Glass for Galaxy Tab A9+ (11")', cat: 'Tablets', price: 24.99, pts: 1000, desc: 'Tempered glass screen protection for the Galaxy Tab A9+ 11-inch.' },
-      { id: 'acc-mouse-m510', name: 'Wireless Mouse (Full Size)', cat: 'Computer Accessories', price: 34.99, desc: 'Logitech M510 full-size wireless mouse \u2014 the one customers ask for by name.' },
-      { id: 'acc-hub-usb3-4port', name: '4-Port USB 3.0 Hub', cat: 'Computer Accessories', price: 19.99, desc: 'Anker 4-port USB 3.0 hub with 5Gbps data transfer \u2014 one port becomes four.' },
-      { id: 'dng-usbc-hdmi', name: 'USB-C to HDMI Adapter (4K)', cat: 'Dongles & Adapters', price: 19.99, desc: 'Anker 310 adapter \u2014 plug a USB-C device into an HDMI display, up to 4K.' },
-      { id: 'dng-usbc-usba-2pk', name: 'USB-C to USB-A Adapter (2-Pack)', cat: 'Dongles & Adapters', price: 16.99, desc: 'Two-pack of Anker USB-C to USB 3.0 adapters for older USB gear.' },
-      { id: 'sto-ssd-512', name: '512GB SSD (2.5" SATA)', cat: 'Storage', price: 129.99, desc: 'Apollo 512GB 2.5-inch SATA SSD \u2014 an internal upgrade drive for a laptop or desktop.' },
-      { id: 'sto-ssd-1tb', name: '1TB SSD (2.5" SATA)', cat: 'Storage', price: 189.99, desc: 'Apollo 1TB 2.5-inch SATA SSD \u2014 an internal upgrade drive for a laptop or desktop.' }
+      { id: 'glass-iphone', name: 'Tempered Glass Screen Protector', cat: 'Phone Screen Protectors', block: 'phone', price: 14.99, pts: 1000, featured: true, imageId: 'glass-iphone', fit: 'Phone', defaultVariant: 'Regular',
+        desc: 'Tempered glass that takes the everyday hits so your screen doesn\u2019t have to. Choose regular or privacy glass, then tell us the phone it has to fit.',
+        variants: [
+          { label: 'Regular', price: 14.99, pts: 1000, sku: 'glass-iphone', skuByBrand: { Samsung: 'glass-samsung' } },
+          { label: 'Privacy', price: 19.99, pts: 1000, sku: 'glass-privacy' }
+        ] },
+      { id: 'case-clear-iphone', name: 'Phone Case', cat: 'Phone Cases', block: 'phone', price: 14.99, pts: 2500, featured: true, imageId: 'case-clear-iphone', fit: 'Phone', defaultVariant: 'Clear case',
+        desc: 'Choose a clear case for a slim everyday hold, or a rugged shockproof case for harder knocks — then tell us the phone it has to fit.',
+        variants: [
+          { label: 'Clear case', price: 14.99, pts: 2500, sku: 'case-clear-iphone', skuByBrand: { Samsung: 'case-clear-samsung' } },
+          { label: 'Rugged case', price: 24.99, pts: 2500, sku: 'case-rugged-iphone' }
+        ] },
+      { id: 'cable-lightning-usbc', name: 'Charging Cable', cat: 'Charging Cables', block: 'phone', price: 14.99, pts: 3500, featured: true, imageId: 'cable-lightning-usbc', defaultVariant: 'Lightning to USB-C — 1.2m',
+        desc: 'Pick the connector pair you need. The lengths listed are the ones we stock and stand behind.',
+        variants: [
+          { label: 'Lightning to USB-C — 1.2m', price: 14.99, pts: 3500, sku: 'cable-lightning-usbc' },
+          { label: 'Lightning to USB-A — 1.2m', price: 12.99, pts: 3500, sku: 'cable-lightning-usba' },
+          { label: 'USB-C to USB-C — 1m', price: 12.99, pts: 3500, sku: 'cable-usbc-usbc' }
+        ] },
+      { id: 'wall-pd-20w', name: 'Wall Charging Block', cat: 'Wall Chargers', block: 'phone', price: 17.99, pts: 3500, featured: true, imageId: 'wall-pd-20w', defaultVariant: '20W USB-C fast charge',
+        desc: 'Compact 20W wall charging blocks. Go single USB-C for the simplest fast charge, or dual-port to run a USB-C and a USB-A cable at once.',
+        variants: [
+          { label: '20W USB-C fast charge', price: 17.99, pts: 3500, sku: 'wall-pd-20w' },
+          { label: '20W dual port — USB-C + USB-A', price: 19.99, pts: 3500, sku: 'wall-dual-20w' }
+        ] },
+      { id: 'mag-pad-15w', name: 'MagSafe Wireless Charger', cat: 'Wireless Chargers', block: 'phone', price: 29.99, pts: 3500, imageId: 'mag-pad-15w',
+        desc: 'A 15W magnetic wireless charging pad that snaps into place on compatible phones — set the phone down and it charges.' },
+      { id: 'tab-glass-ipad-109', name: 'Tempered Glass Screen Protector', cat: 'Tablet Screen Protectors', block: 'tablet', price: 19.99, pts: 1000, featured: true, imageId: 'tab-glass-ipad-109', fit: 'Tablet', defaultVariant: 'iPad fit',
+        desc: 'Tempered glass screen protection, matched to the tablet you choose — pick the fit family, then the brand and model.',
+        variants: [
+          { label: 'iPad fit', price: 19.99, pts: 1000, sku: 'tab-glass-ipad-109', deviceBrands: ['Apple'] },
+          { label: 'Galaxy Tab fit', price: 24.99, pts: 1000, sku: 'tab-glass-galaxy-a9plus', deviceBrands: ['Samsung'] }
+        ] },
+      { id: 'tab-case-ipad-pro129', name: 'Tablet Case', cat: 'Tablet Cases', block: 'tablet', price: 29.99, pts: 2500, imageId: 'tab-case-ipad-pro129', fit: 'Tablet', defaultVariant: 'iPad folio case',
+        desc: 'Cover-style tablet cases that protect the screen in a bag and fold back when you\u2019re using the tablet. Pick the fit family, then the brand and model.',
+        variants: [
+          { label: 'iPad folio case', price: 29.99, pts: 2500, sku: 'tab-case-ipad-pro129', deviceBrands: ['Apple'] },
+          { label: 'Galaxy Tab book cover', price: 59.99, pts: 2500, sku: 'tab-case-galaxy-a9plus', deviceBrands: ['Samsung'] }
+        ] },
+      { id: 'acc-mouse-m510', name: 'Wireless Mouse (Full Size)', cat: 'Computer Accessories', block: 'computer', price: 34.99, pts: 3500, featured: true, imageId: 'acc-mouse-m510', defaultVariant: 'Wireless',
+        desc: 'Logitech M510 full-size wireless mouse — the one customers ask for by name. A wired option isn\u2019t a stocked listing yet; ask us and we\u2019ll line one up.',
+        variants: [
+          { label: 'Wireless', price: 34.99, pts: 3500, sku: 'acc-mouse-m510' },
+          { label: 'Wired — ask us for current options', price: null, pts: null, unavailable: true }
+        ] },
+      { id: 'acc-hub-usb3-4port', name: '4-Port USB 3.0 Hub', cat: 'Computer Accessories', block: 'computer', price: 19.99, pts: 2500, imageId: 'acc-hub-usb3-4port',
+        desc: 'Anker 4-port USB 3.0 hub with 5Gbps data transfer — one port becomes four.' },
+      { id: 'dng-usbc-usba-2pk', name: 'Dongles & Adapters', cat: 'Dongles & Adapters', block: 'computer', price: 16.99, pts: 2500, imageId: 'dng-usbc-usba-2pk', defaultVariant: 'USB-C to USB-A Adapter (2-Pack)',
+        desc: 'The little adapters that make new and old gear work together — USB-C to USB-A for older USB gear, or USB-C to HDMI for a display, up to 4K.',
+        variants: [
+          { label: 'USB-C to USB-A Adapter (2-Pack)', price: 16.99, pts: 2500, sku: 'dng-usbc-usba-2pk' },
+          { label: 'USB-C to HDMI Adapter (4K)', price: 19.99, pts: 2500, sku: 'dng-usbc-hdmi' }
+        ] },
+      { id: 'sto-ssd-512', name: 'Storage Drive', cat: 'Storage', block: 'computer', price: 129.99, pts: 3500, featured: true, imageId: 'sto-ssd-512', defaultVariant: 'SSD — 512GB (2.5" SATA)',
+        desc: 'Internal upgrade drives. The stocked listings are Apollo 2.5-inch SATA SSDs; hard-drive and M.2 options are sourced per machine, so ask us before ordering those.',
+        variants: [
+          { label: 'SSD — 512GB (2.5" SATA)', price: 129.99, pts: 3500, sku: 'sto-ssd-512' },
+          { label: 'SSD — 1TB (2.5" SATA)', price: 189.99, pts: 3500, sku: 'sto-ssd-1tb' },
+          { label: 'Hard drive — ask us for current options', price: null, pts: null, unavailable: true },
+          { label: 'M.2 SSD — ask us for current options', price: null, pts: null, unavailable: true }
+        ] },
+      { id: 'car-dual-usb', name: 'Dual USB Car Charger (Fast Charge)', cat: 'Car Chargers', block: 'other', price: 14.99, pts: 3500, imageId: 'car-dual-usb',
+        desc: 'Two USB ports for charging in the car, with fast-charge support for the drive.' },
+      { id: 'station-3in1', name: '3-in-1 Wireless Charging Station', cat: 'Wireless Chargers', block: 'other', price: 44.99, pts: 3500, imageId: 'station-3in1',
+        desc: 'A three-in-one wireless charging station for a nightstand or desk — one spot that charges your everyday carry together.' }
     ];
 
     var grid = document.getElementById('product-grid');
@@ -879,6 +1007,75 @@
 
     function money(n) { return '$' + n.toFixed(2); }
     function fmtPts(n) { return Number(n || 0).toLocaleString('en-US'); }
+
+    /* ACCOUNT_FIX_PASS_3_4_2026_11_06: cart LINE keys. A plain key is
+       just the product id — the shape every older cart already uses,
+       and it stands for the product's default variant. A configured
+       line (a non-default variant, and/or a chosen fit device) adds
+       ::v=<variant> and ::d=<device> suffixes, so the exact variant
+       and device the customer picked ride on the line through the
+       drawer, the glances, the account Cart section, and checkout.
+       All pricing/points lookups go through the helpers below, which
+       resolve a key back to its product + variant. */
+    function productById(id) { return PRODUCTS.find(function (x) { return x.id === id; }) || null; }
+    function cartBaseId(key) { return String(key).split('::')[0]; }
+    function cartKeyPart(key, tag) {
+      var parts = String(key).split('::');
+      for (var i = 1; i < parts.length; i++) {
+        if (parts[i].indexOf(tag + '=') === 0) {
+          try { return decodeURIComponent(parts[i].slice(tag.length + 1)); } catch (e) { return parts[i].slice(tag.length + 1); }
+        }
+      }
+      return '';
+    }
+    function cartVariantFor(key) {
+      var p = productById(cartBaseId(key));
+      if (!p || !p.variants) return null;
+      var label = cartKeyPart(key, 'v');
+      var found = null;
+      p.variants.forEach(function (v) { if (v.label === label) found = v; });
+      if (found) return found;
+      p.variants.forEach(function (v) { if (v.label === p.defaultVariant) found = v; });
+      return found || p.variants[0];
+    }
+    function cartDeviceFor(key) { return cartKeyPart(key, 'd'); }
+    function cartUnitPrice(key) {
+      var p = productById(cartBaseId(key));
+      if (!p) return 0;
+      var v = cartVariantFor(key);
+      return v && v.price != null ? v.price : p.price;
+    }
+    function cartUnitPts(key) {
+      var p = productById(cartBaseId(key));
+      if (!p) return 0;
+      var v = cartVariantFor(key);
+      return v && v.pts != null ? v.pts : (p.pts || 0);
+    }
+    function cartOptionText(key) {
+      var bits = [];
+      var v = cartVariantFor(key);
+      var p = productById(cartBaseId(key));
+      if (v && p && p.variants) bits.push(v.label);
+      var dev = cartDeviceFor(key);
+      if (dev) bits.push(dev);
+      return bits.join(' \u00b7 ');
+    }
+    function cartCheckoutId(key) {
+      var p = productById(cartBaseId(key));
+      if (!p) return cartBaseId(key);
+      var v = cartVariantFor(key);
+      if (!v) return p.id;
+      var brand = cartDeviceFor(key).split(' ')[0];
+      if (brand && v.skuByBrand && v.skuByBrand[brand]) return v.skuByBrand[brand];
+      return v.sku || p.id;
+    }
+    function makeCartKey(p, variant, device) {
+      var key = p.id;
+      var parts = [];
+      if (variant && (device || variant.label !== p.defaultVariant)) parts.push('v=' + encodeURIComponent(variant.label));
+      if (device) parts.push('d=' + encodeURIComponent(device));
+      return parts.length ? key + '::' + parts.join('::') : key;
+    }
 
     function getCart() {
       var cart;
@@ -901,7 +1098,7 @@
       // from the drawer, and make checkout fail on an unknown item.
       var changed = false;
       Object.keys(cart).forEach(function (k) {
-        var known = PRODUCTS.some(function (p) { return p.id === k; });
+        var known = PRODUCTS.some(function (p) { return p.id === cartBaseId(k); });
         if (!known || !(cart[k] > 0)) { delete cart[k]; changed = true; }
       });
       if (changed) { try { localStorage.setItem('atr-cart', JSON.stringify(cart)); } catch (e) {} }
@@ -929,8 +1126,8 @@
       var cart = getCart();
       var changed = false;
       Object.keys(map).forEach(function (k) {
-        var p = PRODUCTS.find(function (x) { return x.id === k; });
-        if (!cart[k] || !p || !p.pts) { delete map[k]; changed = true; }
+        var p = productById(cartBaseId(k));
+        if (!cart[k] || !p || !cartUnitPts(k)) { delete map[k]; changed = true; }
       });
       if (changed) { try { localStorage.setItem(PTS_KEY, JSON.stringify(map)); } catch (e) {} }
       return map;
@@ -943,9 +1140,9 @@
       var cart = getCart();
       var map = getPtsMap();
       return Object.keys(map).map(function (id) {
-        var p = PRODUCTS.find(function (x) { return x.id === id; });
+        var p = productById(cartBaseId(id));
         var qty = cart[id] || 0;
-        return p && qty > 0 ? { p: p, qty: qty, pts: p.pts * qty } : null;
+        return p && qty > 0 ? { id: id, p: p, qty: qty, pts: cartUnitPts(id) * qty, optionText: cartOptionText(id) } : null;
       }).filter(function (x) { return !!x; });
     }
     function ptsTotal() {
@@ -956,46 +1153,342 @@
       var map = getPtsMap();
       return Object.keys(cart).reduce(function (sum, k) {
         if (map[k]) return sum;
-        var p = PRODUCTS.find(function (x) { return x.id === k; });
-        return sum + (p ? p.price * cart[k] : 0);
+        return sum + cartUnitPrice(k) * cart[k];
       }, 0);
     }
 
-    function renderProducts(filter) {
+    /* ACCOUNT_FIX_PASS_3_4_2026_11_06 (owner shop redesign, Nov 6,
+       2026 — supersedes the same-day tap-to-detail-only shape):
+       cards KEEP an Add button, with the money price on its own row
+       and the points value on a separate row above the actions row,
+       so the points text can never overlap or cover the button at
+       any width. Tapping a card (anywhere but the Add button) opens
+       the pop-up detail view: image, name, full description, price
+       + points, variant selectors where the product varies, and —
+       for fit-dependent products (cases, screen protectors) — a
+       device selector built like the repair flow's brand → model
+       picker, reading the wizard's own device data
+       (window.ATR_PRICE_DATA). The chosen variant + device ride on
+       the cart line (see makeCartKey) so staff know exactly what to
+       bring. A fit product's card Add opens the pop-up instead of
+       adding blind — a case or protector is no use without its
+       device. */
+    var SHOP_BLOCKS = {
+      phone: { title: 'Phone accessories', copy: 'Protectors, cases, cables and charging for your phone.' },
+      computer: { title: 'Computer accessories', copy: 'Mice, hubs, adapters, storage and desktop gear.' },
+      tablet: { title: 'Tablet accessories', copy: 'Cases and screen protection for your tablet.' },
+      gaming: { title: 'Gaming accessories', special: 'gaming' },
+      smartwatch: { title: 'Smartwatch accessories', special: 'smartwatch' },
+      other: { title: 'Other', copy: 'Car charging, charging stations, and the rest of the gear shelf.' },
+      refurbished: { title: 'Refurbished phones', special: 'refurbished' },
+      featured: { title: 'Featured deals', copy: 'A short list of shop favorites at their regular fair prices.' },
+      all: { title: 'Shop all accessories', copy: 'Every accessory in one view.' }
+    };
+    var SHOP_SPECIAL_HTML = {
+      refurbished: '<h4>Refurbished phones, when they\u2019re on the shelf</h4><p>We sell pre-owned and refurbished phones — tested, checked over, and ready to use. Stock changes as devices come in, so there\u2019s no fixed list here: <a href="#contact" data-page="contact">ask us what\u2019s in stock</a> and we\u2019ll tell you exactly what we have.</p>',
+      gaming: '<h4>Sourced for your setup</h4><p>Gaming coolers and console accessories depend on the console and the setup you run, so we source them per setup instead of listing one-size-fits-all versions. <a href="#contact" data-page="contact">Tell us what you\u2019re playing on</a> and we\u2019ll line up the right gear.</p>',
+      smartwatch: '<h4>Matched to your watch</h4><p>Watch bands, chargers and protection are model-specific — the right one depends on your watch\u2019s brand, model and size. <a href="#contact" data-page="contact">Tell us your watch</a> and we\u2019ll line up accessories that fit it.</p>'
+    };
+    var shopTiles = document.getElementById('shop-categories');
+    var shopHead = document.getElementById('shop-listing-head');
+    var shopBlockTitle = document.getElementById('shop-block-title');
+    var shopBlockCopy = document.getElementById('shop-block-copy');
+    var shopSpecial = document.getElementById('shop-special');
+    var shopSearch = document.getElementById('shop-search');
+
+    function shopShowHome() {
+      if (shopTiles) shopTiles.hidden = false;
+      if (shopHead) shopHead.hidden = true;
+      if (shopSpecial) shopSpecial.hidden = true;
+      if (grid) grid.hidden = true;
+    }
+    function shopShowListing(title, copy) {
+      if (shopTiles) shopTiles.hidden = true;
+      if (shopHead) shopHead.hidden = false;
+      if (shopBlockTitle) shopBlockTitle.textContent = title;
+      if (shopBlockCopy) shopBlockCopy.textContent = copy || '';
+    }
+    function openShopBlock(block) {
+      var meta = SHOP_BLOCKS[block];
+      if (!meta) return;
+      if (shopSearch) shopSearch.value = '';
+      if (meta.special) {
+        shopShowListing(meta.title, '');
+        if (grid) grid.hidden = true;
+        if (shopSpecial) { shopSpecial.innerHTML = SHOP_SPECIAL_HTML[meta.special] || ''; shopSpecial.hidden = false; }
+        return;
+      }
+      if (shopSpecial) shopSpecial.hidden = true;
+      var list = block === 'all' ? PRODUCTS.slice()
+        : block === 'featured' ? PRODUCTS.filter(function (p) { return !!p.featured; })
+        : PRODUCTS.filter(function (p) { return p.block === block; });
+      shopShowListing(meta.title, meta.copy);
+      renderProductCards(list);
+      if (grid) grid.hidden = false;
+    }
+    function shopSearchRun() {
+      if (!shopSearch) return;
+      var q = shopSearch.value.trim().toLowerCase();
+      if (!q) { shopShowHome(); return; }
+      var list = PRODUCTS.filter(function (p) {
+        var hay = (p.name + ' ' + p.cat + ' ' + p.block + ' ' + (p.desc || '') + ' ' +
+          (p.variants ? p.variants.map(function (v) { return v.label; }).join(' ') : '')).toLowerCase();
+        return hay.indexOf(q) > -1;
+      });
+      shopShowListing('Search results', list.length
+        ? 'Across every shop category — ' + list.length + (list.length === 1 ? ' match.' : ' matches.')
+        : 'No matches — try a shorter word, or head back and browse the categories.');
+      if (shopSpecial) shopSpecial.hidden = true;
+      renderProductCards(list);
+      if (grid) grid.hidden = false;
+    }
+
+    function cardPriceHtml(p) {
+      if (p.variants) {
+        var min = null;
+        p.variants.forEach(function (v) { if (v.price != null && (min === null || v.price < min)) min = v.price; });
+        if (min !== null && min !== p.price) return 'From ' + money(min);
+      }
+      return money(p.price);
+    }
+    function renderProductCards(list) {
       if (!grid) return;
       grid.innerHTML = '';
-      PRODUCTS.filter(function (p) {
-        return !filter || filter === 'all' || p.cat === filter;
-      }).forEach(function (p) {
+      list.forEach(function (p) {
         var card = document.createElement('article');
         card.className = 'product-card';
+        card.setAttribute('data-id', p.id);
+        card.setAttribute('data-block', p.block);
+        card.setAttribute('tabindex', '0');
+        card.setAttribute('aria-label', p.name + ' — view details');
         card.innerHTML =
-          '<div class="product-media"><img src="images/products/' + p.id + '.jpg" alt="' + p.name + '" loading="lazy"></div>' +
+          '<div class="product-media"><img src="images/products/' + (p.imageId || p.id) + '.jpg" alt="' + p.name + '" loading="lazy"></div>' +
           '<div class="product-body">' +
             '<span class="product-cat">' + p.cat + '</span>' +
             '<h3 class="product-name">' + p.name + '</h3>' +
             (p.desc ? '<p class="product-desc">' + p.desc + '</p>' : '') +
-            '<div class="product-foot">' +
-              '<span class="product-price">' + money(p.price) + (p.pts ? ' <span class="product-pts">or ' + fmtPts(p.pts) + ' pts</span>' : '') + '</span>' +
-              '<button class="add-btn" data-id="' + p.id + '"><i class="fas fa-plus"></i> Add</button>' +
+            '<div class="product-price-row"><span class="product-price">' + cardPriceHtml(p) + '</span></div>' +
+            '<div class="product-points-row"><span class="product-pts">or ' + fmtPts(p.pts) + ' pts</span></div>' +
+            '<div class="product-card-actions">' +
+              '<span class="product-view-hint">View details <i class="fas fa-arrow-right"></i></span>' +
+              '<button class="add-btn" type="button" data-add-id="' + p.id + '">Add</button>' +
             '</div>' +
           '</div>';
+        card.addEventListener('click', function () { openProductDetail(p.id); });
+        card.addEventListener('keydown', function (e) {
+          if (e.target !== card) return;
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openProductDetail(p.id); }
+        });
+        var addBtn = card.querySelector('.add-btn');
+        if (addBtn) addBtn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          addFromCard(p, addBtn);
+        });
         grid.appendChild(card);
       });
-      grid.querySelectorAll('.add-btn').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          var cart = getCart();
-          var id = btn.getAttribute('data-id');
-          cart[id] = (cart[id] || 0) + 1;
-          saveCart(cart);
-          btn.classList.add('added');
-          btn.innerHTML = '<i class="fas fa-check"></i> Added';
-          setTimeout(function () {
-            btn.classList.remove('added');
-            btn.innerHTML = '<i class="fas fa-plus"></i> Add';
-          }, 900);
-        });
+    }
+    /* Kept name/signature for any older caller: a category name now
+       resolves to its landing block; 'all' opens the all view. */
+    function renderProducts(filter) {
+      if (!filter || filter === 'all') { openShopBlock('all'); return; }
+      var byBlock = PRODUCTS.filter(function (p) { return p.block === filter; });
+      if (byBlock.length) { shopShowListing(filter, ''); if (shopSpecial) shopSpecial.hidden = true; renderProductCards(byBlock); if (grid) grid.hidden = false; return; }
+      var byCat = PRODUCTS.filter(function (p) { return p.cat === filter; });
+      shopShowListing(filter, ''); if (shopSpecial) shopSpecial.hidden = true; renderProductCards(byCat); if (grid) grid.hidden = false;
+    }
+    function flashAdded(btn, label) {
+      if (!btn) return;
+      btn.classList.add('added');
+      var original = btn.innerHTML;
+      btn.innerHTML = '<i class="fas fa-check"></i> ' + (label || 'Added');
+      setTimeout(function () { btn.classList.remove('added'); btn.innerHTML = original; }, 1200);
+    }
+    function addFromCard(p, btn) {
+      /* A case or protector added without its device is a wasted
+         trip — its Add opens the pop-up, where the device picker
+         lives, instead of adding a bare line. */
+      if (p.fit) { openProductDetail(p.id); return; }
+      addToCart(p.id);
+      flashAdded(btn, 'Added');
+    }
+
+    /* The pop-up detail view. It rides the cart drawer's conventions
+       (overlay + fixed panel, body scroll locked) and always has a
+       way back: the close button, a tap on the overlay, and Esc. */
+    var pdOverlay = document.getElementById('product-overlay');
+    var pdPanel = document.getElementById('product-detail');
+    var pdCurrent = null;
+    function addToCart(key) {
+      var cart = getCart();
+      cart[key] = (cart[key] || 0) + 1;
+      saveCart(cart);
+    }
+    function pdEl(id) { return document.getElementById(id); }
+    function pdSelectedVariant() {
+      if (!pdCurrent || !pdCurrent.variants) return null;
+      var sel = pdEl('pd-variant');
+      var idx = sel ? parseInt(sel.value, 10) : 0;
+      return pdCurrent.variants[isNaN(idx) ? 0 : idx] || null;
+    }
+    function pdShowError(msg) {
+      var err = pdEl('pd-error');
+      if (!err) return;
+      err.textContent = msg || '';
+      err.hidden = !msg;
+    }
+    function pdDeviceData() {
+      if (!pdCurrent || !pdCurrent.fit) return null;
+      var all = window.ATR_PRICE_DATA;
+      return all && all[pdCurrent.fit] ? all[pdCurrent.fit] : null;
+    }
+    function pdAllowedBrands() {
+      var data = pdDeviceData();
+      if (!data) return [];
+      var brands = Object.keys(data);
+      var v = pdSelectedVariant();
+      if (v && v.deviceBrands) brands = brands.filter(function (b) { return v.deviceBrands.indexOf(b) > -1; });
+      return brands;
+    }
+    function pdPopulateBrands() {
+      var brandSel = pdEl('pd-device-brand');
+      var modelSel = pdEl('pd-device-model');
+      if (!brandSel || !modelSel) return;
+      var brands = pdAllowedBrands();
+      brandSel.innerHTML = '<option value="">Choose a brand</option>' + brands.map(function (b) {
+        return '<option value="' + b + '">' + b + '</option>';
+      }).join('');
+      modelSel.innerHTML = '<option value="">Choose a brand first</option>';
+      modelSel.disabled = true;
+      if (!brands.length) pdShowError('The device list isn\u2019t available right now — text us at (937) 280-6243 and we\u2019ll get the right fit.');
+    }
+    function pdPopulateModels() {
+      var brandSel = pdEl('pd-device-brand');
+      var modelSel = pdEl('pd-device-model');
+      var data = pdDeviceData();
+      if (!brandSel || !modelSel || !data) return;
+      var models = brandSel.value && data[brandSel.value] ? Object.keys(data[brandSel.value]) : [];
+      modelSel.innerHTML = '<option value="">Choose a model</option>' + models.map(function (m) {
+        return '<option value="' + m + '">' + m + '</option>';
+      }).join('');
+      modelSel.disabled = !models.length;
+    }
+    function pdUpdatePrice() {
+      var price = pdEl('product-detail-price');
+      if (!price || !pdCurrent) return;
+      var v = pdSelectedVariant();
+      if (v && v.unavailable) {
+        price.textContent = 'Ask us — not a stocked listing yet';
+        var addBtn = pdEl('product-detail-add');
+        if (addBtn) addBtn.disabled = true;
+        return;
+      }
+      var addBtn2 = pdEl('product-detail-add');
+      if (addBtn2) addBtn2.disabled = false;
+      var unit = v && v.price != null ? v.price : pdCurrent.price;
+      var pts = v && v.pts != null ? v.pts : pdCurrent.pts;
+      price.innerHTML = money(unit) + ' <span class="product-pts">or ' + fmtPts(pts) + ' pts</span>';
+    }
+    function openProductDetail(id) {
+      var p = productById(id);
+      if (!p || !pdPanel) return;
+      pdCurrent = p;
+      pdShowError('');
+      var img = pdEl('product-detail-img');
+      if (img) { img.src = 'images/products/' + (p.imageId || p.id) + '.jpg'; img.alt = p.name; }
+      var cat = pdEl('product-detail-cat');
+      if (cat) cat.textContent = p.cat;
+      var name = pdEl('product-detail-name');
+      if (name) name.textContent = p.name;
+      var desc = pdEl('product-detail-desc');
+      if (desc) { desc.textContent = p.desc || ''; desc.hidden = !p.desc; }
+      var variantWrap = pdEl('pd-variant-wrap');
+      var variantSel = pdEl('pd-variant');
+      if (variantWrap && variantSel) {
+        if (p.variants) {
+          variantWrap.hidden = false;
+          variantSel.innerHTML = p.variants.map(function (v, i) {
+            return '<option value="' + i + '"' + (v.unavailable ? ' disabled' : '') + '>' + v.label +
+              (v.price != null ? ' — ' + money(v.price) : '') + '</option>';
+          }).join('');
+          var def = 0;
+          p.variants.forEach(function (v, i) { if (v.label === p.defaultVariant) def = i; });
+          variantSel.value = String(def);
+        } else {
+          variantWrap.hidden = true;
+          variantSel.innerHTML = '';
+        }
+      }
+      var deviceWrap = pdEl('pd-device-wrap');
+      if (deviceWrap) {
+        deviceWrap.hidden = !p.fit;
+        if (p.fit) pdPopulateBrands();
+      }
+      pdUpdatePrice();
+      var addBtn = pdEl('product-detail-add');
+      if (addBtn) {
+        addBtn.classList.remove('added');
+        addBtn.innerHTML = '<i class="fas fa-plus"></i> Add to cart';
+      }
+      pdPanel.hidden = false;
+      if (pdOverlay) pdOverlay.hidden = false;
+      document.body.style.overflow = 'hidden';
+    }
+    function closeProductDetail() {
+      if (pdPanel) pdPanel.hidden = true;
+      if (pdOverlay) pdOverlay.hidden = true;
+      pdCurrent = null;
+      document.body.style.overflow = '';
+    }
+    if (!window.__atrShopUiWired) {
+      window.__atrShopUiWired = true;
+      var pdClose = pdEl('product-detail-close');
+      if (pdClose) pdClose.addEventListener('click', closeProductDetail);
+      if (pdOverlay) pdOverlay.addEventListener('click', closeProductDetail);
+      var pdAdd = pdEl('product-detail-add');
+      if (pdAdd) pdAdd.addEventListener('click', function () {
+        if (!pdCurrent) return;
+        var variant = pdSelectedVariant();
+        if (variant && variant.unavailable) {
+          pdShowError('That option isn\u2019t a stocked listing yet — text us at (937) 280-6243 and we\u2019ll line it up.');
+          return;
+        }
+        var device = '';
+        if (pdCurrent.fit) {
+          var b = pdEl('pd-device-brand');
+          var m = pdEl('pd-device-model');
+          if (!b || !m || !b.value || !m.value) {
+            pdShowError('Choose your device brand and model first — that\u2019s how we bring exactly the right fit.');
+            return;
+          }
+          device = b.value + ' ' + m.value;
+        }
+        pdShowError('');
+        addToCart(makeCartKey(pdCurrent, variant, device));
+        flashAdded(pdAdd, 'Added to cart');
+        pdAdd.innerHTML = '<i class="fas fa-check"></i> Added to cart';
       });
+      var pdVariantSel = pdEl('pd-variant');
+      if (pdVariantSel) pdVariantSel.addEventListener('change', function () {
+        pdShowError('');
+        if (pdCurrent && pdCurrent.fit) pdPopulateBrands();
+        pdUpdatePrice();
+      });
+      var pdBrandSel = pdEl('pd-device-brand');
+      if (pdBrandSel) pdBrandSel.addEventListener('change', function () { pdShowError(''); pdPopulateModels(); });
+      var pdModelSel = pdEl('pd-device-model');
+      if (pdModelSel) pdModelSel.addEventListener('change', function () { pdShowError(''); });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && pdPanel && !pdPanel.hidden) closeProductDetail();
+      });
+      if (shopTiles) shopTiles.querySelectorAll('[data-shop-block]').forEach(function (tile) {
+        tile.addEventListener('click', function () { openShopBlock(tile.getAttribute('data-shop-block')); });
+      });
+      var shopBack = pdEl('shop-back');
+      if (shopBack) shopBack.addEventListener('click', function () {
+        if (shopSearch) shopSearch.value = '';
+        shopShowHome();
+      });
+      if (shopSearch) shopSearch.addEventListener('input', shopSearchRun);
     }
 
     function cartQty() {
@@ -1006,8 +1499,7 @@
     function cartSum() {
       var cart = getCart();
       return Object.keys(cart).reduce(function (s, k) {
-        var p = PRODUCTS.find(function (x) { return x.id === k; });
-        return s + (p ? p.price * cart[k] : 0);
+        return s + cartUnitPrice(k) * cart[k];
       }, 0);
     }
 
@@ -1018,7 +1510,7 @@
           box.innerHTML = '';
         } else {
           var html = lines.map(function (l) {
-            return '<div class="cart-points-line"><span>' + l.p.name + ' &times; ' + l.qty + '</span><strong>' + fmtPts(l.pts) + ' pts</strong></div>';
+            return '<div class="cart-points-line"><span>' + l.p.name + (l.optionText ? ' — ' + l.optionText : '') + ' &times; ' + l.qty + '</span><strong>' + fmtPts(l.pts) + ' pts</strong></div>';
           }).join('');
           html += '<div class="cart-points-line cart-points-total"><span>Paid with points</span><strong>' + fmtPts(ptsTotal()) + ' pts</strong></div>';
           html += '<div class="cart-points-line"><span>Due at checkout</span><strong>' + money(cashSum()) + '</strong></div>';
@@ -1057,16 +1549,20 @@
       cartItems.innerHTML = '';
       var ptsMap = getPtsMap();
       ids.forEach(function (id) {
-        var p = PRODUCTS.find(function (x) { return x.id === id; });
+        var p = productById(cartBaseId(id));
         if (!p) return;
         var payPts = !!ptsMap[id];
+        var unitPrice = cartUnitPrice(id);
+        var unitPts = cartUnitPts(id);
+        var optionText = cartOptionText(id);
         var div = document.createElement('div');
         div.className = 'cart-item';
         div.innerHTML =
           '<div class="cart-item-info">' +
             '<div class="cart-item-name">' + p.name + '</div>' +
-            '<div class="cart-item-price">' + (payPts ? fmtPts(p.pts * cart[id]) + ' pts' + (cart[id] > 1 ? ' for ' + cart[id] : '') : money(p.price) + ' each') + '</div>' +
-            (p.pts ? '<button class="cart-pts-toggle' + (payPts ? ' is-on' : '') + '" data-pts-id="' + id + '" type="button">' + (payPts ? '<i class="fas fa-check"></i> Paying with points' : '<i class="fas fa-star"></i> Pay with points &mdash; ' + fmtPts(p.pts) + ' pts') + '</button>' : '') +
+            (optionText ? '<div class="cart-item-options">' + optionText + '</div>' : '') +
+            '<div class="cart-item-price">' + (payPts ? fmtPts(unitPts * cart[id]) + ' pts' + (cart[id] > 1 ? ' for ' + cart[id] : '') : money(unitPrice) + ' each') + '</div>' +
+            (unitPts ? '<button class="cart-pts-toggle' + (payPts ? ' is-on' : '') + '" data-pts-id="' + id + '" type="button">' + (payPts ? '<i class="fas fa-check"></i> Paying with points' : '<i class="fas fa-star"></i> Pay with points &mdash; ' + fmtPts(unitPts) + ' pts') + '</button>' : '') +
           '</div>' +
           '<div class="cart-qty">' +
             '<button class="qty-btn" data-act="dec" data-id="' + id + '">&minus;</button>' +
@@ -1184,13 +1680,15 @@
       var ptsMap = getPtsMap();
       els.items.innerHTML = '';
       ids.forEach(function (id) {
-        var p = PRODUCTS.find(function (x) { return x.id === id; });
+        var p = productById(cartBaseId(id));
         if (!p) return;
+        var optionText = cartOptionText(id);
         var row = document.createElement('div');
         row.className = 'cart-glance-row';
-        row.innerHTML = '<span class="cart-glance-name">' + p.name + '</span>' +
+        row.innerHTML = '<span class="cart-glance-name">' + p.name +
+            (optionText ? '<span class="cart-glance-options">' + optionText + '</span>' : '') + '</span>' +
           '<span class="cart-glance-qty">&times;' + cart[id] + '</span>' +
-          '<strong class="cart-glance-price">' + (ptsMap[id] ? fmtPts(p.pts * cart[id]) + ' pts' : money(p.price * cart[id])) + '</strong>';
+          '<strong class="cart-glance-price">' + (ptsMap[id] ? fmtPts(cartUnitPts(id) * cart[id]) + ' pts' : money(cartUnitPrice(id) * cart[id])) + '</strong>';
         els.items.appendChild(row);
       });
       var lines = ptsLines();
@@ -1288,17 +1786,6 @@
       if (window.confirm('Remove everything from your cart?')) saveCart({});
     });
 
-    var filters = document.getElementById('shop-filters');
-    if (filters) {
-      filters.querySelectorAll('.filter-chip').forEach(function (chip) {
-        chip.addEventListener('click', function () {
-          filters.querySelectorAll('.filter-chip').forEach(function (c) { c.classList.remove('active'); });
-          chip.classList.add('active');
-          renderProducts(chip.getAttribute('data-filter'));
-        });
-      });
-    }
-
     // Checkout: real payment via the Square checkout function (prices are
     // set server-side; the browser only sends product ids + quantities).
     // SITE_POINTS_SPEND_2026_10_30: lines the customer toggled to points
@@ -1320,13 +1807,25 @@
     if (checkoutBtn) {
       checkoutBtn.addEventListener('click', function () {
         var cart = getCart();
-        var items = Object.keys(cart).map(function (id) {
-          return { id: id, qty: cart[id] };
-        }).filter(function (x) { return x.qty > 0 && PRODUCTS.some(function (p) { return p.id === x.id; }); });
-        if (!items.length) return;
+        var lineKeys = Object.keys(cart).filter(function (k) {
+          return cart[k] > 0 && !!productById(cartBaseId(k));
+        });
+        if (!lineKeys.length) return;
         var map = getPtsMap();
-        var ptsItems = items.filter(function (x) { return !!map[x.id]; });
-        var cashItems = items.filter(function (x) { return !map[x.id]; });
+        /* ACCOUNT_FIX_PASS_3_4_2026_11_06: Square prices by catalog
+           id, and a configured line's catalog id is its variant's
+           original listing id (cartCheckoutId) — cash lines aggregate
+           by that id; points lines keep their cart key for removal. */
+        var ptsItems = lineKeys.filter(function (k) { return !!map[k]; })
+          .map(function (k) { return { key: k, id: cartCheckoutId(k), qty: cart[k] }; });
+        var cashBySku = {};
+        lineKeys.filter(function (k) { return !map[k]; }).forEach(function (k) {
+          var sku = cartCheckoutId(k);
+          cashBySku[sku] = (cashBySku[sku] || 0) + cart[k];
+        });
+        var cashItems = Object.keys(cashBySku).map(function (sku) {
+          return { id: sku, qty: cashBySku[sku] };
+        });
         var total = ptsTotal();
         var original = checkoutBtn.innerHTML;
         function restore(msg) {
@@ -1350,8 +1849,9 @@
             return;
           }
           window.atrPoints.spendOnShop(total, ptsItems.map(function (x) {
-            var p = PRODUCTS.find(function (y) { return y.id === x.id; });
-            return { id: x.id, name: p ? p.name : x.id, qty: x.qty, pts: p ? p.pts * x.qty : 0 };
+            var p = productById(cartBaseId(x.key));
+            var optionText = cartOptionText(x.key);
+            return { id: x.id, name: (p ? p.name : x.id) + (optionText ? ' — ' + optionText : ''), qty: x.qty, pts: cartUnitPts(x.key) * x.qty };
           })).then(function (res) {
             if (!res || !res.ok) {
               restore(res && res.message ? res.message : 'Points checkout hit a snag — nothing was charged. Please try again.');
@@ -1361,7 +1861,7 @@
             // cart so nothing is bought twice.
             var c = getCart();
             var m = getPtsMap();
-            ptsItems.forEach(function (x) { delete c[x.id]; delete m[x.id]; });
+            ptsItems.forEach(function (x) { delete c[x.key]; delete m[x.key]; });
             try { localStorage.setItem('atr-cart', JSON.stringify(c)); } catch (e) {}
             savePtsMap(m); // re-renders the now cash-only (or empty) cart
             if (window.atrPoints.refreshAccountSurfaces) window.atrPoints.refreshAccountSurfaces();
@@ -1400,7 +1900,7 @@
       });
     }
 
-    renderProducts('all');
+    shopShowHome();
     renderCart();
   });
 })();
@@ -1455,7 +1955,7 @@
       }
       var price = PRICES[brand][repair];
       if (amount) amount.textContent = 'From $' + price;
-      if (note) note.textContent = REPAIR_LABELS[repair] + ' for ' + PRICES[brand].label + ' — starting price, parts and labor included. Your final flat price is confirmed for your exact model before booking. A separate visit fee applies to the visit — $15 for a known repair, or $35 if diagnostics are needed first — due at booking, non-refundable.';
+      if (note) note.textContent = REPAIR_LABELS[repair] + ' for ' + PRICES[brand].label + ' — starting price, parts and labor included. Your exact price is confirmed for your exact model after diagnostics. A separate visit fee applies to the visit — $15 for a known repair, or $35 if diagnostics are needed first — due at booking, non-refundable.';
       if (result) { result.hidden = false; result.classList.add('show'); }
       // Store the quote for the repair form
       try {
