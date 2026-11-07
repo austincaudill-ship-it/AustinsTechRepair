@@ -84,7 +84,8 @@
    each ending with the one-on-one offer; script.js and styles.css
    are unchanged. */
 /* NAV_DEDUPE_2026_11_07: bumped to atrg-v35 — mobile menu deduped against the bottom bar (menu holds only What We Service, About, ATR One, Reviews). */
-const CACHE = "atrg-v35";
+/* NAV_STORE_2026_11_07: bumped to atrg-v36 — Store added to the desktop nav and the mobile menu (it had no nav home and repeats no bottom-bar item). */
+const CACHE = "atrg-v36";
 const CORE = [
   "/",
   "/index.html",
