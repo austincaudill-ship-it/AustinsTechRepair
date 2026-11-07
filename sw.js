@@ -83,7 +83,8 @@
    dead spots, printers, moving to a new phone, photo backups),
    each ending with the one-on-one offer; script.js and styles.css
    are unchanged. */
-const CACHE = "atrg-v34";
+/* NAV_DEDUPE_2026_11_07: bumped to atrg-v35 — mobile menu deduped against the bottom bar (menu holds only What We Service, About, ATR One, Reviews). */
+const CACHE = "atrg-v35";
 const CORE = [
   "/",
   "/index.html",

@@ -76,8 +76,8 @@
          FINAL desktop nav = What We Fix, Prices, About, ATR One,
          Reviews. Out: Shop (brief), B2B (5), Careers + Investors +
          Contact (9), the Home word (10 — the logo is the home button),
-         and Repair (11's final set; booking lives in page CTAs, the
-         mobile menu's own CTA, and the phone bottom bar). ATR One is
+         and Repair (11's final set; booking is carried by page
+         CTAs and the phone bottom bar's Repair). ATR One is
          labeled just "ATR One" (8); Reviews targets the customer
          reviews block on Home via data-guide. -->
     <nav class="nav-desktop" aria-label="Main navigation">
@@ -125,8 +125,8 @@
       <!-- NAV_SEARCH_CLEANUP_2026_11_06 (addendum 11): the Book a Repair
            button is REMOVED from the header (owner: tacky; frees room
            for the account name + Portal word). Booking entry points
-           elsewhere are untouched: page CTAs, the mobile menu's own
-           Book a Repair button, and the phone bottom bar's Repair. -->
+           elsewhere are untouched: page CTAs and the phone bottom
+           bar's Repair. -->
     </div>
   </header>
 
@@ -137,22 +137,17 @@
       <button class="menu-close" id="menu-close" type="button" aria-label="Close menu"><i class="fas fa-times"></i></button>
       <p id="menu-title" class="eyebrow">Navigation</p>
       <div class="menu-links">
-        <!-- NAV_SEARCH_CLEANUP_2026_11_06 (addenda 5, 7, 8, 9, 10, 11):
-             mobile menu = Home + the desktop five (What We Fix, Prices,
-             About, ATR One, Reviews). Home stays here only (add. 10);
-             B2B, Careers, Investors, Contact are out (5, 9) — footer +
-             search carry them; Repair is out (11) — the bottom touch
-             bar and this menu's own Book a Repair button carry booking. -->
-        <a class="menu-link active" href="#home" data-page="home">Home</a>
+        <!-- NAV_DEDUPE_2026_11_07 (owner rule, Nov 7, 2026): the
+             mobile menu never repeats the bottom bar — Home, Repair,
+             Prices, Contact live only in the bottom bar; booking and
+             calling are carried by the bottom bar and page CTAs. The
+             menu holds only What We Service, About, ATR One, Reviews. -->
         <a class="menu-link" href="#whatwedo" data-page="whatwedo">What We Service</a>
-        <a class="menu-link" href="#prices" data-page="prices">Prices</a>
         <a class="menu-link" href="#about" data-page="about">About</a>
         <a class="menu-link" href="#atr-one" data-page="atr-one">ATR One</a>
         <a class="menu-link" href="#home" data-page="home" data-guide="home-reviews">Reviews</a>
       </div>
       <div class="menu-footer">
-        <a class="btn btn-primary menu-cta" href="#repair" data-page="repair"><i class="fas fa-wrench"></i> Book a Repair</a>
-        <a class="menu-phone" href="tel:+19372806243"><i class="fas fa-phone"></i> (937) 280-6243</a>
         <span class="menu-tag">Mobile Service across Dayton &amp; Miami Valley</span>
       </div>
     </div>
