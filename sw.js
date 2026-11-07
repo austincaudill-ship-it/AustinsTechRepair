@@ -85,8 +85,8 @@
    are unchanged. */
 /* NAV_DEDUPE_2026_11_07: bumped to atrg-v35 — mobile menu deduped against the bottom bar (menu holds only What We Service, About, ATR One, Reviews). */
 /* NAV_STORE_2026_11_07: bumped to atrg-v36 — Store added to the desktop nav and the mobile menu (it had no nav home and repeats no bottom-bar item). */
-/* THEME_AUDIT_FIX_2026_11_07: bumped to atrg-v37 — light/dark audit fix pass (styles.css append-only block: --card/--text defined, dark brand-deep family to gold, light gold text to #8A5F06, error/teal/badge dark overrides, C6/C7 chips). */
-const CACHE = "atrg-v37";
+/* IMAGE_SLIM_2026_11_07: bumped to atrg-v38 — all site images recompressed (22.3 MB to 9.2 MB, same filenames/formats) so the new copies reach every visitor. */
+const CACHE = "atrg-v38";
 const CORE = [
   "/",
   "/index.html",
