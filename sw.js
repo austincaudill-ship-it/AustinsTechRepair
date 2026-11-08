@@ -87,7 +87,8 @@
 /* NAV_STORE_2026_11_07: bumped to atrg-v36 — Store added to the desktop nav and the mobile menu (it had no nav home and repeats no bottom-bar item). */
 /* IMAGE_SLIM_2026_11_07: bumped to atrg-v38 — all site images recompressed (22.3 MB to 9.2 MB, same filenames/formats) so the new copies reach every visitor. */
 /* BRAND_BUTTON_SHADE_2026_11_08: bumped to atrg-v39 — orange buttons darkened one shade to #C24A09 for readability (owner decision Nov 8, 2026); --brand itself unchanged. */
-const CACHE = "atrg-v39";
+/* HOMEPAGE_SLIM_2026_11_08: bumped to atrg-v40 — homepage slimmed (repeated one-on-one pitches cut to the carousel + doors, Every device row removed, plain ATR One Free/Plus summary added). */
+const CACHE = "atrg-v40";
 const CORE = [
   "/",
   "/index.html",
