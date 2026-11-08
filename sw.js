@@ -90,7 +90,8 @@
 /* HOMEPAGE_SLIM_2026_11_08: bumped to atrg-v40 — homepage slimmed (repeated one-on-one pitches cut to the carousel + doors, Every device row removed, plain ATR One Free/Plus summary added). */
 /* NAV_ONE_ON_ONE_2026_11_08: bumped to atrg-v41 — One-on-One added to desktop nav and mobile menu (after Store); footer Accessibility moved out of Legal into its own column. */
 /* CABLING_DOOR_2026_11_08: bumped to atrg-v42 — the Internet Cabling page gets its one door: a service card at the end of the Networking page (it had zero inbound links). */
-const CACHE = "atrg-v42";
+/* TEAM_OFF_SITE_2026_11_08: public Leadership staff listing removed from the website. */
+const CACHE = "atrg-v43";
 const CORE = [
   "/",
   "/index.html",
