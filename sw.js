@@ -89,7 +89,8 @@
 /* BRAND_BUTTON_SHADE_2026_11_08: bumped to atrg-v39 — orange buttons darkened one shade to #C24A09 for readability (owner decision Nov 8, 2026); --brand itself unchanged. */
 /* HOMEPAGE_SLIM_2026_11_08: bumped to atrg-v40 — homepage slimmed (repeated one-on-one pitches cut to the carousel + doors, Every device row removed, plain ATR One Free/Plus summary added). */
 /* NAV_ONE_ON_ONE_2026_11_08: bumped to atrg-v41 — One-on-One added to desktop nav and mobile menu (after Store); footer Accessibility moved out of Legal into its own column. */
-const CACHE = "atrg-v41";
+/* CABLING_DOOR_2026_11_08: bumped to atrg-v42 — the Internet Cabling page gets its one door: a service card at the end of the Networking page (it had zero inbound links). */
+const CACHE = "atrg-v42";
 const CORE = [
   "/",
   "/index.html",
