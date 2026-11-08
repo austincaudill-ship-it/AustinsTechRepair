@@ -86,10 +86,15 @@
          the Touch Bar and the menus never carry the same items.
          Store is added here and in the mobile menu because it had no
          nav home (footer, search, and account links only) and it
+         repeats no bottom-bar item.
+         NAV_ONE_ON_ONE_2026_11_08 (owner, Nov 8, 2026): "if it's
+         important, it needs a spot on the NAV links" — One-on-One is
+         added here and in the mobile menu, directly after Store. It
          repeats no bottom-bar item. -->
     <nav class="nav-desktop" aria-label="Main navigation">
       <a class="nav-link" href="#whatwedo" data-page="whatwedo">What We Service</a>
       <a class="nav-link" href="#shop" data-page="shop">Store</a>
+      <a class="nav-link" href="#classes" data-page="classes">One-on-One</a>
       <a class="nav-link" href="#prices" data-page="prices">Prices</a>
       <a class="nav-link" href="#about" data-page="about">About</a>
       <a class="nav-link" href="#atr-one" data-page="atr-one">ATR One</a>
@@ -152,9 +157,13 @@
              menu holds only What We Service, Store, About, ATR One,
              Reviews. NAV_STORE_2026_11_07: Store added under the
              owner's Nov 7, 2026 nav discretion — it had no nav home
-             and repeats no bottom-bar item. -->
+             and repeats no bottom-bar item.
+             NAV_ONE_ON_ONE_2026_11_08 (owner, Nov 8, 2026):
+             One-on-One added after Store — it repeats no bottom-bar
+             item, so the dedupe rule still holds. -->
         <a class="menu-link" href="#whatwedo" data-page="whatwedo">What We Service</a>
         <a class="menu-link" href="#shop" data-page="shop">Store</a>
+        <a class="menu-link" href="#classes" data-page="classes">One-on-One</a>
         <a class="menu-link" href="#about" data-page="about">About</a>
         <a class="menu-link" href="#atr-one" data-page="atr-one">ATR One</a>
         <a class="menu-link" href="#home" data-page="home" data-guide="home-reviews">Reviews</a>
@@ -3855,6 +3864,14 @@
                existing script.js wiring opens the same panel with all
                four settings (bigger text, high contrast, reduce motion,
                underline links) exactly as before. -->
+        </div>
+        <div>
+          <!-- NAV_ONE_ON_ONE_2026_11_08 (owner, Nov 8, 2026):
+               Accessibility moves out of the Legal column into its
+               own column. The button below is the same element that
+               sat in Legal — same id (a11y-btn), same classes, same
+               wiring — only its column changed. -->
+          <span class="footer-col-title">Accessibility</span>
           <button class="footer-link a11y-footer-link" id="a11y-btn" type="button" aria-label="Accessibility options" aria-haspopup="true" aria-expanded="false">Accessibility</button>
         </div>
         <div>
