@@ -2878,3 +2878,21 @@ html .acct-cardbox-status.is-active {
 html .dt-tile.active {
   background: linear-gradient(135deg, #1050A0, #1B6AC9);
 }
+
+/* BRAND_BUTTON_SHADE_2026_11_08 */
+/* Owner decision, Nov 8, 2026: darken the orange BUTTONS one shade
+   for readability (theme audit Tier C, C1 + the C2 button-family
+   chips). The brand pair #FFF8EC / #fff on #D9540D measured 3.81 /
+   4.02 in BOTH modes. Buttons only: --brand itself is NOT changed,
+   so links, brand text, accents, badges, chat bubbles, step dots
+   and every other non-button use keep the exact current orange.
+   The button shade #C24A09 measures cream #FFF8EC at 4.65:1 and
+   white at 4.91:1. Hover backgrounds stay var(--brand-deep)
+   (#A63E06; the cream hover pair is 6.00) exactly as before. */
+.btn-primary { background: #C24A09; box-shadow: 0 6px 18px rgba(194, 74, 9, 0.35); }
+.btn-primary:hover { box-shadow: 0 10px 24px rgba(194, 74, 9, 0.4); }
+.price-match button { background: #C24A09; }
+.filter-chip.active { background: #C24A09; border-color: #C24A09; }
+.a11y-btn { background: #C24A09; }
+.footer-bottom .a11y-btn { background: #C24A09; }
+.footer-share-btn:hover { background: #C24A09; }
