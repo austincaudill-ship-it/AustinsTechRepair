@@ -1415,6 +1415,9 @@
     associateaccounts: loadAssociateAccounts,
     /* TEAMCHAT_2026_11_03: the internal Team Chat panel. */
     teamchat: loadTeamChat,
+    /* GUEST_CHAT_2026_11_08: the Guest Chat panel (Guest group) —
+     * every customer conversation, repair threads and general. */
+    guestchat: loadGuestChat,
     /* WARRANTY_PORTAL_2026_11_03: the Warranty panel (Guest group) —
      * warranty requests from the website form, worked by all staff. */
     warranty: loadWarrantyRequests,
@@ -1455,7 +1458,7 @@
     var tabs = document.querySelectorAll('.portal-tab');
     tabs.forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === name); });
     /* PASS10_2026_11_04: 'tracking' (the Live Tracking panel) hides and shows with the rest too */
-    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'tracking', 'documents', 'financials', 'payroll', 'mileage', 'teamchat', 'associateaccounts', 'warranty', 'setup'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too; ASSOCIATE_ACCOUNTS_2026_11_03: 'associateaccounts' hides and shows with the rest too (it absorbed ACCOUNT_CONTROLS_2026_11_03's 'accountcontrols' and the roster's 'associates'); WARRANTY_PORTAL_2026_11_03: 'warranty' hides and shows with the rest too; PORTAL_SETUP_2026_11_04: 'setup' hides and shows with the rest too; QR_FIX_PASS_2026_11_05: 'scanin' is GONE from this list — the scanner is a popup now, there is no scanin panel to hide or show */
+    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'tracking', 'documents', 'financials', 'payroll', 'mileage', 'teamchat', 'guestchat', 'associateaccounts', 'warranty', 'setup'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too; ASSOCIATE_ACCOUNTS_2026_11_03: 'associateaccounts' hides and shows with the rest too (it absorbed ACCOUNT_CONTROLS_2026_11_03's 'accountcontrols' and the roster's 'associates'); WARRANTY_PORTAL_2026_11_03: 'warranty' hides and shows with the rest too; PORTAL_SETUP_2026_11_04: 'setup' hides and shows with the rest too; QR_FIX_PASS_2026_11_05: 'scanin' is GONE from this list — the scanner is a popup now, there is no scanin panel to hide or show */
       $('portal-panel-' + n).hidden = n !== name;
     });
     closeDrawer();
@@ -1468,6 +1471,9 @@
      * poll and pulls anything new; switching to any other tab stops
      * the poll so a closed panel is never polled. */
     if (name === 'teamchat') resumeTeamChat(); else stopTeamChatPoll();
+    /* GUEST_CHAT_2026_11_08: Guest Chat polls on the same discipline
+     * — runs only while its panel is the open one. */
+    if (name === 'guestchat') resumeGuestChat(); else stopGuestChatPoll();
     if (!state.loaded[name] && LOADERS[name]) LOADERS[name](false);
   }
 
@@ -11313,6 +11319,218 @@ function loadTicketThread(client, ticketId) {
     });
   }
   /* end TEAMCHAT_2026_11_03 */
+  /* ================= GUEST_CHAT_2026_11_08 =================
+   * Austin, Nov 8, 2026: "where is that customer — shouldn't there
+   * be like a guest chat [beside] team chat?" Customers write two
+   * ways from the website: on a repair thread (public.messages with
+   * ticket_id set) and in a General conversation (ticket_id NULL,
+   * customer_id set — the account's Send us a message composer).
+   * The ticket drawer only ever showed the first kind, one ticket
+   * at a time; general messages arrived as an email copy with no
+   * portal surface at all. This panel is that surface: one list of
+   * every customer conversation, newest first, and replies go back
+   * through the same table in the exact shapes the website and the
+   * ticket drawer already use — a ticket-thread reply inserts
+   * {ticket_id, sender: 'tech', message}; a general reply inserts
+   * {ticket_id: null, customer_id, sender: 'tech', message}. No new
+   * tables, no new columns. Labels mirror the customer's own
+   * account: the device line for a repair (deviceLabel), and
+   * "One-on-One — <kind>" for a service ticket (isServiceTicket +
+   * issue_reason — the website's own rule). Message bubbles reuse
+   * renderTicketThread's .portal-msg language, and every rendered
+   * field goes through esc(). The poll runs every 20 seconds ONLY
+   * while the panel is open: activateTab stops it on any other
+   * tab and resumeGuestChat restarts it on return — Team Chat's
+   * exact discipline, on its own timer. */
+  var guestChatTimer = null;
+  var guestChatClient = null;
+  var guestChatWired = false;
+  var guestChatConvos = [];  /* [{key, ticketId, customerId, name, label, lastAt, isNew, preview, msgs}] */
+  var guestChatOpenKey = null;
+
+  function guestChatKey(m) {
+    return m.ticket_id ? ('ticket:' + m.ticket_id) : ('general:' + (m.customer_id || 'unknown'));
+  }
+
+  function groupGuestMessages(rows) {
+    var byKey = {}, keys = [];
+    (rows || []).forEach(function (m) {
+      var key = guestChatKey(m);
+      if (!byKey[key]) {
+        byKey[key] = { key: key, ticketId: m.ticket_id || null, customerId: m.customer_id || null, msgs: [] };
+        keys.push(key);
+      }
+      if (!byKey[key].customerId && m.customer_id) byKey[key].customerId = m.customer_id;
+      byKey[key].msgs.push(m);
+    });
+    return keys.map(function (k) { return byKey[k]; });
+  }
+
+  function fetchGuestChat() {
+    if (!guestChatClient || !state.user) return;
+    var client = guestChatClient;
+    client.from('messages').select('*').order('created_at', { ascending: false }).limit(300)
+      .then(function (res) {
+        if (res.error) {
+          var list = $('portal-guestchat-list');
+          if (list && !guestChatOpenKey) listError(list, 'guest chat');
+          stopGuestChatPoll();
+          return;
+        }
+        var convos = groupGuestMessages(res.data || []);
+        var ticketIds = [], custIds = [];
+        convos.forEach(function (c) {
+          if (c.ticketId && ticketIds.indexOf(c.ticketId) === -1) ticketIds.push(c.ticketId);
+          if (c.customerId && custIds.indexOf(c.customerId) === -1) custIds.push(c.customerId);
+        });
+        var ticketsById = {}, customersById = {};
+        var pending = (ticketIds.length ? 1 : 0) + (custIds.length ? 1 : 0);
+        function finish() {
+          pending--;
+          if (pending > 0) return;
+          convos.forEach(function (c) {
+            var t = c.ticketId ? ticketsById[c.ticketId] : null;
+            if (t && !c.customerId) c.customerId = t.customer_id || null;
+            var cust = c.customerId ? customersById[c.customerId] : null;
+            c.name = (t && t.customer_name) || (cust && cust.name) || 'Customer';
+            c.label = t ? (isServiceTicket(t) ? ('One-on-One — ' + (t.issue_reason || 'Service visit')) : deviceLabel(t)) : 'General conversation';
+            c.msgs.sort(function (a, b) { return new Date(a.created_at) - new Date(b.created_at); });
+            var last = c.msgs[c.msgs.length - 1];
+            c.lastAt = last ? last.created_at : '';
+            c.isNew = !!(last && last.sender === 'customer');
+            c.preview = last ? ((last.sender === 'tech' ? 'You: ' : '') + String(last.message || '')) : '';
+          });
+          convos.sort(function (a, b) { return new Date(b.lastAt) - new Date(a.lastAt); });
+          guestChatConvos = convos;
+          if (guestChatOpenKey && !convos.some(function (c) { return c.key === guestChatOpenKey; })) guestChatOpenKey = null;
+          renderGuestChat();
+        }
+        if (!pending) { pending = 1; finish(); return; }
+        if (ticketIds.length) {
+          client.from('tickets').select('id, customer_id, customer_name, device_type, brand, model, issue, issue_reason, status').in('id', ticketIds)
+            .then(function (r) { if (!r.error) (r.data || []).forEach(function (t) { ticketsById[t.id] = t; }); finish(); })
+            .catch(finish);
+        }
+        if (custIds.length) {
+          client.from('customers').select('id, name').in('id', custIds)
+            .then(function (r) { if (!r.error) (r.data || []).forEach(function (cu) { customersById[cu.id] = cu; }); finish(); })
+            .catch(finish);
+        }
+      })
+      .catch(function () {
+        var list = $('portal-guestchat-list');
+        if (list && !guestChatOpenKey) listError(list, 'guest chat');
+        stopGuestChatPoll();
+      });
+  }
+
+  function guestChatConvo(key) {
+    for (var i = 0; i < guestChatConvos.length; i++) if (guestChatConvos[i].key === key) return guestChatConvos[i];
+    return null;
+  }
+
+  function renderGuestChat() {
+    var list = $('portal-guestchat-list'), thread = $('portal-guestchat-thread');
+    if (!list || !thread) return;
+    var open = guestChatOpenKey ? guestChatConvo(guestChatOpenKey) : null;
+    if (!open) {
+      thread.hidden = true;
+      list.hidden = false;
+      if (!guestChatConvos.length) { emptyState(list, 'No customer messages yet.'); return; }
+      list.innerHTML = guestChatConvos.map(function (c) {
+        var prev = c.preview.length > 90 ? (c.preview.slice(0, 90) + '…') : c.preview;
+        return '<button class="guestchat-card" type="button" data-gc-open="' + esc(c.key) + '">' +
+          '<span class="guestchat-card-top"><span class="guestchat-card-name">' + esc(c.name) + '</span>' +
+          (c.isNew ? '<span class="guestchat-new">New</span>' : '') +
+          '<span class="guestchat-card-time">' + esc(fmtDateTime(c.lastAt)) + '</span></span>' +
+          '<span class="guestchat-card-label">' + esc(c.label) + '</span>' +
+          '<span class="guestchat-card-preview">' + esc(prev) + '</span></button>';
+      }).join('');
+      return;
+    }
+    list.hidden = true;
+    thread.hidden = false;
+    $('portal-guestchat-title').textContent = open.name;
+    $('portal-guestchat-sub').textContent = open.label;
+    var box = $('portal-guestchat-msgs');
+    box.innerHTML = open.msgs.map(function (m) {
+      var who = m.sender === 'tech' ? 'Tech' : 'Customer';
+      return '<div class="portal-msg portal-msg-' + (m.sender === 'tech' ? 'tech' : 'customer') + '">' +
+        esc(m.message) +
+        '<span class="portal-msg-meta">' + who + ' · ' + esc(fmtDateTime(m.created_at)) + '</span></div>';
+    }).join('');
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function sendGuestChat() {
+    var input = $('portal-guestchat-input'), err = $('portal-guestchat-error'), btn = $('portal-guestchat-send');
+    if (!input || !guestChatClient) return;
+    var open = guestChatOpenKey ? guestChatConvo(guestChatOpenKey) : null;
+    if (!open) return;
+    var text = trim(input.value);
+    if (!text) return;
+    if (err) { err.hidden = true; err.textContent = ''; }
+    if (btn) btn.disabled = true;
+    var row = open.ticketId
+      ? { ticket_id: open.ticketId, sender: 'tech', message: text }
+      : { ticket_id: null, customer_id: open.customerId, sender: 'tech', message: text };
+    guestChatClient.from('messages').insert(row)
+      .then(function (res) {
+        if (btn) btn.disabled = false;
+        if (res.error) { if (err) { err.textContent = 'Couldn’t send that reply. Try again.'; err.hidden = false; } return; }
+        input.value = '';
+        fetchGuestChat();
+      })
+      .catch(function () {
+        if (btn) btn.disabled = false;
+        if (err) { err.textContent = 'Couldn’t send that reply. Try again.'; err.hidden = false; }
+      });
+  }
+
+  function wireGuestChat() {
+    if (guestChatWired) return;
+    guestChatWired = true;
+    var list = $('portal-guestchat-list');
+    if (list) list.addEventListener('click', function (e) {
+      var el = e.target;
+      while (el && el !== list) {
+        if (el.getAttribute && el.getAttribute('data-gc-open')) { guestChatOpenKey = el.getAttribute('data-gc-open'); renderGuestChat(); return; }
+        el = el.parentNode;
+      }
+    });
+    var back = $('portal-guestchat-back');
+    if (back) back.addEventListener('click', function () { guestChatOpenKey = null; renderGuestChat(); });
+    var form = $('portal-guestchat-form');
+    if (form) form.addEventListener('submit', function (e) { e.preventDefault(); sendGuestChat(); });
+  }
+
+  function startGuestChatPoll() {
+    if (guestChatTimer) return;
+    guestChatTimer = setInterval(function () {
+      var panel = $('portal-panel-guestchat');
+      if (!panel || panel.hidden) { stopGuestChatPoll(); return; }
+      fetchGuestChat();
+    }, 20000);
+  }
+  function stopGuestChatPoll() {
+    if (guestChatTimer) { clearInterval(guestChatTimer); guestChatTimer = null; }
+  }
+  function resumeGuestChat() {
+    if (guestChatClient && state.user) fetchGuestChat();
+    startGuestChatPoll();
+  }
+
+  function loadGuestChat(force) {
+    state.loaded.guestchat = true;
+    withClient(function (client) {
+      if (!client || !state.user) return;
+      guestChatClient = client;
+      wireGuestChat();
+      fetchGuestChat();
+      startGuestChatPoll();
+    });
+  }
+  /* end GUEST_CHAT_2026_11_08 */
 
   /* ================= CUSTOMERS ================= */
   function renderCustomers(rows) {

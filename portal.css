@@ -1285,3 +1285,32 @@ body.portal-body #portal-dash-view textarea {
 #tc-onnow-list .tc-row { padding-left: 0.1rem; padding-right: 0.1rem; }
 #tc-onnow-list .tc-row:last-child { border-bottom: none; padding-bottom: 0.15rem; }
 /* end PORTAL_VISUAL_CLEANUP_2026_11_06 */
+
+/* ================= GUEST_CHAT_2026_11_08 =================
+ * Guest Chat panel: the conversation list. Thread bubbles and the
+ * composer reuse .portal-thread / .portal-msg and .teamchat-composer
+ * as-is; only the list cards and the New chip need their own rules.
+ * Every card is a white surface, per the portal cleanup rule. */
+.guestchat-list { display: flex; flex-direction: column; gap: 0.6rem; }
+.guestchat-card {
+  display: block; width: 100%; text-align: left; cursor: pointer;
+  background: var(--surface, #FFFDF8); color: var(--ink, #2C231A);
+  border: 1px solid var(--line, #E6D9C0); border-radius: 12px;
+  padding: 0.8rem 0.9rem; font-family: inherit;
+}
+.guestchat-card:hover { border-color: var(--brand, #B4551F); }
+.guestchat-card-top { display: flex; align-items: center; gap: 0.5rem; }
+.guestchat-card-name { font-weight: 800; font-size: 1rem; }
+.guestchat-new {
+  background: var(--brand, #D9540D); color: #fff; border-radius: 999px;
+  padding: 0.05rem 0.5rem; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.02em;
+}
+.guestchat-card-time { margin-left: auto; font-size: 0.75rem; opacity: 0.7; white-space: nowrap; }
+.guestchat-card-label { display: block; font-size: 0.85rem; font-weight: 700; margin-top: 0.15rem; }
+.guestchat-card-preview {
+  display: block; font-size: 0.85rem; opacity: 0.8; margin-top: 0.1rem;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.guestchat-thread-title { margin: 0.7rem 0 0.1rem; font-size: 1.05rem; }
+.guestchat-msgs { max-height: 46vh; }
+/* end GUEST_CHAT_2026_11_08 */
