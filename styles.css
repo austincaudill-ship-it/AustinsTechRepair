@@ -3029,3 +3029,48 @@ html .dt-tile.active {
 }
 .support-icon-door:hover .support-icon-chip,
 .support-icon-door:focus-visible .support-icon-chip { border-color: var(--blue-bright); }
+
+/* ===== SERVICES_SINGLE_DOOR_2026_11_09 =====
+   Owner (Nov 9, 2026): the header is a BLACK bar with white text in
+   BOTH themes (his pick: black "regardless if it's day or night");
+   brand orange/blue live in the page, not on the bar. The logo
+   groups CLOSE with the five nav links in one cluster (.header-main)
+   instead of spreading to opposite ends; header actions stay right.
+   Nav text is 1rem (16px) — the NAV_TIGHTEN_2026_11_09 pinch (0.76–
+   0.86rem sizes, and the 1024–1215px wordmark rest) is RETIRED here
+   by later, higher-specificity rules: with five short links the full
+   brand wordmark fits at iPad widths again, so it stays visible.
+   Also in this block: the thumb bar's logo slot, the reviews grid
+   landscape rule (six cards = two full rows of three on wide
+   screens, no orphan dead space), the screen-reader-only utility the
+   logo slot uses, and Services-flow spacing. Flow colors come from
+   the shared option-btn / estimate-box rules — nothing hardcoded
+   there; the only literals in this block are the bar's own black and
+   white, which are the design itself. */
+.header { background: #000000; border-bottom: 1px solid rgba(255, 255, 255, 0.16); color: #ffffff; }
+html[data-theme="dark"] .header { background: #000000; }
+.header-main { display: flex; align-items: center; gap: 1.6rem; min-width: 0; }
+.header .brand { color: #ffffff; }
+.header .brand-sub { color: rgba(255, 255, 255, 0.62); }
+.header .nav-desktop { gap: 1.5rem; }
+.header .nav-desktop .nav-link { color: rgba(255, 255, 255, 0.86); font-size: 1rem; }
+.header .nav-desktop .nav-link::after { background: #ffffff; }
+.header .nav-desktop .nav-link:hover, .header .nav-desktop .nav-link.active { color: #ffffff; }
+.header .theme-toggle, .header .site-search-btn { background: transparent; border-color: rgba(255, 255, 255, 0.35); color: #ffffff; }
+.header .theme-toggle:hover, .header .site-search-btn:hover { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.6); }
+.header .account-btn { border-color: rgba(255, 255, 255, 0.35); color: #ffffff; }
+.header .account-btn:hover { border-color: #ffffff; color: #ffffff; }
+.header .account-btn.logged-in { border-color: var(--teal); color: #ffffff; }
+.header .btn-outline { border-color: rgba(255, 255, 255, 0.35); color: #ffffff; }
+@media (min-width: 1024px) and (max-width: 1215px) {
+  .header .brand-info { display: flex; }
+}
+.bottom-nav-logo-img { width: 30px; height: 30px; border-radius: 8px; object-fit: cover; display: block; }
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+@media (min-width: 1024px) {
+  .testimonials-grid { grid-template-columns: repeat(3, 1fr); }
+}
+.svc-flow { margin-bottom: 2.2rem; }
+.svc-path-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom: 1.6rem; }
+.svc-flow .estimate-box { margin-top: 1.2rem; }
+.svc-flow #svc-continue, .svc-flow #svc-oo-continue { margin-top: 1.2rem; }

@@ -16,6 +16,10 @@
 
     function switchPage(targetId) {
       var cleanId = String(targetId || '').replace('#', '');
+      /* SERVICES_SINGLE_DOOR_2026_11_09: the Prices page is gone —
+         old #prices bookmarks and links land on Services instead
+         of a dead view. */
+      if (cleanId === 'prices') cleanId = 'whatwedo';
       /* ACCOUNT_FIX_PASS_3_2026_11_06: remember the page the visitor
          was on when they step onto the account page, so the header
          account button can take them back to it (its toggle — see
@@ -418,7 +422,7 @@
           iBtn.className = 'option-btn';
           iBtn.style.alignItems = 'flex-start';
           iBtn.style.textAlign = 'left';
-          iBtn.innerHTML = '<strong>' + escapeHtml(issue.name) + '</strong><span style="font-size:0.78rem; color: var(--brand-deep); font-weight:800;">' + escapeHtml(issue.price) + '</span>';
+          iBtn.innerHTML = bkIconHtmlForName(issue.name) + '<strong>' + escapeHtml(issue.name) + '</strong><span style="font-size:0.78rem; color: var(--brand-deep); font-weight:800;">' + escapeHtml(issue.price) + '</span>';
           /* REPAIR_FLOW_UPDATE_2026_11_05: fallback issues are multi-select too; the step-2
              Continue button (gated on brand + issue + ATR One) advances. */
           iBtn.addEventListener('click', function () {
@@ -426,6 +430,20 @@
           });
           grid.appendChild(iBtn);
         });
+        /* SERVICES_SINGLE_DOOR_2026_11_09 (icon amendment): the
+           fallback grid carries the same catch-all — an unpriced
+           "Something else" pick, so every device path offers it. */
+        var seBtn = document.createElement('button');
+        seBtn.type = 'button';
+        seBtn.className = 'option-btn';
+        seBtn.setAttribute('data-bk-something-else', '1');
+        seBtn.style.alignItems = 'flex-start';
+        seBtn.style.textAlign = 'left';
+        seBtn.innerHTML = bkIconHtml('Something else') + '<strong>Something else</strong><span style="font-size:0.78rem; color: var(--brand-deep); font-weight:800;">Price confirmed up front</span>';
+        seBtn.addEventListener('click', function () {
+          rfToggleIssue('Something else', null, seBtn, null);
+        });
+        grid.appendChild(seBtn);
         /* BOOKING_OO_TILE_2026_11_09: the fallback grid (Business /
            Other) ends with the same One-on-One tile, so this path
            offers the mode inside its grid too. */
@@ -435,7 +453,7 @@
         ooBtn.setAttribute('data-oo-tile', '1');
         ooBtn.style.alignItems = 'flex-start';
         ooBtn.style.textAlign = 'left';
-        ooBtn.innerHTML = '<strong><i class="fas fa-graduation-cap"></i> One-on-One</strong><span style="font-size:0.78rem; color: var(--brand-deep); font-weight:800;">Lessons &amp; help on this device \u2014 $25 an hour</span>';
+        ooBtn.innerHTML = '<i class="fas fa-graduation-cap"></i><strong>One-on-One</strong><span style="font-size:0.78rem; color: var(--brand-deep); font-weight:800;">Lessons &amp; help on this device \u2014 $25 an hour</span>';
         ooBtn.addEventListener('click', function () { setOneOnOneMode(true); });
         grid.appendChild(ooBtn);
         issueList.appendChild(grid);
@@ -456,7 +474,57 @@
     function bkData() { return window.ATR_PRICE_DATA || null; }
     function bkTypeKey(device) { return BK_TYPE_MAP[device] || device; }
     function bkFmt(p) { return (p % 1 === 0) ? '$' + p : '$' + p.toFixed(2); }
-    function bkTile(label, sub) {
+    /* SERVICES_SINGLE_DOOR_2026_11_09 (icon amendment, owner, Nov 9,
+       2026): every repair tile carries a little icon above its label,
+       matching the One-on-One topic tiles — icon first, sized and
+       colored by the shared .option-btn i rules (brand blue). Every
+       glyph verified present in the Font Awesome 6.4.0 build the
+       site loads. Speaker / Mic pairs the speaker with a microphone,
+       as the owner asked; Board / Solder is the microchip (there is
+       no soldering-iron glyph in the free set). A '|' in a value
+       renders two glyphs side by side. */
+    var BK_TILE_ICONS = {
+      'Screen': 'fas fa-display',
+      'Back glass': 'fas fa-mobile-screen-button',
+      'Battery': 'fas fa-battery-full',
+      'Charging port': 'fas fa-plug',
+      'Charging': 'fas fa-plug',
+      'Camera': 'fas fa-camera',
+      'Speaker / Mic': 'fas fa-volume-high|fas fa-microphone',
+      'Board / Solder': 'fas fa-microchip',
+      'HDMI port': 'fas fa-plug-circle-bolt',
+      'Disc drive': 'fas fa-compact-disc',
+      'Fan / Overheat': 'fas fa-fan',
+      'Controller repair': 'fas fa-gamepad',
+      'Storage upgrade': 'fas fa-hard-drive',
+      'RAM upgrade': 'fas fa-memory',
+      'Keyboard / Trackpad': 'fas fa-keyboard',
+      'Keyboard': 'fas fa-keyboard',
+      'Virus / Software cleanup': 'fas fa-bug',
+      'Band / Button': 'fas fa-clock',
+      'Something else': 'fas fa-circle-question'
+    };
+    function bkIconHtml(rawName) {
+      var spec = BK_TILE_ICONS[rawName] || 'fas fa-wrench';
+      return spec.split('|').map(function (cls) { return '<i class="' + cls + '"></i>'; }).join(' ');
+    }
+    /* Fallback issue lists carry friendly full names, not book keys —
+       resolve those to the same icons. */
+    function bkIconHtmlForName(friendlyName) {
+      var n = String(friendlyName || '');
+      for (var k in BK_TILE_ICONS) { if ((BK_FRIENDLY[k] || k) === n) return bkIconHtml(k); }
+      if (/screen|display|digitizer/i.test(n)) return bkIconHtml('Screen');
+      if (/battery/i.test(n)) return bkIconHtml('Battery');
+      if (/charg|power|dc jack/i.test(n)) return bkIconHtml('Charging port');
+      if (/camera|speaker|mic/i.test(n)) return bkIconHtml('Speaker / Mic');
+      if (/virus|software|cleanup|diagnostic/i.test(n)) return bkIconHtml('Virus / Software cleanup');
+      if (/hdmi/i.test(n)) return bkIconHtml('HDMI port');
+      if (/overheat|fan/i.test(n)) return bkIconHtml('Fan / Overheat');
+      if (/disc|storage|ssd/i.test(n)) return bkIconHtml('Storage upgrade');
+      if (/water/i.test(n)) return '<i class="fas fa-droplet"></i>';
+      return bkIconHtml('');
+    }
+    function bkTile(label, sub, iconHtml) {
       var b = document.createElement('button');
       b.type = 'button';
       b.className = 'option-btn';
@@ -464,9 +532,9 @@
       if (sub) {
         b.style.alignItems = 'flex-start';
         b.style.textAlign = 'left';
-        b.innerHTML = '<strong>' + escapeHtml(label) + '</strong><span style="font-size:0.78rem; color: var(--brand-deep); font-weight:800;">' + escapeHtml(sub) + '</span>';
+        b.innerHTML = (iconHtml || '') + '<strong>' + escapeHtml(label) + '</strong><span style="font-size:0.78rem; color: var(--brand-deep); font-weight:800;">' + escapeHtml(sub) + '</span>';
       } else {
-        b.innerHTML = '<span>' + escapeHtml(label) + '</span>';
+        b.innerHTML = (iconHtml || '') + '<span>' + escapeHtml(label) + '</span>';
       }
       return b;
     }
@@ -578,7 +646,7 @@
       }
       repairs.forEach(function (r) {
         var price = priceOf(r);
-        var b = bkTile(BK_FRIENDLY[r] || r, (typeof price === 'number') ? bkFmt(price) : 'Price confirmed up front');
+        var b = bkTile(BK_FRIENDLY[r] || r, (typeof price === 'number') ? bkFmt(price) : 'Price confirmed up front', bkIconHtml(r));
         /* REPAIR_FLOW_UPDATE_2026_11_05: repairs are multi-select — tapping toggles, nothing
            auto-advances; Continue is gated below the ATR One question. */
         b.addEventListener('click', function () {
@@ -586,6 +654,19 @@
         });
         repairGrid.appendChild(b);
       });
+      /* SERVICES_SINGLE_DOOR_2026_11_09 (icon amendment, owner, Nov 9,
+         2026): "Something else" — the catch-all repair tile, so the
+         standard grid reads eight buttons like the lesson grid. It
+         is an unpriced pick exactly like Board / Solder ("Price
+         confirmed up front"), toggles through rfToggleIssue like any
+         other pick, and always renders, for every device and model,
+         right before the One-on-One tile (which stays last). */
+      var seTile = bkTile('Something else', 'Price confirmed up front', bkIconHtml('Something else'));
+      seTile.setAttribute('data-bk-something-else', '1');
+      seTile.addEventListener('click', function () {
+        rfToggleIssue('Something else', null, seTile, null);
+      });
+      repairGrid.appendChild(seTile);
       /* BOOKING_OO_TILE_2026_11_09 (Austin, Nov 9, 2026): One-on-One is
          the LAST tile in this grid — same tile family as the repairs
          (strong label, brand-deep subline, like Board / Solder), not a
@@ -598,12 +679,28 @@
       ooTile.style.padding = '0.85rem 0.5rem';
       ooTile.style.alignItems = 'flex-start';
       ooTile.style.textAlign = 'left';
-      ooTile.innerHTML = '<strong><i class="fas fa-graduation-cap"></i> One-on-One</strong><span style="font-size:0.78rem; color: var(--brand-deep); font-weight:800;">Lessons &amp; help on this device \u2014 $25 an hour</span>';
+      ooTile.innerHTML = '<i class="fas fa-graduation-cap"></i><strong>One-on-One</strong><span style="font-size:0.78rem; color: var(--brand-deep); font-weight:800;">Lessons &amp; help on this device \u2014 $25 an hour</span>';
       ooTile.addEventListener('click', function () { setOneOnOneMode(true); });
       repairGrid.appendChild(ooTile);
       rfShowFlowExtras();
       if (repairWrap) { repairWrap.hidden = false; try { repairWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {} }
     }
+    /* SERVICES_SINGLE_DOOR_2026_11_09: the Services flow at the top
+       of #whatwedo reads the SAME bookkeeping this wizard uses — the
+       shared price book (window.ATR_PRICE_DATA via bkData), the
+       friendly-name map, the book order, the type-key map, the price
+       formatter, the tile icons, and the fallback device data. One
+       store, no fork. */
+    window.atrBkShared = {
+      friendly: BK_FRIENDLY,
+      order: BK_REPAIR_ORDER,
+      typeKey: bkTypeKey,
+      fmt: bkFmt,
+      data: bkData,
+      fallback: deviceData,
+      iconHtml: bkIconHtml,
+      iconForName: bkIconHtmlForName
+    };
     /* REPAIR_WIZARD_ESTIMATE_FIX_2026_11_06: the estimate now ADDS UP.
        Until today it was driven by the FIRST selected repair only, so
        picking screen + battery showed just the first repair's price
@@ -752,7 +849,10 @@
       'Virus / Software cleanup': 'Virus cleanup & tuneup',
       'Charging': 'Charging port repair',
       'Band / Button': 'Other / not sure',
-      'Board / Solder': 'Other / not sure'
+      'Board / Solder': 'Other / not sure',
+      /* SERVICES_SINGLE_DOOR_2026_11_09: the catch-all tile maps to
+         the same intake bucket as Board / Solder. */
+      'Something else': 'Other / not sure'
     };
     function prefillIntakeFromGuided() {
       window.atrGuidedSelection = {
@@ -4067,7 +4167,7 @@ if ("serviceWorker" in navigator) {
     if (!openBtn || !overlay || !input || !resultsBox) return;
 
     var PAGE_NAMES = {
-      home: 'Home', repair: 'Repair', prices: 'Prices', whatwedo: 'What We Service',
+      home: 'Home', repair: 'Repair', whatwedo: 'Services',
       about: 'About', shop: 'Store', b2b: 'B2B', 'atr-one': 'ATR One Membership',
       careers: 'Careers', investors: 'Investors', contact: 'Contact',
       warranty: 'Warranty', 'warranty-request': 'Warranty Request',
@@ -4198,18 +4298,15 @@ if ("serviceWorker" in navigator) {
     }
 
     function openRepairResult(e) {
-      goToPage('prices');
-      var steps = [
-        function () { pickTileText('dt-types', e.type); },
-        function () { setSelect('dt-brands', e.brand); },
-        function () { setSelect('dt-models', e.model); },
-        function () {
-          pickTileText('dt-repairs', e.repair);
-          var r = document.getElementById('dt-result');
-          if (r) { try { r.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (err) {} }
+      /* SERVICES_SINGLE_DOOR_2026_11_09: the Prices lookup is gone —
+         a repair result opens the Services flow on the Services page
+         and drives it to the same pick the lookup used to make. */
+      goToPage('whatwedo');
+      setTimeout(function () {
+        if (window.atrSvcOpenRepair) {
+          window.atrSvcOpenRepair({ type: e.type, brand: e.brand, model: e.model, repair: e.repair });
         }
-      ];
-      steps.forEach(function (fn, i) { setTimeout(fn, 200 + i * 150); });
+      }, 80);
     }
 
     function openShopResult(e) {
@@ -4667,5 +4764,532 @@ if ("serviceWorker" in navigator) {
     document.addEventListener('DOMContentLoaded', wireGiftCards);
   } else {
     wireGiftCards();
+  }
+})();
+
+/* ================= SERVICES_SINGLE_DOOR_2026_11_09 =================
+   The Services flow (owner, Nov 9, 2026): Services is the single
+   door. At the top of #whatwedo the customer picks Repair or
+   One-on-One, descends device -> brand -> model -> service, and sees
+   the free estimate on the spot; Continue hands off to the booking
+   form with the picks pre-applied (the form itself is untouched —
+   this module drives its real controls, the same pattern the site
+   search uses). Prices come only from window.ATR_PRICE_DATA through
+   window.atrBkShared — the same book the wizard reads; nothing is
+   forked. Switching paths never traps: the repair grid ends with the
+   One-on-One tile and the topic grid ends with the repair escape
+   tile, exactly like the form. */
+(function () {
+  'use strict';
+  function arm() { try { init(); } catch (e) {} }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', arm);
+  else arm();
+
+  function init() {
+    if (!document.getElementById('svc-flow')) return;
+    var shared = window.atrBkShared;
+    var DATA = window.ATR_PRICE_DATA;
+    if (!shared || !DATA) return;
+
+    /* The eight One-on-One topics, mirroring the booking form's
+       #bk-service-grid exactly — same canonical kinds, same icons,
+       same device lists (Computer clean-up is Computer only). */
+    var TOPICS = [
+      ['Set up a new device', 'fas fa-box-open', 'Phone, Tablet, Computer, Game Console, Smart Watch, Business / Other'],
+      ['Learn my phone, computer, or tablet', 'fas fa-graduation-cap', 'Phone, Tablet, Computer'],
+      ['Wi-Fi or internet help', 'fas fa-wifi', 'Phone, Tablet, Computer, Game Console, Smart Watch, Business / Other'],
+      ['Printer or accessories', 'fas fa-print', 'Phone, Tablet, Computer, Business / Other'],
+      ['Move my stuff to a new device', 'fas fa-right-left', 'Phone, Tablet, Computer'],
+      ['Computer clean-up', 'fas fa-broom', 'Computer'],
+      ['Something else', 'fas fa-circle-question', 'Phone, Tablet, Computer, Game Console, Smart Watch, Business / Other'],
+      ['Not sure yet', 'fas fa-clipboard-question', 'Phone, Tablet, Computer, Game Console, Smart Watch, Business / Other']
+    ];
+    var FEE_NOTE = 'A separate visit fee applies to the visit \u2014 $15 when the repair is already known, or $35 if your device needs diagnostics first \u2014 due at booking and non-refundable. Estimates are always free. ATR One members pay no visit fee for devices covered under their subscription.';
+
+    function $(id) { return document.getElementById(id); }
+    function esc(s) {
+      return String(s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+    /* Same range rule as the wizard's rfParseRange: only a bare price
+       or price range counts as a figure. */
+    function parseRange(txt) {
+      if (!txt) return null;
+      var s = String(txt);
+      if (!/^[\s$,.\d\u2013\u2014-]+$/.test(s)) return null;
+      var nums = s.replace(/[$,]/g, '').match(/\d+(?:\.\d+)?/g);
+      if (!nums || !nums.length) return null;
+      var lo = parseFloat(nums[0]);
+      var hi = nums.length > 1 ? parseFloat(nums[nums.length - 1]) : lo;
+      return { lo: lo, hi: hi };
+    }
+    function combinedText(t) { return t.lo === t.hi ? shared.fmt(t.lo) : shared.fmt(t.lo) + ' \u2013 ' + shared.fmt(t.hi); }
+
+    function newState() {
+      return { device: '', brandKey: '', brandLabel: '', modelKey: '', modelLabel: '', modelState: 'pending', picks: [], kind: '', hours: 0 };
+    }
+
+    /* ---------------- pane scaffolding ----------------
+       A pane is one path's stack: device grid, brand select, model
+       select, then its own grid (repairs or topics). The cascade
+       setters are callable so path switches and the site search can
+       drive a pane to a pick programmatically. */
+    function makePane(prefix, kind) {
+      return {
+        prefix: prefix, kind: kind, state: newState(),
+        devGrid: $(prefix + '-dev-grid'),
+        brandWrap: $(prefix + '-brand-wrap'), brandSel: $(prefix + '-brand-select'),
+        modelWrap: $(prefix + '-model-wrap'), modelSel: $(prefix + '-model-select'),
+        gridWrap: $(prefix + '-grid-wrap'), grid: $(prefix + '-grid')
+      };
+    }
+    var repairPane = makePane('svc', 'repair');
+    var ooPane = makePane('svc-oo', 'oneonone');
+    var currentPath = '';
+
+    function fillSelect(sel, pairs, placeholder) {
+      sel.innerHTML = '';
+      var ph = document.createElement('option');
+      ph.value = ''; ph.textContent = placeholder;
+      sel.appendChild(ph);
+      pairs.forEach(function (pr) {
+        var o = document.createElement('option');
+        o.value = pr[0]; o.textContent = pr[1];
+        sel.appendChild(o);
+      });
+      sel.value = '';
+    }
+    function isPicker(pane) { return !!DATA[shared.typeKey(pane.state.device)]; }
+    function modelOk(pane) {
+      var ms = pane.state.modelState;
+      return ms === 'chosen' || ms === 'notlisted' || ms === 'na';
+    }
+
+    function paneSetDevice(pane, device) {
+      var st = pane.state;
+      st.device = device; st.brandKey = ''; st.brandLabel = '';
+      st.modelKey = ''; st.modelLabel = ''; st.modelState = 'pending';
+      st.picks = []; st.kind = ''; st.hours = 0;
+      pane.devGrid.querySelectorAll('[data-svc-device]').forEach(function (b) {
+        b.classList.toggle('selected', b.getAttribute('data-svc-device') === device);
+      });
+      if (isPicker(pane)) {
+        var typeKey = shared.typeKey(device);
+        fillSelect(pane.brandSel,
+          Object.keys(DATA[typeKey]).map(function (k) { return [k, k]; }).concat([['__other__', 'Other brand']]),
+          'Choose your brand\u2026');
+      } else {
+        var fb = shared.fallback[device] || { brands: ['Other'] };
+        fillSelect(pane.brandSel, fb.brands.map(function (b) { return [b, b]; }), 'Choose your brand\u2026');
+      }
+      pane.brandWrap.hidden = false;
+      pane.modelWrap.hidden = true;
+      pane.gridWrap.hidden = true;
+      if (pane.kind === 'oneonone') renderOoSummary();
+      gate(pane);
+    }
+
+    function paneSetBrand(pane, brandKey) {
+      var st = pane.state;
+      if (!brandKey) return;
+      st.brandKey = brandKey;
+      st.brandLabel = brandKey === '__other__' ? 'Other' : brandKey;
+      st.modelKey = ''; st.modelLabel = ''; st.modelState = 'pending';
+      st.picks = []; st.kind = '';
+      pane.brandSel.value = brandKey;
+      if (isPicker(pane)) {
+        var names = brandKey === '__other__' ? [] : Object.keys(DATA[shared.typeKey(st.device)][brandKey]);
+        fillSelect(pane.modelSel,
+          names.map(function (k) { return [k, k]; }).concat([['__notlisted__', "My model isn't listed"]]),
+          'Choose your model\u2026');
+        pane.modelWrap.hidden = false;
+        pane.gridWrap.hidden = true;
+      } else {
+        st.modelState = 'na';
+        pane.modelWrap.hidden = true;
+        renderGrid(pane);
+      }
+      if (pane.kind === 'oneonone') renderOoSummary();
+      gate(pane);
+    }
+
+    function paneSetModel(pane, modelKey) {
+      var st = pane.state;
+      if (!modelKey) return;
+      st.modelKey = modelKey;
+      st.modelLabel = modelKey === '__notlisted__' ? '' : modelKey;
+      st.modelState = modelKey === '__notlisted__' ? 'notlisted' : 'chosen';
+      st.picks = []; st.kind = '';
+      pane.modelSel.value = modelKey;
+      renderGrid(pane);
+      if (pane.kind === 'oneonone') renderOoSummary();
+      gate(pane);
+    }
+
+    function wirePane(pane) {
+      pane.devGrid.querySelectorAll('[data-svc-device]').forEach(function (btn) {
+        btn.addEventListener('click', function () { paneSetDevice(pane, btn.getAttribute('data-svc-device')); });
+      });
+      pane.brandSel.addEventListener('change', function () { paneSetBrand(pane, pane.brandSel.value); });
+      pane.modelSel.addEventListener('change', function () { paneSetModel(pane, pane.modelSel.value); });
+    }
+
+    /* ---------------- tiles ---------------- */
+    function tileShell(inner) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'option-btn';
+      b.style.padding = '0.85rem 0.5rem';
+      b.style.alignItems = 'flex-start';
+      b.style.textAlign = 'left';
+      b.innerHTML = inner;
+      return b;
+    }
+    function subSpan(text) {
+      return '<span style="font-size:0.78rem; color: var(--brand-deep); font-weight:800;">' + esc(text) + '</span>';
+    }
+    function doorTile(iconCls, label, sub) {
+      return tileShell('<i class="' + iconCls + '"></i><strong>' + esc(label) + '</strong>' + subSpan(sub));
+    }
+
+    function togglePick(pane, pick, btn) {
+      var st = pane.state;
+      var found = -1;
+      st.picks.forEach(function (p, i) { if (p.name === pick.name) found = i; });
+      if (found >= 0) { st.picks.splice(found, 1); btn.classList.remove('selected'); }
+      else { st.picks.push(pick); btn.classList.add('selected'); }
+      updateEstimate();
+      gate(pane);
+    }
+
+    function genericRepairs(typeKey) {
+      var seen = {};
+      Object.keys(DATA[typeKey]).forEach(function (br) {
+        Object.keys(DATA[typeKey][br]).forEach(function (mo) {
+          Object.keys(DATA[typeKey][br][mo]).forEach(function (r) { seen[r] = true; });
+        });
+      });
+      return shared.order.filter(function (r) { return seen[r]; });
+    }
+
+    function renderGrid(pane) {
+      if (pane.kind === 'oneonone') { renderTopics(pane); return; }
+      var st = pane.state;
+      var grid = pane.grid;
+      grid.innerHTML = '';
+      if (isPicker(pane)) {
+        var typeKey = shared.typeKey(st.device);
+        var repairs, priceOf;
+        if (st.brandKey !== '__other__' && st.modelKey !== '__notlisted__') {
+          repairs = Object.keys(DATA[typeKey][st.brandKey][st.modelKey]);
+          priceOf = function (r) { return DATA[typeKey][st.brandKey][st.modelKey][r]; };
+        } else {
+          repairs = genericRepairs(typeKey);
+          priceOf = function () { return null; };
+        }
+        repairs.forEach(function (r) {
+          (function (r) {
+            var price = priceOf(r);
+            var label = shared.friendly[r] || r;
+            var b = tileShell(shared.iconHtml(r) + '<strong>' + esc(label) + '</strong>' +
+              subSpan(typeof price === 'number' ? shared.fmt(price) : 'Price confirmed up front'));
+            b.setAttribute('data-raw', r);
+            b.addEventListener('click', function () {
+              togglePick(pane, { name: label, price: typeof price === 'number' ? price : null, priceRange: null }, b);
+            });
+            grid.appendChild(b);
+          })(r);
+        });
+      } else {
+        var fb = shared.fallback[st.device] || { issues: [] };
+        fb.issues.forEach(function (issue) {
+          var b = tileShell(shared.iconForName(issue.name) + '<strong>' + esc(issue.name) + '</strong>' + subSpan(issue.price));
+          b.setAttribute('data-raw', issue.name);
+          b.addEventListener('click', function () {
+            togglePick(pane, { name: issue.name, price: null, priceRange: issue.price }, b);
+          });
+          grid.appendChild(b);
+        });
+      }
+      /* The catch-all renders for every device, and the One-on-One
+         tile closes the grid — same as the booking form. */
+      var se = tileShell(shared.iconHtml('Something else') + '<strong>Something else</strong>' + subSpan('Price confirmed up front'));
+      se.setAttribute('data-svc-something-else', '1');
+      se.addEventListener('click', function () {
+        togglePick(pane, { name: 'Something else', price: null, priceRange: null }, se);
+      });
+      grid.appendChild(se);
+      var oo = doorTile('fas fa-graduation-cap', 'One-on-One', 'Lessons & help on this device \u2014 $25 an hour');
+      oo.setAttribute('data-svc-oo-door', '1');
+      oo.addEventListener('click', function () { switchPath('oneonone'); });
+      grid.appendChild(oo);
+      pane.gridWrap.hidden = false;
+      updateEstimate();
+      gate(pane);
+    }
+
+    function learnLabel(pane) {
+      var st = pane.state;
+      var word = { Phone: 'phone', Tablet: 'tablet', Computer: 'computer' }[st.device] || '';
+      if (st.modelLabel) return 'Learn my ' + st.modelLabel;
+      return word ? ('Learn my ' + word) : 'Learn my phone, computer, or tablet';
+    }
+
+    function renderTopics(pane) {
+      var st = pane.state;
+      var grid = pane.grid;
+      grid.innerHTML = '';
+      TOPICS.forEach(function (t) {
+        var kind = t[0], icon = t[1], devices = t[2];
+        if (st.device && devices.split(',').map(function (s) { return s.trim(); }).indexOf(st.device) < 0) return;
+        var label = kind === 'Learn my phone, computer, or tablet' ? learnLabel(pane) : kind;
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'option-btn';
+        b.setAttribute('data-svc-kind', kind);
+        b.innerHTML = '<i class="' + icon + '"></i> ' + esc(label);
+        if (st.kind === kind) b.classList.add('selected');
+        b.addEventListener('click', function () {
+          st.kind = kind;
+          grid.querySelectorAll('[data-svc-kind]').forEach(function (x) { x.classList.remove('selected'); });
+          b.classList.add('selected');
+          renderOoSummary();
+          gate(pane);
+        });
+        grid.appendChild(b);
+      });
+      /* The way back to repairs closes the grid — never trapped. */
+      var escTile = document.createElement('button');
+      escTile.type = 'button';
+      escTile.className = 'option-btn';
+      escTile.setAttribute('data-svc-repair-door', '1');
+      escTile.innerHTML = '<i class="fas fa-wrench"></i> Not a lesson \u2014 I need a repair instead';
+      escTile.addEventListener('click', function () { switchPath('repair'); });
+      grid.appendChild(escTile);
+      pane.gridWrap.hidden = false;
+      gate(pane);
+    }
+
+    /* ---------------- estimate + summary ---------------- */
+    function estimateTotals(picks) {
+      var lo = 0, hi = 0, any = false, unpriced = 0;
+      picks.forEach(function (it) {
+        if (typeof it.price === 'number') { lo += it.price; hi += it.price; any = true; return; }
+        var r = parseRange(it.priceRange);
+        if (r) { lo += r.lo; hi += r.hi; any = true; } else { unpriced++; }
+      });
+      return { any: any, unpriced: unpriced, lo: lo, hi: hi };
+    }
+
+    function updateEstimate() {
+      var st = repairPane.state;
+      var box = $('svc-estimate'), amt = $('svc-est-price'), note = $('svc-est-note');
+      var disc = $('svc-est-disclaimer');
+      if (!box) return;
+      if (!st.picks.length) { box.hidden = true; if (disc) disc.hidden = true; return; }
+      var modelLabel = st.modelLabel || ((st.brandLabel && st.brandLabel !== 'Other') ? st.brandLabel : st.device);
+      var allIssues = st.picks.map(function (i) { return i.name; }).join(', ');
+      var t = estimateTotals(st.picks);
+      if (t.any && t.unpriced === 0) {
+        amt.textContent = combinedText(t);
+        note.innerHTML = esc(allIssues) + ' for ' + esc(modelLabel) + ' &mdash; ' +
+          (st.picks.length > 1 ? 'estimated total for the repairs you picked' : 'estimated price') +
+          ', parts and labor included. ' + FEE_NOTE;
+      } else if (t.any) {
+        var pricedNames = [], unpricedNames = [];
+        st.picks.forEach(function (it) {
+          if (typeof it.price === 'number' || parseRange(it.priceRange)) pricedNames.push(it.name); else unpricedNames.push(it.name);
+        });
+        var partial = combinedText(t);
+        amt.textContent = 'From ' + partial;
+        note.innerHTML = esc(pricedNames.join(', ')) + ' for ' + esc(modelLabel) + ' &mdash; estimated from ' + esc(partial) +
+          ', parts and labor included. ' + esc(unpricedNames.join(', ')) + ' ' + (unpricedNames.length > 1 ? 'do' : 'does') +
+          ' not have a set price yet &mdash; we confirm the exact price after diagnostics, before any work starts. ' + FEE_NOTE;
+      } else {
+        amt.textContent = 'Confirmed after diagnostics';
+        note.innerHTML = 'There is no set price for ' + esc(allIssues.toLowerCase()) + ' on the ' + esc(modelLabel) +
+          ' yet. Book the visit and we confirm your exact price after diagnostics, before any work starts. The visit fee covers the trip &mdash; $15 when the repair is already known, or $35 if your device needs diagnostics first &mdash; due at booking, non-refundable. Estimates are always free. ATR One members pay no visit fee for devices covered under their subscription.';
+      }
+      box.hidden = false;
+      if (disc) disc.hidden = false;
+    }
+
+    /* Mirrors the form's ooRender: time priced pure at $25/hr, the
+       $15 visit fee its own line, the total their sum. */
+    function renderOoSummary() {
+      var st = ooPane.state;
+      var h = st.hours || 0;
+      var time = h * 25;
+      var priceEl = $('svc-oo-price');
+      if (priceEl) priceEl.textContent = h ? ('$' + time) : 'Pick a time';
+      var lines = $('svc-oo-lines');
+      if (lines) {
+        lines.innerHTML =
+          (st.kind ? (esc(st.kind) + ' for your ' + esc([st.brandLabel, st.modelLabel].filter(Boolean).join(' ') || st.device || 'device') + '<br>') : '') +
+          'One-on-one time $25 per hour' + (h ? (' \u2014 ' + h + (h === 1 ? ' hour' : ' hours') + ' $' + time) : '') + '<br>' +
+          'Visit fee $15<br>' +
+          (h ? ('<strong>Total $' + (15 + time) + ' \u2014 the $' + time + ' time plus the $15 visit fee</strong><br>') : '') +
+          'If your session runs longer, the extra time is settled at the visit at $25 an hour.<br>' +
+          'ATR One Plus (paid) members pay no visit fee on covered devices.';
+      }
+    }
+
+    function gate(pane) {
+      var st = pane.state;
+      var btn = pane.kind === 'oneonone' ? $('svc-oo-continue') : $('svc-continue');
+      if (!btn) return;
+      var ready = pane.kind === 'oneonone'
+        ? !!(st.device && st.brandKey && modelOk(pane) && st.kind && st.hours)
+        : !!(st.device && st.brandKey && modelOk(pane) && st.picks.length);
+      btn.disabled = !ready;
+    }
+
+    /* ---------------- path switching ---------------- */
+    function switchPath(p) {
+      currentPath = p;
+      var toRepair = p === 'repair';
+      $('svc-pane-repair').hidden = !toRepair;
+      $('svc-pane-oo').hidden = toRepair;
+      document.querySelectorAll('[data-svc-path]').forEach(function (b) {
+        b.classList.toggle('selected', b.getAttribute('data-svc-path') === p);
+      });
+      /* Carry the device / brand / model picks across, so switching
+         doors never makes the customer start over. */
+      var src = toRepair ? ooPane : repairPane;
+      var dst = toRepair ? repairPane : ooPane;
+      if (src.state.device && dst.state.device !== src.state.device) {
+        paneSetDevice(dst, src.state.device);
+        if (src.state.brandKey) {
+          paneSetBrand(dst, src.state.brandKey);
+          if (src.state.modelKey && isPicker(dst)) paneSetModel(dst, src.state.modelKey);
+        }
+      }
+      var flow = $('svc-flow');
+      if (flow) { try { flow.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {} }
+    }
+
+    document.querySelectorAll('[data-svc-path]').forEach(function (btn) {
+      btn.addEventListener('click', function () { switchPath(btn.getAttribute('data-svc-path')); });
+    });
+    document.querySelectorAll('[data-svc-hours]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        ooPane.state.hours = parseInt(btn.getAttribute('data-svc-hours'), 10) || 0;
+        document.querySelectorAll('[data-svc-hours]').forEach(function (b) { b.classList.remove('selected'); });
+        btn.classList.add('selected');
+        renderOoSummary();
+        gate(ooPane);
+      });
+    });
+    wirePane(repairPane);
+    wirePane(ooPane);
+
+    /* ---------------- handoff to the booking form ----------------
+       The form's own machinery is driven through its real controls —
+       the device tile click, the brand/model selects (change events),
+       and the repair tile clicks — so repairState, the estimate, and
+       the intake carry exactly as if the customer had picked there. */
+    function goToPageNav(pageId) {
+      var a = document.createElement('a');
+      a.setAttribute('href', '#' + pageId);
+      a.setAttribute('data-page', pageId);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+    function clickFormDevice(device) {
+      var b = document.querySelector('#repair [data-device="' + device + '"]');
+      if (b) b.click();
+      return !!b;
+    }
+    function setFormSelect(id, value) {
+      var sel = $(id);
+      if (!sel) return false;
+      for (var i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value === value) {
+          sel.value = value;
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+          return true;
+        }
+      }
+      return false;
+    }
+    function driveFormPicker(pane) {
+      clickFormDevice(pane.state.device);
+      setFormSelect('bk-brand-select', pane.state.brandKey);
+      if (isPicker(pane)) setFormSelect('bk-model-select', pane.state.modelKey);
+    }
+
+    $('svc-continue').addEventListener('click', function () {
+      var pane = repairPane, st = pane.state;
+      goToPageNav('repair');
+      driveFormPicker(pane);
+      if (isPicker(pane)) {
+        st.picks.forEach(function (pick) {
+          if (pick.name === 'Something else') {
+            var se = document.querySelector('#bk-repair-grid [data-bk-something-else]');
+            if (se) se.click();
+            return;
+          }
+          var tiles = document.querySelectorAll('#bk-repair-grid .option-btn');
+          for (var i = 0; i < tiles.length; i++) {
+            var strong = tiles[i].querySelector('strong');
+            if (strong && strong.textContent === pick.name) { tiles[i].click(); break; }
+          }
+        });
+      } else {
+        st.picks.forEach(function (pick) {
+          if (pick.name === 'Something else') {
+            var sef = document.querySelector('#issue-list [data-bk-something-else]');
+            if (sef) sef.click();
+            return;
+          }
+          var btns = document.querySelectorAll('#issue-list .option-btn');
+          for (var i = 0; i < btns.length; i++) {
+            var strong = btns[i].querySelector('strong');
+            if (strong && strong.textContent === pick.name) { btns[i].click(); break; }
+          }
+        });
+      }
+      var card = document.querySelector('.repair-card');
+      if (card) { try { card.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {} }
+    });
+
+    /* This Continue carries data-open-oneonone in the markup, so the
+       form's own entry-point listener raises its One-on-One flag on
+       this very click; the drive is deferred one tick so the flag
+       lands before the device pick moves the form to step 2. */
+    $('svc-oo-continue').addEventListener('click', function () {
+      var pane = ooPane, st = pane.state;
+      setTimeout(function () {
+        goToPageNav('repair');
+        driveFormPicker(pane);
+        var kindBtn = document.querySelector('[data-service-kind="' + st.kind + '"]');
+        if (kindBtn) kindBtn.click();
+        var hrBtn = document.querySelector('[data-oo-hours="' + st.hours + '"]');
+        if (hrBtn) hrBtn.click();
+        var card = document.querySelector('.repair-card');
+        if (card) { try { card.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {} }
+      }, 0);
+    });
+
+    /* Site search hook: a repair result opens this flow already
+       descended to the searched pick (see openRepairResult in the
+       search module). */
+    window.atrSvcOpenRepair = function (sel) {
+      var device = sel.type === 'Smartwatch' ? 'Smart Watch' : sel.type;
+      switchPath('repair');
+      paneSetDevice(repairPane, device);
+      if (sel.brand) {
+        paneSetBrand(repairPane, sel.brand);
+        if (sel.model) paneSetModel(repairPane, sel.model);
+      }
+      if (sel.repair) {
+        var tiles = repairPane.grid.querySelectorAll('.option-btn');
+        for (var i = 0; i < tiles.length; i++) {
+          if (tiles[i].getAttribute('data-raw') === sel.repair) { tiles[i].click(); break; }
+        }
+      }
+    };
   }
 })();

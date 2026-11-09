@@ -65,6 +65,7 @@
 
   <!-- HEADER -->
   <header class="header">
+    <div class="header-main">
     <a href="#home" class="brand" data-page="home" aria-label="Go to home page">
       <div class="brand-mark"><img id="brand-logo-img" src="logo-duo.png" alt="ATR logo" style="width:64px;height:64px;border-radius:14px;object-fit:cover;"></div>
       <div class="brand-info">
@@ -91,17 +92,22 @@
          important, it needs a spot on the NAV links" — One-on-One is
          added here and in the mobile menu, directly after Store. It
          repeats no bottom-bar item. -->
+    <!-- SERVICES_SINGLE_DOOR_2026_11_09 (owner, Nov 9, 2026): the
+         desktop nav is five doors — Services (the What We Service
+         page, renamed), Store, About, ATR One, Support. One-on-One
+         leaves the bar (it lives in Services and in the booking
+         flow), Prices leaves (folded into Services), Reviews leaves
+         (homepage section + mobile menu carry it). The logo groups
+         with the links in .header-main; the bar is black in both
+         themes (styles.css, same marker). -->
     <nav class="nav-desktop" aria-label="Main navigation">
-      <a class="nav-link" href="#whatwedo" data-page="whatwedo">What We Service</a>
+      <a class="nav-link" href="#whatwedo" data-page="whatwedo">Services</a>
       <a class="nav-link" href="#shop" data-page="shop">Store</a>
-      <a class="nav-link" href="#classes" data-page="classes">One-on-One</a>
-      <a class="nav-link" href="#prices" data-page="prices">Prices</a>
       <a class="nav-link" href="#about" data-page="about">About</a>
       <a class="nav-link" href="#atr-one" data-page="atr-one">ATR One</a>
-      <a class="nav-link" href="#home" data-page="home" data-guide="home-reviews">Reviews</a>
-      <!-- SUPPORT_PAGE_2026_11_09 (owner, Nov 9, 2026): Support is the last desktop nav item, Apple's pattern. The mobile menu is untouched (zero overlap with the bottom bar). -->
       <a class="nav-link" href="#support" data-page="support">Support</a>
     </nav>
+    </div>
 
     <div class="header-actions">
       <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark/light mode">
@@ -169,11 +175,14 @@
              so it returns here. The menu is the desktop nav minus the
              bottom-bar destinations &mdash; the dedupe rule (menu and
              bottom bar never repeat) still holds. -->
-        <a class="menu-link" href="#classes" data-page="classes">One-on-One</a>
-        <a class="menu-link" href="#prices" data-page="prices">Prices</a>
-        <a class="menu-link" href="#help-guides" data-page="help-guides">Help Guides</a>
+        <!-- SERVICES_SINGLE_DOOR_2026_11_09 (owner, Nov 9, 2026):
+             the menu is About, ATR One, One-on-One, Help Guides,
+             Reviews — zero overlap with the thumb bar (logo/Home,
+             Services, Store, Support, Menu). Genie animation as-is. -->
         <a class="menu-link" href="#about" data-page="about">About</a>
         <a class="menu-link" href="#atr-one" data-page="atr-one">ATR One</a>
+        <a class="menu-link" href="#classes" data-page="classes">One-on-One</a>
+        <a class="menu-link" href="#help-guides" data-page="help-guides">Help Guides</a>
         <a class="menu-link" href="#home" data-page="home" data-guide="home-reviews">Reviews</a>
       </div>
       <div class="menu-footer">
@@ -216,11 +225,27 @@
           <p class="eyebrow"><i class="fas fa-location-dot"></i> Mobile Service &mdash; Dayton &amp; Miami Valley</p>
           <div class="hero-slides" id="hero-slides">
             <!-- SITE_CAROUSEL_FIX_2026_10_30: slide 4 no longer repeats the slide 1 phone photo; console teardown instead -->
+            <!-- SERVICES_SINGLE_DOOR_2026_11_09 (owner, Nov 9, 2026):
+                 holiday slide, FIRST in the rotation — services as
+                 gifts. No discounts, percentages, or deal terms: none
+                 exist; the slide sells the service, not a sale. -->
             <div class="hero-slide is-active">
-              <h1 class="hero-headline">We bring the repair shop <em>to your door.</em></h1>
+              <p class="eyebrow">Holiday Season</p>
+              <h1 class="hero-headline">Services they&rsquo;ll love.</h1>
+              <p class="hero-sub">Repairs and one-on-ones &mdash; a perfect match this holiday season.</p>
+              <div class="hero-cta-group">
+                <a class="btn btn-primary btn-lg" href="#whatwedo" data-page="whatwedo"><i class="fas fa-gift"></i> Give a service</a>
+                <a class="btn btn-outline btn-lg" href="#account" data-page="account"><i class="fas fa-gift"></i> Gift cards</a>
+              </div>
+              <div class="hero-photo">
+                <img src="images/holiday-services.webp" alt="Wrapped gifts — a laptop with a blue ribbon and a phone-size gift with an orange ribbon — with a blank gift card, under string lights" loading="eager" />
+              </div>
+            </div>
+            <div class="hero-slide">
+              <h2 class="hero-headline">We bring the repair shop <em>to your door.</em></h2>
               <p class="hero-sub">Professional mobile repairs for phones, computers, tablets, and game consoles &mdash; done at your home or office, backed by a 1-year warranty.</p>
               <div class="hero-cta-group">
-                <a class="btn btn-primary btn-lg" href="#repair" data-page="repair"><i class="fas fa-wrench"></i> Start a Repair</a>
+                <a class="btn btn-primary btn-lg" href="#whatwedo" data-page="whatwedo"><i class="fas fa-wrench"></i> Start a Repair</a>
                 <a class="btn btn-outline btn-lg" href="tel:+19372806243"><i class="fas fa-phone"></i> 937-280-6243</a>
               </div>
               <div class="hero-photo">
@@ -243,7 +268,7 @@
               <h2 class="hero-headline">Same-day <em>diagnostics.</em></h2>
               <p class="hero-sub">We can come out same-day to diagnose your device, then order parts and return for the repair.</p>
               <div class="hero-cta-group">
-                <a class="btn btn-primary btn-lg" href="#repair" data-page="repair"><i class="fas fa-wrench"></i> Start a Repair</a>
+                <a class="btn btn-primary btn-lg" href="#whatwedo" data-page="whatwedo"><i class="fas fa-wrench"></i> Start a Repair</a>
                 <a class="btn btn-outline btn-lg" href="tel:+19372806243"><i class="fas fa-phone"></i> 937-280-6243</a>
               </div>
               <div class="hero-photo">
@@ -254,7 +279,7 @@
               <h2 class="hero-headline">Free estimates, <em>always.</em></h2>
               <p class="hero-sub">Tell us what is wrong and get a straight answer on price before any work starts. No charge to find out what your repair will cost.</p>
               <div class="hero-cta-group">
-                <a class="btn btn-primary btn-lg" href="#repair" data-page="repair"><i class="fas fa-wrench"></i> Start a Repair</a>
+                <a class="btn btn-primary btn-lg" href="#whatwedo" data-page="whatwedo"><i class="fas fa-wrench"></i> Start a Repair</a>
                 <a class="btn btn-outline btn-lg" href="tel:+19372806243"><i class="fas fa-phone"></i> 937-280-6243</a>
               </div>
               <div class="hero-photo">
@@ -265,7 +290,7 @@
               <h2 class="hero-headline">Backed by a <em>1-year warranty.</em></h2>
               <p class="hero-sub">One year on ATRG-supplied parts and labor. Every technology, big or small &mdash; we tackle them all, since 2010.</p>
               <div class="hero-cta-group">
-                <a class="btn btn-primary btn-lg" href="#repair" data-page="repair"><i class="fas fa-wrench"></i> Start a Repair</a>
+                <a class="btn btn-primary btn-lg" href="#whatwedo" data-page="whatwedo"><i class="fas fa-wrench"></i> Start a Repair</a>
                 <a class="btn btn-outline btn-lg" href="tel:+19372806243"><i class="fas fa-phone"></i> 937-280-6243</a>
               </div>
               <div class="hero-photo">
@@ -281,6 +306,7 @@
               <button class="hero-dot" type="button" data-hero-dot="2" aria-label="Go to slide 3"><span class="hero-dot-fill"></span></button>
               <button class="hero-dot" type="button" data-hero-dot="3" aria-label="Go to slide 4"><span class="hero-dot-fill"></span></button>
               <button class="hero-dot" type="button" data-hero-dot="4" aria-label="Go to slide 5"><span class="hero-dot-fill"></span></button>
+              <button class="hero-dot" type="button" data-hero-dot="5" aria-label="Go to slide 6"><span class="hero-dot-fill"></span></button>
             </div>
             <button class="hero-arrow" type="button" data-hero-next aria-label="Next slide">&#8250;</button>
             <button class="hero-playpause" type="button" data-hero-playpause aria-label="Pause slideshow" aria-pressed="false"><span data-hero-playpause-icon>&#10074;&#10074;</span></button>
@@ -299,11 +325,11 @@
            Experience -> #about page, Free Estimates -> #prices page.
            Small a.trustbar-item rule at the end of styles.css. -->
         <a class="trustbar-item" href="#warranty-request" data-page="warranty-request"><i class="fas fa-shield-halved"></i> 1-Year Warranty</a>
-        <a class="trustbar-item" href="#repair" data-page="repair"><i class="fas fa-bolt"></i> Same-Day Diagnostics</a>
+        <a class="trustbar-item" href="#whatwedo" data-page="whatwedo"><i class="fas fa-bolt"></i> Same-Day Diagnostics</a>
         <!-- SITE_REVIEW_PAGE_2026_11_02: fifth pill, in the slot the removed We Come To You pill held -->
         <a class="trustbar-item" href="#review" data-page="review"><i class="fas fa-pen"></i> Leave Us a Review</a>
         <a class="trustbar-item" href="#about" data-page="about"><i class="fas fa-star"></i> 10+ Years Experience</a>
-        <a class="trustbar-item" href="#prices" data-page="prices"><i class="fas fa-magnifying-glass"></i> Free Estimates</a>
+        <a class="trustbar-item" href="#whatwedo" data-page="whatwedo"><i class="fas fa-magnifying-glass"></i> Free Estimates</a>
       </div>
 
       <!-- THREE_DOORS_2026_11_06: three intent doors directly under the
@@ -319,7 +345,7 @@
             <h2 class="section-title">What can we help with?</h2>
           </div>
           <div class="doors-grid">
-            <a class="door-card" href="#repair" data-page="repair">
+            <a class="door-card" href="#whatwedo" data-page="whatwedo">
               <div class="door-icon"><i class="fas fa-wrench"></i></div>
               <h3>Repair It</h3>
               <p>Something broken? Tell us what it is and we will come fix it.</p>
@@ -352,7 +378,7 @@
           <h2>No shop. No waiting room. No hassle.</h2>
           <p>Pick your device, tell us what's wrong, and get an instant estimate. If the problem can be confirmed from your description and photos, we quote it flat, order the part ourselves, and fix it in one visit when it lands. If it can't be confirmed remotely, the first visit is a diagnostic visit &mdash; we find out what's actually wrong before anyone orders a part.</p>
           <!-- SITE_HERO_BUTTON_2026_11_01: hero CTA relabeled per Austin (Nov 1, 2026) - says See Transparent Pricing and goes to the Prices estimator, not the repair ticket creator -->
-          <a class="btn btn-primary" href="#prices" data-page="prices">See Transparent Pricing <i class="fas fa-arrow-right"></i></a>
+          <a class="btn btn-primary" href="#whatwedo" data-page="whatwedo">See Transparent Pricing <i class="fas fa-arrow-right"></i></a>
         </div>
         <div class="feature-media">
           <img src="images/work/phone-repair.jpg" alt="Phone repair on a bench" loading="lazy" />
@@ -389,12 +415,12 @@
       <div class="section section-alt">
         <div class="container">
           <div class="section-header center">
-            <p class="eyebrow">What we service</p>
+            <p class="eyebrow">Services</p>
             <h2 class="section-title">Expert repair for every device</h2>
             <p class="section-copy">From cracked screens to complex diagnostics &mdash; handled at your location.</p>
           </div>
           <!-- SITE_DECLUTTER_2026_10_30: home page decluttered per Austin — the services grid moved off home to the What We Fix page (#whatwedo), which now carries the full photo cards; home keeps one clear path to it -->
-          <p style="text-align:center; margin:0.4rem auto 0;"><a class="btn btn-primary btn-lg" href="#whatwedo" data-page="whatwedo">See What We Service <i class="fas fa-arrow-right"></i></a></p>
+          <p style="text-align:center; margin:0.4rem auto 0;"><a class="btn btn-primary btn-lg" href="#whatwedo" data-page="whatwedo">See Services <i class="fas fa-arrow-right"></i></a></p>
           <p class="section-copy" style="text-align:center; margin:1.6rem auto 0;">One honest note: we&rsquo;re not an internet service provider. But we can recommend a provider and plan, help you get set up, and make everything on your side of the connection work.</p>
         </div>
       </div>
@@ -430,6 +456,27 @@
             <h2 class="section-title">What local clients are saying</h2>
           </div>
           <div class="testimonials-grid">
+            <!-- SERVICES_SINGLE_DOOR_2026_11_09 (owner, Nov 9, 2026):
+                 two REAL reviews added at the owner's direction, in
+                 his words, most recent first — Patrick (iPhone 16
+                 screen, Job Complete Nov 2, 2026) and Janae (iPad 5th
+                 generation screen, completed Oct 29, 2026). -->
+            <div class="testimonial-card">
+              <div class="testimonial-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+              <p class="testimonial-text">"My iPhone screen repair was great &mdash; quick, fast, and easy."</p>
+              <div class="testimonial-author">
+                <div class="testimonial-avatar">P</div>
+                <div><div class="testimonial-name">Patrick</div><div class="testimonial-role">iPhone Screen Repair</div></div>
+              </div>
+            </div>
+            <div class="testimonial-card">
+              <div class="testimonial-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+              <p class="testimonial-text">"My iPad looks awesome and works great &mdash; perfect."</p>
+              <div class="testimonial-author">
+                <div class="testimonial-avatar">J</div>
+                <div><div class="testimonial-name">Janae</div><div class="testimonial-role">iPad Repair</div></div>
+              </div>
+            </div>
             <div class="testimonial-card">
               <div class="testimonial-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
               <p class="testimonial-text">"Austin was extremely professional from start to finish. He took the time to properly repair my Xbox One X while explaining everything along the way."</p>
@@ -486,7 +533,7 @@
             <h2>Ready to get it fixed?</h2>
             <p>Start your repair request online in under a minute, or call us and we can come out today to diagnose it.</p>
             <div class="hero-cta-group">
-              <a class="btn btn-cream btn-lg" href="#repair" data-page="repair"><i class="fas fa-wrench"></i> Start a Repair</a>
+              <a class="btn btn-cream btn-lg" href="#whatwedo" data-page="whatwedo"><i class="fas fa-wrench"></i> Start a Repair</a>
               <a class="btn btn-ghostlight btn-lg" href="tel:9372806243"><i class="fas fa-phone"></i> 937-280-6243</a>
             </div>
           </div>
@@ -595,9 +642,98 @@
         <div class="container">
           <div class="section-header center">
             <p class="eyebrow">Services</p>
-            <h1 class="section-title">What We Service</h1>
+            <h1 class="section-title">Services</h1>
             <p class="section-copy">Repairs and tech services handled at your home or office &mdash; free estimates, and appointments booked in 2-hour arrival windows.</p>
           </div>
+          <!-- SERVICES_SINGLE_DOOR_2026_11_09 (owner, Nov 9, 2026):
+               the Services flow — the single door. Pick Repair or
+               One-on-One, descend device, brand, model, service, and
+               see the free estimate on the spot; Continue hands off
+               to the booking form with the picks pre-applied. The
+               script lives in script.js under the same marker; the
+               catalog below stays where it was. -->
+          <div class="svc-flow" id="svc-flow">
+            <div class="option-grid svc-path-grid" id="svc-path-grid">
+              <button class="option-btn" type="button" data-svc-path="repair"><i class="fas fa-wrench"></i><strong>Repair</strong><span style="font-size:0.78rem; color: var(--brand-deep); font-weight:800;">Fix a device &mdash; see your estimated price on the spot</span></button>
+              <button class="option-btn" type="button" data-svc-path="oneonone"><i class="fas fa-graduation-cap"></i><strong>One-on-One</strong><span style="font-size:0.78rem; color: var(--brand-deep); font-weight:800;">Lessons &amp; help on your device &mdash; $25 an hour</span></button>
+            </div>
+
+            <div id="svc-pane-repair" hidden>
+              <p class="field-label">What kind of device?</p>
+              <div class="option-grid" id="svc-dev-grid">
+                <button class="option-btn" type="button" data-svc-device="Phone"><i class="fas fa-mobile-screen-button"></i> Phone</button>
+                <button class="option-btn" type="button" data-svc-device="Tablet"><i class="fas fa-tablet-screen-button"></i> Tablet</button>
+                <button class="option-btn" type="button" data-svc-device="Computer"><i class="fas fa-laptop"></i> Computer</button>
+                <button class="option-btn" type="button" data-svc-device="Game Console"><i class="fas fa-gamepad"></i> Game Console</button>
+                <button class="option-btn" type="button" data-svc-device="Smart Watch"><i class="fas fa-clock"></i> Smart Watch</button>
+                <button class="option-btn" type="button" data-svc-device="Business / Other"><i class="fas fa-briefcase"></i> Business / Other</button>
+              </div>
+              <div id="svc-brand-wrap" hidden>
+                <label class="field-label" for="svc-brand-select">Brand &mdash; pick your brand</label>
+                <select class="form-field" id="svc-brand-select" style="margin-bottom: 1.4rem;">
+                  <option value="">Choose your brand&hellip;</option>
+                </select>
+              </div>
+              <div id="svc-model-wrap" hidden>
+                <label class="field-label" for="svc-model-select">Model</label>
+                <select class="form-field" id="svc-model-select" style="margin-bottom: 1.4rem;">
+                  <option value="">Choose your model&hellip;</option>
+                </select>
+              </div>
+              <div id="svc-grid-wrap" hidden>
+                <p class="field-label">What service does it need?</p>
+                <div class="option-grid" id="svc-grid"></div>
+              </div>
+              <div class="estimate-box" id="svc-estimate" hidden>
+                <p class="label">Your estimated repair price</p>
+                <p class="price" id="svc-est-price"></p>
+                <p class="note" id="svc-est-note"></p>
+              </div>
+              <p class="estimate-disclaimer" id="svc-est-disclaimer" hidden><strong>Estimate only:</strong> the prices shown here are estimates &mdash; not the finalized repair price. Your exact price is confirmed after diagnostics, and the final price may be smaller or larger than the estimate shown.</p>
+              <button class="btn btn-primary" type="button" id="svc-continue" disabled><i class="fas fa-arrow-right"></i> Continue</button>
+            </div>
+
+            <div id="svc-pane-oo" hidden>
+              <p class="field-label">What kind of device?</p>
+              <div class="option-grid" id="svc-oo-dev-grid">
+                <button class="option-btn" type="button" data-svc-device="Phone"><i class="fas fa-mobile-screen-button"></i> Phone</button>
+                <button class="option-btn" type="button" data-svc-device="Tablet"><i class="fas fa-tablet-screen-button"></i> Tablet</button>
+                <button class="option-btn" type="button" data-svc-device="Computer"><i class="fas fa-laptop"></i> Computer</button>
+                <button class="option-btn" type="button" data-svc-device="Game Console"><i class="fas fa-gamepad"></i> Game Console</button>
+                <button class="option-btn" type="button" data-svc-device="Smart Watch"><i class="fas fa-clock"></i> Smart Watch</button>
+                <button class="option-btn" type="button" data-svc-device="Business / Other"><i class="fas fa-briefcase"></i> Business / Other</button>
+              </div>
+              <div id="svc-oo-brand-wrap" hidden>
+                <label class="field-label" for="svc-oo-brand-select">Brand &mdash; pick your brand</label>
+                <select class="form-field" id="svc-oo-brand-select" style="margin-bottom: 1.4rem;">
+                  <option value="">Choose your brand&hellip;</option>
+                </select>
+              </div>
+              <div id="svc-oo-model-wrap" hidden>
+                <label class="field-label" for="svc-oo-model-select">Model</label>
+                <select class="form-field" id="svc-oo-model-select" style="margin-bottom: 1.4rem;">
+                  <option value="">Choose your model&hellip;</option>
+                </select>
+              </div>
+              <div id="svc-oo-grid-wrap" hidden>
+                <p class="field-label">What do you want help with?</p>
+                <div class="option-grid" id="svc-oo-grid"></div>
+                <p class="field-label" style="margin-top: 1rem;">How much time?</p>
+                <div class="option-grid bk-hours-grid">
+                  <button class="option-btn" type="button" data-svc-hours="1">1 hour one-on-one <strong>$25</strong></button>
+                  <button class="option-btn" type="button" data-svc-hours="2">2 hour one-on-one <strong>$50</strong></button>
+                </div>
+                <p class="atr-help">If your session runs longer, the extra time is settled at the visit at $25 an hour.</p>
+              </div>
+              <div class="estimate-box" id="svc-oo-summary">
+                <p class="label">Your one-on-one</p>
+                <p class="price" id="svc-oo-price">Pick a time</p>
+                <p class="note" id="svc-oo-lines"></p>
+              </div>
+              <button class="btn btn-primary" type="button" id="svc-oo-continue" data-open-oneonone disabled><i class="fas fa-arrow-right"></i> Continue</button>
+            </div>
+          </div>
+
           <div class="card-grid">
             <!-- SITE_REAL_PHOTOS_2026_10_30: every photo on this site is Austin's own; AI/stock images removed, icon treatment where no photo of his fits -->
             <!-- SITE_CARD_PHOTOS_2026_10_30: the last icon tiles are gone — the Websites, Networking, and Classes cards and the Websites / Network / Cabling / Classes page banners carry Austin's photos; the Networking cable tester shot is small (138px), so it is contained on a matching backdrop, never stretched -->
@@ -612,14 +748,45 @@
           </div>
         </div>
       </div>
+      <div class="section" id="svc-pricing">
+        <div class="container">
+          <div class="section-header center">
+            <p class="eyebrow">Pricing</p>
+            <h2 class="section-title">How pricing works</h2>
+          </div>
+          <div class="pricing-grid">
+            <div class="pricing-card">
+              <h3>Visit Fee</h3>
+              <div class="amount">$15 / $35</div>
+              <p>$15 when your repair is already known. $35 when your device needs a full diagnosis first. One flat fee per job covers the trip to you &mdash; no mileage math, no surprises. Due at booking. Non-refundable.</p>
+            </div>
+            <div class="pricing-card">
+              <h3>Common Repairs</h3>
+              <div class="amount">Starting at</div>
+              <p>Common repairs (screens, batteries, charge ports) have a starting price &mdash; parts and labor included. Use the lookup above.</p>
+            </div>
+            <div class="pricing-card">
+              <h3>Custom Repairs</h3>
+              <div class="amount">Custom quote</div>
+              <p>Don&rsquo;t see your device? We quote you one clear price upfront &mdash; parts and labor included, no surprises.</p>
+            </div>
+            <div class="pricing-card">
+              <h3>Diagnostics</h3>
+              <div class="amount">Included</div>
+              <p>Free estimates &mdash; always. And when your device needs a diagnosis, it is covered by the $35 visit fee: even if we have to open your device to find the problem, there&rsquo;s no extra diagnostic fee.</p>
+              <p class="note">*Estimates are always free. The visit fee covers the trip to you &mdash; $15 for a known repair, $35 when a full diagnosis is needed &mdash; and it is never credited toward a repair. ATR One Plus (paid) members pay no visit fee for devices covered under their plan.</p>
+            </div>
+          </div>
+        </div>
+      </div>
       <div class="section">
         <div class="container">
           <div class="cta-band">
             <h2>Ready to get it fixed?</h2>
             <p>Start your repair request online in under a minute, or check the price list first &mdash; every estimate is free.</p>
             <div class="hero-cta-group">
-              <a class="btn btn-cream btn-lg" href="#repair" data-page="repair"><i class="fas fa-wrench"></i> Start a Repair</a>
-              <a class="btn btn-ghostlight btn-lg" href="#prices" data-page="prices"><i class="fas fa-tag"></i> See Prices</a>
+              <a class="btn btn-cream btn-lg" href="#whatwedo" data-page="whatwedo"><i class="fas fa-wrench"></i> Start a Repair</a>
+              <a class="btn btn-ghostlight btn-lg" href="#whatwedo" data-page="whatwedo" data-guide="svc-pricing"><i class="fas fa-tag"></i> See Prices</a>
               <a class="btn btn-ghostlight btn-lg" href="#repair-or-replace" data-page="repair-or-replace"><i class="fas fa-scale-balanced"></i> Repair or Replace</a>
               <a class="btn btn-ghostlight btn-lg" href="#help-guides" data-page="help-guides"><i class="fas fa-book-open"></i> Help Guides</a>
             </div>
@@ -1072,110 +1239,11 @@
       </div>
     </section>
 
-    <!-- ==================== PRICES ==================== -->
-    <section id="prices" class="page">
-      <div class="section">
-        <div class="container">
-          <div class="section-header center">
-            <p class="eyebrow">Transparent pricing</p>
-            <h2 class="section-title">Starting prices. No surprises.</h2>
-            <p class="section-copy">Pick your device and repair below to see its starting price. Your exact price is confirmed after a full diagnostics. A visit fee &mdash; $15 for a known repair, or $35 if your device needs diagnostics first &mdash; is due at booking and non-refundable.</p>
-            <p class="price-disclaimer">Prices shown are estimates. Your exact price is confirmed after a full diagnostics.</p>
-            <!-- SITE_MEMBERSHIP_COPY_2026_11_02 -->
-            <p class="price-disclaimer">The prices here are our standard repair prices. Paid ATR One members receive wholesale pricing on parts &mdash; parts at cost &mdash; on every repair.</p>
-          </div>
-
-          <!-- PRICE LOOKUP TOOL -->
-          <!-- SITE_DEVICE_LOOKUP_2026_10_31 -->
-          <style>
-            .dt-step { margin-bottom: 1.25rem; }
-            .dt-step-label { display: block; font-weight: 700; font-size: 0.9rem; margin-bottom: 0.45rem; color: var(--ink); }
-            .dt-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
-            .dt-tile { display: flex; align-items: center; gap: 0.55rem; padding: 0.85rem 1rem; border: 2px solid var(--blue-line, #9DBEDE); border-radius: var(--radius-sm); background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 0.95rem; font-weight: 600; text-align: left; cursor: pointer; }
-            .dt-tile:hover { border-color: var(--blue, #1050A0); box-shadow: 0 0 0 3px var(--blue-soft, #E4EEF9); }
-            .dt-tile:focus-visible { outline: 3px solid var(--blue, #1050A0); outline-offset: 2px; }
-            .dt-tile.active { border-color: #0B1F3A; background: linear-gradient(135deg, #1050A0, #2E7CD6); color: #fff; }
-            .dt-tile.active i { color: #fff; }
-            .dt-tile i { width: 1.1rem; text-align: center; color: var(--blue, #1050A0); }
-            .dt-select { width: 100%; max-width: 560px; }
-            .dt-reset { background: none; border: none; padding: 0.25rem 0; margin-top: 0.75rem; color: var(--brand); font-family: var(--font-body); font-size: 0.9rem; font-weight: 700; text-decoration: underline; cursor: pointer; }
-            @media (min-width: 720px) { .dt-tiles-types { grid-template-columns: repeat(5, 1fr); } .dt-tiles-types .dt-tile { flex-direction: column; text-align: center; justify-content: center; } }
-            .price-disclaimer { font-size: 0.82rem; color: var(--muted); margin: 0.6rem auto 0; max-width: 640px; }
-            .dt-disclaimer { text-align: center; }
-          </style>
-          <div class="price-lookup" id="dt-lookup">
-            <div class="dt-step" id="dt-step-type">
-              <span class="dt-step-label" id="dt-label-type">1. Device type</span>
-              <div class="dt-tiles dt-tiles-types" id="dt-types" role="group" aria-labelledby="dt-label-type"></div>
-            </div>
-            <div class="dt-step" id="dt-step-brand" hidden>
-              <span class="dt-step-label" id="dt-label-brand">2. Brand</span>
-              <!-- CHECKIN_DROPDOWNS_2026_11_05: Brand is a single dropdown, not tiles. -->
-              <select class="form-field dt-select" id="dt-brands" aria-labelledby="dt-label-brand"><option value="">Choose your brand&hellip;</option></select>
-            </div>
-            <div class="dt-step" id="dt-step-model" hidden>
-              <span class="dt-step-label" id="dt-label-model">3. Model</span>
-              <!-- CHECKIN_DROPDOWNS_2026_11_05: Model is a single dropdown populated only from the chosen brand. -->
-              <select class="form-field dt-select" id="dt-models" aria-labelledby="dt-label-model"><option value="">Choose your model&hellip;</option></select>
-            </div>
-            <div class="dt-step" id="dt-step-repair" hidden>
-              <span class="dt-step-label" id="dt-label-repair">4. Repair</span>
-              <div class="dt-tiles" id="dt-repairs" role="group" aria-labelledby="dt-label-repair"></div>
-            </div>
-            <div class="price-result" id="dt-result" hidden>
-              <div class="price-result-label" id="dt-result-label">Starting at</div>
-              <div class="price-result-amount" id="dt-amount">$0</div>
-              <p class="price-result-note" id="dt-note"></p>
-              <a class="btn btn-primary" href="#repair" data-page="repair" id="dt-book">Book This Repair <i class="fas fa-arrow-right"></i></a>
-            </div>
-            <!-- SITE_PRICES_STARTING_AT_2026_11_02 -->
-            <p class="price-disclaimer dt-disclaimer" id="dt-disclaimer" hidden>Estimate only. Your exact price is confirmed after a full diagnostics.</p>
-            <button type="button" class="dt-reset" id="dt-reset" hidden>Start over</button>
-          </div>
-          <!-- NAV_TIGHTEN_2026_11_09 (owner, Nov 9, 2026): Prices is the
-               single price-to-service door &mdash; one clear Schedule a
-               repair button directly under the lookup, so a customer who
-               just saw their price continues to booking right from here. -->
-          <div class="text-center" style="margin:0 auto 1.75rem;">
-            <a class="btn btn-primary" href="#repair" data-page="repair">Schedule a repair</a>
-          </div>
-
-          <!-- REPAIR_OR_REPLACE_2026_11_06: entry to the helper page -->
-          <div class="text-center" style="margin:0 auto 1.75rem; max-width:640px;">
-            <h3>Not sure it is worth fixing?</h3>
-            <p class="section-copy">If a repair costs most of what the device is worth, replacing it can be the smarter money. Our Repair or Replace helper does that math with you &mdash; honestly, using the same price book as the lookup above.</p>
-            <a class="btn btn-outline" href="#repair-or-replace" data-page="repair-or-replace">Repair or Replace? <i class="fas fa-arrow-right"></i></a>
-          </div>
-
-          <div class="pricing-grid">
-            <div class="pricing-card">
-              <h3>Visit Fee</h3>
-              <div class="amount">$15 / $35</div>
-              <p>$15 when your repair is already known. $35 when your device needs a full diagnosis first. One flat fee per job covers the trip to you &mdash; no mileage math, no surprises. Due at booking. Non-refundable.</p>
-            </div>
-            <div class="pricing-card">
-              <h3>Common Repairs</h3>
-              <div class="amount">Starting at</div>
-              <p>Common repairs (screens, batteries, charge ports) have a starting price &mdash; parts and labor included. Use the lookup above.</p>
-            </div>
-            <div class="pricing-card">
-              <h3>Custom Repairs</h3>
-              <div class="amount">Custom quote</div>
-              <p>Don&rsquo;t see your device? We quote you one clear price upfront &mdash; parts and labor included, no surprises.</p>
-            </div>
-            <div class="pricing-card">
-              <h3>Diagnostics</h3>
-              <div class="amount">Included</div>
-              <p>Free estimates &mdash; always. And when your device needs a diagnosis, it is covered by the $35 visit fee: even if we have to open your device to find the problem, there&rsquo;s no extra diagnostic fee.</p>
-              <p class="note">*Estimates are always free. The visit fee covers the trip to you &mdash; $15 for a known repair, $35 when a full diagnosis is needed &mdash; and it is never credited toward a repair. ATR One Plus (paid) members pay no visit fee for devices covered under their plan.</p>
-            </div>
-          </div>
-          <div class="text-center mt-2">
-            <a class="btn btn-primary btn-lg" href="#repair" data-page="repair"><i class="fas fa-wrench"></i> Get My Estimate</a>
-          </div>
-        </div>
-      </div>
-    </section>
+    <!-- SERVICES_SINGLE_DOOR_2026_11_09: the Prices page is
+         removed — its four pricing cards live on in Services
+         under "How pricing works" (above), its lookup is the
+         Services flow, and old #prices arrivals land on
+         Services via the router alias in script.js. -->
 
     <!-- ==================== REPAIR OR REPLACE ==================== -->
     <!-- REPAIR_OR_REPLACE_2026_11_06 (Austin roadmap, Nov 6, 2026):
@@ -1262,7 +1330,7 @@
             <h3>Our rule of thumb, in the open</h3>
             <p>If your estimated repair price is <strong>40% or less</strong> of what a replacement would cost you, fixing it is usually worth it. <strong>Over 40% and up to 65%</strong> is borderline &mdash; the device&rsquo;s age and shape decide it, and we will tell you straight after diagnostics. <strong>Over 65%</strong>, our honest advice is to put the money toward a replacement.</p>
             <p>ATR One members get a discount on repairs, which can change this math &mdash; the percentages here use our standard prices.</p>
-            <p>Already know you want the repair? <a href="#repair" data-page="repair">Schedule a repair</a>, or check the <a href="#prices" data-page="prices">price lookup</a> for starting prices on their own.</p>
+            <p>Already know you want the repair? <a href="#repair" data-page="repair">Schedule a repair</a>, or check the <a href="#whatwedo" data-page="whatwedo">Services flow</a> for starting prices on their own.</p>
           </div>
         </div>
       </div>
@@ -1424,7 +1492,7 @@
             </div>
           </details>
           </div>
-          <p style="text-align:center; margin-top:1.5rem;"><a class="btn btn-outline" href="#whatwedo" data-page="whatwedo">Back to What We Service</a></p>
+          <p style="text-align:center; margin-top:1.5rem;"><a class="btn btn-outline" href="#whatwedo" data-page="whatwedo">Back to Services</a></p>
         </div>
       </div>
     </section>
@@ -3031,7 +3099,7 @@
             <a class="support-icon-door" href="#help-guides" data-page="help-guides"><span class="support-icon-chip"><i class="fas fa-book-open"></i></span>Help Guides</a>
             <a class="support-icon-door" href="#account" data-page="account"><span class="support-icon-chip"><i class="fas fa-gift"></i></span>Gift Cards</a>
             <a class="support-icon-door" href="#repair-or-replace" data-page="repair-or-replace"><span class="support-icon-chip"><i class="fas fa-scale-balanced"></i></span>Repair or Replace</a>
-            <a class="support-icon-door" href="#prices" data-page="prices"><span class="support-icon-chip"><i class="fas fa-tag"></i></span>Prices</a>
+            <a class="support-icon-door" href="#whatwedo" data-page="whatwedo"><span class="support-icon-chip"><i class="fas fa-screwdriver-wrench"></i></span>Services</a>
           </div>
           <p style="text-align:center; margin-top:2rem;">Prefer to read the terms first? <a href="#warranty" data-page="warranty">Read the warranty terms</a></p>
           <p style="text-align:center; color:var(--muted); margin-top:1.5rem;">Call or text <a href="tel:9372806243" style="font-weight:800;">(937) 280-6243</a> &mdash; or <a href="sms:9372806243" style="font-weight:700;">send a text</a></p>
@@ -3465,12 +3533,12 @@
           </div>
           <img src="images/work/phone-repair.jpg" alt="Phone repair work" loading="lazy" style="width:100%; max-width:720px; border-radius:12px; display:block; margin:0 auto 1.5rem;" />
           <p>Phones are the device most people live on, so a phone repair is about getting you back to normal without losing your photos, your apps, or your day. We come to you, diagnose the phone in person, and tell you plainly what is wrong before any part is ordered. Most phone work is screens, batteries, and charging ports, but we also handle cameras, speakers, buttons, back glass, and board-level faults that a screen swap will not fix.</p>
-          <h3>What we service</h3>
+          <h3>Services</h3>
           <ul><li>Cracked and dead screens, including touch and display problems</li><li>Batteries that drain fast, shut off early, or swell</li><li>Charging ports that only work at an angle or not at all</li><li>Cameras, speakers, microphones, and buttons</li><li>Back glass and water damage checks</li><li>Board-level diagnosis when the fault is deeper than a part</li></ul>
           <h3>Why we should fix it</h3>
           <p>A phone is glued together, with thin cables and a battery that has to be handled right. A rushed home repair can tear a cable, damage a connector, or leave a phone that looks fixed but loses touch or Face ID calibration. We test the screen, touch, charging, camera, and speakers before we leave, and the repair carries a 1-year warranty on parts we supply and on our labor.</p>
           <a class="btn btn-primary" href="#repair" data-page="repair"><i class="fas fa-wrench"></i> Start a Repair</a>
-          <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to What We Service</a>
+          <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services</a>
         </div>
       </div>
     </section>
@@ -3484,12 +3552,12 @@
           </div>
           <img src="images/work/tablet-teardown-real.webp" alt="Tablet opened for repair on a work mat" loading="lazy" style="width:100%; max-width:720px; border-radius:12px; display:block; margin:0 auto 1.5rem;" />
           <p>Tablets get used hard at home, at school, and at work, and they break in a different way than phones. The glass is bigger, the adhesive holds more, and a tablet screen job takes real time, about 3 hours for a tablet screen. We tape cracked glass first so it does not spread, check whether the tablet powers on and is backed up, and confirm the fault before ordering anything.</p>
-          <h3>What we service</h3>
+          <h3>Services</h3>
           <ul><li>Cracked glass and digitizer replacement</li><li>Display replacement and touch problems</li><li>Batteries and charging port repair</li><li>Buttons and speakers</li><li>Diagnosis when a tablet will not power on or charge</li></ul>
           <h3>Why we should fix it</h3>
           <p>Big glass and strong adhesive are where home tablet repairs go wrong. Prying a tablet open without heat and patience cracks the display underneath, and a tablet that is not tested after the repair can leave you with dead touch in one corner. We take the time the job actually needs, test touch across the whole screen, and make sure it charges before we leave.</p>
           <a class="btn btn-primary" href="#repair" data-page="repair"><i class="fas fa-wrench"></i> Start a Repair</a>
-          <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to What We Service</a>
+          <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services</a>
         </div>
       </div>
     </section>
@@ -3503,12 +3571,12 @@
           </div>
           <img src="images/work/hp-laptop-board.jpg" alt="Laptop on a repair bench" loading="lazy" style="width:100%; max-width:720px; border-radius:12px; display:block; margin:0 auto 1.5rem;" />
           <p>Computers are where a slow machine, a dead screen, or a lost file turns into a work problem. We fix laptops and desktops of all kinds, at your place. We start by finding whether the fault is hardware, software, or both, because replacing a part will not fix a software problem, and reinstalling software will not fix a failing drive.</p>
-          <h3>What we service</h3>
+          <h3>Services</h3>
           <ul><li>Laptop and desktop screen replacement</li><li>SSD upgrades and RAM installs for slow machines</li><li>Battery and keyboard replacement</li><li>Virus cleanup and software problems</li><li>Data rescue when a drive is failing or a machine will not boot</li><li>Board-level work when the fault is on the board itself</li></ul>
           <h3>Why we should fix it</h3>
           <p>A computer repair is only worth doing if the machine is actually better when we leave. That means testing after the upgrade, checking that your files and programs are still there, and telling you honestly when a manufacturer repair is the better option for the same price. We do not guess at parts, and we do not leave a machine half working.</p>
           <a class="btn btn-primary" href="#repair" data-page="repair"><i class="fas fa-wrench"></i> Start a Repair</a>
-          <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to What We Service</a>
+          <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services</a>
         </div>
       </div>
     </section>
@@ -3522,12 +3590,12 @@
           </div>
           <img src="images/work/ps4-teardown.jpg" alt="Game console opened for service" loading="lazy" style="width:100%; max-width:720px; border-radius:12px; display:block; margin:0 auto 1.5rem;" />
           <p>Game consoles fail in ways that look like a software problem but are usually hardware: overheating, a disc drive that will not read, or an HDMI port that has been knocked loose. We diagnose the console properly first, because a console that overheats needs a fan and cleaning, not a new hard drive, and a console that will not read discs needs the drive checked, not a reset.</p>
-          <h3>What we service</h3>
+          <h3>Services</h3>
           <ul><li>HDMI port repair</li><li>Disc drive repair and replacement</li><li>Cooling fans, cleaning, and overheating fixes</li><li>Storage upgrades</li><li>Controller repair</li><li>Board-level diagnosis for consoles that will not power on</li></ul>
           <h3>Why we should fix it</h3>
           <p>Consoles are packed tight, with small connectors and heat that builds up fast. Opening one without the right tools can damage the board or the drive, and a console that is put back together without testing will fail again the first time it gets hot. We test the console under load before we leave, so it plays, reads discs, and stays cool.</p>
           <a class="btn btn-primary" href="#repair" data-page="repair"><i class="fas fa-wrench"></i> Start a Repair</a>
-          <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to What We Service</a>
+          <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services</a>
         </div>
       </div>
     </section>
@@ -3541,12 +3609,12 @@
           </div>
           <img src="images/work/smartwatch-real.webp" alt="Cracked smartwatch on a wrist" loading="lazy" style="width:100%; max-width:720px; border-radius:12px; display:block; margin:0 auto 1.5rem;" />
           <p>Smartwatches are small, and every repair on one is fiddly. Screens crack, batteries stop holding a charge, and charging stops working when the contacts wear. We handle smartwatches of all kinds, and we are honest up front when a watch is too small or too sealed to repair well, instead of taking it apart and hoping.</p>
-          <h3>What we service</h3>
+          <h3>Services</h3>
           <ul><li>Cracked watch screens</li><li>Batteries that will not hold a charge</li><li>Charging problems</li><li>Buttons and bands</li><li>Pairing and software checks</li></ul>
           <h3>Why we should fix it</h3>
           <p>The size is the whole problem with watches. Tiny screws, glued parts, and seals that are hard to restore once opened mean a home repair can easily lose a part or crack a small screen. We work on a bench with the right tools, test the screen, touch, charging, and pairing with your phone, and tell you before we start if the repair is not worth doing.</p>
           <a class="btn btn-primary" href="#repair" data-page="repair"><i class="fas fa-wrench"></i> Start a Repair</a>
-          <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to What We Service</a>
+          <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services</a>
         </div>
       </div>
     </section>
@@ -3560,12 +3628,12 @@
           </div>
           <img src="images/values/values-hero-workbench.webp" alt="The workbench where websites are built and handled" loading="lazy" style="width:100%; max-width:720px; border-radius:12px; display:block; margin:0 auto 1.5rem;" />
           <p>A website for a business is not a brochure, it is how customers find you, call you, and book you. We build small business websites, from a simple site up to a site with booking and contact forms and an online store, and we handle design, setup, and launch for you. You do not have to learn a builder, chase a domain, or figure out why a form is not sending.</p>
-          <h3>What we service</h3>
+          <h3>Services</h3>
           <ul><li>Small business websites, up to 5 pages and up</li><li>Booking and contact forms that actually reach you</li><li>Online store setup</li><li>Fixes and updates to an existing site</li></ul>
           <h3>Why we should fix it</h3>
           <p>A half-finished website costs real customers, and a site with a broken form or a wrong phone number is worse than no site at all. We build it end to end, check that the phone number, the forms, and the booking all work, and show you how to update it. It is built for your business, not an agency template with an agency price tag.</p>
           <a class="btn btn-primary" href="#repair" data-page="repair"><i class="fas fa-wrench"></i> Start a Repair</a>
-          <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to What We Service</a>
+          <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services</a>
         </div>
       </div>
     </section>
@@ -3579,7 +3647,7 @@
           </div>
           <div class="page-photo-contain"><img src="images/work/cable-tester.jpg" alt="Cable tester used to verify network wiring" loading="lazy" /></div>
           <p>Network installs are about making Wi-Fi and wired internet work everywhere in a home or small business, not just next to the router. We hook up and configure routers, switches, and Wi-Fi access points, and we verify everything working end to end before we leave. If a room has no signal, a device keeps dropping, or a new office needs a full setup, that is the job.</p>
-          <h3>What we service</h3>
+          <h3>Services</h3>
           <ul><li>Routers, hooked up and configured</li><li>Switches, hooked up and configured</li><li>Wi-Fi access points, including whole-home Wi-Fi</li><li>Verification that every room and device works</li></ul>
           <h3>Why we should fix it</h3>
           <p>Network gear fights itself when it is guessed at. Two routers, a bad setting, or an access point in the wrong spot can leave one room dead while the rest works fine. We configure it as one system and test every room, so you are not left restarting a router every day. We are not an internet service provider, but we can recommend a provider and plan and make everything on your side of the connection work.</p>
@@ -3588,7 +3656,7 @@
             <a class="service-card" href="#cabling" data-page="cabling"><img class="service-card-img" src="images/values/values-transparency-parts.webp" alt="Cables and parts organized on the shop wall" loading="lazy" /><div class="service-icon"><i class="fas fa-plug"></i></div><h3>Internet Cabling</h3><p>Ethernet cable runs to a room, terminated and tested.</p></a>
           </div>
           <a class="btn btn-primary" href="#repair" data-page="repair"><i class="fas fa-wrench"></i> Start a Repair</a>
-          <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to What We Service</a>
+          <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services</a>
         </div>
       </div>
     </section>
@@ -3602,12 +3670,12 @@
           </div>
           <img src="images/values/values-transparency-parts.webp" alt="Cables and parts organized on the shop wall" loading="lazy" style="width:100%; max-width:720px; border-radius:12px; display:block; margin:0 auto 1.5rem;" />
           <p>Internet cabling is the physical work behind a reliable connection: running Ethernet cable through a home or small business, terminating it properly, and testing it. Wired connections do not drop the way Wi-Fi does, which is why offices, gaming setups, and home offices still need them. We run clean, finished cable, not loose wire across a floor.</p>
-          <h3>What we service</h3>
+          <h3>Services</h3>
           <ul><li>Ethernet cable runs to a room, terminated and tested</li><li>Wall plates, installed and terminated</li><li>Attic and crawl space runs</li><li>Homes and small businesses</li></ul>
           <h3>Why we should fix it</h3>
           <p>Cabling fails quietly when it is not tested. A bad termination looks finished but drops the connection, and finding it later means opening walls again. We test every run before we leave, finish the wall plate, and confirm the connection works at the device, not just at the router.</p>
           <a class="btn btn-primary" href="#repair" data-page="repair"><i class="fas fa-wrench"></i> Start a Repair</a>
-          <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to What We Service</a>
+          <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services</a>
         </div>
       </div>
     </section>
@@ -3632,7 +3700,7 @@
           <!-- SUPPORT_BOOKING_2026_11_06: booking a class goes through the
                Support path in the booking card now, not the Contact page. -->
           <a class="btn btn-primary" href="#repair" data-page="repair" data-open-oneonone><i class="fas fa-graduation-cap"></i> Book a One-on-One</a>
-          <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to What We Service</a>
+          <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services</a>
           <!-- SUPPORT_PACKAGES_2026_11_06: five ready-made one-on-one
                help packages (Austin roadmap, Nov 6, 2026). Each Book
                button rides the same data-open-oneonone entry wiring as
@@ -3817,10 +3885,10 @@
         </div>
         <div>
           <span class="footer-col-title">Services</span>
-          <a class="footer-link" href="#repair" data-page="repair">Start a Service</a>
-          <a class="footer-link" href="#prices" data-page="prices">Pricing</a>
+          <a class="footer-link" href="#whatwedo" data-page="whatwedo">Start a Service</a>
+          <a class="footer-link" href="#whatwedo" data-page="whatwedo" data-guide="svc-pricing">Pricing</a>
           <a class="footer-link" href="#repair-or-replace" data-page="repair-or-replace">Repair or Replace</a>
-          <a class="footer-link" href="#whatwedo" data-page="whatwedo">What We Service</a>
+          <a class="footer-link" href="#whatwedo" data-page="whatwedo">Services</a>
           <a class="footer-link" href="#classes" data-page="classes">One-on-One Packages</a>
           <a class="footer-link" href="#help-guides" data-page="help-guides">Help Guides</a>
           <a class="footer-link" href="#atr-one" data-page="atr-one">ATR One Membership</a>
@@ -3935,7 +4003,8 @@
        and Prices carries the Schedule a repair button); Store joins
        the bar and leaves the mobile menu. -->
   <nav class="mobile-bottom-nav" aria-label="Mobile Bottom Navigation">
-    <a href="#home" class="bottom-nav-item active" data-page="home"><i class="fa-solid fa-house"></i><span>Home</span></a>
+    <!-- SERVICES_SINGLE_DOOR_2026_11_09 (owner, Nov 9, 2026): slot 1 is the logo itself — the badge is the home button. -->
+    <a href="#home" class="bottom-nav-item bottom-nav-logo active" data-page="home" aria-label="Home"><img class="bottom-nav-logo-img" src="logo-duo.png" alt=""><span class="sr-only">Home</span></a>
     <a href="#whatwedo" class="bottom-nav-item" data-page="whatwedo"><i class="fa-solid fa-screwdriver-wrench"></i><span>Services</span></a>
     <a href="#shop" class="bottom-nav-item" data-page="shop"><i class="fa-solid fa-store"></i><span>Store</span></a>
     <a href="#support" class="bottom-nav-item" data-page="support"><i class="fa-solid fa-headset"></i><span>Support</span></a>
@@ -7182,110 +7251,13 @@
      of the entry they came from; iPad 11th gen Screen priced from the
      10th gen. Every built price is listed in the pass REPORT.md for
      the owner's review. */
-  var TYPES = [
-    { name: 'Phone', icon: 'fas fa-mobile-screen' },
-    { name: 'Tablet', icon: 'fas fa-tablet-screen-button' },
-    { name: 'Computer', icon: 'fas fa-laptop' },
-    { name: 'Smartwatch', icon: 'fas fa-clock' },
-    { name: 'Game Console', icon: 'fas fa-gamepad' }
-  ];
-  function $(id) { return document.getElementById(id); }
-  function fmt(p) { return (p % 1 === 0) ? '$' + p : '$' + p.toFixed(2); }
-  function wire() {
-    var typeBox = $('dt-types'), brandBox = $('dt-brands'), modelBox = $('dt-models'), repairBox = $('dt-repairs');
-    var brandStep = $('dt-step-brand'), modelStep = $('dt-step-model'), repairStep = $('dt-step-repair');
-    var result = $('dt-result'), amount = $('dt-amount'), note = $('dt-note'), label = $('dt-result-label'), book = $('dt-book'), reset = $('dt-reset'), disc = $('dt-disclaimer');
-    if (!typeBox || !brandBox || !modelBox || !repairBox || !result) return;
-    var state = { type: null, brand: null, model: null, repair: null };
-    function scrollTo(el) { try { el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {} }
-    /* CHECKIN_DROPDOWNS_2026_11_05: dropdown filler for Brand / Model steps. */
-    function fillSelect(box, names, placeholder, current) {
-      box.innerHTML = '';
-      var ph = document.createElement('option'); ph.value = ''; ph.textContent = placeholder; box.appendChild(ph);
-      names.forEach(function (name) {
-        var o = document.createElement('option'); o.value = name; o.textContent = name; box.appendChild(o);
-      });
-      box.value = current || '';
-    }
-    function tiles(box, names, current, onPick, icons) {
-      box.innerHTML = '';
-      names.forEach(function (name, i) {
-        var b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'dt-tile' + (name === current ? ' active' : '');
-        b.setAttribute('aria-pressed', name === current ? 'true' : 'false');
-        if (icons && icons[i]) { var ic = document.createElement('i'); ic.className = icons[i]; ic.setAttribute('aria-hidden', 'true'); b.appendChild(ic); }
-        var s = document.createElement('span'); s.textContent = name; b.appendChild(s);
-        b.addEventListener('click', function () { onPick(name); });
-        box.appendChild(b);
-      });
-    }
-    function renderTypes() {
-      tiles(typeBox, TYPES.map(function (t) { return t.name; }), state.type, pickType, TYPES.map(function (t) { return t.icon; }));
-    }
-    function pickType(name) {
-      state = { type: name, brand: null, model: null, repair: null };
-      renderTypes();
-      fillSelect(brandBox, Object.keys(DATA[name]), 'Choose your brand\u2026', null);
-      brandStep.hidden = false; modelStep.hidden = true; repairStep.hidden = true;
-      result.hidden = true; result.classList.remove('show'); if (disc) disc.hidden = true; reset.hidden = false;
-      scrollTo(brandStep);
-    }
-    function pickBrand(name) {
-      state.brand = name; state.model = null; state.repair = null;
-      fillSelect(brandBox, Object.keys(DATA[state.type]), 'Choose your brand\u2026', name);
-      fillSelect(modelBox, Object.keys(DATA[state.type][name]), 'Choose your model\u2026', null);
-      modelStep.hidden = false; repairStep.hidden = true;
-      result.hidden = true; result.classList.remove('show'); if (disc) disc.hidden = true;
-      scrollTo(modelStep);
-    }
-    function pickModel(name) {
-      state.model = name; state.repair = null;
-      fillSelect(modelBox, Object.keys(DATA[state.type][state.brand]), 'Choose your model\u2026', name);
-      tiles(repairBox, Object.keys(DATA[state.type][state.brand][name]), null, pickRepair, null);
-      repairStep.hidden = false;
-      result.hidden = true; result.classList.remove('show'); if (disc) disc.hidden = true;
-      scrollTo(repairStep);
-    }
-    function pickRepair(name) {
-      state.repair = name;
-      tiles(repairBox, Object.keys(DATA[state.type][state.brand][state.model]), name, pickRepair, null);
-      var price = DATA[state.type][state.brand][state.model][name];
-      if (typeof price === 'number') {
-        /* SITE_PRICES_STARTING_AT_2026_11_02: the lookup result is a
-           starting-at estimate, never a promised price; the exact price
-           is confirmed after a full diagnostics. */
-        label.textContent = 'Starting at';
-        amount.style.display = ''; amount.textContent = fmt(price);
-        note.textContent = name + ' for ' + state.model + ' — estimate covering parts and labor. Your exact price is confirmed after a full diagnostics.';
-        if (disc) disc.hidden = false;
-        book.innerHTML = 'Book This Repair <i class="fas fa-arrow-right"></i>';
-      } else {
-        if (disc) disc.hidden = true;
-        label.textContent = 'We fix that — price confirmed up front';
-        amount.style.display = 'none';
-        note.textContent = 'There is no set price for ' + name + ' on the ' + state.model + ' yet. Book the visit and we confirm the exact price for your exact device before any work starts. The visit fee covers the trip \u2014 $15 for a known repair, or $35 if a full diagnosis is needed.';
-        book.innerHTML = 'Book This Visit <i class="fas fa-arrow-right"></i>';
-      }
-      try { sessionStorage.setItem('atr-quote', JSON.stringify({ device: state.model, repair: name, price: (typeof price === 'number') ? price : null })); } catch (e) {}
-      result.hidden = false; result.classList.add('show');
-      scrollTo(result);
-    }
-    /* CHECKIN_DROPDOWNS_2026_11_05: dropdown change wiring (once). */
-    brandBox.addEventListener('change', function () { if (brandBox.value) pickBrand(brandBox.value); });
-    modelBox.addEventListener('change', function () { if (modelBox.value) pickModel(modelBox.value); });
-    reset.addEventListener('click', function () {
-      state = { type: null, brand: null, model: null, repair: null };
-      renderTypes();
-      brandStep.hidden = true; modelStep.hidden = true; repairStep.hidden = true;
-      result.hidden = true; result.classList.remove('show'); reset.hidden = true; if (disc) disc.hidden = true;
-      scrollTo($('dt-lookup'));
-    });
-    renderTypes();
-  }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wire);
-  else wire();
+  /* SERVICES_SINGLE_DOOR_2026_11_09: the Prices lookup wiring
+     that used to follow this line (the dt-* picker) is removed
+     with the Prices page. The price book above is unchanged
+     and still feeds the booking wizard, the Services flow,
+     Repair or Replace, and site search. */
 })();
+
 </script>
 
 <script>
