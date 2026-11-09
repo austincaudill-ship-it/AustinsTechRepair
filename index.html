@@ -720,22 +720,20 @@
               </div>
               <!-- SUPPORT_BOOKING_2026_11_06 (design pivot, Austin, Nov 6,
                    2026): One-on-One is a MODE of this same form, not its
-                   own page. The button below flips step 2 between the
-                   repair tiles and the eight service bubbles; device,
-                   brand, and model are always picked first. -->
-              <div id="bk-oo-row" hidden>
-                <button type="button" class="bk-oo-toggle" id="bk-oo-toggle" aria-pressed="false"><i class="fas fa-graduation-cap"></i> One-on-One <span>Lessons &amp; help on this device &mdash; $25 an hour</span></button>
-              </div>
+                   own page. BOOKING_OO_TILE_2026_11_09 (Austin, Nov 9,
+                   2026): the mode is entered from the One-on-One TILE
+                   inside the repair grid in script.js — the separate
+                   toggle row that used to sit here is gone. -->
               <div id="bk-service-wrap" hidden>
                 <div class="option-grid" id="bk-service-grid">
-                  <button class="option-btn" type="button" data-service-kind="Set up a new device"><i class="fas fa-box-open"></i> Set up a new device</button>
-                  <button class="option-btn" type="button" data-service-kind="Learn my phone, computer, or tablet"><i class="fas fa-graduation-cap"></i> Learn my phone, computer, or tablet</button>
-                  <button class="option-btn" type="button" data-service-kind="Wi-Fi or internet help"><i class="fas fa-wifi"></i> Wi-Fi or internet help</button>
-                  <button class="option-btn" type="button" data-service-kind="Printer or accessories"><i class="fas fa-print"></i> Printer or accessories</button>
-                  <button class="option-btn" type="button" data-service-kind="Move my stuff to a new device"><i class="fas fa-right-left"></i> Move my stuff to a new device</button>
-                  <button class="option-btn" type="button" data-service-kind="Computer clean-up"><i class="fas fa-broom"></i> Computer clean-up</button>
-                  <button class="option-btn" type="button" data-service-kind="Something else"><i class="fas fa-circle-question"></i> Something else</button>
-                  <button class="option-btn" type="button" data-service-kind="Not sure yet"><i class="fas fa-clipboard-question"></i> Not sure yet</button>
+                  <button class="option-btn" type="button" data-service-kind="Set up a new device" data-devices="Phone, Tablet, Computer, Game Console, Smart Watch, Business / Other"><i class="fas fa-box-open"></i> Set up a new device</button>
+                  <button class="option-btn" type="button" data-service-kind="Learn my phone, computer, or tablet" data-devices="Phone, Tablet, Computer"><i class="fas fa-graduation-cap"></i> Learn my phone, computer, or tablet</button>
+                  <button class="option-btn" type="button" data-service-kind="Wi-Fi or internet help" data-devices="Phone, Tablet, Computer, Game Console, Smart Watch, Business / Other"><i class="fas fa-wifi"></i> Wi-Fi or internet help</button>
+                  <button class="option-btn" type="button" data-service-kind="Printer or accessories" data-devices="Phone, Tablet, Computer, Business / Other"><i class="fas fa-print"></i> Printer or accessories</button>
+                  <button class="option-btn" type="button" data-service-kind="Move my stuff to a new device" data-devices="Phone, Tablet, Computer"><i class="fas fa-right-left"></i> Move my stuff to a new device</button>
+                  <button class="option-btn" type="button" data-service-kind="Computer clean-up" data-devices="Computer"><i class="fas fa-broom"></i> Computer clean-up</button>
+                  <button class="option-btn" type="button" data-service-kind="Something else" data-devices="Phone, Tablet, Computer, Game Console, Smart Watch, Business / Other"><i class="fas fa-circle-question"></i> Something else</button>
+                  <button class="option-btn" type="button" data-service-kind="Not sure yet" data-devices="Phone, Tablet, Computer, Game Console, Smart Watch, Business / Other"><i class="fas fa-clipboard-question"></i> Not sure yet</button>
                 </div>
                 <p class="atr-help">Moving to a new device? We sit with you and help you move your photos, contacts, and apps over during the visit.</p>
                 <p class="field-label" style="margin-top: 1rem;">How much time?</p>

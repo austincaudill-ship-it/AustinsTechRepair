@@ -277,6 +277,11 @@
           document.querySelectorAll('[data-device]').forEach(function (b) { b.classList.remove('selected'); });
           btn.classList.add('selected');
           populateBookingOrFallback(repairState.device);
+          /* BOOKING_OO_TILE_2026_11_09: the device just changed while
+             One-on-One mode is on — re-filter the topics for the new
+             device (a pick the new device cannot have is dropped),
+             then re-render the summary and the gate. */
+          if (repairState.mode === 'oneonone') { ooFilterTopics(); rfRenderSummary(); rfGate(); }
           /* SITE_FORM_BACKNAV_2026_10_30: picking a device resets the
              brand/issue picks, so steps 3\u20134 must be re-earned before
              their progress steps become tappable again. */
@@ -421,6 +426,18 @@
           });
           grid.appendChild(iBtn);
         });
+        /* BOOKING_OO_TILE_2026_11_09: the fallback grid (Business /
+           Other) ends with the same One-on-One tile, so this path
+           offers the mode inside its grid too. */
+        var ooBtn = document.createElement('button');
+        ooBtn.type = 'button';
+        ooBtn.className = 'option-btn';
+        ooBtn.setAttribute('data-oo-tile', '1');
+        ooBtn.style.alignItems = 'flex-start';
+        ooBtn.style.textAlign = 'left';
+        ooBtn.innerHTML = '<strong><i class="fas fa-graduation-cap"></i> One-on-One</strong><span style="font-size:0.78rem; color: var(--brand-deep); font-weight:800;">Lessons &amp; help on this device \u2014 $25 an hour</span>';
+        ooBtn.addEventListener('click', function () { setOneOnOneMode(true); });
+        grid.appendChild(ooBtn);
         issueList.appendChild(grid);
       }
     }
@@ -501,6 +518,10 @@
         repairState.modelState = 'pending';
         repairState.priceExact = null;
         rfRenderSummary(); rfGate();
+        /* BOOKING_OO_TILE_2026_11_09: brand changed while One-on-One
+           mode is on — the model pick was just cleared above, so the
+           Learn label falls back to the device word. */
+        if (repairState.mode === 'oneonone') ooFilterTopics();
         renderBkModels(typeKey, brandKey);
       };
     }
@@ -524,6 +545,9 @@
         repairState.issues = [];
         repairState.priceExact = null;
         rfRenderSummary(); rfGate();
+        /* BOOKING_OO_TILE_2026_11_09: model changed while One-on-One
+           mode is on — the Learn topic takes the new model's name. */
+        if (repairState.mode === 'oneonone') ooFilterTopics();
         renderBkRepairs(typeKey, brandKey, modelKey);
       };
       if (modelWrap) { modelWrap.hidden = false; try { modelWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {} }
@@ -562,6 +586,21 @@
         });
         repairGrid.appendChild(b);
       });
+      /* BOOKING_OO_TILE_2026_11_09 (Austin, Nov 9, 2026): One-on-One is
+         the LAST tile in this grid — same tile family as the repairs
+         (strong label, brand-deep subline, like Board / Solder), not a
+         separate box under the grid. Tapping it flips step 2 into
+         One-on-One mode. It renders with every brand/model grid. */
+      var ooTile = document.createElement('button');
+      ooTile.type = 'button';
+      ooTile.className = 'option-btn';
+      ooTile.setAttribute('data-oo-tile', '1');
+      ooTile.style.padding = '0.85rem 0.5rem';
+      ooTile.style.alignItems = 'flex-start';
+      ooTile.style.textAlign = 'left';
+      ooTile.innerHTML = '<strong><i class="fas fa-graduation-cap"></i> One-on-One</strong><span style="font-size:0.78rem; color: var(--brand-deep); font-weight:800;">Lessons &amp; help on this device \u2014 $25 an hour</span>';
+      ooTile.addEventListener('click', function () { setOneOnOneMode(true); });
+      repairGrid.appendChild(ooTile);
       rfShowFlowExtras();
       if (repairWrap) { repairWrap.hidden = false; try { repairWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {} }
     }
@@ -816,8 +855,6 @@
          one-on-one, classes page, account) asked for One-on-One mode —
          it applies here, at the brand/model/service step, because the
          device is always picked first. */
-      var ooRow = document.getElementById('bk-oo-row');
-      if (ooRow) ooRow.hidden = !(stepNum === 2 && repairState.device);
       if (stepNum === 2 && pendingOneOnOne) { pendingOneOnOne = false; setOneOnOneMode(true); }
       if (stepNum === 4) prefillIntakeFromGuided();
     }
@@ -856,12 +893,51 @@
       }
     }
     window.atrOoRender = ooRender;
+    /* BOOKING_OO_TILE_2026_11_09 (Austin, Nov 9, 2026): the eight
+       One-on-One topics REACT to the device picked at step 1. Each
+       topic button in index.html carries data-devices — the step-1
+       device values that may see it — so "Computer clean-up" (Computer
+       only) can never appear for a phone again. A button with no
+       data-devices shows for every device, and with no device picked
+       yet nothing is hidden. If the picked topic is hidden for the
+       current device, the pick is cleared, so the summary and the
+       Continue gate never carry a topic the customer cannot see.
+       Runs when the mode is entered (setOneOnOneMode) and again when
+       the device, brand, or model changes while the mode is on. */
+    function ooFilterTopics() {
+      var dev = repairState.device || '';
+      document.querySelectorAll('[data-service-kind]').forEach(function (btn) {
+        var list = btn.getAttribute('data-devices');
+        var show = true;
+        if (list && dev) {
+          show = list.split(',').map(function (s) { return s.trim(); }).indexOf(dev) >= 0;
+        }
+        btn.style.display = show ? '' : 'none';
+        if (!show && repairState.serviceKind === btn.getAttribute('data-service-kind')) {
+          repairState.serviceKind = '';
+          btn.classList.remove('selected');
+        }
+      });
+      /* The Learn topic is labeled for THIS device: the picked model
+         when there is one ("Learn my iPad Pro", "Learn my iPhone 11
+         Pro"), else the device word ("Learn my phone"). Only the
+         visible text node changes — the icon stays, and the button's
+         data-service-kind keeps its canonical value, so the summary,
+         the intake, and the portal records read the same as always. */
+      var learnBtn = document.querySelector('[data-service-kind="Learn my phone, computer, or tablet"]');
+      if (learnBtn) {
+        var word = { Phone: 'phone', Tablet: 'tablet', Computer: 'computer' }[dev] || '';
+        var label = repairState.model ? ('Learn my ' + repairState.model)
+          : (word ? ('Learn my ' + word) : 'Learn my phone, computer, or tablet');
+        for (var nd = learnBtn.lastChild; nd; nd = nd.previousSibling) {
+          if (nd.nodeType === 3) { nd.nodeValue = ' ' + label; break; }
+        }
+      }
+    }
     function setOneOnOneMode(on) {
       repairState.mode = on ? 'oneonone' : 'repair';
       var card = document.querySelector('.repair-card');
       if (card) card.classList.toggle('oneonone-mode', on);
-      var toggle = document.getElementById('bk-oo-toggle');
-      if (toggle) { toggle.setAttribute('aria-pressed', on ? 'true' : 'false'); toggle.classList.toggle('selected', on); }
       var grid = document.getElementById('bk-repair-grid');
       if (grid) grid.style.display = on ? 'none' : '';
       var fallback = document.getElementById('issue-list');
@@ -887,13 +963,19 @@
       if (wa) wa.hidden = on;
       var sig = document.getElementById('sr-signature-block');
       if (sig) sig.hidden = on;
+      /* BOOKING_OO_TILE_2026_11_09: entering the mode filters the
+         topic bubbles to the device picked at step 1. */
+      if (on) ooFilterTopics();
       ooRender(); rfRenderSummary(); rfGate();
     }
     window.atrSetOneOnOneMode = setOneOnOneMode;
     (function wireOneOnOne() {
-      var toggle = document.getElementById('bk-oo-toggle');
-      if (!toggle) return;
-      toggle.addEventListener('click', function () { setOneOnOneMode(repairState.mode !== 'oneonone'); });
+      /* BOOKING_OO_TILE_2026_11_09: there is no toggle button to wire
+         any more — the One-on-One tile inside the repair grid enters
+         the mode and #bk-oo-off below leaves it. Nothing in this block
+         may return early: the escape button, the topic buttons, the
+         hour buttons, and the data-open-oneonone entry points are all
+         wired here. */
       var off = document.getElementById('bk-oo-off');
       if (off) off.addEventListener('click', function () { setOneOnOneMode(false); });
       document.querySelectorAll('[data-service-kind]').forEach(function (btn) {
