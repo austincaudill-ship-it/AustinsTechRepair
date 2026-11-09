@@ -165,7 +165,10 @@
         rfSet('rf-sum-estimate-label', 'Time');
         rfSet('rf-sum-estimate', repairState.ooHours ? (repairState.ooHours + (repairState.ooHours === 1 ? ' hour' : ' hours') + ' one-on-one \u2014 $' + (repairState.ooHours * 25)) : '\u2014');
       } else {
-        rfSet('rf-sum-repair-label', 'Repair');
+        /* SERVICES_FLOW_V58_2026_11_09: one word — the summary row
+           reads "Service" in repair mode too, as it already did in
+           One-on-One mode. The flow is a service from entry to summary. */
+        rfSet('rf-sum-repair-label', 'Service');
         rfSet('rf-sum-repair', repairs);
         rfSet('rf-sum-estimate-label', 'Estimate');
       }
@@ -208,6 +211,12 @@
        that has not been reached yet. */
     var currentRepairStep = 1;
     var furthestRepairStep = 1;
+    /* SERVICES_FLOW_V58_2026_11_09: while an entry point's carried-in
+       device pick is being applied (rfPresetDevice), the tile click's
+       advance to step 2 is held — the wizard opens on the device step
+       with the pick already made, and the guest steps forward (or
+       changes the pick) from there. */
+    var rfSuppressAdvance = false;
 
     var deviceData = {
       'Phone': {
@@ -257,7 +266,29 @@
         brands: ['Office / Network', 'POS system', 'Printer / peripheral', 'Other device'],
         issues: [
           { name: 'On-site diagnostic & support', price: '$95/hr + house call' },
-          { name: 'Setup / install / cabling', price: 'Custom quote' }
+          { name: 'Setup / install / cabling', price: 'Custom quote' },
+          { name: 'Websites for Business', price: 'Custom quote' }
+        ]
+      },
+      /* SERVICES_FLOW_V58_2026_11_09: two device types the wizard was
+         missing. Their setup work (printer setup, router & mesh setup,
+         Wi-Fi help) is one-on-one service work — it lives in the
+         device-filtered topic list (data-devices in index.html, TOPICS
+         in the Services flow), priced pure at $25/hr with the $15
+         visit fee as its own line, exactly like every other topic.
+         These fallback lists carry only the custom-quote work and the
+         truthful type lists — no part prices exist for these devices
+         and none are invented. */
+      'Printers & Peripherals': {
+        brands: ['HP', 'Canon', 'Epson', 'Brother', 'Other'],
+        issues: [
+          { name: 'Printer repair', price: 'Custom quote' }
+        ]
+      },
+      'Networking': {
+        brands: ['Router', 'Mesh Wi-Fi', 'Wi-Fi extender / access point', 'Other'],
+        issues: [
+          { name: 'Internet cabling', price: 'Custom quote' }
         ]
       }
     };
@@ -290,7 +321,7 @@
              brand/issue picks, so steps 3\u20134 must be re-earned before
              their progress steps become tappable again. */
           furthestRepairStep = 2;
-          goToRepairStep(2);
+          goToRepairStep(rfSuppressAdvance ? 1 : 2);
         });
       });
 
@@ -521,6 +552,9 @@
       if (/hdmi/i.test(n)) return bkIconHtml('HDMI port');
       if (/overheat|fan/i.test(n)) return bkIconHtml('Fan / Overheat');
       if (/disc|storage|ssd/i.test(n)) return bkIconHtml('Storage upgrade');
+      if (/website/i.test(n)) return '<i class="fas fa-globe"></i>';
+      if (/printer/i.test(n)) return '<i class="fas fa-print"></i>';
+      if (/cabling|cable/i.test(n)) return '<i class="fas fa-plug"></i>';
       if (/water/i.test(n)) return '<i class="fas fa-droplet"></i>';
       return bkIconHtml('');
     }
@@ -1139,6 +1173,34 @@
           sessionStorage.removeItem('atr-oneonone');
           pendingOneOnOne = true;
         }
+      } catch (err) {}
+      /* SERVICES_FLOW_V58_2026_11_09 (owner, Nov 9, 2026): entry
+         points that name a device — the service detail pages' Start
+         a Service buttons carry data-wizard-device — hand their
+         device to this same wizard, the way data-open-oneonone hands
+         it a mode. The pick runs through the tile's own click with
+         the step advance held, so the device step arrives answered
+         and the summary already shows the device; the pick can still
+         be changed like any other, and the flow stays step by step.
+         No forked state, no second flow. */
+      function rfPresetDevice(device) {
+        var btn = document.querySelector('#step-device [data-device="' + device + '"]');
+        if (!btn) return;
+        rfSuppressAdvance = true;
+        btn.click();
+        rfSuppressAdvance = false;
+      }
+      window.atrPresetDevice = rfPresetDevice;
+      document.addEventListener('click', function (e) {
+        var t = e.target && e.target.closest ? e.target.closest('[data-wizard-device]') : null;
+        if (!t) return;
+        var device = t.getAttribute('data-wizard-device') || '';
+        try { sessionStorage.setItem('atr-wizard-device', device); } catch (err) {}
+        rfPresetDevice(device);
+      });
+      try {
+        var presetDevice = sessionStorage.getItem('atr-wizard-device');
+        if (presetDevice) { sessionStorage.removeItem('atr-wizard-device'); rfPresetDevice(presetDevice); }
       } catch (err) {}
     })();
 
@@ -5194,18 +5256,24 @@ if ("serviceWorker" in navigator) {
     var DATA = window.ATR_PRICE_DATA;
     if (!shared || !DATA) return;
 
-    /* The eight One-on-One topics, mirroring the booking form's
+    /* The One-on-One topics, mirroring the booking form's
        #bk-service-grid exactly — same canonical kinds, same icons,
-       same device lists (Computer clean-up is Computer only). */
+       same device lists (Computer clean-up is Computer only).
+       SERVICES_FLOW_V58_2026_11_09: Printer setup, Peripheral &
+       accessory setup, and Router & mesh setup joined for the two
+       new device types, in the same grid order as the form. */
     var TOPICS = [
-      ['Set up a new device', 'fas fa-box-open', 'Phone, Tablet, Computer, Game Console, Smart Watch, Business / Other'],
+      ['Set up a new device', 'fas fa-box-open', 'Phone, Tablet, Computer, Game Console, Smart Watch, Printers & Peripherals, Networking, Business / Other'],
       ['Learn my phone, computer, or tablet', 'fas fa-graduation-cap', 'Phone, Tablet, Computer'],
-      ['Wi-Fi or internet help', 'fas fa-wifi', 'Phone, Tablet, Computer, Game Console, Smart Watch, Business / Other'],
-      ['Printer or accessories', 'fas fa-print', 'Phone, Tablet, Computer, Business / Other'],
+      ['Wi-Fi or internet help', 'fas fa-wifi', 'Phone, Tablet, Computer, Game Console, Smart Watch, Printers & Peripherals, Networking, Business / Other'],
+      ['Router & mesh setup', 'fas fa-network-wired', 'Networking'],
+      ['Printer or accessories', 'fas fa-print', 'Phone, Tablet, Computer, Printers & Peripherals, Business / Other'],
+      ['Printer setup', 'fas fa-print', 'Printers & Peripherals'],
+      ['Peripheral & accessory setup', 'fas fa-keyboard', 'Printers & Peripherals'],
       ['Move my stuff to a new device', 'fas fa-right-left', 'Phone, Tablet, Computer'],
       ['Computer clean-up', 'fas fa-broom', 'Computer'],
-      ['Something else', 'fas fa-circle-question', 'Phone, Tablet, Computer, Game Console, Smart Watch, Business / Other'],
-      ['Not sure yet', 'fas fa-clipboard-question', 'Phone, Tablet, Computer, Game Console, Smart Watch, Business / Other']
+      ['Something else', 'fas fa-circle-question', 'Phone, Tablet, Computer, Game Console, Smart Watch, Printers & Peripherals, Networking, Business / Other'],
+      ['Not sure yet', 'fas fa-clipboard-question', 'Phone, Tablet, Computer, Game Console, Smart Watch, Printers & Peripherals, Networking, Business / Other']
     ];
     var FEE_NOTE = 'A separate visit fee applies to the visit \u2014 $15 when the repair is already known, or $35 if your device needs diagnostics first \u2014 due at booking and non-refundable. Estimates are always free. ATR One members pay no visit fee for devices covered under their subscription.';
 

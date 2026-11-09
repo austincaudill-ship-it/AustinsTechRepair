@@ -365,6 +365,12 @@ a { color: var(--brand); }
 .repair-step.active { display: block; animation: pageIn 0.3s ease; }
 .repair-step h3 { font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; margin-bottom: 1.1rem; }
 .option-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)); gap: 0.9rem; margin-top: 0.6rem; }
+/* SERVICES_FLOW_V58_2026_11_09: the device grids — wizard step 1 and
+   both Services panes — hold exactly eight devices. Fixed column
+   counts keep the grid even at every width (4 x 2, then 2 x 4 on
+   small screens); eight divides by both, so no tile ever dangles. */
+#step-device .option-grid, #svc-dev-grid, #svc-oo-dev-grid { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 640px) { #step-device .option-grid, #svc-dev-grid, #svc-oo-dev-grid { grid-template-columns: repeat(2, 1fr); } }
 .option-btn {
   background: var(--bg); border: 2px solid var(--line); border-radius: var(--radius-md);
   padding: 1.2rem 0.9rem; color: var(--ink); font-weight: 700; font-size: 0.9rem;
