@@ -16591,3 +16591,109 @@ function loadTicketThread(client, ticketId) {
     });
   }
 })();
+
+/* ==================== PORTAL_APP_2026_11_09 ====================
+   The Associate Hub as its own installable app (Austin, Nov 9, 2026).
+   portal.html declares portal-manifest.json — a declaration only;
+   the installed app IS portal.html, same code, same updates, nothing
+   forked. The Home panel carries the install card, and a phone thumb
+   bar mirrors the sidebar. This module is deliberately thin: it owns
+   NO navigation or permission logic.
+   - Thumb items click the real sidebar tabs, so a thumb tap runs
+     exactly what a sidebar tap runs: initTabs' activateTab(name)
+     for every tab, plus initExtraTabs' showExtraPanel(name) for
+     Time Clock (both handlers are bound to the sidebar element
+     itself, so .click() reproduces the sidebar behavior whole,
+     including the document-level tab-memory and drawer-close
+     listeners, which key off .portal-tab clicks).
+   - Menu clicks the real #portal-nav-toggle, whose handler
+     (menuToggleNav) is the only code that opens the drawer.
+   - Visibility and active state are MIRRORED from the sidebar tabs:
+     applyRoleNav() writes each tab's display from tabAllowed(), and
+     activateTab()/showExtraPanel() write each tab's .active class.
+     A MutationObserver over those two attributes keeps the mirror
+     exact — the role rules themselves are never reimplemented. */
+(function () {
+  'use strict';
+  function $(id) { return document.getElementById(id); }
+
+  /* ---------- thumb bar: mirror + click-through ---------- */
+  var THUMB_TABS = ['home', 'tickets', 'teamchat', 'timeclock'];
+  function syncThumb() {
+    THUMB_TABS.forEach(function (key) {
+      var side = $('portal-tab-' + key);
+      var item = document.querySelector('.portal-thumb-item[data-thumb="' + key + '"]');
+      if (!side || !item) return;
+      item.style.display = window.getComputedStyle(side).display === 'none' ? 'none' : '';
+      item.classList.toggle('active', side.classList.contains('active'));
+    });
+  }
+  function initThumb() {
+    var bar = $('portal-thumbbar');
+    if (!bar) return;
+    bar.addEventListener('click', function (e) {
+      var item = e.target && e.target.closest ? e.target.closest('.portal-thumb-item') : null;
+      if (!item) return;
+      var key = item.getAttribute('data-thumb');
+      if (key === 'more') { var tg = $('portal-nav-toggle'); if (tg) tg.click(); return; }
+      var side = $('portal-tab-' + key);
+      if (side) side.click();
+    });
+    syncThumb();
+    if (window.MutationObserver) {
+      var obs = new MutationObserver(syncThumb);
+      THUMB_TABS.forEach(function (key) {
+        var side = $('portal-tab-' + key);
+        if (side) obs.observe(side, { attributes: true, attributeFilter: ['style', 'class'] });
+      });
+    }
+  }
+
+  /* ---------- install card (Home panel) ---------- */
+  var deferredInstallPrompt = null;
+  function isStandalone() {
+    return !!((window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true);
+  }
+  function refreshInstallCard() {
+    var card = $('portal-install-card');
+    if (!card) return;
+    if (isStandalone()) { card.hidden = true; return; }
+    card.hidden = false;
+    var btn = $('portal-install-btn');
+    var ios = $('portal-install-ios');
+    if (deferredInstallPrompt) {
+      if (btn) btn.hidden = false;
+      if (ios) ios.hidden = true;
+    } else {
+      if (btn) btn.hidden = true;
+      if (ios) ios.hidden = false;
+    }
+  }
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    refreshInstallCard();
+  });
+  window.addEventListener('appinstalled', function () {
+    deferredInstallPrompt = null;
+    var card = $('portal-install-card');
+    if (card) card.hidden = true;
+  });
+  function initInstall() {
+    var btn = $('portal-install-btn');
+    if (btn) btn.addEventListener('click', function () {
+      if (!deferredInstallPrompt) return;
+      deferredInstallPrompt.prompt();
+      deferredInstallPrompt.userChoice.then(function () {
+        deferredInstallPrompt = null;
+        refreshInstallCard();
+      });
+    });
+    refreshInstallCard();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () { initThumb(); initInstall(); });
+  } else { initThumb(); initInstall(); }
+})();
+/* ==================== end PORTAL_APP_2026_11_09 ==================== */

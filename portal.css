@@ -1340,3 +1340,42 @@ body.portal-body #portal-dash-view textarea {
 .home-prewrap { white-space: pre-wrap; }
 .home-post-img { display: block; max-width: 100%; height: auto; border-radius: 12px; margin-top: 0.6rem; }
 /* end PORTAL_HOME_2026_11_09 */
+
+/* ===== PORTAL_APP_2026_11_09 — the Hub as its own app: thumb bar =====
+   The public site's bottom-nav pattern (styles.css
+   .mobile-bottom-nav) brought inside the portal: five thumb targets
+   at <=920px, wired by the PORTAL_APP module in portal.js (which see
+   for how the items reuse the sidebar's own tabs, toggle, visibility
+   and active state — nothing is reimplemented here or there).
+   z-index 50 keeps the bar under every portal overlay (the drawer
+   backdrop sits at 60, Scan In at 80/81, ad-hoc wraps at 3000), so
+   modals cover it exactly as they cover the page. Content can never
+   hide underneath it: at <=640px the page scrolls on the body and
+   #portal-dash-view gains bottom padding; at 641-920px the panels
+   and the nav card scroll inside their own sticky viewports, so
+   their max-height shrinks by the bar's height instead. Desktop
+   (>920px) never renders the bar. */
+.portal-thumbbar { display: none; }
+@media (max-width: 920px) {
+  .portal-thumbbar {
+    display: flex;
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
+    background: var(--surface, #FFFDF8);
+    border-top: 1px solid var(--line, #E6D9C0);
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+    justify-content: space-around;
+  }
+  .portal-thumb-item {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    flex: 1; padding: 4px 0; background: none; border: none; cursor: pointer;
+    font-family: inherit; font-size: 0.68rem; font-weight: 700;
+    color: var(--muted, #7D6C5B);
+  }
+  .portal-thumb-item i { font-size: 1.18rem; }
+  .portal-thumb-item.active { color: var(--brand, #D9540D); }
+  #portal-dash-view { padding-bottom: 76px; }
+}
+@media (min-width: 641px) and (max-width: 920px) {
+  #portal-dash-view .portal-panel { max-height: calc(100vh - 24px - 70px); }
+  .portal-nav-col { max-height: calc(100vh - 24px - 70px); }
+}

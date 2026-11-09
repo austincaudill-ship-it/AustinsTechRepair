@@ -8,6 +8,15 @@
   <meta name="robots" content="noindex, nofollow" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
   <link rel="stylesheet" href="portal.css" />
+  <!-- PORTAL_APP_2026_11_09 (Austin, Nov 9, 2026): the Associate Hub
+       is its own installable app. portal-manifest.json is a
+       DECLARATION only — the installed app is this very page
+       (portal.html), same code, same site, same updates; nothing is
+       forked or duplicated. theme-color matches the portal top bar's
+       surface color in portal.css. -->
+  <link rel="manifest" href="portal-manifest.json" />
+  <meta name="theme-color" content="#FFFDF8" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <style>
     /* PORTAL_MFA_2026_11_02: styles for the two-step sign-in check, the
        dashboard authenticator setup prompt, and the enrollment view.
@@ -103,6 +112,23 @@
 
     <!-- ==================== DASHBOARD VIEW ==================== -->
     <section id="portal-dash-view" hidden>
+      <!-- PORTAL_APP_2026_11_09: the phone thumb bar — the public
+           site's bottom-nav pattern brought inside the Hub, fixed to
+           the bottom at <=920px (portal.css). Each item clicks the
+           REAL sidebar tab — or, for Menu, the real
+           #portal-nav-toggle — so panels open through the exact
+           sidebar code paths and role gates, and the PORTAL_APP
+           module in portal.js mirrors each sidebar tab's visibility
+           and active state onto these items. The bar lives inside
+           #portal-dash-view, so it exists only on the dashboard,
+           never on the sign-in screens. -->
+      <nav class="portal-thumbbar" id="portal-thumbbar" aria-label="Quick navigation">
+        <button class="portal-thumb-item" type="button" data-thumb="home" aria-label="Home"><i class="fas fa-house"></i><span>Home</span></button>
+        <button class="portal-thumb-item" type="button" data-thumb="tickets" aria-label="Service Queue"><i class="fas fa-list-ol"></i><span>Queue</span></button>
+        <button class="portal-thumb-item" type="button" data-thumb="teamchat" aria-label="Team Chat"><i class="fas fa-comments"></i><span>Team Chat</span></button>
+        <button class="portal-thumb-item" type="button" data-thumb="timeclock" aria-label="Time Clock"><i class="fas fa-clock"></i><span>Time Clock</span></button>
+        <button class="portal-thumb-item" type="button" data-thumb="more" aria-label="Menu"><i class="fas fa-bars"></i><span>Menu</span></button>
+      </nav>
       <div class="portal-dash-head">
         <!-- MERGE_2026_11_03: the brand div + PORTAL_HEADER_CLEANUP_2026_11_02 block below is grafted verbatim from the live portal.html; the staged stack branched before the header cleanup published and still carried the old in-column greeting/clock paragraphs. See MERGE-REPORT.md. -->
         <div class="portal-head-brand">
@@ -257,6 +283,20 @@
           </button>
         </div>
         <p class="portal-muted portal-small">Company updates, what we are working on this month, and the days off ahead — posted by Austin and the office team.</p>
+
+        <!-- PORTAL_APP_2026_11_09: the install card — the Hub as its
+             own home-screen app, offered here on Home where
+             associates land. The card stays hidden until the
+             PORTAL_APP module in portal.js decides: an install
+             prompt was offered -> the Install button; no prompt
+             (iOS) -> the Share instruction; already running as the
+             installed app -> the card never appears at all. -->
+        <article class="portal-card" id="portal-install-card" hidden>
+          <p class="portal-card-title"><i class="fas fa-mobile-screen"></i> Get the Associate Hub app</p>
+          <p class="portal-muted portal-small">Put the Hub on your home screen as its own app &mdash; same portal, same sign-in, same updates. It just opens full-screen, like the apps already on your phone.</p>
+          <button class="portal-btn portal-btn-primary" id="portal-install-btn" type="button" hidden><i class="fas fa-download"></i> Install app</button>
+          <p class="portal-small" id="portal-install-ios" hidden>On iPhone or iPad: tap <strong>Share</strong>, then <strong>Add to Home Screen</strong>.</p>
+        </article>
 
         <div class="portal-panel-head portal-subhead">
           <h3 class="portal-h3">This month at ATRG</h3>

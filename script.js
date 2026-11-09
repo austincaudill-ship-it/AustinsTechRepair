@@ -2680,6 +2680,17 @@
         acctLabel.textContent = 'Account';
         if (openBtn) openBtn.classList.remove('logged-in');
       }
+      /* V53_GREETING_2026_11_09: the mobile top bar's greeting reads
+         the SAME session this function already renders from — no new
+         source, no new fetch. Name resolved -> "Hello, <first>";
+         signed out or name not yet resolved -> "Welcome, Guest".
+         renderHeader() re-runs on sign-in, sign-out and restore, so
+         the greeting swaps in place inside its reserved bar space. */
+      var greetEl = document.getElementById('header-greeting');
+      if (greetEl) {
+        var gName = s ? String(s.name || '').trim() : '';
+        greetEl.textContent = gName ? ('Hello, ' + firstName(gName)) : 'Welcome, Guest';
+      }
     }
 
     /* ---------- account page open --------------------------------

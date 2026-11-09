@@ -115,6 +115,17 @@
     </nav>
     </div>
 
+    <!-- V53_GREETING_2026_11_09 (owner, Nov 9, 2026): on phones the
+         top bar welcomes the person — the guest is the most important
+         part of the business. This span is the greeting's reserved
+         space: renderHeader() in script.js fills it from the same
+         atr-account session that fills the account button ("Hello,
+         <first name>" signed in, "Welcome, Guest" otherwise), and
+         styles.css shows it only at <=920px, centered in the space
+         left of the action buttons. It is a styled span, not a
+         heading, and never renders on desktop. -->
+    <span class="header-greeting" id="header-greeting">Welcome, Guest</span>
+
     <div class="header-actions">
       <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark/light mode">
         <i class="fas fa-moon" id="theme-icon"></i>

@@ -3232,3 +3232,41 @@ html[data-theme="dark"] .site-search-mic.is-listening { color: var(--gold); }
     padding-bottom: 0; padding-top: 0.8rem;
   }
 }
+
+/* ===== V53_2026_11_09 — the mobile top bar becomes a greeting bar =====
+   Owner (Nov 9, 2026): the mobile top strip is a settings-style
+   utility strip, and the space left of the action buttons welcomes
+   the person — the guest is the most important part of the business,
+   second to the associate.
+   (1) The header search button leaves the mobile bar: search lives
+   on the thumb bar now (SEARCH_RELEASE_2026_11_09), so the header
+   copy was a repeat. The button stays in the DOM (desktop renders
+   it; its script binding is untouched) — display:none at <=920px.
+   (2) .header-greeting renders only at <=920px: flex:1 + centered
+   (the iOS title pattern), so it owns the space left of the actions
+   and can never collide with them; long names ellipsis-truncate
+   inside that space (min-width:0). Its text is filled by
+   renderHeader() in script.js from the same atr-account session
+   that fills the account button. Above 920px it is display:none,
+   so the centered desktop header grid is untouched. The header bar
+   is black in both themes (HEADER_REFINE_2026_11_09), so the
+   greeting is near-white in both, like the rest of the bar. */
+.header-greeting { display: none; }
+@media (max-width: 920px) {
+  .header .site-search-btn { display: none; }
+  .header-greeting {
+    display: block;
+    flex: 1 1 auto;
+    min-width: 0;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: var(--font-body);
+    font-size: 0.98rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: rgba(255, 255, 255, 0.92);
+    padding: 0 0.25rem;
+  }
+}
