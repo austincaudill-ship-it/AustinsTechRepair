@@ -365,14 +365,16 @@
      * login snapshot, once the dashboard is up. Fully guarded —
      * it can never block or delay the sign-in flow. */
     try { geoInitAfterLogin(); } catch (e) {}
-    var startTab = savedTab();
-    /* ASSOCIATE_ACCOUNTS_2026_11_03: a tab remembered from before the
-     * merge names a panel that no longer exists — land on the merged
-     * Associate Accounts panel instead of falling back to the queue. */
-    if (startTab === 'associates' || startTab === 'accountcontrols') startTab = 'associateaccounts';
-    var startBtn = startTab ? $('portal-tab-' + startTab) : null;
-    if (startBtn && startTab !== 'tickets' && tabAllowed(startTab)) { startBtn.click(); }
-    else { activateTab('tickets'); }
+    /* PORTAL_HOME_2026_11_09 (Austin, Nov 9, 2026): fresh sign-ins
+     * land on the Home page — the portal's front door, carrying
+     * the month card, the company feed and the holiday schedule.
+     * The remembered-tab restore (PORTAL_TAB_MEMORY_2026_10_30)
+     * no longer reopens the last panel at sign-in: Austin asked
+     * for one front door everyone lands on, then navigates from.
+     * Tabs still record where you are as you move (harmless),
+     * and the ?scan= deep link below still beats the landing,
+     * exactly as it beat the remembered tab. */
+    activateTab('home');
     /* ATRONE_QR_2026_11_05: a scanned account code beats the remembered tab. */
     try { routePendingScan(); } catch (e) {}
   }
@@ -1424,6 +1426,9 @@
     /* PORTAL_SETUP_2026_11_04: the Admin Setup panel — custom buttons
      * from templates plus the printers & devices registry. */
     setup: loadSetup,
+    /* PORTAL_HOME_2026_11_09: the Home panel — the Associate
+     * Hub homepage at the top of the sidebar. */
+    home: loadHome,
   };
 
   /* PORTAL_TAB_MEMORY_2026_10_30: remember the last active tab across
@@ -1458,7 +1463,7 @@
     var tabs = document.querySelectorAll('.portal-tab');
     tabs.forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === name); });
     /* PASS10_2026_11_04: 'tracking' (the Live Tracking panel) hides and shows with the rest too */
-    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'tracking', 'documents', 'financials', 'payroll', 'mileage', 'teamchat', 'guestchat', 'associateaccounts', 'warranty', 'setup'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too; ASSOCIATE_ACCOUNTS_2026_11_03: 'associateaccounts' hides and shows with the rest too (it absorbed ACCOUNT_CONTROLS_2026_11_03's 'accountcontrols' and the roster's 'associates'); WARRANTY_PORTAL_2026_11_03: 'warranty' hides and shows with the rest too; PORTAL_SETUP_2026_11_04: 'setup' hides and shows with the rest too; QR_FIX_PASS_2026_11_05: 'scanin' is GONE from this list — the scanner is a popup now, there is no scanin panel to hide or show */
+    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'tracking', 'documents', 'financials', 'payroll', 'mileage', 'teamchat', 'guestchat', 'associateaccounts', 'warranty', 'setup', 'home'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too; ASSOCIATE_ACCOUNTS_2026_11_03: 'associateaccounts' hides and shows with the rest too (it absorbed ACCOUNT_CONTROLS_2026_11_03's 'accountcontrols' and the roster's 'associates'); WARRANTY_PORTAL_2026_11_03: 'warranty' hides and shows with the rest too; PORTAL_SETUP_2026_11_04: 'setup' hides and shows with the rest too; PORTAL_HOME_2026_11_09: 'home' hides and shows with the rest too; QR_FIX_PASS_2026_11_05: 'scanin' is GONE from this list — the scanner is a popup now, there is no scanin panel to hide or show */
       $('portal-panel-' + n).hidden = n !== name;
     });
     closeDrawer();
@@ -7320,18 +7325,16 @@ function loadTicketThread(client, ticketId) {
     setupFetch(function () { renderCustomActionButtons(); cabBootRestore(); });
   }
   function cabBootRestore() {
-    /* PORTAL_TAB_MEMORY: if the remembered tab is a custom button
-     * that rendered and is visible to this staffer, open it — the
-     * dashboard's own restore ran before this fetch landed, so it
-     * could not find the button. Once per sign-in, and the tab
-     * name was captured before activateTab('tickets') could
-     * overwrite it. */
+    /* PORTAL_HOME_2026_11_09: this used to reopen a remembered
+     * custom tab at sign-in (PORTAL_TAB_MEMORY) — its fetch
+     * landed after the dashboard's own restore, so it replayed
+     * the click here. Fresh loads now land on the Home page
+     * and stay there: custom buttons open when tapped, like
+     * every built-in. The once-per-sign-in flag still flips,
+     * so the boot path keeps its shape; cabBootTab is still
+     * captured above for the record. */
     if (cabBootRestoreDone) return;
     cabBootRestoreDone = true;
-    if (cabBootTab && cabBootTab.indexOf('cab-') === 0) {
-      var btn = $('portal-tab-' + cabBootTab);
-      if (btn) btn.click();
-    }
   }
   function cabWire() {
     if (cabWired) return;
@@ -13439,6 +13442,544 @@ function loadTicketThread(client, ticketId) {
     if (c) c.textContent = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
     if (d) d.textContent = now.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
   }
+
+  /* ================= PORTAL_HOME_2026_11_09 =================
+   * Austin, Nov 9, 2026: "the associate hub right now needs a
+   * homepage... it just drops you wherever it puts you in whatever
+   * button." Home is the Associate Hub's front door: every fresh
+   * sign-in lands here (see showDashboard), and the sidebar's
+   * Home button — pinned at the top, above the Guest group —
+   * returns here. Three blocks, and every word of their content
+   * is managed from inside the portal by Admin tier and above:
+   * the portal is the connector, so changing any of it never
+   * touches the database by hand.
+   *   1. "This month at ATRG" — one row per month in
+   *      public.portal_home_month (month label, initiatives,
+   *      goals). The card shows the CURRENT month and the editor
+   *      upserts the current month's row, so rolling into a new
+   *      month starts from a clean "nothing here yet" shell.
+   *   2. The company feed — public.portal_home_posts: Update /
+   *      Outing / Goal / Photo posts, newest first, with ONE
+   *      post pinnable to the top. A post's picture rides the
+   *      same file flow as the Guides PDFs (GUIDE_FILE_BUCKET):
+   *      the private ticket-documents bucket — staff-only,
+   *      bucket-wide policies — under a home/ path, the row
+   *      carrying image_path, rendered through a signed URL.
+   *      No new storage system.
+   *   3. Holidays & days off — public.portal_home_holidays:
+   *      date + name rows, upcoming first, past days below.
+   * Tables and RLS live in portal-home.sql: any signed-in
+   * staffer reads; writes are Admin tier and above, checked in
+   * the policies against public.employee_profiles — the same
+   * role source every gate in this file reads. The UI mirrors
+   * the rule: Add / Edit / Delete controls render only when
+   * isAdminOrAbove(), the same check the Documents tab's Delete
+   * buttons use. Deletes are the portal's two-tap confirm.
+   * NO money figures ever render here — every associate,
+   * including the tiers locked out of Financials, lands on this
+   * page. Empty tables render plain "nothing here yet" lines
+   * (no invented announcements, ever); tables that do not exist
+   * yet (the SQL has not run) render a "not set up yet" line per
+   * block — the portal's usual fail-soft, like setupFetch. */
+  var HOME_POST_CATEGORIES = { update: 'Update', outing: 'Outing', goal: 'Goal', photo: 'Photo' };
+  var HOME_IMG_BUCKET = 'ticket-documents';
+  var HOME_MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var HOME_DAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  var homeMonthRow = null;       /* the current month's portal_home_month row, or null */
+  var homeMonthMissing = false;  /* that table's read failed (SQL not run yet) */
+  var homePosts = [];
+  var homePostsMissing = false;
+  var homeHolidays = [];
+  var homeHolidaysMissing = false;
+  var homeEditingPostId = null;
+  var homeEditingHolidayId = null;
+  var homeWired = false;
+
+  function homeMonthKey() {
+    var now = new Date();
+    var m = now.getMonth() + 1;
+    return now.getFullYear() + '-' + (m < 10 ? '0' : '') + m;
+  }
+  function homeMonthLabel() {
+    return new Date().toLocaleDateString([], { month: 'long', year: 'numeric' });
+  }
+  function homeTodayStr() {
+    var now = new Date();
+    var m = now.getMonth() + 1, d = now.getDate();
+    return now.getFullYear() + '-' + (m < 10 ? '0' : '') + m + '-' + (d < 10 ? '0' : '') + d;
+  }
+  /* '2026-12-25' -> 'Thu, Dec 25, 2026', built from the parts so a
+   * date-only value never shifts a day across timezones (the
+   * PORTAL_JOB_DATE_2026_10_30 lesson). */
+  function homeFmtDay(dayStr) {
+    var parts = String(dayStr || '').split('-');
+    if (parts.length !== 3) return String(dayStr || '');
+    var y = Number(parts[0]), m = Number(parts[1]), d = Number(parts[2]);
+    if (!y || !m || !d || m < 1 || m > 12) return String(dayStr || '');
+    var dt = new Date(y, m - 1, d);
+    return HOME_DAYS_SHORT[dt.getDay()] + ', ' + HOME_MONTHS_SHORT[m - 1] + ' ' + d + ', ' + y;
+  }
+  function homeFileId() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+  }
+  function homeSafeFileName(name) {
+    var clean = String(name || 'picture').replace(/[^A-Za-z0-9._-]+/g, '-').replace(/^-+|-+$/g, '');
+    return clean || 'picture';
+  }
+
+  function loadHome(force) {
+    state.loaded.home = true;
+    withClient(function (client) {
+      if (!client) {
+        var box0 = $('portal-home-month');
+        if (box0) box0.innerHTML = '<p class="portal-error">Couldn&rsquo;t reach the database. Reload the page to try again.</p>';
+        return;
+      }
+      wireHome();
+      loadHomeMonth(client);
+      loadHomeFeed(client);
+      loadHomeHolidays(client);
+    });
+  }
+
+  function wireHome() {
+    if (homeWired) return;
+    homeWired = true;
+    var monthForm = $('portal-home-month-form');
+    if (monthForm) monthForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      withClient(function (c) { if (c) saveHomeMonth(c); });
+    });
+    var monthCancel = $('portal-home-month-cancel');
+    if (monthCancel) monthCancel.addEventListener('click', function () { $('portal-home-month-form').hidden = true; });
+    var postForm = $('portal-home-post-form');
+    if (postForm) postForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      withClient(function (c) { if (c) saveHomePost(c); });
+    });
+    var postCancel = $('portal-home-post-cancel');
+    if (postCancel) postCancel.addEventListener('click', function () { $('portal-home-post-form').hidden = true; homeEditingPostId = null; });
+    var holForm = $('portal-home-holiday-form');
+    if (holForm) holForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      withClient(function (c) { if (c) saveHomeHoliday(c); });
+    });
+    var holCancel = $('portal-home-holiday-cancel');
+    if (holCancel) holCancel.addEventListener('click', function () { $('portal-home-holiday-form').hidden = true; homeEditingHolidayId = null; });
+  }
+
+  /* ---- Block 1: This month at ATRG ---- */
+  function loadHomeMonth(client) {
+    client.from('portal_home_month').select('*').eq('month_key', homeMonthKey()).maybeSingle()
+      .then(function (res) {
+        if (res.error) { homeMonthMissing = true; homeMonthRow = null; renderHomeMonth(); return; }
+        homeMonthMissing = false;
+        homeMonthRow = res.data || null;
+        renderHomeMonth();
+      })
+      .catch(function () { homeMonthMissing = true; homeMonthRow = null; renderHomeMonth(); });
+  }
+
+  function renderHomeMonth() {
+    var box = $('portal-home-month');
+    if (!box) return;
+    if (homeMonthMissing) { box.innerHTML = '<p class="portal-muted">This section is not set up yet.</p>'; return; }
+    var admin = isAdminOrAbove();
+    var row = homeMonthRow;
+    if (!row) {
+      box.innerHTML = '<article class="portal-card"><p class="portal-card-title">' + esc(homeMonthLabel()) + '</p>' +
+        '<p class="portal-muted">Nothing here yet — this month&rsquo;s initiatives and goals have not been posted.</p>' +
+        (admin ? '<div class="portal-card-actions"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-home-month-edit><i class="fas fa-pen"></i> Add this month</button></div>' : '') +
+        '</article>';
+    } else {
+      var html = '<article class="portal-card"><div class="portal-card-top"><p class="portal-card-title">' + esc(row.month_label || homeMonthLabel()) + '</p>' +
+        (admin ? '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-home-month-edit><i class="fas fa-pen"></i> Edit</button>' : '') + '</div>';
+      if (row.initiatives) html += '<p class="portal-card-meta"><strong>Initiatives</strong> — what we are doing</p><p class="portal-card-issue home-prewrap">' + esc(row.initiatives) + '</p>';
+      if (row.goals) html += '<p class="portal-card-meta"><strong>Goals</strong> — what we are aiming for</p><p class="portal-card-issue home-prewrap">' + esc(row.goals) + '</p>';
+      if (!row.initiatives && !row.goals) html += '<p class="portal-muted">Nothing posted for this month yet.</p>';
+      if (row.updated_by_name) html += '<p class="portal-card-meta">Updated by ' + esc(row.updated_by_name) + (row.updated_at ? ' &middot; ' + esc(fmtDate(row.updated_at)) : '') + '</p>';
+      html += '</article>';
+      box.innerHTML = html;
+    }
+    var editBtn = box.querySelector('[data-home-month-edit]');
+    if (editBtn) editBtn.addEventListener('click', openHomeMonthEditor);
+  }
+
+  function openHomeMonthEditor() {
+    var form = $('portal-home-month-form');
+    if (!form) return;
+    var row = homeMonthRow;
+    $('portal-home-month-label').value = row ? (row.month_label || '') : homeMonthLabel();
+    $('portal-home-month-initiatives').value = row ? (row.initiatives || '') : '';
+    $('portal-home-month-goals').value = row ? (row.goals || '') : '';
+    $('portal-home-month-error').hidden = true;
+    form.hidden = false;
+    if (form.scrollIntoView) form.scrollIntoView({ block: 'nearest' });
+  }
+
+  function saveHomeMonth(client) {
+    var err = $('portal-home-month-error');
+    err.hidden = true; err.textContent = '';
+    var row = {
+      month_key: homeMonthKey(),
+      month_label: trim($('portal-home-month-label').value) || homeMonthLabel(),
+      initiatives: trim($('portal-home-month-initiatives').value) || null,
+      goals: trim($('portal-home-month-goals').value) || null,
+      updated_by: state.user ? state.user.id : null,
+      updated_by_name: state.profile ? (state.profile.name || null) : null,
+      updated_at: new Date().toISOString()
+    };
+    var btn = $('portal-home-month-submit');
+    btn.disabled = true;
+    client.from('portal_home_month').upsert(row, { onConflict: 'month_key' }).then(function (res) {
+      btn.disabled = false;
+      if (res.error) { err.textContent = 'Couldn&rsquo;t save this month: ' + res.error.message; err.hidden = false; return; }
+      $('portal-home-month-form').hidden = true;
+      loadHomeMonth(client);
+    }).catch(function () {
+      btn.disabled = false;
+      err.textContent = 'Couldn&rsquo;t save this month. Try again.';
+      err.hidden = false;
+    });
+  }
+
+  /* ---- Block 2: the company feed ---- */
+  function loadHomeFeed(client) {
+    client.from('portal_home_posts').select('*').order('pinned', { ascending: false }).order('created_at', { ascending: false }).limit(200)
+      .then(function (res) {
+        if (res.error) { homePostsMissing = true; homePosts = []; renderHomeFeed(client); return; }
+        homePostsMissing = false;
+        homePosts = res.data || [];
+        renderHomeFeed(client);
+      })
+      .catch(function () { homePostsMissing = true; homePosts = []; renderHomeFeed(client); });
+  }
+
+  function renderHomeFeed(client) {
+    var tools = $('portal-home-feed-tools');
+    if (tools) {
+      tools.innerHTML = (!homePostsMissing && isAdminOrAbove())
+        ? '<p><button class="portal-btn portal-btn-primary" type="button" data-home-post-add><i class="fas fa-plus"></i> Add post</button></p>' : '';
+      var addBtn = tools.querySelector('[data-home-post-add]');
+      if (addBtn) addBtn.addEventListener('click', function () { openHomePostEditor(null); });
+    }
+    var box = $('portal-home-feed');
+    if (!box) return;
+    if (homePostsMissing) { box.innerHTML = '<p class="portal-muted">This section is not set up yet.</p>'; return; }
+    if (!homePosts.length) { box.innerHTML = '<p class="portal-muted">No posts yet — company updates, outings and photos will show up here.</p>'; return; }
+    var admin = isAdminOrAbove();
+    box.innerHTML = homePosts.map(function (p) {
+      var meta = (HOME_POST_CATEGORIES[p.category] || 'Update') +
+        (p.author_name ? ' &middot; ' + esc(p.author_name) : '') +
+        (p.created_at ? ' &middot; ' + esc(fmtDate(p.created_at)) : '');
+      var html = '<article class="portal-card"><div class="portal-card-top"><p class="portal-card-title">' +
+        (p.pinned ? '<i class="fas fa-thumbtack"></i> ' : '') + esc(p.title) + '</p>' +
+        (p.pinned ? '<span class="portal-badge">Pinned</span>' : '') + '</div>' +
+        '<p class="portal-card-meta">' + meta + '</p>';
+      if (p.body) html += '<p class="portal-card-issue home-prewrap">' + esc(p.body) + '</p>';
+      if (p.image_path) html += '<img class="home-post-img" data-home-img="' + esc(p.image_path) + '" alt="" loading="lazy" hidden />';
+      if (admin) {
+        html += '<div class="portal-card-actions">' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-home-post-edit="' + esc(p.id) + '"><i class="fas fa-pen"></i> Edit</button>' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-home-post-pin="' + esc(p.id) + '"><i class="fas fa-thumbtack"></i> ' + (p.pinned ? 'Unpin' : 'Pin') + '</button>' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-home-post-del="' + esc(p.id) + '"><i class="fas fa-trash"></i> Delete</button>' +
+          '</div>';
+      }
+      html += '</article>';
+      return html;
+    }).join('');
+    /* Pictures resolve through signed URLs (the Documents tab's
+     * pattern) — a picture that cannot be signed for simply never
+     * unhides, so a post is never a broken image. */
+    var imgs = box.querySelectorAll('[data-home-img]');
+    for (var i = 0; i < imgs.length; i++) {
+      (function (img) {
+        client.storage.from(HOME_IMG_BUCKET).createSignedUrl(img.getAttribute('data-home-img'), SIGNED_URL_SECONDS)
+          .then(function (r) { if (r && r.data && r.data.signedUrl) { img.src = r.data.signedUrl; img.hidden = false; } })
+          .catch(function () {});
+      })(imgs[i]);
+    }
+    if (admin) {
+      box.querySelectorAll('[data-home-post-edit]').forEach(function (b) {
+        b.addEventListener('click', function () { openHomePostEditor(this.getAttribute('data-home-post-edit')); });
+      });
+      box.querySelectorAll('[data-home-post-pin]').forEach(function (b) {
+        b.addEventListener('click', function () { toggleHomePin(client, this.getAttribute('data-home-post-pin')); });
+      });
+      box.querySelectorAll('[data-home-post-del]').forEach(function (b) {
+        b.addEventListener('click', function () { deleteHomePost(client, this); });
+      });
+    }
+  }
+
+  function openHomePostEditor(id) {
+    var form = $('portal-home-post-form');
+    if (!form) return;
+    homeEditingPostId = id || null;
+    var post = null;
+    if (id) homePosts.forEach(function (p) { if (String(p.id) === String(id)) post = p; });
+    $('portal-home-post-form-title').textContent = post ? 'Edit post' : 'Add a post';
+    $('portal-home-post-category').value = post ? (post.category || 'update') : 'update';
+    $('portal-home-post-title').value = post ? (post.title || '') : '';
+    $('portal-home-post-body').value = post ? (post.body || '') : '';
+    $('portal-home-post-pinned').checked = post ? !!post.pinned : false;
+    $('portal-home-post-image').value = '';
+    var note = $('portal-home-post-image-note');
+    if (post && post.image_path) {
+      note.textContent = 'This post already has a picture — choose a new one to replace it, or leave the picture empty to keep it.';
+      note.hidden = false;
+    } else { note.hidden = true; }
+    $('portal-home-post-submit').innerHTML = post ? '<i class="fas fa-check"></i> Save post' : '<i class="fas fa-plus"></i> Add post';
+    $('portal-home-post-cancel').hidden = !post;
+    $('portal-home-post-error').hidden = true;
+    form.hidden = false;
+    if (form.scrollIntoView) form.scrollIntoView({ block: 'nearest' });
+  }
+
+  function saveHomePost(client) {
+    var err = $('portal-home-post-error');
+    err.hidden = true; err.textContent = '';
+    var title = trim($('portal-home-post-title').value);
+    if (!title) { err.textContent = 'Give the post a title.'; err.hidden = false; return; }
+    var fileInput = $('portal-home-post-image');
+    var file = fileInput && fileInput.files ? fileInput.files[0] : null;
+    if (file) {
+      if (!/^image\//.test(file.type || '') && !/\.(png|jpe?g|gif|webp)$/i.test(file.name)) {
+        err.textContent = 'That file is not a picture — post pictures are image files.';
+        err.hidden = false;
+        return;
+      }
+      if (file.size > 15 * 1024 * 1024) { err.textContent = 'That picture is over 15 MB — try a smaller one.'; err.hidden = false; return; }
+    }
+    var existing = null;
+    if (homeEditingPostId) homePosts.forEach(function (p) { if (String(p.id) === String(homeEditingPostId)) existing = p; });
+    var btn = $('portal-home-post-submit');
+    var oldHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving&hellip;';
+    function fail(msg) { btn.disabled = false; btn.innerHTML = oldHtml; err.textContent = msg; err.hidden = false; }
+    function writeRow(imagePath) {
+      var row = {
+        category: $('portal-home-post-category').value,
+        title: title,
+        body: trim($('portal-home-post-body').value) || null,
+        pinned: $('portal-home-post-pinned').checked,
+        updated_at: new Date().toISOString()
+      };
+      if (imagePath !== undefined) row.image_path = imagePath;
+      var saveReq;
+      if (existing) {
+        saveReq = client.from('portal_home_posts').update(row).eq('id', existing.id);
+      } else {
+        row.author_id = state.user ? state.user.id : null;
+        row.author_name = state.profile ? (state.profile.name || null) : null;
+        saveReq = client.from('portal_home_posts').insert(row).select('id');
+      }
+      saveReq.then(function (res) {
+        if (res.error) {
+          /* The row did not save — take a just-uploaded picture
+           * back out so the bucket never keeps orphans (the
+           * Guides PDF flow's cleanup rule). */
+          if (imagePath && (!existing || existing.image_path !== imagePath)) {
+            try { client.storage.from(HOME_IMG_BUCKET).remove([imagePath]); } catch (e) {}
+          }
+          fail('Couldn&rsquo;t save that post: ' + res.error.message);
+          return;
+        }
+        if (existing && imagePath && existing.image_path && existing.image_path !== imagePath) {
+          try { client.storage.from(HOME_IMG_BUCKET).remove([existing.image_path]); } catch (e) {}
+        }
+        btn.disabled = false;
+        btn.innerHTML = oldHtml;
+        $('portal-home-post-form').hidden = true;
+        homeEditingPostId = null;
+        if (row.pinned) {
+          /* One pin at a time: this post stays, every other pin
+           * comes down (portal_home_posts carries a partial
+           * unique index as the backstop). */
+          var keepId = existing ? existing.id : (res.data && res.data[0] ? res.data[0].id : null);
+          var unpin = client.from('portal_home_posts').update({ pinned: false }).eq('pinned', true);
+          if (keepId) unpin = unpin.neq('id', keepId);
+          unpin.then(function () { loadHomeFeed(client); }).catch(function () { loadHomeFeed(client); });
+        } else {
+          loadHomeFeed(client);
+        }
+      }).catch(function () { fail('Couldn&rsquo;t save that post. Try again.'); });
+    }
+    if (file) {
+      /* Upload first, then write the row carrying the path —
+       * the Guides PDF order. */
+      var path = 'home/' + homeFileId() + '/' + homeSafeFileName(file.name);
+      client.storage.from(HOME_IMG_BUCKET).upload(path, file, { contentType: file.type || 'image/jpeg', upsert: false })
+        .then(function (up) {
+          if (up.error) { fail('Picture upload failed — check the connection and try again.'); return; }
+          writeRow(path);
+        })
+        .catch(function () { fail('Picture upload failed — check the connection and try again.'); });
+    } else {
+      writeRow(undefined);
+    }
+  }
+
+  function toggleHomePin(client, id) {
+    var post = null;
+    homePosts.forEach(function (p) { if (String(p.id) === String(id)) post = p; });
+    if (!post) return;
+    if (post.pinned) {
+      client.from('portal_home_posts').update({ pinned: false, updated_at: new Date().toISOString() }).eq('id', id)
+        .then(function () { loadHomeFeed(client); })
+        .catch(function () { loadHomeFeed(client); });
+      return;
+    }
+    client.from('portal_home_posts').update({ pinned: false }).eq('pinned', true).neq('id', id)
+      .then(function () {
+        return client.from('portal_home_posts').update({ pinned: true, updated_at: new Date().toISOString() }).eq('id', id);
+      })
+      .then(function () { loadHomeFeed(client); })
+      .catch(function () { loadHomeFeed(client); });
+  }
+
+  function deleteHomePost(client, btn) {
+    var id = btn.getAttribute('data-home-post-del');
+    var post = null;
+    homePosts.forEach(function (p) { if (String(p.id) === String(id)) post = p; });
+    if (!post || !isAdminOrAbove()) return;
+    if (btn.getAttribute('data-confirm') !== '1') {
+      btn.setAttribute('data-confirm', '1');
+      btn.innerHTML = '<i class="fas fa-trash"></i> Confirm delete?';
+      return;
+    }
+    btn.disabled = true;
+    client.from('portal_home_posts').delete().eq('id', id).then(function (res) {
+      if (res.error) {
+        btn.disabled = false;
+        btn.removeAttribute('data-confirm');
+        btn.innerHTML = '<i class="fas fa-trash"></i> Delete';
+        return;
+      }
+      if (post.image_path) { try { client.storage.from(HOME_IMG_BUCKET).remove([post.image_path]); } catch (e) {} }
+      loadHomeFeed(client);
+    }).catch(function () { btn.disabled = false; });
+  }
+
+  /* ---- Block 3: Holidays & days off ---- */
+  function loadHomeHolidays(client) {
+    client.from('portal_home_holidays').select('*').order('day', { ascending: true }).limit(200)
+      .then(function (res) {
+        if (res.error) { homeHolidaysMissing = true; homeHolidays = []; renderHomeHolidays(client); return; }
+        homeHolidaysMissing = false;
+        homeHolidays = res.data || [];
+        renderHomeHolidays(client);
+      })
+      .catch(function () { homeHolidaysMissing = true; homeHolidays = []; renderHomeHolidays(client); });
+  }
+
+  function renderHomeHolidays(client) {
+    var tools = $('portal-home-holiday-tools');
+    if (tools) {
+      tools.innerHTML = (!homeHolidaysMissing && isAdminOrAbove())
+        ? '<p><button class="portal-btn portal-btn-primary" type="button" data-home-holiday-add><i class="fas fa-plus"></i> Add a holiday or day off</button></p>' : '';
+      var addBtn = tools.querySelector('[data-home-holiday-add]');
+      if (addBtn) addBtn.addEventListener('click', function () { openHomeHolidayEditor(null); });
+    }
+    var box = $('portal-home-holidays');
+    if (!box) return;
+    if (homeHolidaysMissing) { box.innerHTML = '<p class="portal-muted">This section is not set up yet.</p>'; return; }
+    if (!homeHolidays.length) { box.innerHTML = '<p class="portal-muted">No holidays or days off posted yet.</p>'; return; }
+    var today = homeTodayStr();
+    var upcoming = homeHolidays.filter(function (h) { return String(h.day) >= today; });
+    var past = homeHolidays.filter(function (h) { return String(h.day) < today; });
+    var admin = isAdminOrAbove();
+    box.innerHTML = upcoming.concat(past).map(function (h) {
+      var isPast = String(h.day) < today;
+      var html = '<div class="p2-line"><div class="p2-line-main"><span class="p2-line-amt">' + esc(homeFmtDay(h.day)) + '</span>' +
+        ' &mdash; <span' + (isPast ? ' class="portal-muted"' : '') + '>' + esc(h.name) + '</span>' +
+        (h.note ? '<br /><span class="portal-muted portal-small">' + esc(h.note) + '</span>' : '') +
+        (isPast ? '<br /><span class="portal-muted portal-small">Past</span>' : '') +
+        '</div>';
+      if (admin) {
+        html += '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-home-holiday-edit="' + esc(h.id) + '"><i class="fas fa-pen"></i> Edit</button> ' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-home-holiday-del="' + esc(h.id) + '"><i class="fas fa-trash"></i> Delete</button>';
+      }
+      html += '</div>';
+      return html;
+    }).join('');
+    if (admin) {
+      box.querySelectorAll('[data-home-holiday-edit]').forEach(function (b) {
+        b.addEventListener('click', function () { openHomeHolidayEditor(this.getAttribute('data-home-holiday-edit')); });
+      });
+      box.querySelectorAll('[data-home-holiday-del]').forEach(function (b) {
+        b.addEventListener('click', function () { deleteHomeHoliday(client, this); });
+      });
+    }
+  }
+
+  function openHomeHolidayEditor(id) {
+    var form = $('portal-home-holiday-form');
+    if (!form) return;
+    homeEditingHolidayId = id || null;
+    var row = null;
+    if (id) homeHolidays.forEach(function (h) { if (String(h.id) === String(id)) row = h; });
+    $('portal-home-holiday-form-title').textContent = row ? 'Edit holiday or day off' : 'Add a holiday or day off';
+    $('portal-home-holiday-date').value = row ? (row.day || '') : '';
+    $('portal-home-holiday-name').value = row ? (row.name || '') : '';
+    $('portal-home-holiday-note').value = row ? (row.note || '') : '';
+    $('portal-home-holiday-submit').innerHTML = row ? '<i class="fas fa-check"></i> Save day' : '<i class="fas fa-plus"></i> Add day';
+    $('portal-home-holiday-cancel').hidden = !row;
+    $('portal-home-holiday-error').hidden = true;
+    form.hidden = false;
+    if (form.scrollIntoView) form.scrollIntoView({ block: 'nearest' });
+  }
+
+  function saveHomeHoliday(client) {
+    var err = $('portal-home-holiday-error');
+    err.hidden = true; err.textContent = '';
+    var day = trim($('portal-home-holiday-date').value);
+    var name = trim($('portal-home-holiday-name').value);
+    if (!day) { err.textContent = 'Pick the date.'; err.hidden = false; return; }
+    if (!name) { err.textContent = 'Give the day a name.'; err.hidden = false; return; }
+    var row = { day: day, name: name, note: trim($('portal-home-holiday-note').value) || null };
+    var btn = $('portal-home-holiday-submit');
+    var oldHtml = btn.innerHTML;
+    btn.disabled = true;
+    var saveReq = homeEditingHolidayId
+      ? client.from('portal_home_holidays').update(row).eq('id', homeEditingHolidayId)
+      : client.from('portal_home_holidays').insert(row);
+    saveReq.then(function (res) {
+      btn.disabled = false;
+      btn.innerHTML = oldHtml;
+      if (res.error) { err.textContent = 'Couldn&rsquo;t save that day: ' + res.error.message; err.hidden = false; return; }
+      $('portal-home-holiday-form').hidden = true;
+      homeEditingHolidayId = null;
+      loadHomeHolidays(client);
+    }).catch(function () {
+      btn.disabled = false;
+      btn.innerHTML = oldHtml;
+      err.textContent = 'Couldn&rsquo;t save that day. Try again.';
+      err.hidden = false;
+    });
+  }
+
+  function deleteHomeHoliday(client, btn) {
+    var id = btn.getAttribute('data-home-holiday-del');
+    if (!isAdminOrAbove()) return;
+    if (btn.getAttribute('data-confirm') !== '1') {
+      btn.setAttribute('data-confirm', '1');
+      btn.innerHTML = '<i class="fas fa-trash"></i> Confirm delete?';
+      return;
+    }
+    btn.disabled = true;
+    client.from('portal_home_holidays').delete().eq('id', id).then(function (res) {
+      if (res.error) {
+        btn.disabled = false;
+        btn.removeAttribute('data-confirm');
+        btn.innerHTML = '<i class="fas fa-trash"></i> Delete';
+        return;
+      }
+      loadHomeHolidays(client);
+    }).catch(function () { btn.disabled = false; });
+  }
+  /* ================= end PORTAL_HOME_2026_11_09 ================= */
 
   /* ================= EXTRA TABS (timeclock / links / square) ================= */
   var EXTRA_LOADERS = { timeclock: loadTimeClock, checkin: loadCheckinCustomers, mileage: loadMileage /* PORTAL_MILEAGE_2026_11_02 */ }; /* CUSTOM_ACTION_BUTTONS_2026_11_04: the Links panel no longer pulls anything in — custom buttons render in the sidebar at sign-in (loadCustomActionButtons), so the old links loader entry is gone. */

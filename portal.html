@@ -136,6 +136,10 @@
         <div class="portal-nav-group portal-nav-label">Action Button</div>
         <nav class="portal-tabs" id="portal-nav" role="tablist" aria-label="Portal sections">
 
+        <!-- PORTAL_HOME_2026_11_09 (Austin, Nov 9, 2026): a Home action button pinned at the very top of the sidebar, above the Guest group — the portal's front door, carrying the month card, the company feed and the holiday schedule. Fresh sign-ins land here (see showDashboard in portal.js). Panel: portal-panel-home, loader loadHome in portal.js. -->
+        <button class="portal-tab" id="portal-tab-home" type="button" role="tab" data-tab="home">
+          <i class="fas fa-house"></i> Home
+        </button>
         <div class="portal-nav-group">Guest</div>
         <!-- CUSTOMER_INBOX_2026_11_05 (owner naming ruling, Nov 5, 2026): this tab's visible label is "New Service Request" now — the customer's side dropped its own "Check In" name the same day, so the two no longer collide. Ids, data-tab, handlers, and behavior are unchanged; Scan In below keeps its name. -->
         <button class="portal-tab" id="portal-tab-checkin" type="button" role="tab" data-tab="checkin">
@@ -243,6 +247,117 @@
       <!-- PORTAL_LOCATION_2026_11_02 (Austin, Nov 2, 2026): the geofencing consent banner and fence-action prompt strip. Both are filled/shown by portal.js only when relevant — the banner asks, in the portal's own words, to allow location (shown until the tech answers); the prompt strip carries fence offers ("You left the base — start a driving trip?") that always wait for a tap. Hidden and empty otherwise. -->
       <div class="loc-banner" id="portal-loc-banner" hidden></div>
       <div class="loc-banner loc-prompt" id="portal-geo-prompt" hidden></div>
+
+      <!-- PORTAL_HOME_2026_11_09 (Austin, Nov 9, 2026): the Associate Hub homepage — the front door every associate lands on. Three blocks, all of it editable from inside the portal by Admin tier and above (the portal is the connector — nobody touches the database to change any of it): "This month at ATRG" (the month label, initiatives and goals), the Company feed (updates, outings, goals and photos; one post can be pinned to the top), and Holidays & days off. Data: public.portal_home_month / portal_home_posts / portal_home_holidays (portal-home.sql in this build folder). A post's picture rides the Guides file flow — the private ticket-documents bucket under a home/ path, the row carrying image_path. NO money figures ever appear here: every associate, including the tiers locked out of Financials, lands on this page. Panel logic: loadHome in portal.js. -->
+      <div class="portal-panel" id="portal-panel-home" role="tabpanel" hidden>
+        <div class="portal-panel-head">
+          <h2 class="portal-h2"><i class="fas fa-house"></i> Home</h2>
+          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="home">
+            <i class="fas fa-rotate-right"></i> Refresh
+          </button>
+        </div>
+        <p class="portal-muted portal-small">Company updates, what we are working on this month, and the days off ahead — posted by Austin and the office team.</p>
+
+        <div class="portal-panel-head portal-subhead">
+          <h3 class="portal-h3">This month at ATRG</h3>
+        </div>
+        <div id="portal-home-month"><p class="portal-muted">Loading&hellip;</p></div>
+        <form id="portal-home-month-form" novalidate hidden>
+          <div class="portal-nh-grid">
+            <div class="portal-field">
+              <label for="portal-home-month-label">Month</label>
+              <input type="text" id="portal-home-month-label" placeholder="e.g. November 2026" />
+            </div>
+            <div class="portal-field portal-nh-wide">
+              <label for="portal-home-month-initiatives">Initiatives — what we are doing this month</label>
+              <textarea id="portal-home-month-initiatives" rows="4" placeholder="One per line, or a short paragraph"></textarea>
+            </div>
+            <div class="portal-field portal-nh-wide">
+              <label for="portal-home-month-goals">Goals — what we are aiming for this month</label>
+              <textarea id="portal-home-month-goals" rows="4" placeholder="One per line, or a short paragraph"></textarea>
+            </div>
+          </div>
+          <p class="portal-error" id="portal-home-month-error" hidden></p>
+          <button class="portal-btn portal-btn-primary" id="portal-home-month-submit" type="submit">
+            <i class="fas fa-check"></i> Save this month
+          </button>
+          <button class="portal-btn portal-btn-outline" id="portal-home-month-cancel" type="button">Cancel</button>
+        </form>
+
+        <div class="portal-panel-head portal-subhead">
+          <h3 class="portal-h3">Company feed</h3>
+        </div>
+        <div id="portal-home-feed"><p class="portal-muted">Loading&hellip;</p></div>
+        <div id="portal-home-feed-tools"></div>
+        <form id="portal-home-post-form" novalidate hidden>
+          <div class="portal-panel-head portal-subhead">
+            <h3 class="portal-h3" id="portal-home-post-form-title">Add a post</h3>
+          </div>
+          <div class="portal-nh-grid">
+            <div class="portal-field">
+              <label for="portal-home-post-category">Type</label>
+              <select id="portal-home-post-category">
+                <option value="update" selected>Update</option>
+                <option value="outing">Outing</option>
+                <option value="goal">Goal</option>
+                <option value="photo">Photo</option>
+              </select>
+            </div>
+            <div class="portal-field">
+              <label for="portal-home-post-title">Title <span aria-hidden="true">*</span></label>
+              <input type="text" id="portal-home-post-title" placeholder="e.g. Shop cookout on Saturday" required />
+            </div>
+            <div class="portal-field portal-nh-wide">
+              <label for="portal-home-post-body">Post</label>
+              <textarea id="portal-home-post-body" rows="4" placeholder="What is going on?"></textarea>
+            </div>
+            <div class="portal-field">
+              <label for="portal-home-post-image">Picture (optional)</label>
+              <input type="file" id="portal-home-post-image" accept="image/*" />
+            </div>
+            <div class="portal-field">
+              <label for="portal-home-post-pinned">Pin this post</label>
+              <input type="checkbox" id="portal-home-post-pinned" /> Pin to the top of the feed
+            </div>
+          </div>
+          <p class="portal-muted portal-small" id="portal-home-post-image-note" hidden></p>
+          <p class="portal-error" id="portal-home-post-error" hidden></p>
+          <button class="portal-btn portal-btn-primary" id="portal-home-post-submit" type="submit">
+            <i class="fas fa-plus"></i> Add post
+          </button>
+          <button class="portal-btn portal-btn-outline" id="portal-home-post-cancel" type="button" hidden>Cancel edit</button>
+        </form>
+
+        <div class="portal-panel-head portal-subhead">
+          <h3 class="portal-h3">Holidays &amp; days off</h3>
+        </div>
+        <div id="portal-home-holidays"><p class="portal-muted">Loading&hellip;</p></div>
+        <div id="portal-home-holiday-tools"></div>
+        <form id="portal-home-holiday-form" novalidate hidden>
+          <div class="portal-panel-head portal-subhead">
+            <h3 class="portal-h3" id="portal-home-holiday-form-title">Add a holiday or day off</h3>
+          </div>
+          <div class="portal-nh-grid">
+            <div class="portal-field">
+              <label for="portal-home-holiday-date">Date <span aria-hidden="true">*</span></label>
+              <input type="date" id="portal-home-holiday-date" required />
+            </div>
+            <div class="portal-field">
+              <label for="portal-home-holiday-name">Name <span aria-hidden="true">*</span></label>
+              <input type="text" id="portal-home-holiday-name" placeholder="e.g. Thanksgiving — closed" required />
+            </div>
+            <div class="portal-field portal-nh-wide">
+              <label for="portal-home-holiday-note">Note (optional)</label>
+              <input type="text" id="portal-home-holiday-note" placeholder="e.g. Back open Friday" />
+            </div>
+          </div>
+          <p class="portal-error" id="portal-home-holiday-error" hidden></p>
+          <button class="portal-btn portal-btn-primary" id="portal-home-holiday-submit" type="submit">
+            <i class="fas fa-plus"></i> Add day
+          </button>
+          <button class="portal-btn portal-btn-outline" id="portal-home-holiday-cancel" type="button" hidden>Cancel edit</button>
+        </form>
+      </div>
 
       <!-- TICKETS -->
       <div class="portal-panel" id="portal-panel-tickets" role="tabpanel">

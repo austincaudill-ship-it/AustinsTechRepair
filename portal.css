@@ -1329,3 +1329,14 @@ body.portal-body #portal-dash-view textarea {
 .bv-chip-wait { background: var(--blue-soft, #E4EEF9); color: var(--blue, #1050A0); }
 .bv-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin: 0.6rem 0 0; }
 /* end BUSINESS_VERIFICATION_2026_11_09 */
+
+/* ================= PORTAL_HOME_2026_11_09 =================
+ * The Associate Hub homepage (portal.js PORTAL_HOME_2026_11_09):
+ * post bodies and the month card keep the author's line breaks,
+ * and a feed picture sits inside its white card at card width.
+ * Everything else on Home rides the existing panel / card /
+ * button / field classes — panels are already white cards, so
+ * the cleanup rule holds with just these two rules. */
+.home-prewrap { white-space: pre-wrap; }
+.home-post-img { display: block; max-width: 100%; height: auto; border-radius: 12px; margin-top: 0.6rem; }
+/* end PORTAL_HOME_2026_11_09 */
