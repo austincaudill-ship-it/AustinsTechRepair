@@ -5316,7 +5316,7 @@
   }
 
   /* ---------- view helpers ---------- */
-  function showAuth() { var a = $('acct-auth-view'), d = $('acct-dash-view'); if (a) a.hidden = false; if (d) d.hidden = true; }
+  function showAuth() { var a = $('acct-auth-view'), d = $('acct-dash-view'); if (a) a.hidden = false; if (d) d.hidden = true; /* V63_LOGIN_FOCUS_2026_11_09: the sign-in view never (re)opens with a field already focused - a field tapped on an earlier visit otherwise keeps its focus while the view is hidden, and iOS re-throws its Face ID password prompt the moment the view shows again. The guest taps the field when ready. */ var ae = document.activeElement; if (ae && a && a.contains(ae) && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) ae.blur(); }
   function showDash() { var a = $('acct-auth-view'), d = $('acct-dash-view'); if (a) a.hidden = true; if (d) d.hidden = false; }
   function renderHeader(cust, pts) {
     var label = $('account-label'), btn = $('account-open-btn');
@@ -6040,7 +6040,13 @@
     }
     if (ov) ov.hidden = false;
     modal.hidden = false;
-    if (pw) { try { pw.focus(); } catch (e) {} }
+    /* V63_LOGIN_FOCUS_2026_11_09: this popup no longer focuses
+       its password field on open. A focused password field is
+       exactly what makes iOS answer with its Face ID /
+       strong-password UI before the guest has chosen to type -
+       the uninvited prompt the owner reported on the login view.
+       The guest taps the field when ready; the popup, its
+       prefilled email, and its Create flow are unchanged. */
   }
   function closeSignupOffer() {
     var modal = $('acct-signup-modal'), ov = $('acct-signup-overlay');

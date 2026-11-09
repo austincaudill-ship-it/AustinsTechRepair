@@ -37,6 +37,23 @@
         document.getElementById('home').classList.add('active');
         cleanId = 'home';
       }
+      /* V63_LOGIN_FOCUS_2026_11_09: arriving on the account page
+         starts with NOTHING in the sign-in view focused. This site
+         never unloads (pages are shown and hidden, not replaced),
+         so a field a guest tapped on an earlier visit keeps its
+         focus while the page is hidden - and the moment the page
+         shows again, iOS resurrects that focused email/password
+         field and re-throws its Face ID password prompt,
+         uninvited, on every open. Clearing the focus here, at the
+         one funnel every arrival passes through (header account
+         button, footer account link, checkout sign-in prompt,
+         direct #account link), means the guest taps the field
+         when THEY are ready and the prompt comes once, on their
+         terms. Nothing else about the sign-in view changes. */
+      if (cleanId === 'account') {
+        var ae = document.activeElement, av = document.getElementById('acct-auth-view');
+        if (ae && av && av.contains(ae) && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) ae.blur();
+      }
       navLinks.forEach(function (link) {
         link.classList.toggle('active', link.getAttribute('data-page') === cleanId);
       });
@@ -2927,6 +2944,12 @@
     function showAuth() {
       authView.hidden = false;
       dashView.hidden = true;
+      /* V63_LOGIN_FOCUS_2026_11_09: same rule as the router's
+         account arrival - the sign-in view never (re)opens with a
+         field already focused. This covers the in-place re-shows
+         that never pass through a page switch. */
+      var ae = document.activeElement;
+      if (ae && authView.contains(ae) && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) ae.blur();
     }
     function showDashboard(s) {
       authView.hidden = true;
