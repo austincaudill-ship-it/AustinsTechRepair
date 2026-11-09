@@ -4648,6 +4648,12 @@
     } catch (e) { /* alert is best-effort; the database insert is the record */ }
     getClient(function (client) {
       if (!client) { leadFailed(); return; }
+      /* GUEST_FOR_EVERY_TICKET_2026_11_09: a chat lead is a
+       * ticket like any other, so its guest record is found or
+       * created first (the shared helper lives in atr-forms.js)
+       * and linked on the row. The helper missing or failing
+       * changes nothing — the lead inserts exactly as before. */
+      var doInsert = function () {
       client.from('tickets').insert(row).then(function (res) {
         if (res.error) { leadFailed(); return; }
         state = 'done';
@@ -4657,6 +4663,13 @@
           { label: 'Done', action: 'close' }
         ]);
       }).catch(leadFailed);
+      };
+      if (window.atrEnsureGuestRecord) {
+        window.atrEnsureGuestRecord(client, { name: row.customer_name, email: row.customer_email, phone: row.customer_phone }).then(function (guestId) {
+          if (guestId) row.customer_id = guestId;
+          doInsert();
+        }, doInsert);
+      } else { doInsert(); }
     });
   }
   function leadFailed() {

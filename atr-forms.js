@@ -178,6 +178,119 @@
   function validPhone(v) {
     return String(v || '').replace(/\D/g, '').length >= 10;
   }
+  /* ---------------- guest record for every ticket ----------------
+   * GUEST_FOR_EVERY_TICKET_2026_11_09 (Austin, Nov 9, 2026):
+   * "Everybody that has a ticket made gets a guest." Website
+   * submissions used to write tickets with no customer_id at all —
+   * the guest record only existed if the person had signed up for
+   * an account first. ensureGuestRecord closes that at the source
+   * for every form in this file that writes a ticket: given the
+   * submission's name / phone / email / address it FINDS the guest
+   * (email first, case-insensitive; then phone, digits only, so
+   * '(937) 270-5712' and '9372705712' count as the same number) or
+   * CREATES the record, and hands back its id for the ticket row.
+   * A found record's stored details are never overwritten with the
+   * form's. The account_number is a random unused 1-1000, the
+   * table's scheme (no generator existed in code before this: the
+   * account signup insert omits the column, and the owner's own
+   * record fix supplies one explicitly). A guest with no email is
+   * created under the standing placeholder
+   * '<first-name>@no-email-on-file.invalid' (the Annie precedent —
+   * customers.email carries a value on every row on file);
+   * placeholders are never matched against, so two different
+   * no-email guests can never be merged into one. The promise
+   * NEVER rejects and resolves null on any failure: every caller
+   * then inserts its ticket exactly as it did before this helper
+   * existed, so the guest step can never strand a submission.
+   * Only the customers table is touched, where the anon role's
+   * select / insert / select-back are the account signup's proven
+   * pattern — the tickets inserts stay return=minimal. Shared with
+   * the guest chat in index.html as window.atrEnsureGuestRecord
+   * (the window.atr* pattern the site already uses). */
+  function guestPhoneDigits(p) {
+    var d = String(p == null ? '' : p).replace(/\D/g, '');
+    if (d.length === 11 && d.charAt(0) === '1') d = d.slice(1);
+    return d;
+  }
+  function guestPlaceholderEmail(name) {
+    var slug = String(name == null ? '' : name).trim().split(/\s+/)[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+    return (slug || 'guest') + '@no-email-on-file.invalid';
+  }
+  function guestMatchableEmail(email) {
+    var e = trim(email).toLowerCase();
+    return (e && e.indexOf('@no-email-on-file.invalid') === -1) ? e : '';
+  }
+  function ensureGuestRecord(client, person) {
+    var email = guestMatchableEmail(person && person.email);
+    var phone = guestPhoneDigits(person && person.phone);
+    function byEmail() {
+      if (!email) return Promise.resolve(null);
+      var pattern = email.replace(/([%_\\])/g, '\\$1');
+      return client.from('customers').select('id').ilike('email', pattern).limit(1)
+        .then(function (res) {
+          return (!res.error && res.data && res.data.length) ? res.data[0].id : null;
+        })
+        .catch(function () { return null; });
+    }
+    function byPhone() {
+      if (!phone || phone.length < 10) return Promise.resolve(null);
+      return client.from('customers').select('id, phone').not('phone', 'is', null).limit(1000)
+        .then(function (res) {
+          if (res.error || !res.data) return null;
+          for (var i = 0; i < res.data.length; i++) {
+            if (guestPhoneDigits(res.data[i].phone) === phone) return res.data[i].id;
+          }
+          return null;
+        })
+        .catch(function () { return null; });
+    }
+    function pickAccountNumber(tries) {
+      var n = 1 + Math.floor(Math.random() * 1000);
+      return client.from('customers').select('id').eq('account_number', n).limit(1)
+        .then(function (res) {
+          if (!res.error && res.data && !res.data.length) return n;
+          if (!res.error && res.data && res.data.length && tries < 6) return pickAccountNumber(tries + 1);
+          return null;
+        })
+        .catch(function () { return null; });
+    }
+    function createGuest() {
+      var row = {
+        name: (person && person.name) || 'Guest',
+        email: email || guestPlaceholderEmail(person && person.name)
+      };
+      if (person && person.phone) row.phone = person.phone;
+      if (person && person.address) row.address = person.address;
+      return pickAccountNumber(0).then(function (n) {
+        if (n) row.account_number = n;
+        return client.from('customers').insert(row).select('id').single()
+          .then(function (res) {
+            if (!res.error && res.data && res.data.id) return res.data.id;
+            /* The record may exist anyway (a double submit raced
+             * this insert, or a match the lookups could not see):
+             * one more email lookup before giving up — the record
+             * existing is what matters, whoever wrote it. */
+            return byEmail();
+          })
+          .catch(function () { return byEmail(); });
+      });
+    }
+    try {
+      return byEmail()
+        .then(function (id) { return id || byPhone(); })
+        .then(function (id) { return id || createGuest(); })
+        .then(function (id) {
+          if (!id && window.console) console.warn('guest link: no guest record linked for this submission');
+          return id || null;
+        })
+        .catch(function () { return null; });
+    } catch (e) {
+      if (window.console) console.warn('guest link: lookup failed', e);
+      return Promise.resolve(null);
+    }
+  }
+  if (typeof window !== 'undefined') window.atrEnsureGuestRecord = ensureGuestRecord;
+
 
   function sanitizeFilename(name) {
     var base = String(name || 'resume').toLowerCase();
@@ -785,6 +898,12 @@
       withClient(function (client) {
         if (!client) { setBusy(form, false); showFormError(form, dbFailMessage()); return; }
         // No .select() — see the return=minimal note at the top of this file.
+        /* GUEST_FOR_EVERY_TICKET_2026_11_09: find-or-create the
+         * guest record first and link it on the row; on any
+         * guest-step failure the ticket inserts exactly as it did
+         * before (no customer_id), so a booking can never be
+         * stranded by the guest step. */
+        var doInsert = function () {
         client.from('tickets').insert(row).then(function (res) {
           setBusy(form, false);
           if (res.error) { showFormError(form, dbFailMessage()); return; }
@@ -820,6 +939,11 @@
           setBusy(form, false);
           showFormError(form, dbFailMessage());
         });
+        };
+        ensureGuestRecord(client, { name: row.customer_name, email: v.email, phone: v.phone, address: address }).then(function (guestId) {
+          if (guestId) row.customer_id = guestId;
+          doInsert();
+        }, doInsert);
       });
     });
   }
@@ -880,6 +1004,11 @@
       withClient(function (client) {
         if (!client) { setBusy(form, false); showFormError(form, dbFailMessage()); return; }
         // No .select() — see the return=minimal note at the top of this file.
+        /* GUEST_FOR_EVERY_TICKET_2026_11_09: a contact message
+         * lands in tickets like any other ticket, so its sender
+         * gets the same find-or-create guest link; on any failure
+         * the message inserts exactly as it did before. */
+        var doInsert = function () {
         client.from('tickets').insert(row).then(function (res) {
           setBusy(form, false);
           if (res.error) { showFormError(form, dbFailMessage()); return; }
@@ -888,6 +1017,11 @@
           setBusy(form, false);
           showFormError(form, dbFailMessage());
         });
+        };
+        ensureGuestRecord(client, { name: v.name, email: v.email || null, phone: v.phone || null }).then(function (guestId) {
+          if (guestId) row.customer_id = guestId;
+          doInsert();
+        }, doInsert);
       });
     });
   }
