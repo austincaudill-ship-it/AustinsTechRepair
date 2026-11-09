@@ -639,6 +639,12 @@
       var repairs, priceOf;
       if (brandKey !== '__other__' && modelKey !== '__notlisted__') {
         repairs = Object.keys(DATA[typeKey][brandKey][modelKey]);
+        /* LEARNING_SYSTEM_2026_11_09: with >= 3 real completed jobs
+           behind this model, its tiles order by how often each repair
+           was actually booked for it; below that (or with no stats)
+           the book order stands. The One-on-One tile is appended
+           after this array renders, so it stays last regardless. */
+        if (window.atrLearn) repairs = window.atrLearn.orderNames(typeKey, brandKey, modelKey, repairs, function (r) { return BK_FRIENDLY[r] || r; });
         priceOf = function (r) { return DATA[typeKey][brandKey][modelKey][r]; };
       } else {
         repairs = bkGenericRepairs(typeKey);
@@ -804,6 +810,14 @@
         repairState.priceRange = 'Confirmed after diagnostics';
         if (amt) amt.textContent = 'Confirmed after diagnostics';
         if (note) note.innerHTML = 'There is no set price for ' + escapeHtml(allIssues.toLowerCase()) + ' on the ' + escapeHtml(modelLabel) + ' yet. Book the visit and we confirm your exact price after diagnostics, before any work starts. The visit fee covers the trip &mdash; $15 when the repair is already known, or $35 if your device needs diagnostics first &mdash; due at booking, non-refundable. Estimates are always free. ATR One members pay no visit fee for devices covered under their subscription.';
+      }
+      /* LEARNING_SYSTEM_2026_11_09: exactly one repair picked, with
+         >= 5 priced real jobs behind this model + repair — add the
+         factual line from those jobs under the estimate. It informs
+         only; the book estimate above is unchanged. */
+      if (note && repairState.issues.length === 1 && window.atrLearn) {
+        var lsSentence = window.atrLearn.sentence(bkTypeKey(repairState.device), repairState.brand, repairState.model, repairState.issues[0].name);
+        if (lsSentence) note.innerHTML += ' ' + escapeHtml(lsSentence);
       }
       var summary = document.getElementById('estimate-summary');
       if (summary) {
@@ -1129,6 +1143,97 @@
     })();
 
   });
+})();
+
+/* ==================== LEARNING_SYSTEM_2026_11_09 ====================
+   The site learns from real completed jobs — and only from them.
+   The public.service_stats view (learning-system.sql) aggregates
+   finished tickets: per device / brand / model / service, how many
+   real jobs listed the service, and the typical final price from
+   single-service jobs. This module reads that view once per page
+   load and offers two things to the surfaces that render services:
+     - orderNames(): with >= 3 real jobs behind a model, its repair
+       tiles order by how often each repair was actually booked for
+       it (book order breaks ties). Below that, the book order is
+       returned untouched.
+     - sentence(): with >= 5 priced real jobs behind a model +
+       repair, one factual line: "From our last N {model} {service}
+       jobs, the typical final price was $X."
+   FAIL SILENT BY DESIGN: no stats, a failed fetch, or a missing
+   view leave every surface behaving exactly as it did before —
+   every public method returns its input unchanged or an empty
+   string. This module NEVER changes a price: tile order and one
+   factual sentence are all it can do. Book prices change only
+   when Austin edits them in the Price Book. */
+(function () {
+  'use strict';
+  var LS_STATS_URL = 'https://lyujxpuicarblpkdzuuc.supabase.co/rest/v1/service_stats?select=device_type,brand,model,service,jobs,priced_jobs,typical_final_price&limit=10000';
+  var LS_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
+  var LS_ORDER_MIN_JOBS = 3;
+  var LS_TYPICAL_MIN_JOBS = 5;
+  var lsModels = null;
+  function lsNorm(s) { return String(s == null ? '' : s).toLowerCase().replace(/\s+/g, ' ').trim(); }
+  function lsModelKey(device, brand, model) { return lsNorm(device) + '|' + lsNorm(brand) + '|' + lsNorm(model); }
+  function lsIndex(list) {
+    var map = {};
+    (list || []).forEach(function (r) {
+      if (!r) return;
+      var mk = lsModelKey(r.device_type, r.brand, r.model);
+      var m = map[mk] || (map[mk] = { total: 0, services: {} });
+      var jobs = Number(r.jobs) || 0;
+      m.total += jobs;
+      m.services[lsNorm(r.service)] = {
+        jobs: jobs,
+        pricedJobs: Number(r.priced_jobs) || 0,
+        typical: (r.typical_final_price == null) ? null : Number(r.typical_final_price)
+      };
+    });
+    lsModels = map;
+  }
+  function lsModel(device, brand, model) {
+    if (!lsModels) return null;
+    return lsModels[lsModelKey(device, brand, model)] || null;
+  }
+  function lsFmt(p) { return '$' + ((p % 1 === 0) ? String(p) : p.toFixed(2)); }
+  window.atrLearn = {
+    ready: function () { return !!lsModels; },
+    modelJobs: function (device, brand, model) {
+      var m = lsModel(device, brand, model);
+      return m ? m.total : 0;
+    },
+    count: function (device, brand, model, service) {
+      var m = lsModel(device, brand, model);
+      var s = m ? m.services[lsNorm(service)] : null;
+      return s ? s.jobs : 0;
+    },
+    orderNames: function (device, brand, model, names, friendlyOf) {
+      var m = lsModel(device, brand, model);
+      if (!m || m.total < LS_ORDER_MIN_JOBS || !names || names.length < 2) return names;
+      var decorated = names.map(function (n, i) {
+        var s = m.services[lsNorm(friendlyOf ? friendlyOf(n) : n)];
+        return { n: n, i: i, c: s ? s.jobs : 0 };
+      });
+      decorated.sort(function (a, b) { return (b.c - a.c) || (a.i - b.i); });
+      return decorated.map(function (d) { return d.n; });
+    },
+    typical: function (device, brand, model, service) {
+      var m = lsModel(device, brand, model);
+      var s = m ? m.services[lsNorm(service)] : null;
+      if (!s || s.pricedJobs < LS_TYPICAL_MIN_JOBS || s.typical == null) return null;
+      return { jobs: s.pricedJobs, price: s.typical };
+    },
+    sentence: function (device, brand, model, service) {
+      var t = window.atrLearn.typical(device, brand, model, service);
+      if (!t) return '';
+      return 'From our last ' + t.jobs + ' ' + model + ' ' + service + ' jobs, the typical final price was ' + lsFmt(t.price) + '.';
+    }
+  };
+  try {
+    fetch(LS_STATS_URL, { headers: { 'apikey': LS_ANON_KEY, 'Authorization': 'Bearer ' + LS_ANON_KEY } })
+      .then(function (r) { if (!r.ok) throw new Error('service_stats'); return r.json(); })
+      .then(function (list) { if (Array.isArray(list)) lsIndex(list); })
+      .catch(function () { /* fail silent — the site behaves as before */ });
+  } catch (e) { /* fail silent */ }
 })();
 
 /* ==================== THEME TOGGLE & COOKIE CONSENT ==================== */

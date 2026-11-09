@@ -7290,6 +7290,14 @@
     var verdict = $('ror-verdict'), vTitle = $('ror-verdict-title'), vMath = $('ror-verdict-math'), vNote = $('ror-verdict-note'), setup = $('ror-setup');
     if (!typeBox || !brandBox || !modelBox || !repairBox || !result || !replInput || !verdict) return;
     var state = { type: null, brand: null, model: null, repair: null, price: null };
+    /* LEARNING_SYSTEM_2026_11_09: same shared learning module as
+       the Prices lookup — tile order and the factual typical-price
+       line, from real completed jobs only. Absent or unloaded,
+       this helper behaves exactly as it did before. */
+    var ROR_FRIENDLY = { 'Screen': 'Screen replacement', 'Battery': 'Battery replacement', 'Charging port': 'Charging port repair', 'Charging': 'Charging port repair' };
+    function rorFriendly(r) { return ROR_FRIENDLY[r] || r; }
+    function rorOrder(names) { return window.atrLearn ? window.atrLearn.orderNames(state.type, state.brand, state.model, names, rorFriendly) : names; }
+    function rorSentence(name) { return window.atrLearn ? window.atrLearn.sentence(state.type, state.brand, state.model, rorFriendly(name)) : ''; }
     function scrollTo(el) { try { el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {} }
     function fillSelect(box, names, placeholder, current) {
       box.innerHTML = '';
@@ -7340,14 +7348,14 @@
     function pickModel(name) {
       state.model = name; state.repair = null; state.price = null;
       fillSelect(modelBox, Object.keys(((D[state.type] || {})[state.brand]) || {}), 'Choose your model\u2026', name);
-      tiles(repairBox, Object.keys((((D[state.type] || {})[state.brand]) || {})[name] || {}), null, pickRepair, null);
+      tiles(repairBox, rorOrder(Object.keys((((D[state.type] || {})[state.brand]) || {})[name] || {})), null, pickRepair, null);
       repairStep.hidden = false;
       hideResult();
       scrollTo(repairStep);
     }
     function pickRepair(name) {
       state.repair = name;
-      tiles(repairBox, Object.keys(((D[state.type] || {})[state.brand] || {})[state.model] || {}), name, pickRepair, null);
+      tiles(repairBox, rorOrder(Object.keys(((D[state.type] || {})[state.brand] || {})[state.model] || {})), name, pickRepair, null);
       var price = (((D[state.type] || {})[state.brand] || {})[state.model] || {})[name];
       state.price = (typeof price === 'number') ? price : null;
       replInput.value = '';
@@ -7373,6 +7381,11 @@
         bookResult.innerHTML = 'Book This Visit <i class="fas fa-arrow-right"></i>';
         replaceStep.hidden = true;
       }
+      /* LEARNING_SYSTEM_2026_11_09: with >= 5 priced real jobs
+         behind this model + repair, add the factual line from
+         those jobs. It informs only; the estimate above stands. */
+      var lsLineR = rorSentence(name);
+      if (lsLineR) note.textContent += ' ' + lsLineR;
       try { sessionStorage.setItem('atr-quote', JSON.stringify({ device: state.model, repair: name, price: state.price })); } catch (e) {}
       result.hidden = false; result.classList.add('show');
       scrollTo(result);
