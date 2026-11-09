@@ -17481,8 +17481,14 @@ function loadTicketThread(client, ticketId) {
    *     (#portal-tab-checkin), so the tap runs exactly what a
    *     sidebar tap runs — activateTab plus the extra-tab
    *     loader — through the tab's own bound handlers.
-   *   - Search drops a compact panel down from directly under
-   *     the top bar (never a bottom sheet): one field, one X
+   *   - Search presents one panel two ways: above 920px it
+   *     drops down from directly under the top bar; at phone
+   *     widths (SEARCH_SHEET_2026_11_09, v65 — "Search pops, just
+   *     like the guest portion side does") it pops up from the
+   *     bottom as a sheet riding the visual viewport, opened
+   *     from the thumb bar's Search item since the top button
+   *     left in the Square swap. Same contents either way: one
+   *     field, one X
    *     that closes the panel AND clears the field, Escape the
    *     same. With the field empty it lists the Hub's SECTIONS
    *     — the search is the menu — and as you type it finds
@@ -17509,10 +17515,10 @@ function loadTicketThread(client, ticketId) {
    *   writes: no insert, update, delete or upsert exists in
    *   this section — it only looks. */
   (function () {
-    var btn = $('portal-hub-search-btn'), newBtn = $('portal-hub-new-btn');
+    var btn = null, newBtn = $('portal-hub-new-btn'); /* SEARCH_SWAP_2026_11_09 (v65): the top Search button left the top row — Search lives on the thumb bar now and reaches openSearch through window.portalOpenHubSearch below; btn stays as a null guard so nothing here can resurrect the old wiring. */
     var panel = $('portal-hubsearch'), input = $('portal-hubsearch-input');
     var xBtn = $('portal-hubsearch-close'), results = $('portal-hubsearch-results');
-    if (!btn || !panel || !input || !results) return;
+    if (!panel || !input || !results) return;
 
     var guestRows = null, guestFetching = false;   /* read-only fill, until state.customersCache lands */
     var ticketRows = null, ticketFetchedAt = 0, ticketFetching = false;
@@ -17612,31 +17618,79 @@ function loadTicketThread(client, ticketId) {
       results.innerHTML = html;
     }
 
+    /* SEARCH_SHEET_2026_11_09 (v65): at phone widths the panel
+       is a bottom sheet riding the visual viewport — the
+       site-side search sheet's exact pattern (SEARCH_RELEASE
+       on the public site): --hs-vv-top / --hs-vv-height are set
+       from visualViewport while the sheet is open, so the sheet
+       sits directly above the on-screen keyboard; the CSS vars
+       are consumed only by the <=920px sheet rules, and without
+       a VisualViewport API the sheet falls back to its 100dvh
+       anchor. Above 920px the panel keeps its top-anchored
+       drop-down and none of this runs. */
+    var hsVvHandler = null;
+    function hsSheetMode() {
+      return !!(window.matchMedia && window.matchMedia('(max-width: 920px)').matches);
+    }
+    function hsSyncViewport() {
+      var vv = window.visualViewport;
+      if (!vv) return;
+      panel.style.setProperty('--hs-vv-top', vv.offsetTop + 'px');
+      panel.style.setProperty('--hs-vv-height', vv.height + 'px');
+    }
+    function hsWatchViewport(on) {
+      var vv = window.visualViewport;
+      if (!vv) return;
+      if (on && !hsVvHandler) {
+        hsVvHandler = function () { hsSyncViewport(); };
+        vv.addEventListener('resize', hsVvHandler);
+        vv.addEventListener('scroll', hsVvHandler);
+        hsSyncViewport();
+      } else if (!on && hsVvHandler) {
+        vv.removeEventListener('resize', hsVvHandler);
+        vv.removeEventListener('scroll', hsVvHandler);
+        hsVvHandler = null;
+        panel.style.removeProperty('--hs-vv-top');
+        panel.style.removeProperty('--hs-vv-height');
+      }
+    }
+
     function openSearch() {
-      var tb = document.querySelector('.portal-topbar');
-      panel.style.top = (tb ? tb.getBoundingClientRect().bottom : 0) + 'px';
+      if (hsSheetMode()) {
+        panel.style.top = '';
+        hsWatchViewport(true);
+      } else {
+        var tb = document.querySelector('.portal-topbar');
+        panel.style.top = (tb ? tb.getBoundingClientRect().bottom : 0) + 'px';
+      }
       guests(); tickets();
       panel.hidden = false;
       panel.classList.remove('hs-open');
       void panel.offsetWidth;
       panel.classList.add('hs-open');
-      btn.setAttribute('aria-expanded', 'true');
+      if (btn) btn.setAttribute('aria-expanded', 'true');
       renderResults();
       input.focus();
     }
     function closeSearch() {
       panel.hidden = true;
       input.value = '';
-      btn.setAttribute('aria-expanded', 'false');
+      hsWatchViewport(false);
+      if (btn) btn.setAttribute('aria-expanded', 'false');
     }
 
-    btn.addEventListener('click', function () { if (panel.hidden) openSearch(); else closeSearch(); });
+    /* SEARCH_SWAP_2026_11_09 (v65): the thumb bar's Search item
+       is the search door now — the PORTAL_APP module calls this
+       for the 'search' bar id. It toggles exactly as the old top
+       button did: open when closed, close (and clear) when open. */
+    window.portalOpenHubSearch = function () { if (panel.hidden) openSearch(); else closeSearch(); };
     if (xBtn) xBtn.addEventListener('click', closeSearch);
     input.addEventListener('input', renderResults);
     panel.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeSearch(); });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !panel.hidden) closeSearch(); });
     window.addEventListener('resize', function () {
       if (panel.hidden) return;
+      if (hsSheetMode()) return; /* the vv watcher tracks the sheet */
       var tb = document.querySelector('.portal-topbar');
       panel.style.top = (tb ? tb.getBoundingClientRect().bottom : 0) + 'px';
     });
@@ -17684,13 +17738,15 @@ function loadTicketThread(client, ticketId) {
      listeners, which key off .portal-tab clicks).
    - HUB_NAV_2026_11_09 (Austin, Nov 9, 2026): the bar's contents
      are the owner's final word — Guest, Queue, Team Chat, Time
-     Clock, Pay. Home came off (the Hub opens on Home) and Menu
+     Clock, Search. Home came off (the Hub opens on Home) and Menu
      came off entirely: no item clicks #portal-nav-toggle any
      more (portal.css retires the pill at phone widths, and the
-     Hub search in the top bar is the menu now — see the
-     HUB_SEARCH section inside the main closure). Pay is a plain
-     anchor out to Square, not a tab: the click handler leaves
-     it alone and syncThumb never mirrors it.
+     Hub search is the menu now — see the HUB_SEARCH section
+     inside the main closure). Search is an action item, not a
+     tab: its tap opens the Hub Search sheet through
+     window.portalOpenHubSearch. Pay is a plain anchor out to
+     Square, not a tab: the click handler leaves it alone and
+     the mirror never marks it active.
    - Visibility and active state are MIRRORED from the sidebar tabs:
      applyRoleNav() writes each tab's display from tabAllowed(), and
      activateTab()/showExtraPanel() write each tab's .active class.
@@ -17700,17 +17756,20 @@ function loadTicketThread(client, ticketId) {
      per associate — long-press or the Search panel's
      Customize row opens an edit mode with drag and drop,
      persisted per associate in public.portal_bar_prefs. See
-     the CUSTOM_BAR section inside this module. The v61 five
-     remain the default bar for anyone who never customizes. */
+     the CUSTOM_BAR section inside this module. The standard
+     five remain the default bar for anyone who never
+     customizes — Guest, Queue, Team Chat, Time Clock, Search
+     since v65 (Pay held the fifth seat through v64). */
 (function () {
   'use strict';
   function $(id) { return document.getElementById(id); }
 
   /* ---------- CUSTOM_BAR_2026_11_09 (v64): the bar is yours ----------
      Austin, Nov 9, 2026: "Make it customizable where I can drag
-     and drop my favorite tabs in the control thumb bar." The v61
-     five (Guest, Queue, Team Chat, Time Clock, Pay) are now the
-     DEFAULT bar — what an associate who never customizes gets,
+     and drop my favorite tabs in the control thumb bar." The
+     standard five (Guest, Queue, Team Chat, Time Clock, Search
+     since the v65 swap — Pay through v64) are now the DEFAULT
+     bar — what an associate who never customizes gets,
      byte for byte in behavior. Every associate can reshape their
      own bar two ways in: a long-press (~450ms) on any bar item,
      or the "Customize thumb bar" row pinned at the foot of the
@@ -17735,7 +17794,7 @@ function loadTicketThread(client, ticketId) {
   /* BAR_LOGIC_BEGIN */
   var PortalBarLogic = (function () {
     var MAX = 5, MIN = 1;
-    var DEFAULTS = ['customers', 'tickets', 'teamchat', 'timeclock', 'pay'];
+    var DEFAULTS = ['customers', 'tickets', 'teamchat', 'timeclock', 'search'];
     function uniq(list) {
       var seen = {}, out = [];
       (list || []).forEach(function (id) {
@@ -17749,15 +17808,15 @@ function loadTicketThread(client, ticketId) {
        usable survives — the bar can never sanitize to empty. */
     function sanitize(raw, isKnown) {
       var list = uniq(Array.isArray(raw) ? raw : []).filter(function (id) {
-        return id === 'pay' || isKnown(id);
+        return id === 'pay' || id === 'search' || isKnown(id);
       });
       if (list.length > MAX) list = list.slice(0, MAX);
-      if (!list.length) list = DEFAULTS.filter(function (id) { return id === 'pay' || isKnown(id); });
+      if (!list.length) list = DEFAULTS.filter(function (id) { return id === 'pay' || id === 'search' || isKnown(id); });
       if (!list.length) list = DEFAULTS.slice();
       return list;
     }
     function visibleOnly(list, isVisible) {
-      return (list || []).filter(function (id) { return id === 'pay' || isVisible(id); });
+      return (list || []).filter(function (id) { return id === 'pay' || id === 'search' || isVisible(id); });
     }
     function reorder(list, from, to) {
       var out = (list || []).slice();
@@ -17807,19 +17866,20 @@ function loadTicketThread(client, ticketId) {
     mileage: 'Mileage', associateaccounts: 'Accounts', investors: 'Investors',
     feedback: 'Feedback', square: 'Square', newhires: 'Onboarding',
     teamdocs: 'Team Docs', applications: 'Applications', setup: 'Setup',
-    financials: 'Financials', payroll: 'Payroll', pay: 'Pay'
+    financials: 'Financials', payroll: 'Payroll', pay: 'Pay', search: 'Search'
   };
   var PAY_META = { id: 'pay', label: 'Pay', full: 'Pay — open Square', icon: 'fas fa-credit-card' };
+  var SEARCH_META = { id: 'search', label: 'Search', full: 'Search', icon: 'fas fa-magnifying-glass' };
 
   var barState = {
     uid: null, stored: null, mirrorPainted: false, dbLoaded: false,
     editing: false, editList: null, preEdit: null, drag: null, renderQueued: false
   };
 
-  function sideEl(id) { return id === 'pay' ? null : $('portal-tab-' + id); }
+  function sideEl(id) { return (id === 'pay' || id === 'search') ? null : $('portal-tab-' + id); }
   function navTabs() { return Array.prototype.slice.call(document.querySelectorAll('#portal-nav .portal-tab')); }
   function isKnownTab(id) {
-    if (id === 'pay') return true;
+    if (id === 'pay' || id === 'search') return true;
     return navTabs().some(function (t) { return t.getAttribute('data-tab') === id; });
   }
   function isVisibleTab(id) {
@@ -17828,6 +17888,7 @@ function loadTicketThread(client, ticketId) {
   }
   function tabMeta(id) {
     if (id === 'pay') return PAY_META;
+    if (id === 'search') return SEARCH_META;
     var el = sideEl(id);
     if (!el) return { id: id, label: id, full: id, icon: 'fas fa-circle' };
     var clone = el.cloneNode(true);
@@ -17861,7 +17922,7 @@ function loadTicketThread(client, ticketId) {
     var inner = '<i class="' + barEsc(meta.icon) + '"></i><span>' + barEsc(meta.label) + '</span>';
     if (editing) inner += '<span class="portal-thumb-x" data-remove="' + barEsc(meta.id) + '" aria-hidden="true">&times;</span>';
     if (meta.id === 'pay') {
-      return '<a class="portal-thumb-item" data-thumb="pay" data-drag-id="pay" href="https://app.squareup.com/dashboard" target="_blank" rel="noopener" aria-label="Pay — open Square">' + inner + '</a>';
+      return '<a class="portal-thumb-item" data-thumb="pay" data-drag-id="pay" href="https://app.squareup.com/dashboard/balance" target="_blank" rel="noopener" aria-label="Pay — open Square">' + inner + '</a>';
     }
     return '<button class="portal-thumb-item" type="button" data-thumb="' + barEsc(meta.id) + '" data-drag-id="' + barEsc(meta.id) + '" aria-label="' + barEsc(meta.full) + '">' + inner + '</button>';
   }
@@ -17873,7 +17934,7 @@ function loadTicketThread(client, ticketId) {
     bar.classList.toggle('bar-editing', !!barState.editing);
     bar.innerHTML = list.map(function (id) { return itemHtml(tabMeta(id), barState.editing); }).join('');
     list.forEach(function (id) {
-      if (id === 'pay') return;
+      if (id === 'pay' || id === 'search') return;
       var item = bar.querySelector('.portal-thumb-item[data-thumb="' + id + '"]');
       var side = sideEl(id);
       if (!item || !side) return;
@@ -17980,6 +18041,57 @@ function loadTicketThread(client, ticketId) {
   }
 
   /* ----- edit mode ----- */
+  /* TRAY_SCROLL_2026_11_09 (v65) — the background lock. The
+     owner's correction: his swipes on the tray were not moving
+     the tray list at all; the SCREEN BEHIND was scrolling
+     underneath while the tray sat still. So while edit mode is
+     open, the background does not scroll at all, and it comes
+     back at exactly its prior position on Done / X / Escape.
+     Two scrollers take turns behind the tray at bar widths, so
+     the lock takes both, each a no-op where it is not the
+     scroller: at phone widths (<=640px) the DOCUMENT scrolls
+     (the single-column page scroll) — locked with the codebase's
+     own PORTAL_DRAWER_SCROLL_LOCK pattern (position:fixed body,
+     inline top offset, .portal-scroll-locked) because
+     overflow:hidden alone does not hold iOS Safari; in the
+     641-920px touch shell the body is already viewport-locked
+     and .portal-main is the scroller — locked by overflow, its
+     scrollTop saved and restored. If the drawer's own lock is
+     somehow already held, the body half stands down and only
+     .portal-main is locked. */
+  var barBgLock = null;
+  function lockBarBackground() {
+    if (barBgLock) return;
+    var main = document.querySelector('.portal-main');
+    var foreign = document.body.classList.contains('portal-scroll-locked');
+    barBgLock = {
+      foreign: foreign,
+      y: window.scrollY || window.pageYOffset || 0,
+      main: main || null,
+      mainOverflowY: main ? main.style.overflowY : null,
+      mainTop: main ? main.scrollTop : 0
+    };
+    if (!foreign) {
+      document.body.style.top = (-barBgLock.y) + 'px';
+      document.body.classList.add('portal-scroll-locked');
+    }
+    if (main) main.style.overflowY = 'hidden';
+  }
+  function unlockBarBackground() {
+    if (!barBgLock) return;
+    var l = barBgLock;
+    barBgLock = null;
+    if (l.main) {
+      l.main.style.overflowY = l.mainOverflowY || '';
+      if (l.main.scrollTop !== l.mainTop) l.main.scrollTop = l.mainTop;
+    }
+    if (!l.foreign) {
+      document.body.classList.remove('portal-scroll-locked');
+      document.body.style.top = '';
+      window.scrollTo(0, l.y);
+    }
+  }
+
   function buildTray() {
     var list = $('portal-bartray-list');
     if (!list) return;
@@ -17987,6 +18099,7 @@ function loadTicketThread(client, ticketId) {
     (barState.editList || []).forEach(function (id) { inBar[id] = 1; });
     var avail = catalog().filter(function (m) { return !inBar[m.id] && isVisibleTab(m.id); });
     if (!inBar.pay) avail.push(PAY_META);
+    if (!inBar.search) avail.push(SEARCH_META);
     if (!avail.length) {
       list.innerHTML = '<p class="portal-bartray-empty">Every tab you can see is already in the bar.</p>';
       return;
@@ -18009,6 +18122,7 @@ function loadTicketThread(client, ticketId) {
     }
     buildTray();
     renderBar();
+    lockBarBackground();
   }
   function exitBarEdit(saveIt) {
     if (!barState.editing) return;
@@ -18022,6 +18136,7 @@ function loadTicketThread(client, ticketId) {
     var tray = $('portal-bartray');
     if (tray) tray.hidden = true;
     renderBar();
+    unlockBarBackground();
   }
   function resetBarEdit() {
     barState.editList = PortalBarLogic.DEFAULTS.slice();
@@ -18092,6 +18207,34 @@ function loadTicketThread(client, ticketId) {
     d.ghost.style.left = (x - d.dx) + 'px';
     d.ghost.style.top = (y - d.dy) + 'px';
   }
+  /* While a tray row is carried by its handle, holding the
+     pointer within ~48px of the rows region's top or bottom edge
+     scrolls the region at a modest rate — a tab from deep in the
+     list can be carried up to the bar without putting it down.
+     The loop is a rAF chain off the drag object; endDrag cancels
+     it on every exit path (commit and cancel alike). */
+  var TRAY_EDGE = 48, TRAY_SCROLL_STEP = 7;
+  function trayAutoScrollTick() {
+    var d = barState.drag;
+    if (!d || d.kind !== 'tray' || !d.scrollDir) { if (d) d.scrollRaf = 0; return; }
+    var list = $('portal-bartray-list');
+    if (list) list.scrollTop += d.scrollDir * TRAY_SCROLL_STEP;
+    d.scrollRaf = window.requestAnimationFrame ? window.requestAnimationFrame(trayAutoScrollTick) : setTimeout(trayAutoScrollTick, 16);
+  }
+  function updateTrayAutoScroll(d) {
+    var list = $('portal-bartray-list');
+    if (!list || d.kind !== 'tray') { d.scrollDir = 0; return; }
+    var r = list.getBoundingClientRect();
+    var max = list.scrollHeight - list.clientHeight;
+    var dir = 0;
+    if (d.lastY < r.top + TRAY_EDGE && list.scrollTop > 0) dir = -1;
+    else if (d.lastY > r.bottom - TRAY_EDGE && list.scrollTop < max) dir = 1;
+    d.scrollDir = dir;
+    if (dir && !d.scrollRaf) {
+      d.scrollRaf = window.requestAnimationFrame ? window.requestAnimationFrame(trayAutoScrollTick) : setTimeout(trayAutoScrollTick, 16);
+    }
+  }
+
   function dragMove(e) {
     var d = barState.drag;
     var cand = barState.dragCand;
@@ -18104,6 +18247,7 @@ function loadTicketThread(client, ticketId) {
     if (e.cancelable) e.preventDefault();
     d.lastX = e.clientX; d.lastY = e.clientY;
     moveGhost(d, e.clientX, e.clientY);
+    updateTrayAutoScroll(d);
     var bar = $('portal-thumbbar');
     var br = bar.getBoundingClientRect();
     var overBar = e.clientX >= br.left - 6 && e.clientX <= br.right + 6 && e.clientY >= br.top - 18 && e.clientY <= br.bottom + 12;
@@ -18124,6 +18268,12 @@ function loadTicketThread(client, ticketId) {
     var d = barState.drag;
     barState.dragCand = null;
     if (!d) return;
+    if (d.scrollRaf) {
+      if (window.cancelAnimationFrame) window.cancelAnimationFrame(d.scrollRaf);
+      else clearTimeout(d.scrollRaf);
+      d.scrollRaf = 0;
+    }
+    d.scrollDir = 0;
     barState.drag = null;
     barState.dragEndedAt = Date.now();
     var bar = $('portal-thumbbar');
@@ -18171,6 +18321,10 @@ function loadTicketThread(client, ticketId) {
       }
       var key = item.getAttribute('data-thumb');
       if (key === 'pay') return; /* a real link out to Square — the browser takes it from here */
+      if (key === 'search') { /* SEARCH_SWAP v65: an action item — open the Hub Search sheet */
+        if (typeof window.portalOpenHubSearch === 'function') window.portalOpenHubSearch();
+        return;
+      }
       var side = sideEl(key);
       if (side) side.click();
     });
@@ -18200,7 +18354,11 @@ function loadTicketThread(client, ticketId) {
     });
 
     /* Drag sources: bar items and tray rows, edit mode only. The
-       remove badge is a tap, never a drag. */
+       remove badge is a tap, never a drag. TRAY_SCROLL v65: a tray
+       row starts its drag ONLY from its grip handle — the rest of
+       the row is a scroll surface, so a swipe anywhere else on the
+       row scrolls the list instead of lifting the row. Bar items
+       keep whole-item dragging (the bar never scrolls). */
     document.addEventListener('pointerdown', function (e) {
       if (!barState.editing) return;
       if (e.target && e.target.closest && e.target.closest('[data-remove]')) return;
@@ -18209,6 +18367,7 @@ function loadTicketThread(client, ticketId) {
       var inBar = !!src.closest('#portal-thumbbar');
       var inTray = !!src.closest('#portal-bartray');
       if (!inBar && !inTray) return;
+      if (inTray && !(e.target.closest && e.target.closest('.portal-bartray-grip'))) return;
       barState.dragCand = { kind: inBar ? 'bar' : 'tray', id: src.getAttribute('data-drag-id'), el: src, x: e.clientX, y: e.clientY };
       document.addEventListener('pointermove', dragMove);
       document.addEventListener('pointerup', dragUp);

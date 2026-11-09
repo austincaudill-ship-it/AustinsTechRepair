@@ -45,7 +45,7 @@
     <div class="portal-topbar-inner">
       <span class="portal-brand"><i class="fas fa-screwdriver-wrench"></i> Austin's Tech Repair Group</span>
       <span class="portal-topbar-tag">Associate Hub</span> <!-- HEADER_TWEAK_2026_11_03: the Log Out button was MOVED here from the dashboard head (see the note left in .portal-head-actions) so it docks beside Back to site as a matched pair in the fixed top bar. Same element, same id, same click handler in portal.js (it binds by id, so the move changes nothing in JS). portal.css hides it whenever the dashboard is not the showing view, so the sign-in screens never offer a Log Out. -->
-      <!-- HUB_NAV_2026_11_09 (Austin, Nov 9, 2026): New Service Request and Search join the top row at every width. New Service Request clicks the real sidebar Check-In tab and Search opens the Hub search dropdown under this bar (the HUB_SEARCH section in portal.js); portal.css hides both beside Log Out whenever the dashboard is not the showing view, so the sign-in screens never offer them. --><span class="portal-topbar-actions"><a class="portal-btn portal-btn-outline" href="https://austinstechrepairgroup.com/">Back to site</a> <button class="portal-btn portal-btn-outline" id="portal-hub-new-btn" type="button"><i class="fas fa-clipboard-check"></i> New Service Request</button> <button class="portal-btn portal-btn-outline" id="portal-hub-search-btn" type="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-magnifying-glass"></i> Search</button> <button class="portal-btn portal-btn-outline" id="portal-logout" type="button"><i class="fas fa-sign-out-alt"></i> Log Out</button></span>
+      <!-- HUB_NAV_2026_11_09 (Austin, Nov 9, 2026): New Service Request and Search join the top row at every width. New Service Request clicks the real sidebar Check-In tab and Search opens the Hub search dropdown under this bar (the HUB_SEARCH section in portal.js); portal.css hides both beside Log Out whenever the dashboard is not the showing view, so the sign-in screens never offer them. SEARCH_SWAP_2026_11_09 (v65): Search left this row for the thumb bar (it is the bar's fifth item now, opening the Hub Search sheet); a Square anchor took its seat here, straight to Square's Balance page, where Cash out lives. Log Out moved up beside Back to site the same day: portal.css orders the four at phone widths as Back to site / Log Out, then New Service Request / Square. --><span class="portal-topbar-actions"><a class="portal-btn portal-btn-outline" href="https://austinstechrepairgroup.com/">Back to site</a> <button class="portal-btn portal-btn-outline" id="portal-hub-new-btn" type="button"><i class="fas fa-clipboard-check"></i> New Service Request</button> <a class="portal-btn portal-btn-outline" id="portal-hub-square-btn" href="https://app.squareup.com/dashboard/balance" target="_blank" rel="noopener"><i class="fas fa-credit-card"></i> Square</a> <button class="portal-btn portal-btn-outline" id="portal-logout" type="button"><i class="fas fa-sign-out-alt"></i> Log Out</button></span>
     </div>
   </header>
 
@@ -140,15 +140,20 @@
            (Austin, Nov 9, 2026): the phone thumb bar — the public
            site's bottom-nav pattern brought inside the Hub, fixed to
            the bottom at <=920px (portal.css). The owner's final word
-           on its contents: Guest, Queue, Team Chat, Time Clock, Pay —
+           on its contents: Guest, Queue, Team Chat, Time Clock, Search —
            no Home (the Hub opens on Home) and no Menu anywhere (the
-           Hub search in the top bar IS the menu now). Each button item
+           Hub search IS the menu now — since v65 it
+           lives on this bar, in the fifth seat). Each button item
            clicks the REAL sidebar tab, so panels open through the
            exact sidebar code paths and role gates, and the PORTAL_APP
            module in portal.js mirrors each sidebar tab's visibility
-           and active state onto these items. Pay is not a tab: it is a
-           plain link out to Square (the v61 REPORT says why the
-           dashboard URL and not an app scheme). The bar lives inside
+           and active state onto these items. Search is not a
+           tab either: it opens the Hub Search sheet. Pay is not
+           a tab: it is a plain link out to Square (the v61
+           REPORT says why the dashboard URL and not an app
+           scheme) — it left the standard bar in v65, when Search
+           took its seat and a Square button went up top, and it
+           stays addable from the customize tray. The bar lives inside
            #portal-dash-view, so it exists only on the dashboard,
            never on the sign-in screens. CUSTOM_BAR_2026_11_09 (v64):
            the five below are now the DEFAULT bar — each associate
@@ -164,7 +169,7 @@
         <button class="portal-thumb-item" type="button" data-thumb="tickets" aria-label="Service Queue"><i class="fas fa-list-ol"></i><span>Queue</span></button>
         <button class="portal-thumb-item" type="button" data-thumb="teamchat" aria-label="Team Chat"><i class="fas fa-comments"></i><span>Team Chat</span></button>
         <button class="portal-thumb-item" type="button" data-thumb="timeclock" aria-label="Time Clock"><i class="fas fa-clock"></i><span>Time Clock</span></button>
-        <a class="portal-thumb-item" data-thumb="pay" href="https://app.squareup.com/dashboard" target="_blank" rel="noopener" aria-label="Pay — open Square"><i class="fas fa-credit-card"></i><span>Pay</span></a>
+        <button class="portal-thumb-item" type="button" data-thumb="search" aria-label="Search"><i class="fas fa-magnifying-glass"></i><span>Search</span></button>
       </nav>
       <!-- CUSTOM_BAR_2026_11_09 (v64): the Available tabs tray. Hidden
            until edit mode; portal.js docks it directly above the thumb
@@ -176,7 +181,7 @@
           <p class="portal-bartray-title">Customize your thumb bar</p>
           <button class="portal-bartray-x" id="portal-bartray-close" type="button" aria-label="Cancel editing"><i class="fas fa-xmark"></i></button>
         </div>
-        <p class="portal-bartray-hint">Drag tabs into the bar, drag bar items down here to remove them, or tap the &times; on a bar item. Up to five across the bottom.</p>
+        <p class="portal-bartray-hint">Scroll the list to see every tab. Drag a tab by its handle to drop it in the bar. Drag bar items down here to remove them, or tap the &times; on a bar item. Up to five across the bottom.</p>
         <div class="portal-bartray-list" id="portal-bartray-list"></div>
         <div class="portal-bartray-actions">
           <button class="portal-bartray-reset" id="portal-bartray-reset" type="button">Reset to the standard bar</button>

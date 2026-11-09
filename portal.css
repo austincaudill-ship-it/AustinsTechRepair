@@ -1424,7 +1424,7 @@ body.portal-body #portal-dash-view textarea {
    whenever the dashboard is not the showing view, so the sign-in,
    reset and two-step screens never offer them. */
 body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-hub-new-btn,
-body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-hub-search-btn { display: none; }
+body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-hub-square-btn { display: none; }
 /* The top row now carries four buttons, and the actions span must be
    allowed to wrap AND to shrink below its longest row: measured on
    the staged build, unwrapped it sized to a 412px row inside a
@@ -1557,7 +1557,7 @@ body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-hub-search-bt
   .portal-drag-ghost i { font-size: 1.18rem; }
   .portal-drag-ghost .portal-thumb-x { display: none; }
   .portal-bartray {
-    display: block; position: fixed; left: 0; right: 0; bottom: 92px; z-index: 51;
+    display: flex; flex-direction: column; max-height: 75vh; position: fixed; left: 0; right: 0; bottom: 92px; z-index: 51;
     background: var(--surface, #FFFDF8);
     border-top: 1px solid var(--line, #E6D9C0);
     border-radius: 16px 16px 0 0;
@@ -1573,17 +1573,20 @@ body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-hub-search-bt
     color: var(--ink, #2C231A); font-size: 0.95rem;
   }
   .portal-bartray-hint { margin: 0.3rem 0 0.6rem; color: var(--muted, #7D6C5B); font-size: 0.82rem; }
-  .portal-bartray-list { display: flex; flex-direction: column; gap: 0.45rem; max-height: 38vh; overflow-y: auto; }
+  .portal-bartray-list { display: flex; flex-direction: column; gap: 0.45rem; flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
   .portal-bartray-row {
     display: flex; align-items: center; gap: 0.6rem; width: 100%;
     padding: 0.55rem 0.65rem; border: 1px solid var(--line, #E6D9C0); border-radius: 12px;
     background: var(--bg, #FAF6EE); color: var(--ink, #2C231A);
-    font: inherit; font-size: 0.9rem; font-weight: 600; text-align: left; cursor: grab;
-    touch-action: none;
+    font: inherit; font-size: 0.9rem; font-weight: 600; text-align: left; flex: none;
   }
   .portal-bartray-row i { flex: none; width: 1.1rem; text-align: center; color: var(--brand-deep, #A63E06); }
   .portal-bartray-row span { flex: 1 1 auto; min-width: 0; }
-  .portal-bartray-row .portal-bartray-grip { color: var(--muted, #7D6C5B); }
+  .portal-bartray-row .portal-bartray-grip {
+    color: var(--muted, #7D6C5B); touch-action: none; cursor: grab;
+    align-self: stretch; display: flex; align-items: center; justify-content: center;
+    width: auto; min-width: 44px; margin: -0.55rem -0.65rem -0.55rem 0; padding-right: 0.65rem;
+  }
   .portal-bartray-row.drag-src { opacity: 0.4; }
   .portal-bartray-empty { margin: 0; color: var(--muted, #7D6C5B); font-size: 0.88rem; padding: 0.3rem 0.1rem; }
   .portal-bartray-actions { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; margin-top: 0.7rem; }
@@ -1598,3 +1601,46 @@ body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-hub-search-bt
   }
 }
 /* end CUSTOM_BAR_2026_11_09 */
+
+/* ===== TRAY_SCROLL_2026_11_09 (v65) =====
+   Three arrangement changes ride along with the tray fix:
+   (2) LOG OUT MOVE (<=920px): the top-row actions wrap in a set
+   order — Back to site / Log Out on the first row, New Service
+   Request / Square on the second — so the lonely third row is
+   gone. Desktop keeps the natural single row; only order is set,
+   and only at phone widths.
+   (4) SEARCH SHEET (<=920px): the Hub Search panel stops dropping
+   from the top and pops up from the bottom as a sheet, the
+   site-side v52 pattern: the panel box rides the visual viewport
+   (--hs-vv-top / --hs-vv-height, set by the HUB_SEARCH section in
+   portal.js while the sheet is open; 100dvh fallback), dimmed
+   behind, and the inner card is the sheet — rounded top, the
+   results flex and scroll inside it, the Customize thumb bar row
+   pinned at its foot, the bar covered underneath. Above 920px
+   the panel keeps its drop-down presentation untouched. */
+@media (max-width: 920px) {
+  .portal-topbar-actions { gap: 0.45rem; }
+  .portal-topbar-actions .portal-btn { padding: 0.55rem 0.7rem; font-size: 0.88rem; min-width: 0; }
+  .portal-topbar-actions #portal-logout { order: 2; }
+  .portal-topbar-actions #portal-hub-new-btn { order: 3; }
+  .portal-topbar-actions #portal-hub-square-btn { order: 4; }
+  .portal-hubsearch {
+    top: var(--hs-vv-top, 0px); height: var(--hs-vv-height, 100dvh); bottom: auto;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    background: rgba(44, 35, 26, 0.45);
+    border-bottom: none; box-shadow: none;
+  }
+  .portal-hubsearch-inner {
+    background: var(--surface, #FFFDF8);
+    border-top: 1px solid var(--line, #E6D9C0);
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -12px 28px rgba(90, 64, 32, 0.18);
+    width: 100%; max-width: none; max-height: 100%; margin: 0;
+    display: flex; flex-direction: column;
+    padding: 0.7rem 0.9rem max(0.8rem, env(safe-area-inset-bottom));
+  }
+  .portal-hubsearch-results { flex: 1 1 auto; min-height: 0; max-height: none; overscroll-behavior: contain; }
+  .portal-hubsearch.hs-open { animation: hubsearch-rise 0.18s ease-out; }
+}
+@keyframes hubsearch-rise { from { transform: translateY(26px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+/* end TRAY_SCROLL_2026_11_09 (v65) */
