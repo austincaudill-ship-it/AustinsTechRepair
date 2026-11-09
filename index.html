@@ -734,6 +734,8 @@
                   <button class="option-btn" type="button" data-service-kind="Computer clean-up" data-devices="Computer"><i class="fas fa-broom"></i> Computer clean-up</button>
                   <button class="option-btn" type="button" data-service-kind="Something else" data-devices="Phone, Tablet, Computer, Game Console, Smart Watch, Business / Other"><i class="fas fa-circle-question"></i> Something else</button>
                   <button class="option-btn" type="button" data-service-kind="Not sure yet" data-devices="Phone, Tablet, Computer, Game Console, Smart Watch, Business / Other"><i class="fas fa-clipboard-question"></i> Not sure yet</button>
+                  <!-- BOOKING_OO_ESCAPE_2026_11_09 (Austin, Nov 9, 2026): the way back to repairs is a full tile at the end of this grid — next to Not sure yet, under Printer or accessories — not the small text link that used to sit below the hours buttons, where nobody found it. No data-service-kind and no data-devices on it: it is not a topic, and the device filter must never hide the way out. -->
+                  <button class="option-btn" type="button" id="bk-oo-off"><i class="fas fa-wrench"></i> Not a lesson &mdash; I need a repair instead</button>
                 </div>
                 <p class="atr-help">Moving to a new device? We sit with you and help you move your photos, contacts, and apps over during the visit.</p>
                 <p class="field-label" style="margin-top: 1rem;">How much time?</p>
@@ -742,7 +744,6 @@
                   <button class="option-btn" type="button" data-oo-hours="2">2 hour one-on-one <strong>$50</strong></button>
                 </div>
                 <p class="atr-help">If your session runs longer, the extra time is settled at the visit at $25 an hour.</p>
-                <button type="button" class="back-btn" id="bk-oo-off"><i class="fas fa-wrench"></i> Not a lesson &mdash; I need a repair instead</button>
               </div>
               <div id="issue-list"></div>
               <!-- REPAIR_FLOW_UPDATE_2026_11_05: Step 3 of Austin's flow — what is wrong (multi-select

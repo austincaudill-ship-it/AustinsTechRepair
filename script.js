@@ -851,6 +851,17 @@
       currentRepairStep = stepNum;
       var card = document.querySelector('.repair-card');
       if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      /* BOOKING_OO_ESCAPE_2026_11_09 (Austin, Nov 9, 2026): arriving
+         at step 1 leaves One-on-One mode. Every route back to the
+         device step funnels through this function — step 2's Back
+         button (data-back="1") and the progress-step taps both end
+         up here — so the reset lives in this one place and no route
+         can strand the customer in the lesson menu: Back out of
+         One-on-One, change the device, come forward, and the repair
+         tiles are showing again. Entry points are unaffected: they
+         set pendingOneOnOne, which is only applied at step 2 below
+         and is never cleared here. */
+      if (stepNum === 1 && repairState.mode === 'oneonone') setOneOnOneMode(false);
       /* SUPPORT_BOOKING_2026_11_06: an entry point (Schedule a
          one-on-one, classes page, account) asked for One-on-One mode —
          it applies here, at the brand/model/service step, because the
@@ -976,6 +987,11 @@
          may return early: the escape button, the topic buttons, the
          hour buttons, and the data-open-oneonone entry points are all
          wired here. */
+      /* BOOKING_OO_ESCAPE_2026_11_09: #bk-oo-off is a full tile at
+         the end of the topic grid now (it was a small text link below
+         the hours buttons); it is still found by id, so the wiring
+         below is unchanged. Landing on step 1 also leaves the mode —
+         see the reset in goToRepairStep. */
       var off = document.getElementById('bk-oo-off');
       if (off) off.addEventListener('click', function () { setOneOnOneMode(false); });
       document.querySelectorAll('[data-service-kind]').forEach(function (btn) {
