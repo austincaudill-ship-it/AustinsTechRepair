@@ -99,6 +99,8 @@
       <a class="nav-link" href="#about" data-page="about">About</a>
       <a class="nav-link" href="#atr-one" data-page="atr-one">ATR One</a>
       <a class="nav-link" href="#home" data-page="home" data-guide="home-reviews">Reviews</a>
+      <!-- SUPPORT_PAGE_2026_11_09 (owner, Nov 9, 2026): Support is the last desktop nav item, Apple's pattern. The mobile menu is untouched (zero overlap with the bottom bar). -->
+      <a class="nav-link" href="#support" data-page="support">Support</a>
     </nav>
 
     <div class="header-actions">
@@ -161,9 +163,15 @@
              NAV_ONE_ON_ONE_2026_11_08 (owner, Nov 8, 2026):
              One-on-One added after Store — it repeats no bottom-bar
              item, so the dedupe rule still holds. -->
-        <a class="menu-link" href="#whatwedo" data-page="whatwedo">What We Service</a>
-        <a class="menu-link" href="#shop" data-page="shop">Store</a>
+        <!-- NAV_TIGHTEN_2026_11_09 (owner revisions, Nov 9, 2026): What
+             We Service (as "Services") and Store moved to the phone
+             bottom bar, so they leave the menu; Prices left the bar,
+             so it returns here. The menu is the desktop nav minus the
+             bottom-bar destinations &mdash; the dedupe rule (menu and
+             bottom bar never repeat) still holds. -->
         <a class="menu-link" href="#classes" data-page="classes">One-on-One</a>
+        <a class="menu-link" href="#prices" data-page="prices">Prices</a>
+        <a class="menu-link" href="#help-guides" data-page="help-guides">Help Guides</a>
         <a class="menu-link" href="#about" data-page="about">About</a>
         <a class="menu-link" href="#atr-one" data-page="atr-one">ATR One</a>
         <a class="menu-link" href="#home" data-page="home" data-guide="home-reviews">Reviews</a>
@@ -1124,6 +1132,13 @@
             <!-- SITE_PRICES_STARTING_AT_2026_11_02 -->
             <p class="price-disclaimer dt-disclaimer" id="dt-disclaimer" hidden>Estimate only. Your exact price is confirmed after a full diagnostics.</p>
             <button type="button" class="dt-reset" id="dt-reset" hidden>Start over</button>
+          </div>
+          <!-- NAV_TIGHTEN_2026_11_09 (owner, Nov 9, 2026): Prices is the
+               single price-to-service door &mdash; one clear Schedule a
+               repair button directly under the lookup, so a customer who
+               just saw their price continues to booking right from here. -->
+          <div class="text-center" style="margin:0 auto 1.75rem;">
+            <a class="btn btn-primary" href="#repair" data-page="repair">Schedule a repair</a>
           </div>
 
           <!-- REPAIR_OR_REPLACE_2026_11_06: entry to the helper page -->
@@ -2991,6 +3006,42 @@
       </div>
     </section>
 
+    <!-- ==================== SUPPORT ==================== -->
+    <!-- SUPPORT_PAGE_2026_11_09 (owner, Nov 9, 2026): the one
+         all-encompassing Support door, Apple's pattern in place of a
+         plain Contact door — contact, warranty, reviews, and the
+         customer's account and ATR One membership in one hub. The
+         Contact view itself is untouched and stays reachable from
+         here and from the footer. -->
+    <section id="support" class="page">
+      <div class="section">
+        <div class="container">
+          <div class="section-header center">
+            <p class="eyebrow">Support</p>
+            <h1 class="section-title">How can we help?</h1>
+            <p class="section-copy">Everything after the repair lives here &mdash; reach us, warranty, reviews, and your account.</p>
+          </div>
+          <div class="card-grid">
+            <a class="service-card" href="#contact" data-page="contact"><div class="service-icon"><i class="fas fa-comments"></i></div><h3>Contact us</h3><p>Call, text, or send a message.</p></a>
+            <a class="service-card" href="#account" data-page="account"><div class="service-icon"><i class="fas fa-crown"></i></div><h3>Change a subscription</h3><p>Manage your ATR One plan, devices, points, and orders.</p></a>
+            <a class="service-card" href="#account" data-page="account"><div class="service-icon"><i class="fas fa-credit-card"></i></div><h3>Billing and payments</h3><p>Membership billing runs through Square &mdash; manage it from your account.</p></a>
+          </div>
+          <div class="support-icon-row">
+            <a class="support-icon-door" href="#warranty-request" data-page="warranty-request"><span class="support-icon-chip"><i class="fas fa-shield-halved"></i></span>Warranty</a>
+            <a class="support-icon-door" href="#home" data-page="home" data-guide="home-reviews"><span class="support-icon-chip"><i class="fas fa-star"></i></span>Reviews</a>
+            <a class="support-icon-door" href="#help-guides" data-page="help-guides"><span class="support-icon-chip"><i class="fas fa-book-open"></i></span>Help Guides</a>
+            <a class="support-icon-door" href="#account" data-page="account"><span class="support-icon-chip"><i class="fas fa-gift"></i></span>Gift Cards</a>
+            <a class="support-icon-door" href="#repair-or-replace" data-page="repair-or-replace"><span class="support-icon-chip"><i class="fas fa-scale-balanced"></i></span>Repair or Replace</a>
+            <a class="support-icon-door" href="#prices" data-page="prices"><span class="support-icon-chip"><i class="fas fa-tag"></i></span>Prices</a>
+          </div>
+          <p style="text-align:center; margin-top:2rem;">Prefer to read the terms first? <a href="#warranty" data-page="warranty">Read the warranty terms</a></p>
+          <p style="text-align:center; color:var(--muted); margin-top:1.5rem;">Call or text <a href="tel:9372806243" style="font-weight:800;">(937) 280-6243</a> &mdash; or <a href="sms:9372806243" style="font-weight:700;">send a text</a></p>
+          <p style="text-align:center; color:var(--muted);"><strong>Hours:</strong> Mon&ndash;Fri 5:30 AM&ndash;10:00 PM &middot; Sat 8:30 AM&ndash;9:00 PM &middot; Sun 9:00 AM&ndash;5:00 PM</p>
+          <p style="text-align:center; margin-top:1.5rem;"><a class="btn btn-outline" href="#home" data-page="home">Back to Home</a></p>
+        </div>
+      </div>
+    </section>
+
     <!-- ==================== PRIVACY ==================== -->
     <section id="privacy" class="page">
       <div class="section">
@@ -3879,11 +3930,16 @@
   </footer>
 
   <!-- Bottom Nav for Mobile -->
+  <!-- NAV_TIGHTEN_2026_11_09 (owner revision, Nov 9, 2026): the bar is
+       Home, Services, Store, Support, Menu. Repair and Prices merged
+       into the Services door (Prices is reached from What We Service,
+       and Prices carries the Schedule a repair button); Store joins
+       the bar and leaves the mobile menu. -->
   <nav class="mobile-bottom-nav" aria-label="Mobile Bottom Navigation">
     <a href="#home" class="bottom-nav-item active" data-page="home"><i class="fa-solid fa-house"></i><span>Home</span></a>
-    <a href="#repair" class="bottom-nav-item" data-page="repair"><i class="fa-solid fa-screwdriver-wrench"></i><span>Repair</span></a>
-    <a href="#prices" class="bottom-nav-item" data-page="prices"><i class="fa-solid fa-tag"></i><span>Prices</span></a>
-    <a href="#contact" class="bottom-nav-item" data-page="contact"><i class="fa-solid fa-envelope"></i><span>Contact</span></a>
+    <a href="#whatwedo" class="bottom-nav-item" data-page="whatwedo"><i class="fa-solid fa-screwdriver-wrench"></i><span>Services</span></a>
+    <a href="#shop" class="bottom-nav-item" data-page="shop"><i class="fa-solid fa-store"></i><span>Store</span></a>
+    <a href="#support" class="bottom-nav-item" data-page="support"><i class="fa-solid fa-headset"></i><span>Support</span></a>
     <button class="bottom-nav-item" id="bottom-menu-toggle" type="button"><i class="fa-solid fa-bars"></i><span>Menu</span></button>
   </nav>
 

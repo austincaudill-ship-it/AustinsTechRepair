@@ -2929,3 +2929,103 @@ html .dt-tile.active {
    homemade text .cf-badge in the footer disclaimer line. Same spot,
    beside the same sentence; the sentence text is unchanged. */
 .cf-badge-img { height: 34px; width: auto; border-radius: 6px; vertical-align: middle; margin-left: 0.5rem; }
+
+/* ===== NAV_TIGHTEN_2026_11_09 =====
+   Owner (Nov 9, 2026): tighten the desktop nav Apple-style &mdash; the
+   logo sits closer to the items, the items sit closer together, and
+   Home is the logo (unchanged). Spacing and sizing only: no colors,
+   no layout changes below 1024px, and every rule is scoped to the
+   header (.header / .brand / .nav-desktop) at desktop widths.
+   Why the ranges: with EIGHT items the header's natural width
+   outgrew the old tablet-band budget (which was drawn for six
+   items). Measured budget (text widths measured with a Liberation
+   Sans Bold proxy, which runs wider than the site's Plus Jakarta
+   Sans 600, so every figure below is conservative; border-box
+   throughout; worst case = staff signed in, account name at its
+   130px cap, Portal button visible):
+     1024px &mdash; brand wordmark text rests (logo mark only, the
+       Apple treatment) and the nav pinches: fits, ~13px slack.
+     1216px &mdash; full brand and labels back at the same pinch:
+       fits, ~9px slack, growing with width.
+     1320px &mdash; mid sizes: fits, ~28px slack.
+     1440px &mdash; wide sizes: fits, ~14px slack, growing with width.
+   Tap targets: every range carries min-height 40px on the links, so
+   the pinch never drops a target under 40px tall. */
+@media (min-width: 1024px) and (max-width: 1215px) {
+  .header { gap: 0.5rem; }
+  .brand-info { display: none; }
+  .nav-desktop { gap: 0.15rem; }
+  .nav-desktop .nav-link { font-size: 0.76rem; padding: 0.5rem 0.28rem; min-height: 40px; }
+}
+@media (min-width: 1216px) and (max-width: 1319px) {
+  .nav-desktop { gap: 0.2rem; }
+  .nav-desktop .nav-link { font-size: 0.76rem; padding: 0.5rem 0.28rem; min-height: 40px; }
+}
+@media (min-width: 1320px) and (max-width: 1439px) {
+  .nav-desktop { gap: 0.4rem; }
+  .nav-desktop .nav-link { padding: 0.5rem 0.4rem; min-height: 40px; }
+}
+@media (min-width: 1440px) {
+  .header { padding: 0.9rem 1rem; }
+  .nav-desktop { gap: 0.45rem; }
+  .nav-desktop .nav-link { font-size: 0.86rem; padding: 0.55rem 0.55rem; min-height: 40px; }
+}
+
+/* ===== MENU_GENIE_2026_11_09 =====
+   Owner direction (Austin, Nov 9, 2026): the slide-out mobile menu
+   should move like the old Mac Dock genie -- growing out of the
+   Menu button when it opens and getting sucked back down into it
+   when it closes. A true mesh genie warp is not natively possible
+   in a browser (and forcing one would lag), so this delivers the
+   anchored grow/shrink the eye reads as the genie: the panel's
+   transform origin is pinned to its bottom-right corner -- the
+   corner that sits right over the Menu button, the rightmost
+   bottom-bar slot -- and the closed state adds a squash
+   (scale 0.82 x 0.62) to the existing off-canvas slide, so under
+   one transition the panel visibly stretches up out of that
+   corner as it opens and collapses back into it as it closes.
+   Base mechanics untouched: same selectors, same aria-hidden
+   show/hide contract (.mobile-menu carries visibility, so the
+   closed menu stays unclickable exactly as before), and the
+   overlay keeps its plain fade -- its transition is retimed
+   0.3s -> 0.38s only, so the visibility flip lands with the
+   panel's 380ms settle instead of clipping the last frames.
+   Animates transform + opacity only; no layout properties, so
+   no lag by construction.
+   prefers-reduced-motion: the squash comes off and the menu
+   returns to the plain base slide on a short transition. */
+.mobile-menu { transition: all 0.38s ease; }
+.menu-panel {
+  transform-origin: 100% 100%;
+  transform: translateX(102%) scale(0.82, 0.62);
+  transition: transform 0.38s cubic-bezier(.22,.9,.28,1);
+}
+.mobile-menu:not([aria-hidden="true"]) .menu-panel { transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .menu-panel { transform: translateX(100%); transition: transform 0.2s ease; }
+}
+
+/* ===== SUPPORT_APPLE_LAYOUT_2026_11_09 =====
+   Support page, icon row (Austin, Nov 9, 2026 — the Apple Support
+   shape he photographed): under the three primary boxes, six small
+   doors, each a circular icon chip with its label under it. Theme
+   variables only, so the row follows the light/dark switch; the
+   chip outline is the site blue per the owner's color direction. */
+.support-icon-row {
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: 1.25rem 1.75rem; margin-top: 2.5rem;
+}
+.support-icon-door {
+  display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+  min-width: 64px; min-height: 48px;
+  color: var(--text); text-decoration: none;
+  font-size: 0.85rem; font-weight: 600; text-align: center;
+}
+.support-icon-chip {
+  width: 56px; height: 56px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--card); border: 1.5px solid var(--blue);
+  color: var(--text); font-size: 1.35rem;
+}
+.support-icon-door:hover .support-icon-chip,
+.support-icon-door:focus-visible .support-icon-chip { border-color: var(--blue-bright); }
