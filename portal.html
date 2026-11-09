@@ -324,6 +324,51 @@
           <p class="portal-small" id="portal-install-ios" hidden>On iPhone or iPad: tap <strong>Share</strong>, then <strong>Add to Home Screen</strong>.</p>
         </article>
 
+        <!-- HUB_HOME_2026_11_09 (v62): YOUR DAY — who is on the clock now, the signed-in associate's hours this week, and their clock state, read from time_entries. Read-only: the punch actions stay in Time Clock. Logic: loadYourDay in portal.js. -->
+        <div class="portal-panel-head portal-subhead">
+          <h3 class="portal-h3">Your day</h3>
+        </div>
+        <div id="portal-home-yourday"><p class="portal-muted">Loading&hellip;</p></div>
+
+        <!-- HUB_HOME_2026_11_09 (v62): TIPS OF THE DAY — one repair tip and one safety tip, the same pair for the whole team all day, turning over each morning from public.portal_home_tips. The whole section hides when the bank has no active tip to show (never a placeholder). Admin+ manages the bank in-panel below. Logic: loadHomeTips in portal.js. -->
+        <div id="portal-home-tips-section">
+          <div class="portal-panel-head portal-subhead">
+            <h3 class="portal-h3">Tips of the day</h3>
+          </div>
+          <div class="hh-tips-grid" id="portal-home-tips"></div>
+          <div id="portal-home-tips-tools"></div>
+          <div id="portal-home-tips-manage" hidden>
+            <div id="portal-home-tips-list"><p class="portal-muted">Loading&hellip;</p></div>
+            <p><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="portal-home-tip-add"><i class="fas fa-plus"></i> Add a tip</button></p>
+            <form id="portal-home-tip-form" novalidate hidden>
+              <div class="portal-panel-head portal-subhead">
+                <h3 class="portal-h3" id="portal-home-tip-form-title">Add a tip</h3>
+              </div>
+              <div class="portal-nh-grid">
+                <div class="portal-field">
+                  <label for="portal-home-tip-kind">Kind</label>
+                  <select id="portal-home-tip-kind">
+                    <option value="repair" selected>Repair tip</option>
+                    <option value="safety">Safety tip</option>
+                  </select>
+                </div>
+                <div class="portal-field">
+                  <label for="portal-home-tip-title">Title (optional)</label>
+                  <input type="text" id="portal-home-tip-title" placeholder="e.g. Battery first, battery last" />
+                </div>
+                <div class="portal-field portal-nh-wide">
+                  <label for="portal-home-tip-text">Tip <span aria-hidden="true">*</span></label>
+                  <textarea id="portal-home-tip-text" rows="3" placeholder="The tip, in plain words" required></textarea>
+                </div>
+              </div>
+              <p class="portal-error" id="portal-home-tip-error" hidden></p>
+              <button class="portal-btn portal-btn-primary" id="portal-home-tip-submit" type="submit">
+                <i class="fas fa-plus"></i> Add tip
+              </button>
+              <button class="portal-btn portal-btn-outline" id="portal-home-tip-cancel" type="button" hidden>Cancel edit</button>
+            </form>
+          </div>
+        </div>
         <div class="portal-panel-head portal-subhead">
           <h3 class="portal-h3">This month at ATRG</h3>
         </div>
@@ -394,6 +439,90 @@
           <button class="portal-btn portal-btn-outline" id="portal-home-post-cancel" type="button" hidden>Cancel edit</button>
         </form>
 
+
+        <!-- HUB_HOME_2026_11_09 (v62): SHIFT CENTER — available shifts from public.portal_shifts. Admin+ posts; any associate claims, and a claim is instant (first come — the claim write only lands while the shift is still open). A claimed shift can be offered back to the board. Logic: loadHomeShifts in portal.js. -->
+        <div class="portal-panel-head portal-subhead">
+          <h3 class="portal-h3">Shift Center</h3>
+        </div>
+        <div id="portal-home-shifts"><p class="portal-muted">Loading&hellip;</p></div>
+        <p class="portal-small" id="portal-home-shift-msg" hidden></p>
+        <div id="portal-home-shift-tools"></div>
+        <form id="portal-home-shift-form" novalidate hidden>
+          <div class="portal-panel-head portal-subhead">
+            <h3 class="portal-h3">Post an available shift</h3>
+          </div>
+          <div class="portal-nh-grid">
+            <div class="portal-field">
+              <label for="portal-home-shift-date">Date <span aria-hidden="true">*</span></label>
+              <input type="date" id="portal-home-shift-date" required />
+            </div>
+            <div class="portal-field">
+              <label for="portal-home-shift-start">Starts <span aria-hidden="true">*</span></label>
+              <input type="time" id="portal-home-shift-start" required />
+            </div>
+            <div class="portal-field">
+              <label for="portal-home-shift-end">Ends <span aria-hidden="true">*</span></label>
+              <input type="time" id="portal-home-shift-end" required />
+            </div>
+            <div class="portal-field">
+              <label for="portal-home-shift-role">Role needed</label>
+              <input type="text" id="portal-home-shift-role" placeholder="e.g. Technician" />
+            </div>
+            <div class="portal-field portal-nh-wide">
+              <label for="portal-home-shift-note">Note (optional)</label>
+              <input type="text" id="portal-home-shift-note" placeholder="e.g. Route coverage" />
+            </div>
+          </div>
+          <p class="portal-error" id="portal-home-shift-error" hidden></p>
+          <button class="portal-btn portal-btn-primary" id="portal-home-shift-submit" type="submit">
+            <i class="fas fa-plus"></i> Post shift
+          </button>
+          <button class="portal-btn portal-btn-outline" id="portal-home-shift-cancel" type="button">Cancel</button>
+        </form>
+
+        <!-- HUB_HOME_2026_11_09 (v62): SHARED CALENDAR — one month for the whole team: public.portal_calendar_events (outings, special days, days off, notes), associate birthdays from employee_profiles (entered once, back every year — team only), the scheduled guest jobs from tickets, and shifts from the Shift Center. Admin+ adds and edits calendar items in-panel. Logic: loadHomeCalendar in portal.js. -->
+        <div class="portal-panel-head portal-subhead">
+          <h3 class="portal-h3">Shared Calendar</h3>
+        </div>
+        <div id="portal-home-calendar"><p class="portal-muted">Loading&hellip;</p></div>
+        <div id="portal-home-cal-tools"></div>
+        <form id="portal-home-cal-form" novalidate hidden>
+          <div class="portal-panel-head portal-subhead">
+            <h3 class="portal-h3" id="portal-home-cal-form-title">Add to the calendar</h3>
+          </div>
+          <div class="portal-nh-grid">
+            <div class="portal-field">
+              <label for="portal-home-cal-kind">Kind</label>
+              <select id="portal-home-cal-kind">
+                <option value="outing">Outing</option>
+                <option value="special">Special day</option>
+                <option value="dayoff">Day off</option>
+                <option value="note" selected>Note</option>
+              </select>
+            </div>
+            <div class="portal-field">
+              <label for="portal-home-cal-title">Title <span aria-hidden="true">*</span></label>
+              <input type="text" id="portal-home-cal-title" placeholder="e.g. Team night at Main Event" required />
+            </div>
+            <div class="portal-field">
+              <label for="portal-home-cal-date">Date <span aria-hidden="true">*</span></label>
+              <input type="date" id="portal-home-cal-date" required />
+            </div>
+            <div class="portal-field">
+              <label for="portal-home-cal-end">End date (optional)</label>
+              <input type="date" id="portal-home-cal-end" />
+            </div>
+            <div class="portal-field portal-nh-wide">
+              <label for="portal-home-cal-note">Note (optional)</label>
+              <input type="text" id="portal-home-cal-note" placeholder="e.g. Meet at 6 PM" />
+            </div>
+          </div>
+          <p class="portal-error" id="portal-home-cal-error" hidden></p>
+          <button class="portal-btn portal-btn-primary" id="portal-home-cal-submit" type="submit">
+            <i class="fas fa-plus"></i> Add item
+          </button>
+          <button class="portal-btn portal-btn-outline" id="portal-home-cal-cancel" type="button" hidden>Cancel edit</button>
+        </form>
         <div class="portal-panel-head portal-subhead">
           <h3 class="portal-h3">Holidays &amp; days off</h3>
         </div>

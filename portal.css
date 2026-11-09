@@ -1447,3 +1447,55 @@ body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-hub-search-bt
   .portal-main { padding-top: 1rem; }
   .portal-dash-head .portal-head-status { margin-top: 0; }
 }
+
+/* ================= HUB_HOME_2026_11_09 (v62) =================
+   The Whole Hub Home blocks: Your day, Tips of the day, the
+   Shift Center, and the Shared Calendar. Same card idiom as the
+   rest of the portal; brand orange carries the marks. */
+.hh-on-dot { color: #2e9e4f; font-size: 0.6em; vertical-align: middle; }
+.hh-weekrow { display: flex; align-items: baseline; gap: 0.6rem; margin-top: 0.9rem; }
+.hh-hrs { font-size: 1.9rem; font-weight: 800; line-height: 1; }
+.hh-hrs small { font-size: 0.95rem; font-weight: 600; }
+.hh-bar { height: 8px; border-radius: 999px; background: var(--brand-soft, #FBEADB); margin: 0.5rem 0 0.2rem; overflow: hidden; }
+.hh-bar i { display: block; height: 100%; border-radius: 999px; background: var(--brand, #D9540D); }
+.hh-state { margin: 0.6rem 0 0.2rem; }
+.hh-sec { font-size: 0.78rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--brand-deep, #A63E06); margin: 1rem 0 0.3rem; }
+.hh-shift { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0; border-bottom: 1px solid rgba(0, 0, 0, 0.07); flex-wrap: wrap; }
+.hh-shift:last-child { border-bottom: none; }
+.hh-chip { width: 46px; flex: 0 0 46px; text-align: center; border: 1px solid rgba(0, 0, 0, 0.1); border-radius: 10px; padding: 0.3rem 0; background: #fff; }
+.hh-chip-dow { font-size: 0.66rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brand, #D9540D); }
+.hh-chip-num { font-size: 1.15rem; font-weight: 800; line-height: 1.1; }
+.hh-shift-what { flex: 1 1 180px; min-width: 0; }
+.hh-shift-what b { display: block; font-size: 0.98rem; }
+.hh-shift-what span { display: block; font-size: 0.85rem; opacity: 0.75; margin-top: 0.1rem; }
+.hh-mine { font-size: 0.75rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--brand-deep, #A63E06); background: var(--brand-soft, #FBEADB); border-radius: 999px; padding: 0.25rem 0.6rem; }
+.hh-tips-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; }
+.hh-tips-grid .portal-card { margin-bottom: 0; }
+.hh-tip-title { font-weight: 700; margin: 0.2rem 0 0.3rem; }
+@media (max-width: 700px) { .hh-tips-grid { grid-template-columns: 1fr; } }
+.hh-cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
+.hh-cal-mo { font-size: 1.1rem; font-weight: 800; }
+.hh-cal-yr { font-weight: 600; opacity: 0.6; }
+.hh-cal-grid { border: 1px solid rgba(0, 0, 0, 0.08); border-radius: 12px; overflow: hidden; background: #fff; }
+.hh-cal-dow-row { display: grid; grid-template-columns: repeat(7, 1fr); background: var(--brand-soft, #FBEADB); }
+.hh-cal-dow-row span { text-align: center; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.4rem 0; color: var(--brand-deep, #A63E06); }
+.hh-cal-week { display: grid; grid-template-columns: repeat(7, 1fr); }
+.hh-cal-cell { appearance: none; border: none; border-top: 1px solid rgba(0, 0, 0, 0.06); background: #fff; min-height: 52px; padding: 0.3rem 0.2rem; display: flex; flex-direction: column; align-items: center; gap: 0.25rem; cursor: pointer; font: inherit; color: inherit; }
+.hh-cal-cell:hover { background: #fdf3e7; }
+.hh-cal-blank { cursor: default; background: #fbf8f3; }
+.hh-cal-blank:hover { background: #fbf8f3; }
+.hh-cal-num { font-weight: 700; font-size: 0.92rem; width: 1.7rem; height: 1.7rem; line-height: 1.7rem; border-radius: 999px; text-align: center; }
+.hh-cal-today .hh-cal-num { border: 2px solid var(--brand, #D9540D); color: var(--brand-deep, #A63E06); }
+.hh-cal-dayoff { background: #f3efe9; }
+.hh-cal-sel { background: #fdeeda; }
+.hh-cal-dots { display: flex; gap: 3px; }
+.hh-dot { display: inline-block; width: 8px; height: 8px; border-radius: 999px; background: #999; vertical-align: middle; }
+.hh-dot-outing { background: #2E7CD6; }
+.hh-dot-birthday { background: var(--brand, #D9540D); }
+.hh-dot-special { background: #7a4fd0; }
+.hh-dot-dayoff { background: #8a8378; }
+.hh-dot-note { background: #b9b0a2; }
+.hh-dot-job { background: #2e9e4f; }
+.hh-dot-shift { background: #d9a40d; }
+.hh-cal-legend span { margin-right: 0.7rem; white-space: nowrap; }
+.hh-cal-daydetail { margin-top: 0.6rem; }

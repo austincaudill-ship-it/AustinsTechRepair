@@ -13539,6 +13539,7 @@ function loadTicketThread(client, ticketId) {
       loadHomeMonth(client);
       loadHomeFeed(client);
       loadHomeHolidays(client);
+      loadHubHome(client); /* HUB_HOME_2026_11_09 (v62) */
     });
   }
 
@@ -13885,10 +13886,17 @@ function loadTicketThread(client, ticketId) {
     var box = $('portal-home-holidays');
     if (!box) return;
     if (homeHolidaysMissing) { box.innerHTML = '<p class="portal-muted">This section is not set up yet.</p>'; return; }
-    if (!homeHolidays.length) { box.innerHTML = '<p class="portal-muted">No holidays or days off posted yet.</p>'; return; }
+    /* HUB_HOME_2026_11_09 (v62): the block is a UNION — the
+     * holidays table's rows plus the shared calendar's dayoff
+     * events (hhDayoffEvents, fed by loadHomeDayoffs), so a day
+     * off entered once on the calendar shows here too. Calendar
+     * rows carry _cal and render without edit buttons: they are
+     * edited on the calendar, not here. */
+    var allHol = homeHolidays.concat((typeof hhDayoffEvents !== 'undefined' ? hhDayoffEvents : []).map(function (ev) { return { id: 'cal-' + ev.id, day: ev.event_date, name: ev.title, note: ev.note, _cal: true }; }));
+    if (!allHol.length) { box.innerHTML = '<p class="portal-muted">No holidays or days off posted yet.</p>'; return; }
     var today = homeTodayStr();
-    var upcoming = homeHolidays.filter(function (h) { return String(h.day) >= today; });
-    var past = homeHolidays.filter(function (h) { return String(h.day) < today; });
+    var upcoming = allHol.filter(function (h) { return String(h.day) >= today; });
+    var past = allHol.filter(function (h) { return String(h.day) < today; });
     var admin = isAdminOrAbove();
     box.innerHTML = upcoming.concat(past).map(function (h) {
       var isPast = String(h.day) < today;
@@ -13896,8 +13904,9 @@ function loadTicketThread(client, ticketId) {
         ' &mdash; <span' + (isPast ? ' class="portal-muted"' : '') + '>' + esc(h.name) + '</span>' +
         (h.note ? '<br /><span class="portal-muted portal-small">' + esc(h.note) + '</span>' : '') +
         (isPast ? '<br /><span class="portal-muted portal-small">Past</span>' : '') +
+        (h._cal ? '<br /><span class="portal-muted portal-small">On the shared calendar</span>' : '') +
         '</div>';
-      if (admin) {
+      if (admin && !h._cal) {
         html += '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-home-holiday-edit="' + esc(h.id) + '"><i class="fas fa-pen"></i> Edit</button> ' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-home-holiday-del="' + esc(h.id) + '"><i class="fas fa-trash"></i> Delete</button>';
       }
@@ -13980,6 +13989,871 @@ function loadTicketThread(client, ticketId) {
     }).catch(function () { btn.disabled = false; });
   }
   /* ================= end PORTAL_HOME_2026_11_09 ================= */
+  /* ================= HUB_HOME_2026_11_09 =================
+   * Austin, Nov 9, 2026 (the Whole Hub Home build, v62): Home
+   * grows from the three PORTAL_HOME blocks into the full
+   * Associate Hub front door the owner drew and approved
+   * (hub-home-vision mockups): a YOUR DAY strip on top, TIPS OF
+   * THE DAY, the SHIFT CENTER, and a SHARED CALENDAR — wrapped
+   * around the existing "This month at ATRG", Company feed, and
+   * Holidays blocks, which keep working exactly as they did.
+   * Owner decisions, settled Nov 9, 2026 — do not re-ask:
+   *   * Shift claims are INSTANT: first come, first served, no
+   *     approval step. The claim write is conditional on the
+   *     shift still being open, so a second claim on a taken
+   *     shift matches no row and fails cleanly.
+   *   * Calendar birthdays are entered ONCE (the birthday on
+   *     the associate's profile) and recur every year on their
+   *     own; TEAM ONLY — no family birthdays here.
+   *   * The shared calendar shows team life PLUS the scheduled
+   *     guest jobs (tickets carrying an appointment).
+   * New stores (sql/hub-home.sql, run BEFORE this code):
+   *   public.portal_shifts — open / claimed shifts.
+   *   public.portal_calendar_events — outing / special /
+   *     dayoff / note rows for the shared calendar.
+   *   public.portal_home_tips — the repair / safety tip bank
+   *     (sql/seed-tips.sql seeds the starter bank).
+   * RLS mirrors portal_home_*: any signed-in staffer reads;
+   * Admin tier and above posts shifts, calendar events, and
+   * tips (the UI renders those controls only for
+   * isAdminOrAbove(), like the blocks above). Shift CLAIM and
+   * OFFER-BACK are the one associate write: the update policy
+   * lets a staffer touch only open rows or their own claimed
+   * rows, and the claim itself is the conditional update.
+   * Fail-soft throughout: a missing table renders its block's
+   * plain "not set up yet" line (tips simply hide), and Home
+   * never shows money — same rule as the blocks above. */
+  var hhShifts = [];
+  var hhShiftsMissing = false;
+  var hhCalEvents = [];
+  var hhCalEventsMissing = false;
+  var hhCalProfiles = [];
+  var hhCalJobs = [];
+  var hhDayoffEvents = [];       /* dayoff-kind calendar rows, unioned into the Holidays block */
+  var hhTips = [];
+  var hhTipsMissing = false;
+  var hhCalYear = null;          /* the calendar's displayed month */
+  var hhCalMonth = null;
+  var hhCalSelected = null;      /* 'YYYY-MM-DD' tapped in the grid, or null */
+  var hhEditingEventId = null;
+  var hhEditingTipId = null;
+  var hhWired = false;
+
+  function hhPad2(n) { return (n < 10 ? '0' : '') + n; }
+  function hhDayStr(y, m1, d) { return y + '-' + hhPad2(m1) + '-' + hhPad2(d); }
+  function hhParseDay(s) {
+    var p = String(s || '').split('-');
+    if (p.length !== 3) return null;
+    var y = Number(p[0]), m = Number(p[1]), d = Number(p[2]);
+    if (!y || !m || !d || m < 1 || m > 12 || d < 1 || d > 31) return null;
+    return { y: y, m: m, d: d };
+  }
+  function hhFmtClockTime(iso) {
+    var dt = new Date(iso);
+    if (isNaN(dt.getTime())) return '';
+    return dt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  }
+  /* '13:30' / '13:30:00' -> '1:30 PM' (portal_shifts time cols) */
+  function hhFmtTimeOfDay(t) {
+    var p = String(t || '').split(':');
+    if (p.length < 2) return String(t || '');
+    var h = Number(p[0]), m = Number(p[1]);
+    if (isNaN(h) || isNaN(m)) return String(t || '');
+    var ap = h >= 12 ? 'PM' : 'AM';
+    var h12 = h % 12; if (h12 === 0) h12 = 12;
+    return h12 + ':' + hhPad2(m) + ' ' + ap;
+  }
+  function hhShiftWhen(s) {
+    return homeFmtDay(s.shift_date) + ' &middot; ' + esc(hhFmtTimeOfDay(s.start_time)) + ' &ndash; ' + esc(hhFmtTimeOfDay(s.end_time));
+  }
+  function hhFirstName(name) {
+    var n = trim(name);
+    if (!n) return 'Guest';
+    return n.split(/\s+/)[0];
+  }
+  function hhMyId() { return state.user ? state.user.id : null; }
+  function hhMyName() { return (state.profile && state.profile.name) || (state.user && state.user.email) || 'Associate'; }
+
+  /* PURE: the signed-in associate's week math from their own
+   * time_entries rows — the same Monday-start pay week and the
+   * same closed-row sums renderTimeCards() shows, plus the
+   * still-open entry counted to `now` and today's total.
+   * Returns { closedMs, openMs, openSince, todayMs }. */
+  function hhWeekMath(rows, wsDate, now) {
+    var we = new Date(wsDate); we.setDate(we.getDate() + 7);
+    var closedMs = 0, openMs = 0, openSince = null, todayMs = 0;
+    var t0 = new Date(now); t0.setHours(0, 0, 0, 0);
+    var t1 = new Date(t0); t1.setDate(t1.getDate() + 1);
+    (rows || []).forEach(function (r) {
+      if (!r.clock_in) return;
+      var ci = new Date(r.clock_in);
+      if (isNaN(ci.getTime())) return;
+      var co = r.clock_out ? new Date(r.clock_out) : null;
+      if (co && isNaN(co.getTime())) co = null;
+      var end = co || now;
+      if (ci >= wsDate && ci < we) {
+        if (co) closedMs += (co - ci);
+        else { openMs += Math.max(0, now - ci); if (!openSince || ci < openSince) openSince = ci; }
+      }
+      if (ci >= t0 && ci < t1) todayMs += Math.max(0, end - ci);
+      else if (!co && ci < t0) { /* an overnight open entry still runs today */ todayMs += Math.max(0, now - Math.max(ci, t0)); if (ci >= wsDate && ci < we) { /* already counted above */ } }
+    });
+    return { closedMs: closedMs, openMs: openMs, openSince: openSince, todayMs: todayMs };
+  }
+
+  /* PURE: day-of-year in local time (DST-safe via UTC parts). */
+  function hhDayOfYear(dt) {
+    var start = Date.UTC(dt.getFullYear(), 0, 0);
+    var cur = Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate());
+    return Math.floor((cur - start) / 86400000);
+  }
+  /* PURE: the tip of the day for one kind — active tips in a
+   * stable order (created_at, then id), indexed by
+   * (day-of-year - 1) mod count, so the whole team sees the
+   * same tip all day and it turns over each morning. */
+  function hhTipFor(tips, kind, date) {
+    var list = (tips || []).filter(function (t) { return t && t.kind === kind && t.active !== false; });
+    list.sort(function (a, b) {
+      var ca = String(a.created_at || ''), cb = String(b.created_at || '');
+      if (ca !== cb) return ca < cb ? -1 : 1;
+      var ia = String(a.id || ''), ib = String(b.id || '');
+      return ia < ib ? -1 : ia > ib ? 1 : 0;
+    });
+    if (!list.length) return null;
+    var idx = (hhDayOfYear(date) - 1) % list.length;
+    return list[idx];
+  }
+
+  /* PURE: assemble one month of calendar items.
+   * events: portal_calendar_events rows (event_date, end_date).
+   * profiles: employee_profiles rows carrying birthday.
+   * jobs: tickets with appointment_at (or job_date).
+   * shifts: portal_shifts rows (the viewer's own claimed shifts
+   *   and every still-open shift — "your day/calendar read from
+   *   the same store").
+   * Returns { 'YYYY-MM-DD': [ {kind, label, sub} ] }. */
+  function hhMonthItems(y, m1, events, profiles, jobs, shifts, myId) {
+    var map = {};
+    function add(dayStr, item) {
+      if (!dayStr) return;
+      var pd = hhParseDay(dayStr);
+      if (!pd || pd.y !== y || pd.m !== m1) return;
+      (map[dayStr] = map[dayStr] || []).push(item);
+    }
+    (events || []).forEach(function (ev) {
+      var start = hhParseDay(ev.event_date);
+      if (!start) return;
+      var end = hhParseDay(ev.end_date) || start;
+      var cur = new Date(start.y, start.m - 1, start.d);
+      var last = new Date(end.y, end.m - 1, end.d);
+      var guard = 0;
+      while (cur <= last && guard < 62) {
+        add(hhDayStr(cur.getFullYear(), cur.getMonth() + 1, cur.getDate()),
+          { kind: 'event-' + (ev.kind || 'note'), id: ev.id, label: ev.title || 'Event', sub: ev.note || '' });
+        cur.setDate(cur.getDate() + 1);
+        guard++;
+      }
+    });
+    (profiles || []).forEach(function (p) {
+      if (!p.birthday) return;
+      var b = hhParseDay(p.birthday);
+      if (!b || b.m !== m1) return;
+      add(hhDayStr(y, m1, b.d), { kind: 'birthday', id: p.id, label: (p.name || 'Associate') + ' \u2014 birthday', sub: 'Team birthday' });
+    });
+    (jobs || []).forEach(function (t) {
+      var dayStr = null;
+      if (t.appointment_at) {
+        var ad = new Date(t.appointment_at);
+        if (!isNaN(ad.getTime())) dayStr = hhDayStr(ad.getFullYear(), ad.getMonth() + 1, ad.getDate());
+      }
+      if (!dayStr && t.job_date) dayStr = String(t.job_date).slice(0, 10);
+      if (!dayStr) return;
+      var dev = [t.device_type, t.brand, t.model].filter(function (x) { return trim(x); }).join(' ');
+      add(dayStr, { kind: 'job', id: t.id, label: 'Guest job \u2014 ' + hhFirstName(t.customer_name), sub: dev || trim(t.issue) || 'Scheduled visit', time: t.appointment_at ? hhFmtClockTime(t.appointment_at) : '' });
+    });
+    (shifts || []).forEach(function (s) {
+      var mine = myId && s.claimed_by && String(s.claimed_by) === String(myId);
+      if (s.status !== 'open' && !mine) return;
+      add(String(s.shift_date || '').slice(0, 10), {
+        kind: mine ? 'shift-mine' : 'shift-open', id: s.id,
+        label: (mine ? 'Your shift' : 'Open shift') + ' \u2014 ' + hhFmtTimeOfDay(s.start_time) + ' &ndash; ' + hhFmtTimeOfDay(s.end_time),
+        sub: s.role_needed || s.note || ''
+      });
+    });
+    return map;
+  }
+
+  /* PURE: the Coming up list — every item from today forward,
+   * in date order, across all four sources. Birthdays project
+   * into this year and, once passed, next year. */
+  function hhComingUp(events, profiles, jobs, shifts, myId, fromDate, limit) {
+    var out = [];
+    var fromStr = hhDayStr(fromDate.getFullYear(), fromDate.getMonth() + 1, fromDate.getDate());
+    function push(dayStr, item) {
+      if (!dayStr || dayStr < fromStr) return;
+      item.day = dayStr;
+      out.push(item);
+    }
+    var spanEnd = new Date(fromDate); spanEnd.setDate(spanEnd.getDate() + 62);
+    for (var y = fromDate.getFullYear(); y <= spanEnd.getFullYear(); y++) {
+      for (var m = 1; m <= 12; m++) {
+        var part = hhMonthItems(y, m, events, profiles, jobs, shifts, myId);
+        Object.keys(part).forEach(function (ds) { part[ds].forEach(function (it) { push(ds, it); }); });
+      }
+    }
+    out.sort(function (a, b) {
+      if (a.day !== b.day) return a.day < b.day ? -1 : 1;
+      return String(a.label) < String(b.label) ? -1 : 1;
+    });
+    var seen = {}, dedup = [];
+    out.forEach(function (it) {
+      var k = it.day + '|' + it.kind + '|' + it.label;
+      if (seen[k]) return;
+      seen[k] = 1;
+      dedup.push(it);
+    });
+    return dedup.slice(0, limit || 8);
+  }
+
+  function loadHubHome(client) {
+    wireHubHome();
+    loadYourDay(client);
+    loadHomeShifts(client);
+    loadHomeCalendar(client);
+    loadHomeTips(client);
+    loadHomeDayoffs(client);
+  }
+
+  function wireHubHome() {
+    if (hhWired) return;
+    hhWired = true;
+    var shiftForm = $('portal-home-shift-form');
+    if (shiftForm) shiftForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      withClient(function (c) { if (c) saveHomeShift(c); });
+    });
+    var shiftCancel = $('portal-home-shift-cancel');
+    if (shiftCancel) shiftCancel.addEventListener('click', function () { $('portal-home-shift-form').hidden = true; });
+    var calForm = $('portal-home-cal-form');
+    if (calForm) calForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      withClient(function (c) { if (c) saveHomeCalEvent(c); });
+    });
+    var calCancel = $('portal-home-cal-cancel');
+    if (calCancel) calCancel.addEventListener('click', function () { $('portal-home-cal-form').hidden = true; hhEditingEventId = null; });
+    var tipForm = $('portal-home-tip-form');
+    if (tipForm) tipForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      withClient(function (c) { if (c) saveHomeTip(c); });
+    });
+    var tipAdd = $('portal-home-tip-add');
+    if (tipAdd) tipAdd.addEventListener('click', function () { openHomeTipEditor(null); });
+    var tipCancel = $('portal-home-tip-cancel');
+    if (tipCancel) tipCancel.addEventListener('click', function () { $('portal-home-tip-form').hidden = true; hhEditingTipId = null; });
+  }
+
+  /* ---- Your day ---- */
+  function loadYourDay(client) {
+    var box = $('portal-home-yourday');
+    if (!box || !state.user) return;
+    var myId = hhMyId();
+    var mineDone = false, openDone = false;
+    var myRows = [], openRows = null;
+    function render() {
+      if (!mineDone || !openDone) return;
+      renderYourDay(box, myRows, openRows, myId);
+    }
+    client.from('time_entries').select('*').eq('employee_id', myId).order('clock_in', { ascending: false }).limit(300)
+      .then(function (res) { myRows = res.error ? [] : (res.data || []); mineDone = true; render(); })
+      .catch(function () { myRows = []; mineDone = true; render(); });
+    client.from('time_entries').select('employee_id, employee_name, clock_in').is('clock_out', null).order('clock_in', { ascending: true })
+      .then(function (res) { openRows = res.error ? null : (res.data || []); openDone = true; render(); })
+      .catch(function () { openRows = null; openDone = true; render(); });
+  }
+
+  function renderYourDay(box, myRows, openRows, myId) {
+    var now = new Date();
+    var math = hhWeekMath(myRows, weekStart(), now);
+    var weekHrs = (math.closedMs + math.openMs) / 3600000;
+    var pct = Math.max(0, Math.min(100, (weekHrs / 40) * 100));
+    var html = '';
+    if (openRows && openRows.length) {
+      html += '<p class="portal-card-meta"><i class="fas fa-circle hh-on-dot"></i> <strong>On the clock now</strong></p>' +
+        openRows.map(function (r) {
+          return '<div class="tc-row"><span><strong>' + esc(r.employee_name || 'Associate') + '</strong></span>' +
+            '<span class="portal-muted">since ' + esc(hhFmtClockTime(r.clock_in)) + '</span></div>';
+        }).join('');
+    } else if (openRows) {
+      html += '<p class="portal-muted">Nobody is on the clock right now.</p>';
+    } else {
+      var mine = myRows.filter(function (r) { return !r.clock_out; });
+      html += mine.length
+        ? '<p class="portal-muted">You are on the clock since ' + esc(hhFmtClockTime(mine[0].clock_in)) + '.</p>'
+        : '<p class="portal-muted">You are off the clock.</p>';
+    }
+    html += '<div class="hh-weekrow"><div class="hh-hrs">' + esc((Math.round(weekHrs * 10) / 10).toString()) + ' <small>hrs</small></div>' +
+      '<div class="portal-muted">your hours this week &middot; of 40</div></div>' +
+      '<div class="hh-bar"><i style="width:' + pct.toFixed(1) + '%"></i></div>';
+    if (math.openSince) {
+      html += '<p class="hh-state"><i class="fas fa-clock"></i> You clocked in at <strong>' + esc(hhFmtClockTime(math.openSince.toISOString())) + '</strong> &middot; ' + esc(fmtHours(math.todayMs)) + ' today</p>';
+    } else if (math.todayMs > 0) {
+      html += '<p class="hh-state"><i class="fas fa-clock"></i> You worked ' + esc(fmtHours(math.todayMs)) + ' today and are off the clock now.</p>';
+    } else {
+      html += '<p class="hh-state"><i class="fas fa-clock"></i> No time logged yet today.</p>';
+    }
+    html += '<p class="portal-muted portal-small">Clock in, break, lunch, and clock out live in Time Clock.</p>';
+    box.innerHTML = html;
+  }
+
+  /* ---- Shift Center ---- */
+  function loadHomeShifts(client) {
+    client.from('portal_shifts').select('*').order('shift_date', { ascending: true }).order('start_time', { ascending: true }).limit(200)
+      .then(function (res) {
+        if (res.error) { hhShiftsMissing = true; hhShifts = []; renderHomeShifts(client); return; }
+        hhShiftsMissing = false;
+        hhShifts = res.data || [];
+        renderHomeShifts(client);
+      })
+      .catch(function () { hhShiftsMissing = true; hhShifts = []; renderHomeShifts(client); });
+  }
+
+  function renderHomeShifts(client) {
+    var tools = $('portal-home-shift-tools');
+    if (tools) {
+      tools.innerHTML = (!hhShiftsMissing && isAdminOrAbove())
+        ? '<p><button class="portal-btn portal-btn-primary" type="button" data-home-shift-add><i class="fas fa-plus"></i> Post an available shift</button></p>' : '';
+      var addBtn = tools.querySelector('[data-home-shift-add]');
+      if (addBtn) addBtn.addEventListener('click', function () {
+        var f = $('portal-home-shift-form');
+        if (f) { f.hidden = false; if (f.scrollIntoView) f.scrollIntoView({ block: 'nearest' }); }
+      });
+    }
+    var box = $('portal-home-shifts');
+    if (!box) return;
+    if (hhShiftsMissing) { box.innerHTML = '<p class="portal-muted">This section is not set up yet.</p>'; return; }
+    var today = homeTodayStr();
+    var myId = hhMyId();
+    var admin = isAdminOrAbove();
+    var upcoming = hhShifts.filter(function (s) { return String(s.shift_date) >= today; });
+    var open = upcoming.filter(function (s) { return s.status === 'open'; });
+    var mine = upcoming.filter(function (s) { return s.status === 'claimed' && myId && String(s.claimed_by) === String(myId); });
+    function chip(s) {
+      var pd = hhParseDay(s.shift_date);
+      var dow = pd ? HOME_DAYS_SHORT[new Date(pd.y, pd.m - 1, pd.d).getDay()] : '';
+      return '<div class="hh-chip"><div class="hh-chip-dow">' + esc(dow) + '</div><div class="hh-chip-num">' + (pd ? pd.d : '') + '</div></div>';
+    }
+    var html = '<p class="hh-sec">Available shifts</p>';
+    if (!open.length) {
+      html += '<p class="portal-muted">No shifts posted right now.</p>';
+    } else {
+      html += open.map(function (s) {
+        var h = '<div class="hh-shift">' + chip(s) + '<div class="hh-shift-what"><b>' + esc(hhFmtTimeOfDay(s.start_time)) + ' &ndash; ' + esc(hhFmtTimeOfDay(s.end_time)) + '</b>' +
+          '<span>' + esc(homeFmtDay(s.shift_date)) + (s.role_needed ? ' &middot; ' + esc(s.role_needed) : '') + (s.note ? ' &middot; ' + esc(s.note) : '') + '</span></div>';
+        h += '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-home-shift-claim="' + esc(s.id) + '">Claim</button>';
+        if (admin) h += ' <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-home-shift-del="' + esc(s.id) + '"><i class="fas fa-trash"></i> Delete</button>';
+        return h + '</div>';
+      }).join('');
+    }
+    html += '<p class="hh-sec">Your upcoming shifts</p>';
+    if (!mine.length) {
+      html += '<p class="portal-muted">You have no shifts claimed. Claim one above and it lands here.</p>';
+    } else {
+      html += mine.map(function (s) {
+        var isToday = String(s.shift_date) === today;
+        var h = '<div class="hh-shift">' + chip(s) + '<div class="hh-shift-what"><b>' + esc(hhFmtTimeOfDay(s.start_time)) + ' &ndash; ' + esc(hhFmtTimeOfDay(s.end_time)) + '</b>' +
+          '<span>' + esc(homeFmtDay(s.shift_date)) + (s.role_needed ? ' &middot; ' + esc(s.role_needed) : '') + (s.note ? ' &middot; ' + esc(s.note) : '') + '</span></div>';
+        h += isToday ? '<span class="hh-mine">Today</span>' : '<span class="hh-mine">Yours</span>';
+        h += ' <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-home-shift-offer="' + esc(s.id) + '">Offer back</button>';
+        if (admin) h += ' <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-home-shift-del="' + esc(s.id) + '"><i class="fas fa-trash"></i> Delete</button>';
+        return h + '</div>';
+      }).join('');
+    }
+    var msg = $('portal-home-shift-msg');
+    box.innerHTML = html;
+    box.querySelectorAll('[data-home-shift-claim]').forEach(function (b) {
+      b.addEventListener('click', function () { claimHomeShift(client, this); });
+    });
+    box.querySelectorAll('[data-home-shift-offer]').forEach(function (b) {
+      b.addEventListener('click', function () { offerHomeShift(client, this); });
+    });
+    if (admin) box.querySelectorAll('[data-home-shift-del]').forEach(function (b) {
+      b.addEventListener('click', function () { deleteHomeShift(client, this); });
+    });
+    if (msg && msg.getAttribute('data-keep') === '1') { msg.removeAttribute('data-keep'); }
+  }
+
+  function homeShiftMsg(text) {
+    var msg = $('portal-home-shift-msg');
+    if (!msg) return;
+    msg.textContent = text || '';
+    msg.hidden = !text;
+    if (text) msg.setAttribute('data-keep', '1');
+  }
+
+  /* The claim is ONE conditional update: it only lands while
+   * the row is still open, so first come really is first
+   * served — a second claim updates zero rows and the tapper
+   * gets a plain word about it, never a silent double-book. */
+  function claimHomeShift(client, btn) {
+    var id = btn.getAttribute('data-home-shift-claim');
+    btn.disabled = true;
+    btn.textContent = 'Claiming&hellip;';
+    client.from('portal_shifts').update({
+      status: 'claimed', claimed_by: hhMyId(), claimed_by_name: hhMyName(),
+      claimed_at: new Date().toISOString(), updated_at: new Date().toISOString()
+    }).eq('id', id).eq('status', 'open').select('id')
+      .then(function (res) {
+        if (res.error) { homeShiftMsg('Could not claim that shift. Try again.'); loadHomeShifts(client); return; }
+        if (!res.data || !res.data.length) {
+          homeShiftMsg('That shift was just claimed by someone else.');
+          loadHomeShifts(client);
+          return;
+        }
+        homeShiftMsg('That shift is yours.');
+        loadHomeShifts(client);
+        loadHomeCalendar(client);
+      })
+      .catch(function () { homeShiftMsg('Could not claim that shift. Try again.'); loadHomeShifts(client); });
+  }
+
+  function offerHomeShift(client, btn) {
+    var id = btn.getAttribute('data-home-shift-offer');
+    btn.disabled = true;
+    client.from('portal_shifts').update({
+      status: 'open', claimed_by: null, claimed_by_name: null, claimed_at: null,
+      updated_at: new Date().toISOString()
+    }).eq('id', id).eq('claimed_by', hhMyId()).select('id')
+      .then(function (res) {
+        if (res.error || !res.data || !res.data.length) { homeShiftMsg('Could not offer that shift back. Try again.'); loadHomeShifts(client); return; }
+        homeShiftMsg('That shift is back on the board for the team.');
+        loadHomeShifts(client);
+        loadHomeCalendar(client);
+      })
+      .catch(function () { homeShiftMsg('Could not offer that shift back. Try again.'); loadHomeShifts(client); });
+  }
+
+  function saveHomeShift(client) {
+    var err = $('portal-home-shift-error');
+    err.hidden = true; err.textContent = '';
+    var day = trim($('portal-home-shift-date').value);
+    var start = trim($('portal-home-shift-start').value);
+    var end = trim($('portal-home-shift-end').value);
+    if (!day) { err.textContent = 'Pick the shift date.'; err.hidden = false; return; }
+    if (!start || !end) { err.textContent = 'Give the shift a start and an end time.'; err.hidden = false; return; }
+    var row = {
+      shift_date: day, start_time: start, end_time: end,
+      role_needed: trim($('portal-home-shift-role').value) || null,
+      note: trim($('portal-home-shift-note').value) || null,
+      posted_by: hhMyId(), posted_by_name: hhMyName()
+    };
+    var btn = $('portal-home-shift-submit');
+    var oldHtml = btn.innerHTML;
+    btn.disabled = true;
+    client.from('portal_shifts').insert(row).then(function (res) {
+      btn.disabled = false; btn.innerHTML = oldHtml;
+      if (res.error) { err.textContent = 'Couldn&rsquo;t post that shift: ' + res.error.message; err.hidden = false; return; }
+      $('portal-home-shift-form').hidden = true;
+      homeShiftMsg('Shift posted.');
+      loadHomeShifts(client);
+      loadHomeCalendar(client);
+    }).catch(function () {
+      btn.disabled = false; btn.innerHTML = oldHtml;
+      err.textContent = 'Couldn&rsquo;t post that shift. Try again.'; err.hidden = false;
+    });
+  }
+
+  function deleteHomeShift(client, btn) {
+    var id = btn.getAttribute('data-home-shift-del');
+    if (!isAdminOrAbove()) return;
+    if (btn.getAttribute('data-confirm') !== '1') {
+      btn.setAttribute('data-confirm', '1');
+      btn.innerHTML = '<i class="fas fa-trash"></i> Confirm delete?';
+      return;
+    }
+    btn.disabled = true;
+    client.from('portal_shifts').delete().eq('id', id).then(function (res) {
+      if (res.error) {
+        btn.disabled = false;
+        btn.removeAttribute('data-confirm');
+        btn.innerHTML = '<i class="fas fa-trash"></i> Delete';
+        return;
+      }
+      loadHomeShifts(client);
+      loadHomeCalendar(client);
+    }).catch(function () { btn.disabled = false; });
+  }
+
+  /* ---- Shared Calendar ---- */
+  function loadHomeCalendar(client) {
+    var now = new Date();
+    if (hhCalYear === null) { hhCalYear = now.getFullYear(); hhCalMonth = now.getMonth() + 1; }
+    var jobsDone = false, evDone = false, profDone = false, shDone = false;
+    function render() { if (jobsDone && evDone && profDone && shDone) renderHomeCalendar(client); }
+    client.from('portal_calendar_events').select('*').order('event_date', { ascending: true }).limit(300)
+      .then(function (res) {
+        if (res.error) { hhCalEventsMissing = true; hhCalEvents = []; } else { hhCalEventsMissing = false; hhCalEvents = res.data || []; }
+        evDone = true; render();
+      })
+      .catch(function () { hhCalEventsMissing = true; hhCalEvents = []; evDone = true; render(); });
+    client.from('employee_profiles').select('id, name, birthday').limit(200)
+      .then(function (res) { hhCalProfiles = res.error ? [] : (res.data || []); profDone = true; render(); })
+      .catch(function () { hhCalProfiles = []; profDone = true; render(); });
+    var fromIso = new Date(hhCalYear, hhCalMonth - 2, 1).toISOString();
+    var toIso = new Date(hhCalYear, hhCalMonth + 1, 1).toISOString();
+    var jdFrom = hhDayStr(hhCalYear, hhCalMonth - 1 < 1 ? 12 : hhCalMonth - 1, 1);
+    if (hhCalMonth - 1 < 1) jdFrom = hhDayStr(hhCalYear - 1, 12, 1);
+    var jdToD = new Date(hhCalYear, hhCalMonth + 1, 1);
+    var jdTo = hhDayStr(jdToD.getFullYear(), jdToD.getMonth() + 1, 1);
+    var jobRows = null, jobDateRows = null;
+    function jobsRender() {
+      if (jobRows === null || jobDateRows === null) return;
+      var seenJ = {}, merged = [];
+      jobRows.concat(jobDateRows).forEach(function (t) {
+        if (t.status === 'Job Complete' || seenJ[t.id]) return;
+        seenJ[t.id] = 1;
+        merged.push(t);
+      });
+      hhCalJobs = merged;
+      jobsDone = true; render();
+    }
+    client.from('tickets').select('id, customer_name, device_type, brand, model, issue, status, appointment_at, job_date')
+      .gte('appointment_at', fromIso).lt('appointment_at', toIso).limit(300)
+      .then(function (res) { jobRows = res.error ? [] : (res.data || []); jobsRender(); })
+      .catch(function () { jobRows = []; jobsRender(); });
+    client.from('tickets').select('id, customer_name, device_type, brand, model, issue, status, appointment_at, job_date')
+      .gte('job_date', jdFrom).lt('job_date', jdTo).limit(300)
+      .then(function (res) { jobDateRows = res.error ? [] : (res.data || []); jobsRender(); })
+      .catch(function () { jobDateRows = []; jobsRender(); });
+    client.from('portal_shifts').select('*').order('shift_date', { ascending: true }).limit(200)
+      .then(function (res) { if (!res.error) hhShifts = res.data || []; shDone = true; render(); })
+      .catch(function () { shDone = true; render(); });
+  }
+
+  var HH_CAL_KIND_LABEL = { 'event-outing': 'Outing', 'event-special': 'Special day', 'event-dayoff': 'Day off', 'event-note': 'Note', birthday: 'Birthday', job: 'Guest job', 'shift-mine': 'Your shift', 'shift-open': 'Open shift' };
+  var HH_CAL_DOT = { 'event-outing': 'hh-dot-outing', 'event-special': 'hh-dot-special', 'event-dayoff': 'hh-dot-dayoff', 'event-note': 'hh-dot-note', birthday: 'hh-dot-birthday', job: 'hh-dot-job', 'shift-mine': 'hh-dot-shift', 'shift-open': 'hh-dot-shift' };
+
+  function renderHomeCalendar(client) {
+    var tools = $('portal-home-cal-tools');
+    if (tools) {
+      tools.innerHTML = (!hhCalEventsMissing && isAdminOrAbove())
+        ? '<p><button class="portal-btn portal-btn-primary" type="button" data-home-cal-add><i class="fas fa-plus"></i> Add to the calendar</button></p>' : '';
+      var addBtn = tools.querySelector('[data-home-cal-add]');
+      if (addBtn) addBtn.addEventListener('click', function () { openHomeCalEditor(null); });
+    }
+    var box = $('portal-home-calendar');
+    if (!box) return;
+    if (hhCalEventsMissing) { box.innerHTML = '<p class="portal-muted">This section is not set up yet.</p>'; return; }
+    var y = hhCalYear, m = hhCalMonth;
+    var items = hhMonthItems(y, m, hhCalEvents, hhCalProfiles, hhCalJobs, hhShifts, hhMyId());
+    var monthName = new Date(y, m - 1, 1).toLocaleDateString([], { month: 'long' });
+    var firstDow = new Date(y, m - 1, 1).getDay();
+    var daysInMonth = new Date(y, m, 0).getDate();
+    var todayStr = homeTodayStr();
+    var html = '<div class="hh-cal-head"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-home-cal-prev aria-label="Previous month"><i class="fas fa-chevron-left"></i></button>' +
+      '<span class="hh-cal-mo">' + esc(monthName) + ' <span class="hh-cal-yr">' + y + '</span></span>' +
+      '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-home-cal-next aria-label="Next month"><i class="fas fa-chevron-right"></i></button></div>';
+    html += '<div class="hh-cal-grid"><div class="hh-cal-dow-row">' + HOME_DAYS_SHORT.map(function (d) { return '<span>' + d + '</span>'; }).join('') + '</div>';
+    html += '<div class="hh-cal-week">';
+    for (var i = 0; i < firstDow; i++) html += '<span class="hh-cal-cell hh-cal-blank"></span>';
+    for (var d = 1; d <= daysInMonth; d++) {
+      var ds = hhDayStr(y, m, d);
+      var dayItems = items[ds] || [];
+      var isDayoff = dayItems.some(function (it) { return it.kind === 'event-dayoff'; });
+      var dots = dayItems.slice(0, 3).map(function (it) { return '<i class="hh-dot ' + (HH_CAL_DOT[it.kind] || 'hh-dot-note') + '"></i>'; }).join('');
+      html += '<button class="hh-cal-cell' + (ds === todayStr ? ' hh-cal-today' : '') + (isDayoff ? ' hh-cal-dayoff' : '') + (ds === hhCalSelected ? ' hh-cal-sel' : '') + '" type="button" data-home-cal-day="' + ds + '">' +
+        '<span class="hh-cal-num">' + d + '</span>' + (dots ? '<span class="hh-cal-dots">' + dots + '</span>' : '') + '</button>';
+      if ((firstDow + d) % 7 === 0 && d < daysInMonth) html += '</div><div class="hh-cal-week">';
+    }
+    html += '</div></div>';
+    html += '<p class="portal-small portal-muted hh-cal-legend"><span><i class="hh-dot hh-dot-outing"></i> Outing</span> <span><i class="hh-dot hh-dot-birthday"></i> Birthday</span> <span><i class="hh-dot hh-dot-dayoff"></i> Day off</span> <span><i class="hh-dot hh-dot-job"></i> Guest job</span> <span><i class="hh-dot hh-dot-shift"></i> Shift</span></p>';
+    if (hhCalSelected && items[hhCalSelected] && items[hhCalSelected].length) {
+      html += '<div class="hh-cal-daydetail"><p class="portal-card-meta"><strong>' + esc(homeFmtDay(hhCalSelected)) + '</strong></p>' +
+        items[hhCalSelected].map(function (it) {
+          return '<div class="p2-line"><div class="p2-line-main"><span class="p2-line-amt">' + esc(HH_CAL_KIND_LABEL[it.kind] || 'Event') + '</span> &mdash; <span>' + esc(it.label) + '</span>' +
+            (it.time ? '<br /><span class="portal-muted portal-small">' + esc(it.time) + '</span>' : '') +
+            (it.sub ? '<br /><span class="portal-muted portal-small">' + esc(it.sub) + '</span>' : '') + '</div></div>';
+        }).join('') + '</div>';
+    }
+    var up = hhComingUp(hhCalEvents, hhCalProfiles, hhCalJobs, hhShifts, hhMyId(), new Date(), 8);
+    html += '<p class="hh-sec">Coming up</p>';
+    if (!up.length) {
+      html += '<p class="portal-muted">Nothing on the calendar right now.</p>';
+    } else {
+      html += up.map(function (it) {
+        var line = '<div class="p2-line"><div class="p2-line-main"><span class="p2-line-amt">' + esc(homeFmtDay(it.day)) + '</span> &mdash; <span>' + esc(it.label) + '</span>' +
+          (it.sub ? '<br /><span class="portal-muted portal-small">' + esc(it.sub) + '</span>' : '') + '</div>';
+        if (isAdminOrAbove() && String(it.kind).indexOf('event-') === 0) {
+          line += '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-home-cal-edit="' + esc(it.id) + '"><i class="fas fa-pen"></i> Edit</button> ' +
+            '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-home-cal-del="' + esc(it.id) + '"><i class="fas fa-trash"></i> Delete</button>';
+        }
+        return line + '</div>';
+      }).join('');
+    }
+    box.innerHTML = html;
+    var prev = box.querySelector('[data-home-cal-prev]');
+    if (prev) prev.addEventListener('click', function () {
+      hhCalMonth--; if (hhCalMonth < 1) { hhCalMonth = 12; hhCalYear--; }
+      hhCalSelected = null; loadHomeCalendar(client);
+    });
+    var next = box.querySelector('[data-home-cal-next]');
+    if (next) next.addEventListener('click', function () {
+      hhCalMonth++; if (hhCalMonth > 12) { hhCalMonth = 1; hhCalYear++; }
+      hhCalSelected = null; loadHomeCalendar(client);
+    });
+    box.querySelectorAll('[data-home-cal-day]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var ds = this.getAttribute('data-home-cal-day');
+        hhCalSelected = (hhCalSelected === ds) ? null : ds;
+        renderHomeCalendar(client);
+      });
+    });
+    if (isAdminOrAbove()) {
+      box.querySelectorAll('[data-home-cal-edit]').forEach(function (b) {
+        b.addEventListener('click', function () { openHomeCalEditor(this.getAttribute('data-home-cal-edit')); });
+      });
+      box.querySelectorAll('[data-home-cal-del]').forEach(function (b) {
+        b.addEventListener('click', function () { deleteHomeCalEvent(client, this); });
+      });
+    }
+  }
+
+  function openHomeCalEditor(id) {
+    var form = $('portal-home-cal-form');
+    if (!form) return;
+    hhEditingEventId = id || null;
+    var row = null;
+    if (id) hhCalEvents.forEach(function (ev) { if (String(ev.id) === String(id)) row = ev; });
+    $('portal-home-cal-form-title').textContent = row ? 'Edit calendar item' : 'Add to the calendar';
+    $('portal-home-cal-kind').value = row ? (row.kind || 'note') : 'note';
+    $('portal-home-cal-title').value = row ? (row.title || '') : '';
+    $('portal-home-cal-date').value = row ? (row.event_date || '') : '';
+    $('portal-home-cal-end').value = row ? (row.end_date || '') : '';
+    $('portal-home-cal-note').value = row ? (row.note || '') : '';
+    $('portal-home-cal-submit').innerHTML = row ? '<i class="fas fa-check"></i> Save item' : '<i class="fas fa-plus"></i> Add item';
+    $('portal-home-cal-cancel').hidden = !row;
+    $('portal-home-cal-error').hidden = true;
+    form.hidden = false;
+    if (form.scrollIntoView) form.scrollIntoView({ block: 'nearest' });
+  }
+
+  function saveHomeCalEvent(client) {
+    var err = $('portal-home-cal-error');
+    err.hidden = true; err.textContent = '';
+    var title = trim($('portal-home-cal-title').value);
+    var day = trim($('portal-home-cal-date').value);
+    if (!title) { err.textContent = 'Give the day a title.'; err.hidden = false; return; }
+    if (!day) { err.textContent = 'Pick the date.'; err.hidden = false; return; }
+    var endDay = trim($('portal-home-cal-end').value);
+    if (endDay && endDay < day) { err.textContent = 'The end date is before the start date.'; err.hidden = false; return; }
+    var row = {
+      kind: $('portal-home-cal-kind').value,
+      title: title, event_date: day,
+      end_date: endDay || null,
+      note: trim($('portal-home-cal-note').value) || null,
+      updated_at: new Date().toISOString()
+    };
+    var btn = $('portal-home-cal-submit');
+    var oldHtml = btn.innerHTML;
+    btn.disabled = true;
+    var saveReq = hhEditingEventId
+      ? client.from('portal_calendar_events').update(row).eq('id', hhEditingEventId)
+      : client.from('portal_calendar_events').insert(Object.assign({ created_by: hhMyId(), created_by_name: hhMyName() }, row));
+    saveReq.then(function (res) {
+      btn.disabled = false; btn.innerHTML = oldHtml;
+      if (res.error) { err.textContent = 'Couldn&rsquo;t save that item: ' + res.error.message; err.hidden = false; return; }
+      $('portal-home-cal-form').hidden = true;
+      hhEditingEventId = null;
+      loadHomeCalendar(client);
+      loadHomeDayoffs(client);
+    }).catch(function () {
+      btn.disabled = false; btn.innerHTML = oldHtml;
+      err.textContent = 'Couldn&rsquo;t save that item. Try again.'; err.hidden = false;
+    });
+  }
+
+  function deleteHomeCalEvent(client, btn) {
+    var id = btn.getAttribute('data-home-cal-del');
+    if (!isAdminOrAbove()) return;
+    if (btn.getAttribute('data-confirm') !== '1') {
+      btn.setAttribute('data-confirm', '1');
+      btn.innerHTML = '<i class="fas fa-trash"></i> Confirm delete?';
+      return;
+    }
+    btn.disabled = true;
+    client.from('portal_calendar_events').delete().eq('id', id).then(function (res) {
+      if (res.error) {
+        btn.disabled = false;
+        btn.removeAttribute('data-confirm');
+        btn.innerHTML = '<i class="fas fa-trash"></i> Delete';
+        return;
+      }
+      loadHomeCalendar(client);
+      loadHomeDayoffs(client);
+    }).catch(function () { btn.disabled = false; });
+  }
+
+  /* The Holidays block's union feed: dayoff-kind calendar
+   * events join portal_home_holidays rows in that block, so a
+   * day off entered on the calendar shows there too (entered
+   * once). Calendar rows are edited on the calendar, not here;
+   * the holidays table and its editor are untouched. */
+  function loadHomeDayoffs(client) {
+    client.from('portal_calendar_events').select('*').eq('kind', 'dayoff').order('event_date', { ascending: true }).limit(200)
+      .then(function (res) {
+        hhDayoffEvents = res.error ? [] : (res.data || []);
+        if (typeof renderHomeHolidays === 'function') renderHomeHolidays(client);
+      })
+      .catch(function () { hhDayoffEvents = []; });
+  }
+
+  /* ---- Tips of the Day ---- */
+  function loadHomeTips(client) {
+    client.from('portal_home_tips').select('*').order('created_at', { ascending: true }).limit(500)
+      .then(function (res) {
+        if (res.error) { hhTipsMissing = true; hhTips = []; renderHomeTips(client); return; }
+        hhTipsMissing = false;
+        hhTips = res.data || [];
+        renderHomeTips(client);
+      })
+      .catch(function () { hhTipsMissing = true; hhTips = []; renderHomeTips(client); });
+  }
+
+  function hhTipCardHtml(kind, tip) {
+    var icon = kind === 'repair' ? 'fa-screwdriver-wrench' : 'fa-helmet-safety';
+    var title = kind === 'repair' ? 'Repair Tip of the Day' : 'Safety Tip of the Day';
+    return '<article class="portal-card hh-tip-card"><p class="portal-card-title"><i class="fas ' + icon + '"></i> ' + title + '</p>' +
+      (tip.title ? '<p class="hh-tip-title">' + esc(tip.title) + '</p>' : '') +
+      '<p class="portal-card-issue home-prewrap">' + esc(tip.text) + '</p></article>';
+  }
+
+  function renderHomeTips(client) {
+    var wrap = $('portal-home-tips');
+    var repairTip = hhTipsMissing ? null : hhTipFor(hhTips, 'repair', new Date());
+    var safetyTip = hhTipsMissing ? null : hhTipFor(hhTips, 'safety', new Date());
+    if (wrap) {
+      if (!repairTip && !safetyTip) {
+        wrap.innerHTML = '';
+        var sec = $('portal-home-tips-section');
+        if (sec) sec.hidden = true;
+      } else {
+        var sec2 = $('portal-home-tips-section');
+        if (sec2) sec2.hidden = false;
+        wrap.innerHTML = (repairTip ? hhTipCardHtml('repair', repairTip) : '') + (safetyTip ? hhTipCardHtml('safety', safetyTip) : '');
+      }
+    }
+    var tools = $('portal-home-tips-tools');
+    if (tools) {
+      tools.innerHTML = (!hhTipsMissing && isAdminOrAbove())
+        ? '<p><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-home-tips-manage><i class="fas fa-list"></i> Manage the tip bank</button></p>' : '';
+      var mBtn = tools.querySelector('[data-home-tips-manage]');
+      if (mBtn) mBtn.addEventListener('click', function () {
+        var mg = $('portal-home-tips-manage');
+        if (mg) { mg.hidden = !mg.hidden; if (!mg.hidden) renderHomeTipsManage(client); }
+      });
+    }
+  }
+
+  function renderHomeTipsManage(client) {
+    var list = $('portal-home-tips-list');
+    if (!list) return;
+    if (!hhTips.length) { list.innerHTML = '<p class="portal-muted">The tip bank is empty.</p>'; return; }
+    list.innerHTML = hhTips.map(function (t) {
+      var html = '<div class="p2-line"><div class="p2-line-main"><span class="p2-line-amt">' + (t.kind === 'repair' ? 'Repair' : 'Safety') + (t.active === false ? ' &middot; Off' : '') + '</span>' +
+        (t.title ? ' &mdash; <strong>' + esc(t.title) + '</strong>' : '') +
+        '<br /><span class="portal-muted portal-small">' + esc(t.text) + '</span></div>';
+      html += '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-home-tip-toggle="' + esc(t.id) + '">' + (t.active === false ? 'Turn on' : 'Turn off') + '</button> ' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-home-tip-edit="' + esc(t.id) + '"><i class="fas fa-pen"></i> Edit</button> ' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-home-tip-del="' + esc(t.id) + '"><i class="fas fa-trash"></i> Delete</button>';
+      return html + '</div>';
+    }).join('');
+    list.querySelectorAll('[data-home-tip-toggle]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var id = this.getAttribute('data-home-tip-toggle');
+        var tip = null;
+        hhTips.forEach(function (t) { if (String(t.id) === String(id)) tip = t; });
+        if (!tip) return;
+        client.from('portal_home_tips').update({ active: tip.active === false, updated_at: new Date().toISOString() }).eq('id', id)
+          .then(function () { loadHomeTips(client); renderHomeTipsManage(client); })
+          .catch(function () { loadHomeTips(client); });
+      });
+    });
+    list.querySelectorAll('[data-home-tip-edit]').forEach(function (b) {
+      b.addEventListener('click', function () { openHomeTipEditor(this.getAttribute('data-home-tip-edit')); });
+    });
+    list.querySelectorAll('[data-home-tip-del]').forEach(function (b) {
+      b.addEventListener('click', function () { deleteHomeTip(client, this); });
+    });
+  }
+
+  function openHomeTipEditor(id) {
+    var form = $('portal-home-tip-form');
+    if (!form) return;
+    hhEditingTipId = id || null;
+    var tip = null;
+    if (id) hhTips.forEach(function (t) { if (String(t.id) === String(id)) tip = t; });
+    $('portal-home-tip-form-title').textContent = tip ? 'Edit tip' : 'Add a tip';
+    $('portal-home-tip-kind').value = tip ? (tip.kind || 'repair') : 'repair';
+    $('portal-home-tip-title').value = tip ? (tip.title || '') : '';
+    $('portal-home-tip-text').value = tip ? (tip.text || '') : '';
+    $('portal-home-tip-submit').innerHTML = tip ? '<i class="fas fa-check"></i> Save tip' : '<i class="fas fa-plus"></i> Add tip';
+    $('portal-home-tip-cancel').hidden = !tip;
+    $('portal-home-tip-error').hidden = true;
+    form.hidden = false;
+    if (form.scrollIntoView) form.scrollIntoView({ block: 'nearest' });
+  }
+
+  function saveHomeTip(client) {
+    var err = $('portal-home-tip-error');
+    err.hidden = true; err.textContent = '';
+    var text = trim($('portal-home-tip-text').value);
+    if (!text) { err.textContent = 'Write the tip first.'; err.hidden = false; return; }
+    var row = {
+      kind: $('portal-home-tip-kind').value,
+      title: trim($('portal-home-tip-title').value) || null,
+      text: text,
+      updated_at: new Date().toISOString()
+    };
+    var btn = $('portal-home-tip-submit');
+    var oldHtml = btn.innerHTML;
+    btn.disabled = true;
+    var saveReq = hhEditingTipId
+      ? client.from('portal_home_tips').update(row).eq('id', hhEditingTipId)
+      : client.from('portal_home_tips').insert(Object.assign({ created_by: hhMyId(), created_by_name: hhMyName() }, row));
+    saveReq.then(function (res) {
+      btn.disabled = false; btn.innerHTML = oldHtml;
+      if (res.error) { err.textContent = 'Couldn&rsquo;t save that tip: ' + res.error.message; err.hidden = false; return; }
+      $('portal-home-tip-form').hidden = true;
+      hhEditingTipId = null;
+      loadHomeTips(client);
+      renderHomeTipsManage(client);
+    }).catch(function () {
+      btn.disabled = false; btn.innerHTML = oldHtml;
+      err.textContent = 'Couldn&rsquo;t save that tip. Try again.'; err.hidden = false;
+    });
+  }
+
+  function deleteHomeTip(client, btn) {
+    var id = btn.getAttribute('data-home-tip-del');
+    if (!isAdminOrAbove()) return;
+    if (btn.getAttribute('data-confirm') !== '1') {
+      btn.setAttribute('data-confirm', '1');
+      btn.innerHTML = '<i class="fas fa-trash"></i> Confirm delete?';
+      return;
+    }
+    btn.disabled = true;
+    client.from('portal_home_tips').delete().eq('id', id).then(function (res) {
+      if (res.error) {
+        btn.disabled = false;
+        btn.removeAttribute('data-confirm');
+        btn.innerHTML = '<i class="fas fa-trash"></i> Delete';
+        return;
+      }
+      loadHomeTips(client);
+      renderHomeTipsManage(client);
+    }).catch(function () { btn.disabled = false; });
+  }
+  /* ================= end HUB_HOME_2026_11_09 ================= */
+
 
   /* ================= EXTRA TABS (timeclock / links / square) ================= */
   var EXTRA_LOADERS = { timeclock: loadTimeClock, checkin: loadCheckinCustomers, mileage: loadMileage /* PORTAL_MILEAGE_2026_11_02 */ }; /* CUSTOM_ACTION_BUTTONS_2026_11_04: the Links panel no longer pulls anything in — custom buttons render in the sidebar at sign-in (loadCustomActionButtons), so the old links loader entry is gone. */
