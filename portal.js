@@ -178,6 +178,14 @@
     }
   }
 
+  /* CUSTOM_BAR_2026_11_09 (v64): the PORTAL_APP module at the end
+     of this file owns the customizable thumb bar and needs the
+     portal's own client for the per-associate prefs row — the
+     same one-client rule as everywhere else (a second client on
+     the same storage key would fight over the refresh token).
+     Expose the fetcher, nothing else. */
+  window.portalWithClient = withClient;
+
   /* ---------------- small helpers ---------------- */
   function $(id) { return document.getElementById(id); }
 
@@ -17687,41 +17695,572 @@ function loadTicketThread(client, ticketId) {
      applyRoleNav() writes each tab's display from tabAllowed(), and
      activateTab()/showExtraPanel() write each tab's .active class.
      A MutationObserver over those two attributes keeps the mirror
-     exact — the role rules themselves are never reimplemented. */
+     exact — the role rules themselves are never reimplemented.
+   - CUSTOM_BAR_2026_11_09 (v64): the bar's contents are now
+     per associate — long-press or the Search panel's
+     Customize row opens an edit mode with drag and drop,
+     persisted per associate in public.portal_bar_prefs. See
+     the CUSTOM_BAR section inside this module. The v61 five
+     remain the default bar for anyone who never customizes. */
 (function () {
   'use strict';
   function $(id) { return document.getElementById(id); }
 
-  /* ---------- thumb bar: mirror + click-through ---------- */
-  var THUMB_TABS = ['customers', 'tickets', 'teamchat', 'timeclock'];
-  function syncThumb() {
-    THUMB_TABS.forEach(function (key) {
-      var side = $('portal-tab-' + key);
-      var item = document.querySelector('.portal-thumb-item[data-thumb="' + key + '"]');
-      if (!side || !item) return;
-      item.style.display = window.getComputedStyle(side).display === 'none' ? 'none' : '';
+  /* ---------- CUSTOM_BAR_2026_11_09 (v64): the bar is yours ----------
+     Austin, Nov 9, 2026: "Make it customizable where I can drag
+     and drop my favorite tabs in the control thumb bar." The v61
+     five (Guest, Queue, Team Chat, Time Clock, Pay) are now the
+     DEFAULT bar — what an associate who never customizes gets,
+     byte for byte in behavior. Every associate can reshape their
+     own bar two ways in: a long-press (~450ms) on any bar item,
+     or the "Customize thumb bar" row pinned at the foot of the
+     Hub Search panel. In edit mode the items jiggle with a remove
+     badge, an Available tabs tray rises above the bar, and items
+     drag — along the bar to reorder, up from the tray to add,
+     down to the tray (or the badge) to remove. His Apple rules
+     are hard limits in the logic, not hints: MAX 5 items, MIN 1.
+     Done saves; the tray's X cancels back to the pre-edit bar.
+     Persistence is per associate in public.portal_bar_prefs
+     (bar-prefs.sql; own-row RLS), mirrored to localStorage for an
+     instant paint on the next sign-in; the database row wins when
+     it lands. ANY failure — table missing, offline, bad JSON,
+     saved ids the role can no longer see — degrades to the
+     filtered or default bar; the bar never renders empty or
+     broken, and role-hidden saved ids are skipped at render,
+     never deleted. The bar still owns no permission logic: item
+     taps click the real sidebar tabs, and tabAllowed() still
+     governs every panel. */
+
+  /* ----- pure logic (no DOM below this line in the block) ----- */
+  /* BAR_LOGIC_BEGIN */
+  var PortalBarLogic = (function () {
+    var MAX = 5, MIN = 1;
+    var DEFAULTS = ['customers', 'tickets', 'teamchat', 'timeclock', 'pay'];
+    function uniq(list) {
+      var seen = {}, out = [];
+      (list || []).forEach(function (id) {
+        if (typeof id === 'string' && id && !seen[id]) { seen[id] = 1; out.push(id); }
+      });
+      return out;
+    }
+    /* A stored list becomes a renderable one: known ids only
+       ('pay' or a sidebar data-tab the caller vouches for),
+       deduped, capped at MAX, and the defaults when nothing
+       usable survives — the bar can never sanitize to empty. */
+    function sanitize(raw, isKnown) {
+      var list = uniq(Array.isArray(raw) ? raw : []).filter(function (id) {
+        return id === 'pay' || isKnown(id);
+      });
+      if (list.length > MAX) list = list.slice(0, MAX);
+      if (!list.length) list = DEFAULTS.filter(function (id) { return id === 'pay' || isKnown(id); });
+      if (!list.length) list = DEFAULTS.slice();
+      return list;
+    }
+    function visibleOnly(list, isVisible) {
+      return (list || []).filter(function (id) { return id === 'pay' || isVisible(id); });
+    }
+    function reorder(list, from, to) {
+      var out = (list || []).slice();
+      if (from < 0 || from >= out.length) return out;
+      var item = out.splice(from, 1)[0];
+      if (to < 0) to = 0;
+      if (to > out.length) to = out.length;
+      out.splice(to, 0, item);
+      return out;
+    }
+    function insertAt(list, id, idx) {
+      var out = (list || []).slice();
+      if (out.indexOf(id) !== -1) return { list: out, ok: false, reason: 'present' };
+      if (out.length >= MAX) return { list: out, ok: false, reason: 'full' };
+      if (idx == null || idx < 0 || idx > out.length) idx = out.length;
+      out.splice(idx, 0, id);
+      return { list: out, ok: true };
+    }
+    function removeId(list, id) {
+      var out = (list || []).slice();
+      var i = out.indexOf(id);
+      if (i === -1) return { list: out, ok: false, reason: 'absent' };
+      if (out.length <= MIN) return { list: out, ok: false, reason: 'last' };
+      out.splice(i, 1);
+      return { list: out, ok: true };
+    }
+    return { MAX: MAX, MIN: MIN, DEFAULTS: DEFAULTS, sanitize: sanitize, visibleOnly: visibleOnly, reorder: reorder, insertAt: insertAt, removeId: removeId };
+  })();
+  /* BAR_LOGIC_END */
+
+  /* ----- DOM layer ----- */
+  function barEsc(v) {
+    return String(v == null ? '' : v)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  /* Short bar labels for the known tabs (the sidebar's own labels
+     are action-button long: "New Service Request" would never fit
+     a thumb target). Unknown ids — Setup's custom buttons — fall
+     back to the first two words of their sidebar label. */
+  var BAR_SHORT_LABELS = {
+    home: 'Home', checkin: 'New Request', scanin: 'Scan In', tickets: 'Queue',
+    customers: 'Guest', guestchat: 'Guest Chat', members: 'Members',
+    documents: 'Documents', warranty: 'Warranty', inventory: 'Inventory',
+    links: 'Links', prices: 'Prices', guides: 'Guides', tracking: 'Tracking',
+    teamchat: 'Team Chat', requests: 'Requests', timeclock: 'Time Clock',
+    mileage: 'Mileage', associateaccounts: 'Accounts', investors: 'Investors',
+    feedback: 'Feedback', square: 'Square', newhires: 'Onboarding',
+    teamdocs: 'Team Docs', applications: 'Applications', setup: 'Setup',
+    financials: 'Financials', payroll: 'Payroll', pay: 'Pay'
+  };
+  var PAY_META = { id: 'pay', label: 'Pay', full: 'Pay — open Square', icon: 'fas fa-credit-card' };
+
+  var barState = {
+    uid: null, stored: null, mirrorPainted: false, dbLoaded: false,
+    editing: false, editList: null, preEdit: null, drag: null, renderQueued: false
+  };
+
+  function sideEl(id) { return id === 'pay' ? null : $('portal-tab-' + id); }
+  function navTabs() { return Array.prototype.slice.call(document.querySelectorAll('#portal-nav .portal-tab')); }
+  function isKnownTab(id) {
+    if (id === 'pay') return true;
+    return navTabs().some(function (t) { return t.getAttribute('data-tab') === id; });
+  }
+  function isVisibleTab(id) {
+    var el = sideEl(id);
+    return !!el && window.getComputedStyle(el).display !== 'none';
+  }
+  function tabMeta(id) {
+    if (id === 'pay') return PAY_META;
+    var el = sideEl(id);
+    if (!el) return { id: id, label: id, full: id, icon: 'fas fa-circle' };
+    var clone = el.cloneNode(true);
+    clone.querySelectorAll('.portal-count').forEach(function (n) { n.parentNode.removeChild(n); });
+    var full = String(clone.textContent || '').replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, '') || id;
+    var iconEl = el.querySelector('i');
+    var short = BAR_SHORT_LABELS[id];
+    if (!short) short = full.split(' ').slice(0, 2).join(' ');
+    return { id: id, label: short, full: full, icon: iconEl ? iconEl.getAttribute('class') : 'fas fa-circle' };
+  }
+  function catalog() {
+    return navTabs().map(function (t) { return tabMeta(t.getAttribute('data-tab')); });
+  }
+
+  /* The list the bar shows when NOT editing: the stored list with
+     role-hidden ids skipped (never deleted), the defaults when
+     that runs dry, and the first visible tab when even those are
+     gone — never empty while the sidebar has a visible tab. */
+  function visibleRenderList() {
+    var base = barState.stored || PortalBarLogic.sanitize(null, isKnownTab);
+    var l = PortalBarLogic.visibleOnly(base, isVisibleTab);
+    if (!l.length) l = PortalBarLogic.visibleOnly(PortalBarLogic.DEFAULTS, isVisibleTab);
+    if (!l.length) {
+      var first = navTabs().filter(function (t) { return window.getComputedStyle(t).display !== 'none'; })[0];
+      if (first) l = [first.getAttribute('data-tab')];
+    }
+    return l;
+  }
+
+  function itemHtml(meta, editing) {
+    var inner = '<i class="' + barEsc(meta.icon) + '"></i><span>' + barEsc(meta.label) + '</span>';
+    if (editing) inner += '<span class="portal-thumb-x" data-remove="' + barEsc(meta.id) + '" aria-hidden="true">&times;</span>';
+    if (meta.id === 'pay') {
+      return '<a class="portal-thumb-item" data-thumb="pay" data-drag-id="pay" href="https://app.squareup.com/dashboard" target="_blank" rel="noopener" aria-label="Pay — open Square">' + inner + '</a>';
+    }
+    return '<button class="portal-thumb-item" type="button" data-thumb="' + barEsc(meta.id) + '" data-drag-id="' + barEsc(meta.id) + '" aria-label="' + barEsc(meta.full) + '">' + inner + '</button>';
+  }
+
+  function renderBar() {
+    var bar = $('portal-thumbbar');
+    if (!bar) return;
+    var list = barState.editing ? (barState.editList || []).slice() : visibleRenderList();
+    bar.classList.toggle('bar-editing', !!barState.editing);
+    bar.innerHTML = list.map(function (id) { return itemHtml(tabMeta(id), barState.editing); }).join('');
+    list.forEach(function (id) {
+      if (id === 'pay') return;
+      var item = bar.querySelector('.portal-thumb-item[data-thumb="' + id + '"]');
+      var side = sideEl(id);
+      if (!item || !side) return;
       item.classList.toggle('active', side.classList.contains('active'));
+      /* Edit mode keeps role-hidden saved items on the bar (dimmed)
+         so they can be removed or kept — they are skipped only by
+         the normal render, never deleted. */
+      if (barState.editing && window.getComputedStyle(side).display === 'none') item.classList.add('bar-dim');
+    });
+    bindTabObservers();
+  }
+  function scheduleRender() {
+    if (barState.renderQueued || barState.drag) return;
+    barState.renderQueued = true;
+    var run = function () { barState.renderQueued = false; renderBar(); };
+    if (window.requestAnimationFrame) window.requestAnimationFrame(run); else setTimeout(run, 30);
+  }
+
+  /* Visibility and active state keep mirroring the sidebar, as
+     they did in v61 — the observers just re-render now, because
+     the mirrored set itself is dynamic. The nav childList watch
+     catches Setup's custom buttons arriving or leaving. */
+  var tabObs = null;
+  function bindTabObservers() {
+    if (!window.MutationObserver) return;
+    if (tabObs) tabObs.disconnect();
+    tabObs = new MutationObserver(scheduleRender);
+    var ids = {};
+    (barState.stored || []).forEach(function (id) { ids[id] = 1; });
+    PortalBarLogic.DEFAULTS.forEach(function (id) { ids[id] = 1; });
+    Object.keys(ids).forEach(function (id) {
+      var side = sideEl(id);
+      if (side) tabObs.observe(side, { attributes: true, attributeFilter: ['style', 'class'] });
     });
   }
+
+  /* ----- persistence: localStorage mirror, then the DB row ----- */
+  var BAR_AUTH_KEY = 'sb-atrg-portal-auth-token';
+  function storedUid() {
+    try {
+      var s = JSON.parse(window.localStorage.getItem(BAR_AUTH_KEY) || 'null');
+      return s && s.user && s.user.id ? s.user.id : null;
+    } catch (e) { return null; }
+  }
+  function mirrorKey(uid) { return 'portal-bar-prefs:' + uid; }
+  function writeMirror() {
+    if (!barState.uid || !barState.stored) return;
+    try { window.localStorage.setItem(mirrorKey(barState.uid), JSON.stringify(barState.stored)); } catch (e) {}
+  }
+  function applyStored(raw, fromDb) {
+    barState.stored = PortalBarLogic.sanitize(raw, isKnownTab);
+    if (fromDb) writeMirror();
+    if (!barState.editing) renderBar();
+  }
+  function paintFromMirror() {
+    var uid = barState.uid || storedUid();
+    if (!uid) return;
+    barState.uid = uid;
+    try {
+      var raw = window.localStorage.getItem(mirrorKey(uid));
+      if (raw) { applyStored(JSON.parse(raw), false); barState.mirrorPainted = true; }
+    } catch (e) { /* bad JSON degrades to the defaults already painted */ }
+  }
+  function withPortalClient(fn) {
+    if (typeof window.portalWithClient === 'function') { window.portalWithClient(fn); return; }
+    fn(null);
+  }
+  function loadBarPrefs() {
+    withPortalClient(function (client) {
+      if (!client || !client.auth || !client.auth.getSession) return;
+      try {
+        client.auth.getSession().then(function (res) {
+          var sess = res && res.data ? res.data.session : null;
+          if (!sess || !sess.user) return;
+          barState.uid = sess.user.id;
+          if (!barState.mirrorPainted) paintFromMirror();
+          client.from('portal_bar_prefs').select('items').eq('employee', barState.uid).maybeSingle()
+            .then(function (r) {
+              barState.dbLoaded = true;
+              if (r && !r.error && r.data && Array.isArray(r.data.items)) applyStored(r.data.items, true);
+            })
+            .catch(function () { barState.dbLoaded = true; });
+        }).catch(function () {});
+      } catch (e) {}
+    });
+  }
+  function persistBarPrefs() {
+    writeMirror();
+    withPortalClient(function (client) {
+      if (!client || !client.auth) return;
+      try {
+        client.auth.getSession().then(function (res) {
+          var sess = res && res.data ? res.data.session : null;
+          var uid = sess && sess.user ? sess.user.id : barState.uid;
+          if (!uid) return;
+          barState.uid = uid;
+          writeMirror();
+          client.from('portal_bar_prefs')
+            .upsert({ employee: uid, items: barState.stored, updated_at: new Date().toISOString() }, { onConflict: 'employee' })
+            .then(function () {}).catch(function () {});
+        }).catch(function () {});
+      } catch (e) {}
+    });
+  }
+
+  /* ----- edit mode ----- */
+  function buildTray() {
+    var list = $('portal-bartray-list');
+    if (!list) return;
+    var inBar = {};
+    (barState.editList || []).forEach(function (id) { inBar[id] = 1; });
+    var avail = catalog().filter(function (m) { return !inBar[m.id] && isVisibleTab(m.id); });
+    if (!inBar.pay) avail.push(PAY_META);
+    if (!avail.length) {
+      list.innerHTML = '<p class="portal-bartray-empty">Every tab you can see is already in the bar.</p>';
+      return;
+    }
+    list.innerHTML = avail.map(function (m) {
+      return '<button type="button" class="portal-bartray-row" data-drag-id="' + barEsc(m.id) + '"><i class="' + barEsc(m.icon) + '"></i><span>' + barEsc(m.full || m.label) + '</span><i class="fas fa-grip-lines portal-bartray-grip" aria-hidden="true"></i></button>';
+    }).join('');
+  }
+  function enterBarEdit() {
+    if (barState.editing) return;
+    if (!barState.stored) barState.stored = PortalBarLogic.sanitize(null, isKnownTab);
+    barState.preEdit = barState.stored.slice();
+    barState.editList = barState.stored.slice();
+    barState.editing = true;
+    var tray = $('portal-bartray');
+    var bar = $('portal-thumbbar');
+    if (tray && bar) {
+      tray.style.bottom = bar.getBoundingClientRect().height + 'px';
+      tray.hidden = false;
+    }
+    buildTray();
+    renderBar();
+  }
+  function exitBarEdit(saveIt) {
+    if (!barState.editing) return;
+    if (saveIt) {
+      barState.stored = PortalBarLogic.sanitize(barState.editList, isKnownTab);
+      persistBarPrefs();
+    }
+    barState.editing = false;
+    barState.editList = null;
+    barState.preEdit = null;
+    var tray = $('portal-bartray');
+    if (tray) tray.hidden = true;
+    renderBar();
+  }
+  function resetBarEdit() {
+    barState.editList = PortalBarLogic.DEFAULTS.slice();
+    buildTray();
+    renderBar();
+  }
+  function removeFromEdit(id) {
+    var r = PortalBarLogic.removeId(barState.editList, id);
+    if (!r.ok) { flashBar(); return; }
+    barState.editList = r.list;
+    buildTray();
+    renderBar();
+  }
+  function flashBar() {
+    var bar = $('portal-thumbbar');
+    if (!bar) return;
+    bar.classList.add('bar-full');
+    setTimeout(function () { bar.classList.remove('bar-full'); }, 380);
+  }
+
+  /* ----- drag and drop (Pointer Events, mouse + touch) ----- */
+  function dragPlaceholder() {
+    var ph = document.createElement('div');
+    ph.className = 'portal-thumb-placeholder';
+    ph.setAttribute('aria-hidden', 'true');
+    return ph;
+  }
+  function placeholderIndex(ph) {
+    var n = 0, node = ph.previousSibling;
+    while (node) {
+      if (node.classList && node.classList.contains('portal-thumb-item') && !node.classList.contains('drag-gone')) n++;
+      node = node.previousSibling;
+    }
+    return n;
+  }
+  function insertionIndex(bar, x) {
+    var items = Array.prototype.slice.call(bar.querySelectorAll('.portal-thumb-item:not(.drag-gone)'));
+    for (var i = 0; i < items.length; i++) {
+      var r = items[i].getBoundingClientRect();
+      if (x < r.left + r.width / 2) return { idx: i, ref: items[i] };
+    }
+    return { idx: items.length, ref: null };
+  }
+  function startDrag(cand, x, y) {
+    var bar = $('portal-thumbbar');
+    var rect = cand.el.getBoundingClientRect();
+    var ghost = cand.el.cloneNode(true);
+    ghost.removeAttribute('id');
+    ghost.classList.add('portal-drag-ghost');
+    ghost.style.width = rect.width + 'px';
+    document.body.appendChild(ghost);
+    var d = {
+      kind: cand.kind, id: cand.id, el: cand.el, ghost: ghost, ph: null,
+      dx: x - rect.left, dy: y - rect.top, lastX: x, lastY: y
+    };
+    if (cand.kind === 'bar') {
+      d.ph = dragPlaceholder();
+      d.ph.style.width = rect.width + 'px';
+      bar.insertBefore(d.ph, cand.el);
+      cand.el.classList.add('drag-gone');
+    } else {
+      cand.el.classList.add('drag-src');
+    }
+    moveGhost(d, x, y);
+    barState.drag = d;
+  }
+  function moveGhost(d, x, y) {
+    d.ghost.style.left = (x - d.dx) + 'px';
+    d.ghost.style.top = (y - d.dy) + 'px';
+  }
+  function dragMove(e) {
+    var d = barState.drag;
+    var cand = barState.dragCand;
+    if (!d && cand) {
+      if (Math.abs(e.clientX - cand.x) + Math.abs(e.clientY - cand.y) < 8) return;
+      startDrag(cand, e.clientX, e.clientY);
+      d = barState.drag;
+    }
+    if (!d) return;
+    if (e.cancelable) e.preventDefault();
+    d.lastX = e.clientX; d.lastY = e.clientY;
+    moveGhost(d, e.clientX, e.clientY);
+    var bar = $('portal-thumbbar');
+    var br = bar.getBoundingClientRect();
+    var overBar = e.clientX >= br.left - 6 && e.clientX <= br.right + 6 && e.clientY >= br.top - 18 && e.clientY <= br.bottom + 12;
+    d.overBar = overBar;
+    var tray = $('portal-bartray');
+    var tr = tray ? tray.getBoundingClientRect() : null;
+    d.overTray = !!(tr && e.clientX >= tr.left && e.clientX <= tr.right && e.clientY >= tr.top && e.clientY <= tr.bottom);
+    if (overBar) {
+      if (!d.ph) { d.ph = dragPlaceholder(); d.ph.style.width = d.ghost.style.width; }
+      var ins = insertionIndex(bar, e.clientX);
+      if (d.ph.parentNode !== bar || d.ph.nextSibling !== ins.ref) bar.insertBefore(d.ph, ins.ref);
+    } else if (d.ph && d.kind === 'tray') {
+      d.ph.parentNode && d.ph.parentNode.removeChild(d.ph);
+      d.ph = null;
+    }
+  }
+  function endDrag(commit) {
+    var d = barState.drag;
+    barState.dragCand = null;
+    if (!d) return;
+    barState.drag = null;
+    barState.dragEndedAt = Date.now();
+    var bar = $('portal-thumbbar');
+    if (commit && d.overBar && d.ph) {
+      var k = placeholderIndex(d.ph);
+      if (d.kind === 'bar') {
+        var from = barState.editList.indexOf(d.id);
+        if (from !== -1) barState.editList = PortalBarLogic.reorder(barState.editList, from, k);
+      } else {
+        var ins = PortalBarLogic.insertAt(barState.editList, d.id, k);
+        if (ins.ok) barState.editList = ins.list; else flashBar();
+      }
+    } else if (commit && d.overTray && d.kind === 'bar') {
+      var r = PortalBarLogic.removeId(barState.editList, d.id);
+      if (r.ok) barState.editList = r.list; else flashBar();
+    }
+    if (d.ghost.parentNode) d.ghost.parentNode.removeChild(d.ghost);
+    if (d.ph && d.ph.parentNode) d.ph.parentNode.removeChild(d.ph);
+    d.el.classList.remove('drag-gone');
+    d.el.classList.remove('drag-src');
+    buildTray();
+    renderBar();
+  }
+
+  /* ----- wiring ----- */
+  var lpTimer = null, swallowClickUntil = 0;
+  function clearLongPress() { if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; } }
   function initThumb() {
     var bar = $('portal-thumbbar');
     if (!bar) return;
+    barState.stored = PortalBarLogic.sanitize(null, isKnownTab);
+
     bar.addEventListener('click', function (e) {
+      if (Date.now() < swallowClickUntil || (barState.dragEndedAt && Date.now() - barState.dragEndedAt < 350)) {
+        e.preventDefault();
+        return;
+      }
       var item = e.target && e.target.closest ? e.target.closest('.portal-thumb-item') : null;
       if (!item) return;
+      if (barState.editing) {
+        e.preventDefault();
+        var rm = e.target.closest ? e.target.closest('[data-remove]') : null;
+        if (rm) removeFromEdit(rm.getAttribute('data-remove'));
+        return;
+      }
       var key = item.getAttribute('data-thumb');
       if (key === 'pay') return; /* a real link out to Square — the browser takes it from here */
-      var side = $('portal-tab-' + key);
+      var side = sideEl(key);
       if (side) side.click();
     });
-    syncThumb();
-    if (window.MutationObserver) {
-      var obs = new MutationObserver(syncThumb);
-      THUMB_TABS.forEach(function (key) {
-        var side = $('portal-tab-' + key);
-        if (side) obs.observe(side, { attributes: true, attributeFilter: ['style', 'class'] });
-      });
+
+    /* Long-press (~450ms, no real movement) opens edit mode. */
+    bar.addEventListener('pointerdown', function (e) {
+      if (barState.editing) return;
+      var item = e.target && e.target.closest ? e.target.closest('.portal-thumb-item') : null;
+      if (!item) return;
+      var x0 = e.clientX, y0 = e.clientY;
+      clearLongPress();
+      lpTimer = setTimeout(function () {
+        lpTimer = null;
+        swallowClickUntil = Date.now() + 800;
+        enterBarEdit();
+      }, 450);
+      var cancel = function (ev) {
+        if (ev && ev.type === 'pointermove' && Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) < 10) return;
+        clearLongPress();
+        document.removeEventListener('pointermove', cancel, true);
+        document.removeEventListener('pointerup', cancel, true);
+        document.removeEventListener('pointercancel', cancel, true);
+      };
+      document.addEventListener('pointermove', cancel, true);
+      document.addEventListener('pointerup', cancel, true);
+      document.addEventListener('pointercancel', cancel, true);
+    });
+
+    /* Drag sources: bar items and tray rows, edit mode only. The
+       remove badge is a tap, never a drag. */
+    document.addEventListener('pointerdown', function (e) {
+      if (!barState.editing) return;
+      if (e.target && e.target.closest && e.target.closest('[data-remove]')) return;
+      var src = e.target && e.target.closest ? e.target.closest('[data-drag-id]') : null;
+      if (!src) return;
+      var inBar = !!src.closest('#portal-thumbbar');
+      var inTray = !!src.closest('#portal-bartray');
+      if (!inBar && !inTray) return;
+      barState.dragCand = { kind: inBar ? 'bar' : 'tray', id: src.getAttribute('data-drag-id'), el: src, x: e.clientX, y: e.clientY };
+      document.addEventListener('pointermove', dragMove);
+      document.addEventListener('pointerup', dragUp);
+      document.addEventListener('pointercancel', dragCancel);
+    });
+    function dragUp() {
+      document.removeEventListener('pointermove', dragMove);
+      document.removeEventListener('pointerup', dragUp);
+      document.removeEventListener('pointercancel', dragCancel);
+      endDrag(true);
     }
+    function dragCancel() {
+      document.removeEventListener('pointermove', dragMove);
+      document.removeEventListener('pointerup', dragUp);
+      document.removeEventListener('pointercancel', dragCancel);
+      endDrag(false);
+    }
+
+    var doneBtn = $('portal-bartray-done'), xBtn = $('portal-bartray-close'), resetBtn = $('portal-bartray-reset');
+    if (doneBtn) doneBtn.addEventListener('click', function () { exitBarEdit(true); });
+    if (xBtn) xBtn.addEventListener('click', function () { exitBarEdit(false); });
+    if (resetBtn) resetBtn.addEventListener('click', resetBarEdit);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && barState.editing) exitBarEdit(false);
+    });
+
+    /* The Search panel's pinned row is the second door into edit
+       mode: close the search through its own X first, so exactly
+       one surface is open at a time. */
+    var custRow = $('portal-hubsearch-customize');
+    if (custRow) custRow.addEventListener('click', function () {
+      var x = $('portal-hubsearch-close');
+      if (x) x.click();
+      enterBarEdit();
+    });
+
+    if (window.MutationObserver) {
+      var navObs = new MutationObserver(scheduleRender);
+      var nav = $('portal-nav');
+      if (nav) navObs.observe(nav, { childList: true });
+      var dash = $('portal-dash-view');
+      if (dash) {
+        var dashObs = new MutationObserver(function () {
+          if (!dash.hidden && !barState.dbLoaded) loadBarPrefs();
+        });
+        dashObs.observe(dash, { attributes: true, attributeFilter: ['hidden'] });
+      }
+    }
+
+    paintFromMirror();
+    renderBar();
+    loadBarPrefs();
   }
 
   /* ---------- install card (Home panel) ---------- */

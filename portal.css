@@ -1499,3 +1499,102 @@ body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-hub-search-bt
 .hh-dot-shift { background: #d9a40d; }
 .hh-cal-legend span { margin-right: 0.7rem; white-space: nowrap; }
 .hh-cal-daydetail { margin-top: 0.6rem; }
+
+/* ===== CUSTOM_BAR_2026_11_09 (v64) — the customizable thumb bar =====
+   Edit-mode treatment, the Available tabs tray, the drag layer,
+   and the Search panel's pinned customize row. The bar's own base
+   styles stay in the PORTAL_APP / HUB_NAV sections above; this
+   block only adds what customization needs. The tray docks
+   directly above the bar: portal.js sets its bottom from the
+   bar's measured height at edit time, so the 92px below is only
+   a first-paint fallback. Everything here lives at <=920px,
+   where the bar exists; the one wider rule hides the customize
+   row on desktop, where there is no bar to customize. */
+#portal-hubsearch-customize { border-top: 1px solid var(--line, #E6D9C0); margin-top: 0.55rem; }
+@media (min-width: 921px) {
+  #portal-hubsearch-customize { display: none; }
+}
+.portal-bartray { display: none; }
+@media (max-width: 920px) {
+  .portal-thumbbar { -webkit-touch-callout: none; }
+  .portal-thumbbar.bar-editing .portal-thumb-item {
+    position: relative;
+    touch-action: none;
+    animation: bar-jiggle 0.28s ease-in-out infinite alternate;
+  }
+  .portal-thumbbar.bar-editing .portal-thumb-item.bar-dim { opacity: 0.45; }
+  .portal-thumbbar.bar-full { animation: bar-shake 0.36s ease-in-out; }
+  @keyframes bar-jiggle { from { transform: rotate(-1.1deg); } to { transform: rotate(1.1deg); } }
+  @keyframes bar-shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+  @media (prefers-reduced-motion: reduce) {
+    .portal-thumbbar.bar-editing .portal-thumb-item { animation: none; outline: 2px solid var(--brand, #D9540D); outline-offset: -2px; }
+    .portal-thumbbar.bar-full { animation: none; }
+  }
+  .portal-thumb-x {
+    position: absolute; top: -5px; right: 2px; z-index: 2;
+    width: 19px; height: 19px; border-radius: 999px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--brand-deep, #A63E06); color: #FFFDF8;
+    font-size: 14px; font-weight: 800; line-height: 1;
+    box-shadow: 0 1px 4px rgba(90, 64, 32, 0.35);
+  }
+  .portal-thumb-item.drag-gone { display: none !important; }
+  .portal-thumb-placeholder {
+    flex: none; align-self: stretch; min-height: 44px;
+    border: 1.5px dashed var(--brand, #D9540D); border-radius: 12px;
+    background: var(--brand-soft, #FBEADB);
+  }
+  .portal-drag-ghost {
+    position: fixed; z-index: 4000; pointer-events: none;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    padding: 6px 0; border-radius: 12px;
+    background: var(--surface, #FFFDF8); color: var(--ink, #2C231A);
+    border: 1px solid var(--line, #E6D9C0);
+    box-shadow: 0 14px 30px rgba(90, 64, 32, 0.35);
+    font-family: inherit; font-size: 0.68rem; font-weight: 700;
+    opacity: 0.97;
+  }
+  .portal-drag-ghost i { font-size: 1.18rem; }
+  .portal-drag-ghost .portal-thumb-x { display: none; }
+  .portal-bartray {
+    display: block; position: fixed; left: 0; right: 0; bottom: 92px; z-index: 51;
+    background: var(--surface, #FFFDF8);
+    border-top: 1px solid var(--line, #E6D9C0);
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -12px 28px rgba(90, 64, 32, 0.18);
+    padding: 0.7rem 0.9rem 0.8rem;
+  }
+  .portal-bartray[hidden] { display: none; }
+  .portal-bartray-head { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; }
+  .portal-bartray-title { margin: 0; font-weight: 800; font-size: 0.95rem; color: var(--ink, #2C231A); }
+  .portal-bartray-x {
+    flex: none; width: 34px; height: 34px; border-radius: 999px; cursor: pointer;
+    border: 1px solid var(--line, #E6D9C0); background: var(--bg, #FAF6EE);
+    color: var(--ink, #2C231A); font-size: 0.95rem;
+  }
+  .portal-bartray-hint { margin: 0.3rem 0 0.6rem; color: var(--muted, #7D6C5B); font-size: 0.82rem; }
+  .portal-bartray-list { display: flex; flex-direction: column; gap: 0.45rem; max-height: 38vh; overflow-y: auto; }
+  .portal-bartray-row {
+    display: flex; align-items: center; gap: 0.6rem; width: 100%;
+    padding: 0.55rem 0.65rem; border: 1px solid var(--line, #E6D9C0); border-radius: 12px;
+    background: var(--bg, #FAF6EE); color: var(--ink, #2C231A);
+    font: inherit; font-size: 0.9rem; font-weight: 600; text-align: left; cursor: grab;
+    touch-action: none;
+  }
+  .portal-bartray-row i { flex: none; width: 1.1rem; text-align: center; color: var(--brand-deep, #A63E06); }
+  .portal-bartray-row span { flex: 1 1 auto; min-width: 0; }
+  .portal-bartray-row .portal-bartray-grip { color: var(--muted, #7D6C5B); }
+  .portal-bartray-row.drag-src { opacity: 0.4; }
+  .portal-bartray-empty { margin: 0; color: var(--muted, #7D6C5B); font-size: 0.88rem; padding: 0.3rem 0.1rem; }
+  .portal-bartray-actions { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; margin-top: 0.7rem; }
+  .portal-bartray-reset {
+    border: none; background: none; cursor: pointer; font: inherit; font-size: 0.88rem;
+    color: var(--brand-deep, #A63E06); font-weight: 700; padding: 0.4rem 0.2rem;
+  }
+  .portal-bartray-done {
+    border: none; border-radius: 999px; cursor: pointer; font: inherit;
+    background: var(--brand, #D9540D); color: #FFFDF8; font-weight: 800;
+    padding: 0.55rem 1.4rem; font-size: 0.92rem;
+  }
+}
+/* end CUSTOM_BAR_2026_11_09 */

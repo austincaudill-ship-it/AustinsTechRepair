@@ -66,6 +66,10 @@
         <button class="portal-hubsearch-x" id="portal-hubsearch-close" type="button" aria-label="Close search"><i class="fas fa-xmark"></i></button>
       </div>
       <div class="portal-hubsearch-results" id="portal-hubsearch-results"></div>
+      <!-- CUSTOM_BAR_2026_11_09 (v64): the second door into bar edit
+           mode, pinned at the foot of the search panel (hidden on
+           desktop widths, where there is no thumb bar). -->
+      <button type="button" class="portal-hubsearch-item" id="portal-hubsearch-customize"><i class="fas fa-sliders"></i><span class="hs-main">Customize thumb bar</span></button>
     </div>
   </div>
 
@@ -146,7 +150,15 @@
            plain link out to Square (the v61 REPORT says why the
            dashboard URL and not an app scheme). The bar lives inside
            #portal-dash-view, so it exists only on the dashboard,
-           never on the sign-in screens. -->
+           never on the sign-in screens. CUSTOM_BAR_2026_11_09 (v64):
+           the five below are now the DEFAULT bar — each associate
+           can long-press the bar (or use the Search panel's
+           Customize row) and drag their own favorites in and out.
+           The PORTAL_APP module re-renders these items in place
+           from the signed-in associate's saved list
+           (public.portal_bar_prefs) when one exists; the static
+           five are the first-paint defaults and the fallback for
+           every failure. The tray markup follows the bar. -->
       <nav class="portal-thumbbar" id="portal-thumbbar" aria-label="Quick navigation">
         <button class="portal-thumb-item" type="button" data-thumb="customers" aria-label="Guest"><i class="fas fa-users"></i><span>Guest</span></button>
         <button class="portal-thumb-item" type="button" data-thumb="tickets" aria-label="Service Queue"><i class="fas fa-list-ol"></i><span>Queue</span></button>
@@ -154,6 +166,23 @@
         <button class="portal-thumb-item" type="button" data-thumb="timeclock" aria-label="Time Clock"><i class="fas fa-clock"></i><span>Time Clock</span></button>
         <a class="portal-thumb-item" data-thumb="pay" href="https://app.squareup.com/dashboard" target="_blank" rel="noopener" aria-label="Pay — open Square"><i class="fas fa-credit-card"></i><span>Pay</span></a>
       </nav>
+      <!-- CUSTOM_BAR_2026_11_09 (v64): the Available tabs tray. Hidden
+           until edit mode; portal.js docks it directly above the thumb
+           bar (bottom set from the bar's measured height), fills the
+           list from the live sidebar minus what is already in the bar,
+           and wires Done (save) / X (cancel) / Reset (standard bar). -->
+      <div class="portal-bartray" id="portal-bartray" hidden>
+        <div class="portal-bartray-head">
+          <p class="portal-bartray-title">Customize your thumb bar</p>
+          <button class="portal-bartray-x" id="portal-bartray-close" type="button" aria-label="Cancel editing"><i class="fas fa-xmark"></i></button>
+        </div>
+        <p class="portal-bartray-hint">Drag tabs into the bar, drag bar items down here to remove them, or tap the &times; on a bar item. Up to five across the bottom.</p>
+        <div class="portal-bartray-list" id="portal-bartray-list"></div>
+        <div class="portal-bartray-actions">
+          <button class="portal-bartray-reset" id="portal-bartray-reset" type="button">Reset to the standard bar</button>
+          <button class="portal-bartray-done" id="portal-bartray-done" type="button">Done</button>
+        </div>
+      </div>
       <div class="portal-dash-head">
         <!-- MERGE_2026_11_03: the brand div + PORTAL_HEADER_CLEANUP_2026_11_02 block below is grafted verbatim from the live portal.html; the staged stack branched before the header cleanup published and still carried the old in-column greeting/clock paragraphs. See MERGE-REPORT.md. -->
         <div class="portal-head-brand">
