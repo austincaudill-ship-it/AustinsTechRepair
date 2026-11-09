@@ -459,6 +459,8 @@ a { color: var(--brand); }
 .footer-link:hover { color: var(--gold); }
 .footer-disclaimer { font-size: 0.60rem; color: #8d7d66; line-height: 1.65; margin-bottom: 1.8rem; border-top: 1px solid #3d3226; padding-top: 2rem; }
 .footer-disclaimer strong { color: #c9a86a; }
+/* FOOTNOTE_MARKERS_2026_11_09: Apple-fashion footnote marker — a small brand-colored superscript number sitting at the claim, matching the numbered small print in the footer. Plain marker, not a link; line-height 0 so it never shifts the line it sits on. */
+sup.fnote { color: var(--brand); font-size: 0.68em; font-weight: 700; line-height: 0; margin-left: 0.1em; }
 .footer-bottom { position: relative; display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 1rem; border-top: 1px solid #3d3226; padding-top: 1.6rem; }
 .footer-copy { font-size: 0.8rem; color: #8d7d66; flex: none; text-align: center; }
 .footer-wordmark { position: static; transform: none; }
