@@ -93,7 +93,7 @@
 /* TEAM_OFF_SITE_2026_11_08: public Leadership staff listing removed from the website. */
 /* SERVICES_SINGLE_DOOR_2026_11_09: bumped to atrg-v49 — Services single-door release (nav, Services flow, Prices folded in, holiday slide, icon set, tile icons). */
 /* LEARNING_SYSTEM_2026_11_09: bumped to atrg-v50 — the site now learns from real completed jobs (service_stats): most-booked repairs rise in a model's booking grid and estimates gain a factual typical-price line. (atrg-v48 was the booking-form escape fix and atrg-v49 the Services single-door release; both published ahead of this one, so the learning layer lands on v50.) */
-const CACHE = "atrg-v53";
+const CACHE = "atrg-v54";
 const CORE = [
   "/",
   "/index.html",

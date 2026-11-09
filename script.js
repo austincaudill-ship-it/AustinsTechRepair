@@ -2690,7 +2690,129 @@
       if (greetEl) {
         var gName = s ? String(s.name || '').trim() : '';
         greetEl.textContent = gName ? ('Hello, ' + firstName(gName)) : 'Welcome, Guest';
+        /* V54_GREETING_ASSOCIATE_2026_11_09: the associate state
+           outranks both of the above (Austin's order: associate
+           first, guest second). It can only upgrade the text set
+           just now — synchronously from this browser session's
+           cache, or asynchronously when the read-only employee
+           check below resolves. */
+        applyAssociateGreeting(greetEl);
       }
+    }
+
+    /* ---------- V54_GREETING_ASSOCIATE_2026_11_09 ----------
+       Austin (Nov 9, 2026): the greeting welcomes ASSOCIATES as
+       associates — his standing order is associate first, guest
+       second — so a staffer browsing the public site on a device
+       where they also use the Associate Hub is greeted
+       "Welcome, Associate", outranking the customer and guest
+       states renderHeader() sets above.
+
+       How it works, and why it is built this way:
+       - The Hub stores its Supabase session in localStorage under
+         'sb-atrg-portal-auth-token' (portal.js
+         PORTAL_AUTH_STORAGE_KEY). The stored value is the session
+         JSON itself; it is parsed here exactly the way portal.js's
+         own storedSessionMeta() parses it. NOTHING is written by
+         this page: no storage writes, no token refresh, no
+         sign-out — pure reading.
+       - The employee test is the portal's own gate query
+         (portal.js verifyEmployee): the caller's own row in
+         employee_profiles, filtered id = the session user's id.
+         supabase-js turns that into a PostgREST GET on
+         /rest/v1/employee_profiles carrying the session's access
+         token as the Bearer JWT; this code issues that identical
+         request directly instead of building a second Supabase
+         client, because a client bound to the portal's storage
+         key would run its own auto-refresh against the portal's
+         refresh-token family from this page (portal.js's storage
+         comments document how two stored copies sharing one
+         refresh token can get the family revoked), and a
+         non-persisting client's setSession() would consume that
+         refresh token without writing the rotated result back
+         anywhere. The direct request is the same wire call with
+         none of those side effects, and RLS sees the same
+         auth.uid() it sees for the portal's own query.
+       - An expired access token is never presented: the check
+         simply does not run (the portal refreshes the session on
+         its own next open). Every failure — no token, malformed
+         token, offline, RLS refusal, non-employee — degrades
+         silently to the customer/guest greeting renderHeader()
+         already set. A positive result is cached in
+         sessionStorage bound to the portal session's user id +
+         expires_at, and the cache is re-validated against the
+         live token on every render before it is trusted:
+         sign-out removes the portal key so the cache is never
+         consulted, and a different staffer or a refreshed token
+         changes the binding and forces a fresh check. */
+    var PORTAL_SESSION_KEY = 'sb-atrg-portal-auth-token';
+    var ASSOC_GREETING_CACHE_KEY = 'atr-greeting-associate';
+    var assocGreetingCheckStarted = false;
+
+    function portalSessionMeta() {
+      try {
+        var raw = localStorage.getItem(PORTAL_SESSION_KEY);
+        if (!raw) return null;
+        var s = JSON.parse(raw);
+        if (!s || !s.user || !s.user.id || !s.access_token) return null;
+        return { userId: s.user.id, accessToken: s.access_token, expiresAt: Number(s.expires_at) || 0 };
+      } catch (e) { return null; }
+    }
+
+    function assocGreetingCached(meta) {
+      try {
+        var raw = sessionStorage.getItem(ASSOC_GREETING_CACHE_KEY);
+        if (!raw) return false;
+        var c = JSON.parse(raw);
+        return !!(c && c.userId === meta.userId && c.expiresAt === meta.expiresAt);
+      } catch (e) { return false; }
+    }
+
+    function applyAssociateGreeting(greetEl) {
+      try {
+        if (!greetEl) return;
+        var meta = portalSessionMeta();
+        if (!meta) return;
+        if (assocGreetingCached(meta)) {
+          greetEl.textContent = 'Welcome, Associate';
+          return;
+        }
+        if (assocGreetingCheckStarted) return;
+        assocGreetingCheckStarted = true;
+        checkAssociateGreeting(meta);
+      } catch (e) {}
+    }
+
+    function checkAssociateGreeting(meta) {
+      try {
+        /* An expired JWT would only earn a 401 — and refreshing
+           it is the portal's job, never this page's. */
+        if (meta.expiresAt && meta.expiresAt * 1000 <= Date.now()) return;
+        var url = SUPABASE_URL + '/rest/v1/employee_profiles?select=id&id=eq.' +
+          encodeURIComponent(meta.userId) + '&limit=1';
+        fetch(url, {
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': 'Bearer ' + meta.accessToken
+          }
+        }).then(function (res) {
+          return res && res.ok ? res.json() : null;
+        }).then(function (rows) {
+          if (!rows || !rows.length) return;
+          /* Re-validate before painting: the portal session must
+             still be the exact one that was checked — a sign-out
+             or a different sign-in in another tab must not inherit
+             this greeting. */
+          var now = portalSessionMeta();
+          if (!now || now.userId !== meta.userId || now.expiresAt !== meta.expiresAt) return;
+          try {
+            sessionStorage.setItem(ASSOC_GREETING_CACHE_KEY,
+              JSON.stringify({ userId: meta.userId, expiresAt: meta.expiresAt }));
+          } catch (e) {}
+          var el = document.getElementById('header-greeting');
+          if (el) el.textContent = 'Welcome, Associate';
+        }).catch(function () { /* silent: the customer/guest greeting stands */ });
+      } catch (e) {}
     }
 
     /* ---------- account page open --------------------------------
