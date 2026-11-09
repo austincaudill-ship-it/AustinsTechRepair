@@ -199,23 +199,32 @@
 
   <!-- NAV_SEARCH_CLEANUP_2026_11_06: site-wide search overlay. One
        panel for the whole site: pages, repairs & prices, and shop
-       items. Opened from the header search button; Escape and a tap
-       on the dimmed area close it.
-       SEARCH_TWO_X_2026_11_06 (owner, Nov 6, 2026): TWO X controls.
-       The small X inside the bubble (#site-search-close) clears the
-       words and results and keeps search open; tapped again on the
-       empty field it exits. The bigger circled X apart at the far
-       right end of the row (#site-search-exit) closes search at
-       once, any time. -->
+       items. Opened from the header search button and from the
+       mobile thumb bar's Search slot; Escape and a tap on the
+       dimmed area close it.
+       SEARCH_RELEASE_2026_11_09 (owner, Nov 9, 2026 — the Apple
+       flip): ONE X only. The Nov 6 in-field clear X is gone — on
+       the empty field it had become a second close button. The
+       circled #site-search-exit is the panel's first child:
+       top-right on desktop, the top row of the flipped mobile
+       stack; closing resets the field, so the next open starts on
+       the empty state. That state carries a labelled "Quick Links"
+       section — About, ATR One, One-on-One, Help Guides, Reviews:
+       the retired mobile menu's five destinations, surfaced
+       through search instead of a hidden menu. On mobile the
+       sheet anchors to the bottom of the visual viewport and the
+       stack flips — X row, Quick Links or results, and the field
+       LAST, directly above the keyboard. The microphone for voice
+       search is added inside the bar by script.js, only where the
+       Web Speech API exists. -->
   <div class="site-search" id="site-search" hidden role="dialog" aria-modal="true" aria-label="Search the site">
     <div class="site-search-panel">
+      <button class="site-search-exit" id="site-search-exit" type="button" aria-label="Close search" title="Close search"><i class="fas fa-times" aria-hidden="true"></i></button>
       <div class="site-search-row">
         <div class="site-search-bar">
           <i class="fas fa-search" aria-hidden="true"></i>
           <input class="site-search-input" id="site-search-input" type="search" placeholder="Search austinstechrepairgroup.com" autocomplete="off" aria-label="Search the site">
-          <button class="site-search-close" id="site-search-close" type="button" aria-label="Clear search" title="Clear search"><i class="fas fa-times" aria-hidden="true"></i></button>
         </div>
-        <button class="site-search-exit" id="site-search-exit" type="button" aria-label="Close search" title="Close search"><i class="fas fa-times" aria-hidden="true"></i></button>
       </div>
       <div class="site-search-results" id="site-search-results">
         <p class="site-search-hint">Start typing &mdash; search looks across every page, the repair price book, and the store.</p>
@@ -4015,14 +4024,20 @@
        Home, Services, Store, Support, Menu. Repair and Prices merged
        into the Services door (Prices is reached from What We Service,
        and Prices carries the Schedule a repair button); Store joins
-       the bar and leaves the mobile menu. -->
+       the bar and leaves the mobile menu.
+       SEARCH_RELEASE_2026_11_09 addendum (owner, Nov 9, 2026):
+       slot 5 below is now Search, not Menu — the genie menu is
+       retired, and its five destinations (About, ATR One,
+       One-on-One, Help Guides, Reviews) live in the search
+       overlay's Quick Links instead of a hidden menu. -->
   <nav class="mobile-bottom-nav" aria-label="Mobile Bottom Navigation">
     <!-- SERVICES_SINGLE_DOOR_2026_11_09 (owner, Nov 9, 2026): slot 1 is the logo itself — the badge is the home button. -->
     <a href="#home" class="bottom-nav-item bottom-nav-logo active" data-page="home" aria-label="Home"><img class="bottom-nav-logo-img" src="logo-duo.png" alt=""><span class="sr-only">Home</span></a>
     <a href="#whatwedo" class="bottom-nav-item" data-page="whatwedo"><i class="fa-solid fa-screwdriver-wrench"></i><span>Services</span></a>
     <a href="#shop" class="bottom-nav-item" data-page="shop"><i class="fa-solid fa-store"></i><span>Store</span></a>
     <a href="#support" class="bottom-nav-item" data-page="support"><i class="fa-solid fa-headset"></i><span>Support</span></a>
-    <button class="bottom-nav-item" id="bottom-menu-toggle" type="button"><i class="fa-solid fa-bars"></i><span>Menu</span></button>
+    <!-- SEARCH_RELEASE_2026_11_09 (owner, Nov 9, 2026): slot 5 opens search (bound in script.js to the same panel as the header search button). The #mobile-menu markup and its router wiring stay in place, dormant — this button was their only trigger. -->
+    <button class="bottom-nav-item" id="bottom-search-toggle" type="button" aria-label="Search the site"><i class="fa-solid fa-magnifying-glass"></i><span>Search</span></button>
   </nav>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

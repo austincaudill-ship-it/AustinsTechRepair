@@ -3170,3 +3170,65 @@ html[data-theme="dark"] .header { background: #000000; }
   text-align: center;
   margin: 1.25rem 0 1rem;
 }
+
+
+/* ================= SEARCH_RELEASE_2026_11_09 =================
+   Owner, Nov 9, 2026 — the Apple flip. One X: #site-search-exit is
+   now the panel's first child; on desktop it keeps its top-right
+   seat by absolute positioning and the search row reserves its
+   width. (The Nov 6 .site-search-close rules above are dormant —
+   that button is gone from the markup.) Voice: .site-search-mic
+   sits at the field's right end, created by script.js only where
+   the Web Speech API exists. Quick Links: the empty state's
+   labelled section of arrow rows. Mobile (max-width: 920px): the
+   overlay becomes a bottom sheet riding the visual viewport
+   (--ss-vv-top / --ss-vv-height, set from script.js; 100dvh
+   fallback) and the panel stack flips — X row, Quick Links or
+   results, field LAST, directly above the keyboard. Only existing
+   variables are used, so both themes hold. */
+.site-search-panel { position: relative; }
+.site-search-exit { position: absolute; top: 1.1rem; right: 1.1rem; }
+.site-search-row { padding-right: 3.6rem; }
+.site-search-mic {
+  flex: none; display: inline-flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: var(--surface-warm); border: 1px solid var(--line);
+  color: var(--ink); cursor: pointer; font-size: 1rem;
+}
+.site-search-mic:hover { border-color: var(--brand); color: var(--brand-deep); }
+.site-search-mic.is-listening { border-color: var(--brand); color: var(--brand-deep); }
+.site-search-mic.is-listening i { animation: ssMicPulse 1.1s ease-in-out infinite; }
+@keyframes ssMicPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.25); } }
+html[data-theme="dark"] .site-search-mic:hover,
+html[data-theme="dark"] .site-search-mic.is-listening { color: var(--gold); }
+.site-search-quicklinks-title {
+  font-size: 0.95rem; font-weight: 700; color: var(--ink);
+  margin: 0.9rem 0.2rem 0.2rem;
+}
+.site-search-quicklink { justify-content: flex-start; gap: 0.6rem; }
+.site-search-quicklink .ss-arrow { flex: none; color: var(--brand); font-size: 0.85rem; }
+@media (max-width: 920px) {
+  .site-search {
+    inset: auto; left: 0; right: 0; bottom: auto;
+    top: var(--ss-vv-top, 0px); height: var(--ss-vv-height, 100dvh);
+    display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 0.75rem; overflow: hidden;
+  }
+  .site-search-panel {
+    display: flex; flex-direction: column;
+    width: 100%; max-height: 100%; margin: 0;
+  }
+  .site-search-exit {
+    position: static; order: 0; align-self: flex-end;
+    margin-bottom: 0.4rem;
+  }
+  .site-search-results {
+    order: 1; flex: 1 1 auto; min-height: 0; max-height: none;
+    overflow-y: auto; padding-top: 0;
+  }
+  .site-search-row { order: 2; padding-right: 0; }
+  .site-search-bar {
+    border-bottom: none; border-top: 2px solid var(--line);
+    padding-bottom: 0; padding-top: 0.8rem;
+  }
+}

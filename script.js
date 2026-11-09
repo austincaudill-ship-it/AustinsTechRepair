@@ -4255,11 +4255,19 @@ if ("serviceWorker" in navigator) {
    same data-page anchors the nav uses, clicked through the normal
    delegated handler. Escape and a tap on the dimmed area close the
    panel — nobody is ever trapped.
-   SEARCH_TWO_X_2026_11_06 (owner, Nov 6, 2026): TWO X controls. The
-   small X inside the bubble clears the words and results and keeps
-   the panel open (cursor back in the box); tapped again on the
-   empty field it exits. A bigger circled X apart at the far right
-   end of the search row closes the panel outright, any time. */
+   SEARCH_RELEASE_2026_11_09 (owner, Nov 9, 2026): ONE X only — the
+   circled #site-search-exit at the panel's top-right (the panel's
+   first child). The Nov 6 in-field clear X is removed: on the
+   empty field it closed the panel, so the two X's did the same
+   job. Closing now RESETS the field, so every open starts on the
+   empty state — the hint plus a labelled "Quick Links" section
+   holding the retired mobile menu's five destinations (About,
+   ATR One, One-on-One, Help Guides, Reviews), which also pin to
+   the top of the results whenever they match a query. Voice
+   search: a microphone is created inside the bar only where the
+   Web Speech API exists, and its transcript drives the field's
+   own 'input' path. The mobile thumb bar's Search slot opens this
+   same panel; the header button stays. */
 (function () {
   'use strict';
   document.addEventListener('DOMContentLoaded', function () {
@@ -4267,8 +4275,9 @@ if ("serviceWorker" in navigator) {
     var overlay = document.getElementById('site-search');
     var input = document.getElementById('site-search-input');
     var resultsBox = document.getElementById('site-search-results');
-    var closeBtn = document.getElementById('site-search-close');
     var exitBtn = document.getElementById('site-search-exit');
+    var thumbSearchBtn = document.getElementById('bottom-search-toggle');
+    var searchBar = overlay.querySelector('.site-search-bar');
     if (!openBtn || !overlay || !input || !resultsBox) return;
 
     var PAGE_NAMES = {
@@ -4286,6 +4295,19 @@ if ("serviceWorker" in navigator) {
     };
     var GROUP_LABELS = { page: 'Pages', repair: 'Repairs & prices', shop: 'Store items' };
     var GROUP_CAPS = { page: 8, repair: 10, shop: 8 };
+    /* SEARCH_RELEASE_2026_11_09: the Quick Links destinations — the
+       retired mobile menu's five, in the menu's own order. page is
+       the router id the destination opens; oo routes through the
+       site's data-open-oneonone entry; guide scrolls to a block on
+       the named page. keys widens matching with the words people
+       actually type. */
+    var DESTS = [
+      { title: 'About', page: 'about', keys: 'about us company austin owner story meet' },
+      { title: 'ATR One', page: 'atr-one', keys: 'atr one membership plus points rewards plans join subscription' },
+      { title: 'One-on-One', oo: true, keys: 'one-on-one one on one lessons classes tutoring learn training' },
+      { title: 'Help Guides', page: 'help-guides', keys: 'help guides how to instructions do it yourself diy' },
+      { title: 'Reviews', page: 'home', guide: 'home-reviews', keys: 'reviews ratings testimonials what local clients are saying stars feedback' }
+    ];
     /* NAV_SEARCH_CLEANUP_2026_11_06 (addendum 4): the storefront's
      * customer-facing name is "Store" (PAGE_NAMES above); "shop" stays
      * behind as a search alias so the old word still finds the page.
@@ -4339,6 +4361,29 @@ if ("serviceWorker" in navigator) {
           name: p.name, hay: hay
         });
       });
+      /* SEARCH_RELEASE_2026_11_09: destinations. About, ATR One and
+         Help Guides already have index entries (their own pages) —
+         tag them and widen their hay. One-on-One and Reviews have
+         no page entry of their own (One-on-One is the booking
+         mode; Reviews is the home testimonials block), so they get
+         explicit entries carrying their own routing. */
+      DESTS.forEach(function (d) {
+        if (d.oo || d.guide) {
+          index.push({
+            kind: 'page', title: d.title, sub: 'Page', page: d.page || '',
+            heads: [], dest: d.title, oo: !!d.oo, guide: d.guide || '',
+            hay: norm(d.title + ' ' + d.keys)
+          });
+          return;
+        }
+        for (var i = 0; i < index.length; i++) {
+          if (index[i].kind === 'page' && index[i].page === d.page && !index[i].dest) {
+            index[i].dest = d.title;
+            index[i].hay += ' ' + norm(d.keys);
+            break;
+          }
+        }
+      });
       return index;
     }
 
@@ -4360,6 +4405,7 @@ if ("serviceWorker" in navigator) {
         if (lt.indexOf(q) > -1) score += 25;
         toks.forEach(function (t) { if (lt.indexOf(t) > -1) score += 5; });
         if (e.kind === 'page') score += 2;
+        if (e.dest) score += 30;
         scored.push({ e: e, score: score });
       });
       scored.sort(function (a, b) { return b.score - a.score; });
@@ -4441,11 +4487,32 @@ if ("serviceWorker" in navigator) {
       }
     }
 
+    function clickTempAnchor(attrs) {
+      var a = document.createElement('a');
+      Object.keys(attrs).forEach(function (k) { a.setAttribute(k, attrs[k]); });
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
     function activate(e, q) {
       closeSearch();
-      if (e.kind === 'repair') openRepairResult(e);
+      if (e.oo) {
+        /* The site's own one-on-one entry: a data-open-oneonone
+           anchor, clicked through the same delegated handlers the
+           door cards and guide buttons use. */
+        clickTempAnchor({ href: '#repair', 'data-page': 'repair', 'data-open-oneonone': '' });
+      } else if (e.guide) {
+        clickTempAnchor({ href: '#' + e.page, 'data-page': e.page, 'data-guide': e.guide });
+      }
+      else if (e.kind === 'repair') openRepairResult(e);
       else if (e.kind === 'shop') openShopResult(e);
       else openPageResult(e, q);
+    }
+
+    function destEntry(title) {
+      var idx = buildIndex();
+      for (var i = 0; i < idx.length; i++) { if (idx[i].dest === title) return idx[i]; }
+      return null;
     }
 
     function render(qRaw) {
@@ -4456,16 +4523,39 @@ if ("serviceWorker" in navigator) {
         hint.className = 'site-search-hint';
         hint.textContent = 'Start typing \u2014 search looks across every page, the repair price book, and the store.';
         resultsBox.appendChild(hint);
-        syncClearLabel();
+        /* SEARCH_RELEASE_2026_11_09: the Quick Links section — the
+           five destinations as arrow rows, Apple's treatment. A tap
+           routes exactly like a result tap (activate). */
+        var qh = document.createElement('p');
+        qh.className = 'site-search-quicklinks-title';
+        qh.textContent = 'Quick Links';
+        resultsBox.appendChild(qh);
+        DESTS.forEach(function (d) {
+          var e = destEntry(d.title);
+          if (!e) return;
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'site-search-item site-search-quicklink';
+          b.setAttribute('data-dest', d.title);
+          var ar = document.createElement('span');
+          ar.className = 'ss-arrow';
+          ar.setAttribute('aria-hidden', 'true');
+          ar.innerHTML = '<i class="fas fa-arrow-right"></i>';
+          var t = document.createElement('span');
+          t.className = 'site-search-item-title';
+          t.textContent = d.title;
+          b.appendChild(ar); b.appendChild(t);
+          b.addEventListener('click', function () { activate(e, ''); });
+          resultsBox.appendChild(b);
+        });
         return;
       }
       var list = runSearch(q);
       if (!list.length) {
         var none = document.createElement('p');
         none.className = 'site-search-none';
-        none.textContent = 'No matches for \u201C' + q.trim() + '\u201D. Try a shorter word \u2014 a device, a repair, or a page name \u2014 or close search and use the menu.';
+        none.textContent = 'No matches for \u201C' + q.trim() + '\u201D. Try a shorter word \u2014 a device, a repair, or a page name.';
         resultsBox.appendChild(none);
-        syncClearLabel();
         return;
       }
       ['page', 'repair', 'shop'].forEach(function (kind) {
@@ -4491,7 +4581,6 @@ if ("serviceWorker" in navigator) {
           resultsBox.appendChild(b);
         });
       });
-      syncClearLabel();
     }
 
     function lockScroll() {
@@ -4503,51 +4592,69 @@ if ("serviceWorker" in navigator) {
       document.body.style.overflow = '';
     }
     function isOpen() { return !overlay.hidden; }
+
+    /* SEARCH_RELEASE_2026_11_09: on mobile the sheet rides the
+       visual viewport, so the field sits directly above the
+       on-screen keyboard. The CSS vars are consumed only by the
+       (max-width: 920px) sheet rules; without a VisualViewport API
+       the sheet falls back to its 100dvh anchor. */
+    var vvHandler = null;
+    function syncSearchViewport() {
+      var vv = window.visualViewport;
+      if (!vv) return;
+      overlay.style.setProperty('--ss-vv-top', vv.offsetTop + 'px');
+      overlay.style.setProperty('--ss-vv-height', vv.height + 'px');
+    }
+    function watchSearchViewport(on) {
+      var vv = window.visualViewport;
+      if (!vv) return;
+      if (on && !vvHandler) {
+        vvHandler = function () { syncSearchViewport(); };
+        vv.addEventListener('resize', vvHandler);
+        vv.addEventListener('scroll', vvHandler);
+        syncSearchViewport();
+      } else if (!on && vvHandler) {
+        vv.removeEventListener('resize', vvHandler);
+        vv.removeEventListener('scroll', vvHandler);
+        vvHandler = null;
+        overlay.style.removeProperty('--ss-vv-top');
+        overlay.style.removeProperty('--ss-vv-height');
+      }
+    }
+
+    /* SEARCH_RELEASE_2026_11_09: closing resets search — the field
+       is emptied and the results return to the empty state, so the
+       next open, from either trigger, starts fresh on Quick Links.
+       (Before this release the query survived close and reopen.) */
+    function resetSearch() {
+      input.value = '';
+      render('');
+    }
     function openSearch() {
       buildIndex();
       overlay.hidden = false;
       lockScroll();
+      watchSearchViewport(true);
       render(input.value);
       setTimeout(function () { try { input.focus(); } catch (e) {} }, 30);
     }
     function closeSearch() {
       if (!isOpen()) return;
+      stopVoice();
+      resetSearch();
       overlay.hidden = true;
       unlockScroll();
+      watchSearchViewport(false);
     }
 
-    /* SEARCH_TWO_X_2026_11_06 (owner, Nov 6, 2026): the small X
-       inside the search bubble clears instead of closing. Words
-       typed, or results (or the no-matches note) on screen -> clear
-       them, restore the empty state via render(''), keep the
-       overlay open with the cursor back in the box. Already empty
-       (hint only) -> the same tap exits. The circled X at the row's
-       far right (#site-search-exit) is wired straight to
-       closeSearch. The in-field X's label follows what its next tap
-       will do, so it never lies: "Clear search" while content is
-       up, "Close search" on the empty field. */
-    function searchHasContent() {
-      if (input.value && input.value.trim()) return true;
-      return !!resultsBox.querySelector('.site-search-item, .site-search-none');
-    }
-    function syncClearLabel() {
-      if (!closeBtn) return;
-      var label = searchHasContent() ? 'Clear search' : 'Close search';
-      closeBtn.setAttribute('aria-label', label);
-      closeBtn.setAttribute('title', label);
-    }
-    function clearSearch() {
-      if (searchHasContent()) {
-        input.value = '';
-        render('');
-        try { input.focus(); } catch (e) {}
-      } else {
-        closeSearch();
-      }
-    }
+    /* SEARCH_RELEASE_2026_11_09: the ONE X (#site-search-exit) is
+       wired straight to closeSearch, and closeSearch resets (see
+       above). The Nov 6 in-field clear X, its label sync, and its
+       tap-again-to-exit behaviour are removed with their button —
+       nothing inside the field closes the panel any more. */
 
     openBtn.addEventListener('click', openSearch);
-    if (closeBtn) closeBtn.addEventListener('click', clearSearch);
+    if (thumbSearchBtn) thumbSearchBtn.addEventListener('click', openSearch);
     if (exitBtn) exitBtn.addEventListener('click', closeSearch);
     overlay.addEventListener('click', function (ev) { if (ev.target === overlay) closeSearch(); });
     document.addEventListener('keydown', function (ev) {
@@ -4555,15 +4662,73 @@ if ("serviceWorker" in navigator) {
     });
     input.addEventListener('input', function () { render(input.value); });
     input.addEventListener('keydown', function (ev) {
-      if (ev.key === 'Enter') {
+      if (ev.key === 'Enter' && input.value.trim()) {
         var first = resultsBox.querySelector('.site-search-item');
         if (first) { ev.preventDefault(); first.click(); }
       }
     });
 
+    /* SEARCH_RELEASE_2026_11_09: voice search. The microphone
+       button exists only where the browser exposes the Web Speech
+       API — it is created here, never written in the markup, so
+       there is no dead button where the API is missing. The
+       transcript is written into the field and pushed through the
+       field's own 'input' event, so voice and typing run the
+       identical search path — the search logic is not forked. Any
+       end or error, a denied microphone included, returns the
+       button to idle quietly; nobody is trapped. stopVoice is a
+       hoisted declaration: closeSearch (above) calls it too. */
+    var micBtn = null;
+    var recog = null;
+    var listening = false;
+    function stopVoice() {
+      if (recog && listening) { try { recog.stop(); } catch (e) {} }
+      listening = false;
+      if (micBtn) {
+        micBtn.classList.remove('is-listening');
+        micBtn.setAttribute('aria-label', 'Search by voice');
+      }
+    }
+    var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRec && searchBar) {
+      micBtn = document.createElement('button');
+      micBtn.type = 'button';
+      micBtn.className = 'site-search-mic';
+      micBtn.id = 'site-search-mic';
+      micBtn.setAttribute('aria-label', 'Search by voice');
+      micBtn.setAttribute('title', 'Search by voice');
+      micBtn.innerHTML = '<i class="fas fa-microphone" aria-hidden="true"></i>';
+      searchBar.appendChild(micBtn);
+      micBtn.addEventListener('click', function () {
+        if (listening) { stopVoice(); return; }
+        try {
+          recog = new SpeechRec();
+          recog.lang = 'en-US';
+          recog.continuous = false;
+          recog.interimResults = true;
+          recog.onresult = function (ev) {
+            var txt = '';
+            for (var i = 0; i < ev.results.length; i++) { txt += ev.results[i][0].transcript; }
+            input.value = txt;
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+          };
+          recog.onend = function () { stopVoice(); };
+          recog.onerror = function () { stopVoice(); };
+          listening = true;
+          micBtn.classList.add('is-listening');
+          micBtn.setAttribute('aria-label', 'Stop voice search');
+          recog.start();
+        } catch (e) {
+          stopVoice();
+        }
+      });
+    }
+
     /* Test/verification handle (same pattern as the lookup's own
-       session hand-off): lets the harness drive the real module. */
-    window.atrSiteSearch = { open: openSearch, close: closeSearch, clear: clearSearch, exit: closeSearch, run: runSearch, isOpen: isOpen };
+       session hand-off): lets the harness drive the real module.
+       clear = empty the field and re-render the empty state while
+       staying open (the reset half of close, exposed for tests). */
+    window.atrSiteSearch = { open: openSearch, close: closeSearch, clear: resetSearch, exit: closeSearch, run: runSearch, isOpen: isOpen };
   });
 })();
 
