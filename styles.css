@@ -2896,3 +2896,30 @@ html .dt-tile.active {
 .a11y-btn { background: #C24A09; }
 .footer-bottom .a11y-btn { background: #C24A09; }
 .footer-share-btn:hover { background: #C24A09; }
+
+/* ATRONE_PLAN_ROW_2026_11_09 */
+/* ATR One plan row fix (Austin, Nov 9, 2026): the four paid plan cards
+   (Individual, Family, Business, Business Pro) must sit in ONE row on
+   desktop instead of the 4th card wrapping under. The base
+   .pricing-grid rule (auto-fit / minmax(260px,1fr) / max-width 900px)
+   cannot fit 4 cards, so this block widens the grid and pins it to
+   4 columns on desktop, 2 on medium screens, 1 on phones. Cards become
+   flex columns at full row height so the row is even. The Join buttons
+   carry an inline style="margin-top:1rem;" — margin-top:auto is what
+   actually pins them to the card bottoms so all four align, and it
+   needs !important to beat that inline style; this is the only
+   !important in this block and it is scoped to .pricing-card .btn.
+   The same grid serves the Prices page explainer row (4 cards, no
+   buttons): the flex/button rules are inert there, only the column
+   layout applies. The Free tier is no longer a card in "Pick your
+   plan", so the base .pricing-free-card rules above are now unused
+   and are left in place (append-only discipline). */
+.pricing-grid { max-width: 1240px; grid-template-columns: repeat(4, 1fr); align-items: stretch; }
+.pricing-card { display: flex; flex-direction: column; height: 100%; }
+.pricing-card .btn { margin-top: auto !important; }
+@media (max-width: 1100px) {
+  .pricing-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 620px) {
+  .pricing-grid { grid-template-columns: 1fr; }
+}
