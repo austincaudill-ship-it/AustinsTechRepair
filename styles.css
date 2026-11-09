@@ -2923,3 +2923,9 @@ html .dt-tile.active {
 @media (max-width: 620px) {
   .pricing-grid { grid-template-columns: 1fr; }
 }
+
+/* CLOUDFLARE_OFFICIAL_BADGE_2026_11_09: the official Protected by
+   Cloudflare badge image (owner-supplied, Nov 9, 2026) replaces the
+   homemade text .cf-badge in the footer disclaimer line. Same spot,
+   beside the same sentence; the sentence text is unchanged. */
+.cf-badge-img { height: 34px; width: auto; border-radius: 6px; vertical-align: middle; margin-left: 0.5rem; }
