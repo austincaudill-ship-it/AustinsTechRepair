@@ -2544,7 +2544,7 @@ function loadTicketThread(client, ticketId) {
             ? '<div class="p2-actions"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p3-checkout-btn"><i class="fas fa-credit-card"></i> Charge / Check out</button>' +
               '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p3-cash-btn"><i class="fas fa-money-bill-wave"></i> Mark paid — cash</button>' +
               '<span class="portal-muted portal-small" id="p3-pay-msg"></span></div>'
-            : '<p class="portal-muted portal-small">Payments on this ticket are handled by Austin or Jeremiah.</p>') +
+            : '<p class="portal-muted portal-small">Payments on this ticket are handled by Austin or Alfred.</p>') +
           '<div id="p3-checkout-link" hidden></div></div></div>' +
           '<div class="portal-drawer-section tk-acc" data-acc="parts">' + tkAccHead('parts', 'Parts on this ticket') + tkAccBodyOpen('parts') +
           '<div id="p2-parts"><p class="portal-muted">Loading parts&hellip;</p></div>' +
@@ -9325,7 +9325,7 @@ function loadTicketThread(client, ticketId) {
   /* ================= PORTAL_ROLE_LADDER_2026_11_04 =================
    * Austin, Nov 4, 2026: the two-value owner/associate model is
    * replaced by his ladder — Super Admin (Austin alone at the top,
-   * everything including money), Co-Super Admin (Jeremiah, his
+   * everything including money), Co-Super Admin (Alfred, his
    * stand-in: full reach including money, but he cannot modify the
    * Super Admin's account or role), Admin (Abigail — "everything I
    * can do except money"), then Technician 1, 2, 3, 4 (seniority
@@ -9351,7 +9351,7 @@ function loadTicketThread(client, ticketId) {
    * 'super_admin' and 'associate' -> 'customer_service' at every
    * read, so a pre-migration session never breaks; the migration
    * then rewrites the stored values per person (Austin ->
-   * super_admin, Jeremiah -> co_super_admin, Abigail -> admin)
+   * super_admin, Alfred -> co_super_admin, Abigail -> admin)
    * and the legacy arms simply stop matching.
    *
    * Every gate in the portal reads roles through the helpers
