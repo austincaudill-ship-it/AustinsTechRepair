@@ -45,9 +45,29 @@
     <div class="portal-topbar-inner">
       <span class="portal-brand"><i class="fas fa-screwdriver-wrench"></i> Austin's Tech Repair Group</span>
       <span class="portal-topbar-tag">Associate Hub</span> <!-- HEADER_TWEAK_2026_11_03: the Log Out button was MOVED here from the dashboard head (see the note left in .portal-head-actions) so it docks beside Back to site as a matched pair in the fixed top bar. Same element, same id, same click handler in portal.js (it binds by id, so the move changes nothing in JS). portal.css hides it whenever the dashboard is not the showing view, so the sign-in screens never offer a Log Out. -->
-      <span class="portal-topbar-actions"><a class="portal-btn portal-btn-outline" href="https://austinstechrepairgroup.com/">Back to site</a> <button class="portal-btn portal-btn-outline" id="portal-logout" type="button"><i class="fas fa-sign-out-alt"></i> Log Out</button></span>
+      <!-- HUB_NAV_2026_11_09 (Austin, Nov 9, 2026): New Service Request and Search join the top row at every width. New Service Request clicks the real sidebar Check-In tab and Search opens the Hub search dropdown under this bar (the HUB_SEARCH section in portal.js); portal.css hides both beside Log Out whenever the dashboard is not the showing view, so the sign-in screens never offer them. --><span class="portal-topbar-actions"><a class="portal-btn portal-btn-outline" href="https://austinstechrepairgroup.com/">Back to site</a> <button class="portal-btn portal-btn-outline" id="portal-hub-new-btn" type="button"><i class="fas fa-clipboard-check"></i> New Service Request</button> <button class="portal-btn portal-btn-outline" id="portal-hub-search-btn" type="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-magnifying-glass"></i> Search</button> <button class="portal-btn portal-btn-outline" id="portal-logout" type="button"><i class="fas fa-sign-out-alt"></i> Log Out</button></span>
     </div>
   </header>
+
+  <!-- HUB_NAV_2026_11_09 (Austin, Nov 9, 2026): the Hub search — the
+       menu and the finder in one. Tapping Search in the top bar drops
+       this panel down from directly under the top bar (the HUB_SEARCH
+       section in portal.js positions and drives it; portal.css styles
+       it). One field, one X that closes it AND clears the field. With
+       the field empty it lists the Hub's sections — every panel the
+       signed-in associate's sidebar shows — and as you type it finds
+       guests and queue tickets. It only ever looks: nothing here
+       creates, edits or deletes. -->
+  <div class="portal-hubsearch" id="portal-hubsearch" hidden>
+    <div class="portal-hubsearch-inner">
+      <div class="portal-hubsearch-row">
+        <i class="fas fa-magnifying-glass portal-hubsearch-icon" aria-hidden="true"></i>
+        <input type="text" id="portal-hubsearch-input" placeholder="Search guests, tickets, or a section&hellip;" autocomplete="off" aria-label="Search the Hub" />
+        <button class="portal-hubsearch-x" id="portal-hubsearch-close" type="button" aria-label="Close search"><i class="fas fa-xmark"></i></button>
+      </div>
+      <div class="portal-hubsearch-results" id="portal-hubsearch-results"></div>
+    </div>
+  </div>
 
   <main class="portal-main">
     <noscript><p class="portal-error">This portal needs JavaScript turned on to work.</p></noscript>
@@ -112,22 +132,27 @@
 
     <!-- ==================== DASHBOARD VIEW ==================== -->
     <section id="portal-dash-view" hidden>
-      <!-- PORTAL_APP_2026_11_09: the phone thumb bar — the public
+      <!-- PORTAL_APP_2026_11_09, reworked by HUB_NAV_2026_11_09
+           (Austin, Nov 9, 2026): the phone thumb bar — the public
            site's bottom-nav pattern brought inside the Hub, fixed to
-           the bottom at <=920px (portal.css). Each item clicks the
-           REAL sidebar tab — or, for Menu, the real
-           #portal-nav-toggle — so panels open through the exact
-           sidebar code paths and role gates, and the PORTAL_APP
+           the bottom at <=920px (portal.css). The owner's final word
+           on its contents: Guest, Queue, Team Chat, Time Clock, Pay —
+           no Home (the Hub opens on Home) and no Menu anywhere (the
+           Hub search in the top bar IS the menu now). Each button item
+           clicks the REAL sidebar tab, so panels open through the
+           exact sidebar code paths and role gates, and the PORTAL_APP
            module in portal.js mirrors each sidebar tab's visibility
-           and active state onto these items. The bar lives inside
+           and active state onto these items. Pay is not a tab: it is a
+           plain link out to Square (the v61 REPORT says why the
+           dashboard URL and not an app scheme). The bar lives inside
            #portal-dash-view, so it exists only on the dashboard,
            never on the sign-in screens. -->
       <nav class="portal-thumbbar" id="portal-thumbbar" aria-label="Quick navigation">
-        <button class="portal-thumb-item" type="button" data-thumb="home" aria-label="Home"><i class="fas fa-house"></i><span>Home</span></button>
+        <button class="portal-thumb-item" type="button" data-thumb="customers" aria-label="Guest"><i class="fas fa-users"></i><span>Guest</span></button>
         <button class="portal-thumb-item" type="button" data-thumb="tickets" aria-label="Service Queue"><i class="fas fa-list-ol"></i><span>Queue</span></button>
         <button class="portal-thumb-item" type="button" data-thumb="teamchat" aria-label="Team Chat"><i class="fas fa-comments"></i><span>Team Chat</span></button>
         <button class="portal-thumb-item" type="button" data-thumb="timeclock" aria-label="Time Clock"><i class="fas fa-clock"></i><span>Time Clock</span></button>
-        <button class="portal-thumb-item" type="button" data-thumb="more" aria-label="Menu"><i class="fas fa-bars"></i><span>Menu</span></button>
+        <a class="portal-thumb-item" data-thumb="pay" href="https://app.squareup.com/dashboard" target="_blank" rel="noopener" aria-label="Pay — open Square"><i class="fas fa-credit-card"></i><span>Pay</span></a>
       </nav>
       <div class="portal-dash-head">
         <!-- MERGE_2026_11_03: the brand div + PORTAL_HEADER_CLEANUP_2026_11_02 block below is grafted verbatim from the live portal.html; the staged stack branched before the header cleanup published and still carried the old in-column greeting/clock paragraphs. See MERGE-REPORT.md. -->
@@ -136,7 +161,8 @@
           <h1 class="portal-h1"><i class="fas fa-briefcase"></i> Associate Hub</h1>
         </div>
         <!-- PORTAL_HEADER_CLEANUP_2026_11_02 (Austin, Nov 2, 2026, late evening): the greeting + name + role + clock/date line moved OUT of the left title column into one centered line of its own, directly under the title row (styled .portal-head-status in portal.css). Same ids in the same order — portal.js writes greeting/name/role/clock/date by id only, so nothing in JS changed. -->
-        <p class="portal-muted portal-head-status"><span class="portal-head-status-greet"><span id="portal-greeting">Welcome back</span>, <span id="portal-emp-name">teammate</span> <span class="portal-badge portal-badge-role" id="portal-emp-role"></span></span> <span class="portal-head-status-sep" aria-hidden="true">&middot;</span> <span class="portal-head-status-clock"><i class="far fa-clock"></i> <span id="portal-clock"></span> &middot; <span id="portal-date"></span></span></p>
+        <!-- HUB_NAV_2026_11_09: greeting, comma and name now sit in ONE inline span (.portal-head-status-greetline). The greet wrapper is inline-flex, and its flex gap was landing between the greeting span and the bare comma text — the "Good afternoon , Austin" bug. Inside one span the line flows as plain text again, for every daypart; the role badge keeps its own flex slot and its middot. -->
+        <p class="portal-muted portal-head-status"><span class="portal-head-status-greet"><span class="portal-head-status-greetline"><span id="portal-greeting">Welcome back</span>, <span id="portal-emp-name">teammate</span></span> <span class="portal-badge portal-badge-role" id="portal-emp-role"></span></span> <span class="portal-head-status-sep" aria-hidden="true">&middot;</span> <span class="portal-head-status-clock"><i class="far fa-clock"></i> <span id="portal-clock"></span> &middot; <span id="portal-date"></span></span></p>
         <div class="portal-head-actions">
           <button class="portal-btn portal-btn-outline" id="portal-nav-toggle" type="button" aria-label="Open menu"><i class="fas fa-bars"></i> Menu</button>
           <!-- HEADER_TWEAK_2026_11_03: the Log Out button that used to sit here was MOVED (not copied) into the top bar beside Back to site — it is the #portal-logout in .portal-topbar-actions above. Do NOT add another one here: exactly one #portal-logout may exist in this file. This container now holds only the phone-width Menu toggle, and portal.css hides the container outright at 641px and up, where the toggle is display:none anyway, so no empty row is left above the greeting. -->

@@ -16590,6 +16590,200 @@ function loadTicketThread(client, ticketId) {
       }).join('') : '<p class="portal-muted">No team birthdays in the next 60 days.</p>';
     });
   }
+
+  /* ================= HUB_SEARCH_2026_11_09 =================
+   * Austin, Nov 9, 2026 — the owner's final Hub layout: "Search
+   * is the menu." The top bar gained two buttons beside Back to
+   * site and Log Out, at every width:
+   *   - New Service Request clicks the REAL sidebar Check-In tab
+   *     (#portal-tab-checkin), so the tap runs exactly what a
+   *     sidebar tap runs — activateTab plus the extra-tab
+   *     loader — through the tab's own bound handlers.
+   *   - Search drops a compact panel down from directly under
+   *     the top bar (never a bottom sheet): one field, one X
+   *     that closes the panel AND clears the field, Escape the
+   *     same. With the field empty it lists the Hub's SECTIONS
+   *     — the search is the menu — and as you type it finds
+   *     GUESTS (by name or phone) and TICKETS (by guest name,
+   *     device or phone).
+   *   Sections are read off the live sidebar at render time and
+   *   filtered by each tab's own computed visibility — the
+   *   exact display applyRoleNav() wrote from tabAllowed() —
+   *   so role gates are mirrored, never reimplemented, and
+   *   Setup's custom action buttons (also .portal-tab) ride
+   *   along. A section tap clicks the real tab element. A guest
+   *   tap opens the Guest panel and then runs
+   *   openCustomerProfile(id); a ticket tap opens the Service
+   *   Queue and runs openTicket(id) — the very functions the
+   *   cards' own View buttons reach through the click
+   *   delegation, fetching fresh by id.
+   *   Data: guests come from state.customersCache once the Guest
+   *   panel has loaded it, with one read-only fill of the same
+   *   rows (id, name, phone, email) behind it until then;
+   *   tickets come from one read-only fetch mirroring
+   *   loadTickets (same table, same ordering, same 200 cap, no
+   *   status filter), refreshed when the panel opens if the
+   *   last fetch is over 30 seconds old. The search NEVER
+   *   writes: no insert, update, delete or upsert exists in
+   *   this section — it only looks. */
+  (function () {
+    var btn = $('portal-hub-search-btn'), newBtn = $('portal-hub-new-btn');
+    var panel = $('portal-hubsearch'), input = $('portal-hubsearch-input');
+    var xBtn = $('portal-hubsearch-close'), results = $('portal-hubsearch-results');
+    if (!btn || !panel || !input || !results) return;
+
+    var guestRows = null, guestFetching = false;   /* read-only fill, until state.customersCache lands */
+    var ticketRows = null, ticketFetchedAt = 0, ticketFetching = false;
+
+    function digits(v) { return String(v == null ? '' : v).replace(/\D/g, ''); }
+
+    function sections() {
+      var out = [];
+      document.querySelectorAll('#portal-nav .portal-tab').forEach(function (t) {
+        if (window.getComputedStyle(t).display === 'none') return;
+        var clone = t.cloneNode(true);
+        clone.querySelectorAll('.portal-count').forEach(function (n) { n.parentNode.removeChild(n); });
+        var label = String(clone.textContent || '').replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, '');
+        var icon = t.querySelector('i');
+        out.push({ tab: t.getAttribute('data-tab'), label: label, icon: icon ? icon.getAttribute('class') : 'fas fa-circle' });
+      });
+      return out;
+    }
+
+    function guests() {
+      if (state.customersCache && state.customersCache.length) return state.customersCache;
+      if (guestRows) return guestRows;
+      if (!guestFetching) {
+        guestFetching = true;
+        withClient(function (client) {
+          if (!client) { guestFetching = false; guestRows = []; return; }
+          client.from('customers').select('id, name, phone, email').order('created_at', { ascending: false }).limit(500)
+            .then(function (res) { guestFetching = false; guestRows = res.error ? [] : (res.data || []); if (!panel.hidden) renderResults(); })
+            .catch(function () { guestFetching = false; guestRows = []; });
+        });
+      }
+      return [];
+    }
+
+    function tickets() {
+      var now = Date.now();
+      if (ticketRows && now - ticketFetchedAt < 30000) return ticketRows;
+      if (!ticketFetching) {
+        ticketFetching = true;
+        withClient(function (client) {
+          if (!client) { ticketFetching = false; ticketRows = ticketRows || []; return; }
+          function run(useJobDate) {
+            var q = client.from('tickets').select('*');
+            if (useJobDate) q = q.order('job_date', { ascending: false });
+            q = q.order('created_at', { ascending: false }).limit(200);
+            q.then(function (res) {
+              if (res.error) { if (useJobDate) { run(false); return; } ticketFetching = false; return; }
+              ticketRows = res.data || []; ticketFetchedAt = Date.now(); ticketFetching = false;
+              if (!panel.hidden) renderResults();
+            }).catch(function () { if (useJobDate) { run(false); return; } ticketFetching = false; });
+          }
+          run(true);
+        });
+      }
+      return ticketRows || [];
+    }
+
+    function matchPhone(q, phone) {
+      var qd = digits(q), pd = digits(phone);
+      if (qd.length >= 3 && pd.indexOf(qd) !== -1) return true;
+      return !!phone && String(phone).toLowerCase().indexOf(q) !== -1;
+    }
+
+    function renderResults() {
+      var q = trim(input.value).toLowerCase();
+      var html = '';
+      var secs = sections().filter(function (s) { return !q || s.label.toLowerCase().indexOf(q) !== -1; });
+      if (secs.length) {
+        html += '<p class="portal-hubsearch-group">Sections</p>' + secs.map(function (s) {
+          return '<button type="button" class="portal-hubsearch-item" data-hs-kind="section" data-hs-tab="' + esc(s.tab) + '"><i class="' + esc(s.icon) + '"></i><span class="hs-main">' + esc(s.label) + '</span></button>';
+        }).join('');
+      }
+      if (q) {
+        var gs = guests().filter(function (c) {
+          return String(c.name || '').toLowerCase().indexOf(q) !== -1 || matchPhone(q, c.phone);
+        }).slice(0, 6);
+        if (gs.length) {
+          html += '<p class="portal-hubsearch-group">Guests</p>' + gs.map(function (c) {
+            return '<button type="button" class="portal-hubsearch-item" data-hs-kind="guest" data-hs-id="' + esc(c.id) + '"><i class="fas fa-user"></i><span class="hs-main">' + esc(c.name || 'Guest') + '</span>' + (c.phone ? '<span class="hs-sub">' + esc(c.phone) + '</span>' : '') + '</button>';
+          }).join('');
+        }
+        var ts = tickets().filter(function (t) {
+          return String(t.customer_name || '').toLowerCase().indexOf(q) !== -1 ||
+            ticketTitle(t).toLowerCase().indexOf(q) !== -1 ||
+            String(t.issue || '').toLowerCase().indexOf(q) !== -1 ||
+            matchPhone(q, t.customer_phone);
+        }).slice(0, 6);
+        if (ts.length) {
+          html += '<p class="portal-hubsearch-group">Tickets</p>' + ts.map(function (t) {
+            return '<button type="button" class="portal-hubsearch-item" data-hs-kind="ticket" data-hs-id="' + esc(t.id) + '"><i class="fas fa-ticket"></i><span class="hs-main">' + esc(ticketTitle(t)) + '</span><span class="hs-sub">' + esc(t.customer_name || 'No name given') + ' &middot; ' + esc(t.status || '') + '</span></button>';
+          }).join('');
+        }
+        if (!secs.length && !gs.length && !ts.length) {
+          html = '<p class="portal-hubsearch-empty">Nothing in the Hub matches &ldquo;' + esc(trim(input.value)) + '&rdquo;.</p>';
+        }
+      }
+      results.innerHTML = html;
+    }
+
+    function openSearch() {
+      var tb = document.querySelector('.portal-topbar');
+      panel.style.top = (tb ? tb.getBoundingClientRect().bottom : 0) + 'px';
+      guests(); tickets();
+      panel.hidden = false;
+      panel.classList.remove('hs-open');
+      void panel.offsetWidth;
+      panel.classList.add('hs-open');
+      btn.setAttribute('aria-expanded', 'true');
+      renderResults();
+      input.focus();
+    }
+    function closeSearch() {
+      panel.hidden = true;
+      input.value = '';
+      btn.setAttribute('aria-expanded', 'false');
+    }
+
+    btn.addEventListener('click', function () { if (panel.hidden) openSearch(); else closeSearch(); });
+    if (xBtn) xBtn.addEventListener('click', closeSearch);
+    input.addEventListener('input', renderResults);
+    panel.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeSearch(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !panel.hidden) closeSearch(); });
+    window.addEventListener('resize', function () {
+      if (panel.hidden) return;
+      var tb = document.querySelector('.portal-topbar');
+      panel.style.top = (tb ? tb.getBoundingClientRect().bottom : 0) + 'px';
+    });
+    results.addEventListener('click', function (e) {
+      var item = e.target && e.target.closest ? e.target.closest('.portal-hubsearch-item') : null;
+      if (!item) return;
+      var kind = item.getAttribute('data-hs-kind');
+      if (kind === 'section') {
+        var tab = document.querySelector('#portal-nav .portal-tab[data-tab="' + item.getAttribute('data-hs-tab') + '"]');
+        closeSearch();
+        if (tab) tab.click();
+      } else if (kind === 'guest') {
+        var gid = item.getAttribute('data-hs-id');
+        closeSearch();
+        var gt = $('portal-tab-customers'); if (gt) gt.click();
+        openCustomerProfile(gid);
+      } else if (kind === 'ticket') {
+        var tid = item.getAttribute('data-hs-id');
+        closeSearch();
+        var tt = $('portal-tab-tickets'); if (tt) tt.click();
+        openTicket(tid);
+      }
+    });
+    if (newBtn) newBtn.addEventListener('click', function () {
+      var t = $('portal-tab-checkin');
+      if (t) t.click();
+    });
+  })();
+  /* ================= end HUB_SEARCH_2026_11_09 ================= */
 })();
 
 /* ==================== PORTAL_APP_2026_11_09 ====================
@@ -16606,8 +16800,15 @@ function loadTicketThread(client, ticketId) {
      itself, so .click() reproduces the sidebar behavior whole,
      including the document-level tab-memory and drawer-close
      listeners, which key off .portal-tab clicks).
-   - Menu clicks the real #portal-nav-toggle, whose handler
-     (menuToggleNav) is the only code that opens the drawer.
+   - HUB_NAV_2026_11_09 (Austin, Nov 9, 2026): the bar's contents
+     are the owner's final word — Guest, Queue, Team Chat, Time
+     Clock, Pay. Home came off (the Hub opens on Home) and Menu
+     came off entirely: no item clicks #portal-nav-toggle any
+     more (portal.css retires the pill at phone widths, and the
+     Hub search in the top bar is the menu now — see the
+     HUB_SEARCH section inside the main closure). Pay is a plain
+     anchor out to Square, not a tab: the click handler leaves
+     it alone and syncThumb never mirrors it.
    - Visibility and active state are MIRRORED from the sidebar tabs:
      applyRoleNav() writes each tab's display from tabAllowed(), and
      activateTab()/showExtraPanel() write each tab's .active class.
@@ -16618,7 +16819,7 @@ function loadTicketThread(client, ticketId) {
   function $(id) { return document.getElementById(id); }
 
   /* ---------- thumb bar: mirror + click-through ---------- */
-  var THUMB_TABS = ['home', 'tickets', 'teamchat', 'timeclock'];
+  var THUMB_TABS = ['customers', 'tickets', 'teamchat', 'timeclock'];
   function syncThumb() {
     THUMB_TABS.forEach(function (key) {
       var side = $('portal-tab-' + key);
@@ -16635,7 +16836,7 @@ function loadTicketThread(client, ticketId) {
       var item = e.target && e.target.closest ? e.target.closest('.portal-thumb-item') : null;
       if (!item) return;
       var key = item.getAttribute('data-thumb');
-      if (key === 'more') { var tg = $('portal-nav-toggle'); if (tg) tg.click(); return; }
+      if (key === 'pay') return; /* a real link out to Square — the browser takes it from here */
       var side = $('portal-tab-' + key);
       if (side) side.click();
     });

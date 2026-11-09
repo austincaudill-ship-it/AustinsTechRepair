@@ -1379,3 +1379,71 @@ body.portal-body #portal-dash-view textarea {
   #portal-dash-view .portal-panel { max-height: calc(100vh - 24px - 70px); }
   .portal-nav-col { max-height: calc(100vh - 24px - 70px); }
 }
+/* ===== HUB_NAV_2026_11_09 — the owner's final Hub layout (Austin, Nov 9, 2026) =====
+   Four layout facts live here; the behavior lives in portal.html /
+   portal.js (the HUB_SEARCH section and the PORTAL_APP rework).
+   1. Phone widths lose the floating Menu pill for good: the
+      .portal-head-actions row holds only #portal-nav-toggle, and
+      both go display:none at <=920px. (At 641-920 the row was
+      already hidden; at <=640 the toggle's own inline-flex rule is
+      out-specified by the #portal-dash-view-scoped rules below.)
+   2. Panels get their inset back on phones: the card padding the
+      >=641px rule has always given panels (.5rem .75rem .75rem)
+      now applies at <=920px too, so a panel head's icon and
+      buttons stop riding the card border (at <=640px panels had
+      NO padding at all — the clipped Home head in the owner's
+      screenshot).
+   3. The dead band at the top of the phone Hub collapses: with
+      the Menu row gone, the greeting is the dash head's first
+      row, so its top margin goes to 0 at <=640px and the main
+      column's top padding tightens from 1.75rem to 1rem —
+      content starts promptly under the top bar, at the panels'
+      own rhythm, without crowding.
+   4. The thumb bar's labels can never sink into the home
+      indicator: the bar's bottom padding gains a 22px floor
+      under the safe-area inset, and the dash view's bottom
+      clearance grows to match the taller bar. */
+.portal-hubsearch { position: fixed; left: 0; right: 0; z-index: 55; background: var(--surface, #FFFDF8); border-bottom: 1px solid var(--line, #E6D9C0); box-shadow: 0 14px 28px rgba(90, 64, 32, 0.14); }
+.portal-hubsearch[hidden] { display: none; }
+.portal-hubsearch.hs-open { animation: hubsearch-drop 0.18s ease-out; }
+@keyframes hubsearch-drop { from { transform: translateY(-10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.portal-hubsearch-inner { max-width: 1200px; margin: 0 auto; padding: 0.7rem 1.25rem 0.8rem; }
+.portal-hubsearch-row { display: flex; align-items: center; gap: 0.6rem; }
+.portal-hubsearch-icon { color: var(--muted, #7D6C5B); }
+#portal-hubsearch-input { flex: 1 1 auto; min-width: 0; padding: 0.6rem 0.8rem; border: 1px solid var(--line, #E6D9C0); border-radius: 10px; background: var(--bg, #FAF6EE); color: var(--ink, #2C231A); font: inherit; font-size: 0.95rem; }
+.portal-hubsearch-x { flex: none; width: 38px; height: 38px; border: 1px solid var(--line, #E6D9C0); border-radius: 999px; background: var(--surface, #FFFDF8); color: var(--ink, #2C231A); cursor: pointer; font-size: 1rem; }
+.portal-hubsearch-results { margin-top: 0.55rem; max-height: min(58vh, 430px); overflow-y: auto; }
+.portal-hubsearch-group { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted, #7D6C5B); margin: 0.55rem 0 0.3rem; }
+.portal-hubsearch-item { display: flex; align-items: center; gap: 0.6rem; width: 100%; padding: 0.5rem 0.55rem; border: none; border-radius: 10px; background: none; cursor: pointer; font: inherit; text-align: left; color: var(--ink, #2C231A); }
+.portal-hubsearch-item:hover, .portal-hubsearch-item:focus-visible { background: var(--brand-soft, #FBEADB); }
+.portal-hubsearch-item i { flex: none; width: 1.1rem; text-align: center; color: var(--brand-deep, #A63E06); }
+.portal-hubsearch-item .hs-main { flex: 1 1 auto; min-width: 0; }
+.portal-hubsearch-item .hs-sub { flex: none; color: var(--muted, #7D6C5B); font-size: 0.85em; text-align: right; }
+.portal-hubsearch-empty { color: var(--muted, #7D6C5B); padding: 0.4rem 0.55rem; margin: 0; }
+/* The two new top-row buttons follow Log Out's rule exactly: hidden
+   whenever the dashboard is not the showing view, so the sign-in,
+   reset and two-step screens never offer them. */
+body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-hub-new-btn,
+body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-hub-search-btn { display: none; }
+/* The top row now carries four buttons, and the actions span must be
+   allowed to wrap AND to shrink below its longest row: measured on
+   the staged build, unwrapped it sized to a 412px row inside a
+   390px phone viewport and forced the whole page wider than the
+   screen (the fixed thumb bar stretched with it and the Pay label
+   slid off the edge). */
+.portal-topbar-actions { flex-wrap: wrap; min-width: 0; max-width: 100%; }
+@media (max-width: 920px) {
+  #portal-dash-view .portal-head-actions { display: none; }
+  #portal-dash-view #portal-nav-toggle { display: none; }
+  #portal-dash-view .portal-panel { padding: 0.5rem 0.75rem 0.75rem; box-sizing: border-box; }
+  a.portal-thumb-item { text-decoration: none; }
+  .portal-thumbbar { padding-bottom: max(22px, calc(6px + env(safe-area-inset-bottom))); }
+  #portal-dash-view { padding-bottom: 96px; }
+}
+@media (min-width: 641px) and (max-width: 920px) {
+  #portal-dash-view .portal-panel, #portal-dash-view .portal-nav-col { max-height: calc(100vh - 24px - 92px); }
+}
+@media (max-width: 640px) {
+  .portal-main { padding-top: 1rem; }
+  .portal-dash-head .portal-head-status { margin-top: 0; }
+}
