@@ -1314,3 +1314,18 @@ body.portal-body #portal-dash-view textarea {
 .guestchat-thread-title { margin: 0.7rem 0 0.1rem; font-size: 1.05rem; }
 .guestchat-msgs { max-height: 46vh; }
 /* end GUEST_CHAT_2026_11_08 */
+
+/* ================= BUSINESS_VERIFICATION_2026_11_09 =================
+ * The business-verification chip and its action row (Members panel
+ * cards, member editor, customer profile). The chip borrows
+ * .portal-badge's shape and the portal's teal/blue soft families,
+ * so it sits quietly beside the existing badges. */
+.bv-chip {
+  display: inline-block; padding: 0.2rem 0.65rem; border-radius: 999px;
+  font-size: 0.78rem; font-weight: 700; white-space: nowrap;
+  background: #f3f4f6; color: #4b5563;
+}
+.bv-chip-on { background: var(--teal-soft, #DFF0EA); color: #0b5a4d; }
+.bv-chip-wait { background: var(--blue-soft, #E4EEF9); color: var(--blue, #1050A0); }
+.bv-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin: 0.6rem 0 0; }
+/* end BUSINESS_VERIFICATION_2026_11_09 */

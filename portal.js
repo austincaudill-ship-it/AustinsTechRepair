@@ -8291,7 +8291,7 @@ function loadTicketThread(client, ticketId) {
     withClient(function (client) {
       if (!client) { listError(list, 'members'); return; }
       client.from('customer_memberships')
-        .select('id, customer_id, tier, status, started_on, cancelled_on, note')
+        .select('id, customer_id, tier, status, started_on, cancelled_on, note, business_verified, verification_requested_at, business_verified_at') /* BUSINESS_VERIFICATION_2026_11_09: the panel reads the verification state too — the columns come from business-verification.sql, which must run BEFORE this file publishes (deploy order in REPORT.md) or this select errors and the panel falls back to its not-set-up wording */
         .order('started_on', { ascending: true }).limit(500)
         .then(function (res) {
           if (res.error) {
@@ -8313,7 +8313,11 @@ function loadTicketThread(client, ticketId) {
                   name: names[r.customer_id] || 'Customer',
                   tier: r.tier, status: r.status,
                   startedOn: r.started_on, cancelledOn: r.cancelled_on,
-                  note: r.note
+                  note: r.note,
+                  /* BUSINESS_VERIFICATION_2026_11_09 */
+                  businessVerified: !!r.business_verified,
+                  verificationRequestedAt: r.verification_requested_at || null,
+                  businessVerifiedAt: r.business_verified_at || null
                 };
               });
               /* Active members first, then by name — the order
@@ -8361,6 +8365,8 @@ function loadTicketThread(client, ticketId) {
         '<p class="portal-card-meta"><i class="fas fa-star"></i> ' + tierLine + '</p>' +
         '<p class="portal-card-meta">' + statusLine + '</p>' +
         (m.note ? '<p class="portal-card-meta"><i class="fas fa-note-sticky"></i> ' + esc(m.note) + '</p>' : '') +
+        /* BUSINESS_VERIFICATION_2026_11_09: a business tier carries its verification state on the card */
+        (bvIsBusinessTier(m.tier) ? '<p class="portal-card-meta"><i class="fas fa-building"></i> Business verification: ' + bvChipHtml(m.businessVerified, m.verificationRequestedAt) + '</p>' : '') +
         '<p class="portal-card-meta portal-muted">Tap to view or edit this membership</p>' +
         '</article>';
     }).join('');
@@ -8448,6 +8454,20 @@ function loadTicketThread(client, ticketId) {
       ['Note', esc(m.note || '—')]
     ]) +
       '<p class="portal-muted portal-small">This status is the portal&rsquo;s own record. It changes only when someone changes it here.</p></div>';
+
+    /* BUSINESS_VERIFICATION_2026_11_09: a business tier gets its
+     * verification section under Membership — the chip, the dates,
+     * and (admin-or-above) the send / mark-verified controls.
+     * Other tiers show nothing. */
+    if (bvIsBusinessTier(m.tier)) {
+      html += '<div class="portal-drawer-section"><h3>Business verification</h3>' +
+        '<p class="cust-prof-mem">Status: ' + bvChipHtml(m.businessVerified, m.verificationRequestedAt) + '</p>' +
+        (m.verificationRequestedAt ? '<p class="portal-muted portal-small">Documents requested ' + esc(fmtDateTime(m.verificationRequestedAt)) + '.</p>' : '') +
+        (m.businessVerified && m.businessVerifiedAt ? '<p class="portal-muted portal-small">Verified ' + esc(fmtDateTime(m.businessVerifiedAt)) + '.</p>' : '') +
+        '<p class="portal-muted portal-small">Business discounts and wholesale pricing apply once this business is verified. The verification email is sent by the system to service@, with a copy to the customer — the customer sends the documents to service@.</p>' +
+        (owner ? bvButtonsHtml(m.id, m.businessVerified) : '<p class="portal-muted portal-small">Only an admin or above can send the verification email or change the verified status.</p>') +
+        '</div>';
+    }
 
     if (pending.length) {
       html += '<div class="portal-drawer-section"><h3>Changes waiting for approval</h3>' + pending.map(function (r) {
@@ -8576,6 +8596,199 @@ function loadTicketThread(client, ticketId) {
     });
   }
   /* end PORTAL_MEMBERS_EDIT_2026_11_02 (member editor) */
+
+  /* ================= BUSINESS VERIFICATION =================
+   * BUSINESS_VERIFICATION_2026_11_09 (Austin, Nov 9, 2026): ATR One
+   * Business and Business Pro require a real business, and until
+   * now nothing checked. After a business signup, staff send the
+   * verification email — the business-verification Edge Function
+   * sends the approved copy from the system sender (no-reply),
+   * addressed to service@ with the customer copied, and stamps
+   * verification_requested_at on the membership row; when the
+   * documents come back, an admin marks the row verified here
+   * (business_verified / business_verified_at, written straight
+   * to customer_memberships — the member editor's direct-write
+   * pattern). Business discounts and wholesale pricing apply once
+   * verified. The columns come from business-verification.sql.
+   * The Members card, the member editor, and the customer profile
+   * all read the same row, so they can never disagree. Individual,
+   * Family, and Free show none of this. */
+  var BV_BUSINESS_TIERS = { business: true, business_plus: true, business_pro: true };
+  var bvProfileNotice = '';   /* one-shot note for the profile's ATR One section */
+
+  function bvIsBusinessTier(tier) { return !!BV_BUSINESS_TIERS[String(tier || '')]; }
+
+  /* The three states, one chip: verified wins, then requested. */
+  function bvChipHtml(verified, requestedAt) {
+    if (verified) return '<span class="bv-chip bv-chip-on">Verified</span>';
+    if (requestedAt) return '<span class="bv-chip bv-chip-wait">Documents requested</span>';
+    return '<span class="bv-chip">Not requested</span>';
+  }
+
+  function bvButtonsHtml(membershipId, verified) {
+    return '<p class="bv-actions">' +
+      '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-bv-send="' + esc(membershipId) + '"><i class="fas fa-envelope"></i> Send verification email</button> ' +
+      '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-bv-flip="' + esc(membershipId) + '">' + (verified ? 'Remove verification' : 'Mark verified') + '</button> ' +
+      '<span class="portal-muted portal-small" id="bv-msg"></span></p>';
+  }
+
+  /* The business-verification call: the same fetch shape as
+   * callStaffAdmin — the caller's own session JWT plus the anon
+   * key, JSON in, JSON out. done(out) gets the parsed body, or
+   * null when the call itself failed (no session, network,
+   * non-JSON). */
+  function callBusinessVerification(payload, done) {
+    var finished = false;
+    function finish(out) { if (!finished) { finished = true; done(out); } }
+    withClient(function (client) {
+      if (!client) { finish(null); return; }
+      try {
+        client.auth.getSession().then(function (sres) {
+          var token = sres && sres.data && sres.data.session ? sres.data.session.access_token : '';
+          if (!token) { finish(null); return null; }
+          return fetch(SUPABASE_URL + '/functions/v1/business-verification', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'apikey': SUPABASE_ANON_KEY },
+            body: JSON.stringify(payload)
+          });
+        }).then(function (r) {
+          if (!r) { finish(null); return null; }
+          return r.json();
+        }).then(function (out) { finish(out || null); })
+        .catch(function () { finish(null); });
+      } catch (e) { finish(null); }
+    });
+  }
+
+  /* Which record is on screen for this membership id — the member
+   * editor or the customer profile (the drawer shows one at a
+   * time). Returns { surface, customerId } or null. */
+  function bvContext(membershipId) {
+    if (memEditCurrent && memEditCurrent.id === membershipId) return { surface: 'member', customerId: memEditCurrent.customerId };
+    if (custProfileMembership && custProfileMembership.id === membershipId && custProfileCurrent) return { surface: 'profile', customerId: custProfileCurrent.id };
+    return null;
+  }
+
+  function bvMsg(text) { var m = $('bv-msg'); if (m) m.textContent = text || ''; }
+
+  function bvSendEmail(membershipId, btn) {
+    if (!isAdminOrAbove()) return;
+    var ctx = bvContext(membershipId);
+    if (!ctx) return;
+    if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+    bvMsg('');
+    callBusinessVerification({ customer_id: ctx.customerId }, function (out) {
+      if (out && out.ok) {
+        var stamp = new Date().toISOString();
+        if (ctx.surface === 'member') {
+          if (memEditCurrent) memEditCurrent.verificationRequestedAt = stamp;
+          atrMembersCache.forEach(function (mm) { if (mm.id === membershipId) mm.verificationRequestedAt = stamp; });
+          memEditNotice = 'Verification email sent to ' + (out.to || 'the customer') + '.';
+          loadAtrOneMembers(true);
+          renderMemberEditor();
+          bvMsg(memEditNotice);
+        } else {
+          bvProfileNotice = 'Verification email sent to ' + (out.to || 'the customer') + '.';
+          openCustomerProfile(ctx.customerId);
+        }
+        return;
+      }
+      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-envelope"></i> Send verification email'; }
+      bvMsg(!out ? 'Could not send — check the connection and try again.' : (out.error || 'Could not send — try again.'));
+    });
+  }
+
+  function bvFlipVerified(membershipId, btn) {
+    if (!isAdminOrAbove()) return;
+    var ctx = bvContext(membershipId);
+    if (!ctx) return;
+    var verifiedNow = ctx.surface === 'member'
+      ? !!(memEditCurrent && memEditCurrent.businessVerified)
+      : !!(custProfileMembership && custProfileMembership.business_verified);
+    var change = verifiedNow
+      ? { business_verified: false, business_verified_at: null }
+      : { business_verified: true, business_verified_at: new Date().toISOString() };
+    if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+    bvMsg('');
+    withClient(function (client) {
+      if (!client) { bvMsg('No connection.'); if (btn) btn.disabled = false; return; }
+      client.from('customer_memberships').update(change).eq('id', membershipId)
+        .then(function (res) {
+          if (res.error) { bvMsg('Couldn’t save — try again.'); if (btn) btn.disabled = false; return; }
+          if (ctx.surface === 'member') {
+            if (memEditCurrent) { memEditCurrent.businessVerified = change.business_verified; memEditCurrent.businessVerifiedAt = change.business_verified_at; }
+            atrMembersCache.forEach(function (mm) { if (mm.id === membershipId) { mm.businessVerified = change.business_verified; mm.businessVerifiedAt = change.business_verified_at; } });
+            memEditNotice = change.business_verified ? 'Business marked verified.' : 'Verification removed.';
+            loadAtrOneMembers(true);
+            renderMemberEditor();
+          } else {
+            if (custProfileMembership) { custProfileMembership.business_verified = change.business_verified; custProfileMembership.business_verified_at = change.business_verified_at; }
+            bvProfileNotice = change.business_verified ? 'Business marked verified.' : 'Verification removed.';
+            openCustomerProfile(ctx.customerId);
+          }
+        })
+        .catch(function () { bvMsg('Couldn’t save — try again.'); if (btn) btn.disabled = false; });
+    });
+  }
+  /* end BUSINESS_VERIFICATION_2026_11_09 */
+
+  /* ================= STAFF NAME EDIT =================
+   * STAFF_NAME_EDIT_2026_11_09 (Austin, Nov 9, 2026): the owner
+   * manages staff info himself in the portal — until now a staff
+   * NAME could only be changed in the database (his own name edit
+   * this morning needed SQL). The Associate Accounts card now
+   * carries an Edit beside the Name row for any viewer who passes
+   * the card's own account-control gate (canControlAccount — the
+   * Super Admin's card shows it only to the Super Admin, and the
+   * staff-admin function's 'rename' action re-checks the same
+   * ceilings server-side; this render only mirrors them). The
+   * save rides acctRun / callStaffAdmin like every other card
+   * control, so the success note, the error line, and the reload
+   * are the panel's own patterns. The function writes the
+   * staff_admin_audit row (action 'rename') after the update —
+   * staff-name-edit.sql widens that CHECK first (deploy order in
+   * REPORT.md). */
+  var assocNameEditId = null; /* profile id whose name editor is open, or null */
+
+  function assocNameEditor(a) {
+    return '<div class="acct-form"><div class="portal-field"><label for="assoc-name-' + esc(a.id) + '">Name</label>' +
+      '<input type="text" id="assoc-name-' + esc(a.id) + '" value="' + esc(a.name || '') + '" maxlength="60" autocomplete="off" /></div>' +
+      '<div class="portal-card-actions">' +
+      '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-assoc-name-save="' + esc(a.id) + '">Save name</button>' +
+      '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-assoc-name-cancel="1">Cancel</button>' +
+      '</div></div>';
+  }
+
+  function assocNameEditToggle(id) {
+    assocNameEditId = assocNameEditId === id ? null : id;
+    acctError('');
+    renderAssociates();
+    if (assocNameEditId) {
+      var input = $('assoc-name-' + id);
+      if (input) { input.focus(); if (input.select) input.select(); }
+    }
+  }
+
+  function assocNameSave(btn, id) {
+    var input = $('assoc-name-' + id);
+    var name = input ? trim(input.value) : '';
+    if (!name) { acctError('Enter a name first — a staff name cannot be blank.'); return; }
+    if (name.length > 60) { acctError('That name is too long — 60 characters at most.'); return; }
+    /* The render already gated this button; re-check against the
+     * loaded rows so a stale card can never even send a rename
+     * this viewer may not run (the function decides regardless). */
+    var prof = null, login = null;
+    associatesCache.forEach(function (a) { if (a.id === id) prof = a; });
+    acctStaffCache.forEach(function (s) { if (s.id === id) login = s; });
+    if (!canControlAccount((prof && prof.role) || (login && login.role) || '')) {
+      acctError('Name changes for this account sit with a higher tier.');
+      return;
+    }
+    acctRun(btn, { action: 'rename', user_id: id, name: name },
+      'Name updated to ' + name + '.',
+      function () { assocNameEditId = null; });
+  }
+  /* end STAFF_NAME_EDIT_2026_11_09 */
 
   /* ================= FINANCIALS =================
    * PORTAL_FINANCIALS_2026_10_30 (Austin, Oct 30, 2026): the money
@@ -9540,6 +9753,7 @@ function loadTicketThread(client, ticketId) {
       var canEditBday = adminAbove || isSelf;
       var banned = !!(s && s.banned);
       var role = (a && a.role) || (s && s.role) || '';
+      var canRenameName = canControlAccount(role); /* STAFF_NAME_EDIT_2026_11_09: the card's own account-control gate — the Super Admin's card shows the name editor only to the Super Admin */
       var open = assocExpandedId === id;
       var detail = '';
       if (open) {
@@ -9552,7 +9766,7 @@ function loadTicketThread(client, ticketId) {
            * below feeds the owner and onboarding sections). */
           var obBday = assocOnboardingFor(p);
           detail += kvRows([
-            ['Name', valOrDash(a.name)],
+            ['Name', valOrDash(a.name) + (canRenameName && assocNameEditId !== id ? ' <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-assoc-name-edit="' + esc(id) + '">Edit</button>' : '')], /* STAFF_NAME_EDIT_2026_11_09 */
             ['Role', valOrDash(roleLabel(a.role))],
             ['Status', banned
               ? '<span class="mem-status-dot mem-dot-off"></span>Deactivated &mdash; their login is turned off (see Portal login below)'
@@ -9578,6 +9792,7 @@ function loadTicketThread(client, ticketId) {
           /* BIRTHDAY_EDIT_2026_11_04: the open birthday editor
            * sits directly under the profile rows it edits. */
           if (canEditBday && assocBirthdayEditId === id) detail += assocBirthdayEditor(a, obBday && obBday.date_of_birth ? obBday.date_of_birth : null); /* PASS9_2026_11_04: prefill from the onboarding DOB when the profile has none */
+          if (canRenameName && assocNameEditId === id) detail += assocNameEditor(a); /* STAFF_NAME_EDIT_2026_11_09 */
           /* PORTAL_ROSTER_DETAIL_2026_11_02: the owner-only full record
            * (pay + home address + time + time-card jump) exists in the
            * markup ONLY for the owner — see the section comment above. */
@@ -9692,6 +9907,7 @@ function loadTicketThread(client, ticketId) {
   function toggleAssociateCard(id) {
     assocExpandedId = assocExpandedId === id ? null : id;
     assocBirthdayEditId = null; /* BIRTHDAY_EDIT_2026_11_04: an open birthday editor never survives a card switch */
+    assocNameEditId = null; /* STAFF_NAME_EDIT_2026_11_09: same rule for the name editor */
     renderAssociates();
   }
 
@@ -12064,6 +12280,17 @@ function loadTicketThread(client, ticketId) {
         '<p class="portal-muted portal-small">Member since ' + esc(fmtJobDate(mem.started_on) || fmtDate(mem.started_on)) +
         (mem.cancelled_on ? ' · Cancelled ' + esc(fmtJobDate(mem.cancelled_on) || fmtDate(mem.cancelled_on)) : '') +
         (mem.note ? ' · ' + esc(mem.note) : '') + '</p>';
+      /* BUSINESS_VERIFICATION_2026_11_09: the same verification
+       * state the Members panel shows, on the customer record
+       * itself — both surfaces read this one membership row. */
+      if (bvIsBusinessTier(mem.tier)) {
+        html += '<p class="cust-prof-mem" style="margin-top:.35rem">Business verification: ' + bvChipHtml(mem.business_verified, mem.verification_requested_at) + '</p>' +
+          (mem.verification_requested_at ? '<p class="portal-muted portal-small">Documents requested ' + esc(fmtDateTime(mem.verification_requested_at)) + '.</p>' : '') +
+          (mem.business_verified && mem.business_verified_at ? '<p class="portal-muted portal-small">Verified ' + esc(fmtDateTime(mem.business_verified_at)) + '.</p>' : '') +
+          (bvProfileNotice ? '<p class="portal-muted portal-small">' + esc(bvProfileNotice) + '</p>' : '') +
+          (owner ? bvButtonsHtml(mem.id, mem.business_verified) : '');
+        bvProfileNotice = '';
+      }
     }
     html += '</div>';
 
@@ -13121,6 +13348,12 @@ function loadTicketThread(client, ticketId) {
           if (acms) { acctSetupMfa(t); return; } /* AUTHENTICATOR_ADMIN_2026_11_05 */
           var accx = t.getAttribute('data-acct-cancel');
           if (accx) { acctExpand = null; renderAssociates(); return; } /* ASSOCIATE_ACCOUNTS_2026_11_03 */
+          var ane = t.getAttribute('data-assoc-name-edit');
+          if (ane) { assocNameEditToggle(ane); return; } /* STAFF_NAME_EDIT_2026_11_09 */
+          var ans = t.getAttribute('data-assoc-name-save');
+          if (ans) { assocNameSave(t, ans); return; } /* STAFF_NAME_EDIT_2026_11_09 */
+          var anc = t.getAttribute('data-assoc-name-cancel');
+          if (anc) { assocNameEditId = null; acctError(''); renderAssociates(); return; } /* STAFF_NAME_EDIT_2026_11_09 */
           var acad = t.getAttribute('data-acct-add');
           if (acad) { acctAddUser(t); return; }
           /* PORTAL_SIDEBAR_ROSTER_2026_11_02: roster row tap expands/collapses that associate's profile in place. */
@@ -13133,6 +13366,10 @@ function loadTicketThread(client, ticketId) {
           if (mt) { saveMembershipToggle(mt); return; }
           var mts = t.getAttribute('data-mem-tier-save');
           if (mts) { saveMembershipTier(mts); return; }
+          var bvs = t.getAttribute('data-bv-send');
+          if (bvs) { bvSendEmail(bvs, t); return; } /* BUSINESS_VERIFICATION_2026_11_09 */
+          var bvf = t.getAttribute('data-bv-flip');
+          if (bvf) { bvFlipVerified(bvf, t); return; } /* BUSINESS_VERIFICATION_2026_11_09 */
         }
         t = t.parentNode;
       }
