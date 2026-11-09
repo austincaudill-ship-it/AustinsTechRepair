@@ -1423,7 +1423,7 @@
           { label: 'Galaxy Tab book cover', price: 59.99, pts: 2500, sku: 'tab-case-galaxy-a9plus', deviceBrands: ['Samsung'] }
         ] },
       { id: 'acc-mouse-m510', name: 'Wireless Mouse (Full Size)', cat: 'Computer Accessories', block: 'computer', price: 34.99, pts: 3500, featured: true, imageId: 'acc-mouse-m510', defaultVariant: 'Wireless',
-        desc: 'Logitech M510 full-size wireless mouse — the one customers ask for by name. A wired option isn\u2019t a stocked listing yet; ask us and we\u2019ll line one up.',
+        desc: 'Logitech M510 full-size wireless mouse — the one guests ask for by name. A wired option isn\u2019t a stocked listing yet; ask us and we\u2019ll line one up.',
         variants: [
           { label: 'Wireless', price: 34.99, pts: 3500, sku: 'acc-mouse-m510' },
           { label: 'Wired — ask us for current options', price: null, pts: null, unavailable: true }
@@ -4439,7 +4439,7 @@ if ("serviceWorker" in navigator) {
       { title: 'ATR One', page: 'atr-one', keys: 'atr one membership plus points rewards plans join subscription' },
       { title: 'One-on-One', oo: true, keys: 'one-on-one one on one lessons classes tutoring learn training' },
       { title: 'Help Guides', page: 'help-guides', keys: 'help guides how to instructions do it yourself diy' },
-      { title: 'Reviews', page: 'home', guide: 'home-reviews', keys: 'reviews ratings testimonials what local clients are saying stars feedback' }
+      { title: 'Reviews', page: 'home', guide: 'home-reviews', keys: 'reviews ratings testimonials what local guests are saying stars feedback' }
     ];
     /* NAV_SEARCH_CLEANUP_2026_11_06 (addendum 4): the storefront's
      * customer-facing name is "Store" (PAGE_NAMES above); "shop" stays

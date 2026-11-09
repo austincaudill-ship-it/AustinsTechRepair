@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Associate Hub | Austin's Tech Repair Group</title>
-  <meta name="description" content="Staff-only operations portal for Austin's Tech Repair Group: tickets, job applications, investors, feedback, customers, inventory, new hires." />
+  <meta name="description" content="Staff-only operations portal for Austin's Tech Repair Group: tickets, job applications, investors, feedback, guests, inventory, new hires." />
   <meta name="robots" content="noindex, nofollow" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
   <link rel="stylesheet" href="portal.css" />
@@ -57,8 +57,8 @@
       <div class="portal-login-card">
         <p class="portal-eyebrow">Staff only</p>
         <h1 class="portal-h1"><i class="fas fa-id-badge"></i> Associate Hub</h1>
-        <p class="portal-muted">Sign in with your employee email and password. This area is
-          for Austin's Tech Repair Group staff only — customers can't see anything here.</p>
+        <p class="portal-muted">Sign in with your associate email and password. This area is
+          for Austin's Tech Repair Group staff only — guests can't see anything here.</p>
 
         <form id="portal-login-form" novalidate>
           <div class="portal-field">
@@ -247,7 +247,7 @@
           <i class="fas fa-square"></i> Square &amp; ATR One
         </button>
         <button class="portal-tab" id="portal-tab-newhires" type="button" role="tab" data-tab="newhires">
-          <i class="fas fa-user-plus"></i> Employee Onboarding
+          <i class="fas fa-user-plus"></i> Associate Onboarding
         </button>
         <button class="portal-tab" id="portal-tab-teamdocs" type="button" role="tab" data-tab="teamdocs">
           <i class="fas fa-folder-open"></i> Documents
@@ -457,7 +457,7 @@
         </div>
         <div class="portal-card">
           <h3 style="margin-top:0;">Signed &amp; filed documents</h3>
-          <div class="portal-field"><label for="portal-docs-search">Search by customer</label><input type="search" id="portal-docs-search" placeholder="Customer name" /></div>
+          <div class="portal-field"><label for="portal-docs-search">Search by guest</label><input type="search" id="portal-docs-search" placeholder="Guest name" /></div>
           <p class="portal-error" id="portal-docs-list-msg" hidden></p>
           <div id="portal-docs-list"><p class="portal-muted">Loading documents&hellip;</p></div>
         </div>
@@ -474,24 +474,24 @@
             <i class="fas fa-rotate-right"></i> Refresh
           </button>
         </div>
-        <p class="portal-muted portal-small">Warranty requests, newest first. Start rework right on a card &mdash; it links the original ticket, sets it to Rework / Warranty, and exempts its charges, so the customer owes $0.</p>
+        <p class="portal-muted portal-small">Warranty requests, newest first. Start rework right on a card &mdash; it links the original ticket, sets it to Rework / Warranty, and exempts its charges, so the guest owes $0.</p>
         <!-- WARRANTY_CONTROLS_2026_11_04: internal claim intake. The website form is not the only door — when a customer calls, texts, or emails instead, staff file the claim for them here. The pickers attach the claim to the customer and their original repair in the database, and saving starts the rework on that ticket exactly like Start rework does on a card. Wired in portal.js (wireWarrantyClaimForm). -->
         <div id="portal-warranty-claim" hidden>
           <div class="portal-card">
             <p class="portal-card-title">New claim &mdash; we fill it in</p>
-            <p class="portal-muted portal-small">For a customer who reached us by call, text, or email instead of the website form. Pick the customer and their original repair; saving files the claim, starts the rework on that ticket, and exempts its charges.</p>
+            <p class="portal-muted portal-small">For a guest who reached us by call, text, or email instead of the website form. Pick the guest and their original repair; saving files the claim, starts the rework on that ticket, and exempts its charges.</p>
             <div class="portal-field"><label for="portal-wc-via">How did they reach us?</label>
               <select id="portal-wc-via"><option value="call">Call</option><option value="text">Text</option><option value="email">Email</option></select></div>
-            <div class="portal-field"><label for="portal-wc-cust-search">Customer</label>
+            <div class="portal-field"><label for="portal-wc-cust-search">Guest</label>
               <input type="search" id="portal-wc-cust-search" placeholder="Search by name or phone" autocomplete="off" />
               <div id="portal-wc-cust-results"></div>
               <p class="portal-small" id="portal-wc-cust-picked" hidden></p></div>
             <div class="portal-field"><label for="portal-wc-ticket">Original repair</label>
-              <select id="portal-wc-ticket" disabled><option value="">Pick the customer first</option></select></div>
+              <select id="portal-wc-ticket" disabled><option value="">Pick the guest first</option></select></div>
             <div class="portal-field"><label for="portal-wc-part">Part or service under warranty</label>
               <input type="text" id="portal-wc-part" placeholder="e.g. Screen" autocomplete="off" /></div>
             <div class="portal-field"><label for="portal-wc-problem">What&rsquo;s wrong?</label>
-              <textarea id="portal-wc-problem" rows="3" placeholder="What the customer told us"></textarea></div>
+              <textarea id="portal-wc-problem" rows="3" placeholder="What the guest told us"></textarea></div>
             <div class="portal-field"><label for="portal-wc-contact">Preferred contact</label>
               <select id="portal-wc-contact"><option>Call</option><option>Text</option><option>Email</option></select></div>
             <div class="portal-status-row">
@@ -544,11 +544,11 @@
             <i class="fas fa-rotate-right"></i> Refresh
           </button>
         </div>
-        <p class="portal-muted portal-small">Profiles and logins for everyone who can sign in to this portal, managed in one place. Tap a person to open their full record &mdash; their profile on top, their login below it: change a login email, set a new password, or deactivate an account that should not sign in anymore (deactivated accounts can be activated again here) &mdash; and from the management section of a card, change a role or a profile picture. Changes take effect right away. Pay rates are set by the top tier; the Admin tier manages Technician and Customer Service accounts.</p>
+        <p class="portal-muted portal-small">Profiles and logins for everyone who can sign in to this portal, managed in one place. Tap a person to open their full record &mdash; their profile on top, their login below it: change a login email, set a new password, or deactivate an account that should not sign in anymore (deactivated accounts can be activated again here) &mdash; and from the management section of a card, change a role or a profile picture. Changes take effect right away. Pay rates are set by the top tier; the Admin tier manages Technician and Guest Service accounts.</p>
         <!-- PICTURE_MOVE_2026_11_04 (Austin, Nov 4, 2026): this is the exact "My picture" card that used to sit at the top of Team Chat — Austin: "take that exact thing and put it in associate accounts." Picture changes live in Associate Accounts only now, in the same place accounts are managed and moderated (the per-card Change picture / Remove picture controls on the cards below), never from the chat, because these pictures are customer-facing. Same ids as before: portal.js renderMyAvatarRow / uploadMyAvatar drive it unchanged. -->
         <div class="teamchat-me" id="portal-teamchat-me">
           <span id="portal-teamchat-me-pic"></span>
-          <span class="teamchat-me-text"><span class="teamchat-me-name" id="portal-teamchat-me-name">My picture</span><span class="portal-muted portal-small" id="portal-teamchat-me-msg">The picture beside your name &mdash; for the team, and for customers checking their repair.</span></span>
+          <span class="teamchat-me-text"><span class="teamchat-me-name" id="portal-teamchat-me-name">My picture</span><span class="portal-muted portal-small" id="portal-teamchat-me-msg">The picture beside your name &mdash; for the team, and for guests checking their repair.</span></span>
           <label class="portal-btn portal-btn-outline portal-btn-sm" for="portal-teamchat-me-file"><i class="fas fa-camera"></i> <span id="portal-teamchat-me-btn">Upload picture</span></label>
           <input type="file" id="portal-teamchat-me-file" accept="image/*" hidden />
         </div>
@@ -591,7 +591,7 @@
               <option value="technician_2">Technician 2</option>
               <option value="technician_3">Technician 3</option>
               <option value="technician_4">Technician 4</option>
-              <option value="customer_service" selected>Customer Service Associate</option>
+              <option value="customer_service" selected>Guest Service Associate</option>
             </select>
           </div>
         </div>
@@ -731,11 +731,11 @@
       <div class="portal-panel" id="portal-panel-customers" role="tabpanel" hidden>
         <div class="portal-panel-head">
           <h2 class="portal-h2">Guest</h2>
-          <input type="search" id="portal-cust-search" placeholder="Search name or email&hellip;" aria-label="Search customers" />
+          <input type="search" id="portal-cust-search" placeholder="Search name or email&hellip;" aria-label="Search guests" />
         </div>
-        <p class="portal-muted portal-small">Delete removes the customer account only, and asks you to confirm first. If a customer has tickets or orders linked, the delete is blocked and you will see a message.</p>
+        <p class="portal-muted portal-small">Delete removes the guest account only, and asks you to confirm first. If a guest has tickets or orders linked, the delete is blocked and you will see a message.</p>
         <div id="portal-celebrations"></div>
-        <div id="portal-customer-list"><p class="portal-muted">Loading customers&hellip;</p></div>
+        <div id="portal-customer-list"><p class="portal-muted">Loading guests&hellip;</p></div>
       </div>
 
       <!-- ATR ONE MEMBERS (PORTAL_ATRONE_MEMBERS_2026_11_02): member list; memberships are added from the ticket drawer. PORTAL_MEMBERS_EDIT_2026_11_02 (Austin, Nov 2, 2026): rows carry a status dot (green = active / good standing, red = off) and tapping a member opens its editor right here — the owner turns the membership off or on and can correct the tier; an associate's change is submitted for owner approval in Requests. -->
@@ -747,7 +747,7 @@
           </button>
         </div>
         <!-- ATRONE_POINTS_TIERS_2026_11_06: the intro below states the tiered points rates -->
-        <p class="portal-muted portal-small">Everyone with an ATR One membership on file. Green dot: the membership is on (good standing). Red dot: it is off. Tap a member to turn their membership off or on, or to correct their tier. New memberships are still added from a customer&rsquo;s ticket. Points: ATR One Free earns 1 point per $1 of a completed repair; ATR One Plus earns 5 points per $1 (Individual, Family) or 10 points per $1 (Business, Business Pro), credited at Job Complete.</p>
+        <p class="portal-muted portal-small">Everyone with an ATR One membership on file. Green dot: the membership is on (good standing). Red dot: it is off. Tap a member to turn their membership off or on, or to correct their tier. New memberships are still added from a guest&rsquo;s ticket. Points: ATR One Free earns 1 point per $1 of a completed repair; ATR One Plus earns 5 points per $1 (Individual, Family) or 10 points per $1 (Business, Business Pro), credited at Job Complete.</p>
         <div id="portal-members-list"><p class="portal-muted">Loading members&hellip;</p></div>
       </div>
 
@@ -853,7 +853,7 @@
             <i class="fas fa-rotate-right"></i> Refresh
           </button>
         </div>
-        <p class="portal-muted portal-small">Every customer conversation in one place &mdash; messages on a repair, and general messages from Send us a message in their account. Tap a conversation to read it and reply.</p>
+        <p class="portal-muted portal-small">Every guest conversation in one place &mdash; messages on a repair, and general messages from Send us a message in their account. Tap a conversation to read it and reply.</p>
         <div class="guestchat-list" id="portal-guestchat-list"><p class="portal-muted">Loading conversations&hellip;</p></div>
         <div class="guestchat-thread" id="portal-guestchat-thread" hidden>
           <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="portal-guestchat-back"><i class="fas fa-arrow-left"></i> All conversations</button>
@@ -918,16 +918,16 @@
       <!-- NEW HIRES (EMPLOYEE ONBOARDING) — PORTAL_NEWHIRE_RELABEL_2026_10_30 -->
       <div class="portal-panel" id="portal-panel-newhires" role="tabpanel" hidden>
         <div class="portal-panel-head">
-          <h2 class="portal-h2">Employee Onboarding <span class="portal-badge portal-badge-role">Employee (W-2)</span></h2>
+          <h2 class="portal-h2">Associate Onboarding <span class="portal-badge portal-badge-role">Associate (W-2)</span></h2>
         </div>
         <!-- ONBOARDING_LIST_REMOVED_2026_11_04: the panel head's Refresh button went with the Current Employees list — reloading that list was its only job. -->
-        <p class="portal-muted portal-small">Onboard new employees (W-2) here. Each employee completes their I-9 and W-4 under Documents &mdash; Social Security and tax ID numbers live only inside those filed documents, never in this panel.</p>
-        <p class="portal-muted portal-small">Blank onboarding forms and company documents (I-9, W-4, Ohio IT 4, direct deposit, non-compete, non-disclosure, employee handbook) live under Team &rarr; Documents. <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="portal-nh-forms-link">Open Team Documents</button> <span id="portal-nh-current" hidden></span></p>
+        <p class="portal-muted portal-small">Onboard new associates (W-2) here. Each associate completes their I-9 and W-4 under Documents &mdash; Social Security and tax ID numbers live only inside those filed documents, never in this panel.</p>
+        <p class="portal-muted portal-small">Blank onboarding forms and company documents (I-9, W-4, Ohio IT 4, direct deposit, non-compete, non-disclosure, associate handbook) live under Team &rarr; Documents. <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="portal-nh-forms-link">Open Team Documents</button> <span id="portal-nh-current" hidden></span></p>
         <form id="portal-newhire-form" novalidate>
           <div class="portal-nh-grid">
             <div class="portal-field">
               <label for="portal-nh-name">Full name <span aria-hidden="true">*</span></label>
-              <input type="text" id="portal-nh-name" placeholder="Employee's full legal name" required />
+              <input type="text" id="portal-nh-name" placeholder="Associate's full legal name" required />
             </div>
             <div class="portal-field">
               <label for="portal-nh-business">Business name (optional)</label>
@@ -935,7 +935,7 @@
             </div>
             <div class="portal-field">
               <label for="portal-nh-email">Email</label>
-              <input type="email" id="portal-nh-email" placeholder="employee@example.com" />
+              <input type="email" id="portal-nh-email" placeholder="associate@example.com" />
             </div>
             <div class="portal-field">
               <label for="portal-nh-phone">Phone</label>
@@ -994,13 +994,13 @@
             </div>
             <div class="portal-field portal-nh-wide">
               <label for="portal-nh-notes">Notes</label>
-              <textarea id="portal-nh-notes" rows="3" placeholder="Anything else about this employee&hellip;"></textarea>
+              <textarea id="portal-nh-notes" rows="3" placeholder="Anything else about this associate&hellip;"></textarea>
             </div>
             <!-- ONBOARDING_PHOTO_2026_11_04 (Austin, Nov 4, 2026): the first-day picture — an admin takes the new associate's picture as part of onboarding, with the rest of their information. Only admins change pictures (they are customer-facing and approved), so the picture starts here, taken by the admin on day one. The pick is optional; the save below crops it square, files it in the hire's documents folder, and saves its path on the hire row (new_hires.photo_path). -->
             <div class="portal-field portal-nh-wide">
               <label for="portal-nh-photo">First-day picture</label>
               <input type="file" id="portal-nh-photo" accept="image/*" capture="environment" />
-              <p class="portal-muted portal-small">Take their picture on their first day. This becomes the picture the team and customers see.</p>
+              <p class="portal-muted portal-small">Take their picture on their first day. This becomes the picture the team and guests see.</p>
               <img id="portal-nh-photo-preview" alt="First-day picture preview" hidden style="width:72px;height:72px;object-fit:cover;border-radius:10px;margin-top:0.4rem;" />
             </div>
           </div>
@@ -1018,10 +1018,10 @@
         <div class="portal-panel-head">
           <h2 class="portal-h2">Team Documents</h2>
         </div>
-        <p class="portal-muted portal-small">Blank onboarding forms and company documents &mdash; here any time, no employee needed. View or print a blank copy, or attach one to a hire to complete and file it. Filed copies live under Documents on the employee&rsquo;s card in Employee Onboarding.</p>
+        <p class="portal-muted portal-small">Blank onboarding forms and company documents &mdash; here any time, no associate needed. View or print a blank copy, or attach one to a hire to complete and file it. Filed copies live under Documents on the associate&rsquo;s card in Associate Onboarding.</p>
         <p class="portal-muted portal-small" id="portal-td-current" hidden></p>
         <div style="display:flex;justify-content:space-between;align-items:center;gap:0.75rem;padding:0.55rem 0;border-bottom:1px solid #E6D9C0;">
-          <div><span style="font-weight:600;">Form I-9 &mdash; Employment Eligibility Verification</span><br /><span class="portal-muted portal-small">The actual USCIS form (expires 05/31/2027) &mdash; the employee completes Section 1; the employer completes Section 2.</span></div>
+          <div><span style="font-weight:600;">Form I-9 &mdash; Employment Eligibility Verification</span><br /><span class="portal-muted portal-small">The actual USCIS form (expires 05/31/2027) &mdash; the associate completes Section 1; the employer completes Section 2.</span></div>
           <span style="display:inline-flex;gap:0.4rem;flex-wrap:wrap;"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-view="i9"><i class="fas fa-eye"></i> View</button><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-print="i9"><i class="fas fa-print"></i> Print</button><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-td-attach="i9"><i class="fas fa-paperclip"></i> Attach to a hire</button></span>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;gap:0.75rem;padding:0.55rem 0;border-bottom:1px solid #E6D9C0;">
@@ -1033,24 +1033,24 @@
           <span style="display:inline-flex;gap:0.4rem;flex-wrap:wrap;"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-view="ohio_it4"><i class="fas fa-eye"></i> View</button><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-print="ohio_it4"><i class="fas fa-print"></i> Print</button><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-td-attach="ohio_it4"><i class="fas fa-paperclip"></i> Attach to a hire</button></span>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;gap:0.75rem;padding:0.55rem 0;border-bottom:1px solid #E6D9C0;">
-          <div><span style="font-weight:600;">Direct Deposit Authorization</span><br /><span class="portal-muted portal-small">Pay deposited into the employee&rsquo;s own bank account &mdash; the Wright-Patt Credit Union direct deposit form will replace this ATRG form once the business account is open.</span></div>
+          <div><span style="font-weight:600;">Direct Deposit Authorization</span><br /><span class="portal-muted portal-small">Pay deposited into the associate&rsquo;s own bank account &mdash; the Wright-Patt Credit Union direct deposit form will replace this ATRG form once the business account is open.</span></div>
           <span style="display:inline-flex;gap:0.4rem;flex-wrap:wrap;"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-view="direct_deposit"><i class="fas fa-eye"></i> View</button><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-print="direct_deposit"><i class="fas fa-print"></i> Print</button><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-td-attach="direct_deposit"><i class="fas fa-paperclip"></i> Attach to a hire</button></span>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;gap:0.75rem;padding:0.55rem 0;border-bottom:1px solid #E6D9C0;">
-          <div><span style="font-weight:600;">Non-Compete Agreement</span><br /><span class="portal-muted portal-small">ATRG agreement &mdash; competing repair work and customer solicitation.</span></div>
+          <div><span style="font-weight:600;">Non-Compete Agreement</span><br /><span class="portal-muted portal-small">ATRG agreement &mdash; competing repair work and guest solicitation.</span></div>
           <span style="display:inline-flex;gap:0.4rem;flex-wrap:wrap;"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-view="non_compete"><i class="fas fa-eye"></i> View</button><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-print="non_compete"><i class="fas fa-print"></i> Print</button><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-td-attach="non_compete"><i class="fas fa-paperclip"></i> Attach to a hire</button></span>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;gap:0.75rem;padding:0.55rem 0;border-bottom:1px solid #E6D9C0;">
-          <div><span style="font-weight:600;">Non-Disclosure Agreement</span><br /><span class="portal-muted portal-small">ATRG agreement &mdash; customer information, pricing, and internal know-how.</span></div>
+          <div><span style="font-weight:600;">Non-Disclosure Agreement</span><br /><span class="portal-muted portal-small">ATRG agreement &mdash; guest information, pricing, and internal know-how.</span></div>
           <span style="display:inline-flex;gap:0.4rem;flex-wrap:wrap;"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-view="nda"><i class="fas fa-eye"></i> View</button><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-print="nda"><i class="fas fa-print"></i> Print</button><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-td-attach="nda"><i class="fas fa-paperclip"></i> Attach to a hire</button></span>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;gap:0.75rem;padding:0.55rem 0;border-bottom:1px solid #E6D9C0;">
-          <div><span style="font-weight:600;">Austin&rsquo;s Tech Repair Group &mdash; Employee Handbook</span><br /><span class="portal-muted portal-small">How ATRG works &mdash; ending with a signed acknowledgment page.</span></div>
+          <div><span style="font-weight:600;">Austin&rsquo;s Tech Repair Group &mdash; Associate Handbook</span><br /><span class="portal-muted portal-small">How ATRG works &mdash; ending with a signed acknowledgment page.</span></div>
           <span style="display:inline-flex;gap:0.4rem;flex-wrap:wrap;"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-view="handbook"><i class="fas fa-eye"></i> View</button><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-print="handbook"><i class="fas fa-print"></i> Print</button><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-td-attach="handbook"><i class="fas fa-paperclip"></i> Attach to a hire</button></span>
         </div>
         <!-- PORTAL_ATRONE_EMPDOC_2026_11_02: ATR One Employee Membership Agreement row — same View / Print / Attach to a hire mechanics as every sibling row (Austin, Nov 2, 2026: a formal Team Document employees sign, NOT a guide). -->
         <div style="display:flex;justify-content:space-between;align-items:center;gap:0.75rem;padding:0.55rem 0;border-bottom:1px solid #E6D9C0;">
-          <div><span style="font-weight:600;">ATR One Employee Membership Agreement</span><br /><span class="portal-muted portal-small">ATRG agreement &mdash; the free employee ATR One membership: what the employee gets, and the rules they sign to. Employees only &mdash; no sharing, not transferable, not sellable.</span></div>
+          <div><span style="font-weight:600;">ATR One Associate Membership Agreement</span><br /><span class="portal-muted portal-small">ATRG agreement &mdash; the free associate ATR One membership: what the associate gets, and the rules they sign to. Associates only &mdash; no sharing, not transferable, not sellable.</span></div>
           <span style="display:inline-flex;gap:0.4rem;flex-wrap:wrap;"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-view="atr_one_employee"><i class="fas fa-eye"></i> View</button><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-td-print="atr_one_employee"><i class="fas fa-print"></i> Print</button><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-td-attach="atr_one_employee"><i class="fas fa-paperclip"></i> Attach to a hire</button></span>
         </div>
       </div>
@@ -1194,14 +1194,14 @@
       <!-- CHECK-IN / TRIAGE -->
       <div class="portal-panel" id="portal-panel-checkin" role="tabpanel" hidden>
         <div class="portal-panel-head"><h2 class="portal-h2">New Service Request &mdash; Triage</h2></div>
-        <p class="portal-muted portal-small">Walk-in and phone check-ins. Find the customer (or add them) &mdash; email and service address are required, because we come to them. For a repair, pick the device and the reason and run the power test. For a one-on-one lesson, tap One-on-One in the Service tiles, pick 1, 2, or 3 hours, and write what they want to get done. Either way the ticket lands straight in the Service Queue. Confirm the money with the customer before submitting &mdash; repairs: $15 visit fee for a known repair, $35 if the job needs diagnostics. One-on-one: $25 an hour for the time booked, and the $15 visit fee charged separately. ATR One members pay no visit fee.</p>
+        <p class="portal-muted portal-small">Walk-in and phone check-ins. Find the guest (or add them) &mdash; email and service address are required, because we come to them. For a repair, pick the device and the reason and run the power test. For a one-on-one lesson, tap One-on-One in the Service tiles, pick 1, 2, or 3 hours, and write what they want to get done. Either way the ticket lands straight in the Service Queue. Confirm the money with the guest before submitting &mdash; repairs: $15 visit fee for a known repair, $35 if the job needs diagnostics. One-on-one: $25 an hour for the time booked, and the $15 visit fee charged separately. ATR One members pay no visit fee.</p>
         <form id="ci-form" novalidate>
           <!-- CHECKIN_COLLAPSE_2026_11_04 (Austin, Nov 4, 2026): the check-in form folds into tappable sections, like the ticket drawer's sections in the Service Queue — Customer starts open, the rest start closed, and the Create ticket button and Clear check-in stay outside the sections at the bottom, always visible. Every field id is exactly as it was; only the folding wrappers were added. -->
           <div class="ci-acc" data-ci-acc="customer">
-          <button type="button" class="ci-acc-head ci-acc-open" data-ci-acc-toggle="customer" aria-expanded="true"><span class="ci-acc-title">Customer</span><i class="fas fa-chevron-down ci-acc-chev" aria-hidden="true"></i></button>
+          <button type="button" class="ci-acc-head ci-acc-open" data-ci-acc-toggle="customer" aria-expanded="true"><span class="ci-acc-title">Guest</span><i class="fas fa-chevron-down ci-acc-chev" aria-hidden="true"></i></button>
           <div class="ci-acc-body" data-ci-acc-body="customer">
           <div class="portal-field">
-            <label for="ci-search">Find existing customer</label>
+            <label for="ci-search">Find existing guest</label>
             <input type="search" id="ci-search" placeholder="Start typing a name&hellip;" autocomplete="off" />
             <div id="ci-results"></div>
           </div>
@@ -1213,7 +1213,7 @@
           </div>
           <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">ATR One</h3></div>
           <div class="portal-field">
-            <label for="ci-atrone">Is this customer an ATR One Plus (paid) member?</label>
+            <label for="ci-atrone">Is this guest an ATR One Plus (paid) member?</label>
             <select id="ci-atrone">
               <option value="">No paid plan (ATR One Free)</option>
               <option value="member">Yes &mdash; ATR One Plus member</option>
@@ -1221,7 +1221,7 @@
             </select>
           </div>
           <div id="ci-atrone-signup" hidden>
-            <p class="portal-muted portal-small">Internal signup &mdash; use these links to sign the customer up on the spot, same signup links as the Square &amp; ATR One panel.</p>
+            <p class="portal-muted portal-small">Internal signup &mdash; use these links to sign the guest up on the spot, same signup links as the Square &amp; ATR One panel.</p>
             <div class="link-grid">
               <a class="link-card" href="https://square.link/u/eFKxDvyo" target="_blank" rel="noopener"><i class="fas fa-user"></i><strong>ATR One Plus &mdash; Individual</strong><span>$9.99/mo signup link</span></a>
               <a class="link-card" href="https://square.link/u/ZA7502vD" target="_blank" rel="noopener"><i class="fas fa-users"></i><strong>ATR One Plus &mdash; Family</strong><span>$19.99/mo signup link</span></a>
@@ -1318,14 +1318,14 @@
           <!-- PORTAL_CHECKIN_CONSENT_2026_10_30: Agreements section (one contiguous block; wired in portal.js by wireCiConsent). The read-aloud script text itself lives in portal.js (CI_CONSENT_SCRIPT) so the filed verbal record quotes the same string the staff read. -->
           <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Agreements</h3></div>
           <p class="portal-muted portal-small">One agreement covers everything &mdash; the Repair Authorization, the Terms &amp; Conditions, and the 1-Year Warranty. Take it now, in person or by phone, and it files itself on the ticket. Skipping is fine too &mdash; it can be signed later from the ticket&rsquo;s Documents section.</p>
-          <p class="portal-muted portal-small" style="margin-bottom:0.25rem;">By phone, read this statement to the customer, word for word:</p>
-          <div class="ci-consent-script" id="ci-consent-script" aria-label="Statement to read to the customer by phone"></div>
+          <p class="portal-muted portal-small" style="margin-bottom:0.25rem;">By phone, read this statement to the guest, word for word:</p>
+          <div class="ci-consent-script" id="ci-consent-script" aria-label="Statement to read to the guest by phone"></div>
           <div class="p2-actions">
             <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="ci-terms-btn"><i class="fas fa-book-open"></i> Read the full terms</button>
-            <button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="ci-sign-btn"><i class="fas fa-pen-nib"></i> Customer signs now</button>
+            <button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="ci-sign-btn"><i class="fas fa-pen-nib"></i> Guest signs now</button>
             <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="ci-consent-clear" hidden>Clear agreement</button>
           </div>
-          <label class="ci-consent-verbal"><input type="checkbox" id="ci-verbal-check" /> <span>Verbal agreement by phone &mdash; I read the statement above to the customer and they verbally agreed</span></label>
+          <label class="ci-consent-verbal"><input type="checkbox" id="ci-verbal-check" /> <span>Verbal agreement by phone &mdash; I read the statement above to the guest and they verbally agreed</span></label>
           <p class="portal-muted portal-small" id="ci-consent-status">No agreement captured yet.</p>
           </div>
           </div>
@@ -1502,7 +1502,7 @@
             <i class="fas fa-rotate-right"></i> Refresh
           </button>
         </div>
-        <p class="portal-muted portal-small">The money picture from your own ticket records: what repairs billed, what customers have actually paid, what went out on parts, and what is left. Revenue is billed charges on tickets; parts cost is our cost on part orders.</p>
+        <p class="portal-muted portal-small">The money picture from your own ticket records: what repairs billed, what guests have actually paid, what went out on parts, and what is left. Revenue is billed charges on tickets; parts cost is our cost on part orders.</p>
         <div class="fin-periods" role="group" aria-label="Time period">
           <button class="portal-btn portal-btn-outline portal-btn-sm fin-period active" type="button" data-fin-period="all">All time</button>
           <button class="portal-btn portal-btn-outline portal-btn-sm fin-period" type="button" data-fin-period="month">This month</button>
@@ -1899,13 +1899,13 @@
     var NH_DOC_KIND_LABELS = {
       i9: 'Form I-9', w4: 'Form W-4', w9: 'Form W-9', ohio_it4: 'Ohio IT 4',
       direct_deposit: 'Direct Deposit Authorization', non_compete: 'Non-Compete Agreement',
-      nda: 'Non-Disclosure Agreement', handbook: 'Employee Handbook',
+      nda: 'Non-Disclosure Agreement', handbook: 'Associate Handbook',
       /* PORTAL_ATRONE_EMPDOC_2026_11_02: registry entry for the ATR
        * One Employee Membership Agreement — this label drives the
        * filed record's title, the hire Documents upload type picker,
        * and the Team Documents attach modal heading, exactly as it
        * does for its sibling kinds. */
-      atr_one_employee: 'ATR One Employee Membership Agreement',
+      atr_one_employee: 'ATR One Associate Membership Agreement',
       id_copy: 'ID copy', certification: 'Certification',
       offer: 'Offer letter', other: 'Other document'
     };
@@ -2162,7 +2162,7 @@
         if (res.error) {
           tdRenderAttachList(tdAttachKind, Object.keys(nhRowsById).map(function (k) { return nhRowsById[k]; }));
           var box = $('td-attach-list');
-          if (box) box.insertAdjacentHTML('afterbegin', '<p class="portal-error">Couldn\u2019t delete ' + esc(hire.full_name || 'that employee') + ': ' + esc(res.error.message) + '</p>');
+          if (box) box.insertAdjacentHTML('afterbegin', '<p class="portal-error">Couldn\u2019t delete ' + esc(hire.full_name || 'that associate') + ': ' + esc(res.error.message) + '</p>');
           return;
         }
         delete nhRowsById[id];
@@ -2198,7 +2198,7 @@
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="nhd-add-btn"><i class="fas fa-upload"></i> Add document</button>' +
         '<input type="file" id="nhd-file" accept="image/*,application/pdf" hidden /></div>' +
         '<h4 style="margin:1.1rem 0 0.35rem;">Fill out a form</h4>' +
-        '<p class="portal-muted portal-small" style="margin:0 0 0.5rem;">Government forms (I-9, W-4, Ohio IT 4, W-9) open the actual official PDF &mdash; complete it, sign it, and file the completed PDF back here. Company documents (direct deposit, non-compete, NDA, handbook, ATR One employee agreement) are completed and signed here in the portal.</p>' +
+        '<p class="portal-muted portal-small" style="margin:0 0 0.5rem;">Government forms (I-9, W-4, Ohio IT 4, W-9) open the actual official PDF &mdash; complete it, sign it, and file the completed PDF back here. Company documents (direct deposit, non-compete, NDA, handbook, ATR One associate agreement) are completed and signed here in the portal.</p>' +
         '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">' +
         '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-nhd-form="i9">Form I-9</button>' +
         '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-nhd-form="w4">Form W-4</button>' +
@@ -2208,9 +2208,9 @@
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-nhd-form="direct_deposit">Direct Deposit</button>' +
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-nhd-form="non_compete">Non-Compete</button>' +
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-nhd-form="nda">Non-Disclosure</button>' +
-        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-nhd-form="handbook">Employee Handbook</button>' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-nhd-form="handbook">Associate Handbook</button>' +
         /* PORTAL_ATRONE_EMPDOC_2026_11_02: the employee agreement joins the company-document buttons, same openHireForm path. */
-        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-nhd-form="atr_one_employee">ATR One Employee</button></div>' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-nhd-form="atr_one_employee">ATR One Associate</button></div>' +
         '<p class="portal-error" id="nhd-msg" hidden></p>' +
         '<p class="portal-muted" id="nhd-ok" hidden></p>' +
         '<div style="display:flex;gap:0.5rem;margin-top:1rem;"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="nhd-close">Close</button></div>',
@@ -2481,7 +2481,7 @@
       var client = getClient();
       if (!client) { done('Couldn\u2019t reach the database. Check your connection and try again.'); return; }
       var title = NH_DOC_KIND_LABELS[kind];
-      var subtitle = 'Completed in the ATRG portal \u2014 ' + new Date().toLocaleString() + ' \u2014 Employee: ' + (nhDocHire.full_name || '');
+      var subtitle = 'Completed in the ATRG portal \u2014 ' + new Date().toLocaleString() + ' \u2014 Associate: ' + (nhDocHire.full_name || '');
       var recCanvas = renderFormRecord({ title: title, subtitle: subtitle, sections: sections, sigs: sigs });
       nhCanvasBlob(recCanvas, function (blob) {
         if (!blob) { done('Could not build the form record — try again.'); return; }
@@ -2528,7 +2528,7 @@
       if (!gov || !nhDocHire) return;
       var label = NH_DOC_KIND_LABELS[kind] || 'Government form';
       var step1 = 'Open the official form and complete it in the PDF.';
-      if (kind === 'i9') step1 = 'Open the official form and complete it in the PDF &mdash; the employee completes Section 1, and the employer completes Section 2 after examining the employee&rsquo;s documents, on the same form.';
+      if (kind === 'i9') step1 = 'Open the official form and complete it in the PDF &mdash; the associate completes Section 1, and the employer completes Section 2 after examining the associate&rsquo;s documents, on the same form.';
       var wrap = nhModal('portal-nh-form-modal',
         '<h3 style="margin:0 0 0.25rem;">' + esc(label) + '</h3>' +
         '<p class="portal-muted portal-small" style="margin:0 0 0.75rem;">This is the actual official ' + esc(gov.agency) + ' form (' + esc(gov.edition) + '). ATRG files the completed official form itself &mdash; not a recreation.</p>' +
@@ -2536,7 +2536,7 @@
         '<ol style="margin:0 0 0.9rem;padding-left:1.3rem;" class="portal-small">' +
         '<li style="margin-bottom:0.35rem;">' + step1 + '</li>' +
         '<li style="margin-bottom:0.35rem;">Sign it in the PDF and save the completed PDF to this device.</li>' +
-        '<li>File it here with the button below &mdash; it goes into this employee&rsquo;s documents as the completed ' + esc(label) + '.</li>' +
+        '<li>File it here with the button below &mdash; it goes into this associate&rsquo;s documents as the completed ' + esc(label) + '.</li>' +
         '</ol>' +
         '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">' +
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="nhgov-file-btn"><i class="fas fa-upload"></i> File the completed form</button>' +
@@ -2571,7 +2571,7 @@
       }
       govErr('');
       if (NH_DOC_KIND_LABELS[kind] === undefined) { govErr('That form type is not recognized.'); return; }
-      if (!nhDocHire) { govErr('No employee is selected — close this and try again.'); return; }
+      if (!nhDocHire) { govErr('No associate is selected — close this and try again.'); return; }
       if (file.size > 15 * 1024 * 1024) { govErr('That file is over 15 MB — try a smaller file.'); return; }
       var client = getClient();
       if (!client) { govErr('Couldn\u2019t reach the database. Check your connection and try again.'); return; }
@@ -2660,7 +2660,7 @@
         '</div>' +
         nhCheck('nhf-w4-exempt', 'Exempt from withholding \u2014 I claim exemption from withholding for 2026, and I certify that I meet both of the conditions for exemption for 2026. I understand I will need to submit a new Form W-4 for 2027.') +
         '<p class="portal-muted portal-small">Under penalties of perjury, I declare that this certificate, to the best of my knowledge and belief, is true, correct, and complete.</p>' +
-        nhPadHtml('nhf-w4-pad', 'Employee signature') +
+        nhPadHtml('nhf-w4-pad', 'Associate signature') +
         nhF('nhf-w4-date', 'Date signed', { type: 'date', req: true, val: nhToday() }) +
         '<h4 style="margin:0.9rem 0 0.4rem;">Employers only</h4>' +
         '<div class="portal-nh-grid">' +
@@ -2670,7 +2670,7 @@
         nhF('nhf-w4-erein', 'Employer identification number (EIN)', {}) +
         '</div>';
       var wrap = nhModal('portal-nh-form-modal', nhFormShell('Form W-4 — Employee\u2019s Withholding Certificate',
-        'Completed by the employee, using the current IRS Form W-4 (2026). This files ATRG\u2019s onboarding record of the federal Form W-4 data.', body), 680);
+        'Completed by the associate, using the current IRS Form W-4 (2026). This files ATRG\u2019s onboarding record of the federal Form W-4 data.', body), 680);
       var pad = nhWirePadIn(wrap, 'nhf-w4-pad');
       wireFormSave(wrap, function () {
         var miss = nhMissing(wrap, [
@@ -2681,7 +2681,7 @@
           ['nhf-w4-ername', 'employer name'], ['nhf-w4-eraddr', 'employer address']
         ]);
         if (miss) return { error: 'Missing: ' + miss + '.' };
-        if (!pad.hasDrawn) return { error: 'The employee signature is required — sign in the box.' };
+        if (!pad.hasDrawn) return { error: 'The associate signature is required — sign in the box.' };
         var kids = parseInt(nhV(wrap, 'nhf-w4-children') || '0', 10) || 0;
         var oth = parseInt(nhV(wrap, 'nhf-w4-others') || '0', 10) || 0;
         var credits = parseFloat(nhV(wrap, 'nhf-w4-credits') || '0') || 0;
@@ -2721,7 +2721,7 @@
         }];
         var sigs = [{
           canvas: wrap.querySelector('#nhf-w4-pad'), hasDrawn: pad.hasDrawn,
-          caption: 'Employee signature',
+          caption: 'Associate signature',
           name: nhV(wrap, 'nhf-w4-first') + ' ' + nhV(wrap, 'nhf-w4-last'),
           date: nhV(wrap, 'nhf-w4-date')
         }];
@@ -2847,9 +2847,9 @@
         '</div>' +
         nhPadHtml('nhf-i9-preppad', 'Preparer / translator signature') +
         '</div>' +
-        nhPadHtml('nhf-i9-pad', 'Employee signature') +
+        nhPadHtml('nhf-i9-pad', 'Associate signature') +
         nhF('nhf-i9-date', 'Date signed', { type: 'date', req: true, val: nhToday() }) +
-        '<h4 style="margin:1.1rem 0 0.4rem;">Section 2 — Employer review and attestation <span class="portal-muted portal-small">(Austin completes this after examining the employee\u2019s documents)</span></h4>' +
+        '<h4 style="margin:1.1rem 0 0.4rem;">Section 2 — Employer review and attestation <span class="portal-muted portal-small">(Austin completes this after examining the associate\u2019s documents)</span></h4>' +
         '<div class="portal-nh-grid">' +
         nhF('nhf-i9-docset', 'Documents examined', { req: true, type: 'select', options: [
           ['A', 'List A document'],
@@ -2887,7 +2887,7 @@
         nhPadHtml('nhf-i9-erpad', 'Employer signature') +
         nhF('nhf-i9-erdate', 'Date signed (employer)', { type: 'date', req: true, val: nhToday() });
       var wrap = nhModal('portal-nh-form-modal', nhFormShell('Form I-9 — Employment Eligibility Verification',
-        'Section 1 is completed by the employee; Section 2 by the employer after examining their documents. Current USCIS edition 01/20/25 (expires 05/31/2027). This files ATRG\u2019s onboarding record of the federal Form I-9 data.', body), 700);
+        'Section 1 is completed by the associate; Section 2 by the employer after examining their documents. Current USCIS edition 01/20/25 (expires 05/31/2027). This files ATRG\u2019s onboarding record of the federal Form I-9 data.', body), 700);
 
       var statusSel = wrap.querySelector('#nhf-i9-status');
       function syncStatus() {
@@ -2919,7 +2919,7 @@
           ['nhf-i9-street', 'street address'], ['nhf-i9-city', 'city'],
           ['nhf-i9-state', 'state'], ['nhf-i9-zip', 'ZIP code'],
           ['nhf-i9-dob', 'date of birth'], ['nhf-i9-ssn', 'Social Security number'],
-          ['nhf-i9-date', 'employee date signed'],
+          ['nhf-i9-date', 'associate date signed'],
           ['nhf-i9-firstday', 'first day of employment'],
           ['nhf-i9-bizname', 'employer / business name'],
           ['nhf-i9-erstreet', 'employer street address'], ['nhf-i9-ercity', 'employer city'],
@@ -2940,7 +2940,7 @@
         }
         var miss = nhMissing(wrap, pairs);
         if (miss) return { error: 'Missing: ' + miss + '.' };
-        if (!empPad.hasDrawn) return { error: 'The employee signature is required — sign in the box.' };
+        if (!empPad.hasDrawn) return { error: 'The associate signature is required — sign in the box.' };
         if (!erPad.hasDrawn) return { error: 'The employer signature is required \u2014 sign in the employer box.' };
         if (prepCheck.checked && !prepPad.hasDrawn) return { error: 'The preparer / translator signature is required when a preparer or translator helped.' };
         var sec1 = [
@@ -3012,7 +3012,7 @@
         var sigs = [
           {
             canvas: wrap.querySelector('#nhf-i9-pad'), hasDrawn: empPad.hasDrawn,
-            caption: 'Employee signature',
+            caption: 'Associate signature',
             name: nhV(wrap, 'nhf-i9-first') + ' ' + nhV(wrap, 'nhf-i9-last'),
             date: nhV(wrap, 'nhf-i9-date')
           },
@@ -3083,7 +3083,7 @@
         waiverChecks +
         '<h4 style="margin:0.9rem 0 0.4rem;">Section IV \u2014 Signature (required)</h4>' +
         '<p class="portal-muted portal-small">Under penalties of perjury, I declare that, to the best of my knowledge and belief, the information is true, correct and complete.</p>' +
-        nhPadHtml('nhf-it4-pad', 'Employee signature') +
+        nhPadHtml('nhf-it4-pad', 'Associate signature') +
         nhF('nhf-it4-date', 'Date signed', { type: 'date', req: true, val: nhToday() });
       var wrap = nhModal('portal-nh-form-modal', nhFormShell('Ohio IT 4 \u2014 Employee\u2019s Withholding Exemption Certificate',
         'Ohio Department of Taxation Form IT 4, Rev. 12/20. Submit to your employer on or before your start date. This files ATRG\u2019s onboarding record of the Ohio IT 4 data.', body), 700);
@@ -3102,7 +3102,7 @@
         }
         var miss = nhMissing(wrap, pairs);
         if (miss) return { error: 'Missing: ' + miss + '.' };
-        if (!pad.hasDrawn) return { error: 'The employee signature is required \u2014 sign in the box.' };
+        if (!pad.hasDrawn) return { error: 'The associate signature is required \u2014 sign in the box.' };
         var l1 = parseInt(nhV(wrap, 'nhf-it4-line1') || '0', 10) || 0;
         var l2 = parseInt(nhV(wrap, 'nhf-it4-line2') || '0', 10) || 0;
         var l3 = parseInt(nhV(wrap, 'nhf-it4-line3') || '0', 10) || 0;
@@ -3139,7 +3139,7 @@
         ];
         var sigs = [{
           canvas: wrap.querySelector('#nhf-it4-pad'), hasDrawn: pad.hasDrawn,
-          caption: 'Employee signature',
+          caption: 'Associate signature',
           name: nhV(wrap, 'nhf-it4-name'),
           date: nhV(wrap, 'nhf-it4-date')
         }];
@@ -3166,7 +3166,7 @@
       var hire = nhDocHire;
       var body =
         '<div class="portal-nh-grid">' +
-        nhF('nhf-dd-name', 'Employee full name', { req: true, val: hire.full_name || '' }) +
+        nhF('nhf-dd-name', 'Associate full name', { req: true, val: hire.full_name || '' }) +
         nhF('nhf-dd-bank', 'Bank name', { req: true }) +
         nhF('nhf-dd-routing', 'Routing number', { req: true, inputmode: 'numeric', ph: '9 digits' }) +
         nhF('nhf-dd-account', 'Account number', { req: true, inputmode: 'numeric' }) +
@@ -3176,25 +3176,25 @@
         nhCheck('nhf-dd-savings', 'Savings') +
         '<p class="portal-muted portal-small" style="margin:0.6rem 0 0.4rem;">Pay election: my full net pay goes to this one account.</p>' +
         '<p class="portal-muted portal-small" style="margin:0 0 0.4rem;">I authorize Austin\u2019s Tech Repair Group to deposit my pay directly into the account above, and to correct any erroneous deposits as allowed by law.</p>' +
-        nhPadHtml('nhf-dd-pad', 'Employee signature') +
+        nhPadHtml('nhf-dd-pad', 'Associate signature') +
         nhF('nhf-dd-date', 'Date signed', { type: 'date', req: true, val: nhToday() });
       var wrap = nhModal('portal-nh-form-modal', nhFormShell('Direct Deposit Authorization',
-        'ATRG company form \u2014 not a government form. The employee\u2019s bank details live only inside this filed document, never in any list.', body), 680);
+        'ATRG company form \u2014 not a government form. The associate\u2019s bank details live only inside this filed document, never in any list.', body), 680);
       var pad = nhWirePadIn(wrap, 'nhf-dd-pad');
       wireFormSave(wrap, function () {
         var miss = nhMissing(wrap, [
-          ['nhf-dd-name', 'employee name'], ['nhf-dd-bank', 'bank name'],
+          ['nhf-dd-name', 'associate name'], ['nhf-dd-bank', 'bank name'],
           ['nhf-dd-routing', 'routing number'], ['nhf-dd-account', 'account number'],
           ['nhf-dd-date', 'date signed']
         ]);
         if (miss) return { error: 'Missing: ' + miss + '.' };
         var chk = nhChecked(wrap, 'nhf-dd-checking'), sav = nhChecked(wrap, 'nhf-dd-savings');
         if (chk === sav) return { error: 'Choose one account type \u2014 Checking or Savings.' };
-        if (!pad.hasDrawn) return { error: 'The employee signature is required \u2014 sign in the box.' };
+        if (!pad.hasDrawn) return { error: 'The associate signature is required \u2014 sign in the box.' };
         var sections = [{
           title: 'Direct Deposit Authorization',
           lines: [
-            ['Employee full name', nhV(wrap, 'nhf-dd-name')],
+            ['Associate full name', nhV(wrap, 'nhf-dd-name')],
             ['Bank name', nhV(wrap, 'nhf-dd-bank')],
             ['Routing number', nhV(wrap, 'nhf-dd-routing')],
             ['Account number', nhV(wrap, 'nhf-dd-account')],
@@ -3205,7 +3205,7 @@
         }];
         var sigs = [{
           canvas: wrap.querySelector('#nhf-dd-pad'), hasDrawn: pad.hasDrawn,
-          caption: 'Employee signature',
+          caption: 'Associate signature',
           name: nhV(wrap, 'nhf-dd-name'),
           date: nhV(wrap, 'nhf-dd-date')
         }];
@@ -3214,43 +3214,43 @@
     }
 
     /* ----- Non-Compete Agreement (ATRG company document) ----- */
-    var NC_PARTIES = 'This agreement is between Austin\u2019s Tech Repair Group (ATRG), a sole proprietorship in Spring Valley, Ohio, and the employee named below.';
-    var NC_AGREE = 'While employed by ATRG, and for 12 months after that employment ends for any reason, the employee agrees that within 25 miles of Spring Valley, Ohio, they will not: (1) work for, own, operate, or help run a business that repairs consumer electronics in competition with ATRG; or (2) contact or solicit ATRG customers to offer them repair work outside of ATRG.';
-    var NC_LIMIT = 'This agreement does not stop the employee from holding any job that does not compete with ATRG.';
+    var NC_PARTIES = 'This agreement is between Austin\u2019s Tech Repair Group (ATRG), a sole proprietorship in Spring Valley, Ohio, and the associate named below.';
+    var NC_AGREE = 'While employed by ATRG, and for 12 months after that employment ends for any reason, the associate agrees that within 25 miles of Spring Valley, Ohio, they will not: (1) work for, own, operate, or help run a business that repairs consumer electronics in competition with ATRG; or (2) contact or solicit ATRG guests to offer them repair work outside of ATRG.';
+    var NC_LIMIT = 'This agreement does not stop the associate from holding any job that does not compete with ATRG.';
     var NC_SEV = 'If any part of this agreement is found unenforceable, that part will be read as narrowly as possible and the rest of the agreement will still apply.';
     function openNonCompeteForm() {
       var hire = nhDocHire;
       var body =
         '<p class="portal-small" style="margin:0 0 0.6rem;">' + NC_PARTIES + '</p>' +
         '<div class="portal-nh-grid">' +
-        nhF('nhf-nc-name', 'Employee full name', { req: true, val: hire.full_name || '' }) +
+        nhF('nhf-nc-name', 'Associate full name', { req: true, val: hire.full_name || '' }) +
         nhF('nhf-nc-date', 'Date signed', { type: 'date', req: true, val: nhToday() }) +
         '</div>' +
-        '<h4 style="margin:0.9rem 0 0.4rem;">What the employee agrees to</h4>' +
+        '<h4 style="margin:0.9rem 0 0.4rem;">What the associate agrees to</h4>' +
         '<p class="portal-small" style="margin:0 0 0.5rem;">' + NC_AGREE + '</p>' +
         '<p class="portal-small" style="margin:0 0 0.5rem;">' + NC_LIMIT + '</p>' +
         '<h4 style="margin:0.9rem 0 0.4rem;">If part of this agreement cannot be enforced</h4>' +
         '<p class="portal-small" style="margin:0 0 0.5rem;">' + NC_SEV + '</p>' +
-        nhPadHtml('nhf-nc-pad-emp', 'Employee signature') +
+        nhPadHtml('nhf-nc-pad-emp', 'Associate signature') +
         nhPadHtml('nhf-nc-pad-owner', 'Owner signature \u2014 Austin Caudill, Owner');
       var wrap = nhModal('portal-nh-form-modal', nhFormShell('Non-Compete Agreement',
-        'ATRG company agreement \u2014 not a government form. Both sign: the employee first, then Austin as owner.', body), 700);
+        'ATRG company agreement \u2014 not a government form. Both sign: the associate first, then Austin as owner.', body), 700);
       var padEmp = nhWirePadIn(wrap, 'nhf-nc-pad-emp');
       var padOwner = nhWirePadIn(wrap, 'nhf-nc-pad-owner');
       wireFormSave(wrap, function () {
         var miss = nhMissing(wrap, [
-          ['nhf-nc-name', 'employee name'], ['nhf-nc-date', 'date signed']
+          ['nhf-nc-name', 'associate name'], ['nhf-nc-date', 'date signed']
         ]);
         if (miss) return { error: 'Missing: ' + miss + '.' };
-        if (!padEmp.hasDrawn) return { error: 'The employee signature is required \u2014 sign in the box.' };
+        if (!padEmp.hasDrawn) return { error: 'The associate signature is required \u2014 sign in the box.' };
         if (!padOwner.hasDrawn) return { error: 'The owner signature is required \u2014 sign in the box.' };
         var sections = [
-          { title: 'Parties', lines: [['Employee', nhV(wrap, 'nhf-nc-name')]], text: NC_PARTIES },
-          { title: 'What the employee agrees to', text: NC_AGREE + ' ' + NC_LIMIT },
+          { title: 'Parties', lines: [['Associate', nhV(wrap, 'nhf-nc-name')]], text: NC_PARTIES },
+          { title: 'What the associate agrees to', text: NC_AGREE + ' ' + NC_LIMIT },
           { title: 'If part of this agreement cannot be enforced', text: NC_SEV }
         ];
         var sigs = [
-          { canvas: wrap.querySelector('#nhf-nc-pad-emp'), hasDrawn: padEmp.hasDrawn, caption: 'Employee signature', name: nhV(wrap, 'nhf-nc-name'), date: nhV(wrap, 'nhf-nc-date') },
+          { canvas: wrap.querySelector('#nhf-nc-pad-emp'), hasDrawn: padEmp.hasDrawn, caption: 'Associate signature', name: nhV(wrap, 'nhf-nc-name'), date: nhV(wrap, 'nhf-nc-date') },
           { canvas: wrap.querySelector('#nhf-nc-pad-owner'), hasDrawn: padOwner.hasDrawn, caption: 'Owner signature', name: 'Austin Caudill, Owner', date: nhV(wrap, 'nhf-nc-date') }
         ];
         return { kind: 'non_compete', sections: sections, sigs: sigs };
@@ -3258,16 +3258,16 @@
     }
 
     /* ----- Non-Disclosure Agreement (ATRG company document) ----- */
-    var NDA_PARTIES = 'This agreement is between Austin\u2019s Tech Repair Group (ATRG), a sole proprietorship in Spring Valley, Ohio, and the employee named below.';
-    var NDA_COVERS = 'Confidential information includes: customer information and customer documents; portal access and login credentials; supplier pricing and ATRG\u2019s internal price book; ATRG\u2019s internal repair guides and procedures; and ATRG\u2019s business plans.';
-    var NDA_DUTY = 'The employee will not share confidential information with anyone outside ATRG, and will not use it for anything other than their work at ATRG. This duty continues after employment ends.';
-    var NDA_EXCEPT = 'This agreement does not cover information that is public through no fault of the employee, or information the employee is required to share by law or court order.';
+    var NDA_PARTIES = 'This agreement is between Austin\u2019s Tech Repair Group (ATRG), a sole proprietorship in Spring Valley, Ohio, and the associate named below.';
+    var NDA_COVERS = 'Confidential information includes: guest information and guest documents; portal access and login credentials; supplier pricing and ATRG\u2019s internal price book; ATRG\u2019s internal repair guides and procedures; and ATRG\u2019s business plans.';
+    var NDA_DUTY = 'The associate will not share confidential information with anyone outside ATRG, and will not use it for anything other than their work at ATRG. This duty continues after employment ends.';
+    var NDA_EXCEPT = 'This agreement does not cover information that is public through no fault of the associate, or information the associate is required to share by law or court order.';
     function openNdaForm() {
       var hire = nhDocHire;
       var body =
         '<p class="portal-small" style="margin:0 0 0.6rem;">' + NDA_PARTIES + '</p>' +
         '<div class="portal-nh-grid">' +
-        nhF('nhf-nda-name', 'Employee full name', { req: true, val: hire.full_name || '' }) +
+        nhF('nhf-nda-name', 'Associate full name', { req: true, val: hire.full_name || '' }) +
         nhF('nhf-nda-date', 'Date signed', { type: 'date', req: true, val: nhToday() }) +
         '</div>' +
         '<h4 style="margin:0.9rem 0 0.4rem;">What counts as confidential</h4>' +
@@ -3276,27 +3276,27 @@
         '<p class="portal-small" style="margin:0 0 0.5rem;">' + NDA_DUTY + '</p>' +
         '<h4 style="margin:0.9rem 0 0.4rem;">What is not covered</h4>' +
         '<p class="portal-small" style="margin:0 0 0.5rem;">' + NDA_EXCEPT + '</p>' +
-        nhPadHtml('nhf-nda-pad-emp', 'Employee signature') +
+        nhPadHtml('nhf-nda-pad-emp', 'Associate signature') +
         nhPadHtml('nhf-nda-pad-owner', 'Owner signature \u2014 Austin Caudill, Owner');
       var wrap = nhModal('portal-nh-form-modal', nhFormShell('Non-Disclosure Agreement',
-        'ATRG company agreement \u2014 not a government form. Both sign: the employee first, then Austin as owner.', body), 700);
+        'ATRG company agreement \u2014 not a government form. Both sign: the associate first, then Austin as owner.', body), 700);
       var padEmp = nhWirePadIn(wrap, 'nhf-nda-pad-emp');
       var padOwner = nhWirePadIn(wrap, 'nhf-nda-pad-owner');
       wireFormSave(wrap, function () {
         var miss = nhMissing(wrap, [
-          ['nhf-nda-name', 'employee name'], ['nhf-nda-date', 'date signed']
+          ['nhf-nda-name', 'associate name'], ['nhf-nda-date', 'date signed']
         ]);
         if (miss) return { error: 'Missing: ' + miss + '.' };
-        if (!padEmp.hasDrawn) return { error: 'The employee signature is required \u2014 sign in the box.' };
+        if (!padEmp.hasDrawn) return { error: 'The associate signature is required \u2014 sign in the box.' };
         if (!padOwner.hasDrawn) return { error: 'The owner signature is required \u2014 sign in the box.' };
         var sections = [
-          { title: 'Parties', lines: [['Employee', nhV(wrap, 'nhf-nda-name')]], text: NDA_PARTIES },
+          { title: 'Parties', lines: [['Associate', nhV(wrap, 'nhf-nda-name')]], text: NDA_PARTIES },
           { title: 'What counts as confidential', text: NDA_COVERS },
           { title: 'The duty', text: NDA_DUTY },
           { title: 'What is not covered', text: NDA_EXCEPT }
         ];
         var sigs = [
-          { canvas: wrap.querySelector('#nhf-nda-pad-emp'), hasDrawn: padEmp.hasDrawn, caption: 'Employee signature', name: nhV(wrap, 'nhf-nda-name'), date: nhV(wrap, 'nhf-nda-date') },
+          { canvas: wrap.querySelector('#nhf-nda-pad-emp'), hasDrawn: padEmp.hasDrawn, caption: 'Associate signature', name: nhV(wrap, 'nhf-nda-name'), date: nhV(wrap, 'nhf-nda-date') },
           { canvas: wrap.querySelector('#nhf-nda-pad-owner'), hasDrawn: padOwner.hasDrawn, caption: 'Owner signature', name: 'Austin Caudill, Owner', date: nhV(wrap, 'nhf-nda-date') }
         ];
         return { kind: 'nda', sections: sections, sigs: sigs };
@@ -3315,21 +3315,21 @@
      * complete handbook with the signed acknowledgment at the end. */
     var HANDBOOK_CHAPTERS = [
       ['At-will employment', 'Your employment with Austin\u2019s Tech Repair Group is at will. You may leave at any time, and the company may end your employment at any time, for any lawful reason. This handbook explains how we work \u2014 it is not a contract, and it does not promise employment for any set length of time.'],
-      ['How we run \u2014 no managers, no write-ups', 'ATRG has no managers and no write-ups. Write-ups ruin morale and make people feel small, so we do not use them. Instead, we teach: a detailed training structure shows every employee how to do the work the right way. Nobody here is above anybody else \u2014 every person has an equal voice, and trust in our employees is a very large part of how this company runs.'],
-      ['Respect: No Bullying, Ever', 'ATRG has zero tolerance for bullying. That means no bullying, harassment, intimidation, teasing that targets a person, shutting people out on purpose, or retaliation \u2014 toward coworkers, customers, or anyone else, in person, by text, or online. It applies to everybody equally, the owner included. If you see it or feel it, bring it straight to Austin. Reporting in good faith is always protected \u2014 nobody gets punished for speaking up. Know the difference: a mistake gets teaching and a move forward, but bullying is not a mistake. It is a choice, and it breaks the trust this company runs on. Bullying can end your employment.'],
+      ['How we run \u2014 no managers, no write-ups', 'ATRG has no managers and no write-ups. Write-ups ruin morale and make people feel small, so we do not use them. Instead, we teach: a detailed training structure shows every associate how to do the work the right way. Nobody here is above anybody else \u2014 every person has an equal voice, and trust in our associates is a very large part of how this company runs.'],
+      ['Respect: No Bullying, Ever', 'ATRG has zero tolerance for bullying. That means no bullying, harassment, intimidation, teasing that targets a person, shutting people out on purpose, or retaliation \u2014 toward coworkers, guests, or anyone else, in person, by text, or online. It applies to everybody equally, the owner included. If you see it or feel it, bring it straight to Austin. Reporting in good faith is always protected \u2014 nobody gets punished for speaking up. Know the difference: a mistake gets teaching and a move forward, but bullying is not a mistake. It is a choice, and it breaks the trust this company runs on. Bullying can end your employment.'],
       ['Mistakes \u2014 we move forward', 'People make mistakes \u2014 a device gets damaged, you are running late, you cannot make a shift. We do not dwell on it or make a big deal of it. We learn what happened, learn how to do it right \u2014 starting with how to properly take devices apart \u2014 fix what can be fixed, and move forward. Hard work gets noticed and rewarded here. We do not dwell on the negatives.'],
-      ['Schedules and breaks', 'We believe in a real work-life balance. Schedules follow the 3/4 rule: work 4 days, off 3 days each week. Shifts are flexible, and if you want more hours, some days can run up to 10 hours by choice. Any shift over six hours includes a one-hour lunch, and every associate gets two paid 30-minute breaks. Breaks and lunch are paid — the clock keeps running. Use the time clock\u2019s Start Break and Start Lunch buttons when you take them, so the time is recorded. Start times here are suggestions, not rules \u2014 we are not a corporate shop, and we do not do workplace politics. Coming in to work or the office, do not stress about the clock; just clock in when you get here. The one time that is not flexible is the customer\u2019s: if your route has an 8 AM job, be at that home inside your arrival window, every time. They are counting on us, and they are how we get paid.'],
+      ['Schedules and breaks', 'We believe in a real work-life balance. Schedules follow the 3/4 rule: work 4 days, off 3 days each week. Shifts are flexible, and if you want more hours, some days can run up to 10 hours by choice. Any shift over six hours includes a one-hour lunch, and every associate gets two paid 30-minute breaks. Breaks and lunch are paid — the clock keeps running. Use the time clock\u2019s Start Break and Start Lunch buttons when you take them, so the time is recorded. Start times here are suggestions, not rules \u2014 we are not a corporate shop, and we do not do workplace politics. Coming in to work or the office, do not stress about the clock; just clock in when you get here. The one time that is not flexible is the guest\u2019s: if your route has an 8 AM job, be at that home inside your arrival window, every time. They are counting on us, and they are how we get paid.'],
       ['Diversity and belonging', 'Everyone is welcome here. Hiring and advancement are based on merit \u2014 skills, qualifications, and experience \u2014 never on race, ethnicity, gender identity, sexual orientation, age, religion, disability, or background. Different people bring different strengths, and every team member should feel they belong and can do their best work.'],
-      ['How we work \u2014 house calls', 'ATRG serves customers at their homes \u2014 house calls only. Appointments are booked in 2-hour arrival windows. In a customer\u2019s home, be professional and respectful, explain the work in plain language, and leave the space as you found it. Diagnostics can be same-day; we never promise a same-day repair.'],
-      ['Photos and media', 'Never photograph inside a customer\u2019s home without that customer\u2019s signed media release first. No exceptions.'],
-      ['Customer privacy', 'Customer information, customer documents, and device data stay in the portal. Do not copy, share, or use them outside the job they belong to.'],
+      ['How we work \u2014 house calls', 'ATRG serves guests at their homes \u2014 house calls only. Appointments are booked in 2-hour arrival windows. In a guest\u2019s home, be professional and respectful, explain the work in plain language, and leave the space as you found it. Diagnostics can be same-day; we never promise a same-day repair.'],
+      ['Photos and media', 'Never photograph inside a guest\u2019s home without that guest\u2019s signed media release first. No exceptions.'],
+      ['Guest privacy', 'Guest information, guest documents, and device data stay in the portal. Do not copy, share, or use them outside the job they belong to.'],
       ['What we repair', 'We repair consumer and business electronics \u2014 phones, tablets, computers, game consoles, smartwatches, and similar devices. We do not work on medical devices or equipment. Ever.'],
       ['Pay', 'Associates are paid weekly. Pay is sent by direct deposit. Your signed Direct Deposit Authorization must be on file before your first deposit.'],
       ['Time clock', 'Clock in and out on the portal time clock at the start and end of every shift. Use the Start Break and Start Lunch buttons when you take a break or lunch, so breaks and lunch are recorded too.'],
-      ['Tools and parts', 'Order parts only through ATRG\u2019s channels. The order number and the tracking link for every part go on the customer\u2019s ticket. Take care of the tools, and speak up right away if a tool is damaged or a part arrives wrong.'],
+      ['Tools and parts', 'Order parts only through ATRG\u2019s channels. The order number and the tracking link for every part go on the guest\u2019s ticket. Take care of the tools, and speak up right away if a tool is damaged or a part arrives wrong.'],
       ['Safety', 'Turn devices off and unplug them before opening them. Treat swollen batteries and cracked glass with care. If a job cannot be done safely, stop and contact Austin \u2014 no repair is worth an injury.']
     ];
-    var HANDBOOK_ACK = 'I have received and read the Austin\u2019s Tech Repair Group Employee Handbook \u2014 including at-will employment, how we run without managers or write-ups, the Respect: No Bullying, Ever rule, and the scheduling, privacy, media, and safety rules. I understand the handbook and will follow it.';
+    var HANDBOOK_ACK = 'I have received and read the Austin\u2019s Tech Repair Group Associate Handbook \u2014 including at-will employment, how we run without managers or write-ups, the Respect: No Bullying, Ever rule, and the scheduling, privacy, media, and safety rules. I understand the handbook and will follow it.';
     function openHandbookForm() {
       var hire = nhDocHire;
       var chaptersHtml = '';
@@ -3344,11 +3344,11 @@
         '<h4 style="margin:1rem 0 0.4rem;">Acknowledgment</h4>' +
         '<p class="portal-small" style="margin:0 0 0.5rem;">' + HANDBOOK_ACK + '</p>' +
         '<div class="portal-nh-grid">' +
-        nhF('nhf-hb-name', 'Employee printed name', { req: true, val: hire.full_name || '' }) +
+        nhF('nhf-hb-name', 'Associate printed name', { req: true, val: hire.full_name || '' }) +
         nhF('nhf-hb-date', 'Date signed', { type: 'date', req: true, val: nhToday() }) +
         '</div>' +
-        nhPadHtml('nhf-hb-pad', 'Employee signature');
-      var wrap = nhModal('portal-nh-form-modal', nhFormShell('Austin\u2019s Tech Repair Group \u2014 Employee Handbook',
+        nhPadHtml('nhf-hb-pad', 'Associate signature');
+      var wrap = nhModal('portal-nh-form-modal', nhFormShell('Austin\u2019s Tech Repair Group \u2014 Associate Handbook',
         'The full handbook, with the signed acknowledgment at the end. Filing files the whole handbook together with the signed acknowledgment \u2014 one complete document.', body), 720);
       var pad = nhWirePadIn(wrap, 'nhf-hb-pad');
       wireFormSave(wrap, function () {
@@ -3356,19 +3356,19 @@
           ['nhf-hb-name', 'printed name'], ['nhf-hb-date', 'date signed']
         ]);
         if (miss) return { error: 'Missing: ' + miss + '.' };
-        if (!pad.hasDrawn) return { error: 'The employee signature is required \u2014 sign in the box.' };
+        if (!pad.hasDrawn) return { error: 'The associate signature is required \u2014 sign in the box.' };
         var sections = [];
         for (var si = 0; si < HANDBOOK_CHAPTERS.length; si++) {
           sections.push({ title: HANDBOOK_CHAPTERS[si][0], text: HANDBOOK_CHAPTERS[si][1] });
         }
         sections.push({
           title: 'Acknowledgment',
-          lines: [['Employee printed name', nhV(wrap, 'nhf-hb-name')]],
+          lines: [['Associate printed name', nhV(wrap, 'nhf-hb-name')]],
           text: HANDBOOK_ACK
         });
         var sigs = [{
           canvas: wrap.querySelector('#nhf-hb-pad'), hasDrawn: pad.hasDrawn,
-          caption: 'Employee signature \u2014 acknowledgment',
+          caption: 'Associate signature \u2014 acknowledgment',
           name: nhV(wrap, 'nhf-hb-name'),
           date: nhV(wrap, 'nhf-hb-date')
         }];
@@ -3391,16 +3391,16 @@
      * employees receive ATR One Business Pro, free — with the
      * Business Pro numbers (50% off repairs, 65% off accessories),
      * per Austin's tier dictation, Nov 2, 2026. AO_RULES untouched. */
-    var AO_PARTIES = 'This agreement is between Austin\u2019s Tech Repair Group (ATRG), a sole proprietorship in Spring Valley, Ohio, and the employee named below.';
-    var AO_GET = 'As an ATRG employee, you get an ATR One Business Pro membership \u2014 the Business Pro plan \u2014 provided by the company free, at no charge to you, while you are an employee. On your own devices, you get the Business Pro benefits: 50% off repairs; 65% off accessories; parts at wholesale cost, with no markup; no visit fee and free diagnostics on covered devices; free priority shipping on parts; and priority in the queue.';
-    var AO_RULES = 'Your membership is for you only \u2014 you, the employee. You will not misuse the membership. You will not share it with anyone else \u2014 it is not to be shared. You will not show, present, or lend your membership in any way so that someone who is not an employee gets member pricing or member benefits, and you will not give it to anyone \u2014 it is not to be given away. The membership is not transferable \u2014 you cannot pass it to another person. The membership is not sellable \u2014 you cannot sell it or trade it for anything.';
+    var AO_PARTIES = 'This agreement is between Austin\u2019s Tech Repair Group (ATRG), a sole proprietorship in Spring Valley, Ohio, and the associate named below.';
+    var AO_GET = 'As an ATRG associate, you get an ATR One Business Pro membership \u2014 the Business Pro plan \u2014 provided by the company free, at no charge to you, while you are an associate. On your own devices, you get the Business Pro benefits: 50% off repairs; 65% off accessories; parts at wholesale cost, with no markup; no visit fee and free diagnostics on covered devices; free priority shipping on parts; and priority in the queue.';
+    var AO_RULES = 'Your membership is for you only \u2014 you, the associate. You will not misuse the membership. You will not share it with anyone else \u2014 it is not to be shared. You will not show, present, or lend your membership in any way so that someone who is not an associate gets member pricing or member benefits, and you will not give it to anyone \u2014 it is not to be given away. The membership is not transferable \u2014 you cannot pass it to another person. The membership is not sellable \u2014 you cannot sell it or trade it for anything.';
     var AO_END = 'The membership is a benefit of working at ATRG. It starts when the company sets it up for you and ends when your employment with ATRG ends. If you misuse the membership or break the rules in this agreement, the company can end your membership.';
     function openAtrOneEmployeeForm() {
       var hire = nhDocHire;
       var body =
         '<p class="portal-small" style="margin:0 0 0.6rem;">' + AO_PARTIES + '</p>' +
         '<div class="portal-nh-grid">' +
-        nhF('nhf-ao-name', 'Employee full name', { req: true, val: hire.full_name || '' }) +
+        nhF('nhf-ao-name', 'Associate full name', { req: true, val: hire.full_name || '' }) +
         nhF('nhf-ao-date', 'Date signed', { type: 'date', req: true, val: nhToday() }) +
         '</div>' +
         '<h4 style="margin:0.9rem 0 0.4rem;">What you get</h4>' +
@@ -3409,27 +3409,27 @@
         '<p class="portal-small" style="margin:0 0 0.5rem;">' + AO_RULES + '</p>' +
         '<h4 style="margin:0.9rem 0 0.4rem;">When it ends</h4>' +
         '<p class="portal-small" style="margin:0 0 0.5rem;">' + AO_END + '</p>' +
-        nhPadHtml('nhf-ao-pad-emp', 'Employee signature') +
+        nhPadHtml('nhf-ao-pad-emp', 'Associate signature') +
         nhPadHtml('nhf-ao-pad-owner', 'Owner signature \u2014 Austin Caudill, Owner');
-      var wrap = nhModal('portal-nh-form-modal', nhFormShell('ATR One Employee Membership Agreement',
-        'ATRG company agreement \u2014 not a government form. Employees only: the free employee membership is never shared, transferred, or sold. Both sign: the employee first, then Austin as owner.', body), 700);
+      var wrap = nhModal('portal-nh-form-modal', nhFormShell('ATR One Associate Membership Agreement',
+        'ATRG company agreement \u2014 not a government form. Associates only: the free associate membership is never shared, transferred, or sold. Both sign: the associate first, then Austin as owner.', body), 700);
       var padEmp = nhWirePadIn(wrap, 'nhf-ao-pad-emp');
       var padOwner = nhWirePadIn(wrap, 'nhf-ao-pad-owner');
       wireFormSave(wrap, function () {
         var miss = nhMissing(wrap, [
-          ['nhf-ao-name', 'employee name'], ['nhf-ao-date', 'date signed']
+          ['nhf-ao-name', 'associate name'], ['nhf-ao-date', 'date signed']
         ]);
         if (miss) return { error: 'Missing: ' + miss + '.' };
-        if (!padEmp.hasDrawn) return { error: 'The employee signature is required \u2014 sign in the box.' };
+        if (!padEmp.hasDrawn) return { error: 'The associate signature is required \u2014 sign in the box.' };
         if (!padOwner.hasDrawn) return { error: 'The owner signature is required \u2014 sign in the box.' };
         var sections = [
-          { title: 'Parties', lines: [['Employee', nhV(wrap, 'nhf-ao-name')]], text: AO_PARTIES },
+          { title: 'Parties', lines: [['Associate', nhV(wrap, 'nhf-ao-name')]], text: AO_PARTIES },
           { title: 'What you get', text: AO_GET },
           { title: 'The rules', text: AO_RULES },
           { title: 'When it ends', text: AO_END }
         ];
         var sigs = [
-          { canvas: wrap.querySelector('#nhf-ao-pad-emp'), hasDrawn: padEmp.hasDrawn, caption: 'Employee signature', name: nhV(wrap, 'nhf-ao-name'), date: nhV(wrap, 'nhf-ao-date') },
+          { canvas: wrap.querySelector('#nhf-ao-pad-emp'), hasDrawn: padEmp.hasDrawn, caption: 'Associate signature', name: nhV(wrap, 'nhf-ao-name'), date: nhV(wrap, 'nhf-ao-date') },
           { canvas: wrap.querySelector('#nhf-ao-pad-owner'), hasDrawn: padOwner.hasDrawn, caption: 'Owner signature', name: 'Austin Caudill, Owner', date: nhV(wrap, 'nhf-ao-date') }
         ];
         return { kind: 'atr_one_employee', sections: sections, sigs: sigs };
@@ -3466,7 +3466,7 @@
         var note = document.createElement('p');
         note.className = 'portal-muted portal-small td-print-hide';
         note.style.margin = '0 0 0.75rem';
-        note.textContent = 'Blank form \u2014 view or print only; nothing is saved from this view. To complete and file it, use Attach to a hire, or Documents on the employee\u2019s card.';
+        note.textContent = 'Blank form \u2014 view or print only; nothing is saved from this view. To complete and file it, use Attach to a hire, or Documents on the associate\u2019s card.';
         h3.parentNode.insertBefore(note, h3.nextElementSibling.nextSibling);
       }
       if (cancel && cancel.parentNode) {
@@ -3546,15 +3546,15 @@
         }
         tdAttachedKinds[kind] = true;
         if (btn) btn.innerHTML = tdAttachLabel(kind);
-        if (note) note.innerHTML = '<i class="fas fa-circle-check"></i> Attached to ' + esc(tdCurrentHire.full_name || 'this hire') + ' — find it under Documents on their card in Employee Onboarding.';
+        if (note) note.innerHTML = '<i class="fas fa-circle-check"></i> Attached to ' + esc(tdCurrentHire.full_name || 'this hire') + ' — find it under Documents on their card in Associate Onboarding.';
       });
     }
 
     function tdAttach(kind) {
       var wrap = nhModal('portal-td-attach-modal',
         '<h3 style="margin:0 0 0.25rem;">Attach \u2014 ' + esc(NH_DOC_KIND_LABELS[kind] || 'Document') + '</h3>' +
-        '<p class="portal-muted portal-small" style="margin:0 0 0.75rem;">Pick the employee who will complete and file this form. It opens ready to fill out under Documents on their card in Employee Onboarding.</p>' +
-        '<div id="td-attach-list"><p class="portal-muted">Loading employees&hellip;</p></div>' +
+        '<p class="portal-muted portal-small" style="margin:0 0 0.75rem;">Pick the associate who will complete and file this form. It opens ready to fill out under Documents on their card in Associate Onboarding.</p>' +
+        '<div id="td-attach-list"><p class="portal-muted">Loading associates&hellip;</p></div>' +
         '<div style="display:flex;gap:0.5rem;margin-top:1rem;"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="td-attach-close">Cancel</button></div>',
         560);
       wrap.querySelector('#td-attach-close').addEventListener('click', function () { nhCloseModal('portal-td-attach-modal'); });
@@ -3566,9 +3566,9 @@
       if (!box) return;
       tdAttachKind = kind;
       if (!rows.length) {
-        box.innerHTML = '<p class="portal-muted">No employees yet \u2014 a form can only be filed for a person who is on file.</p>' +
-          '<p class="portal-muted portal-small">Add the employee first with the form in Employee Onboarding. Once they are added, the Documents button on their card is where this form gets completed and filed.</p>' +
-          '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="td-attach-add">Add an employee</button>';
+        box.innerHTML = '<p class="portal-muted">No associates yet \u2014 a form can only be filed for a person who is on file.</p>' +
+          '<p class="portal-muted portal-small">Add the associate first with the form in Associate Onboarding. Once they are added, the Documents button on their card is where this form gets completed and filed.</p>' +
+          '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="td-attach-add">Add an associate</button>';
         var add = box.querySelector('#td-attach-add');
         if (add) add.addEventListener('click', function () {
           nhCloseModal('portal-td-attach-modal');
@@ -3580,11 +3580,11 @@
       }
       box.innerHTML = rows.map(function (h) {
         return '<div style="display:flex;justify-content:space-between;align-items:center;gap:0.75rem;padding:0.45rem 0;border-bottom:1px solid #E6D9C0;">' +
-          '<div><span style="font-weight:600;">' + esc(h.full_name || 'Employee') + '</span>' +
+          '<div><span style="font-weight:600;">' + esc(h.full_name || 'Associate') + '</span>' +
           (h.status ? '<br /><span class="portal-muted portal-small">' + esc(h.status) + '</span>' : '') + '</div>' +
           '<span style="display:inline-flex;gap:0.6rem;align-items:center;"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-td-pick="' + esc(h.id) + '">Attach</button>' +
           (nhIsAdmin ? '<button class="portal-guide-del' + (confirmHireDeleteId === h.id ? ' confirming' : '') + '" type="button" data-td-del="' + esc(h.id) + '">' +
-          (confirmHireDeleteId === h.id ? 'Confirm: delete ' + esc(h.full_name || 'this employee') + '?' : 'Delete') + '</button>' : '') + '</span></div>';
+          (confirmHireDeleteId === h.id ? 'Confirm: delete ' + esc(h.full_name || 'this associate') + '?' : 'Delete') + '</button>' : '') + '</span></div>';
       }).join('');
       var btns = box.querySelectorAll('[data-td-pick]');
       for (var i = 0; i < btns.length; i++) {
@@ -3624,14 +3624,14 @@
       }
       client.from('new_hires').select('*').order('created_at', { ascending: false }).limit(200).then(function (res) {
         var box = $('td-attach-list');
-        if (res.error) { if (box) box.innerHTML = '<p class="portal-error">Couldn&rsquo;t load employees. Try again.</p>'; return; }
+        if (res.error) { if (box) box.innerHTML = '<p class="portal-error">Couldn&rsquo;t load associates. Try again.</p>'; return; }
         var rows = res.data || [];
         nhRowsById = {};
         for (var i = 0; i < rows.length; i++) { nhRowsById[rows[i].id] = rows[i]; }
         tdRenderAttachList(kind, rows);
       }).catch(function () {
         var box = $('td-attach-list');
-        if (box) box.innerHTML = '<p class="portal-error">Couldn&rsquo;t load employees. Try again.</p>';
+        if (box) box.innerHTML = '<p class="portal-error">Couldn&rsquo;t load associates. Try again.</p>';
       });
     }
 
@@ -5144,7 +5144,7 @@
           ups.sort(function (a, b) { return a.u.days - b.u.days; });
           var head = '<div class="portal-card p3-celeb"><p class="portal-card-title"><i class="fas fa-cake-candles"></i> Celebrations &mdash; birthdays in the next 30 days</p>';
           if (!ups.length) {
-            box.innerHTML = head + '<p class="portal-card-meta">No customer birthdays coming up. Birthdays are added on each customer card below &mdash; or by the customer from their account page on the website.</p></div>';
+            box.innerHTML = head + '<p class="portal-card-meta">No guest birthdays coming up. Birthdays are added on each guest card below &mdash; or by the guest from their account page on the website.</p></div>';
             return;
           }
           var rows = ups.map(function (x) {
@@ -5152,10 +5152,10 @@
             var bits = [esc(fmtDay(x.u.date))];
             if (x.c.phone) bits.push(esc(x.c.phone));
             if (x.c.email) bits.push(esc(x.c.email));
-            return '<p class="portal-card-meta p3-celeb-row"><strong>' + esc(x.c.name || 'Customer') + '</strong> &mdash; ' + when + ' &middot; ' + bits.join(' &middot; ') + '</p>';
+            return '<p class="portal-card-meta p3-celeb-row"><strong>' + esc(x.c.name || 'Guest') + '</strong> &mdash; ' + when + ' &middot; ' + bits.join(' &middot; ') + '</p>';
           }).join('');
           box.innerHTML = head + rows +
-            '<p class="portal-muted portal-small">Birthday customers get 15% off their next repair or accessories, and get an automatic birthday email on the day. Birthdays are month and day only, no year.</p></div>';
+            '<p class="portal-muted portal-small">Birthday guests get 15% off their next repair or accessories, and get an automatic birthday email on the day. Birthdays are month and day only, no year.</p></div>';
         })
         .catch(function () {});
     }

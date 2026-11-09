@@ -318,7 +318,7 @@
   }
 
   /* ================= AUTH ================= */
-  var resetSuccessMessage = null; function isRecoveryHash() { var h = window.location.hash || ""; var q = window.location.search || ""; return h.indexOf("type=recovery") !== -1 || q.indexOf("type=recovery") !== -1; } function showResetView(msg) { var dv = $("portal-dash-view"); if (dv) { dv.hidden = true; } var lv = $("portal-login-view"); if (lv) { lv.hidden = false; } var rf = $("portal-login-form"); if (rf) { rf.hidden = true; } var rv = $("portal-reset-view"); if (rv) { rv.hidden = false; } var mv2 = $("portal-mfa-view"); if (mv2) { mv2.hidden = true; } /* PORTAL_MFA_2026_11_02: recovery view never shares the card with the two-step check. */ var re = $("portal-reset-error"); if (re) { if (msg) { re.textContent = msg; re.hidden = false; } else { re.hidden = true; re.textContent = ""; } } var fm2 = $("portal-forgot-msg"); if (fm2) { fm2.hidden = true; } } function initPasswordReset() { withClient(function (client) { if (!client) { return; } var fb = $("portal-forgot-btn"); if (fb) { fb.addEventListener("click", function () { var em = $("portal-login-email"); var email = em ? trim(em.value) : ""; var mg = $("portal-forgot-msg"); if (!email) { if (mg) { mg.textContent = "Enter your employee email first"; mg.hidden = false; } return; } client.auth.resetPasswordForEmail(email, { redirectTo: "https://austinstechrepairgroup.com/portal.html" }).then(function (res) { if (mg) { if (res.error) { mg.textContent = res.error.message || "Could not send the reset email. Try again."; } else { mg.textContent = "Check your email for a password reset link"; } mg.hidden = false; } }).catch(function (err) { if (mg) { mg.textContent = (err && err.message) || "Could not send the reset email. Try again."; mg.hidden = false; } }); }); } /* PORTAL_DEADEND_2026_10_30: "Back to sign in" exits the recovery view and restores the normal sign-in form. */ var bb = $("portal-reset-back-btn"); if (bb) { bb.addEventListener("click", function () { /* PORTAL_DEVICE_TRUST_2026_11_02: during a forced 30-day rotation, Back is the only exit and it must close the session - landing on the plain form with a live session would bounce straight back to the forced step. signOut fires SIGNED_OUT, whose handler shows the sign-in form. */ if (pwGateState.forced) { pwGateState.forced = false; var _pn = $("portal-reset-note"); if (_pn) { _pn.hidden = true; } client.auth.signOut(); return; } showLogin(null); }); } var rb = $("portal-reset-btn"); if (rb) { rb.addEventListener("click", function () { var pwEl = $("portal-reset-password"); var cfEl = $("portal-reset-confirm"); var er = $("portal-reset-error"); var pw = pwEl ? pwEl.value : ""; var cf = cfEl ? cfEl.value : ""; if (er) { er.hidden = true; er.textContent = ""; } if (pw !== cf) { if (er) { er.textContent = "Passwords do not match"; er.hidden = false; } return; } if (pw.length < 8) { if (er) { er.textContent = "Password must be at least 8 characters"; er.hidden = false; } return; } client.auth.updateUser({ password: pw }).then(function (res) { if (res.error) { if (er) { er.textContent = res.error.message || "Could not update the password. Try again."; er.hidden = false; } return; } /* PORTAL_DEVICE_TRUST_2026_11_02: any successful set through this view restarts the 30-day password clock (best-effort stamp, see stampPasswordChanged). A forced rotation then continues straight to the dashboard - password and authenticator both already passed, and the factor is untouched. The email-link recovery path keeps its original sign-out ending below. */ stampPasswordChanged(client, function () { if (pwGateState.forced) { pwGateState.forced = false; var _pn2 = $("portal-reset-note"); if (_pn2) { _pn2.hidden = true; } if (state.profile) { state.profile.password_changed_at = new Date().toISOString(); } proceedToDashboard(); return; } var doneMsg = "Password updated. Sign in with your new password."; resetSuccessMessage = doneMsg; client.auth.signOut().then(function () { showLogin(doneMsg); }); }); }).catch(function (err) { if (er) { er.textContent = (err && err.message) || "Could not update the password. Try again."; er.hidden = false; } }); }); } }); } function showLogin(errorMsg) {
+  var resetSuccessMessage = null; function isRecoveryHash() { var h = window.location.hash || ""; var q = window.location.search || ""; return h.indexOf("type=recovery") !== -1 || q.indexOf("type=recovery") !== -1; } function showResetView(msg) { var dv = $("portal-dash-view"); if (dv) { dv.hidden = true; } var lv = $("portal-login-view"); if (lv) { lv.hidden = false; } var rf = $("portal-login-form"); if (rf) { rf.hidden = true; } var rv = $("portal-reset-view"); if (rv) { rv.hidden = false; } var mv2 = $("portal-mfa-view"); if (mv2) { mv2.hidden = true; } /* PORTAL_MFA_2026_11_02: recovery view never shares the card with the two-step check. */ var re = $("portal-reset-error"); if (re) { if (msg) { re.textContent = msg; re.hidden = false; } else { re.hidden = true; re.textContent = ""; } } var fm2 = $("portal-forgot-msg"); if (fm2) { fm2.hidden = true; } } function initPasswordReset() { withClient(function (client) { if (!client) { return; } var fb = $("portal-forgot-btn"); if (fb) { fb.addEventListener("click", function () { var em = $("portal-login-email"); var email = em ? trim(em.value) : ""; var mg = $("portal-forgot-msg"); if (!email) { if (mg) { mg.textContent = "Enter your associate email first"; mg.hidden = false; } return; } client.auth.resetPasswordForEmail(email, { redirectTo: "https://austinstechrepairgroup.com/portal.html" }).then(function (res) { if (mg) { if (res.error) { mg.textContent = res.error.message || "Could not send the reset email. Try again."; } else { mg.textContent = "Check your email for a password reset link"; } mg.hidden = false; } }).catch(function (err) { if (mg) { mg.textContent = (err && err.message) || "Could not send the reset email. Try again."; mg.hidden = false; } }); }); } /* PORTAL_DEADEND_2026_10_30: "Back to sign in" exits the recovery view and restores the normal sign-in form. */ var bb = $("portal-reset-back-btn"); if (bb) { bb.addEventListener("click", function () { /* PORTAL_DEVICE_TRUST_2026_11_02: during a forced 30-day rotation, Back is the only exit and it must close the session - landing on the plain form with a live session would bounce straight back to the forced step. signOut fires SIGNED_OUT, whose handler shows the sign-in form. */ if (pwGateState.forced) { pwGateState.forced = false; var _pn = $("portal-reset-note"); if (_pn) { _pn.hidden = true; } client.auth.signOut(); return; } showLogin(null); }); } var rb = $("portal-reset-btn"); if (rb) { rb.addEventListener("click", function () { var pwEl = $("portal-reset-password"); var cfEl = $("portal-reset-confirm"); var er = $("portal-reset-error"); var pw = pwEl ? pwEl.value : ""; var cf = cfEl ? cfEl.value : ""; if (er) { er.hidden = true; er.textContent = ""; } if (pw !== cf) { if (er) { er.textContent = "Passwords do not match"; er.hidden = false; } return; } if (pw.length < 8) { if (er) { er.textContent = "Password must be at least 8 characters"; er.hidden = false; } return; } client.auth.updateUser({ password: pw }).then(function (res) { if (res.error) { if (er) { er.textContent = res.error.message || "Could not update the password. Try again."; er.hidden = false; } return; } /* PORTAL_DEVICE_TRUST_2026_11_02: any successful set through this view restarts the 30-day password clock (best-effort stamp, see stampPasswordChanged). A forced rotation then continues straight to the dashboard - password and authenticator both already passed, and the factor is untouched. The email-link recovery path keeps its original sign-out ending below. */ stampPasswordChanged(client, function () { if (pwGateState.forced) { pwGateState.forced = false; var _pn2 = $("portal-reset-note"); if (_pn2) { _pn2.hidden = true; } if (state.profile) { state.profile.password_changed_at = new Date().toISOString(); } proceedToDashboard(); return; } var doneMsg = "Password updated. Sign in with your new password."; resetSuccessMessage = doneMsg; client.auth.signOut().then(function () { showLogin(doneMsg); }); }); }).catch(function (err) { if (er) { er.textContent = (err && err.message) || "Could not update the password. Try again."; er.hidden = false; } }); }); } }); } function showLogin(errorMsg) {
     $('portal-dash-view').hidden = true;
     $('portal-login-view').hidden = false;
     var _rf = $("portal-login-form"); if (_rf) { _rf.hidden = false; }
@@ -424,13 +424,13 @@
          * below also works — it mints a fresh session that passes
          * through this same gate. */
         state.user = null; state.profile = null;
-        showLogin('You are signed in, but the portal could not check your employee profile — this is usually a connection hiccup. Check your connection, then reload the page.');
+        showLogin('You are signed in, but the portal could not check your associate profile — this is usually a connection hiccup. Check your connection, then reload the page.');
         return;
       }
       if (!profile) {
         client.auth.signOut().then(function () {
           state.user = null; state.profile = null;
-          showLogin('That account isn’t an employee account. This portal is employee access only — customers, please use the customer area on the main site instead.');
+          showLogin('That account isn’t an associate account. This portal is associate access only — guests, please use the guest area on the main site instead.');
         });
         return;
       }
@@ -611,14 +611,14 @@
       note.className = 'portal-gate';
       note.style.marginBottom = '12px';
       note.innerHTML = notFound
-        ? '<strong>Scan lookup:</strong> no customer matches that account code. Check the code and try again, or find them in Customers.'
-        : '<strong>Scanned in.</strong> This customer has no open job right now — their account is below, and their repair history is here too.';
+        ? '<strong>Scan lookup:</strong> no guest matches that account code. Check the code and try again, or find them in Guests.'
+        : '<strong>Scanned in.</strong> This guest has no open job right now — their account is below, and their repair history is here too.';
       body.insertBefore(note, body.firstChild);
     }, 200);
   }
   function showScanNotFound(customerId) {
     activateTab('customers');
-    drawerLoading('Customer lookup');
+    drawerLoading('Guest lookup');
     appendScanNote(customerId, true);
   }
 
@@ -1359,7 +1359,7 @@
         var err = $('portal-login-error');
         err.hidden = true; err.textContent = '';
         if (!email || !password) {
-          err.textContent = 'Enter your employee email and password.';
+          err.textContent = 'Enter your associate email and password.';
           err.hidden = false;
           return;
         }
@@ -1775,7 +1775,7 @@
       return;
     }
     box.innerHTML = messages.map(function (m) {
-      var who = m.sender === 'tech' ? 'Tech' : 'Customer';
+      var who = m.sender === 'tech' ? 'Tech' : 'Guest';
       var gv = (m.sender === 'tech' && outboundByMessage) ? gvTextStatusHtml(outboundByMessage[m.id]) : '';
       return '<div class="portal-msg portal-msg-' + (m.sender === 'tech' ? 'tech' : 'customer') + '">' +
         esc(m.message) + gv +
@@ -1799,7 +1799,7 @@
     if (note) {
       note.textContent = phone
         ? 'Texts go from the business number (937) 280-6243 to ' + phone + ' via the Google Voice relay.'
-        : 'No phone number on file for this customer \u2014 texting unavailable.';
+        : 'No phone number on file for this guest \u2014 texting unavailable.';
     }
   }
 
@@ -2148,7 +2148,7 @@ function loadTicketThread(client, ticketId) {
     var names = tags.map(function (p) { return p.name || 'Associate'; }).join(', ');
     if (!state.user) { showStatus('Note saved. The tag post to Team Chat did not go through.', true); return; }
     var authorName = (state.profile && state.profile.name) || 'Associate';
-    var cust = trim(t.customer_name || '') || 'a customer';
+    var cust = trim(t.customer_name || '') || 'a guest';
     var ref = deviceLabel(t) || trim(t.issue || '').slice(0, 40) || 'repair';
     var excerpt = String(noteText || '').replace(/\s+/g, ' ');
     if (excerpt.length > 140) excerpt = excerpt.slice(0, 140).replace(/\s+\S*$/, '') + '\u2026';
@@ -2396,7 +2396,7 @@ function loadTicketThread(client, ticketId) {
           '<div class="portal-card-top"><p class="portal-card-title">' + esc(ticketTitle(t)) + '</p><span>' + (isServiceTicket(t) ? '<span class="portal-badge portal-badge-service">SERVICE</span> ' : '') + badge(t.status) + '</span></div>' +
           kvRows([
             ['Request type', isServiceTicket(t) ? 'Service' : 'Repair'],
-            ['Customer', valOrDash(t.customer_name)],
+            ['Guest', valOrDash(t.customer_name)],
             ['Phone', valOrDash(t.customer_phone)],
             ['Email', valOrDash(t.customer_email)],
             ['Issue', valOrDash(t.issue)],
@@ -2415,7 +2415,7 @@ function loadTicketThread(client, ticketId) {
             ['Work authorized', fmtBool(t.work_auth_accepted)],
             ['Marketing opt-in', fmtBool(t.marketing_opt_in)],
             ['Source', valOrDash(t.source)],
-            ['Customer account', t.customer_id ? esc(t.customer_id) : 'Web submission — no account'],
+            ['Guest account', t.customer_id ? esc(t.customer_id) : 'Web submission — no account'],
             ['Received', esc(fmtJobDate(t.job_date) || fmtDateTime(t.created_at))],
             ['Last updated', esc(fmtDateTime(t.updated_at))]
           ]) +
@@ -2452,9 +2452,9 @@ function loadTicketThread(client, ticketId) {
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p4-existing-btn"><i class="fas fa-link"></i> Attach an existing document</button></div>' +
           '<div class="p2-form" id="p4-existing-picker" hidden>' +
           '<div id="p4-existing-list"><p class="portal-muted portal-small">Loading documents&hellip;</p></div></div>' +
-          '<p class="portal-muted portal-small">Documents file themselves on this ticket. Signing the repair authorization here, or attaching one as a signed authorization, also marks Terms accepted and Work authorized on the ticket. The media release is separate: sign it only when the customer agrees to photos or clips of the device and the repair work.</p>' +
+          '<p class="portal-muted portal-small">Documents file themselves on this ticket. Signing the repair authorization here, or attaching one as a signed authorization, also marks Terms accepted and Work authorized on the ticket. The media release is separate: sign it only when the guest agrees to photos or clips of the device and the repair work.</p>' +
           '<p class="portal-error" id="p4-doc-msg" hidden></p></div></div>' +
-          '<div class="portal-drawer-section tk-acc" data-acc="message">' + tkAccHead('message', 'Message customer') + tkAccBodyOpen('message') +
+          '<div class="portal-drawer-section tk-acc" data-acc="message">' + tkAccHead('message', 'Message guest') + tkAccBodyOpen('message') +
           '<div class="portal-thread" id="portal-thread"><p class="portal-muted">Loading messages&hellip;</p></div>' +
           '<form id="portal-note-form"><div class="portal-note-row">' +
           '<textarea id="portal-note-input" placeholder="Add a note to this ticket&hellip;" maxlength="2000" aria-label="Add a note to this ticket"></textarea>' +
@@ -2465,8 +2465,8 @@ function loadTicketThread(client, ticketId) {
            * here and re-synced from the customer profile by
            * resolveGvPhone / gvSyncTextControls); with no number it
            * renders disabled and the note says why, in plain words. */
-          '<label class="p2-check"><input type="checkbox" id="portal-gv-text-check"' + (trim(t.customer_phone || '') ? ' checked' : ' disabled') + ' /> Also text this to the customer</label>' +
-          '<p class="portal-muted portal-small" id="portal-gv-text-note">' + (trim(t.customer_phone || '') ? 'Texts go from the business number (937) 280-6243 via the Google Voice relay.' : 'No phone number on file for this customer &mdash; texting unavailable.') + '</p>' +
+          '<label class="p2-check"><input type="checkbox" id="portal-gv-text-check"' + (trim(t.customer_phone || '') ? ' checked' : ' disabled') + ' /> Also text this to the guest</label>' +
+          '<p class="portal-muted portal-small" id="portal-gv-text-note">' + (trim(t.customer_phone || '') ? 'Texts go from the business number (937) 280-6243 via the Google Voice relay.' : 'No phone number on file for this guest &mdash; texting unavailable.') + '</p>' +
           '<p class="portal-muted portal-small" id="portal-gv-text-msg"></p>' +
           '<p class="portal-muted portal-small">Notes are saved to this ticket&rsquo;s message thread as Tech.</p>' +
           '<p class="portal-error" id="portal-note-error" hidden></p></form></div></div>' +
@@ -2480,7 +2480,7 @@ function loadTicketThread(client, ticketId) {
            * sits directly above the Repair Log (it used to close the
            * drawer, below Job timer), per Austin, Nov 2, 2026. */
           '<div class="portal-drawer-section tk-acc" data-acc="repairlog">' + tkAccHead('repairlog', 'Repair log') + tkAccBodyOpen('repairlog') +
-          '<p class="portal-muted portal-small">Internal tech documentation for this repair, not shown to the customer.</p>' +
+          '<p class="portal-muted portal-small">Internal tech documentation for this repair, not shown to the guest.</p>' +
           (t.status === 'In Progress' ? '<p class="portal-muted"><strong>This repair is in progress. Please log what is happening here.</strong></p>' : '') +
           '<div class="portal-thread" id="portal-repair-log-list"><p class="portal-muted">Loading repair log&hellip;</p></div>' +
           '<form id="portal-repair-log-form"><div class="portal-field"><label for="portal-repair-log-input">What is happening with this repair?</label></div>' +
@@ -2536,7 +2536,7 @@ function loadTicketThread(client, ticketId) {
            * Email receipt row that used to sit here moved to the top
            * of the ticket, beside Print receipt (Austin, Nov 3, 2026).
            * The help paragraph stays with the charges it explains. */
-          '<p class="portal-muted portal-small">Generate receipt files a receipt built from these charges into Documents. If the charges change afterwards, generate again and it replaces the filed copy. Download receipt saves that same receipt as a PDF file. Email receipt sends the PDF to the customer&rsquo;s email on file &mdash; the fallback when a portal message or text does not reach them. The Estimate and Invoice buttons at the top of the ticket work the same way, built from these same charges &mdash; the estimate for after a diagnosis, before the customer approves; the invoice when a balance is due.</p></div></div>' +
+          '<p class="portal-muted portal-small">Generate receipt files a receipt built from these charges into Documents. If the charges change afterwards, generate again and it replaces the filed copy. Download receipt saves that same receipt as a PDF file. Email receipt sends the PDF to the guest&rsquo;s email on file &mdash; the fallback when a portal message or text does not reach them. The Estimate and Invoice buttons at the top of the ticket work the same way, built from these same charges &mdash; the estimate for after a diagnosis, before the guest approves; the invoice when a balance is due.</p></div></div>' +
           '<div class="portal-drawer-section tk-acc" data-acc="payment">' + tkAccHead('payment', 'Payment') + tkAccBodyOpen('payment') +
           /* PORTAL_ROLE_LADDER_2026_11_04: the Payment section is
            * money MOVEMENT — Charge / Check out sends a Square
@@ -2566,12 +2566,12 @@ function loadTicketThread(client, ticketId) {
           '<div class="p2-form-row"><input id="p2-part-supplier" type="text" placeholder="Supplier" maxlength="80" aria-label="Supplier" />' +
           '<input id="p2-part-sku" type="text" placeholder="Supplier SKU" maxlength="80" aria-label="Supplier SKU" /></div>' +
           '<div class="p2-form-row"><input id="p2-part-cost" type="number" step="0.01" min="0" placeholder="Our cost $" aria-label="Our cost" />' +
-          '<input id="p2-part-retail" type="number" step="0.01" min="0" placeholder="Customer price $" aria-label="Customer price" />' +
+          '<input id="p2-part-retail" type="number" step="0.01" min="0" placeholder="Guest price $" aria-label="Guest price" />' +
           '<input id="p2-part-qty" type="number" step="1" min="1" value="1" aria-label="Quantity" /></div>' +
           '<div class="p2-form-row"><select id="p2-part-carrier" aria-label="Carrier"><option value="">Carrier</option><option value="FedEx">FedEx</option><option value="UPS">UPS</option><option value="USPS">USPS</option><option value="Other">Other</option></select>' +
           '<input id="p2-part-tracking" type="text" placeholder="Tracking number" maxlength="80" aria-label="Tracking number" />' +
           '<input id="p2-part-ordernum" type="text" placeholder="Order number" maxlength="80" aria-label="Order number" /></div>' +
-          '<label class="p2-check"><input type="checkbox" id="p2-part-addcharge" checked /> Add the customer price to Charges as a part line</label>' +
+          '<label class="p2-check"><input type="checkbox" id="p2-part-addcharge" checked /> Add the guest price to Charges as a part line</label>' +
           '<button class="portal-btn portal-btn-primary portal-btn-sm" type="submit">Add part order</button>' +
           '<p class="portal-error" id="p2-part-error" hidden></p></form></div></div>' +
           '<div class="portal-drawer-section tk-acc" data-acc="timer">' + tkAccHead('timer', 'Job timer') + tkAccBodyOpen('timer') +
@@ -2717,11 +2717,11 @@ function loadTicketThread(client, ticketId) {
                  * queue failed (e.g. outbound_texts SQL not run
                  * yet). Say so next to the checkbox -- never lose
                  * the message over a failed text. */
-                if (gvMsg) gvMsg.textContent = 'Saved to the thread, but the text could not be queued. The message is on the ticket; text the customer from Google Voice for now.';
+                if (gvMsg) gvMsg.textContent = 'Saved to the thread, but the text could not be queued. The message is on the ticket; text the guest from Google Voice for now.';
               }
               loadTicketThread(client, t.id);
             }).catch(function () {
-              if (gvMsg) gvMsg.textContent = 'Saved to the thread, but the text could not be queued. The message is on the ticket; text the customer from Google Voice for now.';
+              if (gvMsg) gvMsg.textContent = 'Saved to the thread, but the text could not be queued. The message is on the ticket; text the guest from Google Voice for now.';
               loadTicketThread(client, t.id);
             });
           }).catch(function () { err.textContent = 'Couldn&rsquo;t save that note. Try again.'; err.hidden = false; });
@@ -2783,7 +2783,7 @@ function loadTicketThread(client, ticketId) {
   /* Short display name for the points note: "Janae Saunders" -> "Janae S." */
   function pointsNameLabel(t) {
     var parts = trim(t.customer_name || '').split(/\s+/).filter(function (x) { return x !== ''; });
-    if (!parts.length) return 'the customer';
+    if (!parts.length) return 'the guest';
     return parts.length > 1 ? parts[0] + ' ' + parts[1].charAt(0).toUpperCase() + '.' : parts[0];
   }
 
@@ -2861,7 +2861,7 @@ function loadTicketThread(client, ticketId) {
   function warrantyExemptBarHtml(t) {
     var on = !!(t && t.warranty_exempt);
     return '<div class="warranty-exempt-bar' + (on ? ' on' : '') + '">' +
-      (on ? '<p class="warranty-exempt-note"><i class="fas fa-shield-halved"></i> <strong>Warranty &mdash; exempt.</strong> The charges below stay on record, but the customer owes $0.00 on this ticket.</p>' : '') +
+      (on ? '<p class="warranty-exempt-note"><i class="fas fa-shield-halved"></i> <strong>Warranty &mdash; exempt.</strong> The charges below stay on record, but the guest owes $0.00 on this ticket.</p>' : '') +
       '<div class="portal-status-row"><button class="portal-btn ' + (on ? 'portal-btn-primary' : 'portal-btn-outline') + ' portal-btn-sm" type="button" id="p2-warranty-exempt-btn" aria-pressed="' + (on ? 'true' : 'false') + '"><i class="fas fa-shield-halved"></i> Warranty exemption</button>' +
       '<span class="portal-muted portal-small" id="p2-warranty-exempt-msg">' + (on ? 'Exemption is on. Press the button again to remove it and restore the balance.' : 'Covered warranty rework? Press to bring this ticket&rsquo;s balance due to $0.') + '</span></div></div>';
   }
@@ -3071,7 +3071,7 @@ function loadTicketThread(client, ticketId) {
         (p.supplier ? ' · ' + esc(p.supplier) : '') + (p.supplier_sku ? ' · SKU ' + esc(p.supplier_sku) : '') +
         ' &times;' + esc(p.qty) +
         (p.our_cost != null ? ' · our cost ' + fmtMoney(p.our_cost) : '') +
-        (p.retail_price != null ? ' · customer ' + fmtMoney(p.retail_price) : '') +
+        (p.retail_price != null ? ' · guest ' + fmtMoney(p.retail_price) : '') +
         (p.carrier ? ' · ' + esc(p.carrier) : '') +
         (p.order_number ? ' · order #' + esc(p.order_number) : '') +
         (p.received_at ? ' · received ' + esc(fmtDate(p.received_at)) : '') + '</span>' + trackingHtml(p) + '</div>' +
@@ -3226,7 +3226,7 @@ function loadTicketThread(client, ticketId) {
    * insert exactly like any other bad type, so run the SQL first. */
   var DOC_TYPE_LABELS = { repair_authorization: 'Repair authorization', receipt: 'Receipt', part_order: 'Part order', other: 'Other document', estimate: 'Estimate', invoice: 'Invoice' };
   /* PORTAL_DOCUMENTS_SET_2026_11_05: 'estimate' and 'invoice' join the labels — their ticket_documents CHECK widening is documents-set.sql in this build folder. */
-  var AUTH_TERMS_TEXT = "Repair Authorization & Service Agreement\nAustin's Tech Repair Group \u2014 State of Ohio, USA \u2014 Last updated October 23, 2026\nPLEASE READ THIS DOCUMENT CAREFULLY. By scheduling an appointment, submitting a repair request, or handing us your device, you (\"Customer,\" \"you\") authorize the services below and agree to these terms with Austin's Tech Repair Group (\"Company,\" \"we,\" \"us,\" \"our\"), a sole proprietorship operating in the State of Ohio.\n1. Authorization to Perform Services\nBy requesting service, you authorize Austin's Tech Repair Group to:\nReceive, handle, open, disassemble, diagnose, test, and repair your device;\nOrder and install the replacement parts you approve;\nRun software diagnostics and updates, and access device functions \u2014 using any passcode you provide \u2014 only as needed to complete and verify the repair;\nTake the device to our bench for advanced work (such as board-level repair) when on-site repair is not possible, and return it when finished.\nYou confirm that you own the device or have the owner's permission to authorize service on it. We service consumer and business electronics only; we do not service medical devices or equipment.\n2. Fees, Parts & Payment\nVisit fee: A visit fee applies to every mobile visit \u2014 $15.00 when the repair is already known, or $35.00 when the job needs a full diagnosis \u2014 covering travel, plus the diagnosis when one is needed. It is non-refundable in all cases, is due at scheduling, is charged separately from the repair price, and is never credited toward a repair. ATR One members pay no visit fee for devices covered under their subscription.\nDiagnostics: Estimates are free. A full diagnosis \u2014 including disassembly or deep board-level diagnostics when required \u2014 is included in the $35.00 visit fee.\nFlat-rate repairs: Common repairs (screens, batteries, charging ports, back glass) are quoted at one flat rate \u2014 parts and labor included. No hourly billing.\nCustom repairs: Repairs outside the standard list are quoted individually as one flat price and begin only with your approval.\nParts: Parts for your job are ordered by us through our suppliers and delivered to us. Because parts are ordered for your specific job, the parts cost is paid upfront before we order. If you cancel after parts are ordered, we keep the part and refund what you paid for the part.\nReplaced parts: Parts we remove during a repair are taken with us and disposed of properly to protect the environment. Some original manufacturer parts must be returned to the manufacturer.\nParts you supply: If you supply your own part, we will install it as-is; our 1-Year Limited Warranty does not cover customer-supplied parts.\nContact about your repair: You agree we may call and text you at the number you provide about your repair \u2014 scheduling, status updates, and completion.\nEstimate approval: We confirm your price before beginning work. If hidden damage, corrosion, or additional failures are found during disassembly, we notify you and obtain your approval before proceeding with any extra work.\nPayment due: The balance is due upon completion, before the device is released. We accept Visa, Mastercard, American Express, Discover, Apple Pay, Google Pay, Samsung Pay, Cash App Pay, PayPal, Venmo, and cash.\nCard processing fee: If you pay by credit or debit card, a processing fee is added to your total. Card payments are processed through Square, and the fee is exactly what Square charges for the transaction \u2014 passed through at Square's actual rate, never more than Square charges.\n3. Repair Risks You Accept\nData: Diagnostics and repair can result in data loss or corruption. Back up your device before service. We are not responsible for lost data, files, photos, accounts, or settings.\nPre-existing damage: Devices with prior liquid exposure, corrosion, structural damage, or earlier repair attempts are fragile and can fail during normal handling. We are not responsible for a device that stops working because of a pre-existing condition.\nAlready-cracked parts: Removing a cracked screen or back glass can cause it to break further. If a damaged part cannot survive disassembly, replacing it becomes part of the repair and is quoted to you before we proceed.\nCosmetics: Minor marks from opening a device are a normal risk of repair work.\nManufacturer warranties & seals: Third-party repair can affect a manufacturer's warranty; unless the manufacturer explicitly states that opening the device does not void the warranty, our work may void it. A device's water-resistance rating cannot be guaranteed after any repair.\n4. Liability Waiver\nExcept in cases of gross negligence or willful misconduct, you release Austin's Tech Repair Group, its owner, and its representatives from liability for claims or damages arising from the repair services, and you agree that our total liability is limited to the amount you paid for the service. We are not liable for incidental, indirect, or consequential damages, including loss of data, loss of use, or loss of business.\n5. Warranty\nStandard repairs include a one (1) year limited warranty on the parts installed and labor performed, under our Warranty Policy.\nThe warranty is void for the affected repair if the device later suffers physical damage, liquid exposure, or is opened or repaired by another party.\nWarranty service requires your original repair invoice or receipt.\n6. Unclaimed Devices\nWe will notify you when your repair is complete. Equipment left unclaimed for more than sixty (60) days after that notice will be considered abandoned and may be disposed of, recycled, or sold to recover costs, as permitted by Ohio law.\n7. Governing Law & Entire Agreement\nThis Agreement is governed by the laws of the State of Ohio. Disputes will first be addressed through good-faith negotiation; if unresolved, they will be submitted to a court of competent jurisdiction in Greene County, Ohio. This document is the entire agreement between you and Austin's Tech Repair Group for repair services. If any provision is found unenforceable, the rest remain in effect.\nAustin's Tech Repair Group\nAustin Tyler Caudill, Owner\nState of Ohio, USA \u2014 (937) 280-6243";
+  var AUTH_TERMS_TEXT = "Repair Authorization & Service Agreement\nAustin's Tech Repair Group \u2014 State of Ohio, USA \u2014 Last updated October 23, 2026\nPLEASE READ THIS DOCUMENT CAREFULLY. By scheduling an appointment, submitting a repair request, or handing us your device, you (\"Guest,\" \"you\") authorize the services below and agree to these terms with Austin's Tech Repair Group (\"Company,\" \"we,\" \"us,\" \"our\"), a sole proprietorship operating in the State of Ohio.\n1. Authorization to Perform Services\nBy requesting service, you authorize Austin's Tech Repair Group to:\nReceive, handle, open, disassemble, diagnose, test, and repair your device;\nOrder and install the replacement parts you approve;\nRun software diagnostics and updates, and access device functions \u2014 using any passcode you provide \u2014 only as needed to complete and verify the repair;\nTake the device to our bench for advanced work (such as board-level repair) when on-site repair is not possible, and return it when finished.\nYou confirm that you own the device or have the owner's permission to authorize service on it. We service consumer and business electronics only; we do not service medical devices or equipment.\n2. Fees, Parts & Payment\nVisit fee: A visit fee applies to every mobile visit \u2014 $15.00 when the repair is already known, or $35.00 when the job needs a full diagnosis \u2014 covering travel, plus the diagnosis when one is needed. It is non-refundable in all cases, is due at scheduling, is charged separately from the repair price, and is never credited toward a repair. ATR One members pay no visit fee for devices covered under their subscription.\nDiagnostics: Estimates are free. A full diagnosis \u2014 including disassembly or deep board-level diagnostics when required \u2014 is included in the $35.00 visit fee.\nFlat-rate repairs: Common repairs (screens, batteries, charging ports, back glass) are quoted at one flat rate \u2014 parts and labor included. No hourly billing.\nCustom repairs: Repairs outside the standard list are quoted individually as one flat price and begin only with your approval.\nParts: Parts for your job are ordered by us through our suppliers and delivered to us. Because parts are ordered for your specific job, the parts cost is paid upfront before we order. If you cancel after parts are ordered, we keep the part and refund what you paid for the part.\nReplaced parts: Parts we remove during a repair are taken with us and disposed of properly to protect the environment. Some original manufacturer parts must be returned to the manufacturer.\nParts you supply: If you supply your own part, we will install it as-is; our 1-Year Limited Warranty does not cover guest-supplied parts.\nContact about your repair: You agree we may call and text you at the number you provide about your repair \u2014 scheduling, status updates, and completion.\nEstimate approval: We confirm your price before beginning work. If hidden damage, corrosion, or additional failures are found during disassembly, we notify you and obtain your approval before proceeding with any extra work.\nPayment due: The balance is due upon completion, before the device is released. We accept Visa, Mastercard, American Express, Discover, Apple Pay, Google Pay, Samsung Pay, Cash App Pay, PayPal, Venmo, and cash.\nCard processing fee: If you pay by credit or debit card, a processing fee is added to your total. Card payments are processed through Square, and the fee is exactly what Square charges for the transaction \u2014 passed through at Square's actual rate, never more than Square charges.\n3. Repair Risks You Accept\nData: Diagnostics and repair can result in data loss or corruption. Back up your device before service. We are not responsible for lost data, files, photos, accounts, or settings.\nPre-existing damage: Devices with prior liquid exposure, corrosion, structural damage, or earlier repair attempts are fragile and can fail during normal handling. We are not responsible for a device that stops working because of a pre-existing condition.\nAlready-cracked parts: Removing a cracked screen or back glass can cause it to break further. If a damaged part cannot survive disassembly, replacing it becomes part of the repair and is quoted to you before we proceed.\nCosmetics: Minor marks from opening a device are a normal risk of repair work.\nManufacturer warranties & seals: Third-party repair can affect a manufacturer's warranty; unless the manufacturer explicitly states that opening the device does not void the warranty, our work may void it. A device's water-resistance rating cannot be guaranteed after any repair.\n4. Liability Waiver\nExcept in cases of gross negligence or willful misconduct, you release Austin's Tech Repair Group, its owner, and its representatives from liability for claims or damages arising from the repair services, and you agree that our total liability is limited to the amount you paid for the service. We are not liable for incidental, indirect, or consequential damages, including loss of data, loss of use, or loss of business.\n5. Warranty\nStandard repairs include a one (1) year limited warranty on the parts installed and labor performed, under our Warranty Policy.\nThe warranty is void for the affected repair if the device later suffers physical damage, liquid exposure, or is opened or repaired by another party.\nWarranty service requires your original repair invoice or receipt.\n6. Unclaimed Devices\nWe will notify you when your repair is complete. Equipment left unclaimed for more than sixty (60) days after that notice will be considered abandoned and may be disposed of, recycled, or sold to recover costs, as permitted by Ohio law.\n7. Governing Law & Entire Agreement\nThis Agreement is governed by the laws of the State of Ohio. Disputes will first be addressed through good-faith negotiation; if unresolved, they will be submitted to a court of competent jurisdiction in Greene County, Ohio. This document is the entire agreement between you and Austin's Tech Repair Group for repair services. If any provision is found unenforceable, the rest remain in effect.\nAustin's Tech Repair Group\nAustin Tyler Caudill, Owner\nState of Ohio, USA \u2014 (937) 280-6243";
 
   function docStamp() { return new Date().toISOString().replace(/[:.]/g, '-'); }
   function safeFileName(name) {
@@ -3543,7 +3543,7 @@ function loadTicketThread(client, ticketId) {
 
   function signedAuthorizationHtml(meta, signerName, signatureDataUrl, signedAtIso) {
     var lines = [
-      ['Customer', meta.customerName],
+      ['Guest', meta.customerName],
       ['Phone', meta.phone],
       ['Device', meta.device]
     ].filter(function (r) { return trim(r[1]) !== ''; }).map(function (r) {
@@ -3567,7 +3567,7 @@ function loadTicketThread(client, ticketId) {
       '<div style="border-top:2px solid #2C231A;margin-top:0.4rem;padding-top:0.5rem;font-size:0.95rem;">Signed by: ' + esc(signerName || '') + '</div>' +
       '<div style="font-size:0.95rem;margin-top:0.25rem;">Date: ' + esc(fmtDateTime(signedAtIso)) + '</div>' +
       '</div>' +
-      '<p style="font-size:0.8rem;color:#6B5B43;margin-top:1.5rem;">Signed electronically and filed on the customer\u2019s repair ticket by Austin\u2019s Tech Repair Group.</p>' +
+      '<p style="font-size:0.8rem;color:#6B5B43;margin-top:1.5rem;">Signed electronically and filed on the guest\u2019s repair ticket by Austin\u2019s Tech Repair Group.</p>' +
       '</div></body></html>';
   }
 
@@ -3737,7 +3737,7 @@ function loadTicketThread(client, ticketId) {
    * signed document. Signing a media release changes NO consent
    * flags: it is not the repair authorization, so
    * markAuthorizationAccepted is deliberately never called here. */
-  var MEDIA_RELEASE_TEXT = "Media Release\nAustin's Tech Repair Group \u2014 \u201CEvery technology, big or small \u2014 we tackle them all.\u201D\n\nI give Austin's Tech Repair Group permission to take photographs and short video clips of my device and of the repair work while it is being done.\n\nAustin's Tech Repair Group may use these photographs and clips on its website, its social media pages, and in its advertising and portfolio, to show the kind of work it does.\n\nPhotographs and clips focus on the device and the work area. Photographs of people are taken only with their own agreement.\n\nSigning is always the customer's choice. Service, pricing, and warranty are the same either way. A customer may take back this permission at any time with a written note or email, and Austin's Tech Repair Group will stop using the photographs and clips from that point on.\n\nThe customer signing below confirms they own the device, or are authorized by its owner, and agrees to the terms above.";
+  var MEDIA_RELEASE_TEXT = "Media Release\nAustin's Tech Repair Group \u2014 \u201CEvery technology, big or small \u2014 we tackle them all.\u201D\n\nI give Austin's Tech Repair Group permission to take photographs and short video clips of my device and of the repair work while it is being done.\n\nAustin's Tech Repair Group may use these photographs and clips on its website, its social media pages, and in its advertising and portfolio, to show the kind of work it does.\n\nPhotographs and clips focus on the device and the work area. Photographs of people are taken only with their own agreement.\n\nSigning is always the guest's choice. Service, pricing, and warranty are the same either way. A guest may take back this permission at any time with a written note or email, and Austin's Tech Repair Group will stop using the photographs and clips from that point on.\n\nThe guest signing below confirms they own the device, or are authorized by its owner, and agrees to the terms above.";
   var MEDIA_SIGN_OPTS = {
     title: 'Media Release',
     intro: 'Read the release, type your name, and sign in the box. Signing files this media release on the ticket. It covers photos and short clips of the device and the repair work only.',
@@ -3747,7 +3747,7 @@ function loadTicketThread(client, ticketId) {
 
   function signedMediaReleaseHtml(meta, signerName, signatureDataUrl, signedAtIso) {
     var lines = [
-      ['Customer', meta.customerName],
+      ['Guest', meta.customerName],
       ['Phone', meta.phone],
       ['Device', meta.device]
     ].filter(function (r) { return trim(r[1]) !== ''; }).map(function (r) {
@@ -3771,7 +3771,7 @@ function loadTicketThread(client, ticketId) {
       '<div style="border-top:2px solid #2C231A;margin-top:0.4rem;padding-top:0.5rem;font-size:0.95rem;">Signed by: ' + esc(signerName || '') + '</div>' +
       '<div style="font-size:0.95rem;margin-top:0.25rem;">Date: ' + esc(fmtDateTime(signedAtIso)) + '</div>' +
       '</div>' +
-      '<p style="font-size:0.8rem;color:#6B5B43;margin-top:1.5rem;">Signed electronically and filed on the customer\u2019s repair ticket by Austin\u2019s Tech Repair Group.</p>' +
+      '<p style="font-size:0.8rem;color:#6B5B43;margin-top:1.5rem;">Signed electronically and filed on the guest\u2019s repair ticket by Austin\u2019s Tech Repair Group.</p>' +
       '</div></body></html>';
   }
 
@@ -3842,7 +3842,7 @@ function loadTicketThread(client, ticketId) {
    * DOCVIEW overlay as a formatted document, never raw code. */
   function signedOtherDocumentHtml(docTitle, bodyText, meta, signerName, signatureDataUrl, signedAtIso) {
     var lines = [
-      ['Customer', meta.customerName],
+      ['Guest', meta.customerName],
       ['Phone', meta.phone],
       ['Device', meta.device]
     ].filter(function (r) { return trim(r[1]) !== ''; }).map(function (r) {
@@ -3866,7 +3866,7 @@ function loadTicketThread(client, ticketId) {
       '<div style="border-top:2px solid #2C231A;margin-top:0.4rem;padding-top:0.5rem;font-size:0.95rem;">Signed by: ' + esc(signerName || '') + '</div>' +
       '<div style="font-size:0.95rem;margin-top:0.25rem;">Date: ' + esc(fmtDateTime(signedAtIso)) + '</div>' +
       '</div>' +
-      '<p style="font-size:0.8rem;color:#6B5B43;margin-top:1.5rem;">Signed electronically and filed on the customer\u2019s repair ticket by Austin\u2019s Tech Repair Group.</p>' +
+      '<p style="font-size:0.8rem;color:#6B5B43;margin-top:1.5rem;">Signed electronically and filed on the guest\u2019s repair ticket by Austin\u2019s Tech Repair Group.</p>' +
       '</div></body></html>';
   }
 
@@ -3943,7 +3943,7 @@ function loadTicketThread(client, ticketId) {
    * the same readable page the customer will sign, never raw text. */
   function unsignedAtrOneAgreementHtml(meta, bodyText, title) {
     var lines = [
-      ['Customer', meta.customerName],
+      ['Guest', meta.customerName],
       ['Phone', meta.phone],
       ['Device', meta.device]
     ].filter(function (r) { return trim(r[1]) !== ''; }).map(function (r) {
@@ -3968,7 +3968,7 @@ function loadTicketThread(client, ticketId) {
       '<div style="border-bottom:2px solid #2C231A;height:2.2rem;margin-top:1rem;"></div>' +
       '<div style="font-size:0.95rem;margin-top:0.4rem;">Date:</div>' +
       '</div>' +
-      '<p style="font-size:0.8rem;color:#6B5B43;margin-top:1.5rem;">Attached to this ticket at check-in \u2014 awaiting the customer\u2019s signature.</p>' +
+      '<p style="font-size:0.8rem;color:#6B5B43;margin-top:1.5rem;">Attached to this ticket at check-in \u2014 awaiting the guest\u2019s signature.</p>' +
       '</div></body></html>';
   }
 
@@ -3998,7 +3998,7 @@ function loadTicketThread(client, ticketId) {
         ticket_id: ticketId, doc_type: 'other', storage_path: path,
         file_name: agreement.title + ' \u2014 awaiting signature.html',
         signer_name: null, signed_at: null,
-        note: agreement.title + ' \u2014 attached at check-in (customer wants to sign up for ATR One); awaiting signature'
+        note: agreement.title + ' \u2014 attached at check-in (guest wants to sign up for ATR One); awaiting signature'
       };
       client.from('ticket_documents').insert(docRow).then(function (res) {
         if (res.error) { done('The ATR One membership agreement could not be attached.'); return; }
@@ -4084,8 +4084,8 @@ function loadTicketThread(client, ticketId) {
    * filing a signed authorization sets that ticket's terms_accepted
    * and work_auth_accepted, same as the drawer flow, and the document
    * then also shows in that ticket's Documents section. */
-  var TERMS_CONDITIONS_TEXT = "Terms & Conditions of Service\nLast updated October 23, 2026\nThese Terms & Conditions govern repair services and website use for Austin's Tech Repair Group (\"Company,\" \"we,\" \"us,\" or \"our\"), a sole proprietorship operating in the State of Ohio. By scheduling an appointment, submitting a repair request, or using this website, you (\"Customer,\" \"you\") agree to these terms.\n1. Who We Are & What We Do\nMobile service: We come to you. Most repairs are completed at your home or office in the Miami Valley (Xenia, Dayton, and surrounding areas). Some advanced repairs, such as board-level work, may require us to take the device with your permission and return it when the work is complete.\nWhat we repair: Phones, tablets, computers & laptops, game consoles, smartwatches, and websites.\nWhat we do not repair: Automotive electronics and instrument clusters, vintage radios and tube equipment, home stereo and sound systems, and major appliances.\n2. Estimates & Pricing\nFlat-rate pricing: Common repairs are quoted at one flat rate \u2014 parts and labor included. There is no hourly billing.\nDiagnostics: Estimates are free. A full diagnosis of the problem \u2014 including disassembly or deep board-level work when required \u2014 is included in the $35.00 visit fee, charged separately from the repair price.\nOnline estimator: Prices shown by the online estimator are starting prices for the most common models. Your final flat price is confirmed for your exact model before you book, and the price we confirm is the price you pay.\nCustom repairs: One-of-a-kind or unusual repairs are quoted individually as one flat price \u2014 and are always approved by you before work begins.\nHidden damage: If disassembly reveals additional damage or failed components beyond the original estimate, we stop, notify you, and get your approval before doing any extra work.\n3. Visit Fee\nA visit fee applies to every mobile visit, and it is due at scheduling: $15.00 when the repair is already known, or $35.00 when the job needs a full diagnosis of the problem. It covers travel to your location, plus the diagnosis when one is needed.\nATR One members: Members pay no visit fee for devices covered under their subscription.\nThe visit fee is non-refundable in all cases and is charged separately from the repair price. It is never credited toward a repair.\n4. Parts & Payment\nParts you supply: You\u2019re welcome to supply everyday parts you can buy at retail \u2014 hard drives, memory, accessories. Our 1-year warranty covers only parts we supply; customer-supplied parts are installed as-is, with no warranty on the part.\nParts are paid upfront: Because parts are ordered for your specific job, the parts cost is due before we order. We order parts through our suppliers and they are delivered to us; we bring them to your install visit. If you cancel after parts are ordered, we keep the part and refund what you paid for the part.\nReplaced parts: Parts we remove during a repair are taken with us and disposed of properly to protect the environment. Some original manufacturer parts must be returned to the manufacturer.\nParts you supply: If you supply your own part, we will install it as-is; our 1-Year Limited Warranty does not cover customer-supplied parts.\nContact about your repair: You agree we may call and text you at the number you provide about your repair \u2014 scheduling, status updates, and completion.\nBalance due: The remaining balance (labor) is due upon completion of the repair, before the device is released back to you.\nAccepted payments: Visa, Mastercard, American Express, Discover, Apple Pay, Google Pay, Samsung Pay, Cash App Pay, PayPal, Venmo, and cash.\nCard processing fee: If you pay by credit or debit card, a processing fee is added to your total. Card payments are processed through Square, and the fee is exactly what Square charges for the transaction \u2014 passed through at Square's actual rate, never more than Square charges.\n5. Cancellations\nYou may cancel or reschedule before your appointment at no charge beyond the visit fee, which is non-refundable once the appointment is booked.\nIf we arrive and you decline the confirmed repair, only the visit fee is owed.\n6. Your Data\nData loss or corruption can occur during diagnostics or repair. You are responsible for backing up your device before service. We are not liable for lost data, files, photos, or settings. See the Repair Authorization for full details.\n7. Warranty\nStandard repairs are covered by our 1-Year Limited Warranty on the parts installed and the labor performed. Full terms and the claim process are in the Warranty Policy on this site.\n8. Limitation of Liability\nTo the fullest extent permitted by Ohio law, our total liability for any claim connected to a service is limited to the amount you paid for that service. We are not liable for incidental, indirect, or consequential damages, including loss of data, loss of use, or loss of business.\n9. Website Use\nYou must be 18 or using this site with a parent or guardian. Use the site only for lawful purposes; no scraping, data mining, malware, or attempts to gain unauthorized access.\nSite content (text, graphics, logos, and code) belongs to Austin's Tech Repair Group and may not be reproduced or commercially used without written permission.\nThe website is provided \"as is\" without warranties of any kind. We are not responsible for third-party websites linked from this site.\n10. Changes, Governing Law & Contact\nWe may update these terms; the version posted on this site when you book governs your service.\nThese terms are governed by the laws of the State of Ohio. Disputes will be addressed first through good-faith negotiation, then in a court of competent jurisdiction in Greene County, Ohio.\nQuestions: Austin's Tech Repair Group \u2014 Austin Tyler Caudill, Owner \u2014 Spring Valley, Ohio \u2014 (937) 280-6243 \u2014 austin.caudill@austinstechrepairgroup.com\nLegal";
-  var WARRANTY_TEXT = "1-Year Limited Warranty & Claims\nLast updated October 20, 2026\nAustin's Tech Repair Group stands behind its work. Every standard repair includes a 1-Year Limited Warranty on the parts we install and the labor we perform, under the terms below.\n1. What This Warranty Covers\nReplacement parts we installed (screens, batteries, charging ports, and other components) that fail due to a defect in the part itself.\nThe labor and workmanship of the specific repair on your invoice.\n2. Warranty Period\nCoverage runs for one year (365 days) from the date the repair was completed.\nThe warranty applies to the original customer and the device listed on the repair invoice. Please keep your invoice or receipt \u2014 it is your proof of coverage.\n3. What This Warranty Does Not Cover\nNew physical damage: Drops, impacts, cracks, pressure damage, or bent frames after the repair.\nParts supplied by the customer \u2014 this warranty covers only parts we supply.\nLiquid damage: Exposure to water, moisture, or steam after the repair.\nTampering: Devices opened, modified, or repaired by anyone other than Austin's Tech Repair Group after our service.\nSoftware problems: Viruses, malware, operating-system corruption, or issues caused by rooting, jailbreaking, or other modifications.\nUnrelated failures: Problems in parts or systems that were not part of the original repair, including pre-existing conditions.\nNormal wear: Gradual battery capacity fade over time and minor cosmetic wear that does not affect function.\n4. How to File a Warranty Claim\nStep 1 \u2014 Contact us: Call or text (937) 280-6243 or email austin.caudill@austinstechrepairgroup.com and describe the problem.\nStep 2 \u2014 Show your invoice: Present your original repair invoice or receipt so we can verify coverage.\nStep 3 \u2014 Inspection: We inspect and test the device to confirm the failure is a covered defect in the part or our workmanship.\nStep 4 \u2014 Remedy: If the claim is covered, we will repair or replace the defective part at no charge for parts or labor. If the part cannot be repaired or replaced, we will refund the price of that part.\nWarranty inspections are diagnostic visits; no visit fee applies to a covered warranty claim.\n5. Limits\nThis warranty is limited to the repair, replacement, or refund described above. We are not liable for incidental or consequential damages, including loss of data or loss of use of the device during evaluation or repair.\nSome states do not allow limits on implied warranties or consequential damages, so parts of this section may not apply to you. This warranty gives you specific legal rights, and you may have other rights that vary by state.\nAustin's Tech Repair Group\nAustin Tyler Caudill, Owner\nSpring Valley, Ohio \u2014 (937) 280-6243";
+  var TERMS_CONDITIONS_TEXT = "Terms & Conditions of Service\nLast updated October 23, 2026\nThese Terms & Conditions govern repair services and website use for Austin's Tech Repair Group (\"Company,\" \"we,\" \"us,\" or \"our\"), a sole proprietorship operating in the State of Ohio. By scheduling an appointment, submitting a repair request, or using this website, you (\"Guest,\" \"you\") agree to these terms.\n1. Who We Are & What We Do\nMobile service: We come to you. Most repairs are completed at your home or office in the Miami Valley (Xenia, Dayton, and surrounding areas). Some advanced repairs, such as board-level work, may require us to take the device with your permission and return it when the work is complete.\nWhat we repair: Phones, tablets, computers & laptops, game consoles, smartwatches, and websites.\nWhat we do not repair: Automotive electronics and instrument clusters, vintage radios and tube equipment, home stereo and sound systems, and major appliances.\n2. Estimates & Pricing\nFlat-rate pricing: Common repairs are quoted at one flat rate \u2014 parts and labor included. There is no hourly billing.\nDiagnostics: Estimates are free. A full diagnosis of the problem \u2014 including disassembly or deep board-level work when required \u2014 is included in the $35.00 visit fee, charged separately from the repair price.\nOnline estimator: Prices shown by the online estimator are starting prices for the most common models. Your final flat price is confirmed for your exact model before you book, and the price we confirm is the price you pay.\nCustom repairs: One-of-a-kind or unusual repairs are quoted individually as one flat price \u2014 and are always approved by you before work begins.\nHidden damage: If disassembly reveals additional damage or failed components beyond the original estimate, we stop, notify you, and get your approval before doing any extra work.\n3. Visit Fee\nA visit fee applies to every mobile visit, and it is due at scheduling: $15.00 when the repair is already known, or $35.00 when the job needs a full diagnosis of the problem. It covers travel to your location, plus the diagnosis when one is needed.\nATR One members: Members pay no visit fee for devices covered under their subscription.\nThe visit fee is non-refundable in all cases and is charged separately from the repair price. It is never credited toward a repair.\n4. Parts & Payment\nParts you supply: You\u2019re welcome to supply everyday parts you can buy at retail \u2014 hard drives, memory, accessories. Our 1-year warranty covers only parts we supply; guest-supplied parts are installed as-is, with no warranty on the part.\nParts are paid upfront: Because parts are ordered for your specific job, the parts cost is due before we order. We order parts through our suppliers and they are delivered to us; we bring them to your install visit. If you cancel after parts are ordered, we keep the part and refund what you paid for the part.\nReplaced parts: Parts we remove during a repair are taken with us and disposed of properly to protect the environment. Some original manufacturer parts must be returned to the manufacturer.\nParts you supply: If you supply your own part, we will install it as-is; our 1-Year Limited Warranty does not cover guest-supplied parts.\nContact about your repair: You agree we may call and text you at the number you provide about your repair \u2014 scheduling, status updates, and completion.\nBalance due: The remaining balance (labor) is due upon completion of the repair, before the device is released back to you.\nAccepted payments: Visa, Mastercard, American Express, Discover, Apple Pay, Google Pay, Samsung Pay, Cash App Pay, PayPal, Venmo, and cash.\nCard processing fee: If you pay by credit or debit card, a processing fee is added to your total. Card payments are processed through Square, and the fee is exactly what Square charges for the transaction \u2014 passed through at Square's actual rate, never more than Square charges.\n5. Cancellations\nYou may cancel or reschedule before your appointment at no charge beyond the visit fee, which is non-refundable once the appointment is booked.\nIf we arrive and you decline the confirmed repair, only the visit fee is owed.\n6. Your Data\nData loss or corruption can occur during diagnostics or repair. You are responsible for backing up your device before service. We are not liable for lost data, files, photos, or settings. See the Repair Authorization for full details.\n7. Warranty\nStandard repairs are covered by our 1-Year Limited Warranty on the parts installed and the labor performed. Full terms and the claim process are in the Warranty Policy on this site.\n8. Limitation of Liability\nTo the fullest extent permitted by Ohio law, our total liability for any claim connected to a service is limited to the amount you paid for that service. We are not liable for incidental, indirect, or consequential damages, including loss of data, loss of use, or loss of business.\n9. Website Use\nYou must be 18 or using this site with a parent or guardian. Use the site only for lawful purposes; no scraping, data mining, malware, or attempts to gain unauthorized access.\nSite content (text, graphics, logos, and code) belongs to Austin's Tech Repair Group and may not be reproduced or commercially used without written permission.\nThe website is provided \"as is\" without warranties of any kind. We are not responsible for third-party websites linked from this site.\n10. Changes, Governing Law & Contact\nWe may update these terms; the version posted on this site when you book governs your service.\nThese terms are governed by the laws of the State of Ohio. Disputes will be addressed first through good-faith negotiation, then in a court of competent jurisdiction in Greene County, Ohio.\nQuestions: Austin's Tech Repair Group \u2014 Austin Tyler Caudill, Owner \u2014 Spring Valley, Ohio \u2014 (937) 280-6243 \u2014 austin.caudill@austinstechrepairgroup.com\nLegal";
+  var WARRANTY_TEXT = "1-Year Limited Warranty & Claims\nLast updated October 20, 2026\nAustin's Tech Repair Group stands behind its work. Every standard repair includes a 1-Year Limited Warranty on the parts we install and the labor we perform, under the terms below.\n1. What This Warranty Covers\nReplacement parts we installed (screens, batteries, charging ports, and other components) that fail due to a defect in the part itself.\nThe labor and workmanship of the specific repair on your invoice.\n2. Warranty Period\nCoverage runs for one year (365 days) from the date the repair was completed.\nThe warranty applies to the original guest and the device listed on the repair invoice. Please keep your invoice or receipt \u2014 it is your proof of coverage.\n3. What This Warranty Does Not Cover\nNew physical damage: Drops, impacts, cracks, pressure damage, or bent frames after the repair.\nParts supplied by the guest \u2014 this warranty covers only parts we supply.\nLiquid damage: Exposure to water, moisture, or steam after the repair.\nTampering: Devices opened, modified, or repaired by anyone other than Austin's Tech Repair Group after our service.\nSoftware problems: Viruses, malware, operating-system corruption, or issues caused by rooting, jailbreaking, or other modifications.\nUnrelated failures: Problems in parts or systems that were not part of the original repair, including pre-existing conditions.\nNormal wear: Gradual battery capacity fade over time and minor cosmetic wear that does not affect function.\n4. How to File a Warranty Claim\nStep 1 \u2014 Contact us: Call or text (937) 280-6243 or email austin.caudill@austinstechrepairgroup.com and describe the problem.\nStep 2 \u2014 Show your invoice: Present your original repair invoice or receipt so we can verify coverage.\nStep 3 \u2014 Inspection: We inspect and test the device to confirm the failure is a covered defect in the part or our workmanship.\nStep 4 \u2014 Remedy: If the claim is covered, we will repair or replace the defective part at no charge for parts or labor. If the part cannot be repaired or replaced, we will refund the price of that part.\nWarranty inspections are diagnostic visits; no visit fee applies to a covered warranty claim.\n5. Limits\nThis warranty is limited to the repair, replacement, or refund described above. We are not liable for incidental or consequential damages, including loss of data or loss of use of the device during evaluation or repair.\nSome states do not allow limits on implied warranties or consequential damages, so parts of this section may not apply to you. This warranty gives you specific legal rights, and you may have other rights that vary by state.\nAustin's Tech Repair Group\nAustin Tyler Caudill, Owner\nSpring Valley, Ohio \u2014 (937) 280-6243";
   /* PORTAL_ATRONE_PER_TIER_2026_11_02 (Austin, Nov 2, 2026): ONE
    * agreement per tier — the combined all-tiers text read as chop
    * suey, so each plan now has its own agreement covering only its
@@ -4108,10 +4108,10 @@ function loadTicketThread(client, ticketId) {
    * family) — prices, coverage counts, Square links, and the
    * database tier values do not change. Source of truth: the four
    * atr-one-*-membership-agreement.txt files beside this build. */
-  var ATRONE_INDIVIDUAL_TEXT = "ATR One Individual Membership Agreement\nAustin's Tech Repair Group — State of Ohio, USA — Last updated November 2, 2026\nPLEASE READ THIS DOCUMENT CAREFULLY. By joining ATR One, you (\"Member,\" \"you\") agree to these terms with Austin's Tech Repair Group (\"Company,\" \"we,\" \"us,\" \"our\"), a sole proprietorship operating in the State of Ohio. This agreement covers your ATR One Individual membership. Repair work itself is authorized and warranted under our Repair Authorization & Service Agreement and our 1-Year Limited Warranty, which are separate documents.\n1. Membership Plans\nFree membership: Anyone may join ATR One free. Free members earn rewards points — 1 point for every $1 spent with us — and 100 points take $5 off a future purchase or repair. Free membership does not include the paid plan benefits in Section 2.\nYour plan: ATR One Individual — $9.99 per month. Covers 1 device.\nCovered devices: Plan benefits apply only to the devices covered under your plan. Your membership, your plan, and your covered devices are recorded on your customer account with us.\n2. Member Benefits — Paid Plans\nWhile your paid membership is active, you receive the following on your covered devices:\nIndividual: 20% off repairs and 25% off accessories.\nWholesale parts pricing: Paid members pay our wholesale cost for parts on covered repairs — the cost we pay, with no markup added.\nVisit fee: Paid members pay no visit fee for covered devices.\nDiagnostics: Diagnostics on covered devices are free.\nParts shipping: Free priority shipping on parts ordered for covered devices.\nPriority queue: Member work is scheduled ahead of non-member work.\nRemote support: Free remote customer service.\nAccessory returns: Accessories you purchase from us can be exchanged or returned within 90 days of purchase.\nWallet card: After signup, you receive your ATR One member card to add to Apple Wallet or Google Wallet.\nScreen protector: When we repair a covered device, a screen protector for that device is included free and installed at that repair. The free screen protector is part of a repair we perform on a device we repaired — it is not available on its own.\n3. Billing & Renewal\nPaid plans are billed monthly through Square. Your plan renews each month and continues until you cancel it.\n[AUSTIN TO DECIDE: price changes — whether plan prices may change, and how far ahead members are told.]\n[AUSTIN TO DECIDE: past-due payments — what happens when a monthly payment fails, including any grace period and when benefits pause.]\n4. Cancellation\nYou may cancel at any time. To stop the next monthly charge, cancel at least 3 days before your next billing date. If a monthly payment has already gone through and you cancel within 3 days of that payment, that payment is refunded in full. Your benefits continue to the end of the current billing period.\n5. Warranty\nThis membership does not change our repair warranty. Every repair we perform carries our 1-Year Limited Warranty on the parts we install and the labor we perform, under that warranty's own terms. Membership neither extends nor limits the warranty, and the warranty neither extends nor limits this membership.\n6. Governing Law & Entire Agreement\nThis Agreement is governed by the laws of the State of Ohio. Disputes will first be addressed through good-faith negotiation; if unresolved, they will be submitted to a court of competent jurisdiction in Greene County, Ohio. This document is the entire agreement between you and Austin's Tech Repair Group for the ATR One membership. If any provision is found unenforceable, the rest remain in effect.\n7. Your Signature\nBy signing this agreement, you agree to be billed monthly through Square for the plan you select, and you confirm that you understand ATR One is a monthly subscription that renews each month until you cancel it.\nAustin's Tech Repair Group\nAustin Tyler Caudill, Owner\nState of Ohio, USA — (937) 280-6243";
-  var ATRONE_FAMILY_TEXT = "ATR One Family Membership Agreement\nAustin's Tech Repair Group — State of Ohio, USA — Last updated November 2, 2026\nPLEASE READ THIS DOCUMENT CAREFULLY. By joining ATR One, you (\"Member,\" \"you\") agree to these terms with Austin's Tech Repair Group (\"Company,\" \"we,\" \"us,\" \"our\"), a sole proprietorship operating in the State of Ohio. This agreement covers your ATR One Family membership. Repair work itself is authorized and warranted under our Repair Authorization & Service Agreement and our 1-Year Limited Warranty, which are separate documents.\n1. Membership Plans\nFree membership: Anyone may join ATR One free. Free members earn rewards points — 1 point for every $1 spent with us — and 100 points take $5 off a future purchase or repair. Free membership does not include the paid plan benefits in Section 2.\nYour plan: ATR One Family — $19.99 per month. Covers up to 5 devices.\nCovered devices: Plan benefits apply only to the devices covered under your plan. Your membership, your plan, and your covered devices are recorded on your customer account with us.\n2. Member Benefits — Paid Plans\nWhile your paid membership is active, you receive the following on your covered devices:\nFamily: 20% off repairs and 25% off accessories.\nWholesale parts pricing: Paid members pay our wholesale cost for parts on covered repairs — the cost we pay, with no markup added.\nVisit fee: Paid members pay no visit fee for covered devices.\nDiagnostics: Diagnostics on covered devices are free.\nParts shipping: Free priority shipping on parts ordered for covered devices.\nPriority queue: Member work is scheduled ahead of non-member work.\nRemote support: Free remote customer service.\nAccessory returns: Accessories you purchase from us can be exchanged or returned within 90 days of purchase.\nWallet card: After signup, you receive your ATR One member card to add to Apple Wallet or Google Wallet.\nScreen protector: When we repair a covered device, a screen protector for that device is included free and installed at that repair. The free screen protector is part of a repair we perform on a device we repaired — it is not available on its own.\n3. Billing & Renewal\nPaid plans are billed monthly through Square. Your plan renews each month and continues until you cancel it.\n[AUSTIN TO DECIDE: price changes — whether plan prices may change, and how far ahead members are told.]\n[AUSTIN TO DECIDE: past-due payments — what happens when a monthly payment fails, including any grace period and when benefits pause.]\n4. Cancellation\nYou may cancel at any time. To stop the next monthly charge, cancel at least 3 days before your next billing date. If a monthly payment has already gone through and you cancel within 3 days of that payment, that payment is refunded in full. Your benefits continue to the end of the current billing period.\n5. Warranty\nThis membership does not change our repair warranty. Every repair we perform carries our 1-Year Limited Warranty on the parts we install and the labor we perform, under that warranty's own terms. Membership neither extends nor limits the warranty, and the warranty neither extends nor limits this membership.\n6. Governing Law & Entire Agreement\nThis Agreement is governed by the laws of the State of Ohio. Disputes will first be addressed through good-faith negotiation; if unresolved, they will be submitted to a court of competent jurisdiction in Greene County, Ohio. This document is the entire agreement between you and Austin's Tech Repair Group for the ATR One membership. If any provision is found unenforceable, the rest remain in effect.\n7. Your Signature\nBy signing this agreement, you agree to be billed monthly through Square for the plan you select, and you confirm that you understand ATR One is a monthly subscription that renews each month until you cancel it.\nAustin's Tech Repair Group\nAustin Tyler Caudill, Owner\nState of Ohio, USA — (937) 280-6243";
-  var ATRONE_BUSINESS_TEXT = "ATR One Business Membership Agreement\nAustin's Tech Repair Group — State of Ohio, USA — Last updated November 2, 2026\nPLEASE READ THIS DOCUMENT CAREFULLY. By joining ATR One, you (\"Member,\" \"you\") agree to these terms with Austin's Tech Repair Group (\"Company,\" \"we,\" \"us,\" \"our\"), a sole proprietorship operating in the State of Ohio. This agreement covers your ATR One Business membership. Repair work itself is authorized and warranted under our Repair Authorization & Service Agreement and our 1-Year Limited Warranty, which are separate documents.\n1. Membership Plans\nFree membership: Anyone may join ATR One free. Free members earn rewards points — 1 point for every $1 spent with us — and 100 points take $5 off a future purchase or repair. Free membership does not include the paid plan benefits in Section 2.\nYour plan: ATR One Business — $49.99 per month. Covers business computers, printers, and cash drawers.\nBusiness membership requires the business's EIN at signup.\nBusiness setup: On a business plan, we can come out and set up your point of sale for you — we set up Square, cash drawers, and your systems. Austin's Tech Repair Group is not a payment processing company: we help you set it up, and we do not process payments.\nCovered devices: Plan benefits apply only to the devices covered under your plan. Your membership, your plan, and your covered devices are recorded on your customer account with us.\n2. Member Benefits — Paid Plans\nWhile your paid membership is active, you receive the following on your covered devices:\nBusiness: 45% off repairs and 55% off accessories.\nWholesale parts pricing: Paid members pay our wholesale cost for parts on covered repairs — the cost we pay, with no markup added.\nVisit fee: Paid members pay no visit fee for covered devices.\nDiagnostics: Diagnostics on covered devices are free.\nParts shipping: Free priority shipping on parts ordered for covered devices.\nPriority queue: Member work is scheduled ahead of non-member work.\nRemote support: Free remote customer service.\nAccessory returns: Accessories you purchase from us can be exchanged or returned within 90 days of purchase.\nWallet card: After signup, you receive your ATR One member card to add to Apple Wallet or Google Wallet.\nScreen protector: When we repair a covered device, a screen protector for that device is included free and installed at that repair. The free screen protector is part of a repair we perform on a device we repaired — it is not available on its own.\n3. Billing & Renewal\nPaid plans are billed monthly through Square. Your plan renews each month and continues until you cancel it.\n[AUSTIN TO DECIDE: price changes — whether plan prices may change, and how far ahead members are told.]\n[AUSTIN TO DECIDE: past-due payments — what happens when a monthly payment fails, including any grace period and when benefits pause.]\n4. Cancellation\nYou may cancel at any time. To stop the next monthly charge, cancel at least 3 days before your next billing date. If a monthly payment has already gone through and you cancel within 3 days of that payment, that payment is refunded in full. Your benefits continue to the end of the current billing period.\n5. Warranty\nThis membership does not change our repair warranty. Every repair we perform carries our 1-Year Limited Warranty on the parts we install and the labor we perform, under that warranty's own terms. Membership neither extends nor limits the warranty, and the warranty neither extends nor limits this membership.\n6. Governing Law & Entire Agreement\nThis Agreement is governed by the laws of the State of Ohio. Disputes will first be addressed through good-faith negotiation; if unresolved, they will be submitted to a court of competent jurisdiction in Greene County, Ohio. This document is the entire agreement between you and Austin's Tech Repair Group for the ATR One membership. If any provision is found unenforceable, the rest remain in effect.\n7. Your Signature\nBy signing this agreement, you agree to be billed monthly through Square for the plan you select, and you confirm that you understand ATR One is a monthly subscription that renews each month until you cancel it.\nAustin's Tech Repair Group\nAustin Tyler Caudill, Owner\nState of Ohio, USA — (937) 280-6243";
-  var ATRONE_BUSINESS_PRO_TEXT = "ATR One Business Pro Membership Agreement\nAustin's Tech Repair Group — State of Ohio, USA — Last updated November 2, 2026\nPLEASE READ THIS DOCUMENT CAREFULLY. By joining ATR One, you (\"Member,\" \"you\") agree to these terms with Austin's Tech Repair Group (\"Company,\" \"we,\" \"us,\" \"our\"), a sole proprietorship operating in the State of Ohio. This agreement covers your ATR One Business Pro membership. Repair work itself is authorized and warranted under our Repair Authorization & Service Agreement and our 1-Year Limited Warranty, which are separate documents.\n1. Membership Plans\nFree membership: Anyone may join ATR One free. Free members earn rewards points — 1 point for every $1 spent with us — and 100 points take $5 off a future purchase or repair. Free membership does not include the paid plan benefits in Section 2.\nYour plan: ATR One Business Pro — $99.99 per month. Full IT management, including server setup.\nBusiness Pro membership requires the business's EIN at signup.\nBusiness setup: On a business plan, we can come out and set up your point of sale for you — we set up Square, cash drawers, and your systems. Austin's Tech Repair Group is not a payment processing company: we help you set it up, and we do not process payments.\nCovered devices: Plan benefits apply only to the devices covered under your plan. Your membership, your plan, and your covered devices are recorded on your customer account with us.\n2. Member Benefits — Paid Plans\nWhile your paid membership is active, you receive the following on your covered devices:\nBusiness Pro: 50% off repairs and 65% off accessories.\nWholesale parts pricing: Paid members pay our wholesale cost for parts on covered repairs — the cost we pay, with no markup added.\nVisit fee: Paid members pay no visit fee for covered devices.\nDiagnostics: Diagnostics on covered devices are free.\nParts shipping: Free priority shipping on parts ordered for covered devices.\nPriority queue: Member work is scheduled ahead of non-member work.\nRemote support: Free remote customer service.\nAccessory returns: Accessories you purchase from us can be exchanged or returned within 90 days of purchase.\nWallet card: After signup, you receive your ATR One member card to add to Apple Wallet or Google Wallet.\nScreen protector: When we repair a covered device, a screen protector for that device is included free and installed at that repair. The free screen protector is part of a repair we perform on a device we repaired — it is not available on its own.\n3. Billing & Renewal\nPaid plans are billed monthly through Square. Your plan renews each month and continues until you cancel it.\n[AUSTIN TO DECIDE: price changes — whether plan prices may change, and how far ahead members are told.]\n[AUSTIN TO DECIDE: past-due payments — what happens when a monthly payment fails, including any grace period and when benefits pause.]\n4. Cancellation\nYou may cancel at any time. To stop the next monthly charge, cancel at least 3 days before your next billing date. If a monthly payment has already gone through and you cancel within 3 days of that payment, that payment is refunded in full. Your benefits continue to the end of the current billing period.\n5. Warranty\nThis membership does not change our repair warranty. Every repair we perform carries our 1-Year Limited Warranty on the parts we install and the labor we perform, under that warranty's own terms. Membership neither extends nor limits the warranty, and the warranty neither extends nor limits this membership.\n6. Governing Law & Entire Agreement\nThis Agreement is governed by the laws of the State of Ohio. Disputes will first be addressed through good-faith negotiation; if unresolved, they will be submitted to a court of competent jurisdiction in Greene County, Ohio. This document is the entire agreement between you and Austin's Tech Repair Group for the ATR One membership. If any provision is found unenforceable, the rest remain in effect.\n7. Your Signature\nBy signing this agreement, you agree to be billed monthly through Square for the plan you select, and you confirm that you understand ATR One is a monthly subscription that renews each month until you cancel it.\nAustin's Tech Repair Group\nAustin Tyler Caudill, Owner\nState of Ohio, USA — (937) 280-6243";
+  var ATRONE_INDIVIDUAL_TEXT = "ATR One Individual Membership Agreement\nAustin's Tech Repair Group — State of Ohio, USA — Last updated November 2, 2026\nPLEASE READ THIS DOCUMENT CAREFULLY. By joining ATR One, you (\"Member,\" \"you\") agree to these terms with Austin's Tech Repair Group (\"Company,\" \"we,\" \"us,\" \"our\"), a sole proprietorship operating in the State of Ohio. This agreement covers your ATR One Individual membership. Repair work itself is authorized and warranted under our Repair Authorization & Service Agreement and our 1-Year Limited Warranty, which are separate documents.\n1. Membership Plans\nFree membership: Anyone may join ATR One free. Free members earn rewards points — 1 point for every $1 spent with us — and 100 points take $5 off a future purchase or repair. Free membership does not include the paid plan benefits in Section 2.\nYour plan: ATR One Individual — $9.99 per month. Covers 1 device.\nCovered devices: Plan benefits apply only to the devices covered under your plan. Your membership, your plan, and your covered devices are recorded on your guest account with us.\n2. Member Benefits — Paid Plans\nWhile your paid membership is active, you receive the following on your covered devices:\nIndividual: 20% off repairs and 25% off accessories.\nWholesale parts pricing: Paid members pay our wholesale cost for parts on covered repairs — the cost we pay, with no markup added.\nVisit fee: Paid members pay no visit fee for covered devices.\nDiagnostics: Diagnostics on covered devices are free.\nParts shipping: Free priority shipping on parts ordered for covered devices.\nPriority queue: Member work is scheduled ahead of non-member work.\nRemote support: Free remote guest service.\nAccessory returns: Accessories you purchase from us can be exchanged or returned within 90 days of purchase.\nWallet card: After signup, you receive your ATR One member card to add to Apple Wallet or Google Wallet.\nScreen protector: When we repair a covered device, a screen protector for that device is included free and installed at that repair. The free screen protector is part of a repair we perform on a device we repaired — it is not available on its own.\n3. Billing & Renewal\nPaid plans are billed monthly through Square. Your plan renews each month and continues until you cancel it.\n[AUSTIN TO DECIDE: price changes — whether plan prices may change, and how far ahead members are told.]\n[AUSTIN TO DECIDE: past-due payments — what happens when a monthly payment fails, including any grace period and when benefits pause.]\n4. Cancellation\nYou may cancel at any time. To stop the next monthly charge, cancel at least 3 days before your next billing date. If a monthly payment has already gone through and you cancel within 3 days of that payment, that payment is refunded in full. Your benefits continue to the end of the current billing period.\n5. Warranty\nThis membership does not change our repair warranty. Every repair we perform carries our 1-Year Limited Warranty on the parts we install and the labor we perform, under that warranty's own terms. Membership neither extends nor limits the warranty, and the warranty neither extends nor limits this membership.\n6. Governing Law & Entire Agreement\nThis Agreement is governed by the laws of the State of Ohio. Disputes will first be addressed through good-faith negotiation; if unresolved, they will be submitted to a court of competent jurisdiction in Greene County, Ohio. This document is the entire agreement between you and Austin's Tech Repair Group for the ATR One membership. If any provision is found unenforceable, the rest remain in effect.\n7. Your Signature\nBy signing this agreement, you agree to be billed monthly through Square for the plan you select, and you confirm that you understand ATR One is a monthly subscription that renews each month until you cancel it.\nAustin's Tech Repair Group\nAustin Tyler Caudill, Owner\nState of Ohio, USA — (937) 280-6243";
+  var ATRONE_FAMILY_TEXT = "ATR One Family Membership Agreement\nAustin's Tech Repair Group — State of Ohio, USA — Last updated November 2, 2026\nPLEASE READ THIS DOCUMENT CAREFULLY. By joining ATR One, you (\"Member,\" \"you\") agree to these terms with Austin's Tech Repair Group (\"Company,\" \"we,\" \"us,\" \"our\"), a sole proprietorship operating in the State of Ohio. This agreement covers your ATR One Family membership. Repair work itself is authorized and warranted under our Repair Authorization & Service Agreement and our 1-Year Limited Warranty, which are separate documents.\n1. Membership Plans\nFree membership: Anyone may join ATR One free. Free members earn rewards points — 1 point for every $1 spent with us — and 100 points take $5 off a future purchase or repair. Free membership does not include the paid plan benefits in Section 2.\nYour plan: ATR One Family — $19.99 per month. Covers up to 5 devices.\nCovered devices: Plan benefits apply only to the devices covered under your plan. Your membership, your plan, and your covered devices are recorded on your guest account with us.\n2. Member Benefits — Paid Plans\nWhile your paid membership is active, you receive the following on your covered devices:\nFamily: 20% off repairs and 25% off accessories.\nWholesale parts pricing: Paid members pay our wholesale cost for parts on covered repairs — the cost we pay, with no markup added.\nVisit fee: Paid members pay no visit fee for covered devices.\nDiagnostics: Diagnostics on covered devices are free.\nParts shipping: Free priority shipping on parts ordered for covered devices.\nPriority queue: Member work is scheduled ahead of non-member work.\nRemote support: Free remote guest service.\nAccessory returns: Accessories you purchase from us can be exchanged or returned within 90 days of purchase.\nWallet card: After signup, you receive your ATR One member card to add to Apple Wallet or Google Wallet.\nScreen protector: When we repair a covered device, a screen protector for that device is included free and installed at that repair. The free screen protector is part of a repair we perform on a device we repaired — it is not available on its own.\n3. Billing & Renewal\nPaid plans are billed monthly through Square. Your plan renews each month and continues until you cancel it.\n[AUSTIN TO DECIDE: price changes — whether plan prices may change, and how far ahead members are told.]\n[AUSTIN TO DECIDE: past-due payments — what happens when a monthly payment fails, including any grace period and when benefits pause.]\n4. Cancellation\nYou may cancel at any time. To stop the next monthly charge, cancel at least 3 days before your next billing date. If a monthly payment has already gone through and you cancel within 3 days of that payment, that payment is refunded in full. Your benefits continue to the end of the current billing period.\n5. Warranty\nThis membership does not change our repair warranty. Every repair we perform carries our 1-Year Limited Warranty on the parts we install and the labor we perform, under that warranty's own terms. Membership neither extends nor limits the warranty, and the warranty neither extends nor limits this membership.\n6. Governing Law & Entire Agreement\nThis Agreement is governed by the laws of the State of Ohio. Disputes will first be addressed through good-faith negotiation; if unresolved, they will be submitted to a court of competent jurisdiction in Greene County, Ohio. This document is the entire agreement between you and Austin's Tech Repair Group for the ATR One membership. If any provision is found unenforceable, the rest remain in effect.\n7. Your Signature\nBy signing this agreement, you agree to be billed monthly through Square for the plan you select, and you confirm that you understand ATR One is a monthly subscription that renews each month until you cancel it.\nAustin's Tech Repair Group\nAustin Tyler Caudill, Owner\nState of Ohio, USA — (937) 280-6243";
+  var ATRONE_BUSINESS_TEXT = "ATR One Business Membership Agreement\nAustin's Tech Repair Group — State of Ohio, USA — Last updated November 2, 2026\nPLEASE READ THIS DOCUMENT CAREFULLY. By joining ATR One, you (\"Member,\" \"you\") agree to these terms with Austin's Tech Repair Group (\"Company,\" \"we,\" \"us,\" \"our\"), a sole proprietorship operating in the State of Ohio. This agreement covers your ATR One Business membership. Repair work itself is authorized and warranted under our Repair Authorization & Service Agreement and our 1-Year Limited Warranty, which are separate documents.\n1. Membership Plans\nFree membership: Anyone may join ATR One free. Free members earn rewards points — 1 point for every $1 spent with us — and 100 points take $5 off a future purchase or repair. Free membership does not include the paid plan benefits in Section 2.\nYour plan: ATR One Business — $49.99 per month. Covers business computers, printers, and cash drawers.\nBusiness membership requires the business's EIN at signup.\nBusiness setup: On a business plan, we can come out and set up your point of sale for you — we set up Square, cash drawers, and your systems. Austin's Tech Repair Group is not a payment processing company: we help you set it up, and we do not process payments.\nCovered devices: Plan benefits apply only to the devices covered under your plan. Your membership, your plan, and your covered devices are recorded on your guest account with us.\n2. Member Benefits — Paid Plans\nWhile your paid membership is active, you receive the following on your covered devices:\nBusiness: 45% off repairs and 55% off accessories.\nWholesale parts pricing: Paid members pay our wholesale cost for parts on covered repairs — the cost we pay, with no markup added.\nVisit fee: Paid members pay no visit fee for covered devices.\nDiagnostics: Diagnostics on covered devices are free.\nParts shipping: Free priority shipping on parts ordered for covered devices.\nPriority queue: Member work is scheduled ahead of non-member work.\nRemote support: Free remote guest service.\nAccessory returns: Accessories you purchase from us can be exchanged or returned within 90 days of purchase.\nWallet card: After signup, you receive your ATR One member card to add to Apple Wallet or Google Wallet.\nScreen protector: When we repair a covered device, a screen protector for that device is included free and installed at that repair. The free screen protector is part of a repair we perform on a device we repaired — it is not available on its own.\n3. Billing & Renewal\nPaid plans are billed monthly through Square. Your plan renews each month and continues until you cancel it.\n[AUSTIN TO DECIDE: price changes — whether plan prices may change, and how far ahead members are told.]\n[AUSTIN TO DECIDE: past-due payments — what happens when a monthly payment fails, including any grace period and when benefits pause.]\n4. Cancellation\nYou may cancel at any time. To stop the next monthly charge, cancel at least 3 days before your next billing date. If a monthly payment has already gone through and you cancel within 3 days of that payment, that payment is refunded in full. Your benefits continue to the end of the current billing period.\n5. Warranty\nThis membership does not change our repair warranty. Every repair we perform carries our 1-Year Limited Warranty on the parts we install and the labor we perform, under that warranty's own terms. Membership neither extends nor limits the warranty, and the warranty neither extends nor limits this membership.\n6. Governing Law & Entire Agreement\nThis Agreement is governed by the laws of the State of Ohio. Disputes will first be addressed through good-faith negotiation; if unresolved, they will be submitted to a court of competent jurisdiction in Greene County, Ohio. This document is the entire agreement between you and Austin's Tech Repair Group for the ATR One membership. If any provision is found unenforceable, the rest remain in effect.\n7. Your Signature\nBy signing this agreement, you agree to be billed monthly through Square for the plan you select, and you confirm that you understand ATR One is a monthly subscription that renews each month until you cancel it.\nAustin's Tech Repair Group\nAustin Tyler Caudill, Owner\nState of Ohio, USA — (937) 280-6243";
+  var ATRONE_BUSINESS_PRO_TEXT = "ATR One Business Pro Membership Agreement\nAustin's Tech Repair Group — State of Ohio, USA — Last updated November 2, 2026\nPLEASE READ THIS DOCUMENT CAREFULLY. By joining ATR One, you (\"Member,\" \"you\") agree to these terms with Austin's Tech Repair Group (\"Company,\" \"we,\" \"us,\" \"our\"), a sole proprietorship operating in the State of Ohio. This agreement covers your ATR One Business Pro membership. Repair work itself is authorized and warranted under our Repair Authorization & Service Agreement and our 1-Year Limited Warranty, which are separate documents.\n1. Membership Plans\nFree membership: Anyone may join ATR One free. Free members earn rewards points — 1 point for every $1 spent with us — and 100 points take $5 off a future purchase or repair. Free membership does not include the paid plan benefits in Section 2.\nYour plan: ATR One Business Pro — $99.99 per month. Full IT management, including server setup.\nBusiness Pro membership requires the business's EIN at signup.\nBusiness setup: On a business plan, we can come out and set up your point of sale for you — we set up Square, cash drawers, and your systems. Austin's Tech Repair Group is not a payment processing company: we help you set it up, and we do not process payments.\nCovered devices: Plan benefits apply only to the devices covered under your plan. Your membership, your plan, and your covered devices are recorded on your guest account with us.\n2. Member Benefits — Paid Plans\nWhile your paid membership is active, you receive the following on your covered devices:\nBusiness Pro: 50% off repairs and 65% off accessories.\nWholesale parts pricing: Paid members pay our wholesale cost for parts on covered repairs — the cost we pay, with no markup added.\nVisit fee: Paid members pay no visit fee for covered devices.\nDiagnostics: Diagnostics on covered devices are free.\nParts shipping: Free priority shipping on parts ordered for covered devices.\nPriority queue: Member work is scheduled ahead of non-member work.\nRemote support: Free remote guest service.\nAccessory returns: Accessories you purchase from us can be exchanged or returned within 90 days of purchase.\nWallet card: After signup, you receive your ATR One member card to add to Apple Wallet or Google Wallet.\nScreen protector: When we repair a covered device, a screen protector for that device is included free and installed at that repair. The free screen protector is part of a repair we perform on a device we repaired — it is not available on its own.\n3. Billing & Renewal\nPaid plans are billed monthly through Square. Your plan renews each month and continues until you cancel it.\n[AUSTIN TO DECIDE: price changes — whether plan prices may change, and how far ahead members are told.]\n[AUSTIN TO DECIDE: past-due payments — what happens when a monthly payment fails, including any grace period and when benefits pause.]\n4. Cancellation\nYou may cancel at any time. To stop the next monthly charge, cancel at least 3 days before your next billing date. If a monthly payment has already gone through and you cancel within 3 days of that payment, that payment is refunded in full. Your benefits continue to the end of the current billing period.\n5. Warranty\nThis membership does not change our repair warranty. Every repair we perform carries our 1-Year Limited Warranty on the parts we install and the labor we perform, under that warranty's own terms. Membership neither extends nor limits the warranty, and the warranty neither extends nor limits this membership.\n6. Governing Law & Entire Agreement\nThis Agreement is governed by the laws of the State of Ohio. Disputes will first be addressed through good-faith negotiation; if unresolved, they will be submitted to a court of competent jurisdiction in Greene County, Ohio. This document is the entire agreement between you and Austin's Tech Repair Group for the ATR One membership. If any provision is found unenforceable, the rest remain in effect.\n7. Your Signature\nBy signing this agreement, you agree to be billed monthly through Square for the plan you select, and you confirm that you understand ATR One is a monthly subscription that renews each month until you cancel it.\nAustin's Tech Repair Group\nAustin Tyler Caudill, Owner\nState of Ohio, USA — (937) 280-6243";
   /* The four agreements, keyed by database tier value: title,
    * display short name, text, and file spec. DOC_SIGNERS, the
    * Documents library (BLANK_DOCS), and the check-in auto-attach
@@ -4144,7 +4144,7 @@ function loadTicketThread(client, ticketId) {
     return {
       text: agreement.text,
       pickTitle: 'Sign an ATR One ' + agreement.shortName + ' membership agreement',
-      pickBlurb: 'Pick the ticket this membership belongs to. The customer signs on the next screen, and the signed membership agreement files itself on that ticket.',
+      pickBlurb: 'Pick the ticket this membership belongs to. The guest signs on the next screen, and the signed membership agreement files itself on that ticket.',
       opts: {
         title: agreement.title,
         intro: 'Read the agreement, type your name, and sign in the box. Signing files this signed copy of the membership agreement on the ticket.',
@@ -4160,14 +4160,14 @@ function loadTicketThread(client, ticketId) {
     authorization: {
       text: AUTH_TERMS_TEXT,
       pickTitle: 'Sign a repair authorization',
-      pickBlurb: 'Pick the repair this authorization belongs to. The customer signs on the next screen, and the signed authorization files itself on that ticket.',
+      pickBlurb: 'Pick the repair this authorization belongs to. The guest signs on the next screen, and the signed authorization files itself on that ticket.',
       opts: null,
       file: fileSignedAuthorization
     },
     warranty: {
       text: WARRANTY_TEXT,
       pickTitle: 'Sign a warranty',
-      pickBlurb: 'Pick the repair this warranty belongs to. The customer signs on the next screen, and the signed warranty files itself on that ticket.',
+      pickBlurb: 'Pick the repair this warranty belongs to. The guest signs on the next screen, and the signed warranty files itself on that ticket.',
       opts: {
         title: '1-Year Limited Warranty',
         intro: 'Read the warranty, type your name, and sign in the box. Signing files this signed copy of the warranty on the ticket.',
@@ -4181,7 +4181,7 @@ function loadTicketThread(client, ticketId) {
     terms: {
       text: TERMS_CONDITIONS_TEXT,
       pickTitle: 'Sign the terms of service',
-      pickBlurb: 'Pick the repair these terms belong to. The customer signs on the next screen, and the signed terms file themselves on that ticket.',
+      pickBlurb: 'Pick the repair these terms belong to. The guest signs on the next screen, and the signed terms file themselves on that ticket.',
       opts: {
         title: 'Terms & Conditions of Service',
         intro: 'Read the terms, type your name, and sign in the box. Signing files this signed copy of the terms on the ticket.',
@@ -4199,7 +4199,7 @@ function loadTicketThread(client, ticketId) {
     media: {
       text: MEDIA_RELEASE_TEXT,
       pickTitle: 'Sign a media release',
-      pickBlurb: 'Pick the repair this release belongs to. The customer signs on the next screen, and the signed release files itself on that ticket.',
+      pickBlurb: 'Pick the repair this release belongs to. The guest signs on the next screen, and the signed release files itself on that ticket.',
       opts: MEDIA_SIGN_OPTS,
       file: fileSignedMediaRelease
     }
@@ -4533,7 +4533,7 @@ function loadTicketThread(client, ticketId) {
     var card = '<div style="background:#FFFFFF;color:#2C231A;border-radius:14px;max-width:430px;width:100%;padding:1.25rem;box-shadow:0 18px 50px rgba(0,0,0,0.35);">' +
       '<h3 style="margin:0 0 0.5rem;">Part tracking</h3>';
     if (part) {
-      card += '<p class="portal-muted portal-small" style="margin:0 0 0.75rem;">This ticket is now Awaiting Parts. Add the shipping details for <strong>' + esc(part.description) + '</strong> and the customer can follow the package. No tracking yet? Tap N.A. and add it later from the part&rsquo;s Tracking button.</p>' +
+      card += '<p class="portal-muted portal-small" style="margin:0 0 0.75rem;">This ticket is now Awaiting Parts. Add the shipping details for <strong>' + esc(part.description) + '</strong> and the guest can follow the package. No tracking yet? Tap N.A. and add it later from the part&rsquo;s Tracking button.</p>' +
         '<div class="portal-field"><label for="p2-pop-carrier">Carrier</label><select id="p2-pop-carrier">' + carrierOptions(part.carrier) + '</select></div>' +
         '<div class="portal-field"><label for="p2-pop-number">Tracking number</label><input type="text" id="p2-pop-number" maxlength="80" value="' + esc(part.tracking_number || '') + '" /></div>' +
         '<div class="portal-field"><label for="p2-pop-order">Order number</label><input type="text" id="p2-pop-order" maxlength="80" value="' + esc(part.order_number || '') + '" /></div>';
@@ -5330,7 +5330,7 @@ function loadTicketThread(client, ticketId) {
         setTimeout(function () { if (a.parentNode) a.parentNode.removeChild(a); }, 800);
         done(to
           ? 'Mail opened with your receipt \u2014 review it and send from your mail app.'
-          : 'Mail opened \u2014 add the customer\u2019s email address in the To line (none on file for this ticket).');
+          : 'Mail opened \u2014 add the guest\u2019s email address in the To line (none on file for this ticket).');
       }
       /* PORTAL_EMAIL_RECEIPT_MAILTO_2026_11_03: tier 1 — share
        * the filed receipt as a real file where the browser
@@ -5693,7 +5693,7 @@ function loadTicketThread(client, ticketId) {
         setTimeout(function () { if (a.parentNode) a.parentNode.removeChild(a); }, 800);
         done(to
           ? 'Mail opened with your ' + spec.lower + ' \u2014 review it and send from your mail app.'
-          : 'Mail opened \u2014 add the customer\u2019s email address in the To line (none on file for this ticket).');
+          : 'Mail opened \u2014 add the guest\u2019s email address in the To line (none on file for this ticket).');
       }
       var shareApis = false;
       try { shareApis = !!(navigator.share && navigator.canShare && typeof File !== 'undefined'); } catch (e) { shareApis = false; }
@@ -6184,7 +6184,7 @@ function loadTicketThread(client, ticketId) {
             msg.textContent = 'Payment link ready \u2014 ' + fmtMoney(out2.data.amount_cents / 100) + '.';
             if (linkBox) {
               linkBox.innerHTML = '<p class="portal-card-meta"><a href="' + esc(out2.data.url) + '" target="_blank" rel="noopener">' + esc(out2.data.url) + '</a></p>' +
-                '<p class="portal-muted portal-small">Send this link to the customer. When Square shows the payment completed, record it in Charges above as a \u201cDeposit received (credit)\u201d line so the balance zeroes out.</p>';
+                '<p class="portal-muted portal-small">Send this link to the guest. When Square shows the payment completed, record it in Charges above as a \u201cDeposit received (credit)\u201d line so the balance zeroes out.</p>';
               linkBox.hidden = false;
             }
           }).catch(function () { checkoutBtn.disabled = false; msg.textContent = 'Couldn\u2019t create the payment link. Check your connection.'; });
@@ -6507,7 +6507,7 @@ function loadTicketThread(client, ticketId) {
       var rec = trim(f.would_recommend)
         ? ' <span class="portal-badge ' + (/yes/i.test(f.would_recommend) ? 'portal-st-ready' : 'portal-st-cancelled') + '">Recommends: ' + esc(f.would_recommend) + '</span>'
         : '';
-      var who = trim(f.customer_name) || 'Anonymous customer';
+      var who = trim(f.customer_name) || 'Anonymous guest';
       var contact = trim(f.customer_email) ? ' · ' + esc(f.customer_email) : '';
       var comments = trim(f.comments) ? '<p class="portal-card-issue">&ldquo;' + esc(f.comments) + '&rdquo;</p>' : '';
       var exp = trim(f.experience) ? '<p class="portal-card-meta">Experience: ' + esc(f.experience) + '</p>' : '';
@@ -6552,7 +6552,7 @@ function loadTicketThread(client, ticketId) {
     if (!isAdminOrAbove()) { if (msg) msg.textContent = 'Deletes sit with Admin and above.'; return; }
     if (btn.getAttribute('data-confirm') !== '1') {
       var row = fbRowById(id);
-      var who = row ? (trim(row.customer_name) || 'Anonymous customer') : 'Anonymous customer';
+      var who = row ? (trim(row.customer_name) || 'Anonymous guest') : 'Anonymous guest';
       btn.setAttribute('data-confirm', '1');
       btn.innerHTML = '<i class="fas fa-trash"></i> Confirm delete?';
       if (msg) msg.textContent = 'Delete ' + who + '’s feedback? Tap Confirm delete — this cannot be undone.';
@@ -6716,7 +6716,7 @@ function loadTicketThread(client, ticketId) {
     if (!isAdminOrAbove()) { if (msg) msg.textContent = 'Deletes sit with Admin and above.'; return; }
     if (btn.getAttribute('data-confirm') !== '1') {
       var row = warrantyRowById(id);
-      var who = row ? (trim(row.customer_name) || 'Customer') : 'Customer';
+      var who = row ? (trim(row.customer_name) || 'Guest') : 'Guest';
       var ref = row ? trim(row.ticket_ref) : '';
       btn.setAttribute('data-confirm', '1');
       btn.innerHTML = '<i class="fas fa-trash"></i> Confirm delete?';
@@ -6756,7 +6756,7 @@ function loadTicketThread(client, ticketId) {
   }
 
   function warrantyTicketLine(t) {
-    return '#' + shortCode(t) + ' · ' + deviceLabel(t) + ' · ' + (t.customer_name || 'Customer') +
+    return '#' + shortCode(t) + ' · ' + deviceLabel(t) + ' · ' + (t.customer_name || 'Guest') +
       ' · ' + (fmtJobDate(t.job_date) || fmtDate(t.created_at) || '') + ' · ' + (t.status || '');
   }
 
@@ -6789,7 +6789,7 @@ function loadTicketThread(client, ticketId) {
        * message span, and the (initially hidden) repair picker. */
       var confirmText = (warrantyConfirm && String(warrantyConfirm.id) === String(r.id)) ? warrantyConfirm.text : '';
       var action = r.ticket_id
-        ? '<div class="portal-status-row warranty-action-row"><span class="portal-small"><i class="fas fa-link"></i> Linked to ticket <strong>#' + esc(warrantyNormalizeRef(r.ticket_ref) || shortCode({ id: r.ticket_id })) + '</strong> &middot; ' + esc(r.customer_name || 'Customer') + '</span>' +
+        ? '<div class="portal-status-row warranty-action-row"><span class="portal-small"><i class="fas fa-link"></i> Linked to ticket <strong>#' + esc(warrantyNormalizeRef(r.ticket_ref) || shortCode({ id: r.ticket_id })) + '</strong> &middot; ' + esc(r.customer_name || 'Guest') + '</span>' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-warranty-open="' + esc(r.ticket_id) + '">Open ticket</button>' +
           '<span class="portal-muted portal-small" data-warranty-rmsg="' + esc(r.id) + '">' + esc(confirmText) + '</span></div>'
         : '<div class="portal-status-row warranty-action-row">' +
@@ -6797,7 +6797,7 @@ function loadTicketThread(client, ticketId) {
           '<span class="portal-muted portal-small" data-warranty-rmsg="' + esc(r.id) + '">' + esc(confirmText) + '</span></div>' +
           '<div data-warranty-picker="' + esc(r.id) + '" hidden></div>';
       return '<article class="portal-card">' +
-        '<div class="portal-card-top"><p class="portal-card-title">' + esc(r.customer_name || 'Customer') + '</p><span data-warranty-badge="' + esc(r.id) + '">' + badge(st) + '</span></div>' +
+        '<div class="portal-card-top"><p class="portal-card-title">' + esc(r.customer_name || 'Guest') + '</p><span data-warranty-badge="' + esc(r.id) + '">' + badge(st) + '</span></div>' +
         ref +
         '<p class="portal-card-meta"><span class="portal-badge portal-st-reviewed">' + esc(warrantySourceTag(r)) + '</span></p>' +
         (contactBits.length ? '<p class="portal-card-meta">' + contactBits.join(' &middot; ') + '</p>' : '') +
@@ -6883,7 +6883,7 @@ function loadTicketThread(client, ticketId) {
     (preset || []).forEach(function (t) {
       html += '<div class="portal-status-row"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-warranty-pick="' + esc(t.id) + '">' + esc(warrantyTicketLine(t)) + '</button></div>';
     });
-    html += '<div class="portal-status-row"><input type="search" data-warranty-pick-q="' + esc(row.id) + '" placeholder="Search repairs by customer name or phone" aria-label="Search repairs by customer name or phone" />' +
+    html += '<div class="portal-status-row"><input type="search" data-warranty-pick-q="' + esc(row.id) + '" placeholder="Search repairs by guest name or phone" aria-label="Search repairs by guest name or phone" />' +
       '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-warranty-pick-go="' + esc(row.id) + '">Search</button></div>' +
       '<div data-warranty-pick-results="' + esc(row.id) + '"></div>';
     box.innerHTML = html;
@@ -6974,7 +6974,7 @@ function loadTicketThread(client, ticketId) {
           warrantySay(row.id, 'Claim linked, but the ticket itself could not be updated — open it and set Rework / Warranty plus the Warranty exemption.');
           return;
         }
-        warrantyConfirm = { id: row.id, text: 'Rework started on ticket #' + shortCode(ticket) + ' — customer owes $0.' };
+        warrantyConfirm = { id: row.id, text: 'Rework started on ticket #' + shortCode(ticket) + ' — guest owes $0.' };
         state.loaded.warranty = false;
         renderWarrantyRequests(warrantyRowsCache);
         setCount('portal-count-warranty', warrantyRowsCache.filter(function (r) { return warrantyStatusOf(r) === 'New'; }).length);
@@ -7032,7 +7032,7 @@ function loadTicketThread(client, ticketId) {
   function warrantyRenderClaimCustomers() {
     var box = $('portal-wc-cust-results');
     if (!box) return;
-    if (!warrantyClaimCustomers) { box.innerHTML = '<p class="portal-muted portal-small">Loading customers&hellip;</p>'; return; }
+    if (!warrantyClaimCustomers) { box.innerHTML = '<p class="portal-muted portal-small">Loading guests&hellip;</p>'; return; }
     var input = $('portal-wc-cust-search');
     var q = trim(input ? input.value : '').toLowerCase();
     var rows = warrantyClaimCustomers.filter(function (c) {
@@ -7040,10 +7040,10 @@ function loadTicketThread(client, ticketId) {
       return String(c.name || '').toLowerCase().indexOf(q) !== -1 ||
         String(c.phone || '').indexOf(q) !== -1;
     }).slice(0, 8);
-    if (!rows.length) { box.innerHTML = '<p class="portal-muted portal-small">No customers match.</p>'; return; }
+    if (!rows.length) { box.innerHTML = '<p class="portal-muted portal-small">No guests match.</p>'; return; }
     box.innerHTML = rows.map(function (c) {
       return '<div class="portal-status-row"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-wc-cust="' + esc(c.id) + '">' +
-        esc(c.name || 'Customer') + (c.phone ? ' &middot; ' + esc(c.phone) : '') + '</button></div>';
+        esc(c.name || 'Guest') + (c.phone ? ' &middot; ' + esc(c.phone) : '') + '</button></div>';
     }).join('');
     box.querySelectorAll('[data-wc-cust]').forEach(function (b) {
       b.addEventListener('click', function () { warrantyPickClaimCustomer(b.getAttribute('data-wc-cust')); });
@@ -7058,7 +7058,7 @@ function loadTicketThread(client, ticketId) {
     var picked = $('portal-wc-cust-picked');
     if (picked) {
       picked.hidden = false;
-      picked.innerHTML = 'Customer: <strong>' + esc(cust.name || 'Customer') + '</strong>' +
+      picked.innerHTML = 'Guest: <strong>' + esc(cust.name || 'Guest') + '</strong>' +
         (cust.phone ? ' &middot; ' + esc(cust.phone) : '') + (cust.email ? ' &middot; ' + esc(cust.email) : '');
     }
     var sel = $('portal-wc-ticket');
@@ -7072,7 +7072,7 @@ function loadTicketThread(client, ticketId) {
         .then(function (res) {
           var tickets = res.error ? [] : (res.data || []);
           tickets.forEach(function (t) { warrantyTicketById[t.id] = t; });
-          if (!tickets.length) { sel.innerHTML = '<option value="">No repairs on file for this customer</option>'; return; }
+          if (!tickets.length) { sel.innerHTML = '<option value="">No repairs on file for this guest</option>'; return; }
           sel.innerHTML = tickets.map(function (t) {
             return '<option value="' + esc(t.id) + '">' + esc(warrantyTicketLine(t)) + '</option>';
           }).join('');
@@ -7090,9 +7090,9 @@ function loadTicketThread(client, ticketId) {
     var ticket = (sel && sel.value) ? warrantyTicketById[sel.value] : null;
     var problemEl = $('portal-wc-problem');
     var problem = trim(problemEl ? problemEl.value : '');
-    if (!cust) { say('Pick the customer first.'); return; }
+    if (!cust) { say('Pick the guest first.'); return; }
     if (!ticket) { say('Pick the original repair.'); return; }
-    if (!problem) { say('Add what’s wrong — the problem the customer described.'); return; }
+    if (!problem) { say('Add what’s wrong — the problem the guest described.'); return; }
     var viaEl = $('portal-wc-via');
     var via = viaEl ? viaEl.value : 'call';
     var contactEl = $('portal-wc-contact');
@@ -7103,7 +7103,7 @@ function loadTicketThread(client, ticketId) {
     withClient(function (client) {
       if (!client) { say('Couldn’t save — try again.'); return; }
       var row = {
-        customer_name: cust.name || ticket.customer_name || 'Customer',
+        customer_name: cust.name || ticket.customer_name || 'Guest',
         phone: cust.phone || ticket.customer_phone || null,
         email: cust.email || null,
         device: deviceLabel(ticket),
@@ -7126,7 +7126,7 @@ function loadTicketThread(client, ticketId) {
             loadWarrantyRequests(true);
             return;
           }
-          say('Claim saved — rework started on ticket #' + shortCode(ticket) + '. The customer owes $0 on it.');
+          say('Claim saved — rework started on ticket #' + shortCode(ticket) + '. The guest owes $0 on it.');
           state.loaded.warranty = false;
           loadWarrantyRequests(true);
         }).catch(function () {
@@ -8142,7 +8142,7 @@ function loadTicketThread(client, ticketId) {
     var box = $('p5-atrone');
     if (!box) return;
     if (!t.customer_id) {
-      box.innerHTML = '<p class="portal-muted">This ticket is not linked to a customer account yet (web submission), so an ATR One membership can&rsquo;t be recorded on it. Memberships live on the customer record.</p>';
+      box.innerHTML = '<p class="portal-muted">This ticket is not linked to a guest account yet (web submission), so an ATR One membership can&rsquo;t be recorded on it. Memberships live on the guest record.</p>';
       return;
     }
     client.from('customer_memberships').select('*').eq('customer_id', t.customer_id).eq('status', 'active')
@@ -8190,7 +8190,7 @@ function loadTicketThread(client, ticketId) {
       return '<option value="' + k + '">' + esc(tr.name) + ' — ' + fmtMoney(tr.price) + '/mo</option>';
     }).join('');
     box.innerHTML =
-      '<p class="portal-muted" style="margin-top:0">No ATR One Plus membership on this customer — they are on ATR One Free (1 point per $1). If they sign up during this visit (through the Square signup links), record it here so it lives on the ticket.</p>' +
+      '<p class="portal-muted" style="margin-top:0">No ATR One Plus membership on this guest — they are on ATR One Free (1 point per $1). If they sign up during this visit (through the Square signup links), record it here so it lives on the ticket.</p>' +
       '<div class="p2-form-row"><select id="p5-atr-tier" aria-label="ATR One tier">' + opts + '</select>' +
       '<input id="p5-atr-note" type="text" placeholder="Note (optional)" maxlength="200" aria-label="Membership note" /></div>' +
       '<div class="p2-actions" style="margin-top:.5rem"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p5-atr-add"><i class="fas fa-plus"></i> Add ATR One membership</button></div>' +
@@ -8210,7 +8210,7 @@ function loadTicketThread(client, ticketId) {
         if (res.error) {
           addBtn.disabled = false; addBtn.textContent = 'Add ATR One membership';
           atrMsg(res.error && res.error.code === '23505'
-            ? 'This customer already has an active ATR One membership on file.'
+            ? 'This guest already has an active ATR One membership on file.'
             : 'Could not save the membership — try again.');
           return;
         }
@@ -8221,7 +8221,7 @@ function loadTicketThread(client, ticketId) {
           qty: 1, unit_price: tier.price, unit_cost: null
         }).then(function (res2) {
           loadCharges(client, t);
-          loadMembership(client, t, res2.error ? handMsg : 'Membership recorded on this customer, and the signup charge is on this ticket.');
+          loadMembership(client, t, res2.error ? handMsg : 'Membership recorded on this guest, and the signup charge is on this ticket.');
         }).catch(function () {
           loadMembership(client, t, handMsg);
         });
@@ -8313,7 +8313,7 @@ function loadTicketThread(client, ticketId) {
               var members = rows.map(function (r) {
                 return {
                   id: r.id, customerId: r.customer_id,
-                  name: names[r.customer_id] || 'Customer',
+                  name: names[r.customer_id] || 'Guest',
                   tier: r.tier, status: r.status,
                   startedOn: r.started_on, cancelledOn: r.cancelled_on,
                   note: r.note,
@@ -8343,7 +8343,7 @@ function loadTicketThread(client, ticketId) {
 
   function renderAtrOneMembers(list, rows) {
     if (!rows.length) {
-      emptyState(list, 'No ATR One members yet. When a customer signs up, record it on their ticket and they will show up here.');
+      emptyState(list, 'No ATR One members yet. When a guest signs up, record it on their ticket and they will show up here.');
       return;
     }
     var activeCount = 0;
@@ -8361,7 +8361,7 @@ function loadTicketThread(client, ticketId) {
       var dot = '<span class="mem-status-dot ' + (active ? 'mem-dot-on' : 'mem-dot-off') + '" title="' +
         (active ? 'Active — good standing' : 'Not active') + '" aria-label="' + (active ? 'Active' : 'Not active') + '"></span>';
       return '<article class="portal-card mem-card" data-member-edit="' + esc(m.id) + '" title="Tap to view or edit this membership">' +
-        '<div class="portal-card-top"><p class="portal-card-title">' + dot + esc(m.name || 'Customer') + '</p>' +
+        '<div class="portal-card-top"><p class="portal-card-title">' + dot + esc(m.name || 'Guest') + '</p>' +
         (active
           ? '<span class="portal-badge portal-badge-atrone"><i class="fas fa-star"></i> ATR One Plus &middot; ' + esc(tier ? tier.name : atroneDisplayName(m.tier)) + '</span>'
           : '<span class="portal-badge portal-st-cancelled">Cancelled</span>') + '</div>' +
@@ -8449,7 +8449,7 @@ function loadTicketThread(client, ticketId) {
     var html = '';
 
     html += '<div class="portal-drawer-section"><h3>Membership</h3>' + kvRows([
-      ['Member', esc(m.name || 'Customer')],
+      ['Member', esc(m.name || 'Guest')],
       ['Tier', tierText],
       ['Status', dot + (active ? 'Active — good standing' : 'Off (' + esc(m.status || 'cancelled') + ')')],
       ['Member since', esc(fmtJobDate(m.startedOn) || '—')],
@@ -8467,7 +8467,7 @@ function loadTicketThread(client, ticketId) {
         '<p class="cust-prof-mem">Status: ' + bvChipHtml(m.businessVerified, m.verificationRequestedAt) + '</p>' +
         (m.verificationRequestedAt ? '<p class="portal-muted portal-small">Documents requested ' + esc(fmtDateTime(m.verificationRequestedAt)) + '.</p>' : '') +
         (m.businessVerified && m.businessVerifiedAt ? '<p class="portal-muted portal-small">Verified ' + esc(fmtDateTime(m.businessVerifiedAt)) + '.</p>' : '') +
-        '<p class="portal-muted portal-small">Business discounts and wholesale pricing apply once this business is verified. The verification email is sent by the system to service@, with a copy to the customer — the customer sends the documents to service@.</p>' +
+        '<p class="portal-muted portal-small">Business discounts and wholesale pricing apply once this business is verified. The verification email is sent by the system to service@, with a copy to the guest — the guest sends the documents to service@.</p>' +
         (owner ? bvButtonsHtml(m.id, m.businessVerified) : '<p class="portal-muted portal-small">Only an admin or above can send the verification email or change the verified status.</p>') +
         '</div>';
     }
@@ -8580,7 +8580,7 @@ function loadTicketThread(client, ticketId) {
     withClient(function (client) {
       if (!client) { if (msg) msg.textContent = 'No connection.'; return; }
       var changes = {
-        _kind: 'membership', membership_id: m.id, _member_name: m.name || 'Customer',
+        _kind: 'membership', membership_id: m.id, _member_name: m.name || 'Guest',
         status: change.status, cancelled_on: change.cancelled_on
       };
       client.from('customer_edit_requests').insert({
@@ -8686,12 +8686,12 @@ function loadTicketThread(client, ticketId) {
         if (ctx.surface === 'member') {
           if (memEditCurrent) memEditCurrent.verificationRequestedAt = stamp;
           atrMembersCache.forEach(function (mm) { if (mm.id === membershipId) mm.verificationRequestedAt = stamp; });
-          memEditNotice = 'Verification email sent to ' + (out.to || 'the customer') + '.';
+          memEditNotice = 'Verification email sent to ' + (out.to || 'the guest') + '.';
           loadAtrOneMembers(true);
           renderMemberEditor();
           bvMsg(memEditNotice);
         } else {
-          bvProfileNotice = 'Verification email sent to ' + (out.to || 'the customer') + '.';
+          bvProfileNotice = 'Verification email sent to ' + (out.to || 'the guest') + '.';
           openCustomerProfile(ctx.customerId);
         }
         return;
@@ -9590,7 +9590,7 @@ function loadTicketThread(client, ticketId) {
     { value: 'technician_2', label: 'Technician 2' },
     { value: 'technician_3', label: 'Technician 3' },
     { value: 'technician_4', label: 'Technician 4' },
-    { value: 'customer_service', label: 'Customer Service Associate' }
+    { value: 'customer_service', label: 'Guest Service Associate' }
   ];
   var ROLE_LABELS = {};
   ROLE_LADDER.forEach(function (r) { ROLE_LABELS[r.value] = r.label; });
@@ -9813,10 +9813,10 @@ function loadTicketThread(client, ticketId) {
             detail += assocOwnerSection(a, ob);
             detail += assocOnboardingSection(ob);
             detail +=
-            '<p class="portal-muted portal-small">This is their portal sign-in profile. Onboarding paperwork (I-9, W-4, signed agreements) lives on their card in Employee Onboarding, under Documents.</p>';
+            '<p class="portal-muted portal-small">This is their portal sign-in profile. Onboarding paperwork (I-9, W-4, signed agreements) lives on their card in Associate Onboarding, under Documents.</p>';
           }
         } else {
-          detail += '<p class="portal-muted portal-small">No sign-in profile is on file for this login yet &mdash; the profile half of this card fills in once their employee profile exists.</p>';
+          detail += '<p class="portal-muted portal-small">No sign-in profile is on file for this login yet &mdash; the profile half of this card fills in once their associate profile exists.</p>';
         }
         /* The login half — Account Controls, inside the same card.
          * SELF_PICTURE_ACCOUNTS_2026_11_04: management-only, as it
@@ -10496,7 +10496,7 @@ function loadTicketThread(client, ticketId) {
    * renderMyAvatarRow keeps Team Chat's own row in step. */
   function assocSelfPictureSection(a) {
     return '<div class="assoc-owner-sec"><p class="assoc-owner-head"><i class="fas fa-camera"></i> Your picture</p>' +
-      '<div class="assoc-pay-row"><span class="assoc-pay-label">Profile picture<span class="assoc-pay-cur">Shown to the team and to customers</span></span>' +
+      '<div class="assoc-pay-row"><span class="assoc-pay-label">Profile picture<span class="assoc-pay-cur">Shown to the team and to guests</span></span>' +
       '<span class="assoc-pay-edit"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-assoc-selfpic-change="' + esc(a.id) + '">Change my picture</button></span></div>' +
       '<p class="portal-small assoc-pay-msg" data-assoc-selfpic-msg="' + esc(a.id) + '"></p></div>';
   }
@@ -10549,7 +10549,7 @@ function loadTicketThread(client, ticketId) {
                 assocAvatarKnown = true;
                 renderAssociates();
                 renderMyAvatarRow();
-                assocSelfPicMsg('Picture updated — this is the face the team and your customers see.');
+                assocSelfPicMsg('Picture updated — this is the face the team and your guests see.');
               });
           })
           .catch(function () { assocSelfPicMsg('Upload failed. Check your connection and try again.'); });
@@ -10776,7 +10776,7 @@ function loadTicketThread(client, ticketId) {
      * PORTAL_ROLE_LADDER_2026_11_04: picture controls follow the
      * account-control ceilings (canControlAccount). */
     if (assocAvatarKnown && canControlAccount(a.role)) {
-      out += '<div class="assoc-pay-row"><span class="assoc-pay-label">Profile picture<span class="assoc-pay-cur">Shown to the team and to customers</span></span>' +
+      out += '<div class="assoc-pay-row"><span class="assoc-pay-label">Profile picture<span class="assoc-pay-cur">Shown to the team and to guests</span></span>' +
         '<span class="assoc-pay-edit"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-assoc-avatar-change="' + esc(a.id) + '">Change picture</button>' +
         (assocAvatarById[a.id] ? '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-assoc-avatar-remove="' + esc(a.id) + '">Remove picture</button>' : '') + '</span></div>' +
         '<p class="portal-small assoc-pay-msg" data-assoc-avatar-msg="' + esc(a.id) + '"></p>';
@@ -11464,7 +11464,7 @@ function loadTicketThread(client, ticketId) {
               renderTeamChatGroupMembers();
               renderTeamChatFind();
               fetchTeamChat(true);
-              myAvatarMsg('Picture updated — this is the face the team and your customers see.');
+              myAvatarMsg('Picture updated — this is the face the team and your guests see.');
             });
         })
         .catch(function () { myAvatarMsg('Upload failed. Check your connection and try again.'); });
@@ -11611,7 +11611,7 @@ function loadTicketThread(client, ticketId) {
             var t = c.ticketId ? ticketsById[c.ticketId] : null;
             if (t && !c.customerId) c.customerId = t.customer_id || null;
             var cust = c.customerId ? customersById[c.customerId] : null;
-            c.name = (t && t.customer_name) || (cust && cust.name) || 'Customer';
+            c.name = (t && t.customer_name) || (cust && cust.name) || 'Guest';
             c.label = t ? (isServiceTicket(t) ? ('One-on-One — ' + (t.issue_reason || 'Service visit')) : deviceLabel(t)) : 'General conversation';
             c.msgs.sort(function (a, b) { return new Date(a.created_at) - new Date(b.created_at); });
             var last = c.msgs[c.msgs.length - 1];
@@ -11655,7 +11655,7 @@ function loadTicketThread(client, ticketId) {
     if (!open) {
       thread.hidden = true;
       list.hidden = false;
-      if (!guestChatConvos.length) { emptyState(list, 'No customer messages yet.'); return; }
+      if (!guestChatConvos.length) { emptyState(list, 'No guest messages yet.'); return; }
       list.innerHTML = guestChatConvos.map(function (c) {
         var prev = c.preview.length > 90 ? (c.preview.slice(0, 90) + '…') : c.preview;
         return '<button class="guestchat-card" type="button" data-gc-open="' + esc(c.key) + '">' +
@@ -11673,7 +11673,7 @@ function loadTicketThread(client, ticketId) {
     $('portal-guestchat-sub').textContent = open.label;
     var box = $('portal-guestchat-msgs');
     box.innerHTML = open.msgs.map(function (m) {
-      var who = m.sender === 'tech' ? 'Tech' : 'Customer';
+      var who = m.sender === 'tech' ? 'Tech' : 'Guest';
       return '<div class="portal-msg portal-msg-' + (m.sender === 'tech' ? 'tech' : 'customer') + '">' +
         esc(m.message) +
         '<span class="portal-msg-meta">' + who + ' · ' + esc(fmtDateTime(m.created_at)) + '</span></div>';
@@ -11754,10 +11754,10 @@ function loadTicketThread(client, ticketId) {
   /* ================= CUSTOMERS ================= */
   function renderCustomers(rows) {
     var list = $('portal-customer-list');
-    if (!rows.length) { emptyState(list, 'No customers match. Customer accounts from the website will show up here.'); return; }
+    if (!rows.length) { emptyState(list, 'No guests match. Guest accounts from the website will show up here.'); return; }
     list.innerHTML = rows.map(function (c) {
       return '<article class="portal-card">' +
-        '<div class="portal-card-top"><p class="portal-card-title">' + esc(c.name || 'Customer') + '</p>' +
+        '<div class="portal-card-top"><p class="portal-card-title">' + esc(c.name || 'Guest') + '</p>' +
         '<span class="portal-badge portal-st-reviewed"><i class="fas fa-coins"></i> ' + esc(String(c.points)) + ' pts</span>' +
         (c.membershipTier ? '<span class="portal-badge portal-badge-atrone"><i class="fas fa-star"></i> ATR One · ' + esc(atroneTierName(c.membershipTier)) + '</span>' : '') +
         /* PORTAL_CUSTOMER_PROFILE_2026_11_02: chip when an associate's edit for this customer is waiting on the owner. */
@@ -11769,7 +11769,7 @@ function loadTicketThread(client, ticketId) {
          * birthday editing lives inside the profile's Edit details
          * form now (see renderCustProfile). */
         '<p class="portal-card-meta">' + esc(String(c.orderCount)) + ' shop order' + (c.orderCount === 1 ? '' : 's') +
-        ' · Customer since ' + esc(fmtDate(c.created_at)) + '</p>' +
+        ' · Guest since ' + esc(fmtDate(c.created_at)) + '</p>' +
         /* PORTAL_TIER_SET_FINISH_2026_11_02: the card affordance reads
          * "View details" — the RepairQ pattern (the ticket card says
          * "View details", and inside, an "Edit details" button). */
@@ -11778,7 +11778,7 @@ function loadTicketThread(client, ticketId) {
          * used to render for EVERY role. Deletes now sit with Admin
          * and above, so only they see it (and deleteCustomer()
          * re-checks the tier before doing anything). */
-        (isAdminOrAbove() ? '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-cust-delete="' + esc(c.id) + '">Delete customer</button> ' : '') +
+        (isAdminOrAbove() ? '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-cust-delete="' + esc(c.id) + '">Delete guest</button> ' : '') +
         '<span class="portal-muted portal-small" data-cust-delete-msg="' + esc(c.id) + '"></span></p>' +
         '</article>';
     }).join('');
@@ -11786,7 +11786,7 @@ function loadTicketThread(client, ticketId) {
 
   function loadCustomers(force) {
     var list = $('portal-customer-list');
-    if (!force) list.innerHTML = '<p class="portal-muted">Loading customers&hellip;</p>';
+    if (!force) list.innerHTML = '<p class="portal-muted">Loading guests&hellip;</p>';
     withClient(function (client) {
       if (!client) { listError(list, 'customers'); return; }
       client.from('customers').select('*').order('created_at', { ascending: false }).limit(500)
@@ -11875,9 +11875,9 @@ function loadTicketThread(client, ticketId) {
     }
     var row = null;
     state.customersCache.forEach(function (c) { if (c.id === customerId) row = c; });
-    var name = row ? (row.name || 'this customer') : 'this customer';
+    var name = row ? (row.name || 'this guest') : 'this guest';
     /* PORTAL_SIDEBAR_ROSTER_2026_11_02: display text only — the list this delete runs from is labeled "Guest" now (Austin's word for customers). Behavior is unchanged. */
-    if (!window.confirm('Delete ' + name + ' from Guest? This cannot be undone. If this customer has tickets or orders linked, the delete will be blocked.')) return;
+    if (!window.confirm('Delete ' + name + ' from Guest? This cannot be undone. If this guest has tickets or orders linked, the delete will be blocked.')) return;
     var msg = document.querySelector('[data-cust-delete-msg="' + customerId + '"]');
     if (msg) msg.textContent = 'Deleting\u2026';
     withClient(function (client) {
@@ -11888,7 +11888,7 @@ function loadTicketThread(client, ticketId) {
        * refused delete returned no error and the card vanished
        * from the screen while the row stayed in the database. */
       client.from('customers').delete().eq('id', customerId).select('id').then(function (res) {
-        if (res.error || !res.data || !res.data.length) { if (msg) msg.textContent = 'Could not delete \u2014 this customer may have tickets or orders linked.'; return; }
+        if (res.error || !res.data || !res.data.length) { if (msg) msg.textContent = 'Could not delete \u2014 this guest may have tickets or orders linked.'; return; }
         state.customersCache = state.customersCache.filter(function (c) { return c.id !== customerId; });
         applyCustomerSearch();
       }).catch(function () { if (msg) msg.textContent = 'Could not delete \u2014 try again.'; });
@@ -11914,12 +11914,12 @@ function loadTicketThread(client, ticketId) {
     form.className = 'p2-form';
     form.setAttribute('autocomplete', 'off');
     form.innerHTML =
-      '<p class="portal-card-title" style="margin:0 0 0.5rem;"><i class="fas fa-user-plus"></i> Add customer</p>' +
-      '<div class="portal-field"><label for="portal-cust-add-name">Name</label><input id="portal-cust-add-name" type="text" placeholder="Customer name" /></div>' +
+      '<p class="portal-card-title" style="margin:0 0 0.5rem;"><i class="fas fa-user-plus"></i> Add guest</p>' +
+      '<div class="portal-field"><label for="portal-cust-add-name">Name</label><input id="portal-cust-add-name" type="text" placeholder="Guest name" /></div>' +
       '<div class="portal-field"><label for="portal-cust-add-phone">Phone</label><input id="portal-cust-add-phone" type="tel" placeholder="(937) 555-0100" /></div>' +
       '<div class="portal-field"><label for="portal-cust-add-email">Email</label><input id="portal-cust-add-email" type="email" placeholder="name@example.com" /></div>' +
       '<div class="portal-field"><label for="portal-cust-add-address">Address <span class="portal-muted">(optional)</span></label><input id="portal-cust-add-address" type="text" placeholder="Street, city, ZIP" /></div>' +
-      '<p style="margin:0.5rem 0 0;"><button class="portal-btn portal-btn-primary portal-btn-sm" type="submit"><i class="fas fa-plus"></i> Add customer</button> ' +
+      '<p style="margin:0.5rem 0 0;"><button class="portal-btn portal-btn-primary portal-btn-sm" type="submit"><i class="fas fa-plus"></i> Add guest</button> ' +
       '<span class="portal-muted portal-small" id="portal-cust-add-msg"></span></p>';
     list.parentNode.insertBefore(form, list);
     form.addEventListener('submit', function (e) { e.preventDefault(); addCustomer(); });
@@ -12047,7 +12047,7 @@ function loadTicketThread(client, ticketId) {
     if (!missing.length) { done(); return; }
     client.from('employee_profiles').select('id, name').in('id', missing)
       .then(function (res) {
-        if (!res.error) (res.data || []).forEach(function (p) { empNameCache[p.id] = p.name || 'Employee'; });
+        if (!res.error) (res.data || []).forEach(function (p) { empNameCache[p.id] = p.name || 'Associate'; });
         done();
       })
       .catch(function () { done(); });
@@ -12159,7 +12159,7 @@ function loadTicketThread(client, ticketId) {
      * customer update; each row's badge carries its kind. */
     var anyMem = custEditRequests.some(function (r) { return r.changes && r.changes._kind === 'membership'; });
     var html = '<div class="portal-card cust-req-card"><h3 class="cust-req-title"><i class="fas fa-user-pen"></i> ' +
-      (anyMem ? 'Updates' : 'Customer updates') + ' waiting for your approval (' + custEditRequests.length + ')</h3>';
+      (anyMem ? 'Updates' : 'Guest updates') + ' waiting for your approval (' + custEditRequests.length + ')</h3>';
     if (notice) html += '<p class="portal-error">' + esc(notice) + '</p>';
     html += custEditRequests.map(function (r) {
       var cust = custRowById(r.customer_id);
@@ -12168,9 +12168,9 @@ function loadTicketThread(client, ticketId) {
        * snapshot stored on the request when the customer list has
        * not been loaded in this session. */
       var isMem = r.changes && r.changes._kind === 'membership';
-      var rowName = cust ? (cust.name || 'Customer') : ((r.changes && r.changes._member_name) || 'Customer');
+      var rowName = cust ? (cust.name || 'Guest') : ((r.changes && r.changes._member_name) || 'Guest');
       return '<div class="cust-req-row">' +
-        '<p class="portal-card-title">' + esc(rowName) + ' <span class="portal-badge portal-st-new">' + (isMem ? 'Membership update' : 'Customer update') + '</span></p>' +
+        '<p class="portal-card-title">' + esc(rowName) + ' <span class="portal-badge portal-st-new">' + (isMem ? 'Membership update' : 'Guest update') + '</span></p>' +
         custChangeLines(r, cust) +
         '<p class="portal-muted portal-small">Submitted by ' + esc(empNameCache[r.submitted_by] || 'an associate') + ' · ' + esc(fmtDateTime(r.created_at)) + '</p>' +
         custApproveRejectButtons(r) +
@@ -12181,15 +12181,15 @@ function loadTicketThread(client, ticketId) {
 
   function openCustomerProfile(customerId) {
     var cached = custRowById(customerId);
-    drawerLoading(cached ? (cached.name || 'Customer') : 'Customer profile');
+    drawerLoading(cached ? (cached.name || 'Guest') : 'Guest profile');
     withClient(function (client) {
       if (!client) { $('portal-drawer-body').innerHTML = '<p class="portal-error">Couldn&rsquo;t reach the database.</p>'; return; }
       client.from('customers').select('*').eq('id', customerId).maybeSingle()
         .then(function (res) {
-          if (res.error || !res.data) { $('portal-drawer-body').innerHTML = '<p class="portal-error">Couldn&rsquo;t load that customer. They may have been deleted.</p>'; return; }
+          if (res.error || !res.data) { $('portal-drawer-body').innerHTML = '<p class="portal-error">Couldn&rsquo;t load that guest. They may have been deleted.</p>'; return; }
           var cust = res.data;
           custProfileCurrent = cust;
-          $('portal-drawer-title').textContent = cust.name || 'Customer';
+          $('portal-drawer-title').textContent = cust.name || 'Guest';
           /* PORTAL_TIER_SET_FINISH_2026_11_02: the profile also shows
            * and edits the customer's ATR One membership, which lives
            * in customer_memberships — load the latest row (any
@@ -12233,10 +12233,10 @@ function loadTicketThread(client, ticketId) {
                 .then(function (cres) { render(cres.error ? [] : (cres.data || [])); })
                 .catch(function () { render([]); });
             })
-            .catch(function () { $('portal-drawer-body').innerHTML = '<p class="portal-error">Couldn&rsquo;t load that customer&rsquo;s repairs.</p>'; });
+            .catch(function () { $('portal-drawer-body').innerHTML = '<p class="portal-error">Couldn&rsquo;t load that guest&rsquo;s repairs.</p>'; });
           }
         })
-        .catch(function () { $('portal-drawer-body').innerHTML = '<p class="portal-error">Couldn&rsquo;t load that customer.</p>'; });
+        .catch(function () { $('portal-drawer-body').innerHTML = '<p class="portal-error">Couldn&rsquo;t load that guest.</p>'; });
     });
   }
 
@@ -12261,7 +12261,7 @@ function loadTicketThread(client, ticketId) {
       ['Phone', valOrDash(cust.phone)],
       ['Address', valOrDash(cust.address)],
       ['Birthday', esc(bdayDisplay(cust.birthday))],
-      ['Customer since', esc(fmtDate(cust.created_at))]
+      ['Guest since', esc(fmtDate(cust.created_at))]
     ]) + '</div>';
 
     /* PORTAL_TIER_SET_FINISH_2026_11_02: ATR One status on the
@@ -12346,7 +12346,7 @@ function loadTicketThread(client, ticketId) {
           '<p class="portal-muted portal-small">Submitted by ' + esc(empNameCache[r.submitted_by] || 'an associate') + ' · ' + esc(fmtDateTime(r.created_at)) + '</p>' +
           /* Austin correction, Nov 2, 2026: no approve/reject here — Requests is the single landing spot for decisions. The profile only shows that a change is waiting. */
           (owner
-            ? '<p class="portal-muted portal-small">Approve or reject this in Requests — that is where customer updates are decided.</p>'
+            ? '<p class="portal-muted portal-small">Approve or reject this in Requests — that is where guest updates are decided.</p>'
             : '<p class="portal-muted portal-small">Waiting on the owner to approve — the record above still shows the current information.</p>') +
           '</div>';
       }).join('') + '</div>';
@@ -12380,8 +12380,8 @@ function loadTicketThread(client, ticketId) {
       (owner ? 'Save changes' : 'Submit changes for approval') + '</button> ' +
       '<span class="portal-muted portal-small" id="cust-prof-edit-msg">' + esc(custProfileNotice) + '</span></p>' +
       '<p class="portal-muted portal-small">' + (owner
-        ? 'You are signed in as the owner — changes save straight to the customer record.'
-        : 'Associates cannot change a customer record directly. Your changes go to the owner, and the record only updates after he approves them.') + '</p>' +
+        ? 'You are signed in as the owner — changes save straight to the guest record.'
+        : 'Associates cannot change a guest record directly. Your changes go to the owner, and the record only updates after he approves them.') + '</p>' +
       '</div></div>';
     custProfileNotice = '';
     body.innerHTML = html;
@@ -12500,7 +12500,7 @@ function loadTicketThread(client, ticketId) {
           openCustomerProfile(customerId);
           applyCustomerSearch();
         }).catch(function () {
-          if (msg) msg.textContent = 'Couldn\u2019t save \u2014 that email may already be on another customer, or the membership table is not set up yet.';
+          if (msg) msg.textContent = 'Couldn\u2019t save \u2014 that email may already be on another guest, or the membership table is not set up yet.';
         });
         return;
       }
@@ -12521,13 +12521,13 @@ function loadTicketThread(client, ticketId) {
           if (memChange.create) {
             payload = {
               _kind: 'membership', membership_id: null, _create: true,
-              _member_name: cust.name || 'Customer',
+              _member_name: cust.name || 'Guest',
               status: 'active', cancelled_on: null, tier: memChange.tier
             };
           } else {
             payload = {
               _kind: 'membership', membership_id: mem.id,
-              _member_name: cust.name || 'Customer'
+              _member_name: cust.name || 'Guest'
             };
             ['status', 'cancelled_on', 'tier'].forEach(function (k) {
               if (Object.prototype.hasOwnProperty.call(memChange.patch, k)) payload[k] = memChange.patch[k];
@@ -12649,7 +12649,7 @@ function loadTicketThread(client, ticketId) {
       client.from('customers').update(req.changes || {}).eq('id', req.customer_id)
         .then(function (res) {
           if (res.error) {
-            renderCustEditPanel('Could not apply that change — the email may already belong to another customer. The request is still waiting.');
+            renderCustEditPanel('Could not apply that change — the email may already belong to another guest. The request is still waiting.');
             return;
           }
           var row = custRowById(req.customer_id);
@@ -13016,7 +13016,7 @@ function loadTicketThread(client, ticketId) {
       (item.supplier_sku ? ' &middot; SKU ' + esc(item.supplier_sku) : '') +
       (item.supplier ? ' &middot; ' + esc(item.supplier) : '') + '</p>' +
       '<div class="portal-field"><label for="inv-attach-search">Which repair?</label>' +
-      '<input type="search" id="inv-attach-search" placeholder="Search customer or device&hellip;" autocomplete="off" /></div>' +
+      '<input type="search" id="inv-attach-search" placeholder="Search guest or device&hellip;" autocomplete="off" /></div>' +
       '<div id="inv-attach-results"><p class="portal-muted">Loading open repairs&hellip;</p></div>' +
       '<p class="portal-error" id="inv-attach-error" hidden></p>' +
       '<p class="portal-muted portal-small" id="inv-attach-msg"></p></div>';
@@ -14932,7 +14932,7 @@ function loadTicketThread(client, ticketId) {
       (isAdminOrAbove()
         ? '<p><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-assoc-ob-del="' + esc(ob.id) + '"><i class="fas fa-trash"></i> Delete onboarding record</button> <span class="portal-muted portal-small" data-assoc-ob-del-msg="' + esc(ob.id) + '"></span></p>'
         : '') +
-      '<p class="portal-muted portal-small">From their Employee Onboarding form &mdash; shown here so everything about an employee lives on this one card.</p></div>';
+      '<p class="portal-muted portal-small">From their Associate Onboarding form &mdash; shown here so everything about an associate lives on this one card.</p></div>';
   }
 
   /* ---------- home addresses (profile field) ---------- */
@@ -16158,16 +16158,16 @@ function loadTicketThread(client, ticketId) {
       'Verbal Consent Record',
       "Austin's Tech Repair Group",
       '',
-      'Customer: ' + (row.customer_name || ''),
+      'Guest: ' + (row.customer_name || ''),
       'Phone: ' + (row.customer_phone || ''),
       'Ticket ID: ' + ticketId,
       'Device: ' + deviceLabel(row),
       'Date and time: ' + when.toLocaleString() + ' (' + when.toISOString() + ')',
       'Recorded by: ' + staff,
       '',
-      'How this consent was taken: the staff member named above read the statement below aloud to the customer by phone, and the customer verbally agreed to it. By that agreement, the customer agreed to the Repair Authorization & Service Agreement, the Terms & Conditions of Service, and the 1-Year Limited Warranty of Austin\u2019s Tech Repair Group, in full.',
+      'How this consent was taken: the staff member named above read the statement below aloud to the guest by phone, and the guest verbally agreed to it. By that agreement, the guest agreed to the Repair Authorization & Service Agreement, the Terms & Conditions of Service, and the 1-Year Limited Warranty of Austin\u2019s Tech Repair Group, in full.',
       '',
-      'Statement read to the customer:',
+      'Statement read to the guest:',
       '\u201C' + CI_CONSENT_SCRIPT + '\u201D'
     ].join('\n');
     var blob = new Blob([text], { type: 'text/plain' });
@@ -16255,7 +16255,7 @@ function loadTicketThread(client, ticketId) {
           if (!cu) return;
           ciCustomerId = cu.id;
           $('ci-name').value = cu.name || ''; $('ci-phone').value = cu.phone || ''; $('ci-email').value = cu.email || ''; $('ci-address').value = cu.address || '';
-          box.innerHTML = '<p class="portal-muted portal-small">Customer linked &mdash; their account will see this repair.</p>';
+          box.innerHTML = '<p class="portal-muted portal-small">Guest linked &mdash; their account will see this repair.</p>';
         });
       });
     });
