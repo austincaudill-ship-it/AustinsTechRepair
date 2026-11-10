@@ -93,9 +93,8 @@
 /* TEAM_OFF_SITE_2026_11_08: public Leadership staff listing removed from the website. */
 /* SERVICES_SINGLE_DOOR_2026_11_09: bumped to atrg-v49 — Services single-door release (nav, Services flow, Prices folded in, holiday slide, icon set, tile icons). */
 /* LEARNING_SYSTEM_2026_11_09: bumped to atrg-v50 — the site now learns from real completed jobs (service_stats): most-booked repairs rise in a model's booking grid and estimates gain a factual typical-price line. (atrg-v48 was the booking-form escape fix and atrg-v49 the Services single-door release; both published ahead of this one, so the learning layer lands on v50.) */
-/* V86_2026_11_10: finish pass — account rows reordered to the owner's words (Associate Portal row at the top for associates, ATRG Connect directly above My Devices); Turnstile slow-connection fix (script wait ~10s -> ~30s, login human-check wait 25s -> 45s); virtual pay step sends the booker's own sign-in (hardened square-ticket-checkout) and the member-covered note points at Connect at the top of the account. */
 /* V82_2026_11_10: bumped to atrg-v85 — Virtual One-on-One (ATRG Connect guest page + ATRG Remote portal console), booking flow with Virtual path and Square first-hour pay step, login-speed pass (Turnstile fresh token at submit, passkey groundwork), header cart bag (mobile) + staff Portal gear restyle, account record match fix (find the guest by account first), app-version visibility (guest_app_versions), Google review links to our own g.page link, home feature rows alternate (desktop) and stack picture-first on phones. */
-const CACHE = "atrg-v86";
+const CACHE = "atrg-v87";
 const CORE = [
   "/",
   "/index.html",
