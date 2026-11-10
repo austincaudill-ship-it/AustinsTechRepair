@@ -1861,7 +1861,7 @@
           <div class="pd-device" id="pd-device-wrap" hidden>
             <p class="pd-device-title">Choose your device</p>
             <label class="pd-field">
-              <span>Brand</span>
+              <span>Make</span>
               <select id="pd-device-brand"></select>
             </label>
             <label class="pd-field">
@@ -2070,7 +2070,7 @@
                     </label>
                     <div class="acct-row2">
                       <label class="acct-field">
-                        <span>Brand</span>
+                        <span>Make</span>
                         <input type="text" id="md-brand" placeholder="e.g. Apple" autocomplete="off" maxlength="60">
                       </label>
                       <label class="acct-field">
@@ -2160,7 +2160,7 @@
                 </label>
                 <div class="acct-row2">
                   <label class="acct-field">
-                    <span>Brand</span>
+                    <span>Make</span>
                     <input type="text" id="acct-t-brand" placeholder="e.g. Apple" autocomplete="off">
                   </label>
                   <label class="acct-field">
@@ -3417,7 +3417,7 @@
     </div>
 
     <div class="atr-field">
-      <label class="field-label" for="wr-device">Device brand and model *</label>
+      <label class="field-label" for="wr-device">Device make and model *</label>
       <input class="form-field" type="text" id="wr-device" name="device" placeholder="e.g., iPhone 13 Pro Max, Galaxy S23, HP Pavilion laptop">
       <span class="atr-field-error" data-error-for="device"></span>
     </div>
@@ -5352,7 +5352,7 @@
       p_notes: String((notesEl && notesEl.value) || '').trim(),
       p_serial: String((serialEl && serialEl.value) || '').trim()
     };
-    if (!vals.p_brand && !vals.p_model && !vals.p_nickname) { fail('Give the device a brand, a model, or a nickname so we know which one it is.'); return; }
+    if (!vals.p_brand && !vals.p_model && !vals.p_nickname) { fail('Give the device a make, a model, or a nickname so we know which one it is.'); return; }
     if (!sb) { fail('My Devices is not switched on yet — nothing was saved. Please try again soon.'); return; }
     var btn = $('md-save-btn'); if (btn) btn.disabled = true;
     sb.rpc('save_my_device', vals).then(function (res) {

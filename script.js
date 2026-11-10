@@ -940,7 +940,7 @@
       if (summary) {
         summary.innerHTML =
           '<span class="pill"><i class="fas fa-mobile-screen"></i> ' + escapeHtml(repairState.device) + '</span>' +
-          '<span class="pill"><i class="fas fa-tag"></i> ' + escapeHtml(repairState.model ? (repairState.brand + ' ' + rfModelWithYear()) : (repairState.brand || 'Any brand')) + '</span>' +
+          '<span class="pill"><i class="fas fa-tag"></i> ' + escapeHtml(repairState.model ? (repairState.brand + ' ' + rfModelWithYear()) : (repairState.brand || 'Any make')) + '</span>' +
           '<span class="pill"><i class="fas fa-wrench"></i> ' + escapeHtml(allIssues) + '</span>' +
           (repairState.atrOne ? '<span class="pill"><i class="fas fa-shield-halved"></i> ATR One: ' + escapeHtml(repairState.atrOne) + '</span>' : '');
       }
@@ -1049,7 +1049,7 @@
         recap.hidden = false;
         recap.innerHTML =
           '<span class="pill"><i class="fas fa-mobile-screen"></i> ' + escapeHtml(g.device) + '</span>' +
-          '<span class="pill"><i class="fas fa-tag"></i> ' + escapeHtml(g.model ? (g.brand + ' ' + g.model) : (g.brand || 'Any brand')) + '</span>' +
+          '<span class="pill"><i class="fas fa-tag"></i> ' + escapeHtml(g.model ? (g.brand + ' ' + g.model) : (g.brand || 'Any make')) + '</span>' +
           '<span class="pill"><i class="fas fa-graduation-cap"></i> ' + escapeHtml(g.serviceKind) + '</span>' +
           '<span class="pill"><i class="fas fa-clock"></i> ' + g.ooHours + (g.ooHours === 1 ? ' hour' : ' hours') + ' one-on-one \u2014 $' + g.ooTime + '</span>' +
           (g.atrOne ? '<span class="pill"><i class="fas fa-shield-halved"></i> ATR One: ' + escapeHtml(g.atrOne) + '</span>' : '');
@@ -1057,7 +1057,7 @@
         recap.hidden = false;
         recap.innerHTML =
           '<span class="pill"><i class="fas fa-mobile-screen"></i> ' + escapeHtml(g.device) + '</span>' +
-          '<span class="pill"><i class="fas fa-tag"></i> ' + escapeHtml(g.model ? (g.brand + ' ' + g.model) : (g.brand || 'Any brand')) + '</span>' +
+          '<span class="pill"><i class="fas fa-tag"></i> ' + escapeHtml(g.model ? (g.brand + ' ' + g.model) : (g.brand || 'Any make')) + '</span>' +
           '<span class="pill"><i class="fas fa-wrench"></i> ' + escapeHtml(g.issue) + '</span>' +
           /* REPAIR_WIZARD_ESTIMATE_FIX_2026_11_06: the recap pill said
              "Flat $X" for priced picks — an estimate is never flat.
@@ -1564,13 +1564,13 @@
       { id: 'mag-pad-15w', name: 'MagSafe Wireless Charger', cat: 'Wireless Chargers', block: 'phone', price: 29.99, pts: 3500, imageId: 'mag-pad-15w',
         desc: 'A 15W magnetic wireless charging pad that snaps into place on compatible phones — set the phone down and it charges.' },
       { id: 'tab-glass-ipad-109', name: 'Tempered Glass Screen Protector', cat: 'Tablet Screen Protectors', block: 'tablet', price: 19.99, pts: 1000, featured: true, imageId: 'tab-glass-ipad-109', fit: 'Tablet', defaultVariant: 'iPad fit',
-        desc: 'Tempered glass screen protection, matched to the tablet you choose — pick the fit family, then the brand and model.',
+        desc: 'Tempered glass screen protection, matched to the tablet you choose — pick the fit family, then the make and model.',
         variants: [
           { label: 'iPad fit', price: 19.99, pts: 1000, sku: 'tab-glass-ipad-109', deviceBrands: ['Apple'] },
           { label: 'Galaxy Tab fit', price: 24.99, pts: 1000, sku: 'tab-glass-galaxy-a9plus', deviceBrands: ['Samsung'] }
         ] },
       { id: 'tab-case-ipad-pro129', name: 'Tablet Case', cat: 'Tablet Cases', block: 'tablet', price: 29.99, pts: 2500, imageId: 'tab-case-ipad-pro129', fit: 'Tablet', defaultVariant: 'iPad folio case',
-        desc: 'Cover-style tablet cases that protect the screen in a bag and fold back when you\u2019re using the tablet. Pick the fit family, then the brand and model.',
+        desc: 'Cover-style tablet cases that protect the screen in a bag and fold back when you\u2019re using the tablet. Pick the fit family, then the make and model.',
         variants: [
           { label: 'iPad folio case', price: 29.99, pts: 2500, sku: 'tab-case-ipad-pro129', deviceBrands: ['Apple'] },
           { label: 'Galaxy Tab book cover', price: 59.99, pts: 2500, sku: 'tab-case-galaxy-a9plus', deviceBrands: ['Samsung'] }
@@ -2128,10 +2128,10 @@
       var modelSel = pdEl('pd-device-model');
       if (!brandSel || !modelSel) return;
       var brands = pdAllowedBrands();
-      brandSel.innerHTML = '<option value="">Choose a brand</option>' + brands.map(function (b) {
+      brandSel.innerHTML = '<option value="">Choose a make</option>' + brands.map(function (b) {
         return '<option value="' + b + '">' + b + '</option>';
       }).join('');
-      modelSel.innerHTML = '<option value="">Choose a brand first</option>';
+      modelSel.innerHTML = '<option value="">Choose a make first</option>';
       modelSel.disabled = true;
       if (!brands.length) pdShowError('The device list isn\u2019t available right now — text us at (937) 280-6243 and we\u2019ll get the right fit.');
     }
@@ -2238,7 +2238,7 @@
           var b = pdEl('pd-device-brand');
           var m = pdEl('pd-device-model');
           if (!b || !m || !b.value || !m.value) {
-            pdShowError('Choose your device brand and model first — that\u2019s how we bring exactly the right fit.');
+            pdShowError('Choose your device make and model first — that\u2019s how we bring exactly the right fit.');
             return;
           }
           device = b.value + ' ' + m.value;
