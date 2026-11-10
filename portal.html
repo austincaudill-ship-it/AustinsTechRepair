@@ -278,6 +278,10 @@
         <button class="portal-tab" id="portal-tab-mileage" type="button" role="tab" data-tab="mileage">
           <i class="fas fa-route"></i> Mileage
         </button>
+        <!-- ATRG_REMOTE_2026_11_10 (Austin, Nov 10, 2026): ATRG Remote is the ASSOCIATE side of Virtual One-on-One — it lives in the Associates group, after Mileage. ATRG Connect is the guest side (the website page the guest opens). From Remote an associate runs the session: makes the one-time code, sends the guest their ATRG Connect link (text or email), and controls the session. The gate itself lives in the virtual-session Edge Function; this panel only mints and revokes. Panel: portal-panel-virtual, loader loadVirtualSessions in portal.js. -->
+        <button class="portal-tab" id="portal-tab-virtual" type="button" role="tab" data-tab="virtual">
+          <i class="fas fa-display"></i> ATRG Remote
+        </button>
         <!-- ACCOUNT_CONTROLS_2026_11_03 (Austin, Nov 3, 2026): Employee Onboarding, Documents and Job Applications moved OUT of this group into the Admin group below — they are owner-side tools, not associate tools. Buttons only: ids, data-tab values and panels are unchanged, so every handler keyed to them works exactly as before. -->
         <div class="portal-nav-group" id="portal-nav-group-admin">Admin</div>
         <!-- ASSOCIATE_ACCOUNTS_2026_11_03 (Austin, Nov 3, 2026): the Associates roster (PORTAL_SIDEBAR_ROSTER_2026_11_02 — every employee_profiles row as a profile card; TEAMCHAT_CHANNELS_2026_11_03 moved its button into Admin, first in the group) and Account Controls (ACCOUNT_CONTROLS_2026_11_03 — the same people as logins) were "kinda the same thing", so Austin merged them: ONE "Associate Accounts" Action Button, first in the Admin group, opening portal-panel-associateaccounts — each person's card carries their profile AND their login in one place. Austin's chosen name for the merged panel: "Associate Accounts". -->
@@ -925,6 +929,77 @@
         <!-- ATRONE_POINTS_TIERS_2026_11_06: the intro below states the tiered points rates -->
         <p class="portal-muted portal-small">Everyone with an ATR One membership on file. Green dot: the membership is on (good standing). Red dot: it is off. Tap a member to turn their membership off or on, or to correct their tier. New memberships are still added from a guest&rsquo;s ticket. Points: ATR One Free earns 1 point per $1 of a completed repair; ATR One Plus earns 5 points per $1 (Individual, Family) or 10 points per $1 (Business, Business Pro), credited at Job Complete.</p>
         <div id="portal-members-list"><p class="portal-muted">Loading members&hellip;</p></div>
+      </div>
+
+      <!-- VIRTUAL_ONE_ON_ONE_2026_11_10: the associate console for virtual sessions, shaped the way the owner asked (Nov 10, 2026): one simple console, organized inside the panel as Connect / Sessions / Chat / Apps / Settings — the panel's own sections, not new sidebar items. The code is shown ONCE here (only its hash is stored); give it to the guest, who types it on the website's Virtual One-on-One page. -->
+      <div class="portal-panel" id="portal-panel-virtual" role="tabpanel" hidden>
+        <div class="portal-panel-head">
+          <h2 class="portal-h2">ATRG Remote</h2>
+          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="virtual">
+            <i class="fas fa-rotate-right"></i> Refresh
+          </button>
+        </div>
+        <p class="portal-muted portal-small">Make a one-time code for a guest&rsquo;s virtual session. The code works once, for 4 hours, and only for that guest. Read it to the guest, or send it in a message &mdash; it is shown here once and never stored in plain sight. ATR One members do not need a code; their member key is theirs alone and works any time.</p>
+        <div class="virtual-secnav">
+          <button class="virtual-sec-btn active" type="button" data-vsec="connect"><i class="fas fa-plug"></i> Connect</button>
+          <button class="virtual-sec-btn" type="button" data-vsec="sessions"><i class="fas fa-list"></i> Sessions</button>
+          <button class="virtual-sec-btn" type="button" data-vsec="chat"><i class="fas fa-comments"></i> Chat</button>
+          <button class="virtual-sec-btn" type="button" data-vsec="apps"><i class="fas fa-toolbox"></i> Apps</button>
+          <button class="virtual-sec-btn" type="button" data-vsec="settings"><i class="fas fa-gear"></i> Settings</button>
+        </div>
+
+        <section class="virtual-sec" id="virtual-sec-connect">
+          <div class="portal-card">
+            <p class="portal-card-title">Start a session</p>
+            <p class="portal-muted portal-small">Pick the guest, make the code, and give it to them &mdash; they type it on the ATRG Connect page and agree to the screen-sharing waiver, and the session begins. In phase 2, the session itself opens right here.</p>
+            <div class="portal-field">
+              <label for="portal-virtual-guest">Guest</label>
+              <select id="portal-virtual-guest"></select>
+            </div>
+            <div class="portal-field">
+              <label for="portal-virtual-device">Device note (optional)</label>
+              <input type="text" id="portal-virtual-device" placeholder="e.g. Dell laptop, Windows">
+            </div>
+            <p><button class="portal-btn portal-btn-primary" type="button" id="portal-virtual-create"><i class="fas fa-key"></i> Make a session code</button></p>
+            <div id="portal-virtual-code-out" hidden>
+              <p class="portal-muted portal-small">Give this code to the guest. It is shown once:</p>
+              <p class="virtual-code-big" id="portal-virtual-code"></p>
+              <p class="portal-small" id="portal-virtual-expiry"></p>
+            </div>
+            <p class="portal-small" id="portal-virtual-msg" role="status"></p>
+          </div>
+        </section>
+
+        <section class="virtual-sec" id="virtual-sec-sessions" hidden>
+          <p class="portal-card-title">Today&rsquo;s sessions</p>
+          <div id="portal-virtual-list"><p class="portal-muted">Loading sessions&hellip;</p></div>
+        </section>
+
+        <section class="virtual-sec" id="virtual-sec-chat" hidden>
+          <div class="portal-card">
+            <p class="portal-card-title">Chat lives in the session</p>
+            <p class="portal-muted">There is no separate chat box here. During a session (phase 2), you talk and type right inside the session window &mdash; the guest can mute their mic at any time, and their camera stays off unless they turn it on. Messages about a booking still live on its ticket, as always.</p>
+          </div>
+        </section>
+
+        <section class="virtual-sec" id="virtual-sec-apps" hidden>
+          <div class="portal-card">
+            <p class="portal-card-title">The toolbox &mdash; phase 2</p>
+            <p class="portal-muted">Portable repair, diagnostic, and cleanup tools, kept on our side of the system. During a session the associate sends one into the guest&rsquo;s device and runs it there &mdash; nothing installs, and no program is left behind when the session ends. The guest watches it happen. Each tool joins only after it is checked on its own maker&rsquo;s site (the list and the checks are in the build report). Guest antivirus may ask about a portable tool the first time &mdash; that is expected, and the guest always sees it first.</p>
+            <p class="portal-muted portal-small">On paper for phase 2: hardware and drive health checks &middot; memory testing &middot; driver cleanup &middot; junk and startup cleanup &middot; malware scanning &middot; disk-space and system-file tools. Nothing is downloaded or run from this panel in phase 1.</p>
+          </div>
+        </section>
+
+        <section class="virtual-sec" id="virtual-sec-settings" hidden>
+          <div class="portal-card">
+            <p class="portal-card-title">How this console is set up</p>
+            <p class="portal-muted portal-small">Our own relay (phase 2): remote.austinstechrepairgroup.com &mdash; sessions run on our system only, never a public service.<br>
+            Session codes: 6 numbers, one use, good for 4 hours.<br>
+            Member keys: made from the member&rsquo;s own account, never stored, work only while the membership is active.<br>
+            Screen-sharing waiver in use: v1-draft-2026-11-10 (draft wording &mdash; the owner&rsquo;s approval is pending).<br>
+            These are facts about the setup, shown here so any associate can see them; changing them is a build change, not a panel setting.</p>
+          </div>
+        </section>
       </div>
 
       <!-- INVENTORY + PURCHASE ORDERS (Phase 3: editable van/shop stock) -->
