@@ -2075,6 +2075,27 @@
                their code by tapping the code itself, on the card above
                or in the quick glance. -->
           <div class="acct-menu" role="group" aria-label="My Account">
+            <!-- PORTAL_IN_ACCOUNT_2026_11_10 (v84, moved to the top in v86 — owner restated Nov 10, 2026):
+                 for associates, the Portal entry lives INSIDE My Account as
+                 its own row at the TOP of the account rows — under the greeting
+                 and the points, above ATRG Connect and My Devices (owner,
+                 Nov 10, 2026) — never as a separate header button. It ships
+                 hidden and the staff check at the end of script.js unhides
+                 it only for a signed-in associate (employee_profiles row);
+                 guests never see it. Tapping it opens the Associate Hub. -->
+            <a class="acct-menu-item acct-flat-row" id="emp-dash-link" href="portal.html" hidden><i class="fas fa-briefcase"></i> Associate Portal <i class="fas fa-arrow-right acct-menu-chev" aria-hidden="true"></i></a>
+            <button class="acct-menu-item acct-flat-row" type="button" data-acct-menu="connect" aria-expanded="false"><i class="fas fa-display"></i> ATRG Connect <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
+
+            <!-- ATRG Connect — ATRG_CONNECT_2026_11_10 (Austin, Nov 10, 2026): "The guest gets a connect plugin in their account under the nav." The FIRST row in the signed-in guest's account rows, right above My Devices (owner, Nov 10, 2026): the plugin lives here, in their account; opening it takes them to the Connect session page where they type the code their associate sent. The row follows the same drop-down machinery as every other account row (data-acct-menu / acct-view-*). -->
+            <div id="acct-view-connect" hidden>
+              <div class="acct-inbox">
+                <div class="acct-repairs-head">
+                  <h4><i class="fas fa-display"></i> ATRG Connect</h4>
+                </div>
+                <p class="acct-muted" style="text-align:left;padding:0;">Your virtual one-on-one, right here in your account. When your associate sends you a session code, open ATRG Connect, type the code, and we can see your screen and help you live.</p>
+                <a class="btn btn-primary btn-sm" href="#virtual-oneonone" data-page="virtual-oneonone"><i class="fas fa-display"></i> Open ATRG Connect</a>
+              </div>
+            </div>
             <button class="acct-menu-item acct-flat-row" type="button" data-acct-menu="devices" aria-expanded="false"><i class="fas fa-laptop"></i> My Devices <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
 
             <!-- My Devices — MY_DEVICES_2026_11_06 (Austin, Nov 6, 2026):
@@ -2316,18 +2337,6 @@
                 <div id="acct-inbox-list"><p class="acct-muted">Loading your messages…</p></div>
               </div>
             </div>
-            <button class="acct-menu-item acct-flat-row" type="button" data-acct-menu="connect" aria-expanded="false"><i class="fas fa-display"></i> ATRG Connect <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
-
-            <!-- ATRG Connect — ATRG_CONNECT_2026_11_10 (Austin, Nov 10, 2026): "The guest gets a connect plugin in their account under the nav." A Connect row in the signed-in guest's account rows, right after Messages: the plugin lives here, in their account; opening it takes them to the Connect session page where they type the code their associate sent. The row follows the same drop-down machinery as every other account row (data-acct-menu / acct-view-*). -->
-            <div id="acct-view-connect" hidden>
-              <div class="acct-inbox">
-                <div class="acct-repairs-head">
-                  <h4><i class="fas fa-display"></i> ATRG Connect</h4>
-                </div>
-                <p class="acct-muted" style="text-align:left;padding:0;">Your virtual one-on-one, right here in your account. When your associate sends you a session code, open ATRG Connect, type the code, and we can see your screen and help you live.</p>
-                <a class="btn btn-primary btn-sm" href="#virtual-oneonone" data-page="virtual-oneonone"><i class="fas fa-display"></i> Open ATRG Connect</a>
-              </div>
-            </div>
             <button class="acct-menu-item acct-flat-row" type="button" data-acct-menu="cart" aria-expanded="false"><i class="fas fa-shopping-cart"></i> Cart <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
 
             <!-- Cart — ACCOUNT_FIX_PASS_3_3_2026_11_06 (owner correction,
@@ -2492,14 +2501,6 @@
                 <p class="acct-muted" id="mm-free-note" style="text-align:left;padding:0;">You are on the free plan &mdash; there is nothing to cancel. Upgrade anytime above.</p>
               </div>
             </div>
-            <!-- PORTAL_IN_ACCOUNT_2026_11_10 (v84 — owner restated Nov 10, 2026):
-                 for associates, the Portal entry lives INSIDE My Account as
-                 its own row, under Manage Membership and above Account
-                 Settings — never as a separate header button. It ships
-                 hidden and the staff check at the end of script.js unhides
-                 it only for a signed-in associate (employee_profiles row);
-                 guests never see it. Tapping it opens the Associate Hub. -->
-            <a class="acct-menu-item acct-flat-row" id="emp-dash-link" href="portal.html" hidden><i class="fas fa-briefcase"></i> Associate Portal <i class="fas fa-arrow-right acct-menu-chev" aria-hidden="true"></i></a>
 
             <button class="acct-menu-item acct-flat-row" type="button" data-acct-menu="settings" aria-expanded="false"><i class="fas fa-gear"></i> Account Settings <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
 

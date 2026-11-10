@@ -85,9 +85,11 @@
   var ATR_ONE_JOIN_LINK = 'https://square.link/u/eFKxDvyo';
   /* VIRTUAL_ONE_ON_ONE_2026_11_10: the virtual first-hour payment
      runs through the square-ticket-checkout function (mode
-     'virtual-first-hour' — spec'd as a deploy companion; until it
-     ships, the pay step answers honestly that it is not connected
-     yet and the booking stands on its own). */
+     'virtual-first-hour'). HARDENED in v86 (Nov 10, 2026): the
+     function takes the payment only from the booker's own signed-in
+     session, with the booking email matching the account — so the
+     pay step below sends the guest's session token, and a
+     signed-out booker is asked to sign in first (booking saved). */
   var SQUARE_TICKET_CHECKOUT_URL = SUPABASE_URL + '/functions/v1/square-ticket-checkout';
   /* VIRTUAL_ONE_ON_ONE_2026_11_10 — THE FEE SWITCH (owner ruling,
      Nov 10, 2026): a virtual session SKIPS the $15 visit fee. The
@@ -449,10 +451,10 @@
        real gate is the key check on the Virtual page at session
        time, so nothing here needs to know who is a member. No charge
        is faked: the button asks square-ticket-checkout for a
-       'virtual-first-hour' session, and until that mode is deployed
-       the panel says plainly that the payment step is not connected
-       yet and the booking is saved — the same honesty as the $15
-       tier's text-the-link pattern. */
+       'virtual-first-hour' session under the booker's own sign-in
+       (v86 hardening), and if that call cannot be made the panel
+       says so plainly and the booking stands saved — the same
+       honesty as the $15 tier's text-the-link pattern. */
     if (opts && opts.virtual) {
       panel.innerHTML =
         '<h4>One last step to fully book your virtual session</h4>' +
@@ -495,31 +497,54 @@
         } catch (e) { /* ignore */ }
         payBtn.disabled = true;
         payBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Opening Square&hellip;';
-        fetch(SQUARE_TICKET_CHECKOUT_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
-            'apikey': SUPABASE_ANON_KEY
-          },
-          body: JSON.stringify({ mode: 'virtual-first-hour', ticket_id: opts.ticketId || null, email: opts.email || '', name: opts.name || '' })
-        }).then(function (r) { return r.json().catch(function () { return null; }); })
-          .then(function (j) {
-            if (j && j.ok && j.url) {
-              window.open(j.url, '_blank', 'noopener');
-              note.textContent = 'Square is open in a new tab. Once the $25 is paid, your session is fully booked — keep the email we sent you; its link opens your Virtual One-on-One page when your session time comes.';
-            } else {
+        /* SQUARE_SESSION_PAY_2026_11_10 (v86 hardening): the payment
+           function only takes the $25 from the booker's own signed-in
+           session (its Verify JWT is on and the booking email must
+           match the account), so send the guest's session token —
+           the same pattern the member-key check below already uses.
+           A signed-out booker is told plainly to sign in first; the
+           booking is already saved either way. */
+        var payWithToken = function (token) {
+          fetch(SQUARE_TICKET_CHECKOUT_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': 'Bearer ' + token,
+              'apikey': SUPABASE_ANON_KEY
+            },
+            body: JSON.stringify({ mode: 'virtual-first-hour', ticket_id: opts.ticketId || null, email: opts.email || '', name: opts.name || '' })
+          }).then(function (r) { return r.json().catch(function () { return null; }); })
+            .then(function (j) {
+              if (j && j.ok && j.url) {
+                window.open(j.url, '_blank', 'noopener');
+                note.textContent = 'Square is open in a new tab. Once the $25 is paid, your session is fully booked — keep the email we sent you; its link opens your Virtual One-on-One page when your session time comes.';
+              } else {
+                note.textContent = (j && j.error) ? j.error : 'The payment step is not connected yet. Your booking is saved — we will text you the payment link for the first hour.';
+                payBtn.innerHTML = '<i class="fas fa-lock"></i> Pay $25 with Square';
+                syncPayBtn();
+              }
+            })
+            .catch(function () {
               note.textContent = 'The payment step is not connected yet. Your booking is saved — we will text you the payment link for the first hour.';
               payBtn.innerHTML = '<i class="fas fa-lock"></i> Pay $25 with Square';
               syncPayBtn();
-            }
-          })
-          .catch(function () {
-            note.textContent = 'The payment step is not connected yet. Your booking is saved — we will text you the payment link for the first hour.';
-            payBtn.innerHTML = '<i class="fas fa-lock"></i> Pay $25 with Square';
-            syncPayBtn();
-          });
+            });
+        };
+        var askSignIn = function () {
+          note.textContent = 'To pay the $25, sign in first (or make your free account) with the same email you booked with, then tap Pay again. Your booking is saved.';
+          payBtn.innerHTML = '<i class="fas fa-lock"></i> Pay $25 with Square';
+          syncPayBtn();
+        };
+        var payClient = createClient();
+        if (payClient && payClient.auth && payClient.auth.getSession) {
+          try {
+            payClient.auth.getSession().then(function (res) {
+              var t = res && res.data && res.data.session && res.data.session.access_token;
+              if (t) { payWithToken(t); } else { askSignIn(); }
+            }).catch(function () { askSignIn(); });
+          } catch (e) { askSignIn(); }
+        } else { askSignIn(); }
       });
       /* CONNECT_MEMBER_KEY_2026_11_10 (owner law, Nov 10, 2026):
          a signed-in PAID ATR One member is never charged here.
@@ -551,7 +576,7 @@
                 panel.innerHTML =
                   '<h4>You are covered &mdash; no payment needed</h4>' +
                   '<p>Your ATR One membership covers virtual sessions, so there is nothing to pay for this booking. ' +
-                  'When your session time comes, open ATRG Connect in your account (under Messages) and use your member key &mdash; it is shown there when you are signed in.</p>' +
+                  'When your session time comes, open ATRG Connect at the top of your account and use your member key &mdash; it is shown there when you are signed in.</p>' +
                   '<p class="atr-paystep-note">Your booking is saved.</p>';
                 panel.hidden = false;
               })

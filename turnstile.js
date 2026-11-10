@@ -80,7 +80,7 @@
         } catch (e) { /* a later mount() call retries */ }
         return;
       }
-      if (++tries <= 100) setTimeout(attempt, 100); // api.js is async; wait up to ~10s
+      if (++tries <= 300) setTimeout(attempt, 100); // api.js is async; wait up to ~30s (TURNSTILE_SLOWFIX_2026_11_10 v86: the old ~10s window starved slow connections — the widget never rendered and no token ever existed, which is what stranded the owner's sign-in on his capped hotspot)
     })();
     return entry;
   }
@@ -115,7 +115,7 @@
    * keeps the gate()/token() behavior it already had. */
   function freshToken(el, cb, opts) {
     opts = opts || {};
-    var waitMs = opts.waitMs || 25000;
+    var waitMs = opts.waitMs || 45000; // TURNSTILE_SLOWFIX_2026_11_10 (v86): 25s -> 45s so a slow human check gets time to finish before the login gives up
     var entry = mount(el);
     if (!entry) { cb(''); return; }
     var tok = token(el);
