@@ -285,7 +285,7 @@
           <i class="fas fa-users-gear"></i> Associate Accounts
         </button>
         <button class="portal-tab" id="portal-tab-investors" type="button" role="tab" data-tab="investors">
-          <i class="fas fa-handshake"></i> Investors <span class="portal-count" id="portal-count-applications2" hidden></span>
+          <i class="fas fa-handshake"></i> Investors <span class="portal-count" id="portal-count-investors" hidden></span><!-- QA_FIX_2026_11_09 (overnight QA): this badge was named portal-count-applications2, which no code writes; loadInvestors in portal.js writes the New-inquiry count to portal-count-investors, which did not exist — setCount null-guards, so the count was silently dropped and the badge could never show. Renamed to the id the JS already writes, matching every sibling tab's badge. -->
         </button>
         <button class="portal-tab" id="portal-tab-feedback" type="button" role="tab" data-tab="feedback">
           <i class="fas fa-star"></i> Feedback
@@ -2296,8 +2296,13 @@
     }
     function syncW9Flag(client) {
       if (!nhDocHire) return;
+      /* QA_FIX_2026_11_09 (overnight QA): loadNewHires was removed with the
+       * Current Employees list (ONBOARDING_LIST_REMOVED_2026_11_04) — the
+       * refresh call below was dead and threw a ReferenceError inside the
+       * promise chain every time a W-9 was filed (swallowed by the catch).
+       * The flag update is the whole job now; there is no list to refresh. */
       client.from('new_hires').update({ w9_on_file: true }).eq('id', nhDocHire.id)
-        .then(function () { loadNewHires(true); }).catch(function () {});
+        .then(function () {}).catch(function () {});
     }
 
     /* PORTAL_CRUD_BATCH_B_2026_11_05: role gate for this

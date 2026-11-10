@@ -1742,3 +1742,24 @@ body:has(#portal-dash-view[hidden]) .portal-thumbbar { display: none; }
   #portal-hubsearch-input { border: none; background: transparent; border-radius: 0; padding: 0.5rem 0; font-size: 1rem; }
 }
 /* end SEARCH_SHEET_FIX_2026_11_09 (v68) */
+
+/* ===== QA_FIX_2026_11_09 (overnight QA): button-shade contrast =====
+   White text on the brand orange #D9540D measures 4.02:1 — under the
+   4.5:1 AA line for the bold ~15px text these controls carry. The
+   owner's Nov 8, 2026 ruling darkened the public site's primary
+   buttons and active filter chips one shade to #C24A09 (4.91:1) for
+   exactly this readability problem, keeping #D9540D itself for links,
+   text, accents and badges. The portal never got that shade: its
+   primary buttons and selected tiles/tabs still sit on #D9540D
+   (portal.html loads portal.css only, so every var(--brand, …)
+   resolves to its fallback here). This block applies the owner's
+   shade to the portal's primary buttons and selected-state controls
+   ONLY — badges, chat bubbles, links, text and accents are untouched,
+   per the same ruling. Hover already deepens to #A63E06 (6.34:1). */
+.portal-btn-primary { background: #C24A09; border-color: #C24A09; }
+.portal-tab.active { background: #C24A09; border-color: #C24A09; }
+.ci-tile.on, .ci-hour-btn.on { background: #C24A09; border-color: #C24A09; }
+.fin-periods .fin-period.active { background: #C24A09; border-color: #C24A09; }
+.p2-book-tab.active { background: #C24A09; border-color: #C24A09; }
+.portal-bartray-done { background: #C24A09; }
+/* end QA_FIX_2026_11_09 */
