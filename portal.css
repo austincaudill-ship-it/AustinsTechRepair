@@ -1792,3 +1792,14 @@ body:has(#portal-dash-view[hidden]) .portal-thumbbar { display: none; }
 .p2-book-tab.active { background: #C24A09; border-color: #C24A09; }
 .portal-bartray-done { background: #C24A09; }
 /* end QA_FIX_2026_11_09 */
+
+/* VIRTUAL_ONE_ON_ONE_2026_11_10: the minted session code, shown once
+   and big enough to read aloud over the phone without a mistake. */
+.virtual-code-big { font-size: 2.4rem; font-weight: 800; letter-spacing: .35em; color: var(--ink, #1a1a1a); margin: .25rem 0; }
+
+/* VIRTUAL_CONSOLE_2026_11_10: the Virtual panel's own section nav
+   (Connect / Sessions / Chat / Apps / Settings) — big tap targets,
+   the panel's internal organization only. */
+.virtual-secnav { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1rem 0; }
+.virtual-sec-btn { padding: .65rem 1.1rem; font-size: 1rem; border-radius: 10px; border: 1px solid var(--line, rgba(127,127,127,.35)); background: var(--card, #fff); color: var(--ink, #1a1a1a); cursor: pointer; }
+.virtual-sec-btn.active { background: #C24A09; border-color: #C24A09; color: #fff; }
