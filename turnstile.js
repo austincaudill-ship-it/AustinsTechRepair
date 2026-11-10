@@ -24,6 +24,12 @@
  * database directly with the public anon key is NOT stopped by this
  * file alone — see CHANGES.md, "Residual risk / Phase 2".
  *
+ * LOGIN_SPEED_2026_11_10 (staged): this copy adds freshToken() —
+ * the login form waits for a fresh token instead of dead-ending
+ * when the widget is still verifying or its token went stale on a
+ * slow connection. This staged file is the copy to publish; the
+ * test harness prefers it over the skeleton helper when present.
+ *
  * Style: ES5, matching the rest of the site.
  * ===================================================================== */
 (function () {
@@ -88,6 +94,36 @@
     if (!entry) return;
     entry.token = ''; entry.issuedAt = 0;
     if (entry.id !== null && apiReady()) { try { window.turnstile.reset(entry.id); } catch (e) {} }
+  }
+
+  /* LOGIN_SPEED_2026_11_10: hand back a FRESH token, waiting for one
+   * if that is what it takes. The login form passes its token
+   * straight to Supabase Auth, and on a slow connection the widget
+   * can still be sitting on "Verifying…" — or its token can have
+   * gone stale (over ~4 minutes old) — when the guest taps Log In.
+   * The old flow stopped right there with "complete the human check
+   * and log in again", a dead end on exactly the connections that
+   * need the most patience. freshToken: a fresh token comes back at
+   * once; otherwise the widget is mounted if needed and reset ONCE
+   * so a fresh check runs, then this polls until a fresh token
+   * lands or the wait runs out (~25s), and calls back with the
+   * token or ''. Only the login form uses it — every other form
+   * keeps the gate()/token() behavior it already had. */
+  function freshToken(el, cb, opts) {
+    opts = opts || {};
+    var waitMs = opts.waitMs || 25000;
+    var entry = mount(el);
+    if (!entry) { cb(''); return; }
+    var tok = token(el);
+    if (tok) { cb(tok); return; }
+    reset(el); // stale or empty: one fresh check, then wait for it
+    var started = Date.now();
+    (function poll() {
+      var t = token(el);
+      if (t) { cb(t); return; }
+      if (Date.now() - started >= waitMs) { cb(''); return; }
+      setTimeout(poll, 250);
+    })();
   }
 
   /* Server-side confirmation through the verify-turnstile Edge
@@ -159,6 +195,7 @@
     token: token,
     reset: reset,
     verify: verify,
-    gate: gate
+    gate: gate,
+    freshToken: freshToken
   };
 })();
