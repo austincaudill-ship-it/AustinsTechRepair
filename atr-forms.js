@@ -76,6 +76,38 @@
    * FEE_SPLIT_2026_11_05) + $1.32 card processing (Square online
    * rate 2.9% + 30 cents). */
   var SQUARE_HOUSECALL_LINK = 'https://square.link/u/GNUAO63Y';
+  /* CONNECT_PAY_STEP_2026_11_10 (owner ruling, Nov 10, 2026): the
+   * ATR One join offered at the virtual pay step is the Individual
+   * tier — this is the same Square link the site's own Join buttons
+   * use for that tier (the ATR One page tiers and Manage
+   * Membership, data-mm-tier="single"). One link, copied from the
+   * site's own wiring; never invent another. */
+  var ATR_ONE_JOIN_LINK = 'https://square.link/u/eFKxDvyo';
+  /* VIRTUAL_ONE_ON_ONE_2026_11_10: the virtual first-hour payment
+     runs through the square-ticket-checkout function (mode
+     'virtual-first-hour' — spec'd as a deploy companion; until it
+     ships, the pay step answers honestly that it is not connected
+     yet and the booking stands on its own). */
+  var SQUARE_TICKET_CHECKOUT_URL = SUPABASE_URL + '/functions/v1/square-ticket-checkout';
+  /* VIRTUAL_ONE_ON_ONE_2026_11_10 — THE FEE SWITCH (owner ruling,
+     Nov 10, 2026): a virtual session SKIPS the $15 visit fee. The
+     guest pays the first hour ($25) at booking and $25 an hour for
+     the time after, on the card they leave on file. In person keeps
+     its $15 + $25 an hour exactly as settled. This one constant is
+     the whole switch: if the ruling ever changes, flip it here and
+     the acknowledgment gate + fee copy follow. */
+  var VIRTUAL_FEE_APPLIES = false;
+  /* VIRTUAL_ONE_ON_ONE_2026_11_10 — WAIVER 1 of 2 (owner's consent
+     law, Nov 10, 2026): before a virtual guest can pay, they agree
+     to a privacy waiver in the pay step (its own box, unchecked,
+     never bundled into the payment consent). The agreement is
+     recorded against the booking by the virtual-session function
+     (action 'waiver', kind 'booking') with this version string —
+     shared with script.js (waiver 2, at session start) so a wording
+     change bumps one version in both places. The text is a DRAFT
+     awaiting the owner's approval (see the build report). */
+  var VIRTUAL_WAIVER_VERSION = 'v1-draft-2026-11-10';
+  var VIRTUAL_SESSION_URL = SUPABASE_URL + '/functions/v1/virtual-session';
 
   /* ---------------- Supabase client bootstrap ----------------
    * index.html already loads supabase-js v2 from the jsDelivr CDN, so
@@ -403,10 +435,140 @@
    * real success path of handleServiceRequest (after the ticket
    * insert and the best-effort signature filing), never for the
    * honeypot fake success. Display only — nothing here writes data. */
-  function showPayStep(form, isOneOnOne) {
+  function showPayStep(form, isOneOnOne, opts) {
     var wrap = form.closest('[data-form-wrap]') || form.parentNode;
     var panel = wrap.querySelector('[data-paystep]');
     if (!panel) return;
+    /* VIRTUAL_ONE_ON_ONE_2026_11_10: the virtual pay step. The guest
+       pays the first hour ($25) now through Square and leaves the
+       card on file; after the session, the time past the first hour
+       is charged to that card at $25 an hour — stated plainly, with
+       a required consent box, before the button can be used. ATR One
+       members are not charged the $25 at all (their member key
+       enables virtual sessions free) — the panel says so, and the
+       real gate is the key check on the Virtual page at session
+       time, so nothing here needs to know who is a member. No charge
+       is faked: the button asks square-ticket-checkout for a
+       'virtual-first-hour' session, and until that mode is deployed
+       the panel says plainly that the payment step is not connected
+       yet and the booking is saved — the same honesty as the $15
+       tier's text-the-link pattern. */
+    if (opts && opts.virtual) {
+      panel.innerHTML =
+        '<h4>One last step to fully book your virtual session</h4>' +
+        '<p>Your first hour is <strong>$25</strong>, paid now through Square. When you pay, you also leave your card on file with Square. ' +
+        'After your session, we may charge that card $25 an hour for the time your session ran beyond the first hour &mdash; nothing more, and we will always tell you the total first.</p>' +
+        '<label class="atr-check"><input type="checkbox" data-voo-waiver> ' +
+        '<span><strong>Privacy waiver for a virtual session.</strong> When we meet on my screen, my associate can see what I show them and help me with my device. ' +
+        'I am always in charge: I can stop sharing, mute, or end the session at any time, and nothing stays connected when it ends. The session is not recorded, and it is for help with my device only.</span></label>' +
+        '<label class="atr-check"><input type="checkbox" data-voo-consent> ' +
+        '<span>I agree: $25 now for the first hour, my card stays on file with Square, and time after the first hour may be charged to it at $25 an hour.</span></label>' +
+        '<p><button type="button" class="btn btn-primary btn-lg" data-voo-pay disabled><i class="fas fa-lock"></i> Pay $25 with Square</button></p>' +
+        '<p class="atr-paystep-note" data-voo-join>Or get this session free with ATR One &mdash; join for $9.99 and save $15 today. Remote service is included for members. <a href="' + ATR_ONE_JOIN_LINK + '" target="_blank" rel="noopener">Join ATR One</a></p>' +
+        '<p class="atr-paystep-note" data-voo-note>ATR One member? Your member key covers virtual sessions &mdash; skip the payment and use your key when your session starts.</p>';
+      panel.hidden = false;
+      var waiverBox = panel.querySelector('[data-voo-waiver]');
+      var consentBox = panel.querySelector('[data-voo-consent]');
+      var payBtn = panel.querySelector('[data-voo-pay]');
+      var note = panel.querySelector('[data-voo-note]');
+      /* Both boxes, separately: the privacy waiver AND the payment
+         consent. Either one alone leaves the button disabled. */
+      var syncPayBtn = function () { payBtn.disabled = !(waiverBox.checked && consentBox.checked); };
+      waiverBox.addEventListener('change', syncPayBtn);
+      consentBox.addEventListener('change', syncPayBtn);
+      payBtn.addEventListener('click', function () {
+        /* Record the waiver agreement against this booking FIRST
+           (fire-and-forget, like the alert emails — the booking and
+           the disabled-until-agreed button are the on-page proof;
+           the function's row is the record). */
+        try {
+          fetch(VIRTUAL_SESSION_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+              'apikey': SUPABASE_ANON_KEY
+            },
+            body: JSON.stringify({ action: 'waiver', kind: 'booking', ticket_id: opts.ticketId || null, email: opts.email || '', version: VIRTUAL_WAIVER_VERSION })
+          }).catch(function () { /* best-effort record */ });
+        } catch (e) { /* ignore */ }
+        payBtn.disabled = true;
+        payBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Opening Square&hellip;';
+        fetch(SQUARE_TICKET_CHECKOUT_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+            'apikey': SUPABASE_ANON_KEY
+          },
+          body: JSON.stringify({ mode: 'virtual-first-hour', ticket_id: opts.ticketId || null, email: opts.email || '', name: opts.name || '' })
+        }).then(function (r) { return r.json().catch(function () { return null; }); })
+          .then(function (j) {
+            if (j && j.ok && j.url) {
+              window.open(j.url, '_blank', 'noopener');
+              note.textContent = 'Square is open in a new tab. Once the $25 is paid, your session is fully booked — keep the email we sent you; its link opens your Virtual One-on-One page when your session time comes.';
+            } else {
+              note.textContent = 'The payment step is not connected yet. Your booking is saved — we will text you the payment link for the first hour.';
+              payBtn.innerHTML = '<i class="fas fa-lock"></i> Pay $25 with Square';
+              syncPayBtn();
+            }
+          })
+          .catch(function () {
+            note.textContent = 'The payment step is not connected yet. Your booking is saved — we will text you the payment link for the first hour.';
+            payBtn.innerHTML = '<i class="fas fa-lock"></i> Pay $25 with Square';
+            syncPayBtn();
+          });
+      });
+      /* CONNECT_MEMBER_KEY_2026_11_10 (owner law, Nov 10, 2026):
+         a signed-in PAID ATR One member is never charged here.
+         The virtual-session function answers 'mykey' only for a
+         signed-in caller with an active paid membership (the free
+         tier has no membership rows, so it never answers with a
+         key). If the key comes back, swap the whole panel to the
+         covered message — no pay step, no pay waiver boxes: the
+         member starts at session time with their key, and the
+         session-start waiver on the Connect page still gates the
+         session itself. Signed-out bookers and non-members hear
+         nothing back and keep the pay panel above, word for word. */
+      (function checkMemberKey() {
+        var client = createClient();
+        function ask(token) {
+          try {
+            fetch(VIRTUAL_SESSION_URL, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': 'Bearer ' + token,
+                'apikey': SUPABASE_ANON_KEY
+              },
+              body: JSON.stringify({ action: 'mykey' })
+            }).then(function (r) { return r.json().catch(function () { return null; }); })
+              .then(function (j) {
+                if (!j || !j.ok || !j.key) return;
+                panel.innerHTML =
+                  '<h4>You are covered &mdash; no payment needed</h4>' +
+                  '<p>Your ATR One membership covers virtual sessions, so there is nothing to pay for this booking. ' +
+                  'When your session time comes, open ATRG Connect in your account (under Messages) and use your member key &mdash; it is shown there when you are signed in.</p>' +
+                  '<p class="atr-paystep-note">Your booking is saved.</p>';
+                panel.hidden = false;
+              })
+              .catch(function () { /* not a signed-in member: the pay panel stands */ });
+          } catch (e) { /* same */ }
+        }
+        if (client && client.auth && client.auth.getSession) {
+          try {
+            client.auth.getSession().then(function (res) {
+              var t = res && res.data && res.data.session && res.data.session.access_token;
+              ask(t || SUPABASE_ANON_KEY);
+            }).catch(function () { ask(SUPABASE_ANON_KEY); });
+          } catch (e) { ask(SUPABASE_ANON_KEY); }
+        } else { ask(SUPABASE_ANON_KEY); }
+      })();
+      return;
+    }
     /* SUPPORT_BOOKING_2026_11_06: a one-on-one booking is always the
        $15 tier (no diagnostics) — its panel is the $15 pattern only:
        confirm the booking and text the payment link. The booked time
@@ -737,6 +899,9 @@
          ticket instead of a repair ticket. */
       var guidedEarly = window.atrGuidedSelection || null;
       var isOO = !!(guidedEarly && guidedEarly.mode === 'oneonone');
+      /* VIRTUAL_ONE_ON_ONE_2026_11_10: the How will we meet? pick,
+         carried from the wizard/pane through atrGuidedSelection. */
+      var isVirtual = !!(isOO && guidedEarly.ooPlace === 'virtual');
 
       var errors = {};
       if (!v.first_name) errors.first_name = 'Please enter your first name.';
@@ -748,6 +913,12 @@
       if (isOO && !guidedEarly.serviceKind) errors.problem = 'Please go back to step 2 and pick the kind of one-on-one help you need.';
       if (!field(form, 'terms_accepted')) errors.terms_accepted = 'Please accept the Terms and Conditions to continue.';
       if (!field(form, 'dispatch_acknowledged')) errors.dispatch_acknowledged = 'Please acknowledge the dispatch fee to continue.';
+      /* VIRTUAL_ONE_ON_ONE_2026_11_10: no visit fee, no visit-fee
+         acknowledgment — while VIRTUAL_FEE_APPLIES is off (the
+         owner's ruling), a virtual booking never trips this gate.
+         (The form also hides the row for virtual bookings, in
+         script.js applyVirtualFormEffects.) */
+      if (isVirtual && !VIRTUAL_FEE_APPLIES) delete errors.dispatch_acknowledged;
       /* A one-on-one visit has no repair work to authorize, so the
          work-order authorization and the Repair Authorization signature
          are not gates in this mode (their rows are hidden too). */
@@ -798,8 +969,19 @@
         var brandModel = [guidedEarly.brand, guidedEarly.model].filter(Boolean).join(' ');
         var ooHours = guidedEarly.ooHours || 1;
         var ooTime = ooHours * 25;
-        issue = '[SERVICE] ' + guidedEarly.serviceKind + ' \u2014 ' + (brandModel || guidedEarly.device || v.device_type) +
-          ' \u00b7 ' + ooHours + (ooHours === 1 ? ' hour' : ' hours') + ' one-on-one ($' + ooTime + ') | Visit fee: $15';
+        if (isVirtual) {
+          /* VIRTUAL_ONE_ON_ONE_2026_11_10: VIRTUAL leads the service
+             segment, plainly, so the portal ticket shows it at a
+             glance. No visit-fee segment — the switch is off. The
+             ticket still carries the full service address (owner:
+             the address stays, in case the session switches to in
+             person halfway). */
+          issue = '[SERVICE] ' + guidedEarly.serviceKind + ' \u2014 ' + (brandModel || guidedEarly.device || v.device_type) +
+            ' \u00b7 VIRTUAL session \u00b7 ' + ooHours + (ooHours === 1 ? ' hour' : ' hours') + ' one-on-one ($' + ooTime + ')';
+        } else {
+          issue = '[SERVICE] ' + guidedEarly.serviceKind + ' \u2014 ' + (brandModel || guidedEarly.device || v.device_type) +
+            ' \u00b7 ' + ooHours + (ooHours === 1 ? ' hour' : ' hours') + ' one-on-one ($' + ooTime + ') | Visit fee: $15';
+        }
         if (v.problem) issue += ' \u00b7 ' + v.problem;
       } else if (guided && guided.issue) {
         var guidedIssues = (guided.issues && guided.issues.length) ? guided.issues.join(', ') : guided.issue;
@@ -846,7 +1028,48 @@
       }
 
       setBusy(form, true);
-      if (isOO) {
+      if (isOO && isVirtual) {
+        /* VIRTUAL_ONE_ON_ONE_2026_11_10: the internal alert keeps the
+           same 'service-request' kind (service@), with the trip rows
+           swapped for the session rows — How first, so nobody reads
+           this as a trip to dispatch. The full service address still
+           rides along (owner: it stays). */
+        sendAlert('New VIRTUAL one-on-one booking: ' + guidedEarly.serviceKind, [
+          ['Name', row.customer_name],
+          ['Phone', v.phone],
+          ['Email', v.email],
+          ['Preferred contact method', row.contact_method],
+          ['How', 'Virtual \u2014 on the guest\u2019s screen'],
+          ['Service address (on file)', address],
+          ['Session date', visitDate],
+          ['Session start window (2-hour)', arrivalWindow],
+          ['Covered by ATR One', atrOneCovered],
+          ['Device', [guidedEarly.device, guidedEarly.brand, guidedEarly.model].filter(Boolean).join(' ')],
+          ['Service kind', guidedEarly.serviceKind],
+          ['What they want to get done', v.problem],
+          ['One-on-one time', ooHours + (ooHours === 1 ? ' hour' : ' hours') + ' \u2014 $' + ooTime],
+          ['Visit fee', 'None \u2014 virtual session'],
+          ['Heard about us', row.source],
+          ['Marketing emails opt-in', row.marketing_opt_in ? 'Yes' : 'No']
+        ], 'service-request');
+        /* VIRTUAL_ONE_ON_ONE_2026_11_10: the guest's own confirmation
+           email — a NEW form-alert kind, 'virtual-booking', spec'd
+           in the build report as a deploy companion (recipient: the
+           guest, from the Email row; From no-reply@, Reply-To
+           service@). Fire-and-forget like every alert: until the
+           kind is deployed the booking stands on the ticket alone,
+           and the pay step tells the guest to keep "the email we
+           sent" only after Square opens — the report flags this
+           dependency for the publisher. */
+        sendAlert('Your Virtual One-on-One is booked', [
+          ['Email', v.email],
+          ['Name', row.customer_name],
+          ['Session date', visitDate],
+          ['Session start window', arrivalWindow],
+          ['Your Virtual One-on-One page', 'https://austinstechrepairgroup.com/#virtual-oneonone'],
+          ['Your code', 'Your associate will give you your code when your session starts.']
+        ], 'virtual-booking');
+      } else if (isOO) {
         /* SUPPORT_BOOKING_2026_11_06: same form-alert, same existing
            'service-request' kind (routes to service@) — rows carry the
            one-on-one contract with the fee on its own line. */
@@ -919,7 +1142,9 @@
                the ticket insert already decided success.
                SUPPORT_BOOKING_2026_11_06: one-on-one bookings get the
                $15-tier panel (no Square link for that tier). */
-            showPayStep(form, isOO);
+            /* VIRTUAL_ONE_ON_ONE_2026_11_10: a virtual booking's pay
+               step needs the ticket + guest for the Square hand-off. */
+            showPayStep(form, isOO, isVirtual ? { virtual: true, ticketId: ticketId, email: v.email, name: row.customer_name } : undefined);
             /* ATRONE_QR_2026_11_05: one-time create-a-password offer for
                guests, so this repair lands in an account they can track.
                The account module in index.html owns the offer and
