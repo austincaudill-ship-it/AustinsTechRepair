@@ -181,7 +181,7 @@
            asked for a gear at the top instead; icon-only, it fits at
            every width. Guests never see it: it renders only when the
            staff check passes, exactly as before. -->
-      <a class="emp-dash-link" id="emp-dash-link" href="portal.html" data-page="employee-dashboard" aria-label="Associate Hub (Portal)" title="Associate Hub" hidden><i class="fas fa-gear" aria-hidden="true"></i></a>
+      <!-- PORTAL_IN_ACCOUNT_2026_11_10 (v84): the header gear is RETIRED — the Portal entry now lives inside My Account (see #emp-dash-link in the account rows). Same id, same staff check, new home, per the owner. -->
       <!-- NAV_SEARCH_CLEANUP_2026_11_06 (addendum 11): the Book a Repair
            button is REMOVED from the header (owner: tacky; frees room
            for the account name + Portal word). Booking entry points
@@ -2492,6 +2492,15 @@
                 <p class="acct-muted" id="mm-free-note" style="text-align:left;padding:0;">You are on the free plan &mdash; there is nothing to cancel. Upgrade anytime above.</p>
               </div>
             </div>
+            <!-- PORTAL_IN_ACCOUNT_2026_11_10 (v84 — owner restated Nov 10, 2026):
+                 for associates, the Portal entry lives INSIDE My Account as
+                 its own row, under Manage Membership and above Account
+                 Settings — never as a separate header button. It ships
+                 hidden and the staff check at the end of script.js unhides
+                 it only for a signed-in associate (employee_profiles row);
+                 guests never see it. Tapping it opens the Associate Hub. -->
+            <a class="acct-menu-item acct-flat-row" id="emp-dash-link" href="portal.html" hidden><i class="fas fa-briefcase"></i> Associate Portal <i class="fas fa-arrow-right acct-menu-chev" aria-hidden="true"></i></a>
+
             <button class="acct-menu-item acct-flat-row" type="button" data-acct-menu="settings" aria-expanded="false"><i class="fas fa-gear"></i> Account Settings <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
 
             <div id="acct-view-settings" hidden>
