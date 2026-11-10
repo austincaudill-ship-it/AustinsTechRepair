@@ -3475,3 +3475,15 @@ html:not([data-theme="dark"]) .footer .footer-cf { color: var(--muted); }
   .feature-row.home-row > .feature-media { order: 1; }
   .feature-row.home-row > .feature-text { order: 2; }
 }
+
+/* TURNSTILE_NAVFIX_2026_11_10 (v83): the human-check widget (Cloudflare
+   Turnstile) used to render at full size inside the forms and, on phones,
+   its live states (a tall challenge, an error card) could slide over the
+   fixed bottom thumb bar and cover it — Austin hit this on the sign-in
+   form Nov 10, 2026. Three-part fix: (1) every Turnstile slot reserves a
+   steady compact height so the form never jumps or grows over anything;
+   (2) the widget itself is rendered compact by turnstile.js;
+   (3) the bottom nav's layer is raised so the bar always paints above
+   page content — forms included. */
+.atr-turnstile { min-height: 70px; }
+.mobile-bottom-nav { z-index: 2100; }
