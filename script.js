@@ -5380,6 +5380,7 @@ if ("serviceWorker" in navigator) {
       pane.brandWrap.hidden = false;
       pane.modelWrap.hidden = true;
       pane.gridWrap.hidden = true;
+      svcFollow(pane.brandWrap);
       if (pane.kind === 'oneonone') renderOoSummary();
       gate(pane);
     }
@@ -5399,6 +5400,7 @@ if ("serviceWorker" in navigator) {
           'Choose your model\u2026');
         pane.modelWrap.hidden = false;
         pane.gridWrap.hidden = true;
+        svcFollow(pane.modelWrap);
       } else {
         st.modelState = 'na';
         pane.modelWrap.hidden = true;
@@ -5521,6 +5523,7 @@ if ("serviceWorker" in navigator) {
       pane.gridWrap.hidden = false;
       updateEstimate();
       gate(pane);
+      svcFollow(pane.gridWrap);
     }
 
     function learnLabel(pane) {
@@ -5563,6 +5566,7 @@ if ("serviceWorker" in navigator) {
       grid.appendChild(escTile);
       pane.gridWrap.hidden = false;
       gate(pane);
+      svcFollow(pane.gridWrap);
     }
 
     /* ---------------- estimate + summary ---------------- */
@@ -5639,6 +5643,28 @@ if ("serviceWorker" in navigator) {
       btn.disabled = !ready;
     }
 
+
+    /* WIZARD_SCROLL_FOLLOW_2026_11_10: advancing a step brings the
+       new step to the guest. Before this, the pane setters unhid the
+       next wrap and never scrolled, so on a phone the brand, model,
+       and service steps rendered below the fold and the guest had to
+       hunt for them (owner, Nov 10, 2026). One funnel: every reveal
+       scrolls its wrap to just under the sticky header — the wraps
+       carry scroll-margin-top in styles.css, the same offset idea
+       the site's anchor targets already use. If the wrap already
+       sits in the presented band under the header, the guest is
+       left where they are. Reduced motion gets an instant jump —
+       the codebase's own matchMedia pattern. */
+    function svcFollow(el) {
+      if (!el || el.hidden) return;
+      var r = el.getBoundingClientRect();
+      var hdr = document.querySelector('.header');
+      var hb = hdr ? hdr.getBoundingClientRect().bottom : 0;
+      if (r.top >= hb && r.top <= hb + 160) return;
+      var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      try { el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }); } catch (e) {}
+    }
+
     /* ---------------- path switching ---------------- */
     function switchPath(p) {
       currentPath = p;
@@ -5660,7 +5686,7 @@ if ("serviceWorker" in navigator) {
         }
       }
       var flow = $('svc-flow');
-      if (flow) { try { flow.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {} }
+      if (flow) svcFollow(flow);
     }
 
     document.querySelectorAll('[data-svc-path]').forEach(function (btn) {
