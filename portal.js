@@ -1179,6 +1179,119 @@
     try { window.localStorage.removeItem(TRUST_TOKEN_KEY); } catch (e) {}
   }
 
+  /* TRUST_DEVICE_2026_11_10 (Austin, Nov 10, 2026): the 30-day
+   * trust must belong to the DEVICE, not to one browser note.
+   * Three supports now carry it:
+   * 1) a real cookie (same value, 30-day expiry, SameSite=Lax,
+   *    Secure) beside the localStorage note — the two heal each
+   *    other on every read, so clearing one store no longer
+   *    costs the trust;
+   * 2) a stable per-device signature (screen, platform, CPU,
+   *    memory, timezone) hashed client-side with SHA-256 and
+   *    stored server-side with the trust row at create time;
+   * 3) on a later sign-in with no local note at all, the client
+   *    re-presents the signature and the function may re-issue
+   *    a token for the SAME staffer on the SAME device inside
+   *    the original 30-day window (the function enforces it).
+   * The signature is a stable-devices signal only — it never
+   * grants anything on its own: the server still requires the
+   * staffer's own live session and an unexpired trust row. */
+  var TRUST_COOKIE_NAME = 'atrg-portal-trusted-device';
+  var TRUST_FP_KEY = 'atrg-portal-device-fp';
+  function readTrustCookie() {
+    try {
+      var parts = document.cookie.split(';');
+      for (var i = 0; i < parts.length; i++) {
+        var kv = parts[i].split('=');
+        if (kv.length >= 2 && kv[0].trim() === TRUST_COOKIE_NAME) {
+          return decodeURIComponent(kv.slice(1).join('=').trim()) || '';
+        }
+      }
+    } catch (e) {}
+    return '';
+  }
+  function writeTrustCookie(token) {
+    try {
+      var exp = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toUTCString();
+      document.cookie = TRUST_COOKIE_NAME + '=' + encodeURIComponent(token) +
+        '; expires=' + exp + '; path=/; SameSite=Lax; Secure';
+    } catch (e) {}
+  }
+  function clearTrustCookie() {
+    try {
+      document.cookie = TRUST_COOKIE_NAME +
+        '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax; Secure';
+    } catch (e) {}
+  }
+  function readTrustTokenAny() {
+    var t = readTrustToken();
+    if (t) {
+      if (readTrustCookie() !== t) writeTrustCookie(t);
+      return t;
+    }
+    var c = readTrustCookie();
+    if (c) {
+      try { window.localStorage.setItem(TRUST_TOKEN_KEY, c); } catch (e) {}
+      return c;
+    }
+    return '';
+  }
+  function storeTrustTokenAll(token) {
+    if (!token) return;
+    storeTrustToken(token);
+    writeTrustCookie(token);
+  }
+  function clearTrustTokenAll() {
+    clearTrustToken();
+    clearTrustCookie();
+  }
+  function sha256Hex(text, done) {
+    try {
+      if (window.crypto && window.crypto.subtle && window.TextEncoder) {
+        window.crypto.subtle.digest('SHA-256', new window.TextEncoder().encode(text))
+          .then(function (buf) {
+            var bytes = new Uint8Array(buf);
+            var hex = '';
+            for (var i = 0; i < bytes.length; i++) {
+              hex += ('0' + bytes[i].toString(16)).slice(-2);
+            }
+            done(hex);
+          })
+          .catch(function () { done(''); });
+        return;
+      }
+    } catch (e) {}
+    done('');
+  }
+  function deviceSignatureText() {
+    var parts = [];
+    try {
+      var n = window.navigator || {};
+      parts.push(n.platform || '');
+      parts.push(n.userAgent || '');
+      parts.push(String(n.hardwareConcurrency || ''));
+      parts.push(String(n.deviceMemory || ''));
+      parts.push(String(n.maxTouchPoints || ''));
+      var s = window.screen || {};
+      parts.push(String(s.width || '') + 'x' + String(s.height || '') + 'x' + String(s.colorDepth || ''));
+      try { parts.push(Intl.DateTimeFormat().resolvedOptions().timeZone || ''); } catch (e) {}
+      parts.push(n.language || '');
+    } catch (e) {}
+    return parts.join('|');
+  }
+  function deviceFingerprint(done) {
+    try {
+      var cached = window.localStorage.getItem(TRUST_FP_KEY) || '';
+      if (cached) { done(cached); return; }
+    } catch (e) {}
+    sha256Hex(deviceSignatureText(), function (hex) {
+      if (hex) {
+        try { window.localStorage.setItem(TRUST_FP_KEY, hex); } catch (e) {}
+      }
+      done(hex || '');
+    });
+  }
+
   /* Same fetch shape as the track-shipment call: the caller's own
    * session JWT plus the anon key, JSON in, JSON out. Any transport
    * failure reports null - callers read that as "not trusted / not
@@ -1204,17 +1317,37 @@
   }
 
   function checkDeviceTrust(client, done) {
-    var token = readTrustToken();
-    if (!token) { done(false); return; }
-    callDeviceTrust(client, { action: 'check', token: token }, function (out) {
-      if (out && out.trusted === true) { done(true); return; }
-      /* A definitive not-trusted answer (expired, revoked, or never
-       * issued) retires the stored token so this device stops
-       * offering it. No answer at all (offline, function down)
-       * keeps the token - the staffer just does the code check
-       * this time. */
-      if (out && out.trusted === false) clearTrustToken();
-      done(false);
+    var token = readTrustTokenAny();
+    if (!token) {
+      /* TRUST_DEVICE_2026_11_10: no note on this device at all -
+       * ask the server whether THIS device already holds a live
+       * trust for this staffer (signature match inside the
+       * original 30-day window). A yes re-issues a fresh token;
+       * anything else falls through to the code check. */
+      deviceFingerprint(function (fp) {
+        if (!fp) { done(false); return; }
+        callDeviceTrust(client, { action: 'reissue', fingerprint: fp }, function (out) {
+          if (out && out.trusted === true && out.token) {
+            storeTrustTokenAll(out.token);
+            done(true);
+            return;
+          }
+          done(false);
+        });
+      });
+      return;
+    }
+    deviceFingerprint(function (fp) {
+      callDeviceTrust(client, { action: 'check', token: token, fingerprint: fp }, function (out) {
+        if (out && out.trusted === true) { done(true); return; }
+        /* A definitive not-trusted answer (expired, revoked, or never
+         * issued) retires the stored token so this device stops
+         * offering it. No answer at all (offline, function down)
+         * keeps the token - the staffer just does the code check
+         * this time. */
+        if (out && out.trusted === false) clearTrustTokenAll();
+        done(false);
+      });
     });
   }
 
@@ -1226,8 +1359,10 @@
     signInTrustState.applied = true;
     var label = '';
     try { label = window.navigator.userAgent || ''; } catch (e) {}
-    callDeviceTrust(client, { action: 'create', label: label }, function (out) {
-      if (out && out.token) storeTrustToken(out.token);
+    deviceFingerprint(function (fp) {
+      callDeviceTrust(client, { action: 'create', label: label, fingerprint: fp }, function (out) {
+        if (out && out.token) storeTrustTokenAll(out.token);
+      });
     });
   }
 
@@ -18149,6 +18284,14 @@ function loadTicketThread(client, ticketId) {
     function hsWatchViewport(on) {
       var vv = window.visualViewport;
       if (!vv) return;
+      /* BAR_DRAG_FIX_2026_11_10: while the search sheet is open
+       * the thumb bar must sit still. iOS keeps repainting the
+       * fixed bar against the moving visual viewport during the
+       * sheet's scroll lock, which reads as the bar dragging
+       * with the scroll — the bar hides for exactly the sheet's
+       * open span and comes back the moment it closes. */
+      var bar = $('portal-thumbbar');
+      if (bar) bar.style.visibility = on ? 'hidden' : '';
       if (on && !hsVvHandler) {
         hsVvHandler = function () { hsSyncViewport(); };
         vv.addEventListener('resize', hsVvHandler);
