@@ -1612,7 +1612,7 @@
             <div class="feature-text">
               <p class="eyebrow">Transparency</p>
               <h2>The same numbers, on the table</h2>
-              <p>A repair price should be explainable in one breath. Estimates come as flat, itemized numbers before any work starts &mdash; parts, labor, and the visit fee in the open &mdash; so the price agreed at the door is the price on the receipt.</p>
+              <p>A repair price should be explainable in one breath. Estimates come as itemized numbers before any work starts &mdash; parts, labor, and the visit fee in the open &mdash; so the price agreed at the door is the price on the receipt.</p>
               <p>When a part needs ordering, the guest receives the order number and the tracking link, and both are filed with their repair. The quote is built from the same supplier figures we see ourselves: one set of numbers, shared with the person paying the bill.</p>
             </div>
             <div class="feature-media">
@@ -3992,7 +3992,7 @@
           <!-- SITE_FOOTER_VALUES_2026_10_30 -->
           <span class="footer-col-title">Our Values</span>
           <a class="footer-value" href="#values" data-page="values" data-guide="values-trust"><i class="fas fa-handshake"></i><strong>Trust</strong> &mdash; earned on every repair</a>
-          <a class="footer-value" href="#values" data-page="values" data-guide="values-transparency"><i class="fas fa-eye"></i><strong>Transparency</strong> &mdash; flat prices and straight answers, up front</a>
+          <a class="footer-value" href="#values" data-page="values" data-guide="values-transparency"><i class="fas fa-eye"></i><strong>Transparency</strong> &mdash; clear estimates and straight answers, up front</a>
           <a class="footer-value" href="#values" data-page="values" data-guide="values-environment"><i class="fas fa-leaf"></i><strong>Environment</strong> &mdash; every repair keeps e-waste out of the landfill, and parts we remove are recycled</a>
           <a class="footer-value" href="#values" data-page="values" data-guide="values-education"><i class="fas fa-graduation-cap"></i><strong>Education</strong> &mdash; we champion students learning to code and to repair</a>
           <a class="footer-value" href="#values" data-page="values" data-guide="values-right"><i class="fas fa-screwdriver-wrench"></i><strong>Right to repair</strong> &mdash; your device, your choice of who fixes it</a>
@@ -4431,9 +4431,9 @@
     var r = priceCtx.repairKey;
     state = 'idle';
     if (r === 'custom') {
-      bot("For that one there's no flat starting price — custom repairs are quoted individually as one flat price, always quoted upfront before any work. Diagnostics are included in the $35 visit fee, even if we have to open the device to identify the problem.");
+      bot("For that one there's no set starting price — custom repairs are quoted individually, and your estimated repair price is always quoted upfront before any work and confirmed after diagnostics. Diagnostics are included in the $35 visit fee, even if we have to open the device to identify the problem.");
     } else {
-      bot(p.label + ' ' + REPAIRS[r].toLowerCase() + ' repairs start at $' + p[r] + ' — parts and labor included. Your final flat price is confirmed for your exact model before you book. A separate visit fee (due at booking, non-refundable) covers the trip out — $15 for a known repair, or $35 if a diagnosis is needed first.');
+      bot(p.label + ' ' + REPAIRS[r].toLowerCase() + ' repairs start at $' + p[r] + ' — parts and labor included. Your estimated repair price is confirmed for your exact model after diagnostics. A separate visit fee (due at booking, non-refundable) covers the trip out — $15 for a known repair, or $35 if a diagnosis is needed first.');
       lead.deviceLabel = p.label;
       lead.repairLabel = REPAIRS[r];
       lead.startPrice = p[r];
@@ -4635,7 +4635,7 @@
       if (c.key === 'custom') {
         priceCtx = {};
         state = 'idle';
-        bot("Computers, consoles, and other devices are quoted individually as one flat price, always quoted upfront. Diagnostics are included in the $35 visit fee, even if disassembly or deep board-level work is required to identify the problem.");
+        bot("Computers, consoles, and other devices are quoted individually — your estimated repair price is always quoted upfront and confirmed after diagnostics. Diagnostics are included in the $35 visit fee, even if disassembly or deep board-level work is required to identify the problem.");
         chips([
           { label: 'Book a repair', action: 'book' },
           { label: 'Talk to a person', action: 'faq', faq: 'human' }
