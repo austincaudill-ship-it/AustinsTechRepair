@@ -69,6 +69,10 @@
         try {
           entry.id = window.turnstile.render(el, {
             sitekey: SITE_KEY,
+            /* TURNSTILE_NAVFIX_2026_11_10 (v83): compact render — the
+               full-size widget's live states could cover the bottom
+               thumb bar on phones; compact keeps it one short row. */
+            size: 'compact',
             callback: function (tok) { entry.token = String(tok || ''); entry.issuedAt = Date.now(); },
             'expired-callback': function () { entry.token = ''; entry.issuedAt = 0; },
             'error-callback': function () { entry.token = ''; entry.issuedAt = 0; }
