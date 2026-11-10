@@ -3340,15 +3340,39 @@ html:not([data-theme="dark"]) .footer .footer-fineprint { border-top-color: var(
 html:not([data-theme="dark"]) .footer .footer-cf { color: var(--muted); }
 .footer .footer-cf .cf-badge-img { height: 26px; width: auto; margin-left: 0; border-radius: 5px; vertical-align: middle; }
 
-/* ===== YEAR_STEP + CF_BADGE_LINK_V78_2026_11_10 =====
-   The year wraps take the same sticky-header offset as the other
-   step-advance targets (see WIZARD_SCROLL_FOLLOW_2026_11_10), so a
-   step advance lands the year picker below the header instead of
-   under it. The Cloudflare badge's new link wrapper keeps the
-   badge's own box, so the bottom-corner row lays out exactly as it
-   did while the badge sat there unlinked. */
-#svc-year-wrap, #bk-year-wrap { scroll-margin-top: 120px; }
-@media (max-width: 920px) {
-  #svc-year-wrap, #bk-year-wrap { scroll-margin-top: 84px; }
+/* ===== CLOUDFLARE_BADGE_LINK_2026_11_10 =====
+   The Protected by Cloudflare badge is now a link (owner, Nov 10,
+   2026); keep it looking like the plain badge it was — no underline
+   or link border riding on the image, tidy inline alignment in the
+   bottom-corner row. */
+.footer .footer-cf a { display: inline-flex; border: 0; text-decoration: none; }
+
+/* ===== PW_EYE_2026_11_10 =====
+   Show/hide eye on the website's password fields (owner, Nov 10,
+   2026) — the Associate Hub's toggle (Nov 3, 2026) brought to the
+   site: the wrap hugs the field, the eye sits inside its right
+   edge, and the typed text keeps clear of it whether the field is
+   showing or hiding. The attribute selectors keep the padding in
+   both states and ahead of the per-form field rules. */
+.pw-wrap { position: relative; display: block; }
+.pw-wrap > input[type="password"], .pw-wrap > input[type="text"] { padding-right: 2.9rem; }
+.pw-eye {
+  position: absolute; right: 0.3rem; top: 50%; transform: translateY(-50%);
+  min-width: 2.6rem; min-height: 2.6rem; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; border: 0; border-radius: 8px;
+  color: var(--brand, #B4551F); font-size: 1rem; cursor: pointer;
 }
-.footer .footer-cf a { display: inline-flex; line-height: 0; }
+.pw-eye:hover { background: var(--brand-soft, #FBEADB); }
+.pw-eye:focus-visible { outline: 2px solid var(--brand, #B4551F); outline-offset: 1px; }
+
+/* ===== STORE_CART_CENTER_DESKTOP_2026_11_10 =====
+   Owner (Nov 10, 2026): on desktop the Store page's cart button
+   sits centered on the page — same button, same spot in the
+   layout, the toolbar row just centers its one control. On
+   phones the placement stays exactly as it was. The cart itself
+   also stays inside My Account as it does today; no cart control
+   goes into the header. */
+@media (min-width: 921px) {
+  .shop-toolbar { justify-content: center; }
+}
