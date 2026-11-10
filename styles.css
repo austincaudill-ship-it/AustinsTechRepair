@@ -3276,29 +3276,3 @@ html[data-theme="dark"] .site-search-mic.is-listening { color: var(--gold); }
   }
 }
 
-/* ================================================================
-   SITE RIBBON -- year-round ribbon travelling down the background
-   of the whole site. One self-contained decoration: the markup is
-   a single .site-ribbon block at the top of <main> in index.html
-   (it stops at the footer because <main> ends where <footer>
-   begins). v60 geometry: the band rides the page gutters and
-   crosses only inside full-bleed sections, so it never crosses
-   bare text; the desktop SVG is a fixed 1440px canvas centred
-   exactly like the 1200px content container, the mobile SVG
-   (<=920px, the site's own switch) hugs the left page margin.
-   The seasonal dressing inside it -- the .site-ribbon-dressing
-   group -- is swapped per season in index.html only; nothing in
-   this section changes with seasons.
-   ================================================================ */
-main { position: relative; }
-.site-ribbon { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; opacity: 0.92; }
-html[data-theme="light"] .site-ribbon { opacity: 0.80; }
-.site-ribbon svg { display: block; }
-.site-ribbon .sr-desktop { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 1440px; height: 100%; }
-.site-ribbon .sr-mobile { display: none; }
-@media (max-width: 920px) {
-  .site-ribbon .sr-desktop { display: none; }
-  .site-ribbon .sr-mobile { display: block; width: 100%; height: 100%; }
-}
-main > *:not(.site-ribbon) { position: relative; z-index: 1; }
-/* ===== END SITE RIBBON ===== */
