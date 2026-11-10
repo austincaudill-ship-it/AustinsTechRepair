@@ -3297,3 +3297,14 @@ html[data-theme="dark"] .site-search-mic.is-listening { color: var(--gold); }
    the AA line. It takes the owner's readable shade like .btn-primary
    did on Nov 8; its border follows so the button stays one piece. */
 .cart-glance-checkout { background: #C24A09; border-color: #C24A09; }
+
+  /* GUEST_ASSISTANT_2026_11_10: the assistant bar in the account's
+     general conversation — a plain note line, the quick-question
+     chips (the retired chat widget's chip language), and room for
+     the Speak to an associate button. */
+  #acct-assistant-bar { margin: 0.4rem 0 0.2rem; }
+  .acct-assistant-note { font-size: 0.78rem; color: var(--muted, #8a7a68); margin: 0 0 0.45rem; }
+  .acct-assistant-chips { display: flex; flex-wrap: wrap; gap: 7px; margin: 0 0 0.55rem; }
+  .acct-assistant-chips:empty { margin: 0; }
+  .acct-assistant-chip { background: #fff; border: 1.5px solid var(--brand, #b4551f); color: var(--brand, #b4551f); border-radius: 999px; padding: 7px 13px; font-size: 0.85rem; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .acct-assistant-chip:hover { background: var(--brand, #b4551f); color: #fff; }

@@ -1313,6 +1313,35 @@ body.portal-body #portal-dash-view textarea {
 }
 .guestchat-thread-title { margin: 0.7rem 0 0.1rem; font-size: 1.05rem; }
 .guestchat-msgs { max-height: 46vh; }
+/* GUEST_ASSISTANT_2026_11_10: the escalation badge on a Guest Chat
+   card, the assistant / auto-reply voices inside an opened thread,
+   and the hub-wide escalation bubble. */
+.guestchat-esc {
+  background: var(--blue, #1050A0); color: #fff; border-radius: 999px;
+  padding: 0.05rem 0.5rem; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.02em;
+}
+.portal-msg-bot { align-self: flex-start; background: #EDF3FA; border: 1px solid #C7D9EE; border-bottom-left-radius: 4px; }
+.portal-msg-auto { align-self: stretch; max-width: 100%; background: transparent; border: 1px dashed var(--line, #E6D9C0); font-size: 0.85rem; }
+.portal-esc-bubble {
+  position: fixed; right: 20px; bottom: 20px; z-index: 1500;
+  display: flex; align-items: stretch; overflow: hidden;
+  background: var(--blue, #1050A0); color: #fff; border-radius: 999px;
+  box-shadow: 0 14px 34px rgba(10, 30, 60, .35); font-family: inherit;
+}
+.portal-esc-bubble[hidden] { display: none; }
+.portal-esc-bubble-main {
+  background: none; border: none; color: #fff; font: inherit; font-weight: 700;
+  font-size: 0.9rem; padding: 0.7rem 0.3rem 0.7rem 1rem; cursor: pointer;
+  display: flex; align-items: center; gap: 0.5rem; text-align: left;
+}
+.portal-esc-bubble-x {
+  background: none; border: none; color: #fff; font-size: 1.05rem;
+  padding: 0 0.85rem; cursor: pointer; opacity: 0.85;
+}
+@media (max-width: 920px) {
+  .portal-esc-bubble { right: 12px; left: 12px; bottom: calc(86px + env(safe-area-inset-bottom)); }
+  .portal-esc-bubble-main { flex: 1; }
+}
 /* end GUEST_CHAT_2026_11_08 */
 
 /* ================= BUSINESS_VERIFICATION_2026_11_09 =================

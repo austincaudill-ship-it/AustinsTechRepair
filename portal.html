@@ -231,7 +231,7 @@
         </button>
         <!-- GUEST_CHAT_2026_11_08 (Austin, Nov 8, 2026): "where is that customer — shouldn't there be like a guest chat [beside] team chat." A Guest Chat button in the Guest group, directly after Guest: every customer conversation in one list — repair threads and the General conversation from the account's Send us a message — readable and answerable here. Panel: portal-panel-guestchat, loader loadGuestChat in portal.js. fa-comments belongs to Team Chat, so this one carries fa-comment-dots. -->
         <button class="portal-tab" id="portal-tab-guestchat" type="button" role="tab" data-tab="guestchat">
-          <i class="fas fa-comment-dots"></i> Guest Chat
+          <i class="fas fa-comment-dots"></i> Guest Chat <span class="portal-count" id="portal-count-guestchat" hidden></span>
         </button>
         <!-- PORTAL_ATRONE_MEMBERS_2026_11_02 (Austin, Nov 2, 2026): a dedicated ATR One Members action button under Customer (the first sidebar group, renamed from Work the same day) — the membership list used to be reachable only through the Admin "Square & ATR One" panel; he wants to just look and see who is a member. -->
         <button class="portal-tab" id="portal-tab-members" type="button" role="tab" data-tab="members">
@@ -1766,6 +1766,16 @@
       </div>
     </section>
   </main>
+
+  <!-- GUEST_ASSISTANT_2026_11_10: the escalation bubble — pops up in
+       the Hub when a guest asks for a live associate. Text is set by
+       checkEscalations() in portal.js ("<FirstName> would like to
+       speak to an associate"); tapping it opens that conversation in
+       Guest Chat. -->
+  <div class="portal-esc-bubble" id="portal-esc-bubble" hidden>
+    <button class="portal-esc-bubble-main" id="portal-esc-bubble-open" type="button"><i class="fas fa-bell"></i> <span id="portal-esc-bubble-text">A guest would like to speak to an associate</span></button>
+    <button class="portal-esc-bubble-x" id="portal-esc-bubble-close" type="button" aria-label="Dismiss">&times;</button>
+  </div>
 
       <!-- PORTAL_APP_2026_11_09, reworked by HUB_NAV_2026_11_09
            (Austin, Nov 9, 2026): the phone thumb bar — the public

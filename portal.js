@@ -810,6 +810,7 @@
   function proceedToDashboard() {
     showDashboard();
     refreshMfaBanner();
+    startEscWatch(); /* GUEST_ASSISTANT_2026_11_10: the guest-escalation bubble watches from here */
   }
 
   function showMfaView(errorMsg) {
@@ -11574,6 +11575,13 @@ function loadTicketThread(client, ticketId) {
   var guestChatWired = false;
   var guestChatConvos = [];  /* [{key, ticketId, customerId, name, label, lastAt, isNew, preview, msgs}] */
   var guestChatOpenKey = null;
+  /* GUEST_ASSISTANT_2026_11_10: the escalation marker state for this
+   * fetch cycle. null = the guest_chat_escalations read failed (its
+   * SQL has not run) and the panel FAILS OPEN to the pre-redesign
+   * behavior; an object (even empty) = the marker is authoritative
+   * and general conversations are gated on it. */
+  var guestChatEsc = null;
+  var guestChatPendingOpen = null; /* a conversation key the escalation bubble asked to open */
 
   function guestChatKey(m) {
     return m.ticket_id ? ('ticket:' + m.ticket_id) : ('general:' + (m.customer_id || 'unknown'));
@@ -11611,7 +11619,7 @@ function loadTicketThread(client, ticketId) {
           if (c.customerId && custIds.indexOf(c.customerId) === -1) custIds.push(c.customerId);
         });
         var ticketsById = {}, customersById = {};
-        var pending = (ticketIds.length ? 1 : 0) + (custIds.length ? 1 : 0);
+        var pending = (ticketIds.length ? 1 : 0) + (custIds.length ? 1 : 0) + 1; /* GUEST_ASSISTANT_2026_11_10: +1 for the escalations read in fetchGuestChat */
         function finish() {
           pending--;
           if (pending > 0) return;
@@ -11625,10 +11633,20 @@ function loadTicketThread(client, ticketId) {
             var last = c.msgs[c.msgs.length - 1];
             c.lastAt = last ? last.created_at : '';
             c.isNew = !!(last && last.sender === 'customer');
-            c.preview = last ? ((last.sender === 'tech' ? 'You: ' : '') + String(last.message || '')) : '';
+            c.preview = last ? ((last.sender === 'tech' ? 'You: ' : (last.sender === 'bot' ? 'Assistant: ' : '')) + String(last.message || '')) : '';
+            guestChatDecorate(c, guestChatEsc);
           });
-          convos.sort(function (a, b) { return new Date(b.lastAt) - new Date(a.lastAt); });
+          convos = guestChatGate(convos, guestChatEsc);
+          convos.sort(guestChatSort);
           guestChatConvos = convos;
+          if (guestChatPendingOpen) {
+            var pk = guestChatPendingOpen;
+            guestChatPendingOpen = null;
+            if (convos.some(function (c) { return c.key === pk; })) guestChatOpenKey = pk;
+          }
+          var gcAwaiting = 0;
+          convos.forEach(function (c) { if (c.awaitingAssociate) gcAwaiting++; });
+          setCount('portal-count-guestchat', gcAwaiting);
           if (guestChatOpenKey && !convos.some(function (c) { return c.key === guestChatOpenKey; })) guestChatOpenKey = null;
           renderGuestChat();
         }
@@ -11643,6 +11661,19 @@ function loadTicketThread(client, ticketId) {
             .then(function (r) { if (!r.error) (r.data || []).forEach(function (cu) { customersById[cu.id] = cu; }); finish(); })
             .catch(finish);
         }
+        /* GUEST_ASSISTANT_2026_11_10: the marker read. Success makes
+         * the gate authoritative (an empty map hides every un-escalated
+         * general conversation); any failure leaves guestChatEsc null
+         * and the panel fails open to the pre-redesign behavior. */
+        client.from('guest_chat_escalations').select('customer_id, requested_at, source')
+          .then(function (r) {
+            if (r.error) { guestChatEsc = null; finish(); return; }
+            var map = {};
+            (r.data || []).forEach(function (e) { map[e.customer_id] = e; });
+            guestChatEsc = map;
+            finish();
+          })
+          .catch(function () { guestChatEsc = null; finish(); });
       })
       .catch(function () {
         var list = $('portal-guestchat-list');
@@ -11669,6 +11700,7 @@ function loadTicketThread(client, ticketId) {
         return '<button class="guestchat-card" type="button" data-gc-open="' + esc(c.key) + '">' +
           '<span class="guestchat-card-top"><span class="guestchat-card-name">' + esc(c.name) + '</span>' +
           (c.isNew ? '<span class="guestchat-new">New</span>' : '') +
+          (c.escalated ? '<span class="guestchat-esc">' + (c.awaitingAssociate ? 'Wants an associate' : 'Associate requested') + '</span>' : '') +
           '<span class="guestchat-card-time">' + esc(fmtDateTime(c.lastAt)) + '</span></span>' +
           '<span class="guestchat-card-label">' + esc(c.label) + '</span>' +
           '<span class="guestchat-card-preview">' + esc(prev) + '</span></button>';
@@ -11681,8 +11713,9 @@ function loadTicketThread(client, ticketId) {
     $('portal-guestchat-sub').textContent = open.label;
     var box = $('portal-guestchat-msgs');
     box.innerHTML = open.msgs.map(function (m) {
-      var who = m.sender === 'tech' ? 'Tech' : 'Guest';
-      return '<div class="portal-msg portal-msg-' + (m.sender === 'tech' ? 'tech' : 'customer') + '">' +
+      var who = m.sender === 'tech' ? 'Tech' : (m.sender === 'bot' ? 'Assistant' : (m.sender === 'auto' ? 'Auto-reply' : 'Guest'));
+      var msgCls = m.sender === 'tech' ? 'tech' : (m.sender === 'bot' ? 'bot' : (m.sender === 'auto' ? 'auto' : 'customer'));
+      return '<div class="portal-msg portal-msg-' + msgCls + '">' +
         esc(m.message) +
         '<span class="portal-msg-meta">' + who + ' · ' + esc(fmtDateTime(m.created_at)) + '</span></div>';
     }).join('');
@@ -11757,6 +11790,157 @@ function loadTicketThread(client, ticketId) {
       startGuestChatPoll();
     });
   }
+  /* ---------- GUEST_ASSISTANT_2026_11_10: the privacy gate ----------
+   * A general conversation stays OUT of this panel until the guest
+   * asks for an associate — the guest_chat_escalations marker — with
+   * one carve-out: a conversation the team has already replied in
+   * (a 'tech' row exists) stays visible, so a thread that predates
+   * the redesign can never be stranded mid-conversation. When the
+   * marker read fails (escMap === null — its SQL has not run), the
+   * gate FAILS OPEN and returns the list untouched: a hidden real
+   * guest message is the worst outcome here. These helpers are pure
+   * on purpose; the harness tests them out of the fetch chain. */
+  function guestChatGate(convos, escMap) {
+    if (!escMap) return convos;
+    return (convos || []).filter(function (c) {
+      if (c.ticketId) return true;
+      if (escMap[c.customerId]) return true;
+      return (c.msgs || []).some(function (m) { return m.sender === 'tech'; });
+    });
+  }
+  function escAwaiting(msgs, esc) {
+    return !(msgs || []).some(function (m) {
+      return m.sender === 'tech' && String(m.created_at) >= String(esc.requested_at);
+    });
+  }
+  function guestChatDecorate(c, escMap) {
+    var esc = (!c.ticketId && escMap) ? escMap[c.customerId] : null;
+    c.escalated = !!esc;
+    c.escalatedAt = esc ? esc.requested_at : null;
+    c.awaitingAssociate = !!esc && escAwaiting(c.msgs, esc);
+    return c;
+  }
+  function guestChatSort(a, b) {
+    var aw = a.awaitingAssociate ? 1 : 0, bw = b.awaitingAssociate ? 1 : 0;
+    if (aw !== bw) return bw - aw;
+    var ae = a.escalated ? 1 : 0, be = b.escalated ? 1 : 0;
+    if (ae !== be) return be - ae;
+    return new Date(b.lastAt) - new Date(a.lastAt);
+  }
+
+  /* ---------- GUEST_ASSISTANT_2026_11_10: the escalation bubble ----------
+   * "Then a little bubble notification comes up in the associate hub
+   * that says guest would like to speak to an associate." (owner,
+   * Nov 10, 2026) The bubble rides its own slow poll (30s) once the
+   * dashboard is up, reads the same marker + messages the panel
+   * reads, and remembers dismissals per escalation in localStorage
+   * (per device, like the site's read markers). Tapping it opens
+   * that guest's conversation in Guest Chat. Every failure here is
+   * silent by design: the tab badge and the badged, top-sorted list
+   * still surface escalations on their own. */
+  var escWatchTimer = null;
+  var escWatchClient = null;
+  var escWatchWired = false;
+  var escBubbleCustId = null;
+  var escLastByCust = {};
+  function escSeenMap() {
+    try { return JSON.parse(window.localStorage.getItem('portal-esc-seen') || '{}'); }
+    catch (e) { return {}; }
+  }
+  function escMarkSeen(custId, at) {
+    try {
+      var m = escSeenMap();
+      m[custId] = at;
+      window.localStorage.setItem('portal-esc-seen', JSON.stringify(m));
+    } catch (e) { /* best-effort */ }
+  }
+  function escIsSeen(seenMap, e) {
+    return !!(seenMap && seenMap[e.customer_id] && String(seenMap[e.customer_id]) >= String(e.requested_at));
+  }
+  function escAwaitingRows(rows, e) {
+    return !(rows || []).some(function (m) {
+      return m.customer_id === e.customer_id && m.sender === 'tech' && String(m.created_at) >= String(e.requested_at);
+    });
+  }
+  function startEscWatch() {
+    if (escWatchTimer) return;
+    withClient(function (client) {
+      if (!client) return;
+      escWatchClient = client;
+      wireEscBubble();
+      checkEscalations();
+      escWatchTimer = setInterval(checkEscalations, 30000);
+    });
+  }
+  function wireEscBubble() {
+    if (escWatchWired) return;
+    escWatchWired = true;
+    var open = $('portal-esc-bubble-open'), close = $('portal-esc-bubble-close');
+    if (open) open.addEventListener('click', function () {
+      if (escBubbleCustId) {
+        var esc = escLastByCust[escBubbleCustId];
+        if (esc) escMarkSeen(escBubbleCustId, esc.requested_at);
+        guestChatPendingOpen = 'general:' + escBubbleCustId;
+      }
+      hideEscBubble();
+      activateTab('guestchat');
+      loadGuestChat(true);
+    });
+    if (close) close.addEventListener('click', function () {
+      if (escBubbleCustId) {
+        var esc2 = escLastByCust[escBubbleCustId];
+        if (esc2) escMarkSeen(escBubbleCustId, esc2.requested_at);
+      }
+      hideEscBubble();
+    });
+  }
+  function hideEscBubble() {
+    var b = $('portal-esc-bubble');
+    if (b) b.hidden = true;
+    escBubbleCustId = null;
+  }
+  function checkEscalations() {
+    var dash = $('portal-dash-view');
+    if (!escWatchClient || !state.user || (dash && dash.hidden)) { hideEscBubble(); return; }
+    var client = escWatchClient;
+    client.from('guest_chat_escalations').select('customer_id, requested_at, source')
+      .order('requested_at', { ascending: false }).limit(25)
+      .then(function (res) {
+        if (res.error || !res.data) return;
+        var rows = res.data;
+        escLastByCust = {};
+        rows.forEach(function (e) { escLastByCust[e.customer_id] = e; });
+        if (!rows.length) { hideEscBubble(); return; }
+        var ids = rows.map(function (e) { return e.customer_id; });
+        return client.from('messages').select('customer_id, sender, created_at')
+          .is('ticket_id', null).in('customer_id', ids)
+          .order('created_at', { ascending: false }).limit(300)
+          .then(function (mres) {
+            if (mres.error) return;
+            var msgs = mres.data || [];
+            var seen = escSeenMap();
+            var pick = null;
+            rows.forEach(function (e) { /* rows are newest-first: the first match is the newest unseen request still waiting */
+              if (pick) return;
+              if (escIsSeen(seen, e)) return;
+              if (escAwaitingRows(msgs, e)) pick = e;
+            });
+            if (!pick) { hideEscBubble(); return; }
+            return client.from('customers').select('id, name').eq('id', pick.customer_id)
+              .then(function (cres) {
+                var nm = (!cres.error && cres.data && cres.data[0] && cres.data[0].name) ? String(cres.data[0].name) : '';
+                var first = nm ? nm.split(' ')[0] : '';
+                var txt = $('portal-esc-bubble-text');
+                if (txt) txt.textContent = first ? (first + ' would like to speak to an associate') : 'A guest would like to speak to an associate';
+                var b = $('portal-esc-bubble');
+                if (b) b.hidden = false;
+                escBubbleCustId = pick.customer_id;
+              });
+          });
+      })
+      .catch(function () { /* silent by design */ });
+  }
+
   /* end GUEST_CHAT_2026_11_08 */
 
   /* ================= CUSTOMERS ================= */

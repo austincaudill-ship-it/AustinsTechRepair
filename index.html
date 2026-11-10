@@ -2107,6 +2107,16 @@
               <div id="acct-parts"></div>
               <div id="acct-charges"></div>
               <div class="acct-messages" id="acct-messages"></div>
+              <!-- GUEST_ASSISTANT_2026_11_10: the assistant bar —
+                   quick-question chips and the Speak to an associate
+                   button. It belongs to the General conversation
+                   only; paintAssistantBar() in the account module
+                   decides when it shows. -->
+              <div id="acct-assistant-bar" hidden>
+                <p class="acct-assistant-note" id="acct-assistant-note"></p>
+                <div class="acct-assistant-chips" id="acct-assistant-chips"></div>
+                <button class="btn btn-outline btn-sm" id="acct-assistant-escalate" type="button"><i class="fas fa-headset"></i> Speak to an associate</button>
+              </div>
               <form id="acct-msg-form" novalidate>
                 <div class="acct-msg-row">
                   <input type="text" id="acct-msg-input" placeholder="Write a message…" autocomplete="off" maxlength="1000" aria-label="Write a message">
@@ -4247,40 +4257,7 @@
       <p class="cookie-disclosure">Read our <a href="#privacy" data-page="privacy">Privacy Policy</a> and <a href="#terms" data-page="terms">Terms of Service</a> for details on how we handle your data.</p>
     </div>
   </div>
-<!-- ==================== ATR CHAT AGENT (Route A, built-in) ==================== -->
 <style>
-  .atr-chat-btn{position:fixed;right:20px;bottom:20px;z-index:1200;display:flex;align-items:center;gap:8px;background:var(--brand,#b4551f);color:#fff;border:none;border-radius:999px;padding:13px 20px;font-family:var(--font-body,system-ui,sans-serif);font-size:.95rem;font-weight:700;cursor:pointer;box-shadow:0 10px 28px rgba(30,20,10,.35)}
-  .atr-chat-btn:hover{filter:brightness(1.07)}
-  .atr-chat-btn i{font-size:1.05rem}
-  @media (max-width:920px){
-    .atr-chat-btn{right:16px;bottom:calc(86px + env(safe-area-inset-bottom));width:52px;height:52px;padding:0;justify-content:center;border-radius:50%}
-    .atr-chat-btn span{display:none}
-    .atr-chat-btn i{font-size:1.45rem}
-    .atr-chat-panel{right:8px;bottom:calc(86px + env(safe-area-inset-bottom))}
-  }
-  .atr-chat-panel{position:fixed;right:20px;bottom:20px;z-index:1600;width:min(380px,94vw);height:min(560px,76vh);background:var(--surface,#fffaf2);border:1px solid var(--line,#e5d9c8);border-radius:18px;box-shadow:0 24px 60px rgba(30,20,10,.35);display:none;flex-direction:column;overflow:hidden;font-family:var(--font-body,system-ui,sans-serif)}
-  .atr-chat-panel.open{display:flex}
-  .atr-chat-head{background:#C24A09;color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px}
-  .atr-chat-head .atr-chat-title{font-family:var(--font-display,Georgia,serif);font-size:1.05rem;font-weight:700;line-height:1.15}
-  .atr-chat-head .atr-chat-sub{font-size:.74rem;opacity:.92}
-  .atr-chat-close{margin-left:auto;background:rgba(255,255,255,.16);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:.95rem}
-  .atr-chat-body{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:9px}
-  .atr-msg{max-width:86%;padding:9px 12px;border-radius:14px;font-size:.92rem;line-height:1.45;white-space:pre-wrap;word-wrap:break-word}
-  .atr-msg.bot{background:#fff;border:1px solid var(--line,#e5d9c8);border-bottom-left-radius:4px;align-self:flex-start;color:#2b2118}
-  .atr-msg.user{background:var(--brand,#b4551f);color:#fff;border-bottom-right-radius:4px;align-self:flex-end}
-  .atr-chips{display:flex;flex-wrap:wrap;gap:7px;align-self:flex-start;max-width:96%}
-  .atr-chip{background:#fff;border:1.5px solid var(--brand,#b4551f);color:var(--brand,#b4551f);border-radius:999px;padding:7px 13px;font-size:.85rem;font-weight:700;cursor:pointer;font-family:inherit}
-  .atr-chip:hover{background:var(--brand,#b4551f);color:#fff}
-  .atr-chat-input{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line,#e5d9c8);background:var(--surface,#fffaf2)}
-  .atr-chat-input input{flex:1;border:1px solid var(--line,#e5d9c8);border-radius:999px;padding:10px 14px;font-size:.92rem;font-family:inherit;background:#fff;color:#2b2118;min-width:0}
-  .atr-chat-send{background:var(--brand,#b4551f);color:#fff;border:none;border-radius:50%;width:40px;height:40px;cursor:pointer;flex:none}
-  .atr-chat-note{font-size:.7rem;color:var(--muted,#8a7a68);text-align:center;padding:0 10px 8px}
-  @media (max-width:768px){
-    .atr-chat-btn{bottom:calc(84px + env(safe-area-inset-bottom));right:16px;width:52px;height:52px;padding:0;justify-content:center}
-    .atr-chat-btn span{display:none}
-    .atr-chat-panel{right:8px;left:8px;width:auto;bottom:calc(84px + env(safe-area-inset-bottom));height:min(520px,68vh)}
-  }
-
 .r2r-band{background:#A63E06;color:#FFF7EA;text-align:center;font-weight:700;font-size:.95rem;padding:12px 16px;border-radius:12px;margin:0 0 18px}
 .r2r-band i{margin-right:.5rem}
 
@@ -4300,466 +4277,11 @@
 .wb-muted{color:var(--muted,#7D6C5B)}
 .wb-del{margin-left:auto}
 </style>
-<button class="atr-chat-btn" id="atr-chat-btn" aria-label="Chat with ATR Chat"><i class="fas fa-comments"></i><span>Chat with us</span></button>
-<div class="atr-chat-panel" id="atr-chat-panel" role="dialog" aria-label="Chat with ATR Chat">
-  <div class="atr-chat-head">
-    <i class="fas fa-screwdriver-wrench" aria-hidden="true"></i>
-    <div>
-      <div class="atr-chat-title">ATR Chat</div>
-      <div class="atr-chat-sub">Austin's Tech Repair Group · answers from our real prices &amp; policies</div>
-    </div>
-    <button class="atr-chat-close" id="atr-chat-close" aria-label="Close chat"><i class="fas fa-xmark"></i></button>
-  </div>
-  <div class="atr-chat-body" id="atr-chat-body"></div>
-  <form class="atr-chat-input" id="atr-chat-form">
-    <input id="atr-chat-text" type="text" placeholder="Type your answer or a question…" autocomplete="off" aria-label="Type a message" />
-    <button class="atr-chat-send" type="submit" aria-label="Send message"><i class="fas fa-paper-plane"></i></button>
-  </form>
-  <div class="atr-turnstile" id="ts-chat"></div>
-  <div class="atr-chat-note">Prefer a person? Call or text (937) 280-6243.</div>
-</div>
-<script>
-(function () {
-  'use strict';
-  var SUPABASE_URL = 'https://lyujxpuicarblpkdzuuc.supabase.co';
-  var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
-  var ALERT_ENDPOINT = 'https://lyujxpuicarblpkdzuuc.supabase.co/functions/v1/form-alert';
-  var PHONE_DISPLAY = '(937) 280-6243';
-
-  var PRICES = {
-    iphone:      { label: 'iPhone',              deviceType: 'Phone',        screen: 89,  battery: 68, backglass: 49, chargeport: 59 },
-    samsung_s:   { label: 'Samsung Galaxy S',    deviceType: 'Phone',        screen: 176, battery: 67, backglass: 49, chargeport: 59 },
-    samsung_a:   { label: 'Samsung Galaxy A/M/F', deviceType: 'Phone',       screen: 67,  battery: 39, backglass: 45, chargeport: 49 },
-    samsung_fold:{ label: 'Samsung Fold / Flip', deviceType: 'Phone',        screen: 349, battery: 59, backglass: 59, chargeport: 69 },
-    pixel:       { label: 'Google Pixel',        deviceType: 'Phone',        screen: 100, battery: 39, backglass: 49, chargeport: 59 },
-    motorola:    { label: 'Motorola',            deviceType: 'Phone',        screen: 69,  battery: 39, backglass: 45, chargeport: 49 },
-    ipad:        { label: 'iPad / Tablet',       deviceType: 'Tablet',       screen: 99,  battery: 79, backglass: 99, chargeport: 89 },
-    watch:       { label: 'Smartwatch',          deviceType: 'Smartwatch',   screen: 119, battery: 49, backglass: 119, chargeport: 89 }
-  };
-  var REPAIRS = { screen: 'Screen', battery: 'Battery', backglass: 'Back glass', chargeport: 'Charging port' };
-
-  var FAQ = {
-    warranty: 'Every standard repair includes our 1-Year Limited Warranty — parts and labor — for the repair on your invoice. New physical damage, liquid damage, or work by another shop is not covered. Covered claim? There is no second visit fee for it.',
-    dispatch: 'There is a visit fee for a mobile visit: $15 when your repair is already known, or $35 if your device needs a full diagnosis. It covers travel to you, it is due when you book, and it is non-refundable — separate from the repair price, never credited toward a repair.',
-    diagnostics: 'Estimates are free. Diagnostics are included in the $35 visit fee — even if we have to open your device or run deep board-level diagnostics to identify the problem, there is no extra diagnostic charge.',
-    area: 'We are a mobile service — we come to you in the Miami Valley (Xenia, Dayton, and surrounding areas). Most repairs are finished in a single visit, right at your home or office.',
-    parts: 'Parts are ordered by us through our suppliers and delivered to us — we bring them to your install visit. Because parts are ordered for your specific job, the parts cost is paid upfront before we order, and those parts belong to you.',
-    howlong: 'Most common repairs (screens, batteries, charge ports) are finished in a single visit once your part is in. If a job needs bench or board-level work, we will tell you the timeline upfront before you commit.',
-    /* SITE_ATRONE_TIERS_2026_11_02 */
-    /* SITE_ATRONE_NAMES_2026_11_02 */
-    membership: 'ATR One membership: $9.99/mo Individual (1 device), $19.99/mo Family (5 devices), $49.99/mo Business, $99.99/mo Business Pro. Members get 20% off repairs and 25% off accessories on Individual and Family, 45% off repairs and 55% off accessories on Business, and 50% off repairs and 65% off accessories on Business Pro, plus wholesale parts pricing, a free screen protector installed with every repair, free priority shipping on parts, priority scheduling, same-day diagnostics, free remote support, and 14 days to exchange or return accessories bought from us &mdash; every accessory carries its manufacturer&rsquo;s warranty, and we add 90 days on top of it. Business and Business Pro memberships require your business EIN at signup. On a business plan, we come out and set up your point of sale — Square, cash drawers, your systems; we help with the setup, we do not process payments. Points: every completed repair earns points — 1 point per $1 on ATR One Free, 5 points per $1 on ATR One Plus Individual and Family, and 10 points per $1 on ATR One Plus Business and Business Pro; 100 points = $5.',
-    services: 'We repair phones, tablets, computers & laptops, game consoles, and smartwatches — including board-level diagnostics most shops will not touch. We also build websites for local businesses, install home and small-business networks and Wi-Fi equipment, and run internet cabling. We do not repair automotive electronics, vintage radios, home stereo systems, major appliances, or medical devices or equipment, and we are not an internet service provider (though we can recommend one and help you get set up).',
-    hours: 'Our hours are Monday\u2013Friday 5:30 AM\u201310:00 PM, Saturday 8:30 AM\u20139:00 PM, and Sunday 9:00 AM\u20135:00 PM. We book by appointment \u2014 send a request here or through the Repair page and we will confirm your time. For anything urgent, call or text ' + PHONE_DISPLAY + '.',
-    human: 'No problem — you can call or text Austin directly at ' + PHONE_DISPLAY + '. Or tap "Book a repair" and leave your number here, and he will reach out to you.'
-  };
-
-  var body, input, panel, btn;
-  var state = 'idle';
-  var miss = 0;
-  var lead = {};
-  var priceCtx = null;
-  var started = false;
-
-  function el(id) { return document.getElementById(id); }
-  function scrollDown() { body.scrollTop = body.scrollHeight; }
-  function addMsg(text, who) {
-    var d = document.createElement('div');
-    d.className = 'atr-msg ' + who;
-    d.textContent = text;
-    body.appendChild(d);
-    scrollDown();
-    return d;
-  }
-  function bot(text) { return addMsg(text, 'bot'); }
-  function chips(list) {
-    var wrap = document.createElement('div');
-    wrap.className = 'atr-chips';
-    list.forEach(function (c) {
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'atr-chip';
-      b.textContent = c.label;
-      b.addEventListener('click', function () { handleChip(c); });
-      wrap.appendChild(b);
-    });
-    body.appendChild(wrap);
-    scrollDown();
-    return wrap;
-  }
-  function mainChips() {
-    chips([
-      { label: 'Get a price', action: 'price' },
-      { label: 'Book a repair', action: 'book' },
-      { label: 'Diagnostics & fees', action: 'faq', faq: 'diagnostics' },
-      { label: 'Warranty', action: 'faq', faq: 'warranty' },
-      { label: 'Talk to a person', action: 'faq', faq: 'human' }
-    ]);
-  }
-  function greet() {
-    bot("Hi! This is the ATR chat for Austin's Tech Repair Group — the mobile repair shop that comes to you. I can check a price, set up a repair, or answer questions about fees and warranty. What do you need?");
-    mainChips();
-  }
-
-  /* ---------------- price flow ---------------- */
-  function priceDevices() {
-    state = 'price_device';
-    bot('What kind of device is it?');
-    chips([
-      { label: 'iPhone', action: 'device', key: 'iphone' },
-      { label: 'Samsung Galaxy', action: 'device', key: 'samsung' },
-      { label: 'Google Pixel', action: 'device', key: 'pixel' },
-      { label: 'Motorola', action: 'device', key: 'motorola' },
-      { label: 'iPad / Tablet', action: 'device', key: 'ipad' },
-      { label: 'Smartwatch', action: 'device', key: 'watch' },
-      { label: 'Computer / Console / Other', action: 'device', key: 'custom' }
-    ]);
-  }
-  function priceRepairs(key) {
-    priceCtx.deviceKey = key;
-    state = 'price_repair';
-    bot('And what does your ' + PRICES[key].label + ' need?');
-    chips([
-      { label: 'Screen', action: 'repair', key: 'screen' },
-      { label: 'Battery', action: 'repair', key: 'battery' },
-      { label: 'Back glass', action: 'repair', key: 'backglass' },
-      { label: 'Charging port', action: 'repair', key: 'chargeport' },
-      { label: 'Something else / not sure', action: 'repair', key: 'custom' }
-    ]);
-  }
-  function priceAnswer() {
-    var p = PRICES[priceCtx.deviceKey];
-    var r = priceCtx.repairKey;
-    state = 'idle';
-    if (r === 'custom') {
-      bot("For that one there's no set starting price — custom repairs are quoted individually, and your estimated repair price is always quoted upfront before any work and confirmed after diagnostics. Diagnostics are included in the $35 visit fee, even if we have to open the device to identify the problem.");
-    } else {
-      bot(p.label + ' ' + REPAIRS[r].toLowerCase() + ' repairs start at $' + p[r] + ' — parts and labor included. Your estimated repair price is confirmed for your exact model after diagnostics. A separate visit fee (due at booking, non-refundable) covers the trip out — $15 for a known repair, or $35 if a diagnosis is needed first.');
-      lead.deviceLabel = p.label;
-      lead.repairLabel = REPAIRS[r];
-      lead.startPrice = p[r];
-      lead.deviceType = p.deviceType;
-    }
-    chips([
-      { label: 'Book this repair', action: 'book' },
-      { label: 'Another price', action: 'price' },
-      { label: 'Talk to a person', action: 'faq', faq: 'human' }
-    ]);
-  }
-
-  /* ---------------- booking / lead flow ---------------- */
-  function startLead() {
-    state = 'lead_name';
-    lead = lead || {};
-    bot("Great — I'll take a few details and Austin will reach out to confirm your appointment. What's your name?");
-  }
-  function leadPhone() {
-    state = 'lead_phone';
-    bot('Thanks, ' + lead.name.split(' ')[0] + ". What's the best phone number to reach you? (We text confirmations.)");
-  }
-  function leadEmail() {
-    state = 'lead_email';
-    bot('And an email for your receipt and warranty records? You can skip this one.');
-    chips([{ label: 'Skip email', action: 'skip_email' }]);
-  }
-  function leadDevice() {
-    if (lead.deviceLabel) { leadIssue(); return; }
-    state = 'lead_device';
-    bot('What device is it, and what model if you know it? (e.g. "iPhone 13 Pro Max", "Dell laptop")');
-  }
-  function leadIssue() {
-    if (lead.repairLabel) { leadConfirm(); return; }
-    state = 'lead_issue';
-    bot("What's going on with it? A sentence or two is plenty.");
-  }
-  function leadConfirm() {
-    state = 'lead_confirm';
-    var lines = 'Here\'s what I\'ll send to Austin:\n' +
-      '\u2022 Name: ' + lead.name + '\n' +
-      '\u2022 Phone: ' + lead.phone + '\n' +
-      (lead.email ? '\u2022 Email: ' + lead.email + '\n' : '') +
-      '\u2022 Device: ' + (lead.deviceLabel || lead.deviceText || 'Not specified') + '\n' +
-      '\u2022 Issue: ' + (lead.issueText || lead.repairLabel || 'Repair') +
-      (lead.startPrice ? ' (starting price quoted: $' + lead.startPrice + ')' : '') +
-      '\n\nOne last step \u2014 sending this in means all three of these are true:\n' +
-      '\u2022 I agree to the Terms and Conditions of service.\n' +
-      '\u2022 I understand the visit fee — $15 if my repair is already known, or $35 if my device needs a full diagnosis — covers the trip to me, is due at scheduling, and is non-refundable.\n' +
-      '\u2022 I authorize Austin\'s Tech Repair Group to perform the requested diagnostic and repair work on my device.\n\n' +
-      'Tap "I agree \u2014 send request" to confirm all three and send this in.';
-    bot(lines);
-    chips([
-      { label: 'I agree \u2014 send request', action: 'send_lead' },
-      { label: 'Start over', action: 'restart' }
-    ]);
-  }
-  function getClient(cb) {
-    if (window.supabase && window.supabase.createClient) {
-      try { cb(window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)); return; } catch (e) { /* fall through */ }
-    }
-    cb(null);
-  }
-  /* SITE_TURNSTILE_2026_11_02 (staged): the chat lead is a public
-   * tickets insert, so it is gated like the other forms — widget
-   * token first, server confirmation via the verify-turnstile Edge
-   * Function second, and only then does doSendLead() run. Nothing is
-   * written and no FormSubmit alert fires before the gate passes.
-   * On a failed or missing check the confirm chips are re-shown so
-   * the customer can complete the check and tap send again. */
-  function sendLead() {
-    var tsEl = el('ts-chat');
-    var tsTok = window.atrTurnstile ? window.atrTurnstile.token(tsEl) : '';
-    if (!tsTok) {
-      if (window.atrTurnstile) window.atrTurnstile.mount(tsEl);
-      bot('One quick human check first — it sits right under the message box below. Complete it, then tap "I agree — send request" again.');
-      chips([
-        { label: 'I agree \u2014 send request', action: 'send_lead' },
-        { label: 'Start over', action: 'restart' }
-      ]);
-      return;
-    }
-    state = 'sending';
-    bot('Sending…');
-    window.atrTurnstile.verify(tsTok, null, function (ok) {
-      window.atrTurnstile.reset(tsEl);
-      if (!ok) {
-        state = 'lead_confirm';
-        bot('That human check did not pass. Please complete it again under the message box, then tap "I agree — send request".');
-        chips([
-          { label: 'I agree \u2014 send request', action: 'send_lead' },
-          { label: 'Start over', action: 'restart' }
-        ]);
-        return;
-      }
-      doSendLead();
-    });
-  }
-
-  function doSendLead() {
-    state = 'sending';
-    var issue = 'Chat request — ' + (lead.deviceLabel || lead.deviceText || 'Device') + ': ' +
-      (lead.issueText || lead.repairLabel || 'Repair') +
-      (lead.startPrice ? ' (starting price quoted in chat: $' + lead.startPrice + ')' : '');
-    var row = {
-      customer_name: lead.name,
-      customer_phone: lead.phone,
-      customer_email: lead.email || null,
-      device_type: lead.deviceType || 'Other',
-      brand: null,
-      model: lead.deviceText || lead.deviceLabel || null,
-      issue: issue,
-      source: 'website-chat',
-      terms_accepted: !!lead.consentGiven,
-      dispatch_acknowledged: !!lead.consentGiven,
-      work_auth_accepted: !!lead.consentGiven,
-      marketing_opt_in: false
-    };
-    try {
-      fetch(ALERT_ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({ kind: 'service-request', subject: 'New chat lead: ' + row.device_type + ' — ' + (lead.repairLabel || 'Repair'), fields: { Name: row.customer_name, Phone: row.customer_phone, Email: row.customer_email || '(not provided)', Device: row.model || row.device_type, Issue: issue } })
-      }).catch(function () {});
-    } catch (e) { /* alert is best-effort; the database insert is the record */ }
-    getClient(function (client) {
-      if (!client) { leadFailed(); return; }
-      /* GUEST_FOR_EVERY_TICKET_2026_11_09: a chat lead is a
-       * ticket like any other, so its guest record is found or
-       * created first (the shared helper lives in atr-forms.js)
-       * and linked on the row. The helper missing or failing
-       * changes nothing — the lead inserts exactly as before. */
-      var doInsert = function () {
-      client.from('tickets').insert(row).then(function (res) {
-        if (res.error) { leadFailed(); return; }
-        state = 'done';
-        bot("You're in, " + lead.name.split(' ')[0] + '! Your request is in our system and Austin will reach out shortly at ' + lead.phone + ' to confirm your appointment. If it\'s urgent, call or text ' + PHONE_DISPLAY + '.');
-        chips([
-          { label: 'Get another price', action: 'price' },
-          { label: 'Done', action: 'close' }
-        ]);
-      }).catch(leadFailed);
-      };
-      if (window.atrEnsureGuestRecord) {
-        window.atrEnsureGuestRecord(client, { name: row.customer_name, email: row.customer_email, phone: row.customer_phone }).then(function (guestId) {
-          if (guestId) row.customer_id = guestId;
-          doInsert();
-        }, doInsert);
-      } else { doInsert(); }
-    });
-  }
-  function leadFailed() {
-    state = 'idle';
-    bot("That didn't go through — sorry about that. Please try the full Service Request form on our Repair page, or call/text " + PHONE_DISPLAY + " and we'll take it from there.");
-    mainChips();
-  }
-
-  /* ---------------- free-text intents ---------------- */
-  function intent(text) {
-    var t = ' ' + text.toLowerCase() + ' ';
-    function has() { for (var i = 0; i < arguments.length; i++) { if (t.indexOf(arguments[i]) > -1) return true; } return false; }
-    if (has('warranty', 'guarantee', 'covered')) return 'warranty';
-    if (has('dispatch')) return 'dispatch';
-    if (has('diagnos', 'whats wrong', "what's wrong", 'figure out')) return 'diagnostics';
-    if (has('membership', 'atr one', 'member', 'subscription')) return 'membership';
-    if (has('where', 'come to', 'location', 'area', 'travel', 'mobile')) return 'area';
-    if (has('hour', 'open', 'when')) return 'hours';
-    if (has('part')) return 'parts';
-    if (has('how long', 'take', 'fast', 'same day', 'same-day')) return 'howlong';
-    if (has('human', 'person', 'call', 'phone number', 'talk to', 'real')) return 'human';
-    if (has('what do you', 'services', 'do you fix', 'do you repair', 'offer')) return 'services';
-    if (has('price', 'cost', 'how much', 'quote', 'screen', 'battery', 'charge port', 'charging')) return 'PRICE';
-    if (has('book', 'schedule', 'appointment', 'fix my', 'repair my', 'need a repair')) return 'BOOK';
-    if (has('hello', 'hi ', 'hey', ' hi', 'yo ')) return 'HELLO';
-    return null;
-  }
-  function validPhone(p) { return p.replace(/\D/g, '').length >= 10; }
-  function validEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
-
-  function handleChip(c) {
-    addMsg(c.label, 'user');
-    miss = 0;
-    if (c.action === 'close') { toggle(false); return; }
-    if (c.action === 'restart') { lead = {}; priceCtx = {}; state = 'idle'; bot('No problem — starting fresh.'); mainChips(); return; }
-    if (c.action === 'price') { priceCtx = {}; priceDevices(); return; }
-    if (c.action === 'book') { if (!priceCtx) priceCtx = {}; startLead(); return; }
-    if (c.action === 'faq') { bot(FAQ[c.faq]); state = 'idle'; mainChips(); return; }
-    if (c.action === 'device') {
-      if (c.key === 'samsung') {
-        state = 'price_samsung';
-        bot('Which Galaxy line?');
-        chips([
-          { label: 'Galaxy S series', action: 'device', key: 'samsung_s' },
-          { label: 'Galaxy A / M / F series', action: 'device', key: 'samsung_a' },
-          { label: 'Fold / Flip', action: 'device', key: 'samsung_fold' }
-        ]);
-        return;
-      }
-      if (c.key === 'custom') {
-        priceCtx = {};
-        state = 'idle';
-        bot("Computers, consoles, and other devices are quoted individually — your estimated repair price is always quoted upfront and confirmed after diagnostics. Diagnostics are included in the $35 visit fee, even if disassembly or deep board-level work is required to identify the problem.");
-        chips([
-          { label: 'Book a repair', action: 'book' },
-          { label: 'Talk to a person', action: 'faq', faq: 'human' }
-        ]);
-        return;
-      }
-      priceRepairs(c.key);
-      return;
-    }
-    if (c.action === 'repair') { priceCtx.repairKey = c.key; priceAnswer(); return; }
-    if (c.action === 'skip_email') { lead.email = null; leadDevice(); return; }
-    if (c.action === 'send_lead') { lead.consentGiven = true; sendLead(); return; }
-  }
-
-  function handleText(text) {
-    addMsg(text, 'user');
-    var t = text.trim();
-    if (!t) return;
-    /* SITE_AUDIT_FIXES_2026_10_30 (D7): a typed escape always works
-       mid-flow, so a customer is never trapped in a guided step. */
-    var lt = t.toLowerCase();
-    if (state !== 'idle' && state !== 'sending' &&
-        (lt === 'menu' || lt === 'main menu' || lt === 'back to menu' || lt === 'restart' ||
-         lt === 'start over' || lt === 'cancel' || lt === 'never mind' || lt === 'nevermind' ||
-         lt === 'quit' || lt === 'exit')) {
-      lead = {}; priceCtx = {}; state = 'idle';
-      bot('No problem \u2014 back to the main menu. Ask me anything, or tap one of these:');
-      mainChips();
-      return;
-    }
-    switch (state) {
-      case 'lead_name':
-        lead.name = t; leadPhone(); return;
-      case 'lead_phone':
-        if (!validPhone(t)) {
-          if (lead.phoneRetry) { bot("That still doesn't look like a full number. No worries — call or text us at " + PHONE_DISPLAY + " instead, or use the Repair page form and we'll take it from there."); state = 'idle'; mainChips(); return; }
-          lead.phoneRetry = true;
-          bot('Hmm, that doesn\'t look like a full phone number — mind checking it? Example format: (937) 555-0100.');
-          return;
-        }
-        lead.phone = t; leadEmail(); return;
-      case 'lead_email':
-        if (!validEmail(t)) { bot('That email looks off — try again, or tap "Skip email".'); chips([{ label: 'Skip email', action: 'skip_email' }]); return; }
-        lead.email = t; leadDevice(); return;
-      case 'lead_device':
-        lead.deviceText = t; leadIssue(); return;
-      case 'lead_issue':
-        lead.issueText = t; leadConfirm(); return;
-      case 'price_device':
-      case 'price_samsung':
-      case 'price_repair': {
-        /* D7: a real question typed mid-flow gets its answer inline;
-           the flow stays right where it was. */
-        var qi = intent(t);
-        if (qi && FAQ[qi]) {
-          bot(FAQ[qi]);
-          bot('Back to your price \u2014 tap one of the options above for that step whenever you are ready, or type "menu" to start over.');
-          return;
-        }
-        bot('Tap one of the options above for that step \u2014 it keeps me from quoting the wrong device. You can also type a question (like "hours" or "warranty") and I will answer it, or type "menu" to start over.');
-        return;
-      }
-      case 'lead_confirm': {
-        var ci = intent(t);
-        if (ci && FAQ[ci]) {
-          bot(FAQ[ci]);
-          bot('Your request is still ready above \u2014 tap "I agree \u2014 send request" to send it, or "Start over" to redo it.');
-          return;
-        }
-        bot('Tap "I agree \u2014 send request" above to send it in, or "Start over" to redo it. You can also type a question first, or "menu" to exit.');
-        return;
-      }
-      case 'sending':
-        return;
-      default: {
-        var i = intent(t);
-        if (i === 'PRICE') { miss = 0; priceCtx = {}; priceDevices(); return; }
-        if (i === 'BOOK') { miss = 0; startLead(); return; }
-        if (i === 'HELLO') { miss = 0; bot('Hi there! Great to meet you.'); mainChips(); return; }
-        if (i && FAQ[i]) { miss = 0; bot(FAQ[i]); mainChips(); return; }
-        miss++;
-        if (miss >= 2) {
-          miss = 0;
-          bot("I don't want to guess wrong on that one. Best bet is a person: call or text " + PHONE_DISPLAY + ", or use the full Service Request form on our Repair page. Meanwhile, here's what I can do:");
-          mainChips();
-        } else {
-          bot("Let me make sure I point you the right way — here's what I can help with:");
-          mainChips();
-        }
-        return;
-      }
-    }
-  }
-
-  function toggle(open) {
-    if (open) {
-      panel.classList.add('open');
-      btn.style.display = 'none';
-      /* SITE_TURNSTILE_2026_11_02 (staged): render the human check
-       * under the message box as soon as the panel opens, so a token
-       * is ready by the time a lead is ready to send. */
-      if (window.atrTurnstile) window.atrTurnstile.mount(el('ts-chat'));
-      if (!started) { started = true; greet(); }
-      setTimeout(function () { input.focus(); }, 60);
-    } else {
-      panel.classList.remove('open');
-      btn.style.display = 'flex';
-    }
-  }
-
-  document.addEventListener('DOMContentLoaded', function () {
-    body = el('atr-chat-body'); input = el('atr-chat-text'); panel = el('atr-chat-panel'); btn = el('atr-chat-btn');
-    btn.addEventListener('click', function () { toggle(true); });
-    el('atr-chat-close').addEventListener('click', function () { toggle(false); });
-    el('atr-chat-form').addEventListener('submit', function (e) {
-      e.preventDefault();
-      var v = input.value;
-      input.value = '';
-      handleText(v);
-    });
-  });
-})();
-</script>
-<!-- ==================== /ATR CHAT AGENT ==================== -->
+<!-- GUEST_ASSISTANT_2026_11_10 (owner, Nov 10, 2026): the floating
+     chat bubble and panel that used to live here are retired — the
+     assistant now lives in the signed-in guest's account Messages
+     (the GUEST_ASSISTANT section of the account module below). The
+     .r2r-band / .wb-* rules that shared this style block stay. -->
 
 <!-- ==================== SELF-SERVICE PASSWORD RESET ==================== -->
 <style>
@@ -6247,6 +5769,7 @@
     loadTicketParts(t);
     loadTicketCharges(t);
     loadThreadMessages(t);
+    paintAssistantBar(); /* GUEST_ASSISTANT_2026_11_10: the bar belongs to the general conversation only */
     markThreadRead(t); /* CUSTOMER_INBOX_2026_11_05: opening a conversation marks it read */
   }
   function showInboxList() {
@@ -6451,9 +5974,10 @@
         if (!rows.length) { box.innerHTML = '<p class="acct-muted">' + (t.__general ? 'No messages yet \u2014 write us here any time.' : 'No messages yet \u2014 write us here any time about this repair.') + '</p>'; return; }
         box.innerHTML = rows.map(function (m) {
           var mine = m.sender === 'customer';
-          return '<div class="acct-msg ' + (mine ? 'acct-msg-me' : 'acct-msg-shop') + '"><span class="acct-msg-who">' + (mine ? 'You' : "Austin's Tech Repair Group") + '</span>' + escX(m.message || '') + '</div>';
+          return '<div class="acct-msg ' + (mine ? 'acct-msg-me' : 'acct-msg-shop') + '"><span class="acct-msg-who">' + (mine ? 'You' : assistantWhoLabel(m.sender)) + '</span>' + escX(m.message || '') + '</div>';
         }).join('');
         box.scrollTop = box.scrollHeight;
+        if (t.__general) paintAssistantBar(); /* GUEST_ASSISTANT_2026_11_10 */
       })
       .catch(function () { box.innerHTML = '<p class="acct-muted">Messages couldn\'t load \u2014 try again in a moment.</p>'; });
   }
@@ -6533,7 +6057,7 @@
       return;
     }
     list.innerHTML = convos.map(function (c) {
-      var preview = (c.last.sender === 'customer' ? 'You: ' : '') + (c.last.message || '');
+      var preview = (c.last.sender === 'customer' ? 'You: ' : (c.last.sender === 'bot' ? 'Assistant: ' : '')) + (c.last.message || '');
       if (preview.length > 90) preview = preview.slice(0, 90) + '\u2026';
       return '<button type="button" class="acct-convo-card" data-convo="' + (c.general ? '__general' : c.t.id) + '">' +
         '<span class="acct-ticket-top"><strong>' + escX(c.general ? 'General conversation' : ticketDevice(c.t)) + '</strong>' +
@@ -6552,6 +6076,7 @@
   }
   function loadInbox(cust) {
     if (!sb || !cust) return;
+    loadAssistantState(cust); /* GUEST_ASSISTANT_2026_11_10: the escalation marker decides assistant phase vs associate phase */
     inboxSettled = false; armWatchdog('messages'); /* ACCOUNT_FIX_PASS_3_2_2026_11_06 ITEM D */
     /* ACCOUNT_FIX_PASS_3_2_2026_11_06: seed the general conversation's
        read marker from its local copy (see GENERAL_TICKET above). */
@@ -6642,6 +6167,392 @@
     } catch (e) { /* best-effort only — a failed marker never breaks the thread */ }
   }
 
+  /* ---------- GUEST_ASSISTANT_2026_11_10 (owner, Nov 10, 2026) ----------
+     "Auto reply at first so guests aren't seeing an empty message
+     after they send one, saying an associate member will be with you
+     shortly. And then… it says I may be able to help — that is where
+     our chat bot lives… in that messaging system and their account…
+     We don't see those messages that they're having with the AI until
+     they request to speak to an associate."
+     The floating website chat is retired (its block above the account
+     module is gone). The assistant lives HERE, in the general
+     conversation:
+       1. the guest's first message is answered at once by an
+          automatic reply (sender 'auto'): thanks, and an associate
+          will be with you shortly;
+       2. then the assistant (sender 'bot') offers "I may be able to
+          help" — the retired widget's own brain (PRICES / REPAIRS /
+          FAQ / intent, moved verbatim below) answers questions and
+          checks prices right in the thread;
+       3. the guest reaches a live associate two ways: the "Speak to
+          an associate" button in the thread, or typing it
+          (assistantEscalationPhrase). Either writes the
+          guest_chat_escalations marker (sql/guest-assistant.sql),
+          fires the team an alert, and from then on this conversation
+          runs exactly as it always has — staff reply in the portal's
+          Guest Chat, every message alerts the shop.
+     PRIVACY GATE: during the assistant phase NOTHING reaches staff —
+     in particular sendGeneralMessage does NOT fire its form-alert
+     email copy for those messages (that email was the leak this
+     redesign removes), and the portal hides the conversation until
+     the marker exists.
+     FAIL OPEN: if the marker table is unreachable (its SQL has not
+     run), assistantLegacy turns on and the conversation behaves as it
+     did before this redesign — messages alert the shop, the portal
+     shows the thread — because a hidden real message is the worst
+     outcome here. Ticket threads never pass through any of this. */
+  var ASSISTANT_PHONE = '(937) 280-6243';
+  var ASSISTANT_AUTO_TEXT = "Thanks for messaging us! Your message is in, and an associate will be with you shortly.";
+  var ASSISTANT_OFFER_TEXT = "I may be able to help in the meantime \u2014 I can check a price, or answer questions about diagnostics, fees, and our warranty. What do you need?";
+  var ASSISTANT_CONNECTED_TEXT = "You're connected \u2014 we've let the team know you'd like to speak to an associate. An associate will reply right here shortly, and you can keep typing in the meantime.";
+  var ASSISTANT_BOOK_TEXT = "Booking lives right here in your account \u2014 open Schedule a repair and your request comes to us with your details already attached. Is there anything else I can answer first?";
+  var ASSISTANT_PRIVACY_NOTE = "You're chatting with our automated assistant. This chat stays private unless you ask for an associate \u2014 tap Speak to an associate any time and a person takes over.";
+  var assistantEscalated = false;  /* the marker exists: the team is in */
+  var assistantLegacy = false;     /* marker table unreachable: pre-redesign behavior */
+  var assistantMuted = false;      /* legacy handoff done: the assistant steps back */
+  var assistantChipsNow = [];
+  var assistantFlow = { state: 'idle', priceCtx: null, miss: 0 };
+
+  /* The retired widget's brain, moved verbatim — the same prices and
+     the same answers it gave on the website, now in Messages. */
+  var ASSISTANT_PRICES = {
+    iphone:      { label: 'iPhone',              deviceType: 'Phone',        screen: 89,  battery: 68, backglass: 49, chargeport: 59 },
+    samsung_s:   { label: 'Samsung Galaxy S',    deviceType: 'Phone',        screen: 176, battery: 67, backglass: 49, chargeport: 59 },
+    samsung_a:   { label: 'Samsung Galaxy A/M/F', deviceType: 'Phone',       screen: 67,  battery: 39, backglass: 45, chargeport: 49 },
+    samsung_fold:{ label: 'Samsung Fold / Flip', deviceType: 'Phone',        screen: 349, battery: 59, backglass: 59, chargeport: 69 },
+    pixel:       { label: 'Google Pixel',        deviceType: 'Phone',        screen: 100, battery: 39, backglass: 49, chargeport: 59 },
+    motorola:    { label: 'Motorola',            deviceType: 'Phone',        screen: 69,  battery: 39, backglass: 45, chargeport: 49 },
+    ipad:        { label: 'iPad / Tablet',       deviceType: 'Tablet',       screen: 99,  battery: 79, backglass: 99, chargeport: 89 },
+    watch:       { label: 'Smartwatch',          deviceType: 'Smartwatch',   screen: 119, battery: 49, backglass: 119, chargeport: 89 }
+  };
+  var ASSISTANT_REPAIRS = { screen: 'Screen', battery: 'Battery', backglass: 'Back glass', chargeport: 'Charging port' };
+  var ASSISTANT_FAQ = {
+    warranty: 'Every standard repair includes our 1-Year Limited Warranty — parts and labor — for the repair on your invoice. New physical damage, liquid damage, or work by another shop is not covered. Covered claim? There is no second visit fee for it.',
+    dispatch: 'There is a visit fee for a mobile visit: $15 when your repair is already known, or $35 if your device needs a full diagnosis. It covers travel to you, it is due when you book, and it is non-refundable — separate from the repair price, never credited toward a repair.',
+    diagnostics: 'Estimates are free. Diagnostics are included in the $35 visit fee — even if we have to open your device or run deep board-level diagnostics to identify the problem, there is no extra diagnostic charge.',
+    area: 'We are a mobile service — we come to you in the Miami Valley (Xenia, Dayton, and surrounding areas). Most repairs are finished in a single visit, right at your home or office.',
+    parts: 'Parts are ordered by us through our suppliers and delivered to us — we bring them to your install visit. Because parts are ordered for your specific job, the parts cost is paid upfront before we order, and those parts belong to you.',
+    howlong: 'Most common repairs (screens, batteries, charge ports) are finished in a single visit once your part is in. If a job needs bench or board-level work, we will tell you the timeline upfront before you commit.',
+    /* SITE_ATRONE_TIERS_2026_11_02 */
+    /* SITE_ATRONE_NAMES_2026_11_02 */
+    membership: 'ATR One membership: $9.99/mo Individual (1 device), $19.99/mo Family (5 devices), $49.99/mo Business, $99.99/mo Business Pro. Members get 20% off repairs and 25% off accessories on Individual and Family, 45% off repairs and 55% off accessories on Business, and 50% off repairs and 65% off accessories on Business Pro, plus wholesale parts pricing, a free screen protector installed with every repair, free priority shipping on parts, priority scheduling, same-day diagnostics, free remote support, and 14 days to exchange or return accessories bought from us &mdash; every accessory carries its manufacturer&rsquo;s warranty, and we add 90 days on top of it. Business and Business Pro memberships require your business EIN at signup. On a business plan, we come out and set up your point of sale — Square, cash drawers, your systems; we help with the setup, we do not process payments. Points: every completed repair earns points — 1 point per $1 on ATR One Free, 5 points per $1 on ATR One Plus Individual and Family, and 10 points per $1 on ATR One Plus Business and Business Pro; 100 points = $5.',
+    services: 'We repair phones, tablets, computers & laptops, game consoles, and smartwatches — including board-level diagnostics most shops will not touch. We also build websites for local businesses, install home and small-business networks and Wi-Fi equipment, and run internet cabling. We do not repair automotive electronics, vintage radios, home stereo systems, major appliances, or medical devices or equipment, and we are not an internet service provider (though we can recommend one and help you get set up).',
+    hours: 'Our hours are Monday\u2013Friday 5:30 AM\u201310:00 PM, Saturday 8:30 AM\u20139:00 PM, and Sunday 9:00 AM\u20135:00 PM. We book by appointment \u2014 send a request here or through the Repair page and we will confirm your time. For anything urgent, call or text ' + ASSISTANT_PHONE + '.',
+    human: 'No problem — you can call or text Austin directly at ' + ASSISTANT_PHONE + '. Or tap "Book a repair" and leave your number here, and he will reach out to you.'
+  };
+  function assistantIntent(text) {
+    var t = ' ' + text.toLowerCase() + ' ';
+    function has() { for (var i = 0; i < arguments.length; i++) { if (t.indexOf(arguments[i]) > -1) return true; } return false; }
+    if (has('warranty', 'guarantee', 'covered')) return 'warranty';
+    if (has('dispatch')) return 'dispatch';
+    if (has('diagnos', 'whats wrong', "what's wrong", 'figure out')) return 'diagnostics';
+    if (has('membership', 'atr one', 'member', 'subscription')) return 'membership';
+    if (has('where', 'come to', 'location', 'area', 'travel', 'mobile')) return 'area';
+    if (has('hour', 'open', 'when')) return 'hours';
+    if (has('part')) return 'parts';
+    if (has('how long', 'take', 'fast', 'same day', 'same-day')) return 'howlong';
+    if (has('human', 'person', 'call', 'phone number', 'talk to', 'real')) return 'human';
+    if (has('what do you', 'services', 'do you fix', 'do you repair', 'offer')) return 'services';
+    if (has('price', 'cost', 'how much', 'quote', 'screen', 'battery', 'charge port', 'charging')) return 'PRICE';
+    if (has('book', 'schedule', 'appointment', 'fix my', 'repair my', 'need a repair')) return 'BOOK';
+    if (has('hello', 'hi ', 'hey', ' hi', 'yo ')) return 'HELLO';
+    return null;
+  }
+
+  /* The escalation phrases (owner: "or they can type speak to
+     associate"): speak / talk / chat to or with an associate, a
+     person, a human, someone, a representative; connect me to…;
+     get me a…; live associate / person / help; real or actual
+     person / associate / human; "associate please". Checked BEFORE
+     the answer brain runs, so asking for a person always wins. */
+  var ASSISTANT_ESCALATION_RES = [
+    /\b(speak|talk|chat)\s+(to|with)\s+(an?\s+|the\s+)?(associate|person|human|someone|representative|rep)\b/,
+    /\bconnect\s+(me\s+)?(to|with)\s+(an?\s+|the\s+)?(associate|person|human|someone|representative)\b/,
+    /\bget\s+(me\s+)?(an?\s+|the\s+)?(associate|person|human|representative)\b/,
+    /\blive\s+(associate|person|help|support)\b/,
+    /\b(real|actual)\s+(person|associate|human)\b/,
+    /\bhuman\s+(associate|person|please)\b/,
+    /\bassociate\s+please\b/
+  ];
+  function assistantEscalationPhrase(text) {
+    var t = ' ' + String(text || '').toLowerCase().replace(/\s+/g, ' ') + ' ';
+    for (var i = 0; i < ASSISTANT_ESCALATION_RES.length; i++) {
+      if (ASSISTANT_ESCALATION_RES[i].test(t)) return true;
+    }
+    return false;
+  }
+
+  function assistantWhoLabel(sender) {
+    if (sender === 'customer') return 'You';
+    if (sender === 'bot') return 'Assistant';
+    return "Austin's Tech Repair Group"; /* 'tech' and the 'auto' reply both speak as the shop */
+  }
+
+  function assistantInsert(sender, text) {
+    if (!sb || !currentCust) return Promise.resolve(false);
+    return sb.from('messages').insert({ ticket_id: null, customer_id: currentCust.id, sender: sender, message: text })
+      .then(function (res) { return !res.error; })
+      .catch(function () { return false; });
+  }
+
+  function loadAssistantState(cust) {
+    if (!sb || !cust) return;
+    sb.from('guest_chat_escalations').select('customer_id, requested_at, source')
+      .eq('customer_id', cust.id).limit(1)
+      .then(function (res) {
+        if (res.error) throw res.error;
+        assistantLegacy = false;
+        assistantEscalated = !!(res.data && res.data.length);
+        paintAssistantBar();
+      })
+      .catch(function () {
+        /* The marker table is not there (SQL not run yet): fail open
+           to the pre-redesign behavior rather than hiding anything. */
+        assistantLegacy = true;
+        assistantEscalated = false;
+        paintAssistantBar();
+      });
+  }
+
+  /* The escalation alert — the same insert-then-alert shape as
+     fireGeneralAlert, with its own subject: this is the moment a
+     human is being asked for. Best-effort, never awaited by callers
+     for its own sake. */
+  function fireAssociateAlert() {
+    if (!currentCust || typeof fetch !== 'function') return;
+    try {
+      fetch(SUPABASE_URL + '/functions/v1/form-alert', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+          'apikey': SUPABASE_ANON_KEY
+        },
+        body: JSON.stringify({
+          kind: 'contact',
+          subject: (currentCust.name || 'A guest') + ' would like to speak to an associate',
+          rows: [
+            ['Name', currentCust.name || '(not provided)'],
+            ['Email', currentCust.email || '(not provided)'],
+            ['Phone', currentCust.phone || '(not provided)'],
+            ['Message', 'This guest asked to speak to a live associate from their account Messages. Their conversation is now open in the Associate Hub, under Guest Chat.']
+          ]
+        })
+      }).catch(function () { /* alert is best-effort; the escalation marker is the record */ });
+    } catch (e) { /* ignore */ }
+  }
+
+  function assistantEscalate(source, cb) {
+    function finish() { if (cb) cb(); }
+    if (!sb || !currentCust) { finish(); return; }
+    var row = {
+      customer_id: currentCust.id,
+      source: source === 'typed' ? 'typed' : 'button',
+      requested_at: new Date().toISOString()
+    };
+    sb.from('guest_chat_escalations').upsert(row, { onConflict: 'customer_id' })
+      .then(function (res) {
+        if (res.error) throw res.error;
+        assistantEscalated = true;
+        assistantChipsNow = [];
+        assistantInsert('auto', ASSISTANT_CONNECTED_TEXT).then(function () {
+          fireAssociateAlert();
+          paintAssistantBar();
+          finish();
+        });
+      })
+      .catch(function () {
+        /* FAIL OPEN: the marker could not be written (its SQL has
+           not run) — hand off the pre-redesign way instead: the shop
+           is emailed, the portal keeps showing the thread, and the
+           assistant steps back so the guest is talking to the team. */
+        assistantLegacy = true;
+        assistantMuted = true;
+        assistantChipsNow = [];
+        fireAssociateAlert();
+        assistantInsert('auto', ASSISTANT_CONNECTED_TEXT);
+        paintAssistantBar();
+        finish();
+      });
+  }
+
+  /* ---------- the assistant's turns (the widget's flow, in-thread) ---------- */
+  function assistantTurn(texts, chips) { return { texts: texts, chips: chips || [] }; }
+  function assistantMainChips() {
+    return [
+      { label: 'Get a price', action: 'price' },
+      { label: 'Diagnostics & fees', action: 'faq', faq: 'diagnostics' },
+      { label: 'Warranty', action: 'faq', faq: 'warranty' },
+      { label: 'ATR One membership', action: 'faq', faq: 'membership' }
+    ];
+  }
+  function assistantPriceDevices() {
+    assistantFlow.state = 'price_device';
+    return assistantTurn(['What kind of device is it?'], [
+      { label: 'iPhone', action: 'device', key: 'iphone' },
+      { label: 'Samsung Galaxy', action: 'device', key: 'samsung' },
+      { label: 'Google Pixel', action: 'device', key: 'pixel' },
+      { label: 'Motorola', action: 'device', key: 'motorola' },
+      { label: 'iPad / Tablet', action: 'device', key: 'ipad' },
+      { label: 'Smartwatch', action: 'device', key: 'watch' },
+      { label: 'Computer / Console / Other', action: 'device', key: 'custom' }
+    ]);
+  }
+  function assistantPriceRepairs(key) {
+    assistantFlow.priceCtx.deviceKey = key;
+    assistantFlow.state = 'price_repair';
+    return assistantTurn(['And what does your ' + ASSISTANT_PRICES[key].label + ' need?'], [
+      { label: 'Screen', action: 'repair', key: 'screen' },
+      { label: 'Battery', action: 'repair', key: 'battery' },
+      { label: 'Back glass', action: 'repair', key: 'backglass' },
+      { label: 'Charging port', action: 'repair', key: 'chargeport' },
+      { label: 'Something else / not sure', action: 'repair', key: 'custom' }
+    ]);
+  }
+  function assistantPriceAnswer() {
+    var f = assistantFlow;
+    var p = ASSISTANT_PRICES[f.priceCtx.deviceKey];
+    var r = f.priceCtx.repairKey;
+    f.state = 'idle';
+    var chips = [
+      { label: 'Book a repair', action: 'book' },
+      { label: 'Another price', action: 'price' },
+      { label: 'Speak to an associate', action: 'escalate' }
+    ];
+    if (r === 'custom') {
+      return assistantTurn(["For that one there's no set starting price \u2014 custom repairs are quoted individually, and your estimated repair price is always quoted upfront before any work and confirmed after diagnostics. Diagnostics are included in the $35 visit fee, even if we have to open the device to identify the problem."], chips);
+    }
+    return assistantTurn([p.label + ' ' + ASSISTANT_REPAIRS[r].toLowerCase() + ' repairs start at $' + p[r] + ' \u2014 parts and labor included. Your estimated repair price is confirmed for your exact model after diagnostics. A separate visit fee (due at booking, non-refundable) covers the trip out \u2014 $15 for a known repair, or $35 if a diagnosis is needed first.'], chips);
+  }
+  function assistantHandleChip(c) {
+    var f = assistantFlow;
+    f.miss = 0;
+    if (c.action === 'price') { f.priceCtx = {}; return assistantPriceDevices(); }
+    if (c.action === 'faq') { f.state = 'idle'; return assistantTurn([ASSISTANT_FAQ[c.faq]], assistantMainChips()); }
+    if (c.action === 'device') {
+      if (c.key === 'samsung') {
+        f.state = 'price_samsung';
+        return assistantTurn(['Which Galaxy line?'], [
+          { label: 'Galaxy S series', action: 'device', key: 'samsung_s' },
+          { label: 'Galaxy A / M / F series', action: 'device', key: 'samsung_a' },
+          { label: 'Fold / Flip', action: 'device', key: 'samsung_fold' }
+        ]);
+      }
+      if (c.key === 'custom') {
+        f.priceCtx = {};
+        f.state = 'idle';
+        return assistantTurn(["Computers, consoles, and other devices are quoted individually \u2014 your estimated repair price is always quoted upfront and confirmed after diagnostics. Diagnostics are included in the $35 visit fee, even if disassembly or deep board-level work is required to identify the problem."], [
+          { label: 'Book a repair', action: 'book' },
+          { label: 'Speak to an associate', action: 'escalate' }
+        ]);
+      }
+      return assistantPriceRepairs(c.key);
+    }
+    if (c.action === 'repair') { f.priceCtx.repairKey = c.key; return assistantPriceAnswer(); }
+    return assistantTurn([], assistantMainChips());
+  }
+  function assistantHandleText(text) {
+    var f = assistantFlow;
+    var t = (text || '').trim();
+    /* A typed escape always works mid-flow — nobody is trapped in a
+       guided step (the widget's rule, kept). */
+    var lt = t.toLowerCase();
+    if (f.state !== 'idle' &&
+        (lt === 'menu' || lt === 'main menu' || lt === 'back to menu' || lt === 'restart' ||
+         lt === 'start over' || lt === 'cancel' || lt === 'never mind' || lt === 'nevermind' ||
+         lt === 'quit' || lt === 'exit')) {
+      f.state = 'idle'; f.priceCtx = null;
+      return assistantTurn(['No problem \u2014 back to the main menu. Ask me anything, or tap one of these:'], assistantMainChips());
+    }
+    if (f.state === 'price_device' || f.state === 'price_samsung' || f.state === 'price_repair') {
+      /* A real question typed mid-flow gets its answer inline; the
+         flow stays right where it was (the widget's rule, kept). */
+      var qi = assistantIntent(t);
+      if (qi && ASSISTANT_FAQ[qi]) {
+        return assistantTurn([ASSISTANT_FAQ[qi], 'Back to your price \u2014 tap one of the options above for that step whenever you are ready, or type "menu" to start over.'], assistantChipsNow);
+      }
+      return assistantTurn(['Tap one of the options above for that step \u2014 it keeps me from quoting the wrong device. You can also type a question (like "hours" or "warranty") and I will answer it, or type "menu" to start over.'], assistantChipsNow);
+    }
+    var i = assistantIntent(t);
+    if (i === 'PRICE') { f.miss = 0; f.priceCtx = {}; return assistantPriceDevices(); }
+    if (i === 'BOOK') { f.miss = 0; return { book: true }; }
+    if (i === 'HELLO') { f.miss = 0; return assistantTurn(['Hi there! Great to meet you.'], assistantMainChips()); }
+    if (i && ASSISTANT_FAQ[i]) { f.miss = 0; return assistantTurn([ASSISTANT_FAQ[i]], assistantMainChips()); }
+    f.miss++;
+    if (f.miss >= 2) {
+      f.miss = 0;
+      return assistantTurn(["I don't want to guess wrong on that one. Best bet is a person: tap \"Speak to an associate\" below and an associate will pick this up, or call or text " + ASSISTANT_PHONE + ". Meanwhile, here's what I can do:"], assistantMainChips());
+    }
+    return assistantTurn(['Let me make sure I point you the right way \u2014 here\'s what I can help with:'], assistantMainChips());
+  }
+  function assistantDeliverTurn(turn, cb) {
+    if (!turn) { if (cb) cb(); return; }
+    if (turn.book) turn = assistantTurn([ASSISTANT_BOOK_TEXT], assistantMainChips());
+    var texts = turn.texts || [];
+    assistantChipsNow = turn.chips || [];
+    var chain = Promise.resolve();
+    texts.forEach(function (tx) {
+      chain = chain.then(function () { return assistantInsert('bot', tx); });
+    });
+    chain.then(function () { paintAssistantBar(); if (cb) cb(); });
+  }
+  function assistantChipTap(c) {
+    if (!sb || !currentCust || assistantEscalated || assistantMuted) return;
+    if (c.action === 'escalate') {
+      assistantEscalate('button', function () {
+        if (openTicket && openTicket.__general) loadThreadMessages(openTicket);
+      });
+      return;
+    }
+    /* The tap itself is a guest message in the stored thread — the
+       conversation reads the same for the guest now and for the
+       associate who picks it up after an escalation. */
+    assistantInsert('customer', c.label).then(function () {
+      if (c.action === 'book') {
+        assistantDeliverTurn({ book: true }, function () {
+          if (openTicket && openTicket.__general) loadThreadMessages(openTicket);
+        });
+        return;
+      }
+      assistantDeliverTurn(assistantHandleChip(c), function () {
+        if (openTicket && openTicket.__general) loadThreadMessages(openTicket);
+      });
+    });
+  }
+  function paintAssistantBar() {
+    var bar = $('acct-assistant-bar');
+    if (!bar) return;
+    if (!openTicket || !openTicket.__general) { bar.hidden = true; return; }
+    bar.hidden = false;
+    var note = $('acct-assistant-note'), chipsBox = $('acct-assistant-chips'), escBtn = $('acct-assistant-escalate');
+    if (assistantEscalated) {
+      if (note) note.textContent = "You're in with the team now \u2014 an associate will reply right here.";
+      if (chipsBox) chipsBox.innerHTML = '';
+      if (escBtn) escBtn.hidden = true;
+      return;
+    }
+    if (assistantMuted) {
+      if (note) note.textContent = "We've passed this to the team \u2014 an associate will reply right here.";
+      if (chipsBox) chipsBox.innerHTML = '';
+      if (escBtn) escBtn.hidden = true;
+      return;
+    }
+    if (note) note.textContent = ASSISTANT_PRIVACY_NOTE;
+    if (escBtn) escBtn.hidden = false;
+    if (chipsBox) {
+      chipsBox.innerHTML = '';
+      assistantChipsNow.forEach(function (c) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'acct-assistant-chip';
+        b.textContent = c.label;
+        b.addEventListener('click', function () { assistantChipTap(c); });
+        chipsBox.appendChild(b);
+      });
+    }
+  }
+
   /* ACCOUNT_FIX_PASS_3_2_2026_11_06: a general (no-repair) message
      also alerts the shop, the same insert-then-alert contract every
      form on this site follows: the public.messages row is the record
@@ -6679,11 +6590,49 @@
      both insert through here, so the payload can never drift. */
   function sendGeneralMessage(text, done) {
     if (!sb || !currentCust) { done(false); return; }
-    sb.from('messages').insert({ ticket_id: null, customer_id: currentCust.id, sender: 'customer', message: text })
+    var custId = currentCust.id;
+    /* GUEST_ASSISTANT_2026_11_10: this is still the ONE send path for
+       general messages — the payload is unchanged — but what follows
+       the send now depends on the phase. Associate phase (escalated,
+       or the legacy fail-open): the alert fires, exactly as before.
+       Assistant phase: NO alert (the privacy gate), and the
+       assistant answers — with the two-step opening on the guest's
+       first-ever message. */
+    var greetedKey = 'atr-assistant-greeted-' + custId;
+    var greeted = false;
+    try { greeted = !!window.localStorage.getItem(greetedKey); } catch (e) { greeted = false; }
+    function afterInsert() {
+      if (assistantEscalated || assistantLegacy) { fireGeneralAlert(text); done(true); return; }
+      if (assistantEscalationPhrase(text)) { assistantEscalate('typed', function () { done(true); }); return; }
+      if (!greeted) {
+        assistantInsert('auto', ASSISTANT_AUTO_TEXT).then(function () {
+          return assistantInsert('bot', ASSISTANT_OFFER_TEXT);
+        }).then(function () {
+          try { window.localStorage.setItem(greetedKey, new Date().toISOString()); } catch (e) { /* marker is best-effort */ }
+          assistantChipsNow = assistantMainChips();
+          paintAssistantBar();
+          done(true);
+        });
+        return;
+      }
+      assistantDeliverTurn(assistantHandleText(text), function () { done(true); });
+    }
+    sb.from('messages').insert({ ticket_id: null, customer_id: custId, sender: 'customer', message: text })
       .then(function (res) {
         if (res.error) { done(false); return; }
-        fireGeneralAlert(text);
-        done(true);
+        if (greeted) { afterInsert(); return; }
+        /* First-contact check: does any earlier general row exist
+           besides the one just sent? (The assistant's own rows count —
+           a thread that already has the opening is not a first
+           contact, marker or no marker.) */
+        sb.from('messages').select('id').eq('customer_id', custId).is('ticket_id', null).limit(2)
+          .then(function (q) {
+            if (!q.error && q.data && q.data.length > 1) {
+              greeted = true;
+              try { window.localStorage.setItem(greetedKey, new Date().toISOString()); } catch (e) { /* best-effort */ }
+            }
+            afterInsert();
+          }, function () { afterInsert(); });
       })
       .catch(function () { done(false); });
   }
@@ -6757,6 +6706,15 @@
         });
       });
     }
+    /* GUEST_ASSISTANT_2026_11_10: the Speak to an associate button is
+       wired here, with the composer, so it is live before any data
+       loads; paintAssistantBar() decides when it shows. */
+    var escBtn = $('acct-assistant-escalate');
+    if (escBtn) escBtn.addEventListener('click', function () {
+      assistantEscalate('button', function () {
+        if (openTicket && openTicket.__general) loadThreadMessages(openTicket);
+      });
+    });
   }
   function wireRepairs() {
     if (repairsWired) return; repairsWired = true;
