@@ -159,6 +159,11 @@
          same wizard — serviceKind is one of the eight service bubbles,
          ooHours is 1 or 2 (pure $25/hr). */
       mode: 'repair', serviceKind: '', ooHours: 0,
+      /* VIRTUAL_ONE_ON_ONE_2026_11_10: how the session happens —
+         '' (not picked), 'inperson', or 'virtual'. Picked early in
+         One-on-One mode (the How will we meet? tiles) and carried
+         into the ticket through atrGuidedSelection. */
+      ooPlace: '',
       /* COMPUTER_YEAR_2026_11_10 (owner, Nov 10, 2026): computers
          carry a year pick (make, model, then year — like searching
          for a vehicle; parts are listed by year). '' until picked;
@@ -226,7 +231,7 @@
          its year pick before Continue ('Not sure' counts). */
       var yearOk = repairState.mode === 'oneonone' || repairState.device !== 'Computer' || !!repairState.year;
       var ready = repairState.mode === 'oneonone'
-        ? !!(repairState.device && repairState.brand && modelOk && repairState.serviceKind && repairState.ooHours && repairState.atrOne)
+        ? !!(repairState.device && repairState.brand && modelOk && repairState.serviceKind && repairState.ooHours && repairState.atrOne && repairState.ooPlace)
         : !!(repairState.device && repairState.brand && modelOk && yearOk && repairState.issues.length && repairState.atrOne);
       cont.disabled = !ready;
     }
@@ -1002,6 +1007,10 @@
            hours, and the pure time price. */
         mode: repairState.mode || 'repair',
         serviceKind: repairState.serviceKind || '',
+        /* VIRTUAL_ONE_ON_ONE_2026_11_10: the How will we meet? pick,
+           read by atr-forms.js for the ticket text, the fee gates,
+           and the pay step. */
+        ooPlace: repairState.ooPlace || '',
         ooHours: repairState.ooHours || 0,
         ooTime: (repairState.ooHours || 0) * 25
       };
@@ -1067,6 +1076,31 @@
       }
     }
 
+    /* VIRTUAL_ONE_ON_ONE_2026_11_10: step 4 (the intake form) follows
+       the How will we meet? pick. A virtual booking keeps EVERY field
+       an in-person booking has — full contact and the service address
+       included, because the address feeds the guest record and a
+       session can switch to in person halfway (owner, Nov 10, 2026).
+       Only two things change: the $15 visit-fee acknowledgment steps
+       aside (virtual has no visit fee — owner ruling, same day), and
+       the date/time pick is labeled as what it is for a virtual
+       session — the session's day and start window, not a trip.
+       In-person (and repair) restores the standard form exactly. */
+    function applyVirtualFormEffects() {
+      var g = window.atrGuidedSelection || {};
+      var virtual = g.mode === 'oneonone' && g.ooPlace === 'virtual';
+      var disp = document.querySelector('input[name="dispatch_acknowledged"]');
+      var dispRow = disp ? disp.closest('label.atr-check') : null;
+      if (dispRow) dispRow.hidden = virtual;
+      var dateLbl = document.querySelector('label[for="sr-visit-date"]');
+      if (dateLbl) dateLbl.innerHTML = virtual ? 'Session date' : 'Preferred visit date';
+      var winLbl = document.querySelector('label[for="sr-arrival-window"]');
+      if (winLbl) winLbl.innerHTML = virtual
+        ? 'Session start time <span class="atr-optional">(we start your session inside this 2-hour window)</span>'
+        : 'Arrival window <span class="atr-optional">(we arrive within this 2-hour window)</span>';
+    }
+    window.atrApplyVirtualFormEffects = applyVirtualFormEffects;
+
     function goToRepairStep(stepNum) {
       var ids = { 1: 'step-device', 2: 'step-issue', 3: 'step-estimate', 4: 'step-contact' };
       document.querySelectorAll('.repair-step').forEach(function (s) { s.classList.remove('active'); });
@@ -1103,7 +1137,7 @@
          it applies here, at the brand/model/service step, because the
          device is always picked first. */
       if (stepNum === 2 && pendingOneOnOne) { pendingOneOnOne = false; setOneOnOneMode(true); }
-      if (stepNum === 4) prefillIntakeFromGuided();
+      if (stepNum === 4) { prefillIntakeFromGuided(); applyVirtualFormEffects(); }
     }
 
     function escapeHtml(str) {
@@ -1128,15 +1162,37 @@
       var time = h * 25;
       var priceEl = document.getElementById('oo-price');
       if (priceEl) priceEl.textContent = h ? ('$' + time) : 'Pick a time';
+      /* VIRTUAL_ONE_ON_ONE_2026_11_10: the summary note follows the
+         pick too — a virtual session has no visit fee to mention
+         (owner ruling, Nov 10, 2026). */
+      var note = document.getElementById('rf-summary-note');
+      if (note && repairState.mode === 'oneonone') {
+        note.textContent = repairState.ooPlace === 'virtual'
+          ? 'One-on-one help is $25 an hour. Virtual sessions have no visit fee \u2014 the first hour is paid when you book, and ATR One members pay nothing with their member key.'
+          : 'One-on-one help is $25 an hour, plus the $15 visit fee. ATR One Plus (paid) members pay no visit fee on covered devices.';
+      }
       var lines = document.getElementById('oo-lines');
       if (lines) {
-        lines.innerHTML =
-          (repairState.serviceKind ? (escapeHtml(repairState.serviceKind) + ' for your ' + escapeHtml([repairState.brand, repairState.model].filter(Boolean).join(' ') || repairState.device || 'device') + '<br>') : '') +
-          'One-on-one time $25 per hour' + (h ? (' \u2014 ' + h + (h === 1 ? ' hour' : ' hours') + ' $' + time) : '') + '<br>' +
-          'Visit fee $15<br>' +
-          (h ? ('<strong>Total $' + (15 + time) + ' \u2014 the $' + time + ' time plus the $15 visit fee</strong><br>') : '') +
-          'If your session runs longer, the extra time is settled at the visit at $25 an hour.<br>' +
-          'ATR One Plus (paid) members pay no visit fee on covered devices.';
+        if (repairState.ooPlace === 'virtual') {
+          /* VIRTUAL_ONE_ON_ONE_2026_11_10 (owner ruling, Nov 10,
+             2026): virtual skips the $15 visit fee — the total is
+             the time alone, the first hour paid at booking. */
+          lines.innerHTML =
+            (repairState.serviceKind ? (escapeHtml(repairState.serviceKind) + ' for your ' + escapeHtml([repairState.brand, repairState.model].filter(Boolean).join(' ') || repairState.device || 'device') + '<br>') : '') +
+            'Virtual \u2014 we meet on your screen, no trip<br>' +
+            'One-on-one time $25 per hour' + (h ? (' \u2014 ' + h + (h === 1 ? ' hour' : ' hours') + ' $' + time) : '') + '<br>' +
+            (h ? ('<strong>Total $' + time + ' \u2014 the first hour ($25) is paid when you book</strong><br>') : '') +
+            'If your session runs longer, the extra time is charged to your card on file at $25 an hour.<br>' +
+            'ATR One members: your member key makes virtual sessions free.';
+        } else {
+          lines.innerHTML =
+            (repairState.serviceKind ? (escapeHtml(repairState.serviceKind) + ' for your ' + escapeHtml([repairState.brand, repairState.model].filter(Boolean).join(' ') || repairState.device || 'device') + '<br>') : '') +
+            'One-on-one time $25 per hour' + (h ? (' \u2014 ' + h + (h === 1 ? ' hour' : ' hours') + ' $' + time) : '') + '<br>' +
+            'Visit fee $15<br>' +
+            (h ? ('<strong>Total $' + (15 + time) + ' \u2014 the $' + time + ' time plus the $15 visit fee</strong><br>') : '') +
+            'If your session runs longer, the extra time is settled at the visit at $25 an hour.<br>' +
+            'ATR One Plus (paid) members pay no visit fee on covered devices.';
+        }
       }
     }
     window.atrOoRender = ooRender;
@@ -1183,6 +1239,13 @@
     }
     function setOneOnOneMode(on) {
       repairState.mode = on ? 'oneonone' : 'repair';
+      /* VIRTUAL_ONE_ON_ONE_2026_11_10: the place pick belongs to the
+         mode — leaving the mode clears it, so a later repair booking
+         can never inherit a stale Virtual. */
+      if (!on && repairState.ooPlace) {
+        repairState.ooPlace = '';
+        document.querySelectorAll('[data-oo-place]').forEach(function (b) { b.classList.remove('selected'); });
+      }
       var card = document.querySelector('.repair-card');
       if (card) card.classList.toggle('oneonone-mode', on);
       var grid = document.getElementById('bk-repair-grid');
@@ -1242,6 +1305,18 @@
         btn.addEventListener('click', function () {
           repairState.ooHours = parseInt(btn.getAttribute('data-oo-hours'), 10) || 0;
           document.querySelectorAll('[data-oo-hours]').forEach(function (b) { b.classList.remove('selected'); });
+          btn.classList.add('selected');
+          ooRender(); rfRenderSummary(); rfGate();
+        });
+      });
+      /* VIRTUAL_ONE_ON_ONE_2026_11_10: the How will we meet? tiles.
+         One pick, changeable any time before Continue; the pick
+         re-renders the summary lines (the fee story differs) and
+         re-runs the gate. */
+      document.querySelectorAll('[data-oo-place]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          repairState.ooPlace = btn.getAttribute('data-oo-place') || '';
+          document.querySelectorAll('[data-oo-place]').forEach(function (b) { b.classList.remove('selected'); });
           btn.classList.add('selected');
           ooRender(); rfRenderSummary(); rfGate();
         });
@@ -2309,6 +2384,10 @@
       var ids = Object.keys(cart);
       var lines = ptsLines();
       if (cartCount) cartCount.textContent = cartQty();
+      /* HEADER_CART_BAG_2026_11_10: the header bag's badge rides the
+         same repaint — same count, hidden at zero. */
+      var bagCount = document.getElementById('cart-bag-count');
+      if (bagCount) { var bq = cartQty(); bagCount.textContent = bq; bagCount.hidden = bq === 0; }
       // #cart-total is always the amount the Square checkout will
       // charge: points-paid lines come off the cash bill entirely.
       if (cartTotal) {
@@ -2505,6 +2584,12 @@
     if (!window.__atrCartGlanceWired) {
       window.__atrCartGlanceWired = true;
       if (openBtn) openBtn.addEventListener('click', toggleCartGlance);
+      /* HEADER_CART_BAG_2026_11_10: the header bag (phones only,
+         styles.css) opens the same cart drawer as everything else —
+         this module's own openCart, the drawer the account Cart
+         section's Open cart row also opens. No second cart. */
+      var bagBtn = document.getElementById('cart-bag-btn');
+      if (bagBtn) bagBtn.addEventListener('click', function () { openCart(); });
       var cartGlanceView = document.getElementById('cart-glance-view');
       if (cartGlanceView) cartGlanceView.addEventListener('click', function () { closeCartGlance(); openCart(); });
       var cartGlanceCheckout = document.getElementById('cart-glance-checkout');
@@ -3897,6 +3982,8 @@ if ("serviceWorker" in navigator) {
     var membershipView = document.getElementById('acct-view-membership');
     /* MY_DEVICES_2026_11_06: the My Devices view joins the toggle set. */
     var devicesView = document.getElementById('acct-view-devices');
+    /* ATRG_CONNECT_2026_11_10: the ATRG Connect view joins the toggle set. */
+    var connectView = document.getElementById('acct-view-connect');
     if (!menuItems.length || !repairsView || !settingsView) return;
     acctMenuWired = true;
     window.__atrAcctMenuWired = true;
@@ -3908,7 +3995,7 @@ if ("serviceWorker" in navigator) {
        tapping its own row — it took a tap on a different row. The
        safety net in index.html carries the identical toggle. */
     function show(view) {
-      var panels = { repairs: repairsView, settings: settingsView, rewards: rewardsView, messages: messagesView, orders: ordersView, cart: cartView, membership: membershipView, devices: devicesView };
+      var panels = { repairs: repairsView, settings: settingsView, rewards: rewardsView, messages: messagesView, orders: ordersView, cart: cartView, membership: membershipView, devices: devicesView, connect: connectView };
       var target = (panels[view] && !panels[view].hidden) ? null : view;
       repairsView.hidden = target !== 'repairs';
       settingsView.hidden = target !== 'settings';
@@ -3919,6 +4006,7 @@ if ("serviceWorker" in navigator) {
       if (cartView) cartView.hidden = target !== 'cart';
       if (membershipView) membershipView.hidden = target !== 'membership';
       if (devicesView) devicesView.hidden = target !== 'devices';
+      if (connectView) connectView.hidden = target !== 'connect';
       menuItems.forEach(function (btn) {
         var on = btn.getAttribute('data-acct-menu') === target;
         btn.classList.toggle('is-active', on);
@@ -5061,38 +5149,105 @@ if ("serviceWorker" in navigator) {
     function show() { link.hidden = false; }
     function hide() { link.hidden = true; }
     hide(); /* fail closed from the first frame */
-    function rpcFallback(client) {
+    /* STAFF_GATE_HARDEN_2026_11_10 (owner report, Nov 10, 2026):
+       the owner's phone hid this button for a whole session because
+       the one check at page load failed on his slow connection and
+       nothing ever asked again. Two cures, fail-closed throughout:
+       (1) a TRANSIENT failure — the profile read or the RPC coming
+       back with an error, never a clean "no row" answer, which is a
+       real guest and stays final — retries the whole check ONCE
+       after a short delay; the retry re-reads the session and runs
+       only while the same user is still signed in, so it can never
+       resurrect the button after a sign-out. (2) Opening My Account
+       asks again: window.atrStaffRecheck (called by the account
+       button and the quick-glance Open row in index.html) re-runs
+       the check with a fresh one-retry budget, so a staff member
+       who landed on a hidden button gets a fresh answer the moment
+       they open their account. A guest's clean answers are never
+       retried, and nothing is ever shown on a maybe. */
+    var sessionUser = null; /* the user the latest check belongs to */
+    var retryTimer = null;
+    var retriedFor = '';    /* user id that already used its one retry */
+    function rpcFallback(client, user, allowRetry) {
       if (!client || typeof client.rpc !== 'function') { hide(); return; }
       try {
         client.rpc('is_employee').then(function (res) {
-          if (res && !res.error && res.data === true) { show(); } else { hide(); }
-        }).catch(function () { hide(); });
-      } catch (e) { hide(); }
+          if (res && !res.error && res.data === true) { show(); return; }
+          if (res && res.error) { transient(user, allowRetry); return; }
+          hide();
+        }).catch(function () { transient(user, allowRetry); });
+      } catch (e) { transient(user, allowRetry); }
     }
-    function check(user) {
+    function transient(user, allowRetry) {
+      hide();
+      if (!user || !allowRetry) return;
+      if (retriedFor === user.id) return;
+      retriedFor = user.id;
+      if (retryTimer) return;
+      retryTimer = setTimeout(function () {
+        retryTimer = null;
+        checkFresh(false);
+      }, 2600);
+    }
+    function check(user, allowRetry) {
+      if (user && sessionUser && sessionUser.id !== user.id) retriedFor = '';
+      sessionUser = user || null;
       var client = getClient();
       if (!user || !client) { hide(); return; }
       try {
         client.from('employee_profiles').select('id').eq('id', user.id).maybeSingle()
           .then(function (res) {
-            if (res && res.error) { rpcFallback(client); return; }
+            if (res && res.error) { rpcFallback(client, user, allowRetry); return; }
             if (res && res.data && res.data.id) { show(); } else { hide(); }
           })
-          .catch(function () { rpcFallback(client); });
-      } catch (e) { rpcFallback(client); }
+          .catch(function () { rpcFallback(client, user, allowRetry); });
+      } catch (e) { rpcFallback(client, user, allowRetry); }
     }
-    var client = getClient();
-    if (!client) return;
-    try {
-      client.auth.getSession().then(function (res) {
-        var session = res && res.data ? res.data.session : null;
-        check(session ? session.user : null);
-      }).catch(function () { hide(); });
-      if (client.auth && typeof client.auth.onAuthStateChange === 'function') {
-        client.auth.onAuthStateChange(function (_event, session) {
-          check(session ? session.user : null);
+    function checkFresh(allowRetry) {
+      var client = getClient();
+      if (!client || !client.auth || typeof client.auth.getSession !== 'function') { hide(); return; }
+      try {
+        client.auth.getSession().then(function (res) {
+          var session = res && res.data ? res.data.session : null;
+          var user = session ? session.user : null;
+          /* a late answer never crosses users: if the session now
+             belongs to somebody else (or nobody), the check runs
+             for THAT user — a sign-out lands on check(null) and
+             the button stays hidden. */
+          check(user, allowRetry);
+        }).catch(function () {
+          hide();
+          /* the session read itself failed on a bad connection:
+             one delayed re-ask, same one-retry budget. */
+          if (allowRetry && !retryTimer) {
+            retryTimer = setTimeout(function () {
+              retryTimer = null;
+              checkFresh(false);
+            }, 2600);
+          }
         });
-      }
+      } catch (e) { hide(); }
+    }
+    window.atrStaffRecheck = function () { retriedFor = ''; checkFresh(true); };
+    var wired = false;
+    function wire() {
+      if (wired) return;
+      var client = getClient();
+      if (!client) return;
+      wired = true;
+      try {
+        if (client.auth && typeof client.auth.onAuthStateChange === 'function') {
+          client.auth.onAuthStateChange(function (_event, session) {
+            if (retryTimer) { clearTimeout(retryTimer); retryTimer = null; }
+            check(session ? session.user : null, true);
+          });
+        }
+      } catch (e) { hide(); }
+    }
+    try {
+      checkFresh(true);
+      wire();
+      if (!wired) setTimeout(wire, 1500); /* library a beat late: subscribe once more, then stop */
     } catch (e) { hide(); }
   });
 })();
@@ -5399,7 +5554,7 @@ if ("serviceWorker" in navigator) {
     function combinedText(t) { return t.lo === t.hi ? shared.fmt(t.lo) : shared.fmt(t.lo) + ' \u2013 ' + shared.fmt(t.hi); }
 
     function newState() {
-      return { device: '', brandKey: '', brandLabel: '', modelKey: '', modelLabel: '', modelState: 'pending', picks: [], kind: '', hours: 0, year: '' };
+      return { device: '', brandKey: '', brandLabel: '', modelKey: '', modelLabel: '', modelState: 'pending', picks: [], kind: '', hours: 0, year: '', place: '' };
     }
 
     /* ---------------- pane scaffolding ----------------
@@ -5726,11 +5881,19 @@ if ("serviceWorker" in navigator) {
       if (lines) {
         lines.innerHTML =
           (st.kind ? (esc(st.kind) + ' for your ' + esc([st.brandLabel, st.modelLabel].filter(Boolean).join(' ') || st.device || 'device') + '<br>') : '') +
-          'One-on-one time $25 per hour' + (h ? (' \u2014 ' + h + (h === 1 ? ' hour' : ' hours') + ' $' + time) : '') + '<br>' +
-          'Visit fee $15<br>' +
-          (h ? ('<strong>Total $' + (15 + time) + ' \u2014 the $' + time + ' time plus the $15 visit fee</strong><br>') : '') +
-          'If your session runs longer, the extra time is settled at the visit at $25 an hour.<br>' +
-          'ATR One Plus (paid) members pay no visit fee on covered devices.';
+          /* VIRTUAL_ONE_ON_ONE_2026_11_10: same fee story as the
+             form — virtual has no visit fee (owner ruling). */
+          (st.place === 'virtual'
+            ? 'Virtual \u2014 we meet on your screen, no trip<br>' +
+              'One-on-one time $25 per hour' + (h ? (' \u2014 ' + h + (h === 1 ? ' hour' : ' hours') + ' $' + time) : '') + '<br>' +
+              (h ? ('<strong>Total $' + time + ' \u2014 the first hour ($25) is paid when you book</strong><br>') : '') +
+              'If your session runs longer, the extra time is charged to your card on file at $25 an hour.<br>' +
+              'ATR One members: your member key makes virtual sessions free.'
+            : 'One-on-one time $25 per hour' + (h ? (' \u2014 ' + h + (h === 1 ? ' hour' : ' hours') + ' $' + time) : '') + '<br>' +
+              'Visit fee $15<br>' +
+              (h ? ('<strong>Total $' + (15 + time) + ' \u2014 the $' + time + ' time plus the $15 visit fee</strong><br>') : '') +
+              'If your session runs longer, the extra time is settled at the visit at $25 an hour.<br>' +
+              'ATR One Plus (paid) members pay no visit fee on covered devices.');
       }
     }
 
@@ -5739,7 +5902,7 @@ if ("serviceWorker" in navigator) {
       var btn = pane.kind === 'oneonone' ? $('svc-oo-continue') : $('svc-continue');
       if (!btn) return;
       var ready = pane.kind === 'oneonone'
-        ? !!(st.device && st.brandKey && modelOk(pane) && st.kind && st.hours)
+        ? !!(st.device && st.brandKey && modelOk(pane) && st.kind && st.hours && st.place)
         : !!(st.device && st.brandKey && modelOk(pane) && (st.device !== 'Computer' || st.year) && st.picks.length);
       btn.disabled = !ready;
     }
@@ -5797,6 +5960,18 @@ if ("serviceWorker" in navigator) {
       btn.addEventListener('click', function () {
         ooPane.state.hours = parseInt(btn.getAttribute('data-svc-hours'), 10) || 0;
         document.querySelectorAll('[data-svc-hours]').forEach(function (b) { b.classList.remove('selected'); });
+        btn.classList.add('selected');
+        renderOoSummary();
+        gate(ooPane);
+      });
+    });
+    /* VIRTUAL_ONE_ON_ONE_2026_11_10: the pane's How will we meet?
+       tiles — one pick, asked first (before the device), driven
+       into the form on Continue. */
+    document.querySelectorAll('[data-svc-oo-place]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        ooPane.state.place = btn.getAttribute('data-svc-oo-place') || '';
+        document.querySelectorAll('[data-svc-oo-place]').forEach(function (b) { b.classList.remove('selected'); });
         btn.classList.add('selected');
         renderOoSummary();
         gate(ooPane);
@@ -5893,6 +6068,13 @@ if ("serviceWorker" in navigator) {
         if (kindBtn) kindBtn.click();
         var hrBtn = document.querySelector('[data-oo-hours="' + st.hours + '"]');
         if (hrBtn) hrBtn.click();
+        /* VIRTUAL_ONE_ON_ONE_2026_11_10: the place pick rides the
+           same handoff — the form's own tile gets the click, so the
+           form's state, gate, and summary all move together. */
+        if (st.place) {
+          var plBtn = document.querySelector('[data-oo-place="' + st.place + '"]');
+          if (plBtn) plBtn.click();
+        }
         var card = document.querySelector('.repair-card');
         if (card) { try { card.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {} }
       }, 0);
@@ -5941,3 +6123,212 @@ document.addEventListener('click', function (e) {
   b.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
   try { input.focus(); } catch (err) {}
 });
+
+/* =====================================================================
+   VIRTUAL_ONE_ON_ONE_2026_11_10 — the Virtual One-on-One page gate.
+
+   The page (section#virtual-oneonone) is the front door only: a
+   consent box, one code box, and the virtual-session Edge Function
+   behind it. The function is the only door — this page never reads
+   the sessions table, and a member key is never computed here.
+
+   Flow: the consent check enables the code box. "Check my code"
+   sends the code to the function (with the guest's sign-in token
+   when they have one, so a member key can be matched to their own
+   account). A good answer shows the checked-in steps and the
+   PHASE2_HANDOFF block, where the phase-2 RustDesk session will
+   open from our own relay. A no shows the function's plain reason
+   word for word; when the reason is "no path" the page also offers
+   the two ways in (book a One-on-One, or join ATR One). Signed-in
+   members get their own key shown on the page (action 'mykey').
+
+   Everything here fails quiet: if the function is not deployed yet
+   or the network drops, the guest gets one plain line and the phone
+   number — never a spinner forever, never a fake session.
+   ===================================================================== */
+(function () {
+  var SUPABASE_URL = 'https://lyujxpuicarblpkdzuuc.supabase.co';
+  var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
+  /* Waiver version, shared with atr-forms.js (the booking waiver)
+     and recorded with every acceptance. DRAFT wording — the version
+     string changes when the owner approves final text. */
+  var WAIVER_VERSION = 'v1-draft-2026-11-10';
+  var lastCode = '';
+  var consent = document.getElementById('voo-consent');
+  var codeEl = document.getElementById('voo-code');
+  var startBtn = document.getElementById('voo-start');
+  var msgEl = document.getElementById('voo-msg');
+  var nextEl = document.getElementById('voo-next');
+  var nopathEl = document.getElementById('voo-nopath');
+  var keyEl = document.getElementById('voo-member-key');
+  if (!consent || !codeEl || !startBtn) return;
+
+  function sb() {
+    if (window.supabase && window.supabase.createClient) {
+      return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+    return null;
+  }
+
+  function showMsg(text) {
+    if (!msgEl) return;
+    msgEl.textContent = text;
+    msgEl.hidden = !text;
+  }
+
+  function setGate() {
+    var on = !!consent.checked;
+    codeEl.disabled = !on;
+    startBtn.disabled = !on;
+    if (on) showMsg('');
+  }
+  consent.addEventListener('change', setGate);
+  setGate();
+
+  function bearer(cb) {
+    var client = sb();
+    if (!client) { cb(SUPABASE_ANON_KEY); return; }
+    try {
+      client.auth.getSession().then(function (res) {
+        var t = res && res.data && res.data.session && res.data.session.access_token;
+        cb(t || SUPABASE_ANON_KEY);
+      }).catch(function () { cb(SUPABASE_ANON_KEY); });
+    } catch (e) { cb(SUPABASE_ANON_KEY); }
+  }
+
+  function callFn(payload, cb) {
+    bearer(function (token) {
+      fetch(SUPABASE_URL + '/functions/v1/virtual-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token,
+          'apikey': SUPABASE_ANON_KEY
+        },
+        body: JSON.stringify(payload)
+      }).then(function (r) { return r.json().catch(function () { return null; }); })
+        .then(function (j) { cb(j); })
+        .catch(function () { cb(null); });
+    });
+  }
+
+  function check() {
+    var code = (codeEl.value || '').replace(/[\s-]+/g, '').toUpperCase();
+    if (!code) { showMsg('Type the code your associate gave you, then check it.'); return; }
+    startBtn.disabled = true;
+    showMsg('Checking your code…');
+    callFn({ action: 'check', code: code }, function (j) {
+      startBtn.disabled = false;
+      if (!j) {
+        showMsg('We could not check that code just now. Call or text us at (937) 280-6243 and we will get you connected.');
+        return;
+      }
+      if (j.ok) {
+        showMsg('');
+        lastCode = code;
+        if (nopathEl) nopathEl.hidden = true;
+        if (nextEl) nextEl.hidden = false;
+        /* The code is good — but the session does NOT start yet.
+           WAIVER 2 of 2 (owner's consent law, Nov 10, 2026): the
+           screen-sharing waiver below comes first, and the hand-off
+           activates only after it is agreed and recorded (see
+           wireWaiver). */
+      } else {
+        showMsg(j.message || 'That code did not work. Check the code and try again.');
+        if (j.reason === 'no_access' && nopathEl) nopathEl.hidden = false;
+      }
+    });
+  }
+  startBtn.addEventListener('click', check);
+  codeEl.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Enter' && !startBtn.disabled) { ev.preventDefault(); check(); }
+  });
+
+  /* A signed-in member sees their own key on the page, so they can
+     use it without asking. Signed out (or no active paid membership)
+     answers nothing and the line stays hidden — no error, no hint. */
+  callFn({ action: 'mykey' }, function (j) {
+    if (j && j.ok && j.key && keyEl) {
+      keyEl.textContent = 'Your ATR One member key: ' + j.key;
+      keyEl.hidden = false;
+    }
+  });
+
+  /* WAIVER 2 of 2: the screen-sharing waiver at session start.
+     The screen box is required — the Start button stays disabled
+     without it, and it is never pre-checked. Mic and camera are the
+     guest's own separate allows (optional, off by default, and the
+     session tools themselves also start with both off). Start sends
+     the agreement to the function to be recorded against the
+     session; only a recorded agreement reveals the connecting steps
+     and the PHASE2_HANDOFF block. If the recording fails, the guest
+     is told plainly and can tap again — a session never starts on
+     an unrecorded waiver. */
+  (function wireWaiver() {
+    var wvScreen = document.getElementById('voo-wv-screen');
+    var wvMic = document.getElementById('voo-wv-mic');
+    var wvCamera = document.getElementById('voo-wv-camera');
+    var startSessionBtn = document.getElementById('voo-session-start');
+    var wvMsg = document.getElementById('voo-wv-msg');
+    var wvBlock = document.getElementById('voo-waiver');
+    var finalBlock = document.getElementById('voo-final');
+    if (!wvScreen || !startSessionBtn) return;
+    wvScreen.addEventListener('change', function () {
+      startSessionBtn.disabled = !wvScreen.checked;
+    });
+    startSessionBtn.addEventListener('click', function () {
+      if (!wvScreen.checked) return;
+      startSessionBtn.disabled = true;
+      if (wvMsg) { wvMsg.textContent = 'Saving your agreement…'; wvMsg.hidden = false; }
+      callFn({
+        action: 'waiver', kind: 'session', code: lastCode,
+        version: WAIVER_VERSION,
+        mic_allowed: !!(wvMic && wvMic.checked),
+        camera_allowed: !!(wvCamera && wvCamera.checked)
+      }, function (j) {
+        if (j && j.ok) {
+          if (wvBlock) wvBlock.hidden = true;
+          if (finalBlock) finalBlock.hidden = false;
+          /* PHASE2_HANDOFF: the RustDesk session opens here in
+             phase 2 (guest helper pointed at our own relay), with
+             the mic/camera allows above as its starting state.
+             Phase 1 stops at the checked-in steps on purpose. */
+        } else {
+          startSessionBtn.disabled = false;
+          if (wvMsg) wvMsg.textContent = 'We could not save your agreement just now. Please tap Start my session once more.';
+        }
+      });
+    });
+  })();
+
+  /* The End control (owner's guest-side rule, Nov 10, 2026): our
+     own button in our own page. It resets the whole gate — code
+     cleared, waivers and consent unchecked, checked-in blocks
+     hidden — and says plainly that nothing is connected.
+     PHASE2: the engine teardown hooks in here, so ending from the
+     page also closes the RustDesk session. */
+  var endBtn = document.getElementById('voo-end');
+  if (endBtn) {
+    endBtn.addEventListener('click', function () {
+      /* PHASE2_HANDOFF_TEARDOWN: close the engine session here. */
+      if (nextEl) nextEl.hidden = true;
+      var fin = document.getElementById('voo-final');
+      if (fin) fin.hidden = true;
+      var wv = document.getElementById('voo-waiver');
+      if (wv) wv.hidden = false;
+      ['voo-wv-screen', 'voo-wv-mic', 'voo-wv-camera'].forEach(function (id) {
+        var box = document.getElementById(id);
+        if (box) box.checked = false;
+      });
+      var ssb = document.getElementById('voo-session-start');
+      if (ssb) ssb.disabled = true;
+      codeEl.value = '';
+      lastCode = '';
+      consent.checked = false;
+      setGate();
+      showMsg('You have ended the session. Nothing is connected.');
+    });
+  }
+
+  window.atrVirtual = { check: check };
+})();
