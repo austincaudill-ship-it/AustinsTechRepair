@@ -1420,11 +1420,12 @@ body.portal-body #portal-dash-view textarea {
 .portal-hubsearch-item .hs-main { flex: 1 1 auto; min-width: 0; }
 .portal-hubsearch-item .hs-sub { flex: none; color: var(--muted, #7D6C5B); font-size: 0.85em; text-align: right; }
 .portal-hubsearch-empty { color: var(--muted, #7D6C5B); padding: 0.4rem 0.55rem; margin: 0; }
-/* The two new top-row buttons follow Log Out's rule exactly: hidden
+/* The top-row buttons follow Log Out's rule exactly: hidden
    whenever the dashboard is not the showing view, so the sign-in,
    reset and two-step screens never offer them. */
 body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-hub-new-btn,
-body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-hub-square-btn { display: none; }
+body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-hub-square-btn,
+body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-hub-search-btn { display: none; }
 /* The top row now carries four buttons, and the actions span must be
    allowed to wrap AND to shrink below its longest row: measured on
    the staged build, unwrapped it sized to a 412px row inside a
@@ -1644,3 +1645,100 @@ body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-hub-square-bt
 }
 @keyframes hubsearch-rise { from { transform: translateY(26px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 /* end TRAY_SCROLL_2026_11_09 (v65) */
+
+/* ===== SEARCH_SHEET_FIX_2026_11_09 (v68) =====
+   Owner, Nov 9, 2026, phone in hand: the Hub search sheet broke
+   under the keyboard (the field stranded half-cut at the top of
+   the screen, page text bleeding through the panel's middle,
+   the Customize row adrift) and on iPad and desktop Search was
+   simply gone — "the thumb nav is only for phone." Three
+   repairs, one idea: the public website's search sheet and
+   bottom bar are the proven patterns on his phone, so the Hub
+   adopts them wholesale.
+   (1) THE SHEET IS THE SITE'S CARD. At <=920px the panel is a
+   floating rounded card inset from the screen edges over the
+   dimmed page: the X at the card's top-right, sections and
+   results scrolling inside the card's middle with the
+   Customize thumb bar row at the foot of that scroll, and
+   the search field LAST — a rounded bar at the card's foot,
+   directly above where the keyboard rises, so the field
+   never has to travel. The <=920px rules below supersede the
+   v65 TRAY_SCROLL sheet rules (the vv anchoring above them
+   stands). portal.js carries the other half of the site
+   pattern: the page behind is scroll-locked while the sheet
+   is open, and the field is focused only after the lock
+   lands, so iOS focus-scroll has nothing left to drag.
+   (2) LARGE SCREENS GET THEIR SEARCH BACK. The top Search
+   button (restored in portal.html) shows only over 920px,
+   the Square anchor only at phone widths, and the desktop
+   order is the pre-v65 row: Back to site, Log Out, New
+   Service Request, Search. The drop-down presentation is
+   the one that never left; its one new seat is the X's,
+   top-right over the panel with the field row reserving
+   its width — the site sheet's desktop arrangement. The
+   card's inner stack is flex-ordered (field first on
+   desktop, field last on phones), and the sheet sizes
+   border-box, the site sheet's own sizing, so the vv
+   height the panel is given is the height it takes.
+   (3) THE THUMB BAR ANSWERS ONLY TO THE VIEWPORT. In
+   portal.html the bar moved out of #portal-dash-view to sit
+   directly under <body>, a body child like the site's
+   .mobile-bottom-nav: position:fixed; bottom:0 with the
+   safe-area inset carried in its padding — the site bar's
+   exact anchor — and no scrolling ancestor left between it
+   and the viewport. The gate below keeps it dashboard-only. */
+/* The moved bar keeps its dashboard-only rule after the move
+   (the same body:has pattern that gates Log Out). */
+body:has(#portal-dash-view[hidden]) .portal-thumbbar { display: none; }
+/* The card's X seats at the panel's top-right corner on
+   desktop; the field row reserves its width. On phones the
+   X row is a real row at the card's head (<=920px below). */
+.portal-hubsearch-inner { position: relative; display: flex; flex-direction: column; }
+.portal-hubsearch, .portal-hubsearch-inner { box-sizing: border-box; }
+.portal-hubsearch-xrow { position: absolute; top: 0.7rem; right: 1.25rem; z-index: 1; }
+.portal-hubsearch-row { padding-right: 3.1rem; order: 1; }
+.portal-hubsearch-main { order: 2; }
+/* Voice: the mic sits at the field bar's right end, created
+   by portal.js only where the Web Speech API exists — the
+   site sheet's rule. */
+.portal-hubsearch-mic {
+  flex: none; display: inline-flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: var(--surface, #FFFDF8); border: 1px solid var(--line, #E6D9C0);
+  color: var(--ink, #2C231A); cursor: pointer; font-size: 1rem;
+}
+.portal-hubsearch-mic:hover { border-color: var(--brand, #D9540D); color: var(--brand-deep, #A63E06); }
+.portal-hubsearch-mic.is-listening { border-color: var(--brand, #D9540D); color: var(--brand-deep, #A63E06); }
+.portal-hubsearch-mic.is-listening i { animation: hubsearch-mic-pulse 1.1s ease-in-out infinite; }
+@keyframes hubsearch-mic-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.25); } }
+@media (min-width: 921px) {
+  .portal-topbar-actions #portal-hub-square-btn { display: none; }
+  .portal-topbar-actions #portal-logout { order: 2; }
+  .portal-topbar-actions #portal-hub-new-btn { order: 3; }
+  .portal-topbar-actions #portal-hub-search-btn { order: 4; }
+}
+@media (max-width: 920px) {
+  .portal-topbar-actions #portal-hub-search-btn { display: none; }
+  .portal-hubsearch { padding: 0.75rem; overflow: hidden; }
+  .portal-hubsearch-inner {
+    background: var(--surface, #FFFDF8);
+    border: 1px solid var(--line, #E6D9C0);
+    border-radius: 18px;
+    box-shadow: 0 18px 44px rgba(90, 64, 32, 0.28);
+    width: 100%; max-width: none; max-height: 100%; margin: 0;
+    display: flex; flex-direction: column;
+    padding: 0.8rem 0.9rem 0.85rem;
+  }
+  .portal-hubsearch-xrow { position: static; display: flex; justify-content: flex-end; margin-bottom: 0.3rem; }
+  .portal-hubsearch-main { order: 1; }
+  .portal-hubsearch-row { order: 2; }
+  .portal-hubsearch-main { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+  .portal-hubsearch-results { margin-top: 0; max-height: none; overflow: visible; }
+  .portal-hubsearch-row {
+    margin-top: 0.55rem; padding: 0.35rem 0.45rem 0.35rem 0.85rem;
+    background: var(--bg, #FAF6EE);
+    border: 1px solid var(--line, #E6D9C0); border-radius: 999px;
+  }
+  #portal-hubsearch-input { border: none; background: transparent; border-radius: 0; padding: 0.5rem 0; font-size: 1rem; }
+}
+/* end SEARCH_SHEET_FIX_2026_11_09 (v68) */

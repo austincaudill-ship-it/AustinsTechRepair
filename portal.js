@@ -17641,7 +17641,7 @@ function loadTicketThread(client, ticketId) {
    *   writes: no insert, update, delete or upsert exists in
    *   this section — it only looks. */
   (function () {
-    var btn = null, newBtn = $('portal-hub-new-btn'); /* SEARCH_SWAP_2026_11_09 (v65): the top Search button left the top row — Search lives on the thumb bar now and reaches openSearch through window.portalOpenHubSearch below; btn stays as a null guard so nothing here can resurrect the old wiring. */
+    var btn = $('portal-hub-search-btn'), newBtn = $('portal-hub-new-btn'); /* SEARCH_SHEET_FIX_2026_11_09 (v68): the top Search button is back for screens over 920px (portal.css gates it there and gates Square to phone widths in exchange) — iPad, Mac and PC had no door to this panel at all after the v65 swap took the button at every width. The phone door stays the thumb bar's Search item, reaching openSearch through window.portalOpenHubSearch below. The button toggles the panel exactly as it did before the swap. */
     var panel = $('portal-hubsearch'), input = $('portal-hubsearch-input');
     var xBtn = $('portal-hubsearch-close'), results = $('portal-hubsearch-results');
     if (!panel || !input || !results) return;
@@ -17781,10 +17781,38 @@ function loadTicketThread(client, ticketId) {
       }
     }
 
+    /* SEARCH_SHEET_FIX_2026_11_09 (v68): while the phone sheet
+       is open, the page behind it is scroll-locked with the
+       codebase's own drawer pattern (lockBodyScroll — the
+       position:fixed body; overflow:hidden alone does not hold
+       iOS Safari) — the site sheet's lock-first discipline.
+       The lock lands BEFORE the field is focused, so the focus
+       can no longer scroll the page out from under the sheet:
+       that un-locked focus-scroll is what stranded the v65
+       sheet's field at the top of the screen over bleeding
+       page text and set the thumb bar adrift. The focus itself
+       waits a beat (the site's 30ms) so the keyboard rises
+       against an already-anchored sheet. If the drawer's lock
+       is somehow already held, the sheet stands down and does
+       not release what it did not take. */
+    var hsLocked = false;
+    function hsLock(on) {
+      if (on) {
+        if (document.body.classList.contains('portal-scroll-locked')) { hsLocked = false; return; }
+        lockBodyScroll();
+        hsLocked = document.body.classList.contains('portal-scroll-locked');
+      } else if (hsLocked) {
+        hsLocked = false;
+        unlockBodyScroll();
+      }
+    }
+
     function openSearch() {
-      if (hsSheetMode()) {
+      var sheet = hsSheetMode();
+      if (sheet) {
         panel.style.top = '';
         hsWatchViewport(true);
+        hsLock(true);
       } else {
         var tb = document.querySelector('.portal-topbar');
         panel.style.top = (tb ? tb.getBoundingClientRect().bottom : 0) + 'px';
@@ -17796,12 +17824,18 @@ function loadTicketThread(client, ticketId) {
       panel.classList.add('hs-open');
       if (btn) btn.setAttribute('aria-expanded', 'true');
       renderResults();
-      input.focus();
+      if (sheet) {
+        setTimeout(function () { try { input.focus(); } catch (e) {} }, 30);
+      } else {
+        input.focus();
+      }
     }
     function closeSearch() {
+      stopHubVoice();
       panel.hidden = true;
       input.value = '';
       hsWatchViewport(false);
+      hsLock(false);
       if (btn) btn.setAttribute('aria-expanded', 'false');
     }
 
@@ -17810,6 +17844,7 @@ function loadTicketThread(client, ticketId) {
        for the 'search' bar id. It toggles exactly as the old top
        button did: open when closed, close (and clear) when open. */
     window.portalOpenHubSearch = function () { if (panel.hidden) openSearch(); else closeSearch(); };
+    if (btn) btn.addEventListener('click', function () { if (panel.hidden) openSearch(); else closeSearch(); });
     if (xBtn) xBtn.addEventListener('click', closeSearch);
     input.addEventListener('input', renderResults);
     panel.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeSearch(); });
@@ -17840,6 +17875,62 @@ function loadTicketThread(client, ticketId) {
         openTicket(tid);
       }
     });
+    /* SEARCH_SHEET_FIX_2026_11_09 (v68): voice search, the
+       site sheet's own pattern — the microphone button exists
+       only where the browser exposes the Web Speech API; it
+       is created here, never written in the markup, and sits
+       at the field bar's right end. The transcript is written
+       into the field and pushed through the field's own
+       'input' event, so voice and typing run the identical
+       search path — the search logic is not forked. Any end
+       or error, a denied microphone included, returns the
+       button to idle quietly; nobody is trapped. */
+    var micBtn = null;
+    var recog = null;
+    var listening = false;
+    function stopHubVoice() {
+      if (recog && listening) { try { recog.stop(); } catch (e) {} }
+      listening = false;
+      if (micBtn) {
+        micBtn.classList.remove('is-listening');
+        micBtn.setAttribute('aria-label', 'Search by voice');
+      }
+    }
+    var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    var hsFieldRow = panel.querySelector('.portal-hubsearch-row');
+    if (SpeechRec && hsFieldRow) {
+      micBtn = document.createElement('button');
+      micBtn.type = 'button';
+      micBtn.className = 'portal-hubsearch-mic';
+      micBtn.id = 'portal-hubsearch-mic';
+      micBtn.setAttribute('aria-label', 'Search by voice');
+      micBtn.setAttribute('title', 'Search by voice');
+      micBtn.innerHTML = '<i class="fas fa-microphone" aria-hidden="true"></i>';
+      hsFieldRow.appendChild(micBtn);
+      micBtn.addEventListener('click', function () {
+        if (listening) { stopHubVoice(); return; }
+        try {
+          recog = new SpeechRec();
+          recog.lang = 'en-US';
+          recog.continuous = false;
+          recog.interimResults = true;
+          recog.onresult = function (ev) {
+            var txt = '';
+            for (var i = 0; i < ev.results.length; i++) { txt += ev.results[i][0].transcript; }
+            input.value = txt;
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+          };
+          recog.onend = function () { stopHubVoice(); };
+          recog.onerror = function () { stopHubVoice(); };
+          listening = true;
+          micBtn.classList.add('is-listening');
+          micBtn.setAttribute('aria-label', 'Stop voice search');
+          recog.start();
+        } catch (e) {
+          stopHubVoice();
+        }
+      });
+    }
     if (newBtn) newBtn.addEventListener('click', function () {
       var t = $('portal-tab-checkin');
       if (t) t.click();

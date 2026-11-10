@@ -45,7 +45,7 @@
     <div class="portal-topbar-inner">
       <span class="portal-brand"><i class="fas fa-screwdriver-wrench"></i> Austin's Tech Repair Group</span>
       <span class="portal-topbar-tag">Associate Hub</span> <!-- HEADER_TWEAK_2026_11_03: the Log Out button was MOVED here from the dashboard head (see the note left in .portal-head-actions) so it docks beside Back to site as a matched pair in the fixed top bar. Same element, same id, same click handler in portal.js (it binds by id, so the move changes nothing in JS). portal.css hides it whenever the dashboard is not the showing view, so the sign-in screens never offer a Log Out. -->
-      <!-- HUB_NAV_2026_11_09 (Austin, Nov 9, 2026): New Service Request and Search join the top row at every width. New Service Request clicks the real sidebar Check-In tab and Search opens the Hub search dropdown under this bar (the HUB_SEARCH section in portal.js); portal.css hides both beside Log Out whenever the dashboard is not the showing view, so the sign-in screens never offer them. SEARCH_SWAP_2026_11_09 (v65): Search left this row for the thumb bar (it is the bar's fifth item now, opening the Hub Search sheet); a Square anchor took its seat here, straight to Square's Balance page, where Cash out lives. Log Out moved up beside Back to site the same day: portal.css orders the four at phone widths as Back to site / Log Out, then New Service Request / Square. --><span class="portal-topbar-actions"><a class="portal-btn portal-btn-outline" href="https://austinstechrepairgroup.com/">Back to site</a> <button class="portal-btn portal-btn-outline" id="portal-hub-new-btn" type="button"><i class="fas fa-clipboard-check"></i> New Service Request</button> <a class="portal-btn portal-btn-outline" id="portal-hub-square-btn" href="https://app.squareup.com/dashboard/balance" target="_blank" rel="noopener"><i class="fas fa-credit-card"></i> Square</a> <button class="portal-btn portal-btn-outline" id="portal-logout" type="button"><i class="fas fa-sign-out-alt"></i> Log Out</button></span>
+      <!-- HUB_NAV_2026_11_09 (Austin, Nov 9, 2026): New Service Request and Search join the top row at every width. New Service Request clicks the real sidebar Check-In tab and Search opens the Hub search dropdown under this bar (the HUB_SEARCH section in portal.js); portal.css hides both beside Log Out whenever the dashboard is not the showing view, so the sign-in screens never offer them. SEARCH_SWAP_2026_11_09 (v65): Search left this row for the thumb bar (it is the bar's fifth item now, opening the Hub Search sheet); a Square anchor took its seat here, straight to Square's Balance page, where Cash out lives. Log Out moved up beside Back to site the same day: portal.css orders the four at phone widths as Back to site / Log Out, then New Service Request / Square. SEARCH_SHEET_FIX_2026_11_09 (v68): the Search button above is back in this row for screens over 920px only (portal.css gates it there, and gates Square to phone widths in exchange) — the pre-v65 large-screen arrangement, because the thumb bar exists only on phones and iPad, Mac and PC had no door to the Hub search at all. --><span class="portal-topbar-actions"><a class="portal-btn portal-btn-outline" href="https://austinstechrepairgroup.com/">Back to site</a> <button class="portal-btn portal-btn-outline" id="portal-hub-new-btn" type="button"><i class="fas fa-clipboard-check"></i> New Service Request</button> <a class="portal-btn portal-btn-outline" id="portal-hub-square-btn" href="https://app.squareup.com/dashboard/balance" target="_blank" rel="noopener"><i class="fas fa-credit-card"></i> Square</a> <button class="portal-btn portal-btn-outline" id="portal-hub-search-btn" type="button" aria-haspopup="true" aria-expanded="false"><i class="fas fa-magnifying-glass"></i> Search</button> <button class="portal-btn portal-btn-outline" id="portal-logout" type="button"><i class="fas fa-sign-out-alt"></i> Log Out</button></span>
     </div>
   </header>
 
@@ -57,19 +57,40 @@
        the field empty it lists the Hub's sections — every panel the
        signed-in associate's sidebar shows — and as you type it finds
        guests and queue tickets. It only ever looks: nothing here
-       creates, edits or deletes. -->
+       creates, edits or deletes.
+       SEARCH_SHEET_FIX_2026_11_09 (v68): on phones the panel is
+       now the public website's search card brought inside the
+       Hub — a floating rounded card over the dimmed page, X at
+       the card's top-right, sections and results scrolling in
+       its middle, and the field LAST in a rounded bar at the
+       card's foot, directly above where the keyboard rises, so
+       the field never has to travel. The page behind is
+       scroll-locked while it is open, as the site locks its
+       page. Above 920px the drop-down is as it was. -->
   <div class="portal-hubsearch" id="portal-hubsearch" hidden>
     <div class="portal-hubsearch-inner">
+      <!-- SEARCH_SHEET_FIX_2026_11_09 (v68): the card's stack, the
+           site sheet's own — the X row first (on desktop the X
+           seats itself at the panel's top-right corner by CSS),
+           then the scrolling middle: sections and results, with
+           the Customize row at the foot of that scroll. The
+           search field is LAST: on phones it rests in a rounded
+           bar at the card's foot, directly above the keyboard. -->
+      <div class="portal-hubsearch-xrow">
+        <button class="portal-hubsearch-x" id="portal-hubsearch-close" type="button" aria-label="Close search"><i class="fas fa-xmark"></i></button>
+      </div>
+      <div class="portal-hubsearch-main">
+        <div class="portal-hubsearch-results" id="portal-hubsearch-results"></div>
+        <!-- CUSTOM_BAR_2026_11_09 (v64): the second door into bar
+             edit mode, at the foot of the search panel's scrolling
+             content (hidden on desktop widths, where there is no
+             thumb bar). -->
+        <button type="button" class="portal-hubsearch-item" id="portal-hubsearch-customize"><i class="fas fa-sliders"></i><span class="hs-main">Customize thumb bar</span></button>
+      </div>
       <div class="portal-hubsearch-row">
         <i class="fas fa-magnifying-glass portal-hubsearch-icon" aria-hidden="true"></i>
         <input type="text" id="portal-hubsearch-input" placeholder="Search guests, tickets, or a section&hellip;" autocomplete="off" aria-label="Search the Hub" />
-        <button class="portal-hubsearch-x" id="portal-hubsearch-close" type="button" aria-label="Close search"><i class="fas fa-xmark"></i></button>
       </div>
-      <div class="portal-hubsearch-results" id="portal-hubsearch-results"></div>
-      <!-- CUSTOM_BAR_2026_11_09 (v64): the second door into bar edit
-           mode, pinned at the foot of the search panel (hidden on
-           desktop widths, where there is no thumb bar). -->
-      <button type="button" class="portal-hubsearch-item" id="portal-hubsearch-customize"><i class="fas fa-sliders"></i><span class="hs-main">Customize thumb bar</span></button>
     </div>
   </div>
 
@@ -136,41 +157,7 @@
 
     <!-- ==================== DASHBOARD VIEW ==================== -->
     <section id="portal-dash-view" hidden>
-      <!-- PORTAL_APP_2026_11_09, reworked by HUB_NAV_2026_11_09
-           (Austin, Nov 9, 2026): the phone thumb bar — the public
-           site's bottom-nav pattern brought inside the Hub, fixed to
-           the bottom at <=920px (portal.css). The owner's final word
-           on its contents: Guest, Queue, Team Chat, Time Clock, Search —
-           no Home (the Hub opens on Home) and no Menu anywhere (the
-           Hub search IS the menu now — since v65 it
-           lives on this bar, in the fifth seat). Each button item
-           clicks the REAL sidebar tab, so panels open through the
-           exact sidebar code paths and role gates, and the PORTAL_APP
-           module in portal.js mirrors each sidebar tab's visibility
-           and active state onto these items. Search is not a
-           tab either: it opens the Hub Search sheet. Pay is not
-           a tab: it is a plain link out to Square (the v61
-           REPORT says why the dashboard URL and not an app
-           scheme) — it left the standard bar in v65, when Search
-           took its seat and a Square button went up top, and it
-           stays addable from the customize tray. The bar lives inside
-           #portal-dash-view, so it exists only on the dashboard,
-           never on the sign-in screens. CUSTOM_BAR_2026_11_09 (v64):
-           the five below are now the DEFAULT bar — each associate
-           can long-press the bar (or use the Search panel's
-           Customize row) and drag their own favorites in and out.
-           The PORTAL_APP module re-renders these items in place
-           from the signed-in associate's saved list
-           (public.portal_bar_prefs) when one exists; the static
-           five are the first-paint defaults and the fallback for
-           every failure. The tray markup follows the bar. -->
-      <nav class="portal-thumbbar" id="portal-thumbbar" aria-label="Quick navigation">
-        <button class="portal-thumb-item" type="button" data-thumb="customers" aria-label="Guest"><i class="fas fa-users"></i><span>Guest</span></button>
-        <button class="portal-thumb-item" type="button" data-thumb="tickets" aria-label="Service Queue"><i class="fas fa-list-ol"></i><span>Queue</span></button>
-        <button class="portal-thumb-item" type="button" data-thumb="teamchat" aria-label="Team Chat"><i class="fas fa-comments"></i><span>Team Chat</span></button>
-        <button class="portal-thumb-item" type="button" data-thumb="timeclock" aria-label="Time Clock"><i class="fas fa-clock"></i><span>Time Clock</span></button>
-        <button class="portal-thumb-item" type="button" data-thumb="search" aria-label="Search"><i class="fas fa-magnifying-glass"></i><span>Search</span></button>
-      </nav>
+
       <!-- CUSTOM_BAR_2026_11_09 (v64): the Available tabs tray. Hidden
            until edit mode; portal.js docks it directly above the thumb
            bar (bottom set from the bar's measured height), fills the
@@ -1779,6 +1766,52 @@
       </div>
     </section>
   </main>
+
+      <!-- PORTAL_APP_2026_11_09, reworked by HUB_NAV_2026_11_09
+           (Austin, Nov 9, 2026): the phone thumb bar — the public
+           site's bottom-nav pattern brought inside the Hub, fixed to
+           the bottom at <=920px (portal.css). The owner's final word
+           on its contents: Guest, Queue, Team Chat, Time Clock, Search —
+           no Home (the Hub opens on Home) and no Menu anywhere (the
+           Hub search IS the menu now — since v65 it
+           lives on this bar, in the fifth seat). Each button item
+           clicks the REAL sidebar tab, so panels open through the
+           exact sidebar code paths and role gates, and the PORTAL_APP
+           module in portal.js mirrors each sidebar tab's visibility
+           and active state onto these items. Search is not a
+           tab either: it opens the Hub Search sheet. Pay is not
+           a tab: it is a plain link out to Square (the v61
+           REPORT says why the dashboard URL and not an app
+           scheme) — it left the standard bar in v65, when Search
+           took its seat and a Square button went up top, and it
+           stays addable from the customize tray. It exists only on the dashboard,
+           never on the sign-in screens. CUSTOM_BAR_2026_11_09 (v64):
+           the five below are now the DEFAULT bar — each associate
+           can long-press the bar (or use the Search panel's
+           Customize row) and drag their own favorites in and out.
+           The PORTAL_APP module re-renders these items in place
+           from the signed-in associate's saved list
+           (public.portal_bar_prefs) when one exists; the static
+           five are the first-paint defaults and the fallback for
+           every failure. The tray markup follows in the
+           dashboard view below. SEARCH_SHEET_FIX_2026_11_09
+           (v68): the bar itself moved OUT of #portal-dash-view
+           to sit directly under <body> — the public site's
+           bottom-nav structure, whose bar is a body child. A
+           position:fixed element nested inside the scrolling
+           view negotiates with that view's scroll on iOS; as a
+           body child the bar answers only to the viewport,
+           like the site's. Dashboard-only gating survives the
+           move through the body:has(#portal-dash-view[hidden])
+           rule in portal.css, the same pattern that gates
+           Log Out. -->
+      <nav class="portal-thumbbar" id="portal-thumbbar" aria-label="Quick navigation">
+        <button class="portal-thumb-item" type="button" data-thumb="customers" aria-label="Guest"><i class="fas fa-users"></i><span>Guest</span></button>
+        <button class="portal-thumb-item" type="button" data-thumb="tickets" aria-label="Service Queue"><i class="fas fa-list-ol"></i><span>Queue</span></button>
+        <button class="portal-thumb-item" type="button" data-thumb="teamchat" aria-label="Team Chat"><i class="fas fa-comments"></i><span>Team Chat</span></button>
+        <button class="portal-thumb-item" type="button" data-thumb="timeclock" aria-label="Time Clock"><i class="fas fa-clock"></i><span>Time Clock</span></button>
+        <button class="portal-thumb-item" type="button" data-thumb="search" aria-label="Search"><i class="fas fa-magnifying-glass"></i><span>Search</span></button>
+      </nav>
 
   <!-- ==================== DETAIL DRAWER ==================== -->
   <!-- PORTAL_GV_TEXTS_2026_11_02: the ticket drawer's Message customer
