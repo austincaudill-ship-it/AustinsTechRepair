@@ -3487,3 +3487,9 @@ html:not([data-theme="dark"]) .footer .footer-cf { color: var(--muted); }
    page content — forms included. */
 .atr-turnstile { min-height: 70px; }
 .mobile-bottom-nav { z-index: 2100; }
+
+/* PORTAL_IN_ACCOUNT_2026_11_10 (v84): the Portal row inside My Account is
+   an anchor wearing the account-row classes — kill the link underline so
+   it reads as a row like its neighbors, and keep [hidden] absolute. */
+a.acct-menu-item { text-decoration: none; color: inherit; }
+#emp-dash-link[hidden] { display: none; }
