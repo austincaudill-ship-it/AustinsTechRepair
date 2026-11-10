@@ -1131,7 +1131,7 @@
       var note = document.getElementById('rf-summary-note');
       if (note) note.textContent = on
         ? 'One-on-one help is $25 an hour, plus the $15 visit fee. ATR One Plus (paid) members pay no visit fee on covered devices.'
-        : 'Estimates are always free. Your exact price is confirmed after a full diagnostics.';
+        : 'Estimates are always free. Your exact price is confirmed once we have checked your device.';
       /* A lesson or setup visit has no repair work to authorize: the
          authorization row and the signature block step aside in this
          mode, and atr-forms skips those gates for the [SERVICE] ticket. */

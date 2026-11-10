@@ -457,7 +457,7 @@ a { color: var(--brand); }
 .footer-col-title { font-family: var(--font-display); font-weight: 700; color: #FAF6EE; font-size: 1.05rem; margin-bottom: 1.1rem; display: block; }
 .footer-link { display: block; color: #B9A98F; text-decoration: none; margin-bottom: 0.7rem; transition: color var(--transition); font-size: 0.9rem; overflow-wrap: anywhere; }
 .footer-link:hover { color: var(--gold); }
-.footer-disclaimer { font-size: 0.60rem; color: #8d7d66; line-height: 1.65; margin-bottom: 1.8rem; border-top: 1px solid #3d3226; padding-top: 2rem; }
+.footer-disclaimer { font-size: 0.72rem; color: #8d7d66; line-height: 1.65; margin-bottom: 1.8rem; border-top: 1px solid #3d3226; padding-top: 2rem; }
 .footer-disclaimer strong { color: #c9a86a; }
 /* FOOTNOTE_MARKERS_2026_11_09: Apple-fashion footnote marker — a small brand-colored superscript number sitting at the claim, matching the numbered small print in the footer. Plain marker, not a link; line-height 0 so it never shifts the line it sits on. */
 sup.fnote { color: var(--brand); font-size: 0.68em; font-weight: 700; line-height: 0; margin-left: 0.1em; }
@@ -3323,3 +3323,19 @@ html[data-theme="dark"] .site-search-mic.is-listening { color: var(--gold); }
   #svc-oo-brand-wrap, #svc-oo-model-wrap, #svc-oo-grid-wrap,
   .repair-card { scroll-margin-top: 84px; }
 }
+
+/* ===== FOOTER_FINEPRINT_ONE_BLOCK_2026_11_10 =====
+   Owner (Nov 10, 2026): one fine-print block, not three separate
+   disclosures. The .footer-fineprint wrapper carries the single
+   divider rule and spacing; the paragraphs inside lose their own
+   dividers so the block reads as one piece of small print at the
+   v77 size (0.72rem). The Cloudflare row (.footer-cf) sits below
+   the copyright row as the last thing on the page: one short muted
+   row tucked to the bottom-left corner, badge small beside it. */
+.footer .footer-fineprint { border-top: 1px solid #3d3226; padding-top: 2rem; margin-bottom: 1.8rem; }
+html:not([data-theme="dark"]) .footer .footer-fineprint { border-top-color: var(--line); }
+.footer .footer-fineprint .footer-disclaimer { border-top: none; padding-top: 0; margin-bottom: 0.9rem; }
+.footer .footer-fineprint .footer-disclaimer:last-child { margin-bottom: 0; }
+.footer .footer-cf { display: flex; align-items: center; justify-content: flex-start; flex-wrap: wrap; gap: 0.35rem 0.6rem; margin-top: 1.4rem; text-align: left; font-size: 0.72rem; line-height: 1.5; color: #8d7d66; }
+html:not([data-theme="dark"]) .footer .footer-cf { color: var(--muted); }
+.footer .footer-cf .cf-badge-img { height: 26px; width: auto; margin-left: 0; border-radius: 5px; vertical-align: middle; }
