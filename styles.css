@@ -3339,3 +3339,16 @@ html:not([data-theme="dark"]) .footer .footer-fineprint { border-top-color: var(
 .footer .footer-cf { display: flex; align-items: center; justify-content: flex-start; flex-wrap: wrap; gap: 0.35rem 0.6rem; margin-top: 1.4rem; text-align: left; font-size: 0.72rem; line-height: 1.5; color: #8d7d66; }
 html:not([data-theme="dark"]) .footer .footer-cf { color: var(--muted); }
 .footer .footer-cf .cf-badge-img { height: 26px; width: auto; margin-left: 0; border-radius: 5px; vertical-align: middle; }
+
+/* ===== YEAR_STEP + CF_BADGE_LINK_V78_2026_11_10 =====
+   The year wraps take the same sticky-header offset as the other
+   step-advance targets (see WIZARD_SCROLL_FOLLOW_2026_11_10), so a
+   step advance lands the year picker below the header instead of
+   under it. The Cloudflare badge's new link wrapper keeps the
+   badge's own box, so the bottom-corner row lays out exactly as it
+   did while the badge sat there unlinked. */
+#svc-year-wrap, #bk-year-wrap { scroll-margin-top: 120px; }
+@media (max-width: 920px) {
+  #svc-year-wrap, #bk-year-wrap { scroll-margin-top: 84px; }
+}
+.footer .footer-cf a { display: inline-flex; line-height: 0; }

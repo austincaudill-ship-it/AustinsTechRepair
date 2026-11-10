@@ -154,7 +154,7 @@
     }
 
     /* ---------------- Repair wizard ---------------- */
-    var repairState = { device: '', brand: '', model: '', issue: '', issues: [], atrOne: '', describe: '', modelState: 'pending', priceRange: '$50 \u2013 $150', priceExact: null,
+    var repairState = { device: '', brand: '', model: '', year: '', issue: '', issues: [], atrOne: '', describe: '', modelState: 'pending', priceRange: '$50 \u2013 $150', priceExact: null,
       /* SUPPORT_BOOKING_2026_11_06 (design pivot): One-on-One mode of this
          same wizard — serviceKind is one of the eight service bubbles,
          ooHours is 1 or 2 (pure $25/hr). */
@@ -167,10 +167,19 @@
        entirely; nothing renders an image from flow selections. */
     function rfVal(id) { var el = document.getElementById(id); return el ? String(el.value || '').trim() : ''; }
     function rfSet(id, txt) { var el = document.getElementById(id); if (el) el.textContent = txt; }
+    /* YEAR_STEP_V78_2026_11_10: the make + model line the summary
+       pills and the step-4 recap share — a computer's year rides it
+       ("Apple MacBook Pro 2021") once the year step is answered. */
+    function rfMakeModelTxt(brand, model, year) {
+      if (!model) return brand || 'Any make';
+      return brand + ' ' + model + (year ? (year === 'Not sure' ? ' (year not sure)' : ' ' + year) : '');
+    }
     function rfRenderSummary() {
       rfSet('rf-sum-device', repairState.device || 'Not picked yet');
       rfSet('rf-sum-brand', repairState.brand || '\u2014');
-      rfSet('rf-sum-model', repairState.model || (repairState.modelState === 'notlisted' ? 'Not listed' : (repairState.modelState === 'na' ? 'Not applicable' : '\u2014')));
+      var rfModelTxt = repairState.model || (repairState.modelState === 'notlisted' ? 'Not listed' : (repairState.modelState === 'na' ? 'Not applicable' : '\u2014'));
+      if (repairState.year && repairState.modelState !== 'na') rfModelTxt += ' \u00b7 ' + (repairState.year === 'Not sure' ? 'year not sure' : repairState.year);
+      rfSet('rf-sum-model', rfModelTxt);
       var repairs = repairState.issues.length ? repairState.issues.map(function (i) { return i.name; }).join(', ') : (repairState.issue || '\u2014');
       if (repairState.mode === 'oneonone') {
         /* SUPPORT_BOOKING_2026_11_06: the same two summary rows carry the
@@ -207,11 +216,16 @@
       var cont = document.getElementById('bk-continue');
       if (!cont) return;
       var modelOk = repairState.modelState === 'chosen' || repairState.modelState === 'notlisted' || repairState.modelState === 'na';
+      /* YEAR_STEP_V78_2026_11_10: in repair mode a computer's year is
+         part of "model OK" — the repair grid is held until the year
+         is picked, and this gate says the same. One-on-One mode
+         never gates on the year. */
+      var yearOk = repairState.mode === 'oneonone' || !bkYearApplies() || !!repairState.year;
       /* SUPPORT_BOOKING_2026_11_06: One-on-One mode gates on the service
          kind + booked hours instead of repair tiles. */
       var ready = repairState.mode === 'oneonone'
         ? !!(repairState.device && repairState.brand && modelOk && repairState.serviceKind && repairState.ooHours && repairState.atrOne)
-        : !!(repairState.device && repairState.brand && modelOk && repairState.issues.length && repairState.atrOne);
+        : !!(repairState.device && repairState.brand && modelOk && yearOk && repairState.issues.length && repairState.atrOne);
       cont.disabled = !ready;
     }
     function rfShowFlowExtras() {
@@ -228,11 +242,13 @@
        that has not been reached yet. */
     var currentRepairStep = 1;
     var furthestRepairStep = 1;
-    /* SERVICES_FLOW_V58_2026_11_09: while an entry point's carried-in
-       device pick is being applied (rfPresetDevice), the tile click's
-       advance to step 2 is held — the wizard opens on the device step
-       with the pick already made, and the guest steps forward (or
-       changes the pick) from there. */
+    /* SERVICES_FLOW_V58_2026_11_09: originally, while an entry
+       point's carried-in device pick was being applied
+       (rfPresetDevice), the tile click's advance to step 2 was held.
+       ENTRY_ADVANCE_V78_2026_11_10 (owner, Nov 10, 2026) retires the
+       hold: an entry pick now advances like any tile tap, so this
+       flag is never set any more; it stays declared so the tile
+       handler below keeps its original shape. */
     var rfSuppressAdvance = false;
 
     var deviceData = {
@@ -255,8 +271,12 @@
           { name: 'Diagnostic / software', price: '$50 \u2013 $100' }
         ]
       },
+      /* MAKE_LIST_V78_2026_11_10 (owner, Nov 10, 2026): the computer
+         makes are Apple, Microsoft, HP, Dell, Lenovo, Chromebook,
+         Other — 'Windows PC' and 'Custom PC' are out (a Windows
+         machine is Microsoft, or Other), and the word is make. */
       'Computer': {
-        brands: ['Apple Mac', 'Dell', 'HP', 'Lenovo', 'Custom PC'],
+        brands: ['Apple', 'Microsoft', 'HP', 'Dell', 'Lenovo', 'Chromebook', 'Other'],
         issues: [
           { name: 'Laptop screen replacement', price: '$149 \u2013 $320' },
           { name: 'SSD upgrade & OS install', price: '$120 \u2013 $250' },
@@ -323,6 +343,7 @@
           repairState.issues = [];
           repairState.atrOne = '';
           repairState.modelState = 'pending';
+          repairState.year = '';
           repairState.priceExact = null;
           document.querySelectorAll('input[name="bk-atrone"]').forEach(function (r) { r.checked = false; });
           rfRenderSummary(); rfGate();
@@ -444,15 +465,17 @@
       var brandSel = document.getElementById('bk-brand-select');
       var issueList = document.getElementById('issue-list');
       var bkMW = document.getElementById('bk-model-wrap');
+      var bkYW = document.getElementById('bk-year-wrap');
       var bkRW = document.getElementById('bk-repair-wrap');
       if (bkMW) bkMW.hidden = true;
+      if (bkYW) bkYW.hidden = true;
       if (bkRW) bkRW.hidden = true;
 
       /* CHECKIN_DROPDOWNS_2026_11_05: fallback brands use the same single dropdown. */
       if (brandSel) {
         bkFillSelect(brandSel,
           data.brands.map(function (brand) { return [brand, brand]; }),
-          'Choose your brand\u2026');
+          'Choose your make\u2026');
         brandSel.onchange = function () {
           if (brandSel.value) { repairState.brand = brandSel.value; repairState.modelState = 'na'; rfRenderSummary(); rfGate(); }
         };
@@ -619,14 +642,16 @@
       var brandSel = document.getElementById('bk-brand-select');
       var issueList = document.getElementById('issue-list');
       var modelWrap = document.getElementById('bk-model-wrap');
+      var yearWrap = document.getElementById('bk-year-wrap');
       var repairWrap = document.getElementById('bk-repair-wrap');
       if (issueList) issueList.innerHTML = '';
       if (modelWrap) modelWrap.hidden = true;
+      if (yearWrap) yearWrap.hidden = true;
       if (repairWrap) repairWrap.hidden = true;
       if (!brandSel) { populateBrandsAndIssues(device); return; }
       bkFillSelect(brandSel,
-        Object.keys(DATA[typeKey]).map(function (k) { return [k, k]; }).concat([['__other__', 'Other brand']]),
-        'Choose your brand\u2026');
+        Object.keys(DATA[typeKey]).map(function (k) { return [k, k]; }).concat([['__other__', 'Other make']]),
+        'Choose your make\u2026');
       brandSel.onchange = function () {
         if (!brandSel.value) return;
         var brandKey = brandSel.value;
@@ -635,6 +660,7 @@
         repairState.issue = '';
         repairState.issues = [];
         repairState.modelState = 'pending';
+        repairState.year = '';
         repairState.priceExact = null;
         rfRenderSummary(); rfGate();
         /* BOOKING_OO_TILE_2026_11_09: brand changed while One-on-One
@@ -649,8 +675,10 @@
       var modelWrap = document.getElementById('bk-model-wrap');
       var repairWrap = document.getElementById('bk-repair-wrap');
       var modelSel = document.getElementById('bk-model-select');
+      var yearWrap = document.getElementById('bk-year-wrap');
       if (!modelSel) return;
       if (repairWrap) repairWrap.hidden = true;
+      if (yearWrap) yearWrap.hidden = true;
       var names = brandKey === '__other__' ? [] : Object.keys(DATA[typeKey][brandKey]);
       bkFillSelect(modelSel,
         names.map(function (k) { return [k, k]; }).concat([['__notlisted__', "My model isn't listed"]]),
@@ -662,14 +690,52 @@
         repairState.modelState = modelKey === '__notlisted__' ? 'notlisted' : 'chosen';
         repairState.issue = '';
         repairState.issues = [];
+        repairState.year = '';
         repairState.priceExact = null;
         rfRenderSummary(); rfGate();
         /* BOOKING_OO_TILE_2026_11_09: model changed while One-on-One
            mode is on — the Learn topic takes the new model's name. */
         if (repairState.mode === 'oneonone') ooFilterTopics();
-        renderBkRepairs(typeKey, brandKey, modelKey);
+        /* YEAR_STEP_V78_2026_11_10 (owner, Nov 10, 2026): in repair
+           mode a computer's repair grid waits for the year — make,
+           model, year, like searching for a vehicle. One-on-One mode
+           never waits: its topics do not depend on a year. */
+        if (repairState.mode !== 'oneonone' && bkYearApplies()) { bkShowYear(typeKey, brandKey, modelKey); rfShowFlowExtras(); }
+        else renderBkRepairs(typeKey, brandKey, modelKey);
       };
       if (modelWrap) { modelWrap.hidden = false; try { modelWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {} }
+    }
+    /* YEAR_STEP_V78_2026_11_10 (owner, Nov 10, 2026): computers ask
+       make, model, then YEAR — like searching for a vehicle online —
+       because the part depends on the year (Mobile Sentrix lists
+       Macs by year; the same holds for HP, Dell, and Lenovo laptops).
+       PROVISIONAL LIST: the owner is confirming the exact years
+       against Mobile Sentrix; the years live in this one list so his
+       confirmed list drops straight in. 'Not sure' rides the picker
+       as an answer, so a guest who does not know the year is never
+       stuck. Phones and every other device keep make, then model —
+       no year. */
+    var BK_YEARS = ['2026', '2025', '2024', '2023', '2022', '2021', '2020', '2019', '2018', '2017', '2016', '2015'];
+    function bkYearApplies() {
+      return repairState.device === 'Computer' &&
+        (repairState.modelState === 'chosen' || repairState.modelState === 'notlisted');
+    }
+    function bkShowYear(typeKey, brandKey, modelKey) {
+      var yearWrap = document.getElementById('bk-year-wrap');
+      var yearSel = document.getElementById('bk-year-select');
+      var repairWrap = document.getElementById('bk-repair-wrap');
+      if (!yearSel) { renderBkRepairs(typeKey, brandKey, modelKey); return; }
+      if (repairWrap) repairWrap.hidden = true;
+      bkFillSelect(yearSel,
+        BK_YEARS.map(function (y) { return [y, y]; }).concat([['__notsure__', 'Not sure']]),
+        'Choose your year\u2026');
+      yearSel.onchange = function () {
+        if (!yearSel.value) return;
+        repairState.year = yearSel.value === '__notsure__' ? 'Not sure' : yearSel.value;
+        rfRenderSummary(); rfGate();
+        renderBkRepairs(typeKey, brandKey, modelKey);
+      };
+      if (yearWrap) { yearWrap.hidden = false; try { yearWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {} }
     }
     function bkGenericRepairs(typeKey) {
       var DATA = bkData();
@@ -756,7 +822,10 @@
       data: bkData,
       fallback: deviceData,
       iconHtml: bkIconHtml,
-      iconForName: bkIconHtmlForName
+      iconForName: bkIconHtmlForName,
+      /* YEAR_STEP_V78_2026_11_10: the Services panes read the same
+         provisional year list — one list, both flows. */
+      years: BK_YEARS
     };
     /* REPAIR_WIZARD_ESTIMATE_FIX_2026_11_06: the estimate now ADDS UP.
        Until today it was driven by the FIRST selected repair only, so
@@ -874,7 +943,7 @@
       if (summary) {
         summary.innerHTML =
           '<span class="pill"><i class="fas fa-mobile-screen"></i> ' + escapeHtml(repairState.device) + '</span>' +
-          '<span class="pill"><i class="fas fa-tag"></i> ' + escapeHtml(repairState.model ? (repairState.brand + ' ' + repairState.model) : (repairState.brand || 'Any brand')) + '</span>' +
+          '<span class="pill"><i class="fas fa-tag"></i> ' + escapeHtml(rfMakeModelTxt(repairState.brand, repairState.model, repairState.year)) + '</span>' +
           '<span class="pill"><i class="fas fa-wrench"></i> ' + escapeHtml(allIssues) + '</span>' +
           (repairState.atrOne ? '<span class="pill"><i class="fas fa-shield-halved"></i> ATR One: ' + escapeHtml(repairState.atrOne) + '</span>' : '');
       }
@@ -924,6 +993,9 @@
         device: repairState.device || '',
         brand: repairState.brand || '',
         model: repairState.model || '',
+        /* YEAR_STEP_V78_2026_11_10: the computer's year, when the
+           year step was answered ('' for every other device). */
+        year: repairState.year || '',
         issue: repairState.issue || '',
         issues: repairState.issues.map(function (i) { return i.name; }),
         atrOne: repairState.atrOne || '',
@@ -942,7 +1014,10 @@
       var typeSel = document.getElementById('sr-device-type');
       if (typeSel && !typeSel.value && g.device) typeSel.value = g.device;
       var info = document.getElementById('sr-device-info');
-      if (info && !info.value && (g.model || g.brand)) info.value = g.model || g.brand;
+      /* YEAR_STEP_V78_2026_11_10: the year rides the device-info
+         line ("MacBook Pro (2021)") so it lands on the ticket,
+         where the parts order reads it. */
+      if (info && !info.value && (g.model || g.brand)) info.value = (g.model || g.brand) + (g.year ? ' (' + (g.year === 'Not sure' ? 'year not sure' : g.year) + ')' : '');
       var needSel = document.getElementById('sr-repair-needed');
       if (needSel && !needSel.value && g.mode !== 'oneonone' && REPAIR_NEEDED_MAP[g.issue]) needSel.value = REPAIR_NEEDED_MAP[g.issue];
       /* REPAIR_FLOW_UPDATE_2026_11_05: ATR One answer + describe text carry
@@ -978,7 +1053,7 @@
         recap.hidden = false;
         recap.innerHTML =
           '<span class="pill"><i class="fas fa-mobile-screen"></i> ' + escapeHtml(g.device) + '</span>' +
-          '<span class="pill"><i class="fas fa-tag"></i> ' + escapeHtml(g.model ? (g.brand + ' ' + g.model) : (g.brand || 'Any brand')) + '</span>' +
+          '<span class="pill"><i class="fas fa-tag"></i> ' + escapeHtml(rfMakeModelTxt(g.brand, g.model, g.year)) + '</span>' +
           '<span class="pill"><i class="fas fa-graduation-cap"></i> ' + escapeHtml(g.serviceKind) + '</span>' +
           '<span class="pill"><i class="fas fa-clock"></i> ' + g.ooHours + (g.ooHours === 1 ? ' hour' : ' hours') + ' one-on-one \u2014 $' + g.ooTime + '</span>' +
           (g.atrOne ? '<span class="pill"><i class="fas fa-shield-halved"></i> ATR One: ' + escapeHtml(g.atrOne) + '</span>' : '');
@@ -986,7 +1061,7 @@
         recap.hidden = false;
         recap.innerHTML =
           '<span class="pill"><i class="fas fa-mobile-screen"></i> ' + escapeHtml(g.device) + '</span>' +
-          '<span class="pill"><i class="fas fa-tag"></i> ' + escapeHtml(g.model ? (g.brand + ' ' + g.model) : (g.brand || 'Any brand')) + '</span>' +
+          '<span class="pill"><i class="fas fa-tag"></i> ' + escapeHtml(rfMakeModelTxt(g.brand, g.model, g.year)) + '</span>' +
           '<span class="pill"><i class="fas fa-wrench"></i> ' + escapeHtml(g.issue) + '</span>' +
           /* REPAIR_WIZARD_ESTIMATE_FIX_2026_11_06: the recap pill said
              "Flat $X" for priced picks — an estimate is never flat.
@@ -1142,6 +1217,15 @@
       /* BOOKING_OO_TILE_2026_11_09: entering the mode filters the
          topic bubbles to the device picked at step 1. */
       if (on) ooFilterTopics();
+      /* YEAR_STEP_V78_2026_11_10: leaving One-on-One with a computer
+         whose year was never asked (the mode does not ask it) — ask
+         now, so the Continue gate never sits disabled in repair mode
+         with no visible reason. */
+      if (!on && bkYearApplies() && !repairState.year) {
+        bkShowYear(bkTypeKey(repairState.device),
+          repairState.brand === 'Other' ? '__other__' : repairState.brand,
+          repairState.modelState === 'notlisted' ? '__notlisted__' : repairState.model);
+      }
       ooRender(); rfRenderSummary(); rfGate();
     }
     window.atrSetOneOnOneMode = setOneOnOneMode;
@@ -1195,17 +1279,18 @@
          points that name a device — the service detail pages' Start
          a Service buttons carry data-wizard-device — hand their
          device to this same wizard, the way data-open-oneonone hands
-         it a mode. The pick runs through the tile's own click with
-         the step advance held, so the device step arrives answered
-         and the summary already shows the device; the pick can still
-         be changed like any other, and the flow stays step by step.
-         No forked state, no second flow. */
+         it a mode.
+         ENTRY_ADVANCE_V78_2026_11_10 (owner, Nov 10, 2026 — supersedes
+         the v58 hold): the pick runs through the tile's own click
+         UNHELD, so it advances to step 2 like any tap. An entry pick
+         must carry the guest forward — never make them tap the same
+         device twice. The pick can still be changed like any other
+         (step 1 stays one tap back), the summary shows the device
+         from the first screen, and no state is forked. */
       function rfPresetDevice(device) {
         var btn = document.querySelector('#step-device [data-device="' + device + '"]');
         if (!btn) return;
-        rfSuppressAdvance = true;
         btn.click();
-        rfSuppressAdvance = false;
       }
       window.atrPresetDevice = rfPresetDevice;
       document.addEventListener('click', function (e) {
@@ -5321,7 +5406,7 @@ if ("serviceWorker" in navigator) {
     function combinedText(t) { return t.lo === t.hi ? shared.fmt(t.lo) : shared.fmt(t.lo) + ' \u2013 ' + shared.fmt(t.hi); }
 
     function newState() {
-      return { device: '', brandKey: '', brandLabel: '', modelKey: '', modelLabel: '', modelState: 'pending', picks: [], kind: '', hours: 0 };
+      return { device: '', brandKey: '', brandLabel: '', modelKey: '', modelLabel: '', modelState: 'pending', year: '', yearVal: '', picks: [], kind: '', hours: 0 };
     }
 
     /* ---------------- pane scaffolding ----------------
@@ -5335,6 +5420,7 @@ if ("serviceWorker" in navigator) {
         devGrid: $(prefix + '-dev-grid'),
         brandWrap: $(prefix + '-brand-wrap'), brandSel: $(prefix + '-brand-select'),
         modelWrap: $(prefix + '-model-wrap'), modelSel: $(prefix + '-model-select'),
+        yearWrap: $(prefix + '-year-wrap'), yearSel: $(prefix + '-year-select'),
         gridWrap: $(prefix + '-grid-wrap'), grid: $(prefix + '-grid')
       };
     }
@@ -5364,6 +5450,7 @@ if ("serviceWorker" in navigator) {
       var st = pane.state;
       st.device = device; st.brandKey = ''; st.brandLabel = '';
       st.modelKey = ''; st.modelLabel = ''; st.modelState = 'pending';
+      st.year = ''; st.yearVal = '';
       st.picks = []; st.kind = ''; st.hours = 0;
       pane.devGrid.querySelectorAll('[data-svc-device]').forEach(function (b) {
         b.classList.toggle('selected', b.getAttribute('data-svc-device') === device);
@@ -5371,14 +5458,15 @@ if ("serviceWorker" in navigator) {
       if (isPicker(pane)) {
         var typeKey = shared.typeKey(device);
         fillSelect(pane.brandSel,
-          Object.keys(DATA[typeKey]).map(function (k) { return [k, k]; }).concat([['__other__', 'Other brand']]),
-          'Choose your brand\u2026');
+          Object.keys(DATA[typeKey]).map(function (k) { return [k, k]; }).concat([['__other__', 'Other make']]),
+          'Choose your make\u2026');
       } else {
         var fb = shared.fallback[device] || { brands: ['Other'] };
-        fillSelect(pane.brandSel, fb.brands.map(function (b) { return [b, b]; }), 'Choose your brand\u2026');
+        fillSelect(pane.brandSel, fb.brands.map(function (b) { return [b, b]; }), 'Choose your make\u2026');
       }
       pane.brandWrap.hidden = false;
       pane.modelWrap.hidden = true;
+      if (pane.yearWrap) pane.yearWrap.hidden = true;
       pane.gridWrap.hidden = true;
       svcFollow(pane.brandWrap);
       if (pane.kind === 'oneonone') renderOoSummary();
@@ -5391,8 +5479,10 @@ if ("serviceWorker" in navigator) {
       st.brandKey = brandKey;
       st.brandLabel = brandKey === '__other__' ? 'Other' : brandKey;
       st.modelKey = ''; st.modelLabel = ''; st.modelState = 'pending';
+      st.year = ''; st.yearVal = '';
       st.picks = []; st.kind = '';
       pane.brandSel.value = brandKey;
+      if (pane.yearWrap) pane.yearWrap.hidden = true;
       if (isPicker(pane)) {
         var names = brandKey === '__other__' ? [] : Object.keys(DATA[shared.typeKey(st.device)][brandKey]);
         fillSelect(pane.modelSel,
@@ -5417,9 +5507,41 @@ if ("serviceWorker" in navigator) {
       st.modelLabel = modelKey === '__notlisted__' ? '' : modelKey;
       st.modelState = modelKey === '__notlisted__' ? 'notlisted' : 'chosen';
       st.picks = []; st.kind = '';
+      st.year = ''; st.yearVal = '';
       pane.modelSel.value = modelKey;
-      renderGrid(pane);
+      /* YEAR_STEP_V78_2026_11_10 (owner, Nov 10, 2026): the repair
+         pane asks a computer's year after its model — make, model,
+         year, like searching for a vehicle — and the service grid
+         waits for it. 'Not sure' is always an answer, so nobody is
+         trapped. The One-on-One pane never asks: lessons do not
+         depend on a year. */
+      if (paneNeedsYear(pane)) {
+        fillSelect(pane.yearSel,
+          (shared.years || []).map(function (y) { return [y, y]; }).concat([['__notsure__', 'Not sure']]),
+          'Choose your year\u2026');
+        pane.gridWrap.hidden = true;
+        pane.yearWrap.hidden = false;
+        svcFollow(pane.yearWrap);
+      } else {
+        renderGrid(pane);
+      }
       if (pane.kind === 'oneonone') renderOoSummary();
+      gate(pane);
+    }
+
+    function paneNeedsYear(pane) {
+      var st = pane.state;
+      return pane.kind === 'repair' && isPicker(pane) && st.device === 'Computer' &&
+        (st.modelState === 'chosen' || st.modelState === 'notlisted');
+    }
+
+    function paneSetYear(pane, yearVal) {
+      var st = pane.state;
+      if (!yearVal) return;
+      st.yearVal = yearVal;
+      st.year = yearVal === '__notsure__' ? 'Not sure' : yearVal;
+      if (pane.yearSel) pane.yearSel.value = yearVal;
+      renderGrid(pane);
       gate(pane);
     }
 
@@ -5429,6 +5551,7 @@ if ("serviceWorker" in navigator) {
       });
       pane.brandSel.addEventListener('change', function () { paneSetBrand(pane, pane.brandSel.value); });
       pane.modelSel.addEventListener('change', function () { paneSetModel(pane, pane.modelSel.value); });
+      if (pane.yearSel) pane.yearSel.addEventListener('change', function () { paneSetYear(pane, pane.yearSel.value); });
     }
 
     /* ---------------- tiles ---------------- */
@@ -5587,6 +5710,9 @@ if ("serviceWorker" in navigator) {
       if (!box) return;
       if (!st.picks.length) { box.hidden = true; if (disc) disc.hidden = true; return; }
       var modelLabel = st.modelLabel || ((st.brandLabel && st.brandLabel !== 'Other') ? st.brandLabel : st.device);
+      /* YEAR_STEP_V78_2026_11_10: the estimate names the year too —
+         "Screen replacement for MacBook Pro · 2021". */
+      if (st.year) modelLabel += ' \u00b7 ' + (st.year === 'Not sure' ? 'year not sure' : st.year);
       var allIssues = st.picks.map(function (i) { return i.name; }).join(', ');
       var t = estimateTotals(st.picks);
       if (t.any && t.unpriced === 0) {
@@ -5639,7 +5765,7 @@ if ("serviceWorker" in navigator) {
       if (!btn) return;
       var ready = pane.kind === 'oneonone'
         ? !!(st.device && st.brandKey && modelOk(pane) && st.kind && st.hours)
-        : !!(st.device && st.brandKey && modelOk(pane) && st.picks.length);
+        : !!(st.device && st.brandKey && modelOk(pane) && (!paneNeedsYear(pane) || !!st.year) && st.picks.length);
       btn.disabled = !ready;
     }
 
@@ -5683,6 +5809,10 @@ if ("serviceWorker" in navigator) {
         if (src.state.brandKey) {
           paneSetBrand(dst, src.state.brandKey);
           if (src.state.modelKey && isPicker(dst)) paneSetModel(dst, src.state.modelKey);
+          /* YEAR_STEP_V78_2026_11_10: a computer's year carries
+             across the door switch too, so the repair pane never
+             re-asks what the guest already answered. */
+          if (src.state.yearVal && dst.kind === 'repair') paneSetYear(dst, src.state.yearVal);
         }
       }
       var flow = $('svc-flow');
@@ -5738,6 +5868,10 @@ if ("serviceWorker" in navigator) {
       clickFormDevice(pane.state.device);
       setFormSelect('bk-brand-select', pane.state.brandKey);
       if (isPicker(pane)) setFormSelect('bk-model-select', pane.state.modelKey);
+      /* YEAR_STEP_V78_2026_11_10: the year rides the handoff too —
+         setting it fires the form's own year change, which renders
+         the repair grid the pick clicks below land on. */
+      if (isPicker(pane) && pane.state.yearVal) setFormSelect('bk-year-select', pane.state.yearVal);
     }
 
     $('svc-continue').addEventListener('click', function () {
@@ -5804,6 +5938,11 @@ if ("serviceWorker" in navigator) {
         paneSetBrand(repairPane, sel.brand);
         if (sel.model) paneSetModel(repairPane, sel.model);
       }
+      /* YEAR_STEP_V78_2026_11_10: a search result carries no year —
+         take the 'Not sure' answer so the service grid (and the
+         repair tile click below) still lands, exactly as it did
+         before the year step existed. */
+      if (repairPane.yearWrap && !repairPane.yearWrap.hidden) paneSetYear(repairPane, '__notsure__');
       if (sel.repair) {
         var tiles = repairPane.grid.querySelectorAll('.option-btn');
         for (var i = 0; i < tiles.length; i++) {
