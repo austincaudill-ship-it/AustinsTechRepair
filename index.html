@@ -130,6 +130,18 @@
       <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark/light mode">
         <i class="fas fa-moon" id="theme-icon"></i>
       </button>
+      <!-- HEADER_CART_BAG_2026_11_10 (owner, Nov 10, 2026): a bag
+           button in the header on PHONES only (<=920px, styles.css),
+           right beside the light/dark toggle, so a shopper can reach
+           the cart from anywhere. It opens the very same cart drawer
+           the account Cart section's own Open cart row opens
+           (window.atrOpenCart / openCart in script.js) — one cart, no
+           second implementation. This supersedes for mobile only the
+           ACCOUNT_FIX_PASS_3_3 ruling below ("no separate cart button
+           in the header"); the account Cart row stays, and the
+           desktop header is unchanged. The count badge reuses the
+           shop button's .cart-count pill and stays hidden at zero. -->
+      <button class="cart-bag-btn" id="cart-bag-btn" type="button" aria-label="Open your cart" title="Cart"><i class="fas fa-bag-shopping" aria-hidden="true"></i><span class="cart-count cart-bag-count" id="cart-bag-count" hidden>0</span></button>
       <!-- NAV_SEARCH_CLEANUP_2026_11_06: site-wide search button, in the header on every layout -->
       <button class="site-search-btn" id="site-search-open" type="button" aria-label="Search the site" title="Search the site"><i class="fas fa-search" aria-hidden="true"></i></button>
       <span class="acct-glance-anchor">
@@ -159,7 +171,17 @@
            signed-in user is staff (employee_profiles) — see the portal
            visibility module at the end of script.js. Fail closed: no
            session, no staff row, or any check error = it stays hidden. -->
-      <a class="btn btn-outline btn-sm emp-dash-link" id="emp-dash-link" href="portal.html" data-page="employee-dashboard" hidden><i class="fas fa-screwdriver-wrench"></i> <span class="account-label">Portal</span></a>
+      <!-- PORTAL_GEAR_2026_11_10 (owner, Nov 10, 2026): the SAME
+           element (id emp-dash-link, same hidden start, same staff
+           check unhides it — see the portal visibility module at the
+           end of script.js) restyled as a gear icon button beside the
+           account button. The wide wrench-and-"Portal" text pill it
+           replaces was squeezed off the phone header row (the
+           SITE_MOBILE_HEADER history in styles.css) and the owner
+           asked for a gear at the top instead; icon-only, it fits at
+           every width. Guests never see it: it renders only when the
+           staff check passes, exactly as before. -->
+      <a class="emp-dash-link" id="emp-dash-link" href="portal.html" data-page="employee-dashboard" aria-label="Associate Hub (Portal)" title="Associate Hub" hidden><i class="fas fa-gear" aria-hidden="true"></i></a>
       <!-- NAV_SEARCH_CLEANUP_2026_11_06 (addendum 11): the Book a Repair
            button is REMOVED from the header (owner: tacky; frees room
            for the account name + Portal word). Booking entry points
@@ -741,6 +763,14 @@
             </div>
 
             <div id="svc-pane-oo" hidden>
+              <!-- VIRTUAL_ONE_ON_ONE_2026_11_10: the pane asks the same
+                   question first, with the same two answers, and the
+                   pick is driven into the booking form on Continue. -->
+              <p class="field-label">How will we meet?</p>
+              <div class="option-grid bk-place-grid" style="margin-bottom: 1.4rem;">
+                <button class="option-btn" type="button" data-svc-oo-place="inperson"><i class="fas fa-house"></i> In person <span>&mdash; we come to you</span></button>
+                <button class="option-btn" type="button" data-svc-oo-place="virtual"><i class="fas fa-display"></i> Virtual <span>&mdash; on your screen, from anywhere</span></button>
+              </div>
               <p class="field-label">What kind of device?</p>
               <div class="option-grid" id="svc-oo-dev-grid">
                 <button class="option-btn" type="button" data-svc-device="Phone"><i class="fas fa-mobile-screen-button"></i> Phone</button>
@@ -952,6 +982,20 @@
                    inside the repair grid in script.js — the separate
                    toggle row that used to sit here is gone. -->
               <div id="bk-service-wrap" hidden>
+                <!-- VIRTUAL_ONE_ON_ONE_2026_11_10 (owner, Nov 10, 2026):
+                     early in the One-on-One flow the guest picks HOW the
+                     session happens. In person keeps everything exactly
+                     as it was; Virtual drops the $15 visit fee (owner
+                     ruling, same day) and ends at the Square first-hour
+                     pay step in atr-forms.js. The pick rides
+                     atrGuidedSelection.ooPlace into the ticket. -->
+                <div id="bk-place-wrap">
+                  <p class="field-label">How will we meet?</p>
+                  <div class="option-grid bk-place-grid">
+                    <button class="option-btn" type="button" data-oo-place="inperson"><i class="fas fa-house"></i> In person <span>&mdash; we come to you</span></button>
+                    <button class="option-btn" type="button" data-oo-place="virtual"><i class="fas fa-display"></i> Virtual <span>&mdash; on your screen, from anywhere</span></button>
+                  </div>
+                </div>
                 <!-- SERVICES_FLOW_V58_2026_11_09: the topic list is
                      device-aware for the two new device types as well —
                      Printer setup and Peripheral & accessory setup belong
@@ -2272,6 +2316,18 @@
                 <div id="acct-inbox-list"><p class="acct-muted">Loading your messages…</p></div>
               </div>
             </div>
+            <button class="acct-menu-item acct-flat-row" type="button" data-acct-menu="connect" aria-expanded="false"><i class="fas fa-display"></i> ATRG Connect <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
+
+            <!-- ATRG Connect — ATRG_CONNECT_2026_11_10 (Austin, Nov 10, 2026): "The guest gets a connect plugin in their account under the nav." A Connect row in the signed-in guest's account rows, right after Messages: the plugin lives here, in their account; opening it takes them to the Connect session page where they type the code their associate sent. The row follows the same drop-down machinery as every other account row (data-acct-menu / acct-view-*). -->
+            <div id="acct-view-connect" hidden>
+              <div class="acct-inbox">
+                <div class="acct-repairs-head">
+                  <h4><i class="fas fa-display"></i> ATRG Connect</h4>
+                </div>
+                <p class="acct-muted" style="text-align:left;padding:0;">Your virtual one-on-one, right here in your account. When your associate sends you a session code, open ATRG Connect, type the code, and we can see your screen and help you live.</p>
+                <a class="btn btn-primary btn-sm" href="#virtual-oneonone" data-page="virtual-oneonone"><i class="fas fa-display"></i> Open ATRG Connect</a>
+              </div>
+            </div>
             <button class="acct-menu-item acct-flat-row" type="button" data-acct-menu="cart" aria-expanded="false"><i class="fas fa-shopping-cart"></i> Cart <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
 
             <!-- Cart — ACCOUNT_FIX_PASS_3_3_2026_11_06 (owner correction,
@@ -2454,6 +2510,11 @@
               </label>
               <button class="btn btn-outline btn-sm" id="authx-profile-save" type="button"><i class="fas fa-save"></i> Save profile</button>
               <button class="btn btn-outline btn-sm" id="authx-passkey-setup-btn" type="button"><i class="fas fa-fingerprint"></i> Set up a passkey</button><span class="acct-muted" id="authx-profile-msg"></span><div id="authx-passkey-list"></div>
+              <!-- VERSION_VISIBILITY_2026_11_10: the guest's own
+                   version line — support may ask them to read it out.
+                   Filled by paintAppVersion() once the build stamp
+                   resolves; hidden until then. -->
+              <p class="acct-muted" id="acct-app-version" hidden></p>
             </div>
 
             <!-- My birthday (optional) -->
@@ -3186,6 +3247,7 @@
             <a class="service-card" href="#contact" data-page="contact"><div class="service-icon"><i class="fas fa-comments"></i></div><h3>Contact us</h3><p>Call, text, or send a message.</p></a>
             <a class="service-card" href="#account" data-page="account"><div class="service-icon"><i class="fas fa-crown"></i></div><h3>Change a subscription</h3><p>Manage your ATR One plan, devices, points, and orders.</p></a>
             <a class="service-card" href="#account" data-page="account"><div class="service-icon"><i class="fas fa-credit-card"></i></div><h3>Billing and payments</h3><p>Membership billing runs through Square &mdash; manage it from your account.</p></a>
+            <a class="service-card" href="#virtual-oneonone" data-page="virtual-oneonone"><div class="service-icon"><i class="fas fa-display"></i></div><h3>Virtual One-on-One</h3><p>Booked a virtual session? Type your code here and we are right there on your screen with you.</p></a>
           </div>
           <div class="support-icon-row">
             <a class="support-icon-door" href="#warranty-request" data-page="warranty-request"><span class="support-icon-chip"><i class="fas fa-shield-halved"></i></span>Warranty</a>
@@ -3794,6 +3856,10 @@
           <!-- SUPPORT_BOOKING_2026_11_06: booking a class goes through the
                Support path in the booking card now, not the Contact page. -->
           <a class="btn btn-primary" href="#repair" data-page="repair" data-open-oneonone><i class="fas fa-graduation-cap"></i> Book a One-on-One</a>
+          <!-- VIRTUAL_ONE_ON_ONE_2026_11_10: the same one-on-one, over
+               the internet — the booking flow asks In person or Virtual
+               right at the start. -->
+          <p style="margin-top:1.25rem;">Too far for a visit, or need help sooner? Book the same one-on-one as a <strong>Virtual One-on-One</strong> &mdash; we meet on your screen instead of at your door. Pick Virtual when you book, and when your session time comes, open your <a href="#virtual-oneonone" data-page="virtual-oneonone">Virtual One-on-One page</a> and type the code your associate gives you.</p>
           <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services We Offer</a>
           <!-- SUPPORT_PACKAGES_2026_11_06: five ready-made one-on-one
                help packages (Austin roadmap, Nov 6, 2026). Each Book
@@ -3851,6 +3917,131 @@
         </div>
       </div>
     </section>
+    <!-- ==================== VIRTUAL ONE-ON-ONE ====================
+         VIRTUAL_ONE_ON_ONE_2026_11_10 (owner, Nov 10, 2026): the front
+         door of the virtual session. The guest arrives from the link in
+         their booking confirmation email, types the code their
+         associate gave them (or their own ATR One member key), and the
+         virtual-session Edge Function decides — a booked, paid session
+         code, or an active member's own key. Phase 1 is the door and
+         the gate; the screen-sharing hand-off lands in the marked
+         #voo-handoff block in phase 2 (self-hosted RustDesk on our own
+         relay — see the build report). Consent comes first and in
+         plain words, and the code box stays locked until the guest
+         agrees. -->
+    <section id="virtual-oneonone" class="page">
+      <div class="section">
+        <div class="container">
+          <div class="section-header center">
+            <p class="eyebrow">One-on-One, from anywhere</p>
+            <h1 class="section-title">Virtual One-on-One</h1>
+            <p class="section-copy">The same one-on-one help, over the internet. Your associate can see your screen and help you right on your own device &mdash; while you watch, on your device, the whole time.</p>
+          </div>
+
+          <div class="voo-card">
+            <h3>What happens on your device</h3>
+            <div class="voo-devices">
+              <div class="voo-device">
+                <p class="voo-device-name"><i class="fas fa-laptop"></i> Computer</p>
+                <p>Windows or Mac &mdash; we can see your screen and work on it with you, like sitting right beside you.</p>
+              </div>
+              <div class="voo-device">
+                <p class="voo-device-name"><i class="fas fa-mobile-screen"></i> Android phone or tablet</p>
+                <p>We can see your screen and work on it with you, the same as a computer.</p>
+              </div>
+              <div class="voo-device">
+                <p class="voo-device-name"><i class="fas fa-tablet-screen-button"></i> iPhone or iPad</p>
+                <p>It works here too &mdash; you just tap one <strong>Share</strong> button and we can see your screen. Apple keeps touch control with you (no company&rsquo;s tool can take over an iPhone), so we watch, talk, and guide you through every tap.</p>
+              </div>
+            </div>
+
+            <h3>How it works</h3>
+            <ol class="voo-steps">
+              <li>Book a One-on-One and pick <strong>Virtual</strong> &mdash; or use your ATR One member key.</li>
+              <li>When your session time comes, open this page from the link in your booking email.</li>
+              <li>Your associate gives you a short code. Type it below, agree, and we connect &mdash; for this one session only.</li>
+            </ol>
+            <p>A session works like a phone call, on your screen. We can talk, type messages, see your screen, and see your camera only if you turn it on. Your mic and camera start off &mdash; nothing is live until you allow it, and you can mute or stop either one at any time.</p>
+            <p>Nothing is installed on your device: on a computer or Android, a small helper runs just for the session and is gone when the session ends &mdash; no program is left behind.</p>
+
+            <div class="voo-gate">
+              <label class="atr-check">
+                <input type="checkbox" id="voo-consent">
+                <span>I understand I am letting an associate from Austin&rsquo;s Tech Repair Group <strong>see my screen</strong> &mdash; and on a computer or Android, <strong>work on my device with me</strong> &mdash; for this one session only. During the session we can also <strong>talk</strong> and <strong>type messages</strong>. My <strong>mic and camera stay off unless I turn them on</strong>, and I can mute or stop either one at any time. I can end the session at any time, and nothing stays connected when it ends.</span>
+              </label>
+              <label class="field-label" for="voo-code">Your code</label>
+              <input class="form-field voo-code-input" type="text" id="voo-code" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" placeholder="Type the code your associate gave you" disabled>
+              <p class="atr-help">A session code is 6 numbers. ATR One members: your member key works too &mdash; it is yours alone, tied to your account, and virtual sessions are free with it.</p>
+              <p class="voo-member-key" id="voo-member-key" hidden></p>
+              <button class="btn btn-primary btn-lg" type="button" id="voo-start" disabled><i class="fas fa-display"></i> Check my code</button>
+              <p class="voo-msg" id="voo-msg" role="status" hidden></p>
+              <div class="voo-next" id="voo-next" hidden>
+                <!-- WAIVER 2 of 2 (owner's consent law, Nov 10, 2026):
+                     the screen-sharing waiver, agreed at session
+                     start, BEFORE the hand-off activates. The screen
+                     box is required; mic and camera are the guest's
+                     own separate allows, off unless they choose
+                     them. The Start button records the agreement
+                     (virtual-session function, action 'waiver') and
+                     only then shows the connecting steps. DRAFT
+                     WORDING — awaiting the owner's approval (see the
+                     build report). -->
+                <div id="voo-waiver">
+                  <h4>Before we connect &mdash; your screen-sharing waiver</h4>
+                  <p>Your code is good. One agreement first, in plain words:</p>
+                  <label class="atr-check">
+                    <input type="checkbox" id="voo-wv-screen">
+                    <span><strong>Share my screen.</strong> I agree to share my screen with my associate for this one session, so they can see my device and help me. I can stop sharing at any time, and sharing ends when the session ends. My associate may also run their repair and cleanup tools during the session &mdash; those tools install nothing and leave nothing behind.</span>
+                  </label>
+                  <label class="atr-check">
+                    <input type="checkbox" id="voo-wv-mic">
+                    <span><strong>Also allow my microphone</strong> (your choice). So we can talk during the session. It starts off &mdash; I turn it on, and I can mute it at any time.</span>
+                  </label>
+                  <label class="atr-check">
+                    <input type="checkbox" id="voo-wv-camera">
+                    <span><strong>Also allow my camera</strong> (your choice). So my associate can see me during the session. It starts off &mdash; I turn it on, and I can stop it at any time.</span>
+                  </label>
+                  <p><button class="btn btn-primary" type="button" id="voo-session-start" disabled><i class="fas fa-display"></i> Start my session</button></p>
+                  <p class="voo-msg" id="voo-wv-msg" role="status" hidden></p>
+                </div>
+                <div id="voo-final" hidden>
+                  <h4>You are checked in</h4>
+                  <p>Your associate is connecting now. Keep this page open.</p>
+                  <ol class="voo-steps">
+                    <li>On a computer or Android, a small box will ask if it is okay to connect &mdash; that is us. Say yes only if you are expecting your session.</li>
+                    <li>On an iPhone or iPad: tap the <strong>Share</strong> button when it appears, then tap <strong>Start Broadcast</strong> when Apple asks &mdash; that is all. We can see your screen, and we talk you through each tap from there.</li>
+                    <li>We can talk and type messages during the session, like a phone call. Your mic and camera start off &mdash; turn them on only if you want to.</li>
+                    <li>You can end the session at any moment &mdash; just say so, or close the session window. Nothing stays connected afterwards.</li>
+                  </ol>
+                  <p>If nothing opens within a minute, call or text us at <a href="tel:9372806243">(937) 280-6243</a> and we will walk it through with you.</p>
+                  <!-- GUEST_FRAME_2026_11_10 (owner's guest-side rule):
+                       the End control is OUR button, in our page, in
+                       our styling — the guest never leaves the site's
+                       own frame. In phase 2 this same button also
+                       closes the engine session (hook marked in
+                       script.js); in phase 1 it ends the check-in
+                       and clears the page back to the start. -->
+                  <p><button class="btn btn-outline" type="button" id="voo-end"><i class="fas fa-phone-slash"></i> End session</button></p>
+                </div>
+                <!-- PHASE2_HANDOFF: the self-hosted RustDesk session
+                     opens from here (our own relay, our own address).
+                     Phase 1 ends at this marker on purpose — nothing
+                     here pretends a session has started. -->
+                <div id="voo-handoff" hidden></div>
+              </div>
+              <div class="voo-nopath" id="voo-nopath" hidden>
+                <p>No code yet? A virtual session starts with a booking:</p>
+                <p><a class="btn btn-outline" href="#classes" data-page="classes">Book a One-on-One</a> <a class="btn btn-outline" href="#atr-one" data-page="atr-one">Join ATR One</a></p>
+              </div>
+            </div>
+          </div>
+
+          <p style="text-align:center; color:var(--muted); margin-top:1.5rem;">Virtual sessions are booked like any One-on-One, at $25 an hour &mdash; the first hour is paid when you book, and there is no visit fee. ATR One members use their key and pay nothing.</p>
+          <p style="text-align:center; margin-top:1rem;"><a class="btn btn-outline" href="#support" data-page="support">Back to Support</a></p>
+        </div>
+      </div>
+    </section>
+
     <!-- ==================== ATRG FOR EDUCATION ==================== -->
     <!-- FOOTER_AUDIENCE_PAGES_2026_11_06: audience page (owner, Nov 6, 2026). Only services ATRG already lists — device repair, tech support, one-on-one classes. -->
     <section id="education" class="page">
@@ -4172,7 +4363,7 @@
     'use strict';
     function $(id) { return document.getElementById(id); }
     function showAcctView(view) {
-      var r = $('acct-view-repairs'), s = $('acct-view-settings'), w = $('acct-view-rewards'), m = $('acct-view-messages'), o = $('acct-view-orders'), c = $('acct-view-cart'), mmv = $('acct-view-membership'), dv = $('acct-view-devices');
+      var r = $('acct-view-repairs'), s = $('acct-view-settings'), w = $('acct-view-rewards'), m = $('acct-view-messages'), o = $('acct-view-orders'), c = $('acct-view-cart'), mmv = $('acct-view-membership'), dv = $('acct-view-devices'), cn = $('acct-view-connect');
       /* CUSTOMER_INBOX_2026_11_05: the Messages view joins the set,
          and the switch is a TOGGLE, same as the script.js module —
          owner bug fix (Nov 5, 2026): tapping a closed row opens it
@@ -4181,7 +4372,7 @@
          ACCOUNT_FIX_PASS_3_2_2026_11_06 (ITEM C): the Orders view
          joins the set the same way.
          ACCOUNT_FIX_PASS_3_3_2026_11_06: the Cart view joins too. */
-      var panels = { repairs: r, settings: s, rewards: w, messages: m, orders: o, cart: c, membership: mmv, devices: dv };
+      var panels = { repairs: r, settings: s, rewards: w, messages: m, orders: o, cart: c, membership: mmv, devices: dv, connect: cn };
       var target = (panels[view] && !panels[view].hidden) ? null : view;
       if (r) r.hidden = target !== 'repairs';
       if (s) s.hidden = target !== 'settings';
@@ -4191,6 +4382,7 @@
       if (c) c.hidden = target !== 'cart';
       if (mmv) mmv.hidden = target !== 'membership';
       if (dv) dv.hidden = target !== 'devices';
+      if (cn) cn.hidden = target !== 'connect';
       document.querySelectorAll('[data-acct-menu]').forEach(function (b) {
         var on = b.getAttribute('data-acct-menu') === target;
         b.classList.toggle('is-active', on);
@@ -6858,46 +7050,245 @@
     });
   }
 
+  /* ---------- VERSION_VISIBILITY_2026_11_10 ----------
+     The build's version stamp has ONE source: the CACHE constant in
+     sw.js ("atrg-vNN"). The page never keeps a second copy of the
+     number. It reads the stamp back from the running build itself:
+     the active service worker's cache is named by that constant, so
+     caches.keys() hands it over; on a first visit (no cache yet) it
+     falls back to reading the constant out of sw.js. Normalized to
+     the display form "vNN". Resolved once per page, then:
+       - recordAppVersion(cust): a fire-and-forget upsert of the
+         signed-in guest's row in guest_app_versions (their own row
+         only, per that table's RLS) — fails completely silent, the
+         table not existing yet included, and never blocks the page;
+       - paintAppVersion(): the guest's own "App version vNN" line
+         in Account Settings, so support can ask them to read it out. */
+  var atrVersionValue = null, atrVersionWaiters = [];
+  function resolveAtrVersion(cb) {
+    if (atrVersionValue) { cb(atrVersionValue); return; }
+    atrVersionWaiters.push(cb);
+    if (atrVersionWaiters.length > 1) return;
+    function done(v) {
+      if (v) atrVersionValue = v;
+      var ws = atrVersionWaiters; atrVersionWaiters = [];
+      ws.forEach(function (w) { try { w(atrVersionValue); } catch (e) {} });
+    }
+    function norm(name) {
+      var m = /^atrg-(v\d+)$/.exec(String(name || ''));
+      return m ? m[1] : null;
+    }
+    function fromSwText() {
+      try {
+        fetch('sw.js', { cache: 'no-store' }).then(function (r) { return r.text(); })
+          .then(function (txt) {
+            var m = /const CACHE\s*=\s*"([^"]+)"/.exec(txt || '');
+            done(m ? norm(m[1]) : null);
+          })
+          .catch(function () { done(null); });
+      } catch (e) { done(null); }
+    }
+    try {
+      if (window.caches && typeof caches.keys === 'function') {
+        caches.keys().then(function (keys) {
+          var hit = null;
+          (keys || []).forEach(function (k) { var n = norm(k); if (n) hit = n; });
+          if (hit) done(hit); else fromSwText();
+        }).catch(fromSwText);
+      } else fromSwText();
+    } catch (e) { fromSwText(); }
+  }
+  window.atrResolveVersion = resolveAtrVersion;
+  function recordAppVersion(cust) {
+    if (!cust || !cust.id || !sb) return;
+    resolveAtrVersion(function (v) {
+      if (!v) return;
+      try {
+        var p = sb.from('guest_app_versions').upsert({
+          customer_id: cust.id,
+          version: v,
+          last_seen: new Date().toISOString(),
+          user_agent: String(navigator.userAgent || '').slice(0, 400)
+        }, { onConflict: 'customer_id' });
+        if (p && typeof p.then === 'function') p.then(function () {}, function () {});
+      } catch (e) { /* the stamp is a courtesy — never an error surface */ }
+    });
+  }
+  function paintAppVersion() {
+    var el = $('acct-app-version');
+    if (!el) return;
+    resolveAtrVersion(function (v) {
+      if (!v) return;
+      el.textContent = 'App version ' + v;
+      el.hidden = false;
+    });
+  }
+
   /* ---------- the link step ---------- */
-  function enterAccount(session) {
-    if (!session || !session.user || !sb) return;
-    var uid = session.user.id;
-    if (linkedUid === uid || linkInFlightFor === uid) return;
-    linkInFlightFor = uid;
-    sb.rpc('link_customer_account', { p_name: pendingName || null, p_phone: pendingPhone || null })
-      .then(function (res) {
-        linkInFlightFor = null;
-        if (res.error) throw res.error;
-        var data = res.data || {};
-        if (data.status === 'email_unconfirmed') {
-          selectTab('login');
-          showErr($('authx-login-error'), 'Please confirm your email first — tap the link in the email we sent you, then log in.');
-          sb.auth.signOut().catch(function () {});
-          return;
-        }
-        if (data.status === 'conflict' || !data.customer) {
-          selectTab('login');
-          showErr($('authx-login-error'), 'We found an older account with this email that needs a hand from us to link. Call or text (937) 280-6243 and we will sort it out.');
-          sb.auth.signOut().catch(function () {});
-          return;
-        }
-        linkedUid = uid;
-        currentCustomer = data.customer;
-        var cust = data.customer;
-        fetchPoints(cust.id, function (pts) {
-          writeLocalSession(cust, pts);
-          renderDash(cust, pts);
-          fillProfile(cust);
-          /* QR_FIX_PASS_2_2026_11_05: the old "nudge the open hook when
+  /* ACCOUNT_ID_FIRST_2026_11_10 (owner report, Nov 10, 2026): the
+     account page resolves the signed-in guest's record by PRIMARY KEY
+     first — customers.id = the auth user's id — and falls back to the
+     link RPC (verified-email match, re-key, or create) only when no
+     row carries that id. The row's own email does NOT have to equal
+     the sign-in email: the owner's record has carried his auth id
+     since Oct 16, 2026 while its email on file is service@, so
+     email-first resolution landed him on an empty shell (0 points,
+     no phone, no devices). Portal-made guest records carry random
+     ids, so email stays their path — through the same RPC as before.
+     Every surface below keys off the row resolved here (profile,
+     points via rewards.customer_id, repairs, orders, inbox), and
+     devices (my_devices) and membership (my_membership) resolve
+     server-side from the same auth id, so the whole page agrees on
+     one record. No data is changed: the id read is a plain own-row
+     select (the customers policy already allows exactly that read),
+     and any read error falls through to the RPC, unchanged.
+     ACCOUNT_STAFF_EMAILS_2026_11_10 below adds step 3 of the order. */
+  /* ACCOUNT_STAFF_EMAILS_2026_11_10 (step 3 of the resolution
+     order): when steps 1-2 land a staffer on a shell — no row under
+     their auth id, and the link RPC answering 'created' with a
+     blank record — one more look runs before the shell is accepted:
+     the emails on the signed-in user's OWN employee_profiles row,
+     matched against customers by email, and a hit loads THAT record
+     instead. Schema facts, stated plainly (verified Nov 10, 2026):
+     employee_profiles carries NO email column — its columns are
+     id, name, role, birthday, pay_rate, avatar_url,
+     password_changed_at, location_consent, home_address — so the
+     only email a staff row connects to is the auth user's own
+     sign-in email, which is exactly the address the link RPC has
+     already matched on in step 2; and for staff whose record rides
+     on their auth id, step 1 has already found it. The look is
+     therefore expected to miss in every case the earlier steps
+     miss; it runs anyway so the order is honored in code, it is
+     gated on a staff row existing (employee_profiles own-row read),
+     it uses the same customers-by-email select pattern the site's
+     lead find-or-create helpers have always used, it changes NO
+     data, and any miss or error falls through to the RPC's answer,
+     unchanged. It never runs for a guest (no staff row, no look). */
+  function staffEmailFallback(uid, userEmail, done) {
+    var finished = false;
+    function miss() { if (!finished) { finished = true; done(null); } }
+    try {
+      sb.from('employee_profiles').select('id').eq('id', uid).maybeSingle()
+        .then(function (prof) {
+          if (finished) return;
+          if (!prof || prof.error || !prof.data || !prof.data.id) { miss(); return; }
+          /* the staff row's only email is the sign-in email itself
+             (see the note above) — match customers on it. */
+          var emails = [];
+          if (userEmail) emails.push(String(userEmail).toLowerCase());
+          if (!emails.length) { miss(); return; }
+          var i = 0;
+          (function next() {
+            if (finished) return;
+            if (i >= emails.length) { miss(); return; }
+            var em = emails[i++];
+            try {
+              sb.from('customers')
+                .select('id, name, email, phone, address, birthday, account_number')
+                .ilike('email', em).limit(1)
+                .then(function (res) {
+                  if (finished) return;
+                  if (res && !res.error && res.data && res.data.length && res.data[0] && res.data[0].id && res.data[0].id !== uid) {
+                    finished = true;
+                    done(res.data[0]);
+                    return;
+                  }
+                  next();
+                })
+                .catch(function () { next(); });
+            } catch (e) { next(); }
+          })();
+        })
+        .catch(function () { miss(); });
+    } catch (e) { miss(); }
+  }
+
+  function finishAccountLoad(uid, cust) {
+    linkedUid = uid;
+    currentCustomer = cust;
+    fetchPoints(cust.id, function (pts) {
+      writeLocalSession(cust, pts);
+      renderDash(cust, pts);
+      fillProfile(cust);
+      /* QR_FIX_PASS_2_2026_11_05: the old "nudge the open hook when
              the modal is already open" block is gone with the modal —
              renderDash above already loaded My Repairs, and there is no
              sheet left to nudge. */
-        });
-      })
-      .catch(function () {
-        linkInFlightFor = null;
-        showErr($('authx-login-error'), 'You are signed in, but we could not load your account. Please try again in a moment.');
+    });
+    recordAppVersion(cust); /* VERSION_VISIBILITY_2026_11_10 */
+    paintAppVersion();
+  }
+  function enterAccount(session) {
+    if (!session || !session.user || !sb) return;
+    var uid = session.user.id;
+    var userEmail = session.user.email || '';
+    if (linkedUid === uid || linkInFlightFor === uid) return;
+    linkInFlightFor = uid;
+    var settled = false;
+    function stop() { settled = true; linkInFlightFor = null; }
+    /* ACCOUNT_STAFF_EMAILS_2026_11_10: the RPC answered 'created'
+       (its customer is on hand): before the shell is accepted, a
+       staff member gets the step-3 look — a hit loads the real
+       record, a miss loads the shell exactly as before. A row the
+       RPC created for the caller's own auth id is not a shell and
+       skips the look (a first-sign-in associate's brand-new
+       record must load as-is). */
+    function acceptRpcCustomer(data) {
+      var cust = data.customer;
+      var looksShell = !!cust && String(cust.id) !== String(uid) &&
+        !cust.phone && !cust.address && !cust.account_number &&
+        String(cust.email || '').toLowerCase() === String(userEmail || '').toLowerCase();
+      if (!looksShell) { stop(); finishAccountLoad(uid, cust); return; }
+      staffEmailFallback(uid, userEmail, function (row) {
+        if (settled) return;
+        stop();
+        finishAccountLoad(uid, row || cust);
       });
+    }
+    function rpcLink() {
+      if (settled) return;
+      sb.rpc('link_customer_account', { p_name: pendingName || null, p_phone: pendingPhone || null })
+        .then(function (res) {
+          if (settled) return;
+          if (res.error) throw res.error;
+          var data = res.data || {};
+          if (data.status === 'email_unconfirmed') {
+            stop();
+            selectTab('login');
+            showErr($('authx-login-error'), 'Please confirm your email first — tap the link in the email we sent you, then log in.');
+            sb.auth.signOut().catch(function () {});
+            return;
+          }
+          if (data.status === 'conflict' || !data.customer) {
+            stop();
+            selectTab('login');
+            showErr($('authx-login-error'), 'We found an older account with this email that needs a hand from us to link. Call or text (937) 280-6243 and we will sort it out.');
+            sb.auth.signOut().catch(function () {});
+            return;
+          }
+          acceptRpcCustomer(data);
+        })
+        .catch(function () {
+          if (settled) return;
+          stop();
+          showErr($('authx-login-error'), 'You are signed in, but we could not load your account. Please try again in a moment.');
+        });
+    }
+    try {
+      sb.from('customers')
+        .select('id, name, email, phone, address, birthday, account_number')
+        .eq('id', uid).maybeSingle()
+        .then(function (res) {
+          if (settled) return;
+          if (res && !res.error && res.data && res.data.id) {
+            stop();
+            finishAccountLoad(uid, res.data);
+            return;
+          }
+          rpcLink();
+        })
+        .catch(function () { rpcLink(); });
+    } catch (e) { rpcLink(); }
   }
 
   function exitAccount() {
@@ -6949,6 +7340,12 @@
          keeps this twin handler and goAccount from undoing each
          other). When it leaves, there is nothing else to do here. */
       if (window.atrAccountToggleLeave && window.atrAccountToggleLeave()) return;
+      /* STAFF_GATE_HARDEN_2026_11_10: opening My Account re-asks the
+         staff check behind the header Portal gear (script.js), so a
+         staff member whose first check failed on a slow connection
+         gets a fresh answer here instead of a button hidden for the
+         whole session. Fail-closed inside; guests notice nothing. */
+      if (window.atrStaffRecheck) { try { window.atrStaffRecheck(); } catch (e) {} }
       /* QR_FIX_PASS_2_2026_11_05: My Account is a page — the account
          button navigates to it like any other page switch. Wired here
          as well as in script.js so the button works even against a
@@ -6987,6 +7384,8 @@
     var glanceOpenRow = $('acct-glance-open');
     if (glanceOpenRow) glanceOpenRow.addEventListener('click', function () {
       closeGlance();
+      /* STAFF_GATE_HARDEN_2026_11_10: same re-ask as the account button. */
+      if (window.atrStaffRecheck) { try { window.atrStaffRecheck(); } catch (e) {} }
       if (window.location.hash !== '#account') { window.location.hash = '#account'; }
     });
     document.addEventListener('click', function (e) {
@@ -7022,7 +7421,16 @@
     if (tl) tl.addEventListener('click', function () { selectTab('login'); });
     if (ts) ts.addEventListener('click', function () { selectTab('signup'); });
 
-    var pkBtn=$('authx-passkey-btn'); if(pkBtn)pkBtn.addEventListener('click',function(){ showErr($('authx-login-error'),''); var em=$('authx-login-email'); var email=em?em.value.trim():''; if(!email){ showErr($('authx-login-error'),'Enter your email first'); return; } if(!sb||!sb.auth||!sb.auth.signInWithPasskey){ showErr($('authx-login-error'),'Passkeys are not available in this browser.'); return; } pkBtn.disabled=true; sb.auth.signInWithPasskey().then(function(res){ pkBtn.disabled=false; if(res.error){ showErr($('authx-login-error'),res.error.message||'No passkey found for this account. Sign in another way, then set up a passkey in your profile.'); return; } if(res.data&&res.data.session){ enterAccount(res.data.session); } else { window.location.reload(); } }).catch(function(err){ pkBtn.disabled=false; showErr($('authx-login-error'),(err&&err.message)||'Passkey sign-in was cancelled or failed.'); }); }); var forgot = $('authx-forgot-btn');
+    /* LOGIN_SPEED_2026_11_10: passkey sign-in. No email is asked
+       first — signInWithPasskey() runs the discoverable-credential
+       ceremony and the device picks the account (Supabase docs:
+       "no email or phone needed upfront"). There is NO Turnstile
+       token on this path on purpose: a passkey is bound to the
+       device and the person holding it, so the human check would
+       add nothing. Success follows the same road as password
+       login (enterAccount); any failure lands soft on the
+       password form with one plain line. */
+    var pkBtn=$('authx-passkey-btn'); if(pkBtn)pkBtn.addEventListener('click',function(){ showErr($('authx-login-error'),''); if(!sb||!sb.auth||!sb.auth.signInWithPasskey){ showErr($('authx-login-error'),'Passkeys are not available in this browser. Sign in with your password below.'); return; } pkBtn.disabled=true; sb.auth.signInWithPasskey().then(function(res){ pkBtn.disabled=false; if(res.error){ showErr($('authx-login-error'),'Passkey sign-in did not work on this device. Sign in with your password below \u2014 if you have never set up a passkey, you can set one up in your profile after you sign in.'); return; } if(res.data&&res.data.session){ enterAccount(res.data.session); } else { window.location.reload(); } }).catch(function(){ pkBtn.disabled=false; showErr($('authx-login-error'),'Passkey sign-in was cancelled. Sign in with your password below.'); }); }); var forgot = $('authx-forgot-btn');
     if (forgot) forgot.addEventListener('click', function () {
       if (window.atrOpenReset) window.atrOpenReset();
     });
@@ -7036,26 +7444,49 @@
       if (!validEmail(email)) { showErr($('authx-login-error'), 'Please enter a valid email address.'); return; }
       if (!pass) { showErr($('authx-login-error'), 'Please enter your password.'); return; }
       if (!sb) { showErr($('authx-login-error'), SB_UNAVAILABLE); return; }
+      var btn = loginForm.querySelector('button[type="submit"]');
+      function submitLogin(tsTokLogin) {
+        if (btn) { btn.disabled = true; btn.innerHTML = 'Logging in…'; }
+        sb.auth.signInWithPassword({ email: email, password: pass, options: { captchaToken: tsTokLogin } }).then(function (res) {
+          if (window.atrTurnstile) window.atrTurnstile.reset($('ts-login'));
+          if (btn) { btn.disabled = false; btn.innerHTML = 'Log In <i class="fas fa-arrow-right"></i>'; }
+          if (res.error) {
+            showErr($('authx-login-error'), 'That email and password did not match. New here? Tap Sign Up — or use "Forgot your password?" below.');
+            return;
+          }
+          if (res.data && res.data.session) enterAccount(res.data.session);
+        }).catch(function () {
+          if (btn) { btn.disabled = false; btn.innerHTML = 'Log In <i class="fas fa-arrow-right"></i>'; }
+          showErr($('authx-login-error'), 'Something went wrong. Please try again.');
+        });
+      }
+      /* LOGIN_SPEED_2026_11_10: never dead-end on the human check.
+         The widget can still be sitting on "Verifying…" — or its
+         token can have gone stale — when Log In is tapped, above
+         all on a slow connection (the owner's own hotspot). Wait
+         for a fresh token (the helper resets the check once and
+         waits for the new one) and only then submit. The old
+         "complete the check, then log in again" stop is gone; the
+         only failure left is the check truly never finishing. */
+      if (window.atrTurnstile && window.atrTurnstile.freshToken) {
+        if (btn) { btn.disabled = true; btn.innerHTML = 'One moment — finishing the quick human check…'; }
+        window.atrTurnstile.freshToken($('ts-login'), function (tsTokLogin) {
+          if (btn) { btn.disabled = false; btn.innerHTML = 'Log In <i class="fas fa-arrow-right"></i>'; }
+          if (!tsTokLogin) {
+            showErr($('authx-login-error'), 'The human check did not finish. Check your connection and tap Log In again — or call or text us at (937) 280-6243.');
+            return;
+          }
+          submitLogin(tsTokLogin);
+        });
+        return;
+      }
       var tsTokLogin = window.atrTurnstile ? window.atrTurnstile.token($('ts-login')) : '';
       if (!tsTokLogin) {
         if (window.atrTurnstile) window.atrTurnstile.mount($('ts-login'));
         showErr($('authx-login-error'), 'Please complete the quick human check above the button, then log in again.');
         return;
       }
-      var btn = loginForm.querySelector('button[type="submit"]');
-      if (btn) { btn.disabled = true; btn.innerHTML = 'Logging in…'; }
-      sb.auth.signInWithPassword({ email: email, password: pass, options: { captchaToken: tsTokLogin } }).then(function (res) {
-        if (window.atrTurnstile) window.atrTurnstile.reset($('ts-login'));
-        if (btn) { btn.disabled = false; btn.innerHTML = 'Log In <i class="fas fa-arrow-right"></i>'; }
-        if (res.error) {
-          showErr($('authx-login-error'), 'That email and password did not match. New here? Tap Sign Up — or use "Forgot your password?" below.');
-          return;
-        }
-        if (res.data && res.data.session) enterAccount(res.data.session);
-      }).catch(function () {
-        if (btn) { btn.disabled = false; btn.innerHTML = 'Log In <i class="fas fa-arrow-right"></i>'; }
-        showErr($('authx-login-error'), 'Something went wrong. Please try again.');
-      });
+      submitLogin(tsTokLogin);
     });
 
     var signupForm = $('authx-signup-form');
