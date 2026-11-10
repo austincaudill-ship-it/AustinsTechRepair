@@ -3276,3 +3276,24 @@ html[data-theme="dark"] .site-search-mic.is-listening { color: var(--gold); }
   }
 }
 
+/* V74_COOKIE_BAR_CLEARANCE_2026_11_10 */
+/* Owner approval, Nov 10, 2026 (overnight QA finding P-1): on phone
+   widths the cookie consent banner (fixed, bottom: 0, z-9999) covered
+   the mobile thumb bar for the whole first visit. The banner now sits
+   directly above the bar: the offset equals the bar's own height --
+   the measured 59px plus the same env(safe-area-inset-bottom) the
+   bar's bottom padding adds, so the two track 1:1 on notched phones.
+   Desktop is unchanged (the bar is display:none above 920px and the
+   banner keeps bottom: 0 there). Consent controls stay fully
+   reachable in both themes; nobody is trapped. */
+@media (max-width: 920px) {
+  .cookie-banner { bottom: calc(59px + env(safe-area-inset-bottom)); }
+}
+
+/* V74_CART_GLANCE_SHADE_2026_11_10 */
+/* Same owner approval, item 4: the mini-cart popover's Checkout button
+   (.cart-glance-checkout, styles.css:2216) is a text-bearing primary
+   button still on var(--brand) -- white on #D9540D = 4.02:1, under
+   the AA line. It takes the owner's readable shade like .btn-primary
+   did on Nov 8; its border follows so the button stays one piece. */
+.cart-glance-checkout { background: #C24A09; border-color: #C24A09; }
