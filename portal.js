@@ -1429,6 +1429,10 @@
     /* GUEST_CHAT_2026_11_08: the Guest Chat panel (Guest group) —
      * every customer conversation, repair threads and general. */
     guestchat: loadGuestChat,
+    /* VIRTUAL_ONE_ON_ONE_2026_11_10: the Virtual One-on-One panel
+     * (Guest group, after ATR One Members) — mint/revoke session
+     * codes. */
+    virtual: loadVirtualSessions,
     /* WARRANTY_PORTAL_2026_11_03: the Warranty panel (Guest group) —
      * warranty requests from the website form, worked by all staff. */
     warranty: loadWarrantyRequests,
@@ -1472,7 +1476,7 @@
     var tabs = document.querySelectorAll('.portal-tab');
     tabs.forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === name); });
     /* PASS10_2026_11_04: 'tracking' (the Live Tracking panel) hides and shows with the rest too */
-    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'tracking', 'documents', 'financials', 'payroll', 'mileage', 'teamchat', 'guestchat', 'associateaccounts', 'warranty', 'setup', 'home'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too; ASSOCIATE_ACCOUNTS_2026_11_03: 'associateaccounts' hides and shows with the rest too (it absorbed ACCOUNT_CONTROLS_2026_11_03's 'accountcontrols' and the roster's 'associates'); WARRANTY_PORTAL_2026_11_03: 'warranty' hides and shows with the rest too; PORTAL_SETUP_2026_11_04: 'setup' hides and shows with the rest too; PORTAL_HOME_2026_11_09: 'home' hides and shows with the rest too; QR_FIX_PASS_2026_11_05: 'scanin' is GONE from this list — the scanner is a popup now, there is no scanin panel to hide or show */
+    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'tracking', 'documents', 'financials', 'payroll', 'mileage', 'teamchat', 'guestchat', 'associateaccounts', 'warranty', 'setup', 'home', 'virtual'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too; ASSOCIATE_ACCOUNTS_2026_11_03: 'associateaccounts' hides and shows with the rest too (it absorbed ACCOUNT_CONTROLS_2026_11_03's 'accountcontrols' and the roster's 'associates'); WARRANTY_PORTAL_2026_11_03: 'warranty' hides and shows with the rest too; PORTAL_SETUP_2026_11_04: 'setup' hides and shows with the rest too; PORTAL_HOME_2026_11_09: 'home' hides and shows with the rest too; QR_FIX_PASS_2026_11_05: 'scanin' is GONE from this list — the scanner is a popup now, there is no scanin panel to hide or show */
       $('portal-panel-' + n).hidden = n !== name;
     });
     closeDrawer();
@@ -11581,6 +11585,7 @@ function loadTicketThread(client, ticketId) {
    * behavior; an object (even empty) = the marker is authoritative
    * and general conversations are gated on it. */
   var guestChatEsc = null;
+  var guestAppVersions = {};  /* VERSION_VISIBILITY_2026_11_10: customer_id -> guest_app_versions row, best-effort */
   var guestChatPendingOpen = null; /* a conversation key the escalation bubble asked to open */
 
   function guestChatKey(m) {
@@ -11619,7 +11624,7 @@ function loadTicketThread(client, ticketId) {
           if (c.customerId && custIds.indexOf(c.customerId) === -1) custIds.push(c.customerId);
         });
         var ticketsById = {}, customersById = {};
-        var pending = (ticketIds.length ? 1 : 0) + (custIds.length ? 1 : 0) + 1; /* GUEST_ASSISTANT_2026_11_10: +1 for the escalations read in fetchGuestChat */
+        var pending = (ticketIds.length ? 1 : 0) + (custIds.length ? 1 : 0) + 1 + 1; /* GUEST_ASSISTANT_2026_11_10: +1 for the escalations read in fetchGuestChat; VERSION_VISIBILITY_2026_11_10: +1 for the app-version read */
         function finish() {
           pending--;
           if (pending > 0) return;
@@ -11627,6 +11632,9 @@ function loadTicketThread(client, ticketId) {
             var t = c.ticketId ? ticketsById[c.ticketId] : null;
             if (t && !c.customerId) c.customerId = t.customer_id || null;
             var cust = c.customerId ? customersById[c.customerId] : null;
+            var gv = c.customerId ? guestAppVersions[c.customerId] : null;
+            c.appVersion = gv ? gv.version : null;
+            c.appLastSeen = gv ? gv.last_seen : null;
             c.name = (t && t.customer_name) || (cust && cust.name) || 'Guest';
             c.label = t ? (isServiceTicket(t) ? ('One-on-One — ' + (t.issue_reason || 'Service visit')) : deviceLabel(t)) : 'General conversation';
             c.msgs.sort(function (a, b) { return new Date(a.created_at) - new Date(b.created_at); });
@@ -11661,6 +11669,19 @@ function loadTicketThread(client, ticketId) {
             .then(function (r) { if (!r.error) (r.data || []).forEach(function (cu) { customersById[cu.id] = cu; }); finish(); })
             .catch(finish);
         }
+        /* VERSION_VISIBILITY_2026_11_10: best-effort — a missing
+         * table (its SQL has not run yet) leaves the map empty and
+         * no version line renders in any thread. */
+        client.from('guest_app_versions').select('customer_id, version, last_seen')
+          .then(function (r) {
+            if (!r.error) {
+              var vm = {};
+              (r.data || []).forEach(function (row) { vm[row.customer_id] = row; });
+              guestAppVersions = vm;
+            }
+            finish();
+          })
+          .catch(finish);
         /* GUEST_ASSISTANT_2026_11_10: the marker read. Success makes
          * the gate authoritative (an empty map hides every un-escalated
          * general conversation); any failure leaves guestChatEsc null
@@ -11710,7 +11731,7 @@ function loadTicketThread(client, ticketId) {
     list.hidden = true;
     thread.hidden = false;
     $('portal-guestchat-title').textContent = open.name;
-    $('portal-guestchat-sub').textContent = open.label;
+    $('portal-guestchat-sub').textContent = open.label + (open.appVersion ? ' · App version: ' + open.appVersion + ' · last seen ' + fmtDateTime(open.appLastSeen) : '');
     var box = $('portal-guestchat-msgs');
     box.innerHTML = open.msgs.map(function (m) {
       var who = m.sender === 'tech' ? 'Tech' : (m.sender === 'bot' ? 'Assistant' : (m.sender === 'auto' ? 'Auto-reply' : 'Guest'));
@@ -11778,6 +11799,166 @@ function loadTicketThread(client, ticketId) {
   function resumeGuestChat() {
     if (guestChatClient && state.user) fetchGuestChat();
     startGuestChatPoll();
+  }
+
+  /* ================= VIRTUAL ONE-ON-ONE (VIRTUAL_ONE_ON_ONE_2026_11_10) =================
+   * The staff side of the Virtual One-on-One gate. Minting goes
+   * through the virtual-session Edge Function (the code exists in
+   * plain text only in its answer, shown here once; the table holds
+   * only its hash). The list reads the table directly — staff RLS
+   * (employee_profiles) is the gate — and revoke is a direct update,
+   * per the CRUD law (add + revoke in the UI). If the table is not
+   * there yet (the SQL has not run), the panel says so in plain
+   * words instead of spinning. */
+  var virtualClient = null;
+  var virtualWired = false;
+  var virtualGuestNames = {};
+
+  function callVirtualSession(payload, done) {
+    var finished = false;
+    function finish(out) { if (!finished) { finished = true; done(out); } }
+    withClient(function (client) {
+      if (!client) { finish(null); return; }
+      try {
+        client.auth.getSession().then(function (sres) {
+          var token = sres && sres.data && sres.data.session ? sres.data.session.access_token : null;
+          if (!token) { finish(null); return null; }
+          return fetch(SUPABASE_URL + '/functions/v1/virtual-session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'apikey': SUPABASE_ANON_KEY },
+            body: JSON.stringify(payload)
+          });
+        }).then(function (r) {
+          if (!r) { finish(null); return null; }
+          return r.json();
+        }).then(function (out) { finish(out || null); })
+        .catch(function () { finish(null); });
+      } catch (e) { finish(null); }
+    });
+  }
+
+  function virtualStatusOf(s) {
+    if (s.revoked_at) return 'Revoked';
+    if (s.used_at) return 'Used';
+    if (new Date(s.expires_at).getTime() < Date.now()) return 'Expired';
+    return 'Waiting';
+  }
+
+  function loadVirtualSessions(force) {
+    state.loaded.virtual = true;
+    var list = $('portal-virtual-list');
+    if (!list) return;
+    withClient(function (client) {
+      if (!client || !state.user) return;
+      virtualClient = client;
+      wireVirtualPanel();
+      client.from('customers').select('id, name, email').order('name').limit(500)
+        .then(function (res) {
+          var sel = $('portal-virtual-guest');
+          if (!sel || res.error || !res.data) return;
+          virtualGuestNames = {};
+          sel.innerHTML = res.data.map(function (c) {
+            virtualGuestNames[c.id] = c.name || c.email || 'Guest';
+            return '<option value="' + c.id + '">' + esc(c.name || c.email || 'Guest') + '</option>';
+          }).join('');
+          renderVirtualList();
+        })
+        .catch(function () { renderVirtualList(); });
+      renderVirtualList();
+    });
+  }
+
+  function renderVirtualList() {
+    var list = $('portal-virtual-list');
+    if (!list || !virtualClient) return;
+    var start = new Date(); start.setHours(0, 0, 0, 0);
+    virtualClient.from('virtual_sessions')
+      .select('id, customer_id, device_note, created_at, expires_at, used_at, revoked_at, created_by_name')
+      .gte('created_at', start.toISOString())
+      .order('created_at', { ascending: false })
+      .then(function (res) {
+        if (res.error) {
+          list.innerHTML = '<p class="portal-muted">Virtual sessions are not connected yet. Once the sessions table is set up, codes you make will show here.</p>';
+          return;
+        }
+        if (!res.data || !res.data.length) {
+          list.innerHTML = '<p class="portal-muted">No sessions yet today.</p>';
+          return;
+        }
+        list.innerHTML = res.data.map(function (s) {
+          var st = virtualStatusOf(s);
+          var who = (s.customer_id && virtualGuestNames[s.customer_id]) || 'Guest';
+          var when = new Date(s.created_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+          var exp = new Date(s.expires_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+          var revoke = st === 'Waiting'
+            ? ' <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-virtual-revoke="' + s.id + '">Revoke</button>'
+            : '';
+          return '<div class="portal-card"><p class="portal-card-title">' + esc(who) + '</p>' +
+            '<p class="portal-card-meta">' + esc(st) + ' &middot; made ' + esc(when) + ' by ' + esc(s.created_by_name || 'an associate') +
+            ' &middot; good until ' + esc(exp) +
+            (s.device_note ? ' &middot; ' + esc(s.device_note) : '') + revoke + '</p></div>';
+        }).join('');
+        list.querySelectorAll('[data-virtual-revoke]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var id = btn.getAttribute('data-virtual-revoke');
+            btn.disabled = true;
+            virtualClient.from('virtual_sessions')
+              .update({ revoked_at: new Date().toISOString() })
+              .eq('id', id)
+              .then(function (res) {
+                if (res.error) { btn.disabled = false; return; }
+                renderVirtualList();
+              })
+              .catch(function () { btn.disabled = false; });
+          });
+        });
+      })
+      .catch(function () {
+        list.innerHTML = '<p class="portal-muted">Virtual sessions are not connected yet. Once the sessions table is set up, codes you make will show here.</p>';
+      });
+  }
+
+  function wireVirtualPanel() {
+    if (virtualWired) return;
+    var btn = $('portal-virtual-create');
+    if (!btn) return;
+    virtualWired = true;
+    /* VIRTUAL_CONSOLE_2026_11_10: the panel's own sections —
+       Connect / Sessions / Chat / Apps / Settings. Pure showing and
+       hiding; the sections hold no state of their own. */
+    document.querySelectorAll('[data-vsec]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var name = b.getAttribute('data-vsec');
+        document.querySelectorAll('[data-vsec]').forEach(function (x) {
+          x.classList.toggle('active', x === b);
+        });
+        ['connect', 'sessions', 'chat', 'apps', 'settings'].forEach(function (n) {
+          var sec = $('virtual-sec-' + n);
+          if (sec) sec.hidden = n !== name;
+        });
+      });
+    });
+    btn.addEventListener('click', function () {
+      var sel = $('portal-virtual-guest');
+      var msg = $('portal-virtual-msg');
+      var out = $('portal-virtual-code-out');
+      var customerId = sel ? sel.value : '';
+      if (!customerId) { if (msg) msg.textContent = 'Pick the guest first.'; return; }
+      btn.disabled = true;
+      if (msg) msg.textContent = 'Making the code…';
+      callVirtualSession({ action: 'create', customer_id: customerId, device_note: ($('portal-virtual-device') || {}).value || '' }, function (res) {
+        btn.disabled = false;
+        if (!res) { if (msg) msg.textContent = 'Could not make a code just now — check the connection and try again.'; return; }
+        if (!res.ok) { if (msg) msg.textContent = res.message || 'Could not make a code just now.'; return; }
+        if (msg) msg.textContent = '';
+        if (out) out.hidden = false;
+        var codeEl = $('portal-virtual-code');
+        if (codeEl) codeEl.textContent = res.code;
+        var expEl = $('portal-virtual-expiry');
+        if (expEl && res.expires_at) expEl.textContent = 'Good until ' + new Date(res.expires_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) + ' today. It works once.';
+        renderVirtualList();
+      });
+    });
   }
 
   function loadGuestChat(force) {
@@ -11962,6 +12143,9 @@ function loadTicketThread(client, ticketId) {
          * form now (see renderCustProfile). */
         '<p class="portal-card-meta">' + esc(String(c.orderCount)) + ' shop order' + (c.orderCount === 1 ? '' : 's') +
         ' · Guest since ' + esc(fmtDate(c.created_at)) + '</p>' +
+        /* VERSION_VISIBILITY_2026_11_10: staff-only support line —
+         * renders only when a version row exists for this guest. */
+        (c.appVersion ? '<p class="portal-card-meta"><i class="fas fa-mobile-screen-button"></i> App version: ' + esc(c.appVersion) + ' · last seen ' + esc(fmtDateTime(c.appLastSeen)) + '</p>' : '') +
         /* PORTAL_TIER_SET_FINISH_2026_11_02: the card affordance reads
          * "View details" — the RepairQ pattern (the ticket card says
          * "View details", and inside, an "Edit details" button). */
@@ -11988,7 +12172,8 @@ function loadTicketThread(client, ticketId) {
           var pointsByCustomer = {};
           var ordersByCustomer = {};
           var membershipsByCustomer = {};
-          var pending = 3;
+          var versionsByCustomer = {};
+          var pending = 4;
           function finish() {
             pending--;
             if (pending > 0) return;
@@ -11998,7 +12183,9 @@ function loadTicketThread(client, ticketId) {
                 id: c.id, name: c.name, email: c.email, phone: c.phone, address: c.address, created_at: c.created_at, birthday: c.birthday,
                 points: pointsByCustomer[c.id] || 0,
                 orderCount: ordersByCustomer[c.id] || 0,
-                membershipTier: membershipsByCustomer[c.id] || null
+                membershipTier: membershipsByCustomer[c.id] || null,
+                appVersion: versionsByCustomer[c.id] ? versionsByCustomer[c.id].version : null,
+                appLastSeen: versionsByCustomer[c.id] ? versionsByCustomer[c.id].last_seen : null
               };
             });
             state.customersCache = rows;
@@ -12016,6 +12203,17 @@ function loadTicketThread(client, ticketId) {
           client.from('orders').select('customer_id').then(function (r) {
             if (!r.error) (r.data || []).forEach(function (row) {
               if (row.customer_id) ordersByCustomer[row.customer_id] = (ordersByCustomer[row.customer_id] || 0) + 1;
+            });
+            finish();
+          }).catch(finish);
+          /* VERSION_VISIBILITY_2026_11_10: each guest's app version
+           * stamp (guest_app_versions), for support. Best-effort like
+           * the memberships read: if the table is not set up yet the
+           * query errors, the map stays empty, and no version line
+           * renders on any card. */
+          client.from('guest_app_versions').select('customer_id, version, last_seen').then(function (r) {
+            if (!r.error) (r.data || []).forEach(function (row) {
+              if (row.customer_id) versionsByCustomer[row.customer_id] = row;
             });
             finish();
           }).catch(finish);
@@ -18260,7 +18458,7 @@ function loadTicketThread(client, ticketId) {
      back to the first two words of their sidebar label. */
   var BAR_SHORT_LABELS = {
     home: 'Home', checkin: 'New Request', scanin: 'Scan In', tickets: 'Queue',
-    customers: 'Guest', guestchat: 'Guest Chat', members: 'Members',
+    customers: 'Guest', guestchat: 'Guest Chat', members: 'Members', virtual: 'Virtual',
     documents: 'Documents', warranty: 'Warranty', inventory: 'Inventory',
     links: 'Links', prices: 'Prices', guides: 'Guides', tracking: 'Tracking',
     teamchat: 'Team Chat', requests: 'Requests', timeclock: 'Time Clock',
