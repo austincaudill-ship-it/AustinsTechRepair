@@ -3376,3 +3376,21 @@ html:not([data-theme="dark"]) .footer .footer-cf { color: var(--muted); }
 @media (min-width: 921px) {
   .shop-toolbar { justify-content: center; }
 }
+
+/* ===== HOME_ALTERNATE_2026_11_10 =====
+   Owner (live call, Nov 10, 2026): the two Home feature rows
+   alternate — "How it works" reads picture left, text right
+   (the flip class, published ahead of this build), and "Our
+   promise" stays text left, picture right, so the pair reads
+   picture-text, then text-picture. Nothing else about the
+   rows changes: same words, same pictures.
+   On phones the pair stacks the natural way — picture first,
+   then the words — for both rows. The home-row class scopes
+   that stacking to these two rows only; every other
+   .feature-row on the site keeps its current phone order.
+   This block sits last so its phone orders win over the
+   older flip normalization above at equal strength. */
+@media (max-width: 820px) {
+  .feature-row.home-row > .feature-media { order: 1; }
+  .feature-row.home-row > .feature-text { order: 2; }
+}
