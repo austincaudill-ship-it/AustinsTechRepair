@@ -406,7 +406,7 @@
       }
       document.querySelectorAll('input[name="bk-atrone"]').forEach(function (r) {
         r.addEventListener('change', function () {
-          if (r.checked) { repairState.atrOne = r.value; rfRenderSummary(); rfGate(); }
+          if (r.checked) { repairState.atrOne = r.value; rfRenderSummary(); rfGate(); refreshDispatchAck(); }
         });
       });
       var srAtrOneSel = document.getElementById('sr-atr-one');
@@ -414,6 +414,7 @@
         srAtrOneSel.addEventListener('change', function () {
           repairState.atrOne = srAtrOneSel.value || repairState.atrOne;
           rfRenderSummary();
+          refreshDispatchAck();
         });
       }
       document.querySelectorAll('[data-rf-change]').forEach(function (b) {
@@ -1108,8 +1109,7 @@
       var dispSpan = dispRow ? dispRow.querySelector('span') : null;
       if (dispSpan) {
         if (srDispatchOrigHtml === null) srDispatchOrigHtml = dispSpan.innerHTML;
-        dispSpan.innerHTML = virtual ? SR_DISPATCH_VIRTUAL_HTML
-          : (g.mode === 'oneonone' ? SR_DISPATCH_OO_HTML : srDispatchOrigHtml);
+        dispSpan.innerHTML = srDispatchAckHtml(virtual, g.mode);
       }
       var dateLbl = document.querySelector('label[for="sr-visit-date"]');
       if (dateLbl) dateLbl.innerHTML = virtual ? 'Session date' : 'Preferred visit date';
@@ -1270,6 +1270,42 @@
     var srDispatchOrigHtml = null;
     var SR_DISPATCH_OO_HTML = 'I understand the <strong>visit fee is $15</strong> and my <strong>one-on-one is $25</strong>, collected upon arrival. *';
     var SR_DISPATCH_VIRTUAL_HTML = 'I understand the <strong>virtual one-on-one is $25</strong>, due at the time of the connect. It is <strong>non-refundable</strong> — it pays for our time and effort, even if the issue is not solved. *';
+    /* ATRONE_NO_FEE_2026_11_11 (Austin, Nov 11, 2026, found live on
+       his phone): the if-then is his — if the guest answers Yes, this
+       device is covered by ATR One, then there is NO visit fee, on a
+       repair or on an in-person one-on-one. The fee acknowledgment
+       swaps to the no-fee wording the moment the answer is Yes, and
+       back the moment it is not. The virtual wording never changes:
+       the $25 there is the session itself, not a visit fee, and paid
+       members already skip that pay wall at the Connect page. */
+    var SR_DISPATCH_OO_MEMBER_HTML = 'I understand my <strong>one-on-one is $25</strong>, collected upon arrival. My device is covered by ATR One, so there is <strong>no visit fee</strong>. *';
+    var SR_DISPATCH_REPAIR_MEMBER_HTML = 'I understand my device is <strong>covered by ATR One</strong>, so there is <strong>no visit fee</strong> for this visit. *';
+    var SR_DISPATCH_REPAIR_FALLBACK_HTML = 'I understand the <strong>visit fee</strong> &mdash; <strong>$15</strong> if my repair is already known, or <strong>$35</strong> if my device needs a full diagnosis &mdash; covers the trip to me, is due at scheduling, and is <strong>non-refundable</strong>. *';
+    function srDispatchAckHtml(virtual, mode) {
+      var member = repairState.atrOne === 'Yes';
+      if (virtual) return SR_DISPATCH_VIRTUAL_HTML;
+      if (mode === 'oneonone') return member ? SR_DISPATCH_OO_MEMBER_HTML : SR_DISPATCH_OO_HTML;
+      if (member) return SR_DISPATCH_REPAIR_MEMBER_HTML;
+      return srDispatchOrigHtml !== null ? srDispatchOrigHtml : SR_DISPATCH_REPAIR_FALLBACK_HTML;
+    }
+    function refreshDispatchAck() {
+      var disp = document.querySelector('input[name="dispatch_acknowledged"]');
+      var row = disp && disp.closest ? disp.closest('label.atr-check') : null;
+      var span = row ? row.querySelector('span') : null;
+      if (span) {
+        var g = window.atrGuidedSelection || {};
+        var mode = g.mode || repairState.mode;
+        var place = g.ooPlace || repairState.ooPlace;
+        span.innerHTML = srDispatchAckHtml(mode === 'oneonone' && place === 'virtual', mode);
+      }
+      var note = document.getElementById('rf-summary-note');
+      if (note && repairState.mode === 'oneonone') {
+        note.textContent = repairState.atrOne === 'Yes'
+          ? 'One-on-one help is $25 an hour. Your device is covered by ATR One, so there is no visit fee.'
+          : 'One-on-one help is $25 an hour, plus the $15 visit fee. ATR One Plus (paid) members pay no visit fee on covered devices.';
+      }
+    }
+    window.atrRefreshDispatchAck = refreshDispatchAck;
     function setOneOnOneMode(on) {
       repairState.mode = on ? 'oneonone' : 'repair';
       /* VIRTUAL_ONE_ON_ONE_2026_11_10: the place pick belongs to the
@@ -1297,7 +1333,9 @@
       if (pl) pl.textContent = on ? 'Summary' : 'Estimate';
       var note = document.getElementById('rf-summary-note');
       if (note) note.textContent = on
-        ? 'One-on-one help is $25 an hour, plus the $15 visit fee. ATR One Plus (paid) members pay no visit fee on covered devices.'
+        ? (repairState.atrOne === 'Yes'
+          ? 'One-on-one help is $25 an hour. Your device is covered by ATR One, so there is no visit fee.'
+          : 'One-on-one help is $25 an hour, plus the $15 visit fee. ATR One Plus (paid) members pay no visit fee on covered devices.')
         : 'Estimates are always free. Your exact price is confirmed once we have checked your device.';
       /* A lesson or setup visit has no repair work to authorize: the
          authorization row and the signature block step aside in this
@@ -1343,7 +1381,7 @@
       var dispSpan = dispRow ? dispRow.querySelector('span') : null;
       if (dispSpan) {
         if (srDispatchOrigHtml === null) srDispatchOrigHtml = dispSpan.innerHTML;
-        dispSpan.innerHTML = on ? SR_DISPATCH_OO_HTML : srDispatchOrigHtml;
+        dispSpan.innerHTML = srDispatchAckHtml(false, on ? 'oneonone' : 'repair');
       }
       /* BOOKING_OO_TILE_2026_11_09: entering the mode filters the
          topic bubbles to the device picked at step 1. */
@@ -5137,6 +5175,25 @@ if ("serviceWorker" in navigator) {
       render('');
       clearBtn.hidden = true;
       try { input.focus(); } catch (e) {}
+    });
+    /* SEARCH_CLOSE_ON_KEYBOARD_DISMISS_2026_11_11 (owner, Nov 11,
+       2026): on his iPhone, closing the keyboard with its check mark
+       left the sheet hanging open over the page — "get rid of that."
+       When the field loses focus and the tap that caused it did NOT
+       land inside the sheet, the sheet closes too: the keyboard
+       going away means the search is done. Taps inside the sheet (a
+       result, a Quick Link, the clear X, the mic) stamp themselves
+       and are left to their own handlers; the clear X refocuses the
+       field, which also keeps the sheet up. */
+    var sheetTapStamp = 0;
+    overlay.addEventListener('pointerdown', function () { sheetTapStamp = Date.now(); }, true);
+    input.addEventListener('blur', function () {
+      setTimeout(function () {
+        if (!isOpen()) return;
+        if (document.activeElement === input) return;
+        if (Date.now() - sheetTapStamp < 400) return;
+        closeSearch();
+      }, 300);
     });
     input.addEventListener('keydown', function (ev) {
       if (ev.key === 'Enter' && input.value.trim()) {
