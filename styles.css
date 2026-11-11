@@ -3238,6 +3238,41 @@ html[data-theme="dark"] .site-search-mic.is-listening { color: var(--gold); }
   }
 }
 
+/* ================= SEARCH_CENTER_2026_11_11 =================
+   Owner, Nov 11, 2026 — the sheet on his phone and iPad portrait
+   was broken two ways: the card sat glued to the bottom of the
+   screen, where the thumb bar (z 2100) and the cookie banner
+   (z 9999) painted over the search field, and the keyboard never
+   popped. His layout, the one he made Nov 9: the card floats in
+   the MIDDLE of the display over the dimmed page, the text items
+   sit in the card, and the search field is at the card's bottom
+   directly above the keyboard when it pops. So: the sheet now
+   paints above everything else, and on mobile the overlay
+   centers the card in the visual viewport — when the keyboard
+   opens, the visible area shrinks and the centered card rides
+   up with it, field still directly above the keyboard. The
+   Quick Link rows also leave the narrow-screen column flip to
+   the repair results — a quick link is one row: arrow + label. */
+.site-search { z-index: 10000; }
+@media (max-width: 920px) {
+  .site-search { justify-content: center; }
+}
+@media (max-width: 560px) {
+  .site-search-quicklink { flex-direction: row; align-items: center; }
+}
+/* The in-field clear X (owner's drawing, Nov 11, 2026): a small
+   circled X inside the bar, at the field's right end. It shows
+   only while the field holds text; it clears the text and never
+   closes the sheet — closing is the big X's job alone. */
+.site-search-clear {
+  flex: none; display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--surface-warm); border: 1px solid var(--line);
+  color: var(--ink); cursor: pointer; font-size: 0.85rem;
+}
+.site-search-clear[hidden] { display: none; }
+.site-search-clear:hover { border-color: var(--brand); color: var(--brand-deep); }
+
 /* ===== V53_2026_11_09 — the mobile top bar becomes a greeting bar =====
    Owner (Nov 9, 2026): the mobile top strip is a settings-style
    utility strip, and the space left of the action buttons welcomes
