@@ -6446,13 +6446,32 @@ document.addEventListener('click', function (e) {
     if (ev.key === 'Enter' && !startBtn.disabled) { ev.preventDefault(); check(); }
   });
 
-  /* A signed-in member sees their own key on the page, so they can
-     use it without asking. Signed out (or no active paid membership)
-     answers nothing and the line stays hidden — no error, no hint. */
+  /* A signed-in member's own key belongs to this line. SHOW_MY_KEY
+     _2026_11_11 (owner, Nov 11, 2026): the key no longer prints in
+     the open — the line carries only a "Show my key" button, the key
+     is held in this closure, and it is written into the page only
+     while the member has it revealed; tapping again clears it back
+     out. Signed out (or no active paid membership) answers nothing
+     and the line stays hidden — no error, no hint. */
+  var myKey = '';
+  var keyToggle = document.getElementById('voo-key-toggle');
+  var keyValue = document.getElementById('voo-key-value');
   callFn({ action: 'mykey' }, function (j) {
     if (j && j.ok && j.key && keyEl) {
-      keyEl.textContent = 'Your ATR One member key: ' + j.key;
+      myKey = String(j.key);
       keyEl.hidden = false;
+    }
+  });
+  if (keyToggle) keyToggle.addEventListener('click', function () {
+    if (!keyValue || !myKey) return;
+    if (keyValue.hidden) {
+      keyValue.textContent = myKey;
+      keyValue.hidden = false;
+      keyToggle.textContent = 'Hide my key';
+    } else {
+      keyValue.textContent = '';
+      keyValue.hidden = true;
+      keyToggle.textContent = 'Show my key';
     }
   });
 
@@ -6474,12 +6493,25 @@ document.addEventListener('click', function (e) {
     var wvMsg = document.getElementById('voo-wv-msg');
     var wvBlock = document.getElementById('voo-waiver');
     var finalBlock = document.getElementById('voo-final');
+    var tsSlot = document.getElementById('ts-voo');
     if (!wvScreen || !startSessionBtn) return;
+    /* HUMAN_CHECK_2026_11_11: mount the human-check widget with
+       the waiver (explicit render works while the block is still
+       hidden; the Start handler re-mounts, a no-op once live). */
+    if (tsSlot && window.atrTurnstile) window.atrTurnstile.mount(tsSlot);
     wvScreen.addEventListener('change', function () {
       startSessionBtn.disabled = !wvScreen.checked;
     });
-    startSessionBtn.addEventListener('click', function () {
-      if (!wvScreen.checked) return;
+    /* HUMAN_CHECK_2026_11_11 (owner, Nov 11, 2026): Start my
+       session stays inert until the site's human check confirms
+       a person — the same Cloudflare Turnstile widget and the
+       same verify-turnstile server path the sign-in and
+       booking forms already use (turnstile.js,
+       window.atrTurnstile.verify; no new machinery, no new
+       function). Only then does the waiver record, and the
+       redirect fires exactly as before. Like the rest of the
+       site this fails closed: no confirmed check, no start. */
+    function recordWaiver() {
       startSessionBtn.disabled = true;
       if (wvMsg) { wvMsg.textContent = 'Saving your agreement…'; wvMsg.hidden = false; }
       callFn({
@@ -6490,15 +6522,47 @@ document.addEventListener('click', function (e) {
       }, function (j) {
         if (j && j.ok) {
           if (wvBlock) wvBlock.hidden = true;
-          if (finalBlock) finalBlock.hidden = false;
-          /* PHASE2_HANDOFF: the RustDesk session opens here in
-             phase 2 (guest helper pointed at our own relay), with
-             the mic/camera allows above as its starting state.
-             Phase 1 stops at the checked-in steps on purpose. */
+          /* CONNECT_REDIRECT_2026_11_11 (owner, Nov 11, 2026): the
+             check is the doorway - a code that matches sends the
+             guest onward to the business's ATRG Connect
+             link. There is no standing ATRG Connect link anywhere on
+             the page; this redirect is the only way through, and it
+             fires only after the waiver above has been recorded.
+             The destination below is the business's ATRG Connect
+             link, supplied by the owner. (Before: this revealed the in-page
+             #voo-final block - our own session front end, which
+             connected to nothing.) */
+          window.location.href = 'https://start.teamviewer.com/799992734';
         } else {
           startSessionBtn.disabled = false;
           if (wvMsg) wvMsg.textContent = 'We could not save your agreement just now. Please tap Start my session once more.';
         }
+      });
+    }
+    startSessionBtn.addEventListener('click', function () {
+      if (!wvScreen.checked) return;
+      if (!tsSlot || !window.atrTurnstile) {
+        if (wvMsg) { wvMsg.textContent = 'The human check could not load on this device. Please reload the page — or call or text us and we will get you connected.'; wvMsg.hidden = false; }
+        return;
+      }
+      window.atrTurnstile.mount(tsSlot);
+      var tok = window.atrTurnstile.token(tsSlot);
+      if (!tok) {
+        if (wvMsg) { wvMsg.textContent = 'One quick human check first — tick the box just above, then tap Start my session again.'; wvMsg.hidden = false; }
+        return;
+      }
+      startSessionBtn.disabled = true;
+      if (wvMsg) { wvMsg.textContent = 'Checking…'; wvMsg.hidden = false; }
+      bearer(function (b) {
+        window.atrTurnstile.verify(tok, b, function (ok) {
+          window.atrTurnstile.reset(tsSlot);
+          if (!ok) {
+            startSessionBtn.disabled = false;
+            if (wvMsg) { wvMsg.textContent = 'The human check did not pass. Please tick the box once more, then tap Start my session again.'; wvMsg.hidden = false; }
+            return;
+          }
+          recordWaiver();
+        });
       });
     });
   })();

@@ -2190,6 +2190,7 @@
                  it only for a signed-in associate (employee_profiles row);
                  guests never see it. Tapping it opens the Associate Hub. -->
             <a class="acct-menu-item acct-flat-row" id="emp-dash-link" href="portal.html" hidden><i class="fas fa-briefcase"></i> Associate Portal <i class="fas fa-arrow-right acct-menu-chev" aria-hidden="true"></i></a>
+            <!-- CONNECT_DOOR_RESTORED_2026_11_11 (owner FINAL reversal, Nov 11, 2026): the ATRG Connect account door below was restored after its earlier same-day removal. Guests keep the button in their own account (the Guest Hub); the protection is the human-issued code on the gated page, not the door. -->
             <button class="acct-menu-item acct-flat-row" type="button" data-acct-menu="connect" aria-expanded="false"><i class="fas fa-display"></i> ATRG Connect <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
 
             <!-- ATRG Connect — ATRG_CONNECT_2026_11_10 (Austin, Nov 10, 2026): "The guest gets a connect plugin in their account under the nav." The FIRST row in the signed-in guest's account rows, right above My Devices (owner, Nov 10, 2026): the plugin lives here, in their account; opening it takes them to the Connect session page where they type the code their associate sent. The row follows the same drop-down machinery as every other account row (data-acct-menu / acct-view-*). -->
@@ -3363,7 +3364,7 @@
             <a class="service-card" href="#contact" data-page="contact"><div class="service-icon"><i class="fas fa-comments"></i></div><h3>Contact us</h3><p>Call, text, or send a message.</p></a>
             <a class="service-card" href="#account" data-page="account"><div class="service-icon"><i class="fas fa-crown"></i></div><h3>Change a subscription</h3><p>Manage your ATR One plan, devices, points, and orders.</p></a>
             <a class="service-card" href="#account" data-page="account"><div class="service-icon"><i class="fas fa-credit-card"></i></div><h3>Billing and payments</h3><p>Membership billing runs through Square &mdash; manage it from your account.</p></a>
-            <a class="service-card" href="#virtual-oneonone" data-page="virtual-oneonone"><div class="service-icon"><i class="fas fa-display"></i></div><h3>Virtual One-on-One</h3><p>Booked a virtual session? Type your code here and we are right there on your screen with you.</p></a>
+            <!-- CONNECT_SUPPORT_CARD_REMOVED_2026_11_11: the Virtual One-on-One card that linked to the Connect page was here. It stays removed in v114 - the owner's final ruling (Nov 11, 2026) restored only the guest-account ATRG Connect door. Restorable on his word by re-inserting the card here. -->
           </div>
           <div class="support-icon-row">
             <a class="support-icon-door" href="#warranty-request" data-page="warranty-request"><span class="support-icon-chip"><i class="fas fa-shield-halved"></i></span>Warranty</a>
@@ -4088,7 +4089,7 @@
               <label class="field-label" for="voo-code">Your code</label>
               <input class="form-field voo-code-input" type="text" id="voo-code" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" placeholder="Type the code your associate gave you" disabled>
               <p class="atr-help">A session code is 6 numbers. ATR One members: your member key works too &mdash; it is yours alone, tied to your account, and virtual sessions are free with it.</p>
-              <p class="voo-member-key" id="voo-member-key" hidden></p>
+              <p class="voo-member-key" id="voo-member-key" hidden>Your ATR One member key: <button class="btn btn-outline btn-sm" type="button" id="voo-key-toggle">Show my key</button> <span id="voo-key-value" hidden></span></p>
               <button class="btn btn-primary btn-lg" type="button" id="voo-start" disabled><i class="fas fa-display"></i> Check my code</button>
               <p class="voo-msg" id="voo-msg" role="status" hidden></p>
               <div class="voo-next" id="voo-next" hidden>
@@ -4134,28 +4135,15 @@
                     <input type="checkbox" id="voo-wv-camera">
                     <span><strong>Also allow my camera</strong> (your choice). So my associate can see me during the session. It starts off &mdash; I turn it on, and I can stop it at any time.</span>
                   </label>
+                  <div class="atr-turnstile" id="ts-voo"></div>
                   <p><button class="btn btn-primary" type="button" id="voo-session-start" disabled><i class="fas fa-display"></i> Start my session</button></p>
                   <p class="voo-msg" id="voo-wv-msg" role="status" hidden></p>
                 </div>
-                <div id="voo-final" hidden>
-                  <h4>You are checked in</h4>
-                  <p>Your associate is connecting now. Keep this page open.</p>
-                  <ol class="voo-steps">
-                    <li>On a computer or Android, a small box will ask if it is okay to connect &mdash; that is us. Say yes only if you are expecting your session.</li>
-                    <li>On an iPhone or iPad: tap the <strong>Share</strong> button when it appears, then tap <strong>Start Broadcast</strong> when Apple asks &mdash; that is all. We can see your screen, and we talk you through each tap from there.</li>
-                    <li>We can talk and type messages during the session, like a phone call. Your mic and camera start off &mdash; turn them on only if you want to.</li>
-                    <li>You can end the session at any moment &mdash; just say so, or close the session window. Nothing stays connected afterwards.</li>
-                  </ol>
-                  <p>If nothing opens within a minute, call or text us at <a href="tel:9372806243">(937) 280-6243</a> and we will walk it through with you.</p>
-                  <!-- GUEST_FRAME_2026_11_10 (owner's guest-side rule):
-                       the End control is OUR button, in our page, in
-                       our styling — the guest never leaves the site's
-                       own frame. In phase 2 this same button also
-                       closes the engine session (hook marked in
-                       script.js); in phase 1 it ends the check-in
-                       and clears the page back to the start. -->
-                  <p><button class="btn btn-outline" type="button" id="voo-end"><i class="fas fa-phone-slash"></i> End session</button></p>
-                </div>
+                <!-- CONNECT_REDIRECT_2026_11_11 (owner, Nov 11, 2026): the
+                     #voo-final in-page session block was removed. A guest whose
+                     code matches is redirected by script.js (at the waiver step)
+                     to the business's ATRG Connect link - there is
+                     no ATRG Connect link element on this page by design. -->
                 <!-- PHASE2_HANDOFF: the self-hosted RustDesk session
                      opens from here (our own relay, our own address).
                      Phase 1 ends at this marker on purpose — nothing
