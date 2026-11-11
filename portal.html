@@ -1126,7 +1126,7 @@
           <form class="teamchat-composer" id="portal-guestchat-form" novalidate>
             <div class="portal-field teamchat-field">
               <label for="portal-guestchat-input">Reply</label>
-              <textarea id="portal-guestchat-input" rows="2" maxlength="2000" placeholder="Write a reply&hellip;"></textarea>
+              <textarea id="portal-guestchat-input" rows="2" placeholder="Write a reply&hellip;"></textarea>
             </div>
             <button class="portal-btn portal-btn-primary" type="submit" id="portal-guestchat-send"><i class="fas fa-paper-plane"></i> Send</button>
           </form>
@@ -1171,7 +1171,8 @@
         <form class="teamchat-composer" id="portal-teamchat-form" novalidate>
           <div class="portal-field teamchat-field">
             <label for="portal-teamchat-input" id="portal-teamchat-input-label">Message Office</label>
-            <textarea id="portal-teamchat-input" rows="2" maxlength="2000" placeholder="Write a message&hellip;"></textarea>
+            <!-- NO_LIMITS_2026_11_11 (owner, Nov 11, 2026): writing boxes carry NO character cap - maxlength removed here, in Guest Chat, and in the ticket note / repair log composers; the matching database length checks were dropped the same day. Austin: "We don't do limits here." -->
+            <textarea id="portal-teamchat-input" rows="2" placeholder="Write a message&hellip;"></textarea>
           </div>
           <button class="portal-btn portal-btn-primary" type="submit" id="portal-teamchat-send"><i class="fas fa-paper-plane"></i> Send</button>
         </form>
