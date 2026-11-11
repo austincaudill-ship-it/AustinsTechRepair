@@ -551,7 +551,12 @@
     try { id = window.sessionStorage.getItem(SCAN_STASH_KEY); } catch (e) {}
     if (!id) return;
     try { window.sessionStorage.removeItem(SCAN_STASH_KEY); } catch (e) {}
-    routeToScannedCustomer(id);
+    /* SCAN_TICKET_2026_11_11: the stash now converges on the one
+     * shared resolver too, so a ?scan=T-<CODE> deep link pops its
+     * ticket; a stashed guest id or account code routes exactly as
+     * it did before (routeScanPayload still ends at
+     * routeToScannedCustomer for those). */
+    routeScanPayload(id);
   }
   function routeToScannedCustomer(customerId) {
     withClient(function (client) {
@@ -580,17 +585,33 @@
   }
   /* One resolver for every form a scan can arrive in — the Scan In
    * camera, the Scan In account-number entry, and (via the stash) the
-   * ?scan= deep link all end at routeToScannedCustomer. */
+   * ?scan= deep link. Guest forms end at routeToScannedCustomer;
+   * SCAN_TICKET_2026_11_11 added the ticket form: a device label's
+   * T-<CODE> (bare, or as the value inside a ?scan= link) and the
+   * bare 8-character code off its barcode end at
+   * routeToScannedTicket, checked BEFORE the guest routes so a
+   * ticket code can never be mistaken for a guest. */
   function routeScanPayload(raw) {
     var s = String(raw == null ? '' : raw).trim();
     if (!s) { showScanNotFound(''); return; }
+    /* SCAN_TICKET_2026_11_11: the ticket token first — bare, ahead
+     * of every guest route. */
+    var tm = /^T-([0-9A-Fa-f]{8})$/i.exec(s);
+    if (tm) { routeToScannedTicket(tm[1]); return; }
     var m = /^ATR-(\d+)$/i.exec(s);
     if (m) { routeScanAccountNumber(parseInt(m[1], 10)); return; }
     var scanId = null;
     try { scanId = new window.URL(s).searchParams.get('scan'); } catch (e) {}
     if (!scanId) { var m2 = /[?&]scan=([^&#]+)/.exec(s); if (m2) { try { scanId = decodeURIComponent(m2[1]); } catch (e) { scanId = m2[1]; } } }
     if (!scanId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)) scanId = s;
-    if (scanId) { routeToScannedCustomer(scanId); return; }
+    if (scanId) {
+      var tm2 = /^T-([0-9A-Fa-f]{8})$/i.exec(scanId);
+      if (tm2) { routeToScannedTicket(tm2[1]); return; }
+      routeToScannedCustomer(scanId); return;
+    }
+    /* The bare code off the label's barcode (a camera read of the
+     * Code 128 lands here with no URL around it). */
+    if (/^[0-9A-Fa-f]{8}$/.test(s)) { routeToScannedTicket(s); return; }
     showScanNotFound(s);
   }
   function routeScanAccountNumber(n) {
@@ -603,6 +624,75 @@
         })
         .catch(function () { showScanNotFound('ATR-' + n); });
     });
+  }
+  /* SCAN_TICKET_2026_11_11 (Austin, Nov 11, 2026): "Whatever it has
+   * to do in order to make the ticket pop open. It should pop the
+   * ticket." The device label's ticket code is the ticket id's first
+   * 8 characters, uppercased — the same shortCode(t) the receipts
+   * print. Normalizing a scanned code mirrors that exactly: trim,
+   * uppercase, an optional T- (or #) prefix, exactly 8 hex chars. */
+  function normalizeTicketCode(raw) {
+    var s = String(raw == null ? '' : raw).trim().toUpperCase();
+    var m = /^T-([0-9A-F]{8})$/.exec(s) || /^#?([0-9A-F]{8})$/.exec(s);
+    return m ? m[1] : '';
+  }
+  function routeToScannedTicket(rawCode) {
+    var code = normalizeTicketCode(rawCode);
+    if (!code) { showTicketScanNotFound(String(rawCode == null ? '' : rawCode)); return; }
+    withClient(function (client) {
+      if (!client) { showTicketScanNotFound(code); return; }
+      activateTab('tickets');
+      function pick(rows) {
+        var matches = (rows || []).filter(function (t) { return shortCode(t) === code; });
+        if (!matches.length) { showTicketScanNotFound(code); return; }
+        matches.sort(function (a, b) {
+          return String(b.updated_at || b.created_at || '').localeCompare(String(a.updated_at || a.created_at || ''));
+        });
+        var chosen = null;
+        for (var i = 0; i < matches.length; i++) {
+          if (matches[i].status !== 'Job Complete') { chosen = matches[i]; break; }
+        }
+        scanBehindCustomerId = null; /* a ticket scan has no guest profile behind the drawer */
+        openTicket((chosen || matches[0]).id);
+      }
+      /* The id is a uuid, so the prefix match runs on its text form.
+       * If an older database layer refuses the cast, fall back to
+       * matching recent tickets on this side — the ticket still
+       * pops, and a code that matches nothing lands on the plain
+       * not-found note either way. */
+      client.from('tickets').select('id, status, updated_at, created_at')
+        .filter('id::text', 'ilike', code.toLowerCase() + '%')
+        .order('updated_at', { ascending: false }).limit(10)
+        .then(function (res) {
+          if (res.error) {
+            client.from('tickets').select('id, status, updated_at, created_at')
+              .order('created_at', { ascending: false }).limit(1000)
+              .then(function (res2) { pick(res2 && !res2.error ? (res2.data || []) : []); })
+              .catch(function () { showTicketScanNotFound(code); });
+            return;
+          }
+          pick(res.data || []);
+        })
+        .catch(function () { showTicketScanNotFound(code); });
+    });
+  }
+  function showTicketScanNotFound(code) {
+    activateTab('tickets');
+    drawerLoading('Ticket lookup');
+    var tries = 0;
+    var iv = setInterval(function () {
+      tries++;
+      var body = $('portal-drawer-body');
+      if (!body) { if (tries > 25) clearInterval(iv); return; }
+      clearInterval(iv);
+      if (document.getElementById('scan-ticket-note')) return;
+      var note = document.createElement('div');
+      note.id = 'scan-ticket-note';
+      note.className = 'portal-gate';
+      note.style.marginBottom = '12px';
+      note.innerHTML = '<strong>Ticket lookup:</strong> no ticket matches code ' + esc(code) + '. Check the code on the label and try again, or search the Service Queue.';
+      body.insertBefore(note, body.firstChild);
+    }, 200);
   }
   function appendScanNote(customerId, notFound) {
     var tries = 0;
@@ -1819,12 +1909,38 @@
    * teal queue treatment (portal.css q-rework) — active work, but
    * visually distinct from the yellow In Progress. */
   var QCLASS = { 'Awaiting Diagnostics': 'q-red', 'Awaiting Estimate': 'q-red', 'Awaiting Scheduling': 'q-red', 'Support Requested': 'q-red', 'Awaiting Customer Response': 'q-yellow', 'Awaiting Parts': 'q-orange', 'Awaiting Repair': 'q-orange', 'En Route to Customer': 'q-yellow', 'Rework / Warranty': 'q-rework', 'In Progress': 'q-yellow', 'Quality Control': 'q-lime', 'Ready': 'q-green', 'Job Complete': 'q-done' };
+  /* SCAN_TICKET_2026_11_11: the queue search narrows the rows the
+   * status filter already fetched — queueAllRows is the current
+   * view (whatever loadTickets last loaded) and the search only
+   * ever narrows within it. Queue positions are counted on the
+   * full view, so a card found by search keeps its real number. */
+  var queueAllRows = [];
+  var queueSearchTerm = '';
+  function queueRowMatches(t, term) {
+    var q = String(term || '').trim().toLowerCase();
+    if (!q) return true;
+    if (String(t.customer_name || '').toLowerCase().indexOf(q) !== -1) return true;
+    var codeQ = q.replace(/^#/, '').replace(/^t-/, '');
+    if (shortCode(t).toLowerCase().indexOf(codeQ) !== -1) return true;
+    if (String(t.id || '').toLowerCase().indexOf(codeQ) !== -1) return true;
+    if (deviceLabel(t).toLowerCase().indexOf(q) !== -1) return true;
+    var digits = q.replace(/\D/g, '');
+    if (digits && !/[a-z]/.test(q) && String(t.customer_phone || '').replace(/\D/g, '').indexOf(digits) !== -1) return true;
+    return false;
+  }
   function renderTickets(rows) {
     var list = $('portal-ticket-list');
-    if (!rows.length) { emptyState(list, 'No tickets match. New service requests from the website will show up here.'); return; }
+    queueAllRows = rows || [];
     var posMap = {}, n = 0;
-    for (var i = rows.length - 1; i >= 0; i--) { if (rows[i].status !== 'Job Complete') { n++; posMap[rows[i].id] = n; } }
-    list.innerHTML = rows.map(function (t) {
+    for (var i = queueAllRows.length - 1; i >= 0; i--) { if (queueAllRows[i].status !== 'Job Complete') { n++; posMap[queueAllRows[i].id] = n; } }
+    var view = queueSearchTerm ? queueAllRows.filter(function (t) { return queueRowMatches(t, queueSearchTerm); }) : queueAllRows;
+    if (!view.length) {
+      emptyState(list, queueSearchTerm
+        ? 'No tickets match that search. Clear the search to see the whole queue.'
+        : 'No tickets match. New service requests from the website will show up here.');
+      return;
+    }
+    list.innerHTML = view.map(function (t) {
       var qchip = posMap[t.id] ? '<span class="q-chip">Queue #' + posMap[t.id] + '</span>' : '';
       var appt = t.appointment_at ? '<p class="portal-card-meta"><i class="fas fa-calendar-check"></i> Appointment: ' + esc(fmtDateTime(t.appointment_at)) + '</p>' : '';
       var src = t.source ? ' <span class="portal-badge portal-badge-source">' + esc(t.source) + '</span>' : '';
@@ -1874,6 +1990,124 @@
       run(true);
     });
   }
+
+  /* ================= SCAN_TICKET_2026_11_11 =================
+   * Service Queue search + device-label scan (Austin, Nov 11,
+   * 2026). The search box sits at the top of the Service Queue:
+   * typing narrows the loaded queue live (queueRowMatches above).
+   * The Scan button opens the camera with the same reader pattern
+   * as the parts and inventory scanners (BarcodeDetector first,
+   * the ZXing fallback loaded the same way, a Stop button, and a
+   * plain fallback message — here the fallback is the search box
+   * itself, so there is no second code entry to keep in sync).
+   * A read lands in the search box and applies; a read that is a
+   * ticket code or a ?scan= payload also pops that ticket through
+   * the one shared resolver (routeScanPayload), and a guest
+   * payload keeps its guest route the same way. No character caps
+   * anywhere: the box takes whatever a label can carry. */
+  function syncQueueSearchClear() {
+    var btn = $('portal-queue-search-clear'), inp = $('portal-queue-search');
+    if (btn && inp) btn.hidden = !inp.value;
+  }
+  function applyQueueSearch() {
+    var inp = $('portal-queue-search');
+    queueSearchTerm = inp ? inp.value : '';
+    syncQueueSearchClear();
+    renderTickets(queueAllRows);
+  }
+  function clearQueueSearch() {
+    var inp = $('portal-queue-search');
+    if (inp) { inp.value = ''; try { inp.focus(); } catch (e) {} }
+    queueSearchTerm = '';
+    syncQueueSearchClear();
+    renderTickets(queueAllRows);
+  }
+  var queueSearchWired = false;
+  function wireQueueSearch() {
+    if (queueSearchWired) return;
+    var inp = $('portal-queue-search');
+    if (!inp) return;
+    queueSearchWired = true;
+    inp.addEventListener('input', applyQueueSearch);
+    var clearBtn = $('portal-queue-search-clear');
+    if (clearBtn) clearBtn.addEventListener('click', clearQueueSearch);
+    var scanBtn = $('portal-queue-scan-btn');
+    if (scanBtn) scanBtn.addEventListener('click', startQueueScan);
+    var scanStop = $('portal-queue-scan-stop');
+    if (scanStop) scanStop.addEventListener('click', stopQueueScan);
+  }
+  var queueScanStream = null, queueScanTimer = null, queueScanReader = null;
+  function stopQueueScan() {
+    if (queueScanTimer) { clearInterval(queueScanTimer); queueScanTimer = null; }
+    if (queueScanReader && queueScanReader.reset) { try { queueScanReader.reset(); } catch (e) {} queueScanReader = null; }
+    if (queueScanStream) { queueScanStream.getTracks().forEach(function (tr) { tr.stop(); }); queueScanStream = null; }
+    var v = $('portal-queue-scan-video'); if (v) v.srcObject = null;
+    var box = $('portal-queue-scan-box'); if (box) box.hidden = true;
+  }
+  function applyQueueScannedCode(code) {
+    code = String(code || '').trim();
+    if (!code) return;
+    stopQueueScan();
+    var inp = $('portal-queue-search');
+    if (inp) inp.value = code;
+    queueSearchTerm = code;
+    syncQueueSearchClear();
+    renderTickets(queueAllRows);
+    if (/[?&]scan=/i.test(code) || /^T-[0-9A-Fa-f]{8}$/i.test(code) || /^ATR-\d+$/i.test(code) ||
+        /^[0-9A-Fa-f]{8}$/.test(code) || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(code)) {
+      routeScanPayload(code);
+    }
+  }
+  function startQueueScan() {
+    var box = $('portal-queue-scan-box'); if (!box) return;
+    if (queueScanStream || queueScanTimer) stopQueueScan();
+    box.hidden = false;
+    if (box.scrollIntoView) box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    var status = $('portal-queue-scan-status');
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      if (status) status.textContent = 'This device cannot open the camera here \u2014 type the ticket code in the search box instead.';
+      return;
+    }
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }).then(function (stream) {
+      queueScanStream = stream;
+      var v = $('portal-queue-scan-video'); v.srcObject = stream; v.play();
+      if (status) status.textContent = 'Point the camera at the barcode or QR code on the device label\u2026';
+      if (window.BarcodeDetector) {
+        var det = new BarcodeDetector({ formats: ['upc_a', 'upc_e', 'ean_13', 'ean_8', 'code_128', 'code_39', 'qr_code'] });
+        queueScanTimer = setInterval(function () {
+          det.detect(v).then(function (codes) {
+            if (codes && codes.length) applyQueueScannedCode(codes[0].rawValue);
+          }).catch(function () {});
+        }, 500);
+      } else if (window.ZXing) {
+        try {
+          queueScanReader = new ZXing.BrowserMultiFormatReader();
+          queueScanReader.decodeFromVideoDevice(null, v, function (result) {
+            if (result) applyQueueScannedCode(result.getText());
+          });
+        } catch (e) {
+          if (status) status.textContent = 'Camera opened but barcode reading is not available here \u2014 type the ticket code in the search box instead.';
+        }
+      } else {
+        var s = document.createElement('script');
+        s.src = 'https://unpkg.com/@zxing/browser@0.1.5/umd/index.min.js';
+        s.onload = function () {
+          if (!window.ZXing) { if (status) status.textContent = 'Barcode reading could not load \u2014 type the ticket code in the search box instead.'; return; }
+          try {
+            queueScanReader = new ZXing.BrowserMultiFormatReader();
+            queueScanReader.decodeFromVideoDevice(null, v, function (result) {
+              if (result) applyQueueScannedCode(result.getText());
+            });
+          } catch (e) {}
+        };
+        s.onerror = function () { if (status) status.textContent = 'Barcode reading could not load \u2014 type the ticket code in the search box instead.'; };
+        document.head.appendChild(s);
+      }
+    }).catch(function () {
+      if (status) status.textContent = 'Camera permission was denied \u2014 type the ticket code in the search box instead.';
+    });
+  }
+  /* ================= /SCAN_TICKET_2026_11_11 ================= */
 
   /* ================= PORTAL_GV_TEXTS_2026_11_02 =================
    * Google Voice texting relay (Austin, Nov 2, 2026): "figure out
@@ -5890,11 +6124,12 @@ function loadTicketThread(client, ticketId) {
    * carries the guest's name, the device line, the ticket's short
    * code LARGE (the same Ticket # the receipts print and guests
    * reference), a Code 128 barcode of that code, and a QR code.
-   * The QR encodes the portal's own scan route for the guest —
-   * portal.html?scan=<customer_id> — because the scan flow routes
-   * by GUEST (routeScanPayload -> routeToScannedCustomer, which
-   * opens the guest and their newest open ticket), never by ticket
-   * number; the barcode is what carries the ticket itself. Both
+   * The QR encodes the ticket route — portal.html?scan=T-<code> —
+   * so a scan pops this exact ticket (SCAN_TICKET_2026_11_11
+   * added routeToScannedTicket to the scan flow). At v97 the QR
+   * carried the guest route instead, because the scan flow then
+   * routed by guest only; labels printed with the guest route
+   * still land on the guest, whose route is unchanged. Both
    * codes are drawn by the compact generators below, embedded in
    * this file on purpose: no library or CDN is involved, so the
    * label prints the same on a weak phone hotspot as anywhere. */
@@ -6125,9 +6360,13 @@ function loadTicketThread(client, ticketId) {
     return true;
   }
   function deviceLabelQrPayload(t) {
-    return t.customer_id
-      ? 'https://austinstechrepairgroup.com/portal.html?scan=' + t.customer_id
-      : 'https://austinstechrepairgroup.com/portal.html';
+    /* SCAN_TICKET_2026_11_11: the QR carries the ticket route —
+     * ?scan=T-<CODE> pops this exact ticket (routeScanPayload ->
+     * routeToScannedTicket), the same code the barcode carries,
+     * so both codes on the label land in the same place. Guest-
+     * route labels already printed keep working (see the header
+     * comment above). */
+    return 'https://austinstechrepairgroup.com/portal.html?scan=T-' + shortCode(t);
   }
   function composeDeviceLabelHtml(t) {
     var code = shortCode(t);
@@ -14551,6 +14790,7 @@ function loadTicketThread(client, ticketId) {
       state.loaded.tickets = false;
       loadTickets(true);
     });
+    wireQueueSearch(); /* SCAN_TICKET_2026_11_11: queue search + label scan */
     $('portal-cust-search').addEventListener('input', applyCustomerSearch);
     buildCustAddForm(); /* PORTAL_CRUD_BATCH_A_2026_11_05: Add customer form above the list */
     var invFilterEl = $('portal-inv-filter');
