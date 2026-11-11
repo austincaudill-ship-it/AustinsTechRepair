@@ -1807,3 +1807,25 @@ body:has(#portal-dash-view[hidden]) .portal-thumbbar { display: none; }
 .virtual-secnav { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1rem 0; }
 .virtual-sec-btn { padding: .65rem 1.1rem; font-size: 1rem; border-radius: 10px; border: 1px solid var(--line, rgba(127,127,127,.35)); background: var(--card, #fff); color: var(--ink, #1a1a1a); cursor: pointer; }
 .virtual-sec-btn.active { background: #C24A09; border-color: #C24A09; color: #fff; }
+
+/* GETAPP_2026_11_10 (Austin, Nov 10, 2026): the Get App button docks at the
+   right of the top bar's first row (margin-left auto inside the flex inner),
+   in the empty space beside the Associate Hub tag where Austin circled it.
+   It never shows inside the installed app, and its steps panel is a white
+   card under the bar — no floating text. */
+#portal-getapp-btn { margin-left: auto; }
+@media (max-width: 920px) {
+  #portal-getapp-btn { padding: 0.55rem 0.7rem; font-size: 0.88rem; }
+}
+@media (display-mode: standalone) {
+  #portal-getapp-btn, #hub-getapp-panel { display: none !important; }
+}
+.hub-getapp-panel[hidden] { display: none !important; }
+.hub-getapp-panel { max-width: 1200px; margin: 0 auto; padding: 0.75rem 1.25rem 0; }
+.hub-getapp-card {
+  background: var(--surface, #FFFDF8); border: 1px solid var(--line, #E6D9C0);
+  border-radius: 16px; padding: 1rem 1.1rem;
+}
+.hub-getapp-title { font-weight: 800; margin: 0 0 0.4rem; }
+.hub-getapp-title i { color: var(--brand, #D9540D); }
+.hub-getapp-steps { margin: 0 0 0.75rem; line-height: 1.55; white-space: pre-line; }
