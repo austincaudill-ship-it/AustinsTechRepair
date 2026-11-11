@@ -13389,6 +13389,144 @@ function loadTicketThread(client, ticketId) {
       });
   }
 
+  /* ================= REMOTE_APPS_2026_11_11 =================
+   * The ATRG Remote toolbox (Austin, Nov 11, 2026): the Apps tab
+   * comes prebuilt with the repair and testing tools we trust, and
+   * any associate can add a quick app — a name, the maker's own
+   * link, one line on what it is for. Delete is Admin tier and
+   * above, two taps, the same as Setup's delete. The list lives in
+   * ONE portal_setup_items row, template 'remote-apps', with the
+   * apps in config.apps — the same shape the training program uses
+   * (one row, config holds the content), so the Setup fetch/save
+   * helpers drive it and no new table exists. Links open on the
+   * maker's own site in a new tab; nothing downloads from this
+   * panel. The seeded list is seed-remote-apps.sql (build v107) —
+   * until that runs, the tab says so plainly, and the first app an
+   * associate adds makes the row. */
+  var remoteAppsWired = false;
+
+  function remoteAppsRow() {
+    var rows = setupRows || [];
+    for (var i = 0; i < rows.length; i++) {
+      if (rows[i] && rows[i].template === 'remote-apps') return rows[i];
+    }
+    return null;
+  }
+  function remoteAppsList() {
+    var row = remoteAppsRow();
+    var cfg = row ? setupCfg(row) : {};
+    var apps = Array.isArray(cfg.apps) ? cfg.apps : [];
+    return apps.filter(function (a) {
+      return a && typeof a.name === 'string' && a.name.trim() &&
+        typeof a.url === 'string' && a.url.trim();
+    }).map(function (a) {
+      return { name: a.name, url: a.url, blurb: typeof a.blurb === 'string' ? a.blurb : '' };
+    });
+  }
+  function loadRemoteApps(force) {
+    wireRemoteApps();
+    if (setupRows && !force) { renderRemoteApps(); return; }
+    setupFetch(function () { renderRemoteApps(); });
+  }
+  function renderRemoteApps() {
+    var box = $('portal-virtual-apps-list');
+    if (!box) return;
+    if (setupDbMissing) {
+      box.innerHTML = '<div class="portal-empty">The toolbox needs the database step first &mdash; nothing is saved yet.</div>';
+      return;
+    }
+    var apps = remoteAppsList();
+    if (!apps.length) {
+      box.innerHTML = '<div class="portal-empty">' + (remoteAppsRow()
+        ? 'No apps yet. Add the first one below.'
+        : 'The toolbox list is not set up yet. Add the first app below and the list starts.') + '</div>';
+      return;
+    }
+    var canDelete = isAdminOrAbove();
+    box.innerHTML = apps.map(function (a, i) {
+      return '<article class="portal-card">' +
+        '<div class="portal-card-top"><p class="portal-card-title"><i class="fas fa-toolbox"></i> ' + esc(a.name) + '</p>' +
+        '<span style="display:inline-flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">' +
+        '<a class="portal-btn portal-btn-primary portal-btn-sm" href="' + esc(a.url) + '" target="_blank" rel="noopener"><i class="fas fa-arrow-up-right-from-square"></i> Open</a>' +
+        (canDelete ? '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-rapp-del="' + i + '"><i class="fas fa-trash"></i> Delete</button>' : '') +
+        '</span></div>' +
+        (a.blurb ? '<p class="portal-card-meta">' + esc(a.blurb) + '</p>' : '') +
+        '</article>';
+    }).join('');
+  }
+  function saveRemoteApps(apps, msgEl, done) {
+    withClient(function (client) {
+      if (!client) { if (msgEl) msgEl.textContent = 'Could not reach the database.'; if (done) done(false); return; }
+      var row = remoteAppsRow();
+      var q;
+      if (row) {
+        var cfg = setupCfg(row);
+        cfg.apps = apps;
+        q = client.from('portal_setup_items').update({ config: cfg }).eq('id', row.id);
+      } else {
+        q = client.from('portal_setup_items').insert({
+          template: 'remote-apps', label: 'ATRG Remote toolbox', icon: 'fas fa-toolbox',
+          url: null, location: 'associates', active: true, sort: 0, config: { apps: apps }
+        });
+      }
+      q.then(function (res) {
+        if (res.error) { setupSaveError(msgEl, res.error); if (done) done(false); return; }
+        setupFetch(function () { renderRemoteApps(); if (done) done(true); });
+      }).catch(function () { if (msgEl) msgEl.textContent = 'Could not save. Try again.'; if (done) done(false); });
+    });
+  }
+  function remoteAppsAdd() {
+    var msg = $('portal-virtual-app-msg');
+    var nameEl = $('portal-virtual-app-name'), urlEl = $('portal-virtual-app-url'), blurbEl = $('portal-virtual-app-blurb');
+    if (!nameEl || !urlEl) return;
+    var name = nameEl.value.trim();
+    var url = setupNormalizeUrl(urlEl.value);
+    var blurb = blurbEl ? blurbEl.value.trim() : '';
+    if (!name) { if (msg) msg.textContent = 'Give the app a name.'; return; }
+    if (!url) { if (msg) msg.textContent = 'Add the link to the maker\u2019s own page.'; return; }
+    var apps = remoteAppsList();
+    apps.push({ name: name, url: url, blurb: blurb });
+    var btn = $('portal-virtual-app-add'); if (btn) btn.disabled = true;
+    saveRemoteApps(apps, msg, function (ok) {
+      if (btn) btn.disabled = false;
+      if (ok) {
+        nameEl.value = ''; urlEl.value = ''; if (blurbEl) blurbEl.value = '';
+        if (msg) msg.textContent = 'Added. It is in the toolbox now.';
+      }
+    });
+  }
+  function remoteAppsDelete(idx, btnEl) {
+    if (!isAdminOrAbove()) return;
+    if (!btnEl.getAttribute('data-confirm')) {
+      btnEl.setAttribute('data-confirm', '1');
+      btnEl.innerHTML = '<i class="fas fa-trash"></i> Confirm delete?';
+      return;
+    }
+    var apps = remoteAppsList();
+    if (idx < 0 || idx >= apps.length) return;
+    apps.splice(idx, 1);
+    saveRemoteApps(apps, $('portal-virtual-app-msg'), function () {});
+  }
+  function wireRemoteApps() {
+    if (remoteAppsWired) return;
+    var addBtn = $('portal-virtual-app-add');
+    var list = $('portal-virtual-apps-list');
+    if (!addBtn || !list) return;
+    remoteAppsWired = true;
+    addBtn.addEventListener('click', remoteAppsAdd);
+    list.addEventListener('click', function (e) {
+      var t = e.target;
+      while (t && t !== list) {
+        if (t.getAttribute && t.getAttribute('data-rapp-del') != null) {
+          remoteAppsDelete(parseInt(t.getAttribute('data-rapp-del'), 10), t);
+          return;
+        }
+        t = t.parentNode;
+      }
+    });
+  }
+  /* ================= end REMOTE_APPS_2026_11_11 ================= */
+
   function wireVirtualPanel() {
     if (virtualWired) return;
     var btn = $('portal-virtual-create');
@@ -13407,6 +13545,8 @@ function loadTicketThread(client, ticketId) {
           var sec = $('virtual-sec-' + n);
           if (sec) sec.hidden = n !== name;
         });
+        /* REMOTE_APPS_2026_11_11: opening the Apps tab loads the toolbox list. */
+        if (name === 'apps') loadRemoteApps(true);
       });
     });
     btn.addEventListener('click', function () {
