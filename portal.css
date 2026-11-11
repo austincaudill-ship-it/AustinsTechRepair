@@ -1829,3 +1829,9 @@ body:has(#portal-dash-view[hidden]) .portal-thumbbar { display: none; }
 .hub-getapp-title { font-weight: 800; margin: 0 0 0.4rem; }
 .hub-getapp-title i { color: var(--brand, #D9540D); }
 .hub-getapp-steps { margin: 0 0 0.75rem; line-height: 1.55; white-space: pre-line; }
+
+/* PROMOTION_ENGINE_2026_11_11: the long-answer boxes on promotion
+ * tests and the training Feedback form — full width, roomy, and
+ * deliberately uncapped: no maxlength belongs anywhere near them
+ * (owner, Nov 11, 2026: we don't do limits here). */
+.training-longtext { width: 100%; min-height: 7rem; }
