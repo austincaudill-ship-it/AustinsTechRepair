@@ -8171,26 +8171,89 @@ function loadTicketThread(client, ticketId) {
    * uncapped written answers — submissions land in the
    * associate's own progress slice under a promotions key,
    * Admin and above review them in-panel, and a Feedback button
-   * closes the program once every topic quiz is passed. */
+   * closes the program once every topic quiz is passed.
+   * OWN_ACCOUNT_TRAINING_2026_11_11 (below) supersedes the
+   * storage half of the paragraph above: progress no longer
+   * lives in config.progress at all. */
   var TRAINING_PASS_PCT = 80; /* flagged for the owner in the build report */
   var trainingView = {}; /* button id -> {view, topicId, lessonIdx, result} */
+  /* OWN_ACCOUNT_TRAINING_2026_11_11 (Austin, Nov 11, 2026):
+   * "everybody's answers and everybody's trainings live in their
+   * own account." Progress used to live in config.progress of the
+   * shared training row — a row every signed-in associate's
+   * client downloads at sign-in (staff-wide SELECT), so every
+   * person's slice rode along to every client, written answers
+   * included. Now each person's progress lives in their OWN row
+   * of public.portal_training_progress (profile_id = their own
+   * profile id), and this client only ever reads the row whose
+   * profile_id is the signed-in associate's own id, and only
+   * ever writes that same row (an upsert; the table's row-level
+   * security is the door — select/insert/update own row only,
+   * Admin and above may SELECT all rows for the review view).
+   * The shared row now carries ONLY the program; its
+   * config.progress is never read or written here anymore.
+   * Fallback: if the table read fails (for example the code is
+   * live before the migration runs), the program renders with
+   * an empty slice and every save surfaces the save error —
+   * nothing ever falls back to the shared row. */
+  var trainingOwn = {};       /* training row id -> my slice object */
+  var trainingOwnState = {};  /* training row id -> 'loading' | 'ready' | 'error' */
+  var trainingAllRows = null; /* Admin review: [{profile_id, progress}] from portal_training_progress */
+  var trainingAllState = '';  /* '' | 'loading' | 'ready' | 'error' */
+  function trainingEnsureOwn(id) {
+    if (trainingOwnState[id]) return;
+    trainingOwnState[id] = 'loading';
+    withClient(function (client) {
+      if (!client) { trainingOwnState[id] = 'error'; return; }
+      client.from('portal_training_progress').select('progress')
+        .eq('profile_id', trainingMyId()).maybeSingle()
+        .then(function (res) {
+          if (res.error) { trainingOwnState[id] = 'error'; return; }
+          var p = (res.data && res.data.progress && typeof res.data.progress === 'object') ? res.data.progress : {};
+          trainingOwn[id] = p;
+          trainingOwnState[id] = 'ready';
+          if (document.querySelector('[data-training-root="' + id + '"]')) trainingRender(id);
+        })
+        .catch(function () { trainingOwnState[id] = 'error'; });
+    });
+  }
+  function trainingEnsureAll(id) {
+    /* Admin+ only: the review's all-rows read. The table's
+     * policies are what actually admit an Admin; this gate just
+     * keeps a non-admin client from asking at all. */
+    if (!isAdminOrAbove()) return;
+    if (trainingAllState) return;
+    trainingAllState = 'loading';
+    withClient(function (client) {
+      if (!client) { trainingAllState = 'error'; return; }
+      client.from('portal_training_progress').select('profile_id, progress')
+        .then(function (res) {
+          if (res.error) { trainingAllState = 'error'; return; }
+          trainingAllRows = res.data || [];
+          trainingAllState = 'ready';
+          if (document.querySelector('[data-training-root="' + id + '"]')) trainingRender(id);
+        })
+        .catch(function () { trainingAllState = 'error'; });
+    });
+  }
   function trainingProgram(r) {
     var p = setupCfg(r).program;
     return (p && Array.isArray(p.topics)) ? p : null;
   }
   function trainingMyId() { return (state.profile && state.profile.id) || (state.user && state.user.id) || ''; }
   function trainingMyProgress(r) {
-    /* Write-through on the row's local config cache: the slice is
-     * stored under my id the moment it is created, so every caller
-     * in this session mutates the SAME object the save sends. */
-    var cfg = setupCfg(r);
-    if (!cfg.progress || typeof cfg.progress !== 'object') cfg.progress = {};
-    var mine = cfg.progress[trainingMyId()];
-    if (!mine || typeof mine !== 'object') { mine = {}; cfg.progress[trainingMyId()] = mine; }
+    /* OWN_ACCOUNT_TRAINING_2026_11_11: my slice lives in the
+     * per-person cache (trainingOwn), loaded from my OWN
+     * portal_training_progress row by trainingEnsureOwn — never
+     * in the shared row's config. The cached object identity is
+     * stable within the session (the fetch swaps it in once, on
+     * arrival), so every caller mutates the SAME object the save
+     * sends. */
+    var mine = trainingOwn[r.id];
+    if (!mine || typeof mine !== 'object') { mine = {}; trainingOwn[r.id] = mine; }
     if (!mine.lessons || typeof mine.lessons !== 'object') mine.lessons = {};
     if (!mine.quizzes || typeof mine.quizzes !== 'object') mine.quizzes = {};
     if (!mine.promotions || typeof mine.promotions !== 'object') mine.promotions = {}; /* PROMOTION_ENGINE_2026_11_11 */
-    r.config = cfg;
     return mine;
   }
   function trainingTopic(r, topicId) {
@@ -8214,6 +8277,7 @@ function loadTicketThread(client, ticketId) {
   }
   function trainingMsg(id) { return '<p class="portal-muted portal-small" data-training-msg="' + esc(id) + '"></p>'; }
   function trainingShellHtml(r) {
+    trainingEnsureOwn(r.id); /* OWN_ACCOUNT_TRAINING_2026_11_11: kick the own-row fetch (fires once per session) */
     var p = trainingProgram(r);
     if (!p) return '<p class="portal-muted">The training program content has not been loaded yet. An admin runs the one-time program setup step, and then this fills in — topics, lessons, quizzes, and your own progress.</p>';
     var view = trainingView[r.id] || { view: 'topics' };
@@ -8263,6 +8327,7 @@ function loadTicketThread(client, ticketId) {
         '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-training-btn="' + esc(r.id) + '" data-training-feedback="1">Feedback</button></div>' +
         '<p class="portal-card-meta">Every topic quiz is passed. Tell us what worked and what should change \u2014 it lands in the feedback list with your name on it.</p></article>';
     }
+    if (isAdminOrAbove()) trainingEnsureAll(r.id); /* OWN_ACCOUNT_TRAINING_2026_11_11 */
     if (isAdminOrAbove() && trainingAnySubmissions(r)) {
       html += '<article class="portal-card"><div class="portal-card-top"><p class="portal-card-title">Promotion submissions</p>' +
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-training-btn="' + esc(r.id) + '" data-training-review="1">Review</button></div>' +
@@ -8369,21 +8434,27 @@ function loadTicketThread(client, ticketId) {
   function trainingSave(id) {
     var r = cabRowById(id);
     if (!r) return;
-    var cfg = setupCfg(r);
-    if (!cfg.progress || typeof cfg.progress !== 'object') cfg.progress = {};
-    cfg.progress[trainingMyId()] = trainingMyProgress(r);
-    r.config = cfg;
+    /* OWN_ACCOUNT_TRAINING_2026_11_11: the save upserts my slice
+     * into my OWN portal_training_progress row — keyed on my own
+     * profile id, narrowed by the table's row-level security to
+     * exactly that row. The shared row's config is never touched.
+     * updated_at is set here because the column default only
+     * applies on insert. */
+    var mine = trainingMyProgress(r);
     var msg = document.querySelector('[data-training-msg="' + id + '"]');
-    if (msg) msg.textContent = 'Saving\u2026';
+    if (msg) msg.textContent = 'Saving…';
     withClient(function (client) {
-      if (!client) { if (msg) msg.textContent = 'Could not save \u2014 check your connection and try again.'; return; }
-      client.rpc('portal_set_training_progress', { p_id: id, p_progress: cfg.progress[trainingMyId()] }).then(function (res) {
-        var m2 = document.querySelector('[data-training-msg="' + id + '"]');
-        if (m2) m2.textContent = res.error ? 'Could not save that \u2014 try again.' : 'Progress saved.';
-      }).catch(function () {
-        var m3 = document.querySelector('[data-training-msg="' + id + '"]');
-        if (m3) m3.textContent = 'Could not save that \u2014 try again.';
-      });
+      if (!client) { if (msg) msg.textContent = 'Could not save — check your connection and tap again.'; return; }
+      client.from('portal_training_progress')
+        .upsert({ profile_id: trainingMyId(), progress: mine, updated_at: new Date().toISOString() }, { onConflict: 'profile_id' })
+        .then(function (res) {
+          var m2 = document.querySelector('[data-training-msg="' + id + '"]');
+          if (!m2) return;
+          m2.textContent = res.error ? 'Could not save that — try again.' : 'Progress saved.';
+        }).catch(function () {
+          var m3 = document.querySelector('[data-training-msg="' + id + '"]');
+          if (m3) m3.textContent = 'Could not save that — try again.';
+        });
     });
   }
   function trainingGrade(id, t) {
@@ -8509,9 +8580,10 @@ function loadTicketThread(client, ticketId) {
    * boxes with NO character cap of any kind — no maxlength, no
    * counter, no trim (owner, Nov 11, 2026: "We don't do limits
    * here"). A finished test is written into the associate's OWN
-   * progress slice through the same portal_set_training_progress
-   * door as lessons and quizzes, under a promotions key, and it
-   * lands as SUBMITTED — under review. Nothing here grants a
+   * progress slice under a promotions key, and it lands as
+   * SUBMITTED — under review. (Since OWN_ACCOUNT_TRAINING_2026_11_11
+   * that slice lives in the associate's own portal_training_progress
+   * row — see the storage note at trainingOwn, above.) Nothing here grants a
    * promotion: a person reads the written answers and decides.
    *
    * Retakes (builder's default, flagged for the owner): the test
@@ -8523,11 +8595,11 @@ function loadTicketThread(client, ticketId) {
    * Review: Admin tier and above get a submissions view inside
    * this panel (trainingPromoReviewHtml) listing every submitted
    * attempt with the written answers readable. The UI gate is
-   * Admin+; the data-layer truth is plainer and is stated in the
-   * build report: portal_setup_items is staff-readable, so
-   * config.progress — every associate's progress, written answers
-   * included — is readable by any signed-in associate's client
-   * today. The review VIEW is Admin+ regardless.
+   * Admin+ — and since OWN_ACCOUNT_TRAINING_2026_11_11 the data
+   * layer matches it: attempts live in portal_training_progress,
+   * whose policies let an associate read only their own row and
+   * admit Admin and above to read all rows for this view. The
+   * shared portal_setup_items row carries no progress anymore.
    *
    * The Feedback button shows once every topic quiz is passed
    * (and stays up, including after a promotion test is turned
@@ -8718,10 +8790,13 @@ function loadTicketThread(client, ticketId) {
     });
   }
   function trainingAnySubmissions(r) {
-    var cfg = setupCfg(r);
-    var prog = (cfg.progress && typeof cfg.progress === 'object') ? cfg.progress : {};
-    for (var pid in prog) {
-      var pr = prog[pid] && prog[pid].promotions;
+    /* OWN_ACCOUNT_TRAINING_2026_11_11: counted from the per-person
+     * rows the Admin read loaded (trainingAllRows) — the shared
+     * row's config carries no progress anymore. False until that
+     * read lands; its arrival re-renders the topics view. */
+    if (!trainingAllRows) return false;
+    for (var i = 0; i < trainingAllRows.length; i++) {
+      var pr = trainingAllRows[i].progress && trainingAllRows[i].progress.promotions;
       if (pr && typeof pr === 'object') {
         for (var gid in pr) { if (pr[gid] && pr[gid].status === 'submitted') return true; }
       }
@@ -8732,11 +8807,16 @@ function loadTicketThread(client, ticketId) {
     var head = '<p><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-training-btn="' + esc(r.id) + '" data-training-back="topics"><i class="fas fa-arrow-left"></i> All topics</button></p>' +
       '<div class="portal-panel-head"><h3 class="portal-h3">Promotion submissions</h3></div>' +
       '<p class="portal-muted">Newest first. The scenario part is scored; the written answers are each associate\u2019s own words, shown exactly as written. Reading them is the review \u2014 nothing here changes anybody\u2019s role.</p>';
-    var cfg = setupCfg(r);
-    var prog = (cfg.progress && typeof cfg.progress === 'object') ? cfg.progress : {};
+    trainingEnsureAll(r.id); /* OWN_ACCOUNT_TRAINING_2026_11_11 */
+    if (trainingAllState !== 'ready') {
+      return head + '<p class="portal-muted">' + (trainingAllState === 'error'
+        ? 'Submissions could not be loaded — go back and try again in a moment.'
+        : 'Loading submissions…') + '</p>' + trainingMsg(r.id);
+    }
     var entries = [];
-    Object.keys(prog).forEach(function (pid) {
-      var pr = prog[pid] && prog[pid].promotions;
+    (trainingAllRows || []).forEach(function (row) {
+      var pid = row.profile_id;
+      var pr = row.progress && row.progress.promotions;
       if (!pr || typeof pr !== 'object') return;
       Object.keys(pr).forEach(function (gid) {
         var a = pr[gid];
@@ -8941,14 +9021,17 @@ function loadTicketThread(client, ticketId) {
         if (JSON.stringify(oldCfg.items || []) === JSON.stringify(items)) cfg.checks = oldCfg.checks || {};
       }
     } else if (template === 'training') {
-      /* PORTAL_TRAINING_PROGRAM_2026_11_06: program content and
-       * every staffer's progress live in the row's config and
-       * are never rebuilt from this form — an edit here changes
-       * label / icon / group / visibility only. A brand-new
-       * training button starts empty until the program setup
-       * step seeds its content. */
-      if (existing && existing.template === 'training') cfg = setupCfg(existing);
-      else cfg = { program: null, progress: {} };
+      /* PORTAL_TRAINING_PROGRAM_2026_11_06: program content lives
+       * in the row's config and is never rebuilt from this form —
+       * an edit here changes label / icon / group / visibility
+       * only. A brand-new training button starts empty until the
+       * program setup step seeds its content.
+       * OWN_ACCOUNT_TRAINING_2026_11_11: progress no longer lives
+       * in this config at all (per-person rows hold it) — strip
+       * any legacy progress key so a label edit can never write
+       * progress back into the shared row. */
+      if (existing && existing.template === 'training') { cfg = setupCfg(existing); delete cfg.progress; }
+      else cfg = { program: null };
     }
     var row = {
       template: template,
