@@ -3063,6 +3063,12 @@ html .dt-tile.active {
    there; the only literals in this block are the bar's own black and
    white, which are the design itself. */
 .header { background: #000000; border-bottom: 1px solid rgba(255, 255, 255, 0.16); color: #ffffff; }
+/* HEADER_NOTCH_FILL_2026_11_11 (owner, Nov 11, 2026): on phones with a
+   front-camera notch the status-bar strip above the black header showed
+   light. The header now grows by the top safe-area inset, so its black
+   background runs to the very top edge and its content clears the
+   status bar. Phones without a notch get env() = 0: unchanged. */
+.header { padding-top: calc(0.9rem + env(safe-area-inset-top, 0px)); }
 html[data-theme="dark"] .header { background: #000000; }
 .header-main { display: flex; align-items: center; gap: 1.6rem; min-width: 0; }
 .header .brand { color: #ffffff; }
@@ -3616,3 +3622,18 @@ a.acct-menu-item { text-decoration: none; color: inherit; }
   .site-search-hint, .site-search-none { font-size: 1.02rem; }
   .site-search-input { font-size: 1.2rem; }
 }
+
+/* THUMB_NAV_ALWAYS_DARK_2026_11_11 (owner, Nov 11, 2026): the thumb bar
+   was light in light mode (var(--surface)); the header is a black bar
+   with white text in BOTH themes. Make the thumb nav always dark like
+   the header — same black background, same white-on-black text, in
+   both light and dark mode. Values copied from the header's own rules
+   (styles.css ~3065): background #000000, top border
+   rgba(255,255,255,0.16), links rgba(255,255,255,0.86), active/hover
+   #ffffff. */
+.mobile-bottom-nav {
+  background: #000000;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+}
+.bottom-nav-item { color: rgba(255, 255, 255, 0.86); }
+.bottom-nav-item.active, .bottom-nav-item:hover { color: #ffffff; }
