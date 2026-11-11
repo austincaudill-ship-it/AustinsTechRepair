@@ -441,111 +441,24 @@
     var wrap = form.closest('[data-form-wrap]') || form.parentNode;
     var panel = wrap.querySelector('[data-paystep]');
     if (!panel) return;
-    /* VIRTUAL_ONE_ON_ONE_2026_11_10: the virtual pay step. The guest
-       pays the first hour ($25) now through Square and leaves the
-       card on file; after the session, the time past the first hour
-       is charged to that card at $25 an hour — stated plainly, with
-       a required consent box, before the button can be used. ATR One
-       members are not charged the $25 at all (their member key
-       enables virtual sessions free) — the panel says so, and the
-       real gate is the key check on the Virtual page at session
-       time, so nothing here needs to know who is a member. No charge
-       is faked: the button asks square-ticket-checkout for a
-       'virtual-first-hour' session under the booker's own sign-in
-       (v86 hardening), and if that call cannot be made the panel
-       says so plainly and the booking stands saved — the same
-       honesty as the $15 tier's text-the-link pattern. */
+    /* PAY_WALL_2026_11_11 (owner, Nov 11, 2026): a virtual booking
+       collects NOTHING at booking time. The $25 first hour is paid
+       at connect time, at the pay wall on the Virtual One-on-One
+       page — the guest clicks their Connect link, types their code,
+       and pays to connect. This panel only says that, plainly: the
+       booking is saved, nothing is due now, and the $25 at connect
+       is non-refundable because it pays for our time and effort,
+       even if the issue is not solved. ATR One members are never
+       charged (their key covers the session) — the member check
+       below still swaps the panel to the covered message. */
     if (opts && opts.virtual) {
       panel.innerHTML =
-        '<h4>One last step to fully book your virtual session</h4>' +
-        '<p>Your first hour is <strong>$25</strong>, paid now through Square. When you pay, you also leave your card on file with Square. ' +
-        'After your session, we may charge that card $25 an hour for the time your session ran beyond the first hour &mdash; nothing more, and we will always tell you the total first.</p>' +
-        '<label class="atr-check"><input type="checkbox" data-voo-waiver> ' +
-        '<span><strong>Privacy waiver for a virtual session.</strong> When we meet on my screen, my associate can see what I show them and help me with my device. ' +
-        'I am always in charge: I can stop sharing, mute, or end the session at any time, and nothing stays connected when it ends. The session is not recorded, and it is for help with my device only.</span></label>' +
-        '<label class="atr-check"><input type="checkbox" data-voo-consent> ' +
-        '<span>I agree: $25 now for the first hour, my card stays on file with Square, and time after the first hour may be charged to it at $25 an hour.</span></label>' +
-        '<p><button type="button" class="btn btn-primary btn-lg" data-voo-pay disabled><i class="fas fa-lock"></i> Pay $25 with Square</button></p>' +
+        '<h4>Your virtual session is booked</h4>' +
+        '<p>There is nothing to pay now. When your session time comes, open your Virtual One-on-One page from the link in your booking email, type the code your associate gives you, and you will pay the <strong>$25</strong> first hour there to connect. ' +
+        'It is <strong>non-refundable</strong> &mdash; it pays for our time and effort, even if the issue is not solved. Time after the first hour is $25 an hour, and we will always tell you the total first.</p>' +
         '<p class="atr-paystep-note" data-voo-join>Or get this session free with ATR One &mdash; join for $9.99 and save $15 today. Remote service is included for members. <a href="' + ATR_ONE_JOIN_LINK + '" target="_blank" rel="noopener">Join ATR One</a></p>' +
         '<p class="atr-paystep-note" data-voo-note>ATR One member? Your member key covers virtual sessions &mdash; skip the payment and use your key when your session starts.</p>';
       panel.hidden = false;
-      var waiverBox = panel.querySelector('[data-voo-waiver]');
-      var consentBox = panel.querySelector('[data-voo-consent]');
-      var payBtn = panel.querySelector('[data-voo-pay]');
-      var note = panel.querySelector('[data-voo-note]');
-      /* Both boxes, separately: the privacy waiver AND the payment
-         consent. Either one alone leaves the button disabled. */
-      var syncPayBtn = function () { payBtn.disabled = !(waiverBox.checked && consentBox.checked); };
-      waiverBox.addEventListener('change', syncPayBtn);
-      consentBox.addEventListener('change', syncPayBtn);
-      payBtn.addEventListener('click', function () {
-        /* Record the waiver agreement against this booking FIRST
-           (fire-and-forget, like the alert emails — the booking and
-           the disabled-until-agreed button are the on-page proof;
-           the function's row is the record). */
-        try {
-          fetch(VIRTUAL_SESSION_URL, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-              'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
-              'apikey': SUPABASE_ANON_KEY
-            },
-            body: JSON.stringify({ action: 'waiver', kind: 'booking', ticket_id: opts.ticketId || null, email: opts.email || '', version: VIRTUAL_WAIVER_VERSION })
-          }).catch(function () { /* best-effort record */ });
-        } catch (e) { /* ignore */ }
-        payBtn.disabled = true;
-        payBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Opening Square&hellip;';
-        /* SQUARE_SESSION_PAY_2026_11_10 (v86 hardening): the payment
-           function only takes the $25 from the booker's own signed-in
-           session (its Verify JWT is on and the booking email must
-           match the account), so send the guest's session token —
-           the same pattern the member-key check below already uses.
-           A signed-out booker is told plainly to sign in first; the
-           booking is already saved either way. */
-        var payWithToken = function (token) {
-          fetch(SQUARE_TICKET_CHECKOUT_URL, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-              'Authorization': 'Bearer ' + token,
-              'apikey': SUPABASE_ANON_KEY
-            },
-            body: JSON.stringify({ mode: 'virtual-first-hour', ticket_id: opts.ticketId || null, email: opts.email || '', name: opts.name || '' })
-          }).then(function (r) { return r.json().catch(function () { return null; }); })
-            .then(function (j) {
-              if (j && j.ok && j.url) {
-                window.open(j.url, '_blank', 'noopener');
-                note.textContent = 'Square is open in a new tab. Once the $25 is paid, your session is fully booked — keep the email we sent you; its link opens your Virtual One-on-One page when your session time comes.';
-              } else {
-                note.textContent = (j && j.error) ? j.error : 'The payment step is not connected yet. Your booking is saved — we will text you the payment link for the first hour.';
-                payBtn.innerHTML = '<i class="fas fa-lock"></i> Pay $25 with Square';
-                syncPayBtn();
-              }
-            })
-            .catch(function () {
-              note.textContent = 'The payment step is not connected yet. Your booking is saved — we will text you the payment link for the first hour.';
-              payBtn.innerHTML = '<i class="fas fa-lock"></i> Pay $25 with Square';
-              syncPayBtn();
-            });
-        };
-        var askSignIn = function () {
-          note.textContent = 'To pay the $25, sign in first (or make your free account) with the same email you booked with, then tap Pay again. Your booking is saved.';
-          payBtn.innerHTML = '<i class="fas fa-lock"></i> Pay $25 with Square';
-          syncPayBtn();
-        };
-        var payClient = createClient();
-        if (payClient && payClient.auth && payClient.auth.getSession) {
-          try {
-            payClient.auth.getSession().then(function (res) {
-              var t = res && res.data && res.data.session && res.data.session.access_token;
-              if (t) { payWithToken(t); } else { askSignIn(); }
-            }).catch(function () { askSignIn(); });
-          } catch (e) { askSignIn(); }
-        } else { askSignIn(); }
-      });
       /* CONNECT_MEMBER_KEY_2026_11_10 (owner law, Nov 10, 2026):
          a signed-in PAID ATR One member is never charged here.
          The virtual-session function answers 'mykey' only for a
@@ -556,7 +469,7 @@
          member starts at session time with their key, and the
          session-start waiver on the Connect page still gates the
          session itself. Signed-out bookers and non-members hear
-         nothing back and keep the pay panel above, word for word. */
+         nothing back and keep the panel above, word for word. */
       (function checkMemberKey() {
         var client = createClient();
         function ask(token) {
