@@ -8290,6 +8290,8 @@ function loadTicketThread(client, ticketId) {
       }
     }
     if (view.view === 'promo' && view.gateId) { var pgate = trainingGate(r, view.gateId); if (pgate) return trainingPromoHtml(r, pgate, view); }
+    if (view.view === 'practice') return practiceHtml(r); /* SANDBOX_TICKET_2026_11_11 */
+    if (view.view === 'practice-done') return practiceDoneHtml(r); /* SANDBOX_TICKET_2026_11_11 */
     if (view.view === 'feedback') return trainingFeedbackHtml(r, view);
     if (view.view === 'promo-review') return trainingPromoReviewHtml(r);
     return trainingTopicsHtml(r, p);
@@ -8309,6 +8311,8 @@ function loadTicketThread(client, ticketId) {
         '<p class="portal-card-meta">' + esc(t.blurb || '') + '</p>' +
         trainingBar(st.pct) +
         '<p class="portal-card-meta">' + st.done + ' of ' + st.total + ' lessons done \u00b7 ' + esc(quizLine) + '</p>' +
+        /* SANDBOX_TICKET_2026_11_11: the practice run also starts from the topic card */
+        (t.id === PRACTICE_TOPIC_ID ? '<p style="margin:0.45rem 0 0;"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-training-btn="' + esc(r.id) + '" data-training-practice="start">' + (practiceRuns[r.id] ? 'Continue practice ticket' : 'Start a practice ticket') + '</button></p>' : '') +
         '</article>';
     }).join('');
     var html = '<p class="portal-muted">Work through each topic in order: read the lessons, tap Done on each one, then pass the short quiz at the end of the topic. Your progress is yours — it saves as you go. ' + doneTopics + ' of ' + p.topics.length + ' topics complete.</p>' + cards;
@@ -8358,7 +8362,7 @@ function loadTicketThread(client, ticketId) {
       '<div class="portal-panel-head"><h3 class="portal-h3">' + esc(t.title) + '</h3></div>' +
       trainingBar(st.pct) +
       '<p class="portal-card-meta">' + st.done + ' of ' + st.total + ' lessons done</p>' +
-      rows + quizCard + trainingMsg(r.id);
+      rows + (t.id === PRACTICE_TOPIC_ID ? practiceTopicCardHtml(r) : '') + quizCard + trainingMsg(r.id); /* SANDBOX_TICKET_2026_11_11 */
   }
   function trainingLessonHtml(r, t, idx) {
     var l = t.lessons[idx];
@@ -8537,6 +8541,8 @@ function loadTicketThread(client, ticketId) {
       if (t2) trainingGrade(id, t2);
       return;
     }
+    /* SANDBOX_TICKET_2026_11_11 handlers */
+    if (btn.hasAttribute('data-training-practice')) { practiceClick(id, btn); return; }
     /* PROMOTION_ENGINE_2026_11_11 handlers */
     if (btn.hasAttribute('data-training-promo')) {
       trainingView[id] = { view: 'promo', gateId: btn.getAttribute('data-training-promo') };
@@ -8852,6 +8858,367 @@ function loadTicketThread(client, ticketId) {
     }).join('');
     return head + cards + trainingMsg(r.id);
   }
+  /* ================= SANDBOX_TICKET_2026_11_11 =================
+   * Abigail's ask (Nov 11, 2026): "a sandbox/test ticket trainees
+   * can submit without it landing in the real queue." This is a
+   * PURELY CLIENT-SIDE simulation. A run lives in one in-memory
+   * object (practiceRuns, below) and no code path in this section
+   * ever calls the database — not tickets, not ticket_charges,
+   * not customers, nothing. A practice ticket therefore cannot
+   * appear in the Service Queue, queue counts, any guest's record,
+   * any money surface, queue search, or scan routing: it is never
+   * written anywhere those surfaces read. "Finish and clear" and
+   * "throw this run away" both just delete the object.
+   *
+   * A run survives view switches inside the Hub for the session,
+   * the way trainingView itself does; a page reload restarts it.
+   * That is deliberate — nothing about a run is stored anywhere,
+   * on any device, ever.
+   *
+   * The steps and fields mirror the real intake (New Service
+   * Request / check-in): the same fields in the same order, the
+   * same required set (name, phone, email, service address, what
+   * they need), the real ci-type device list, the same
+   * TICKET_STATUSES list in the status control, a repair-log style
+   * notes list, charge lines, and the eight-item Connect handoff
+   * checklist from the Connect Handoff topic. The scenario guest
+   * is authored here, consistent with the Practice Ticket topic:
+   * a guest writes in asking for virtual (ATRG Connect) help. */
+  var PRACTICE_TOPIC_ID = 'practice-ticket';
+  var practiceRuns = {};  /* training row id -> run object (memory only) */
+  var practiceDone = {};  /* training row id -> completion snapshot (memory only) */
+  var PRACTICE_DEVICE_TYPES = ['Phone', 'Tablet', 'Laptop', 'Desktop', 'Game Console', 'Smartwatch', 'Earbuds / Hearable', 'Other']; /* the real ci-type list */
+  var PRACTICE_SCENARIO = {
+    guestName: 'Robin Rivers',
+    message: 'Hi! This is Robin Rivers. My HP laptop has got so slow I can hardly use it \u2014 it takes forever just to start up, and my browser freezes every few minutes. A friend told me you can help right over the internet, without me bringing it anywhere. Could we do that? I would love to get it sorted this week. My email is robin.rivers@example.com, my number is (555) 014-2026, and I am at 412 Willow Creek Drive in Xenia. Thank you!',
+    askReply: 'Thanks, Robin! One quick thing before I make your ticket \u2014 what model is the laptop? It is on a sticker on the bottom.',
+    guestReply: 'Of course \u2014 it is a Pavilion 15. The sticker on the bottom says the model is 15-eg0025nr. Hope that helps!'
+  };
+  var practiceInputWired = false;
+  function practiceWireInput() {
+    /* Typing harvests into the run on every keystroke (delegated,
+     * wired once), so a half-filled form survives wandering off to
+     * another view and coming back — the run object, not the DOM,
+     * is the record. Only pr-* fields inside a training root with a
+     * live run are read; nothing is written anywhere. */
+    if (practiceInputWired) return;
+    practiceInputWired = true;
+    var onField = function (e) {
+      var el = e.target;
+      if (!el || !el.id || el.id.indexOf('pr-') !== 0) return;
+      var root = (el.closest) ? el.closest('[data-training-root]') : null;
+      if (!root) return;
+      var id = root.getAttribute('data-training-root');
+      if (id && practiceRuns[id]) practiceHarvest(id);
+    };
+    document.addEventListener('input', onField);
+    document.addEventListener('change', onField);
+  }
+  function practiceNewRun() {
+    return {
+      step: 'message',           /* message -> intake -> ticket */
+      askedModel: false,
+      number: 'PRACTICE-' + (1000 + Math.floor(Math.random() * 9000)),
+      fields: { name: '', email: '', phone: '', address: '', type: 'Laptop', brand: '', model: '', need: '' },
+      status: 'Awaiting Diagnostics',  /* the real repair check-in starting status */
+      statusSel: '',
+      statusMoves: 0,
+      notes: [],                 /* {text, at} */
+      noteDraft: '',
+      charges: [],               /* {label, amount} — screen only, never saved */
+      chargeLabel: '', chargeAmount: '',
+      member: '',                /* '' | 'member' | 'not' */
+      handedOff: false,
+      err: '', msg: ''
+    };
+  }
+  function practiceBannerHtml() {
+    return '<div class="practice-banner"><i class="fas fa-flask"></i> <strong>PRACTICE</strong> \u2014 this is training. The guest is made up, nothing here is saved, and the real Service Queue never sees it.</div>';
+  }
+  function practiceHarvest(id) {
+    var run = practiceRuns[id];
+    if (!run) return;
+    var root = document.querySelector('[data-training-root="' + id + '"]');
+    if (!root) return;
+    var val = function (sel) { var el = root.querySelector(sel); return el ? el.value : null; };
+    var v;
+    if ((v = val('#pr-name')) !== null) run.fields.name = v;
+    if ((v = val('#pr-email')) !== null) run.fields.email = v;
+    if ((v = val('#pr-phone')) !== null) run.fields.phone = v;
+    if ((v = val('#pr-address')) !== null) run.fields.address = v;
+    if ((v = val('#pr-type')) !== null) run.fields.type = v;
+    if ((v = val('#pr-brand')) !== null) run.fields.brand = v;
+    if ((v = val('#pr-model')) !== null) run.fields.model = v;
+    if ((v = val('#pr-need')) !== null) run.fields.need = v;
+    if ((v = val('#pr-note')) !== null) run.noteDraft = v;
+    if ((v = val('#pr-charge-label')) !== null) run.chargeLabel = v;
+    if ((v = val('#pr-charge-amount')) !== null) run.chargeAmount = v;
+    if ((v = val('#pr-status')) !== null) run.statusSel = v;
+    if ((v = val('#pr-member')) !== null) run.member = v;
+  }
+  function practiceChecklist(run) {
+    var f = run.fields;
+    return [
+      { label: 'Guest name', ok: !!String(f.name).trim() },
+      { label: 'Email', ok: !!String(f.email).trim() },
+      { label: 'Phone', ok: !!String(f.phone).trim() },
+      { label: 'Device type', ok: !!f.type },
+      { label: 'Make', ok: !!String(f.brand).trim() },
+      { label: 'Model', ok: !!String(f.model).trim() },
+      { label: 'What they need help with', ok: !!String(f.need).trim() },
+      { label: 'Member or not', ok: !!run.member,
+        note: run.member === 'member' ? 'Paid ATR One member \u2014 connects free.'
+          : run.member === 'not' ? 'Not a paid member \u2014 the $25 first hour applies before the session.'
+          : 'Pick one below.' }
+    ];
+  }
+  function practiceMissing(run) {
+    var m = [];
+    if (!run.statusMoves) m.push('move the status at least once');
+    if (!run.notes.length) m.push('add a note');
+    if (!run.charges.length) m.push('add a practice charge line');
+    if (!run.handedOff) m.push('finish the Connect handoff');
+    return m;
+  }
+  function practiceChargeTotal(run) {
+    return run.charges.reduce(function (sum, c) { return sum + (Number(c.amount) || 0); }, 0);
+  }
+  function practiceDiscardBtn(id) {
+    return '<p style="margin-top:1rem;"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-training-btn="' + esc(id) + '" data-training-practice="discard">Throw this run away</button></p>';
+  }
+  function practiceTopicCardHtml(r) {
+    var run = practiceRuns[r.id];
+    return '<article class="portal-card"><div class="portal-card-top"><p class="portal-card-title">Practice it \u2014 a full run, start to finish</p>' +
+      '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-training-btn="' + esc(r.id) + '" data-training-practice="start">' + (run ? 'Continue your practice ticket' : 'Start a practice ticket') + '</button></div>' +
+      '<p class="portal-card-meta">' + (run
+        ? 'Your practice run is still here \u2014 pick it up where you left off. It never touches the real queue.'
+        : 'Work a made-up guest\u2019s ticket end to end: read the message, make the ticket, work it, and hand off for the Connect link. Nothing is saved and the real queue never sees it.') + '</p></article>';
+  }
+  function practiceHtml(r) {
+    var run = practiceRuns[r.id];
+    if (!run) { var t = trainingTopic(r, PRACTICE_TOPIC_ID); return t ? trainingTopicHtml(r, t) : trainingTopicsHtml(r, trainingProgram(r)); }
+    if (run.step === 'intake') return practiceIntakeHtml(r, run);
+    if (run.step === 'ticket') return practiceTicketHtml(r, run);
+    return practiceMessageHtml(r, run);
+  }
+  function practiceMessageHtml(r, run) {
+    var facts = [
+      ['Guest name', 'Robin Rivers', true],
+      ['Device type', 'Laptop', true],
+      ['Make', 'HP', true],
+      ['Model', run.askedModel ? 'Pavilion 15 (15-eg0025nr) \u2014 from her reply' : 'Not in the message', run.askedModel],
+      ['What she needs', 'Laptop very slow, browser freezes \u2014 and she wants help over the internet (virtual)', true]
+    ];
+    var factRows = facts.map(function (f) {
+      return '<li>' + (f[2] ? '\u2713' : '\u2717') + ' <strong>' + esc(f[0]) + ':</strong> ' + esc(f[1]) + '</li>';
+    }).join('');
+    var html = practiceBannerHtml() +
+      '<p><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-training-btn="' + esc(r.id) + '" data-training-back="topic"><i class="fas fa-arrow-left"></i> Practice Ticket topic</button></p>' +
+      '<div class="portal-panel-head"><h3 class="portal-h3">Practice ticket \u2014 step 1 of 3: read the message</h3></div>' +
+      '<article class="portal-card"><div class="portal-card-top"><p class="portal-card-title">A new guest message</p>' +
+      '<span class="portal-badge portal-badge-service">Practice guest \u2014 made up</span></div>' +
+      '<p style="white-space:pre-wrap;">' + esc(PRACTICE_SCENARIO.message) + '</p></article>' +
+      '<article class="portal-card"><p class="portal-card-title">Find the facts first</p>' +
+      '<ul class="practice-check">' + factRows + '</ul>';
+    if (!run.askedModel) {
+      html += '<p class="portal-card-meta">The model is missing. Lesson one: ask for just that one thing, in a short, friendly reply \u2014 never guess a model.</p>' +
+        '<p class="portal-card-meta">Your reply: \u201C' + esc(PRACTICE_SCENARIO.askReply) + '\u201D</p>' +
+        '<p><button class="portal-btn portal-btn-primary" type="button" data-training-btn="' + esc(r.id) + '" data-training-practice="ask-model">Send the reply and ask for the model</button></p>';
+    } else {
+      html += '<p class="portal-card-meta">You asked for the one missing thing. She wrote back:</p>' +
+        '<p style="white-space:pre-wrap;">\u201C' + esc(PRACTICE_SCENARIO.guestReply) + '\u201D</p>' +
+        '<p><button class="portal-btn portal-btn-primary" type="button" data-training-btn="' + esc(r.id) + '" data-training-practice="to-intake">Start the ticket <i class="fas fa-arrow-right"></i></button></p>';
+    }
+    return html + '</article>' + practiceDiscardBtn(r.id) + trainingMsg(r.id);
+  }
+  function practiceIntakeHtml(r, run) {
+    var f = run.fields;
+    var typeOpts = PRACTICE_DEVICE_TYPES.map(function (v) {
+      return '<option value="' + esc(v) + '"' + (v === f.type ? ' selected' : '') + '>' + esc(v) + '</option>';
+    }).join('');
+    return practiceBannerHtml() +
+      '<div class="portal-panel-head"><h3 class="portal-h3">Practice ticket \u2014 step 2 of 3: make the ticket</h3></div>' +
+      '<p class="portal-muted">Same fields, same order as New Service Request. Fill them from the message \u2014 everything the guest told you goes on the ticket.</p>' +
+      '<article class="portal-card"><p class="portal-card-title">Her message, for reference</p>' +
+      '<p class="portal-card-meta" style="white-space:pre-wrap;">' + esc(PRACTICE_SCENARIO.message) + '</p>' +
+      (run.askedModel ? '<p class="portal-card-meta" style="white-space:pre-wrap;">Her reply: \u201C' + esc(PRACTICE_SCENARIO.guestReply) + '\u201D</p>' : '') +
+      '</article>' +
+      '<div class="portal-field"><label for="pr-name">Guest name</label><input type="text" id="pr-name" value="' + esc(f.name) + '" autocomplete="off" /></div>' +
+      '<div class="portal-field"><label for="pr-email">Email</label><input type="text" id="pr-email" value="' + esc(f.email) + '" autocomplete="off" /></div>' +
+      '<div class="portal-field"><label for="pr-phone">Phone</label><input type="text" id="pr-phone" value="' + esc(f.phone) + '" autocomplete="off" /></div>' +
+      '<div class="portal-field"><label for="pr-address">Service address</label><input type="text" id="pr-address" value="' + esc(f.address) + '" autocomplete="off" /></div>' +
+      '<div class="portal-field"><label for="pr-type">Device type</label><select id="pr-type">' + typeOpts + '</select></div>' +
+      '<div class="portal-field"><label for="pr-brand">Make</label><input type="text" id="pr-brand" value="' + esc(f.brand) + '" autocomplete="off" /></div>' +
+      '<div class="portal-field"><label for="pr-model">Model</label><input type="text" id="pr-model" value="' + esc(f.model) + '" autocomplete="off" /></div>' +
+      '<div class="portal-field"><label for="pr-need">What they need help with</label><textarea id="pr-need" rows="3" style="width:100%;">' + esc(f.need) + '</textarea></div>' +
+      (run.err ? '<p class="portal-error">' + esc(run.err) + '</p>' : '') +
+      '<p style="display:flex;gap:0.6rem;flex-wrap:wrap;"><button class="portal-btn portal-btn-primary" type="button" data-training-btn="' + esc(r.id) + '" data-training-practice="create">Create the practice ticket</button>' +
+      '<button class="portal-btn portal-btn-outline" type="button" data-training-btn="' + esc(r.id) + '" data-training-practice="to-message">Back to the message</button></p>' +
+      practiceDiscardBtn(r.id) + trainingMsg(r.id);
+  }
+  function practiceTicketHtml(r, run) {
+    var f = run.fields;
+    var check = practiceChecklist(run);
+    var checkRows = check.map(function (c) {
+      return '<li>' + (c.ok ? '\u2713' : '\u25CB') + ' ' + esc(c.label) + (c.note ? ' \u2014 ' + esc(c.note) : '') + '</li>';
+    }).join('');
+    var notesHtml = run.notes.length
+      ? run.notes.map(function (n) {
+          return '<div class="portal-card" style="margin-bottom:0.5rem;"><p style="white-space:pre-wrap;margin:0;">' + esc(n.text) + '</p><p class="portal-card-meta">' + esc(fmtDateTime(n.at)) + '</p></div>';
+        }).join('')
+      : '<p class="portal-muted portal-small">No notes yet. On a real ticket, if it is not written here, it did not happen.</p>';
+    var chargesHtml = run.charges.length
+      ? run.charges.map(function (c, ci) {
+          return '<div class="portal-card" style="margin-bottom:0.5rem;"><div class="portal-card-top"><p class="portal-card-title" style="font-size:0.95rem;">' + esc(c.label) + '</p>' +
+            '<span>$' + (Number(c.amount) || 0).toFixed(2) + ' <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-training-btn="' + esc(r.id) + '" data-training-practice="del-charge" data-pr-index="' + ci + '">Remove</button></span></div>' +
+            '<p class="portal-card-meta">Practice charge \u2014 screen only, never saved.</p></div>';
+        }).join('') + '<p class="portal-card-meta">Practice total: $' + practiceChargeTotal(run).toFixed(2) + '</p>'
+      : '<p class="portal-muted portal-small">No charge lines yet.</p>';
+    var missing = practiceMissing(run);
+    var progressRows = [
+      ['Ticket created with the guest\u2019s facts', true],
+      ['Status moved at least once', !!run.statusMoves],
+      ['A note added', !!run.notes.length],
+      ['A practice charge line added', !!run.charges.length],
+      ['Connect handoff finished', !!run.handedOff]
+    ].map(function (p) { return '<li>' + (p[1] ? '\u2713' : '\u25CB') + ' ' + esc(p[0]) + '</li>'; }).join('');
+    var html = practiceBannerHtml() +
+      '<article class="portal-card"><div class="portal-card-top"><p class="portal-card-title">Practice ticket #' + esc(run.number) + '</p>' +
+      '<span><span class="portal-badge portal-badge-role">PRACTICE</span> ' + badge(run.status) + '</span></div>' +
+      '<p class="portal-card-meta">Guest: ' + esc(f.name) + ' \u00b7 ' + esc(f.phone) + ' \u00b7 ' + esc(f.email) + '</p>' +
+      '<p class="portal-card-meta">Service address: ' + esc(f.address) + '</p>' +
+      '<p class="portal-card-meta">Device: ' + esc(f.type) + ' \u00b7 ' + esc(f.brand) + ' \u00b7 ' + esc(f.model) + '</p>' +
+      '<p class="portal-card-meta">What they need: ' + esc(f.need) + '</p></article>' +
+      '<div class="portal-drawer-section"><h3>Status</h3>' +
+      '<div class="portal-status-row"><select id="pr-status" aria-label="Practice ticket status">' +
+      statusOptions(TICKET_STATUSES, run.statusSel || run.status) + '</select>' +
+      '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-training-btn="' + esc(r.id) + '" data-training-practice="save-status">Save status</button></div>' +
+      '<p class="portal-muted portal-small">Same status list as a real ticket. A virtual job still moves \u2014 move this one at least once.</p></div>' +
+      '<div class="portal-drawer-section"><h3>Notes</h3>' + notesHtml +
+      '<div class="portal-field"><label for="pr-note">Add a note</label><textarea id="pr-note" rows="3" style="width:100%;" placeholder="Write what you did or found, like you would on a real ticket">' + esc(run.noteDraft) + '</textarea></div>' +
+      '<p><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-training-btn="' + esc(r.id) + '" data-training-practice="add-note">Add note</button></p></div>' +
+      '<div class="portal-drawer-section"><h3>Charges (practice)</h3>' + chargesHtml +
+      '<div class="portal-field"><label for="pr-charge-label">Charge label</label><input type="text" id="pr-charge-label" value="' + esc(run.chargeLabel) + '" placeholder="e.g. One-on-One first hour" autocomplete="off" /></div>' +
+      '<div class="portal-field"><label for="pr-charge-amount">Amount ($)</label><input type="text" id="pr-charge-amount" value="' + esc(run.chargeAmount) + '" placeholder="25" autocomplete="off" /></div>' +
+      '<p><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-training-btn="' + esc(r.id) + '" data-training-practice="add-charge">Add charge line</button></p>' +
+      '<p class="portal-muted portal-small">Practice charges live on this screen only. They are never saved and never touch a real ticket, a receipt, or the money pages.</p></div>' +
+      '<div class="portal-drawer-section"><h3>Connect handoff checklist</h3>' +
+      '<p class="portal-muted portal-small">All eight, every time, before Alfred can send the Connect link. Read the ticket back against the list:</p>' +
+      '<ul class="practice-check">' + checkRows + '</ul>' +
+      '<div class="portal-field"><label for="pr-member">Member or not</label><select id="pr-member">' +
+      '<option value=""' + (run.member === '' ? ' selected' : '') + '>Pick one</option>' +
+      '<option value="member"' + (run.member === 'member' ? ' selected' : '') + '>Paid ATR One member</option>' +
+      '<option value="not"' + (run.member === 'not' ? ' selected' : '') + '>Not a paid member</option></select></div>' +
+      (run.handedOff
+        ? '<div class="portal-gate"><strong>Handed off.</strong> In Team Chat you posted: \u201CPractice ticket #' + esc(run.number) + ' is ready for its Connect link.\u201D And you told the guest, in plain words: \u201CAlfred will send your Connect link \u2014 open ATRG Connect in your account and type the code to start.\u201D</div>'
+        : '<p><button class="portal-btn portal-btn-primary" type="button" data-training-btn="' + esc(r.id) + '" data-training-practice="handoff">Hand off to Alfred</button></p>') +
+      '</div>' +
+      '<div class="portal-drawer-section"><h3>Before you can finish</h3>' +
+      '<ul class="practice-check">' + progressRows + '</ul>' +
+      (run.msg ? '<p class="portal-muted">' + esc(run.msg) + '</p>' : '') +
+      '<p><button class="portal-btn portal-btn-primary" type="button" data-training-btn="' + esc(r.id) + '" data-training-practice="complete">Mark practice complete</button></p></div>' +
+      practiceDiscardBtn(r.id) + trainingMsg(r.id);
+    return html;
+  }
+  function practiceDoneHtml(r) {
+    var d = practiceDone[r.id];
+    if (!d) return trainingTopicsHtml(r, trainingProgram(r));
+    return practiceBannerHtml() +
+      '<div class="portal-panel-head"><h3 class="portal-h3"><i class="fas fa-check"></i> Practice complete</h3></div>' +
+      '<article class="portal-card"><p class="portal-card-title">You ran practice ticket #' + esc(d.number) + ' start to finish</p>' +
+      '<ul class="practice-check">' +
+      '<li>\u2713 Read the guest\u2019s message and asked for the one missing fact</li>' +
+      '<li>\u2713 Made the ticket with all eight handoff facts on it</li>' +
+      '<li>\u2713 Moved the status ' + d.moves + ' time' + (d.moves === 1 ? '' : 's') + ' (ended at ' + esc(d.finalStatus) + ')</li>' +
+      '<li>\u2713 Added ' + d.notes + ' note' + (d.notes === 1 ? '' : 's') + '</li>' +
+      '<li>\u2713 Added ' + d.charges + ' practice charge line' + (d.charges === 1 ? '' : 's') + ' ($' + Number(d.total || 0).toFixed(2) + ' \u2014 never saved)</li>' +
+      '<li>\u2713 Finished the Connect handoff to Alfred</li></ul>' +
+      '<p class="portal-card-meta">The run is cleared \u2014 every trace of it is gone, and the real queue never saw it. That is the whole point of the sandbox.</p></article>' +
+      '<p style="display:flex;gap:0.6rem;flex-wrap:wrap;"><button class="portal-btn portal-btn-primary" type="button" data-training-btn="' + esc(r.id) + '" data-training-back="topics">Back to Tech Hub</button>' +
+      '<button class="portal-btn portal-btn-outline" type="button" data-training-btn="' + esc(r.id) + '" data-training-practice="start">Start another practice run</button></p>' +
+      trainingMsg(r.id);
+  }
+  function practiceClick(id, btn) {
+    var action = btn.getAttribute('data-training-practice');
+    if (action === 'start') {
+      practiceWireInput();
+      if (!practiceRuns[id]) practiceRuns[id] = practiceNewRun();
+      delete practiceDone[id];
+      trainingView[id] = { view: 'practice', topicId: PRACTICE_TOPIC_ID };
+      trainingRender(id); return;
+    }
+    var run = practiceRuns[id];
+    if (action === 'discard') {
+      delete practiceRuns[id];
+      trainingView[id] = { view: 'topic', topicId: PRACTICE_TOPIC_ID };
+      trainingRender(id); return;
+    }
+    if (!run) { trainingView[id] = { view: 'topic', topicId: PRACTICE_TOPIC_ID }; trainingRender(id); return; }
+    practiceHarvest(id);
+    if (action === 'ask-model') { run.askedModel = true; }
+    else if (action === 'to-intake') { run.step = 'intake'; run.err = ''; }
+    else if (action === 'to-message') { run.step = 'message'; run.err = ''; }
+    else if (action === 'create') {
+      var f = run.fields;
+      var missing = [];
+      if (!String(f.name).trim()) missing.push('the guest\u2019s name');
+      if (!String(f.email).trim()) missing.push('email');
+      if (!String(f.phone).trim()) missing.push('phone');
+      if (!String(f.address).trim()) missing.push('the service address');
+      if (!String(f.brand).trim()) missing.push('the make');
+      if (!String(f.model).trim()) missing.push('the model');
+      if (!String(f.need).trim()) missing.push('what they need help with');
+      if (missing.length) {
+        run.err = 'Every ticket needs ' + missing.join(', ') + ' \u2014 fill those in from the message and try again.';
+      } else { run.err = ''; run.step = 'ticket'; run.msg = ''; }
+    }
+    else if (action === 'save-status') {
+      if (run.statusSel && run.statusSel !== run.status) {
+        run.status = run.statusSel; run.statusMoves++;
+        run.msg = 'Status saved \u2014 now ' + run.status + '.';
+      } else { run.msg = 'Pick a different status, then save it.'; }
+    }
+    else if (action === 'add-note') {
+      if (String(run.noteDraft).trim()) {
+        run.notes.push({ text: run.noteDraft, at: new Date().toISOString() });
+        run.noteDraft = ''; run.msg = 'Note added.';
+      } else { run.msg = 'Write the note first, then add it.'; }
+    }
+    else if (action === 'add-charge') {
+      var amt = parseFloat(String(run.chargeAmount).replace(/[^0-9.]/g, ''));
+      if (String(run.chargeLabel).trim() && isFinite(amt) && amt > 0) {
+        run.charges.push({ label: String(run.chargeLabel).trim(), amount: amt });
+        run.chargeLabel = ''; run.chargeAmount = ''; run.msg = 'Practice charge added \u2014 it is never saved.';
+      } else { run.msg = 'A charge line needs a label and an amount over $0.'; }
+    }
+    else if (action === 'del-charge') {
+      var ci = parseInt(btn.getAttribute('data-pr-index'), 10);
+      if (!isNaN(ci) && run.charges[ci]) { run.charges.splice(ci, 1); run.msg = 'Charge line removed.'; }
+    }
+    else if (action === 'handoff') {
+      var unmet = practiceChecklist(run).filter(function (c) { return !c.ok; });
+      if (unmet.length) {
+        run.msg = 'The handoff is not ready \u2014 still missing: ' + unmet.map(function (c) { return c.label.toLowerCase(); }).join(', ') + '.';
+      } else { run.handedOff = true; run.msg = ''; }
+    }
+    else if (action === 'complete') {
+      var miss = practiceMissing(run);
+      if (miss.length) {
+        run.msg = 'Not yet \u2014 still to do: ' + miss.join(' \u00b7 ') + '.';
+      } else {
+        practiceDone[id] = {
+          number: run.number, moves: run.statusMoves, finalStatus: run.status,
+          notes: run.notes.length, charges: run.charges.length, total: practiceChargeTotal(run)
+        };
+        delete practiceRuns[id];  /* finish and clear: the run is gone, nothing was ever stored */
+        trainingView[id] = { view: 'practice-done', topicId: PRACTICE_TOPIC_ID };
+        trainingRender(id); return;
+      }
+    }
+    trainingRender(id);
+  }
+  /* ================= end SANDBOX_TICKET_2026_11_11 ================= */
+
   function renderSetupPanel() {
     var note = $('portal-setup-db-note');
     if (note) note.hidden = !setupDbMissing;
