@@ -7761,12 +7761,29 @@ function loadTicketThread(client, ticketId) {
     var st = trainingTopicState(r, t);
     var doneIt = !!st.marks[String(idx)];
     var steps = (l.steps || []).map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('');
+    /* TRAINING_SLIDES_2026_11_10: picture guides — a lesson may carry
+     * slides: [image paths]; render one at a time with Back/Next. */
+    var slidesHtml = '';
+    if (Array.isArray(l.slides) && l.slides.length) {
+      var sview = trainingView[r.id] || {};
+      var si = (typeof sview.slideIdx === 'number') ? sview.slideIdx : 0;
+      if (si < 0) si = 0;
+      if (si > l.slides.length - 1) si = l.slides.length - 1;
+      slidesHtml = '<div class="training-slides">' +
+        '<img class="training-slide-img" src="' + esc(l.slides[si]) + '" alt="Guide picture ' + (si + 1) + ' of ' + l.slides.length + '">' +
+        '<div class="training-slides-nav">' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-training-btn="' + esc(r.id) + '" data-training-slide="-1"' + (si === 0 ? ' disabled' : '') + '><i class="fas fa-arrow-left"></i> Back</button>' +
+        '<span class="portal-muted portal-small">Picture ' + (si + 1) + ' of ' + l.slides.length + '</span>' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-training-btn="' + esc(r.id) + '" data-training-slide="1"' + (si === l.slides.length - 1 ? ' disabled' : '') + '>Next <i class="fas fa-arrow-right"></i></button>' +
+        '</div></div>';
+    }
     var next = idx + 1 < t.lessons.length
       ? '<button class="portal-btn portal-btn-outline" type="button" data-training-btn="' + esc(r.id) + '" data-training-lesson="' + (idx + 1) + '">Next lesson</button>'
       : '<button class="portal-btn portal-btn-outline" type="button" data-training-btn="' + esc(r.id) + '" data-training-back="topic">Back to the topic</button>';
     return '<p><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-training-btn="' + esc(r.id) + '" data-training-back="topic"><i class="fas fa-arrow-left"></i> ' + esc(t.title) + '</button></p>' +
       '<div class="portal-panel-head"><h3 class="portal-h3">Lesson ' + (idx + 1) + ' of ' + t.lessons.length + ' \u2014 ' + esc(l.title) + '</h3></div>' +
       (l.intro ? '<p class="portal-muted">' + esc(l.intro) + '</p>' : '') +
+      slidesHtml +
       '<ol class="training-steps">' + steps + '</ol>' +
       '<p style="display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center;">' +
       (doneIt
@@ -7878,8 +7895,14 @@ function loadTicketThread(client, ticketId) {
       trainingView[id] = btn.getAttribute('data-training-back') === 'topics' ? { view: 'topics' } : { view: 'topic', topicId: view.topicId };
       trainingRender(id); return;
     }
+    if (btn.hasAttribute('data-training-slide')) {
+      var sdelta = parseInt(btn.getAttribute('data-training-slide'), 10) || 0;
+      var scur = (typeof view.slideIdx === 'number') ? view.slideIdx : 0;
+      trainingView[id] = { view: 'lesson', topicId: view.topicId, lessonIdx: view.lessonIdx || 0, slideIdx: Math.max(0, scur + sdelta) };
+      trainingRender(id); return;
+    }
     if (btn.getAttribute('data-training-lesson') !== null && btn.getAttribute('data-training-lesson') !== undefined && btn.hasAttribute('data-training-lesson')) {
-      trainingView[id] = { view: 'lesson', topicId: view.topicId, lessonIdx: parseInt(btn.getAttribute('data-training-lesson'), 10) || 0 };
+      trainingView[id] = { view: 'lesson', topicId: view.topicId, lessonIdx: parseInt(btn.getAttribute('data-training-lesson'), 10) || 0, slideIdx: 0 };
       trainingRender(id); return;
     }
     if (btn.hasAttribute('data-training-done')) {
@@ -7889,7 +7912,7 @@ function loadTicketThread(client, ticketId) {
       var mine = trainingMyProgress(r);
       if (!mine.lessons[t.id] || typeof mine.lessons[t.id] !== 'object') mine.lessons[t.id] = {};
       mine.lessons[t.id][String(idx)] = true;
-      if (idx + 1 < t.lessons.length) trainingView[id] = { view: 'lesson', topicId: t.id, lessonIdx: idx + 1 };
+      if (idx + 1 < t.lessons.length) trainingView[id] = { view: 'lesson', topicId: t.id, lessonIdx: idx + 1, slideIdx: 0 };
       else trainingView[id] = { view: 'topic', topicId: t.id };
       trainingSave(id);
       trainingRender(id); return;
