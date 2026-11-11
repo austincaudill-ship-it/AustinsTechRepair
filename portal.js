@@ -19235,3 +19235,91 @@ function loadTicketThread(client, ticketId) {
   } else { initThumb(); initInstall(); }
 })();
 /* ==================== end PORTAL_APP_2026_11_09 ==================== */
+
+/* ================================================================
+   GETAPP_2026_11_10 (Austin, Nov 10, 2026): the Get App button in the
+   portal top bar — ONE button, same face on every device. Behind it:
+   Android/Chrome get the browser's real install prompt
+   (beforeinstallprompt); iPhone gets the Share -> Add to Home Screen
+   steps in the panel under the bar (Apple offers no install button);
+   anything else gets its browser-menu steps. The button hides itself
+   once the Hub is installed or running as the app, and after a guest
+   accepts the install prompt. Austin's rule: fake it till we make it —
+   one clean face for people, real work behind it.
+   ================================================================ */
+(function () {
+  'use strict';
+  var deferredPrompt = null;
+  var promptUsed = false;
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    deferredPrompt = e;
+  });
+  window.addEventListener('appinstalled', function () {
+    deferredPrompt = null;
+    hideGetApp();
+  });
+  function isStandalone() {
+    try {
+      if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) return true;
+    } catch (err) {}
+    return window.navigator.standalone === true;
+  }
+  function hideGetApp() {
+    var b = document.getElementById('portal-getapp-btn');
+    if (b) b.hidden = true;
+    var p = document.getElementById('hub-getapp-panel');
+    if (p) p.hidden = true;
+  }
+  function stepsText() {
+    var ua = (window.navigator.userAgent || '');
+    if (/iphone|ipad|ipod/i.test(ua)) {
+      return '1. Tap the Share button at the bottom of your browser.\n2. Scroll down and tap Add to Home Screen.\n3. Tap Add. The Hub will sit on your home screen like an app — tap it and sign in there.';
+    }
+    if (/android/i.test(ua)) {
+      return '1. Tap the three-dot menu in your browser.\n2. Tap Install app (or Add to Home screen).\n3. Tap Install. The Hub will sit on your home screen like an app — tap it and sign in there.';
+    }
+    return 'Open your browser menu and choose Install app or Add to Home screen. The Hub will then open like an app — sign in there.';
+  }
+  function togglePanel() {
+    var p = document.getElementById('hub-getapp-panel');
+    var s = document.getElementById('hub-getapp-steps');
+    if (!p) return;
+    if (p.hidden) {
+      if (s) s.textContent = stepsText();
+      p.hidden = false;
+    } else {
+      p.hidden = true;
+    }
+  }
+  function onGetAppClick() {
+    if (deferredPrompt && !promptUsed) {
+      promptUsed = true;
+      try {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(function (choice) {
+          if (choice && choice.outcome === 'accepted') { hideGetApp(); }
+          deferredPrompt = null;
+        });
+        return;
+      } catch (err) { /* fall through to the steps panel */ }
+    }
+    togglePanel();
+  }
+  function initGetApp() {
+    var b = document.getElementById('portal-getapp-btn');
+    if (!b) return;
+    if (isStandalone()) { hideGetApp(); return; }
+    b.addEventListener('click', onGetAppClick);
+    var close = document.getElementById('hub-getapp-close');
+    if (close) close.addEventListener('click', function () {
+      var p = document.getElementById('hub-getapp-panel');
+      if (p) p.hidden = true;
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initGetApp);
+  } else {
+    initGetApp();
+  }
+})();
