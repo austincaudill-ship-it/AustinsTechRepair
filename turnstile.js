@@ -24,6 +24,12 @@
  * database directly with the public anon key is NOT stopped by this
  * file alone — see CHANGES.md, "Residual risk / Phase 2".
  *
+ * TURNSTILE_LOADHELP_2026_11_10 (v89): if Cloudflare's api.js is
+ * blocked outright, mount() now says so in the widget's own spot,
+ * in plain words, with a Try again button — instead of an empty
+ * gap and a silent wait (owner's laptop: the check box simply
+ * was not there).
+ *
  * LOGIN_SPEED_2026_11_10 (staged): this copy adds freshToken() —
  * the login form waits for a fresh token instead of dead-ending
  * when the widget is still verifying or its token went stale on a
@@ -51,6 +57,41 @@
 
   function apiReady() { return !!(window.turnstile && typeof window.turnstile.render === 'function'); }
 
+  /* TURNSTILE_LOADHELP_2026_11_10 (v89): when Cloudflare's script is
+   * blocked outright (ad blocker, strict tracking protection, a
+   * network filter), the widget never renders and the guest sees an
+   * empty gap. Put the reason and the way back in the widget's own
+   * spot. Try again re-asks for the script and restarts the wait —
+   * if the block has been lifted, the check appears. */
+  function showLoadHelp(el, entry) {
+    if (entry.helpShown) return;
+    entry.helpShown = true;
+    el.innerHTML = '';
+    var box = document.createElement('div');
+    box.setAttribute('style', 'border:1px solid #b08954;border-radius:10px;padding:.7rem .8rem;font-size:.92rem;line-height:1.45;text-align:left;');
+    var msg = document.createElement('div');
+    msg.textContent = 'The human check could not load. It is a small box from Cloudflare that keeps bots out, and something on this device or network is blocking it. Turn off any ad blocker or strict tracking protection for this site, then tap Try again.';
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = 'Try again';
+    btn.setAttribute('style', 'margin-top:.55rem;padding:.5rem 1rem;border-radius:8px;border:1px solid #b08954;background:transparent;color:inherit;font:inherit;cursor:pointer;');
+    btn.addEventListener('click', function () {
+      entry.helpShown = false;
+      entry.loadFailed = false;
+      el.innerHTML = '';
+      try {
+        var s = document.createElement('script');
+        s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+        s.async = true;
+        document.head.appendChild(s);
+      } catch (e) {}
+      if (entry.resumeAttempts) entry.resumeAttempts();
+    });
+    box.appendChild(msg);
+    box.appendChild(btn);
+    el.appendChild(box);
+  }
+
   /* Render the widget into a container (idempotent). The container may
    * start out hidden (signup tab, account views, chat panel): explicit
    * rendering still works, and mount() is simply called again when the
@@ -63,7 +104,7 @@
     widgets.push(entry);
     el.style.margin = '.75rem 0';
     var tries = 0;
-    (function attempt() {
+    var attempt = function () {
       if (entry.id !== null) return;
       if (apiReady()) {
         try {
@@ -80,8 +121,14 @@
         } catch (e) { /* a later mount() call retries */ }
         return;
       }
-      if (++tries <= 300) setTimeout(attempt, 100); // api.js is async; wait up to ~30s (TURNSTILE_SLOWFIX_2026_11_10 v86: the old ~10s window starved slow connections — the widget never rendered and no token ever existed, which is what stranded the owner's sign-in on his capped hotspot)
-    })();
+      if (++tries <= 300) { setTimeout(attempt, 100); return; } // api.js is async; wait up to ~30s (TURNSTILE_SLOWFIX_2026_11_10 v86: the old ~10s window starved slow connections — the widget never rendered and no token ever existed, which is what stranded the owner's sign-in on his capped hotspot)
+      /* TURNSTILE_LOADHELP_2026_11_10 (v89): ~30s and the script
+         still is not here — it is blocked, not slow. Say so in the
+         widget's own spot instead of leaving an empty gap. */
+      if (!entry.loadFailed) { entry.loadFailed = true; showLoadHelp(el, entry); }
+    };
+    entry.resumeAttempts = function () { tries = 0; attempt(); };
+    attempt();
     return entry;
   }
 
