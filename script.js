@@ -1090,17 +1090,27 @@
        an in-person booking has — full contact and the service address
        included, because the address feeds the guest record and a
        session can switch to in person halfway (owner, Nov 10, 2026).
-       Only two things change: the $15 visit-fee acknowledgment steps
-       aside (virtual has no visit fee — owner ruling, same day), and
-       the date/time pick is labeled as what it is for a virtual
+       The date/time pick is labeled as what it is for a virtual
        session — the session's day and start window, not a trip.
-       In-person (and repair) restores the standard form exactly. */
+       THREE_FORMS_2026_11_11 (Austin, Nov 11, 2026): the fee
+       acknowledgment no longer steps aside for virtual — each of the
+       three forms carries its own. Virtual has no trip and no
+       scheduling urgency: its box says the virtual one-on-one is
+       $25, due at the time of the connect. In-person one-on-one
+       carries the $15 visit fee + $25 collected upon arrival, and
+       Repair keeps the original $15/$35 wording. */
     function applyVirtualFormEffects() {
       var g = window.atrGuidedSelection || {};
       var virtual = g.mode === 'oneonone' && g.ooPlace === 'virtual';
       var disp = document.querySelector('input[name="dispatch_acknowledged"]');
       var dispRow = disp ? disp.closest('label.atr-check') : null;
-      if (dispRow) dispRow.hidden = virtual;
+      if (dispRow) dispRow.hidden = false;
+      var dispSpan = dispRow ? dispRow.querySelector('span') : null;
+      if (dispSpan) {
+        if (srDispatchOrigHtml === null) srDispatchOrigHtml = dispSpan.innerHTML;
+        dispSpan.innerHTML = virtual ? SR_DISPATCH_VIRTUAL_HTML
+          : (g.mode === 'oneonone' ? SR_DISPATCH_OO_HTML : srDispatchOrigHtml);
+      }
       var dateLbl = document.querySelector('label[for="sr-visit-date"]');
       if (dateLbl) dateLbl.innerHTML = virtual ? 'Session date' : 'Preferred visit date';
       var winLbl = document.querySelector('label[for="sr-arrival-window"]');
@@ -1248,8 +1258,18 @@
     }
     /* FORM_REACTS_TO_SERVICE_2026_11_11: the intake form's original
        visit-fee wording, captured the first time One-on-One mode
-       swaps it, so Repair mode restores it word for word. */
+       swaps it, so Repair mode restores it word for word.
+       THREE_FORMS_2026_11_11 (Austin, Nov 11, 2026): there are three
+       forms — Repair, One-on-One in person, One-on-One virtual — and
+       each carries its own fee acknowledgment in the owner's words.
+       In person: the $15 visit fee, and the $25 one-on-one collected
+       upon arrival. Virtual: no trip, no scheduling urgency — the
+       $25 is collected when the guest clicks the Connect link (a pay
+       wall: pay to connect), and it is non-refundable, because it
+       pays for our time and effort even if the issue is not solved. */
     var srDispatchOrigHtml = null;
+    var SR_DISPATCH_OO_HTML = 'I understand the <strong>visit fee is $15</strong> and my <strong>one-on-one is $25</strong>, collected upon arrival. *';
+    var SR_DISPATCH_VIRTUAL_HTML = 'I understand the <strong>virtual one-on-one is $25</strong>, due at the time of the connect. It is <strong>non-refundable</strong> — it pays for our time and effort, even if the issue is not solved. *';
     function setOneOnOneMode(on) {
       repairState.mode = on ? 'oneonone' : 'repair';
       /* VIRTUAL_ONE_ON_ONE_2026_11_10: the place pick belongs to the
@@ -1294,10 +1314,12 @@
          and the serial number (it only speeds up parts ordering).
          Any answer already typed is cleared, so a repair answer can
          never ride along on a service ticket. The problem box asks
-         the one-on-one question instead, and the visit-fee
-         acknowledgment names the one fee a lesson carries — $15,
-         never the $35 diagnosis fee. Repair mode restores every
-         field and every word exactly as they were. */
+         the one-on-one question instead, and the fee acknowledgment
+         carries the in-person one-on-one wording (the $15 visit fee
+         and the $25 one-on-one collected upon arrival — never the
+         $35 diagnosis fee). The virtual wording is applied at step 4
+         by applyVirtualFormEffects. Repair mode restores every field
+         and every word exactly as they were. */
       [['sr-repair-needed', '.atr-field'], ['sr-power-on', '.atr-row'],
        ['sr-prior-repair', '.atr-row'], ['sr-serial', '.atr-field']].forEach(function (pair) {
         var f = document.getElementById(pair[0]);
@@ -1321,9 +1343,7 @@
       var dispSpan = dispRow ? dispRow.querySelector('span') : null;
       if (dispSpan) {
         if (srDispatchOrigHtml === null) srDispatchOrigHtml = dispSpan.innerHTML;
-        dispSpan.innerHTML = on
-          ? 'I understand the <strong>visit fee</strong> &mdash; <strong>$15</strong> &mdash; covers the trip to me, is due at scheduling, and is <strong>non-refundable</strong>. *'
-          : srDispatchOrigHtml;
+        dispSpan.innerHTML = on ? SR_DISPATCH_OO_HTML : srDispatchOrigHtml;
       }
       /* BOOKING_OO_TILE_2026_11_09: entering the mode filters the
          topic bubbles to the device picked at step 1. */
