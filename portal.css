@@ -2179,3 +2179,76 @@ html[data-theme="dark"] .portal-guide-pdf,
 html[data-theme="dark"] .portal-link-edit,
 html[data-theme="dark"] .portal-bartray-reset { color: #E07B2A; }
 /* end HUB_DARK_THEME_2026_11_11 */
+
+/* ===== HUB_POLISH_2026_11_11 (v119, Austin, Nov 11, 2026) =====
+   Polish from the owner's own eyes on the live Hub (iPad photos,
+   light + dark). Measured on the live build before touching
+   anything (iPad landscape, both themes identical):
+   - top bar bottom at y=165.3, column surfaces starting at
+     y=178.9 — a 13.6px band of page background between the header
+     zone and the columns. The band is the dashboard head's
+     .85rem bottom margin: at 641px and up everything inside the
+     head is display:none, so the row is empty but its margin
+     still painted background.
+   - the ACTION PANEL label sat 5px lower than the sidebar's
+     Action Button label (its .portal-nav-group margin-top grew
+     to 18px in the size-up pass, against the sidebar card's
+     13px padding), on a transparent box — page background
+     showing through above the panel's white — while the panel
+     itself started 5px below the sidebar's first button.
+   His fix, verbatim in substance: "move the action button white
+   and the action panel white all the way up and make it fill
+   in" — both surfaces meet the header zone, the labels sit ON
+   their surfaces, tops level. And in dark the QUICK ACTIONS
+   label wore the brand tint as a full-width band, unlike every
+   other label row; it now matches the label family (plain
+   surface, mid-orange text, the thin line under it).
+   Scoped to 641px and up, where the flush two-column geometry
+   lives; phones keep their stacked-card pattern. */
+@media (min-width: 641px) {
+  /* The empty head row stops painting a background band:
+     the column surfaces now start at the top bar's bottom edge. */
+  #portal-dash-view .portal-dash-head { margin-bottom: 0; }
+  /* The ACTION PANEL label sits ON the panel surface: same
+     surface color as the panel under it, no margins, and the
+     exact vertical budget of the sidebar label (13px card
+     padding above the text, the label's own line + rule, then
+     5px — folded into padding — where the sidebar label's
+     bottom margin sits), so the two label texts start level
+     and the panel top lands exactly on the first button's top.
+     Side insets mirror the sidebar label's (card padding 13 +
+     label margin 6 = 19). */
+  #portal-dash-view .portal-panel-col-label {
+    margin: 0;
+    padding: 13px 19px 9px;
+    background: var(--pvc-surface, #FFFFFF);
+  }
+  /* Label surface and panel surface read as one piece: the
+     panel's own top border would double the label's rule. */
+  #portal-dash-view .portal-panel { border-top: 0; }
+}
+@media screen and (min-width: 641px) and (pointer: coarse) {
+  /* The sidebar column measured exactly 26px taller than its
+     grid area on the iPad shell — its 13px top + 13px bottom
+     padding: the shell gives it height:100% but, unlike the
+     panel (border-box since the size-up pass), the column was
+     still content-box, so the padding stacked on top of the
+     full area height and its bottom ran 26px past the screen
+     foot. Border-box puts it exactly inside its area; its
+     button list already scrolls inside itself. */
+  #portal-dash-view .portal-nav-col { box-sizing: border-box; }
+}
+/* Dark only: the QUICK ACTIONS strip leaves the brand tint and
+   joins the label family — transparent over the top bar's plain
+   surface, the same mid-orange text as the ACTION BUTTON /
+   ACTION PANEL labels (v117 lift), the family's 2px line under
+   it, squared corners. The Associate Hub pill keeps its tint;
+   light keeps the pill look the owner approved. */
+html[data-theme="dark"] .portal-quickactions-label {
+  background: transparent;
+  color: #E07B2A;
+  border-bottom: 2px solid var(--line, #3A2F24);
+  border-radius: 0;
+  padding-bottom: 0.35rem;
+}
+/* end HUB_POLISH_2026_11_11 */
