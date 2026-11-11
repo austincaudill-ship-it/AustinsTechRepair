@@ -274,19 +274,25 @@
           <div class="hero-slides" id="hero-slides">
             <!-- SITE_CAROUSEL_FIX_2026_10_30: slide 4 no longer repeats the slide 1 phone photo; console teardown instead -->
             <!-- SERVICES_SINGLE_DOOR_2026_11_09 (owner, Nov 9, 2026):
-                 holiday slide, FIRST in the rotation — services as
-                 gifts. No discounts, percentages, or deal terms: none
-                 exist; the slide sells the service, not a sale. -->
-            <div class="hero-slide is-active">
-              <p class="eyebrow">Holiday Season</p>
-              <h1 class="hero-headline">Services they&rsquo;ll love.</h1>
-              <p class="hero-sub">Repairs and one-on-ones &mdash; a perfect match this holiday season.</p>
+                 holiday slide, FIRST in the rotation —
+                 HOLIDAY_AUTO_2026_11_10 (owner, Nov 10, 2026): the
+                 slide swaps itself by date for every holiday of the
+                 year (Thanksgiving now, Christmas after it, New
+                 Year's after that, then the year round). The HTML
+                 default below is the Thanksgiving version, so the
+                 right season shows even before the script runs. No
+                 discounts, percentages, or deal terms: none exist;
+                 the slide sells the service, not a sale. -->
+            <div class="hero-slide is-active" data-holiday-slide>
+              <p class="eyebrow" data-hol="eyebrow">Thanksgiving</p>
+              <h1 class="hero-headline" data-hol="headline">Dropped your phone after all that turkey?</h1>
+              <p class="hero-sub" data-hol="sub">It happens every Thanksgiving. Cracked screen, dead battery, will not charge &mdash; we come to you and fix it. Estimates are always free.</p>
               <div class="hero-cta-group">
-                <a class="btn btn-primary btn-lg" href="#whatwedo" data-page="whatwedo"><i class="fas fa-gift"></i> Give a service</a>
-                <a class="btn btn-outline btn-lg" href="#account" data-page="account"><i class="fas fa-gift"></i> Gift cards</a>
+                <a class="btn btn-primary btn-lg" href="#whatwedo" data-page="whatwedo" data-hol="cta1"><i class="fas fa-wrench"></i> <span data-hol="cta1text">Start a Service</span></a>
+                <a class="btn btn-outline btn-lg" href="tel:+19372806243" data-hol="cta2"><i class="fas fa-phone"></i> <span data-hol="cta2text">937-280-6243</span></a>
               </div>
               <div class="hero-photo">
-                <img src="images/holiday-services.webp" alt="Wrapped gifts — a laptop with a blue ribbon and a phone-size gift with an orange ribbon — with a blank gift card, under string lights" loading="eager" />
+                <img src="images/work/phone-repair.jpg" alt="Technician repairing a smartphone" loading="eager" data-hol="img" />
               </div>
             </div>
             <div class="hero-slide">
@@ -346,6 +352,63 @@
               </div>
             </div>
           </div>
+          <script>
+          /* HOLIDAY_AUTO_2026_11_10: first hero slide picks the current
+             holiday by itself from the visitor's date. One slide, dated
+             windows, plain words. Christmas keeps the gift version. */
+          (function () {
+            var slide = document.querySelector('[data-holiday-slide]');
+            if (!slide) return;
+            function el(n) { return slide.querySelector('[data-hol="' + n + '"]'); }
+            function nthWeekday(y, m, wd, n) { var d = new Date(y, m, 1); var add = (wd - d.getDay() + 7) % 7 + (n - 1) * 7; return new Date(y, m, 1 + add); }
+            function lastWeekday(y, m, wd) { var d = new Date(y, m + 1, 0); var back = (d.getDay() - wd + 7) % 7; return new Date(y, m, d.getDate() - back); }
+            function easter(y) { var a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m2=Math.floor((a+11*h+22*l)/451),mo=Math.floor((h+l-7*m2+114)/31),da=((h+l-7*m2+114)%31)+1; return new Date(y, mo-1, da); }
+            function day(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+            var now = new Date(); var today = day(now); var y = now.getFullYear();
+            var thanksgiving = nthWeekday(y, 10, 4, 4);
+            var christmasStart = day(new Date(thanksgiving.getTime() + 86400000));
+            var eas = easter(y);
+            var HOLIDAYS = [
+              { name: 'newyear', from: new Date(y, 11, 26), to: new Date(y, 11, 31), eyebrow: "New Year's", headline: 'Partied a little too hard?', sub: 'Broke your phone on New Year\u2019s Eve? We understand. We come to you and fix it. Estimates are always free.', img: 'images/work/phone-repair.jpg', alt: 'Technician repairing a smartphone' },
+              { name: 'newyear-jan', from: new Date(y, 0, 1), to: new Date(y, 0, 2), eyebrow: "New Year's", headline: 'Partied a little too hard?', sub: 'Broke your phone on New Year\u2019s Eve? We understand. We come to you and fix it. Estimates are always free.', img: 'images/work/phone-repair.jpg', alt: 'Technician repairing a smartphone' },
+              { name: 'winter', from: new Date(y, 0, 3), to: new Date(y, 1, 2), eyebrow: 'New Year', headline: 'Start the year with tech that works.', sub: 'Phone acting up, computer running slow, tablet due for a setup — we come to you and make it right. Estimates are always free.', img: 'images/work/hp-laptop-board.jpg', alt: 'Laptop on a repair bench' },
+              { name: 'valentine', from: new Date(y, 1, 3), to: new Date(y, 1, 14), eyebrow: "Valentine's Day", headline: 'A fix they will actually love.', sub: 'Repairs and one-on-one lessons make a gift that gets used every day. We come to you. Estimates are always free.', img: 'images/holiday-services.webp', alt: 'Wrapped gifts with a blank gift card, under string lights', gift: true },
+              { name: 'spring', from: new Date(y, 1, 15), to: new Date(y, 2, 9), eyebrow: 'Spring', headline: 'Spring cleaning for your tech.', sub: 'Slow computer, full storage, tablet that needs setting up — we come to you and sort it out. Estimates are always free.', img: 'images/work/tablet-teardown-real.webp', alt: 'Tablet opened for repair on a work mat' },
+              { name: 'stpatrick', from: new Date(y, 2, 10), to: new Date(y, 2, 17), eyebrow: "St. Patrick's Day", headline: 'Out of luck with a cracked screen?', sub: 'No luck needed. We come to you and fix it, backed by a 1-year warranty. Estimates are always free.', img: 'images/work/phone-repair.jpg', alt: 'Technician repairing a smartphone' },
+              { name: 'easter', from: day(new Date(eas.getTime() - 13 * 86400000)), to: eas, eyebrow: 'Easter', headline: 'Hop to it — get that screen fixed.', sub: 'Cracked screen or a battery that will not last the day? We come to you and fix it. Estimates are always free.', img: 'images/work/tablet-teardown-real.webp', alt: 'Tablet opened for repair on a work mat' },
+              { name: 'spring2', from: day(new Date(eas.getTime() + 86400000)), to: new Date(y, 4, 17), eyebrow: 'Spring', headline: 'Spring cleaning for your tech.', sub: 'Slow computer, full storage, tablet that needs setting up — we come to you and sort it out. Estimates are always free.', img: 'images/work/tablet-teardown-real.webp', alt: 'Tablet opened for repair on a work mat' },
+              { name: 'memorial', from: new Date(y, 4, 18), to: lastWeekday(y, 4, 1), eyebrow: 'Memorial Day', headline: 'We remember. We are thankful.', sub: 'Austin\u2019s Tech Repair Group is a proud American company. We are closed Memorial Day and back the next morning. Estimates are always free.', img: 'images/work/ps4-teardown.jpg', alt: 'Game console opened for repair on a bench' },
+              { name: 'summer', from: day(new Date(lastWeekday(y, 4, 1).getTime() + 86400000)), to: new Date(y, 5, 24), eyebrow: 'Summer', headline: 'Dropped your phone by the pool?', sub: 'Summer happens. We come to you and fix it, at your home or anywhere in the Miami Valley. Estimates are always free.', img: 'images/work/phone-repair.jpg', alt: 'Technician repairing a smartphone' },
+              { name: 'july4', from: new Date(y, 5, 25), to: new Date(y, 6, 4), eyebrow: 'Independence Day', headline: 'Proudly American. Proudly local.', sub: 'We are closed July 4 and back the next morning. Every other day, we come to you. Estimates are always free.', img: 'images/work/ps4-teardown.jpg', alt: 'Game console opened for repair on a bench' },
+              { name: 'summer2', from: new Date(y, 6, 5), to: new Date(y, 7, 27), eyebrow: 'Summer', headline: 'Dropped your phone on vacation?', sub: 'We come to you and fix it, at your home or anywhere in the Miami Valley. Estimates are always free.', img: 'images/work/phone-repair.jpg', alt: 'Technician repairing a smartphone' },
+              { name: 'labor', from: new Date(y, 7, 28), to: nthWeekday(y, 8, 1, 1), eyebrow: 'Labor Day', headline: 'Hard work built this country.', sub: 'We are closed Labor Day and back the next morning. Every other day, we come to you. Estimates are always free.', img: 'images/work/hp-laptop-board.jpg', alt: 'Laptop on a repair bench' },
+              { name: 'fall', from: day(new Date(nthWeekday(y, 8, 1, 1).getTime() + 86400000)), to: new Date(y, 8, 30), eyebrow: 'Fall', headline: 'Back to school, back to working tech.', sub: 'Laptop slow, tablet cracked, phone battery tired — we come to you and fix it. Estimates are always free.', img: 'images/work/hp-laptop-board.jpg', alt: 'Laptop on a repair bench' },
+              { name: 'halloween', from: new Date(y, 9, 1), to: new Date(y, 9, 31), eyebrow: 'Halloween', headline: 'A cracked screen is scary enough.', sub: 'No tricks. We come to you, fix it, and back it with a 1-year warranty. Estimates are always free.', img: 'images/work/ps4-teardown.jpg', alt: 'Game console opened for repair on a bench' },
+              { name: 'thanksgiving', from: new Date(y, 10, 1), to: thanksgiving, eyebrow: 'Thanksgiving', headline: 'Dropped your phone after all that turkey?', sub: 'It happens every Thanksgiving. Cracked screen, dead battery, will not charge — we come to you and fix it. Estimates are always free.', img: 'images/work/phone-repair.jpg', alt: 'Technician repairing a smartphone' },
+              { name: 'christmas', from: christmasStart, to: new Date(y, 11, 25), eyebrow: 'Holiday Season', headline: 'Services they\u2019ll love.', sub: 'Repairs and one-on-ones — a perfect match this holiday season.', img: 'images/holiday-services.webp', alt: 'Wrapped gifts — a laptop with a blue ribbon and a phone-size gift with an orange ribbon — with a blank gift card, under string lights', gift: true }
+            ];
+            var pick = null;
+            for (var i = 0; i < HOLIDAYS.length; i++) { var h = HOLIDAYS[i]; if (today >= day(h.from) && today <= day(h.to)) { pick = h; break; } }
+            if (!pick) return;
+            el('eyebrow').textContent = pick.eyebrow;
+            el('headline').textContent = pick.headline;
+            el('sub').textContent = pick.sub;
+            var img = el('img'); img.setAttribute('src', pick.img); img.setAttribute('alt', pick.alt);
+            var cta1 = el('cta1'), cta2 = el('cta2');
+            if (pick.gift) {
+              cta1.setAttribute('href', '#whatwedo'); cta1.setAttribute('data-page', 'whatwedo');
+              cta1.querySelector('i').className = 'fas fa-gift'; el('cta1text').textContent = 'Give a service';
+              cta2.setAttribute('href', '#account'); cta2.setAttribute('data-page', 'account');
+              cta2.querySelector('i').className = 'fas fa-gift'; el('cta2text').textContent = 'Gift cards';
+            } else {
+              cta1.setAttribute('href', '#whatwedo'); cta1.setAttribute('data-page', 'whatwedo');
+              cta1.querySelector('i').className = 'fas fa-wrench'; el('cta1text').textContent = 'Start a Service';
+              cta2.setAttribute('href', 'tel:+19372806243'); cta2.removeAttribute('data-page');
+              cta2.querySelector('i').className = 'fas fa-phone'; el('cta2text').textContent = '937-280-6243';
+            }
+            slide.setAttribute('data-holiday-active', pick.name);
+          })();
+          </script>
           <div class="hero-controls" role="group" aria-label="Homepage slides">
             <button class="hero-arrow" type="button" data-hero-prev aria-label="Previous slide">&#8249;</button>
             <div class="hero-dots" role="group" aria-label="Choose a slide">
