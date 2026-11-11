@@ -937,13 +937,17 @@
       if (!isOO && !v.repair_needed && !v.problem) errors.problem = 'Tell us what repair you need, or describe the problem.';
       if (isOO && !guidedEarly.serviceKind) errors.problem = 'Please go back to step 2 and pick the kind of one-on-one help you need.';
       if (!field(form, 'terms_accepted')) errors.terms_accepted = 'Please accept the Terms and Conditions to continue.';
-      if (!field(form, 'dispatch_acknowledged')) errors.dispatch_acknowledged = 'Please acknowledge the dispatch fee to continue.';
-      /* VIRTUAL_ONE_ON_ONE_2026_11_10: no visit fee, no visit-fee
-         acknowledgment — while VIRTUAL_FEE_APPLIES is off (the
-         owner's ruling), a virtual booking never trips this gate.
-         (The form also hides the row for virtual bookings, in
-         script.js applyVirtualFormEffects.) */
-      if (isVirtual && !VIRTUAL_FEE_APPLIES) delete errors.dispatch_acknowledged;
+      if (!field(form, 'dispatch_acknowledged')) errors.dispatch_acknowledged = 'Please check the acknowledgment box to continue.';
+      /* THREE_FORMS_2026_11_11 (Austin, Nov 11, 2026): the
+         acknowledgment gate applies to all three forms alike. The
+         row is never hidden — script.js applyVirtualFormEffects
+         words it per form: Repair keeps the $15/$35 visit-fee text,
+         One-on-One in person names the $15 visit fee and the $25
+         collected upon arrival, and Virtual says the $25 is due at
+         the time of the connect. (VIRTUAL_FEE_APPLIES still records
+         that a virtual booking has no visit fee at all — the $25 is
+         the session's first hour, collected at connect time through
+         the pay step, not a fee due at scheduling.) */
       /* A one-on-one visit has no repair work to authorize, so the
          work-order authorization and the Repair Authorization signature
          are not gates in this mode (their rows are hidden too). */
