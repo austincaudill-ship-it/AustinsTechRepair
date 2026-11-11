@@ -3391,10 +3391,11 @@
   var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
   var SESSION_KEY = 'atr-account';
 
-  var STATUSES = ['Awaiting Estimate', 'Awaiting Diagnostics', 'Awaiting Customer Response', 'Awaiting Parts', 'En Route to Customer', 'In Progress', 'Quality Control', 'Ready', 'Job Complete'];
+  var STATUSES = ['Awaiting Estimate', 'Awaiting Scheduling', 'Awaiting Diagnostics', 'Awaiting Customer Response', 'Awaiting Parts', 'En Route to Customer', 'In Progress', 'Quality Control', 'Ready', 'Job Complete'];
   var STATUS_CLASS = {
     'Awaiting Diagnostics': 'acct-st-waiting',
     'Awaiting Estimate': 'acct-st-waiting',
+    'Awaiting Scheduling': 'acct-st-waiting',
     'Awaiting Customer Response': 'acct-st-progress',
     'Awaiting Parts': 'acct-st-parts',
     'En Route to Customer': 'acct-st-progress',
