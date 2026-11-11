@@ -4097,6 +4097,23 @@
                      only then shows the connecting steps. DRAFT
                      WORDING — awaiting the owner's approval (see the
                      build report). -->
+                <!-- PAY_WALL_2026_11_11 (Austin, Nov 11, 2026): a code
+                     guest pays to connect — the $25 first hour is
+                     collected here, when they click to connect, not
+                     when they book. Non-refundable: it pays for our
+                     time and effort, even if the issue is not solved.
+                     ATR One members never see this block; their key
+                     takes them straight to the waiver below. -->
+                <div id="voo-paywall" hidden>
+                  <h4>Pay to connect</h4>
+                  <p>Your first hour is <strong>$25</strong>, paid now through Square. It is <strong>non-refundable</strong> &mdash; it pays for our time and effort, even if the issue is not solved. Time after the first hour is $25 an hour, and we will always tell you the total first.</p>
+                  <label class="atr-check">
+                    <input type="checkbox" id="voo-pay-consent">
+                    <span>I understand the $25 is non-refundable and pays for our time and effort.</span>
+                  </label>
+                  <p><button class="btn btn-primary" type="button" id="voo-pay-btn" disabled><i class="fas fa-lock"></i> Pay $25 with Square</button></p>
+                  <p class="voo-msg" id="voo-pay-msg" role="status" hidden></p>
+                </div>
                 <div id="voo-waiver">
                   <h4>Before we connect &mdash; your screen-sharing waiver</h4>
                   <p>Your code is good. One agreement first, in plain words:</p>
@@ -4147,7 +4164,7 @@
             </div>
           </div>
 
-          <p style="text-align:center; color:var(--muted); margin-top:1.5rem;">Virtual sessions are booked like any One-on-One, at $25 an hour &mdash; the first hour is paid when you book, and there is no visit fee. ATR One members use their key and pay nothing.</p>
+          <p style="text-align:center; color:var(--muted); margin-top:1.5rem;">Virtual sessions are booked like any One-on-One, at $25 an hour &mdash; the first hour is paid when you connect, and there is no visit fee. ATR One members use their key and pay nothing.</p>
           <p style="text-align:center; margin-top:1rem;"><a class="btn btn-outline" href="#support" data-page="support">Back to Support</a></p>
         </div>
       </div>
