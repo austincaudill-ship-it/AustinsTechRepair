@@ -1973,3 +1973,209 @@ body:has(#portal-dash-view:not([hidden])) .portal-main { padding: 0; }
   #portal-dash-view .portal-panel { top: 0; max-height: 100vh; }
 }
 /* end FLUSH_FILL_2026_11_11 */
+
+/* ===== HUB_DARK_THEME_2026_11_11 (v117, Austin, Nov 11, 2026) =====
+   The Hub's own dark theme — the follow-on v116 flagged. v116
+   shipped the Quick Actions dark/light toggle wired to the public
+   website's theme mechanism (localStorage 'atr-theme', applied as
+   data-theme on <html>), but this sheet carried no [data-theme]
+   styles, so inside the Hub the switch changed nothing visible.
+
+   How this section works: the portal's colors were always written
+   as site tokens with literal light fallbacks (var(--surface,
+   #FFFDF8) and friends), and the tokens themselves were never
+   defined on this page — the fallbacks WERE the light theme.
+   Defining the tokens under html[data-theme="dark"] therefore
+   flips every var() consumer at once: page, topbar and Quick
+   Actions, greeting, sidebar, ACTION PANEL, cards, fields, tables,
+   chats, drawer, documents, thumb nav, sign-in / reset / two-step
+   screens, search sheet and bar tray. The token values below are
+   the website's own dark values (styles.css, its
+   html[data-theme="dark"] block) verbatim for every shared token,
+   so the two halves of the site match. Brand orange, brand-deep,
+   teal, gold and blue are NOT redefined — the website doesn't
+   redefine them in dark either; their literal fallbacks keep
+   governing, with the few text-on-tint cases corrected directly
+   below. What remains after the tokens is a short list of rules
+   that painted flat light colors with no token at all (status
+   pills, badges, notices, home calendar, chat bot bubble, the
+   JS-built modal cards, the Financials donut) — each gets a dark
+   counterpart here. Light theme is untouched: every rule in this
+   section is scoped to [data-theme="dark"].
+   Portal-only token notes: --pvc-surface is this sheet's own
+   token (the visual-cleanup pass's white); in dark it takes the
+   site dark surface. --blue-soft has no site dark value (the site
+   leaves it light); the portal needs its badge/chip surfaces
+   dark, so it takes the deep blue tint used by the in-progress
+   status pill below. --card / --text are the site's own light
+   aliases (var(--surface) / var(--ink)), restated so the portal
+   rules written against them flip too. */
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #14100B;
+  --bg-deep: #1D1712;
+  --surface: #221B14;
+  --surface-warm: #2A211A;
+  --ink: #F0E8DA;
+  --ink-soft: #D6C9B4;
+  --muted: #A89880;
+  --faint: #7D6C5B;
+  --line: #3A2F24;
+  --line-soft: #2E251C;
+  --brand-soft: #3A2113;
+  --teal-soft: #14332C;
+  --gold-soft: #3A2E12;
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 8px 28px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 18px 50px rgba(0, 0, 0, 0.5);
+  --pvc-surface: #221B14;
+  --blue-soft: #16283F;
+  --card: var(--surface);
+  --text: var(--ink);
+}
+
+/* Status pills + badges: flat pastel pairs in the light sheet get
+   deep tinted surfaces with light text, same hue families. */
+html[data-theme="dark"] .portal-st-waiting,
+html[data-theme="dark"] .portal-st-new { background: #3A2E12; color: #F5D67B; }
+html[data-theme="dark"] .portal-st-inprogress,
+html[data-theme="dark"] .portal-st-processing,
+html[data-theme="dark"] .portal-st-reviewed,
+html[data-theme="dark"] .portal-st-ordered { background: #16283F; color: #9CC3F5; }
+html[data-theme="dark"] .portal-st-waitingparts { background: #2A2140; color: #C4B0F0; }
+html[data-theme="dark"] .portal-st-ready { background: #12352A; color: #7BDDB4; }
+html[data-theme="dark"] .portal-st-done,
+html[data-theme="dark"] .portal-st-received { background: #14331D; color: #8FE3A8; }
+html[data-theme="dark"] .portal-st-contacted { background: #3A2113; color: #F5B98A; }
+html[data-theme="dark"] .portal-st-cancelled,
+html[data-theme="dark"] .portal-st-rejected,
+html[data-theme="dark"] .portal-st-closed { background: #3A1717; color: #F59E9E; }
+html[data-theme="dark"] .portal-st-draft { background: #2A211A; color: #C0B09A; }
+html[data-theme="dark"] .portal-st-rework { background: #14332C; color: #7BD8C8; }
+html[data-theme="dark"] .portal-badge,
+html[data-theme="dark"] .bv-chip,
+html[data-theme="dark"] .p31-src { background: #2A211A; color: #C0B09A; }
+html[data-theme="dark"] .cust-badge-pending { background: #3A2E12; color: #F5D67B; }
+/* Text on token tints: the tint flips via token, the flat text
+   color does not — brighten the text only. */
+html[data-theme="dark"] .portal-badge-source,
+html[data-theme="dark"] .bv-chip-on,
+html[data-theme="dark"] .p31-src-manufacturer { color: #7BD8C8; }
+html[data-theme="dark"] .portal-badge-service,
+html[data-theme="dark"] .bv-chip-wait { color: #9CC3F5; }
+html[data-theme="dark"] .p31-src-internal { color: #EAC463; }
+
+/* Notices and inline state text. */
+html[data-theme="dark"] .portal-error { background: #3A1717; border-color: #7A2E2E; color: #F59E9E; }
+html[data-theme="dark"] .portal-note { color: #EAC463; }
+html[data-theme="dark"] .portal-gate { background: #3A2E12; border-color: #8A6D1F; color: #F5D67B; }
+html[data-theme="dark"] .tc-badge { background: #14331D; color: #8FE3A8; }
+html[data-theme="dark"] .tc-badge-pending { background: #3A2A12; color: #F0BE78; }
+html[data-theme="dark"] .portal-stock-low { color: #F0A04B; }
+html[data-theme="dark"] .portal-stock-ok { color: #8FE3A8; }
+html[data-theme="dark"] .portal-check.no i { color: #F59E9E; }
+html[data-theme="dark"] .portal-guide-del,
+html[data-theme="dark"] .portal-link-del,
+html[data-theme="dark"] .p2-x { color: #F0766B; }
+html[data-theme="dark"] .warranty-exempt-note { color: #7BD8C8; }
+html[data-theme="dark"] .portal-stars .portal-star-off { color: #7D6C5B; }
+
+/* Flat light surfaces the tokens never reached. */
+html[data-theme="dark"] .loc-banner { background: #3A2113; }
+html[data-theme="dark"] .warranty-exempt-bar.on { background: #0E2A24; border-color: #1F5C4D; }
+html[data-theme="dark"] .portal-msg-bot { background: #16283F; border-color: #2A4A73; }
+html[data-theme="dark"] img.avatar-img { background: #2A211A; }
+/* The queue card's plain chip is near-black on light cards; in
+   dark it inverts. The colored state chips are unchanged. */
+html[data-theme="dark"] .q-chip { background: #F0E8DA; color: #2C231A; }
+
+/* Home hub widgets: white calendar/chip surfaces and black-alpha
+   hairlines become dark surfaces and ink-alpha hairlines. */
+html[data-theme="dark"] .hh-chip { background: #221B14; border-color: rgba(240, 232, 218, 0.14); }
+html[data-theme="dark"] .hh-cal-grid { background: #221B14; border-color: rgba(240, 232, 218, 0.12); }
+html[data-theme="dark"] .hh-cal-cell { background: #221B14; border-top-color: rgba(240, 232, 218, 0.08); }
+html[data-theme="dark"] .hh-cal-cell:hover { background: #2A211A; }
+html[data-theme="dark"] .hh-cal-blank,
+html[data-theme="dark"] .hh-cal-blank:hover { background: #1D1712; }
+html[data-theme="dark"] .hh-cal-dayoff { background: #2A211A; }
+html[data-theme="dark"] .hh-cal-sel { background: #3A2113; }
+html[data-theme="dark"] .hh-shift { border-bottom-color: rgba(240, 232, 218, 0.09); }
+
+/* Price Book rows: the black-alpha hover/count/edit washes become
+   ink-alpha so they read as lightening, not smudges. */
+html[data-theme="dark"] .pb-nav-row:hover { background: rgba(240, 232, 218, 0.05); }
+html[data-theme="dark"] .pb-nav-row .pb-nav-count { background: rgba(240, 232, 218, 0.09); }
+html[data-theme="dark"] .pb-edit-row td { background: rgba(240, 232, 218, 0.05); }
+
+/* Financials donut: the slices are JS-written SVG presentation
+   attributes (a near-black parts slice and a cream track) that
+   would vanish on a dark card. CSS beats presentation
+   attributes, so the parts slice takes the ink and the track
+   takes the line color; the legend's ink dot is inline-styled
+   and needs the !important. */
+html[data-theme="dark"] .fin-chart-wrap circle[stroke="#2C231A"] { stroke: #F0E8DA; }
+html[data-theme="dark"] .fin-chart-wrap circle[stroke="#EFE3CC"] { stroke: #3A2F24; }
+html[data-theme="dark"] .fin-dot[style*="#2C231A"] { background: #F0E8DA !important; }
+
+/* JS-built modal cards: every modal factory in portal.js and
+   portal.html's inline scripts builds the same shape — a fixed
+   wrapper whose inline style carries the shared scrim
+   rgba(44,35,26,0.55), with the card as its first child carrying
+   an inline white background and ink text. Inline styles need
+   !important to yield. The IDs name the known factories; the
+   attribute selector catches the rest (the onboarding nhModal
+   family takes caller-chosen ids). Paper inside the card stays
+   paper on purpose: the agreement text box and the signature
+   canvas keep their light inline surfaces, like the printed
+   documents they become. */
+html[data-theme="dark"] #doc-preview-modal > div,
+html[data-theme="dark"] #p4-sign-modal > div,
+html[data-theme="dark"] #p4-doc-pick-modal > div,
+html[data-theme="dark"] #p4-text-modal > div,
+html[data-theme="dark"] #p2-track-popup > div,
+html[data-theme="dark"] #ci-terms-modal > div,
+html[data-theme="dark"] div[style*="rgba(44,35,26,0.55)"] > div {
+  background: #221B14 !important;
+  color: #F0E8DA !important;
+}
+
+/* Inline-styled bits in portal.html itself: the cream hairline
+   under static rows, and the flat error red, both inline — the
+   hairline takes the dark line color, the red brightens. */
+html[data-theme="dark"] [style*="border-bottom:1px solid #E6D9C0"] { border-bottom-color: #3A2F24 !important; }
+html[data-theme="dark"] [style*="color:#b3261e"] { color: #F0766B !important; }
+
+/* Field affordances in dark: the company-blue focus ring is dim
+   on dark surfaces, so it takes the site's pale blue; browser
+   autofill would otherwise paint fields pale yellow-white. */
+html[data-theme="dark"] .portal-body input:focus-visible,
+html[data-theme="dark"] .portal-body select:focus-visible,
+html[data-theme="dark"] .portal-body textarea:focus-visible { outline-color: #7FB3EC; }
+html[data-theme="dark"] .portal-body input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px #221B14 inset;
+  -webkit-text-fill-color: #F0E8DA;
+  caret-color: #F0E8DA;
+}
+/* Render-check fix (v117 verification): brand-deep text was the
+   one systematic dim spot in dark — #A63E06 sits at ~2.4:1 on the
+   dark brand tint and ~2.8:1 on dark surfaces. The token itself
+   stays the site's (buttons that paint WITH brand-deep keep it);
+   only brand-deep TEXT lifts: tint pairs take the light orange,
+   labels and small text on plain surfaces take the portal's own
+   mid orange #E07B2A (already the --brand fallback in the p2/p3
+   sheets). */
+html[data-theme="dark"] .portal-topbar-tag,
+html[data-theme="dark"] .hh-mine,
+html[data-theme="dark"] .p31-src-ifixit { color: #F5B98A; }
+html[data-theme="dark"] .hh-cal-dow-row span { color: #F5B98A; }
+html[data-theme="dark"] .portal-nav-group,
+html[data-theme="dark"] .portal-card-meta a,
+html[data-theme="dark"] #portal-emp-role,
+html[data-theme="dark"] .tk-acc-hint,
+html[data-theme="dark"] .cust-prof-invest,
+html[data-theme="dark"] .hh-sec,
+html[data-theme="dark"] .portal-guide-edit,
+html[data-theme="dark"] .portal-guide-pdf,
+html[data-theme="dark"] .portal-link-edit,
+html[data-theme="dark"] .portal-bartray-reset { color: #E07B2A; }
+/* end HUB_DARK_THEME_2026_11_11 */
