@@ -382,7 +382,18 @@
      * Tabs still record where you are as you move (harmless),
      * and the ?scan= deep link below still beats the landing,
      * exactly as it beat the remembered tab. */
-    activateTab('home');
+    /* F5_RESTORE_2026_11_11 (Amendment 2, Austin, Nov 11, 2026):
+     * the one exception is a RELOAD. The global Refresh button is
+     * a plain F5 (location.reload), and an F5 must land back on
+     * the panel the associate was on — so on a reload the
+     * remembered tab reopens by replaying its button click (the
+     * old PORTAL_TAB_MEMORY restore, reload-only; a remembered
+     * custom tab is replayed by cabBootRestore once its button
+     * renders). Fresh sign-ins still land on Home, exactly as
+     * the Nov 9 ruling above demands. */
+    var bootTab = navWasReload() ? savedTab() : '';
+    var bootBtn = bootTab ? document.querySelector('.portal-tab[data-tab="' + bootTab + '"]') : null;
+    if (bootBtn) { bootBtn.click(); } else { activateTab('home'); }
     /* ATRONE_QR_2026_11_05: a scanned account code beats the remembered tab. */
     try { routePendingScan(); } catch (e) {}
   }
@@ -1679,6 +1690,18 @@
   var TAB_KEY = 'atrg-portal-tab';
   function saveActiveTab(name) { try { window.localStorage.setItem(TAB_KEY, name); } catch (e) {} }
   function savedTab() { try { return window.localStorage.getItem(TAB_KEY) || ''; } catch (e) { return ''; } }
+  /* F5_RESTORE_2026_11_11 (Amendment 2, Austin, Nov 11, 2026): was
+   * this page load a reload (the global Refresh button / F5) rather
+   * than a fresh navigation? showDashboard and cabBootRestore use
+   * it to land a refresh back on the same panel while fresh
+   * sign-ins keep landing on Home (PORTAL_HOME_2026_11_09). */
+  function navWasReload() {
+    try {
+      var entries = window.performance && performance.getEntriesByType ? performance.getEntriesByType('navigation') : null;
+      if (entries && entries[0]) return entries[0].type === 'reload';
+      return !!(window.performance && performance.navigation && performance.navigation.type === 1);
+    } catch (e) { return false; }
+  }
 
   function activateTab(name) {
     /* PORTAL_ROLE_LADDER_2026_11_04: a gated tab (the Admin
@@ -1750,6 +1773,24 @@
         state.loaded[name] = false;
         if (LOADERS[name]) LOADERS[name](true);
       });
+    });
+    /* GLOBAL_REFRESH_2026_11_11 (Austin, Nov 11, 2026): one Refresh
+     * button in the top bar that can never be lost — some panels
+     * have no Refresh of their own, and the Hub installed as a
+     * phone app has no browser refresh to fall back on.
+     * AMENDED (Amendment 2, later the same day): the owner ruled
+     * the in-panel refresh paths "don't really do anything" and
+     * the global one "should be just like a F5 button" — so the
+     * original per-panel cascade (the panel's own Refresh button,
+     * then a forced loader, then a reload) is DROPPED on his
+     * word. A tap is a plain full-page reload, exactly like F5;
+     * the reload-only tab restore in showDashboard
+     * (F5_RESTORE_2026_11_11) lands it back on the same panel.
+     * The per-panel Refresh buttons keep their own wiring above,
+     * untouched. */
+    var hubRefreshBtn = $('portal-hub-refresh-btn');
+    if (hubRefreshBtn) hubRefreshBtn.addEventListener('click', function () {
+      window.location.reload();
     });
   }
 
@@ -8020,6 +8061,14 @@ function loadTicketThread(client, ticketId) {
      * captured above for the record. */
     if (cabBootRestoreDone) return;
     cabBootRestoreDone = true;
+    /* F5_RESTORE_2026_11_11: on a reload only, replay a remembered
+     * custom tab so the F5 Refresh lands back on its panel too
+     * (showDashboard's restore ran before these buttons rendered).
+     * Fresh sign-ins still land on Home. */
+    if (navWasReload() && cabBootTab && cabBootTab.indexOf('cab-') === 0) {
+      var cabBtn = document.querySelector('.portal-tab[data-tab="' + cabBootTab + '"]');
+      if (cabBtn) cabBtn.click();
+    }
   }
   function cabWire() {
     if (cabWired) return;
@@ -19997,11 +20046,54 @@ function loadTicketThread(client, ticketId) {
   /* ================= end HUB_SEARCH_2026_11_09 ================= */
 })();
 
+/* ==================== PORTAL_THEME_2026_11_11 ====================
+   Amendment 2 (Austin, Nov 11, 2026): a dark/light toggle at the
+   very end of the Quick Actions row, mirroring the public website,
+   where the moon sits last. It runs the website's own theme
+   mechanism on this origin: the choice lives in localStorage
+   under 'atr-theme', is applied as data-theme on <html>, the icon
+   is a sun in dark mode and a moon in light, a saved choice wins,
+   and until one exists the device's own setting is followed live.
+   The key is shared, so a choice made here is the website's
+   choice and vice versa. NOTE: portal.css carries no [data-theme]
+   dark styles yet, so inside the Hub the switch currently flips
+   the stored choice, the attribute and the icon — the portal's
+   visible dark theme is a flagged follow-on (see REPORT.md). */
+(function () {
+  'use strict';
+  var root = document.documentElement;
+  var btn = document.getElementById('portal-theme-btn');
+  var icon = document.getElementById('portal-theme-icon');
+  function setTheme(theme) {
+    root.setAttribute('data-theme', theme);
+    if (icon) icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+  }
+  var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+  function systemTheme() { return mq && mq.matches ? 'dark' : 'light'; }
+  var savedTheme = null;
+  try { savedTheme = localStorage.getItem('atr-theme'); } catch (e) {}
+  if (savedTheme === 'dark' || savedTheme === 'light') { setTheme(savedTheme); } else { setTheme(systemTheme()); }
+  if (mq && mq.addEventListener) {
+    mq.addEventListener('change', function () {
+      var s2 = null;
+      try { s2 = localStorage.getItem('atr-theme'); } catch (e) {}
+      if (s2 !== 'dark' && s2 !== 'light') setTheme(systemTheme());
+    });
+  }
+  if (btn) {
+    btn.addEventListener('click', function () {
+      var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      setTheme(next);
+      try { localStorage.setItem('atr-theme', next); } catch (e) {}
+    });
+  }
+})();
+
 /* ==================== PORTAL_APP_2026_11_09 ====================
    The Associate Hub as its own installable app (Austin, Nov 9, 2026).
    portal.html declares portal-manifest.json — a declaration only;
    the installed app IS portal.html, same code, same updates, nothing
-   forked. The Home panel carries the install card, and a phone thumb
+   forked. (The Home panel's install card was removed Nov 11, 2026 — HUB_HEADER_2026_11_11; the header Get App button is the install door.) A phone thumb
    bar mirrors the sidebar. This module is deliberately thin: it owns
    NO navigation or permission logic.
    - Thumb items click the real sidebar tabs, so a thumb tap runs
@@ -20697,52 +20789,17 @@ function loadTicketThread(client, ticketId) {
     loadBarPrefs();
   }
 
-  /* ---------- install card (Home panel) ---------- */
-  var deferredInstallPrompt = null;
-  function isStandalone() {
-    return !!((window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true);
-  }
-  function refreshInstallCard() {
-    var card = $('portal-install-card');
-    if (!card) return;
-    if (isStandalone()) { card.hidden = true; return; }
-    card.hidden = false;
-    var btn = $('portal-install-btn');
-    var ios = $('portal-install-ios');
-    if (deferredInstallPrompt) {
-      if (btn) btn.hidden = false;
-      if (ios) ios.hidden = true;
-    } else {
-      if (btn) btn.hidden = true;
-      if (ios) ios.hidden = false;
-    }
-  }
-  window.addEventListener('beforeinstallprompt', function (e) {
-    e.preventDefault();
-    deferredInstallPrompt = e;
-    refreshInstallCard();
-  });
-  window.addEventListener('appinstalled', function () {
-    deferredInstallPrompt = null;
-    var card = $('portal-install-card');
-    if (card) card.hidden = true;
-  });
-  function initInstall() {
-    var btn = $('portal-install-btn');
-    if (btn) btn.addEventListener('click', function () {
-      if (!deferredInstallPrompt) return;
-      deferredInstallPrompt.prompt();
-      deferredInstallPrompt.userChoice.then(function () {
-        deferredInstallPrompt = null;
-        refreshInstallCard();
-      });
-    });
-    refreshInstallCard();
-  }
+  /* ---------- HUB_HEADER_2026_11_11: the Home install card is gone ----------
+     Austin, Nov 11, 2026: the Home panel install card came
+     off, and its wiring went with it — its prompt variable,
+     its card painter, its init function and their
+     beforeinstallprompt / appinstalled listeners. The
+     header Get App button keeps its own GETAPP_2026_11_10
+     module below, untouched. */
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function () { initThumb(); initInstall(); });
-  } else { initThumb(); initInstall(); }
+    document.addEventListener('DOMContentLoaded', function () { initThumb(); });
+  } else { initThumb(); }
 })();
 /* ==================== end PORTAL_APP_2026_11_09 ==================== */
 
