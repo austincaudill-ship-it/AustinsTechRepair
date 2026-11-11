@@ -306,6 +306,11 @@
 .q-chip{font-size:.7rem;font-weight:800;border-radius:999px;padding:3px 9px;background:#111827;color:#fff}
 .q-red .q-chip{background:#dc2626}.q-orange .q-chip{background:#ea580c}.q-yellow .q-chip{background:#d97706}.q-lime .q-chip{background:#65a30d}.q-green .q-chip{background:#16a34a}
 .q-legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.82rem;color:var(--muted,#6f6152);margin:0 0 12px}
+/* SCAN_TICKET_2026_11_11: Service Queue search row + label scan box */
+.portal-queue-search{display:flex;gap:8px;align-items:center;margin:0 0 10px}
+.portal-queue-search input[type="search"]{flex:1;min-width:0;padding:0.55rem 0.8rem;border:1px solid var(--line,#E6D9C0);border-radius:8px;background:var(--surface,#FFFDF8);color:var(--ink,#2C231A);font-family:inherit;font-size:0.9rem}
+#portal-queue-scan-box{margin:0 0 12px}
+#portal-queue-scan-box video{display:block;margin-bottom:.5rem}
 .q-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px}
 .q-dot.q-red{background:#dc2626}.q-dot.q-orange{background:#ea580c}.q-dot.q-yellow{background:#d97706}.q-dot.q-lime{background:#65a30d}.q-dot.q-green{background:#16a34a}
 .portal-gate{background:#fef3c7;border:1px solid #f59e0b;color:#92400e;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:.92rem}
