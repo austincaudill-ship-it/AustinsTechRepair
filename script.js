@@ -6528,11 +6528,16 @@ document.addEventListener('click', function (e) {
              link. There is no standing ATRG Connect link anywhere on
              the page; this redirect is the only way through, and it
              fires only after the waiver above has been recorded.
-             The destination below is the business's ATRG Connect
-             link, supplied by the owner. (Before: this revealed the in-page
-             #voo-final block - our own session front end, which
-             connected to nothing.) */
-          window.location.href = 'https://start.teamviewer.com/799992734';
+             The destination below is the generic QuickSupport
+             entry - https://start.teamviewer.com with NO ID
+             pre-filled, per the owner's rule (Nov 11, 2026): his
+             own QuickSupport ID is his alone and never appears in
+             a guest-facing link. The guest opens QuickSupport
+             there and reads their own QuickSupport code to the
+             associate, who enters it in TeamViewer. (Before: this
+             revealed the in-page #voo-final block - our own
+             session front end, which connected to nothing.) */
+          window.location.href = 'https://start.teamviewer.com';
         } else {
           startSessionBtn.disabled = false;
           if (wvMsg) wvMsg.textContent = 'We could not save your agreement just now. Please tap Start my session once more.';
