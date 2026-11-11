@@ -7925,8 +7925,14 @@ function loadTicketThread(client, ticketId) {
    * pattern as portal_set_checklist_state: any staffer can save
    * their own progress; the program and everyone else's
    * progress stay out of reach. Promotion tests render from
-   * program.promotions as "coming" gates — no test questions
-   * ship until the owner activates them. */
+   * program.promotions as "coming" gates with no test questions
+   * until the owner activates them. PROMOTION_ENGINE_2026_11_11
+   * (below) extends this: an activated gate (status "open" with
+   * questions loaded) runs a real test — scenario questions plus
+   * uncapped written answers — submissions land in the
+   * associate's own progress slice under a promotions key,
+   * Admin and above review them in-panel, and a Feedback button
+   * closes the program once every topic quiz is passed. */
   var TRAINING_PASS_PCT = 80; /* flagged for the owner in the build report */
   var trainingView = {}; /* button id -> {view, topicId, lessonIdx, result} */
   function trainingProgram(r) {
@@ -7944,6 +7950,7 @@ function loadTicketThread(client, ticketId) {
     if (!mine || typeof mine !== 'object') { mine = {}; cfg.progress[trainingMyId()] = mine; }
     if (!mine.lessons || typeof mine.lessons !== 'object') mine.lessons = {};
     if (!mine.quizzes || typeof mine.quizzes !== 'object') mine.quizzes = {};
+    if (!mine.promotions || typeof mine.promotions !== 'object') mine.promotions = {}; /* PROMOTION_ENGINE_2026_11_11 */
     r.config = cfg;
     return mine;
   }
@@ -7979,6 +7986,9 @@ function loadTicketThread(client, ticketId) {
         if (view.view === 'quiz') return trainingQuizHtml(r, t, view);
       }
     }
+    if (view.view === 'promo' && view.gateId) { var pgate = trainingGate(r, view.gateId); if (pgate) return trainingPromoHtml(r, pgate, view); }
+    if (view.view === 'feedback') return trainingFeedbackHtml(r, view);
+    if (view.view === 'promo-review') return trainingPromoReviewHtml(r);
     return trainingTopicsHtml(r, p);
   }
   function trainingTopicsHtml(r, p) {
@@ -8002,11 +8012,22 @@ function loadTicketThread(client, ticketId) {
     var gates = Array.isArray(p.promotions) ? p.promotions : [];
     if (gates.length) {
       html += '<div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Promotion tests</h3></div>' +
-        '<p class="portal-muted portal-small">A 20-question test at each step of the ladder. These open once the owner activates them.</p>' +
-        gates.map(function (g) {
-          return '<article class="portal-card"><div class="portal-card-top"><p class="portal-card-title">' + esc(g.from) + ' \u2192 ' + esc(g.to) + '</p>' +
-            '<span class="portal-muted portal-small">Coming</span></div></article>';
-        }).join('');
+        '<p class="portal-muted portal-small">Each step of the ladder has a test: scenario questions where you pick the best response, plus a few written questions you answer in your own words and a person reads. A test opens once the owner activates it, and turning one in never promotes anybody on its own.</p>' +
+        gates.map(function (g) { return trainingGateCardHtml(r, g); }).join('');
+    }
+    /* PROMOTION_ENGINE_2026_11_11: the Feedback button — shown once
+     * every topic quiz is passed, and it stays (a submitted
+     * promotion test does not hide it; this view is where it
+     * lives). */
+    if (p.topics.length && doneTopics === p.topics.length) {
+      html += '<article class="portal-card"><div class="portal-card-top"><p class="portal-card-title">Finished the training?</p>' +
+        '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-training-btn="' + esc(r.id) + '" data-training-feedback="1">Feedback</button></div>' +
+        '<p class="portal-card-meta">Every topic quiz is passed. Tell us what worked and what should change \u2014 it lands in the feedback list with your name on it.</p></article>';
+    }
+    if (isAdminOrAbove() && trainingAnySubmissions(r)) {
+      html += '<article class="portal-card"><div class="portal-card-top"><p class="portal-card-title">Promotion submissions</p>' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-training-btn="' + esc(r.id) + '" data-training-review="1">Review</button></div>' +
+        '<p class="portal-card-meta">Promotion tests turned in and waiting on a person\u2019s read. Admin and above.</p></article>';
     }
     return html + trainingMsg(r.id);
   }
@@ -8206,6 +8227,311 @@ function loadTicketThread(client, ticketId) {
       if (t2) trainingGrade(id, t2);
       return;
     }
+    /* PROMOTION_ENGINE_2026_11_11 handlers */
+    if (btn.hasAttribute('data-training-promo')) {
+      trainingView[id] = { view: 'promo', gateId: btn.getAttribute('data-training-promo') };
+      trainingRender(id); return;
+    }
+    if (btn.hasAttribute('data-training-promo-submit')) {
+      var pgs = trainingGate(r, btn.getAttribute('data-training-promo-submit'));
+      if (pgs) trainingPromoSubmit(id, pgs);
+      return;
+    }
+    if (btn.hasAttribute('data-training-feedback')) {
+      trainingView[id] = { view: 'feedback' };
+      trainingRender(id); return;
+    }
+    if (btn.hasAttribute('data-training-feedback-submit')) { trainingFeedbackSubmit(id); return; }
+    if (btn.hasAttribute('data-training-review')) {
+      trainingView[id] = { view: 'promo-review' };
+      promoReviewEnsureNames(id);
+      trainingRender(id); return;
+    }
+  }
+  /* ============ PROMOTION TESTS + TRAINING FEEDBACK ============
+   * PROMOTION_ENGINE_2026_11_11 (Austin, Nov 11, 2026): the ladder
+   * stops being a promise and becomes a test. His spec: after the
+   * trainings come the promotional quizzes — scenario questions,
+   * "what should you do in this situation," aimed at showing
+   * leadership judgment rather than repair technique — some of
+   * them extended-response, "so we can just feel out people that
+   * we hired" from what they write — and after everything, a
+   * Feedback button.
+   *
+   * A gate is OPEN only when the owner has activated it: status
+   * "open" in program.promotions AND a questions array present
+   * (questions are loaded by promotions-load.sql, which runs
+   * after this code ships). Until then the card says Coming,
+   * exactly as before.
+   *
+   * A test has two parts. Scenario (choice) questions score like
+   * the topic quizzes — TRAINING_PASS_PCT (80%) is the floor on
+   * that part. Written (extended) questions render as plain text
+   * boxes with NO character cap of any kind — no maxlength, no
+   * counter, no trim (owner, Nov 11, 2026: "We don't do limits
+   * here"). A finished test is written into the associate's OWN
+   * progress slice through the same portal_set_training_progress
+   * door as lessons and quizzes, under a promotions key, and it
+   * lands as SUBMITTED — under review. Nothing here grants a
+   * promotion: a person reads the written answers and decides.
+   *
+   * Retakes (builder's default, flagged for the owner): the test
+   * may be retaken while the scenario part sits under the pass
+   * mark; each retake is a fresh full attempt and the written
+   * answers go in again with it. Once the scenario part passes,
+   * the gate locks as submitted / under review.
+   *
+   * Review: Admin tier and above get a submissions view inside
+   * this panel (trainingPromoReviewHtml) listing every submitted
+   * attempt with the written answers readable. The UI gate is
+   * Admin+; the data-layer truth is plainer and is stated in the
+   * build report: portal_setup_items is staff-readable, so
+   * config.progress — every associate's progress, written answers
+   * included — is readable by any signed-in associate's client
+   * today. The review VIEW is Admin+ regardless.
+   *
+   * The Feedback button shows once every topic quiz is passed
+   * (and stays up, including after a promotion test is turned
+   * in): three uncapped boxes — what worked, what should change,
+   * anything else — inserted into public.feedback in the shape
+   * the guest "How Did We Do" form uses: customer_name carries
+   * the associate's name, experience carries "what worked", and
+   * comments carries the other two answers, labeled. */
+  function trainingGateOpen(g) {
+    return !!g && g.status === 'open' && Array.isArray(g.questions) && g.questions.length > 0;
+  }
+  function trainingGate(r, gateId) {
+    var p = trainingProgram(r);
+    if (!p || !Array.isArray(p.promotions)) return null;
+    for (var i = 0; i < p.promotions.length; i++) { if (p.promotions[i].id === gateId) return p.promotions[i]; }
+    return null;
+  }
+  function trainingGateCardHtml(r, g) {
+    var top = '<div class="portal-card-top"><p class="portal-card-title">' + esc(g.from) + ' \u2192 ' + esc(g.to) + '</p>';
+    if (!trainingGateOpen(g)) {
+      return '<article class="portal-card">' + top + '<span class="portal-muted portal-small">Coming</span></div></article>';
+    }
+    var mine = trainingMyProgress(r);
+    var sub = (mine.promotions && mine.promotions[g.id]) || null;
+    if (sub && sub.status === 'submitted' && sub.passed) {
+      return '<article class="portal-card">' + top + '<span class="portal-badge portal-st-ready">Submitted \u2014 under review</span></div>' +
+        '<p class="portal-card-meta">Turned in ' + esc(fmtDateTime(sub.submittedAt)) + ' \u00b7 scenario score ' + sub.pct + '%. A person reads your written answers \u2014 a promotion is never automatic.</p></article>';
+    }
+    var btn = '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-training-btn="' + esc(r.id) + '" data-training-promo="' + esc(g.id) + '">' + (sub ? 'Retake the test' : 'Take the test') + '</button>';
+    var meta = sub
+      ? 'Last try: ' + sub.pct + '% on the scenario questions \u2014 passing is ' + TRAINING_PASS_PCT + '%. Your written answers went in with that try; a retake sends a fresh set.'
+      : 'Scenario questions plus written answers in your own words. Passing the scenario part takes ' + TRAINING_PASS_PCT + '%; the written answers are read by a person.';
+    return '<article class="portal-card">' + top + btn + '</div><p class="portal-card-meta">' + meta + '</p></article>';
+  }
+  function trainingPromoHtml(r, g, view) {
+    var head = '<p><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-training-btn="' + esc(r.id) + '" data-training-back="topics"><i class="fas fa-arrow-left"></i> All topics</button></p>' +
+      '<div class="portal-panel-head"><h3 class="portal-h3">Promotion test \u2014 ' + esc(g.from) + ' \u2192 ' + esc(g.to) + '</h3></div>';
+    var qs = Array.isArray(g.questions) ? g.questions : [];
+    if (view.promoResult) {
+      var res = view.promoResult;
+      var review = qs.map(function (q, qi) {
+        if (q.type === 'extended') {
+          return '<article class="portal-card"><p class="portal-card-title">' + (qi + 1) + '. ' + esc(q.question) + '</p>' +
+            '<p class="portal-card-meta">Written answer \u2014 in for review:</p>' +
+            '<p style="white-space:pre-wrap;">' + esc(res.extended[qi] || '') + '</p></article>';
+        }
+        var ok = res.answers[qi];
+        return '<article class="portal-card"><p class="portal-card-title">' + (qi + 1) + '. ' + esc(q.question) + ' ' + (ok ? '\u2713' : '\u2717') + '</p>' +
+          '<p class="portal-card-meta">Answer: ' + esc(q.options[q.correct_index]) + '</p>' +
+          (q.explanation ? '<p class="portal-card-meta">' + esc(q.explanation) + '</p>' : '') + '</article>';
+      }).join('');
+      return head +
+        '<p class="portal-muted">Scenario score: ' + res.pct + '% (' + res.score + ' of ' + res.total + '). ' +
+        (res.passed ? 'That clears the ' + TRAINING_PASS_PCT + '% mark. ' : 'Passing is ' + TRAINING_PASS_PCT + '% \u2014 you can retake the test when you are ready. ') +
+        'Your test is turned in and under review: a person reads the written answers, and a promotion is decided by a person, never by this screen.</p>' +
+        review +
+        (res.passed ? '' : '<p><button class="portal-btn portal-btn-outline" type="button" data-training-btn="' + esc(r.id) + '" data-training-promo="' + esc(g.id) + '">Retake the test</button></p>') +
+        trainingMsg(r.id);
+    }
+    var choiceN = 0, extN = 0;
+    qs.forEach(function (q) { if (q.type === 'extended') extN++; else choiceN++; });
+    var body = qs.map(function (q, qi) {
+      if (q.type === 'extended') {
+        return '<article class="portal-card"><p class="portal-card-title">' + (qi + 1) + '. ' + esc(q.question) + '</p>' +
+          '<p class="portal-card-meta">In your own words. There is no length limit \u2014 say what you really think.</p>' +
+          '<textarea class="training-longtext" rows="6" data-promo-extended="' + qi + '" placeholder="Write your answer&hellip;"></textarea></article>';
+      }
+      var opts = (q.options || []).map(function (o, oi) {
+        return '<p style="margin:0.3rem 0;"><label style="display:flex;gap:0.6rem;align-items:flex-start;cursor:pointer;">' +
+          '<input type="radio" name="pq-' + esc(g.id) + '-' + qi + '" value="' + oi + '" style="width:1.15rem;height:1.15rem;margin-top:0.15rem;flex:none;"> <span>' + esc(o) + '</span></label></p>';
+      }).join('');
+      return '<article class="portal-card"><p class="portal-card-title">' + (qi + 1) + '. ' + esc(q.question) + '</p>' + opts + '</article>';
+    }).join('');
+    return head +
+      '<p class="portal-muted">' + choiceN + ' scenario questions \u2014 pick the best response; ' + TRAINING_PASS_PCT + '% passes that part. Then ' + extN + ' written questions \u2014 answer every one, in your own words, with no length limit. Turning it in puts it under review; nothing here promotes anybody on its own.</p>' +
+      body +
+      '<p><button class="portal-btn portal-btn-primary" type="button" data-training-btn="' + esc(r.id) + '" data-training-promo-submit="' + esc(g.id) + '">Turn in my test</button></p>' +
+      trainingMsg(r.id);
+  }
+  function trainingPromoSubmit(id, g) {
+    var r = cabRowById(id);
+    var root = document.querySelector('[data-training-root="' + id + '"]');
+    if (!r || !root) return;
+    var qs = Array.isArray(g.questions) ? g.questions : [];
+    var answers = [], choiceAnswers = {}, extendedAnswers = {}, extendedView = {};
+    var score = 0, total = 0, missing = false, missingExt = false;
+    qs.forEach(function (q, qi) {
+      if (q.type === 'extended') {
+        var ta = root.querySelector('[data-promo-extended="' + qi + '"]');
+        var val = ta ? ta.value : '';
+        extendedAnswers[String(qi)] = val;
+        extendedView[qi] = val;
+        answers.push(null);
+        if (!val.replace(/\s+/g, '')) missingExt = true;
+        return;
+      }
+      total++;
+      var picked = root.querySelector('input[name="pq-' + g.id + '-' + qi + '"]:checked');
+      if (!picked) { missing = true; answers.push(false); return; }
+      var oi = parseInt(picked.value, 10);
+      choiceAnswers[String(qi)] = oi;
+      var ok = oi === q.correct_index;
+      if (ok) score++;
+      answers.push(ok);
+    });
+    var msg = root.querySelector('[data-training-msg="' + id + '"]');
+    if (missing) { if (msg) msg.textContent = 'Answer every scenario question, then turn it in.'; return; }
+    if (missingExt) { if (msg) msg.textContent = 'Write an answer for every written question \u2014 there is no length limit, and a person reads every word.'; return; }
+    var pct = total ? Math.round(100 * score / total) : 0;
+    var passed = pct >= TRAINING_PASS_PCT;
+    var mine = trainingMyProgress(r);
+    if (!mine.promotions || typeof mine.promotions !== 'object') mine.promotions = {};
+    var prev = mine.promotions[g.id] || {};
+    mine.promotions[g.id] = {
+      status: 'submitted',
+      choiceAnswers: choiceAnswers,
+      extendedAnswers: extendedAnswers,
+      score: score, total: total, pct: pct, passed: passed,
+      attempts: (prev.attempts || 0) + 1,
+      submittedAt: new Date().toISOString()
+    };
+    trainingView[id] = { view: 'promo', gateId: g.id, promoResult: { answers: answers, extended: extendedView, score: score, total: total, pct: pct, passed: passed } };
+    trainingSave(id);
+    trainingRender(id);
+  }
+  function trainingFeedbackHtml(r, view) {
+    var head = '<p><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-training-btn="' + esc(r.id) + '" data-training-back="topics"><i class="fas fa-arrow-left"></i> All topics</button></p>' +
+      '<div class="portal-panel-head"><h3 class="portal-h3">Training feedback</h3></div>';
+    if (view.feedbackDone) {
+      return head + '<p class="portal-muted">Thank you \u2014 your feedback is in. It lands in the same feedback list the team reads, with your name on it.</p>' + trainingMsg(r.id);
+    }
+    function box(key, label, hint) {
+      return '<article class="portal-card"><p class="portal-card-title">' + label + '</p>' +
+        '<p class="portal-card-meta">' + hint + '</p>' +
+        '<textarea class="training-longtext" rows="5" data-training-fb="' + key + '" placeholder="Write it here&hellip;"></textarea></article>';
+    }
+    return head +
+      '<p class="portal-muted">You finished the whole training. Three short boxes \u2014 no length limit on any of them.</p>' +
+      box('worked', 'What worked?', 'The parts of the training that actually helped you learn the job.') +
+      box('change', 'What should change?', 'Anything unclear, missing, or in the wrong order.') +
+      box('else', 'Anything else?', 'Whatever is on your mind \u2014 about the training, the Hub, or the job.') +
+      '<p><button class="portal-btn portal-btn-primary" type="button" data-training-btn="' + esc(r.id) + '" data-training-feedback-submit="1">Send feedback</button></p>' +
+      trainingMsg(r.id);
+  }
+  function trainingFeedbackSubmit(id) {
+    var r = cabRowById(id);
+    var root = document.querySelector('[data-training-root="' + id + '"]');
+    if (!r || !root) return;
+    function val(key) { var el = root.querySelector('[data-training-fb="' + key + '"]'); return el ? el.value.replace(/^\s+|\s+$/g, '') : ''; }
+    var worked = val('worked'), change = val('change'), extra = val('else');
+    var msg = root.querySelector('[data-training-msg="' + id + '"]');
+    if (!worked && !change && !extra) { if (msg) msg.textContent = 'Write at least one answer \u2014 even a line helps.'; return; }
+    var comments = '[Tech Hub training feedback]';
+    var sections = [];
+    if (change) sections.push('What should change:\n' + change);
+    if (extra) sections.push('Anything else:\n' + extra);
+    if (sections.length) comments += '\n\n' + sections.join('\n\n');
+    var payload = { customer_name: (state.profile && state.profile.name) || 'Associate', comments: comments };
+    if (worked) payload.experience = worked;
+    if (msg) msg.textContent = 'Sending\u2026';
+    withClient(function (client) {
+      var fail = function () { var m2 = document.querySelector('[data-training-msg="' + id + '"]'); if (m2) m2.textContent = 'Could not send that \u2014 try again.'; };
+      if (!client) { fail(); return; }
+      client.from('feedback').insert(payload).then(function (res) {
+        if (res.error) { fail(); return; }
+        trainingView[id] = { view: 'feedback', feedbackDone: true };
+        trainingRender(id);
+      }).catch(fail);
+    });
+  }
+  var promoReviewNames = null;
+  var promoReviewNamesLoading = false;
+  function promoReviewEnsureNames(id) {
+    if (promoReviewNames || promoReviewNamesLoading) return;
+    promoReviewNamesLoading = true;
+    withClient(function (client) {
+      if (!client) { promoReviewNamesLoading = false; return; }
+      client.from('team_directory').select('id, name').order('name', { ascending: true }).limit(200)
+        .then(function (res) {
+          promoReviewNamesLoading = false;
+          if (res.error || !res.data) return;
+          promoReviewNames = {};
+          res.data.forEach(function (p) { promoReviewNames[p.id] = p.name; });
+          var v = trainingView[id];
+          if (v && v.view === 'promo-review') trainingRender(id);
+        })
+        .catch(function () { promoReviewNamesLoading = false; });
+    });
+  }
+  function trainingAnySubmissions(r) {
+    var cfg = setupCfg(r);
+    var prog = (cfg.progress && typeof cfg.progress === 'object') ? cfg.progress : {};
+    for (var pid in prog) {
+      var pr = prog[pid] && prog[pid].promotions;
+      if (pr && typeof pr === 'object') {
+        for (var gid in pr) { if (pr[gid] && pr[gid].status === 'submitted') return true; }
+      }
+    }
+    return false;
+  }
+  function trainingPromoReviewHtml(r) {
+    var head = '<p><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-training-btn="' + esc(r.id) + '" data-training-back="topics"><i class="fas fa-arrow-left"></i> All topics</button></p>' +
+      '<div class="portal-panel-head"><h3 class="portal-h3">Promotion submissions</h3></div>' +
+      '<p class="portal-muted">Newest first. The scenario part is scored; the written answers are each associate\u2019s own words, shown exactly as written. Reading them is the review \u2014 nothing here changes anybody\u2019s role.</p>';
+    var cfg = setupCfg(r);
+    var prog = (cfg.progress && typeof cfg.progress === 'object') ? cfg.progress : {};
+    var entries = [];
+    Object.keys(prog).forEach(function (pid) {
+      var pr = prog[pid] && prog[pid].promotions;
+      if (!pr || typeof pr !== 'object') return;
+      Object.keys(pr).forEach(function (gid) {
+        var a = pr[gid];
+        if (a && a.status === 'submitted') entries.push({ pid: pid, gid: gid, a: a });
+      });
+    });
+    entries.sort(function (x, y) { return String(y.a.submittedAt || '').localeCompare(String(x.a.submittedAt || '')); });
+    if (!entries.length) return head + '<p class="portal-muted">No promotion tests have been turned in yet.</p>' + trainingMsg(r.id);
+    var cards = entries.map(function (e) {
+      var g = trainingGate(r, e.gid);
+      var name = (promoReviewNames && promoReviewNames[e.pid]) || ('Associate ' + String(e.pid).slice(0, 8));
+      var title = g ? (g.from + ' \u2192 ' + g.to) : e.gid;
+      var a = e.a;
+      var html = '<article class="portal-card"><div class="portal-card-top"><p class="portal-card-title">' + esc(name) + ' \u2014 ' + esc(title) + '</p>' +
+        '<span class="portal-badge ' + (a.passed ? 'portal-st-ready' : 'portal-st-cancelled') + '">' + (a.passed ? 'Scenario passed' : 'Scenario under the mark') + '</span></div>' +
+        '<p class="portal-card-meta">Turned in ' + esc(fmtDateTime(a.submittedAt)) + ' \u00b7 scenario ' + a.pct + '% (' + a.score + ' of ' + a.total + ') \u00b7 attempt ' + (a.attempts || 1) + '</p>';
+      if (g && Array.isArray(g.questions)) {
+        html += g.questions.map(function (q, qi) {
+          if (q.type === 'extended') {
+            var ans = (a.extendedAnswers && a.extendedAnswers[String(qi)]) || '';
+            return '<div style="margin-top:0.7rem;"><p class="portal-card-title" style="font-size:0.95rem;">' + (qi + 1) + '. ' + esc(q.question) + '</p>' +
+              '<p style="white-space:pre-wrap;">' + esc(ans || '(no answer)') + '</p></div>';
+          }
+          var picked = a.choiceAnswers ? a.choiceAnswers[String(qi)] : undefined;
+          var ok = picked === q.correct_index;
+          var pickedTxt = (picked !== undefined && picked !== null && q.options && q.options[picked] !== undefined) ? q.options[picked] : '(no answer)';
+          return '<div style="margin-top:0.7rem;"><p class="portal-card-title" style="font-size:0.95rem;">' + (qi + 1) + '. ' + esc(q.question) + ' ' + (ok ? '\u2713' : '\u2717') + '</p>' +
+            '<p class="portal-card-meta">Their answer: ' + esc(pickedTxt) + (ok ? '' : ' \u00b7 Right answer: ' + esc(q.options[q.correct_index])) + '</p>' +
+            (q.explanation ? '<p class="portal-card-meta">' + esc(q.explanation) + '</p>' : '') + '</div>';
+        }).join('');
+      }
+      return html + '</article>';
+    }).join('');
+    return head + cards + trainingMsg(r.id);
   }
   function renderSetupPanel() {
     var note = $('portal-setup-db-note');
