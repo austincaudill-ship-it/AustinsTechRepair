@@ -3076,6 +3076,24 @@ html[data-theme="dark"] .header { background: #000000; }
 .header .account-btn { border-color: rgba(255, 255, 255, 0.35); color: #ffffff; }
 .header .account-btn:hover { border-color: #ffffff; color: #ffffff; }
 .header .account-btn.logged-in { border-color: var(--teal); color: #ffffff; }
+
+/* ACCOUNT_DROPDOWN_DARK_2026_11_11 (owner, Nov 11, 2026): the header
+   account drop-down — the chevron toggle beside the account button — is
+   styled by the inline account-page block (index.html) with
+   border: 2px solid var(--line) and color: var(--ink). In dark mode
+   --line is #3A2F24, so the outline vanishes against the black header,
+   and in light mode --ink leaves the chevron dark on black. Fix: in
+   dark mode the toggle takes the same light outline the other header
+   controls already use (rgba(255,255,255,0.35)); the chevron stays
+   white in both modes. The drop-down panel itself (.acct-glance) gets
+   the same light border in dark mode — its 1px var(--line) border was
+   #3A2F24 on a #221B14 surface, nearly invisible. Light-mode
+   outlines untouched. Higher
+   specificity (0,2,0)/(0,3,1) beats the inline (0,1,0) rule. */
+.header .acct-glance-toggle,
+.header .acct-glance-toggle i { color: #ffffff; }
+html[data-theme="dark"] .header .acct-glance-toggle { border-color: rgba(255, 255, 255, 0.35); }
+html[data-theme="dark"] .acct-glance { border-color: rgba(255, 255, 255, 0.35); }
 .header .btn-outline { border-color: rgba(255, 255, 255, 0.35); color: #ffffff; }
 @media (min-width: 1024px) and (max-width: 1215px) {
   .header .brand-info { display: flex; }
