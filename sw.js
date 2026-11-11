@@ -94,7 +94,7 @@
 /* SERVICES_SINGLE_DOOR_2026_11_09: bumped to atrg-v49 — Services single-door release (nav, Services flow, Prices folded in, holiday slide, icon set, tile icons). */
 /* LEARNING_SYSTEM_2026_11_09: bumped to atrg-v50 — the site now learns from real completed jobs (service_stats): most-booked repairs rise in a model's booking grid and estimates gain a factual typical-price line. (atrg-v48 was the booking-form escape fix and atrg-v49 the Services single-door release; both published ahead of this one, so the learning layer lands on v50.) */
 /* V82_2026_11_10: bumped to atrg-v85 — Virtual One-on-One (ATRG Connect guest page + ATRG Remote portal console), booking flow with Virtual path and Square first-hour pay step, login-speed pass (Turnstile fresh token at submit, passkey groundwork), header cart bag (mobile) + staff Portal gear restyle, account record match fix (find the guest by account first), app-version visibility (guest_app_versions), Google review links to our own g.page link, home feature rows alternate (desktop) and stack picture-first on phones. */
-const CACHE = "atrg-v107";
+const CACHE = "atrg-v108";
 const CORE = [
   "/",
   "/index.html",
