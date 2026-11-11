@@ -617,6 +617,17 @@
             </button>
           </div>
         </div>
+        <!-- SCAN_TICKET_2026_11_11: queue search + device-label scan. The Scan button opens the camera; a read lands in the search box and a ticket code pops its ticket. -->
+        <div class="portal-queue-search">
+          <input type="search" id="portal-queue-search" placeholder="Search the queue &mdash; name, ticket code, device, or phone" aria-label="Search the Service Queue" autocomplete="off" />
+          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="portal-queue-scan-btn"><i class="fas fa-barcode"></i> Scan</button>
+          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="portal-queue-search-clear" aria-label="Clear the queue search" hidden>&times;</button>
+        </div>
+        <div id="portal-queue-scan-box" hidden>
+          <video id="portal-queue-scan-video" playsinline muted style="width:100%;max-width:420px;border-radius:12px;background:#000"></video>
+          <div class="p2-actions"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="portal-queue-scan-stop">Stop camera</button></div>
+          <p class="portal-muted portal-small" id="portal-queue-scan-status">Point the camera at the barcode or QR code on the device label. If the camera cannot read it, type the ticket code in the search box instead.</p>
+        </div>
         <p class="q-legend"><span><i class="q-dot q-red"></i> Needs diagnostics</span><span><i class="q-dot q-orange"></i> Waiting on parts</span><span><i class="q-dot q-yellow"></i> In progress</span><span><i class="q-dot q-rework"></i> Rework / warranty</span><span><i class="q-dot q-lime"></i> Quality check</span><span><i class="q-dot q-green"></i> Ready</span></p>
         <div id="portal-ticket-list"><p class="portal-muted">Loading tickets&hellip;</p></div>
       </div>
