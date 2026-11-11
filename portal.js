@@ -2605,7 +2605,7 @@ function loadTicketThread(client, ticketId) {
           '<div class="portal-drawer-section tk-acc" data-acc="message">' + tkAccHead('message', 'Message guest') + tkAccBodyOpen('message') +
           '<div class="portal-thread" id="portal-thread"><p class="portal-muted">Loading messages&hellip;</p></div>' +
           '<form id="portal-note-form"><div class="portal-note-row">' +
-          '<textarea id="portal-note-input" placeholder="Add a note to this ticket&hellip;" maxlength="2000" aria-label="Add a note to this ticket"></textarea>' +
+          '<textarea id="portal-note-input" placeholder="Add a note to this ticket&hellip;" aria-label="Add a note to this ticket"></textarea>' +
           '<button class="portal-btn portal-btn-primary" type="submit"><i class="fas fa-paper-plane"></i></button></div>' +
           /* PORTAL_GV_TEXTS_2026_11_02: the texting option. Default
            * ON when the customer has a phone number on file (the
@@ -2637,7 +2637,7 @@ function loadTicketThread(client, ticketId) {
            * dropdown anchors to (it opens upward over the log), and
            * a status line for the save + tag outcome. */
           '<p class="portal-muted portal-small">Type @ and a name to tag a teammate &mdash; they will see the note in Team Chat.</p>' +
-          '<div class="rlog-composer-wrap"><div class="portal-note-row"><textarea id="portal-repair-log-input" placeholder="What is happening with this repair?" maxlength="2000" aria-label="What is happening with this repair?"></textarea>' +
+          '<div class="rlog-composer-wrap"><div class="portal-note-row"><textarea id="portal-repair-log-input" placeholder="What is happening with this repair?" aria-label="What is happening with this repair?"></textarea>' +
           '<button class="portal-btn portal-btn-primary" type="submit">Save update</button></div>' +
           '<div class="rlog-mention-menu" id="portal-repair-log-mentions" hidden></div></div>' +
           '<p class="portal-error" id="portal-repair-log-error" hidden></p>' +
