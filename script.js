@@ -1246,6 +1246,10 @@
         }
       }
     }
+    /* FORM_REACTS_TO_SERVICE_2026_11_11: the intake form's original
+       visit-fee wording, captured the first time One-on-One mode
+       swaps it, so Repair mode restores it word for word. */
+    var srDispatchOrigHtml = null;
     function setOneOnOneMode(on) {
       repairState.mode = on ? 'oneonone' : 'repair';
       /* VIRTUAL_ONE_ON_ONE_2026_11_10: the place pick belongs to the
@@ -1282,6 +1286,45 @@
       if (wa) wa.hidden = on;
       var sig = document.getElementById('sr-signature-block');
       if (sig) sig.hidden = on;
+      /* FORM_REACTS_TO_SERVICE_2026_11_11 (Austin, Nov 11, 2026):
+         the intake form reacts to the service type. A one-on-one
+         visit is not a repair, so the repair questions step aside —
+         Repair needed, Does it power on?, Is it backed up?, Has it
+         been repaired before?, the manufacturer-warranty question,
+         and the serial number (it only speeds up parts ordering).
+         Any answer already typed is cleared, so a repair answer can
+         never ride along on a service ticket. The problem box asks
+         the one-on-one question instead, and the visit-fee
+         acknowledgment names the one fee a lesson carries — $15,
+         never the $35 diagnosis fee. Repair mode restores every
+         field and every word exactly as they were. */
+      [['sr-repair-needed', '.atr-field'], ['sr-power-on', '.atr-row'],
+       ['sr-prior-repair', '.atr-row'], ['sr-serial', '.atr-field']].forEach(function (pair) {
+        var f = document.getElementById(pair[0]);
+        var wrap = f && f.closest ? f.closest(pair[1]) : null;
+        if (wrap) wrap.style.display = on ? 'none' : '';
+      });
+      if (on) {
+        ['sr-repair-needed', 'sr-power-on', 'sr-backed-up', 'sr-prior-repair', 'sr-warranty', 'sr-serial'].forEach(function (id) {
+          var f = document.getElementById(id);
+          if (f) f.value = '';
+        });
+      }
+      var probLbl = document.querySelector('label[for="sr-problem"]');
+      if (probLbl) probLbl.textContent = on ? 'What do you want to get done? *' : 'Describe the problem *';
+      var probTa = document.getElementById('sr-problem');
+      if (probTa) probTa.placeholder = on
+        ? 'Tell us what you want to learn or get done during your visit.'
+        : 'What happened, and what is the device doing (or not doing)?';
+      var dispInput = document.querySelector('input[name="dispatch_acknowledged"]');
+      var dispRow = dispInput && dispInput.closest ? dispInput.closest('label.atr-check') : null;
+      var dispSpan = dispRow ? dispRow.querySelector('span') : null;
+      if (dispSpan) {
+        if (srDispatchOrigHtml === null) srDispatchOrigHtml = dispSpan.innerHTML;
+        dispSpan.innerHTML = on
+          ? 'I understand the <strong>visit fee</strong> &mdash; <strong>$15</strong> &mdash; covers the trip to me, is due at scheduling, and is <strong>non-refundable</strong>. *'
+          : srDispatchOrigHtml;
+      }
       /* BOOKING_OO_TILE_2026_11_09: entering the mode filters the
          topic bubbles to the device picked at step 1. */
       if (on) ooFilterTopics();
