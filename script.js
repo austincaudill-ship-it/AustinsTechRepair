@@ -67,6 +67,15 @@
         if (href && href.charAt(0) === '#') {
           e.preventDefault();
           closeMobileMenu();
+          /* SEARCH_CLOSE_ON_NAV_2026_11_11 (owner bug report, Nov 11,
+             2026): choosing any destination closes the search sheet
+             first. Before this, tapping Services / Store / Support /
+             Home in the thumb bar switched the page UNDERNEATH the
+             open sheet and the sheet stayed up - the guest saw the
+             new item light up behind a sheet that would not move.
+             close() is a no-op when the sheet is already closed, and
+             search results close first in activate() either way. */
+          if (window.atrSiteSearch && window.atrSiteSearch.isOpen()) window.atrSiteSearch.close();
           if (window.location.hash !== href) { window.location.hash = href; }
           switchPage(href);
           var guideId = target.getAttribute('data-guide');
@@ -5033,8 +5042,12 @@ if ("serviceWorker" in navigator) {
        tap-again-to-exit behaviour are removed with their button —
        nothing inside the field closes the panel any more. */
 
-    openBtn.addEventListener('click', openSearch);
-    if (thumbSearchBtn) thumbSearchBtn.addEventListener('click', openSearch);
+    /* SEARCH_CLOSE_ON_NAV_2026_11_11: the Search buttons toggle -
+       tapping Search again while the sheet is open closes it (and
+       resets, like the X). Same sheet, same close as everywhere. */
+    function toggleSearch() { if (isOpen()) closeSearch(); else openSearch(); }
+    openBtn.addEventListener('click', toggleSearch);
+    if (thumbSearchBtn) thumbSearchBtn.addEventListener('click', toggleSearch);
     if (exitBtn) exitBtn.addEventListener('click', closeSearch);
     overlay.addEventListener('click', function (ev) { if (ev.target === overlay) closeSearch(); });
     document.addEventListener('keydown', function (ev) {
