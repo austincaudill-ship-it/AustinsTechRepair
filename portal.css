@@ -1840,3 +1840,8 @@ body:has(#portal-dash-view[hidden]) .portal-thumbbar { display: none; }
  * deliberately uncapped: no maxlength belongs anywhere near them
  * (owner, Nov 11, 2026: we don't do limits here). */
 .training-longtext { width: 100%; min-height: 7rem; }
+/* SANDBOX_TICKET_2026_11_11: the Tech Hub practice ticket — an
+   unmistakable PRACTICE banner and the handoff checklist marks. */
+.practice-banner { background: var(--brand-soft, #FBEADB); border: 2px solid var(--brand, #D9540D); border-radius: 12px; padding: 0.7rem 0.9rem; margin: 0 0 1rem; font-weight: 600; line-height: 1.45; }
+.practice-check { list-style: none; margin: 0.4rem 0 0.8rem; padding: 0; }
+.practice-check li { margin: 0.35rem 0; line-height: 1.45; }
