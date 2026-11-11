@@ -218,6 +218,16 @@ a { color: var(--brand); }
   .hero-slide.is-active { animation: none; }
 }
 
+/* HERO_CONTROLS_ONE_LINE_2026_11_11 (owner, Nov 11, 2026): on phones the
+   carousel controls wrapped onto two rows (back arrow + dots on one line,
+   forward + pause on a second). Keep prev + dots + next + pause on ONE
+   line at phone widths: no wrap, tighter gap, narrower dots. Desktop
+   untouched — it already fits on one line. */
+@media (max-width: 480px) {
+  .hero-controls { flex-wrap: nowrap; gap: .5rem; }
+  .hero-dot { width: 22px; }
+}
+
 /* ---------- Trust bar ---------- */
 .trustbar {
   display: flex; flex-wrap: wrap; justify-content: center; gap: 0.8rem 2rem;
