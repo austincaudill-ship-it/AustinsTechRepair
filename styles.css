@@ -3528,3 +3528,33 @@ html:not([data-theme="dark"]) .footer .footer-cf { color: var(--muted); }
    it reads as a row like its neighbors, and keep [hidden] absolute. */
 a.acct-menu-item { text-decoration: none; color: inherit; }
 #emp-dash-link[hidden] { display: none; }
+
+/* ================= SEARCH_FILL_2026_11_11 =================
+   Owner, Nov 11, 2026 (second pass, from his iPad photo): the
+   card read small and sat off to the left — the base sheet caps
+   the panel at 680px and the phone/tablet rules zeroed its auto
+   margins, so on an iPad it hugged the left at part width. His
+   words: the thumb nav stays on the bottom, the keyboard floats
+   on top of it, and the Quick Links and the search sit centered
+   above the keyboard, a little bigger, filling the screen. So
+   at phone and tablet widths the panel now spans the overlay's
+   full width and sits centered — the overlay itself tracks the
+   visual viewport, so the card floats above the keyboard and
+   the keyboard covers neither the card nor, in the sheet's own
+   layer, the thumb bar under it. The Quick Link rows grow with
+   it: taller rows, bigger text, bigger arrows. Desktop keeps
+   the 680px centered card he already approved. */
+@media (max-width: 920px) {
+  .site-search-panel {
+    width: 100%; max-width: none; margin: 0 auto;
+    padding: 1.3rem 1.3rem 0.8rem;
+  }
+  .site-search-quicklinks-title { font-size: 1.05rem; margin-top: 1.1rem; }
+  .site-search-quicklink {
+    font-size: 1.12rem; font-weight: 600;
+    padding-top: 1rem; padding-bottom: 1rem;
+  }
+  .site-search-quicklink .ss-arrow { font-size: 1rem; }
+  .site-search-hint, .site-search-none { font-size: 1.02rem; }
+  .site-search-input { font-size: 1.2rem; }
+}
