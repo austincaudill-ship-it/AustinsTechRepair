@@ -1193,6 +1193,10 @@ span.avatar-disc {
 .training-bar-fill { background: var(--blue, #1050A0); height: 100%; border-radius: 999px; }
 .training-steps { margin: 0.5rem 0 1rem 1.3rem; padding: 0; }
 .training-steps li { margin: 0.5rem 0; line-height: 1.45; }
+/* TRAINING_SLIDES_2026_11_10: picture-guide viewer inside a lesson */
+.training-slides { margin: 0.25rem 0 1rem; }
+.training-slide-img { width: 100%; max-width: 430px; display: block; margin: 0 auto; border-radius: 14px; border: 1px solid var(--line, #E6D9C0); background: #0a1628; }
+.training-slides-nav { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; max-width: 430px; margin: 0.55rem auto 0; }
 
 /* ================= PORTAL_VISUAL_CLEANUP_2026_11_06 =================
  * (Austin, Nov 6, 2026): "I want to make sure there's no floating
