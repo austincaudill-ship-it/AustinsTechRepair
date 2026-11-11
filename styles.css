@@ -3336,7 +3336,7 @@ html[data-theme="dark"] .site-search-mic.is-listening { color: var(--gold); }
 html:not([data-theme="dark"]) .footer .footer-fineprint { border-top-color: var(--line); }
 .footer .footer-fineprint .footer-disclaimer { border-top: none; padding-top: 0; margin-bottom: 0.9rem; }
 .footer .footer-fineprint .footer-disclaimer:last-child { margin-bottom: 0; }
-.footer .footer-cf { display: flex; align-items: center; justify-content: flex-start; flex-wrap: wrap; gap: 0.35rem 0.6rem; margin-top: 1.4rem; text-align: left; font-size: 0.72rem; line-height: 1.5; color: #8d7d66; }
+.footer .footer-cf { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 0.35rem 0.6rem; margin-top: 1.4rem; text-align: center; font-size: 0.72rem; line-height: 1.5; color: #8d7d66; }
 html:not([data-theme="dark"]) .footer .footer-cf { color: var(--muted); }
 .footer .footer-cf .cf-badge-img { height: 26px; width: auto; margin-left: 0; border-radius: 5px; vertical-align: middle; }
 
