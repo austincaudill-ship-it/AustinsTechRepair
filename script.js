@@ -4728,6 +4728,7 @@ if ("serviceWorker" in navigator) {
     var input = document.getElementById('site-search-input');
     var resultsBox = document.getElementById('site-search-results');
     var exitBtn = document.getElementById('site-search-exit');
+    var clearBtn = document.getElementById('site-search-clear');
     var thumbSearchBtn = document.getElementById('bottom-search-toggle');
     var searchBar = overlay.querySelector('.site-search-bar');
     if (!openBtn || !overlay || !input || !resultsBox) return;
@@ -5080,6 +5081,7 @@ if ("serviceWorker" in navigator) {
        (Before this release the query survived close and reopen.) */
     function resetSearch() {
       input.value = '';
+      if (clearBtn) clearBtn.hidden = true;
       render('');
     }
     function openSearch() {
@@ -5088,6 +5090,12 @@ if ("serviceWorker" in navigator) {
       lockScroll();
       watchSearchViewport(true);
       render(input.value);
+      /* SEARCH_CENTER_2026_11_11 (owner, Nov 11, 2026): focus the
+         field inside the tap itself, so the keyboard pops as the
+         sheet opens — a delayed focus alone does not raise the
+         keyboard on iPhone/iPad. The delayed retry stays for
+         browsers that drop the first attempt. */
+      try { input.focus(); } catch (e) {}
       setTimeout(function () { try { input.focus(); } catch (e) {} }, 30);
     }
     function closeSearch() {
@@ -5116,7 +5124,20 @@ if ("serviceWorker" in navigator) {
     document.addEventListener('keydown', function (ev) {
       if (isOpen() && (ev.key === 'Escape' || ev.keyCode === 27)) closeSearch();
     });
-    input.addEventListener('input', function () { render(input.value); });
+    input.addEventListener('input', function () {
+      render(input.value);
+      if (clearBtn) clearBtn.hidden = !input.value;
+    });
+    /* SEARCH_CENTER_2026_11_11 (owner's drawing, Nov 11, 2026):
+       the in-field X clears the typed text ONLY — the sheet stays
+       open and the field keeps focus, so the guest can type the
+       next try at once. The circled X up top closes the sheet. */
+    if (clearBtn) clearBtn.addEventListener('click', function () {
+      input.value = '';
+      render('');
+      clearBtn.hidden = true;
+      try { input.focus(); } catch (e) {}
+    });
     input.addEventListener('keydown', function (ev) {
       if (ev.key === 'Enter' && input.value.trim()) {
         var first = resultsBox.querySelector('.site-search-item');
@@ -6172,6 +6193,28 @@ if ("serviceWorker" in navigator) {
         for (var i = 0; i < tiles.length; i++) {
           if (tiles[i].getAttribute('data-raw') === sel.repair) { tiles[i].click(); break; }
         }
+      }
+      /* SEARCH_INTO_FLOW_2026_11_11 (owner, Nov 11, 2026): a search
+         pick is a COMPLETE pick — the guest already chose the
+         device, the make, the model, and the repair in search, so
+         the flow must not stop on the Services pane and must not
+         ask make and model again in the form. When the pane's gate
+         says the pick is complete, run the pane's own Continue
+         handoff (the same code the guest's tap runs), then, on the
+         form's model & service step, scroll past the answered
+         pickers to the one question still open — ATR One coverage
+         (the optional notes box rides right above it). An
+         incomplete pick (a computer still needs its year) stays
+         on the pane, exactly as a hand-made pick does. */
+      var cont = document.getElementById('svc-continue');
+      if (cont && !cont.disabled) {
+        cont.click();
+        setTimeout(function () {
+          var wrap = document.getElementById('bk-atrone-wrap');
+          if (wrap && !wrap.hidden) {
+            try { wrap.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
+          }
+        }, 500);
       }
     };
   }
