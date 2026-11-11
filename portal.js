@@ -13484,6 +13484,12 @@ function loadTicketThread(client, ticketId) {
     var blurb = blurbEl ? blurbEl.value.trim() : '';
     if (!name) { if (msg) msg.textContent = 'Give the app a name.'; return; }
     if (!url) { if (msg) msg.textContent = 'Add the link to the maker\u2019s own page.'; return; }
+    /* REMOTE_APPS_REQUESTS_2026_11_11 (Austin, Nov 11, 2026): below
+     * Admin, an added app is an ask, not a save \u2014 it goes to
+     * Requests automatically (remoteAppsRequest, below) and never
+     * touches the toolbox list. Admin and above keep the direct
+     * save that follows, unchanged. */
+    if (!isAdminOrAbove()) { remoteAppsRequest(name, url, blurb, msg); return; }
     var apps = remoteAppsList();
     apps.push({ name: name, url: url, blurb: blurb });
     var btn = $('portal-virtual-app-add'); if (btn) btn.disabled = true;
@@ -13493,6 +13499,56 @@ function loadTicketThread(client, ticketId) {
         nameEl.value = ''; urlEl.value = ''; if (blurbEl) blurbEl.value = '';
         if (msg) msg.textContent = 'Added. It is in the toolbox now.';
       }
+    });
+  }
+  /* REMOTE_APPS_REQUESTS_2026_11_11: a below-Admin app ask rides
+   * the Requests queue's own write path \u2014 the same public.
+   * tech_requests insert the Requests form performs (kind, item,
+   * qty, note, requested_by stamped with the signed-in associate's
+   * email; the queue defaults the status to New), and the link is
+   * then set on the row's item_url the same way the Requests form
+   * attaches a link after saving. Kind 'Tools' is the queue's own
+   * kind for a tool ask. The toolbox list is never written here:
+   * no portal_setup_items call exists on this path. */
+  function remoteAppsRequest(name, url, blurb, msg) {
+    var btn = $('portal-virtual-app-add');
+    var nameEl = $('portal-virtual-app-name'), urlEl = $('portal-virtual-app-url'), blurbEl = $('portal-virtual-app-blurb');
+    if (btn) btn.disabled = true;
+    withClient(function (client) {
+      if (!client) { if (btn) btn.disabled = false; if (msg) msg.textContent = 'Could not reach the database. Try again.'; return; }
+      var row = {
+        kind: 'Tools',
+        item: 'Tool request: ' + name + ' \u2014 ' + url,
+        qty: 1,
+        note: blurb || null,
+        requested_by: (state.user && state.user.email) ? state.user.email : null
+      };
+      client.from('tech_requests').insert(row).select().then(function (res) {
+        if (res.error) {
+          if (btn) btn.disabled = false;
+          var emsg = String(res.error.message || '');
+          if (/check/i.test(emsg) && /kind/i.test(emsg)) {
+            if (msg) msg.textContent = 'That kind of request needs a database step first \u2014 nothing was sent.';
+          } else if (msg) {
+            msg.textContent = 'Could not send that to Requests. Try again.';
+          }
+          return;
+        }
+        var saved = res.data && res.data[0];
+        function finish() {
+          if (btn) btn.disabled = false;
+          if (nameEl) nameEl.value = ''; if (urlEl) urlEl.value = ''; if (blurbEl) blurbEl.value = '';
+          if (msg) msg.textContent = 'Sent to Requests \u2014 an admin will take a look.';
+        }
+        if (!saved || !saved.id) { finish(); return; }
+        /* Best-effort, exactly like the Requests form's link
+         * attach: the ask itself is already saved either way. */
+        client.from('tech_requests').update({ item_url: url }).eq('id', saved.id)
+          .then(function () { finish(); }).catch(function () { finish(); });
+      }).catch(function () {
+        if (btn) btn.disabled = false;
+        if (msg) msg.textContent = 'Could not send that to Requests. Try again.';
+      });
     });
   }
   function remoteAppsDelete(idx, btnEl) {
