@@ -974,9 +974,9 @@
               <input type="text" id="portal-virtual-device" placeholder="e.g. Dell laptop, Windows">
             </div>
             <p><button class="portal-btn portal-btn-primary" type="button" id="portal-virtual-create"><i class="fas fa-key"></i> Make a session code</button></p>
-            <!-- CONNECT_LINKS_2026_11_11 (owner, Nov 11, 2026): ATRG Remote links to TeamViewer; ATRG Connect links to QuickSupport. This button opens TeamViewer for the associate on this device. Target is the TeamViewer web client (web.teamviewer.com) — no verified iOS app-opening URL exists for the installed TeamViewer app (teamviewer10: is a Windows-desktop-only scheme); see v120 REPORT.md. -->
-            <p><a class="portal-btn portal-btn-outline" href="https://web.teamviewer.com" target="_blank" rel="noopener"><i class="fas fa-display"></i> Open TeamViewer</a></p>
-            <p class="portal-small portal-muted">Opens TeamViewer in your browser &mdash; sign in, then enter the guest&rsquo;s QuickSupport code to connect.</p>
+            <!-- CONNECT_LINKS_2026_11_11 (owner, Nov 11, 2026): ATRG Remote links to TeamViewer; ATRG Connect links to QuickSupport. This button opens the installed TeamViewer app on the associate's device: start.teamviewer.com is claimed by the full TeamViewer iOS app (apple-app-site-association, appID E3NMZFNA2K.com.teamviewer.rc, paths "*"), so with the app downloaded it auto-opens the app on iPad; without the app it falls back to the QuickSupport page in the browser. See v121 REPORT.md. -->
+            <p><a class="portal-btn portal-btn-outline" href="https://start.teamviewer.com" target="_blank" rel="noopener"><i class="fas fa-display"></i> Open TeamViewer</a></p>
+            <p class="portal-small portal-muted">Opens the TeamViewer app on this device &mdash; sign in, then enter the guest&rsquo;s QuickSupport code to connect. If the app is not on this device, it opens in your browser instead.</p>
             <div id="portal-virtual-code-out" hidden>
               <p class="portal-muted portal-small">Give this code to the guest. It is shown once:</p>
               <p class="virtual-code-big" id="portal-virtual-code"></p>
