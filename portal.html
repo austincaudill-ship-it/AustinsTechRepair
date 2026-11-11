@@ -5775,6 +5775,12 @@
     @media print {
       body.portal-printing > *:not(#portal-print-area) { display: none !important; }
       body.portal-printing #portal-print-area { display: block !important; }
+      /* PRINT_HOLD_2026_11_11: the label page has zero margin, so the
+         browser's own 8px body margin pushed the label past the page
+         and every print carried a second, blank label. Pulling the
+         label area up by that margin keeps it to exactly one page.
+         Receipts keep their page margin and are untouched. */
+      body.portal-printing #portal-print-area.label { margin-top: -8px; }
     }
     .rc { color: #000; font-family: Arial, Helvetica, sans-serif; max-width: 560px; margin: 0 auto; }
     .rc h1 { font-size: 20pt; margin: 0 0 2pt; }
@@ -5804,7 +5810,10 @@
     .rc-terms-head { font-size: 10pt; font-weight: 700; margin: 0 0 4pt; }
     .rc-terms ul { margin: 0; padding-left: 12pt; font-size: 9pt; color: #333; line-height: 1.45; }
     .rc-terms li { margin-bottom: 2pt; }
-    .lbl { width: 2.25in; height: 1.25in; padding: 0.09in 0.1in; box-sizing: border-box; overflow: hidden;
+    /* PRINT_HOLD_2026_11_11: label heights sit a hair UNDER the 1.25in
+       page — at exactly 1.25in the label spilled onto a second, blank
+       label page on every print. */
+    .lbl { width: 2.25in; height: 1.23in; padding: 0.09in 0.1in; box-sizing: border-box; overflow: hidden;
       color: #000; font-family: Arial, Helvetica, sans-serif; }
     .lbl-biz { font-size: 6.5pt; font-weight: 700; letter-spacing: 0.08em; }
     .lbl-part { font-size: 12.5pt; font-weight: 800; line-height: 1.15; margin: 2pt 0; }
@@ -5813,7 +5822,7 @@
        atr-label page as the part label (.lbl above). On thermal
        stock it fills the label; on a regular sheet it prints as
        one small bordered label at the top-left. */
-    .dlbl { width: 2.25in; height: 1.25in; padding: 0.07in 0.09in; box-sizing: border-box; overflow: hidden;
+    .dlbl { width: 2.25in; height: 1.23in; padding: 0.07in 0.09in; box-sizing: border-box; overflow: hidden;
       color: #000; font-family: Arial, Helvetica, sans-serif; border: 1pt solid #000; background: #fff; }
     .dlbl-biz { font-size: 6.5pt; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
     .dlbl-flex { display: flex; gap: 5pt; align-items: flex-start; margin-top: 1pt; }
