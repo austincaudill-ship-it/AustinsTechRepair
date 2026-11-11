@@ -2507,6 +2507,11 @@ function loadTicketThread(client, ticketId) {
            * Same markup, same ids, same by-id wiring — only
            * the seat moved. */
 '<div class="portal-drawer-section p2-actions"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-receipt-btn"><i class="fas fa-receipt"></i> Print receipt</button>' +
+          /* DEVICE_LABEL_2026_11_11: Print device label sits beside
+           * Print receipt — one tap prints the device's tracking
+           * label (guest, device, ticket code, barcode, scan QR).
+           * printDeviceLabel is wired in wireTicketActions. */
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-device-label-btn"><i class="fas fa-barcode"></i> Print device label</button>' +
           /* PORTAL_RECEIPT_TOP_2026_11_03: the receipt actions live
            * together at the top of the ticket, beside Print receipt —
            * Generate / Download / Email moved up here out of Charges
@@ -5877,6 +5882,277 @@ function loadTicketThread(client, ticketId) {
     }).catch(function () { fail('Couldn\u2019t prepare the ' + spec.lower + ' \u2014 try again.'); });
   }
 
+
+  /* DEVICE_LABEL_2026_11_11 (Austin, Nov 11, 2026): "Print device
+   * label" in the ticket drawer's action row. One label per ticket,
+   * sized for the same 2.25in x 1.25in stock as the part labels and
+   * printed through the same printArea 'label' page. The label
+   * carries the guest's name, the device line, the ticket's short
+   * code LARGE (the same Ticket # the receipts print and guests
+   * reference), a Code 128 barcode of that code, and a QR code.
+   * The QR encodes the portal's own scan route for the guest —
+   * portal.html?scan=<customer_id> — because the scan flow routes
+   * by GUEST (routeScanPayload -> routeToScannedCustomer, which
+   * opens the guest and their newest open ticket), never by ticket
+   * number; the barcode is what carries the ticket itself. Both
+   * codes are drawn by the compact generators below, embedded in
+   * this file on purpose: no library or CDN is involved, so the
+   * label prints the same on a weak phone hotspot as anywhere. */
+  var DL_C128_WIDTHS = '212222 222122 222221 121223 121322 131222 122213 122312 132212 221213 221312 231212 112232 122132 122231 113222 123122 123221 223211 221132 221231 213212 223112 312131 311222 321122 321221 312212 322112 322211 212123 212321 232121 111323 131123 131321 112313 132113 132311 211313 231113 231311 112133 112331 132131 113123 113321 133121 313121 211331 231131 213113 213311 213131 311123 311321 331121 312113 312311 332111 314111 221411 431111 111224 111422 121124 121421 141122 141221 112214 112412 122114 122411 142112 142211 241211 221114 413111 241112 134111 111242 121142 121241 114212 124112 124211 411212 421112 421211 212141 214121 412121 111143 111341 131141 114113 114311 411113 411311 113141 114131 311141 411131 211412 211214 211232 2331112'.split(' ');
+  function dlCode128Svg(text) {
+    var codes = [104], sum = 104, i, v;
+    for (i = 0; i < text.length; i++) {
+      v = text.charCodeAt(i) - 32;
+      if (v < 0 || v > 94) v = 0;
+      codes.push(v); sum += v * (i + 1);
+    }
+    codes.push(sum % 103); codes.push(106);
+    var mods = 20, rects = '', x = 10;
+    codes.forEach(function (code) {
+      var w = DL_C128_WIDTHS[code];
+      for (var j = 0; j < w.length; j++) {
+        var n = w.charCodeAt(j) - 48;
+        if (j % 2 === 0) rects += '<rect x="' + x + '" y="0" width="' + n + '" height="10"/>';
+        x += n; mods += n;
+      }
+    });
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + mods + ' 10" preserveAspectRatio="none" fill="#000" role="img" aria-label="Ticket barcode">' + rects + '</svg>';
+  }
+
+  /* Compact QR generator: byte mode, error level M, versions 1-6
+   * (up to 106 bytes — the scan URL with a full customer id is 88). */
+  var DL_QR_DATA = [0, 16, 28, 44, 64, 86, 108];
+  var DL_QR_ECC = [0, 10, 16, 26, 18, 24, 16];
+  var DL_QR_BLOCKS = [null, [16], [28], [44], [32, 32], [43, 43], [27, 27, 27, 27]];
+  var DL_QR_ALIGN = [null, [], [6, 18], [6, 22], [6, 26], [6, 30], [6, 34]];
+  var DL_QR_REM = [0, 0, 7, 7, 7, 7, 7];
+  var DL_GF_EXP = [], DL_GF_LOG = [];
+  (function () {
+    var x = 1;
+    for (var i = 0; i < 255; i++) { DL_GF_EXP[i] = x; DL_GF_LOG[x] = i; x <<= 1; if (x & 0x100) x ^= 0x11D; }
+  })();
+  function dlGfMul(a, b) { return a && b ? DL_GF_EXP[(DL_GF_LOG[a] + DL_GF_LOG[b]) % 255] : 0; }
+  function dlRsDivisor(degree) {
+    var result = [], i;
+    for (i = 0; i < degree - 1; i++) result.push(0);
+    result.push(1);
+    var root = 1;
+    for (i = 0; i < degree; i++) {
+      for (var j = 0; j < result.length; j++) {
+        result[j] = dlGfMul(result[j], root);
+        if (j + 1 < result.length) result[j] ^= result[j + 1];
+      }
+      root = dlGfMul(root, 0x02);
+    }
+    return result;
+  }
+  function dlRsRemainder(data, divisor) {
+    var result = divisor.map(function () { return 0; });
+    data.forEach(function (b) {
+      var factor = b ^ result.shift();
+      result.push(0);
+      divisor.forEach(function (coef, i) { result[i] ^= dlGfMul(coef, factor); });
+    });
+    return result;
+  }
+  function dlQrMatrix(text) {
+    var bytes = [], i, j;
+    for (i = 0; i < text.length; i++) {
+      var ch = text.charCodeAt(i);
+      if (ch > 255) return null;
+      bytes.push(ch);
+    }
+    var ver = 0;
+    for (var v = 1; v <= 6; v++) { if (bytes.length <= DL_QR_DATA[v] - 2) { ver = v; break; } }
+    if (!ver) return null;
+    var total = DL_QR_DATA[ver], size = ver * 4 + 17;
+    var bits = [];
+    function pushBits(val, len) { for (var k = len - 1; k >= 0; k--) bits.push((val >>> k) & 1); }
+    pushBits(0x4, 4); pushBits(bytes.length, 8);
+    bytes.forEach(function (b) { pushBits(b, 8); });
+    var cap = total * 8, term = Math.min(4, cap - bits.length);
+    for (i = 0; i < term; i++) bits.push(0);
+    while (bits.length % 8) bits.push(0);
+    var pads = [0xEC, 0x11], pi = 0;
+    while (bits.length < cap) { pushBits(pads[pi % 2], 8); pi++; }
+    var dataCw = [];
+    for (i = 0; i < bits.length; i += 8) {
+      var cw = 0;
+      for (j = 0; j < 8; j++) cw = (cw << 1) | bits[i + j];
+      dataCw.push(cw);
+    }
+    var blocks = DL_QR_BLOCKS[ver], eccLen = DL_QR_ECC[ver], div = dlRsDivisor(eccLen);
+    var dataBlocks = [], eccBlocks = [], off = 0;
+    blocks.forEach(function (n) {
+      var d = dataCw.slice(off, off + n);
+      off += n;
+      dataBlocks.push(d); eccBlocks.push(dlRsRemainder(d, div));
+    });
+    var finalBits = [];
+    function pushCw(val) { for (var k = 7; k >= 0; k--) finalBits.push((val >>> k) & 1); }
+    var maxLen = Math.max.apply(null, blocks);
+    for (i = 0; i < maxLen; i++) dataBlocks.forEach(function (d) { if (i < d.length) pushCw(d[i]); });
+    for (i = 0; i < eccLen; i++) eccBlocks.forEach(function (e) { pushCw(e[i]); });
+    for (i = 0; i < DL_QR_REM[ver]; i++) finalBits.push(0);
+
+    var m = [], fn = [];
+    for (i = 0; i < size; i++) {
+      m.push([]); fn.push([]);
+      for (j = 0; j < size; j++) { m[i].push(0); fn[i].push(false); }
+    }
+    function setFn(x, y, val) { if (x >= 0 && x < size && y >= 0 && y < size) { m[y][x] = val ? 1 : 0; fn[y][x] = true; } }
+    function reserve(x, y) { if (x >= 0 && x < size && y >= 0 && y < size) fn[y][x] = true; }
+    for (i = 0; i < size; i++) { setFn(6, i, i % 2 === 0); setFn(i, 6, i % 2 === 0); }
+    function drawFinder(x0, y0) {
+      for (var dy = -1; dy <= 7; dy++) for (var dx = -1; dx <= 7; dx++) {
+        var xx = x0 + dx, yy = y0 + dy;
+        if (xx < 0 || xx >= size || yy < 0 || yy >= size) continue;
+        var core = dx >= 0 && dx <= 6 && dy >= 0 && dy <= 6 &&
+          (dx === 0 || dx === 6 || dy === 0 || dy === 6 || (dx >= 2 && dx <= 4 && dy >= 2 && dy <= 4));
+        setFn(xx, yy, core);
+      }
+    }
+    drawFinder(0, 0); drawFinder(size - 7, 0); drawFinder(0, size - 7);
+    var ap = DL_QR_ALIGN[ver];
+    if (ap.length) {
+      var first = ap[0], last = ap[ap.length - 1];
+      ap.forEach(function (ax) { ap.forEach(function (ay) {
+        if ((ax === first && ay === first) || (ax === first && ay === last) || (ax === last && ay === first)) return;
+        for (var dy = -2; dy <= 2; dy++) for (var dx = -2; dx <= 2; dx++)
+          setFn(ax + dx, ay + dy, Math.max(Math.abs(dx), Math.abs(dy)) !== 1);
+      }); });
+    }
+    for (i = 0; i <= 8; i++) { if (i !== 6) { reserve(8, i); reserve(i, 8); } }
+    for (i = 0; i < 8; i++) reserve(size - 1 - i, 8);
+    for (i = 8; i < 15; i++) reserve(8, size - 15 + i);
+    setFn(8, size - 8, true);
+    var bitIdx = 0;
+    for (var right = size - 1; right >= 1; right -= 2) {
+      if (right === 6) right = 5;
+      var upward = ((right + 1) & 2) === 0;
+      for (var vert = 0; vert < size; vert++) {
+        for (j = 0; j < 2; j++) {
+          var xx2 = right - j, yy2 = upward ? size - 1 - vert : vert;
+          if (!fn[yy2][xx2]) { m[yy2][xx2] = bitIdx < finalBits.length ? finalBits[bitIdx] : 0; bitIdx++; }
+        }
+      }
+    }
+    var MASKS = [
+      function (x, y) { return (x + y) % 2 === 0; },
+      function (x, y) { return y % 2 === 0; },
+      function (x, y) { return x % 3 === 0; },
+      function (x, y) { return (x + y) % 3 === 0; },
+      function (x, y) { return (Math.floor(y / 2) + Math.floor(x / 3)) % 2 === 0; },
+      function (x, y) { return (x * y) % 2 + (x * y) % 3 === 0; },
+      function (x, y) { return ((x * y) % 2 + (x * y) % 3) % 2 === 0; },
+      function (x, y) { return ((x + y) % 2 + (x * y) % 3) % 2 === 0; }
+    ];
+    function drawFormat(mat, mask) {
+      var data = mask, rem = data, k;
+      for (k = 0; k < 10; k++) rem = (rem << 1) ^ ((rem >>> 9) * 0x537);
+      var fbits = ((data << 10) | rem) ^ 0x5412;
+      function get(k2) { return (fbits >>> k2) & 1; }
+      for (k = 0; k <= 5; k++) mat[k][8] = get(k);
+      mat[7][8] = get(6); mat[8][8] = get(7); mat[8][7] = get(8);
+      for (k = 9; k < 15; k++) mat[8][14 - k] = get(k);
+      for (k = 0; k < 8; k++) mat[8][size - 1 - k] = get(k);
+      for (k = 8; k < 15; k++) mat[size - 15 + k][8] = get(k);
+      mat[size - 8][8] = 1;
+    }
+    function penalty(mat) {
+      var score = 0, x, y, k;
+      function runPenalty(arr) {
+        var s = 0, color = arr[0], len = 1;
+        for (var q = 1; q < arr.length; q++) {
+          if (arr[q] === color) len++;
+          else { if (len >= 5) s += len - 2; color = arr[q]; len = 1; }
+        }
+        if (len >= 5) s += len - 2;
+        return s;
+      }
+      for (y = 0; y < size; y++) {
+        score += runPenalty(mat[y]);
+        var col = [];
+        for (x = 0; x < size; x++) col.push(mat[x][y]);
+        score += runPenalty(col);
+      }
+      for (y = 0; y + 1 < size; y++) for (x = 0; x + 1 < size; x++)
+        if (mat[y][x] === mat[y][x + 1] && mat[y][x] === mat[y + 1][x] && mat[y][x] === mat[y + 1][x + 1]) score += 3;
+      function finderLike(s) {
+        var s2 = '0000' + s + '0000', n = 0;
+        ['10111010000', '00001011101'].forEach(function (pat) {
+          var idx = s2.indexOf(pat);
+          while (idx !== -1) { n++; idx = s2.indexOf(pat, idx + 1); }
+        });
+        return n;
+      }
+      for (y = 0; y < size; y++) {
+        score += 40 * finderLike(mat[y].join(''));
+        var colS = '';
+        for (x = 0; x < size; x++) colS += mat[x][y];
+        score += 40 * finderLike(colS);
+      }
+      var dark = 0;
+      for (y = 0; y < size; y++) for (x = 0; x < size; x++) dark += mat[y][x];
+      var tot = size * size;
+      k = Math.ceil(Math.abs(dark * 20 - tot * 10) / tot) - 1;
+      if (k > 0) score += k * 10;
+      return score;
+    }
+    var best = null, bestScore = Infinity;
+    for (var mask = 0; mask < 8; mask++) {
+      var cand = m.map(function (row) { return row.slice(); });
+      for (var yy = 0; yy < size; yy++) for (var xx3 = 0; xx3 < size; xx3++)
+        if (!fn[yy][xx3] && MASKS[mask](xx3, yy)) cand[yy][xx3] ^= 1;
+      drawFormat(cand, mask);
+      var sc = penalty(cand);
+      if (sc < bestScore) { bestScore = sc; best = cand; }
+    }
+    return { size: size, version: ver, modules: best };
+  }
+  function dlDrawQr(canvas, text) {
+    var qr = dlQrMatrix(text);
+    if (!qr) return false;
+    var scale = Math.max(3, Math.floor(340 / (qr.size + 8)));
+    var dim = (qr.size + 8) * scale;
+    canvas.width = dim; canvas.height = dim;
+    var ctx = canvas.getContext && canvas.getContext('2d');
+    if (!ctx) return false;
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, dim, dim);
+    ctx.fillStyle = '#000';
+    for (var y = 0; y < qr.size; y++) for (var x = 0; x < qr.size; x++)
+      if (qr.modules[y][x]) ctx.fillRect((x + 4) * scale, (y + 4) * scale, scale, scale);
+    return true;
+  }
+  function deviceLabelQrPayload(t) {
+    return t.customer_id
+      ? 'https://austinstechrepairgroup.com/portal.html?scan=' + t.customer_id
+      : 'https://austinstechrepairgroup.com/portal.html';
+  }
+  function composeDeviceLabelHtml(t) {
+    var code = shortCode(t);
+    return '<div class="dlbl">' +
+      '<div class="dlbl-biz">Austin&rsquo;s Tech Repair Group</div>' +
+      '<div class="dlbl-flex"><div class="dlbl-text">' +
+      '<div class="dlbl-guest">' + esc(t.customer_name || '') + '</div>' +
+      '<div class="dlbl-device">' + esc(deviceLabel(t)) + '</div>' +
+      '<div class="dlbl-ticket">#' + esc(code) + '</div>' +
+      '<div class="dlbl-barcode">' + dlCode128Svg(code) + '</div>' +
+      '</div><canvas class="dlbl-qr" id="dlbl-qr-canvas" width="294" height="294"></canvas></div></div>';
+  }
+  function printDeviceLabel(t) {
+    printArea(composeDeviceLabelHtml(t), 'label');
+    var cv = document.getElementById('dlbl-qr-canvas');
+    if (cv) dlDrawQr(cv, deviceLabelQrPayload(t));
+  }
+  window.atrDeviceLabel = {
+    print: printDeviceLabel,
+    compose: composeDeviceLabelHtml,
+    payload: deviceLabelQrPayload,
+    qrMatrix: dlQrMatrix,
+    code128Svg: dlCode128Svg
+  };
+
   function printPartLabel(t, p) {
     var partUrl = 'https://austinstechrepairgroup.com/portal.html?part=' + p.id;
     var html = '<div class="lbl"><div class="lbl-flex"><div class="lbl-text">' +
@@ -5897,6 +6173,10 @@ function loadTicketThread(client, ticketId) {
   function wireTicketActions(client, t) {
     var receiptBtn = $('p2-receipt-btn');
     if (receiptBtn) receiptBtn.addEventListener('click', function () { printReceipt(client, t); });
+
+    /* DEVICE_LABEL_2026_11_11: Print device label wiring. */
+    var devLabelBtn = $('p2-device-label-btn');
+    if (devLabelBtn) devLabelBtn.addEventListener('click', function () { printDeviceLabel(t); });
 
     /* PORTAL_TICKET_DRAWER_2026_11_02: Generate receipt lives in
      * the Charges section; it files the receipt into Documents
