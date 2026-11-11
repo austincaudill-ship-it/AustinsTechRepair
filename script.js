@@ -6230,6 +6230,16 @@ document.addEventListener('click', function (e) {
      string changes when the owner approves final text. */
   var WAIVER_VERSION = 'v1-draft-2026-11-10';
   var lastCode = '';
+  /* PAY_WALL_2026_11_11: what the last good code check brought back —
+     the basis (member vs code session) and, for a code session, the
+     ticket the pay wall charges. */
+  var lastBasis = '';
+  var lastTicket = null;
+  var paywallEl = document.getElementById('voo-paywall');
+  var payConsent = document.getElementById('voo-pay-consent');
+  var payBtn = document.getElementById('voo-pay-btn');
+  var payMsg = document.getElementById('voo-pay-msg');
+  var SQUARE_CHECKOUT_URL = SUPABASE_URL + '/functions/v1/square-ticket-checkout';
   var consent = document.getElementById('voo-consent');
   var codeEl = document.getElementById('voo-code');
   var startBtn = document.getElementById('voo-start');
@@ -6302,8 +6312,23 @@ document.addEventListener('click', function (e) {
       if (j.ok) {
         showMsg('');
         lastCode = code;
+        lastBasis = j.basis || '';
+        lastTicket = (j.ticket_id && j.email) ? { id: j.ticket_id, email: j.email, name: j.name || '' } : null;
         if (nopathEl) nopathEl.hidden = true;
         if (nextEl) nextEl.hidden = false;
+        /* PAY_WALL_2026_11_11: a code guest with a ticket to charge
+           pays to connect BEFORE the waiver — the waiver block waits
+           until the pay step is done. A member (their key is the
+           basis) or a session with no ticket behind it goes straight
+           to the waiver, exactly as before. */
+        var wv0 = document.getElementById('voo-waiver');
+        if (lastTicket) {
+          if (paywallEl) paywallEl.hidden = false;
+          if (wv0) wv0.hidden = true;
+        } else {
+          if (paywallEl) paywallEl.hidden = true;
+          if (wv0) wv0.hidden = false;
+        }
         /* The code is good — but the session does NOT start yet.
            WAIVER 2 of 2 (owner's consent law, Nov 10, 2026): the
            screen-sharing waiver below comes first, and the hand-off
@@ -6377,6 +6402,56 @@ document.addEventListener('click', function (e) {
     });
   })();
 
+  /* PAY_WALL_2026_11_11 wiring: the consent box arms the Pay button.
+     Tapping Pay records the booking waiver against the ticket
+     (fire-and-forget — the same record the booking-time pay step
+     used to write), then asks square-ticket-checkout for this
+     ticket's first-hour session under the guest's own sign-in; the
+     function's own guard matches the booking email to the account.
+     Square opens in a new tab, the pay wall steps aside, and the
+     waiver below is revealed so the guest can finish connecting.
+     The associate confirms the payment in Square before the session
+     starts — the same trust pattern the booking step used. A
+     signed-out guest is told plainly to sign in first. */
+  (function wirePaywall() {
+    if (!paywallEl || !payConsent || !payBtn) return;
+    payConsent.addEventListener('change', function () { payBtn.disabled = !payConsent.checked; });
+    payBtn.addEventListener('click', function () {
+      if (!lastTicket) return;
+      payBtn.disabled = true;
+      if (payMsg) { payMsg.textContent = 'Opening Square…'; payMsg.hidden = false; }
+      try { callFn({ action: 'waiver', kind: 'booking', ticket_id: lastTicket.id, email: lastTicket.email, version: WAIVER_VERSION }, function () {}); } catch (e) { /* best-effort record */ }
+      bearer(function (token) {
+        if (!token || token === SUPABASE_ANON_KEY) {
+          if (payMsg) payMsg.textContent = 'To pay the $25, sign in first (or make your free account) with the same email you booked with, then tap Pay again.';
+          payBtn.disabled = false;
+          return;
+        }
+        fetch(SQUARE_CHECKOUT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'apikey': SUPABASE_ANON_KEY },
+          body: JSON.stringify({ mode: 'virtual-first-hour', ticket_id: lastTicket.id, email: lastTicket.email, name: lastTicket.name })
+        }).then(function (r) { return r.json().catch(function () { return null; }); })
+          .then(function (j) {
+            if (j && j.ok && j.url) {
+              window.open(j.url, '_blank', 'noopener');
+              if (payMsg) payMsg.textContent = 'Square is open in a new tab. Once the $25 is paid, agree to the waiver below and start your session.';
+              paywallEl.hidden = true;
+              var wv = document.getElementById('voo-waiver');
+              if (wv) { wv.hidden = false; try { wv.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {} }
+            } else {
+              if (payMsg) payMsg.textContent = (j && j.error) ? j.error : 'The payment step is not connected yet. Tell your associate — they will get you connected.';
+              payBtn.disabled = false;
+            }
+          })
+          .catch(function () {
+            if (payMsg) payMsg.textContent = 'The payment step is not connected yet. Tell your associate — they will get you connected.';
+            payBtn.disabled = false;
+          });
+      });
+    });
+  })();
+
   /* The End control (owner's guest-side rule, Nov 10, 2026): our
      own button in our own page. It resets the whole gate — code
      cleared, waivers and consent unchecked, checked-in blocks
@@ -6392,6 +6467,14 @@ document.addEventListener('click', function (e) {
       if (fin) fin.hidden = true;
       var wv = document.getElementById('voo-waiver');
       if (wv) wv.hidden = false;
+      /* PAY_WALL_2026_11_11: the pay wall resets with everything
+         else — hidden, consent cleared, button disarmed. */
+      lastTicket = null;
+      lastBasis = '';
+      if (paywallEl) paywallEl.hidden = true;
+      if (payConsent) payConsent.checked = false;
+      if (payBtn) payBtn.disabled = true;
+      if (payMsg) { payMsg.textContent = ''; payMsg.hidden = true; }
       ['voo-wv-screen', 'voo-wv-mic', 'voo-wv-camera'].forEach(function (id) {
         var box = document.getElementById(id);
         if (box) box.checked = false;
