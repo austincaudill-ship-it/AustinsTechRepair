@@ -4954,21 +4954,39 @@ function loadTicketThread(client, ticketId) {
     });
   }
 
+  /* PRINT_HOLD_2026_11_11 (Austin, Nov 11, 2026): the device label
+   * printed BLANK on his iPad. The label itself was fine — this
+   * function wiped the print area 400 ms after window.print(), and
+   * on iPhone/iPad the print preview is made after print() returns,
+   * so the preview could snapshot an emptied page. Now the content
+   * stays in place until the browser says printing is done
+   * (afterprint), with a 60-second safety cleanup if that event
+   * never comes. The screen never shows the area either way (the
+   * print stylesheet keeps it display:none off paper), so holding
+   * it is invisible in the Hub. Same fix covers receipts, estimates,
+   * invoices, and the part labels — they all ride this function. */
+  var printCleanupTimer = null;
   function printArea(html, cls) {
     var area = $('portal-print-area');
     if (!area) { window.print(); return; }
+    if (printCleanupTimer) { clearTimeout(printCleanupTimer); printCleanupTimer = null; }
     area.className = cls;
     area.innerHTML = html;
     area.hidden = false;
     document.body.classList.add('portal-printing');
-    setTimeout(function () {
-      window.print();
-      setTimeout(function () {
-        document.body.classList.remove('portal-printing');
-        area.hidden = true;
-        area.innerHTML = '';
-      }, 400);
-    }, 60);
+    var done = false;
+    function finish() {
+      if (done) return;
+      done = true;
+      window.removeEventListener('afterprint', finish);
+      if (printCleanupTimer) { clearTimeout(printCleanupTimer); printCleanupTimer = null; }
+      document.body.classList.remove('portal-printing');
+      area.hidden = true;
+      area.innerHTML = '';
+    }
+    window.addEventListener('afterprint', finish);
+    printCleanupTimer = setTimeout(finish, 60000);
+    setTimeout(function () { window.print(); }, 60);
   }
 
   /* PORTAL_SIGNED_RECEIPT_2026_10_30 (Austin, Oct 30, 2026): the
