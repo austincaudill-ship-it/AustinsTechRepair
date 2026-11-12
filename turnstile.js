@@ -36,6 +36,18 @@
  * slow connection. This staged file is the copy to publish; the
  * test harness prefers it over the skeleton helper when present.
  *
+ * TURNSTILE_AUTOFILL_2026_11_12 (v130b): the owner found it live —
+ * typing the password works, autofill does not. Autofill fills
+ * email + password at once and Log In is tapped before the widget
+ * (which only mounted when the account box opened) has rendered or
+ * produced a token. So the login + signup widgets now mount on
+ * page load, a short autofill watch (field-value poll + the
+ * :-webkit-autofill animation signal + focus) makes sure they are
+ * mounted whenever the fields fill without typing, and freshToken()
+ * waits out the first challenge instead of resetting it — it only
+ * restarts a check that already went stale, or one that is still
+ * token-less after a long wait (a dead render).
+ *
  * Style: ES5, matching the rest of the site.
  * ===================================================================== */
 (function () {
@@ -96,11 +108,13 @@
    * start out hidden (signup tab, account views, chat panel): explicit
    * rendering still works, and mount() is simply called again when the
    * view is shown — later calls are no-ops once a widget exists. */
+  var mountCalls = 0; /* diagnostic counter (v130b): mount() calls, incl. no-ops */
   function mount(el) {
     if (!el) return null;
+    mountCalls++;
     var entry = entryFor(el);
     if (entry) return entry;
-    entry = { el: el, id: null, token: '', issuedAt: 0 };
+    entry = { el: el, id: null, token: '', issuedAt: 0, hadToken: false, renderedAt: 0 };
     widgets.push(entry);
     el.style.margin = '.75rem 0';
     var tries = 0;
@@ -114,10 +128,11 @@
                full-size widget's live states could cover the bottom
                thumb bar on phones; compact keeps it one short row. */
             size: 'compact',
-            callback: function (tok) { entry.token = String(tok || ''); entry.issuedAt = Date.now(); },
+            callback: function (tok) { entry.token = String(tok || ''); entry.issuedAt = Date.now(); entry.hadToken = true; },
             'expired-callback': function () { entry.token = ''; entry.issuedAt = 0; },
             'error-callback': function () { entry.token = ''; entry.issuedAt = 0; }
           });
+          entry.renderedAt = Date.now();
         } catch (e) { /* a later mount() call retries */ }
         return;
       }
@@ -154,25 +169,35 @@
    * gone stale (over ~4 minutes old) — when the guest taps Log In.
    * The old flow stopped right there with "complete the human check
    * and log in again", a dead end on exactly the connections that
-   * need the most patience. freshToken: a fresh token comes back at
-   * once; otherwise the widget is mounted if needed and reset ONCE
-   * so a fresh check runs, then this polls until a fresh token
-   * lands or the wait runs out (~25s), and calls back with the
-   * token or ''. Only the login form uses it — every other form
+   * need the most patience.
+   * TURNSTILE_AUTOFILL_2026_11_12 (v130b): freshToken waits out the
+   * FIRST challenge — it must NOT reset a widget that is still on
+   * its first "Verifying…" just because no token exists yet (that
+   * is exactly the autofill case: fields filled at once, Log In
+   * tapped at once). Reset happens only when a token already existed
+   * and went stale/expired, or when the widget is still token-less
+   * after a long wait (STUCK_MS — a dead render, e.g. mounted while
+   * hidden), in which case it is reset ONCE and the wait continues.
+   * A fresh token comes back at once; otherwise this polls until a
+   * fresh token lands or the wait runs out (~45s), and calls back
+   * with the token or ''. Login AND signup use it — every other form
    * keeps the gate()/token() behavior it already had. */
   function freshToken(el, cb, opts) {
     opts = opts || {};
     var waitMs = opts.waitMs || 45000; // TURNSTILE_SLOWFIX_2026_11_10 (v86): 25s -> 45s so a slow human check gets time to finish before the login gives up
+    var STUCK_MS = 20000; // first challenge gets this long before a token-less widget counts as stuck
     var entry = mount(el);
     if (!entry) { cb(''); return; }
-    var tok = token(el);
-    if (tok) { cb(tok); return; }
-    reset(el); // stale or empty: one fresh check, then wait for it
+    if (entry.token && (Date.now() - entry.issuedAt <= TOKEN_MAX_AGE_MS)) { cb(entry.token); return; }
+    var resetDone = false;
+    if (entry.token || entry.hadToken) { reset(el); resetDone = true; } // stale/expired token: one fresh check
     var started = Date.now();
     (function poll() {
       var t = token(el);
       if (t) { cb(t); return; }
-      if (Date.now() - started >= waitMs) { cb(''); return; }
+      var elapsed = Date.now() - started;
+      if (!resetDone && !entry.hadToken && elapsed >= STUCK_MS) { reset(el); resetDone = true; }
+      if (elapsed >= waitMs) { cb(''); return; }
       setTimeout(poll, 250);
     })();
   }
@@ -240,6 +265,74 @@
     });
   }
 
+  /* TURNSTILE_AUTOFILL_2026_11_12 (v130b): mount on page load +
+   * autofill watch. The old flow mounted the auth widgets only when
+   * the account box opened, so an autofilled sign-in raced the
+   * mount: both fields filled at once, Log In tapped at once, no
+   * token yet. Mounting at load gives the Managed check its whole
+   * run-up before anyone taps anything, however fast they fill.
+   * Autofill fires no input/change event, so the watch does not
+   * rely on them: (a) a 500ms poll of the four auth fields for a
+   * non-empty value, for up to 30s or until both widgets render;
+   * (b) the :-webkit-autofill CSS-animation signal (a 0.01s
+   * animation on autofilled inputs; the animationstart event
+   * carries it); (c) focus on any auth field. All three just call
+   * mount(), which is idempotent — the worst case is a no-op.
+   * Managed mode stays automatic: no checkbox, no puzzle, no click
+   * step. The v89 load-help box is untouched. */
+  var AUTH_WIDGET_IDS = ['ts-login', 'ts-signup'];
+  var AUTH_FIELD_IDS = ['authx-login-email', 'authx-login-password', 'authx-signup-email', 'authx-signup-password'];
+  function mountAuthWidgets() {
+    for (var i = 0; i < AUTH_WIDGET_IDS.length; i++) {
+      var w = document.getElementById(AUTH_WIDGET_IDS[i]);
+      if (w) mount(w);
+    }
+  }
+  function authWidgetsRendered() {
+    for (var i = 0; i < AUTH_WIDGET_IDS.length; i++) {
+      var w = document.getElementById(AUTH_WIDGET_IDS[i]);
+      var en = w ? entryFor(w) : null;
+      if (!en || en.id === null) return false;
+    }
+    return true;
+  }
+  function autofillWatchTick() {
+    for (var i = 0; i < AUTH_FIELD_IDS.length; i++) {
+      var f = document.getElementById(AUTH_FIELD_IDS[i]);
+      if (f && f.value) { mountAuthWidgets(); return; }
+    }
+  }
+  function installAutofillSignal() {
+    try {
+      var st = document.createElement('style');
+      st.setAttribute('data-atr-turnstile', 'autofill-signal');
+      st.textContent = '@keyframes atrAutofill { from { opacity: 1; } to { opacity: 1; } } input:-webkit-autofill { animation-name: atrAutofill; animation-duration: 0.01s; }';
+      document.head.appendChild(st);
+    } catch (e) {}
+  }
+  function startAutofillWatch() {
+    installAutofillSignal();
+    mountAuthWidgets();
+    var ticks = 0;
+    var poll = setInterval(function () {
+      ticks++;
+      autofillWatchTick();
+      if (authWidgetsRendered() || ticks >= 60) clearInterval(poll);
+    }, 500);
+  }
+  document.addEventListener('animationstart', function (e) {
+    if (e && e.animationName === 'atrAutofill') mountAuthWidgets();
+  }, true);
+  document.addEventListener('focus', function (e) {
+    var t = e && e.target;
+    if (t && t.id && AUTH_FIELD_IDS.indexOf(t.id) !== -1) mountAuthWidgets();
+  }, true);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startAutofillWatch);
+  } else {
+    startAutofillWatch();
+  }
+
   window.atrTurnstile = {
     SITE_KEY: SITE_KEY,
     mount: mount,
@@ -247,6 +340,7 @@
     reset: reset,
     verify: verify,
     gate: gate,
-    freshToken: freshToken
+    freshToken: freshToken,
+    mountCalls: function () { return mountCalls; }
   };
 })();

@@ -177,7 +177,12 @@
          carry a year pick (make, model, then year — like searching
          for a vehicle; parts are listed by year). '' until picked;
          'Not sure' is a real pick, so nobody is trapped. */
-      year: '' };
+      year: '',
+      /* SERVICES_TWO_PAGES_2026_11_12 (owner, Nov 12, 2026):
+         business bookings — business is set when the guest enters
+         from Business Services (data-business) or picks Business /
+         Other; ein is the scheduling gate, shown on the ticket. */
+      business: false, ein: '' };
 
     /* REPAIR_FLOW_UPDATE_2026_11_05: persistent summary panel + step-2 gating.
        The summary is clean text rows only — NO device picture. Austin ruled
@@ -223,6 +228,12 @@
          exact wording it always had. */
       if (repairState.mode !== 'oneonone') rfSet('rf-sum-estimate', repairState.issues.length ? (repairState.priceExact !== null && repairState.priceExact !== undefined ? (repairState.issues.length > 1 ? repairState.priceRange : 'Starting at ' + repairState.priceRange) : (repairState.issues.length > 1 && repairState.priceRange && (repairState.priceRange.charAt(0) === '$' || repairState.priceRange.indexOf('From ') === 0) ? repairState.priceRange : 'Confirmed up front')) : '\u2014');
       rfSet('rf-sum-atrone', repairState.atrOne ? ('Covered by ATR One: ' + repairState.atrOne) : 'Not answered yet');
+      /* SERVICES_TWO_PAGES_2026_11_12: the business EIN rides the
+         summary when this is a business booking; the row stays
+         hidden for guest bookings. */
+      var einRow = document.getElementById('rf-sum-ein-row');
+      if (einRow) einRow.hidden = !repairState.business;
+      rfSet('rf-sum-ein', repairState.ein || '\u2014');
       var loc = [rfVal('sr-address-street'), rfVal('sr-address-line2'), rfVal('sr-address-city'), rfVal('sr-address-state'), rfVal('sr-address-zip')].filter(Boolean).join(', ');
       rfSet('rf-sum-location', loc || '\u2014');
       var when = [rfVal('sr-visit-date'), rfVal('sr-arrival-window')].filter(Boolean).join(' \u00b7 ');
@@ -239,15 +250,37 @@
       /* COMPUTER_YEAR_2026_11_10: a computer in repair mode needs
          its year pick before Continue ('Not sure' counts). */
       var yearOk = repairState.mode === 'oneonone' || repairState.device !== 'Computer' || !!repairState.year;
+      /* SERVICES_TWO_PAGES_2026_11_12: a business booking cannot
+         continue without its EIN — the scheduling gate, repair and
+         one-on-one alike. */
+      var einOk = !repairState.business || !!repairState.ein;
       var ready = repairState.mode === 'oneonone'
-        ? !!(repairState.device && repairState.brand && modelOk && repairState.serviceKind && repairState.ooHours && repairState.atrOne && repairState.ooPlace)
-        : !!(repairState.device && repairState.brand && modelOk && yearOk && repairState.issues.length && repairState.atrOne);
+        ? !!(repairState.device && repairState.brand && modelOk && repairState.serviceKind && repairState.ooHours && repairState.atrOne && repairState.ooPlace && einOk)
+        : !!(repairState.device && repairState.brand && modelOk && yearOk && repairState.issues.length && repairState.atrOne && einOk);
       cont.disabled = !ready;
     }
     function rfShowFlowExtras() {
       var d = document.getElementById('bk-describe-wrap'); if (d) d.hidden = false;
       var a = document.getElementById('bk-atrone-wrap'); if (a) a.hidden = false;
     }
+    /* SERVICES_TWO_PAGES_2026_11_12 (owner, Nov 12, 2026): flip a
+       booking into business mode — the EIN field appears on step 2
+       and the Continue gate requires it. Sticky for the session:
+       a Business Services entry stays business even if the guest
+       changes device; leaving business mode clears the EIN. */
+    function rfSetBusiness(on) {
+      repairState.business = !!on;
+      if (!on) {
+        repairState.ein = '';
+        var e = document.getElementById('bk-ein');
+        if (e) e.value = '';
+      }
+      var w = document.getElementById('bk-ein-wrap');
+      if (w) w.hidden = !repairState.business;
+      try { sessionStorage.setItem('atr-business', repairState.business ? '1' : ''); } catch (err) {}
+      rfRenderSummary(); rfGate();
+    }
+    window.atrSetBusiness = rfSetBusiness;
     var DEFAULT_ESTIMATE_NOTE = '';
 
     /* SITE_FORM_BACKNAV_2026_10_30: step-navigation state. currentRepairStep
@@ -353,6 +386,11 @@
       document.querySelectorAll('[data-device]').forEach(function (btn) {
         btn.addEventListener('click', function () {
           repairState.device = btn.getAttribute('data-device');
+          /* SERVICES_TWO_PAGES_2026_11_12: picking Business / Other
+             is a business booking — the EIN gate comes on. Any other
+             device leaves the business flag where the entry point
+             put it (a Business Services entry stays business). */
+          if (repairState.device === 'Business / Other') rfSetBusiness(true);
           repairState.brand = '';
           repairState.model = '';
           repairState.year = '';
@@ -409,6 +447,15 @@
           if (r.checked) { repairState.atrOne = r.value; rfRenderSummary(); rfGate(); refreshDispatchAck(); }
         });
       });
+      /* SERVICES_TWO_PAGES_2026_11_12: the business EIN field — the
+         typed EIN is the gate; the summary and Continue follow it. */
+      var bkEin = document.getElementById('bk-ein');
+      if (bkEin) {
+        bkEin.addEventListener('input', function () {
+          repairState.ein = bkEin.value.trim();
+          rfRenderSummary(); rfGate();
+        });
+      }
       var srAtrOneSel = document.getElementById('sr-atr-one');
       if (srAtrOneSel) {
         srAtrOneSel.addEventListener('change', function () {
@@ -1024,7 +1071,13 @@
            and the pay step. */
         ooPlace: repairState.ooPlace || '',
         ooHours: repairState.ooHours || 0,
-        ooTime: (repairState.ooHours || 0) * 25
+        ooTime: (repairState.ooHours || 0) * 25,
+        /* SERVICES_TWO_PAGES_2026_11_12: the business flag and EIN
+           ride the same contract — atr-forms.js files the EIN on
+           the ticket's issue text (no ein column exists, none is
+           invented, mirroring the ATR One pattern). */
+        business: !!repairState.business,
+        ein: repairState.ein || ''
       };
       var g = window.atrGuidedSelection;
       var typeSel = document.getElementById('sr-device-type');
@@ -1476,9 +1529,85 @@
         try { sessionStorage.setItem('atr-wizard-device', device); } catch (err) {}
         rfPresetDevice(device);
       });
+      /* SERVICES_TWO_PAGES_2026_11_12 (owner, Nov 12, 2026): the
+         search-carry driver, replacing the retired Services flow.
+         Drives the booking form directly — device tile, make, model,
+         then the repair tile — using the same synchronous select
+         chain the old flow's driveFormPicker used (a change event on
+         each select fills the next one). A computer needs its year
+         before the tiles render, so a search-carried computer lands
+         on 'Not sure' — a real pick the guest can change. Any step
+         that cannot be matched stops quietly, leaving the guest at
+         the furthest step reached instead of a broken pick. */
+      window.atrBkOpenRepair = function (sel) {
+        if (!sel || !sel.type) return;
+        /* The price book keys the watch type 'Smartwatch'; the
+           device tiles call it 'Smart Watch' — the old driver
+           mapped it the same way. */
+        var device = sel.type === 'Smartwatch' ? 'Smart Watch' : sel.type;
+        var devBtn = document.querySelector('#step-device [data-device="' + device + '"]');
+        if (!devBtn) return;
+        devBtn.click();
+        var brandSel = document.getElementById('bk-brand-select');
+        if (brandSel && sel.brand) {
+          var hasBrand = false;
+          for (var i = 0; i < brandSel.options.length; i++) { if (brandSel.options[i].value === sel.brand) { hasBrand = true; break; } }
+          if (!hasBrand) return;
+          brandSel.value = sel.brand;
+          brandSel.dispatchEvent(new Event('change', { bubbles: true }));
+        } else { return; }
+        var modelSel = document.getElementById('bk-model-select');
+        if (modelSel && sel.model) {
+          var hasModel = false;
+          for (var j = 0; j < modelSel.options.length; j++) { if (modelSel.options[j].value === sel.model) { hasModel = true; break; } }
+          if (!hasModel) return;
+          modelSel.value = sel.model;
+          modelSel.dispatchEvent(new Event('change', { bubbles: true }));
+        } else { return; }
+        var yearWrap = document.getElementById('bk-year-wrap');
+        if (yearWrap && !yearWrap.hidden) {
+          var ySel = document.getElementById('bk-year-select');
+          if (ySel) {
+            ySel.value = 'Not sure';
+            ySel.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+        }
+        if (!sel.repair) return;
+        var friendly = BK_FRIENDLY[sel.repair] || sel.repair;
+        var tiles = document.querySelectorAll('#bk-repair-grid .option-btn');
+        for (var k = 0; k < tiles.length; k++) {
+          var strong = tiles[k].querySelector('strong');
+          if (strong && strong.textContent === friendly) { tiles[k].click(); break; }
+        }
+        /* SEARCH_INTO_FLOW_2026_11_11: a search pick is a COMPLETE
+           pick — scroll past the answered pickers to the one
+           question still open, ATR One coverage. */
+        setTimeout(function () {
+          var wrap = document.getElementById('bk-atrone-wrap');
+          if (wrap && !wrap.hidden) {
+            try { wrap.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
+          }
+        }, 400);
+      };
+      /* SERVICES_TWO_PAGES_2026_11_12: Business Services entry —
+         any [data-business] tap (business card, business bottom
+         button) marks the session business before the tap's own
+         navigation or device pick runs. */
+      document.addEventListener('click', function (e) {
+        var t = e.target && e.target.closest ? e.target.closest('[data-business]') : null;
+        if (!t) return;
+        try { sessionStorage.setItem('atr-business', '1'); } catch (err) {}
+        rfSetBusiness(true);
+      });
       try {
         var presetDevice = sessionStorage.getItem('atr-wizard-device');
         if (presetDevice) { sessionStorage.removeItem('atr-wizard-device'); rfPresetDevice(presetDevice); }
+      } catch (err) {}
+      /* SERVICES_TWO_PAGES_2026_11_12: a business entry that crossed
+         a detail page (card -> detail page -> Start a Service) still
+         lands business — the flag rides sessionStorage. */
+      try {
+        if (sessionStorage.getItem('atr-business') === '1') rfSetBusiness(true);
       } catch (err) {}
     })();
 
@@ -2041,6 +2170,7 @@
       other: { title: 'Other', copy: 'Car charging, charging stations, and the rest of the gear shelf.' },
       refurbished: { title: 'Refurbished phones', special: 'refurbished' },
       featured: { title: 'Featured deals', copy: 'A short list of shop favorites at their regular fair prices.' },
+      cables: { title: 'Cables and Chargers', copy: 'Cables, wall blocks and wireless chargers for your devices.' },
       all: { title: 'Shop all accessories', copy: 'Every accessory in one view.' }
     };
     var SHOP_SPECIAL_HTML = {
@@ -2080,6 +2210,7 @@
       if (shopSpecial) shopSpecial.hidden = true;
       var list = block === 'all' ? PRODUCTS.slice()
         : block === 'featured' ? PRODUCTS.filter(function (p) { return !!p.featured; })
+        : block === 'cables' ? PRODUCTS.filter(function (p) { return /charg/i.test(p.cat || '') || /cable/i.test(p.name || ''); })
         : PRODUCTS.filter(function (p) { return p.block === block; });
       shopShowListing(meta.title, meta.copy);
       renderProductCards(list);
@@ -2395,7 +2526,7 @@
       var addBtn = pdEl('product-detail-add');
       if (addBtn) {
         addBtn.classList.remove('added');
-        addBtn.innerHTML = '<i class="fas fa-plus"></i> Add to cart';
+        addBtn.innerHTML = '<i class="fas fa-plus"></i> Add to bag';
       }
       pdPanel.hidden = false;
       if (pdOverlay) pdOverlay.hidden = false;
@@ -2510,7 +2641,7 @@
       paintCartPointsSummary(lines);
       if (!cartItems) return;
       if (!ids.length) {
-        cartItems.innerHTML = '<p class="cart-empty">Your cart is empty.<br>Add some accessories to get started.</p>';
+        cartItems.innerHTML = '<p class="cart-empty">Your bag is empty.<br>Add some accessories to get started.</p>';
         /* ACCOUNT_FIX_PASS_3_3_2026_11_06: the glance-style panels
            repaint on the empty transition too — this branch used to
            return before renderCartGlance() ran, so emptying the cart
@@ -2765,7 +2896,7 @@
        * whole cart (one stray tap used to remove every item with no
        * undo); renderCart already paints the empty-cart state. */
       if (!Object.keys(getCart()).length) return;
-      if (window.confirm('Remove everything from your cart?')) saveCart({});
+      if (window.confirm('Remove everything from your bag?')) saveCart({});
     });
 
     // Checkout: real payment via the Square checkout function (prices are
@@ -2817,7 +2948,7 @@
         }
         if (ptsItems.length) {
           if (!window.atrPoints || !window.atrPoints.getSession()) {
-            alert('Sign in to pay with points — tap your account at the top of the page and sign in, then check out. Your cart is saved.');
+            alert('Sign in to pay with points — tap your account at the top of the page and sign in, then check out. Your bag is saved.');
             return;
           }
           if (!(total > 0)) return;
@@ -4338,7 +4469,7 @@ if ("serviceWorker" in navigator) {
         if (claim.reason === 'insufficient') {
           return { ok: false, message: 'Your points balance is ' + fmtPts(claim.balance) + ' — not enough for the items you marked (' + fmtPts(total) + ' pts). Nothing was charged. Unmark an item or two and try again.' };
         }
-        return { ok: false, message: 'Your points balance just changed — please review your cart and try again. Nothing was charged.' };
+        return { ok: false, message: 'Your points balance just changed — please review your bag and try again. Nothing was charged.' };
       }
       return recordRedemption({
         customer_id: s.id, kind: 'shop', points_spent: total,
@@ -4775,8 +4906,8 @@ if ("serviceWorker" in navigator) {
     if (!openBtn || !overlay || !input || !resultsBox) return;
 
     var PAGE_NAMES = {
-      home: 'Home', repair: 'Repair', whatwedo: 'Services',
-      about: 'About', shop: 'Store', b2b: 'B2B', 'atr-one': 'ATR One Membership',
+      home: 'Home', repair: 'Repair', whatwedo: 'Guest Services',
+      about: 'About', shop: 'Store', b2b: 'Business Services', 'atr-one': 'ATR One Membership',
       careers: 'Careers', investors: 'Investors', contact: 'Contact',
       warranty: 'Warranty', 'warranty-request': 'Warranty Request',
       privacy: 'Privacy Policy', terms: 'Terms of Service',
@@ -4785,7 +4916,8 @@ if ("serviceWorker" in navigator) {
       tablets: 'Tablets', computers: 'Computers', consoles: 'Game Consoles',
       smartwatches: 'Smartwatches', websites: 'Websites',
       network: 'Network Installs', cabling: 'Internet Cabling',
-      classes: 'One-on-One Classes'
+      classes: 'One-on-One Classes',
+      'questions-answers': 'Service and Repair'
     };
     var GROUP_LABELS = { page: 'Pages', repair: 'Repairs & prices', shop: 'Store items' };
     var GROUP_CAPS = { page: 8, repair: 10, shop: 8 };
@@ -4806,7 +4938,7 @@ if ("serviceWorker" in navigator) {
      * customer-facing name is "Store" (PAGE_NAMES above); "shop" stays
      * behind as a search alias so the old word still finds the page.
      * Internal ids (data-page="shop", section id) are unchanged. */
-    var PAGE_ALIASES = { shop: 'shop', b2b: 'business enterprise pos small business' };
+    var PAGE_ALIASES = { shop: 'shop', b2b: 'business enterprise pos small business', 'questions-answers': 'service and repair questions answers faq warranty coverage track repair status' };
 
     function norm(s) { return String(s == null ? '' : s).toLowerCase(); }
     function fmtPrice(p) { return (p % 1 === 0) ? '$' + p : '$' + p.toFixed(2); }
@@ -4943,12 +5075,19 @@ if ("serviceWorker" in navigator) {
     }
 
     function openRepairResult(e) {
-      /* SERVICES_SINGLE_DOOR_2026_11_09: the Prices lookup is gone —
-         a repair result opens the Services flow on the Services page
-         and drives it to the same pick the lookup used to make. */
-      goToPage('whatwedo');
+      /* SERVICES_TWO_PAGES_2026_11_12 (owner, Nov 12, 2026): the
+         Services flow (#svc-flow) is gone — a repair result now
+         drives the booking form directly (window.atrBkOpenRepair),
+         so the sealed search-carry rule still holds: the pick lands
+         applied on the booking form, never re-asked. The guest lands
+         on the booking form itself (#repair), where the ATR One
+         coverage question waits at step 2. Falls back to the old
+         flow only if the new driver is missing. */
+      goToPage('repair');
       setTimeout(function () {
-        if (window.atrSvcOpenRepair) {
+        if (window.atrBkOpenRepair) {
+          window.atrBkOpenRepair({ type: e.type, brand: e.brand, model: e.model, repair: e.repair });
+        } else if (window.atrSvcOpenRepair) {
           window.atrSvcOpenRepair({ type: e.type, brand: e.brand, model: e.model, repair: e.repair });
         }
       }, 80);

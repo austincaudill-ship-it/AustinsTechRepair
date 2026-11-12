@@ -934,6 +934,10 @@
          in the ticket's issue text, where staff see it on the ticket. */
       if (!atrOneCovered && guided && guided.atrOne) atrOneCovered = guided.atrOne;
       if (atrOneCovered) issue = issue + ' (ATR One covered: ' + atrOneCovered + ')';
+      /* SERVICES_TWO_PAGES_2026_11_12 (owner, Nov 12, 2026): no ein column exists on tickets and none is invented —
+         a business booking's EIN is recorded in the ticket's issue text, where staff see it on the ticket,
+         mirroring the ATR One pattern directly above. */
+      if (guided && guided.ein) issue = issue + ' (Business EIN: ' + guided.ein + ')';
       var ticketId = newTicketId();
 
       var row = {

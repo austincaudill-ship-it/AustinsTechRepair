@@ -141,7 +141,7 @@
            in the header"); the account Cart row stays, and the
            desktop header is unchanged. The count badge reuses the
            shop button's .cart-count pill and stays hidden at zero. -->
-      <button class="cart-bag-btn" id="cart-bag-btn" type="button" aria-label="Open your cart" title="Cart"><i class="fas fa-bag-shopping" aria-hidden="true"></i><span class="cart-count cart-bag-count" id="cart-bag-count" hidden>0</span></button>
+      <button class="cart-bag-btn" id="cart-bag-btn" type="button" aria-label="Open your bag" title="Your bag"><i class="fas fa-bag-shopping" aria-hidden="true"></i><span class="cart-count cart-bag-count" id="cart-bag-count" hidden>0</span></button>
       <!-- NAV_SEARCH_CLEANUP_2026_11_06: site-wide search button, in the header on every layout -->
       <button class="site-search-btn" id="site-search-open" type="button" aria-label="Search the site" title="Search the site"><i class="fas fa-search" aria-hidden="true"></i></button>
       <span class="acct-glance-anchor">
@@ -301,8 +301,9 @@
               </div>
             </div>
             <div class="hero-slide">
-              <h2 class="hero-headline">We bring the repair shop <em>to your door.</em></h2>
+              <h2 class="hero-headline">We come to you, <em>anywhere you want</em>*</h2>
               <p class="hero-sub">Professional mobile repairs for phones, computers, tablets, and game consoles &mdash; done at your home or office, backed by a 1-year warranty.</p>
+              <p class="hero-fineprint">*Within 25 miles &mdash; $15.99 dispatch for guests, $35.99 for business. Over 25 miles is an extra $1 per mile.</p>
               <div class="hero-cta-group">
                 <a class="btn btn-primary btn-lg" href="#whatwedo" data-page="whatwedo"><i class="fas fa-wrench"></i> Start a Service</a>
                 <a class="btn btn-outline btn-lg" href="tel:+19372806243"><i class="fas fa-phone"></i> 937-280-6243</a>
@@ -808,174 +809,43 @@
         <div class="container">
           <div class="section-header center">
             <p class="eyebrow">Services We Offer</p>
-            <h1 class="section-title">Services</h1>
-            <p class="section-copy">Repairs and tech services handled at your home or office &mdash; free estimates, and appointments booked in 2-hour arrival windows.</p>
+            <h1 class="section-title">Guest Services</h1>
+            <p class="section-copy">We come to you. Phones, tablets, computers, and everything else you live on &mdash; repaired at your door, with a written estimate first and a 1-year warranty on parts and labor.</p>
           </div>
-          <!-- SERVICES_SINGLE_DOOR_2026_11_09 (owner, Nov 9, 2026):
-               the Services flow — the single door. Pick Repair or
-               One-on-One, descend device, brand, model, service, and
-               see the free estimate on the spot; Continue hands off
-               to the booking form with the picks pre-applied. The
-               script lives in script.js under the same marker; the
-               catalog below stays where it was. -->
-          <div class="svc-flow" id="svc-flow">
-            <div class="option-grid svc-path-grid" id="svc-path-grid">
-              <button class="option-btn" type="button" data-svc-path="repair"><i class="fas fa-wrench"></i><strong>Repair</strong><span style="font-size:0.78rem; color: var(--brand-deep); font-weight:800;">Fix a device &mdash; see your estimated price on the spot</span></button>
-              <button class="option-btn" type="button" data-svc-path="oneonone"><i class="fas fa-graduation-cap"></i><strong>One-on-One</strong><span style="font-size:0.78rem; color: var(--brand-deep); font-weight:800;">Lessons &amp; help on your device &mdash; $25 an hour</span></button>
-            </div>
-
-            <div id="svc-pane-repair" hidden>
-              <p class="field-label">What kind of device?</p>
-              <div class="option-grid" id="svc-dev-grid">
-                <button class="option-btn" type="button" data-svc-device="Phone"><i class="fas fa-mobile-screen-button"></i> Phone</button>
-                <button class="option-btn" type="button" data-svc-device="Tablet"><i class="fas fa-tablet-screen-button"></i> Tablet</button>
-                <button class="option-btn" type="button" data-svc-device="Computer"><i class="fas fa-laptop"></i> Computer</button>
-                <button class="option-btn" type="button" data-svc-device="Game Console"><i class="fas fa-gamepad"></i> Game Console</button>
-                <button class="option-btn" type="button" data-svc-device="Smart Watch"><i class="fas fa-clock"></i> Smart Watch</button>
-                <button class="option-btn" type="button" data-svc-device="Printers &amp; Peripherals"><i class="fas fa-print"></i> Printers &amp; Peripherals</button>
-                <button class="option-btn" type="button" data-svc-device="Networking"><i class="fas fa-network-wired"></i> Networking</button>
-                <button class="option-btn" type="button" data-svc-device="Business / Other"><i class="fas fa-briefcase"></i> Business / Other</button>
-              </div>
-              <div id="svc-brand-wrap" hidden>
-                <label class="field-label" for="svc-brand-select">Make &mdash; pick your make</label>
-                <select class="form-field" id="svc-brand-select" style="margin-bottom: 1.4rem;">
-                  <option value="">Choose your make&hellip;</option>
-                </select>
-              </div>
-              <div id="svc-model-wrap" hidden>
-                <label class="field-label" for="svc-model-select">Model</label>
-                <select class="form-field" id="svc-model-select" style="margin-bottom: 1.4rem;">
-                  <option value="">Choose your model&hellip;</option>
-                </select>
-              </div>
-              <!-- COMPUTER_YEAR_2026_11_10 (owner, Nov 10, 2026): the Services repair pane's computer path takes the same year pick after the model (SVC_YEARS in script.js). -->
-              <div id="svc-year-wrap" hidden>
-                <label class="field-label" for="svc-year-select">Year</label>
-                <select class="form-field" id="svc-year-select" style="margin-bottom: 1.4rem;">
-                  <option value="">Choose the year&hellip;</option>
-                </select>
-              </div>
-              <div id="svc-grid-wrap" hidden>
-                <p class="field-label">What service does it need?</p>
-                <div class="option-grid" id="svc-grid"></div>
-              </div>
-              <div class="estimate-box" id="svc-estimate" hidden>
-                <p class="label">Your estimated repair price</p>
-                <p class="price" id="svc-est-price"></p>
-                <p class="note" id="svc-est-note"></p>
-              </div>
-              <p class="estimate-disclaimer" id="svc-est-disclaimer" hidden><strong>Estimate only:</strong> the prices shown here are estimates &mdash; not the final repair price. Your exact price is confirmed after diagnostics, and the final price may be smaller or larger than the estimate shown.</p>
-              <button class="btn btn-primary" type="button" id="svc-continue" disabled><i class="fas fa-arrow-right"></i> Continue</button>
-            </div>
-
-            <div id="svc-pane-oo" hidden>
-              <!-- VIRTUAL_ONE_ON_ONE_2026_11_10: the pane asks the same
-                   question first, with the same two answers, and the
-                   pick is driven into the booking form on Continue. -->
-              <p class="field-label">How will we meet?</p>
-              <div class="option-grid bk-place-grid" style="margin-bottom: 1.4rem;">
-                <button class="option-btn" type="button" data-svc-oo-place="inperson"><i class="fas fa-house"></i> In person <span>&mdash; we come to you</span></button>
-                <button class="option-btn" type="button" data-svc-oo-place="virtual"><i class="fas fa-display"></i> Virtual <span>&mdash; on your screen, from anywhere</span></button>
-              </div>
-              <p class="field-label">What kind of device?</p>
-              <div class="option-grid" id="svc-oo-dev-grid">
-                <button class="option-btn" type="button" data-svc-device="Phone"><i class="fas fa-mobile-screen-button"></i> Phone</button>
-                <button class="option-btn" type="button" data-svc-device="Tablet"><i class="fas fa-tablet-screen-button"></i> Tablet</button>
-                <button class="option-btn" type="button" data-svc-device="Computer"><i class="fas fa-laptop"></i> Computer</button>
-                <button class="option-btn" type="button" data-svc-device="Game Console"><i class="fas fa-gamepad"></i> Game Console</button>
-                <button class="option-btn" type="button" data-svc-device="Smart Watch"><i class="fas fa-clock"></i> Smart Watch</button>
-                <button class="option-btn" type="button" data-svc-device="Printers &amp; Peripherals"><i class="fas fa-print"></i> Printers &amp; Peripherals</button>
-                <button class="option-btn" type="button" data-svc-device="Networking"><i class="fas fa-network-wired"></i> Networking</button>
-                <button class="option-btn" type="button" data-svc-device="Business / Other"><i class="fas fa-briefcase"></i> Business / Other</button>
-              </div>
-              <div id="svc-oo-brand-wrap" hidden>
-                <label class="field-label" for="svc-oo-brand-select">Make &mdash; pick your make</label>
-                <select class="form-field" id="svc-oo-brand-select" style="margin-bottom: 1.4rem;">
-                  <option value="">Choose your make&hellip;</option>
-                </select>
-              </div>
-              <div id="svc-oo-model-wrap" hidden>
-                <label class="field-label" for="svc-oo-model-select">Model</label>
-                <select class="form-field" id="svc-oo-model-select" style="margin-bottom: 1.4rem;">
-                  <option value="">Choose your model&hellip;</option>
-                </select>
-              </div>
-              <div id="svc-oo-grid-wrap" hidden>
-                <p class="field-label">What do you want help with?</p>
-                <div class="option-grid" id="svc-oo-grid"></div>
-                <p class="field-label" style="margin-top: 1rem;">How much time?</p>
-                <div class="option-grid bk-hours-grid">
-                  <button class="option-btn" type="button" data-svc-hours="1">1 hour one-on-one <strong>$25</strong></button>
-                  <button class="option-btn" type="button" data-svc-hours="2">2 hour one-on-one <strong>$50</strong></button>
-                </div>
-                <p class="atr-help">If your session runs longer, the extra time is settled at the visit at $25 an hour.</p>
-              </div>
-              <div class="estimate-box" id="svc-oo-summary">
-                <p class="label">Your one-on-one</p>
-                <p class="price" id="svc-oo-price">Pick a time</p>
-                <p class="note" id="svc-oo-lines"></p>
-              </div>
-              <button class="btn btn-primary" type="button" id="svc-oo-continue" data-open-oneonone disabled><i class="fas fa-arrow-right"></i> Continue</button>
-            </div>
-          </div>
-
+          <!-- SERVICES_TWO_PAGES_2026_11_12 (owner, Nov 12, 2026): the Repair / One-on-One selector that used to sit here is gone — it was redundant with the cards below, which open the detail pages and the booking flow. The script.js Services-flow module is inert without #svc-flow (guarded); site search now drives the booking form directly (window.atrBkOpenRepair). -->
           <div class="card-grid">
             <!-- SITE_REAL_PHOTOS_2026_10_30: every photo on this site is Austin's own; AI/stock images removed, icon treatment where no photo of his fits -->
-            <!-- SITE_CARD_PHOTOS_2026_10_30: the last icon tiles are gone — the Websites, Networking, and Classes cards and the Websites / Network / Cabling / Classes page banners carry Austin's photos; the Networking cable tester shot is small (138px), so it is contained on a matching backdrop, never stretched -->
             <a class="service-card" href="#phones" data-page="phones"><img class="service-card-img" src="images/work/phone-repair.jpg" alt="Phone opened for screen repair on a bench" loading="lazy" /><div class="service-icon"><i class="fas fa-mobile-screen"></i></div><h3>Phones</h3><p>Cracked screens, battery swaps, charging ports, cameras, and water damage recovery.</p></a>
             <a class="service-card" href="#tablets" data-page="tablets"><img class="service-card-img" src="images/work/tablet-teardown-real.webp" alt="Tablet opened for repair on a work mat" loading="lazy" /><div class="service-icon"><i class="fas fa-tablet-screen-button"></i></div><h3>Tablets</h3><p>Display replacement, charging port repair, touch issues, and battery service.</p></a>
             <a class="service-card" href="#computers" data-page="computers"><img class="service-card-img" src="images/work/hp-laptop-board.jpg" alt="Laptop computer on a repair bench" loading="lazy" /><div class="service-icon"><i class="fas fa-laptop"></i></div><h3>Computers</h3><p>SSD upgrades, RAM installs, virus cleanup, display repair, and data rescue.</p></a>
             <a class="service-card" href="#consoles" data-page="consoles"><img class="service-card-img" src="images/work/ps4-teardown.jpg" alt="Game console opened for teardown on a bench" loading="lazy" /><div class="service-icon"><i class="fas fa-gamepad"></i></div><h3>Game Consoles</h3><p>HDMI port repair, cooling fans, storage upgrades, and overheating fixes.</p></a>
             <a class="service-card" href="#smartwatches" data-page="smartwatches"><img class="service-card-img" src="images/work/smartwatch-real.webp" alt="Cracked smartwatch on a wrist" loading="lazy" /><div class="service-icon"><i class="fas fa-clock"></i></div><h3>Smartwatches</h3><p>Screen and battery service for smartwatches of all kinds.</p></a>
-            <a class="service-card" href="#websites" data-page="websites"><img class="service-card-img" src="images/values/values-hero-workbench.webp" alt="The workbench where websites are built and handled" loading="lazy" /><div class="service-icon"><i class="fas fa-globe"></i></div><h3>Websites for Businesses</h3><p>A professional website for your business, built and handled for you &mdash; design, setup, and launch, without the agency price tag.</p></a>
-            <a class="service-card" href="#network" data-page="network"><img class="service-card-img svc-media-contain" src="images/work/cable-tester.jpg" alt="Cable tester used to verify network wiring" loading="lazy" /><div class="service-icon"><i class="fas fa-network-wired"></i></div><h3>Networking</h3><p>Routers, switches, and Wi-Fi access points hooked up and configured &mdash; verified working end to end at your home or office.</p></a>
-            <!-- BUSINESS_SETUP_CARD_2026_11_11 (owner, Nov 11, 2026; rates CORRECTED Nov 11, 2026 — v123, supersede all round numbers): business tech setup as its own door — point of sale, Square, cash drawers, and systems, at the guest's business. Scope is the settled ATR One Business agreement wording only. Business rates, exact figures from the owner Nov 11, 2026: business one-on-one $49.99 an hour, in person or virtual; business dispatch $35.99, diagnostics $65.99 (guest: $15 / $35); Business Plus members pay no visit fee (the $35.99 is waived, the $49.99 an hour still applies — NOT waived). Photo: images/work/network-install.webp — a real photo of a finished on-site network install (router, switch, Wi-Fi access point on the shelf); no point-of-sale photo exists in the library, this is the closest real fit (owner's eyes are the verdict); icon treatment kept beside it; links to the booking flow with Business / Other pre-selected, the same data-wizard-device pattern the detail-page Start a Service button uses. No Business Setup detail page exists yet. The booking form does NOT yet charge business rates by tier, and no business Square payment links exist yet — follow-up build. -->
-            <a class="service-card" href="#repair" data-page="repair" data-wizard-device="Business / Other"><img class="service-card-img" src="images/work/network-install.webp" alt="Network installed and cabled at a business — router, switch, and Wi-Fi access point on the shelf" loading="lazy" /><div class="service-icon"><i class="fas fa-cash-register"></i></div><h3>Business Setup</h3><p>We come to your business and set up your tech &mdash; your point of sale, Square, cash drawers, and your systems &mdash; so you can take payments and run the day. We help with the setup; we do not process payments. Business one-on-one is $49.99 an hour, in person or virtual. When we come to your business there is a $35.99 dispatch fee &mdash; $65.99 if your device needs a full diagnosis first. Business Plus members pay no visit fee.</p></a>
-            <a class="service-card" href="#repair" data-page="repair" data-open-oneonone><img class="service-card-img" src="images/values/values-education-code.webp" alt="Learning a repair from the printed guide at the bench" loading="lazy" /><div class="service-icon"><i class="fas fa-graduation-cap"></i></div><h3>One-on-One Classes</h3><p>We teach you at your home or your business &mdash; hands-on lessons on your own phone, tablet, or computer, at your pace, for business owners and consumers alike. One-on-one help is $25 an hour plus the $15 visit fee &mdash; tap to book a one-on-one.</p></a>
+            <a class="service-card" href="#websites" data-page="websites"><img class="service-card-img" src="images/values/values-hero-workbench.webp" alt="The workbench where websites are built and handled" loading="lazy" /><div class="service-icon"><i class="fas fa-globe"></i></div><h3>Websites for Guests</h3><p>A professional website, built and handled for you &mdash; design, setup, and launch, without the agency price tag.</p></a>
+            <a class="service-card" href="#network" data-page="network"><img class="service-card-img svc-media-contain" src="images/work/cable-tester.jpg" alt="Cable tester used to verify network wiring" loading="lazy" /><div class="service-icon"><i class="fas fa-network-wired"></i></div><h3>In-Home Networking</h3><p>Routers, switches, and Wi-Fi access points hooked up and configured &mdash; verified working end to end at your home.</p></a>
+            <a class="service-card" href="#repair" data-page="repair" data-open-oneonone><img class="service-card-img" src="images/values/values-education-code.webp" alt="Learning a repair from the printed guide at the bench" loading="lazy" /><div class="service-icon"><i class="fas fa-graduation-cap"></i></div><h3>One-on-One Guest Classes</h3><p>We teach you at your home &mdash; hands-on lessons on your own phone, tablet, or computer, at your pace.</p></a>
+          </div>
+          <p class="cat-subhead">Why we should fix it</p>
+          <div class="cat-why">
+            <h3>Why we should fix it</h3>
+            <p>Most of what we fix is glued together, with thin cables and a battery that has to be handled right. A rushed home repair can tear a cable, damage a connector, or leave a device that looks fixed but is not. We test the screen, touch, charging, camera, and speakers before we leave, and the repair carries a 1-year warranty on parts we supply and on our labor.</p>
           </div>
         </div>
       </div>
       <div class="section" id="svc-pricing">
         <div class="container">
-          <div class="section-header center">
+          <!-- SERVICES_TWO_PAGES_2026_11_12 (owner, Nov 12, 2026): one combined pricing block, built like the consumer side — dispatch separate from diagnostics, no separate boxes. The old four pricing cards are gone: the hourly custom-repairs card and the "Diagnostics Included" card both contradicted the fee schedule (diagnostics is $35.99, never included free). -->
+          <div class="price-block">
             <p class="eyebrow">Pricing</p>
-            <h2 class="section-title">How pricing works</h2>
-          </div>
-          <div class="pricing-grid">
-            <div class="pricing-card">
-              <h3>Visit Fee</h3>
-              <div class="amount">$15 / $35</div>
-              <p>$15 when your repair is already known. $35 when your device needs a full diagnosis first. One flat fee per job covers the trip to you &mdash; no mileage math, no surprises. Due at booking. Non-refundable.<sup class="fnote">3</sup></p>
-            </div>
-            <div class="pricing-card">
-              <h3>Common Repairs</h3>
-              <div class="amount">Starting at $37</div>
-              <p>Common repairs (screens, batteries, charge ports) have a starting price &mdash; parts and labor included. Pick your device and repair above to see your estimated price.</p>
-            </div>
-            <div class="pricing-card">
-              <h3>Custom Repairs</h3>
-              <div class="amount">Custom quote</div>
-              <p>Custom repairs are $50.50 an hour, plus parts. Don&rsquo;t see your device? We quote you one clear price upfront &mdash; no surprises.</p>
-            </div>
-            <div class="pricing-card">
-              <h3>Diagnostics</h3>
-              <div class="amount">Included</div>
-              <p>Free estimates &mdash; always. And when your device needs a diagnosis, it is covered by the $35 visit fee: even if we have to open your device to find the problem, there&rsquo;s no extra diagnostic fee.<sup class="fnote">3</sup></p>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="section">
-        <div class="container">
-          <div class="cta-band">
-            <h2>Ready to get it fixed?</h2>
-            <p>Start your repair request online in under a minute, or check the price list first &mdash; every estimate is free.</p>
-            <div class="hero-cta-group">
-              <a class="btn btn-cream btn-lg" href="#whatwedo" data-page="whatwedo"><i class="fas fa-wrench"></i> Start a Service</a>
-              <a class="btn btn-ghostlight btn-lg" href="#whatwedo" data-page="whatwedo" data-guide="svc-pricing"><i class="fas fa-tag"></i> See Prices</a>
-              <a class="btn btn-ghostlight btn-lg" href="#repair-or-replace" data-page="repair-or-replace"><i class="fas fa-scale-balanced"></i> Repair or Replace</a>
-              <a class="btn btn-ghostlight btn-lg" href="#help-guides" data-page="help-guides"><i class="fas fa-book-open"></i> Help Guides</a>
-            </div>
+            <h2 class="section-title" style="font-size:1.6rem;">What it costs <span class="price-asterisk" aria-label="See note 3 in the footer">*</span></h2>
+            <p class="lead-line"><strong>Dispatch fee is $15.99.</strong> That is just to get us to your house, and it is non-refundable.</p>
+            <p><strong>Diagnostics $35.99</strong></p>
+            <p><strong>One-on-one is $25 an hour, plus a $15 visit fee.</strong></p>
+            <p>Common repairs starting at $37.99 for phones, $52.99 for tablets, $50.99 for computers, $58.99 for game consoles, $66.99 for smartwatches.</p>
+            <p>Custom repairs are $50 an hour, plus parts.</p>
+            <p class="price-note">Within 25 miles the dispatch fee is as above. Over 25 miles is an extra $1 per mile.</p>
+            <p class="price-note">ATR One Free covers 1 device.</p>
+            <p class="price-note">* See note 3 in the footer below.</p>
+            <a class="btn btn-primary btn-lg" href="#repair" data-page="repair" style="margin-top:.5rem;">Start a Service <i class="fas fa-arrow-right"></i></a>
           </div>
         </div>
       </div>
@@ -1023,6 +893,7 @@
                   <li><span id="rf-sum-repair-label">Service</span><strong id="rf-sum-repair">&mdash;</strong><button type="button" class="rf-change" data-rf-change="2">Change</button></li>
                   <li><span id="rf-sum-estimate-label">Estimate</span><strong id="rf-sum-estimate">&mdash;</strong><button type="button" class="rf-change" data-rf-change="3">Change</button></li>
                   <li><span>ATR One</span><strong id="rf-sum-atrone">Not answered yet</strong><button type="button" class="rf-change" data-rf-change="2">Change</button></li>
+                  <li id="rf-sum-ein-row" hidden><span>Business EIN</span><strong id="rf-sum-ein">&mdash;</strong><button type="button" class="rf-change" data-rf-change="2">Change</button></li>
                   <li><span>Visit &mdash; where</span><strong id="rf-sum-location">&mdash;</strong><button type="button" class="rf-change" data-rf-change="4">Change</button></li>
                   <li><span>Visit &mdash; when</span><strong id="rf-sum-visit">&mdash;</strong><button type="button" class="rf-change" data-rf-change="4">Change</button></li>
                   <li><span>Contact</span><strong id="rf-sum-contact">&mdash;</strong><button type="button" class="rf-change" data-rf-change="4">Change</button></li>
@@ -1150,6 +1021,12 @@
                   <label class="rf-radio"><input type="radio" name="bk-atrone" value="Not sure"><span>Not sure</span></label>
                 </div>
                 <p class="atr-help" style="margin-bottom: 1.2rem;">ATR One is our membership. ATR One Plus (paid) members pay no visit fee on covered devices &mdash; ATR One Free is pay per visit.</p>
+              </div>
+              <!-- SERVICES_TWO_PAGES_2026_11_12 (owner, Nov 12, 2026): business bookings show their EIN at scheduling — the Mobile Sentrix-style gate. The field only appears for business bookings (Business Services page, or the Business / Other device pick); the Continue gate in script.js (rfGate) requires it before the guest can move on, and the EIN rides the ticket's issue text via atrGuidedSelection (atr-forms.js). -->
+              <div id="bk-ein-wrap" hidden>
+                <label class="field-label" for="bk-ein">Business EIN</label>
+                <input class="form-field" id="bk-ein" type="text" inputmode="text" autocomplete="off" placeholder="XX-XXXXXXX" style="margin-bottom: 0.4rem;" />
+                <p class="atr-help" style="margin-bottom: 1.2rem;">Business services are for businesses &mdash; show us your EIN to schedule. We only use it to confirm this is a business booking.</p>
               </div>
               <button class="btn btn-primary" type="button" id="bk-continue" disabled><i class="fas fa-arrow-right"></i> Continue</button>
               <button class="back-btn" type="button" data-back="1" style="margin-top: 1.2rem;"><i class="fas fa-arrow-left"></i> Back</button>
@@ -1887,7 +1764,7 @@
           <div class="section-header center">
             <p class="eyebrow">ATR Shop</p>
             <h2 class="section-title">Accessories &amp; gear</h2>
-            <p class="section-copy">Quality accessories at fair prices &mdash; screen protectors, cases, chargers and cables, delivered to you during your repair visit. Add items to your cart, then check out &mdash; we'll bring everything when we fix your device.</p>
+            <p class="section-copy">Quality accessories at fair prices &mdash; screen protectors, cases, chargers and cables, delivered to you during your repair visit. Add items to your bag, then check out &mdash; we'll bring everything when we fix your device.</p>
           </div>
 
 
@@ -1897,13 +1774,13 @@
                  shop now opens on the category tiles below; the cart
                  control stays in the toolbar. -->
             <span class="cart-glance-anchor">
-              <button class="btn btn-primary" id="cart-open-btn" aria-haspopup="true" aria-expanded="false"><i class="fas fa-shopping-cart"></i> Cart <span class="cart-count" id="cart-count">0</span></button>
+              <button class="btn btn-primary" id="cart-open-btn" aria-haspopup="true" aria-expanded="false"><i class="fas fa-bag-shopping"></i> Your bag <span class="cart-count" id="cart-count">0</span></button>
               <div class="cart-glance" id="cart-glance" hidden>
                 <div class="cart-glance-items" id="cart-glance-items"></div>
                 <div class="cart-glance-total" id="cart-glance-total-row"><span id="cart-glance-total-label">Subtotal</span><strong id="cart-glance-total">$0.00</strong></div>
-                <p class="cart-glance-empty" id="cart-glance-empty" hidden>Your cart is empty.<br><a href="#shop" data-page="shop">Browse the shop</a></p>
+                <p class="cart-glance-empty" id="cart-glance-empty" hidden>Your bag is empty.<br><a href="#shop" data-page="shop">Browse the shop</a></p>
                 <div class="cart-glance-actions" id="cart-glance-actions">
-                  <button type="button" class="cart-glance-view" id="cart-glance-view">View cart</button>
+                  <button type="button" class="cart-glance-view" id="cart-glance-view">View bag</button>
                   <button type="button" class="cart-glance-checkout" id="cart-glance-checkout">Checkout <i class="fas fa-arrow-right" aria-hidden="true"></i></button>
                 </div>
               </div>
@@ -1945,6 +1822,7 @@
             <button class="shop-category-tile" type="button" data-shop-block="other"><i class="fas fa-shapes" aria-hidden="true"></i><span class="shop-tile-title">Other</span><span class="shop-tile-copy">Car charging, stations and more</span></button>
             <button class="shop-category-tile" type="button" data-shop-block="refurbished"><i class="fas fa-mobile-screen" aria-hidden="true"></i><span class="shop-tile-title">Refurbished phones</span><span class="shop-tile-copy">Tested pre-owned phones — ask what&rsquo;s in stock</span></button>
             <button class="shop-category-tile" type="button" data-shop-block="featured"><i class="fas fa-tags" aria-hidden="true"></i><span class="shop-tile-title">Featured deals</span><span class="shop-tile-copy">A short list of shop favorites</span></button>
+            <button class="shop-category-tile" type="button" data-shop-block="cables"><i class="fas fa-plug-circle-bolt" aria-hidden="true"></i><span class="shop-tile-title">Cables and Chargers</span><span class="shop-tile-copy">Cables, wall blocks and wireless chargers</span></button>
             <button class="shop-category-tile shop-tile-all" type="button" data-shop-block="all"><i class="fas fa-border-all" aria-hidden="true"></i><span class="shop-tile-title">Shop all accessories</span><span class="shop-tile-copy">Every accessory in one view</span></button>
           </div>
 
@@ -1973,9 +1851,9 @@
 
     <!-- CART DRAWER -->
     <div class="cart-overlay" id="cart-overlay" hidden></div>
-    <aside class="cart-drawer" id="cart-drawer" aria-label="Shopping cart" hidden>
+    <aside class="cart-drawer" id="cart-drawer" aria-label="Your bag" hidden>
       <div class="cart-header">
-        <h3><i class="fas fa-shopping-cart"></i> Your Cart</h3>
+        <h3><i class="fas fa-bag-shopping"></i> Your bag</h3>
         <button class="cart-close" id="cart-close" aria-label="Close cart"><i class="fas fa-times"></i></button>
       </div>
       <div class="cart-items" id="cart-items"></div>
@@ -2007,7 +1885,7 @@
         </div>
         <p class="pts-success" id="cart-points-success" hidden></p>
         <button class="btn btn-primary btn-lg cart-checkout" id="cart-checkout"><i class="fas fa-lock"></i> Secure Checkout &mdash; Square</button>
-        <button class="cart-clear" id="cart-clear">Clear cart</button>
+        <button class="cart-clear" id="cart-clear">Clear bag</button>
       </div>
     </aside>
 
@@ -2048,7 +1926,7 @@
           <p class="pd-error" id="pd-error" hidden></p>
         </div>
         <p class="product-detail-desc" id="product-detail-desc"></p>
-        <button class="product-detail-add" id="product-detail-add" type="button"><i class="fas fa-plus"></i> Add to cart</button>
+        <button class="product-detail-add" id="product-detail-add" type="button"><i class="fas fa-plus"></i> Add to bag</button>
       </div>
     </aside>
 
@@ -2466,7 +2344,7 @@
                 <div id="acct-inbox-list"><p class="acct-muted">Loading your messages…</p></div>
               </div>
             </div>
-            <button class="acct-menu-item acct-flat-row" type="button" data-acct-menu="cart" aria-expanded="false"><i class="fas fa-shopping-cart"></i> Cart <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
+            <button class="acct-menu-item acct-flat-row" type="button" data-acct-menu="cart" aria-expanded="false"><i class="fas fa-bag-shopping"></i> Your bag <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
 
             <!-- Cart — ACCOUNT_FIX_PASS_3_3_2026_11_06 (owner correction,
                  Nov 6, 2026): the owner expected the cart INSIDE My
@@ -2492,13 +2370,13 @@
             <div id="acct-view-cart" hidden>
               <div class="acct-cart">
                 <div class="acct-repairs-head">
-                  <h4><i class="fas fa-shopping-cart"></i> Cart</h4>
+                  <h4><i class="fas fa-bag-shopping"></i> Your bag</h4>
                 </div>
                 <div class="cart-glance-items" id="acct-cart-items"></div>
                 <div class="cart-glance-total" id="acct-cart-total-row"><span id="acct-cart-total-label">Subtotal</span><strong id="acct-cart-total">$0.00</strong></div>
-                <p class="cart-glance-empty" id="acct-cart-empty" hidden>Your cart is empty.<br><a href="#shop" data-page="shop">Browse the shop</a></p>
+                <p class="cart-glance-empty" id="acct-cart-empty" hidden>Your bag is empty.<br><a href="#shop" data-page="shop">Browse the shop</a></p>
                 <div class="cart-glance-actions" id="acct-cart-actions">
-                  <button type="button" class="cart-glance-view" id="acct-cart-open">Open cart</button>
+                  <button type="button" class="cart-glance-view" id="acct-cart-open">Open bag</button>
                 </div>
               </div>
             </div>
@@ -2776,9 +2654,10 @@
       <div class="section">
         <div class="container">
           <div class="section-header center">
-            <p class="eyebrow">For business</p>
-            <h2 class="section-title">Business is better with ATRG.</h2>
-            <p class="section-copy">Device repair, office tech, and point-of-sale setup for businesses across the Miami Valley &mdash; done at your place, by the same local team every time.</p>
+            <p class="eyebrow">ATRG for Business</p>
+            <h2 class="section-title">Business Services</h2>
+            <p class="section-copy">We come to your business. Built for shops, offices, and crews &mdash; the tech a small business runs on, repaired and set up on site, with a written estimate first and a 1-year warranty on parts and labor.</p>
+            <p class="section-copy" style="margin-top:.9rem;"><strong>Repairs that keep you open</strong> &mdash; so a broken device never becomes a closed sign.</p>
           </div>
           <div class="card-grid">
             <div class="perk-card">
@@ -2815,62 +2694,42 @@
           <img src="images/work/pc-motherboard.jpg" alt="Business computer repair" loading="lazy" />
         </div>
       </div>
-      <!-- BUSINESS_PUBLIC_PRICES_2026_11_11 (owner, Nov 11, 2026): business prices go public for the first time — the fee schedule lived in the membership agreements until now. The full list sits under the Business area; the services-grid Business Setup card stays the teaser. -->
-      <div class="section">
+      <!-- SERVICES_TWO_PAGES_2026_11_12 (owner, Nov 12, 2026): the business services grid — the same categories as Guest Services, for business, plus Business Setup and Websites for Business, moved out of the guest side. Cards carry no "Start a Service" text; the card itself is the button. The old four pricing cards are gone — the Hourly Rate card was an internal rate and never belongs on the public site. -->
+      <div class="section" style="padding-top:0;">
         <div class="container">
-          <div class="section-header center">
-            <p class="eyebrow">Business prices</p>
-            <h2 class="section-title">What it costs for your business</h2>
-            <p class="section-copy">The same honest pricing as every guest, at business rates. One fee per job, agreed before work begins.</p>
+          <div class="card-grid">
+            <a class="service-card" href="#phones" data-page="phones" data-business="1"><img class="service-card-img" src="images/work/phone-repair.jpg" alt="Phone opened for screen repair on a bench" loading="lazy" /><div class="service-icon"><i class="fas fa-mobile-screen"></i></div><h3>Phones for Business</h3><p>Staff phones repaired on site &mdash; screens, batteries, charging ports, and cameras, with a written estimate first.</p></a>
+            <a class="service-card" href="#tablets" data-page="tablets" data-business="1"><img class="service-card-img" src="images/work/tablet-teardown-real.webp" alt="Tablet opened for repair on a work mat" loading="lazy" /><div class="service-icon"><i class="fas fa-tablet-screen-button"></i></div><h3>Tablets for Business</h3><p>Staff tablets repaired on site &mdash; displays, charging ports, touch issues, and batteries.</p></a>
+            <a class="service-card" href="#computers" data-page="computers" data-business="1"><img class="service-card-img" src="images/work/hp-laptop-board.jpg" alt="Laptop computer on a repair bench" loading="lazy" /><div class="service-icon"><i class="fas fa-laptop"></i></div><h3>Computers for Business</h3><p>Office computers repaired and set up on site &mdash; SSDs, RAM, displays, and cleanup.</p></a>
+            <a class="service-card" href="#consoles" data-page="consoles" data-business="1"><img class="service-card-img" src="images/work/ps4-teardown.jpg" alt="Game console opened for teardown on a bench" loading="lazy" /><div class="service-icon"><i class="fas fa-gamepad"></i></div><h3>Game Consoles for Business</h3><p>Consoles for your break room or business &mdash; HDMI, fans, storage, and overheating fixes.</p></a>
+            <a class="service-card" href="#smartwatches" data-page="smartwatches" data-business="1"><img class="service-card-img" src="images/work/smartwatch-real.webp" alt="Cracked smartwatch on a wrist" loading="lazy" /><div class="service-icon"><i class="fas fa-clock"></i></div><h3>Smartwatches for Business</h3><p>Staff smartwatches &mdash; screen and battery service on site.</p></a>
+            <a class="service-card" href="#websites" data-page="websites" data-business="1"><img class="service-card-img" src="images/values/values-hero-workbench.webp" alt="The workbench where websites are built and handled" loading="lazy" /><div class="service-icon"><i class="fas fa-globe"></i></div><h3>Websites for Business</h3><p>A professional website for your business, built and handled for you &mdash; design, setup, and launch, without the agency price tag.</p></a>
+            <a class="service-card" href="#repair" data-page="repair" data-wizard-device="Business / Other" data-business="1"><img class="service-card-img" src="images/work/network-install.webp" alt="Network installed and cabled at a business — router, switch, and Wi-Fi access point on the shelf" loading="lazy" /><div class="service-icon"><i class="fas fa-cash-register"></i></div><h3>Business Setup</h3><p>We come to your business and set up your tech &mdash; your point of sale, Square, cash drawers, and your systems &mdash; so you can take payments and run the day. We help with the setup; we do not process payments.</p></a>
+            <a class="service-card" href="#repair" data-page="repair" data-open-oneonone data-business="1"><img class="service-card-img" src="images/values/values-education-code.webp" alt="Learning a repair from the printed guide at the bench" loading="lazy" /><div class="service-icon"><i class="fas fa-graduation-cap"></i></div><h3>One-on-One Business Classes</h3><p>We teach your team at your business &mdash; hands-on lessons on your own devices, at your pace.</p></a>
           </div>
-          <div class="pricing-grid">
-            <div class="pricing-card">
-              <h3>Dispatch</h3>
-              <div class="amount">$35.99</div>
-              <p>The fee when we come to your business. One fee per job.</p>
-            </div>
-            <div class="pricing-card">
-              <h3>Diagnostics</h3>
-              <div class="amount">$65.99</div>
-              <p>A full diagnosis of your device, when the problem is not already known.</p>
-            </div>
-            <div class="pricing-card">
-              <h3>One-on-One</h3>
-              <div class="amount">$49.99<span style="font-size:1.1rem;">/hr</span></div>
-              <p>One-on-one help is $49.99 an hour, in person or virtual.</p>
-            </div>
-            <div class="pricing-card">
-              <h3>Hourly Rate</h3>
-              <div class="amount">$100.50<span style="font-size:1.1rem;">/hr</span></div>
-              <p>Work by the hour is $100.50 an hour, plus parts.</p>
-            </div>
+          <p class="cat-subhead">Why we should fix it</p>
+          <div class="cat-why">
+            <h3>Why we should fix it</h3>
+            <p>A broken device should never become a closed sign. We repair on site so your staff keeps working, test everything before we leave, and every repair carries a 1-year warranty on parts we supply and on our labor.</p>
           </div>
-          <p style="text-align:center; color:var(--muted); margin-top:1.5rem;">Business Plus members pay no visit fee on covered devices.</p>
-          <p style="text-align:center; margin-top:1rem;"><a class="btn btn-primary btn-lg" href="#repair" data-page="repair">Start a Service <i class="fas fa-arrow-right"></i></a></p>
         </div>
       </div>
-      <!-- SERVICES_FLOW_V58_2026_11_09: the Business page never
-           mentioned websites — an offer ATRG makes every day. This
-           passage puts Websites for Business where business guests
-           read about everything else we can take off their plate. -->
-      <div class="feature-row">
-        <div class="feature-text">
-          <p class="eyebrow">Websites</p>
-          <h2>Websites for Business</h2>
-          <p>Your website is part of the technology your business runs on, so we build it the way we do everything else &mdash; in person, in plain language, and finished end to end. We design, set up, and launch websites for business guests: pages that load fast, your phone number where guests expect it, and contact and booking forms that actually reach you, with an online store when you need one.</p>
-          <p>You never have to learn a website builder, chase a domain company, or wonder why a form is not sending. We handle it, then show you how to update the site yourself. Every build starts with one clear custom quote, agreed before any work begins.</p>
-          <a class="btn btn-primary" href="#websites" data-page="websites">See Websites for Businesses <i class="fas fa-arrow-right"></i></a>
-        </div>
-        <div class="feature-media">
-          <img src="images/values/values-hero-workbench.webp" alt="The workbench where websites are built and handled" loading="lazy" />
-        </div>
-      </div>
-      <div class="section">
-        <div class="container" style="text-align:center;">
-          <h2 class="section-title">Tell us what your business runs on</h2>
-          <p class="section-copy" style="margin-left:auto; margin-right:auto;">One call and we will come look at it. Call or text <a href="tel:9372806243">(937) 280-6243</a>.</p>
-          <a class="btn btn-primary" href="#contact" data-page="contact">Talk to Us <i class="fas fa-arrow-right"></i></a>
-          <a class="btn btn-outline" href="#repair" data-page="repair" style="margin-left:0.5rem;">Start a Service</a>
+      <div class="section" style="padding-top:0;">
+        <div class="container">
+          <div class="price-block">
+            <p class="eyebrow">Business pricing</p>
+            <h2 class="section-title" style="font-size:1.6rem;">What it costs for your business <span class="price-asterisk" aria-label="See note 3 in the footer">*</span></h2>
+            <p class="lead-line"><strong>Dispatch fee is $35.99.</strong></p>
+            <p><strong>Diagnostics $65.99</strong></p>
+            <p><strong>One-on-one is $49.99 an hour, plus a $35.99 visit fee.</strong></p>
+            <p>Common repairs starting at $69.99.</p>
+            <p>Custom repairs are $100 an hour, plus parts.</p>
+            <p class="price-note">Within 25 miles the dispatch fee is as above. Over 25 miles is an extra $1 per mile.</p>
+            <p class="price-note">ATRG Business Plus and Business Pro members pay no visit fee on covered devices.</p>
+            <p class="price-note">To schedule, show us your EIN.</p>
+            <p class="price-note">* See note 3 in the footer below.</p>
+            <a class="btn btn-primary btn-lg" href="#repair" data-page="repair" data-business="1" style="margin-top:.5rem;">Start a Service <i class="fas fa-arrow-right"></i></a>
+          </div>
         </div>
       </div>
     </section>
@@ -3391,6 +3250,90 @@
       </div>
     </section>
 
+    <!-- ==================== SERVICE AND REPAIR (QUESTIONS & ANSWERS) ==================== -->
+    <!-- QUESTIONS_ANSWERS_2026_11_12 (owner, Nov 12, 2026): the
+         service-and-repair Q&A page, Apple service-and-repair layout
+         pattern only — title, short intro, "Choose a product" tiles,
+         then "Questions? Answers." — one question, one short plain
+         answer, in order. It lives UNDER SUPPORT: linked only from
+         the Support page, never from the Store and never from the
+         footer. ATRG does service and repair; we do NOT have our own
+         phones, tablets, or computers like Apple does, so coverage
+         here is ATRG warranty and ATR One, never Apple warranty or
+         AppleCare. The first two questions use the owner's own
+         wording; every price and fact is already settled live on
+         the site — nothing invented. "Can I repair my own device?"
+         is LEFT OUT: no settled ATRG self-repair policy exists. -->
+    <section id="questions-answers" class="page">
+      <div class="section">
+        <div class="container">
+          <div class="section-header center">
+            <p class="eyebrow">Support</p>
+            <h1 class="section-title">Service and Repair</h1>
+            <p class="section-copy">Let&apos;s get your device working the way it should. Tell us what&apos;s wrong, and we&apos;ll help you find the best way to get it fixed.</p>
+          </div>
+          <style>
+            .qa-subhead { text-align: center; font-size: 1.5rem; margin: 2.5rem 0 0.5rem; }
+            .qa-subcopy { text-align: center; color: var(--muted); margin: 0 0 1.5rem; }
+            .qa-products { max-width: 1020px; margin: 0 auto; }
+            .qa-list { max-width: 780px; margin: 0 auto; display: grid; gap: 1rem; }
+            .qa-item h3 { margin-bottom: 0.5rem; }
+            .qa-item p { margin: 0; }
+            .qa-item p + p { margin-top: 0.6rem; }
+          </style>
+          <h2 class="qa-subhead">Choose a product to get service on.</h2>
+          <p class="qa-subcopy">Find out about service options and repairs, and see what you expect to pay.</p>
+          <div class="card-grid qa-products">
+            <a class="service-card" href="#phones" data-page="phones"><img class="service-card-img" src="images/work/phone-repair.jpg" alt="Phone opened for screen repair on a bench" loading="lazy" /><div class="service-icon"><i class="fas fa-mobile-screen"></i></div><h3>Phones</h3><p>Cracked screens, battery swaps, charging ports, cameras, and water damage recovery.</p><p><strong>Common repairs starting at $37.99.</strong></p></a>
+            <a class="service-card" href="#computers" data-page="computers"><img class="service-card-img" src="images/work/hp-laptop-board.jpg" alt="Laptop computer on a repair bench" loading="lazy" /><div class="service-icon"><i class="fas fa-laptop"></i></div><h3>Computers</h3><p>SSD upgrades, RAM installs, virus cleanup, display repair, and data rescue.</p><p><strong>Common repairs starting at $50.99.</strong></p></a>
+            <a class="service-card" href="#tablets" data-page="tablets"><img class="service-card-img" src="images/work/tablet-teardown-real.webp" alt="Tablet opened for repair on a work mat" loading="lazy" /><div class="service-icon"><i class="fas fa-tablet-screen-button"></i></div><h3>Tablets</h3><p>Display replacement, charging port repair, touch issues, and battery service.</p><p><strong>Common repairs starting at $52.99.</strong></p></a>
+            <a class="service-card" href="#smartwatches" data-page="smartwatches"><img class="service-card-img" src="images/work/smartwatch-real.webp" alt="Cracked smartwatch on a wrist" loading="lazy" /><div class="service-icon"><i class="fas fa-clock"></i></div><h3>Watches</h3><p>Screen and battery service for smartwatches of all kinds.</p><p><strong>Common repairs starting at $66.99.</strong></p></a>
+          </div>
+          <h2 class="qa-subhead">Questions? Answers.</h2>
+          <div class="qa-list">
+            <article class="service-card qa-item">
+              <h3>Where can I track the existing repair with Austin&apos;s Tech Repair Group?</h3>
+              <p>To track the status of an existing repair, <a href="#account" data-page="account">sign into your account</a> and see the status.</p>
+              <p>Your repair moves through Request received, Diagnosed, Part ordered, Part on the way, On the way to you, Quality check, Complete, and Warranty active once it is covered.</p>
+            </article>
+            <article class="service-card qa-item">
+              <h3>Where can I check if my device is covered by Austin&apos;s Tech Repair Group warranty, or ATR One?</h3>
+              <p>You can check your coverage status <a href="#account" data-page="account">in your account</a>.</p>
+            </article>
+            <article class="service-card qa-item">
+              <h3>How long does the warranty last, and what does it cover?</h3>
+              <p>One year (365 days) from the date the repair was completed, for the original guest and the device listed on the repair invoice. The invoice or receipt is the proof of coverage.</p>
+              <p>It covers replacement parts we installed that fail because the part itself was defective, and the labor and workmanship of the specific repair on the invoice.</p>
+            </article>
+            <article class="service-card qa-item">
+              <h3>How do I claim warranty service?</h3>
+              <p>Tap <a href="#warranty-request" data-page="warranty-request">Submit a Warranty Request</a> on the <a href="#warranty" data-page="warranty">Warranty</a> page and fill out the form &mdash; tell us the device, the part or service under warranty, and what went wrong, and include the ticket number from your receipt if you have it. If the form will not load, call or text <a href="tel:9372806243">(937) 280-6243</a>.</p>
+            </article>
+            <article class="service-card qa-item">
+              <h3>What does ATR One cover?</h3>
+              <p><a href="#atr-one" data-page="atr-one">ATR One</a> covers the devices on your plan &mdash; Free covers 1 device, Individual 1, Family 5, Business 10, Business Pro 25. Members pay no visit fee or diagnostics on covered devices.</p>
+            </article>
+            <article class="service-card qa-item">
+              <h3>What does a visit cost?</h3>
+              <p>Guests: dispatch $15.99 just to get us there, non-refundable; diagnostics $35.99. Businesses: dispatch $35.99, diagnostics $65.99. ATR One members pay no visit fee or diagnostics on covered devices.</p>
+            </article>
+            <article class="service-card qa-item">
+              <h3>Do you come to me, or do I bring my device to you?</h3>
+              <p>We come to you &mdash; no drop-off. Visits within 25 miles are covered by the dispatch fee; over 25 miles is an extra $1 per mile.</p>
+            </article>
+            <article class="service-card qa-item">
+              <h3>Are estimates free?</h3>
+              <p>Yes &mdash; estimates are always free. Diagnostics is separate: $35.99 for guests, $65.99 for business.</p>
+            </article>
+            <article class="service-card qa-item">
+              <h3>Still have a question?</h3>
+              <p>Call or text <a href="tel:9372806243">(937) 280-6243</a>, or send us a message and we will answer it plainly.</p>
+              <p><a class="btn btn-outline" href="#contact" data-page="contact">Contact us</a></p>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
     <!-- ==================== SUPPORT ==================== -->
     <!-- SUPPORT_PAGE_2026_11_09 (owner, Nov 9, 2026): the one
          all-encompassing Support door, Apple's pattern in place of a
@@ -3408,7 +3351,6 @@
           </div>
           <div class="card-grid">
             <a class="service-card" href="#contact" data-page="contact"><div class="service-icon"><i class="fas fa-comments"></i></div><h3>Contact us</h3><p>Call, text, or send a message.</p></a>
-            <a class="service-card" href="#account" data-page="account"><div class="service-icon"><i class="fas fa-crown"></i></div><h3>Change a subscription</h3><p>Manage your ATR One plan, devices, points, and orders.</p></a>
             <a class="service-card" href="#account" data-page="account"><div class="service-icon"><i class="fas fa-credit-card"></i></div><h3>Billing and payments</h3><p>Membership billing runs through Square &mdash; manage it from your account.</p></a>
             <!-- CONNECT_SUPPORT_CARD_REMOVED_2026_11_11: the Virtual One-on-One card that linked to the Connect page was here. It stays removed in v114 - the owner's final ruling (Nov 11, 2026) restored only the guest-account ATRG Connect door. Restorable on his word by re-inserting the card here. -->
           </div>
@@ -3416,6 +3358,7 @@
             <a class="support-icon-door" href="#warranty-request" data-page="warranty-request"><span class="support-icon-chip"><i class="fas fa-shield-halved"></i></span>Warranty</a>
             <a class="support-icon-door" href="#home" data-page="home" data-guide="home-reviews"><span class="support-icon-chip"><i class="fas fa-star"></i></span>Reviews</a>
             <a class="support-icon-door" href="#help-guides" data-page="help-guides"><span class="support-icon-chip"><i class="fas fa-book-open"></i></span>Help Guides</a>
+            <a class="support-icon-door" href="#questions-answers" data-page="questions-answers"><span class="support-icon-chip"><i class="fas fa-circle-question"></i></span>Questions &amp; Answers</a>
             <a class="support-icon-door" href="#account" data-page="account"><span class="support-icon-chip"><i class="fas fa-gift"></i></span>Gift Cards</a>
             <a class="support-icon-door" href="#repair-or-replace" data-page="repair-or-replace"><span class="support-icon-chip"><i class="fas fa-scale-balanced"></i></span>Repair or Replace</a>
             <a class="support-icon-door" href="#whatwedo" data-page="whatwedo"><span class="support-icon-chip"><i class="fas fa-screwdriver-wrench"></i></span>Services</a>
@@ -3849,11 +3792,21 @@
       .cat-page .cat-lede { font-size: 1.08rem; line-height: 1.8; color: var(--ink); margin-bottom: 2rem; }
       .cat-page .cat-subhead { font-size: 0.85rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--brand); margin: 2.25rem 0 0.9rem; }
       .cat-services { list-style: none; margin: 0 0 2rem; padding: 0; display: grid; gap: 0.6rem; }
-      .cat-services li { position: relative; padding: 0.75rem 1rem 0.75rem 2.75rem; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm); line-height: 1.55; }
+      .cat-services li { position: relative; padding: 0.75rem 1rem 0.75rem 2.75rem; background: var(--surface); border: 2px solid var(--blue); border-radius: var(--radius-sm); line-height: 1.55; }
       .cat-services li::before { content: "\f00c"; font-family: "Font Awesome 6 Free"; font-weight: 900; position: absolute; left: 0.95rem; top: 50%; transform: translateY(-50%); width: 1.35rem; height: 1.35rem; border-radius: 50%; background: var(--blue-soft); color: var(--blue); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; }
-      .cat-why { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--brand); border-radius: var(--radius-sm); padding: 1.15rem 1.25rem; margin: 0 0 2rem; }
+      .cat-why { background: var(--surface); border: 2px solid var(--blue); border-left: 4px solid var(--brand); border-radius: var(--radius-sm); padding: 1.15rem 1.25rem; margin: 0 0 2rem; }
+      .cat-why:hover, .cat-why:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
       .cat-why h3 { margin: 0 0 0.5rem; font-size: 1.15rem; }
       .cat-why p { margin: 0; line-height: 1.7; }
+      /* SERVICES_TWO_PAGES_2026_11_12: one combined pricing block (fees-on-the-bottom version, approved mockups v129) + carousel fine print. Theme vars only, so both react to the light/dark switch. */
+      .price-block { background: var(--surface); border: 2px solid var(--blue); border-radius: var(--radius-lg); padding: 2rem 1.5rem; text-align: center; box-shadow: 0 2px 8px rgba(44,35,26,.06); }
+      .price-block:hover, .price-block:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+      .price-block p { margin: 0 auto 1rem; max-width: 560px; color: var(--ink-soft); font-size: 1rem; }
+      .price-block p strong { color: var(--ink); }
+      .price-block .lead-line { font-size: 1.12rem; color: var(--ink); }
+      .price-note { color: var(--muted); font-size: 0.92rem; }
+      .price-asterisk { font-size: 1.7em; line-height: 0; color: var(--brand); vertical-align: super; }
+      .hero-fineprint { color: var(--muted); font-size: 0.85rem; margin-top: 0.9rem; }
       .cat-page .btn { margin-bottom: 0.5rem; }
     </style>
 
@@ -4393,10 +4346,10 @@
             <div class="footer-top">
         <div>
           <span class="footer-col-title">Austin's Tech Repair Group</span>
-          <p style="color:#B9A98F; font-size:0.88rem; margin-bottom:1rem;">Mobile electronics repair across Xenia, Dayton, Beavercreek &amp; the Miami Valley. We come to you.</p>
+          <p style="color:#B9A98F; font-size:0.88rem; margin-bottom:0.6rem;">Mobile electronics repair across Xenia, Dayton, Beavercreek &amp; the Miami Valley. We come to you.</p>
           <a class="footer-link" href="tel:9372806243" style="font-weight:800; color:var(--gold);"><i class="fas fa-phone"></i> 937-280-6243</a>
           <a class="footer-link footer-email" href="mailto:service@austinstechrepairgroup.com"><i class="fas fa-envelope"></i> service@<wbr>austinstechrepairgroup.com</a>
-          <p style="color:#B9A98F; font-size:0.88rem; margin-top:1rem;">Mon-Fri 5:30 AM-10:00 PM<br>Sat 8:30 AM-9:00 PM<br>Sun 9:00 AM-5:00 PM</p>
+          <p style="color:#B9A98F; font-size:0.88rem; margin-top:0.6rem;">Mon-Fri 5:30 AM-10:00 PM<br>Sat 8:30 AM-9:00 PM<br>Sun 9:00 AM-5:00 PM</p>
         </div>
         <div>
           <span class="footer-col-title">Services</span>
@@ -4419,7 +4372,7 @@
         </div>
         <div>
           <span class="footer-col-title">For Business</span>
-          <a class="footer-link" href="#b2b" data-page="b2b">ATRG for Business</a>
+          <a class="footer-link" href="#b2b" data-page="b2b">Business Services</a>
         </div>
         <div>
           <span class="footer-col-title">For Organizations</span>
@@ -4438,12 +4391,12 @@
         <div>
           <!-- SITE_FOOTER_VALUES_2026_10_30 -->
           <span class="footer-col-title">Our Values</span>
-          <a class="footer-value" href="#values" data-page="values" data-guide="values-trust"><i class="fas fa-handshake"></i><strong>Trust</strong> &mdash; earned on every repair</a>
-          <a class="footer-value" href="#values" data-page="values" data-guide="values-transparency"><i class="fas fa-eye"></i><strong>Transparency</strong> &mdash; clear estimates and straight answers, up front</a>
-          <a class="footer-value" href="#values" data-page="values" data-guide="values-environment"><i class="fas fa-leaf"></i><strong>Environment</strong> &mdash; every repair keeps e-waste out of the landfill, and parts we remove are recycled</a>
-          <a class="footer-value" href="#values" data-page="values" data-guide="values-education"><i class="fas fa-graduation-cap"></i><strong>Education</strong> &mdash; we champion students learning to code and to repair</a>
-          <a class="footer-value" href="#values" data-page="values" data-guide="values-right"><i class="fas fa-screwdriver-wrench"></i><strong>Right to repair</strong> &mdash; your device, your choice of who fixes it</a>
-          <a class="footer-value" href="#values" data-page="values" data-guide="values-small-business"><i class="fas fa-store"></i><strong>Small Business</strong> &mdash; we support other small businesses</a>
+          <a class="footer-link" href="#values" data-page="values" data-guide="values-trust">Trust</a>
+          <a class="footer-link" href="#values" data-page="values" data-guide="values-transparency">Transparency</a>
+          <a class="footer-link" href="#values" data-page="values" data-guide="values-environment">Environment</a>
+          <a class="footer-link" href="#values" data-page="values" data-guide="values-education">Education</a>
+          <a class="footer-link" href="#values" data-page="values" data-guide="values-right">Right to Repair</a>
+          <a class="footer-link" href="#values" data-page="values" data-guide="values-small-business">Small Business</a>
         </div>
         <div>
           <span class="footer-col-title">Legal</span>
@@ -4495,7 +4448,7 @@
       </p>
       <!-- FOOTNOTE_NUMBERS_2026_11_09 (owner FOOTNOTE LAW, Nov 9, 2026), renumbered FOOTER_NUMBERING_2026_11_10: in Apple fashion, claim-specific footer notes are numbered and the claim up in the copy carries the same number as a small superscript marker (sup.fnote). Note 1 = the brand disclaimer (no in-page marker); Note 2 = ATR One membership disclaimer (marker on the ATR One section lead); Note 3 = estimates/visit fee (markers on the Visit Fee and Diagnostics cards under "How pricing works"). The Cloudflare line stays unnumbered at the very bottom of the page. -->
       <!-- SMALL_PRINT_FOOTER_2026_11_09 (owner rule, Nov 9, 2026): fine print never sits inside a content topic - asterisk small print lives here in the footer with the other small print. This note (now note 3) moved down from the Diagnostics card under "How pricing works". -->
-      <p class="footer-disclaimer">3. Estimates are always free. The visit fee covers the trip to you &mdash; $15 for a known repair, $35 when a full diagnosis is needed &mdash; and it is never credited toward a repair. ATR One Plus (paid) members pay no visit fee for devices covered under their plan.</p>
+      <p class="footer-disclaimer">3. Estimates are always free. The visit covers the trip to you &mdash; $15.99 for guests, $35.99 for business. Diagnostics is $35.99 for guests, $65.99 for business. ATR One members pay no visit fee or diagnostics on covered devices.</p>
       </div>
 
       <div class="footer-bottom">
@@ -7557,7 +7510,10 @@
     var SB_UNAVAILABLE = 'Sign-in could not load \u2014 check your connection and refresh the page. If it keeps happening, call or text us at (937) 280-6243.';
 
     /* SITE_TURNSTILE_2026_11_02 (staged): mount the login + signup
-     * human checks when the account box opens. Supabase Auth verifies
+     * human checks when the account box opens. TURNSTILE_AUTOFILL_2026_11_12
+     * (v130b): turnstile.js also mounts them on page load now, so an
+     * autofilled sign-in is not racing the mount; this re-mount is a
+     * no-op. Supabase Auth verifies
      * these tokens itself once captcha protection is enabled in the
      * project (see CHANGES.md) — the token travels as captchaToken on
      * the sign-in / sign-up calls below. */
@@ -7694,8 +7650,9 @@
          The widget can still be sitting on "Verifying…" — or its
          token can have gone stale — when Log In is tapped, above
          all on a slow connection (the owner's own hotspot). Wait
-         for a fresh token (the helper resets the check once and
-         waits for the new one) and only then submit. The old
+         for a fresh token (the helper waits out the check — it only
+         restarts a check that already went stale) and only then
+         submit. The old
          "complete the check, then log in again" stop is gone; the
          only failure left is the check truly never finishing. */
       if (window.atrTurnstile && window.atrTurnstile.freshToken) {
@@ -7731,14 +7688,9 @@
       if (!validEmail(email)) { showErr($('authx-signup-error'), 'Please enter a valid email address.'); return; }
       if (!pass || pass.length < 8) { showErr($('authx-signup-error'), 'Please use a password of at least 8 characters.'); return; }
       if (!sb) { showErr($('authx-signup-error'), SB_UNAVAILABLE); return; }
-      var tsTokSignup = window.atrTurnstile ? window.atrTurnstile.token($('ts-signup')) : '';
-      if (!tsTokSignup) {
-        if (window.atrTurnstile) window.atrTurnstile.mount($('ts-signup'));
-        showErr($('authx-signup-error'), 'Please complete the quick human check above the button, then create the account again.');
-        return;
-      }
       pendingName = name; pendingPhone = phone;
       var btn = signupForm.querySelector('button[type="submit"]');
+      function submitSignup(tsTokSignup) {
       if (btn) { btn.disabled = true; btn.innerHTML = 'Creating account…'; }
       sb.auth.signUp({
         email: email, password: pass,
@@ -7762,6 +7714,31 @@
         if (btn) { btn.disabled = false; btn.innerHTML = 'Create Account <i class="fas fa-arrow-right"></i>'; }
         showErr($('authx-signup-error'), 'Something went wrong. Please try again.');
       });
+      }
+      /* TURNSTILE_AUTOFILL_2026_11_12 (v130b): same wait as Log In.
+         Autofill fills the fields at once and Create Account can be
+         tapped before the widget has produced a token — never dead-end
+         with "complete the check and try again". Wait for a fresh token
+         (the helper waits out the first challenge) and only then submit. */
+      if (window.atrTurnstile && window.atrTurnstile.freshToken) {
+        if (btn) { btn.disabled = true; btn.innerHTML = 'One moment — finishing the quick human check…'; }
+        window.atrTurnstile.freshToken($('ts-signup'), function (tsTokSignup) {
+          if (btn) { btn.disabled = false; btn.innerHTML = 'Create Account <i class="fas fa-arrow-right"></i>'; }
+          if (!tsTokSignup) {
+            showErr($('authx-signup-error'), 'The human check did not finish. Check your connection and tap Create Account again — or call or text us at (937) 280-6243.');
+            return;
+          }
+          submitSignup(tsTokSignup);
+        });
+        return;
+      }
+      var tsTokSignup = window.atrTurnstile ? window.atrTurnstile.token($('ts-signup')) : '';
+      if (!tsTokSignup) {
+        if (window.atrTurnstile) window.atrTurnstile.mount($('ts-signup'));
+        showErr($('authx-signup-error'), 'Please complete the quick human check above the button, then create the account again.');
+        return;
+      }
+      submitSignup(tsTokSignup);
     });
 
     var logoutBtn = $('authx-logout');
