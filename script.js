@@ -784,7 +784,9 @@
       }
       repairs.forEach(function (r) {
         var price = priceOf(r);
-        var b = bkTile(BK_FRIENDLY[r] || r, (typeof price === 'number') ? bkFmt(price) : 'Price confirmed up front', bkIconHtml(r));
+        /* V127_2026_11_12 (owner, Nov 12, 2026): iPad service prices read as estimates — the tile shows "Starting at $X" for Apple tablets (iPads). Every other device keeps the bare price, as before. */
+        var isIpad = (typeKey === 'Tablet' && brandKey === 'Apple');
+        var b = bkTile(BK_FRIENDLY[r] || r, (typeof price === 'number') ? (isIpad ? 'Starting at ' + bkFmt(price) : bkFmt(price)) : 'Price confirmed up front', bkIconHtml(r));
         /* REPAIR_FLOW_UPDATE_2026_11_05: repairs are multi-select — tapping toggles, nothing
            auto-advances; Continue is gated below the ATR One question. */
         b.addEventListener('click', function () {
@@ -5887,6 +5889,9 @@ if ("serviceWorker" in navigator) {
       grid.innerHTML = '';
       if (isPicker(pane)) {
         var typeKey = shared.typeKey(st.device);
+        /* V127_IPAD_STARTING_AT_2026_11_12: iPad prices read as estimates —
+           same rule as the booking-flow tiles (renderBkRepairs). */
+        var isIpad = (typeKey === 'Tablet' && st.brandKey === 'Apple');
         var repairs, priceOf;
         if (st.brandKey !== '__other__' && st.modelKey !== '__notlisted__') {
           repairs = Object.keys(DATA[typeKey][st.brandKey][st.modelKey]);
@@ -5900,7 +5905,7 @@ if ("serviceWorker" in navigator) {
             var price = priceOf(r);
             var label = shared.friendly[r] || r;
             var b = tileShell(shared.iconHtml(r) + '<strong>' + esc(label) + '</strong>' +
-              subSpan(typeof price === 'number' ? shared.fmt(price) : 'Price confirmed up front'));
+              subSpan(typeof price === 'number' ? (isIpad ? 'Starting at ' + shared.fmt(price) : shared.fmt(price)) : 'Price confirmed up front'));
             b.setAttribute('data-raw', r);
             b.addEventListener('click', function () {
               togglePick(pane, { name: label, price: typeof price === 'number' ? price : null, priceRange: null }, b);
