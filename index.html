@@ -1502,6 +1502,26 @@
             .ror-rule h3 { margin: 0 0 0.5rem; font-size: 1.05rem; }
             .ror-rule p { font-size: 0.92rem; color: var(--muted); margin: 0 0 0.5rem; }
             .ror-rule p:last-child { margin-bottom: 0; }
+            /* REPAIR_OR_REPLACE_CHIPS_2026_11_12 (v125): the device-type
+               and repair tiles had no base rules at all — the global
+               reset zeroes button padding, so the chips rendered as
+               bare 19px buttons touching each other with the icon cut
+               at the edge. Pills follow the site's .pill language
+               (inline-flex, gap, radius 999px) on the --surface /
+               --line / --ink vars, so both modes react. The
+               `html .dt-tile.active` gradient in styles.css (0,2,1)
+               still wins over this base background (0,1,0); the
+               white active text is set here because that rule sets
+               background only. */
+            .dt-tiles { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+            .dt-tile { display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem; padding: 0.55rem 0.95rem; background: var(--surface); border: 1.5px solid var(--line); border-radius: 999px; color: var(--ink); font-family: var(--font-body); font-size: 0.95rem; font-weight: 700; line-height: 1.2; text-align: center; cursor: pointer; transition: border-color var(--transition), background var(--transition), box-shadow var(--transition); }
+            .dt-tile i { font-size: 1rem; color: var(--brand); }
+            .dt-tile:hover { border-color: var(--brand); }
+            .dt-tile:focus-visible { outline: 2px solid var(--blue, #1050A0); outline-offset: 2px; }
+            .dt-tile.active { color: #fff; border-color: #1050A0; }
+            .dt-tile.active i { color: #fff; }
+            .dt-step { margin-bottom: 1.1rem; }
+            .dt-step-label { display: block; margin-bottom: 0.5rem; font-weight: 700; color: var(--ink); }
           </style>
           <div class="price-lookup" id="ror-lookup">
             <div class="dt-step" id="ror-step-type">
