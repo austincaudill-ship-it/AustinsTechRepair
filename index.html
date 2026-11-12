@@ -282,12 +282,14 @@
                  the FIRST slide is the holiday slide, and it follows
                  the calendar on its own. The script right below the
                  hero controls fills it for whichever holiday is in
-                 season (Thanksgiving first, Christmas after it, then
-                 New Year's, and the rest of the year), and takes the
-                 slide out entirely when no holiday is on. The default
-                 content below is Thanksgiving. No discounts or deal
-                 terms on any holiday: none exist; the slide sells the
-                 service, not a sale. -->
+                 season (Black Friday Nov 25-27, then Thanksgiving,
+                 Christmas after it, then New Year's, and the rest of
+                 the year), and takes the slide out entirely when no
+                 holiday is on. The default content below is
+                 Thanksgiving. No discounts or deal terms on any
+                 holiday EXCEPT Black Friday: Austin ordered 30% off
+                 repair labor for everybody, Nov 25-27, 2026 (owner,
+                 Nov 12, 2026), parts stay at cost. -->
             <div class="hero-slide is-active" id="holiday-slide">
               <p class="eyebrow" id="holiday-eyebrow">Thanksgiving</p>
               <h1 class="hero-headline" id="holiday-headline">Dropped your phone after all that turkey?</h1>
@@ -404,6 +406,10 @@
                 eyebrow: 'Veterans Day', headline: 'Thank you to those who served.',
                 sub: 'We are closed on Veterans Day to honor those who served. Veterans take 15% off today &mdash; our thank-you. Book online any time &mdash; we will be back the next day.',
                 img: 'images/holiday-flag.webp', alt: 'An American flag waving on a porch at golden hour', ctas: STD },
+              { when: function () { return between(now, minus(tg, 1), plus(tg, 1)); },
+                eyebrow: 'Black Friday', headline: '30% off labor this Black Friday.',
+                sub: '30% off repair labor for everybody, November 25 to 27. Parts stay at cost. We are closed Thanksgiving Day, November 26 &mdash; book ahead and we will be there.',
+                img: 'images/work/phone-repair.jpg', alt: 'Technician repairing a smartphone', ctas: STD },
               { when: function () { return between(now, day(y, 10, 1), tg); },
                 eyebrow: 'Thanksgiving', headline: 'Dropped your phone after all that turkey?',
                 sub: 'It happens. We come to you and fix it at your door. Closed Thanksgiving Day &mdash; book before or after and we will be there.',
@@ -839,11 +845,10 @@
             <h2 class="section-title" style="font-size:1.6rem;">What it costs <span class="price-asterisk" aria-label="See note 3 in the footer">*</span></h2>
             <p class="lead-line"><strong>Dispatch fee is $15.99.</strong> That is just to get us to your house, and it is non-refundable.</p>
             <p><strong>Diagnostics $35.99</strong></p>
-            <p><strong>One-on-one is $25 an hour, plus a $15 visit fee.</strong></p>
+            <p><strong>One-on-one is $25 an hour, plus a $15.99 visit fee.</strong></p>
             <p>Common repairs starting at $37.99 for phones, $52.99 for tablets, $50.99 for computers, $58.99 for game consoles, $66.99 for smartwatches.</p>
             <p>Custom repairs are $50 an hour, plus parts.</p>
-            <p class="price-note">Within 25 miles the dispatch fee is as above. Over 25 miles is an extra $1 per mile.</p>
-            <p class="price-note">ATR One Free covers 1 device.</p>
+            <p class="price-note">Within 25 miles, the dispatch fee is the price listed above. Over 25 miles, add $1 per mile.</p>
             <p class="price-note">* See note 3 in the footer below.</p>
             <a class="btn btn-primary btn-lg" href="#repair" data-page="repair" style="margin-top:.5rem;">Start a Service <i class="fas fa-arrow-right"></i></a>
           </div>
@@ -2724,7 +2729,7 @@
             <p><strong>One-on-one is $49.99 an hour, plus a $35.99 visit fee.</strong></p>
             <p>Common repairs starting at $69.99.</p>
             <p>Custom repairs are $100 an hour, plus parts.</p>
-            <p class="price-note">Within 25 miles the dispatch fee is as above. Over 25 miles is an extra $1 per mile.</p>
+            <p class="price-note">Within 25 miles, the dispatch fee is the price listed above. Over 25 miles, add $1 per mile.</p>
             <p class="price-note">ATRG Business Plus and Business Pro members pay no visit fee on covered devices.</p>
             <p class="price-note">To schedule, show us your EIN.</p>
             <p class="price-note">* See note 3 in the footer below.</p>
@@ -2750,7 +2755,7 @@
                (Abigail's feedback + owner approval, Nov 8, 2026) — Free
                vs Plus in plain words before the detail below. -->
           <div class="section-header center" style="margin-bottom:1.8rem;">
-            <p class="section-copy"><strong>ATR One Free</strong> costs nothing. It covers 1 device. You earn points on every completed repair or service, and you pay the visit fee when we come out.</p>
+            <p class="section-copy"><strong>ATR One Free</strong> costs nothing. You earn points on every completed repair or service, and you pay the visit fee when we come out.</p>
             <p class="section-copy"><strong>ATR One Plus</strong> is the paid membership. Members pay no visit fee on covered devices, earn points faster, and save more on repairs and accessories.</p>
           </div>
 
@@ -3311,7 +3316,7 @@
             </article>
             <article class="service-card qa-item">
               <h3>What does ATR One cover?</h3>
-              <p><a href="#atr-one" data-page="atr-one">ATR One</a> covers the devices on your plan &mdash; Free covers 1 device, Individual 1, Family 5, Business 10, Business Pro 25. Members pay no visit fee or diagnostics on covered devices.</p>
+              <p><a href="#atr-one" data-page="atr-one">ATR One</a> covers the devices on your plan &mdash; Individual 1, Family 5, Business 10, Business Pro 25. Members pay no visit fee or diagnostics on covered devices.</p>
             </article>
             <article class="service-card qa-item">
               <h3>What does a visit cost?</h3>
@@ -5603,8 +5608,8 @@
     var cap = mdCoverageCap();
     if (note) {
       if (cap === undefined) { note.hidden = false; note.textContent = 'Checking your membership…'; }
-      else if (cap === 0) { note.hidden = false; note.textContent = 'ATR One Plus covers the devices on your plan — Individual covers 1 device, Family covers up to 5, Business up to 10, and Business Pro up to 25. Your devices are saved here either way.'; }
-      else if (cap === 1) { note.hidden = false; note.textContent = 'Your plan covers 1 device — swap it anytime. Mark the one you want covered below.'; }
+      else if (cap === 0) { note.hidden = false; note.textContent = 'ATR One Plus covers the devices on your plan — Individual covers a single device, Family covers up to 5, Business up to 10, and Business Pro up to 25. Your devices are saved here either way.'; }
+      else if (cap === 1) { note.hidden = false; note.textContent = 'Your plan covers a single device — swap it anytime. Mark the one you want covered below.'; }
       else { note.hidden = false; note.textContent = 'Your plan covers up to ' + cap + ' devices. Mark the ones you want covered below — you can change them anytime.'; }
     }
     if (mdDevices === null) { list.innerHTML = '<p class="acct-muted">Loading your devices…</p>'; return; }

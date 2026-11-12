@@ -3633,11 +3633,15 @@ a.acct-menu-item { text-decoration: none; color: inherit; }
    the header — same black background, same white-on-black text, in
    both light and dark mode. Values copied from the header's own rules
    (styles.css ~3065): background #000000, top border
-   rgba(255,255,255,0.16), links rgba(255,255,255,0.86), active/hover
-   #ffffff. */
+   rgba(255,255,255,0.16), links rgba(255,255,255,0.86), hover
+   #ffffff. THUMB_NAV_ACTIVE_2026_11_12 (owner, Nov 12, 2026): the
+   active thumb item is brand orange var(--brand) #D9540D, in BOTH
+   themes, so you can tell which one you are on. The bar itself
+   stays black; inactive items stay rgba(255,255,255,0.86). */
 .mobile-bottom-nav {
   background: #000000;
   border-top: 1px solid rgba(255, 255, 255, 0.16);
 }
 .bottom-nav-item { color: rgba(255, 255, 255, 0.86); }
-.bottom-nav-item.active, .bottom-nav-item:hover { color: #ffffff; }
+.bottom-nav-item:hover { color: #ffffff; }
+.bottom-nav-item.active { color: var(--brand); }

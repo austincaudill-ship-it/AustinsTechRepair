@@ -5277,6 +5277,12 @@ if ("serviceWorker" in navigator) {
          browsers that drop the first attempt. */
       try { input.focus(); } catch (e) {}
       setTimeout(function () { try { input.focus(); } catch (e) {} }, 30);
+      /* THUMB_NAV_ACTIVE_2026_11_12 (owner, Nov 12, 2026): the thumb
+         bar's Search slot is a button with no data-page, so the
+         router never marks it active. Light it orange like the
+         other thumb items while the sheet is open; closeSearch
+         below takes it off again. */
+      if (thumbSearchBtn) thumbSearchBtn.classList.add('active');
     }
     function closeSearch() {
       if (!isOpen()) return;
@@ -5285,6 +5291,7 @@ if ("serviceWorker" in navigator) {
       overlay.hidden = true;
       unlockScroll();
       watchSearchViewport(false);
+      if (thumbSearchBtn) thumbSearchBtn.classList.remove('active');
     }
 
     /* SEARCH_RELEASE_2026_11_09: the ONE X (#site-search-exit) is
