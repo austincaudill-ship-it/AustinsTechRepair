@@ -246,6 +246,10 @@
         <button class="portal-tab" id="portal-tab-guestchat" type="button" role="tab" data-tab="guestchat">
           <i class="fas fa-comment-dots"></i> Guest Chat <span class="portal-count" id="portal-count-guestchat" hidden></span>
         </button>
+        <!-- ATRG_REMOTE_2026_11_10 (Austin, Nov 10, 2026): ATRG Remote is the ASSOCIATE side of Virtual One-on-One — it moved to the Guest group Nov 12, 2026 by Austin's order ("ATRG remote should not be in associates. It should be in guests"), after Guest Chat: Guest Chat is the guest-conversation surface, Remote is the guest-session surface, so they sit together. ATRG Connect is the guest side (the website page the guest opens). From Remote an associate runs the session: makes the one-time code, sends the guest their ATRG Connect link (text or email), and controls the session. The gate itself lives in the virtual-session Edge Function; this panel only mints and revokes. Panel: portal-panel-virtual, loader loadVirtualSessions in portal.js. -->
+        <button class="portal-tab" id="portal-tab-virtual" type="button" role="tab" data-tab="virtual">
+          <i class="fas fa-display"></i> ATRG Remote
+        </button>
         <!-- PORTAL_ATRONE_MEMBERS_2026_11_02 (Austin, Nov 2, 2026): a dedicated ATR One Members action button under Customer (the first sidebar group, renamed from Work the same day) — the membership list used to be reachable only through the Admin "Square & ATR One" panel; he wants to just look and see who is a member. -->
         <button class="portal-tab" id="portal-tab-members" type="button" role="tab" data-tab="members">
           <i class="fas fa-star"></i> ATR One Members
@@ -290,10 +294,6 @@
         <!-- PORTAL_MILEAGE_2026_11_02 (Austin, Nov 2, 2026): a Mileage Action Button in the Associates group. Technicians log trips (From / To — road miles and drive time are calculated automatically) and each saved trip lands on their time card as a Driving entry that pays mileage reimbursement. Panel: portal-panel-mileage, loader in portal.js (extra tab, same wiring as Time Clock). -->
         <button class="portal-tab" id="portal-tab-mileage" type="button" role="tab" data-tab="mileage">
           <i class="fas fa-route"></i> Mileage
-        </button>
-        <!-- ATRG_REMOTE_2026_11_10 (Austin, Nov 10, 2026): ATRG Remote is the ASSOCIATE side of Virtual One-on-One — it lives in the Associates group, after Mileage. ATRG Connect is the guest side (the website page the guest opens). From Remote an associate runs the session: makes the one-time code, sends the guest their ATRG Connect link (text or email), and controls the session. The gate itself lives in the virtual-session Edge Function; this panel only mints and revokes. Panel: portal-panel-virtual, loader loadVirtualSessions in portal.js. -->
-        <button class="portal-tab" id="portal-tab-virtual" type="button" role="tab" data-tab="virtual">
-          <i class="fas fa-display"></i> ATRG Remote
         </button>
         <!-- ACCOUNT_CONTROLS_2026_11_03 (Austin, Nov 3, 2026): Employee Onboarding, Documents and Job Applications moved OUT of this group into the Admin group below — they are owner-side tools, not associate tools. Buttons only: ids, data-tab values and panels are unchanged, so every handler keyed to them works exactly as before. -->
         <div class="portal-nav-group" id="portal-nav-group-admin">Admin</div>
