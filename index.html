@@ -929,8 +929,8 @@
             <a class="service-card" href="#smartwatches" data-page="smartwatches"><img class="service-card-img" src="images/work/smartwatch-real.webp" alt="Cracked smartwatch on a wrist" loading="lazy" /><div class="service-icon"><i class="fas fa-clock"></i></div><h3>Smartwatches</h3><p>Screen and battery service for smartwatches of all kinds.</p></a>
             <a class="service-card" href="#websites" data-page="websites"><img class="service-card-img" src="images/values/values-hero-workbench.webp" alt="The workbench where websites are built and handled" loading="lazy" /><div class="service-icon"><i class="fas fa-globe"></i></div><h3>Websites for Businesses</h3><p>A professional website for your business, built and handled for you &mdash; design, setup, and launch, without the agency price tag.</p></a>
             <a class="service-card" href="#network" data-page="network"><img class="service-card-img svc-media-contain" src="images/work/cable-tester.jpg" alt="Cable tester used to verify network wiring" loading="lazy" /><div class="service-icon"><i class="fas fa-network-wired"></i></div><h3>Networking</h3><p>Routers, switches, and Wi-Fi access points hooked up and configured &mdash; verified working end to end at your home or office.</p></a>
-            <!-- BUSINESS_SETUP_CARD_2026_11_11 (owner, Nov 11, 2026; rates CORRECTED Nov 11, 2026 — v123, supersede all round numbers): business tech setup as its own door — point of sale, Square, cash drawers, and systems, at the guest's business. Scope is the settled ATR One Business agreement wording only. Business rates, exact figures from the owner Nov 11, 2026: business one-on-one $49.99 an hour, in person or virtual; business dispatch $35.99, diagnostics $65.99 (guest: $15 / $35); Business Plus members pay no visit fee (the $35.99 is waived, the $49.99 an hour still applies — NOT waived). Icon treatment (no photo of his fits a point-of-sale setup); links to the booking flow with Business / Other pre-selected, the same data-wizard-device pattern the detail-page Start a Service button uses. No Business Setup detail page exists yet. The booking form does NOT yet charge business rates by tier, and no business Square payment links exist yet — follow-up build. -->
-            <a class="service-card" href="#repair" data-page="repair" data-wizard-device="Business / Other"><div class="service-icon"><i class="fas fa-cash-register"></i></div><h3>Business Setup</h3><p>We come to your business and set up your tech &mdash; your point of sale, Square, cash drawers, and your systems &mdash; so you can take payments and run the day. We help with the setup; we do not process payments. Business one-on-one is $49.99 an hour, in person or virtual. When we come to your business there is a $35.99 dispatch fee &mdash; $65.99 if your device needs a full diagnosis first. Business Plus members pay no visit fee.</p></a>
+            <!-- BUSINESS_SETUP_CARD_2026_11_11 (owner, Nov 11, 2026; rates CORRECTED Nov 11, 2026 — v123, supersede all round numbers): business tech setup as its own door — point of sale, Square, cash drawers, and systems, at the guest's business. Scope is the settled ATR One Business agreement wording only. Business rates, exact figures from the owner Nov 11, 2026: business one-on-one $49.99 an hour, in person or virtual; business dispatch $35.99, diagnostics $65.99 (guest: $15 / $35); Business Plus members pay no visit fee (the $35.99 is waived, the $49.99 an hour still applies — NOT waived). Photo: images/work/network-install.webp — a real photo of a finished on-site network install (router, switch, Wi-Fi access point on the shelf); no point-of-sale photo exists in the library, this is the closest real fit (owner's eyes are the verdict); icon treatment kept beside it; links to the booking flow with Business / Other pre-selected, the same data-wizard-device pattern the detail-page Start a Service button uses. No Business Setup detail page exists yet. The booking form does NOT yet charge business rates by tier, and no business Square payment links exist yet — follow-up build. -->
+            <a class="service-card" href="#repair" data-page="repair" data-wizard-device="Business / Other"><img class="service-card-img" src="images/work/network-install.webp" alt="Network installed and cabled at a business — router, switch, and Wi-Fi access point on the shelf" loading="lazy" /><div class="service-icon"><i class="fas fa-cash-register"></i></div><h3>Business Setup</h3><p>We come to your business and set up your tech &mdash; your point of sale, Square, cash drawers, and your systems &mdash; so you can take payments and run the day. We help with the setup; we do not process payments. Business one-on-one is $49.99 an hour, in person or virtual. When we come to your business there is a $35.99 dispatch fee &mdash; $65.99 if your device needs a full diagnosis first. Business Plus members pay no visit fee.</p></a>
             <a class="service-card" href="#repair" data-page="repair" data-open-oneonone><img class="service-card-img" src="images/values/values-education-code.webp" alt="Learning a repair from the printed guide at the bench" loading="lazy" /><div class="service-icon"><i class="fas fa-graduation-cap"></i></div><h3>One-on-One Classes</h3><p>We teach you at your home or your business &mdash; hands-on lessons on your own phone, tablet, or computer, at your pace, for business owners and consumers alike. One-on-one help is $25 an hour plus the $15 visit fee &mdash; tap to book a one-on-one.</p></a>
           </div>
         </div>
@@ -3843,7 +3843,21 @@
       </div>
     </section>
 
-    <section id="phones" class="page">
+    <!-- SERVICE_PAGES_STYLED_2026_11_12 (v126; owner, Nov 12, 2026): the eight service detail pages were plain paragraphs and plain bullets — styled text treatment, same on every page. Copy unchanged; classes and one wrapper only. All vars react to the light/dark switch. -->
+    <style>
+      .cat-page .container { max-width: 760px; }
+      .cat-page .cat-lede { font-size: 1.08rem; line-height: 1.8; color: var(--ink); margin-bottom: 2rem; }
+      .cat-page .cat-subhead { font-size: 0.85rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--brand); margin: 2.25rem 0 0.9rem; }
+      .cat-services { list-style: none; margin: 0 0 2rem; padding: 0; display: grid; gap: 0.6rem; }
+      .cat-services li { position: relative; padding: 0.75rem 1rem 0.75rem 2.75rem; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm); line-height: 1.55; }
+      .cat-services li::before { content: "\f00c"; font-family: "Font Awesome 6 Free"; font-weight: 900; position: absolute; left: 0.95rem; top: 50%; transform: translateY(-50%); width: 1.35rem; height: 1.35rem; border-radius: 50%; background: var(--blue-soft); color: var(--blue); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; }
+      .cat-why { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--brand); border-radius: var(--radius-sm); padding: 1.15rem 1.25rem; margin: 0 0 2rem; }
+      .cat-why h3 { margin: 0 0 0.5rem; font-size: 1.15rem; }
+      .cat-why p { margin: 0; line-height: 1.7; }
+      .cat-page .btn { margin-bottom: 0.5rem; }
+    </style>
+
+    <section id="phones" class="page cat-page">
       <div class="section">
         <div class="container">
           <div class="section-header center">
@@ -3851,18 +3865,20 @@
             <h2 class="section-title">Phones</h2>
           </div>
           <img src="images/work/phone-repair.jpg" alt="Phone repair work" loading="lazy" style="width:100%; max-width:720px; border-radius:12px; display:block; margin:0 auto 1.5rem;" />
-          <p>Phones are the device most people live on, so a phone repair is about getting you back to normal without losing your photos, your apps, or your day. We come to you, diagnose the phone in person, and tell you plainly what is wrong before any part is ordered. Most phone work is screens, batteries, and charging ports, but we also handle cameras, speakers, buttons, back glass, and board-level faults that a screen swap will not fix.</p>
-          <h3>Services</h3>
-          <ul><li>Cracked and dead screens, including touch and display problems</li><li>Batteries that drain fast, shut off early, or swell</li><li>Charging ports that only work at an angle or not at all</li><li>Cameras, speakers, microphones, and buttons</li><li>Back glass and water damage checks</li><li>Circuit board faults — the deeper problems a part swap will not fix</li></ul>
+          <p class="cat-lede">Phones are the device most people live on, so a phone repair is about getting you back to normal without losing your photos, your apps, or your day. We come to you, diagnose the phone in person, and tell you plainly what is wrong before any part is ordered. Most phone work is screens, batteries, and charging ports, but we also handle cameras, speakers, buttons, back glass, and board-level faults that a screen swap will not fix.</p>
+          <h3 class="cat-subhead">Services</h3>
+          <ul class="cat-services"><li>Cracked and dead screens, including touch and display problems</li><li>Batteries that drain fast, shut off early, or swell</li><li>Charging ports that only work at an angle or not at all</li><li>Cameras, speakers, microphones, and buttons</li><li>Back glass and water damage checks</li><li>Circuit board faults — the deeper problems a part swap will not fix</li></ul>
+          <div class="cat-why">
           <h3>Why we should fix it</h3>
           <p>A phone is glued together, with thin cables and a battery that has to be handled right. A rushed home repair can tear a cable, damage a connector, or leave a phone that looks fixed but loses touch or Face ID calibration. We test the screen, touch, charging, camera, and speakers before we leave, and the repair carries a 1-year warranty on parts we supply and on our labor.</p>
+          </div>
           <a class="btn btn-primary" href="#repair" data-page="repair" data-wizard-device="Phone"><i class="fas fa-wrench"></i> Start a Service</a>
           <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services We Offer</a>
         </div>
       </div>
     </section>
 
-    <section id="tablets" class="page">
+    <section id="tablets" class="page cat-page">
       <div class="section">
         <div class="container">
           <div class="section-header center">
@@ -3870,18 +3886,20 @@
             <h2 class="section-title">Tablets</h2>
           </div>
           <img src="images/work/tablet-teardown-real.webp" alt="Tablet opened for repair on a work mat" loading="lazy" style="width:100%; max-width:720px; border-radius:12px; display:block; margin:0 auto 1.5rem;" />
-          <p>Tablets get used hard at home, at school, and at work, and they break in a different way than phones. The glass is bigger, the adhesive holds more, and a tablet screen job takes real time, about 3 hours for a tablet screen. We tape cracked glass first so it does not spread, check whether the tablet powers on and is backed up, and confirm the fault before ordering anything.</p>
-          <h3>Services</h3>
-          <ul><li>Cracked glass and touch-screen replacement</li><li>Display replacement and touch problems</li><li>Batteries and charging port repair</li><li>Buttons and speakers</li><li>Diagnosis when a tablet will not power on or charge</li></ul>
+          <p class="cat-lede">Tablets get used hard at home, at school, and at work, and they break in a different way than phones. The glass is bigger, the adhesive holds more, and a tablet screen job takes real time, about 3 hours for a tablet screen. We tape cracked glass first so it does not spread, check whether the tablet powers on and is backed up, and confirm the fault before ordering anything.</p>
+          <h3 class="cat-subhead">Services</h3>
+          <ul class="cat-services"><li>Cracked glass and touch-screen replacement</li><li>Display replacement and touch problems</li><li>Batteries and charging port repair</li><li>Buttons and speakers</li><li>Diagnosis when a tablet will not power on or charge</li></ul>
+          <div class="cat-why">
           <h3>Why we should fix it</h3>
           <p>Big glass and strong adhesive are where home tablet repairs go wrong. Prying a tablet open without heat and patience cracks the display underneath, and a tablet that is not tested after the repair can leave you with dead touch in one corner. We take the time the job actually needs, test touch across the whole screen, and make sure it charges before we leave.</p>
+          </div>
           <a class="btn btn-primary" href="#repair" data-page="repair" data-wizard-device="Tablet"><i class="fas fa-wrench"></i> Start a Service</a>
           <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services We Offer</a>
         </div>
       </div>
     </section>
 
-    <section id="computers" class="page">
+    <section id="computers" class="page cat-page">
       <div class="section">
         <div class="container">
           <div class="section-header center">
@@ -3889,18 +3907,20 @@
             <h2 class="section-title">Computers</h2>
           </div>
           <img src="images/work/hp-laptop-board.jpg" alt="Laptop on a repair bench" loading="lazy" style="width:100%; max-width:720px; border-radius:12px; display:block; margin:0 auto 1.5rem;" />
-          <p>Computers are where a slow machine, a dead screen, or a lost file turns into a work problem. We fix laptops and desktops of all kinds, at your place. We start by finding whether the fault is hardware, software, or both, because replacing a part will not fix a software problem, and reinstalling software will not fix a failing drive.</p>
-          <h3>Services</h3>
-          <ul><li>Laptop and desktop screen replacement</li><li>SSD upgrades and RAM installs for slow machines</li><li>Battery and keyboard replacement</li><li>Virus cleanup and software problems</li><li>Data rescue when a drive is failing or a machine will not boot</li><li>Circuit board repair when the fault is on the board itself</li></ul>
+          <p class="cat-lede">Computers are where a slow machine, a dead screen, or a lost file turns into a work problem. We fix laptops and desktops of all kinds, at your place. We start by finding whether the fault is hardware, software, or both, because replacing a part will not fix a software problem, and reinstalling software will not fix a failing drive.</p>
+          <h3 class="cat-subhead">Services</h3>
+          <ul class="cat-services"><li>Laptop and desktop screen replacement</li><li>SSD upgrades and RAM installs for slow machines</li><li>Battery and keyboard replacement</li><li>Virus cleanup and software problems</li><li>Data rescue when a drive is failing or a machine will not boot</li><li>Circuit board repair when the fault is on the board itself</li></ul>
+          <div class="cat-why">
           <h3>Why we should fix it</h3>
           <p>A computer repair is only worth doing if the machine is actually better when we leave. That means testing after the upgrade, checking that your files and programs are still there, and telling you honestly when a manufacturer repair is the better option for the same price. We do not guess at parts, and we do not leave a machine half working.</p>
+          </div>
           <a class="btn btn-primary" href="#repair" data-page="repair" data-wizard-device="Computer"><i class="fas fa-wrench"></i> Start a Service</a>
           <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services We Offer</a>
         </div>
       </div>
     </section>
 
-    <section id="consoles" class="page">
+    <section id="consoles" class="page cat-page">
       <div class="section">
         <div class="container">
           <div class="section-header center">
@@ -3908,18 +3928,20 @@
             <h2 class="section-title">Game Consoles</h2>
           </div>
           <img src="images/work/ps4-teardown.jpg" alt="Game console opened for service" loading="lazy" style="width:100%; max-width:720px; border-radius:12px; display:block; margin:0 auto 1.5rem;" />
-          <p>Game consoles fail in ways that look like a software problem but are usually hardware: overheating, a disc drive that will not read, or an HDMI port that has been knocked loose. We diagnose the console properly first, because a console that overheats needs a fan and cleaning, not a new hard drive, and a console that will not read discs needs the drive checked, not a reset.</p>
-          <h3>Services</h3>
-          <ul><li>HDMI port repair</li><li>Disc drive repair and replacement</li><li>Cooling fans, cleaning, and overheating fixes</li><li>Storage upgrades</li><li>Controller repair</li><li>Circuit board faults on consoles that will not power on</li></ul>
+          <p class="cat-lede">Game consoles fail in ways that look like a software problem but are usually hardware: overheating, a disc drive that will not read, or an HDMI port that has been knocked loose. We diagnose the console properly first, because a console that overheats needs a fan and cleaning, not a new hard drive, and a console that will not read discs needs the drive checked, not a reset.</p>
+          <h3 class="cat-subhead">Services</h3>
+          <ul class="cat-services"><li>HDMI port repair</li><li>Disc drive repair and replacement</li><li>Cooling fans, cleaning, and overheating fixes</li><li>Storage upgrades</li><li>Controller repair</li><li>Circuit board faults on consoles that will not power on</li></ul>
+          <div class="cat-why">
           <h3>Why we should fix it</h3>
           <p>Consoles are packed tight, with small connectors and heat that builds up fast. Opening one without the right tools can damage the board or the drive, and a console that is put back together without testing will fail again the first time it gets hot. We test the console under load before we leave, so it plays, reads discs, and stays cool.</p>
+          </div>
           <a class="btn btn-primary" href="#repair" data-page="repair" data-wizard-device="Game Console"><i class="fas fa-wrench"></i> Start a Service</a>
           <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services We Offer</a>
         </div>
       </div>
     </section>
 
-    <section id="smartwatches" class="page">
+    <section id="smartwatches" class="page cat-page">
       <div class="section">
         <div class="container">
           <div class="section-header center">
@@ -3927,18 +3949,20 @@
             <h2 class="section-title">Smartwatches</h2>
           </div>
           <img src="images/work/smartwatch-real.webp" alt="Cracked smartwatch on a wrist" loading="lazy" style="width:100%; max-width:720px; border-radius:12px; display:block; margin:0 auto 1.5rem;" />
-          <p>Smartwatches are small, and every repair on one is fiddly. Screens crack, batteries stop holding a charge, and charging stops working when the contacts wear. We handle smartwatches of all kinds, and we are honest up front when a watch is too small or too sealed to repair well, instead of taking it apart and hoping.</p>
-          <h3>Services</h3>
-          <ul><li>Cracked watch screens</li><li>Batteries that will not hold a charge</li><li>Charging problems</li><li>Buttons and bands</li><li>Pairing and software checks</li></ul>
+          <p class="cat-lede">Smartwatches are small, and every repair on one is fiddly. Screens crack, batteries stop holding a charge, and charging stops working when the contacts wear. We handle smartwatches of all kinds, and we are honest up front when a watch is too small or too sealed to repair well, instead of taking it apart and hoping.</p>
+          <h3 class="cat-subhead">Services</h3>
+          <ul class="cat-services"><li>Cracked watch screens</li><li>Batteries that will not hold a charge</li><li>Charging problems</li><li>Buttons and bands</li><li>Pairing and software checks</li></ul>
+          <div class="cat-why">
           <h3>Why we should fix it</h3>
           <p>The size is the whole problem with watches. Tiny screws, glued parts, and seals that are hard to restore once opened mean a home repair can easily lose a part or crack a small screen. We work on a bench with the right tools, test the screen, touch, charging, and pairing with your phone, and tell you before we start if the repair is not worth doing.</p>
+          </div>
           <a class="btn btn-primary" href="#repair" data-page="repair" data-wizard-device="Smart Watch"><i class="fas fa-wrench"></i> Start a Service</a>
           <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services We Offer</a>
         </div>
       </div>
     </section>
 
-    <section id="websites" class="page">
+    <section id="websites" class="page cat-page">
       <div class="section">
         <div class="container">
           <div class="section-header center">
@@ -3946,18 +3970,20 @@
             <h2 class="section-title">Websites for Businesses</h2>
           </div>
           <img src="images/values/values-hero-workbench.webp" alt="The workbench where websites are built and handled" loading="lazy" style="width:100%; max-width:720px; border-radius:12px; display:block; margin:0 auto 1.5rem;" />
-          <p>A website for a business is not a brochure, it is how guests find you, call you, and book you. We build small business websites, from a simple site up to a site with booking and contact forms and an online store, and we handle design, setup, and launch for you. You do not have to learn a builder, chase a domain, or figure out why a form is not sending.</p>
-          <h3>Services</h3>
-          <ul><li>Small business websites, up to 5 pages and up</li><li>Booking and contact forms that actually reach you</li><li>Online store setup</li><li>Fixes and updates to an existing site</li></ul>
+          <p class="cat-lede">A website for a business is not a brochure, it is how guests find you, call you, and book you. We build small business websites, from a simple site up to a site with booking and contact forms and an online store, and we handle design, setup, and launch for you. You do not have to learn a builder, chase a domain, or figure out why a form is not sending.</p>
+          <h3 class="cat-subhead">Services</h3>
+          <ul class="cat-services"><li>Small business websites, up to 5 pages and up</li><li>Booking and contact forms that actually reach you</li><li>Online store setup</li><li>Fixes and updates to an existing site</li></ul>
+          <div class="cat-why">
           <h3>Why we should fix it</h3>
           <p>A half-finished website costs real guests, and a site with a broken form or a wrong phone number is worse than no site at all. We build it end to end, check that the phone number, the forms, and the booking all work, and show you how to update it. It is built for your business, not an agency template with an agency price tag.</p>
+          </div>
           <a class="btn btn-primary" href="#repair" data-page="repair" data-wizard-device="Business / Other"><i class="fas fa-wrench"></i> Start a Service</a>
           <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services We Offer</a>
         </div>
       </div>
     </section>
 
-    <section id="network" class="page">
+    <section id="network" class="page cat-page">
       <div class="section">
         <div class="container">
           <div class="section-header center">
@@ -3965,11 +3991,13 @@
             <h2 class="section-title">Network Installs</h2>
           </div>
           <div class="page-photo-contain"><img src="images/work/cable-tester.jpg" alt="Cable tester used to verify network wiring" loading="lazy" /></div>
-          <p>Network installs are about making Wi-Fi and wired internet work everywhere in a home or small business, not just next to the router. We hook up and configure routers, switches, and Wi-Fi access points, and we verify everything working end to end before we leave. If a room has no signal, a device keeps dropping, or a new office needs a full setup, that is the job.</p>
-          <h3>Services</h3>
-          <ul><li>Routers, hooked up and configured</li><li>Switches, hooked up and configured</li><li>Wi-Fi access points, including whole-home Wi-Fi</li><li>Verification that every room and device works</li></ul>
+          <p class="cat-lede">Network installs are about making Wi-Fi and wired internet work everywhere in a home or small business, not just next to the router. We hook up and configure routers, switches, and Wi-Fi access points, and we verify everything working end to end before we leave. If a room has no signal, a device keeps dropping, or a new office needs a full setup, that is the job.</p>
+          <h3 class="cat-subhead">Services</h3>
+          <ul class="cat-services"><li>Routers, hooked up and configured</li><li>Switches, hooked up and configured</li><li>Wi-Fi access points, including whole-home Wi-Fi</li><li>Verification that every room and device works</li></ul>
+          <div class="cat-why">
           <h3>Why we should fix it</h3>
           <p>Network gear fights itself when it is guessed at. Two routers, a bad setting, or an access point in the wrong spot can leave one room dead while the rest works fine. We configure it as one system and test every room, so you are not left restarting a router every day. We are not an internet service provider, but we can recommend a provider and plan and make everything on your side of the connection work.</p>
+          </div>
           <!-- CABLING_DOOR_2026_11_08: the Internet Cabling page had zero inbound links anywhere on the site — search was its only door. Exactly one door, from its parent topic, in the What We Service grid's service-card markup; photo, alt text, and card line are the Cabling page's own. -->
           <div class="card-grid">
             <a class="service-card" href="#cabling" data-page="cabling"><img class="service-card-img" src="images/values/values-transparency-parts.webp" alt="Cables and parts organized on the shop wall" loading="lazy" /><div class="service-icon"><i class="fas fa-plug"></i></div><h3>Internet Cabling</h3><p>Ethernet cable runs to a room, terminated and tested.</p></a>
@@ -3980,7 +4008,7 @@
       </div>
     </section>
 
-    <section id="cabling" class="page">
+    <section id="cabling" class="page cat-page">
       <div class="section">
         <div class="container">
           <div class="section-header center">
@@ -3988,11 +4016,13 @@
             <h2 class="section-title">Internet Cabling</h2>
           </div>
           <img src="images/values/values-transparency-parts.webp" alt="Cables and parts organized on the shop wall" loading="lazy" style="width:100%; max-width:720px; border-radius:12px; display:block; margin:0 auto 1.5rem;" />
-          <p>Internet cabling is the physical work behind a reliable connection: running Ethernet cable through a home or small business, terminating it properly, and testing it. Wired connections do not drop the way Wi-Fi does, which is why offices, gaming setups, and home offices still need them. We run clean, finished cable, not loose wire across a floor.</p>
-          <h3>Services</h3>
-          <ul><li>Ethernet cable runs to a room, terminated and tested</li><li>Wall plates, installed and terminated</li><li>Attic and crawl space runs</li><li>Homes and small businesses</li></ul>
+          <p class="cat-lede">Internet cabling is the physical work behind a reliable connection: running Ethernet cable through a home or small business, terminating it properly, and testing it. Wired connections do not drop the way Wi-Fi does, which is why offices, gaming setups, and home offices still need them. We run clean, finished cable, not loose wire across a floor.</p>
+          <h3 class="cat-subhead">Services</h3>
+          <ul class="cat-services"><li>Ethernet cable runs to a room, terminated and tested</li><li>Wall plates, installed and terminated</li><li>Attic and crawl space runs</li><li>Homes and small businesses</li></ul>
+          <div class="cat-why">
           <h3>Why we should fix it</h3>
           <p>Cabling fails quietly when it is not tested. A bad termination looks finished but drops the connection, and finding it later means opening walls again. We test every run before we leave, finish the wall plate, and confirm the connection works at the device, not just at the router.</p>
+          </div>
           <a class="btn btn-primary" href="#repair" data-page="repair" data-wizard-device="Networking"><i class="fas fa-wrench"></i> Start a Service</a>
           <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services We Offer</a>
         </div>
