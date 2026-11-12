@@ -45,8 +45,18 @@
  * :-webkit-autofill animation signal + focus) makes sure they are
  * mounted whenever the fields fill without typing, and freshToken()
  * waits out the first challenge instead of resetting it — it only
- * restarts a check that already went stale, or one that is still
- * token-less after a long wait (a dead render).
+ * restarts a check that already went stale.
+ *
+ * TURNSTILE_SIGNIN_WAIT_2026_11_12 (v132): the owner proved the
+ * 45s wait still gives up too soon — on his 5 Mbps hotspot the
+ * token landed after about a minute, past the wait, while the
+ * widget itself showed Success a moment later. freshToken() now
+ * waits 120s and never resets a first challenge that has never
+ * produced a token merely for being slow (the old 20s STUCK_MS
+ * reset is gone — it restarted the very challenge that was about
+ * to finish). The wait ends early only on a true failure: the
+ * widget's error-callback fired, or the Cloudflare script never
+ * loaded. See freshToken() for the full rule.
  *
  * Style: ES5, matching the rest of the site.
  * ===================================================================== */
@@ -114,7 +124,7 @@
     mountCalls++;
     var entry = entryFor(el);
     if (entry) return entry;
-    entry = { el: el, id: null, token: '', issuedAt: 0, hadToken: false, renderedAt: 0 };
+    entry = { el: el, id: null, token: '', issuedAt: 0, hadToken: false, renderedAt: 0, failed: false };
     widgets.push(entry);
     el.style.margin = '.75rem 0';
     var tries = 0;
@@ -128,9 +138,9 @@
                full-size widget's live states could cover the bottom
                thumb bar on phones; compact keeps it one short row. */
             size: 'compact',
-            callback: function (tok) { entry.token = String(tok || ''); entry.issuedAt = Date.now(); entry.hadToken = true; },
+            callback: function (tok) { entry.token = String(tok || ''); entry.issuedAt = Date.now(); entry.hadToken = true; entry.failed = false; },
             'expired-callback': function () { entry.token = ''; entry.issuedAt = 0; },
-            'error-callback': function () { entry.token = ''; entry.issuedAt = 0; }
+            'error-callback': function () { entry.token = ''; entry.issuedAt = 0; entry.failed = true; }
           });
           entry.renderedAt = Date.now();
         } catch (e) { /* a later mount() call retries */ }
@@ -175,29 +185,49 @@
    * its first "Verifying…" just because no token exists yet (that
    * is exactly the autofill case: fields filled at once, Log In
    * tapped at once). Reset happens only when a token already existed
-   * and went stale/expired, or when the widget is still token-less
-   * after a long wait (STUCK_MS — a dead render, e.g. mounted while
-   * hidden), in which case it is reset ONCE and the wait continues.
-   * A fresh token comes back at once; otherwise this polls until a
-   * fresh token lands or the wait runs out (~45s), and calls back
-   * with the token or ''. Login AND signup use it — every other form
-   * keeps the gate()/token() behavior it already had. */
+   * and went stale/expired.
+   * TURNSTILE_SIGNIN_WAIT_2026_11_12 (v132): the owner proved the
+   * 45s wait still gives up too soon — on his 5 Mbps hotspot the
+   * token landed after about a minute, past the wait, while the
+   * widget itself showed Success a moment later (his laptop photo:
+   * Success badge + "did not finish" error at the same time). Two
+   * changes: (1) the wait is 120s — twice his observed minute, with
+   * margin for a slow Managed challenge end to end. (2) The old
+   * STUCK_MS reset is GONE: a first challenge that has never
+   * produced a token is never reset for being slow — resetting it
+   * restarts the very challenge that was about to finish, making
+   * the total even longer. The wait now ends early ONLY on a true
+   * failure: the widget's error-callback fired (entry.failed), or
+   * the Cloudflare script never loaded (entry.loadFailed — blocked
+   * or network down). A merely slow challenge is waited out. A
+   * fresh token comes back at once; otherwise this polls every
+   * 250ms until a fresh token lands, a true failure reports, or
+   * the 120s wait runs out, and calls back with the token or ''.
+   * Login AND signup use it — every other form keeps the gate() /
+   * token() behavior it already had. */
   function freshToken(el, cb, opts) {
     opts = opts || {};
-    var waitMs = opts.waitMs || 45000; // TURNSTILE_SLOWFIX_2026_11_10 (v86): 25s -> 45s so a slow human check gets time to finish before the login gives up
-    var STUCK_MS = 20000; // first challenge gets this long before a token-less widget counts as stuck
+    var waitMs = opts.waitMs || 120000; // TURNSTILE_SIGNIN_WAIT_2026_11_12 (v132): 45s -> 120s, twice the owner's observed ~60s token time on his 5 Mbps hotspot, with margin — the wait gives up only after two full minutes, by which time something is actually wrong, not merely slow
     var entry = mount(el);
     if (!entry) { cb(''); return; }
     if (entry.token && (Date.now() - entry.issuedAt <= TOKEN_MAX_AGE_MS)) { cb(entry.token); return; }
+    /* A previous challenge REPORTED failure (error-callback): that
+     * challenge is dead, so a new attempt starts a fresh one instead
+     * of failing at once. This is recovery from a reported failure,
+     * not a reset of a slow challenge. */
+    if (entry.failed) { entry.failed = false; reset(el); }
     var resetDone = false;
     if (entry.token || entry.hadToken) { reset(el); resetDone = true; } // stale/expired token: one fresh check
     var started = Date.now();
     (function poll() {
       var t = token(el);
       if (t) { cb(t); return; }
-      var elapsed = Date.now() - started;
-      if (!resetDone && !entry.hadToken && elapsed >= STUCK_MS) { reset(el); resetDone = true; }
-      if (elapsed >= waitMs) { cb(''); return; }
+      /* True failure only: the widget reported failure, or the
+       * Cloudflare script never loaded (blocked / network down). A
+       * merely slow challenge keeps waiting — the wait ends early
+       * on a reported failure, never on slowness. */
+      if (entry.failed || entry.loadFailed) { cb(''); return; }
+      if (Date.now() - started >= waitMs) { cb(''); return; }
       setTimeout(poll, 250);
     })();
   }

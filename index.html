@@ -1990,6 +1990,7 @@
             <p class="acct-error" id="authx-login-error" hidden></p>
             <div class="atr-turnstile" id="ts-login"></div>
             <button class="btn btn-primary btn-lg acct-submit" type="submit">Log In <i class="fas fa-arrow-right"></i></button>
+            <p class="acct-muted" id="authx-login-check" hidden>Still running the quick human check — this can take a moment on a slow connection.</p>
             <button class="authx-forgot" id="authx-forgot-btn" type="button">Forgot your password?</button>
           </form>
 
@@ -2014,6 +2015,7 @@
             <p class="acct-muted" id="authx-signup-note" hidden></p>
             <div class="atr-turnstile" id="ts-signup"></div>
             <button class="btn btn-primary btn-lg acct-submit" type="submit">Create Account <i class="fas fa-arrow-right"></i></button>
+            <p class="acct-muted" id="authx-signup-check" hidden>Still running the quick human check — this can take a moment on a slow connection.</p>
           </form>
 
         </div>
@@ -7833,6 +7835,7 @@
     if (loginForm) loginForm.addEventListener('submit', function (e) {
       e.preventDefault();
       showErr($('authx-login-error'), '');
+      var loginCheck = $('authx-login-check'); if (loginCheck) loginCheck.hidden = true;
       var email = String($('authx-login-email').value || '').trim().toLowerCase();
       var pass = $('authx-login-password').value || '';
       if (!validEmail(email)) { showErr($('authx-login-error'), 'Please enter a valid email address.'); return; }
@@ -7862,10 +7865,17 @@
          restarts a check that already went stale) and only then
          submit. The old
          "complete the check, then log in again" stop is gone; the
-         only failure left is the check truly never finishing. */
+         only failure left is the check truly never finishing.
+         TURNSTILE_SIGNIN_WAIT_2026_11_12 (v132): the helper now
+         waits 120s and never restarts a slow first challenge; while
+         it waits the button stays disabled and the plain line under
+         it (#authx-login-check) says the check is still running, so
+         the guest knows it is working, not dead. */
       if (window.atrTurnstile && window.atrTurnstile.freshToken) {
         if (btn) { btn.disabled = true; btn.innerHTML = 'One moment — finishing the quick human check…'; }
+        if (loginCheck) loginCheck.hidden = false;
         window.atrTurnstile.freshToken($('ts-login'), function (tsTokLogin) {
+          if (loginCheck) loginCheck.hidden = true;
           if (btn) { btn.disabled = false; btn.innerHTML = 'Log In <i class="fas fa-arrow-right"></i>'; }
           if (!tsTokLogin) {
             showErr($('authx-login-error'), 'The human check did not finish. Check your connection and tap Log In again — or call or text us at (937) 280-6243.');
@@ -7888,6 +7898,7 @@
     if (signupForm) signupForm.addEventListener('submit', function (e) {
       e.preventDefault();
       showErr($('authx-signup-error'), '');
+      var signupCheck = $('authx-signup-check'); if (signupCheck) signupCheck.hidden = true;
       var name = String($('authx-signup-name').value || '').trim();
       var email = String($('authx-signup-email').value || '').trim().toLowerCase();
       var phone = String($('authx-signup-phone').value || '').trim();
@@ -7927,10 +7938,16 @@
          Autofill fills the fields at once and Create Account can be
          tapped before the widget has produced a token — never dead-end
          with "complete the check and try again". Wait for a fresh token
-         (the helper waits out the first challenge) and only then submit. */
+         (the helper waits out the first challenge) and only then submit.
+         TURNSTILE_SIGNIN_WAIT_2026_11_12 (v132): the wait is 120s and
+         never restarts a slow first challenge; the plain line under
+         the button (#authx-signup-check) says the check is still
+         running while it waits. */
       if (window.atrTurnstile && window.atrTurnstile.freshToken) {
         if (btn) { btn.disabled = true; btn.innerHTML = 'One moment — finishing the quick human check…'; }
+        if (signupCheck) signupCheck.hidden = false;
         window.atrTurnstile.freshToken($('ts-signup'), function (tsTokSignup) {
+          if (signupCheck) signupCheck.hidden = true;
           if (btn) { btn.disabled = false; btn.innerHTML = 'Create Account <i class="fas fa-arrow-right"></i>'; }
           if (!tsTokSignup) {
             showErr($('authx-signup-error'), 'The human check did not finish. Check your connection and tap Create Account again — or call or text us at (937) 280-6243.');
