@@ -3783,3 +3783,18 @@ a.acct-menu-item { text-decoration: none; color: inherit; }
   }
   .acct-menu #authx-logout i { width: 1.2rem; font-size: 1.05rem; }
 }
+
+/* COMPARE_BIZ_PHONE_2026_11_12 (owner, Nov 12, 2026): the business "Compare the
+   plans" table was wider than a phone screen, so the Business Pro column was cut
+   off at the right edge ("Busines Pro", "$99.99/m") and needed sideways scrolling
+   to read. At phone widths only, and on the business ATR One page only, pin the
+   table to a fixed layout so all three columns share the available width, shrink
+   the type and padding, and let long cells wrap. The guest compare table is
+   untouched. */
+@media (max-width: 640px) {
+  #atr-one-business .compare-table { table-layout: fixed; font-size: 0.85rem; }
+  #atr-one-business .compare-table th,
+  #atr-one-business .compare-table td { padding: 0.6rem 0.55rem; overflow-wrap: anywhere; }
+  #atr-one-business .compare-table th:first-child,
+  #atr-one-business .compare-table td:first-child { width: 36%; }
+}
