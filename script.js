@@ -8,6 +8,23 @@
 (function () {
   'use strict';
 
+  /* IMG_PROTECT_2026_11_12 (owner, Nov 12, 2026): every picture on
+     the public site — his photos, work photos, carousel images. The
+     right-click save menu and dragging a photo off the page are
+     stopped on images only (delegated on document, so it covers
+     images added by scripts too, not just the ones in the HTML
+     today). Taps are untouched: no pointer-events rule anywhere, so
+     service cards and every other tappable picture still works. No
+     watermark, badge, or overlay. Honest limit: this stops the
+     casual right-click / long-press save — not screenshots, the
+     browser's developer tools, or view-source. */
+  document.addEventListener('contextmenu', function (e) {
+    if (e.target && e.target.closest && e.target.closest('img')) e.preventDefault();
+  });
+  document.addEventListener('dragstart', function (e) {
+    if (e.target && e.target.closest && e.target.closest('img')) e.preventDefault();
+  });
+
   document.addEventListener('DOMContentLoaded', function () {
 
     /* ---------------- Page router ---------------- */
@@ -3178,6 +3195,10 @@
            cache, or asynchronously when the read-only employee
            check below resolves. */
         applyAssociateGreeting(greetEl);
+        /* V55_GREETING_BUSINESS_2026_11_12: the business state upgrades
+           the greeting the same way the associate state does — after
+           the associate upgrade, so associate still outranks it. */
+        applyBusinessGreeting(greetEl);
       }
     }
 
@@ -3295,6 +3316,56 @@
         }).catch(function () { /* silent: the customer/guest greeting stands */ });
       } catch (e) {}
     }
+
+    /* ---------- V55_GREETING_BUSINESS_2026_11_12 ----------
+       Austin (Nov 12, 2026): the greeting names the account type —
+       "Welcome, Business" on a business account, the same comma
+       pattern as "Welcome, Guest" and "Welcome, Associate". One
+       account button, one account panel — only the greeting text
+       changes.
+
+       How it works, and why it is built this way:
+       - The tier is the one the account panel already resolves: the
+         inline membership script's mmPlan ({tier, name} | null Free |
+         undefined unavailable), set by setMembershipLine() from
+         sb.rpc('my_membership'). mmPlan lives inside that script's
+         IIFE, so the inline script mirrors it to window.mmPlan on
+         every tier change (see the V55 mirror lines there). NOTHING
+         new is fetched and no new account type or flag is invented —
+         this reads that mirrored window global.
+       - Business tiers are business, business_plus and business_pro.
+         A business tier outranks the plain "Hello, <name>" state
+         (like the associate state outranks the guest state) but must
+         NOT outrank "Welcome, Associate" — Austin's standing order
+         is associate first, guest second, and business sits with the
+         guest side of that order. So this runs AFTER
+         applyAssociateGreeting() in renderHeader(), and it skips
+         when the greeting already reads "Welcome, Associate". The
+         associate async callback sets Associate unconditionally when
+         it resolves, so an associate who is also a business member
+         still ends up "Welcome, Associate" even if the business
+         greeting landed first.
+       - renderHeader() runs before the membership RPC answers, so
+         the greeting cannot wait for the tier there. The inline
+         setMembershipLine() calls window.atrRefreshGreeting() (this
+         module's renderHeader, exposed below) once the tier lands,
+         which re-applies the greeting with the tier in hand. */
+    var BUSINESS_GREETING_TIERS = { business: true, business_plus: true, business_pro: true };
+    function isBusinessTier() {
+      try {
+        var m = window.mmPlan;
+        return !!(m && m.tier && BUSINESS_GREETING_TIERS[m.tier]);
+      } catch (e) { return false; }
+    }
+    function applyBusinessGreeting(greetEl) {
+      try {
+        if (!greetEl) return;
+        if (!isBusinessTier()) return;
+        if (greetEl.textContent === 'Welcome, Associate') return;
+        greetEl.textContent = 'Welcome, Business';
+      } catch (e) {}
+    }
+    window.atrRefreshGreeting = renderHeader;
 
     /* ---------- account page open --------------------------------
        QR_FIX_PASS_2_2026_11_05: My Account is a page now, not an
@@ -4908,6 +4979,7 @@ if ("serviceWorker" in navigator) {
     var PAGE_NAMES = {
       home: 'Home', repair: 'Repair', whatwedo: 'Guest Services',
       about: 'About', shop: 'Store', b2b: 'Business Services', 'atr-one': 'ATR One Membership',
+      'atr-one-business': 'ATR One Business Membership',
       careers: 'Careers', investors: 'Investors', contact: 'Contact',
       warranty: 'Warranty', 'warranty-request': 'Warranty Request',
       privacy: 'Privacy Policy', terms: 'Terms of Service',
@@ -6662,6 +6734,36 @@ document.addEventListener('click', function (e) {
        function). Only then does the waiver record, and the
        redirect fires exactly as before. Like the rest of the
        site this fails closed: no confirmed check, no start. */
+    /* CONNECT_QS_URL_2026_11_12 (owner, Nov 12, 2026): device-aware
+       QuickSupport destination — see the CONNECT_REDIRECT comment at
+       the redirect below. iPhone/iPad (including iPadOS 13+, which
+       reports as MacIntel with touch points) gets the App Store
+       QuickSupport app; Android gets the Play Store QuickSupport app;
+       Mac gets the direct QuickSupport .dmg; Windows and everything
+       else gets the direct QuickSupport .exe. All four are
+       TeamViewer's official sources, verified live Nov 12, 2026
+       (download.teamviewer.com resolves to the QuickSupport binary;
+       both store pages return 200). No ID is ever pre-filled. */
+    function quickSupportUrl() {
+      try {
+        var ua = navigator.userAgent || '';
+        var platform = navigator.platform || '';
+        if (/iPad|iPhone|iPod/.test(ua) || (platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+          return 'https://apps.apple.com/us/app/teamviewer-quicksupport/id661649585';
+        }
+        if (/Android/.test(ua)) {
+          return 'https://play.google.com/store/apps/details?id=com.teamviewer.quicksupport.market';
+        }
+        if (/Mac/.test(platform) || /Macintosh/.test(ua)) {
+          return 'https://download.teamviewer.com/download/TeamViewerQS.dmg';
+        }
+      } catch (e) {}
+      return 'https://download.teamviewer.com/download/TeamViewerQS.exe';
+    }
+    /* Exposed for the staged Playwright checks (v132): the guest
+       redirect itself is the only production caller. */
+    window.atrQuickSupportUrl = quickSupportUrl;
+
     function recordWaiver() {
       startSessionBtn.disabled = true;
       if (wvMsg) { wvMsg.textContent = 'Saving your agreement…'; wvMsg.hidden = false; }
@@ -6673,22 +6775,27 @@ document.addEventListener('click', function (e) {
       }, function (j) {
         if (j && j.ok) {
           if (wvBlock) wvBlock.hidden = true;
-          /* CONNECT_REDIRECT_2026_11_11 (owner, Nov 11, 2026): the
-             check is the doorway - a code that matches sends the
-             guest onward to the business's ATRG Connect
-             link. There is no standing ATRG Connect link anywhere on
-             the page; this redirect is the only way through, and it
-             fires only after the waiver above has been recorded.
-             The destination below is the generic QuickSupport
-             entry - https://start.teamviewer.com with NO ID
-             pre-filled, per the owner's rule (Nov 11, 2026): his
-             own QuickSupport ID is his alone and never appears in
-             a guest-facing link. The guest opens QuickSupport
-             there and reads their own QuickSupport code to the
-             associate, who enters it in TeamViewer. (Before: this
-             revealed the in-page #voo-final block - our own
-             session front end, which connected to nothing.) */
-          window.location.href = 'https://start.teamviewer.com';
+          /* CONNECT_REDIRECT_2026_11_12 (owner, Nov 12, 2026 — REPLACES
+             the Nov 11 CONNECT_REDIRECT): the Nov 11 destination was
+             bare https://start.teamviewer.com — TeamViewer's own
+             session-start page for the FULL TeamViewer client, NOT
+             the QuickSupport download. On a device with the full app
+             installed it opened that app, which is not what this page
+             promises ("a small helper runs just for the session and
+             is gone when the session ends"). The guest destination is
+             now the real QuickSupport download, picked by device by
+             quickSupportUrl() above — App Store on iPhone/iPad, Play
+             Store on Android, the direct download.teamviewer.com
+             QuickSupport file on a Windows/Mac computer. One tap
+             lands on the QuickSupport run, not on the full-client
+             download. The flow after the button is unchanged: the
+             guest runs QuickSupport and reads THEIR OWN ID to the
+             associate, who enters it in TeamViewer. No ID is ever
+             pre-filled and no private ID appears in any guest-facing
+             link. The portal ATRG Remote "Open TeamViewer" button is
+             NOT touched — that is the associate side, where the full
+             app is correct. */
+          window.location.href = quickSupportUrl();
         } else {
           startSessionBtn.disabled = false;
           if (wvMsg) wvMsg.textContent = 'We could not save your agreement just now. Please tap Start my session once more.';

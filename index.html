@@ -818,6 +818,48 @@
             <h1 class="section-title">Guest Services</h1>
             <p class="section-copy">We come to you. Phones, tablets, computers, and everything else you live on &mdash; repaired at your door, with a written estimate first and a 1-year warranty on parts and labor.</p>
           </div>
+          <!-- MIRROR_RULE_2026_11_12 (owner, Nov 12, 2026): Guest Services mirrors Business Services — same structure, same order: intro, four trust blocks, ATR One pitch, service cards, Why we should fix it, pricing at the bottom. Guest wording and guest prices only. All body copy reuses the page's own words; no new claims, prices, or services. -->
+          <div class="card-grid">
+            <div class="perk-card">
+              <i class="fas fa-truck-fast"></i>
+              <h4>We come to you</h4>
+              <p>You never haul a dead device across town. We come to your home and do the repair and the setup there, on your schedule, with a written estimate first and a 1-year warranty on parts and labor.</p>
+            </div>
+            <div class="perk-card">
+              <i class="fas fa-wifi"></i>
+              <h4>We set it right up</h4>
+              <p>Phones, tablets, computers, and Wi-Fi set up and working at your home: routers, switches, and Wi-Fi access points hooked up and configured &mdash; verified working end to end.</p>
+            </div>
+            <div class="perk-card">
+              <i class="fas fa-screwdriver-wrench"></i>
+              <h4>Repairs that keep you connected</h4>
+              <p>Phones, tablets, computers, and everything else you live on, repaired with a written estimate first and a 1-year warranty on parts and labor &mdash; so a broken device never leaves you cut off.</p>
+            </div>
+            <div class="perk-card">
+              <i class="fas fa-shield-halved"></i>
+              <h4>Technicians you can trust</h4>
+              <p>The same local technicians, at your door, testing the screen, touch, charging, camera, and speakers before we leave &mdash; and the repair carries a 1-year warranty on parts we supply and on our labor.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="feature-row">
+        <div class="feature-text">
+          <p class="eyebrow">For every guest</p>
+          <h2>Built for every guest</h2>
+          <p>Every guest starts on ATR One Free automatically &mdash; nothing to join and nothing to pay. You earn 1 point for every $1 on every completed repair or service &mdash; 100 points is $5 toward repairs, accessories, and vouchers.</p>
+          <p>Paid members pay no visit fee or diagnostics on covered devices, earn points faster, and save more on repairs and accessories.</p>
+          <p><strong>ATR One Individual &mdash; $9.99/mo.</strong> 20% off repairs and 25% off accessories on covered devices, and no visit fee on covered devices. Covers 1 device. Earns 5 points for every $1 spent.</p>
+          <p><strong>ATR One Family &mdash; $19.99/mo.</strong> 20% off repairs and 25% off accessories on covered devices, and no visit fee on covered devices. Covers 5 devices. Earns 5 points for every $1 spent.</p>
+          <a class="btn btn-primary" href="#atr-one" data-page="atr-one">See ATR One <i class="fas fa-arrow-right"></i></a>
+          <a class="btn btn-outline" href="#contact" data-page="contact" style="margin-left:0.5rem;">Talk to Us</a>
+        </div>
+        <div class="feature-media">
+          <img src="images/work/phone-screen-replacement.webp" alt="Phone screen being replaced" loading="lazy" />
+        </div>
+      </div>
+      <div class="section" style="padding-top:0;">
+        <div class="container">
           <!-- SERVICES_TWO_PAGES_2026_11_12 (owner, Nov 12, 2026): the Repair / One-on-One selector that used to sit here is gone — it was redundant with the cards below, which open the detail pages and the booking flow. The script.js Services-flow module is inert without #svc-flow (guarded); site search now drives the booking form directly (window.atrBkOpenRepair). -->
           <div class="card-grid">
             <!-- SITE_REAL_PHOTOS_2026_10_30: every photo on this site is Austin's own; AI/stock images removed, icon treatment where no photo of his fits -->
@@ -1773,24 +1815,7 @@
           </div>
 
 
-          <div class="shop-toolbar">
-            <!-- ACCOUNT_FIX_PASS_3_4_2026_11_06 (owner shop redesign,
-                 Nov 6, 2026): the old category chips are retired. The
-                 shop now opens on the category tiles below; the cart
-                 control stays in the toolbar. -->
-            <span class="cart-glance-anchor">
-              <button class="btn btn-primary" id="cart-open-btn" aria-haspopup="true" aria-expanded="false"><i class="fas fa-bag-shopping"></i> Your bag <span class="cart-count" id="cart-count">0</span></button>
-              <div class="cart-glance" id="cart-glance" hidden>
-                <div class="cart-glance-items" id="cart-glance-items"></div>
-                <div class="cart-glance-total" id="cart-glance-total-row"><span id="cart-glance-total-label">Subtotal</span><strong id="cart-glance-total">$0.00</strong></div>
-                <p class="cart-glance-empty" id="cart-glance-empty" hidden>Your bag is empty.<br><a href="#shop" data-page="shop">Browse the shop</a></p>
-                <div class="cart-glance-actions" id="cart-glance-actions">
-                  <button type="button" class="cart-glance-view" id="cart-glance-view">View bag</button>
-                  <button type="button" class="cart-glance-checkout" id="cart-glance-checkout">Checkout <i class="fas fa-arrow-right" aria-hidden="true"></i></button>
-                </div>
-              </div>
-            </span>
-          </div>
+          <!-- SHOP_BAG_DEDUPE_2026_11_12 (owner, Nov 12, 2026): the in-page "Your bag" button lived here and duplicated the bag already in the header. Removed, with its glance popover (openable only from that button). The header bag opens the same drawer; the account Cart section is unchanged. No JS change: every reference to the removed button, count pill, and glance popover in script.js is null-guarded. -->
 
           <!-- ACCOUNT_FIX_PASS_3_4_2026_11_06 (owner shop landing,
                Nov 6, 2026): the shop opens on big category tiles in
@@ -2680,6 +2705,12 @@
               <h4>Repairs that keep you open</h4>
               <p>Phones, tablets, computers, and printers repaired with a written estimate first and a 1-year warranty on parts and labor &mdash; so a broken device never becomes a closed sign.</p>
             </div>
+            <!-- MIRROR_RULE_2026_11_12 (owner, Nov 12, 2026): fourth trust block — no empty slot in the grid. "Techs" is Austin's spelling, T-E-C-H-S, plural, meaning technicians. -->
+            <div class="perk-card">
+              <i class="fas fa-shield-halved"></i>
+              <h4>Techs you can trust</h4>
+              <p>On site at your business, keeping you open &mdash; so a broken device never becomes a closed sign.</p>
+            </div>
           </div>
         </div>
       </div>
@@ -2692,7 +2723,7 @@
           <p>For larger offices and device fleets, it is the same on-site service, scaled to the whole building: full IT management, including server setup, scheduled maintenance, and priority dispatch &mdash; one local number to call instead of a call center and a ticket queue.</p>
           <p><strong>ATR One Business &mdash; $49.99/mo.</strong> 45% off repairs and 55% off accessories on covered devices, wholesale parts pricing, and no visit fee on covered devices.</p>
           <p><strong>ATR One Business Pro &mdash; $99.99/mo.</strong> 50% off repairs and 65% off accessories on covered devices, with full IT management for the business.</p>
-          <a class="btn btn-primary" href="#atr-one" data-page="atr-one">See ATR One <i class="fas fa-arrow-right"></i></a>
+          <a class="btn btn-primary" href="#atr-one-business" data-page="atr-one-business">See ATR One <i class="fas fa-arrow-right"></i></a>
           <a class="btn btn-outline" href="#contact" data-page="contact" style="margin-left:0.5rem;">Talk to Us</a>
         </div>
         <div class="feature-media">
@@ -2702,7 +2733,7 @@
       <!-- SERVICES_TWO_PAGES_2026_11_12 (owner, Nov 12, 2026): the business services grid — the same categories as Guest Services, for business, plus Business Setup and Websites for Business, moved out of the guest side. Cards carry no "Start a Service" text; the card itself is the button. The old four pricing cards are gone — the Hourly Rate card was an internal rate and never belongs on the public site. -->
       <div class="section" style="padding-top:0;">
         <div class="container">
-          <div class="card-grid">
+          <div class="card-grid" id="b2b-services">
             <a class="service-card" href="#phones" data-page="phones" data-business="1"><img class="service-card-img" src="images/work/phone-repair.jpg" alt="Phone opened for screen repair on a bench" loading="lazy" /><div class="service-icon"><i class="fas fa-mobile-screen"></i></div><h3>Phones for Business</h3><p>Staff phones repaired on site &mdash; screens, batteries, charging ports, and cameras, with a written estimate first.</p></a>
             <a class="service-card" href="#tablets" data-page="tablets" data-business="1"><img class="service-card-img" src="images/work/tablet-teardown-real.webp" alt="Tablet opened for repair on a work mat" loading="lazy" /><div class="service-icon"><i class="fas fa-tablet-screen-button"></i></div><h3>Tablets for Business</h3><p>Staff tablets repaired on site &mdash; displays, charging ports, touch issues, and batteries.</p></a>
             <a class="service-card" href="#computers" data-page="computers" data-business="1"><img class="service-card-img" src="images/work/hp-laptop-board.jpg" alt="Laptop computer on a repair bench" loading="lazy" /><div class="service-icon"><i class="fas fa-laptop"></i></div><h3>Computers for Business</h3><p>Office computers repaired and set up on site &mdash; SSDs, RAM, displays, and cleanup.</p></a>
@@ -2721,7 +2752,7 @@
       </div>
       <div class="section" style="padding-top:0;">
         <div class="container">
-          <div class="price-block">
+          <div class="price-block" id="b2b-pricing">
             <p class="eyebrow">Business pricing</p>
             <h2 class="section-title" style="font-size:1.6rem;">What it costs for your business <span class="price-asterisk" aria-label="See note 3 in the footer">*</span></h2>
             <p class="lead-line"><strong>Dispatch fee is $35.99.</strong></p>
@@ -2748,7 +2779,7 @@
             <h2 class="section-title">One membership. Every perk.</h2>
             <p class="section-copy">ATR One is our membership for people who want their tech handled — priority service, real discounts, and free remote support whenever you need it.<sup class="fnote">2</sup></p>
             <!-- SITE_MEMBERSHIP_COPY_2026_11_02 -->
-            <p class="section-copy">Every guest starts on ATR One Free: earn 1 point for every $1 of a completed repair &mdash; 100 points = $5 toward repairs, accessories, and vouchers. ATR One Plus plans earn faster &mdash; 5 points per $1 on Individual and Family, 10 points per $1 on Business and Business Pro &mdash; and add every perk below, including wholesale pricing on parts.</p>
+            <p class="section-copy">Every guest starts on ATR One Free: earn 1 point for every $1 of a completed repair &mdash; 100 points = $5 toward repairs, accessories, and vouchers. ATR One Plus plans earn faster &mdash; 5 points per $1 on Individual and Family &mdash; and add every perk below, including wholesale pricing on parts.</p>
           </div>
 
           <!-- HOMEPAGE_SLIM_2026_11_08: plain two-part ATR One summary
@@ -2802,12 +2833,12 @@
             <div class="perk-card">
               <i class="fas fa-percent"></i>
               <h4>Repair Discounts on Every Plan</h4>
-              <p>Every repair, every time: 20% off on Individual and Family, 45% off on Business, and 50% off on Business Pro.</p>
+              <p>Every repair, every time: 20% off on Individual and Family.</p>
             </div>
             <div class="perk-card">
               <i class="fas fa-tags"></i>
               <h4>Accessory Discounts on Every Plan</h4>
-              <p>Cases, chargers, cables, and more: 25% off on Individual and Family, 55% off on Business, and 65% off on Business Pro.</p>
+              <p>Cases, chargers, cables, and more: 25% off on Individual and Family.</p>
             </div>
             <!-- SITE_ATRONE_TIERS_2026_11_02 -->
             <!-- SITE_MEMBERSHIP_COPY_2026_11_02 -->
@@ -2841,26 +2872,9 @@
           <div class="compare-wrap">
             <table class="compare-table">
               <thead>
-                <tr><th></th><th>Individual</th><th>Family</th><th>Business</th><th class="compare-hl">Business Pro</th></tr>
+                <tr><th></th><th>Individual</th><th>Family</th></tr>
               </thead>
-              <tbody>
-                <tr><td>Price</td><td>$9.99/mo</td><td>$19.99/mo</td><td>$49.99/mo</td><td class="compare-hl">$99.99/mo</td></tr>
-                <tr><td>Covered devices</td><td>1 device</td><td>Up to 5 devices</td><td>Up to 10 devices</td><td class="compare-hl">Up to 25 devices</td></tr>
-                <tr><td>Reward points on completed repairs or services</td><td>5 points per $1</td><td>5 points per $1</td><td>10 points per $1</td><td class="compare-hl">10 points per $1</td></tr>
-                <tr><td>Repair discounts</td><td class="yes"><i class="fas fa-check"></i> 20% off</td><td class="yes"><i class="fas fa-check"></i> 20% off</td><td class="yes"><i class="fas fa-check"></i> 45% off</td><td class="yes compare-hl"><i class="fas fa-check"></i> 50% off</td></tr>
-                <tr><td>Accessory discounts</td><td class="yes"><i class="fas fa-check"></i> 25% off</td><td class="yes"><i class="fas fa-check"></i> 25% off</td><td class="yes"><i class="fas fa-check"></i> 55% off</td><td class="yes compare-hl"><i class="fas fa-check"></i> 65% off</td></tr>
-                <tr><td>Visit fee on covered devices</td><td class="yes"><i class="fas fa-check"></i> Free</td><td class="yes"><i class="fas fa-check"></i> Free</td><td class="yes"><i class="fas fa-check"></i> Free</td><td class="yes compare-hl"><i class="fas fa-check"></i> Free</td></tr>
-                <tr><td>Free screen protector with every repair</td><td class="yes"><i class="fas fa-check"></i></td><td class="yes"><i class="fas fa-check"></i></td><td class="yes"><i class="fas fa-check"></i></td><td class="yes compare-hl"><i class="fas fa-check"></i></td></tr>
-                <tr><td>Priority shipping on parts</td><td class="yes"><i class="fas fa-check"></i> Free</td><td class="yes"><i class="fas fa-check"></i> Free</td><td class="yes"><i class="fas fa-check"></i> Free</td><td class="yes compare-hl"><i class="fas fa-check"></i> Free</td></tr>
-                <tr><td>Wholesale parts pricing</td><td class="yes"><i class="fas fa-check"></i> Parts at cost</td><td class="yes"><i class="fas fa-check"></i> Parts at cost</td><td class="yes"><i class="fas fa-check"></i> Parts at cost</td><td class="yes compare-hl"><i class="fas fa-check"></i> Parts at cost</td></tr>
-                <tr><td>Wholesale accessory pricing</td><td class="yes"><i class="fas fa-check"></i></td><td class="yes"><i class="fas fa-check"></i></td><td class="yes"><i class="fas fa-check"></i></td><td class="yes compare-hl"><i class="fas fa-check"></i></td></tr>
-                <tr><td>Priority scheduling</td><td class="yes"><i class="fas fa-check"></i></td><td class="yes"><i class="fas fa-check"></i></td><td class="yes"><i class="fas fa-check"></i></td><td class="yes compare-hl"><i class="fas fa-check"></i></td></tr>
-                <tr><td>Same-day diagnostics</td><td class="yes"><i class="fas fa-check"></i> Priority</td><td class="yes"><i class="fas fa-check"></i> Priority</td><td class="yes"><i class="fas fa-check"></i> Priority</td><td class="yes compare-hl"><i class="fas fa-check"></i> Priority</td></tr>
-                <tr><td>Remote guest service</td><td class="yes"><i class="fas fa-check"></i> Free</td><td class="yes"><i class="fas fa-check"></i> Free</td><td class="yes"><i class="fas fa-check"></i> Free</td><td class="yes compare-hl"><i class="fas fa-check"></i> Free</td></tr>
-                <tr><td>Point-of-sale setup at your business</td><td class="no"><i class="fas fa-minus"></i></td><td class="no"><i class="fas fa-minus"></i></td><td class="yes"><i class="fas fa-check"></i></td><td class="yes compare-hl"><i class="fas fa-check"></i></td></tr>
-                <tr><td>Full IT management, including server setup</td><td class="no"><i class="fas fa-minus"></i></td><td class="no"><i class="fas fa-minus"></i></td><td class="no"><i class="fas fa-minus"></i></td><td class="yes compare-hl"><i class="fas fa-check"></i></td></tr>
-                <tr><td>Business EIN required</td><td class="no"><i class="fas fa-minus"></i></td><td class="no"><i class="fas fa-minus"></i></td><td>Required</td><td class="compare-hl">Required</td></tr>
-              </tbody>
+              <tbody><tr><th></th><th>Individual</th><th>Family</th></tr><tr><td>Price</td><td>$9.99/mo</td><td>$19.99/mo</td></tr><tr><td>Covered devices</td><td>1 device</td><td>Up to 5 devices</td></tr><tr><td>Reward points on completed repairs or services</td><td>5 points per $1</td><td>5 points per $1</td></tr><tr><td>Repair discounts</td><td class="yes"><i class="fas fa-check"></i> 20% off</td><td class="yes"><i class="fas fa-check"></i> 20% off</td></tr><tr><td>Accessory discounts</td><td class="yes"><i class="fas fa-check"></i> 25% off</td><td class="yes"><i class="fas fa-check"></i> 25% off</td></tr><tr><td>Visit fee on covered devices</td><td class="yes"><i class="fas fa-check"></i> Free</td><td class="yes"><i class="fas fa-check"></i> Free</td></tr><tr><td>Free screen protector with every repair</td><td class="yes"><i class="fas fa-check"></i></td><td class="yes"><i class="fas fa-check"></i></td></tr><tr><td>Priority shipping on parts</td><td class="yes"><i class="fas fa-check"></i> Free</td><td class="yes"><i class="fas fa-check"></i> Free</td></tr><tr><td>Wholesale parts pricing</td><td class="yes"><i class="fas fa-check"></i> Parts at cost</td><td class="yes"><i class="fas fa-check"></i> Parts at cost</td></tr><tr><td>Wholesale accessory pricing</td><td class="yes"><i class="fas fa-check"></i></td><td class="yes"><i class="fas fa-check"></i></td></tr><tr><td>Priority scheduling</td><td class="yes"><i class="fas fa-check"></i></td><td class="yes"><i class="fas fa-check"></i></td></tr><tr><td>Same-day diagnostics</td><td class="yes"><i class="fas fa-check"></i> Priority</td><td class="yes"><i class="fas fa-check"></i> Priority</td></tr><tr><td>Remote guest service</td><td class="yes"><i class="fas fa-check"></i> Free</td><td class="yes"><i class="fas fa-check"></i> Free</td></tr></tbody>
             </table>
           </div>
 
@@ -2868,7 +2882,7 @@
           <div class="section-header center" style="margin:3rem 0 1.8rem;">
             <h3 style="font-family:var(--font-display); font-size:1.5rem;">Pick your plan</h3>
             <!-- SITE_ATRONE_TIERS_2026_11_02 -->
-            <p class="section-copy">Every ATR One Plus plan includes all the paid benefits, with bigger discounts on the business plans. Cancel anytime.</p>
+            <p class="section-copy">Every ATR One Plus plan includes all the paid benefits. Cancel anytime.</p>
           </div>
           <!-- SITE_ATRONE_NAMES_2026_11_02 -->
           <div class="pricing-grid">
@@ -2886,6 +2900,152 @@
               <p>Covers 5 devices. The whole family — phones, tablets, laptops, all of it. 20% off repairs and 25% off accessories.</p>
               <a href="https://square.link/u/ZA7502vD" target="_blank" rel="noopener" class="btn btn-primary" style="margin-top:1rem;">Join Family</a>
             </div>
+            
+            
+          </div>
+
+          <div class="text-center" style="margin-top:2.5rem;">
+            <p style="color:var(--muted); font-size:0.95rem;">Pick your plan above to join — secure checkout through Square. Cancel anytime. Your member QR code appears in My Account as soon as your membership is active.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+<!-- ATRONE_SPLIT_2026_11_12 (owner, Nov 12, 2026): ATR One is split — guest page (#atr-one) shows Free/Individual/Family; this business page shows Business/Business Pro only. Same layout, same structure, business facts only. One account system for everyone; only these marketing pages split. -->
+    <section id="atr-one-business" class="page">
+      <div class="section">
+        <div class="container">
+          <div class="section-header center">
+            <p class="eyebrow"><i class="fas fa-crown"></i> ATR One Business Membership</p>
+            <h2 class="section-title">One membership. Every perk.</h2>
+            <p class="section-copy">ATR One is our membership for people who want their tech handled — priority service, real discounts, and free remote support whenever you need it.<sup class="fnote">2</sup></p>
+            <!-- SITE_MEMBERSHIP_COPY_2026_11_02 -->
+            <p class="section-copy">Every business starts on ATR One Free: earn 1 point for every $1 of a completed repair &mdash; 100 points = $5 toward repairs, accessories, and vouchers. ATR One Plus plans earn faster &mdash; 10 points per $1 on Business and Business Pro &mdash; and add every perk below, including wholesale pricing on parts.</p>
+          </div>
+
+          <!-- HOMEPAGE_SLIM_2026_11_08: plain two-part ATR One summary
+               (Abigail's feedback + owner approval, Nov 8, 2026) — Free
+               vs Plus in plain words before the detail below. -->
+          <div class="section-header center" style="margin-bottom:1.8rem;">
+            <p class="section-copy"><strong>ATR One Free</strong> costs nothing. You earn points on every completed repair or service, and you pay the visit fee when we come out.</p>
+            <p class="section-copy"><strong>ATR One Plus</strong> is the paid membership. Members pay no visit fee on covered devices, earn points faster, and save more on repairs and accessories.</p>
+          </div>
+
+          <!-- How it works -->
+          <div class="section-header center" style="margin-bottom:1.8rem;">
+            <h3 style="font-family:var(--font-display); font-size:1.5rem;">How it works</h3>
+          </div>
+          <div class="steps-grid">
+            <div class="step-card">
+              <div class="step-num">1</div>
+              <h4>Start free, upgrade anytime</h4>
+              <p>Every guest is on ATR One Free automatically &mdash; nothing to join and nothing to pay. Upgrade to ATR One Plus in under a minute with our secure checkout whenever you&rsquo;re ready.</p>
+            </div>
+            <div class="step-card">
+              <div class="step-num">2</div>
+              <h4>Your member QR code</h4>
+              <p>Your ATR One member QR code lives in your My Account — nothing to carry and nothing to wait on. It is there the moment your membership is active.</p>
+            </div>
+            <div class="step-card">
+              <div class="step-num">3</div>
+              <h4>Show &amp; save</h4>
+              <p>At your visit, tap the member QR code in My Account to make it big and hold it up, or mention you're a member on the phone. Discounts apply automatically. Your technician can help you pull it up when we arrive.</p>
+            </div>
+          </div>
+
+          <!-- Benefits -->
+          <div class="section-header center" style="margin:3rem 0 1.8rem;">
+            <h3 style="font-family:var(--font-display); font-size:1.5rem;">What you get</h3>
+          </div>
+          <div class="card-grid">
+            <div class="perk-card perk-featured">
+              <i class="fas fa-headset"></i>
+              <h4>Free Remote Guest Service</h4>
+              <p>Stuck on something? ATR One Plus members get free remote help — troubleshooting, setup, and tech questions answered without a service call.</p>
+              <span class="perk-tag">Most loved</span>
+            </div>
+            <div class="perk-card">
+              <i class="fas fa-shield-halved"></i>
+              <h4>Free Screen Protector With Every Repair</h4>
+              <p>Every time we repair your device, ATR One Plus members get a screen protector installed free &mdash; cut to fit your exact device on the spot.</p>
+            </div>
+            <!-- SITE_ATRONE_TIERS_2026_11_02 -->
+            <!-- SITE_ATRONE_NAMES_2026_11_02 -->
+            <div class="perk-card">
+              <i class="fas fa-percent"></i>
+              <h4>Repair Discounts on Every Plan</h4>
+              <p>Every repair, every time: 45% off on Business, and 50% off on Business Pro.</p>
+            </div>
+            <div class="perk-card">
+              <i class="fas fa-tags"></i>
+              <h4>Accessory Discounts on Every Plan</h4>
+              <p>Cases, chargers, cables, and more: 55% off on Business, and 65% off on Business Pro.</p>
+            </div>
+            <!-- SITE_ATRONE_TIERS_2026_11_02 -->
+            <!-- SITE_MEMBERSHIP_COPY_2026_11_02 -->
+            <div class="perk-card">
+              <i class="fas fa-box-open"></i>
+              <h4>Wholesale Parts Pricing</h4>
+              <p>Paid members get parts at cost &mdash; wholesale pricing on the parts your repair needs.</p>
+            </div>
+            <div class="perk-card">
+              <i class="fas fa-bolt"></i>
+              <h4>Priority Queue Access</h4>
+              <p>Jump to the front of the line. ATR One Plus members get scheduled first, every time.</p>
+            </div>
+            <div class="perk-card">
+              <i class="fas fa-truck-fast"></i>
+              <h4>Same-Day Diagnostics</h4>
+              <p>When schedule allows, ATR One Plus members get priority same-day diagnostics. We come to you, fast. Repairs follow once parts arrive.</p>
+            </div>
+            <div class="perk-card">
+              <i class="fas fa-house"></i>
+              <h4>Free Diagnostics &mdash; No Visit Fee</h4>
+              <p>ATR One Plus members pay no visit fee on covered devices &mdash; the visit and the full diagnosis are included with the paid membership.</p>
+            </div>
+          </div>
+
+          <!-- Comparison -->
+          <!-- ATRONE_PLAN_CHART_2026_11_09 -->
+          <div class="section-header center" style="margin:3rem 0 1.8rem;">
+            <h3 style="font-family:var(--font-display); font-size:1.5rem;">Compare the plans</h3>
+          </div>
+          <div class="compare-wrap">
+            <table class="compare-table">
+              <thead>
+                <tr><th></th><th>Business</th><th class="compare-hl">Business Pro</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Price</td><td>$49.99/mo</td><td class="compare-hl">$99.99/mo</td></tr>
+                <tr><td>Covered devices</td><td>Up to 10 devices</td><td class="compare-hl">Up to 25 devices</td></tr>
+                <tr><td>Reward points on completed repairs or services</td><td>10 points per $1</td><td class="compare-hl">10 points per $1</td></tr>
+                <tr><td>Repair discounts</td><td class="yes"><i class="fas fa-check"></i> 45% off</td><td class="yes compare-hl"><i class="fas fa-check"></i> 50% off</td></tr>
+                <tr><td>Accessory discounts</td><td class="yes"><i class="fas fa-check"></i> 55% off</td><td class="yes compare-hl"><i class="fas fa-check"></i> 65% off</td></tr>
+                <tr><td>Visit fee on covered devices</td><td class="yes"><i class="fas fa-check"></i> Free</td><td class="yes compare-hl"><i class="fas fa-check"></i> Free</td></tr>
+                <tr><td>Free screen protector with every repair</td><td class="yes"><i class="fas fa-check"></i></td><td class="yes compare-hl"><i class="fas fa-check"></i></td></tr>
+                <tr><td>Priority shipping on parts</td><td class="yes"><i class="fas fa-check"></i> Free</td><td class="yes compare-hl"><i class="fas fa-check"></i> Free</td></tr>
+                <tr><td>Wholesale parts pricing</td><td class="yes"><i class="fas fa-check"></i> Parts at cost</td><td class="yes compare-hl"><i class="fas fa-check"></i> Parts at cost</td></tr>
+                <tr><td>Wholesale accessory pricing</td><td class="yes"><i class="fas fa-check"></i></td><td class="yes compare-hl"><i class="fas fa-check"></i></td></tr>
+                <tr><td>Priority scheduling</td><td class="yes"><i class="fas fa-check"></i></td><td class="yes compare-hl"><i class="fas fa-check"></i></td></tr>
+                <tr><td>Same-day diagnostics</td><td class="yes"><i class="fas fa-check"></i> Priority</td><td class="yes compare-hl"><i class="fas fa-check"></i> Priority</td></tr>
+                <tr><td>Remote guest service</td><td class="yes"><i class="fas fa-check"></i> Free</td><td class="yes compare-hl"><i class="fas fa-check"></i> Free</td></tr>
+                <tr><td>Point-of-sale setup at your business</td><td class="yes"><i class="fas fa-check"></i></td><td class="yes compare-hl"><i class="fas fa-check"></i></td></tr>
+                <tr><td>Full IT management, including server setup</td><td class="no"><i class="fas fa-minus"></i></td><td class="yes compare-hl"><i class="fas fa-check"></i></td></tr>
+                <tr><td>Business EIN required</td><td>Required</td><td class="compare-hl">Required</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pricing -->
+          <div class="section-header center" style="margin:3rem 0 1.8rem;">
+            <h3 style="font-family:var(--font-display); font-size:1.5rem;">Pick your plan</h3>
+            <!-- SITE_ATRONE_TIERS_2026_11_02 -->
+            <p class="section-copy">Every ATR One Plus plan includes all the paid benefits. Cancel anytime.</p>
+          </div>
+          <!-- SITE_ATRONE_NAMES_2026_11_02 -->
+          <div class="pricing-grid">
+            
+            
             <!-- SITE_ATRONE_TIERS_2026_11_02: EIN note on the business tiers -->
             <div class="pricing-card">
               <h3>Business &mdash; 10 Devices</h3>
@@ -4226,12 +4386,16 @@
           </div>
         </div>
       </div>
-      <div class="section" style="padding-top:0;">
-        <div class="container">
-          <h3>Learning, not just fixing</h3>
+      <!-- AUDIENCE_PAGES_2026_11_12 (owner, Nov 12, 2026): the plain-text "Learning" block becomes a feature row like the Business Services page — same layout, real repo photo, same buttons. Copy unchanged. -->
+      <div class="feature-row">
+        <div class="feature-text">
+          <h2>Learning, not just fixing</h2>
           <p>Our one-on-one classes happen on the device you actually use, one question at a time: learning to code step by step, making a website of your own, or getting comfortable with a phone, tablet, or computer. For a classroom, a teacher, or a student who wants to go further, it is the same patient teaching we bring to every visit.</p>
           <a class="btn btn-primary" href="#classes" data-page="classes"><i class="fas fa-graduation-cap"></i> See One-on-One Classes</a>
           <a class="btn btn-outline" href="#contact" data-page="contact" style="margin-left:0.5rem;">Talk to Us</a>
+        </div>
+        <div class="feature-media">
+          <img src="images/values/values-education-code.webp" alt="Learning a repair from the printed guide at the bench" loading="lazy" />
         </div>
       </div>
       <!-- ORG_PRICING_2026_11_11: no settled prices exist for organizations — no numbers are printed here. The action routes to the contact form. -->
@@ -4274,10 +4438,17 @@
               <p>Every job starts with a written, itemized estimate on paper before work begins, and every repair carries our 1-year warranty on parts and labor.</p>
             </div>
           </div>
-          <p style="margin-top:2rem;"><strong>One boundary, stated plainly:</strong> we handle the office technology &mdash; the computers, printers, and networks around the care. We do not repair medical devices or medical equipment.</p>
-          <div style="margin-top:1.5rem;">
-            <a class="btn btn-primary" href="#contact" data-page="contact">Talk to Us <i class="fas fa-arrow-right"></i></a>
-            <a class="btn btn-outline" href="#repair" data-page="repair" style="margin-left:0.5rem;">Start a Service</a>
+          <!-- AUDIENCE_PAGES_2026_11_12 (owner, Nov 12, 2026): the boundary paragraph becomes a feature row like the Business Services page — same layout, real repo photo, same buttons. The boundary wording is unchanged and stays prominent. -->
+          <div class="feature-row">
+            <div class="feature-text">
+              <h2>One boundary, stated plainly</h2>
+              <p>We handle the office technology &mdash; the computers, printers, and networks around the care. We do not repair medical devices or medical equipment.</p>
+              <a class="btn btn-primary" href="#contact" data-page="contact">Talk to Us <i class="fas fa-arrow-right"></i></a>
+              <a class="btn btn-outline" href="#repair" data-page="repair" style="margin-left:0.5rem;">Start a Service</a>
+            </div>
+            <div class="feature-media">
+              <img src="images/work/hp-laptop-board.jpg" alt="Laptop computer on a repair bench" loading="lazy" />
+            </div>
           </div>
         </div>
       </div>
@@ -4321,11 +4492,18 @@
               <p>Work is quoted job by job, in the open, before anything starts &mdash; no long-term contract required to call us, and the same local team every time.</p>
             </div>
           </div>
-          <div style="margin-top:1.5rem;">
-            <a class="btn btn-primary" href="#contact" data-page="contact">Talk to Us <i class="fas fa-arrow-right"></i></a>
-            <a class="btn btn-outline" href="#repair" data-page="repair" style="margin-left:0.5rem;">Start a Service</a>
+          <!-- AUDIENCE_PAGES_2026_11_12 (owner, Nov 12, 2026): the buttons + phone line become a feature row like the Business Services page — same layout, real repo photo, same buttons and phone line. Heading reuses the intro's own words. -->
+          <div class="feature-row">
+            <div class="feature-text">
+              <h2>One call, on site, no runaround</h2>
+              <p>Call or text <a href="tel:9372806243">(937) 280-6243</a>.</p>
+              <a class="btn btn-primary" href="#contact" data-page="contact">Talk to Us <i class="fas fa-arrow-right"></i></a>
+              <a class="btn btn-outline" href="#repair" data-page="repair" style="margin-left:0.5rem;">Start a Service</a>
+            </div>
+            <div class="feature-media">
+              <img src="images/work/network-install.webp" alt="Network installed and cabled at a business &mdash; router, switch, and Wi-Fi access point on the shelf" loading="lazy" />
+            </div>
           </div>
-          <p style="margin-top:1rem;">Call or text <a href="tel:9372806243">(937) 280-6243</a>.</p>
         </div>
       </div>
       <!-- ORG_PRICING_2026_11_11: no settled prices exist for organizations — no numbers are printed here. The action routes to the contact form. -->
@@ -4361,10 +4539,8 @@
           <a class="footer-link" href="#whatwedo" data-page="whatwedo">Start a Service</a>
           <a class="footer-link" href="#whatwedo" data-page="whatwedo" data-guide="svc-pricing">Pricing</a>
           <a class="footer-link" href="#repair-or-replace" data-page="repair-or-replace">Repair or Replace</a>
-          <a class="footer-link" href="#whatwedo" data-page="whatwedo">Services</a>
           <a class="footer-link" href="#classes" data-page="classes">One-on-One Packages</a>
           <a class="footer-link" href="#help-guides" data-page="help-guides">Help Guides</a>
-          <a class="footer-link" href="#atr-one" data-page="atr-one">ATR One Membership</a>
           <a class="footer-link" href="#shop" data-page="shop">Store</a> <!-- FOOTER_AUDIENCE_PAGES_2026_11_06 addendum: owner renamed the storefront "Shop" -> "Store" in customer-facing labels (Nov 6, 2026); data-page="shop" is internal and unchanged. -->
           <a class="footer-link" href="#account" data-page="account">Gift Cards</a>
         </div>
@@ -4373,11 +4549,14 @@
           <span class="footer-col-title">Account</span>
           <a class="footer-link" href="#account" id="footer-account-link">Manage Your ATR One Account</a>
           <a class="footer-link" href="#atr-one" data-page="atr-one">ATR One Membership</a>
-          <a class="footer-link" href="#atr-one-agreement" data-page="atr-one-agreement">ATR One Membership Agreement</a>
         </div>
         <div>
           <span class="footer-col-title">For Business</span>
           <a class="footer-link" href="#b2b" data-page="b2b">Business Services</a>
+          <!-- FOOTER_B2B_JUMP_LINKS_2026_11_12 (owner, Nov 12, 2026): the site is one pager, so these jump down the business page — same data-page + data-guide pattern as the Services column Pricing link (script.js scrolls the id into view after 800ms). -->
+          <a class="footer-link" href="#atr-one-business" data-page="atr-one-business">ATR One Business Membership</a>
+          <a class="footer-link" href="#b2b" data-page="b2b" data-guide="b2b-services">Devices and Services</a>
+          <a class="footer-link" href="#b2b" data-page="b2b" data-guide="b2b-pricing">Pricing</a>
         </div>
         <div>
           <span class="footer-col-title">For Organizations</span>
@@ -5248,6 +5427,7 @@
   var TIER_POINTS_RATE = { single: 5, family: 5, business: 10, business_plus: 10, business_pro: 10 };
   var TIER_PRICES = { single: '9.99', family: '19.99', business: '49.99', business_plus: '49.99', business_pro: '99.99' };
   var mmPlan = null; /* the signed-in customer's paid plan: {tier, name} | null (Free) | undefined (lookup unavailable) */
+  window.mmPlan = null; /* V55_GREETING_BUSINESS_2026_11_12: mirror for the header greeting in script.js — mmPlan lives inside this IIFE, so script.js cannot read it directly; setMembershipLine() re-mirrors it on every tier change. */
   var acctCardWired = false, acctCardPayload = '', acctCardName = '', acctCardTierLine = '', acctCardSince = '';
   var glanceWired = false; /* QR_FIX_PASS_2_2026_11_05: one-shot wiring guard, same pattern as acctCardWired */
   var acctCardPoints = null, acctCardCustSince = '';
@@ -5383,8 +5563,15 @@
       acctCardSince = sinceEl.textContent;
       acctCardTierLine = 'ATR One Plus ' + tierName + ' · Active';
       mmPlan = { tier: membership.tier, name: tierName };
+      window.mmPlan = mmPlan; /* V55: mirror for the header greeting */
       paintManageMembership();
       paintEarnRate();
+      /* V55_GREETING_BUSINESS_2026_11_12: the tier just landed — re-run
+         the header greeting so a business account reads "Welcome,
+         Business" (and a Free/cancelled account drops back to
+         "Hello, <name>"). The hook is script.js's renderHeader; guard
+         for the case it has not loaded yet. */
+      if (window.atrRefreshGreeting) { try { window.atrRefreshGreeting(); } catch (e) {} }
       return;
     }
     if (membership === undefined) {
@@ -5397,7 +5584,14 @@
       acctCardSince = '';
       acctCardTierLine = 'ATR One';
       mmPlan = undefined;
+      window.mmPlan = mmPlan; /* V55: mirror for the header greeting */
       paintManageMembership();
+      /* V55_GREETING_BUSINESS_2026_11_12: the tier just landed — re-run
+         the header greeting so a business account reads "Welcome,
+         Business" (and a Free/cancelled account drops back to
+         "Hello, <name>"). The hook is script.js's renderHeader; guard
+         for the case it has not loaded yet. */
+      if (window.atrRefreshGreeting) { try { window.atrRefreshGreeting(); } catch (e) {} }
       return;
     }
     /* FREE STATE: no active paid row — no row at all, or a cancelled
@@ -5411,8 +5605,15 @@
     acctCardSince = sinceEl.textContent;
     acctCardTierLine = 'ATR One Free · Active';
     mmPlan = null;
+    window.mmPlan = mmPlan; /* V55: mirror for the header greeting */
     paintManageMembership();
     paintEarnRate();
+      /* V55_GREETING_BUSINESS_2026_11_12: the tier just landed — re-run
+         the header greeting so a business account reads "Welcome,
+         Business" (and a Free/cancelled account drops back to
+         "Hello, <name>"). The hook is script.js's renderHeader; guard
+         for the case it has not loaded yet. */
+      if (window.atrRefreshGreeting) { try { window.atrRefreshGreeting(); } catch (e) {} }
   }
   /* ---------- ATRONE_POINTS_TIERS_2026_11_06: Manage Membership panel ----------
      Painted from the same membership answer the member card uses
