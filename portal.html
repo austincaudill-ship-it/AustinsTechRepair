@@ -974,9 +974,9 @@
               <input type="text" id="portal-virtual-device" placeholder="e.g. Dell laptop, Windows">
             </div>
             <p><button class="portal-btn portal-btn-primary" type="button" id="portal-virtual-create"><i class="fas fa-key"></i> Make a session code</button></p>
-            <!-- CONNECT_LINKS_2026_11_11 (owner, Nov 11, 2026): ATRG Remote links to TeamViewer; ATRG Connect links to QuickSupport. This button opens the installed TeamViewer app on the associate's device: start.teamviewer.com is claimed by the full TeamViewer iOS app (apple-app-site-association, appID E3NMZFNA2K.com.teamviewer.rc, paths "*"), so with the app downloaded it auto-opens the app on iPad; without the app it falls back to the QuickSupport page in the browser. See v121 REPORT.md. -->
-            <p><a class="portal-btn portal-btn-outline" href="https://start.teamviewer.com" target="_blank" rel="noopener"><i class="fas fa-display"></i> Open TeamViewer</a></p>
-            <p class="portal-small portal-muted">Opens the TeamViewer app on this device &mdash; sign in, then enter the guest&rsquo;s QuickSupport code to connect. If the app is not on this device, it opens in your browser instead.</p>
+            <!-- V143_REMOTE_LINK_2026_11_13 (owner, Nov 13, 2026, voice call — Austin supplied the link himself, twice): the Hub's Open TeamViewer button goes to the Sessions tab of TeamViewer on the web — https://web.teamviewer.com/remote-support?tab=Sessions — where the supporter creates the session and gets the code. The old start.teamviewer.com destination lands on the partner-ID screen and never shows a code (verified from Austin's iPad photos Nov 13); the v121 app-open design is overturned and does not fire on his iPad. The guest side is untouched: quicksupport.me stays under ATRG Connect in the guest account, never in the portal. -->
+            <p><a class="portal-btn portal-btn-outline" href="https://web.teamviewer.com/remote-support?tab=Sessions" target="_blank" rel="noopener"><i class="fas fa-display"></i> Open TeamViewer</a></p>
+            <p class="portal-small portal-muted">Opens the Sessions tab of TeamViewer on the web &mdash; sign in, go to Remote Support, start a New session, name it, copy the session code or link, then give the code to the guest, who types it at quicksupport.me.</p>
             <div id="portal-virtual-code-out" hidden>
               <p class="portal-muted portal-small">Give this code to the guest. It is shown once:</p>
               <p class="virtual-code-big" id="portal-virtual-code"></p>
@@ -1743,13 +1743,16 @@
       <div class="portal-panel" id="portal-panel-prices" role="tabpanel" hidden>
         <div class="portal-panel-head"><h2 class="portal-h2">Price Book</h2></div>
         <!-- PRICEBOOK_CLEANUP_2026_11_04: Price Book header cleaned up at Austin's direction (Nov 4, 2026, iPad walkthrough: "This needs cleaned up more"). The old single run-on paragraph is now a short Updated line plus a "How pricing works" rule list, one rule per line, in the panel idiom (subhead + muted small lines). Presentation only — every fact from the old paragraph is preserved; the Google Sheet button, search field, brand filter, results rendering, and all price data are untouched. -->
-        <p class="portal-muted portal-small">Updated Nov 6, 2026</p>
+        <p class="portal-muted portal-small">Updated Nov 13, 2026</p>
         <div class="portal-panel-head portal-subhead" style="margin-top:0.5rem;"><h3 class="portal-h3">How pricing works</h3></div>
+        <!-- V143_PRICEBOOK_PRICES_2026_11_13 (owner, Nov 13, 2026): "How pricing works" now carries the full settled price list, so anyone logging in sees how prices are built. The old "$50 for standard repairs / $100 for soldering and folding devices / $15 or $35 visit fee" lines were the pre-Nov-12 model and are gone; "folding devices" has no standard time of its own — flag it if one is needed. -->
         <ul class="portal-muted portal-small" style="margin:0 0 4px; padding-left:1.25rem; line-height:2;">
-          <li>Repair prices are part cost plus flat labor &mdash; <strong>$50</strong> for standard repairs</li>
-          <li><strong>$100</strong> for soldering and folding devices</li>
+          <li>Repair prices are shown flat &mdash; parts plus labor for the time the job typically takes: phones about 1 hour, tablets 2 to 3 hours, computers about 3 hours for a complete build, soldering 4 to 5 hours, HDMI repair about 3 hours</li>
+          <li>Labor is <strong>$50 an hour</strong> for guests, <strong>$100 an hour</strong> for business</li>
+          <li>The dispatch (visit) fee is added once per job &mdash; <strong>$15.99</strong> for guests, <strong>$35.99</strong> for business &mdash; non-refundable. Diagnostics is separate: <strong>$34.99</strong> for guests, <strong>$64.99</strong> for business</li>
+          <li>One-on-one is <strong>$24.99 an hour</strong> for guests plus a $15.99 visit fee; <strong>$49.99 an hour</strong> for business plus a $35.99 visit fee. ATR One Plus (paid) members pay no visit fee or diagnostics on covered devices</li>
           <li>Service work that is not a repair is billed at <strong>$25/hr</strong></li>
-          <li>The <strong>visit fee</strong> is added once per job &mdash; <strong>$15</strong> for a known repair, <strong>$35</strong> when the job needs diagnostics &mdash; ATR One members pay no visit fee on covered devices</li>
+          <li>ATR One: Individual <strong>$9.99</strong>, Family <strong>$19.99</strong>, Business <strong>$49.99</strong>, Business Pro <strong>$99.99</strong> a month &mdash; members earn points and save on repairs and accessories</li>
           <li>Member tier discounts apply to the repair price</li>
           <li>Every line carries a standard price &mdash; part cost plus flat labor &mdash; so you can quote straight from the book</li>
         </ul>
