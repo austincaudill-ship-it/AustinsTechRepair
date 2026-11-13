@@ -141,6 +141,9 @@
          is always asked, because associates book on behalf of others.
        - Business tier (window.mmPlan tier business, business_plus
          or business_pro) goes straight to Business Services (#b2b).
+         V146_SIGNUP_SPLIT_2026_11_13: a business ACCOUNT
+         (window.atrAccountType === 'business', from the signUp
+         metadata) counts the same way, even before any plan.
        - Signed in as a guest (a site session, not business, not
          associate) goes straight to Guest Services (#whatwedo).
        - Signed out gets the chooser.
@@ -156,6 +159,10 @@
 
     function svcIsBusinessAccount() {
       try {
+        /* V146_SIGNUP_SPLIT_2026_11_13: a business ACCOUNT (signUp
+           metadata account_type, mirrored to window.atrAccountType)
+           routes to Business Services even before any Business plan. */
+        if (window.atrAccountType === 'business') return true;
         var m = window.mmPlan;
         if (m && m.tier && SVC_BUSINESS_TIERS[m.tier]) return true;
         var g = document.getElementById('header-greeting');
@@ -1111,7 +1118,12 @@
          (#estimate-disclaimer in index.html): estimates only, exact
          price after diagnostics, final price may be smaller or
          larger than the estimate. */
-      var feeNote = 'A separate visit fee applies to the visit &mdash; $15 when the repair is already known, or $35 if your device needs diagnostics first &mdash; due at booking and non-refundable. Estimates are always free. ATR One members pay no visit fee for devices covered under their subscription.';
+      /* V146_AUDIT_2026_11_13: the fee note follows the settled list —
+         dispatch and diagnostics are separate. Guest $15.99 + $34.99
+         diagnostics; business $35.99 + $64.99. */
+      var feeNote = repairState.business
+        ? 'A separate visit fee applies to the visit &mdash; $35.99 &mdash; plus diagnostics of $64.99 if your device needs a full diagnosis &mdash; due at booking and non-refundable. Estimates are always free. ATR One members pay no visit fee or diagnostics for devices covered under their subscription.'
+        : 'A separate visit fee applies to the visit &mdash; $15.99 &mdash; plus diagnostics of $34.99 if your device needs a full diagnosis &mdash; due at booking and non-refundable. Estimates are always free. ATR One members pay no visit fee or diagnostics for devices covered under their subscription.';
       var t = rfEstimateTotals();
       if (lbl) lbl.textContent = 'Your estimated repair price';
       if (t.any && t.unpriced === 0) {
@@ -1133,7 +1145,7 @@
       } else {
         repairState.priceRange = 'Confirmed after diagnostics';
         if (amt) amt.textContent = 'Confirmed after diagnostics';
-        if (note) note.innerHTML = 'There is no set price for ' + escapeHtml(allIssues.toLowerCase()) + ' on the ' + escapeHtml(modelLabel) + ' yet. Book the visit and we confirm your exact price after diagnostics, before any work starts. The visit fee covers the trip &mdash; $15 when the repair is already known, or $35 if your device needs diagnostics first &mdash; due at booking, non-refundable. Estimates are always free. ATR One members pay no visit fee for devices covered under their subscription.';
+        if (note) note.innerHTML = 'There is no set price for ' + escapeHtml(allIssues.toLowerCase()) + ' on the ' + escapeHtml(modelLabel) + ' yet. Book the visit and we confirm your exact price after diagnostics, before any work starts. ' + feeNote;
       }
       /* LEARNING_SYSTEM_2026_11_09: exactly one repair picked, with
          >= 5 priced real jobs behind this model + repair — add the
@@ -1298,7 +1310,8 @@
        scheduling urgency: its box says the virtual one-on-one is
        $24.99, due at the time of the connect. In-person one-on-one
        carries the $15.99 visit fee + $24.99 collected upon arrival, and
-       Repair keeps the original $15/$35 wording. */
+       Repair keeps the original wording (visit fee $15.99 + diagnostics
+       $34.99 for guests, $35.99 + $64.99 for business). */
     function applyVirtualFormEffects() {
       var g = window.atrGuidedSelection || {};
       var virtual = g.mode === 'oneonone' && g.ooPlace === 'virtual';
@@ -1499,13 +1512,21 @@
     var SR_DISPATCH_VIRTUAL_BIZ_HTML = 'I understand the <strong>virtual one-on-one is $49.99</strong>, due at the time of the connect. It is <strong>non-refundable</strong> — it pays for our time and effort, even if the issue is not solved. *';
     var SR_DISPATCH_OO_MEMBER_BIZ_HTML = 'I understand my <strong>one-on-one is $49.99</strong>, collected upon arrival. My device is covered by ATR One, so there is <strong>no visit fee</strong>. *';
     var SR_DISPATCH_REPAIR_MEMBER_HTML = 'I understand my device is <strong>covered by ATR One</strong>, so there is <strong>no visit fee</strong> for this visit. *';
-    var SR_DISPATCH_REPAIR_FALLBACK_HTML = 'I understand the <strong>visit fee</strong> &mdash; <strong>$15</strong> if my repair is already known, or <strong>$35</strong> if my device needs a full diagnosis &mdash; covers the trip to me, is due at scheduling, and is <strong>non-refundable</strong>. *';
+    /* V146_AUDIT_2026_11_13: the repair acknowledgment follows the
+       settled fee list — dispatch and diagnostics are separate line
+       items now, not the old $15-known / $35-diagnosis split. Guest
+       $15.99 + $34.99 diagnostics; business $35.99 + $64.99. The
+       business variant is new: Repair mode never had one, so a
+       business repair booker used to see the guest numbers. */
+    var SR_DISPATCH_REPAIR_FALLBACK_HTML = 'I understand the <strong>visit fee is $15.99</strong> &mdash; and <strong>diagnostics is $34.99</strong> if my device needs a full diagnosis &mdash; covers the trip to me, is due at scheduling, and is <strong>non-refundable</strong>. *';
+    var SR_DISPATCH_REPAIR_BIZ_HTML = 'I understand the <strong>visit fee is $35.99</strong> &mdash; and <strong>diagnostics is $64.99</strong> if my device needs a full diagnosis &mdash; covers the trip to me, is due at scheduling, and is <strong>non-refundable</strong>. *';
     function srDispatchAckHtml(virtual, mode) {
       var member = repairState.atrOne === 'Yes';
       var biz = repairState.business;
       if (virtual) return biz ? SR_DISPATCH_VIRTUAL_BIZ_HTML : SR_DISPATCH_VIRTUAL_HTML;
       if (mode === 'oneonone') return member ? (biz ? SR_DISPATCH_OO_MEMBER_BIZ_HTML : SR_DISPATCH_OO_MEMBER_HTML) : (biz ? SR_DISPATCH_OO_BIZ_HTML : SR_DISPATCH_OO_HTML);
       if (member) return SR_DISPATCH_REPAIR_MEMBER_HTML;
+      if (biz) return SR_DISPATCH_REPAIR_BIZ_HTML;
       return srDispatchOrigHtml !== null ? srDispatchOrigHtml : SR_DISPATCH_REPAIR_FALLBACK_HTML;
     }
     function refreshDispatchAck() {
@@ -1575,7 +1596,7 @@
          the one-on-one question instead, and the fee acknowledgment
          carries the in-person one-on-one wording (the $15.99 visit fee
          and the $24.99 one-on-one collected upon arrival — never the
-         $35 diagnosis fee). The virtual wording is applied at step 4
+         diagnostics fee). The virtual wording is applied at step 4
          by applyVirtualFormEffects. Repair mode restores every field
          and every word exactly as they were. */
       [['sr-repair-needed', '.atr-field'], ['sr-power-on', '.atr-row'],
@@ -3267,7 +3288,7 @@
       }
       var price = PRICES[brand][repair];
       if (amount) amount.textContent = 'From $' + price;
-      if (note) note.textContent = REPAIR_LABELS[repair] + ' for ' + PRICES[brand].label + ' — starting price, parts and labor included. Your exact price is confirmed for your exact model after diagnostics. A separate visit fee applies to the visit — $15 for a known repair, or $35 if diagnostics are needed first — due at booking, non-refundable.';
+      if (note) note.textContent = REPAIR_LABELS[repair] + ' for ' + PRICES[brand].label + ' — starting price, parts and labor included. Your exact price is confirmed for your exact model after diagnostics. A separate visit fee applies to the visit — $15.99 for guests, $35.99 for business — plus diagnostics of $34.99 for guests, $64.99 for business, if your device needs a full diagnosis — due at booking, non-refundable.';
       if (result) { result.hidden = false; result.classList.add('show'); }
       // Store the quote for the repair form
       try {
@@ -3564,6 +3585,11 @@
     var BUSINESS_GREETING_TIERS = { business: true, business_plus: true, business_pro: true };
     function isBusinessTier() {
       try {
+        /* V146_SIGNUP_SPLIT_2026_11_13: a business ACCOUNT counts as
+           business even before any Business ATR One plan — the inline
+           account script mirrors the signUp metadata account_type to
+           window.atrAccountType on sign-in. */
+        if (window.atrAccountType === 'business') return true;
         var m = window.mmPlan;
         return !!(m && m.tier && BUSINESS_GREETING_TIERS[m.tier]);
       } catch (e) { return false; }
@@ -4688,21 +4714,21 @@ if ("serviceWorker" in navigator) {
     return out;
   }
 
-  /* Exchange $5 blocks for a voucher. One commit: claim the points,
+  /* Exchange points for $5 vouchers. One commit: claim the points,
    * insert the voucher, write the audit row. Any failure after the
    * claim rolls the points back before the customer hears about it. */
   function createVoucher(blocks) {
     var s = getSession();
     if (!s || !s.id) return Promise.resolve({ ok: false, message: 'Please sign in first.' });
     blocks = Math.max(0, Math.floor(Number(blocks) || 0));
-    if (!blocks) return Promise.resolve({ ok: false, message: 'Choose at least one $5 block.' });
+    if (!blocks) return Promise.resolve({ ok: false, message: 'Choose at least one $5 voucher.' });
     var spend = blocks * BLOCK_POINTS;
     var c = client();
     if (!c) return Promise.resolve({ ok: false, message: 'Points are unavailable right now — please try again later.' });
     return claimSpend(s.id, spend).then(function (claim) {
       if (!claim.ok) {
         if (claim.reason === 'insufficient') {
-          return { ok: false, message: 'Your balance is ' + fmtPts(claim.balance) + ' points — not enough for ' + blocks + ' block' + (blocks > 1 ? 's' : '') + '. Nothing was exchanged.' };
+          return { ok: false, message: 'Your balance is ' + fmtPts(claim.balance) + ' points — not enough for ' + blocks + ' voucher' + (blocks > 1 ? 's' : '') + '. Nothing was exchanged.' };
         }
         return { ok: false, message: 'Your balance just changed — please try again. Nothing was exchanged.' };
       }
@@ -4855,6 +4881,11 @@ if ("serviceWorker" in navigator) {
     if (exchangeBlocks < 1) exchangeBlocks = 1;
     var num = $('pts-blocks');
     if (num) num.textContent = exchangeBlocks;
+    /* V146_AUDIT_2026_11_13: plain words, no "block" jargon — the
+       stepper picks how many $5 vouchers, so the word follows the
+       count (1 voucher, 2 vouchers). */
+    var wrd = $('pts-blocks-word');
+    if (wrd) wrd.textContent = exchangeBlocks > 1 ? 'vouchers' : 'voucher';
     var sub = $('pts-blocks-sub');
     if (sub) sub.textContent = fmtPts(exchangeBlocks * BLOCK_POINTS) + ' points = $' + (exchangeBlocks * BLOCK_VALUE) + ' voucher';
     var minus = $('pts-minus'), plus = $('pts-plus'), btn = $('pts-exchange-btn');
@@ -4863,7 +4894,7 @@ if ("serviceWorker" in navigator) {
     if (btn) {
       btn.disabled = max < 1 || vouchersKnown === false;
       btn.innerHTML = max < 1
-        ? 'You need ' + BLOCK_POINTS + ' points for a $5 block'
+        ? 'You need ' + BLOCK_POINTS + ' points for a $5 voucher'
         : '<i class="fas fa-ticket"></i> Exchange for a $' + (exchangeBlocks * BLOCK_VALUE) + ' voucher';
     }
     var wrap = $('pts-exchange'), un = $('pts-exchange-unavailable');
@@ -4897,6 +4928,8 @@ if ("serviceWorker" in navigator) {
     if (cartBlocks < 1) cartBlocks = 1;
     var num = $('cart-pts-blocks');
     if (num) num.textContent = cartBlocks;
+    var cwrd = $('cart-pts-blocks-word');
+    if (cwrd) cwrd.textContent = cartBlocks > 1 ? 'vouchers' : 'voucher';
     var minus = $('cart-pts-minus'), plus = $('cart-pts-plus'), btn = $('cart-pts-convert-btn');
     if (minus) minus.disabled = cartBlocks <= 1;
     if (plus) plus.disabled = cartBlocks >= max;
@@ -6201,7 +6234,17 @@ if ("serviceWorker" in navigator) {
       ['Something else', 'fas fa-circle-question', 'Phone, Tablet, Computer, Game Console, Smart Watch, Printers & Peripherals, Networking, Business / Other'],
       ['Not sure yet', 'fas fa-clipboard-question', 'Phone, Tablet, Computer, Game Console, Smart Watch, Printers & Peripherals, Networking, Business / Other']
     ];
-    var FEE_NOTE = 'A separate visit fee applies to the visit \u2014 $15 when the repair is already known, or $35 if your device needs diagnostics first \u2014 due at booking and non-refundable. Estimates are always free. ATR One members pay no visit fee for devices covered under their subscription.';
+    /* V146_AUDIT_2026_11_13: the fee note is a function, not a constant,
+       so it reads the audience at the moment it is shown \u2014 the wizard
+       can flip guest/business mid-session and the note follows. Rates
+       are the settled list: guest $15.99 + $34.99 diagnostics,
+       business $35.99 + $64.99. */
+    function feeNoteText() {
+      var biz = document.body.classList.contains('aud-business');
+      return biz
+        ? 'A separate visit fee applies to the visit \u2014 $35.99 \u2014 plus diagnostics of $64.99 if your device needs a full diagnosis \u2014 due at booking and non-refundable. Estimates are always free. ATR One members pay no visit fee or diagnostics for devices covered under their subscription.'
+        : 'A separate visit fee applies to the visit \u2014 $15.99 \u2014 plus diagnostics of $34.99 if your device needs a full diagnosis \u2014 due at booking and non-refundable. Estimates are always free. ATR One members pay no visit fee or diagnostics for devices covered under their subscription.';
+    }
     /* COMPUTER_YEAR_2026_11_10 (owner, Nov 10, 2026): the same
        year list the booking form uses (BK_YEARS there) — computers
        in the repair pane pick a year after the model. */
@@ -6526,7 +6569,7 @@ if ("serviceWorker" in navigator) {
         amt.textContent = combinedText(t);
         note.innerHTML = esc(allIssues) + ' for ' + esc(modelLabel) + ' &mdash; ' +
           (st.picks.length > 1 ? 'estimated total for the repairs you picked' : 'estimated price') +
-          ', parts and labor included. ' + FEE_NOTE;
+          ', parts and labor included. ' + feeNoteText();
       } else if (t.any) {
         var pricedNames = [], unpricedNames = [];
         st.picks.forEach(function (it) {
@@ -6536,11 +6579,11 @@ if ("serviceWorker" in navigator) {
         amt.textContent = 'From ' + partial;
         note.innerHTML = esc(pricedNames.join(', ')) + ' for ' + esc(modelLabel) + ' &mdash; estimated from ' + esc(partial) +
           ', parts and labor included. ' + esc(unpricedNames.join(', ')) + ' ' + (unpricedNames.length > 1 ? 'do' : 'does') +
-          ' not have a set price yet &mdash; we confirm the exact price after diagnostics, before any work starts. ' + FEE_NOTE;
+          ' not have a set price yet &mdash; we confirm the exact price after diagnostics, before any work starts. ' + feeNoteText();
       } else {
         amt.textContent = 'Confirmed after diagnostics';
         note.innerHTML = 'There is no set price for ' + esc(allIssues.toLowerCase()) + ' on the ' + esc(modelLabel) +
-          ' yet. Book the visit and we confirm your exact price after diagnostics, before any work starts. The visit fee covers the trip &mdash; $15 when the repair is already known, or $35 if your device needs diagnostics first &mdash; due at booking, non-refundable. Estimates are always free. ATR One members pay no visit fee for devices covered under their subscription.';
+          ' yet. Book the visit and we confirm your exact price after diagnostics, before any work starts. ' + feeNoteText();
       }
       box.hidden = false;
       if (disc) disc.hidden = false;
@@ -7146,7 +7189,7 @@ document.addEventListener('click', function (e) {
       try { callFn({ action: 'waiver', kind: 'booking', ticket_id: lastTicket.id, email: lastTicket.email, version: WAIVER_VERSION }, function () {}); } catch (e) { /* best-effort record */ }
       bearer(function (token) {
         if (!token || token === SUPABASE_ANON_KEY) {
-          if (payMsg) payMsg.textContent = 'To pay the $25, sign in first (or make your free account) with the same email you booked with, then tap Pay again.';
+          if (payMsg) payMsg.textContent = 'To pay the first hour, sign in first (or make your free account) with the same email you booked with, then tap Pay again.';
           payBtn.disabled = false;
           return;
         }
@@ -7158,7 +7201,7 @@ document.addEventListener('click', function (e) {
           .then(function (j) {
             if (j && j.ok && j.url) {
               window.open(j.url, '_blank', 'noopener');
-              if (payMsg) payMsg.textContent = 'Square is open in a new tab. Once the $25 is paid, agree to the waiver below and start your session.';
+              if (payMsg) payMsg.textContent = 'Square is open in a new tab. Once the first hour is paid, agree to the waiver below and start your session.';
               paywallEl.hidden = true;
               var wv = document.getElementById('voo-waiver');
               if (wv) { wv.hidden = false; try { wv.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {} }
