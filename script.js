@@ -2278,7 +2278,7 @@
             '<div class="product-points-row"><span class="product-pts">or ' + fmtPts(p.pts) + ' pts</span></div>' +
             '<div class="product-card-actions">' +
               '<span class="product-view-hint">View details <i class="fas fa-arrow-right"></i></span>' +
-              '<button class="add-btn" type="button" data-add-id="' + p.id + '">Add</button>' +
+              '<button class="add-btn" type="button" data-add-id="' + p.id + '">' + (p.fit ? 'Choose device' : 'Add') + '</button>' +
             '</div>' +
           '</div>';
         card.addEventListener('click', function () { openProductDetail(p.id); });
@@ -2350,7 +2350,7 @@
             dots +
             '<div class="product-card-actions">' +
               '<span class="product-view-hint">View details <i class="fas fa-arrow-right"></i></span>' +
-              '<button class="add-btn" type="button" data-rail-add="' + p.id + '">Add</button>' +
+              '<button class="add-btn" type="button" data-rail-add="' + p.id + '">' + (p.fit ? 'Choose device' : 'Add') + '</button>' +
             '</div>' +
           '</div>';
         card.addEventListener('click', function () {
@@ -2415,7 +2415,12 @@
     function addFromCard(p, btn) {
       /* A case or protector added without its device is a wasted
          trip — its Add opens the pop-up, where the device picker
-         lives, instead of adding a bare line. */
+         lives, instead of adding a bare line.
+         V141_2026_11_13 (owner, Nov 13, 2026): that silent pop-up
+         was the bag-not-showing complaint — the guest tapped "Add",
+         saw a pop-up, closed it, and the bag was empty. The button
+         now says what it does ("Choose device") on fit products,
+         grid and rail alike; the picker itself stays. */
       if (p.fit) { openProductDetail(p.id); return; }
       addToCart(p.id);
       flashAdded(btn, 'Added');
@@ -2658,7 +2663,13 @@
       paintCartPointsSummary(lines);
       if (!cartItems) return;
       if (!ids.length) {
-        cartItems.innerHTML = '<p class="cart-empty">Your bag is empty.<br>Add some accessories to get started.</p>';
+        /* V141_2026_11_13 (owner, Nov 13, 2026): the empty bag in the
+           header bag icon had nowhere to go — "Go to the store" rides
+           to the Shop and closes this drawer on the way (the router
+           does not close drawers by itself). */
+        cartItems.innerHTML = '<p class="cart-empty">Your bag is empty.<br>Add some accessories to get started.<br><a href="#shop" data-page="shop" id="cart-empty-shop">Go to the store</a></p>';
+        var emptyShopLink = document.getElementById('cart-empty-shop');
+        if (emptyShopLink) emptyShopLink.addEventListener('click', function () { closeCart(); });
         /* ACCOUNT_FIX_PASS_3_3_2026_11_06: the glance-style panels
            repaint on the empty transition too — this branch used to
            return before renderCartGlance() ran, so emptying the cart
@@ -2870,6 +2881,15 @@
         var link = document.querySelector('.nav-link[data-page="shop"], .menu-link[data-page="shop"], .footer-link[data-page="shop"]');
         if (link) link.click();
         openCart();
+      });
+      /* V141_2026_11_13 (owner, Nov 13, 2026): empty the bag right
+         here in the account bag menu — same confirm wording as the
+         drawer Clear bag, and the same saveCart({}) so every view
+         of the bag clears at once. */
+      var acctCartEmpty = document.getElementById('acct-cart-empty-btn');
+      if (acctCartEmpty) acctCartEmpty.addEventListener('click', function () {
+        if (!Object.keys(getCart()).length) return;
+        if (window.confirm('Remove everything from your bag?')) saveCart({});
       });
       /* ACCOUNT_FIX_PASS_3_3_2026_11_06: this judge listens in the
          CAPTURE phase. The account glance's chevron stops

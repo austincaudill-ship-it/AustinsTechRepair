@@ -2125,9 +2125,7 @@
             <!-- ATRG Connect — ATRG_CONNECT_2026_11_10 (Austin, Nov 10, 2026): "The guest gets a connect plugin in their account under the nav." The FIRST row in the signed-in guest's account rows, right above My Devices (owner, Nov 10, 2026): the plugin lives here, in their account; opening it takes them to the Connect session page where they type the code their associate sent. The row follows the same drop-down machinery as every other account row (data-acct-menu / acct-view-*). -->
             <div id="acct-view-connect" hidden>
               <div class="acct-inbox">
-                <div class="acct-repairs-head">
-                  <h4><i class="fas fa-display"></i> ATRG Connect</h4>
-                </div>
+                <!-- V141_2026_11_13 (owner, Nov 13, 2026): the panel no longer repeats its own menu-row name as a heading — the row above already says it. Same removal in the Devices, Messages, Your bag, Orders, Rewards & Gift Cards, and Manage Membership panels; Services ("My Repairs") and Account Settings ("My Profile") never repeated and are untouched. -->
                 <p class="acct-muted" style="text-align:left;padding:0;">Your virtual one-on-one, right here in your account. When your associate sends you a session code, open ATRG Connect, type the code, and we can see your screen and help you live.</p>
                 <a class="btn btn-primary btn-sm" href="#virtual-oneonone" data-page="virtual-oneonone"><i class="fas fa-display"></i> Open ATRG Connect</a>
               </div>
@@ -2152,9 +2150,6 @@
                  invents a device. -->
             <div id="acct-view-devices" hidden>
               <div class="acct-devices">
-                <div class="acct-repairs-head">
-                  <h4><i class="fas fa-laptop"></i> My Devices</h4>
-                </div>
                 <p class="acct-muted" style="text-align:left;padding:0;">Every device in your home, in one place. Add them once — the next repair starts faster, and you choose which ones your ATR One plan covers.</p>
                 <p class="acct-muted" style="text-align:left;padding:0;" id="md-coverage-note" hidden></p>
                 <div id="md-list"><p class="acct-muted">Loading your devices…</p></div>
@@ -2339,9 +2334,6 @@
                  Repairs section uses — one thread, two doors. -->
             <div id="acct-view-messages" hidden>
               <div class="acct-inbox" id="acct-inbox">
-                <div class="acct-repairs-head">
-                  <h4><i class="fas fa-envelope"></i> Messages</h4>
-                </div>
                 <!-- ACCOUNT_FIX_PASS_3_2_2026_11_06 (owner's final spec,
                      Nov 6, 2026 — supersedes the pass-3 thread routing
                      AND the pass-3.1 route-to-Schedule behavior): "Send
@@ -2398,14 +2390,13 @@
                  Orders — the row order above is the result. -->
             <div id="acct-view-cart" hidden>
               <div class="acct-cart">
-                <div class="acct-repairs-head">
-                  <h4><i class="fas fa-bag-shopping"></i> Your bag</h4>
-                </div>
                 <div class="cart-glance-items" id="acct-cart-items"></div>
                 <div class="cart-glance-total" id="acct-cart-total-row"><span id="acct-cart-total-label">Subtotal</span><strong id="acct-cart-total">$0.00</strong></div>
                 <p class="cart-glance-empty" id="acct-cart-empty" hidden>Your bag is empty.<br><a href="#shop" data-page="shop">Browse the shop</a></p>
                 <div class="cart-glance-actions" id="acct-cart-actions">
                   <button type="button" class="cart-glance-view" id="acct-cart-open">Open bag</button>
+                  <!-- V141_2026_11_13 (owner, Nov 13, 2026): empty the bag right here in the menu — same confirm as the drawer Clear bag. -->
+                  <button type="button" class="cart-glance-view" id="acct-cart-empty-btn">Empty bag</button>
                 </div>
               </div>
             </div>
@@ -2424,9 +2415,6 @@
                  plain words. -->
             <div id="acct-view-orders" hidden>
               <div class="acct-orders">
-                <div class="acct-repairs-head">
-                  <h4><i class="fas fa-bag-shopping"></i> Orders</h4>
-                </div>
                 <p class="acct-muted" style="text-align:left;padding:0;">Everything you have ordered from our Shop.</p>
                 <div id="acct-order-list"><p class="acct-muted">Loading your orders…</p></div>
               </div>
@@ -2436,7 +2424,6 @@
             <!-- Rewards & Gift Cards (SITE_POINTS_SPEND_2026_10_30; panel renamed and gift cards added, GIFT_CARDS_2026_11_06) -->
             <div id="acct-view-rewards" hidden>
               <div class="acct-rewards">
-                <h4><i class="fas fa-ticket"></i> Rewards &amp; Gift Cards</h4>
                 <p class="acct-muted" style="text-align:left;padding:0;"><span id="pts-earn-rate">You earn 1 point for every $1 of a completed repair.</span> ATR One Plus members earn more &mdash; 5 points per $1 on Individual &amp; Family, 10 points per $1 on Business plans. Trade points for a voucher — 100 points = $5 — and use it at your next visit, or pay for accessories with points right in the Shop.</p>
                 <div id="pts-exchange">
                   <p class="pts-balance-line">Your balance: <strong id="pts-balance-num">0</strong> points</p>
@@ -2508,9 +2495,6 @@
                  Subscription link in their Square subscription emails. -->
             <div id="acct-view-membership" hidden>
               <div class="acct-membership">
-                <div class="acct-repairs-head">
-                  <h4><i class="fas fa-crown"></i> Manage Membership</h4>
-                </div>
                 <p class="acct-muted" style="text-align:left;padding:0;">Your plan: <strong id="mm-plan-line">ATR One Free</strong></p>
                 <p class="acct-muted" style="text-align:left;padding:0;" id="mm-rate-line">You earn 1 point for every $1 of a completed repair.</p>
                 <h4 class="acct-detail-h"><i class="fas fa-arrow-up"></i> Upgrade or switch to ATR One Plus</h4>
@@ -6297,6 +6281,24 @@
       return q > 1 ? n + ' \u00d7' + q : String(n);
     }).join(' \u00b7 ');
   }
+  /* V141_2026_11_13 (owner, Nov 13, 2026): a cancelled order never
+     left the list — the guest can now take it out of their own
+     Orders list. The row stays in the shop's records; only this
+     device's list hides it, in localStorage, so the removal sticks
+     on this device without touching anyone else's history. */
+  var HIDDEN_ORDERS_KEY = 'atr-hidden-orders';
+  function getHiddenOrders() {
+    try { var v = JSON.parse(localStorage.getItem(HIDDEN_ORDERS_KEY) || '[]'); return Array.isArray(v) ? v : []; }
+    catch (e) { return []; }
+  }
+  function hideOrder(id) {
+    try {
+      var list = getHiddenOrders();
+      var key = String(id);
+      if (list.indexOf(key) === -1) list.push(key);
+      localStorage.setItem(HIDDEN_ORDERS_KEY, JSON.stringify(list));
+    } catch (e) {}
+  }
   function loadMyOrders(cust) {
     var list = $('acct-order-list');
     if (!list || !sb || !cust) return;
@@ -6306,6 +6308,8 @@
       .then(function (res) {
         if (res.error) throw res.error;
         var rows = res.data || [];
+        var hidden = getHiddenOrders();
+        rows = rows.filter(function (o) { return hidden.indexOf(String(o.id)) === -1; });
         if (!rows.length) {
           list.innerHTML = '<p class="acct-muted">No orders yet \u2014 anything you order from the Shop will show up here.</p>';
           return;
@@ -6313,12 +6317,22 @@
         list.innerHTML = rows.map(function (o) {
           var st = ORDER_STATUS_COPY[o.status] || { label: o.status || 'Received', cls: 'acct-st-waiting' };
           var total = (o.total == null || isNaN(Number(o.total))) ? '' : ' \u00b7 $' + Number(o.total).toFixed(2);
+          var removeBtn = (o.status === 'Cancelled')
+            ? '<button type="button" class="btn btn-outline btn-sm acct-order-remove" data-order-id="' + escX(String(o.id)) + '">Remove from my orders</button>'
+            : '';
           return '<div class="acct-ticket-card acct-order-card" style="cursor:default">' +
             '<span class="acct-ticket-top"><strong>' + escX(orderItemsLine(o)) + '</strong>' +
             '<span class="acct-status ' + st.cls + '">' + escX(st.label) + '</span></span>' +
             '<span class="acct-ticket-meta">' + escX(ticketDate(o)) + total + '</span>' +
+            removeBtn +
           '</div>';
         }).join('');
+        list.querySelectorAll('.acct-order-remove').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            hideOrder(btn.getAttribute('data-order-id'));
+            loadMyOrders(cust);
+          });
+        });
       })
       .catch(function () {
         list.innerHTML = '<p class="acct-muted">We couldn\'t load your orders just now \u2014 pull this page up again in a moment, or call or text (937) 280-6243.</p>';
