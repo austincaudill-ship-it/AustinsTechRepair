@@ -78,6 +78,17 @@
     }
 
     document.body.addEventListener('click', function (e) {
+      /* SERVICES_CHOOSER_2026_11_13: an ambiguous services entry asks
+         first (or routes by account type) instead of landing straight
+         on guest services. See the Services chooser module below. */
+      var svcTarget = e.target.closest('[data-services-route]');
+      if (svcTarget) {
+        e.preventDefault();
+        closeMobileMenu();
+        if (window.atrSiteSearch && window.atrSiteSearch.isOpen()) window.atrSiteSearch.close();
+        svcRouteServices();
+        return;
+      }
       var target = e.target.closest('[data-page]');
       if (target) {
         var href = target.getAttribute('href');
@@ -99,6 +110,91 @@
           if (guideId) { setTimeout(function () { var el = document.getElementById(guideId); if (el) el.scrollIntoView({ behavior: 'auto', block: 'start' }); }, 800); }
         }
       }
+    });
+
+    /* ---------------- Services chooser ---------------- */
+    /* SERVICES_CHOOSER_2026_11_13 (owner, Nov 13, 2026): Start a
+       Service and the thumb-nav Services button used to go straight
+       to guest services no matter who was signed in. Now they route
+       by account type, and ask first when the account type cannot
+       tell us which side to use.
+       - Associate first (the owner's standing order): an associate
+         is always asked, because associates book on behalf of others.
+       - Business tier (window.mmPlan tier business, business_plus
+         or business_pro) goes straight to Business Services (#b2b).
+       - Signed in as a guest (a site session, not business, not
+         associate) goes straight to Guest Services (#whatwedo).
+       - Signed out gets the chooser.
+       Every check below is a pure read of state the site already
+       holds (window.mmPlan, the site session, the greeting text,
+       the associate cache the greeting itself trusts). Nothing is
+       fetched, nothing is remembered, nothing is written. */
+    var SVC_BUSINESS_TIERS = { business: true, business_plus: true, business_pro: true };
+    var svcChooserEl = document.getElementById('svc-chooser');
+    var svcChooserGuestEl = document.getElementById('svc-chooser-guest');
+    var svcChooserBusinessEl = document.getElementById('svc-chooser-business');
+    var svcChooserCloseEl = document.getElementById('svc-chooser-close');
+
+    function svcIsBusinessAccount() {
+      try {
+        var m = window.mmPlan;
+        if (m && m.tier && SVC_BUSINESS_TIERS[m.tier]) return true;
+        var g = document.getElementById('header-greeting');
+        if (g && g.textContent === 'Welcome, Business') return true;
+      } catch (e) {}
+      return false;
+    }
+    function svcIsAssociateAccount() {
+      try {
+        var g = document.getElementById('header-greeting');
+        if (g && g.textContent === 'Welcome, Associate') return true;
+        var raw = null;
+        try { raw = localStorage.getItem('sb-atrg-portal-auth-token'); } catch (e) {}
+        if (!raw) return false;
+        var s = JSON.parse(raw);
+        if (!s || !s.user || !s.user.id || !s.access_token) return false;
+        var c = null;
+        try { c = JSON.parse(sessionStorage.getItem('atr-greeting-associate') || 'null'); } catch (e) {}
+        return !!(c && c.userId === s.user.id && c.expiresAt === (Number(s.expires_at) || 0));
+      } catch (e) { return false; }
+    }
+    function svcIsSignedIn() {
+      try {
+        if (window.atrPoints && window.atrPoints.getSession && window.atrPoints.getSession()) return true;
+        var g = document.getElementById('header-greeting');
+        if (g && g.textContent && g.textContent.indexOf('Hello, ') === 0) return true;
+      } catch (e) {}
+      return false;
+    }
+    function svcGoServices(pageId) {
+      var href = '#' + pageId;
+      if (window.location.hash !== href) { window.location.hash = href; }
+      switchPage(href);
+    }
+    function svcShowChooser() {
+      if (!svcChooserEl) return;
+      svcChooserEl.style.display = 'flex';
+      try { lockPageScroll(); } catch (e) {}
+      if (svcChooserGuestEl) svcChooserGuestEl.focus();
+    }
+    function svcHideChooser() {
+      if (!svcChooserEl) return;
+      svcChooserEl.style.display = 'none';
+      try { unlockPageScroll(); } catch (e) {}
+    }
+    function svcRouteServices() {
+      if (svcIsAssociateAccount()) { svcShowChooser(); return; }
+      if (svcIsBusinessAccount()) { svcGoServices('b2b'); return; }
+      if (svcIsSignedIn()) { svcGoServices('whatwedo'); return; }
+      svcShowChooser();
+    }
+    window.atrServicesRoute = svcRouteServices;
+    if (svcChooserGuestEl) svcChooserGuestEl.addEventListener('click', function () { svcHideChooser(); svcGoServices('whatwedo'); });
+    if (svcChooserBusinessEl) svcChooserBusinessEl.addEventListener('click', function () { svcHideChooser(); svcGoServices('b2b'); });
+    if (svcChooserCloseEl) svcChooserCloseEl.addEventListener('click', svcHideChooser);
+    if (svcChooserEl) svcChooserEl.addEventListener('click', function (e) { if (e.target === svcChooserEl) svcHideChooser(); });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && svcChooserEl && svcChooserEl.style.display === 'flex') svcHideChooser();
     });
 
     if (window.location.hash) { switchPage(window.location.hash); }

@@ -107,7 +107,7 @@
          with the links in .header-main; the bar is black in both
          themes (styles.css, same marker). -->
     <nav class="nav-desktop" aria-label="Main navigation">
-      <a class="nav-link" href="#whatwedo" data-page="whatwedo">Services</a>
+      <a class="nav-link" href="#whatwedo" data-page="whatwedo" data-services-route>Services</a>
       <a class="nav-link" href="#shop" data-page="shop">Store</a>
       <a class="nav-link" href="#about" data-page="about">About</a>
       <a class="nav-link" href="#atr-one" data-page="atr-one">ATR One</a>
@@ -295,7 +295,7 @@
               <h1 class="hero-headline" id="holiday-headline">Dropped your phone after all that turkey?</h1>
               <p class="hero-sub" id="holiday-sub">It happens. We come to you and fix it at your door. Closed Thanksgiving Day &mdash; book before or after and we will be there.</p>
               <div class="hero-cta-group" id="holiday-ctas">
-                <a class="btn btn-primary btn-lg" href="#whatwedo" data-page="whatwedo"><i class="fas fa-wrench"></i> Start a Service</a>
+                <a class="btn btn-primary btn-lg" href="#whatwedo" data-page="whatwedo" data-services-route><i class="fas fa-wrench"></i> Start a Service</a>
                 <a class="btn btn-outline btn-lg" href="tel:+19372806243"><i class="fas fa-phone"></i> 937-280-6243</a>
               </div>
               <div class="hero-photo">
@@ -307,7 +307,7 @@
               <p class="hero-sub">Professional mobile repairs for phones, computers, tablets, and game consoles &mdash; done at your home or office, backed by a 1-year warranty.</p>
               <p class="hero-fineprint">*Within 25 miles &mdash; $15.99 dispatch for guests, $35.99 for business. Over 25 miles is an extra $1 per mile.</p>
               <div class="hero-cta-group">
-                <a class="btn btn-primary btn-lg" href="#whatwedo" data-page="whatwedo"><i class="fas fa-wrench"></i> Start a Service</a>
+                <a class="btn btn-primary btn-lg" href="#whatwedo" data-page="whatwedo" data-services-route><i class="fas fa-wrench"></i> Start a Service</a>
                 <a class="btn btn-outline btn-lg" href="tel:+19372806243"><i class="fas fa-phone"></i> 937-280-6243</a>
               </div>
               <div class="hero-photo">
@@ -330,7 +330,7 @@
               <h2 class="hero-headline">Same-day <em>diagnostics.</em></h2>
               <p class="hero-sub">We can come out same-day to diagnose your device, then order parts and return for the repair.</p>
               <div class="hero-cta-group">
-                <a class="btn btn-primary btn-lg" href="#whatwedo" data-page="whatwedo"><i class="fas fa-wrench"></i> Start a Service</a>
+                <a class="btn btn-primary btn-lg" href="#whatwedo" data-page="whatwedo" data-services-route><i class="fas fa-wrench"></i> Start a Service</a>
                 <a class="btn btn-outline btn-lg" href="tel:+19372806243"><i class="fas fa-phone"></i> 937-280-6243</a>
               </div>
               <div class="hero-photo">
@@ -341,7 +341,7 @@
               <h2 class="hero-headline">Free estimates, <em>always.</em></h2>
               <p class="hero-sub">Tell us what is wrong and get a straight answer on price before any work starts. No charge to find out what your repair will cost.</p>
               <div class="hero-cta-group">
-                <a class="btn btn-primary btn-lg" href="#whatwedo" data-page="whatwedo"><i class="fas fa-wrench"></i> Start a Service</a>
+                <a class="btn btn-primary btn-lg" href="#whatwedo" data-page="whatwedo" data-services-route><i class="fas fa-wrench"></i> Start a Service</a>
                 <a class="btn btn-outline btn-lg" href="tel:+19372806243"><i class="fas fa-phone"></i> 937-280-6243</a>
               </div>
               <div class="hero-photo">
@@ -352,7 +352,7 @@
               <h2 class="hero-headline">Backed by a <em>1-year warranty.</em></h2>
               <p class="hero-sub">One year on ATRG-supplied parts and labor. Every technology, big or small &mdash; we tackle them all, since 2010.</p>
               <div class="hero-cta-group">
-                <a class="btn btn-primary btn-lg" href="#whatwedo" data-page="whatwedo"><i class="fas fa-wrench"></i> Start a Service</a>
+                <a class="btn btn-primary btn-lg" href="#whatwedo" data-page="whatwedo" data-services-route><i class="fas fa-wrench"></i> Start a Service</a>
                 <a class="btn btn-outline btn-lg" href="tel:+19372806243"><i class="fas fa-phone"></i> 937-280-6243</a>
               </div>
               <div class="hero-photo">
@@ -394,7 +394,7 @@
             var mem = lastDow(y, 4, 1);
             var lab = nthDow(y, 8, 1, 1);
             var STD = [
-              { href: '#whatwedo', page: 'whatwedo', icon: 'fas fa-wrench', text: 'Start a Service' },
+              { href: '#whatwedo', page: 'whatwedo', icon: 'fas fa-wrench', text: 'Start a Service', route: 1 },
               { href: 'tel:+19372806243', page: null, icon: 'fas fa-phone', text: '937-280-6243' }
             ];
             var GIFT = [
@@ -447,7 +447,7 @@
               var html = '';
               for (var i = 0; i < h.ctas.length; i++) {
                 var c = h.ctas[i];
-                html += '<a class="btn ' + (i === 0 ? 'btn-primary' : 'btn-outline') + ' btn-lg" href="' + c.href + '"' + (c.page ? ' data-page="' + c.page + '"' : '') + '><i class="' + c.icon + '"></i> ' + c.text + '</a>';
+                html += '<a class="btn ' + (i === 0 ? 'btn-primary' : 'btn-outline') + ' btn-lg" href="' + c.href + '"' + (c.page ? ' data-page="' + c.page + '"' : '') + (c.route ? ' data-services-route' : '') + '><i class="' + c.icon + '"></i> ' + c.text + '</a>';
               }
               box.innerHTML = html;
             }
@@ -590,7 +590,7 @@
             <p class="section-copy">From cracked screens to hard-to-find problems &mdash; handled at your location.</p>
           </div>
           <!-- SITE_DECLUTTER_2026_10_30: home page decluttered per Austin — the services grid moved off home to the What We Fix page (#whatwedo), which now carries the full photo cards; home keeps one clear path to it -->
-          <p style="text-align:center; margin:0.4rem auto 0;"><a class="btn btn-primary btn-lg" href="#whatwedo" data-page="whatwedo">See Services <i class="fas fa-arrow-right"></i></a></p>
+          <p style="text-align:center; margin:0.4rem auto 0;"><a class="btn btn-primary btn-lg" href="#whatwedo" data-page="whatwedo" data-services-route>See Services <i class="fas fa-arrow-right"></i></a></p>
           <p class="section-copy" style="text-align:center; margin:1.6rem auto 0;">One honest note: we&rsquo;re not an internet service provider. But we can recommend a provider and plan, help you get set up, and make everything on your side of the connection work.</p>
         </div>
       </div>
@@ -703,7 +703,7 @@
             <h2>Ready to get it fixed?</h2>
             <p>Start your repair request online in under a minute, or call us and we can come out today to diagnose it.</p>
             <div class="hero-cta-group">
-              <a class="btn btn-cream btn-lg" href="#whatwedo" data-page="whatwedo"><i class="fas fa-wrench"></i> Start a Service</a>
+              <a class="btn btn-cream btn-lg" href="#whatwedo" data-page="whatwedo" data-services-route><i class="fas fa-wrench"></i> Start a Service</a>
               <a class="btn btn-ghostlight btn-lg" href="tel:9372806243"><i class="fas fa-phone"></i> 937-280-6243</a>
             </div>
           </div>
@@ -842,7 +842,6 @@
       </div>
       <div class="feature-row">
         <div class="feature-text">
-          <p class="eyebrow">For every guest</p>
           <h2>Built for every guest</h2>
           <p>Every guest starts on ATR One Free automatically &mdash; nothing to join and nothing to pay. You earn 1 point for every $1 on every completed repair or service &mdash; 100 points is $5 toward repairs, accessories, and vouchers.</p>
           <p>Paid members pay no visit fee or diagnostics on covered devices, earn points faster, and save more on repairs and accessories.</p>
@@ -851,13 +850,16 @@
           <a class="btn btn-primary" href="#atr-one" data-page="atr-one">See ATR One <i class="fas fa-arrow-right"></i></a>
           <a class="btn btn-outline" href="#contact" data-page="contact" style="margin-left:0.5rem;">Talk to Us</a>
         </div>
-        <div class="feature-media">
-          <img src="images/work/phone-screen-replacement.webp" alt="Phone screen being replaced" loading="lazy" />
+        <!-- SERVICES_CHOOSER_2026_11_13 (owner, Nov 13, 2026): the iPhone photo that sat here is gone on the owner's word — it sat right above the service cards and made the page look cluttered. An orange pill carries the "For every guest" label in its place. The "For every guest" eyebrow above the heading is gone too: the pill is the label now. -->
+        <div style="display:flex; align-items:center; justify-content:center;">
+          <span style="display:inline-block; background:var(--brand); color:#FFF8EC; font-weight:800; font-size:0.95rem; letter-spacing:0.4px; padding:0.6rem 1.4rem; border-radius:999px; box-shadow:0 8px 28px rgba(90,64,32,0.12);">For every guest</span>
         </div>
       </div>
       <div class="section" style="padding-top:0;">
         <div class="container">
           <!-- SERVICES_TWO_PAGES_2026_11_12 (owner, Nov 12, 2026): the Repair / One-on-One selector that used to sit here is gone — it was redundant with the cards below, which open the detail pages and the booking flow. The script.js Services-flow module is inert without #svc-flow (guarded); site search now drives the booking form directly (window.atrBkOpenRepair). -->
+          <!-- SERVICES_CHOOSER_2026_11_13 (owner, Nov 13, 2026): the service cards below get their own title, right above them. -->
+          <h2 class="section-title" style="text-align:center;">Services we offer</h2>
           <div class="card-grid" id="svc-services">
             <!-- SITE_REAL_PHOTOS_2026_10_30: every photo on this site is Austin's own; AI/stock images removed, icon treatment where no photo of his fits -->
             <a class="service-card" href="#phones" data-page="phones"><img class="service-card-img" src="images/work/phone-repair.jpg" alt="Phone opened for screen repair on a bench" loading="lazy" /><div class="service-icon"><i class="fas fa-mobile-screen"></i></div><h3>Phones</h3><p>Cracked screens, battery swaps, charging ports, cameras, and water damage recovery.</p></a>
@@ -3509,7 +3511,7 @@
             <a class="support-icon-door" href="#questions-answers" data-page="questions-answers"><span class="support-icon-chip"><i class="fas fa-circle-question"></i></span>Questions &amp; Answers</a>
             <a class="support-icon-door" href="#account" data-page="account"><span class="support-icon-chip"><i class="fas fa-gift"></i></span>Gift Cards</a>
             <a class="support-icon-door" href="#repair-or-replace" data-page="repair-or-replace"><span class="support-icon-chip"><i class="fas fa-scale-balanced"></i></span>Repair or Replace</a>
-            <a class="support-icon-door" href="#whatwedo" data-page="whatwedo"><span class="support-icon-chip"><i class="fas fa-screwdriver-wrench"></i></span>Services</a>
+            <a class="support-icon-door" href="#whatwedo" data-page="whatwedo" data-services-route><span class="support-icon-chip"><i class="fas fa-screwdriver-wrench"></i></span>Services</a>
           </div>
           <p style="text-align:center; margin-top:2rem;">Prefer to read the terms first? <a href="#warranty" data-page="warranty">Read the warranty terms</a></p>
           <p style="text-align:center; color:var(--muted); margin-top:1.5rem;">Call or text <a href="tel:9372806243" style="font-weight:800;">(937) 280-6243</a> &mdash; or <a href="sms:9372806243" style="font-weight:700;">send a text</a></p>
@@ -4646,7 +4648,7 @@
   <nav class="mobile-bottom-nav" aria-label="Mobile Bottom Navigation">
     <!-- SERVICES_SINGLE_DOOR_2026_11_09 (owner, Nov 9, 2026): slot 1 is the logo itself — the badge is the home button. -->
     <a href="#home" class="bottom-nav-item bottom-nav-logo active" data-page="home" aria-label="Home"><img class="bottom-nav-logo-img" src="logo-duo.png" alt=""><span class="sr-only">Home</span></a>
-    <a href="#whatwedo" class="bottom-nav-item" data-page="whatwedo"><i class="fa-solid fa-screwdriver-wrench"></i><span>Services</span></a>
+    <a href="#whatwedo" class="bottom-nav-item" data-page="whatwedo" data-services-route><i class="fa-solid fa-screwdriver-wrench"></i><span>Services</span></a>
     <a href="#shop" class="bottom-nav-item" data-page="shop"><i class="fa-solid fa-store"></i><span>Store</span></a>
     <a href="#support" class="bottom-nav-item" data-page="support"><i class="fa-solid fa-headset"></i><span>Support</span></a>
     <!-- SEARCH_RELEASE_2026_11_09 (owner, Nov 9, 2026): slot 5 opens search (bound in script.js to the same panel as the header search button). The #mobile-menu markup and its router wiring stay in place, dormant — this button was their only trigger. -->
@@ -8372,6 +8374,19 @@
   else wire();
 })();
 </script>
+
+  <!-- SERVICES_CHOOSER_2026_11_13 (owner, Nov 13, 2026): the guest-or-business chooser. Start a Service and the thumb-nav Services button ask first, then route to the right services page. Hidden until script.js opens it. -->
+  <div id="svc-chooser" role="dialog" aria-modal="true" aria-labelledby="svc-chooser-title" style="position:fixed; inset:0; z-index:10000; display:none; align-items:center; justify-content:center; padding:1rem; background:rgba(20,16,11,0.55);">
+    <div style="background:var(--surface); color:var(--ink); border:1px solid var(--line); border-radius:1.4rem; box-shadow:0 18px 50px rgba(0,0,0,0.35); max-width:26rem; width:100%; padding:1.6rem 1.6rem 1.4rem; text-align:center; position:relative;">
+      <button type="button" id="svc-chooser-close" aria-label="Close" style="position:absolute; top:0.6rem; right:0.6rem; width:2rem; height:2rem; border-radius:50%; border:1px solid var(--line); background:var(--surface); color:var(--ink); cursor:pointer; font-size:1rem; line-height:1;"><i class="fas fa-times" aria-hidden="true"></i></button>
+      <h2 id="svc-chooser-title" style="font-family:var(--font-display); font-size:1.5rem; line-height:1.2; margin-bottom:0.5rem;">Is this for a guest or a business?</h2>
+      <p style="color:var(--ink-soft); margin-bottom:1.2rem;">Pick one and we will take you to the right services.</p>
+      <div style="display:grid; gap:0.7rem;">
+        <button type="button" class="btn btn-primary btn-lg" id="svc-chooser-guest">Guest</button>
+        <button type="button" class="btn btn-outline btn-lg" id="svc-chooser-business">Business</button>
+      </div>
+    </div>
+  </div>
 
 </body>
 </html>
