@@ -3860,3 +3860,70 @@ a.acct-menu-item { text-decoration: none; color: inherit; }
    Search slot already does — it never lit up at all before. */
 .site-search-btn.active { color: var(--brand); border-color: var(--brand); background: var(--brand-soft); }
 .header .site-search-btn.active { color: var(--brand); border-color: var(--brand); background: rgba(217, 84, 13, 0.15); }
+
+/* ================= V143_SERVICES_CLEANUP_2026_11_13 =================
+   (owner, Nov 13, 2026): services pages straightened, least text,
+   dropdowns reused, one page two faces. */
+
+/* V143_HOME_DOORS: the three "What can we help with?" cards read
+   centered — icon, heading, copy, and the small line underneath —
+   so the three cards line up straight. Words and destinations
+   unchanged. */
+.door-card { text-align: center; }
+.door-icon { margin-left: auto; margin-right: auto; }
+
+/* V143_WHY_SPACING: the "Why we should fix it" box sits visibly
+   lower and separated on the guest and business services pages,
+   not jammed against the service cards. The stray duplicate
+   subhead line above it is gone from the markup. */
+#whatwedo .cat-why, #b2b .cat-why { margin-top: 2.5rem; }
+
+/* V143_CHECKLIST: the SERVICES checklist is already styled by the
+   inline SERVICE_PAGES_STYLED block in index.html (v126) — boxed
+   rows with Font Awesome check circles. No new checklist CSS here;
+   the Classes list below is the only addition. */
+
+/* V143_CLASSES_LIST: the Classes list left-aligns inside a centered
+   narrow column — the old centered bullets sat at a different
+   indent each and read ragged. Beats the v142 "#classes ul" rule. */
+#classes .classes-list { list-style: none; padding-left: 0; text-align: left; max-width: 560px; margin: 0 auto 1.5rem; }
+
+/* V143_CLASSES_PKGS: the ready-made packages are Help Guides
+   dropdown rows now; the list reads left-aligned like the guides,
+   and the price line inside a dropdown body keeps its blue bold
+   treatment (the old .pkg-card .pkg-price rule does not reach it). */
+#classes .classes-pkgs { text-align: left; }
+#classes .hg-body { text-align: left; }
+#classes .hg-body .pkg-price { font-weight: 700; color: var(--blue); }
+
+/* V143_AUDIENCE: one page, two faces. The guest face (.aud-g) is
+   the default; the business face (.aud-b) shows only when the
+   session is business (body.aud-business, set by script.js from
+   the same 'atr-business' flag the [data-business] taps already
+   set). Each face restores its own natural display — buttons keep
+   inline-flex, cards keep block — so hiding one face never
+   reflows the other. */
+.aud-b { display: none !important; }
+body.aud-business .aud-g { display: none !important; }
+body.aud-business p.aud-b, body.aud-business ul.aud-b { display: block !important; }
+body.aud-business span.aud-b { display: inline !important; }
+body.aud-business a.btn.aud-b { display: inline-flex !important; }
+body.aud-business a.service-card.aud-b { display: block !important; }
+
+/* V143_SUBHEAD_2026_11_13 (voice call, Nov 13, 2026): the services pages'
+   plain intro text is gone — one short styled subheader bubble in bold
+   orange sits immediately before "Services we offer", same on guest and
+   business. Theme vars only, so it reacts to the light/dark switch. */
+.svc-subhead { background: var(--surface); border: 2px solid var(--brand); border-radius: var(--radius-lg); padding: 1.25rem 1.5rem; text-align: center; font-weight: 700; color: var(--ink); max-width: 760px; margin: 0 auto 2rem; line-height: 1.6; }
+
+/* V143_CLASSBOX_2026_11_13 (voice call, Nov 13, 2026): the One-on-One
+   Classes page's prose blocks are squares/bubbles now, the same clean
+   card style as the ATR One guest page — surface, blue border, rounded,
+   centered. The packages stay Help Guides dropdown rows (already boxed);
+   the checklist stays boxed rows. Both faces share the box; only one
+   face's paragraph is visible at a time. */
+.class-box { background: var(--surface); border: 2px solid var(--blue); border-radius: var(--radius-lg); padding: 1.25rem 1.5rem; margin: 0 auto 1.5rem; max-width: 720px; text-align: center; }
+.class-box h3 { margin: 0 0 0.5rem; }
+.class-box p { margin: 0; line-height: 1.7; color: var(--ink-soft); }
+.class-box p + p { margin-top: 0.5rem; }
+.class-box .btn { margin-top: 0.75rem; }

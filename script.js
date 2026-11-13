@@ -75,7 +75,26 @@
         link.classList.toggle('active', link.getAttribute('data-page') === cleanId);
       });
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      atrApplyAudience();
     }
+
+    /* V143_AUDIENCE_2026_11_13 (owner, Nov 13, 2026): one page,
+       two faces — the shared service pages (#classes and the
+       #phones … #cabling landing pages) read guest or business
+       from the same session flag the [data-business] taps already
+       set (sessionStorage 'atr-business'). Guest-side entry links
+       carry data-guest="1" and clear the flag, so a guest arrival
+       after a business arrival in the same session still lands on
+       the guest face. No flag means guest — the safe default. The
+       pages adapt by a body class (body.aud-business); both faces
+       sit in the HTML and CSS shows one. Runs on every page
+       switch and on load, and right after any audience tap. */
+    function atrApplyAudience() {
+      var business = false;
+      try { business = sessionStorage.getItem('atr-business') === '1'; } catch (e) {}
+      document.body.classList.toggle('aud-business', !!business);
+    }
+    window.atrApplyAudience = atrApplyAudience;
 
     document.body.addEventListener('click', function (e) {
       /* SERVICES_CHOOSER_2026_11_13: an ambiguous services entry asks
@@ -171,6 +190,14 @@
       return false;
     }
     function svcGoServices(pageId) {
+      /* V143_AUDIENCE_2026_11_13: the chooser's pick is an audience
+         pick too — business sets the session flag, guest clears it,
+         so the landing pages land on the right face. */
+      try {
+        if (pageId === 'b2b') sessionStorage.setItem('atr-business', '1');
+        else sessionStorage.removeItem('atr-business');
+      } catch (e) {}
+      atrApplyAudience();
       var href = '#' + pageId;
       if (window.location.hash !== href) { window.location.hash = href; }
       switchPage(href);
@@ -283,7 +310,7 @@
     var repairState = { device: '', brand: '', model: '', issue: '', issues: [], atrOne: '', describe: '', modelState: 'pending', priceRange: '$50 \u2013 $150', priceExact: null,
       /* SUPPORT_BOOKING_2026_11_06 (design pivot): One-on-One mode of this
          same wizard — serviceKind is one of the eight service bubbles,
-         ooHours is 1 or 2 (pure $25/hr). */
+         ooHours is 1 or 2 (pure $24.99/hr). */
       mode: 'repair', serviceKind: '', ooHours: 0,
       /* VIRTUAL_ONE_ON_ONE_2026_11_10: how the session happens —
          '' (not picked), 'inperson', or 'virtual'. Picked early in
@@ -295,11 +322,14 @@
          for a vehicle; parts are listed by year). '' until picked;
          'Not sure' is a real pick, so nobody is trapped. */
       year: '',
-      /* SERVICES_TWO_PAGES_2026_11_12 (owner, Nov 12, 2026):
-         business bookings — business is set when the guest enters
-         from Business Services (data-business) or picks Business /
-         Other; ein is the scheduling gate, shown on the ticket. */
-      business: false, ein: '' };
+      /* V144_EIN_REMOVAL_2026_11_13 (owner, Nov 13, 2026):
+         business bookings — business is set only when the guest
+         enters from Business Services (data-business) or the
+         chooser / account routes them business. Picking a device —
+         including Business / Other — never flips the audience.
+         The form never asks for an EIN: scheduling uses the EIN
+         on file from business sign-up. */
+      business: false };
 
     /* REPAIR_FLOW_UPDATE_2026_11_05: persistent summary panel + step-2 gating.
        The summary is clean text rows only — NO device picture. Austin ruled
@@ -345,12 +375,6 @@
          exact wording it always had. */
       if (repairState.mode !== 'oneonone') rfSet('rf-sum-estimate', repairState.issues.length ? (repairState.priceExact !== null && repairState.priceExact !== undefined ? (repairState.issues.length > 1 ? repairState.priceRange : 'Starting at ' + repairState.priceRange) : (repairState.issues.length > 1 && repairState.priceRange && (repairState.priceRange.charAt(0) === '$' || repairState.priceRange.indexOf('From ') === 0) ? repairState.priceRange : 'Confirmed up front')) : '\u2014');
       rfSet('rf-sum-atrone', repairState.atrOne ? ('Covered by ATR One: ' + repairState.atrOne) : 'Not answered yet');
-      /* SERVICES_TWO_PAGES_2026_11_12: the business EIN rides the
-         summary when this is a business booking; the row stays
-         hidden for guest bookings. */
-      var einRow = document.getElementById('rf-sum-ein-row');
-      if (einRow) einRow.hidden = !repairState.business;
-      rfSet('rf-sum-ein', repairState.ein || '\u2014');
       var loc = [rfVal('sr-address-street'), rfVal('sr-address-line2'), rfVal('sr-address-city'), rfVal('sr-address-state'), rfVal('sr-address-zip')].filter(Boolean).join(', ');
       rfSet('rf-sum-location', loc || '\u2014');
       var when = [rfVal('sr-visit-date'), rfVal('sr-arrival-window')].filter(Boolean).join(' \u00b7 ');
@@ -367,34 +391,33 @@
       /* COMPUTER_YEAR_2026_11_10: a computer in repair mode needs
          its year pick before Continue ('Not sure' counts). */
       var yearOk = repairState.mode === 'oneonone' || repairState.device !== 'Computer' || !!repairState.year;
-      /* SERVICES_TWO_PAGES_2026_11_12: a business booking cannot
-         continue without its EIN — the scheduling gate, repair and
-         one-on-one alike. */
-      var einOk = !repairState.business || !!repairState.ein;
+      /* V144_EIN_REMOVAL_2026_11_13: no EIN gate — Continue never
+         depends on an EIN. Scheduling uses the EIN on file from
+         business sign-up; the form never asks for one. */
       var ready = repairState.mode === 'oneonone'
-        ? !!(repairState.device && repairState.brand && modelOk && repairState.serviceKind && repairState.ooHours && repairState.atrOne && repairState.ooPlace && einOk)
-        : !!(repairState.device && repairState.brand && modelOk && yearOk && repairState.issues.length && repairState.atrOne && einOk);
+        ? !!(repairState.device && repairState.brand && modelOk && repairState.serviceKind && repairState.ooHours && repairState.atrOne && repairState.ooPlace)
+        : !!(repairState.device && repairState.brand && modelOk && yearOk && repairState.issues.length && repairState.atrOne);
       cont.disabled = !ready;
     }
     function rfShowFlowExtras() {
       var d = document.getElementById('bk-describe-wrap'); if (d) d.hidden = false;
       var a = document.getElementById('bk-atrone-wrap'); if (a) a.hidden = false;
     }
-    /* SERVICES_TWO_PAGES_2026_11_12 (owner, Nov 12, 2026): flip a
-       booking into business mode — the EIN field appears on step 2
-       and the Continue gate requires it. Sticky for the session:
-       a Business Services entry stays business even if the guest
-       changes device; leaving business mode clears the EIN. */
+    /* V144_EIN_REMOVAL_2026_11_13 (owner, Nov 13, 2026): flip a
+       booking into business mode — or back to guest. The audience
+       follows the entry point, never the device: a guest entry
+       (guest card, guest Start button, guest landing-page button,
+       guest chooser pick) calls this with false and the stored
+       flag is REMOVED, so business can never stick across a guest
+       entry in the same session. A business entry sets it true.
+       No EIN anywhere in this flow — scheduling uses the EIN on
+       file from business sign-up. */
     function rfSetBusiness(on) {
       repairState.business = !!on;
-      if (!on) {
-        repairState.ein = '';
-        var e = document.getElementById('bk-ein');
-        if (e) e.value = '';
-      }
-      var w = document.getElementById('bk-ein-wrap');
-      if (w) w.hidden = !repairState.business;
-      try { sessionStorage.setItem('atr-business', repairState.business ? '1' : ''); } catch (err) {}
+      try {
+        if (repairState.business) sessionStorage.setItem('atr-business', '1');
+        else sessionStorage.removeItem('atr-business');
+      } catch (err) {}
       rfRenderSummary(); rfGate();
     }
     window.atrSetBusiness = rfSetBusiness;
@@ -477,7 +500,7 @@
          missing. Their setup work (printer setup, router & mesh setup,
          Wi-Fi help) is one-on-one service work — it lives in the
          device-filtered topic list (data-devices in index.html, TOPICS
-         in the Services flow), priced pure at $25/hr with the $15
+         in the Services flow), priced pure at $24.99/hr with the $15.99
          visit fee as its own line, exactly like every other topic.
          These fallback lists carry only the custom-quote work and the
          truthful type lists — no part prices exist for these devices
@@ -503,11 +526,13 @@
       document.querySelectorAll('[data-device]').forEach(function (btn) {
         btn.addEventListener('click', function () {
           repairState.device = btn.getAttribute('data-device');
-          /* SERVICES_TWO_PAGES_2026_11_12: picking Business / Other
-             is a business booking — the EIN gate comes on. Any other
-             device leaves the business flag where the entry point
-             put it (a Business Services entry stays business). */
-          if (repairState.device === 'Business / Other') rfSetBusiness(true);
+          /* V144_EIN_REMOVAL_2026_11_13: picking a device never
+             flips the audience — not even Business / Other. The
+             flag follows the entry point (guest card / business
+             card, chooser pick, account type). This is the
+             #websites cross-over fix: a guest tapping Websites for
+             Guests presets Business / Other as the device bucket
+             and stays in guest mode with guest prices. */
           repairState.brand = '';
           repairState.model = '';
           repairState.year = '';
@@ -564,15 +589,6 @@
           if (r.checked) { repairState.atrOne = r.value; rfRenderSummary(); rfGate(); refreshDispatchAck(); }
         });
       });
-      /* SERVICES_TWO_PAGES_2026_11_12: the business EIN field — the
-         typed EIN is the gate; the summary and Continue follow it. */
-      var bkEin = document.getElementById('bk-ein');
-      if (bkEin) {
-        bkEin.addEventListener('input', function () {
-          repairState.ein = bkEin.value.trim();
-          rfRenderSummary(); rfGate();
-        });
-      }
       var srAtrOneSel = document.getElementById('sr-atr-one');
       if (srAtrOneSel) {
         srAtrOneSel.addEventListener('change', function () {
@@ -704,7 +720,7 @@
         ooBtn.setAttribute('data-oo-tile', '1');
         ooBtn.style.alignItems = 'flex-start';
         ooBtn.style.textAlign = 'left';
-        ooBtn.innerHTML = '<i class="fas fa-graduation-cap"></i><strong>One-on-One</strong><span style="font-size:0.78rem; color: var(--brand-deep); font-weight:800;">Lessons &amp; help on this device \u2014 $25 an hour</span>';
+        ooBtn.innerHTML = '<i class="fas fa-graduation-cap"></i><strong>One-on-One</strong><span style="font-size:0.78rem; color: var(--brand-deep); font-weight:800;">Lessons &amp; help on this device \u2014 $24.99 an hour</span>';
         ooBtn.addEventListener('click', function () { setOneOnOneMode(true); });
         grid.appendChild(ooBtn);
         issueList.appendChild(grid);
@@ -983,7 +999,7 @@
       ooTile.style.padding = '0.85rem 0.5rem';
       ooTile.style.alignItems = 'flex-start';
       ooTile.style.textAlign = 'left';
-      ooTile.innerHTML = '<i class="fas fa-graduation-cap"></i><strong>One-on-One</strong><span style="font-size:0.78rem; color: var(--brand-deep); font-weight:800;">Lessons &amp; help on this device \u2014 $25 an hour</span>';
+      ooTile.innerHTML = '<i class="fas fa-graduation-cap"></i><strong>One-on-One</strong><span style="font-size:0.78rem; color: var(--brand-deep); font-weight:800;">Lessons &amp; help on this device \u2014 $24.99 an hour</span>';
       ooTile.addEventListener('click', function () { setOneOnOneMode(true); });
       repairGrid.appendChild(ooTile);
       rfShowFlowExtras();
@@ -1189,12 +1205,13 @@
         ooPlace: repairState.ooPlace || '',
         ooHours: repairState.ooHours || 0,
         ooTime: (repairState.ooHours || 0) * 25,
-        /* SERVICES_TWO_PAGES_2026_11_12: the business flag and EIN
-           ride the same contract — atr-forms.js files the EIN on
-           the ticket's issue text (no ein column exists, none is
-           invented, mirroring the ATR One pattern). */
-        business: !!repairState.business,
-        ein: repairState.ein || ''
+        /* V144_EIN_REMOVAL_2026_11_13: only the business flag
+           rides the contract — no EIN is passed anywhere. The
+           live atr-forms.js files an EIN on the ticket's issue
+           text only if guided.ein is set, so with the field gone
+           nothing is ever filed. Scheduling uses the EIN on file
+           from business sign-up. */
+        business: !!repairState.business
       };
       var g = window.atrGuidedSelection;
       var typeSel = document.getElementById('sr-device-type');
@@ -1269,8 +1286,8 @@
        acknowledgment no longer steps aside for virtual — each of the
        three forms carries its own. Virtual has no trip and no
        scheduling urgency: its box says the virtual one-on-one is
-       $25, due at the time of the connect. In-person one-on-one
-       carries the $15 visit fee + $25 collected upon arrival, and
+       $24.99, due at the time of the connect. In-person one-on-one
+       carries the $15.99 visit fee + $24.99 collected upon arrival, and
        Repair keeps the original $15/$35 wording. */
     function applyVirtualFormEffects() {
       var g = window.atrGuidedSelection || {};
@@ -1343,14 +1360,14 @@
        not its own page — "we're using the same form, we're just adding
        features." Device, brand, and model are picked first; at the
        service step the One-on-One button swaps the repair tiles for
-       eight service bubbles and two even hour buttons (1 hour $25 /
-       2 hours $50, priced pure). The $15 visit fee stays its own
+       eight service bubbles and two even hour buttons (1 hour $24.99 /
+       2 hours $49.98, priced pure). The $15.99 visit fee stays its own
        separate line in the summary and the pay step. The step heading
        "What service does it need?" is universal — it never flips. */
     var pendingOneOnOne = false;
     function ooRender() {
       var h = repairState.ooHours || 0;
-      var time = h * 25;
+      var time = h * 24.99;
       var priceEl = document.getElementById('oo-price');
       if (priceEl) priceEl.textContent = h ? ('$' + time) : 'Pick a time';
       /* VIRTUAL_ONE_ON_ONE_2026_11_10: the summary note follows the
@@ -1359,29 +1376,29 @@
       var note = document.getElementById('rf-summary-note');
       if (note && repairState.mode === 'oneonone') {
         note.textContent = repairState.ooPlace === 'virtual'
-          ? 'One-on-one help is $25 an hour. Virtual sessions have no visit fee \u2014 the first hour is paid when you book, and ATR One members pay nothing with their member key.'
-          : 'One-on-one help is $25 an hour, plus the $15 visit fee. ATR One Plus (paid) members pay no visit fee on covered devices.';
+          ? 'One-on-one help is $24.99 an hour. Virtual sessions have no visit fee \u2014 the first hour is paid when you book, and ATR One members pay nothing with their member key.'
+          : 'One-on-one help is $24.99 an hour, plus the $15.99 visit fee. ATR One Plus (paid) members pay no visit fee on covered devices.';
       }
       var lines = document.getElementById('oo-lines');
       if (lines) {
         if (repairState.ooPlace === 'virtual') {
           /* VIRTUAL_ONE_ON_ONE_2026_11_10 (owner ruling, Nov 10,
-             2026): virtual skips the $15 visit fee — the total is
+             2026): virtual skips the $15.99 visit fee — the total is
              the time alone, the first hour paid at booking. */
           lines.innerHTML =
             (repairState.serviceKind ? (escapeHtml(repairState.serviceKind) + ' for your ' + escapeHtml([repairState.brand, repairState.model].filter(Boolean).join(' ') || repairState.device || 'device') + '<br>') : '') +
             'Virtual \u2014 we meet on your screen, no trip<br>' +
-            'One-on-one time $25 per hour' + (h ? (' \u2014 ' + h + (h === 1 ? ' hour' : ' hours') + ' $' + time) : '') + '<br>' +
-            (h ? ('<strong>Total $' + time + ' \u2014 the first hour ($25) is paid when you book</strong><br>') : '') +
-            'If your session runs longer, the extra time is charged to your card on file at $25 an hour.<br>' +
+            'One-on-one time $24.99 per hour' + (h ? (' \u2014 ' + h + (h === 1 ? ' hour' : ' hours') + ' $' + time) : '') + '<br>' +
+            (h ? ('<strong>Total $' + time + ' \u2014 the first hour ($24.99) is paid when you book</strong><br>') : '') +
+            'If your session runs longer, the extra time is charged to your card on file at $24.99 an hour.<br>' +
             'ATR One members: your member key makes virtual sessions free.';
         } else {
           lines.innerHTML =
             (repairState.serviceKind ? (escapeHtml(repairState.serviceKind) + ' for your ' + escapeHtml([repairState.brand, repairState.model].filter(Boolean).join(' ') || repairState.device || 'device') + '<br>') : '') +
-            'One-on-one time $25 per hour' + (h ? (' \u2014 ' + h + (h === 1 ? ' hour' : ' hours') + ' $' + time) : '') + '<br>' +
-            'Visit fee $15<br>' +
-            (h ? ('<strong>Total $' + (15 + time) + ' \u2014 the $' + time + ' time plus the $15 visit fee</strong><br>') : '') +
-            'If your session runs longer, the extra time is settled at the visit at $25 an hour.<br>' +
+            'One-on-one time $24.99 per hour' + (h ? (' \u2014 ' + h + (h === 1 ? ' hour' : ' hours') + ' $' + time) : '') + '<br>' +
+            'Visit fee $15.99<br>' +
+            (h ? ('<strong>Total $' + (15.99 + time) + ' \u2014 the $' + time + ' time plus the $15.99 visit fee</strong><br>') : '') +
+            'If your session runs longer, the extra time is settled at the visit at $24.99 an hour.<br>' +
             'ATR One Plus (paid) members pay no visit fee on covered devices.';
         }
       }
@@ -1434,23 +1451,23 @@
        THREE_FORMS_2026_11_11 (Austin, Nov 11, 2026): there are three
        forms — Repair, One-on-One in person, One-on-One virtual — and
        each carries its own fee acknowledgment in the owner's words.
-       In person: the $15 visit fee, and the $25 one-on-one collected
+       In person: the $15.99 visit fee, and the $24.99 one-on-one collected
        upon arrival. Virtual: no trip, no scheduling urgency — the
-       $25 is collected when the guest clicks the Connect link (a pay
+       $24.99 is collected when the guest clicks the Connect link (a pay
        wall: pay to connect), and it is non-refundable, because it
        pays for our time and effort even if the issue is not solved. */
     var srDispatchOrigHtml = null;
-    var SR_DISPATCH_OO_HTML = 'I understand the <strong>visit fee is $15</strong> and my <strong>one-on-one is $25</strong>, collected upon arrival. *';
-    var SR_DISPATCH_VIRTUAL_HTML = 'I understand the <strong>virtual one-on-one is $25</strong>, due at the time of the connect. It is <strong>non-refundable</strong> — it pays for our time and effort, even if the issue is not solved. *';
+    var SR_DISPATCH_OO_HTML = 'I understand the <strong>visit fee is $15.99</strong> and my <strong>one-on-one is $24.99</strong>, collected upon arrival. *';
+    var SR_DISPATCH_VIRTUAL_HTML = 'I understand the <strong>virtual one-on-one is $24.99</strong>, due at the time of the connect. It is <strong>non-refundable</strong> — it pays for our time and effort, even if the issue is not solved. *';
     /* ATRONE_NO_FEE_2026_11_11 (Austin, Nov 11, 2026, found live on
        his phone): the if-then is his — if the guest answers Yes, this
        device is covered by ATR One, then there is NO visit fee, on a
        repair or on an in-person one-on-one. The fee acknowledgment
        swaps to the no-fee wording the moment the answer is Yes, and
        back the moment it is not. The virtual wording never changes:
-       the $25 there is the session itself, not a visit fee, and paid
+       the $24.99 there is the session itself, not a visit fee, and paid
        members already skip that pay wall at the Connect page. */
-    var SR_DISPATCH_OO_MEMBER_HTML = 'I understand my <strong>one-on-one is $25</strong>, collected upon arrival. My device is covered by ATR One, so there is <strong>no visit fee</strong>. *';
+    var SR_DISPATCH_OO_MEMBER_HTML = 'I understand my <strong>one-on-one is $24.99</strong>, collected upon arrival. My device is covered by ATR One, so there is <strong>no visit fee</strong>. *';
     var SR_DISPATCH_REPAIR_MEMBER_HTML = 'I understand my device is <strong>covered by ATR One</strong>, so there is <strong>no visit fee</strong> for this visit. *';
     var SR_DISPATCH_REPAIR_FALLBACK_HTML = 'I understand the <strong>visit fee</strong> &mdash; <strong>$15</strong> if my repair is already known, or <strong>$35</strong> if my device needs a full diagnosis &mdash; covers the trip to me, is due at scheduling, and is <strong>non-refundable</strong>. *';
     function srDispatchAckHtml(virtual, mode) {
@@ -1473,8 +1490,8 @@
       var note = document.getElementById('rf-summary-note');
       if (note && repairState.mode === 'oneonone') {
         note.textContent = repairState.atrOne === 'Yes'
-          ? 'One-on-one help is $25 an hour. Your device is covered by ATR One, so there is no visit fee.'
-          : 'One-on-one help is $25 an hour, plus the $15 visit fee. ATR One Plus (paid) members pay no visit fee on covered devices.';
+          ? 'One-on-one help is $24.99 an hour. Your device is covered by ATR One, so there is no visit fee.'
+          : 'One-on-one help is $24.99 an hour, plus the $15.99 visit fee. ATR One Plus (paid) members pay no visit fee on covered devices.';
       }
     }
     window.atrRefreshDispatchAck = refreshDispatchAck;
@@ -1506,8 +1523,8 @@
       var note = document.getElementById('rf-summary-note');
       if (note) note.textContent = on
         ? (repairState.atrOne === 'Yes'
-          ? 'One-on-one help is $25 an hour. Your device is covered by ATR One, so there is no visit fee.'
-          : 'One-on-one help is $25 an hour, plus the $15 visit fee. ATR One Plus (paid) members pay no visit fee on covered devices.')
+          ? 'One-on-one help is $24.99 an hour. Your device is covered by ATR One, so there is no visit fee.'
+          : 'One-on-one help is $24.99 an hour, plus the $15.99 visit fee. ATR One Plus (paid) members pay no visit fee on covered devices.')
         : 'Estimates are always free. Your exact price is confirmed once we have checked your device.';
       /* A lesson or setup visit has no repair work to authorize: the
          authorization row and the signature block step aside in this
@@ -1525,8 +1542,8 @@
          Any answer already typed is cleared, so a repair answer can
          never ride along on a service ticket. The problem box asks
          the one-on-one question instead, and the fee acknowledgment
-         carries the in-person one-on-one wording (the $15 visit fee
-         and the $25 one-on-one collected upon arrival — never the
+         carries the in-person one-on-one wording (the $15.99 visit fee
+         and the $24.99 one-on-one collected upon arrival — never the
          $35 diagnosis fee). The virtual wording is applied at step 4
          by applyVirtualFormEffects. Repair mode restores every field
          and every word exactly as they were. */
@@ -1715,6 +1732,19 @@
         if (!t) return;
         try { sessionStorage.setItem('atr-business', '1'); } catch (err) {}
         rfSetBusiness(true);
+        atrApplyAudience();
+      });
+      /* V143_AUDIENCE_2026_11_13: the mirror — any [data-guest] tap
+         (guest card, guest footer link, guest Start button) clears
+         the session business flag, so a guest arrival after a
+         business arrival in the same session still lands on the
+         guest face. The flag is the same one [data-business] sets;
+         nothing new is invented. */
+      document.addEventListener('click', function (e) {
+        var g = e.target && e.target.closest ? e.target.closest('[data-guest]') : null;
+        if (!g) return;
+        rfSetBusiness(false);
+        atrApplyAudience();
       });
       try {
         var presetDevice = sessionStorage.getItem('atr-wizard-device');
@@ -1726,6 +1756,7 @@
       try {
         if (sessionStorage.getItem('atr-business') === '1') rfSetBusiness(true);
       } catch (err) {}
+      atrApplyAudience();
     })();
 
   });
@@ -3389,15 +3420,19 @@
 
     /* V142_GREETING_OWNER_2026_11_13: the cache remembers the role
        too, so a cached owner stays the owner on the next render.
-       Entries written before this build carry no role and read as
-       'associate' — the old behavior, never a wrong greeting. */
+       V143_GREETING_CACHE_2026_11_13: entries written before v142
+       carry no role — that is a MISS, not 'associate'. A stale
+       no-role entry used to paint "Welcome, Associate" for the
+       owner on every render until the portal token rotated; now
+       the role is re-read from employee_profiles instead. */
     function assocGreetingCachedRole(meta) {
       try {
         var raw = sessionStorage.getItem(ASSOC_GREETING_CACHE_KEY);
         if (!raw) return null;
         var c = JSON.parse(raw);
         if (!(c && c.userId === meta.userId && c.expiresAt === meta.expiresAt)) return null;
-        return (c && c.role) || 'associate';
+        if (!(c && c.role)) return null;
+        return c.role;
       } catch (e) { return null; }
     }
 
@@ -6383,7 +6418,7 @@ if ("serviceWorker" in navigator) {
         togglePick(pane, { name: 'Something else', price: null, priceRange: null }, se);
       });
       grid.appendChild(se);
-      var oo = doorTile('fas fa-graduation-cap', 'One-on-One', 'Lessons & help on this device \u2014 $25 an hour');
+      var oo = doorTile('fas fa-graduation-cap', 'One-on-One', 'Lessons & help on this device \u2014 $24.99 an hour');
       oo.setAttribute('data-svc-oo-door', '1');
       oo.addEventListener('click', function () { switchPath('oneonone'); });
       grid.appendChild(oo);
@@ -6480,12 +6515,12 @@ if ("serviceWorker" in navigator) {
       if (disc) disc.hidden = false;
     }
 
-    /* Mirrors the form's ooRender: time priced pure at $25/hr, the
-       $15 visit fee its own line, the total their sum. */
+    /* Mirrors the form's ooRender: time priced pure at $24.99/hr, the
+       $15.99 visit fee its own line, the total their sum. */
     function renderOoSummary() {
       var st = ooPane.state;
       var h = st.hours || 0;
-      var time = h * 25;
+      var time = h * 24.99;
       var priceEl = $('svc-oo-price');
       if (priceEl) priceEl.textContent = h ? ('$' + time) : 'Pick a time';
       var lines = $('svc-oo-lines');
@@ -6496,14 +6531,14 @@ if ("serviceWorker" in navigator) {
              form — virtual has no visit fee (owner ruling). */
           (st.place === 'virtual'
             ? 'Virtual \u2014 we meet on your screen, no trip<br>' +
-              'One-on-one time $25 per hour' + (h ? (' \u2014 ' + h + (h === 1 ? ' hour' : ' hours') + ' $' + time) : '') + '<br>' +
-              (h ? ('<strong>Total $' + time + ' \u2014 the first hour ($25) is paid when you book</strong><br>') : '') +
-              'If your session runs longer, the extra time is charged to your card on file at $25 an hour.<br>' +
+              'One-on-one time $24.99 per hour' + (h ? (' \u2014 ' + h + (h === 1 ? ' hour' : ' hours') + ' $' + time) : '') + '<br>' +
+              (h ? ('<strong>Total $' + time + ' \u2014 the first hour ($24.99) is paid when you book</strong><br>') : '') +
+              'If your session runs longer, the extra time is charged to your card on file at $24.99 an hour.<br>' +
               'ATR One members: your member key makes virtual sessions free.'
-            : 'One-on-one time $25 per hour' + (h ? (' \u2014 ' + h + (h === 1 ? ' hour' : ' hours') + ' $' + time) : '') + '<br>' +
-              'Visit fee $15<br>' +
-              (h ? ('<strong>Total $' + (15 + time) + ' \u2014 the $' + time + ' time plus the $15 visit fee</strong><br>') : '') +
-              'If your session runs longer, the extra time is settled at the visit at $25 an hour.<br>' +
+            : 'One-on-one time $24.99 per hour' + (h ? (' \u2014 ' + h + (h === 1 ? ' hour' : ' hours') + ' $' + time) : '') + '<br>' +
+              'Visit fee $15.99<br>' +
+              (h ? ('<strong>Total $' + (15.99 + time) + ' \u2014 the $' + time + ' time plus the $15.99 visit fee</strong><br>') : '') +
+              'If your session runs longer, the extra time is settled at the visit at $24.99 an hour.<br>' +
               'ATR One Plus (paid) members pay no visit fee on covered devices.');
       }
     }

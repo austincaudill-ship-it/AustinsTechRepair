@@ -314,10 +314,10 @@
                 <img src="images/work/phone-repair.jpg" alt="Technician repairing a smartphone" loading="eager" />
               </div>
             </div>
-            <!-- ONE_ON_ONE_CAROUSEL_2026_11_06: one-on-one tech support slide — $25/hr, we come to you (owner, Nov 6, 2026) -->
+            <!-- ONE_ON_ONE_CAROUSEL_2026_11_06: one-on-one tech support slide — $24.99/hr, we come to you (owner, Nov 6, 2026) -->
             <div class="hero-slide">
               <h2 class="hero-headline">One-on-one tech support, <em>we come to you.</em></h2>
-              <p class="hero-sub">We will set your electronics up, turn them on, and teach you how to work your computer, tablet, or phone &mdash; right at your home, at your pace, for as long as you need. One-on-one help is only $25 an hour, booked by the hour.</p>
+              <p class="hero-sub">We will set your electronics up, turn them on, and teach you how to work your computer, tablet, or phone &mdash; right at your home, at your pace, for as long as you need. One-on-one help is only $24.99 an hour, booked by the hour.</p>
               <div class="hero-cta-group">
                 <a class="btn btn-primary btn-lg" href="#repair" data-page="repair" data-open-oneonone><i class="fas fa-graduation-cap"></i> One-on-One Classes</a>
                 <a class="btn btn-outline btn-lg" href="tel:+19372806243"><i class="fas fa-phone"></i> 937-280-6243</a>
@@ -511,7 +511,7 @@
             <h2 class="section-title">What can we help with?</h2>
           </div>
           <div class="doors-grid">
-            <a class="door-card" href="#whatwedo" data-page="whatwedo">
+            <a class="door-card" href="#whatwedo" data-page="whatwedo" data-guest="1">
               <div class="door-icon"><i class="fas fa-wrench"></i></div>
               <h3>Repair It</h3>
               <p>Something broken? Tell us what it is and we will come fix it.</p>
@@ -813,29 +813,28 @@
           <div class="section-header center">
             <p class="eyebrow">Services We Offer</p>
             <h1 class="section-title">Guest Services</h1>
-            <p class="section-copy">We come to you. Phones, tablets, computers, and everything else you live on &mdash; repaired at your door, with a written estimate first and a 1-year warranty on parts and labor.</p>
           </div>
           <!-- MIRROR_RULE_2026_11_12 (owner, Nov 12, 2026): Guest Services mirrors Business Services — same structure, same order: intro, four trust blocks, ATR One pitch, service cards, Why we should fix it, pricing at the bottom. Guest wording and guest prices only. All body copy reuses the page's own words; no new claims, prices, or services. -->
           <div class="card-grid">
             <div class="perk-card">
               <i class="fas fa-truck-fast"></i>
               <h4>We come to you</h4>
-              <p>You never haul a dead device across town. We come to your home and do the repair and the setup there, on your schedule, with a written estimate first and a 1-year warranty on parts and labor.</p>
+              <p>You never haul a dead device across town. We come to your home and fix it there, on your schedule &mdash; written estimate first, 1-year warranty on parts and labor.</p>
             </div>
             <div class="perk-card">
               <i class="fas fa-wifi"></i>
               <h4>We set it right up</h4>
-              <p>Phones, tablets, computers, and Wi-Fi set up and working at your home: routers, switches, and Wi-Fi access points hooked up and configured &mdash; verified working end to end.</p>
+              <p>Phones, tablets, computers, and Wi-Fi set up at your home &mdash; routers, switches, and access points hooked up and verified working end to end.</p>
             </div>
             <div class="perk-card">
               <i class="fas fa-screwdriver-wrench"></i>
               <h4>Repairs that keep you connected</h4>
-              <p>Phones, tablets, computers, and everything else you live on, repaired with a written estimate first and a 1-year warranty on parts and labor &mdash; so a broken device never leaves you cut off.</p>
+              <p>Phones, tablets, computers, and everything else you live on &mdash; written estimate first, 1-year warranty, so a broken device never leaves you cut off.</p>
             </div>
             <div class="perk-card">
               <i class="fas fa-shield-halved"></i>
               <h4>Technicians you can trust</h4>
-              <p>The same local technicians, at your door, testing the screen, touch, charging, camera, and speakers before we leave &mdash; and the repair carries a 1-year warranty on parts we supply and on our labor.</p>
+              <p>Local technicians at your door, testing screen, touch, charging, camera, and speakers before we leave &mdash; 1-year warranty on parts we supply and on our labor.</p>
             </div>
           </div>
         </div>
@@ -856,39 +855,40 @@
         <div class="container">
           <!-- SERVICES_TWO_PAGES_2026_11_12 (owner, Nov 12, 2026): the Repair / One-on-One selector that used to sit here is gone — it was redundant with the cards below, which open the detail pages and the booking flow. The script.js Services-flow module is inert without #svc-flow (guarded); site search now drives the booking form directly (window.atrBkOpenRepair). -->
           <!-- SERVICES_CHOOSER_2026_11_13 (owner, Nov 13, 2026): the service cards below get their own title, right above them. -->
+          <!-- V143_SUBHEAD_2026_11_13 (voice call, Nov 13, 2026): same rule as business — no plain unstyled intro text anywhere. The guest intro paragraph moved here as the orange subheader bubble, facts kept whole. -->
+          <p class="svc-subhead">We come to you. Phones, tablets, computers, and everything else you live on &mdash; repaired at your door, with a written estimate first and a 1-year warranty on parts and labor.</p>
           <h2 class="section-title" style="text-align:center;">Services we offer</h2>
           <div class="card-grid" id="svc-services">
             <!-- SITE_REAL_PHOTOS_2026_10_30: every photo on this site is Austin's own; AI/stock images removed, icon treatment where no photo of his fits -->
-            <a class="service-card" href="#phones" data-page="phones"><img class="service-card-img" src="images/work/phone-repair.jpg" alt="Phone opened for screen repair on a bench" loading="lazy" /><div class="service-icon"><i class="fas fa-mobile-screen"></i></div><h3>Phones</h3><p>Cracked screens, battery swaps, charging ports, cameras, and water damage recovery.</p></a>
-            <a class="service-card" href="#tablets" data-page="tablets"><img class="service-card-img" src="images/work/tablet-teardown-real.webp" alt="Tablet opened for repair on a work mat" loading="lazy" /><div class="service-icon"><i class="fas fa-tablet-screen-button"></i></div><h3>Tablets</h3><p>Display replacement, charging port repair, touch issues, and battery service.</p></a>
-            <a class="service-card" href="#computers" data-page="computers"><img class="service-card-img" src="images/work/hp-laptop-board.jpg" alt="Laptop computer on a repair bench" loading="lazy" /><div class="service-icon"><i class="fas fa-laptop"></i></div><h3>Computers</h3><p>SSD upgrades, RAM installs, virus cleanup, display repair, and data rescue.</p></a>
-            <a class="service-card" href="#consoles" data-page="consoles"><img class="service-card-img" src="images/work/ps4-teardown.jpg" alt="Game console opened for teardown on a bench" loading="lazy" /><div class="service-icon"><i class="fas fa-gamepad"></i></div><h3>Game Consoles</h3><p>HDMI port repair, cooling fans, storage upgrades, and overheating fixes.</p></a>
-            <a class="service-card" href="#smartwatches" data-page="smartwatches"><img class="service-card-img" src="images/work/smartwatch-real.webp" alt="Cracked smartwatch on a wrist" loading="lazy" /><div class="service-icon"><i class="fas fa-clock"></i></div><h3>Smartwatches</h3><p>Screen and battery service for smartwatches of all kinds.</p></a>
-            <a class="service-card" href="#websites" data-page="websites"><img class="service-card-img" src="images/values/values-hero-workbench.webp" alt="The workbench where websites are built and handled" loading="lazy" /><div class="service-icon"><i class="fas fa-globe"></i></div><h3>Websites for Guests</h3><p>A professional website, built and handled for you &mdash; design, setup, and launch, without the agency price tag.</p></a>
-            <a class="service-card" href="#network" data-page="network"><img class="service-card-img svc-media-contain" src="images/work/cable-tester.jpg" alt="Cable tester used to verify network wiring" loading="lazy" /><div class="service-icon"><i class="fas fa-network-wired"></i></div><h3>In-Home Networking</h3><p>Routers, switches, and Wi-Fi access points hooked up and configured &mdash; verified working end to end at your home.</p></a>
-            <a class="service-card" href="#repair" data-page="repair" data-open-oneonone><img class="service-card-img" src="images/values/values-education-code.webp" alt="Learning a repair from the printed guide at the bench" loading="lazy" /><div class="service-icon"><i class="fas fa-graduation-cap"></i></div><h3>One-on-One Guest Classes</h3><p>We teach you at your home &mdash; hands-on lessons on your own phone, tablet, or computer, at your pace.</p></a>
+            <a class="service-card" href="#phones" data-page="phones" data-guest="1"><img class="service-card-img" src="images/work/phone-repair.jpg" alt="Phone opened for screen repair on a bench" loading="lazy" /><div class="service-icon"><i class="fas fa-mobile-screen"></i></div><h3>Phones</h3><p>Cracked screens, battery swaps, charging ports, cameras, and water damage recovery.</p></a>
+            <a class="service-card" href="#tablets" data-page="tablets" data-guest="1"><img class="service-card-img" src="images/work/tablet-teardown-real.webp" alt="Tablet opened for repair on a work mat" loading="lazy" /><div class="service-icon"><i class="fas fa-tablet-screen-button"></i></div><h3>Tablets</h3><p>Display replacement, charging port repair, touch issues, and battery service.</p></a>
+            <a class="service-card" href="#computers" data-page="computers" data-guest="1"><img class="service-card-img" src="images/work/hp-laptop-board.jpg" alt="Laptop computer on a repair bench" loading="lazy" /><div class="service-icon"><i class="fas fa-laptop"></i></div><h3>Computers</h3><p>SSD upgrades, RAM installs, virus cleanup, display repair, and data rescue.</p></a>
+            <a class="service-card" href="#consoles" data-page="consoles" data-guest="1"><img class="service-card-img" src="images/work/ps4-teardown.jpg" alt="Game console opened for teardown on a bench" loading="lazy" /><div class="service-icon"><i class="fas fa-gamepad"></i></div><h3>Game Consoles</h3><p>HDMI port repair, cooling fans, storage upgrades, and overheating fixes.</p></a>
+            <a class="service-card" href="#smartwatches" data-page="smartwatches" data-guest="1"><img class="service-card-img" src="images/work/smartwatch-real.webp" alt="Cracked smartwatch on a wrist" loading="lazy" /><div class="service-icon"><i class="fas fa-clock"></i></div><h3>Smartwatches</h3><p>Screen and battery service for smartwatches of all kinds.</p></a>
+            <a class="service-card" href="#websites" data-page="websites" data-guest="1"><img class="service-card-img" src="images/values/values-hero-workbench.webp" alt="The workbench where websites are built and handled" loading="lazy" /><div class="service-icon"><i class="fas fa-globe"></i></div><h3>Websites for Guests</h3><p>A professional website, built and handled for you &mdash; design, setup, and launch, without the agency price tag.</p></a>
+            <a class="service-card" href="#network" data-page="network" data-guest="1"><img class="service-card-img svc-media-contain" src="images/work/cable-tester.jpg" alt="Cable tester used to verify network wiring" loading="lazy" /><div class="service-icon"><i class="fas fa-network-wired"></i></div><h3>In-Home Networking</h3><p>Routers, switches, and Wi-Fi access points hooked up and configured &mdash; verified working end to end at your home.</p></a>
+            <a class="service-card" href="#classes" data-page="classes" data-guest="1"><img class="service-card-img" src="images/values/values-education-code.webp" alt="Learning a repair from the printed guide at the bench" loading="lazy" /><div class="service-icon"><i class="fas fa-graduation-cap"></i></div><h3>One-on-One Guest Classes</h3><p>We teach you at your home &mdash; hands-on lessons on your own phone, tablet, or computer, at your pace.</p></a>
           </div>
-          <p class="cat-subhead">Why we should fix it</p>
-          <div class="cat-why">
+                    <div class="cat-why">
             <h3>Why we should fix it</h3>
-            <p>Most of what we fix is glued together, with thin cables and a battery that has to be handled right. A rushed home repair can tear a cable, damage a connector, or leave a device that looks fixed but is not. We test the screen, touch, charging, camera, and speakers before we leave, and the repair carries a 1-year warranty on parts we supply and on our labor.</p>
+            <p>Most of what we fix is glued together, with thin cables and a battery that has to be handled right. A rushed home repair can tear a cable or leave a device that looks fixed but is not. We test screen, touch, charging, camera, and speakers before we leave &mdash; 1-year warranty on parts we supply and on our labor.</p>
           </div>
         </div>
       </div>
       <div class="section" id="svc-pricing">
         <div class="container">
-          <!-- SERVICES_TWO_PAGES_2026_11_12 (owner, Nov 12, 2026): one combined pricing block, built like the consumer side — dispatch separate from diagnostics, no separate boxes. The old four pricing cards are gone: the hourly custom-repairs card and the "Diagnostics Included" card both contradicted the fee schedule (diagnostics is $35.99, never included free). -->
+          <!-- SERVICES_TWO_PAGES_2026_11_12 (owner, Nov 12, 2026): one combined pricing block, built like the consumer side — dispatch separate from diagnostics, no separate boxes. The old four pricing cards are gone: the hourly custom-repairs card and the "Diagnostics Included" card both contradicted the fee schedule (diagnostics is $34.99, never included free). -->
           <div class="price-block">
             <p class="eyebrow">Pricing</p>
             <h2 class="section-title" style="font-size:1.6rem;">What it costs <span class="price-asterisk" aria-label="See note 3 in the footer">*</span></h2>
             <p class="lead-line"><strong>Dispatch fee is $15.99.</strong> That is just to get us to your house, and it is non-refundable.</p>
-            <p><strong>Diagnostics $35.99</strong></p>
-            <p><strong>One-on-one is $25 an hour, plus a $15.99 visit fee.</strong></p>
+            <p><strong>Diagnostics $34.99</strong></p>
+            <p><strong>One-on-one is $24.99 an hour, plus a $15.99 visit fee.</strong></p>
             <p>Common repairs starting at $37.99 for phones, $52.99 for tablets, $50.99 for computers, $58.99 for game consoles, $66.99 for smartwatches.</p>
             <p>Custom repairs are $50 an hour, plus parts.</p>
             <p class="price-note">Within 25 miles, the dispatch fee is the price listed above. Over 25 miles, add $1 per mile.</p>
             <p class="price-note">* See note 3 in the footer below.</p>
-            <a class="btn btn-primary btn-lg" href="#repair" data-page="repair" style="margin-top:.5rem;">Start a Service <i class="fas fa-arrow-right"></i></a>
+            <a class="btn btn-primary btn-lg" href="#repair" data-page="repair" data-guest="1" style="margin-top:.5rem;">Start a Service <i class="fas fa-arrow-right"></i></a>
           </div>
         </div>
       </div>
@@ -936,7 +936,6 @@
                   <li><span id="rf-sum-repair-label">Service</span><strong id="rf-sum-repair">&mdash;</strong><button type="button" class="rf-change" data-rf-change="2">Change</button></li>
                   <li><span id="rf-sum-estimate-label">Estimate</span><strong id="rf-sum-estimate">&mdash;</strong><button type="button" class="rf-change" data-rf-change="3">Change</button></li>
                   <li><span>ATR One</span><strong id="rf-sum-atrone">Not answered yet</strong><button type="button" class="rf-change" data-rf-change="2">Change</button></li>
-                  <li id="rf-sum-ein-row" hidden><span>Business EIN</span><strong id="rf-sum-ein">&mdash;</strong><button type="button" class="rf-change" data-rf-change="2">Change</button></li>
                   <li><span>Visit &mdash; where</span><strong id="rf-sum-location">&mdash;</strong><button type="button" class="rf-change" data-rf-change="4">Change</button></li>
                   <li><span>Visit &mdash; when</span><strong id="rf-sum-visit">&mdash;</strong><button type="button" class="rf-change" data-rf-change="4">Change</button></li>
                   <li><span>Contact</span><strong id="rf-sum-contact">&mdash;</strong><button type="button" class="rf-change" data-rf-change="4">Change</button></li>
@@ -1007,7 +1006,7 @@
                 <!-- VIRTUAL_ONE_ON_ONE_2026_11_10 (owner, Nov 10, 2026):
                      early in the One-on-One flow the guest picks HOW the
                      session happens. In person keeps everything exactly
-                     as it was; Virtual drops the $15 visit fee (owner
+                     as it was; Virtual drops the $15.99 visit fee (owner
                      ruling, same day) and ends at the Square first-hour
                      pay step in atr-forms.js. The pick rides
                      atrGuidedSelection.ooPlace into the ticket. -->
@@ -1022,8 +1021,8 @@
                      device-aware for the two new device types as well —
                      Printer setup and Peripheral & accessory setup belong
                      to Printers & Peripherals, Router & mesh setup to
-                     Networking; setup work is one-on-one work ($25/hr,
-                     $15 visit fee separate), never a repair price. -->
+                     Networking; setup work is one-on-one work ($24.99/hr,
+                     $15.99 visit fee separate), never a repair price. -->
                 <div class="option-grid" id="bk-service-grid">
                   <button class="option-btn" type="button" data-service-kind="Set up a new device" data-devices="Phone, Tablet, Computer, Game Console, Smart Watch, Printers & Peripherals, Networking, Business / Other"><i class="fas fa-box-open"></i> Set up a new device</button>
                   <button class="option-btn" type="button" data-service-kind="Learn my phone, computer, or tablet" data-devices="Phone, Tablet, Computer"><i class="fas fa-graduation-cap"></i> Learn my phone, computer, or tablet</button>
@@ -1042,10 +1041,10 @@
                 <p class="atr-help">Moving to a new device? We sit with you and help you move your photos, contacts, and apps over during the visit.</p>
                 <p class="field-label" style="margin-top: 1rem;">How much time?</p>
                 <div class="option-grid bk-hours-grid">
-                  <button class="option-btn" type="button" data-oo-hours="1">1 hour one-on-one <strong>$25</strong></button>
-                  <button class="option-btn" type="button" data-oo-hours="2">2 hour one-on-one <strong>$50</strong></button>
+                  <button class="option-btn" type="button" data-oo-hours="1">1 hour one-on-one <strong>$24.99</strong></button>
+                  <button class="option-btn" type="button" data-oo-hours="2">2 hour one-on-one <strong>$49.98</strong></button>
                 </div>
-                <p class="atr-help">If your session runs longer, the extra time is settled at the visit at $25 an hour.</p>
+                <p class="atr-help">If your session runs longer, the extra time is settled at the visit at $24.99 an hour.</p>
               </div>
               <div id="issue-list"></div>
               <!-- REPAIR_FLOW_UPDATE_2026_11_05: Step 3 of Austin's flow — what is wrong (multi-select
@@ -1065,12 +1064,7 @@
                 </div>
                 <p class="atr-help" style="margin-bottom: 1.2rem;">ATR One is our membership. ATR One Plus (paid) members pay no visit fee on covered devices &mdash; ATR One Free is pay per visit.</p>
               </div>
-              <!-- SERVICES_TWO_PAGES_2026_11_12 (owner, Nov 12, 2026): business bookings show their EIN at scheduling — the Mobile Sentrix-style gate. The field only appears for business bookings (Business Services page, or the Business / Other device pick); the Continue gate in script.js (rfGate) requires it before the guest can move on, and the EIN rides the ticket's issue text via atrGuidedSelection (atr-forms.js). -->
-              <div id="bk-ein-wrap" hidden>
-                <label class="field-label" for="bk-ein">Business EIN</label>
-                <input class="form-field" id="bk-ein" type="text" inputmode="text" autocomplete="off" placeholder="XX-XXXXXXX" style="margin-bottom: 0.4rem;" />
-                <p class="atr-help" style="margin-bottom: 1.2rem;">Business services are for businesses &mdash; show us your EIN to schedule. We only use it to confirm this is a business booking.</p>
-              </div>
+              <!-- V144_EIN_REMOVAL_2026_11_13 (owner, Nov 13, 2026): the Business EIN field is gone from the booking form. Scheduling uses the EIN on file from business sign-up; the form never asks for one. -->
               <button class="btn btn-primary" type="button" id="bk-continue" disabled><i class="fas fa-arrow-right"></i> Continue</button>
               <button class="back-btn" type="button" data-back="1" style="margin-top: 1.2rem;"><i class="fas fa-arrow-left"></i> Back</button>
             </div>
@@ -1081,11 +1075,11 @@
               <div id="estimate-summary" class="oo-repair-only" style="margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.6rem;"></div>
               <!-- SUPPORT_BOOKING_2026_11_06: in One-on-One mode this block
                    replaces the estimate box — no estimate, no diagnostics
-                   wording in this mode. Time is priced pure; the $15 visit
+                   wording in this mode. Time is priced pure; the $15.99 visit
                    fee is its own line; the total reads as their sum. -->
               <div class="estimate-box oo-only" id="oo-summary-block" hidden>
                 <p class="label">Your one-on-one</p>
-                <p class="price" id="oo-price">$25</p>
+                <p class="price" id="oo-price">$24.99</p>
                 <p class="note" id="oo-lines"></p>
               </div>
               <div class="estimate-box oo-repair-only">
@@ -1483,7 +1477,7 @@
                 <a class="btn btn-primary" href="#repair" data-page="repair" id="ror-book">Schedule a repair <i class="fas fa-arrow-right"></i></a>
               </div>
               <div class="ror-setup" id="ror-setup" hidden>
-                <p class="ror-setup-note">Buying a replacement instead? We can set the new device up at your home, move you onto it, and teach you on it &mdash; one-on-one help is $25 an hour.</p>
+                <p class="ror-setup-note">Buying a replacement instead? We can set the new device up at your home, move you onto it, and teach you on it &mdash; one-on-one help is $24.99 an hour.</p>
                 <a class="btn btn-outline" href="#repair" data-page="repair" data-open-oneonone id="ror-setup-btn">Book a one-on-one setup <i class="fas fa-arrow-right"></i></a>
               </div>
             </div>
@@ -1553,7 +1547,7 @@
               </ol>
               <p class="hg-note">When in doubt, stop. Hang up, close the tab, and talk it over with someone you trust &mdash; a family member, your bank on its real number, or us &mdash; before you send anyone anything.</p>
               <div class="hg-stuck">
-                <p>Still stuck? We will come do it with you for $25 an hour.</p>
+                <p>Still stuck? We will come do it with you for $24.99 an hour.</p>
                 <a class="btn btn-primary" href="#repair" data-page="repair" data-open-oneonone>Book a one-on-one</a>
               </div>
             </div>
@@ -1573,7 +1567,7 @@
                 <li><strong>Leave breathing room.</strong> Keep about 10% of the storage free. A completely full phone cannot install security updates and will keep nagging you.</li>
               </ol>
               <div class="hg-stuck">
-                <p>Still stuck? We will come do it with you for $25 an hour.</p>
+                <p>Still stuck? We will come do it with you for $24.99 an hour.</p>
                 <a class="btn btn-primary" href="#repair" data-page="repair" data-open-oneonone>Book a one-on-one</a>
               </div>
             </div>
@@ -1591,7 +1585,7 @@
                 <li><strong>Place mesh units halfway.</strong> Put each unit halfway between the router and the dead zone &mdash; not inside the dead zone itself, where there is no signal for it to pass along.</li>
               </ol>
               <div class="hg-stuck">
-                <p>Still stuck? We will come do it with you for $25 an hour.</p>
+                <p>Still stuck? We will come do it with you for $24.99 an hour.</p>
                 <a class="btn btn-primary" href="#repair" data-page="repair" data-open-oneonone>Book a one-on-one</a>
               </div>
             </div>
@@ -1610,7 +1604,7 @@
                 <li><strong>Confirm with a test page</strong> from the printer settings screen. If the test page prints, the printer is fine and the problem is the app you are printing from &mdash; try printing the same thing from a different app.</li>
               </ol>
               <div class="hg-stuck">
-                <p>Still stuck? We will come do it with you for $25 an hour.</p>
+                <p>Still stuck? We will come do it with you for $24.99 an hour.</p>
                 <a class="btn btn-primary" href="#repair" data-page="repair" data-open-oneonone>Book a one-on-one</a>
               </div>
             </div>
@@ -1631,7 +1625,7 @@
               </ol>
               <p class="hg-note">Rather have company while you do it? That is exactly what our one-on-ones are: we sit with you at your home while you make the move on your own phones &mdash; nobody takes your accounts or your passwords.</p>
               <div class="hg-stuck">
-                <p>Still stuck? We will come do it with you for $25 an hour.</p>
+                <p>Still stuck? We will come do it with you for $24.99 an hour.</p>
                 <a class="btn btn-primary" href="#repair" data-page="repair" data-open-oneonone>Book a one-on-one</a>
               </div>
             </div>
@@ -1649,7 +1643,7 @@
                 <li><strong>Check twice a year.</strong> Open the cloud website, scroll to your newest photos, and confirm they are there. A backup nobody checks is a hope, not a backup.</li>
               </ol>
               <div class="hg-stuck">
-                <p>Still stuck? We will come do it with you for $25 an hour.</p>
+                <p>Still stuck? We will come do it with you for $24.99 an hour.</p>
                 <a class="btn btn-primary" href="#repair" data-page="repair" data-open-oneonone>Book a one-on-one</a>
               </div>
             </div>
@@ -2118,7 +2112,7 @@
                  hidden and the staff check at the end of script.js unhides
                  it only for a signed-in associate (employee_profiles row);
                  guests never see it. Tapping it opens the Associate Hub. -->
-            <a class="acct-menu-item acct-flat-row" id="emp-dash-link" href="portal.html" hidden><i class="fas fa-briefcase"></i> Associate Portal <i class="fas fa-arrow-right acct-menu-chev" aria-hidden="true"></i></a>
+            <a class="acct-menu-item acct-flat-row" id="emp-dash-link" href="portal.html" hidden><i class="fas fa-briefcase"></i> Associate Hub <i class="fas fa-arrow-right acct-menu-chev" aria-hidden="true"></i></a>
             <!-- CONNECT_DOOR_RESTORED_2026_11_11 (owner FINAL reversal, Nov 11, 2026): the ATRG Connect account door below was restored after its earlier same-day removal. Guests keep the button in their own account (the Guest Hub); the protection is the human-issued code on the gated page, not the door. -->
             <button class="acct-menu-item acct-flat-row" type="button" data-acct-menu="connect" aria-expanded="false"><i class="fas fa-display"></i> ATRG Connect <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
 
@@ -2669,24 +2663,22 @@
           <div class="section-header center">
             <p class="eyebrow">ATRG for Business</p>
             <h2 class="section-title">Business Services</h2>
-            <p class="section-copy">We come to your business. Built for shops, offices, and crews &mdash; the tech a small business runs on, repaired and set up on site, with a written estimate first and a 1-year warranty on parts and labor.</p>
-            <p class="section-copy" style="margin-top:.9rem;"><strong>Repairs that keep you open</strong> &mdash; so a broken device never becomes a closed sign.</p>
-          </div>
+                      </div>
           <div class="card-grid">
             <div class="perk-card">
               <i class="fas fa-truck-fast"></i>
               <h4>We come to you</h4>
-              <p>Your team never hauls a dead register or a cracked laptop across town. We do the repair and the setup right at your business, on your schedule.</p>
+              <p>Your team never hauls a dead register or cracked laptop across town. We repair and set up right at your business, on your schedule.</p>
             </div>
             <div class="perk-card">
               <i class="fas fa-cash-register"></i>
               <h4>We set it right up</h4>
-              <p>Point-of-sale systems, set up and working: we set up Square, cash drawers, receipt printers, and the computers they run on. One honest note &mdash; we are not a payment processing company. We help you set it up, and we do not process payments.</p>
+              <p>Point of sale, set up and working: Square, cash drawers, receipt printers, and the computers they run on. One honest note &mdash; we are not a payment processing company. We help you set it up; we do not process payments.</p>
             </div>
             <div class="perk-card">
               <i class="fas fa-screwdriver-wrench"></i>
               <h4>Repairs that keep you open</h4>
-              <p>Phones, tablets, computers, and printers repaired with a written estimate first and a 1-year warranty on parts and labor &mdash; so a broken device never becomes a closed sign.</p>
+              <p>Phones, tablets, computers, and printers repaired &mdash; written estimate first, 1-year warranty, so a broken device never becomes a closed sign.</p>
             </div>
             <!-- MIRROR_RULE_2026_11_12 (owner, Nov 12, 2026): fourth trust block — no empty slot in the grid. "Techs" is Austin's spelling, T-E-C-H-S, plural, meaning technicians. -->
             <div class="perk-card">
@@ -2698,11 +2690,8 @@
         </div>
       </div>
       <!-- ONE_BUSINESS_PAGE_2026_11_11: one Business page — the Small Business and Enterprise rows are folded into this single section. Nothing was dropped: the small-business tech list, the larger-office scale-up, and both ATR One lines are all here. -->
-      <!-- V142_ATR_ONE_2026_11_13 (owner, Nov 13, 2026): the business ATR One pitch mirrors the guest one — same centered blue bubble, same structure, business copy and business prices only. The old "Built for shops, offices, and crews" heading becomes "Built for every business"; no pill, no button-like label — the bubble itself is the advertisement. The two general business intro lines stay, centered, above the bubble. -->
-      <div class="atr-one-intro">
-        <p>The tech a small business runs on &mdash; staff phones and tablets, office computers, printers, Wi-Fi and networks, and the register by the door &mdash; repaired and set up on site, without an IT department on payroll.</p>
-        <p>For larger offices and device fleets, it is the same on-site service, scaled to the whole building: full IT management, including server setup, scheduled maintenance, and priority dispatch &mdash; one local number to call instead of a call center and a ticket queue.</p>
-      </div>
+      <!-- V142_ATR_ONE_2026_11_13 (owner, Nov 13, 2026): the business ATR One pitch mirrors the guest one — same centered blue bubble, same structure, business copy and business prices only. The old "Built for shops, offices, and crews" heading becomes "Built for every business"; no pill, no button-like label — the bubble itself is the advertisement. -->
+      <!-- V143_SUBHEAD_2026_11_13 (voice call, Nov 13, 2026): the plain business intro text is gone — the two .atr-one-intro lines above the bubble and the top intro paragraph are consolidated into one short bold orange subheader bubble immediately before "Services we offer" (below). Kept facts: we come to your business; built for shops, offices, and crews; the tech a small business runs on, repaired and set up on site. Cut: the staff-phones list, the larger-office scale-up (server setup, scheduled maintenance, priority dispatch, one local number), and the written-estimate / 1-year-warranty clause from the top line (that promise still lives in the trust blocks and the pricing block). This supersedes the v143 item-3 shorten-in-place. -->
       <div class="atr-one-ad">
         <h2>Built for every business</h2>
         <p>Every business starts on ATR One Free automatically &mdash; nothing to join and nothing to pay. You earn 1 point for every $1 on every completed repair or service &mdash; 100 points is $5 toward repairs, accessories, and vouchers.</p>
@@ -2718,6 +2707,7 @@
       <div class="section" style="padding-top:0;">
         <div class="container">
           <!-- V142_2026_11_13 (owner, Nov 13, 2026): the business cards get the same "Services we offer" banner the guest page has — same centered title, same place, directly above the cards. -->
+          <p class="svc-subhead">We come to your business. Built for shops, offices, and crews &mdash; the tech a small business runs on, repaired and set up on site.</p>
           <h2 class="section-title" style="text-align:center;">Services we offer</h2>
           <div class="card-grid" id="b2b-services">
             <a class="service-card" href="#phones" data-page="phones" data-business="1"><img class="service-card-img" src="images/work/phone-repair.jpg" alt="Phone opened for screen repair on a bench" loading="lazy" /><div class="service-icon"><i class="fas fa-mobile-screen"></i></div><h3>Phones for Business</h3><p>Staff phones repaired on site &mdash; screens, batteries, charging ports, and cameras, with a written estimate first.</p></a>
@@ -2726,11 +2716,10 @@
             <a class="service-card" href="#consoles" data-page="consoles" data-business="1"><img class="service-card-img" src="images/work/ps4-teardown.jpg" alt="Game console opened for teardown on a bench" loading="lazy" /><div class="service-icon"><i class="fas fa-gamepad"></i></div><h3>Game Consoles for Business</h3><p>Consoles for your break room or business &mdash; HDMI, fans, storage, and overheating fixes.</p></a>
             <a class="service-card" href="#smartwatches" data-page="smartwatches" data-business="1"><img class="service-card-img" src="images/work/smartwatch-real.webp" alt="Cracked smartwatch on a wrist" loading="lazy" /><div class="service-icon"><i class="fas fa-clock"></i></div><h3>Smartwatches for Business</h3><p>Staff smartwatches &mdash; screen and battery service on site.</p></a>
             <a class="service-card" href="#websites" data-page="websites" data-business="1"><img class="service-card-img" src="images/values/values-hero-workbench.webp" alt="The workbench where websites are built and handled" loading="lazy" /><div class="service-icon"><i class="fas fa-globe"></i></div><h3>Websites for Business</h3><p>A professional website for your business, built and handled for you &mdash; design, setup, and launch, without the agency price tag.</p></a>
-            <a class="service-card" href="#repair" data-page="repair" data-wizard-device="Business / Other" data-business="1"><img class="service-card-img" src="images/work/network-install.webp" alt="Network installed and cabled at a business — router, switch, and Wi-Fi access point on the shelf" loading="lazy" /><div class="service-icon"><i class="fas fa-cash-register"></i></div><h3>Business Setup</h3><p>We come to your business and set up your tech &mdash; your point of sale, Square, cash drawers, and your systems &mdash; so you can take payments and run the day. We help with the setup; we do not process payments.</p></a>
-            <a class="service-card" href="#repair" data-page="repair" data-open-oneonone data-business="1"><img class="service-card-img" src="images/values/values-education-code.webp" alt="Learning a repair from the printed guide at the bench" loading="lazy" /><div class="service-icon"><i class="fas fa-graduation-cap"></i></div><h3>One-on-One Business Classes</h3><p>We teach your team at your business &mdash; hands-on lessons on your own devices, at your pace.</p></a>
+            <a class="service-card" href="#business-setup" data-page="business-setup" data-business="1"><img class="service-card-img" src="images/work/network-install.webp" alt="Network installed and cabled at a business — router, switch, and Wi-Fi access point on the shelf" loading="lazy" /><div class="service-icon"><i class="fas fa-cash-register"></i></div><h3>Business Setup</h3><p>We come to your business and set up your tech &mdash; your point of sale, Square, cash drawers, and your systems &mdash; so you can take payments and run the day. We help with the setup; we do not process payments.</p></a>
+            <a class="service-card" href="#classes" data-page="classes" data-business="1"><img class="service-card-img" src="images/values/values-education-code.webp" alt="Learning a repair from the printed guide at the bench" loading="lazy" /><div class="service-icon"><i class="fas fa-graduation-cap"></i></div><h3>One-on-One Business Classes</h3><p>We teach your team at your business &mdash; hands-on lessons on your own devices, at your pace.</p></a>
           </div>
-          <p class="cat-subhead">Why we should fix it</p>
-          <div class="cat-why">
+                    <div class="cat-why">
             <h3>Why we should fix it</h3>
             <p>A broken device should never become a closed sign. We repair on site so your staff keeps working, test everything before we leave, and every repair carries a 1-year warranty on parts we supply and on our labor.</p>
           </div>
@@ -2742,13 +2731,13 @@
             <p class="eyebrow">Business pricing</p>
             <h2 class="section-title" style="font-size:1.6rem;">What it costs for your business <span class="price-asterisk" aria-label="See note 3 in the footer">*</span></h2>
             <p class="lead-line"><strong>Dispatch fee is $35.99.</strong></p>
-            <p><strong>Diagnostics $65.99</strong></p>
+            <p><strong>Diagnostics $64.99</strong></p>
             <p><strong>One-on-one is $49.99 an hour, plus a $35.99 visit fee.</strong></p>
             <p>Common repairs starting at $69.99.</p>
             <p>Custom repairs are $100 an hour, plus parts.</p>
             <p class="price-note">Within 25 miles, the dispatch fee is the price listed above. Over 25 miles, add $1 per mile.</p>
             <p class="price-note">ATRG Business Plus and Business Pro members pay no visit fee on covered devices.</p>
-            <p class="price-note">To schedule, show us your EIN.</p>
+            <p class="price-note">To schedule, sign in with your business account. Your EIN is already on file from sign-up.</p>
             <p class="price-note">* See note 3 in the footer below.</p>
             <a class="btn btn-primary btn-lg" href="#repair" data-page="repair" data-business="1" style="margin-top:.5rem;">Start a Service <i class="fas fa-arrow-right"></i></a>
           </div>
@@ -3435,10 +3424,10 @@
           <h2 class="qa-subhead">Choose a product to get service on.</h2>
           <p class="qa-subcopy">Find out about service options and repairs, and see what you expect to pay.</p>
           <div class="card-grid qa-products">
-            <a class="service-card" href="#phones" data-page="phones"><img class="service-card-img" src="images/work/phone-repair.jpg" alt="Phone opened for screen repair on a bench" loading="lazy" /><div class="service-icon"><i class="fas fa-mobile-screen"></i></div><h3>Phones</h3><p>Cracked screens, battery swaps, charging ports, cameras, and water damage recovery.</p><p><strong>Common repairs starting at $37.99.</strong></p></a>
-            <a class="service-card" href="#computers" data-page="computers"><img class="service-card-img" src="images/work/hp-laptop-board.jpg" alt="Laptop computer on a repair bench" loading="lazy" /><div class="service-icon"><i class="fas fa-laptop"></i></div><h3>Computers</h3><p>SSD upgrades, RAM installs, virus cleanup, display repair, and data rescue.</p><p><strong>Common repairs starting at $50.99.</strong></p></a>
-            <a class="service-card" href="#tablets" data-page="tablets"><img class="service-card-img" src="images/work/tablet-teardown-real.webp" alt="Tablet opened for repair on a work mat" loading="lazy" /><div class="service-icon"><i class="fas fa-tablet-screen-button"></i></div><h3>Tablets</h3><p>Display replacement, charging port repair, touch issues, and battery service.</p><p><strong>Common repairs starting at $52.99.</strong></p></a>
-            <a class="service-card" href="#smartwatches" data-page="smartwatches"><img class="service-card-img" src="images/work/smartwatch-real.webp" alt="Cracked smartwatch on a wrist" loading="lazy" /><div class="service-icon"><i class="fas fa-clock"></i></div><h3>Watches</h3><p>Screen and battery service for smartwatches of all kinds.</p><p><strong>Common repairs starting at $66.99.</strong></p></a>
+            <a class="service-card" href="#phones" data-page="phones" data-guest="1"><img class="service-card-img" src="images/work/phone-repair.jpg" alt="Phone opened for screen repair on a bench" loading="lazy" /><div class="service-icon"><i class="fas fa-mobile-screen"></i></div><h3>Phones</h3><p>Cracked screens, battery swaps, charging ports, cameras, and water damage recovery.</p><p><strong>Common repairs starting at $37.99.</strong></p></a>
+            <a class="service-card" href="#computers" data-page="computers" data-guest="1"><img class="service-card-img" src="images/work/hp-laptop-board.jpg" alt="Laptop computer on a repair bench" loading="lazy" /><div class="service-icon"><i class="fas fa-laptop"></i></div><h3>Computers</h3><p>SSD upgrades, RAM installs, virus cleanup, display repair, and data rescue.</p><p><strong>Common repairs starting at $50.99.</strong></p></a>
+            <a class="service-card" href="#tablets" data-page="tablets" data-guest="1"><img class="service-card-img" src="images/work/tablet-teardown-real.webp" alt="Tablet opened for repair on a work mat" loading="lazy" /><div class="service-icon"><i class="fas fa-tablet-screen-button"></i></div><h3>Tablets</h3><p>Display replacement, charging port repair, touch issues, and battery service.</p><p><strong>Common repairs starting at $52.99.</strong></p></a>
+            <a class="service-card" href="#smartwatches" data-page="smartwatches" data-guest="1"><img class="service-card-img" src="images/work/smartwatch-real.webp" alt="Cracked smartwatch on a wrist" loading="lazy" /><div class="service-icon"><i class="fas fa-clock"></i></div><h3>Watches</h3><p>Screen and battery service for smartwatches of all kinds.</p><p><strong>Common repairs starting at $66.99.</strong></p></a>
           </div>
           <h2 class="qa-subhead">Questions? Answers.</h2>
           <div class="qa-list">
@@ -3466,7 +3455,7 @@
             </article>
             <article class="service-card qa-item">
               <h3>What does a visit cost?</h3>
-              <p>Guests: dispatch $15.99 just to get us there, non-refundable; diagnostics $35.99. Businesses: dispatch $35.99, diagnostics $65.99. ATR One members pay no visit fee or diagnostics on covered devices.</p>
+              <p>Guests: dispatch $15.99 just to get us there, non-refundable; diagnostics $34.99. Businesses: dispatch $35.99, diagnostics $64.99. ATR One members pay no visit fee or diagnostics on covered devices.</p>
             </article>
             <article class="service-card qa-item">
               <h3>Do you come to me, or do I bring my device to you?</h3>
@@ -3474,7 +3463,7 @@
             </article>
             <article class="service-card qa-item">
               <h3>Are estimates free?</h3>
-              <p>Yes &mdash; estimates are always free. Diagnostics is separate: $35.99 for guests, $65.99 for business.</p>
+              <p>Yes &mdash; estimates are always free. Diagnostics is separate: $34.99 for guests, $64.99 for business.</p>
             </article>
             <article class="service-card qa-item">
               <h3>Still have a question?</h3>
@@ -3576,15 +3565,15 @@
             <h3>2. Estimates &amp; Pricing</h3>
             <ul>
               <li><strong>Estimated pricing:</strong> Common repairs are quoted as one estimated repair price &mdash; parts and labor included. There is no hourly billing.</li>
-              <li><strong>Diagnostics:</strong> Estimates are free. A full diagnosis of the problem &mdash; including disassembly or deep board-level work when required &mdash; is included in the $35.00 visit fee (the fee for a job that needs diagnostics), charged separately from the repair price.</li>
+              <li><strong>Diagnostics:</strong> Estimates are free. A full diagnosis of the problem &mdash; including disassembly or deep board-level work when required &mdash; is $34.99 for guests and $64.99 for business, charged separately from the repair price.</li>
               <li><strong>Online estimator:</strong> Prices shown by the online estimator are <strong>starting prices</strong> for the most common models. Your estimated repair price is confirmed for your exact model after diagnostics, and the price we confirm is the price you pay.</li>
-              <li><strong>Custom repairs:</strong> One-of-a-kind or unusual repairs are quoted individually as an estimated repair price &mdash; and are always approved by you before work begins.</li>
+              <li><strong>Custom repairs:</strong> One-of-a-kind or unusual repairs are quoted individually as an estimated repair price &mdash; parts plus labor ($50 an hour for guests, $100 an hour for business) &mdash; and are always approved by you before work begins.</li>
               <li><strong>Hidden damage:</strong> If disassembly reveals additional damage or failed components beyond the original estimate, we stop, notify you, and get your approval before doing any extra work.</li>
             </ul>
 
             <h3>3. Visit Fee</h3>
             <ul>
-              <li>A <strong>visit fee</strong> applies to every mobile visit, and it is due at scheduling: <strong>$15.00</strong> when the repair is already known, or <strong>$35.00</strong> when the job needs a full diagnosis of the problem. It covers travel to your location, plus the diagnosis when one is needed.</li>
+              <li>A <strong>visit fee</strong> applies to every mobile visit, and it is due at scheduling: <strong>$15.99</strong> for guests, <strong>$35.99</strong> for business. It covers travel to your location only. Diagnostics is separate (see above).</li>
               <li><strong>ATR One Plus members:</strong> Paid members pay no visit fee for devices covered under their plan. ATR One Free is pay per visit.</li>
               <li>The visit fee is <strong>non-refundable in all cases</strong> and is charged separately from the repair price. It is never credited toward a repair.</li>
             </ul>
@@ -3826,10 +3815,10 @@
 
             <h3>2. Fees, Parts &amp; Payment</h3>
             <ul>
-              <li><strong>Visit fee:</strong> A visit fee applies to every mobile visit &mdash; $15.00 when the repair is already known, or $35.00 when the job needs a full diagnosis &mdash; covering travel, plus the diagnosis when one is needed. It is <strong>non-refundable in all cases</strong>, is due at scheduling, is charged separately from the repair price, and is never credited toward a repair. ATR One Plus (paid) members pay no visit fee for devices covered under their plan.</li>
-              <li><strong>Diagnostics:</strong> Estimates are free. A full diagnosis &mdash; including disassembly or deep board-level diagnostics when required &mdash; is included in the $35.00 visit fee.</li>
+              <li><strong>Visit fee:</strong> A visit fee applies to every mobile visit &mdash; $15.99 for guests, $35.99 for business &mdash; covering travel only. Diagnostics is separate (see below). It is <strong>non-refundable in all cases</strong>, is due at scheduling, is charged separately from the repair price, and is never credited toward a repair. ATR One Plus (paid) members pay no visit fee for devices covered under their plan.</li>
+              <li><strong>Diagnostics:</strong> Estimates are free. A full diagnosis &mdash; including disassembly or deep board-level diagnostics when required &mdash; is $34.99 for guests and $64.99 for business, charged separately from the repair price.</li>
               <li><strong>Estimated repairs:</strong> Common repairs (screens, batteries, charging ports, back glass) are quoted as one estimated repair price &mdash; parts and labor included. No hourly billing.</li>
-              <li><strong>Custom repairs:</strong> Repairs outside the standard list are quoted individually as an estimated repair price and begin only with your approval.</li>
+              <li><strong>Custom repairs:</strong> Repairs outside the standard list are quoted individually as an estimated repair price &mdash; parts plus labor ($50 an hour for guests, $100 an hour for business) &mdash; and begin only with your approval.</li>
               <li><strong>Parts:</strong> Parts for your job are ordered by us through our suppliers and delivered to us. Because parts are ordered for your specific job, the parts cost is paid upfront before we order. If you cancel after parts are ordered, we keep the part and refund what you paid for the part.</li>
               <li><strong>Replaced parts:</strong> Parts we remove during a repair are taken with us and disposed of properly to protect the environment. Some original manufacturer parts must be returned to the manufacturer.</li>
               <li><strong>Parts you supply:</strong> If you supply your own part, we will install it as-is; our 1-Year Limited Warranty does not cover guest-supplied parts.</li>
@@ -3969,15 +3958,18 @@
             <h2 class="section-title">Phones</h2>
           </div>
           <img src="images/work/phone-repair.jpg" alt="Phone repair work" loading="lazy" style="width:100%; max-width:720px; border-radius:12px; display:block; margin:0 auto 1.5rem;" />
-          <p class="cat-lede">Phones are the device most people live on, so a phone repair is about getting you back to normal without losing your photos, your apps, or your day. We come to you, diagnose the phone in person, and tell you plainly what is wrong before any part is ordered. Most phone work is screens, batteries, and charging ports, but we also handle cameras, speakers, buttons, back glass, and board-level faults that a screen swap will not fix.</p>
+          <p class="cat-lede">Phones are the device most people live on, so a phone repair is about getting you back to normal without losing your photos, your apps, or your day. We come to you, diagnose the phone in person, and tell you plainly what is wrong before any part is ordered.</p>
           <h3 class="cat-subhead">Services</h3>
           <ul class="cat-services"><li>Cracked and dead screens, including touch and display problems</li><li>Batteries that drain fast, shut off early, or swell</li><li>Charging ports that only work at an angle or not at all</li><li>Cameras, speakers, microphones, and buttons</li><li>Back glass and water damage checks</li><li>Circuit board faults — the deeper problems a part swap will not fix</li></ul>
           <div class="cat-why">
           <h3>Why we should fix it</h3>
-          <p>A phone is glued together, with thin cables and a battery that has to be handled right. A rushed home repair can tear a cable, damage a connector, or leave a phone that looks fixed but loses touch or Face ID calibration. We test the screen, touch, charging, camera, and speakers before we leave, and the repair carries a 1-year warranty on parts we supply and on our labor.</p>
+          <p class="aud-g">A phone is glued together, with thin cables and a battery that has to be handled right. A rushed home repair can tear a cable, damage a connector, or leave a phone that looks fixed but loses touch or Face ID calibration. We test the screen, touch, charging, camera, and speakers before we leave &mdash; 1-year warranty on parts we supply and on our labor.</p>
+          <p class="aud-b">A phone is glued together, with thin cables and a battery that has to be handled right. A rushed repair can tear a cable or leave a phone that looks fixed but loses touch or Face ID calibration &mdash; and a staff phone down is work stopped. We test the screen, touch, charging, camera, and speakers before we leave &mdash; 1-year warranty on parts we supply and on our labor.</p>
           </div>
-          <a class="btn btn-primary" href="#repair" data-page="repair" data-wizard-device="Phone"><i class="fas fa-wrench"></i> Start a Service</a>
-          <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services We Offer</a>
+          <a class="btn btn-primary aud-g" href="#repair" data-guest="1" data-page="repair" data-wizard-device="Phone"><i class="fas fa-wrench"></i> Start a Service</a>
+          <a class="btn btn-primary aud-b" href="#repair" data-page="repair" data-wizard-device="Phone" data-business="1"><i class="fas fa-wrench"></i> Start a Service</a>
+          <a class="btn btn-outline aud-g" href="#whatwedo" data-guest="1" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services We Offer</a>
+          <a class="btn btn-outline aud-b" href="#b2b" data-page="b2b" data-business="1" style="margin-left:0.5rem;">Back to Business Services</a>
         </div>
       </div>
     </section>
@@ -3990,15 +3982,18 @@
             <h2 class="section-title">Tablets</h2>
           </div>
           <img src="images/work/tablet-teardown-real.webp" alt="Tablet opened for repair on a work mat" loading="lazy" style="width:100%; max-width:720px; border-radius:12px; display:block; margin:0 auto 1.5rem;" />
-          <p class="cat-lede">Tablets get used hard at home, at school, and at work, and they break in a different way than phones. The glass is bigger, the adhesive holds more, and a tablet screen job takes real time, about 3 hours for a tablet screen. We tape cracked glass first so it does not spread, check whether the tablet powers on and is backed up, and confirm the fault before ordering anything.</p>
+          <p class="cat-lede">Tablets break differently than phones. The glass is bigger, the adhesive holds more, and a tablet screen job takes real time &mdash; about 3 hours. We tape cracked glass first so it does not spread, check whether the tablet powers on and is backed up, and confirm the fault before ordering anything.</p>
           <h3 class="cat-subhead">Services</h3>
           <ul class="cat-services"><li>Cracked glass and touch-screen replacement</li><li>Display replacement and touch problems</li><li>Batteries and charging port repair</li><li>Buttons and speakers</li><li>Diagnosis when a tablet will not power on or charge</li></ul>
           <div class="cat-why">
           <h3>Why we should fix it</h3>
-          <p>Big glass and strong adhesive are where home tablet repairs go wrong. Prying a tablet open without heat and patience cracks the display underneath, and a tablet that is not tested after the repair can leave you with dead touch in one corner. We take the time the job actually needs, test touch across the whole screen, and make sure it charges before we leave.</p>
+          <p class="aud-g">Big glass and strong adhesive are where home tablet repairs go wrong. Prying a tablet open without heat and patience cracks the display underneath, and a tablet that is not tested after the repair can leave you with dead touch in one corner. We take the time the job actually needs, test touch across the whole screen, and make sure it charges before we leave.</p>
+          <p class="aud-b">Big glass and strong adhesive are where tablet repairs go wrong. Prying a tablet open without heat and patience cracks the display underneath &mdash; and a staff tablet down is work stopped. We take the time the job actually needs, test touch across the whole screen, and make sure it charges before we leave.</p>
           </div>
-          <a class="btn btn-primary" href="#repair" data-page="repair" data-wizard-device="Tablet"><i class="fas fa-wrench"></i> Start a Service</a>
-          <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services We Offer</a>
+          <a class="btn btn-primary aud-g" href="#repair" data-guest="1" data-page="repair" data-wizard-device="Tablet"><i class="fas fa-wrench"></i> Start a Service</a>
+          <a class="btn btn-primary aud-b" href="#repair" data-page="repair" data-wizard-device="Tablet" data-business="1"><i class="fas fa-wrench"></i> Start a Service</a>
+          <a class="btn btn-outline aud-g" href="#whatwedo" data-guest="1" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services We Offer</a>
+          <a class="btn btn-outline aud-b" href="#b2b" data-page="b2b" data-business="1" style="margin-left:0.5rem;">Back to Business Services</a>
         </div>
       </div>
     </section>
@@ -4016,10 +4011,13 @@
           <ul class="cat-services"><li>Laptop and desktop screen replacement</li><li>SSD upgrades and RAM installs for slow machines</li><li>Battery and keyboard replacement</li><li>Virus cleanup and software problems</li><li>Data rescue when a drive is failing or a machine will not boot</li><li>Circuit board repair when the fault is on the board itself</li></ul>
           <div class="cat-why">
           <h3>Why we should fix it</h3>
-          <p>A computer repair is only worth doing if the machine is actually better when we leave. That means testing after the upgrade, checking that your files and programs are still there, and telling you honestly when a manufacturer repair is the better option for the same price. We do not guess at parts, and we do not leave a machine half working.</p>
+          <p class="aud-g">A computer repair is only worth doing if the machine is actually better when we leave. That means testing after the upgrade, checking that your files and programs are still there, and telling you honestly when a manufacturer repair is the better option for the same price. We do not guess at parts, and we do not leave a machine half working.</p>
+          <p class="aud-b">A computer repair is only worth doing if the machine is actually better when we leave. That means testing after the upgrade, checking that your files and programs are still there, and telling you honestly when a manufacturer repair is the better option for the same price &mdash; so your staff stays working. We do not guess at parts, and we do not leave a machine half working.</p>
           </div>
-          <a class="btn btn-primary" href="#repair" data-page="repair" data-wizard-device="Computer"><i class="fas fa-wrench"></i> Start a Service</a>
-          <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services We Offer</a>
+          <a class="btn btn-primary aud-g" href="#repair" data-guest="1" data-page="repair" data-wizard-device="Computer"><i class="fas fa-wrench"></i> Start a Service</a>
+          <a class="btn btn-primary aud-b" href="#repair" data-page="repair" data-wizard-device="Computer" data-business="1"><i class="fas fa-wrench"></i> Start a Service</a>
+          <a class="btn btn-outline aud-g" href="#whatwedo" data-guest="1" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services We Offer</a>
+          <a class="btn btn-outline aud-b" href="#b2b" data-page="b2b" data-business="1" style="margin-left:0.5rem;">Back to Business Services</a>
         </div>
       </div>
     </section>
@@ -4032,15 +4030,18 @@
             <h2 class="section-title">Game Consoles</h2>
           </div>
           <img src="images/work/ps4-teardown.jpg" alt="Game console opened for service" loading="lazy" style="width:100%; max-width:720px; border-radius:12px; display:block; margin:0 auto 1.5rem;" />
-          <p class="cat-lede">Game consoles fail in ways that look like a software problem but are usually hardware: overheating, a disc drive that will not read, or an HDMI port that has been knocked loose. We diagnose the console properly first, because a console that overheats needs a fan and cleaning, not a new hard drive, and a console that will not read discs needs the drive checked, not a reset.</p>
+          <p class="cat-lede">Game consoles fail in ways that look like a software problem but are usually hardware: overheating, a disc drive that will not read, or an HDMI port that has been knocked loose. We diagnose the console properly first, because a console that overheats needs a fan and cleaning, not a new hard drive.</p>
           <h3 class="cat-subhead">Services</h3>
           <ul class="cat-services"><li>HDMI port repair</li><li>Disc drive repair and replacement</li><li>Cooling fans, cleaning, and overheating fixes</li><li>Storage upgrades</li><li>Controller repair</li><li>Circuit board faults on consoles that will not power on</li></ul>
           <div class="cat-why">
           <h3>Why we should fix it</h3>
-          <p>Consoles are packed tight, with small connectors and heat that builds up fast. Opening one without the right tools can damage the board or the drive, and a console that is put back together without testing will fail again the first time it gets hot. We test the console under load before we leave, so it plays, reads discs, and stays cool.</p>
+          <p class="aud-g">Consoles are packed tight, with small connectors and heat that builds up fast. Opening one without the right tools can damage the board or the drive, and a console that is put back together without testing will fail again the first time it gets hot. We test the console under load before we leave, so it plays, reads discs, and stays cool.</p>
+          <p class="aud-b">Consoles are packed tight, with small connectors and heat that builds up fast. Opening one without the right tools can damage the board or the drive, and a console that is put back together without testing will fail again the first time it gets hot. We test the console under load before we leave, so it plays, reads discs, and stays cool &mdash; your break room stays open.</p>
           </div>
-          <a class="btn btn-primary" href="#repair" data-page="repair" data-wizard-device="Game Console"><i class="fas fa-wrench"></i> Start a Service</a>
-          <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services We Offer</a>
+          <a class="btn btn-primary aud-g" href="#repair" data-guest="1" data-page="repair" data-wizard-device="Game Console"><i class="fas fa-wrench"></i> Start a Service</a>
+          <a class="btn btn-primary aud-b" href="#repair" data-page="repair" data-wizard-device="Game Console" data-business="1"><i class="fas fa-wrench"></i> Start a Service</a>
+          <a class="btn btn-outline aud-g" href="#whatwedo" data-guest="1" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services We Offer</a>
+          <a class="btn btn-outline aud-b" href="#b2b" data-page="b2b" data-business="1" style="margin-left:0.5rem;">Back to Business Services</a>
         </div>
       </div>
     </section>
@@ -4053,15 +4054,18 @@
             <h2 class="section-title">Smartwatches</h2>
           </div>
           <img src="images/work/smartwatch-real.webp" alt="Cracked smartwatch on a wrist" loading="lazy" style="width:100%; max-width:720px; border-radius:12px; display:block; margin:0 auto 1.5rem;" />
-          <p class="cat-lede">Smartwatches are small, and every repair on one is fiddly. Screens crack, batteries stop holding a charge, and charging stops working when the contacts wear. We handle smartwatches of all kinds, and we are honest up front when a watch is too small or too sealed to repair well, instead of taking it apart and hoping.</p>
+          <p class="cat-lede">Smartwatches are small, and every repair on one is fiddly. Screens crack, batteries stop holding a charge, and charging stops working when the contacts wear. We handle smartwatches of all kinds, and we are honest up front when a watch is too small or too sealed to repair well.</p>
           <h3 class="cat-subhead">Services</h3>
           <ul class="cat-services"><li>Cracked watch screens</li><li>Batteries that will not hold a charge</li><li>Charging problems</li><li>Buttons and bands</li><li>Pairing and software checks</li></ul>
           <div class="cat-why">
           <h3>Why we should fix it</h3>
-          <p>The size is the whole problem with watches. Tiny screws, glued parts, and seals that are hard to restore once opened mean a home repair can easily lose a part or crack a small screen. We work on a bench with the right tools, test the screen, touch, charging, and pairing with your phone, and tell you before we start if the repair is not worth doing.</p>
+          <p class="aud-g">The size is the whole problem with watches. Tiny screws, glued parts, and seals that are hard to restore once opened mean a home repair can easily lose a part or crack a small screen. We work on a bench with the right tools, test the screen, touch, charging, and pairing with your phone, and tell you before we start if the repair is not worth doing.</p>
+          <p class="aud-b">The size is the whole problem with watches. Tiny screws, glued parts, and seals that are hard to restore once opened mean a repair can easily lose a part or crack a small screen. We work on a bench with the right tools, test the screen, touch, charging, and pairing, and tell you before we start if the repair is not worth doing &mdash; so a staff watch is never down for nothing.</p>
           </div>
-          <a class="btn btn-primary" href="#repair" data-page="repair" data-wizard-device="Smart Watch"><i class="fas fa-wrench"></i> Start a Service</a>
-          <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services We Offer</a>
+          <a class="btn btn-primary aud-g" href="#repair" data-guest="1" data-page="repair" data-wizard-device="Smart Watch"><i class="fas fa-wrench"></i> Start a Service</a>
+          <a class="btn btn-primary aud-b" href="#repair" data-page="repair" data-wizard-device="Smart Watch" data-business="1"><i class="fas fa-wrench"></i> Start a Service</a>
+          <a class="btn btn-outline aud-g" href="#whatwedo" data-guest="1" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services We Offer</a>
+          <a class="btn btn-outline aud-b" href="#b2b" data-page="b2b" data-business="1" style="margin-left:0.5rem;">Back to Business Services</a>
         </div>
       </div>
     </section>
@@ -4071,18 +4075,22 @@
         <div class="container">
           <div class="section-header center">
             <p class="eyebrow">Services We Offer</p>
-            <h2 class="section-title">Websites for Businesses</h2>
+            <h2 class="section-title"><span class="aud-g">Websites for Guests</span><span class="aud-b">Websites for Businesses</span></h2>
           </div>
           <img src="images/values/values-hero-workbench.webp" alt="The workbench where websites are built and handled" loading="lazy" style="width:100%; max-width:720px; border-radius:12px; display:block; margin:0 auto 1.5rem;" />
-          <p class="cat-lede">A website for a business is not a brochure, it is how guests find you, call you, and book you. We build small business websites, from a simple site up to a site with booking and contact forms and an online store, and we handle design, setup, and launch for you. You do not have to learn a builder, chase a domain, or figure out why a form is not sending.</p>
+          <p class="cat-lede aud-g">A website is how people find you and reach you. We build small websites, from a simple site up to a site with booking and contact forms and an online store, and we handle design, setup, and launch for you. You do not have to learn a builder, chase a domain, or figure out why a form is not sending.</p>
+          <p class="cat-lede aud-b">A website for a business is not a brochure, it is how guests find you, call you, and book you. We build small business websites, from a simple site up to a site with booking and contact forms and an online store, and we handle design, setup, and launch for you. You do not have to learn a builder, chase a domain, or figure out why a form is not sending.</p>
           <h3 class="cat-subhead">Services</h3>
-          <ul class="cat-services"><li>Small business websites, up to 5 pages and up</li><li>Booking and contact forms that actually reach you</li><li>Online store setup</li><li>Fixes and updates to an existing site</li></ul>
+          <ul class="cat-services"><li><span class="aud-g">A professional website for you, up to 5 pages and up</span><span class="aud-b">Small business websites, up to 5 pages and up</span></li><li>Booking and contact forms that actually reach you</li><li>Online store setup</li><li>Fixes and updates to an existing site</li></ul>
           <div class="cat-why">
           <h3>Why we should fix it</h3>
-          <p>A half-finished website costs real guests, and a site with a broken form or a wrong phone number is worse than no site at all. We build it end to end, check that the phone number, the forms, and the booking all work, and show you how to update it. It is built for your business, not an agency template with an agency price tag.</p>
+          <p class="aud-g">A half-finished website costs real visitors, and a site with a broken form or a wrong phone number is worse than no site at all. We build it end to end, check that the phone number, the forms, and the booking all work, and show you how to update it. It is built for you, not an agency template with an agency price tag.</p>
+          <p class="aud-b">A half-finished website costs real guests, and a site with a broken form or a wrong phone number is worse than no site at all. We build it end to end, check that the phone number, the forms, and the booking all work, and show you how to update it. It is built for your business, not an agency template with an agency price tag.</p>
           </div>
-          <a class="btn btn-primary" href="#repair" data-page="repair" data-wizard-device="Business / Other"><i class="fas fa-wrench"></i> Start a Service</a>
-          <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services We Offer</a>
+          <a class="btn btn-primary aud-g" href="#repair" data-guest="1" data-page="repair" data-wizard-device="Business / Other"><i class="fas fa-wrench"></i> Start a Service</a>
+          <a class="btn btn-primary aud-b" href="#repair" data-page="repair" data-wizard-device="Business / Other" data-business="1"><i class="fas fa-wrench"></i> Start a Service</a>
+          <a class="btn btn-outline aud-g" href="#whatwedo" data-guest="1" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services We Offer</a>
+          <a class="btn btn-outline aud-b" href="#b2b" data-page="b2b" data-business="1" style="margin-left:0.5rem;">Back to Business Services</a>
         </div>
       </div>
     </section>
@@ -4095,19 +4103,23 @@
             <h2 class="section-title">Network Installs</h2>
           </div>
           <div class="page-photo-contain"><img src="images/work/cable-tester.jpg" alt="Cable tester used to verify network wiring" loading="lazy" /></div>
-          <p class="cat-lede">Network installs are about making Wi-Fi and wired internet work everywhere in a home or small business, not just next to the router. We hook up and configure routers, switches, and Wi-Fi access points, and we verify everything working end to end before we leave. If a room has no signal, a device keeps dropping, or a new office needs a full setup, that is the job.</p>
+          <p class="cat-lede">Network installs are about making Wi-Fi and wired internet work everywhere, not just next to the router. We hook up and configure routers, switches, and Wi-Fi access points, and we verify everything working end to end before we leave.</p>
           <h3 class="cat-subhead">Services</h3>
           <ul class="cat-services"><li>Routers, hooked up and configured</li><li>Switches, hooked up and configured</li><li>Wi-Fi access points, including whole-home Wi-Fi</li><li>Verification that every room and device works</li></ul>
           <div class="cat-why">
           <h3>Why we should fix it</h3>
-          <p>Network gear fights itself when it is guessed at. Two routers, a bad setting, or an access point in the wrong spot can leave one room dead while the rest works fine. We configure it as one system and test every room, so you are not left restarting a router every day. We are not an internet service provider, but we can recommend a provider and plan and make everything on your side of the connection work.</p>
+          <p class="aud-g">Network gear fights itself when it is guessed at. Two routers, a bad setting, or an access point in the wrong spot can leave one room dead while the rest works fine. We configure it as one system and test every room, so you are not left restarting a router every day. We are not an internet service provider, but we can recommend a provider and plan and make everything on your side of the connection work.</p>
+          <p class="aud-b">Network gear fights itself when it is guessed at. Two routers, a bad setting, or an access point in the wrong spot can leave one room dead while the rest works fine. We configure it as one system and test every room, so your staff is not left restarting a router every day. We are not an internet service provider, but we can recommend a provider and plan and make everything on your side of the connection work.</p>
           </div>
           <!-- CABLING_DOOR_2026_11_08: the Internet Cabling page had zero inbound links anywhere on the site — search was its only door. Exactly one door, from its parent topic, in the What We Service grid's service-card markup; photo, alt text, and card line are the Cabling page's own. -->
           <div class="card-grid">
-            <a class="service-card" href="#cabling" data-page="cabling"><img class="service-card-img" src="images/values/values-transparency-parts.webp" alt="Cables and parts organized on the shop wall" loading="lazy" /><div class="service-icon"><i class="fas fa-plug"></i></div><h3>Internet Cabling</h3><p>Ethernet cable runs to a room, terminated and tested.</p></a>
+            <a class="service-card aud-g" href="#cabling" data-guest="1" data-page="cabling"><img class="service-card-img" src="images/values/values-transparency-parts.webp" alt="Cables and parts organized on the shop wall" loading="lazy" /><div class="service-icon"><i class="fas fa-plug"></i></div><h3>Internet Cabling</h3><p>Ethernet cable runs to a room, terminated and tested.</p></a>
+            <a class="service-card aud-b" href="#cabling" data-page="cabling" data-business="1"><img class="service-card-img" src="images/values/values-transparency-parts.webp" alt="Cables and parts organized on the shop wall" loading="lazy" /><div class="service-icon"><i class="fas fa-plug"></i></div><h3>Internet Cabling</h3><p>Ethernet cable runs to a room, terminated and tested.</p></a>
           </div>
-          <a class="btn btn-primary" href="#repair" data-page="repair" data-wizard-device="Networking"><i class="fas fa-wrench"></i> Start a Service</a>
-          <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services We Offer</a>
+          <a class="btn btn-primary aud-g" href="#repair" data-guest="1" data-page="repair" data-wizard-device="Networking"><i class="fas fa-wrench"></i> Start a Service</a>
+          <a class="btn btn-primary aud-b" href="#repair" data-page="repair" data-wizard-device="Networking" data-business="1"><i class="fas fa-wrench"></i> Start a Service</a>
+          <a class="btn btn-outline aud-g" href="#whatwedo" data-guest="1" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services We Offer</a>
+          <a class="btn btn-outline aud-b" href="#b2b" data-page="b2b" data-business="1" style="margin-left:0.5rem;">Back to Business Services</a>
         </div>
       </div>
     </section>
@@ -4120,20 +4132,46 @@
             <h2 class="section-title">Internet Cabling</h2>
           </div>
           <img src="images/values/values-transparency-parts.webp" alt="Cables and parts organized on the shop wall" loading="lazy" style="width:100%; max-width:720px; border-radius:12px; display:block; margin:0 auto 1.5rem;" />
-          <p class="cat-lede">Internet cabling is the physical work behind a reliable connection: running Ethernet cable through a home or small business, terminating it properly, and testing it. Wired connections do not drop the way Wi-Fi does, which is why offices, gaming setups, and home offices still need them. We run clean, finished cable, not loose wire across a floor.</p>
+          <p class="cat-lede">Internet cabling is the physical work behind a reliable connection: running Ethernet cable through a home or small business, terminating it properly, and testing it. Wired connections do not drop the way Wi-Fi does, which is why offices, gaming setups, and home offices still need them.</p>
           <h3 class="cat-subhead">Services</h3>
           <ul class="cat-services"><li>Ethernet cable runs to a room, terminated and tested</li><li>Wall plates, installed and terminated</li><li>Attic and crawl space runs</li><li>Homes and small businesses</li></ul>
           <div class="cat-why">
           <h3>Why we should fix it</h3>
-          <p>Cabling fails quietly when it is not tested. A bad termination looks finished but drops the connection, and finding it later means opening walls again. We test every run before we leave, finish the wall plate, and confirm the connection works at the device, not just at the router.</p>
+          <p class="aud-g">Cabling fails quietly when it is not tested. A bad termination looks finished but drops the connection, and finding it later means opening walls again. We test every run before we leave, finish the wall plate, and confirm the connection works at the device, not just at the router.</p>
+          <p class="aud-b">Cabling fails quietly when it is not tested. A bad termination looks finished but drops the connection, and finding it later means opening walls again. We test every run before we leave, finish the wall plate, and confirm the connection works at the device, not just at the router &mdash; so your office stays connected.</p>
           </div>
-          <a class="btn btn-primary" href="#repair" data-page="repair" data-wizard-device="Networking"><i class="fas fa-wrench"></i> Start a Service</a>
-          <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services We Offer</a>
+          <a class="btn btn-primary aud-g" href="#repair" data-guest="1" data-page="repair" data-wizard-device="Networking"><i class="fas fa-wrench"></i> Start a Service</a>
+          <a class="btn btn-primary aud-b" href="#repair" data-page="repair" data-wizard-device="Networking" data-business="1"><i class="fas fa-wrench"></i> Start a Service</a>
+          <a class="btn btn-outline aud-g" href="#whatwedo" data-guest="1" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services We Offer</a>
+          <a class="btn btn-outline aud-b" href="#b2b" data-page="b2b" data-business="1" style="margin-left:0.5rem;">Back to Business Services</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- V143_BUSINESS_SETUP_2026_11_13 (owner, Nov 13, 2026): Business Setup finally has its own landing page — the business card used to jump straight to booking. Built in the Computers-page structure: short intro, SERVICES checklist, Why box, Start a Service + Back buttons. Settled facts only — on-site setup of point of sale, Square, cash drawers, and systems; we help with the setup, we do not process payments. No price: none is settled for Business Setup. -->
+    <section id="business-setup" class="page cat-page">
+      <div class="section">
+        <div class="container">
+          <div class="section-header center">
+            <p class="eyebrow">Services We Offer</p>
+            <h2 class="section-title">Business Setup</h2>
+          </div>
+          <img src="images/work/network-install.webp" alt="Network installed and cabled at a business — router, switch, and Wi-Fi access point on the shelf" loading="lazy" style="width:100%; max-width:720px; border-radius:12px; display:block; margin:0 auto 1.5rem;" />
+          <p class="cat-lede">We come to your business and set up your tech &mdash; your point of sale, Square, cash drawers, and your systems &mdash; so you can take payments and run the day. We help with the setup; we do not process payments.</p>
+          <h3 class="cat-subhead">Services</h3>
+          <ul class="cat-services"><li>Point of sale, including Square</li><li>Cash drawers and receipt printers</li><li>The computers your systems run on</li><li>Wi-Fi and networks, set up and working</li></ul>
+          <div class="cat-why">
+          <h3>Why we should fix it</h3>
+          <p>A register that will not ring up a sale costs real money while it sits. We set the whole system up on site and test it before we leave &mdash; take a payment, print a receipt, and run the day. We help with the setup; we do not process payments.</p>
+          </div>
+          <a class="btn btn-primary" href="#repair" data-page="repair" data-wizard-device="Business / Other" data-business="1"><i class="fas fa-wrench"></i> Start a Service</a>
+          <a class="btn btn-outline" href="#b2b" data-page="b2b" data-business="1" style="margin-left:0.5rem;">Back to Business Services</a>
         </div>
       </div>
     </section>
 
     <!-- SITE_CLASSES_PAGE_2026_10_30: dedicated One-on-One Classes page, built like the other service pages, copy from Austin -->
+    <!-- V143_CLASSES_2026_11_13 (owner, Nov 13, 2026): straightened — short sections in one order, the "What we can help with" list left-aligned in a centered narrow column (the old centered bullets read ragged), ready-made help as Help Guides dropdown rows instead of five cards. One page, two faces: the guest face (at your home, $24.99/hr + $15.99 visit fee) and the business face (at your business, teaching your team, $49.99/hr + $35.99 visit fee), switched by the same session audience flag as the other landing pages (body.aud-business). No coding or website-building help — standing rule. -->
     <section id="classes" class="page">
       <div class="section">
         <div class="container">
@@ -4142,76 +4180,102 @@
             <h2 class="section-title">One-on-One Classes</h2>
           </div>
           <img src="images/values/values-education-code.webp" alt="Learning a repair from the printed guide at the bench" loading="lazy" style="width:100%; max-width:720px; border-radius:12px; display:block; margin:0 auto 1.5rem;" />
-          <p>Some technology does not need fixing &mdash; it needs explaining. Our one-on-one classes happen right at your home, on your own devices. We sit down with you, hands on, and show you how your tech works, one question at a time. We don&rsquo;t just fix &mdash; we are also a walking, talking user guide.</p>
+          <p class="aud-g">Some technology does not need fixing &mdash; it needs explaining. Our one-on-one classes happen right at your home, on your own devices. We sit down with you, hands on, and show you how your tech works, one question at a time.</p>
+          <p class="aud-b">Some technology does not need fixing &mdash; it needs explaining. Our one-on-one classes happen right at your business, with your team, on their own devices. We sit down with them, hands on, and show them how your tech works, one question at a time.</p>
           <h3>What we can help with</h3>
           <!-- V142_2026_11_13 (owner's standing rule, Nov 13, 2026): ATRG does NOT teach people to code or build websites — the coding and website-building lines are out of this list, same as they came off the Education page. One-on-one is for guests and businesses only. -->
-          <ul><li>Using your phone &mdash; calls, apps, settings, and photos</li><li>Using your tablet</li><li>Using your computer</li><li>Using your game console</li><li>The tech questions you have been trying to learn on your own, with someone right there to help</li></ul>
+          <ul class="cat-services classes-list aud-g"><li>Using your phone &mdash; calls, apps, settings, and photos</li><li>Using your tablet</li><li>Using your computer</li><li>Using your game console</li><li>The tech questions you have been trying to learn on your own, with someone right there to help</li></ul>
+          <ul class="cat-services classes-list aud-b"><li>Using your team's phones &mdash; calls, apps, settings, and photos</li><li>Using your team's tablets</li><li>Using your team's computers</li><li>Using your team's game console</li><li>The tech questions your team has been trying to learn on their own, with someone right there to help</li></ul>
+          <div class="class-box">
           <h3>How a class works</h3>
-          <p>A class is one on one, at your home, on the device you actually use every day &mdash; not a classroom and not a video call. You bring the questions you have been saving up, we work through them together until they make sense, and you practice while we are there so it sticks. Classes are booked like any other visit, in a 2-hour arrival window.</p>
-          <!-- ONE_ON_ONE_CAROUSEL_2026_11_06: one-on-one price set by the owner Nov 6, 2026 ($25/hr) -->
+          <p class="aud-g">A class is one on one, at your home, on the device you actually use every day &mdash; not a classroom and not a video call. You bring the questions you have been saving up, we work through them together, and you practice while we are there so it sticks. Classes are booked like any other visit, in a 2-hour arrival window.</p>
+          <p class="aud-b">A class is one on one, at your business, on the devices your team actually uses every day &mdash; not a classroom and not a video call. Your team brings the questions they have been saving up, we work through them together, and they practice while we are there so it sticks. Classes are booked like any other visit, in a 2-hour arrival window.</p>
+          </div>
+          <!-- ONE_ON_ONE_CAROUSEL_2026_11_06: one-on-one price set by the owner Nov 6, 2026 ($24.99/hr guest, $49.99/hr business) -->
+          <div class="class-box">
           <h3>What it costs</h3>
-          <p>One-on-one help is $25 per hour &mdash; the whole hour, right at your home. That covers setup help, troubleshooting guidance, and teaching: we set your electronics up, turn them on, show you how to use them, and stay as long as you need, booked by the hour. A $15 visit fee covers the trip to you, charged separately from the hourly time.</p>
+          <p class="aud-g">One-on-one help is $24.99 per hour &mdash; the whole hour, right at your home. That covers setup help, troubleshooting guidance, and teaching. A $15.99 visit fee covers the trip to you, charged separately from the hourly time.</p>
+          <p class="aud-b">One-on-one help is $49.99 per hour &mdash; the whole hour, right at your business. That covers setup help, troubleshooting guidance, and teaching. A $35.99 visit fee covers the trip to you, charged separately from the hourly time.</p>
+          </div>
           <!-- SUPPORT_BOOKING_2026_11_06: booking a class goes through the
                Support path in the booking card now, not the Contact page. -->
-          <a class="btn btn-primary" href="#repair" data-page="repair" data-open-oneonone><i class="fas fa-graduation-cap"></i> Book a One-on-One</a>
+          <a class="btn btn-primary aud-g" href="#repair" data-guest="1" data-page="repair" data-open-oneonone><i class="fas fa-graduation-cap"></i> Book a One-on-One</a>
+          <a class="btn btn-primary aud-b" href="#repair" data-page="repair" data-open-oneonone data-business="1"><i class="fas fa-graduation-cap"></i> Book a One-on-One</a>
           <!-- VIRTUAL_ONE_ON_ONE_2026_11_10: the same one-on-one, over
                the internet — the booking flow asks In person or Virtual
                right at the start. -->
-          <p style="margin-top:1.25rem;">Too far for a visit, or need help sooner? Book the same one-on-one as a <strong>Virtual One-on-One</strong> &mdash; we meet on your screen instead of at your door. Pick Virtual when you book, and when your session time comes, open your <a href="#virtual-oneonone" data-page="virtual-oneonone">Virtual One-on-One page</a> and type the code your associate gives you.</p>
-          <a class="btn btn-outline" href="#whatwedo" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services We Offer</a>
+          <div class="class-box">
+          <p>Too far for a visit, or need help sooner? Book the same one-on-one as a <strong>Virtual One-on-One</strong> &mdash; we meet on your screen instead of at your door. Pick Virtual when you book, and when your session time comes, open your <a href="#virtual-oneonone" data-page="virtual-oneonone">Virtual One-on-One page</a> and type the code your associate gives you.</p>
+          </div>
+          <a class="btn btn-outline aud-g" href="#whatwedo" data-guest="1" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services We Offer</a>
+          <a class="btn btn-outline aud-b" href="#b2b" data-page="b2b" data-business="1" style="margin-left:0.5rem;">Back to Business Services</a>
           <!-- SUPPORT_PACKAGES_2026_11_06: five ready-made one-on-one
-               help packages (Austin roadmap, Nov 6, 2026). Each Book
+               ready-made help (Austin roadmap, Nov 6, 2026). Each Book
                button rides the same data-open-oneonone entry wiring as
                the Book a One-on-One button above — the unified form has
                no package/kind preselect, so the customer picks the kind
                of help on the form's service step. Pricing law: time is
-               quoted pure ($25 an hour, from $25 for the first hour);
-               the $15 visit fee is stated separately and is never
-               blended into a package or hour price. -->
-          <h3>Ready-made help packages</h3>
-          <p>Pick a package and book it like any one-on-one visit &mdash; at your home, on your own device. Time is $25 an hour, booked by the hour, and every package starts at $25 for the first hour. The $15 visit fee covers the trip to you; it is charged once, separately, when you book &mdash; it is never added into the hourly price. ATR One Plus (paid) members pay no visit fee on covered devices.</p>
-          <div class="pkg-grid">
-            <div class="pkg-card">
-              <div class="pkg-icon"><i class="fas fa-box-open"></i></div>
-              <h4>New Device Setup</h4>
+               quoted pure ($24.99 an hour guest, $49.99 an hour business,
+               from $24.99 / $49.99 for the first hour); the visit fee
+               ($15.99 guest, $35.99 business) is stated separately and
+               is never blended into a package or hour price. -->
+          <h3>Ready-made help</h3>
+          <p class="aud-g">Pick a package and book it like any one-on-one visit &mdash; at your home, on your own device. Time is $24.99 an hour, booked by the hour, and every package starts at $24.99 for the first hour. The $15.99 visit fee covers the trip to you; it is charged once, separately, when you book &mdash; it is never added into the hourly price. ATR One Plus (paid) members pay no visit fee on covered devices.</p>
+          <p class="aud-b">Pick a package and book it like any one-on-one visit &mdash; at your business, on your team's own devices. Time is $49.99 an hour, booked by the hour, and every package starts at $49.99 for the first hour. The $35.99 visit fee covers the trip to you; it is charged once, separately, when you book &mdash; it is never added into the hourly price. ATR One Plus (paid) members pay no visit fee on covered devices.</p>
+          <div class="hg-list classes-pkgs">
+          <details class="hg-guide" id="pkg-new-device">
+            <summary><i class="fas fa-box-open"></i><h3>New Device Setup</h3><span class="hg-chev" aria-hidden="true"><i class="fas fa-chevron-down"></i></span></summary>
+            <div class="hg-body">
               <p>Phone, tablet, computer or console out of the box and set up right &mdash; accounts signed in, ready to use.</p>
-              <p class="pkg-price">From $25 &middot; $25 an hour</p>
-              <a class="btn btn-primary btn-sm" href="#repair" data-page="repair" data-open-oneonone>Book</a>
+              <p class="pkg-price"><span class="aud-g">From $24.99 &middot; $24.99 an hour</span><span class="aud-b">From $49.99 &middot; $49.99 an hour</span></p>
+              <a class="btn btn-primary btn-sm aud-g" href="#repair" data-guest="1" data-page="repair" data-open-oneonone>Book</a>
+              <a class="btn btn-primary btn-sm aud-b" href="#repair" data-page="repair" data-open-oneonone data-business="1">Book</a>
             </div>
-            <div class="pkg-card">
-              <div class="pkg-icon"><i class="fas fa-wifi"></i></div>
-              <h4>Home Wi-Fi Check</h4>
+          </details>
+          <details class="hg-guide" id="pkg-wifi-check">
+            <summary><i class="fas fa-wifi"></i><h3>Home Wi-Fi Check</h3><span class="hg-chev" aria-hidden="true"><i class="fas fa-chevron-down"></i></span></summary>
+            <div class="hg-body">
               <p>We find the dead spots, check your router, and get the whole home covered.</p>
-              <p class="pkg-price">From $25 &middot; $25 an hour</p>
-              <a class="btn btn-primary btn-sm" href="#repair" data-page="repair" data-open-oneonone>Book</a>
+              <p class="pkg-price"><span class="aud-g">From $24.99 &middot; $24.99 an hour</span><span class="aud-b">From $49.99 &middot; $49.99 an hour</span></p>
+              <a class="btn btn-primary btn-sm aud-g" href="#repair" data-guest="1" data-page="repair" data-open-oneonone>Book</a>
+              <a class="btn btn-primary btn-sm aud-b" href="#repair" data-page="repair" data-open-oneonone data-business="1">Book</a>
             </div>
-            <div class="pkg-card">
-              <div class="pkg-icon"><i class="fas fa-broom"></i></div>
-              <h4>Computer Tune-Up</h4>
+          </details>
+          <details class="hg-guide" id="pkg-tune-up">
+            <summary><i class="fas fa-broom"></i><h3>Computer Tune-Up</h3><span class="hg-chev" aria-hidden="true"><i class="fas fa-chevron-down"></i></span></summary>
+            <div class="hg-body">
               <p>A slow computer cleaned up: junk off, updates on, start-up trimmed.</p>
-              <p class="pkg-price">From $25 &middot; $25 an hour</p>
-              <a class="btn btn-primary btn-sm" href="#repair" data-page="repair" data-open-oneonone>Book</a>
+              <p class="pkg-price"><span class="aud-g">From $24.99 &middot; $24.99 an hour</span><span class="aud-b">From $49.99 &middot; $49.99 an hour</span></p>
+              <a class="btn btn-primary btn-sm aud-g" href="#repair" data-guest="1" data-page="repair" data-open-oneonone>Book</a>
+              <a class="btn btn-primary btn-sm aud-b" href="#repair" data-page="repair" data-open-oneonone data-business="1">Book</a>
             </div>
-            <div class="pkg-card">
-              <div class="pkg-icon"><i class="fas fa-heart"></i></div>
-              <h4>Senior Tech Help</h4>
+          </details>
+          <details class="hg-guide" id="pkg-senior-help">
+            <summary><i class="fas fa-heart"></i><h3>Senior Tech Help</h3><span class="hg-chev" aria-hidden="true"><i class="fas fa-chevron-down"></i></span></summary>
+            <div class="hg-body">
               <p>Patient one-on-one help with a phone or tablet &mdash; video calls, photos, passwords &mdash; at your pace.</p>
-              <p class="pkg-price">From $25 &middot; $25 an hour</p>
-              <a class="btn btn-primary btn-sm" href="#repair" data-page="repair" data-open-oneonone>Book</a>
+              <p class="pkg-price"><span class="aud-g">From $24.99 &middot; $24.99 an hour</span><span class="aud-b">From $49.99 &middot; $49.99 an hour</span></p>
+              <a class="btn btn-primary btn-sm aud-g" href="#repair" data-guest="1" data-page="repair" data-open-oneonone>Book</a>
+              <a class="btn btn-primary btn-sm aud-b" href="#repair" data-page="repair" data-open-oneonone data-business="1">Book</a>
             </div>
-            <div class="pkg-card">
-              <div class="pkg-icon"><i class="fas fa-store"></i></div>
-              <h4>Small Business Setup</h4>
+          </details>
+          <details class="hg-guide" id="pkg-small-business">
+            <summary><i class="fas fa-store"></i><h3>Small Business Setup</h3><span class="hg-chev" aria-hidden="true"><i class="fas fa-chevron-down"></i></span></summary>
+            <div class="hg-body">
               <p>Point of sale, printers, Wi-Fi and the rest of your devices, set up for your shop or office.</p>
-              <p class="pkg-price">From $25 &middot; $25 an hour</p>
-              <a class="btn btn-primary btn-sm" href="#repair" data-page="repair" data-open-oneonone>Book</a>
+              <p class="pkg-price"><span class="aud-g">From $24.99 &middot; $24.99 an hour</span><span class="aud-b">From $49.99 &middot; $49.99 an hour</span></p>
+              <a class="btn btn-primary btn-sm aud-g" href="#repair" data-guest="1" data-page="repair" data-open-oneonone>Book</a>
+              <a class="btn btn-primary btn-sm aud-b" href="#repair" data-page="repair" data-open-oneonone data-business="1">Book</a>
             </div>
+          </details>
           </div>
           <!-- HELP_GUIDES_2026_11_06: classes page points at the free
                self-help guides — same problems, try-it-yourself form. -->
+          <div class="class-box">
           <h3>Try it yourself first</h3>
-          <p>Some help does not need a visit at all. Our free <a href="#help-guides" data-page="help-guides">Help Guides</a> walk through the problems people ask us about most &mdash; spotting scams, a phone that says storage is full, Wi-Fi dead spots, a printer that won&rsquo;t print, moving to a new phone, and backing up photos &mdash; in plain words, step by step. And every guide ends with the same offer, if you would rather have company while you do it.</p>
+          <p>Some help does not need a visit at all. Our free <a href="#help-guides" data-page="help-guides">Help Guides</a> walk through the problems people ask us about most &mdash; spotting scams, a phone that says storage is full, Wi-Fi dead spots, a printer that won&rsquo;t print, moving to a new phone, and backing up photos &mdash; in plain words, step by step.</p>
           <a class="btn btn-outline" href="#help-guides" data-page="help-guides"><i class="fas fa-book-open"></i> Read the Help Guides</a>
+          </div>
         </div>
       </div>
     </section>
@@ -4511,10 +4575,9 @@
           <p style="color:#B9A98F; font-size:0.88rem; margin-top:0.6rem;">Mon-Fri 5:30 AM-10:00 PM<br>Sat 8:30 AM-9:00 PM<br>Sun 9:00 AM-5:00 PM</p>
         </div>
         <div>
-          <!-- V142_FOOTER_2026_11_13 (owner, Nov 13, 2026): the Services column is now Resources — Repair or Replace, One-on-One Packages, Help Guides, Store, Gift Cards, Accessibility. No "Start a Service", no "Pricing" here; they duplicate the Guest/Businesses columns. Gift Cards moved here from the removed Account column; the Accessibility button moved here from its own column — same element, same id (a11y-btn), same wiring, only its column changed. -->
+          <!-- V142_FOOTER_2026_11_13 (owner, Nov 13, 2026): the Services column is now Resources — Repair or Replace, Help Guides, Store, Gift Cards, Accessibility. No "Start a Service", no "Pricing" here; they duplicate the Guest/Businesses columns. Gift Cards moved here from the removed Account column; the Accessibility button moved here from its own column — same element, same id (a11y-btn), same wiring, only its column changed. -->
           <span class="footer-col-title">Resources</span>
           <a class="footer-link" href="#repair-or-replace" data-page="repair-or-replace">Repair or Replace</a>
-          <a class="footer-link" href="#classes" data-page="classes">One-on-One Packages</a>
           <a class="footer-link" href="#help-guides" data-page="help-guides">Help Guides</a>
           <a class="footer-link" href="#shop" data-page="shop">Store</a> <!-- FOOTER_AUDIENCE_PAGES_2026_11_06 addendum: owner renamed the storefront "Shop" -> "Store" in customer-facing labels (Nov 6, 2026); data-page="shop" is internal and unchanged. -->
           <a class="footer-link" href="#account" data-page="account">Gift Cards</a>
@@ -4522,21 +4585,23 @@
         </div>
         <div>
           <span class="footer-col-title">Guest</span>
-          <a class="footer-link" href="#whatwedo" data-page="whatwedo">Guest Services</a>
+          <a class="footer-link" href="#whatwedo" data-page="whatwedo" data-guest="1">Guest Services</a>
+          <a class="footer-link" href="#classes" data-page="classes" data-guest="1">One-on-One Guest Classes</a>
           <a class="footer-link" href="#atr-one" data-page="atr-one">ATR One Guest Membership</a>
           <!-- FOOTER_GUEST_JUMP_LINKS_2026_11_13 (owner, Nov 13, 2026): Guest column mirrors For Business — same two links, guest page only (data-page="whatwedo" + data-guide; script.js scrolls the id into view after 800ms). -->
-          <a class="footer-link" href="#whatwedo" data-page="whatwedo" data-guide="svc-services">Devices and Services</a>
-          <a class="footer-link" href="#whatwedo" data-page="whatwedo" data-guide="svc-pricing">Pricing</a>
+          <a class="footer-link" href="#whatwedo" data-page="whatwedo" data-guide="svc-services" data-guest="1">Devices and Services</a>
+          <a class="footer-link" href="#whatwedo" data-page="whatwedo" data-guide="svc-pricing" data-guest="1">Pricing</a>
           <!-- V142_FOOTER_2026_11_13 (owner, Nov 13, 2026): the Account column is gone — its Manage link is split by side, this one under Guest. It opens My Account through the header account button (script.js) and carries NO data-page on purpose, same as the old link. -->
           <a class="footer-link" href="#account" id="footer-account-guest-link">Manage Your ATR One Guest Account</a>
         </div>
         <div>
           <span class="footer-col-title">Businesses</span>
-          <a class="footer-link" href="#b2b" data-page="b2b">Business Services</a>
+          <a class="footer-link" href="#b2b" data-page="b2b" data-business="1">Business Services</a>
+          <a class="footer-link" href="#classes" data-page="classes" data-business="1">One-on-One Business Classes</a>
           <!-- FOOTER_B2B_JUMP_LINKS_2026_11_12 (owner, Nov 12, 2026): the site is one pager, so these jump down the business page — same data-page + data-guide pattern as the Services column Pricing link (script.js scrolls the id into view after 800ms). -->
           <a class="footer-link" href="#atr-one-business" data-page="atr-one-business">ATR One Business Membership</a>
-          <a class="footer-link" href="#b2b" data-page="b2b" data-guide="b2b-services">Devices and Services</a>
-          <a class="footer-link" href="#b2b" data-page="b2b" data-guide="b2b-pricing">Pricing</a>
+          <a class="footer-link" href="#b2b" data-page="b2b" data-guide="b2b-services" data-business="1">Devices and Services</a>
+          <a class="footer-link" href="#b2b" data-page="b2b" data-guide="b2b-pricing" data-business="1">Pricing</a>
           <!-- V142_FOOTER_2026_11_13 (owner, Nov 13, 2026): the Account column is gone — its Manage link is split by side, this one under Businesses. It opens My Account through the header account button (script.js) and carries NO data-page on purpose, same as the old link. -->
           <a class="footer-link" href="#account" id="footer-account-business-link">Manage Your ATR One Business Account</a>
         </div>
@@ -4605,7 +4670,7 @@
       </p>
       <!-- FOOTNOTE_NUMBERS_2026_11_09 (owner FOOTNOTE LAW, Nov 9, 2026), renumbered FOOTER_NUMBERING_2026_11_10: in Apple fashion, claim-specific footer notes are numbered and the claim up in the copy carries the same number as a small superscript marker (sup.fnote). Note 1 = the brand disclaimer (no in-page marker); Note 2 = ATR One membership disclaimer (marker on the ATR One section lead); Note 3 = estimates/visit fee (markers on the Visit Fee and Diagnostics cards under "How pricing works"). The Cloudflare line stays unnumbered at the very bottom of the page. -->
       <!-- SMALL_PRINT_FOOTER_2026_11_09 (owner rule, Nov 9, 2026): fine print never sits inside a content topic - asterisk small print lives here in the footer with the other small print. This note (now note 3) moved down from the Diagnostics card under "How pricing works". -->
-      <p class="footer-disclaimer">3. Estimates are always free. The visit covers the trip to you &mdash; $15.99 for guests, $35.99 for business. Diagnostics is $35.99 for guests, $65.99 for business. ATR One members pay no visit fee or diagnostics on covered devices.</p>
+      <p class="footer-disclaimer">3. Estimates are always free. The visit covers the trip to you &mdash; $15.99 for guests, $35.99 for business. Diagnostics is $34.99 for guests, $64.99 for business. ATR One members pay no visit fee or diagnostics on covered devices.</p>
       </div>
 
       <div class="footer-bottom">
