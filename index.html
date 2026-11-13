@@ -858,7 +858,7 @@
       <div class="section" style="padding-top:0;">
         <div class="container">
           <!-- SERVICES_TWO_PAGES_2026_11_12 (owner, Nov 12, 2026): the Repair / One-on-One selector that used to sit here is gone — it was redundant with the cards below, which open the detail pages and the booking flow. The script.js Services-flow module is inert without #svc-flow (guarded); site search now drives the booking form directly (window.atrBkOpenRepair). -->
-          <div class="card-grid">
+          <div class="card-grid" id="svc-services">
             <!-- SITE_REAL_PHOTOS_2026_10_30: every photo on this site is Austin's own; AI/stock images removed, icon treatment where no photo of his fits -->
             <a class="service-card" href="#phones" data-page="phones"><img class="service-card-img" src="images/work/phone-repair.jpg" alt="Phone opened for screen repair on a bench" loading="lazy" /><div class="service-icon"><i class="fas fa-mobile-screen"></i></div><h3>Phones</h3><p>Cracked screens, battery swaps, charging ports, cameras, and water damage recovery.</p></a>
             <a class="service-card" href="#tablets" data-page="tablets"><img class="service-card-img" src="images/work/tablet-teardown-real.webp" alt="Tablet opened for repair on a work mat" loading="lazy" /><div class="service-icon"><i class="fas fa-tablet-screen-button"></i></div><h3>Tablets</h3><p>Display replacement, charging port repair, touch issues, and battery service.</p></a>
@@ -4546,6 +4546,9 @@
           <span class="footer-col-title">Guest</span>
           <a class="footer-link" href="#whatwedo" data-page="whatwedo">Guest Services</a>
           <a class="footer-link" href="#atr-one" data-page="atr-one">ATR One Guest Membership</a>
+          <!-- FOOTER_GUEST_JUMP_LINKS_2026_11_13 (owner, Nov 13, 2026): Guest column mirrors For Business — same two links, guest page only (data-page="whatwedo" + data-guide; script.js scrolls the id into view after 800ms). -->
+          <a class="footer-link" href="#whatwedo" data-page="whatwedo" data-guide="svc-services">Devices and Services</a>
+          <a class="footer-link" href="#whatwedo" data-page="whatwedo" data-guide="svc-pricing">Pricing</a>
         </div>
         <div>
           <!-- FOOTER_REORG_2026_11_12 (owner, Nov 12, 2026): Account gets its own column of basic neutral account links; Guest holds guest-only links. Gift Cards moved here from Services — it fits both columns, Account wins per the owner's dual-fit rule. -->
