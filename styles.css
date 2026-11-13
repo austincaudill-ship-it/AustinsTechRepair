@@ -3798,3 +3798,65 @@ a.acct-menu-item { text-decoration: none; color: inherit; }
   #atr-one-business .compare-table th:first-child,
   #atr-one-business .compare-table td:first-child { width: 36%; }
 }
+
+/* V142_ATR_ONE_2026_11_13 (owner, Nov 13, 2026): the ATR One pitch is the
+   flagship advertisement — a centered blue bubble holding the heading, the
+   copy, and the buttons. Same bubble on the guest page (#whatwedo) and the
+   business page (#b2b); only the copy and prices differ. No pill, no
+   button-like label (owner's correction, Nov 13): the bubble itself is
+   the ad. The business page's two general intro lines sit centered above
+   the bubble, outside it. */
+.atr-one-ad {
+  width: min(var(--content), calc(100% - 3rem));
+  margin: 1rem auto 2.5rem; padding: 2.8rem 2rem;
+  text-align: center; background: var(--surface);
+  border: 2px solid var(--blue); border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+}
+.atr-one-ad h2 { font-family: var(--font-display); font-size: clamp(1.8rem, 3vw, 2.5rem); font-weight: 700; margin-bottom: 1rem; line-height: 1.15; }
+.atr-one-ad p { color: var(--ink-soft); font-size: 1.05rem; margin: 0 auto 1rem; max-width: 720px; }
+.atr-one-ad p strong { color: var(--ink); }
+.atr-one-cta { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; margin-top: 1.4rem; }
+.atr-one-cta .btn { margin-top: 0; }
+.atr-one-intro { width: min(var(--content), calc(100% - 3rem)); margin: 0 auto; padding: 2.5rem 1.5rem 0; text-align: center; }
+.atr-one-intro p { color: var(--ink-soft); font-size: 1.05rem; margin: 0 auto 1rem; max-width: 720px; }
+@media (max-width: 640px) {
+  .atr-one-ad { padding: 2rem 1.25rem; }
+  .atr-one-intro { padding-top: 1.8rem; }
+}
+
+/* V142_CENTER_2026_11_13 (owner, Nov 13, 2026): every page reads centered —
+   section titles and copy, eyebrows, feature-row text (Meet Austin, "Your
+   time is worth more than a waiting room", "Fixed right, backed for a full
+   year", How it works and its button), the "Why we should fix it" blocks,
+   and the Classes / Virtual One-on-One prose pages. Card grids, forms, the
+   account panels, and the footer directory keep their own layout; only the
+   section-level prose is centered. */
+.section-title { text-align: center; }
+.section-copy { text-align: center; margin-left: auto; margin-right: auto; }
+.eyebrow { text-align: center; }
+.feature-text { text-align: center; }
+.cat-subhead { text-align: center; }
+.cat-why { text-align: center; }
+#classes .container { text-align: center; }
+#classes ul { list-style-position: inside; padding-left: 0; }
+#virtual-oneonone h3, #virtual-oneonone p { text-align: center; }
+#virtual-oneonone .voo-steps { list-style-position: inside; padding-left: 0; }
+
+/* V142_VOUCHER_RETURN_2026_11_13 (owner, Nov 13, 2026): the "Return to
+   points" action on each voucher card in My vouchers — a quiet pill
+   button under the code line, never a big button. */
+.pts-voucher-return {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  margin-top: 0.6rem; padding: 0.35rem 0.7rem;
+  background: none; border: 1px solid var(--line); border-radius: 999px;
+  color: var(--brand-deep); font-size: 0.85rem; font-weight: 700; cursor: pointer;
+}
+.pts-voucher-return:hover { border-color: var(--brand); color: var(--brand); }
+.pts-voucher-return:disabled { opacity: 0.55; cursor: default; }
+
+/* V142_SEARCH_ACTIVE_2026_11_13 (owner, Nov 13, 2026): the header search
+   button turns orange while the search sheet is open, like the thumb-nav
+   Search slot already does — it never lit up at all before. */
+.site-search-btn.active { color: var(--brand); border-color: var(--brand); background: var(--brand-soft); }
+.header .site-search-btn.active { color: var(--brand); border-color: var(--brand); background: rgba(217, 84, 13, 0.15); }

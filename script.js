@@ -147,7 +147,11 @@
     function svcIsAssociateAccount() {
       try {
         var g = document.getElementById('header-greeting');
-        if (g && g.textContent === 'Welcome, Associate') return true;
+        /* V142_GREETING_OWNER_2026_11_13: the owner greets as
+           "Welcome Austin, Owner" — he is still an associate for
+           routing (associates book on behalf of others, so he is
+           always asked), so the owner greeting counts here too. */
+        if (g && (g.textContent === 'Welcome, Associate' || g.textContent === 'Welcome Austin, Owner')) return true;
         var raw = null;
         try { raw = localStorage.getItem('sb-atrg-portal-auth-token'); } catch (e) {}
         if (!raw) return false;
@@ -3365,6 +3369,12 @@
          changes the binding and forces a fresh check. */
     var PORTAL_SESSION_KEY = 'sb-atrg-portal-auth-token';
     var ASSOC_GREETING_CACHE_KEY = 'atr-greeting-associate';
+    /* V142_GREETING_OWNER_2026_11_13 (owner, Nov 13, 2026): Austin is the
+       owner, not an associate — "Welcome Austin, Owner", never
+       "Welcome, Associate", for him. The owner is the Super Admin
+       (employee_profiles role 'super_admin'); every other associate
+       keeps "Welcome, Associate". */
+    var OWNER_GREETING = 'Welcome Austin, Owner';
     var assocGreetingCheckStarted = false;
 
     function portalSessionMeta() {
@@ -3377,13 +3387,18 @@
       } catch (e) { return null; }
     }
 
-    function assocGreetingCached(meta) {
+    /* V142_GREETING_OWNER_2026_11_13: the cache remembers the role
+       too, so a cached owner stays the owner on the next render.
+       Entries written before this build carry no role and read as
+       'associate' — the old behavior, never a wrong greeting. */
+    function assocGreetingCachedRole(meta) {
       try {
         var raw = sessionStorage.getItem(ASSOC_GREETING_CACHE_KEY);
-        if (!raw) return false;
+        if (!raw) return null;
         var c = JSON.parse(raw);
-        return !!(c && c.userId === meta.userId && c.expiresAt === meta.expiresAt);
-      } catch (e) { return false; }
+        if (!(c && c.userId === meta.userId && c.expiresAt === meta.expiresAt)) return null;
+        return (c && c.role) || 'associate';
+      } catch (e) { return null; }
     }
 
     function applyAssociateGreeting(greetEl) {
@@ -3391,8 +3406,9 @@
         if (!greetEl) return;
         var meta = portalSessionMeta();
         if (!meta) return;
-        if (assocGreetingCached(meta)) {
-          greetEl.textContent = 'Welcome, Associate';
+        var cachedRole = assocGreetingCachedRole(meta);
+        if (cachedRole) {
+          greetEl.textContent = (cachedRole === 'super_admin') ? OWNER_GREETING : 'Welcome, Associate';
           return;
         }
         if (assocGreetingCheckStarted) return;
@@ -3406,7 +3422,14 @@
         /* An expired JWT would only earn a 401 — and refreshing
            it is the portal's job, never this page's. */
         if (meta.expiresAt && meta.expiresAt * 1000 <= Date.now()) return;
-        var url = SUPABASE_URL + '/rest/v1/employee_profiles?select=id&id=eq.' +
+        /* V142_GREETING_OWNER_2026_11_13: the check reads the role
+           too (employee_profiles.role — the same row, the same
+           employee-wide read policy the id-only check already
+           relies on), so the owner is told apart from every other
+           associate. A row with no role, or a check that answers
+           without one, falls back to "Welcome, Associate" — the old
+           behavior, never a wrong greeting. */
+        var url = SUPABASE_URL + '/rest/v1/employee_profiles?select=id,role&id=eq.' +
           encodeURIComponent(meta.userId) + '&limit=1';
         fetch(url, {
           headers: {
@@ -3423,12 +3446,13 @@
              this greeting. */
           var now = portalSessionMeta();
           if (!now || now.userId !== meta.userId || now.expiresAt !== meta.expiresAt) return;
+          var empRole = (rows[0] && rows[0].role) || 'associate';
           try {
             sessionStorage.setItem(ASSOC_GREETING_CACHE_KEY,
-              JSON.stringify({ userId: meta.userId, expiresAt: meta.expiresAt }));
+              JSON.stringify({ userId: meta.userId, expiresAt: meta.expiresAt, role: empRole }));
           } catch (e) {}
           var el = document.getElementById('header-greeting');
-          if (el) el.textContent = 'Welcome, Associate';
+          if (el) el.textContent = (empRole === 'super_admin') ? OWNER_GREETING : 'Welcome, Associate';
         }).catch(function () { /* silent: the customer/guest greeting stands */ });
       } catch (e) {}
     }
@@ -3454,9 +3478,14 @@
          (like the associate state outranks the guest state) but must
          NOT outrank "Welcome, Associate" — Austin's standing order
          is associate first, guest second, and business sits with the
-         guest side of that order. So this runs AFTER
+         guest side of that order. V142_GREETING_OWNER_2026_11_13:
+         the same bar holds for the owner greeting — a business tier
+         must never overwrite "Welcome Austin, Owner" either, and
+         Austin is a Business Pro member, so this check matters for
+         him on every sign-in. So this runs AFTER
          applyAssociateGreeting() in renderHeader(), and it skips
-         when the greeting already reads "Welcome, Associate". The
+         when the greeting already reads "Welcome, Associate" or the
+         owner greeting. The
          associate async callback sets Associate unconditionally when
          it resolves, so an associate who is also a business member
          still ends up "Welcome, Associate" even if the business
@@ -3477,7 +3506,7 @@
       try {
         if (!greetEl) return;
         if (!isBusinessTier()) return;
-        if (greetEl.textContent === 'Welcome, Associate') return;
+        if (greetEl.textContent === 'Welcome, Associate' || greetEl.textContent === OWNER_GREETING) return;
         greetEl.textContent = 'Welcome, Business';
       } catch (e) {}
     }
@@ -4645,6 +4674,58 @@ if ("serviceWorker" in navigator) {
     });
   }
 
+  /* Return a voucher for its points. V142_VOUCHER_RETURN_2026_11_13
+   * (owner, Nov 13, 2026): a guest who does not want a voucher any
+   * more gets the points back on their account. One guarded commit,
+   * mirroring createVoucher in reverse:
+   *   1. read the voucher row (own, active) and the balance;
+   *   2. flip the voucher active -> void, guarded on still-active,
+   *      so a double tap can only void it once;
+   *   3. credit the points back with the same guarded update
+   *      createVoucher's rollback uses;
+   *   4. on any failure after the flip, flip it back to active
+   *      before the guest hears anything.
+   * The stored status is 'void' — the schema's own word for a
+   * cancelled voucher (points_vouchers status is only ever active,
+   * used, or void). NO points_redemptions row is written: that
+   * table's CHECK only allows spends (kind in voucher/shop/repair
+   * and points_spent > 0), so a return cannot be recorded there
+   * without a schema change — the voided voucher row plus the
+   * restored balance is the record. */
+  function returnVoucher(voucherId) {
+    var s = getSession();
+    if (!s || !s.id) return Promise.resolve({ ok: false, message: 'Please sign in first.' });
+    var c = client();
+    if (!c) return Promise.resolve({ ok: false, message: 'Points are unavailable right now — please try again later.' });
+    return c.from('points_vouchers').select('id, code, blocks, points_spent, value_dollars, status')
+      .eq('id', voucherId).eq('customer_id', s.id).maybeSingle()
+      .then(function (res) {
+        if (res.error) throw res.error;
+        var v = res.data;
+        if (!v) return { ok: false, message: 'That voucher is no longer there — it may already have been returned.' };
+        if (v.status !== 'active') return { ok: false, message: 'That voucher was already ' + (v.status === 'void' ? 'returned' : 'used') + ' — its points are not coming back twice.' };
+        var spend = v.points_spent || (v.blocks * BLOCK_POINTS);
+        return fetchBalance(s.id).then(function (bal) {
+          return c.from('points_vouchers').update({ status: 'void' })
+            .eq('id', v.id).eq('customer_id', s.id).eq('status', 'active').select('id')
+            .then(function (upd) {
+              if (upd.error) throw upd.error;
+              if (!upd.data || !upd.data.length) return { ok: false, message: 'That voucher was already returned — nothing changed.' };
+              return creditBack(s.id, spend, bal).then(function (back) {
+                if (!back) {
+                  return c.from('points_vouchers').update({ status: 'active' })
+                    .eq('id', v.id).eq('customer_id', s.id).eq('status', 'void').select('id')
+                    .then(function () { return { ok: false, message: 'Your balance just changed — please try again. Nothing was returned.' }; })
+                    .catch(function () { return { ok: false, message: 'The return hit a snag. Text us at ' + PHONE_TEXT + ' and we will sort out your points.' }; });
+                }
+                patchSessionPoints(bal + spend);
+                return { ok: true, code: v.code, points: spend, value: v.value_dollars, balance: bal + spend };
+              });
+            });
+        });
+      }).catch(function () { return { ok: false, message: 'The return hit a snag — please try again. Nothing was returned.' }; });
+  }
+
   /* Shop checkout commit for points-paid lines (called by the cart). */
   function spendOnShop(total, items) {
     var s = getSession();
@@ -4795,7 +4876,8 @@ if ("serviceWorker" in navigator) {
           var st = String(v.status || 'active');
           st = st.charAt(0).toUpperCase() + st.slice(1);
           return '<div class="pts-voucher-card"><div><div class="pts-voucher-code">' + escX(v.code) + '</div>' +
-            '<div class="acct-muted" style="text-align:left;padding:0;">Show this code at your visit to use it. Status: ' + escX(st) + '</div></div>' +
+            '<div class="acct-muted" style="text-align:left;padding:0;">Show this code at your visit to use it. Status: ' + escX(st) + '</div>' +
+            '<button type="button" class="pts-voucher-return" data-voucher-return="' + escX(v.id) + '"><i class="fas fa-times" aria-hidden="true"></i> Return to points</button></div>' +
             '<div class="pts-voucher-value">$' + escX(v.value_dollars) + '</div></div>';
         }).join('') : '<p class="acct-muted">No vouchers yet — exchange points above and they will show up here.</p>';
       }
@@ -4852,6 +4934,7 @@ if ("serviceWorker" in navigator) {
     fetchBalance: fetchBalance,
     claimSpend: claimSpend,
     createVoucher: createVoucher,
+    returnVoucher: returnVoucher,
     spendOnShop: spendOnShop,
     refreshAccountSurfaces: refreshAccountSurfaces,
     cartChanged: function (snapshot) {
@@ -4944,6 +5027,34 @@ if ("serviceWorker" in navigator) {
     var voucherList = $('pts-voucher-list');
     if (voucherList) voucherList.addEventListener('click', function (e) {
       var t = e.target;
+      /* V142_VOUCHER_RETURN_2026_11_13 (owner, Nov 13, 2026): the
+         "Return to points" button lives inside the card, so its tap
+         must not also toggle the show-at-the-visit state — handle
+         it here and stop. The button disables while the return
+         runs, so a double tap cannot return the same voucher twice. */
+      var retBtn = (t && t.closest) ? t.closest('[data-voucher-return]') : null;
+      if (retBtn && voucherList.contains(retBtn)) {
+        var vid = retBtn.getAttribute('data-voucher-return');
+        var retErr = $('pts-exchange-error'), retOk = $('pts-exchange-success');
+        if (retErr) retErr.hidden = true;
+        if (retOk) retOk.hidden = true;
+        retBtn.disabled = true;
+        retBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Returning…';
+        returnVoucher(vid).then(function (res) {
+          if (res.ok) {
+            if (retOk) {
+              retOk.hidden = false;
+              retOk.innerHTML = '<strong>Voucher ' + escX(res.code) + ' returned — ' + fmtPts(res.points) + ' points put back on your account.</strong><br>Your balance is now ' + fmtPts(res.balance) + ' points.';
+            }
+            refreshBalances();
+            refreshVoucherSurfaces();
+          } else {
+            if (retErr) { retErr.textContent = res.message; retErr.hidden = false; }
+            refreshVoucherSurfaces();
+          }
+        });
+        return;
+      }
       var card = (t && t.closest) ? t.closest('.pts-voucher-card') : null;
       if (!card || !voucherList.contains(card)) return;
       var wasShown = card.classList.contains('pts-voucher-card--show');
@@ -5469,8 +5580,11 @@ if ("serviceWorker" in navigator) {
          bar's Search slot is a button with no data-page, so the
          router never marks it active. Light it orange like the
          other thumb items while the sheet is open; closeSearch
-         below takes it off again. */
+         below takes it off again. V142_2026_11_13 (owner, Nov 13,
+         2026): the header search button gets the same orange while
+         the sheet is open — it never lit up at all before. */
       if (thumbSearchBtn) thumbSearchBtn.classList.add('active');
+      if (openBtn) openBtn.classList.add('active');
     }
     function closeSearch() {
       if (!isOpen()) return;
@@ -5480,6 +5594,7 @@ if ("serviceWorker" in navigator) {
       unlockScroll();
       watchSearchViewport(false);
       if (thumbSearchBtn) thumbSearchBtn.classList.remove('active');
+      if (openBtn) openBtn.classList.remove('active');
     }
 
     /* SEARCH_RELEASE_2026_11_09: the ONE X (#site-search-exit) is
@@ -5743,22 +5858,24 @@ if ("serviceWorker" in navigator) {
   });
 })();
 
-/* ==================== FOOTER_AUDIENCE_PAGES_2026_11_06: FOOTER ACCOUNT LINK ====================
-   The footer Account column's "Manage Your ATR One Account" link
-   opens My Account through the header account button itself — it
-   clicks #account-open-btn, so the tap runs the exact routing that
-   button uses (script.js goAccount + the index.html twin handler:
-   signed-in visitors land on their dashboard, signed-out visitors
-   on the sign-in view, the quick glance closes, and the human
-   checks mount after the page switch). There is deliberately no
-   data-page attribute on the link: the generic router would switch
-   the page without choosing the right account view. If the header
-   button is ever missing, the fallback is a plain hash navigation
-   to the account page. */
+/* ==================== FOOTER_AUDIENCE_PAGES_2026_11_06: FOOTER ACCOUNT LINKS ====================
+   V142_FOOTER_2026_11_13 (owner, Nov 13, 2026): the footer Account column
+   is gone — its "Manage Your ATR One Account" link is split by side:
+   "Manage Your ATR One Guest Account" under Guest and "Manage Your ATR One
+   Business Account" under Businesses. Both open My Account through the
+   header account button itself — they click #account-open-btn, so the tap
+   runs the exact routing that button uses (script.js goAccount + the
+   index.html twin handler: signed-in visitors land on their dashboard,
+   signed-out visitors on the sign-in view, the quick glance closes, and
+   the human checks mount after the page switch). There is deliberately no
+   data-page attribute on either link: the generic router would switch the
+   page without choosing the right account view. If the header button is
+   ever missing, the fallback is a plain hash navigation to the account
+   page. */
 (function () {
   'use strict';
   document.addEventListener('click', function (e) {
-    var t = e.target && e.target.closest ? e.target.closest('#footer-account-link') : null;
+    var t = e.target && e.target.closest ? e.target.closest('#footer-account-guest-link, #footer-account-business-link') : null;
     if (!t) return;
     e.preventDefault();
     var btn = document.getElementById('account-open-btn');

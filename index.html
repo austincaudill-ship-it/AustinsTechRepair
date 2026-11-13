@@ -292,7 +292,7 @@
                  Nov 12, 2026), parts stay at cost. -->
             <div class="hero-slide is-active" id="holiday-slide">
               <p class="eyebrow" id="holiday-eyebrow">Thanksgiving</p>
-              <h1 class="hero-headline" id="holiday-headline">Dropped your phone after all that turkey?</h1>
+              <h1 class="hero-headline" id="holiday-headline">Dropped your phone after the holidays?</h1>
               <p class="hero-sub" id="holiday-sub">It happens. We come to you and fix it at your door. Closed Thanksgiving Day &mdash; book before or after and we will be there.</p>
               <div class="hero-cta-group" id="holiday-ctas">
                 <a class="btn btn-primary btn-lg" href="#whatwedo" data-page="whatwedo" data-services-route><i class="fas fa-wrench"></i> Start a Service</a>
@@ -408,7 +408,7 @@
                 img: 'images/holiday-flag.webp', alt: 'An American flag waving on a porch at golden hour', ctas: STD },
               /* BLACK_FRIDAY_HOLD_2026_11_12 (owner, Nov 12, 2026): the Nov 25-27 sale entry is out until Thanksgiving Day — restore from index-thanksgiving-slide-up.html on Nov 26. */
               { when: function () { return between(now, day(y, 10, 1), tg); },
-                eyebrow: 'Thanksgiving', headline: 'Dropped your phone after all that turkey?',
+                eyebrow: 'Thanksgiving', headline: 'Dropped your phone after the holidays?',
                 sub: 'It happens. We come to you and fix it at your door. Closed Thanksgiving Day &mdash; book before or after and we will be there.',
                 img: 'images/holiday-thanksgiving.webp', alt: 'A phone on a Thanksgiving table beside pumpkin pie and fall leaves', ctas: STD },
               { when: function () { return between(now, plus(tg, 1), day(y, 11, 25)); },
@@ -840,19 +840,16 @@
           </div>
         </div>
       </div>
-      <div class="feature-row">
-        <div class="feature-text">
-          <h2>Built for every guest</h2>
-          <p>Every guest starts on ATR One Free automatically &mdash; nothing to join and nothing to pay. You earn 1 point for every $1 on every completed repair or service &mdash; 100 points is $5 toward repairs, accessories, and vouchers.</p>
-          <p>Paid members pay no visit fee or diagnostics on covered devices, earn points faster, and save more on repairs and accessories.</p>
-          <p><strong>ATR One Individual &mdash; $9.99/mo.</strong> 20% off repairs and 25% off accessories on covered devices, and no visit fee on covered devices. Covers 1 device. Earns 5 points for every $1 spent.</p>
-          <p><strong>ATR One Family &mdash; $19.99/mo.</strong> 20% off repairs and 25% off accessories on covered devices, and no visit fee on covered devices. Covers 5 devices. Earns 5 points for every $1 spent.</p>
+      <!-- V142_ATR_ONE_2026_11_13 (owner, Nov 13, 2026): the ATR One pitch is the main product advertisement — it now stands out in its own blue bubble, everything centered, no photo. Guest copy and guest prices only; the old left-aligned text and the photo column are gone. -->
+      <div class="atr-one-ad">
+        <h2>Built for every guest</h2>
+        <p>Every guest starts on ATR One Free automatically &mdash; nothing to join and nothing to pay. You earn 1 point for every $1 on every completed repair or service &mdash; 100 points is $5 toward repairs, accessories, and vouchers.</p>
+        <p>Paid members pay no visit fee or diagnostics on covered devices, earn points faster, and save more on repairs and accessories.</p>
+        <p><strong>ATR One Individual &mdash; $9.99/mo.</strong> 20% off repairs and 25% off accessories on covered devices, and no visit fee on covered devices. Covers 1 device. Earns 5 points for every $1 spent.</p>
+        <p><strong>ATR One Family &mdash; $19.99/mo.</strong> 20% off repairs and 25% off accessories on covered devices, and no visit fee on covered devices. Covers 5 devices. Earns 5 points for every $1 spent.</p>
+        <div class="atr-one-cta">
           <a class="btn btn-primary" href="#atr-one" data-page="atr-one">See ATR One <i class="fas fa-arrow-right"></i></a>
-          <a class="btn btn-outline" href="#contact" data-page="contact" style="margin-left:0.5rem;">Talk to Us</a>
-        </div>
-        <!-- SERVICES_CHOOSER_2026_11_13 (owner, Nov 13, 2026): the iPhone photo that sat here is gone on the owner's word — it sat right above the service cards and made the page look cluttered. An orange pill carries the "For every guest" label in its place. The "For every guest" eyebrow above the heading is gone too: the pill is the label now. -->
-        <div style="display:flex; align-items:center; justify-content:center;">
-          <span style="display:inline-block; background:var(--brand); color:#FFF8EC; font-weight:800; font-size:0.95rem; letter-spacing:0.4px; padding:0.6rem 1.4rem; border-radius:999px; box-shadow:0 8px 28px rgba(90,64,32,0.12);">For every guest</span>
+          <a class="btn btn-outline" href="#contact" data-page="contact">Talk to Us</a>
         </div>
       </div>
       <div class="section" style="padding-top:0;">
@@ -2031,7 +2028,8 @@
                card highlights — the state the customer holds up
                at the visit. Tapping again puts it back. */
             .pts-voucher-card { cursor: pointer; }
-            .pts-voucher-card--show { border-color: var(--gold); background: var(--gold-soft); box-shadow: 0 6px 22px rgba(30,20,10,.18); }
+            /* V142_VOUCHER_RETURN_2026_11_13 (owner, Nov 13, 2026): a tapped voucher box turns ORANGE — the same as the Services, Store, and Support buttons — not gold. Blue at rest (styles.css card rule), orange once tapped. */
+            .pts-voucher-card--show { border-color: var(--brand); background: var(--brand-soft); box-shadow: 0 6px 22px rgba(30,20,10,.18); }
             .pts-voucher-card--show .pts-voucher-code { font-size: 1.45rem; }
             .pts-voucher-card--show .acct-muted { color: var(--brand-deep); font-weight: 700; }
           </style>
@@ -2700,24 +2698,27 @@
         </div>
       </div>
       <!-- ONE_BUSINESS_PAGE_2026_11_11: one Business page — the Small Business and Enterprise rows are folded into this single section. Nothing was dropped: the small-business tech list, the larger-office scale-up, and both ATR One lines are all here. -->
-      <div class="feature-row">
-        <div class="feature-text">
-          <p class="eyebrow">For every business</p>
-          <h2>Built for shops, offices, and crews</h2>
-          <p>The tech a small business runs on &mdash; staff phones and tablets, office computers, printers, Wi-Fi and networks, and the register by the door &mdash; repaired and set up on site, without an IT department on payroll.</p>
-          <p>For larger offices and device fleets, it is the same on-site service, scaled to the whole building: full IT management, including server setup, scheduled maintenance, and priority dispatch &mdash; one local number to call instead of a call center and a ticket queue.</p>
-          <p><strong>ATR One Business &mdash; $49.99/mo.</strong> 45% off repairs and 55% off accessories on covered devices, wholesale parts pricing, and no visit fee on covered devices.</p>
-          <p><strong>ATR One Business Pro &mdash; $99.99/mo.</strong> 50% off repairs and 65% off accessories on covered devices, with full IT management for the business.</p>
+      <!-- V142_ATR_ONE_2026_11_13 (owner, Nov 13, 2026): the business ATR One pitch mirrors the guest one — same centered blue bubble, same structure, business copy and business prices only. The old "Built for shops, offices, and crews" heading becomes "Built for every business"; no pill, no button-like label — the bubble itself is the advertisement. The two general business intro lines stay, centered, above the bubble. -->
+      <div class="atr-one-intro">
+        <p>The tech a small business runs on &mdash; staff phones and tablets, office computers, printers, Wi-Fi and networks, and the register by the door &mdash; repaired and set up on site, without an IT department on payroll.</p>
+        <p>For larger offices and device fleets, it is the same on-site service, scaled to the whole building: full IT management, including server setup, scheduled maintenance, and priority dispatch &mdash; one local number to call instead of a call center and a ticket queue.</p>
+      </div>
+      <div class="atr-one-ad">
+        <h2>Built for every business</h2>
+        <p>Every business starts on ATR One Free automatically &mdash; nothing to join and nothing to pay. You earn 1 point for every $1 on every completed repair or service &mdash; 100 points is $5 toward repairs, accessories, and vouchers.</p>
+        <p>Paid members pay no visit fee or diagnostics on covered devices, earn points faster, and save more on repairs and accessories.</p>
+        <p><strong>ATR One Business &mdash; $49.99/mo.</strong> 45% off repairs and 55% off accessories on covered devices, wholesale parts pricing, and no visit fee on covered devices. Covers 10 devices. Earns 10 points for every $1 spent.</p>
+        <p><strong>ATR One Business Pro &mdash; $99.99/mo.</strong> 50% off repairs and 65% off accessories on covered devices, with full IT management for the business, and no visit fee on covered devices. Covers 25 devices. Earns 10 points for every $1 spent.</p>
+        <div class="atr-one-cta">
           <a class="btn btn-primary" href="#atr-one-business" data-page="atr-one-business">See ATR One <i class="fas fa-arrow-right"></i></a>
-          <a class="btn btn-outline" href="#contact" data-page="contact" style="margin-left:0.5rem;">Talk to Us</a>
-        </div>
-        <div class="feature-media">
-          <img src="images/work/pc-motherboard.jpg" alt="Business computer repair" loading="lazy" />
+          <a class="btn btn-outline" href="#contact" data-page="contact">Talk to Us</a>
         </div>
       </div>
       <!-- SERVICES_TWO_PAGES_2026_11_12 (owner, Nov 12, 2026): the business services grid — the same categories as Guest Services, for business, plus Business Setup and Websites for Business, moved out of the guest side. Cards carry no "Start a Service" text; the card itself is the button. The old four pricing cards are gone — the Hourly Rate card was an internal rate and never belongs on the public site. -->
       <div class="section" style="padding-top:0;">
         <div class="container">
+          <!-- V142_2026_11_13 (owner, Nov 13, 2026): the business cards get the same "Services we offer" banner the guest page has — same centered title, same place, directly above the cards. -->
+          <h2 class="section-title" style="text-align:center;">Services we offer</h2>
           <div class="card-grid" id="b2b-services">
             <a class="service-card" href="#phones" data-page="phones" data-business="1"><img class="service-card-img" src="images/work/phone-repair.jpg" alt="Phone opened for screen repair on a bench" loading="lazy" /><div class="service-icon"><i class="fas fa-mobile-screen"></i></div><h3>Phones for Business</h3><p>Staff phones repaired on site &mdash; screens, batteries, charging ports, and cameras, with a written estimate first.</p></a>
             <a class="service-card" href="#tablets" data-page="tablets" data-business="1"><img class="service-card-img" src="images/work/tablet-teardown-real.webp" alt="Tablet opened for repair on a work mat" loading="lazy" /><div class="service-icon"><i class="fas fa-tablet-screen-button"></i></div><h3>Tablets for Business</h3><p>Staff tablets repaired on site &mdash; displays, charging ports, touch issues, and batteries.</p></a>
@@ -4143,7 +4144,8 @@
           <img src="images/values/values-education-code.webp" alt="Learning a repair from the printed guide at the bench" loading="lazy" style="width:100%; max-width:720px; border-radius:12px; display:block; margin:0 auto 1.5rem;" />
           <p>Some technology does not need fixing &mdash; it needs explaining. Our one-on-one classes happen right at your home, on your own devices. We sit down with you, hands on, and show you how your tech works, one question at a time. We don&rsquo;t just fix &mdash; we are also a walking, talking user guide.</p>
           <h3>What we can help with</h3>
-          <ul><li>Learning to code, step by step, at your pace</li><li>Making a website of your own</li><li>Using your phone &mdash; calls, apps, settings, and photos</li><li>Using your tablet</li><li>Using your computer</li><li>Using your game console</li><li>The tech questions you have been trying to learn on your own, with someone right there to help</li></ul>
+          <!-- V142_2026_11_13 (owner's standing rule, Nov 13, 2026): ATRG does NOT teach people to code or build websites — the coding and website-building lines are out of this list, same as they came off the Education page. One-on-one is for guests and businesses only. -->
+          <ul><li>Using your phone &mdash; calls, apps, settings, and photos</li><li>Using your tablet</li><li>Using your computer</li><li>Using your game console</li><li>The tech questions you have been trying to learn on your own, with someone right there to help</li></ul>
           <h3>How a class works</h3>
           <p>A class is one on one, at your home, on the device you actually use every day &mdash; not a classroom and not a video call. You bring the questions you have been saving up, we work through them together until they make sense, and you practice while we are there so it sticks. Classes are booked like any other visit, in a 2-hour arrival window.</p>
           <!-- ONE_ON_ONE_CAROUSEL_2026_11_06: one-on-one price set by the owner Nov 6, 2026 ($25/hr) -->
@@ -4509,11 +4511,14 @@
           <p style="color:#B9A98F; font-size:0.88rem; margin-top:0.6rem;">Mon-Fri 5:30 AM-10:00 PM<br>Sat 8:30 AM-9:00 PM<br>Sun 9:00 AM-5:00 PM</p>
         </div>
         <div>
-          <span class="footer-col-title">Services</span>
+          <!-- V142_FOOTER_2026_11_13 (owner, Nov 13, 2026): the Services column is now Resources — Repair or Replace, One-on-One Packages, Help Guides, Store, Gift Cards, Accessibility. No "Start a Service", no "Pricing" here; they duplicate the Guest/Businesses columns. Gift Cards moved here from the removed Account column; the Accessibility button moved here from its own column — same element, same id (a11y-btn), same wiring, only its column changed. -->
+          <span class="footer-col-title">Resources</span>
           <a class="footer-link" href="#repair-or-replace" data-page="repair-or-replace">Repair or Replace</a>
           <a class="footer-link" href="#classes" data-page="classes">One-on-One Packages</a>
           <a class="footer-link" href="#help-guides" data-page="help-guides">Help Guides</a>
           <a class="footer-link" href="#shop" data-page="shop">Store</a> <!-- FOOTER_AUDIENCE_PAGES_2026_11_06 addendum: owner renamed the storefront "Shop" -> "Store" in customer-facing labels (Nov 6, 2026); data-page="shop" is internal and unchanged. -->
+          <a class="footer-link" href="#account" data-page="account">Gift Cards</a>
+          <button class="footer-link a11y-footer-link" id="a11y-btn" type="button" aria-label="Accessibility options" aria-haspopup="true" aria-expanded="false">Accessibility</button>
         </div>
         <div>
           <span class="footer-col-title">Guest</span>
@@ -4522,13 +4527,8 @@
           <!-- FOOTER_GUEST_JUMP_LINKS_2026_11_13 (owner, Nov 13, 2026): Guest column mirrors For Business — same two links, guest page only (data-page="whatwedo" + data-guide; script.js scrolls the id into view after 800ms). -->
           <a class="footer-link" href="#whatwedo" data-page="whatwedo" data-guide="svc-services">Devices and Services</a>
           <a class="footer-link" href="#whatwedo" data-page="whatwedo" data-guide="svc-pricing">Pricing</a>
-        </div>
-        <div>
-          <!-- FOOTER_REORG_2026_11_12 (owner, Nov 12, 2026): Account gets its own column of basic neutral account links; Guest holds guest-only links. Gift Cards moved here from Services — it fits both columns, Account wins per the owner's dual-fit rule. -->
-          <!-- FOOTER_AUDIENCE_PAGES_2026_11_06: the Manage link carries NO data-page on purpose — it clicks the header account button (script.js), so it uses the exact routing that button uses (auth view vs dashboard, glance close, human-check mount). -->
-          <span class="footer-col-title">Account</span>
-          <a class="footer-link" href="#account" id="footer-account-link">Manage Your ATR One Account</a>
-          <a class="footer-link" href="#account" data-page="account">Gift Cards</a>
+          <!-- V142_FOOTER_2026_11_13 (owner, Nov 13, 2026): the Account column is gone — its Manage link is split by side, this one under Guest. It opens My Account through the header account button (script.js) and carries NO data-page on purpose, same as the old link. -->
+          <a class="footer-link" href="#account" id="footer-account-guest-link">Manage Your ATR One Guest Account</a>
         </div>
         <div>
           <span class="footer-col-title">Businesses</span>
@@ -4537,6 +4537,8 @@
           <a class="footer-link" href="#atr-one-business" data-page="atr-one-business">ATR One Business Membership</a>
           <a class="footer-link" href="#b2b" data-page="b2b" data-guide="b2b-services">Devices and Services</a>
           <a class="footer-link" href="#b2b" data-page="b2b" data-guide="b2b-pricing">Pricing</a>
+          <!-- V142_FOOTER_2026_11_13 (owner, Nov 13, 2026): the Account column is gone — its Manage link is split by side, this one under Businesses. It opens My Account through the header account button (script.js) and carries NO data-page on purpose, same as the old link. -->
+          <a class="footer-link" href="#account" id="footer-account-business-link">Manage Your ATR One Business Account</a>
         </div>
         <div>
           <span class="footer-col-title">Organizations</span>
@@ -4554,7 +4556,7 @@
         </div>
         <div>
           <!-- SITE_FOOTER_VALUES_2026_10_30 -->
-          <span class="footer-col-title">Our Values</span>
+          <span class="footer-col-title">ATRG Values</span>
           <a class="footer-link" href="#values" data-page="values" data-guide="values-trust">Trust</a>
           <a class="footer-link" href="#values" data-page="values" data-guide="values-transparency">Transparency</a>
           <a class="footer-link" href="#values" data-page="values" data-guide="values-environment">Environment</a>
@@ -4579,15 +4581,6 @@
                existing script.js wiring opens the same panel with all
                four settings (bigger text, high contrast, reduce motion,
                underline links) exactly as before. -->
-        </div>
-        <div>
-          <!-- NAV_ONE_ON_ONE_2026_11_08 (owner, Nov 8, 2026):
-               Accessibility moves out of the Legal column into its
-               own column. The button below is the same element that
-               sat in Legal — same id (a11y-btn), same classes, same
-               wiring — only its column changed. -->
-          <span class="footer-col-title">Accessibility</span>
-          <button class="footer-link a11y-footer-link" id="a11y-btn" type="button" aria-label="Accessibility options" aria-haspopup="true" aria-expanded="false">Accessibility</button>
         </div>
         <div>
           <span class="footer-col-title">Find Us Online</span>
