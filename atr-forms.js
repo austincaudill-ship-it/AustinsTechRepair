@@ -38,14 +38,15 @@
  * visit fee through Square and the appointment counts as fully
  * booked once the fee is paid. Display + link only; it runs after
  * the ticket insert has already decided success.
- * FEE_SPLIT_2026_11_05: the visit fee is now two-tier — $15 when the
- * repair is already known, $35 when the job needs diagnostics. The
- * submit path carries no reliable diagnostics signal, so the panel
- * states both tiers: the button below still collects the $35
- * diagnosis tier (the only Square link that exists); the $15 tier
- * is confirmed by staff and its payment link is texted, the same
- * pattern the panel's closing note already promises. A dedicated
- * $15 Square link is the follow-up that makes the panel branch.
+ * FEE_SPLIT_2026_11_05 (settled prices, Nov 13, 2026): the visit fee
+ * is $15.99 for guests, $35.99 for business — one fee per audience,
+ * not a known-repair/diagnostics split. Diagnostics is a separate
+ * charge ($34.99 guest / $64.99 business). The panel states the
+ * audience fee: the button below still collects the old $36.32
+ * Square link ($35.00 + $1.32 processing — the link amount is a
+ * payment change, flagged for the owner); the $15.99 guest tier is
+ * confirmed by staff and its payment link is texted, the same
+ * pattern the panel's closing note already promises.
  *
  * SITE_TURNSTILE_2026_11_02 (staged): every form below is gated by
  * Cloudflare Turnstile. init() injects the widget container and
@@ -72,9 +73,12 @@
   var MAX_RESUME_BYTES = 10 * 1024 * 1024; // 10 MB client-side guard
   /* SITE_PAYSTEP_2026_10_30: Square payment link for the visit fee
    * — "House-Call Fee" link in the business Square account.
-   * $36.32 total = $35.00 visit fee (the with-diagnostics tier,
+   * $36.32 total = $35.00 visit fee (the old with-diagnostics tier,
    * FEE_SPLIT_2026_11_05) + $1.32 card processing (Square online
-   * rate 2.9% + 30 cents). */
+   * rate 2.9% + 30 cents). NOTE (Nov 13, 2026): the settled visit
+   * fee is $15.99 guest / $35.99 business — this link still charges
+   * the old $35.00-based total. A new link amount is a payment
+   * change, flagged for the owner; the amount is NOT touched here. */
   var SQUARE_HOUSECALL_LINK = 'https://square.link/u/GNUAO63Y';
   /* CONNECT_PAY_STEP_2026_11_10 (owner ruling, Nov 10, 2026): the
    * ATR One join offered at the virtual pay step is the Individual
@@ -92,12 +96,14 @@
      signed-out booker is asked to sign in first (booking saved). */
   var SQUARE_TICKET_CHECKOUT_URL = SUPABASE_URL + '/functions/v1/square-ticket-checkout';
   /* VIRTUAL_ONE_ON_ONE_2026_11_10 — THE FEE SWITCH (owner ruling,
-     Nov 10, 2026): a virtual session SKIPS the $15 visit fee. The
-     guest pays the first hour ($25) at booking and $25 an hour for
+     Nov 10, 2026; settled prices Nov 13, 2026): a virtual session
+     SKIPS the visit fee. The guest pays the first hour ($24.99 guest
+     / $49.99 business) at connect time and the same rate an hour for
      the time after, on the card they leave on file. In person keeps
-     its $15 + $25 an hour exactly as settled. This one constant is
-     the whole switch: if the ruling ever changes, flip it here and
-     the acknowledgment gate + fee copy follow. */
+     its $15.99/$35.99 visit fee + $24.99/$49.99 an hour exactly as
+     settled. This one constant is the whole switch: if the ruling
+     ever changes, flip it here and the acknowledgment gate + fee
+     copy follow. */
   var VIRTUAL_FEE_APPLIES = false;
   /* VIRTUAL_ONE_ON_ONE_2026_11_10 — WAIVER 1 of 2 (owner's consent
      law, Nov 10, 2026): before a virtual guest can pay, they agree
@@ -441,22 +447,33 @@
     var wrap = form.closest('[data-form-wrap]') || form.parentNode;
     var panel = wrap.querySelector('[data-paystep]');
     if (!panel) return;
-    /* PAY_WALL_2026_11_11 (owner, Nov 11, 2026): a virtual booking
-       collects NOTHING at booking time. The $25 first hour is paid
-       at connect time, at the pay wall on the Virtual One-on-One
-       page — the guest clicks their Connect link, types their code,
-       and pays to connect. This panel only says that, plainly: the
-       booking is saved, nothing is due now, and the $25 at connect
-       is non-refundable because it pays for our time and effort,
-       even if the issue is not solved. ATR One members are never
-       charged (their key covers the session) — the member check
-       below still swaps the panel to the covered message. */
+    /* PAY_WALL_2026_11_11 (owner, Nov 11, 2026; settled prices Nov
+       13, 2026): a virtual booking collects NOTHING at booking time.
+       The first hour ($24.99 guest / $49.99 business) is paid at
+       connect time, at the pay wall on the Virtual One-on-One page —
+       the guest clicks their Connect link, types their code, and pays
+       to connect. This panel only says that, plainly: the booking is
+       saved, nothing is due now, and the first hour at connect is
+       non-refundable because it pays for our time and effort, even if
+       the issue is not solved. ATR One members are never charged
+       (their key covers the session) — the member check below still
+       swaps the panel to the covered message. */
     if (opts && opts.virtual) {
+      /* V146_OO_2499_2026_11_13: the first hour is $24.99 for guests,
+         $49.99 for business — the audience rides opts.business from
+         the submit handler. The Individual join ($9.99, save $15) is
+         the guest math ($24.99 − $9.99); a business booker is
+         pointed at the Business plans instead, where remote service
+         is included. */
+      var vooRate = (opts && opts.business) ? 49.99 : 24.99;
+      var vooJoinNote = (opts && opts.business)
+        ? '<p class="atr-paystep-note" data-voo-join>Or get this session free with ATR One &mdash; remote service is included for Business members. <a href="https://austinstechrepairgroup.com/#atr-one-business" target="_blank" rel="noopener">See ATR One Business</a></p>'
+        : '<p class="atr-paystep-note" data-voo-join>Or get this session free with ATR One &mdash; join for $9.99 and save $15 today. Remote service is included for members. <a href="' + ATR_ONE_JOIN_LINK + '" target="_blank" rel="noopener">Join ATR One</a></p>';
       panel.innerHTML =
         '<h4>Your virtual session is booked</h4>' +
-        '<p>There is nothing to pay now. When your session time comes, open your Virtual One-on-One page from the link in your booking email, type the code your associate gives you, and you will pay the <strong>$25</strong> first hour there to connect. ' +
-        'It is <strong>non-refundable</strong> &mdash; it pays for our time and effort, even if the issue is not solved. Time after the first hour is $25 an hour, and we will always tell you the total first.</p>' +
-        '<p class="atr-paystep-note" data-voo-join>Or get this session free with ATR One &mdash; join for $9.99 and save $15 today. Remote service is included for members. <a href="' + ATR_ONE_JOIN_LINK + '" target="_blank" rel="noopener">Join ATR One</a></p>' +
+        '<p>There is nothing to pay now. When your session time comes, open your Virtual One-on-One page from the link in your booking email, type the code your associate gives you, and you will pay the <strong>$' + vooRate + '</strong> first hour there to connect. ' +
+        'It is <strong>non-refundable</strong> &mdash; it pays for our time and effort, even if the issue is not solved. Time after the first hour is $' + vooRate + ' an hour, and we will always tell you the total first.</p>' +
+        vooJoinNote +
         '<p class="atr-paystep-note" data-voo-note>ATR One member? Your member key covers virtual sessions &mdash; skip the payment and use your key when your session starts.</p>';
       panel.hidden = false;
       /* CONNECT_MEMBER_KEY_2026_11_10 (owner law, Nov 10, 2026):
@@ -507,27 +524,43 @@
       })();
       return;
     }
-    /* SUPPORT_BOOKING_2026_11_06: a one-on-one booking is always the
-       $15 tier (no diagnostics) — its panel is the $15 pattern only:
-       confirm the booking and text the payment link. The booked time
-       ($25 an hour) is settled at the visit. */
+    /* SUPPORT_BOOKING_2026_11_06 (settled prices Nov 13, 2026): a
+       one-on-one booking is always the visit-fee panel (no Square
+       link for that tier) — confirm the booking and text the payment
+       link. The booked time ($24.99/hr guest, $49.99/hr business) is
+       settled at the visit. */
     if (isOneOnOne) {
+      var ooPayRate = (opts && opts.business) ? 49.99 : 24.99;
+      var ooPayFee = (opts && opts.business) ? 35.99 : 15.99;
       panel.innerHTML =
         '<h4>One last step to fully book your visit</h4>' +
-        '<p>Your visit is fully booked once your $15.00 visit fee is paid. It covers the trip to you, is due at scheduling, and is non-refundable. ' +
-        'We will confirm your booking and text you the payment link for that amount &mdash; your one-on-one time ($25 an hour) is settled at the visit.</p>' +
+        '<p>Your visit is fully booked once your $' + ooPayFee + ' visit fee is paid. It covers the trip to you, is due at scheduling, and is non-refundable. ' +
+        'We will confirm your booking and text you the payment link for that amount &mdash; your one-on-one time ($' + ooPayRate + ' an hour) is settled at the visit.</p>' +
         '<p class="atr-paystep-note">If you close this page first, your booking is still saved and we will text you the payment link.</p>';
       panel.hidden = false;
       return;
     }
+    /* V146_OO_2499_2026_11_13 (settled prices Nov 13, 2026): the
+       visit fee is $15.99 guest / $35.99 business; diagnostics is a
+       separate charge ($34.99/$64.99), never folded into the fee.
+       The $36.32 Square button is UNCHANGED — it is the actual
+       charge on the existing link (old $35.00 + $1.32 processing)
+       and a new link amount is a payment change for the owner. The
+       guest tier has no Square link (same as the old $15 tier) — the
+       fee is confirmed by staff and its payment link is texted. */
+    var repFee = (opts && opts.business) ? 35.99 : 15.99;
+    var repDiag = (opts && opts.business) ? 64.99 : 34.99;
+    var repPayHtml = (opts && opts.business)
+      ? '<p>You can pay your visit fee now with Square &mdash; the link below charges $36.32 total.</p>' +
+        '<p><a class="btn btn-primary btn-lg" href="' + SQUARE_HOUSECALL_LINK + '" target="_blank" rel="noopener">' +
+        '<i class="fas fa-lock"></i> Pay $36.32 with Square</a></p>'
+      : '<p>We will confirm your booking and text you the payment link for that amount.</p>';
     panel.innerHTML =
       '<h4>One last step to fully book your appointment</h4>' +
       '<p>Your appointment is fully booked once your visit fee is paid. ' +
-      'The visit fee is $15.00 when your repair is already known, or $35.00 if your device needs a full diagnosis first &mdash; either way it covers travel to you and is non-refundable. ' +
-      'If your device needs the full diagnosis, you can pay that fee now: $35.00 plus Square&rsquo;s processing fee of $1.32, a total of $36.32. ' +
-      'If your repair is already known, your fee is the $15.00 one &mdash; we will confirm it and text you the payment link for that amount.</p>' +
-      '<p><a class="btn btn-primary btn-lg" href="' + SQUARE_HOUSECALL_LINK + '" target="_blank" rel="noopener">' +
-      '<i class="fas fa-lock"></i> Pay $36.32 with Square</a></p>' +
+      'The visit fee is $' + repFee + '. It covers the trip to you, is due at scheduling, and is non-refundable. ' +
+      'If your device needs a full diagnosis, diagnostics is $' + repDiag + ', charged separately.</p>' +
+      repPayHtml +
       '<p class="atr-paystep-note">If you close this page before paying, your request is still saved ' +
       'and we will text you this payment link &mdash; your appointment is fully booked once the fee is paid.</p>';
     panel.hidden = false;
@@ -840,6 +873,18 @@
       /* VIRTUAL_ONE_ON_ONE_2026_11_10: the How will we meet? pick,
          carried from the wizard/pane through atrGuidedSelection. */
       var isVirtual = !!(isOO && guidedEarly.ooPlace === 'virtual');
+      /* V146_OO_2499_2026_11_13 (owner, Nov 13, 2026 — settled
+         prices): one-on-one is $24.99/hr for guests, $49.99/hr for
+         business; the visit fee is $15.99 guest / $35.99 business.
+         The audience rides the guided contract as guided.business
+         (script.js prefillIntakeFromGuided, V144_EIN_REMOVAL), and
+         the website already computes guided.ooTime at the audience
+         rate — use it when present, hours × the audience rate when
+         it is not (older cached page). Rounded to cents so the
+         ticket text never shows float dust. */
+      var isBusiness = !!(guidedEarly && guidedEarly.business);
+      var ooRate = isBusiness ? 49.99 : 24.99;
+      var ooVisitFeeAmt = isBusiness ? 35.99 : 15.99;
 
       var errors = {};
       if (!v.first_name) errors.first_name = 'Please enter your first name.';
@@ -851,16 +896,17 @@
       if (isOO && !guidedEarly.serviceKind) errors.problem = 'Please go back to step 2 and pick the kind of one-on-one help you need.';
       if (!field(form, 'terms_accepted')) errors.terms_accepted = 'Please accept the Terms and Conditions to continue.';
       if (!field(form, 'dispatch_acknowledged')) errors.dispatch_acknowledged = 'Please check the acknowledgment box to continue.';
-      /* THREE_FORMS_2026_11_11 (Austin, Nov 11, 2026): the
-         acknowledgment gate applies to all three forms alike. The
-         row is never hidden — script.js applyVirtualFormEffects
-         words it per form: Repair keeps the $15/$35 visit-fee text,
-         One-on-One in person names the $15 visit fee and the $25
-         collected upon arrival, and Virtual says the $25 is due at
-         the time of the connect. (VIRTUAL_FEE_APPLIES still records
-         that a virtual booking has no visit fee at all — the $25 is
-         the session's first hour, collected at connect time through
-         the pay step, not a fee due at scheduling.) */
+      /* THREE_FORMS_2026_11_11 (Austin, Nov 11, 2026; settled prices
+         Nov 13, 2026): the acknowledgment gate applies to all three
+         forms alike. The row is never hidden — script.js
+         applyVirtualFormEffects words it per form: Repair states the
+         $15.99/$35.99 visit fee by audience, One-on-One in person
+         names the audience visit fee and the $24.99/$49.99 an hour
+         collected upon arrival, and Virtual says the first hour is
+         due at the time of the connect. (VIRTUAL_FEE_APPLIES still
+         records that a virtual booking has no visit fee at all — the
+         first hour is the session's first hour, collected at connect
+         time through the pay step, not a fee due at scheduling.) */
       /* A one-on-one visit has no repair work to authorize, so the
          work-order authorization and the Repair Authorization signature
          are not gates in this mode (their rows are hidden too). */
@@ -910,7 +956,9 @@
            by step 2's "What do you want to get done?") rides along. */
         var brandModel = [guidedEarly.brand, guidedEarly.model].filter(Boolean).join(' ');
         var ooHours = guidedEarly.ooHours || 1;
-        var ooTime = ooHours * 25;
+        var ooTime = (typeof guidedEarly.ooTime === 'number' && isFinite(guidedEarly.ooTime) && guidedEarly.ooTime > 0)
+          ? Math.round(guidedEarly.ooTime * 100) / 100
+          : Math.round(ooHours * ooRate * 100) / 100;
         if (isVirtual) {
           /* VIRTUAL_ONE_ON_ONE_2026_11_10: VIRTUAL leads the service
              segment, plainly, so the portal ticket shows it at a
@@ -922,7 +970,7 @@
             ' \u00b7 VIRTUAL session \u00b7 ' + ooHours + (ooHours === 1 ? ' hour' : ' hours') + ' one-on-one ($' + ooTime + ')';
         } else {
           issue = '[SERVICE] ' + guidedEarly.serviceKind + ' \u2014 ' + (brandModel || guidedEarly.device || v.device_type) +
-            ' \u00b7 ' + ooHours + (ooHours === 1 ? ' hour' : ' hours') + ' one-on-one ($' + ooTime + ') | Visit fee: $15';
+            ' \u00b7 ' + ooHours + (ooHours === 1 ? ' hour' : ' hours') + ' one-on-one ($' + ooTime + ') | Visit fee: $' + ooVisitFeeAmt;
         }
         if (v.problem) issue += ' \u00b7 ' + v.problem;
       } else if (guided && guided.issue) {
@@ -1033,7 +1081,7 @@
           ['Service kind', guidedEarly.serviceKind],
           ['What they want to get done', v.problem],
           ['One-on-one time', ooHours + (ooHours === 1 ? ' hour' : ' hours') + ' \u2014 $' + ooTime],
-          ['Visit fee', '$15'],
+          ['Visit fee', '$' + ooVisitFeeAmt],
           ['Heard about us', row.source],
           ['Marketing emails opt-in', row.marketing_opt_in ? 'Yes' : 'No']
         ], 'service-request');
@@ -1087,10 +1135,11 @@
                filing above landed or not — filing is best-effort and
                the ticket insert already decided success.
                SUPPORT_BOOKING_2026_11_06: one-on-one bookings get the
-               $15-tier panel (no Square link for that tier). */
+               visit-fee panel (no Square link for that tier — the fee
+               is confirmed by staff and its payment link is texted). */
             /* VIRTUAL_ONE_ON_ONE_2026_11_10: a virtual booking's pay
                step needs the ticket + guest for the Square hand-off. */
-            showPayStep(form, isOO, isVirtual ? { virtual: true, ticketId: ticketId, email: v.email, name: row.customer_name } : undefined);
+            showPayStep(form, isOO, isVirtual ? { virtual: true, ticketId: ticketId, email: v.email, name: row.customer_name, business: isBusiness } : { business: isBusiness });
             /* ATRONE_QR_2026_11_05: one-time create-a-password offer for
                guests, so this repair lands in an account they can track.
                The account module in index.html owns the offer and
