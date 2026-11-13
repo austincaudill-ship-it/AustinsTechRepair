@@ -346,6 +346,16 @@
       if (!repairState.model) return '';
       return repairState.year ? repairState.model + ' (' + repairState.year + ')' : repairState.model;
     }
+    /* V145_ONEONONE_2499_2026_11_13 (owner, Nov 13, 2026 - settled
+       one-on-one rates: guest $24.99/hr + $15.99 visit fee, business
+       $49.99/hr + $35.99 visit fee): the shared form serves BOTH
+       audiences, so every one-on-one price in this flow reads the
+       audience rate from repairState.business - never a hardcoded
+       guest number. The v143 sweep fixed the copy but left two
+       computations at 25 dollars an hour (summary + ooTime); this pass fixes
+       those and every other one-on-one computation in the form. */
+    function ooHourRate() { return repairState.business ? 49.99 : 24.99; }
+    function ooVisitFee() { return repairState.business ? 35.99 : 15.99; }
     function rfRenderSummary() {
       rfSet('rf-sum-device', repairState.device || 'Not picked yet');
       rfSet('rf-sum-brand', repairState.brand || '\u2014');
@@ -359,7 +369,7 @@
         rfSet('rf-sum-repair-label', 'Service');
         rfSet('rf-sum-repair', repairState.serviceKind || '\u2014');
         rfSet('rf-sum-estimate-label', 'Time');
-        rfSet('rf-sum-estimate', repairState.ooHours ? (repairState.ooHours + (repairState.ooHours === 1 ? ' hour' : ' hours') + ' one-on-one \u2014 $' + (repairState.ooHours * 25)) : '\u2014');
+        rfSet('rf-sum-estimate', repairState.ooHours ? (repairState.ooHours + (repairState.ooHours === 1 ? ' hour' : ' hours') + ' one-on-one \u2014 $' + (repairState.ooHours * ooHourRate())) : '\u2014');
       } else {
         /* SERVICES_FLOW_V58_2026_11_09: one word — the summary row
            reads "Service" in repair mode too, as it already did in
@@ -720,7 +730,7 @@
         ooBtn.setAttribute('data-oo-tile', '1');
         ooBtn.style.alignItems = 'flex-start';
         ooBtn.style.textAlign = 'left';
-        ooBtn.innerHTML = '<i class="fas fa-graduation-cap"></i><strong>One-on-One</strong><span style="font-size:0.78rem; color: var(--brand-deep); font-weight:800;">Lessons &amp; help on this device \u2014 $24.99 an hour</span>';
+        ooBtn.innerHTML = '<i class="fas fa-graduation-cap"></i><strong>One-on-One</strong><span style="font-size:0.78rem; color: var(--brand-deep); font-weight:800;">Lessons &amp; help on this device \u2014 $' + ooHourRate() + ' an hour</span>';
         ooBtn.addEventListener('click', function () { setOneOnOneMode(true); });
         grid.appendChild(ooBtn);
         issueList.appendChild(grid);
@@ -999,7 +1009,7 @@
       ooTile.style.padding = '0.85rem 0.5rem';
       ooTile.style.alignItems = 'flex-start';
       ooTile.style.textAlign = 'left';
-      ooTile.innerHTML = '<i class="fas fa-graduation-cap"></i><strong>One-on-One</strong><span style="font-size:0.78rem; color: var(--brand-deep); font-weight:800;">Lessons &amp; help on this device \u2014 $24.99 an hour</span>';
+      ooTile.innerHTML = '<i class="fas fa-graduation-cap"></i><strong>One-on-One</strong><span style="font-size:0.78rem; color: var(--brand-deep); font-weight:800;">Lessons &amp; help on this device \u2014 $' + ooHourRate() + ' an hour</span>';
       ooTile.addEventListener('click', function () { setOneOnOneMode(true); });
       repairGrid.appendChild(ooTile);
       rfShowFlowExtras();
@@ -1204,7 +1214,7 @@
            and the pay step. */
         ooPlace: repairState.ooPlace || '',
         ooHours: repairState.ooHours || 0,
-        ooTime: (repairState.ooHours || 0) * 25,
+        ooTime: (repairState.ooHours || 0) * ooHourRate(),
         /* V144_EIN_REMOVAL_2026_11_13: only the business flag
            rides the contract — no EIN is passed anywhere. The
            live atr-forms.js files an EIN on the ticket's issue
@@ -1360,14 +1370,18 @@
        not its own page — "we're using the same form, we're just adding
        features." Device, brand, and model are picked first; at the
        service step the One-on-One button swaps the repair tiles for
-       eight service bubbles and two even hour buttons (1 hour $24.99 /
-       2 hours $49.98, priced pure). The $15.99 visit fee stays its own
-       separate line in the summary and the pay step. The step heading
+       eight service bubbles and two even hour buttons (1 hour /
+       2 hours, priced pure at the audience rate - guest $24.99/hr,
+       business $49.99/hr; V145_ONEONONE_2499_2026_11_13). The visit
+       fee (guest $15.99, business $35.99) stays its own separate
+       line in the summary and the pay step. The step heading
        "What service does it need?" is universal — it never flips. */
     var pendingOneOnOne = false;
     function ooRender() {
       var h = repairState.ooHours || 0;
-      var time = h * 24.99;
+      var rate = ooHourRate();
+      var fee = ooVisitFee();
+      var time = h * rate;
       var priceEl = document.getElementById('oo-price');
       if (priceEl) priceEl.textContent = h ? ('$' + time) : 'Pick a time';
       /* VIRTUAL_ONE_ON_ONE_2026_11_10: the summary note follows the
@@ -1376,8 +1390,8 @@
       var note = document.getElementById('rf-summary-note');
       if (note && repairState.mode === 'oneonone') {
         note.textContent = repairState.ooPlace === 'virtual'
-          ? 'One-on-one help is $24.99 an hour. Virtual sessions have no visit fee \u2014 the first hour is paid when you book, and ATR One members pay nothing with their member key.'
-          : 'One-on-one help is $24.99 an hour, plus the $15.99 visit fee. ATR One Plus (paid) members pay no visit fee on covered devices.';
+          ? 'One-on-one help is $' + rate + ' an hour. Virtual sessions have no visit fee \u2014 the first hour is paid when you book, and ATR One members pay nothing with their member key.'
+          : 'One-on-one help is $' + rate + ' an hour, plus the $' + fee + ' visit fee. ATR One Plus (paid) members pay no visit fee on covered devices.';
       }
       var lines = document.getElementById('oo-lines');
       if (lines) {
@@ -1388,20 +1402,30 @@
           lines.innerHTML =
             (repairState.serviceKind ? (escapeHtml(repairState.serviceKind) + ' for your ' + escapeHtml([repairState.brand, repairState.model].filter(Boolean).join(' ') || repairState.device || 'device') + '<br>') : '') +
             'Virtual \u2014 we meet on your screen, no trip<br>' +
-            'One-on-one time $24.99 per hour' + (h ? (' \u2014 ' + h + (h === 1 ? ' hour' : ' hours') + ' $' + time) : '') + '<br>' +
-            (h ? ('<strong>Total $' + time + ' \u2014 the first hour ($24.99) is paid when you book</strong><br>') : '') +
-            'If your session runs longer, the extra time is charged to your card on file at $24.99 an hour.<br>' +
+            'One-on-one time $' + rate + ' per hour' + (h ? (' \u2014 ' + h + (h === 1 ? ' hour' : ' hours') + ' $' + time) : '') + '<br>' +
+            (h ? ('<strong>Total $' + time + ' \u2014 the first hour ($' + rate + ') is paid when you book</strong><br>') : '') +
+            'If your session runs longer, the extra time is charged to your card on file at $' + rate + ' an hour.<br>' +
             'ATR One members: your member key makes virtual sessions free.';
         } else {
           lines.innerHTML =
             (repairState.serviceKind ? (escapeHtml(repairState.serviceKind) + ' for your ' + escapeHtml([repairState.brand, repairState.model].filter(Boolean).join(' ') || repairState.device || 'device') + '<br>') : '') +
-            'One-on-one time $24.99 per hour' + (h ? (' \u2014 ' + h + (h === 1 ? ' hour' : ' hours') + ' $' + time) : '') + '<br>' +
-            'Visit fee $15.99<br>' +
-            (h ? ('<strong>Total $' + (15.99 + time) + ' \u2014 the $' + time + ' time plus the $15.99 visit fee</strong><br>') : '') +
-            'If your session runs longer, the extra time is settled at the visit at $24.99 an hour.<br>' +
+            'One-on-one time $' + rate + ' per hour' + (h ? (' \u2014 ' + h + (h === 1 ? ' hour' : ' hours') + ' $' + time) : '') + '<br>' +
+            'Visit fee $' + fee + '<br>' +
+            (h ? ('<strong>Total $' + (fee + time) + ' \u2014 the $' + time + ' time plus the $' + fee + ' visit fee</strong><br>') : '') +
+            'If your session runs longer, the extra time is settled at the visit at $' + rate + ' an hour.<br>' +
             'ATR One Plus (paid) members pay no visit fee on covered devices.';
         }
       }
+      /* V145_ONEONONE_2499_2026_11_13: the hour buttons carry their
+         price in the label - relabel them to the audience rate, so a
+         business booker never taps a $24.99 button and lands on a
+         $49.99 summary. Runs on mode entry and every pick, because
+         ooRender is called from all of them. */
+      document.querySelectorAll('[data-oo-hours]').forEach(function (btn) {
+        var hrs = parseInt(btn.getAttribute('data-oo-hours'), 10) || 0;
+        var strong = btn.querySelector('strong');
+        if (strong) strong.textContent = '$' + (hrs * rate);
+      });
     }
     window.atrOoRender = ooRender;
     /* BOOKING_OO_TILE_2026_11_09 (Austin, Nov 9, 2026): the eight
@@ -1468,12 +1492,19 @@
        the $24.99 there is the session itself, not a visit fee, and paid
        members already skip that pay wall at the Connect page. */
     var SR_DISPATCH_OO_MEMBER_HTML = 'I understand my <strong>one-on-one is $24.99</strong>, collected upon arrival. My device is covered by ATR One, so there is <strong>no visit fee</strong>. *';
+    /* V145_ONEONONE_2499_2026_11_13: the business faces of the same
+       three one-on-one acknowledgments - guest $24.99 + $15.99,
+       business $49.99 + $35.99. Repair-mode wording is untouched. */
+    var SR_DISPATCH_OO_BIZ_HTML = 'I understand the <strong>visit fee is $35.99</strong> and my <strong>one-on-one is $49.99</strong>, collected upon arrival. *';
+    var SR_DISPATCH_VIRTUAL_BIZ_HTML = 'I understand the <strong>virtual one-on-one is $49.99</strong>, due at the time of the connect. It is <strong>non-refundable</strong> — it pays for our time and effort, even if the issue is not solved. *';
+    var SR_DISPATCH_OO_MEMBER_BIZ_HTML = 'I understand my <strong>one-on-one is $49.99</strong>, collected upon arrival. My device is covered by ATR One, so there is <strong>no visit fee</strong>. *';
     var SR_DISPATCH_REPAIR_MEMBER_HTML = 'I understand my device is <strong>covered by ATR One</strong>, so there is <strong>no visit fee</strong> for this visit. *';
     var SR_DISPATCH_REPAIR_FALLBACK_HTML = 'I understand the <strong>visit fee</strong> &mdash; <strong>$15</strong> if my repair is already known, or <strong>$35</strong> if my device needs a full diagnosis &mdash; covers the trip to me, is due at scheduling, and is <strong>non-refundable</strong>. *';
     function srDispatchAckHtml(virtual, mode) {
       var member = repairState.atrOne === 'Yes';
-      if (virtual) return SR_DISPATCH_VIRTUAL_HTML;
-      if (mode === 'oneonone') return member ? SR_DISPATCH_OO_MEMBER_HTML : SR_DISPATCH_OO_HTML;
+      var biz = repairState.business;
+      if (virtual) return biz ? SR_DISPATCH_VIRTUAL_BIZ_HTML : SR_DISPATCH_VIRTUAL_HTML;
+      if (mode === 'oneonone') return member ? (biz ? SR_DISPATCH_OO_MEMBER_BIZ_HTML : SR_DISPATCH_OO_MEMBER_HTML) : (biz ? SR_DISPATCH_OO_BIZ_HTML : SR_DISPATCH_OO_HTML);
       if (member) return SR_DISPATCH_REPAIR_MEMBER_HTML;
       return srDispatchOrigHtml !== null ? srDispatchOrigHtml : SR_DISPATCH_REPAIR_FALLBACK_HTML;
     }
@@ -1490,8 +1521,8 @@
       var note = document.getElementById('rf-summary-note');
       if (note && repairState.mode === 'oneonone') {
         note.textContent = repairState.atrOne === 'Yes'
-          ? 'One-on-one help is $24.99 an hour. Your device is covered by ATR One, so there is no visit fee.'
-          : 'One-on-one help is $24.99 an hour, plus the $15.99 visit fee. ATR One Plus (paid) members pay no visit fee on covered devices.';
+          ? 'One-on-one help is $' + ooHourRate() + ' an hour. Your device is covered by ATR One, so there is no visit fee.'
+          : 'One-on-one help is $' + ooHourRate() + ' an hour, plus the $' + ooVisitFee() + ' visit fee. ATR One Plus (paid) members pay no visit fee on covered devices.';
       }
     }
     window.atrRefreshDispatchAck = refreshDispatchAck;
@@ -1523,8 +1554,8 @@
       var note = document.getElementById('rf-summary-note');
       if (note) note.textContent = on
         ? (repairState.atrOne === 'Yes'
-          ? 'One-on-one help is $24.99 an hour. Your device is covered by ATR One, so there is no visit fee.'
-          : 'One-on-one help is $24.99 an hour, plus the $15.99 visit fee. ATR One Plus (paid) members pay no visit fee on covered devices.')
+          ? 'One-on-one help is $' + ooHourRate() + ' an hour. Your device is covered by ATR One, so there is no visit fee.'
+          : 'One-on-one help is $' + ooHourRate() + ' an hour, plus the $' + ooVisitFee() + ' visit fee. ATR One Plus (paid) members pay no visit fee on covered devices.')
         : 'Estimates are always free. Your exact price is confirmed once we have checked your device.';
       /* A lesson or setup visit has no repair work to authorize: the
          authorization row and the signature block step aside in this
@@ -6418,7 +6449,7 @@ if ("serviceWorker" in navigator) {
         togglePick(pane, { name: 'Something else', price: null, priceRange: null }, se);
       });
       grid.appendChild(se);
-      var oo = doorTile('fas fa-graduation-cap', 'One-on-One', 'Lessons & help on this device \u2014 $24.99 an hour');
+      var oo = doorTile('fas fa-graduation-cap', 'One-on-One', 'Lessons & help on this device \u2014 $' + (document.body.classList.contains('aud-business') ? 49.99 : 24.99) + ' an hour');
       oo.setAttribute('data-svc-oo-door', '1');
       oo.addEventListener('click', function () { switchPath('oneonone'); });
       grid.appendChild(oo);
@@ -6515,12 +6546,24 @@ if ("serviceWorker" in navigator) {
       if (disc) disc.hidden = false;
     }
 
-    /* Mirrors the form's ooRender: time priced pure at $24.99/hr, the
-       $15.99 visit fee its own line, the total their sum. */
+    /* Mirrors the form's ooRender: time priced pure at the audience
+       rate (guest $24.99/hr, business $49.99/hr), the visit fee
+       (guest $15.99, business $35.99) its own line, the total
+       their sum. V145_ONEONONE_2499_2026_11_13. */
     function renderOoSummary() {
       var st = ooPane.state;
       var h = st.hours || 0;
-      var time = h * 24.99;
+      /* V145_ONEONONE_2499_2026_11_13: this wizard lives in its own
+         IIFE (repairState is not in scope here) and its pages adapt
+         by body.aud-business, so the rate and fee read the body class
+         - guest $24.99/hr + $15.99, business $49.99/hr + $35.99.
+         The pane has no svc-oo DOM in the staged index.html, so this
+         currently no-ops on null price/lines elements; the math is
+         fixed anyway so it cannot go live wrong. */
+      var biz = document.body.classList.contains('aud-business');
+      var rate = biz ? 49.99 : 24.99;
+      var fee = biz ? 35.99 : 15.99;
+      var time = h * rate;
       var priceEl = $('svc-oo-price');
       if (priceEl) priceEl.textContent = h ? ('$' + time) : 'Pick a time';
       var lines = $('svc-oo-lines');
@@ -6531,14 +6574,14 @@ if ("serviceWorker" in navigator) {
              form — virtual has no visit fee (owner ruling). */
           (st.place === 'virtual'
             ? 'Virtual \u2014 we meet on your screen, no trip<br>' +
-              'One-on-one time $24.99 per hour' + (h ? (' \u2014 ' + h + (h === 1 ? ' hour' : ' hours') + ' $' + time) : '') + '<br>' +
-              (h ? ('<strong>Total $' + time + ' \u2014 the first hour ($24.99) is paid when you book</strong><br>') : '') +
-              'If your session runs longer, the extra time is charged to your card on file at $24.99 an hour.<br>' +
+              'One-on-one time $' + rate + ' per hour' + (h ? (' \u2014 ' + h + (h === 1 ? ' hour' : ' hours') + ' $' + time) : '') + '<br>' +
+              (h ? ('<strong>Total $' + time + ' \u2014 the first hour ($' + rate + ') is paid when you book</strong><br>') : '') +
+              'If your session runs longer, the extra time is charged to your card on file at $' + rate + ' an hour.<br>' +
               'ATR One members: your member key makes virtual sessions free.'
-            : 'One-on-one time $24.99 per hour' + (h ? (' \u2014 ' + h + (h === 1 ? ' hour' : ' hours') + ' $' + time) : '') + '<br>' +
-              'Visit fee $15.99<br>' +
-              (h ? ('<strong>Total $' + (15.99 + time) + ' \u2014 the $' + time + ' time plus the $15.99 visit fee</strong><br>') : '') +
-              'If your session runs longer, the extra time is settled at the visit at $24.99 an hour.<br>' +
+            : 'One-on-one time $' + rate + ' per hour' + (h ? (' \u2014 ' + h + (h === 1 ? ' hour' : ' hours') + ' $' + time) : '') + '<br>' +
+              'Visit fee $' + fee + '<br>' +
+              (h ? ('<strong>Total $' + (fee + time) + ' \u2014 the $' + time + ' time plus the $' + fee + ' visit fee</strong><br>') : '') +
+              'If your session runs longer, the extra time is settled at the visit at $' + rate + ' an hour.<br>' +
               'ATR One Plus (paid) members pay no visit fee on covered devices.');
       }
     }
