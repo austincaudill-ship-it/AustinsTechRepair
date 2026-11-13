@@ -6734,31 +6734,17 @@ document.addEventListener('click', function (e) {
        function). Only then does the waiver record, and the
        redirect fires exactly as before. Like the rest of the
        site this fails closed: no confirmed check, no start. */
-    /* CONNECT_QS_URL_2026_11_12 (owner, Nov 12, 2026): device-aware
-       QuickSupport destination — see the CONNECT_REDIRECT comment at
-       the redirect below. iPhone/iPad (including iPadOS 13+, which
-       reports as MacIntel with touch points) gets the App Store
-       QuickSupport app; Android gets the Play Store QuickSupport app;
-       Mac gets the direct QuickSupport .dmg; Windows and everything
-       else gets the direct QuickSupport .exe. All four are
-       TeamViewer's official sources, verified live Nov 12, 2026
-       (download.teamviewer.com resolves to the QuickSupport binary;
-       both store pages return 200). No ID is ever pre-filled. */
+    /* CONNECT_QS_BARE_LINK_2026_11_13 (owner, Nov 13, 2026 —
+       REPLACES the Nov 12 CONNECT_QS_URL device-aware routing):
+       the guest destination is now the bare
+       https://quicksupport.me — the guest lands there and
+       Austin gives them the session code himself at
+       appointment time. A session-specific link must NEVER
+       be baked into the page: it expires in 24 hours (verified from Austin's own session screen,
+       Nov 13, 2026) and would be dead the next day. No code
+       and no session link is ever pre-filled. */
     function quickSupportUrl() {
-      try {
-        var ua = navigator.userAgent || '';
-        var platform = navigator.platform || '';
-        if (/iPad|iPhone|iPod/.test(ua) || (platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
-          return 'https://apps.apple.com/us/app/teamviewer-quicksupport/id661649585';
-        }
-        if (/Android/.test(ua)) {
-          return 'https://play.google.com/store/apps/details?id=com.teamviewer.quicksupport.market';
-        }
-        if (/Mac/.test(platform) || /Macintosh/.test(ua)) {
-          return 'https://download.teamviewer.com/download/TeamViewerQS.dmg';
-        }
-      } catch (e) {}
-      return 'https://download.teamviewer.com/download/TeamViewerQS.exe';
+      return 'https://quicksupport.me';
     }
     /* Exposed for the staged Playwright checks (v132): the guest
        redirect itself is the only production caller. */
@@ -6775,25 +6761,23 @@ document.addEventListener('click', function (e) {
       }, function (j) {
         if (j && j.ok) {
           if (wvBlock) wvBlock.hidden = true;
-          /* CONNECT_REDIRECT_2026_11_12 (owner, Nov 12, 2026 — REPLACES
-             the Nov 11 CONNECT_REDIRECT): the Nov 11 destination was
-             bare https://start.teamviewer.com — TeamViewer's own
-             session-start page for the FULL TeamViewer client, NOT
-             the QuickSupport download. On a device with the full app
-             installed it opened that app, which is not what this page
-             promises ("a small helper runs just for the session and
-             is gone when the session ends"). The guest destination is
-             now the real QuickSupport download, picked by device by
-             quickSupportUrl() above — App Store on iPhone/iPad, Play
-             Store on Android, the direct download.teamviewer.com
-             QuickSupport file on a Windows/Mac computer. One tap
-             lands on the QuickSupport run, not on the full-client
-             download. The flow after the button is unchanged: the
-             guest runs QuickSupport and reads THEIR OWN ID to the
-             associate, who enters it in TeamViewer. No ID is ever
-             pre-filled and no private ID appears in any guest-facing
-             link. The portal ATRG Remote "Open TeamViewer" button is
-             NOT touched — that is the associate side, where the full
+          /* CONNECT_REDIRECT_2026_11_13 (owner, Nov 13, 2026 — REPLACES
+             the Nov 12 CONNECT_REDIRECT): the guest destination is
+             now the bare https://quicksupport.me, picked by
+             quickSupportUrl() above. The guest lands there and
+             Austin gives them the session code himself at
+             appointment time. The Nov 12 device-aware download
+             routing (App Store / Play Store / direct .dmg / .exe)
+             is gone: the bare link is the stable destination, and
+             a session-specific link must never be baked into the
+             page — it expires in 24 hours. (History: the Nov 11
+             destination was bare https://start.teamviewer.com,
+             the full-client page, not QuickSupport.) The flow after the button is unchanged: the guest enters
+             the code Austin gives them and joins his session. No
+             code and no session link is ever pre-filled and no
+             private ID appears in any guest-facing link. The
+             portal ATRG Remote "Open TeamViewer" button is NOT
+             touched — that is the associate side, where the full
              app is correct. */
           window.location.href = quickSupportUrl();
         } else {
