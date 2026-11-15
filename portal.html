@@ -242,6 +242,10 @@
         <button class="portal-tab" id="portal-tab-customers" type="button" role="tab" data-tab="customers">
           <i class="fas fa-users"></i> Guest
         </button>
+        <!-- LEADS_2026_11_15 (Austin, Nov 15, 2026): a Leads button in the Guest group, directly after Guest — people who reached out but are not guests yet (a Google Voice call, a walk-in, a referral) get tracked here until they book or go cold, instead of living in someone's head. Panel: portal-panel-leads, loader loadLeads in portal.js. Visible to every staff tier that sees the Guest group, same as the Guest button. -->
+        <button class="portal-tab" id="portal-tab-leads" type="button" role="tab" data-tab="leads">
+          <i class="fas fa-user-plus"></i> Leads <span class="portal-count" id="portal-count-leads" hidden></span>
+        </button>
         <!-- GUEST_CHAT_2026_11_08 (Austin, Nov 8, 2026): "where is that customer — shouldn't there be like a guest chat [beside] team chat." A Guest Chat button in the Guest group, directly after Guest: every customer conversation in one list — repair threads and the General conversation from the account's Send us a message — readable and answerable here. Panel: portal-panel-guestchat, loader loadGuestChat in portal.js. fa-comments belongs to Team Chat, so this one carries fa-comment-dots. -->
         <button class="portal-tab" id="portal-tab-guestchat" type="button" role="tab" data-tab="guestchat">
           <i class="fas fa-comment-dots"></i> Guest Chat <span class="portal-count" id="portal-count-guestchat" hidden></span>
@@ -929,6 +933,42 @@
         <p class="portal-muted portal-small">Delete removes the guest account only, and asks you to confirm first. If a guest has tickets or orders linked, the delete is blocked and you will see a message.</p>
         <div id="portal-celebrations"></div>
         <div id="portal-customer-list"><p class="portal-muted">Loading guests&hellip;</p></div>
+      </div>
+
+      <!-- LEADS — LEADS_2026_11_15 (Austin, Nov 15, 2026): people who reached out but are not guests yet — a Google Voice call, a text, a walk-in, a referral — tracked here until they book or go cold. Rows live in public.leads (leads-table.sql, staged with this build). Every staff tier that sees the Guest group works leads; deletes sit with Admin and above, the portal's standing rule. No placeholder leads: the list starts empty and staff add real people with New lead. -->
+      <div class="portal-panel" id="portal-panel-leads" role="tabpanel" hidden>
+        <div class="portal-panel-head">
+          <h2 class="portal-h2">Leads</h2>
+          <button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="portal-leads-new">
+            <i class="fas fa-user-plus"></i> New lead
+          </button>
+          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="leads">
+            <i class="fas fa-rotate-right"></i> Refresh
+          </button>
+        </div>
+        <p class="portal-muted portal-small">People who reached out but are not guests yet. Add them when they call, text, walk in, or get referred, and follow up from here until they book or go cold.</p>
+        <!-- LEADS_2026_11_15: the add form. Name, phone, and what they need are required; how they reached us and notes are optional. Wired in portal.js (wireLeadForm). -->
+        <div id="portal-leads-form" hidden>
+          <div class="portal-card">
+            <p class="portal-card-title">New lead</p>
+            <div class="portal-field"><label for="portal-lead-name">Name</label>
+              <input type="text" id="portal-lead-name" placeholder="Their name" autocomplete="off" /></div>
+            <div class="portal-field"><label for="portal-lead-phone">Phone</label>
+              <input type="tel" id="portal-lead-phone" placeholder="(937) 555-0100" autocomplete="off" /></div>
+            <div class="portal-field"><label for="portal-lead-need">What they need</label>
+              <textarea id="portal-lead-need" rows="3" placeholder="What they told us — device, problem, anything they asked for"></textarea></div>
+            <div class="portal-field"><label for="portal-lead-source">How did they reach us?</label>
+              <select id="portal-lead-source"><option value="">Not sure</option><option value="Google Voice">Google Voice</option><option value="Walk-in">Walk-in</option><option value="Referral">Referral</option><option value="Website">Website</option><option value="Other">Other</option></select></div>
+            <div class="portal-field"><label for="portal-lead-notes">Notes</label>
+              <textarea id="portal-lead-notes" rows="2" placeholder="Anything else worth remembering"></textarea></div>
+            <div class="portal-status-row">
+              <button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="portal-lead-save">Save lead</button>
+              <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="portal-lead-cancel">Cancel</button>
+              <span class="portal-muted portal-small" id="portal-lead-msg"></span></div>
+            <p class="portal-error" id="portal-lead-error" hidden></p>
+          </div>
+        </div>
+        <div id="portal-leads-list"><p class="portal-muted">Loading leads&hellip;</p></div>
       </div>
 
       <!-- ATR ONE MEMBERS (PORTAL_ATRONE_MEMBERS_2026_11_02): member list; memberships are added from the ticket drawer. PORTAL_MEMBERS_EDIT_2026_11_02 (Austin, Nov 2, 2026): rows carry a status dot (green = active / good standing, red = off) and tapping a member opens its editor right here — the owner turns the membership off or on and can correct the tier; an associate's change is submitted for owner approval in Requests. -->

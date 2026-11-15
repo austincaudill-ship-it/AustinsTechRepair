@@ -265,6 +265,9 @@
        * request statuses (Approved / Denied) and for the Rework /
        * Warranty ticket status (calm teal — portal.css .portal-st-rework). */
       approved: 'portal-st-ready', denied: 'portal-st-rejected',
+      /* LEADS_2026_11_15: badge colors for the lead statuses —
+       * Booked is a win, Lost is closed out. */
+      booked: 'portal-st-ready', lost: 'portal-st-rejected',
       reworkwarranty: 'portal-st-rework',
       cancelled: 'portal-st-cancelled', rejected: 'portal-st-rejected', closed: 'portal-st-closed',
       draft: 'portal-st-draft'
@@ -314,7 +317,7 @@
   var state = {
     user: null,
     profile: null,
-    loaded: { tickets: false, applications: false, investors: false, feedback: false, customers: false, members: false, inventory: false, financials: false, associateaccounts: false, warranty: false }, /* ASSOCIATE_ACCOUNTS_2026_11_03: one loaded flag for the merged panel (was 'associates' + the Account Controls loads); WARRANTY_PORTAL_2026_11_03: 'warranty' flag for the Warranty panel */
+    loaded: { tickets: false, applications: false, investors: false, feedback: false, customers: false, members: false, inventory: false, financials: false, associateaccounts: false, warranty: false, leads: false }, /* ASSOCIATE_ACCOUNTS_2026_11_03: one loaded flag for the merged panel (was 'associates' + the Account Controls loads); WARRANTY_PORTAL_2026_11_03: 'warranty' flag for the Warranty panel; LEADS_2026_11_15: 'leads' flag for the Leads panel */
     customersCache: [], inventoryCache: []
   };
 
@@ -1672,6 +1675,10 @@
     /* WARRANTY_PORTAL_2026_11_03: the Warranty panel (Guest group) —
      * warranty requests from the website form, worked by all staff. */
     warranty: loadWarrantyRequests,
+    /* LEADS_2026_11_15: the Leads panel (Guest group, directly
+     * after Guest) — people who reached out but are not guests
+     * yet, worked by all staff. */
+    leads: loadLeads,
     /* PORTAL_SETUP_2026_11_04: the Admin Setup panel — custom buttons
      * from templates plus the printers & devices registry. */
     setup: loadSetup,
@@ -1724,7 +1731,7 @@
     var tabs = document.querySelectorAll('.portal-tab');
     tabs.forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === name); });
     /* PASS10_2026_11_04: 'tracking' (the Live Tracking panel) hides and shows with the rest too */
-    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'tracking', 'documents', 'financials', 'payroll', 'mileage', 'teamchat', 'guestchat', 'associateaccounts', 'warranty', 'setup', 'home', 'virtual'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too; ASSOCIATE_ACCOUNTS_2026_11_03: 'associateaccounts' hides and shows with the rest too (it absorbed ACCOUNT_CONTROLS_2026_11_03's 'accountcontrols' and the roster's 'associates'); WARRANTY_PORTAL_2026_11_03: 'warranty' hides and shows with the rest too; PORTAL_SETUP_2026_11_04: 'setup' hides and shows with the rest too; PORTAL_HOME_2026_11_09: 'home' hides and shows with the rest too; QR_FIX_PASS_2026_11_05: 'scanin' is GONE from this list — the scanner is a popup now, there is no scanin panel to hide or show */
+    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'leads', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'tracking', 'documents', 'financials', 'payroll', 'mileage', 'teamchat', 'guestchat', 'associateaccounts', 'warranty', 'setup', 'home', 'virtual'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too; ASSOCIATE_ACCOUNTS_2026_11_03: 'associateaccounts' hides and shows with the rest too (it absorbed ACCOUNT_CONTROLS_2026_11_03's 'accountcontrols' and the roster's 'associates'); WARRANTY_PORTAL_2026_11_03: 'warranty' hides and shows with the rest too; PORTAL_SETUP_2026_11_04: 'setup' hides and shows with the rest too; PORTAL_HOME_2026_11_09: 'home' hides and shows with the rest too; LEADS_2026_11_15: 'leads' hides and shows with the rest too; QR_FIX_PASS_2026_11_05: 'scanin' is GONE from this list — the scanner is a popup now, there is no scanin panel to hide or show */
       $('portal-panel-' + n).hidden = n !== name;
     });
     closeDrawer();
@@ -7859,6 +7866,236 @@ function loadTicketThread(client, ticketId) {
           say('Claim saved, but the ticket could not be flipped — open it and set Rework / Warranty plus the Warranty exemption.');
         });
       }).catch(function () { say('Couldn’t save the claim — try again.'); });
+    });
+  }
+
+  /* ================= LEADS =================
+   * LEADS_2026_11_15 (Austin, Nov 15, 2026): people who reached
+   * out but are not guests yet — a Google Voice call, a text, a
+   * walk-in, a referral — tracked here until they book or go cold.
+   * Rows live in public.leads (leads-table.sql, staged with this
+   * build; run it before this panel can save anything). No tier
+   * gate: every staff tier that sees the Guest group works leads,
+   * the same as Warranty. Deletes are Admin-or-above only, the
+   * portal's standing rule (the handler re-checks the tier itself,
+   * and the button only renders for Admin-or-above).
+   *
+   * Status values are the panel's canonical set below. The stored
+   * value is matched case-insensitively and saving writes the
+   * canonical value, so the panel behaves the same whichever shape
+   * the row arrived in. The list starts empty — no placeholder
+   * leads; staff add real people with New lead. */
+  var LEAD_STATUSES = ['New', 'Contacted', 'Booked', 'Lost'];
+  function leadStatusOf(r) {
+    var s = String((r && r.status) || '').toLowerCase();
+    for (var i = 0; i < LEAD_STATUSES.length; i++) {
+      if (LEAD_STATUSES[i].toLowerCase() === s) return LEAD_STATUSES[i];
+    }
+    return 'New';
+  }
+
+  /* LEADS_2026_11_15: the rows currently on screen, and the
+   * once-only wiring flag for the New lead form. */
+  var leadRowsCache = [];
+  var leadFormWired = false;
+
+  function leadRowById(id) {
+    for (var i = 0; i < leadRowsCache.length; i++) {
+      if (String(leadRowsCache[i].id) === String(id)) return leadRowsCache[i];
+    }
+    return null;
+  }
+
+  function leadSay(id, text) {
+    var list = $('portal-leads-list');
+    var m = list ? list.querySelector('[data-lead-msg="' + id + '"]') : null;
+    if (m) m.textContent = text;
+  }
+
+  function loadLeads(force) {
+    var list = $('portal-leads-list');
+    if (!list) return;
+    wireLeadForm();
+    if (!force) list.innerHTML = '<p class="portal-muted">Loading leads&hellip;</p>';
+    withClient(function (client) {
+      if (!client) { listError(list, 'leads'); return; }
+      client.from('leads').select('*').order('created_at', { ascending: false }).limit(200)
+        .then(function (res) {
+          if (res.error) { listError(list, 'leads'); return; }
+          state.loaded.leads = true;
+          renderLeads(res.data || []);
+        })
+        .catch(function () { listError(list, 'leads'); });
+    });
+  }
+
+  function renderLeads(rows) {
+    var list = $('portal-leads-list');
+    leadRowsCache = rows;
+    setCount('portal-count-leads', rows.filter(function (r) { return leadStatusOf(r) === 'New'; }).length);
+    if (!rows.length) { emptyState(list, 'No leads yet. When someone reaches out — a call, a text, a walk-in, a referral — add them with New lead and follow up from here.'); return; }
+    list.innerHTML = rows.map(function (r) {
+      var st = leadStatusOf(r);
+      return '<article class="portal-card">' +
+        '<div class="portal-card-top"><p class="portal-card-title">' + esc(r.name || 'Lead') + '</p><span data-lead-badge="' + esc(r.id) + '">' + badge(st) + '</span></div>' +
+        (trim(r.phone) ? '<p class="portal-card-meta"><i class="fas fa-phone"></i> ' + esc(r.phone) + '</p>' : '') +
+        (trim(r.source) ? '<p class="portal-card-meta"><span class="portal-badge portal-st-reviewed">' + esc(r.source) + '</span></p>' : '') +
+        (trim(r.need) ? '<p class="portal-card-issue">' + esc(r.need).replace(/\n/g, '<br>') + '</p>' : '') +
+        (trim(r.notes) ? '<p class="portal-card-meta">' + esc(r.notes).replace(/\n/g, '<br>') + '</p>' : '') +
+        '<p class="portal-card-meta">First heard from ' + esc(fmtDateTime(r.created_at)) + '</p>' +
+        '<div class="portal-status-row lead-status-row"><label class="portal-small" for="portal-lead-status-' + esc(r.id) + '">Status</label>' +
+        '<select id="portal-lead-status-' + esc(r.id) + '" data-lead-status="' + esc(r.id) + '" aria-label="Lead status">' +
+        statusOptions(LEAD_STATUSES, st) + '</select>' +
+        '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-lead-save="' + esc(r.id) + '">Save status</button>' +
+        /* LEADS_2026_11_15: Delete on every card, rendered for
+         * Admin-or-above only (the panel is worked by all staff;
+         * leadDelete re-checks the tier on every tap). */
+        (isAdminOrAbove() ? '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-lead-del="' + esc(r.id) + '"><i class="fas fa-trash"></i> Delete</button>' : '') +
+        '<span class="portal-muted portal-small" data-lead-msg="' + esc(r.id) + '"></span></div>' +
+        '</article>';
+    }).join('');
+    list.querySelectorAll('[data-lead-save]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = btn.getAttribute('data-lead-save');
+        var sel = list.querySelector('[data-lead-status="' + id + '"]');
+        if (!sel) return;
+        var next = sel.value;
+        leadSay(id, 'Saving…');
+        withClient(function (client) {
+          if (!client) { leadSay(id, 'Couldn’t save — try again.'); return; }
+          client.from('leads').update({ status: next, updated_at: new Date().toISOString() }).eq('id', id).then(function (res) {
+            if (res.error) { leadSay(id, 'Couldn’t save — try again.'); return; }
+            leadSay(id, 'Saved.');
+            var b = list.querySelector('[data-lead-badge="' + id + '"]');
+            if (b) b.innerHTML = badge(next);
+            state.loaded.leads = false;
+          }).catch(function () { leadSay(id, 'Couldn’t save — try again.'); });
+        });
+      });
+    });
+    /* LEADS_2026_11_15: card Delete (Admin-or-above). */
+    list.querySelectorAll('[data-lead-del]').forEach(function (btn) {
+      btn.addEventListener('click', function () { leadDelete(btn); });
+    });
+  }
+
+  /* LEADS_2026_11_15: the card Delete handler. First tap arms the
+   * button (the portal's confirm-arm shape, as in setupDelete) and
+   * names the lead in the card's own message line, so the wrong
+   * card is never deleted by accident; only the second tap runs
+   * the delete. The delete chains .select('id') so a delete the
+   * database refuses — no DELETE policy exists until
+   * leads-table.sql runs — reads as zero rows back and is treated
+   * as a failure: the button resets and the card stays on screen
+   * with the error, it is never silently dropped. On success the
+   * row leaves the cache, the list re-renders without the card,
+   * the New count is refreshed, and a one-line "Deleted." note
+   * sits at the top of the list until the next render. */
+  function leadDelete(btn) {
+    var id = btn.getAttribute('data-lead-del');
+    var list = $('portal-leads-list');
+    if (!isAdminOrAbove()) { leadSay(id, 'Deletes sit with Admin and above.'); return; }
+    if (btn.getAttribute('data-confirm') !== '1') {
+      var row = leadRowById(id);
+      var who = row ? (trim(row.name) || 'Lead') : 'Lead';
+      btn.setAttribute('data-confirm', '1');
+      btn.innerHTML = '<i class="fas fa-trash"></i> Confirm delete?';
+      leadSay(id, 'Delete ' + who + '’s lead? Tap Confirm delete — this cannot be undone.');
+      return;
+    }
+    btn.disabled = true;
+    leadSay(id, 'Deleting…');
+    var fail = function () {
+      btn.disabled = false;
+      btn.removeAttribute('data-confirm');
+      btn.innerHTML = '<i class="fas fa-trash"></i> Delete';
+      leadSay(id, 'Couldn’t delete — try again.');
+    };
+    withClient(function (client) {
+      if (!client) { fail(); return; }
+      client.from('leads').delete().eq('id', id).select('id').then(function (res) {
+        if (res.error || !res.data || !res.data.length) { fail(); return; }
+        leadRowsCache = leadRowsCache.filter(function (r) { return String(r.id) !== String(id); });
+        state.loaded.leads = false;
+        renderLeads(leadRowsCache);
+        var l2 = $('portal-leads-list');
+        if (l2) l2.insertAdjacentHTML('afterbegin', '<p class="portal-muted portal-small">Deleted.</p>');
+      }).catch(fail);
+    });
+  }
+
+  /* LEADS_2026_11_15: the New lead form. Name, phone, and what
+   * they need are required; how they reached us and notes are
+   * optional. Saving writes status 'New' and the first-seen date
+   * comes from the row's created_at. On success the form clears
+   * and closes and the new card lands at the top of the list. */
+  function wireLeadForm() {
+    if (leadFormWired) return;
+    var btn = $('portal-leads-new');
+    if (!btn) return;
+    leadFormWired = true;
+    btn.addEventListener('click', function () {
+      var wrap = $('portal-leads-form');
+      if (!wrap) return;
+      wrap.hidden = !wrap.hidden;
+      if (!wrap.hidden) { var nm = $('portal-lead-name'); if (nm) nm.focus(); }
+    });
+    var cancel = $('portal-lead-cancel');
+    if (cancel) cancel.addEventListener('click', function () {
+      var wrap = $('portal-leads-form');
+      if (wrap) wrap.hidden = true;
+    });
+    var save = $('portal-lead-save');
+    if (save) save.addEventListener('click', leadSaveNew);
+  }
+
+  function leadSaveNew() {
+    var err = $('portal-lead-error');
+    var msg = $('portal-lead-msg');
+    var clearErr = function () { if (err) { err.hidden = true; err.textContent = ''; } };
+    clearErr();
+    if (msg) msg.textContent = '';
+    var name = trim($('portal-lead-name') ? $('portal-lead-name').value : '');
+    var phone = trim($('portal-lead-phone') ? $('portal-lead-phone').value : '');
+    var need = trim($('portal-lead-need') ? $('portal-lead-need').value : '');
+    var source = trim($('portal-lead-source') ? $('portal-lead-source').value : '');
+    var notes = trim($('portal-lead-notes') ? $('portal-lead-notes').value : '');
+    if (!name || !phone || !need) {
+      if (err) { err.textContent = 'Name, phone, and what they need are all required.'; err.hidden = false; }
+      return;
+    }
+    var btn = $('portal-lead-save');
+    if (btn) btn.disabled = true;
+    if (msg) msg.textContent = 'Saving…';
+    withClient(function (client) {
+      if (!client) {
+        if (btn) btn.disabled = false;
+        if (err) { err.textContent = 'Couldn’t save — try again.'; err.hidden = false; }
+        return;
+      }
+      client.from('leads').insert({
+        name: name, phone: phone, need: need,
+        source: source || null, notes: notes || null, status: 'New'
+      }).select().then(function (res) {
+        if (btn) btn.disabled = false;
+        if (res.error || !res.data || !res.data.length) {
+          if (err) { err.textContent = 'Couldn’t save — try again.'; err.hidden = false; }
+          if (msg) msg.textContent = '';
+          return;
+        }
+        ['portal-lead-name', 'portal-lead-phone', 'portal-lead-need', 'portal-lead-source', 'portal-lead-notes'].forEach(function (id) {
+          var el = $(id); if (el) el.value = '';
+        });
+        var wrap = $('portal-leads-form');
+        if (wrap) wrap.hidden = true;
+        if (msg) msg.textContent = '';
+        state.loaded.leads = false;
+        loadLeads(true);
+      }).catch(function () {
+        if (btn) btn.disabled = false;
+        if (err) { err.textContent = 'Couldn’t save — try again.'; err.hidden = false; }
+        if (msg) msg.textContent = '';
+      });
     });
   }
 
@@ -20227,6 +20464,7 @@ function loadTicketThread(client, ticketId) {
   var BAR_SHORT_LABELS = {
     home: 'Home', checkin: 'New Request', scanin: 'Scan In', tickets: 'Queue',
     customers: 'Guest', guestchat: 'Guest Chat', members: 'Members', virtual: 'Virtual',
+    leads: 'Leads', /* LEADS_2026_11_15: thumb-bar short label for the Leads tab. */
     documents: 'Documents', warranty: 'Warranty', inventory: 'Inventory',
     links: 'Links', prices: 'Prices', guides: 'Guides', tracking: 'Tracking',
     teamchat: 'Team Chat', requests: 'Requests', timeclock: 'Time Clock',
