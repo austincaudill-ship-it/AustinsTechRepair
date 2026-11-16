@@ -97,7 +97,7 @@
      the time after, on the card they leave on file — guest $24.99
      first hour / $24.99 an hour, business $49.99 / $49.99 an hour.
      In person keeps its visit fee + hourly rate exactly as settled
-     (guest $15.99 + $24.99/hr, business $35.99 + $49.99/hr).
+     (guest $14.99 + $24.99/hr, business $35.99 + $49.99/hr).
      V146_AUDIT_2026_11_13: the old flat $15 / $25 wording is gone —
      the rates are the audience rates from the Nov 13, 2026 list. */
   var VIRTUAL_FEE_APPLIES = false;
@@ -456,7 +456,7 @@
        V146_AUDIT_2026_11_13: the first hour is the audience rate —
        $24.99 guest, $49.99 business — never a flat $25. */
     var ooPayRate = (opts && opts.business) ? 49.99 : 24.99;
-    var ooPayFee = (opts && opts.business) ? 35.99 : 15.99;
+    var ooPayFee = (opts && opts.business) ? 35.99 : 14.99;
     if (opts && opts.virtual) {
       panel.innerHTML =
         '<h4>Your virtual session is booked</h4>' +
@@ -520,7 +520,7 @@
        pattern only: confirm the booking and text the payment link.
        The booked time is settled at the visit.
        V146_AUDIT_2026_11_13: the fee and the hourly rate are the
-       audience rates — guest $15.99 + $24.99/hr, business $35.99 +
+       audience rates — guest $14.99 + $24.99/hr, business $35.99 +
        $49.99/hr — never a flat $15 / $25. */
     if (isOneOnOne) {
       panel.innerHTML =
@@ -873,7 +873,7 @@
          has no visit fee at all — the first hour is the session's
          price, collected at connect time through the pay step, not
          a fee due at scheduling.) Rates are the audience rates
-         (guest $15.99 / $24.99, business $35.99 / $49.99). */
+         (guest $14.99 / $24.99, business $35.99 / $49.99). */
       /* A one-on-one visit has no repair work to authorize, so the
          work-order authorization and the Repair Authorization signature
          are not gates in this mode (their rows are hidden too). */
@@ -924,14 +924,14 @@
         var brandModel = [guidedEarly.brand, guidedEarly.model].filter(Boolean).join(' ');
         var ooHours = guidedEarly.ooHours || 1;
         /* V146_AUDIT_2026_11_13: the one-on-one price is the audience
-           rate, not a hardcoded $25 — guest $24.99/hr + $15.99 visit
+           rate, not a hardcoded $25 — guest $24.99/hr + $14.99 visit
            fee, business $49.99/hr + $35.99 visit fee (settled Nov 13,
            2026). guidedEarly.business rides the booking contract from
            script.js (v145), so the ticket text and the staff alert
            carry the same rates the guest was shown. Amounts print with
            two decimals so 3 hours reads $74.97, never $74.7. */
         var ooRate = guidedEarly.business ? 49.99 : 24.99;
-        var ooFee = guidedEarly.business ? 35.99 : 15.99;
+        var ooFee = guidedEarly.business ? 35.99 : 14.99;
         var ooTime = ooHours * ooRate;
         if (isVirtual) {
           /* VIRTUAL_ONE_ON_ONE_2026_11_10: VIRTUAL leads the service

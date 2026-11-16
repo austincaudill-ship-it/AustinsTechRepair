@@ -354,7 +354,7 @@
       return repairState.year ? repairState.model + ' (' + repairState.year + ')' : repairState.model;
     }
     /* V145_ONEONONE_2499_2026_11_13 (owner, Nov 13, 2026 - settled
-       one-on-one rates: guest $24.99/hr + $15.99 visit fee, business
+       one-on-one rates: guest $24.99/hr + $14.99 visit fee, business
        $49.99/hr + $35.99 visit fee): the shared form serves BOTH
        audiences, so every one-on-one price in this flow reads the
        audience rate from repairState.business - never a hardcoded
@@ -362,7 +362,7 @@
        computations at 25 dollars an hour (summary + ooTime); this pass fixes
        those and every other one-on-one computation in the form. */
     function ooHourRate() { return repairState.business ? 49.99 : 24.99; }
-    function ooVisitFee() { return repairState.business ? 35.99 : 15.99; }
+    function ooVisitFee() { return repairState.business ? 35.99 : 14.99; }
     function rfRenderSummary() {
       rfSet('rf-sum-device', repairState.device || 'Not picked yet');
       rfSet('rf-sum-brand', repairState.brand || '\u2014');
@@ -517,7 +517,7 @@
          missing. Their setup work (printer setup, router & mesh setup,
          Wi-Fi help) is one-on-one service work — it lives in the
          device-filtered topic list (data-devices in index.html, TOPICS
-         in the Services flow), priced pure at $24.99/hr with the $15.99
+         in the Services flow), priced pure at $24.99/hr with the $14.99
          visit fee as its own line, exactly like every other topic.
          These fallback lists carry only the custom-quote work and the
          truthful type lists — no part prices exist for these devices
@@ -1119,11 +1119,11 @@
          price after diagnostics, final price may be smaller or
          larger than the estimate. */
       /* V146_AUDIT_2026_11_13: the fee note follows the settled list —
-         dispatch and diagnostics are separate. Guest $15.99 + $34.99
+         dispatch and diagnostics are separate. Guest $14.99 + $34.99
          diagnostics; business $35.99 + $64.99. */
       var feeNote = repairState.business
         ? 'A separate visit fee applies to the visit &mdash; $35.99 &mdash; plus diagnostics of $64.99 if your device needs a full diagnosis &mdash; due at booking and non-refundable. Estimates are always free. ATR One members pay no visit fee or diagnostics for devices covered under their subscription.'
-        : 'A separate visit fee applies to the visit &mdash; $15.99 &mdash; plus diagnostics of $34.99 if your device needs a full diagnosis &mdash; due at booking and non-refundable. Estimates are always free. ATR One members pay no visit fee or diagnostics for devices covered under their subscription.';
+        : 'A separate visit fee applies to the visit &mdash; $14.99 &mdash; plus diagnostics of $34.99 if your device needs a full diagnosis &mdash; due at booking and non-refundable. Estimates are always free. ATR One members pay no visit fee or diagnostics for devices covered under their subscription.';
       var t = rfEstimateTotals();
       if (lbl) lbl.textContent = 'Your estimated repair price';
       if (t.any && t.unpriced === 0) {
@@ -1309,8 +1309,8 @@
        three forms carries its own. Virtual has no trip and no
        scheduling urgency: its box says the virtual one-on-one is
        $24.99, due at the time of the connect. In-person one-on-one
-       carries the $15.99 visit fee + $24.99 collected upon arrival, and
-       Repair keeps the original wording (visit fee $15.99 + diagnostics
+       carries the $14.99 visit fee + $24.99 collected upon arrival, and
+       Repair keeps the original wording (visit fee $14.99 + diagnostics
        $34.99 for guests, $35.99 + $64.99 for business). */
     function applyVirtualFormEffects() {
       var g = window.atrGuidedSelection || {};
@@ -1386,7 +1386,7 @@
        eight service bubbles and two even hour buttons (1 hour /
        2 hours, priced pure at the audience rate - guest $24.99/hr,
        business $49.99/hr; V145_ONEONONE_2499_2026_11_13). The visit
-       fee (guest $15.99, business $35.99) stays its own separate
+       fee (guest $14.99, business $35.99) stays its own separate
        line in the summary and the pay step. The step heading
        "What service does it need?" is universal — it never flips. */
     var pendingOneOnOne = false;
@@ -1410,7 +1410,7 @@
       if (lines) {
         if (repairState.ooPlace === 'virtual') {
           /* VIRTUAL_ONE_ON_ONE_2026_11_10 (owner ruling, Nov 10,
-             2026): virtual skips the $15.99 visit fee — the total is
+             2026): virtual skips the $14.99 visit fee — the total is
              the time alone, the first hour paid at booking. */
           lines.innerHTML =
             (repairState.serviceKind ? (escapeHtml(repairState.serviceKind) + ' for your ' + escapeHtml([repairState.brand, repairState.model].filter(Boolean).join(' ') || repairState.device || 'device') + '<br>') : '') +
@@ -1488,13 +1488,13 @@
        THREE_FORMS_2026_11_11 (Austin, Nov 11, 2026): there are three
        forms — Repair, One-on-One in person, One-on-One virtual — and
        each carries its own fee acknowledgment in the owner's words.
-       In person: the $15.99 visit fee, and the $24.99 one-on-one collected
+       In person: the $14.99 visit fee, and the $24.99 one-on-one collected
        upon arrival. Virtual: no trip, no scheduling urgency — the
        $24.99 is collected when the guest clicks the Connect link (a pay
        wall: pay to connect), and it is non-refundable, because it
        pays for our time and effort even if the issue is not solved. */
     var srDispatchOrigHtml = null;
-    var SR_DISPATCH_OO_HTML = 'I understand the <strong>visit fee is $15.99</strong> and my <strong>one-on-one is $24.99</strong>, collected upon arrival. *';
+    var SR_DISPATCH_OO_HTML = 'I understand the <strong>visit fee is $14.99</strong> and my <strong>one-on-one is $24.99</strong>, collected upon arrival. *';
     var SR_DISPATCH_VIRTUAL_HTML = 'I understand the <strong>virtual one-on-one is $24.99</strong>, due at the time of the connect. It is <strong>non-refundable</strong> — it pays for our time and effort, even if the issue is not solved. *';
     /* ATRONE_NO_FEE_2026_11_11 (Austin, Nov 11, 2026, found live on
        his phone): the if-then is his — if the guest answers Yes, this
@@ -1506,7 +1506,7 @@
        members already skip that pay wall at the Connect page. */
     var SR_DISPATCH_OO_MEMBER_HTML = 'I understand my <strong>one-on-one is $24.99</strong>, collected upon arrival. My device is covered by ATR One, so there is <strong>no visit fee</strong>. *';
     /* V145_ONEONONE_2499_2026_11_13: the business faces of the same
-       three one-on-one acknowledgments - guest $24.99 + $15.99,
+       three one-on-one acknowledgments - guest $24.99 + $14.99,
        business $49.99 + $35.99. Repair-mode wording is untouched. */
     var SR_DISPATCH_OO_BIZ_HTML = 'I understand the <strong>visit fee is $35.99</strong> and my <strong>one-on-one is $49.99</strong>, collected upon arrival. *';
     var SR_DISPATCH_VIRTUAL_BIZ_HTML = 'I understand the <strong>virtual one-on-one is $49.99</strong>, due at the time of the connect. It is <strong>non-refundable</strong> — it pays for our time and effort, even if the issue is not solved. *';
@@ -1515,10 +1515,10 @@
     /* V146_AUDIT_2026_11_13: the repair acknowledgment follows the
        settled fee list — dispatch and diagnostics are separate line
        items now, not the old $15-known / $35-diagnosis split. Guest
-       $15.99 + $34.99 diagnostics; business $35.99 + $64.99. The
+       $14.99 + $34.99 diagnostics; business $35.99 + $64.99. The
        business variant is new: Repair mode never had one, so a
        business repair booker used to see the guest numbers. */
-    var SR_DISPATCH_REPAIR_FALLBACK_HTML = 'I understand the <strong>visit fee is $15.99</strong> &mdash; and <strong>diagnostics is $34.99</strong> if my device needs a full diagnosis &mdash; covers the trip to me, is due at scheduling, and is <strong>non-refundable</strong>. *';
+    var SR_DISPATCH_REPAIR_FALLBACK_HTML = 'I understand the <strong>visit fee is $14.99</strong> &mdash; and <strong>diagnostics is $34.99</strong> if my device needs a full diagnosis &mdash; covers the trip to me, is due at scheduling, and is <strong>non-refundable</strong>. *';
     var SR_DISPATCH_REPAIR_BIZ_HTML = 'I understand the <strong>visit fee is $35.99</strong> &mdash; and <strong>diagnostics is $64.99</strong> if my device needs a full diagnosis &mdash; covers the trip to me, is due at scheduling, and is <strong>non-refundable</strong>. *';
     function srDispatchAckHtml(virtual, mode) {
       var member = repairState.atrOne === 'Yes';
@@ -1594,7 +1594,7 @@
          Any answer already typed is cleared, so a repair answer can
          never ride along on a service ticket. The problem box asks
          the one-on-one question instead, and the fee acknowledgment
-         carries the in-person one-on-one wording (the $15.99 visit fee
+         carries the in-person one-on-one wording (the $14.99 visit fee
          and the $24.99 one-on-one collected upon arrival — never the
          diagnostics fee). The virtual wording is applied at step 4
          by applyVirtualFormEffects. Repair mode restores every field
@@ -3288,7 +3288,7 @@
       }
       var price = PRICES[brand][repair];
       if (amount) amount.textContent = 'From $' + price;
-      if (note) note.textContent = REPAIR_LABELS[repair] + ' for ' + PRICES[brand].label + ' — starting price, parts and labor included. Your exact price is confirmed for your exact model after diagnostics. A separate visit fee applies to the visit — $15.99 for guests, $35.99 for business — plus diagnostics of $34.99 for guests, $64.99 for business, if your device needs a full diagnosis — due at booking, non-refundable.';
+      if (note) note.textContent = REPAIR_LABELS[repair] + ' for ' + PRICES[brand].label + ' — starting price, parts and labor included. Your exact price is confirmed for your exact model after diagnostics. A separate visit fee applies to the visit — $14.99 for guests, $35.99 for business — plus diagnostics of $34.99 for guests, $64.99 for business, if your device needs a full diagnosis — due at booking, non-refundable.';
       if (result) { result.hidden = false; result.classList.add('show'); }
       // Store the quote for the repair form
       try {
@@ -6237,13 +6237,13 @@ if ("serviceWorker" in navigator) {
     /* V146_AUDIT_2026_11_13: the fee note is a function, not a constant,
        so it reads the audience at the moment it is shown \u2014 the wizard
        can flip guest/business mid-session and the note follows. Rates
-       are the settled list: guest $15.99 + $34.99 diagnostics,
+       are the settled list: guest $14.99 + $34.99 diagnostics,
        business $35.99 + $64.99. */
     function feeNoteText() {
       var biz = document.body.classList.contains('aud-business');
       return biz
         ? 'A separate visit fee applies to the visit \u2014 $35.99 \u2014 plus diagnostics of $64.99 if your device needs a full diagnosis \u2014 due at booking and non-refundable. Estimates are always free. ATR One members pay no visit fee or diagnostics for devices covered under their subscription.'
-        : 'A separate visit fee applies to the visit \u2014 $15.99 \u2014 plus diagnostics of $34.99 if your device needs a full diagnosis \u2014 due at booking and non-refundable. Estimates are always free. ATR One members pay no visit fee or diagnostics for devices covered under their subscription.';
+        : 'A separate visit fee applies to the visit \u2014 $14.99 \u2014 plus diagnostics of $34.99 if your device needs a full diagnosis \u2014 due at booking and non-refundable. Estimates are always free. ATR One members pay no visit fee or diagnostics for devices covered under their subscription.';
     }
     /* COMPUTER_YEAR_2026_11_10 (owner, Nov 10, 2026): the same
        year list the booking form uses (BK_YEARS there) — computers
@@ -6591,7 +6591,7 @@ if ("serviceWorker" in navigator) {
 
     /* Mirrors the form's ooRender: time priced pure at the audience
        rate (guest $24.99/hr, business $49.99/hr), the visit fee
-       (guest $15.99, business $35.99) its own line, the total
+       (guest $14.99, business $35.99) its own line, the total
        their sum. V145_ONEONONE_2499_2026_11_13. */
     function renderOoSummary() {
       var st = ooPane.state;
@@ -6599,13 +6599,13 @@ if ("serviceWorker" in navigator) {
       /* V145_ONEONONE_2499_2026_11_13: this wizard lives in its own
          IIFE (repairState is not in scope here) and its pages adapt
          by body.aud-business, so the rate and fee read the body class
-         - guest $24.99/hr + $15.99, business $49.99/hr + $35.99.
+         - guest $24.99/hr + $14.99, business $49.99/hr + $35.99.
          The pane has no svc-oo DOM in the staged index.html, so this
          currently no-ops on null price/lines elements; the math is
          fixed anyway so it cannot go live wrong. */
       var biz = document.body.classList.contains('aud-business');
       var rate = biz ? 49.99 : 24.99;
-      var fee = biz ? 35.99 : 15.99;
+      var fee = biz ? 35.99 : 14.99;
       var time = h * rate;
       var priceEl = $('svc-oo-price');
       if (priceEl) priceEl.textContent = h ? ('$' + time) : 'Pick a time';
