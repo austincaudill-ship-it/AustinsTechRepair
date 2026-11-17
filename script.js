@@ -355,14 +355,14 @@
     }
     /* V145_ONEONONE_2499_2026_11_13 (owner, Nov 13, 2026 - settled
        one-on-one rates: guest $24.99/hr + $14.99 visit fee, business
-       $49.99/hr + $35.99 visit fee): the shared form serves BOTH
+       $49.99/hr + $34.99 visit fee): the shared form serves BOTH
        audiences, so every one-on-one price in this flow reads the
        audience rate from repairState.business - never a hardcoded
        guest number. The v143 sweep fixed the copy but left two
        computations at 25 dollars an hour (summary + ooTime); this pass fixes
        those and every other one-on-one computation in the form. */
     function ooHourRate() { return repairState.business ? 49.99 : 24.99; }
-    function ooVisitFee() { return repairState.business ? 35.99 : 14.99; }
+    function ooVisitFee() { return repairState.business ? 34.99 : 14.99; }
     function rfRenderSummary() {
       rfSet('rf-sum-device', repairState.device || 'Not picked yet');
       rfSet('rf-sum-brand', repairState.brand || '\u2014');
@@ -1120,9 +1120,9 @@
          larger than the estimate. */
       /* V146_AUDIT_2026_11_13: the fee note follows the settled list —
          dispatch and diagnostics are separate. Guest $14.99 + $34.99
-         diagnostics; business $35.99 + $64.99. */
+         diagnostics; business $34.99 + $64.99. */
       var feeNote = repairState.business
-        ? 'A separate visit fee applies to the visit &mdash; $35.99 &mdash; plus diagnostics of $64.99 if your device needs a full diagnosis &mdash; due at booking and non-refundable. Estimates are always free. ATR One members pay no visit fee or diagnostics for devices covered under their subscription.'
+        ? 'A separate visit fee applies to the visit &mdash; $34.99 &mdash; plus diagnostics of $64.99 if your device needs a full diagnosis &mdash; due at booking and non-refundable. Estimates are always free. ATR One members pay no visit fee or diagnostics for devices covered under their subscription.'
         : 'A separate visit fee applies to the visit &mdash; $14.99 &mdash; plus diagnostics of $34.99 if your device needs a full diagnosis &mdash; due at booking and non-refundable. Estimates are always free. ATR One members pay no visit fee or diagnostics for devices covered under their subscription.';
       var t = rfEstimateTotals();
       if (lbl) lbl.textContent = 'Your estimated repair price';
@@ -1311,7 +1311,7 @@
        $24.99, due at the time of the connect. In-person one-on-one
        carries the $14.99 visit fee + $24.99 collected upon arrival, and
        Repair keeps the original wording (visit fee $14.99 + diagnostics
-       $34.99 for guests, $35.99 + $64.99 for business). */
+       $34.99 for guests, $34.99 + $64.99 for business). */
     function applyVirtualFormEffects() {
       var g = window.atrGuidedSelection || {};
       var virtual = g.mode === 'oneonone' && g.ooPlace === 'virtual';
@@ -1386,7 +1386,7 @@
        eight service bubbles and two even hour buttons (1 hour /
        2 hours, priced pure at the audience rate - guest $24.99/hr,
        business $49.99/hr; V145_ONEONONE_2499_2026_11_13). The visit
-       fee (guest $14.99, business $35.99) stays its own separate
+       fee (guest $14.99, business $34.99) stays its own separate
        line in the summary and the pay step. The step heading
        "What service does it need?" is universal — it never flips. */
     var pendingOneOnOne = false;
@@ -1507,19 +1507,19 @@
     var SR_DISPATCH_OO_MEMBER_HTML = 'I understand my <strong>one-on-one is $24.99</strong>, collected upon arrival. My device is covered by ATR One, so there is <strong>no visit fee</strong>. *';
     /* V145_ONEONONE_2499_2026_11_13: the business faces of the same
        three one-on-one acknowledgments - guest $24.99 + $14.99,
-       business $49.99 + $35.99. Repair-mode wording is untouched. */
-    var SR_DISPATCH_OO_BIZ_HTML = 'I understand the <strong>visit fee is $35.99</strong> and my <strong>one-on-one is $49.99</strong>, collected upon arrival. *';
+       business $49.99 + $34.99. Repair-mode wording is untouched. */
+    var SR_DISPATCH_OO_BIZ_HTML = 'I understand the <strong>visit fee is $34.99</strong> and my <strong>one-on-one is $49.99</strong>, collected upon arrival. *';
     var SR_DISPATCH_VIRTUAL_BIZ_HTML = 'I understand the <strong>virtual one-on-one is $49.99</strong>, due at the time of the connect. It is <strong>non-refundable</strong> — it pays for our time and effort, even if the issue is not solved. *';
     var SR_DISPATCH_OO_MEMBER_BIZ_HTML = 'I understand my <strong>one-on-one is $49.99</strong>, collected upon arrival. My device is covered by ATR One, so there is <strong>no visit fee</strong>. *';
     var SR_DISPATCH_REPAIR_MEMBER_HTML = 'I understand my device is <strong>covered by ATR One</strong>, so there is <strong>no visit fee</strong> for this visit. *';
     /* V146_AUDIT_2026_11_13: the repair acknowledgment follows the
        settled fee list — dispatch and diagnostics are separate line
        items now, not the old $15-known / $35-diagnosis split. Guest
-       $14.99 + $34.99 diagnostics; business $35.99 + $64.99. The
+       $14.99 + $34.99 diagnostics; business $34.99 + $64.99. The
        business variant is new: Repair mode never had one, so a
        business repair booker used to see the guest numbers. */
     var SR_DISPATCH_REPAIR_FALLBACK_HTML = 'I understand the <strong>visit fee is $14.99</strong> &mdash; and <strong>diagnostics is $34.99</strong> if my device needs a full diagnosis &mdash; covers the trip to me, is due at scheduling, and is <strong>non-refundable</strong>. *';
-    var SR_DISPATCH_REPAIR_BIZ_HTML = 'I understand the <strong>visit fee is $35.99</strong> &mdash; and <strong>diagnostics is $64.99</strong> if my device needs a full diagnosis &mdash; covers the trip to me, is due at scheduling, and is <strong>non-refundable</strong>. *';
+    var SR_DISPATCH_REPAIR_BIZ_HTML = 'I understand the <strong>visit fee is $34.99</strong> &mdash; and <strong>diagnostics is $64.99</strong> if my device needs a full diagnosis &mdash; covers the trip to me, is due at scheduling, and is <strong>non-refundable</strong>. *';
     function srDispatchAckHtml(virtual, mode) {
       var member = repairState.atrOne === 'Yes';
       var biz = repairState.business;
@@ -3288,7 +3288,7 @@
       }
       var price = PRICES[brand][repair];
       if (amount) amount.textContent = 'From $' + price;
-      if (note) note.textContent = REPAIR_LABELS[repair] + ' for ' + PRICES[brand].label + ' — starting price, parts and labor included. Your exact price is confirmed for your exact model after diagnostics. A separate visit fee applies to the visit — $14.99 for guests, $35.99 for business — plus diagnostics of $34.99 for guests, $64.99 for business, if your device needs a full diagnosis — due at booking, non-refundable.';
+      if (note) note.textContent = REPAIR_LABELS[repair] + ' for ' + PRICES[brand].label + ' — starting price, parts and labor included. Your exact price is confirmed for your exact model after diagnostics. A separate visit fee applies to the visit — $14.99 for guests, $34.99 for business — plus diagnostics of $34.99 for guests, $64.99 for business, if your device needs a full diagnosis — due at booking, non-refundable.';
       if (result) { result.hidden = false; result.classList.add('show'); }
       // Store the quote for the repair form
       try {
@@ -4492,8 +4492,6 @@ if ("serviceWorker" in navigator) {
     var membershipView = document.getElementById('acct-view-membership');
     /* MY_DEVICES_2026_11_06: the My Devices view joins the toggle set. */
     var devicesView = document.getElementById('acct-view-devices');
-    /* ATRG_CONNECT_2026_11_10: the ATRG Connect view joins the toggle set. */
-    var connectView = document.getElementById('acct-view-connect');
     if (!menuItems.length || !repairsView || !settingsView) return;
     acctMenuWired = true;
     window.__atrAcctMenuWired = true;
@@ -4505,7 +4503,7 @@ if ("serviceWorker" in navigator) {
        tapping its own row — it took a tap on a different row. The
        safety net in index.html carries the identical toggle. */
     function show(view) {
-      var panels = { repairs: repairsView, settings: settingsView, rewards: rewardsView, messages: messagesView, orders: ordersView, cart: cartView, membership: membershipView, devices: devicesView, connect: connectView };
+      var panels = { repairs: repairsView, settings: settingsView, rewards: rewardsView, messages: messagesView, orders: ordersView, cart: cartView, membership: membershipView, devices: devicesView };
       var target = (panels[view] && !panels[view].hidden) ? null : view;
       repairsView.hidden = target !== 'repairs';
       settingsView.hidden = target !== 'settings';
@@ -4516,7 +4514,6 @@ if ("serviceWorker" in navigator) {
       if (cartView) cartView.hidden = target !== 'cart';
       if (membershipView) membershipView.hidden = target !== 'membership';
       if (devicesView) devicesView.hidden = target !== 'devices';
-      if (connectView) connectView.hidden = target !== 'connect';
       menuItems.forEach(function (btn) {
         var on = btn.getAttribute('data-acct-menu') === target;
         btn.classList.toggle('is-active', on);
@@ -4532,6 +4529,10 @@ if ("serviceWorker" in navigator) {
         if (r) r.hidden = false;
         if (th) th.hidden = true;
         if (nt) nt.hidden = true;
+        /* V158_SCREENSHOT_FIX_2026_11_17: the account page is one long
+           stacked page — bring the opened panel to the top of the
+           screen, or the guest stays looking at the section above it. */
+        if (repairsView && repairsView.scrollIntoView) { try { repairsView.scrollIntoView({ behavior: 'auto', block: 'start' }); } catch (e) {} }
       }
       if (target === 'messages') {
         var ib = document.getElementById('acct-inbox');
@@ -4953,7 +4954,12 @@ if ("serviceWorker" in navigator) {
   }
 
   function refreshAccountSurfaces() {
-    return Promise.all([refreshBalances(), refreshVoucherSurfaces()]);
+    // V156_DOC_SIGNING_2026_11_16: the "Sign your documents here" list
+    // refreshes with the other account surfaces whenever the account
+    // page becomes active or the session changes.
+    var jobs = [refreshBalances(), refreshVoucherSurfaces()];
+    if (typeof window.atrDocSigningRefresh === 'function') jobs.push(window.atrDocSigningRefresh());
+    return Promise.all(jobs);
   }
 
   function refreshTicketPoints() {
@@ -5212,7 +5218,11 @@ if ("serviceWorker" in navigator) {
     });
 
     paintCartPanel();
-    if (getSession()) { refreshBalances(); refreshVoucherSurfaces(); }
+    // V156_DOC_SIGNING_2026_11_16: the signing list refreshes here too
+    // — see 1b above. A direct #account load never fires the
+    // MutationObserver (the router already added .active), so without
+    // this the list would stay on "Loading…".
+    if (getSession()) { refreshBalances(); refreshVoucherSurfaces(); if (typeof window.atrDocSigningRefresh === 'function') window.atrDocSigningRefresh(); }
   });
 })();
 
@@ -6196,11 +6206,11 @@ if ("serviceWorker" in navigator) {
        so it reads the audience at the moment it is shown \u2014 the wizard
        can flip guest/business mid-session and the note follows. Rates
        are the settled list: guest $14.99 + $34.99 diagnostics,
-       business $35.99 + $64.99. */
+       business $34.99 + $64.99. */
     function feeNoteText() {
       var biz = document.body.classList.contains('aud-business');
       return biz
-        ? 'A separate visit fee applies to the visit \u2014 $35.99 \u2014 plus diagnostics of $64.99 if your device needs a full diagnosis \u2014 due at booking and non-refundable. Estimates are always free. ATR One members pay no visit fee or diagnostics for devices covered under their subscription.'
+        ? 'A separate visit fee applies to the visit \u2014 $34.99 \u2014 plus diagnostics of $64.99 if your device needs a full diagnosis \u2014 due at booking and non-refundable. Estimates are always free. ATR One members pay no visit fee or diagnostics for devices covered under their subscription.'
         : 'A separate visit fee applies to the visit \u2014 $14.99 \u2014 plus diagnostics of $34.99 if your device needs a full diagnosis \u2014 due at booking and non-refundable. Estimates are always free. ATR One members pay no visit fee or diagnostics for devices covered under their subscription.';
     }
     /* COMPUTER_YEAR_2026_11_10 (owner, Nov 10, 2026): the same
@@ -6549,7 +6559,7 @@ if ("serviceWorker" in navigator) {
 
     /* Mirrors the form's ooRender: time priced pure at the audience
        rate (guest $24.99/hr, business $49.99/hr), the visit fee
-       (guest $14.99, business $35.99) its own line, the total
+       (guest $14.99, business $34.99) its own line, the total
        their sum. V145_ONEONONE_2499_2026_11_13. */
     function renderOoSummary() {
       var st = ooPane.state;
@@ -6557,13 +6567,13 @@ if ("serviceWorker" in navigator) {
       /* V145_ONEONONE_2499_2026_11_13: this wizard lives in its own
          IIFE (repairState is not in scope here) and its pages adapt
          by body.aud-business, so the rate and fee read the body class
-         - guest $24.99/hr + $14.99, business $49.99/hr + $35.99.
+         - guest $24.99/hr + $14.99, business $49.99/hr + $34.99.
          The pane has no svc-oo DOM in the staged index.html, so this
          currently no-ops on null price/lines elements; the math is
          fixed anyway so it cannot go live wrong. */
       var biz = document.body.classList.contains('aud-business');
       var rate = biz ? 49.99 : 24.99;
-      var fee = biz ? 35.99 : 14.99;
+      var fee = biz ? 34.99 : 14.99;
       var time = h * rate;
       var priceEl = $('svc-oo-price');
       if (priceEl) priceEl.textContent = h ? ('$' + time) : 'Pick a time';
@@ -7214,4 +7224,357 @@ document.addEventListener('click', function (e) {
   }
 
   window.atrVirtual = { check: check };
+})();
+
+/* V156_DOC_SIGNING_2026_11_16 (Austin, Nov 16, 2026): "Sign your
+ * documents here" — the guest's own signing section in My Account.
+ *
+ * What it does: lists the signed-in guest's documents waiting for a
+ * signature — the Service Agreement (one per open ticket), and every
+ * filed estimate and invoice — and lets the guest sign each one
+ * themselves: type their full name, tap Sign. The signature is
+ * recorded in public.document_signatures with the guest's name, the
+ * document, the ticket, and the timestamp, so the portal can show the
+ * document as Signed with when/by whom.
+ *
+ * Staff NEVER sign for a guest: there is no staff path anywhere in
+ * this module. The signer email is always the signed-in user's own
+ * email (from their live auth session), and the database only accepts
+ * a signature whose signer email matches the signed-in user AND whose
+ * ticket belongs to that user — a staff member's session cannot
+ * satisfy that, so the insert fails rather than silently signing.
+ *
+ * Preview: the agreement opens view-doc.html?doc=agreement&t=<id>
+ * (rendered from the live site). An estimate or invoice asks the
+ * doc-view Edge Function for a short-lived preview link (the guest's
+ * browser cannot mint one — the storage bucket is staff-only).
+ *
+ * A signature counts for an estimate/invoice only when it was made
+ * AFTER that document was filed — if an estimate is regenerated, the
+ * old signature no longer covers the new file and the guest signs
+ * again. The agreement has no file date, so any signature on it
+ * counts. An agreement is only listed unsigned while its ticket is
+ * still open; a signed agreement stays listed as Signed.
+ *
+ * Wiring: refreshAccountSurfaces() calls window.atrDocSigningRefresh
+ * whenever the account page becomes active or the session changes.
+ * A MutationObserver on #acct-dash-view covers the two paths that
+ * show the dashboard without refreshing the surfaces — the header
+ * account button and a fresh sign-in — so the list loads the moment
+ * the dashboard appears. The preview page can also send the guest
+ * here with a pending document (sessionStorage 'atr-pending-sign'):
+ * after sign-in the sign dialog opens for that document automatically. */
+
+(function () {
+  var SUPABASE_URL = 'https://lyujxpuicarblpkdzuuc.supabase.co';
+  var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
+  var DOC_LABELS = { agreement: 'Repair Authorization and Service Agreement', estimate: 'Estimate', invoice: 'Invoice', terms: 'Terms & Conditions', warranty: '1-Year Limited Warranty' };
+  var COMPLETE = { 'Job Complete': true };
+
+  var sb = null;
+  try {
+    if (window.supabase && window.supabase.createClient) sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  } catch (e) { sb = null; }
+
+  function $(id) { return document.getElementById(id); }
+  function getSession() {
+    try { return JSON.parse(localStorage.getItem('atr-account') || 'null'); } catch (e) { return null; }
+  }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function fmtDate(iso) {
+    try { return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }); } catch (e) { return ''; }
+  }
+  function shortCode(id) { return String(id || '').slice(0, 8).toUpperCase(); }
+  function deviceWording(t) {
+    return [t.device_type, t.brand, t.model].filter(function (x) { return x; }).join(' ') || 'Your repair';
+  }
+
+  /* The newest signature for this document type that was made at or
+   * after the document was filed. filedAt is null for the agreement
+   * (no file date — any signature counts). */
+  function currentSignatureFor(sigs, docType, filedAt) {
+    var best = null;
+    var filedMs = filedAt ? new Date(filedAt).getTime() : 0;
+    (sigs || []).forEach(function (sig) {
+      if (!sig || sig.document_type !== docType || !sig.signed_at) return;
+      var ms = new Date(sig.signed_at).getTime();
+      if (filedMs && ms < filedMs) return;
+      if (!best || ms > new Date(best.signed_at).getTime()) best = sig;
+    });
+    return best;
+  }
+
+  function agreementNeedsSignature(ticket, sigs) {
+    if (!ticket || COMPLETE[ticket.status]) return false;
+    return !currentSignatureFor(sigs, 'agreement', null);
+  }
+
+  var lastRows = [];
+
+  function rowHtml(r) {
+    var label = DOC_LABELS[r.type] || 'Document';
+    var meta = esc(deviceWording(r.ticket)) + ' &middot; Ticket #' + esc(shortCode(r.ticket.id)) + ' &middot; Filed ' + esc(fmtDate(r.filedAt));
+    if (r.signed) {
+      return '<div class="acct-signdoc-row">' +
+        '<div class="acct-signdoc-title">' + esc(label) + '</div>' +
+        '<div class="acct-signdoc-meta">' + meta + '</div>' +
+        '<div class="acct-signdoc-meta"><span class="acct-signdoc-signed">Signed</span> — ' + esc(r.signed.signer_name) + ', ' + esc(fmtDate(r.signed.signed_at)) + '</div>' +
+        '<div class="acct-signdoc-btns"><button type="button" class="acct-signdoc-btn acct-signdoc-btn--ghost" data-signdoc="preview" data-ticket="' + esc(r.ticket.id) + '" data-type="' + esc(r.type) + '">View</button></div>' +
+        '</div>';
+    }
+    return '<div class="acct-signdoc-row">' +
+      '<div class="acct-signdoc-title">' + esc(label) + '</div>' +
+      '<div class="acct-signdoc-meta">' + meta + '</div>' +
+      '<div class="acct-signdoc-meta">Waiting for your signature.</div>' +
+      '<div class="acct-signdoc-btns">' +
+      '<button type="button" class="acct-signdoc-btn acct-signdoc-btn--ghost" data-signdoc="preview" data-ticket="' + esc(r.ticket.id) + '" data-type="' + esc(r.type) + '">Preview</button>' +
+      '<button type="button" class="acct-signdoc-btn" data-signdoc="sign" data-ticket="' + esc(r.ticket.id) + '" data-type="' + esc(r.type) + '">Sign</button>' +
+      '</div></div>';
+  }
+
+  function renderList(tickets, docs, sigs) {
+    var list = $('acct-sign-docs-list');
+    if (!list) return;
+    var rows = [];
+    tickets.forEach(function (t) {
+      var tSigs = sigs.filter(function (x) { return x.ticket_id === t.id; });
+      var tDocs = docs.filter(function (x) { return x.ticket_id === t.id; });
+      var agSig = currentSignatureFor(tSigs, 'agreement', null);
+      if (!agSig && agreementNeedsSignature(t, tSigs)) {
+        rows.push({ ticket: t, type: 'agreement', filedAt: t.created_at, signed: null });
+      } else if (agSig) {
+        rows.push({ ticket: t, type: 'agreement', filedAt: t.created_at, signed: agSig });
+      }
+      /* V158_GUEST_PORTAL_2026_11_17 (owner, Nov 17, 2026), merged by V160_GUEST_HUB_FIXES_2026_11_17: the standard documents are
+       * AUTOMATIC — Repair Authorization and Service Agreement and the 1-Year
+       * Limited Warranty wait on every open ticket from the start.
+       * No staff push, no filed file needed; they are the site's own
+       * published texts, rendered by view-doc.html. A completed
+       * ticket lists only the ones already signed. */
+      if (!COMPLETE[t.status]) {
+        ['warranty'].forEach(function (stdType) {
+          var stdSig = currentSignatureFor(tSigs, stdType, null);
+          rows.push({ ticket: t, type: stdType, filedAt: t.created_at, signed: stdSig || null });
+        });
+      } else {
+        ['warranty'].forEach(function (stdType) {
+          var stdSig2 = currentSignatureFor(tSigs, stdType, null);
+          if (stdSig2) rows.push({ ticket: t, type: stdType, filedAt: t.created_at, signed: stdSig2 });
+        });
+      }
+      tDocs.forEach(function (d) {
+        if (d.doc_type !== 'estimate' && d.doc_type !== 'invoice') return;
+        rows.push({ ticket: t, type: d.doc_type, filedAt: d.created_at, path: d.storage_path, signed: currentSignatureFor(tSigs, d.doc_type, d.created_at) });
+      });
+    });
+    lastRows = rows;
+        if (!tickets.length) {
+          /* Nothing waiting — the standard documents are still here to
+           * read (signing waits for an open service, because a
+           * signature belongs to a ticket). */
+          list.innerHTML = '<p class="acct-muted">Nothing needs your signature right now — read the standard documents any time:</p>' +
+            '<div class="acct-signdoc-row"><div class="acct-signdoc-title">Repair Authorization and Service Agreement</div><div class="acct-signdoc-btns"><a class="acct-signdoc-btn acct-signdoc-btn--ghost" href="/#service-agreement">Read</a></div></div>' +
+            '<div class="acct-signdoc-row"><div class="acct-signdoc-title">1-Year Limited Warranty</div><div class="acct-signdoc-btns"><a class="acct-signdoc-btn acct-signdoc-btn--ghost" href="/#warranty">Read</a></div></div>';
+          return;
+        }
+    list.innerHTML = rows.map(rowHtml).join('');
+    wireList(list);
+    openPendingSign();
+  }
+
+  function wireList(list) {
+    if (list.__signdocWired) return;
+    list.__signdocWired = true;
+    list.addEventListener('click', function (e) {
+      var btn = e.target && e.target.closest ? e.target.closest('[data-signdoc]') : null;
+      if (!btn) return;
+      var action = btn.getAttribute('data-signdoc');
+      var ticketId = btn.getAttribute('data-ticket');
+      var type = btn.getAttribute('data-type');
+      if (action === 'preview') openPreview(btn, ticketId, type);
+      if (action === 'sign') openSignModal(ticketId, type);
+    });
+  }
+
+  function openPreview(btn, ticketId, type) {
+    if (type === 'agreement' || type === 'terms' || type === 'warranty') {
+      window.open('view-doc.html?doc=' + encodeURIComponent(type) + '&t=' + encodeURIComponent(ticketId), '_blank');
+      return;
+    }
+    if (!sb) return;
+    btn.disabled = true;
+    var oldText = btn.textContent;
+    btn.textContent = 'Opening…';
+    sb.auth.getSession().then(function (sres) {
+      var token = sres && sres.data && sres.data.session ? sres.data.session.access_token : null;
+      if (!token) throw new Error('Please sign in again, then try the preview.');
+      return fetch(SUPABASE_URL + '/functions/v1/doc-view', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'apikey': SUPABASE_ANON_KEY },
+        body: JSON.stringify({ ticket_id: ticketId, kind: type })
+      });
+    }).then(function (res) { return res.json(); })
+      .then(function (out) {
+        if (!out || !out.ok || !out.url) throw new Error('That preview could not be opened — please use the link in your email.');
+        window.open(out.url, '_blank');
+      })
+      .catch(function (err) {
+        btn.textContent = (err && err.message) || 'Preview unavailable — use the link in your email.';
+      })
+      .then(function () {
+        if (btn.textContent === 'Opening…') { btn.textContent = oldText; btn.disabled = false; }
+      });
+  }
+
+  function openSignModal(ticketId, type) {
+    var row = null;
+    lastRows.forEach(function (r) { if (r.ticket.id === ticketId && r.type === type) row = r; });
+    if (!row) return;
+    var s = getSession();
+    var label = DOC_LABELS[type] || 'Document';
+    var overlay = document.createElement('div');
+    overlay.className = 'atr-signmodal-overlay';
+    overlay.innerHTML =
+      '<div class="atr-signmodal" role="dialog" aria-label="Sign your ' + esc(label.toLowerCase()) + '">' +
+      '<h3>Sign your ' + esc(label.toLowerCase()) + '</h3>' +
+      '<p><strong>' + esc(label) + '</strong> — ' + esc(deviceWording(row.ticket)) + ' (Ticket #' + esc(shortCode(row.ticket.id)) + ')</p>' +
+      '<p>By signing, you confirm you have read this document and agree to it. Your signature is recorded with your name and today&rsquo;s date.</p>' +
+      '<label for="atr-signdoc-name">Your full name</label>' +
+      '<input id="atr-signdoc-name" type="text" autocomplete="name" placeholder="Type your full name">' +
+      '<p class="atr-signmodal-err" id="atr-signdoc-err" hidden></p>' +
+      '<div class="atr-signmodal-btns">' +
+      '<button type="button" class="acct-signdoc-btn" id="atr-signdoc-go">Sign</button>' +
+      '<button type="button" class="acct-signdoc-btn acct-signdoc-btn--ghost" id="atr-signdoc-cancel">Cancel</button>' +
+      '</div></div>';
+    document.body.appendChild(overlay);
+    var input = overlay.querySelector('#atr-signdoc-name');
+    var errEl = overlay.querySelector('#atr-signdoc-err');
+    var goBtn = overlay.querySelector('#atr-signdoc-go');
+    input.value = (s && s.name) || '';
+    input.focus();
+    function close() { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }
+    overlay.querySelector('#atr-signdoc-cancel').addEventListener('click', close);
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });
+    goBtn.addEventListener('click', function () {
+      var name = (input.value || '').trim();
+      if (!name) {
+        errEl.textContent = 'Please type your full name first.';
+        errEl.hidden = false;
+        input.focus();
+        return;
+      }
+      goBtn.disabled = true;
+      errEl.hidden = true;
+      if (!sb) {
+        errEl.textContent = 'That did not save. Please try again.';
+        errEl.hidden = false;
+        goBtn.disabled = false;
+        return;
+      }
+      sb.auth.getSession().then(function (sres) {
+        var user = sres && sres.data && sres.data.session ? sres.data.session.user : null;
+        if (!user || !user.email) throw new Error('Please sign in again, then try signing.');
+        /* The signer email is always the signed-in user's own email —
+         * the database only accepts a signature whose signer email
+         * matches the signed-in user, so nobody can sign for someone
+         * else. */
+        return sb.from('document_signatures').insert([{
+          ticket_id: ticketId,
+          customer_id: (s && s.id) || null,
+          document_type: type,
+          document_path: row.path || null,
+          signer_name: name,
+          signer_email: user.email
+        }]);
+      }).then(function (res) {
+        if (res && res.error) throw res.error;
+        close();
+        loadSignDocs();
+      }).catch(function (err) {
+        errEl.textContent = (err && err.message) || 'That did not save. Please try again.';
+        errEl.hidden = false;
+        goBtn.disabled = false;
+      });
+    });
+  }
+
+  /* The preview page sends the guest here with a document to sign
+   * (sessionStorage 'atr-pending-sign', set before the sign-in
+   * redirect). Open its sign dialog once the list has rendered. */
+  function openPendingSign() {
+    var pending = null;
+    try { pending = JSON.parse(sessionStorage.getItem('atr-pending-sign') || 'null'); } catch (e) { pending = null; }
+    if (!pending || !pending.ticket_id || !pending.document_type) return;
+    try { sessionStorage.removeItem('atr-pending-sign'); } catch (e) { /* storage unavailable */ }
+    var found = false;
+    lastRows.forEach(function (r) {
+      if (r.ticket.id === pending.ticket_id && r.type === pending.document_type && !r.signed) found = true;
+    });
+    if (found) openSignModal(pending.ticket_id, pending.document_type);
+  }
+
+  function loadSignDocs() {
+    var box = $('acct-sign-docs');
+    var list = $('acct-sign-docs-list');
+    if (!box || !list) return Promise.resolve();
+    var s = getSession();
+    if (!s || !s.id || !sb) { box.hidden = true; return Promise.resolve(); }
+    box.hidden = false;
+    list.innerHTML = '<p class="acct-muted">Loading your documents…</p>';
+    return sb.from('tickets').select('id,device_type,brand,model,status,created_at')
+      .eq('customer_id', s.id)
+      .order('created_at', { ascending: false })
+      .limit(50)
+      .then(function (tres) {
+        var tickets = (tres && tres.data) || [];
+        if (!tickets.length) {
+          list.innerHTML = '<p class="acct-muted">Nothing needs your signature right now.</p>';
+          lastRows = [];
+          return;
+        }
+        var ids = tickets.map(function (t) { return t.id; });
+        return Promise.all([
+          sb.from('ticket_documents').select('id,ticket_id,doc_type,storage_path,created_at').in('ticket_id', ids),
+          sb.from('document_signatures').select('id,ticket_id,document_type,signer_name,signed_at').in('ticket_id', ids)
+        ]).then(function (pair) {
+          var docs = (pair[0] && pair[0].data) || [];
+          var sigs = (pair[1] && pair[1].data) || [];
+          renderList(tickets, docs, sigs);
+        });
+      })
+      .catch(function () {
+        list.innerHTML = '<p class="acct-muted">We could not load your documents. Please try again, or call or text us at (937) 280-6243.</p>';
+      });
+  }
+
+  window.atrDocSigningRefresh = loadSignDocs;
+  /* V156 — the dashboard appears through showDashboard (the header
+   * account button, or a fresh sign-in) and NEITHER path refreshes
+   * the account surfaces, so watch the dashboard view itself: the
+   * moment it stops being hidden, refresh the signing list. This is
+   * what makes the preview page's "Sign in to sign" path work for a
+   * guest who was not signed in — after they sign in, the list
+   * loads and the pending document's sign dialog opens. */
+  (function () {
+    var dv = document.getElementById('acct-dash-view');
+    if (dv && window.MutationObserver) {
+      var dashMo = new MutationObserver(function () {
+        if (!dv.hidden) loadSignDocs();
+      });
+      dashMo.observe(dv, { attributes: true, attributeFilter: ['hidden'] });
+    }
+  })();
+  /* Pure helpers, exposed for the unit test and for the DOM test. */
+  window.__atrDocSigning = {
+    currentSignatureFor: currentSignatureFor,
+    agreementNeedsSignature: agreementNeedsSignature,
+    /* V158_GUEST_PORTAL_2026_11_17: the ticket page's Documents section opens the
+     * same Sign dialog the "Sign your documents here" list uses —
+     * one dialog, one insert path, guest-only either way. */
+    openSign: openSignModal
+  };
 })();

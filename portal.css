@@ -475,7 +475,7 @@ body.portal-scroll-locked{position:fixed;left:0;right:0;width:100%;overflow:hidd
 @media screen and (min-width:641px) and (pointer:coarse){
   .portal-body{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
   .portal-topbar{flex:none}
-  .portal-main{flex:1 1 auto;min-height:0;width:100%;box-sizing:border-box;display:flex;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .portal-main{flex:1 1 auto;min-height:0;width:100%;box-sizing:border-box;display:flex;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:0}
   #portal-dash-view{flex:1 1 auto;min-width:0;min-height:0;grid-template-rows:auto auto auto minmax(0,1fr)}
   #portal-dash-view .portal-dash-head{grid-row:1}
   #portal-dash-view .portal-error{grid-row:2}
@@ -1496,13 +1496,22 @@ body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-hub-search-bt
   #portal-dash-view .portal-panel { padding: 0.5rem 0.75rem 0.75rem; box-sizing: border-box; }
   a.portal-thumb-item { text-decoration: none; }
   .portal-thumbbar { padding-bottom: max(22px, calc(6px + env(safe-area-inset-bottom))); }
-  #portal-dash-view { padding-bottom: 96px; }
+/* V162_HUB_GAP_2026_11_17 (Austin, Nov 17, 2026): the action panel sat
+   ~70px above the thumb bar on his iPad — a dead cream band. The band
+   was the stack of clearances below the panel: the touch shell's
+   .portal-main kept the base 3rem bottom padding, the dash view added
+   96px, and the fixed bar is only ~75px tall (6px top pad + ~47px of
+   items + max(22px, safe-area) bottom pad). 76px of dash clearance is
+   exactly flush, so the main's bottom padding goes to 0 at phone
+   widths and in the touch shell, and the panel max-height budget
+   drops from 92px to the same 76px. */
+  #portal-dash-view { padding-bottom: 76px; }
 }
 @media (min-width: 641px) and (max-width: 920px) {
-  #portal-dash-view .portal-panel, #portal-dash-view .portal-nav-col { max-height: calc(100vh - 24px - 92px); }
+  #portal-dash-view .portal-panel, #portal-dash-view .portal-nav-col { max-height: calc(100vh - 24px - 76px); }
 }
 @media (max-width: 640px) {
-  .portal-main { padding-top: 1rem; }
+  .portal-main { padding-top: 1rem; padding-bottom: 0; }
   .portal-head-status { margin-top: 0; }
 }
 

@@ -305,7 +305,7 @@
             <div class="hero-slide">
               <h2 class="hero-headline">We come to you, <em>anywhere you want</em>*</h2>
               <p class="hero-sub">Professional mobile repairs for phones, computers, tablets, and game consoles &mdash; done at your home or office, backed by a 1-year warranty.</p>
-              <p class="hero-fineprint">*Within 25 miles &mdash; $14.99 dispatch for guests, $35.99 for business. Over 25 miles is an extra $1 per mile.</p>
+              <p class="hero-fineprint">*Within 25 miles &mdash; $14.99 dispatch for guests, $34.99 for business. Over 25 miles is an extra $1 per mile.</p>
               <div class="hero-cta-group">
                 <a class="btn btn-primary btn-lg" href="#whatwedo" data-page="whatwedo" data-services-route><i class="fas fa-wrench"></i> Start a Service</a>
                 <a class="btn btn-outline btn-lg" href="tel:+19372806243"><i class="fas fa-phone"></i> 937-280-6243</a>
@@ -885,7 +885,7 @@
             <p><strong>Diagnostics $34.99</strong></p>
             <p><strong>One-on-one is $24.99 an hour, plus a $14.99 visit fee.</strong></p>
             <p>Common repairs starting at $37.99 for phones, $52.99 for tablets, $50.99 for computers, $58.99 for game consoles, $66.99 for smartwatches.</p>
-            <p>Custom repairs are $50 an hour, plus parts.</p>
+            <p>Custom repairs are $49.99 an hour, plus parts.</p>
             <p class="price-note">Within 25 miles, the dispatch fee is the price listed above. Over 25 miles, add $1 per mile.</p>
             <p class="price-note">* See note 3 in the footer below.</p>
             <a class="btn btn-primary btn-lg" href="#repair" data-page="repair" data-guest="1" style="margin-top:.5rem;">Start a Service <i class="fas fa-arrow-right"></i></a>
@@ -1086,7 +1086,7 @@
               <div class="estimate-box oo-repair-only">
                 <p class="label" id="estimate-label">Estimated price range</p>
                 <p class="price" id="estimate-price">$50 &ndash; $150</p>
-                <p class="note" id="estimate-note">Final pricing is confirmed once we've inspected the device. Estimates are always free. A non-refundable visit fee secures your mobile appointment &mdash; $14.99 for guests, $35.99 for business &mdash; plus diagnostics of $34.99 for guests, $64.99 for business, when one is needed. It covers the trip to you, and it&rsquo;s due when you book. ATR One Plus (paid) members pay no visit fee or diagnostics for devices covered under their plan.</p>
+                <p class="note" id="estimate-note">Final pricing is confirmed once we've inspected the device. Estimates are always free. A non-refundable visit fee secures your mobile appointment &mdash; $14.99 for guests, $34.99 for business &mdash; plus diagnostics of $34.99 for guests, $64.99 for business, when one is needed. It covers the trip to you, and it&rsquo;s due when you book. ATR One Plus (paid) members pay no visit fee or diagnostics for devices covered under their plan.</p>
               </div>
               <!-- REPAIR_WIZARD_ESTIMATE_FIX_2026_11_06: standing estimate
                    disclaimer (owner, Nov 6, 2026) — a proper, visible
@@ -2100,6 +2100,20 @@
             <div class="acct-cardbox-statusrow"><span class="acct-cardbox-status acct-cardbox-status--compact" id="acct-qr-status">Loading…</span></div>
           </div>
 
+          <!-- V156_DOC_SIGNING_2026_11_16 (Austin, Nov 16, 2026): the
+               guest signs their documents here — the service agreement,
+               estimates and invoices waiting for a signature, listed
+               under this exact heading. The list is filled by the
+               signing module at the end of script.js; the cardbox ships
+               hidden and only shows when the guest is signed in. -->
+          <div class="acct-cardbox" id="acct-sign-docs" hidden>
+            <div class="acct-cardbox-head">
+              <span class="acct-cardbox-title"><i class="fas fa-pen"></i> Sign your documents here</span>
+            </div>
+            <p class="acct-muted" style="margin:.5rem 0 .75rem;">Documents waiting for your signature — read each one first, then sign it yourself. Only you can sign for yourself.</p>
+            <div id="acct-sign-docs-list"><p class="acct-muted">Loading your documents…</p></div>
+          </div>
+
           <!-- ACCOUNT_FIX_PASS_3_2026_11_06 (owner, Nov 6, 2026): the
                standalone "Schedule a repair" row that sat here is GONE —
                it duplicated the Schedule a repair button inside the
@@ -2120,7 +2134,8 @@
                customer side dropped the name entirely: members open
                their code by tapping the code itself, on the card above
                or in the quick glance. -->
-          <div class="acct-menu" role="group" aria-label="My Account">
+          <div class="acct-quickview-label" style="font-size:.72rem;font-weight:800;letter-spacing:1.5px;color:var(--muted,#7D6C5B);margin:.4rem 0 .3rem;">ACCOUNT</div>
+           <div class="acct-menu" role="group" aria-label="Account">
             <!-- PORTAL_IN_ACCOUNT_2026_11_10 (v84, moved to the top in v86 — owner restated Nov 10, 2026):
                  for associates, the Portal entry lives INSIDE My Account as
                  its own row at the TOP of the account rows — under the greeting
@@ -2129,18 +2144,11 @@
                  hidden and the staff check at the end of script.js unhides
                  it only for a signed-in associate (employee_profiles row);
                  guests never see it. Tapping it opens the Associate Hub. -->
-            <a class="acct-menu-item acct-flat-row" id="emp-dash-link" href="portal.html" hidden><i class="fas fa-briefcase"></i> Associate Hub <i class="fas fa-arrow-right acct-menu-chev" aria-hidden="true"></i></a>
-            <!-- CONNECT_DOOR_RESTORED_2026_11_11 (owner FINAL reversal, Nov 11, 2026): the ATRG Connect account door below was restored after its earlier same-day removal. Guests keep the button in their own account (the Guest Hub); the protection is the human-issued code on the gated page, not the door. -->
-            <button class="acct-menu-item acct-flat-row" type="button" data-acct-menu="connect" aria-expanded="false"><i class="fas fa-display"></i> ATRG Connect <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
+            <button class="acct-menu-item acct-flat-row" id="acct-guesthub-btn" type="button" hidden><i class="fas fa-house"></i> Guest Hub <i class="fas fa-arrow-right acct-menu-chev" aria-hidden="true"></i></button>
+             <a class="acct-menu-item acct-flat-row" id="emp-dash-link" href="portal.html" hidden><i class="fas fa-briefcase"></i> Associate Hub <i class="fas fa-arrow-right acct-menu-chev" aria-hidden="true"></i></a>
+            <!-- V162_ACCOUNT_DROPDOWN_2026_11_17 (Austin, Nov 17, 2026): the ATRG Connect dropdown row is gone — Connect lives in the Guest Hub only now (the Connect tab). The protection is the human-issued code on the gated page, not the door. -->
 
-            <!-- ATRG Connect — ATRG_CONNECT_2026_11_10 (Austin, Nov 10, 2026): "The guest gets a connect plugin in their account under the nav." The FIRST row in the signed-in guest's account rows, right above My Devices (owner, Nov 10, 2026): the plugin lives here, in their account; opening it takes them to the Connect session page where they type the code their associate sent. The row follows the same drop-down machinery as every other account row (data-acct-menu / acct-view-*). -->
-            <div id="acct-view-connect" hidden>
-              <div class="acct-inbox">
-                <!-- V141_2026_11_13 (owner, Nov 13, 2026): the panel no longer repeats its own menu-row name as a heading — the row above already says it. Same removal in the Devices, Messages, Your bag, Orders, Rewards & Gift Cards, and Manage Membership panels; Services ("My Repairs") and Account Settings ("My Profile") never repeated and are untouched. -->
-                <p class="acct-muted" style="text-align:left;padding:0;">Your virtual one-on-one, right here in your account. When your associate sends you a session code, open ATRG Connect, type the code, and we can see your screen and help you live.</p>
-                <a class="btn btn-primary btn-sm" href="#virtual-oneonone" data-page="virtual-oneonone"><i class="fas fa-display"></i> Open ATRG Connect</a>
-              </div>
-            </div>
+            
             <button class="acct-menu-item acct-flat-row" type="button" data-acct-menu="devices" aria-expanded="false"><i class="fas fa-laptop"></i> My Devices <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
 
             <!-- My Devices — MY_DEVICES_2026_11_06 (Austin, Nov 6, 2026):
@@ -2208,187 +2216,22 @@
                 </div>
               </div>
             </div>
-            <button class="acct-menu-item acct-flat-row" type="button" data-acct-menu="repairs" aria-expanded="false"><i class="fas fa-tools"></i> Services <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
-            <div id="acct-view-repairs" hidden>
-            <!-- My Repairs -->
-            <div class="acct-repairs" id="acct-repairs">
-              <div class="acct-repairs-head">
-                <h4><i class="fas fa-tools"></i> My Repairs</h4>
-                <!-- CUSTOMER_INBOX_2026_11_05 (owner vocabulary rule): on the customer side, starting a repair is always called "Schedule a repair" — one name everywhere. This button opens the same in-account form it always did. -->
-                <button class="btn btn-primary btn-sm" id="acct-new-ticket-btn" type="button"><i class="fas fa-calendar-check"></i> Schedule a repair</button>
-              </div>
-              <div id="acct-ticket-list"><p class="acct-muted">Loading your repairs…</p></div>
-            </div>
+            
 
-            <!-- Ticket thread view -->
-            <div class="acct-thread" id="acct-thread" hidden>
-              <button class="btn btn-outline btn-sm" id="acct-thread-back" type="button"><i class="fas fa-arrow-left"></i> Back to repairs</button>
-              <div class="acct-thread-info" id="acct-thread-info"></div>
-              <!-- REPAIR_TIMELINE_2026_11_06: the job timeline paints
-                   here — stage states from the ticket's real status
-                   plus its own part rows; repairs only, never for
-                   support bookings or the general conversation. -->
-              <div id="acct-timeline"></div>
-              <div id="acct-parts"></div>
-              <div id="acct-charges"></div>
-              <div class="acct-messages" id="acct-messages"></div>
-              <!-- GUEST_ASSISTANT_2026_11_10: the assistant bar —
-                   quick-question chips and the Speak to an associate
-                   button. It belongs to the General conversation
-                   only; paintAssistantBar() in the account module
-                   decides when it shows. -->
-              <div id="acct-assistant-bar" hidden>
-                <p class="acct-assistant-note" id="acct-assistant-note"></p>
-                <div class="acct-assistant-chips" id="acct-assistant-chips"></div>
-                <button class="btn btn-outline btn-sm" id="acct-assistant-escalate" type="button"><i class="fas fa-headset"></i> Speak to an associate</button>
-              </div>
-              <form id="acct-msg-form" novalidate>
-                <div class="acct-msg-row">
-                  <input type="text" id="acct-msg-input" placeholder="Write a message…" autocomplete="off" maxlength="1000" aria-label="Write a message">
-                  <button class="btn btn-primary btn-sm" type="submit" aria-label="Send message"><i class="fas fa-paper-plane"></i></button>
-                </div>
-                <div class="atr-turnstile" id="ts-acct-msg"></div>
-                <p class="acct-error" id="acct-msg-error" hidden></p>
-              </form>
-            </div>
-
-            <!-- New ticket form -->
-            <div class="acct-newticket" id="acct-newticket" hidden>
-              <button class="btn btn-outline btn-sm" id="acct-newticket-back" type="button"><i class="fas fa-arrow-left"></i> Back to repairs</button>
-              <h4><i class="fas fa-calendar-check"></i> Schedule a Repair</h4>
-              <form id="acct-ticket-form" novalidate>
-                <label class="acct-field">
-                  <span>Device type</span>
-                  <select id="acct-t-device" required>
-                    <option value="Phone">Phone</option>
-                    <option value="Tablet">Tablet</option>
-                    <option value="Laptop">Laptop</option>
-                    <option value="Desktop">Desktop</option>
-                    <option value="Game Console">Game Console</option>
-                    <option value="Smartwatch">Smartwatch</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </label>
-                <div class="acct-row2">
-                  <label class="acct-field">
-                    <span>Make</span>
-                    <input type="text" id="acct-t-brand" placeholder="e.g. Apple" autocomplete="off">
-                  </label>
-                  <label class="acct-field">
-                    <span>Model</span>
-                    <input type="text" id="acct-t-model" placeholder="e.g. iPhone 13" autocomplete="off">
-                  </label>
-                </div>
-                <label class="acct-field">
-                  <span>What's wrong?</span>
-                  <textarea id="acct-t-issue" placeholder="Describe the problem…" rows="3" required></textarea>
-                </label>
-                <label class="atr-check">
-                  <input type="checkbox" id="acct-t-marketing">
-                  <span>Email me occasional offers and repair tips. <em>(Optional — no spam, ever.)</em></span>
-                </label>
-                <label class="atr-check">
-                  <input type="checkbox" id="acct-t-terms">
-                  <span>I agree to the <strong>Terms and Conditions</strong> of service. *</span>
-                </label>
-                <label class="atr-check">
-                  <input type="checkbox" id="acct-t-dispatch">
-                  <span>I understand the <strong>visit fee is $14.99 for guests, $35.99 for business</strong> &mdash; and <strong>diagnostics is $34.99 for guests, $64.99 for business</strong>, if my device needs a full diagnosis &mdash; covers the trip to me, is due at scheduling, and is <strong>non-refundable</strong>. *</span>
-                </label>
-                <label class="atr-check">
-                  <input type="checkbox" id="acct-t-work-auth">
-                  <span>I <strong>authorize</strong> Austin&rsquo;s Tech Repair Group to perform the requested diagnostic and repair work on my device. *</span>
-                </label>
-                <!-- SITE_POINTS_SPEND_2026_10_30: intent only — nothing
-                     is deducted at booking; the discount lands at the
-                     visit. The block stays hidden without a balance. -->
-                <div class="acct-ticket-points" id="acct-t-points-wrap" hidden>
-                  <label class="atr-check">
-                    <input type="checkbox" id="acct-t-use-points">
-                    <span><strong>Use my reward points toward this repair.</strong> <span id="acct-t-points-detail"></span></span>
-                  </label>
-                  <label class="acct-field" id="acct-t-points-amount" hidden>
-                    <span>How much? (100 points = $5)</span>
-                    <select id="acct-t-points-blocks"></select>
-                  </label>
-                  <p class="acct-muted" style="text-align:left;padding:0;">Nothing is deducted now — we apply the discount at your visit.</p>
-                </div>
-                <div class="atr-turnstile" id="ts-acct-ticket"></div>
-                <p class="acct-error" id="acct-ticket-error" hidden></p>
-                <button class="btn btn-primary btn-lg acct-submit" type="submit">Submit Request <i class="fas fa-arrow-right"></i></button>
-              </form>
-            </div>
-
-            <!-- SUPPORT_BOOKING_2026_11_06 (Austin, Nov 6, 2026): the Service
-                 section holds two labeled groups — My Repairs above, and My
-                 One-on-Ones here: the customer's support bookings, each with
-                 its Support label, plus the door into the Support path. -->
-            <div class="acct-repairs" id="acct-oneonones" style="margin-top:1.5rem;">
-              <div class="acct-repairs-head">
-                <h4><i class="fas fa-graduation-cap"></i> My One-on-Ones</h4>
-                <a class="btn btn-primary btn-sm" href="#repair" data-page="repair" data-open-oneonone><i class="fas fa-calendar-check"></i> Schedule a one-on-one</a>
-              </div>
-              <div id="acct-support-list"><p class="acct-muted">Loading your one-on-ones…</p></div>
-            </div>
-
-            </div>
-            <button class="acct-menu-item acct-flat-row" type="button" data-acct-menu="messages" aria-expanded="false"><i class="fas fa-envelope"></i> Messages <span class="acct-msg-badge" id="acct-msg-badge" hidden>0</span> <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
-
-            <!-- Messages inbox — CUSTOMER_INBOX_2026_11_05 (owner,
-                 Nov 5, 2026): "our message to them goes to their
-                 message/inbox button on their account page… and vice
-                 versa." One conversation per repair that has messages,
-                 newest activity first; the badge on the row counts the
-                 conversations with something new from the shop, and a
-                 New marker rides on each of those rows. Opening a
-                 conversation shows the same thread and reply box the
-                 Repairs section uses — one thread, two doors. -->
-            <div id="acct-view-messages" hidden>
-              <div class="acct-inbox" id="acct-inbox">
-                <!-- ACCOUNT_FIX_PASS_3_2_2026_11_06 (owner's final spec,
-                     Nov 6, 2026 — supersedes the pass-3 thread routing
-                     AND the pass-3.1 route-to-Schedule behavior): "Send
-                     us a message" opens a composer RIGHT HERE in the
-                     account page — a text box and a Send button — for
-                     every customer, and never routes anyone away.
-                     With a repair on file the button opens the thread
-                     for the most recent repair (the same thread element
-                     and insert path the conversation rows use). With no
-                     repairs it opens the composer below: the message is
-                     stored as a general message in the same
-                     public.messages store (see staged/general-messages.sql),
-                     appears in this list as the General conversation,
-                     and an alert copy goes to the shop's service inbox
-                     through the site's own form-alert sender, exactly
-                     like every other form on the site. -->
-                <button class="btn btn-primary btn-sm" id="acct-inbox-new" type="button" style="margin:0 0 .6rem;"><i class="fas fa-pen"></i> Send us a message</button>
-                <div id="acct-inbox-compose" hidden>
-                  <p class="acct-muted" style="text-align:left;padding:0;">No repair on file yet — no problem. Write us a general message here and we will reply right in this Messages list. If you meant to book a repair instead, <a href="#repair" data-page="repair">Schedule a repair</a>.</p>
-                  <form id="acct-general-form" novalidate>
-                    <div class="acct-msg-row">
-                      <input type="text" id="acct-general-input" placeholder="Write a message…" autocomplete="off" maxlength="1000" aria-label="Write a message">
-                      <button class="btn btn-primary btn-sm" type="submit" id="acct-general-send" disabled>Send <i class="fas fa-paper-plane"></i></button>
-                    </div>
-                    <p class="acct-error" id="acct-general-error" hidden></p>
-                  </form>
-                </div>
-                <p class="acct-muted" style="text-align:left;padding:0;">Messages between you and our shop. Tap a conversation to read it or reply.</p>
-                <div id="acct-inbox-list"><p class="acct-muted">Loading your messages…</p></div>
-              </div>
-            </div>
-            <button class="acct-menu-item acct-flat-row" type="button" data-acct-menu="cart" aria-expanded="false"><i class="fas fa-bag-shopping"></i> Your bag <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
+            
+            <button class="acct-menu-item acct-flat-row" type="button" data-acct-menu="cart" aria-expanded="false"><i class="fas fa-bag-shopping"></i> Your Bag <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
 
             <!-- Cart — ACCOUNT_FIX_PASS_3_3_2026_11_06 (owner correction,
                  Nov 6, 2026): the owner expected the cart INSIDE My
                  Account with the other drop-downs all along ("I thought
                  the cart button was going to be inside of the my
                  account with all the drop downs"). It joins the menu
-                 here, directly before Account Settings — the slot the
+                 here, directly before Orders — the slot the
                  old plain Cart row held (that row only navigated to
                  the Shop and opened the drawer, count badge and all;
                  this drop-down replaces it), giving the owner's row
-                 order: Repairs, Messages, Cart, Orders, Rewards & Gift Cards,
-                 Manage Membership, Account Settings. The panel is painted by the
+                 order: Guest Hub, My Devices, Your Bag, Your Orders, Rewards & Gift Cards,
+                 Sign Out. Repairs, Messages, Manage Membership and Account Settings live in the Guest Hub now. The panel is painted by the
                  shop module in script.js from the SAME cart state as
                  the Shop glance and the drawer (one source of truth,
                  the same painter), it repaints on every cart change,
@@ -2411,7 +2254,7 @@
                 </div>
               </div>
             </div>
-            <button class="acct-menu-item acct-flat-row" type="button" data-acct-menu="orders" aria-expanded="false"><i class="fas fa-bag-shopping"></i> Orders <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
+            <button class="acct-menu-item acct-flat-row" type="button" data-acct-menu="orders" aria-expanded="false"><i class="fas fa-bag-shopping"></i> Your Orders <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
 
             <!-- Orders — ACCOUNT_FIX_PASS_3_2_2026_11_06 (ITEM C, owner,
                  Nov 6, 2026): shop orders are history like repairs, so
@@ -2486,150 +2329,11 @@
                 <p class="acct-muted" id="gc-unavailable" hidden>Gift cards are not available online yet — bring your code to your visit, or text us at (937) 280-6243, and we will add it for you.</p>
               </div>
             </div>
-            <button class="acct-menu-item acct-flat-row" type="button" data-acct-menu="membership" aria-expanded="false"><i class="fas fa-crown"></i> Manage Membership <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
 
-            <!-- Manage Membership — ATRONE_POINTS_TIERS_2026_11_06 (Austin, Nov 6, 2026):
-                 he asked where a customer upgrades, changes, or cancels
-                 — the member card only ever SHOWED the plan. This row
-                 sits directly under Cart (his placement call) and holds
-                 the controls: the customer's own plan + points rate,
-                 join/switch links for every paid tier (the same Square
-                 checkouts the plan cards use), billing handled by
-                 Square (we never take card info), and a REAL self-serve
-                 cancel — his correction later the same morning: no
-                 calling, texting, emailing, or messaging us to cancel.
-                 The button calls the narrow cancel_my_membership() RPC
-                 (draft SQL in this build's folder, NOT run yet): our
-                 record cancels on the spot and the account drops back
-                 to Free. The Square subscription itself is stopped by
-                 the customer on Square's own side, through the Manage
-                 Subscription link in their Square subscription emails. -->
-            <div id="acct-view-membership" hidden>
-              <div class="acct-membership">
-                <p class="acct-muted" style="text-align:left;padding:0;">Your plan: <strong id="mm-plan-line">ATR One Free</strong></p>
-                <p class="acct-muted" style="text-align:left;padding:0;" id="mm-rate-line">You earn 1 point for every $1 of a completed repair.</p>
-                <h4 class="acct-detail-h"><i class="fas fa-arrow-up"></i> Upgrade or switch to ATR One Plus</h4>
-                <p class="acct-muted" style="text-align:left;padding:0;">Paid plans are billed monthly through Square. Switching plans starts the new plan at checkout &mdash; if you are switching mid-month, text us at (937) 280-6243 and we will make sure you are not double-billed.</p>
-                <div class="mm-tier-list">
-                  <div class="mm-tier-row"><div class="mm-tier-info"><strong>Individual &mdash; 1 Device</strong><span>$9.99/mo &middot; Earn 5 points per $1</span></div><a class="btn btn-outline btn-sm mm-join" data-mm-tier="single" href="https://square.link/u/eFKxDvyo" target="_blank" rel="noopener">Join</a></div>
-                  <div class="mm-tier-row"><div class="mm-tier-info"><strong>Family &mdash; 5 Devices</strong><span>$19.99/mo &middot; Earn 5 points per $1</span></div><a class="btn btn-outline btn-sm mm-join" data-mm-tier="family" href="https://square.link/u/ZA7502vD" target="_blank" rel="noopener">Join</a></div>
-                  <div class="mm-tier-row"><div class="mm-tier-info"><strong>Business &mdash; 10 Devices</strong><span>$49.99/mo &middot; Earn 10 points per $1</span></div><a class="btn btn-outline btn-sm mm-join" data-mm-tier="business_plus" href="https://square.link/u/HtnQBIG1" target="_blank" rel="noopener">Join</a></div>
-                  <div class="mm-tier-row"><div class="mm-tier-info"><strong>Business Pro &mdash; 25 Devices</strong><span>$99.99/mo &middot; Earn 10 points per $1</span></div><a class="btn btn-outline btn-sm mm-join" data-mm-tier="business_pro" href="https://square.link/u/V8WCkjbW" target="_blank" rel="noopener">Join</a></div>
-                </div>
-                <div id="mm-cancel-wrap" hidden>
-                  <h4 class="acct-detail-h"><i class="fas fa-ban"></i> Cancel ATR One Plus</h4>
-                  <p class="acct-muted" style="text-align:left;padding:0;">You can cancel anytime, right here &mdash; no call, text, or email to us, ever. Cancel at least 3 days before your next billing date and that charge never happens. If a payment just went through and you cancel within 3 days of it, that payment is refunded in full. Your paid benefits run to the end of the current billing period, and you keep ATR One Free either way.</p>
-                  <p class="acct-muted" style="text-align:left;padding:0;"><strong>Step 1 &mdash; cancel with us:</strong> the button below ends your Plus membership on our side the moment you confirm. You drop back to ATR One Free and the free points rate (1 point per $1).</p>
-                  <p class="acct-muted" style="text-align:left;padding:0;"><strong>Step 2 &mdash; stop the billing at Square:</strong> Square runs the payments, so stop the subscription there too &mdash; open any of your Square subscription emails and tap <strong>Manage Subscription</strong>. Do both steps and nothing is charged again.</p>
-                  <button class="btn btn-outline btn-sm" type="button" id="mm-cancel-btn">Cancel membership with us</button>
-                  <p class="acct-error" id="mm-cancel-error" hidden></p>
-                  <p class="pts-success" id="mm-cancel-success" hidden></p>
-                </div>
-                <div id="mm-billing">
-                  <h4 class="acct-detail-h"><i class="fas fa-credit-card"></i> Billing &mdash; handled by Square</h4>
-                  <p class="acct-muted" style="text-align:left;padding:0;">We never take or store card information &mdash; not here, not anywhere. Square runs the payments for ATR One Plus. To update your card, pause, or manage the billing, open any of your Square subscription emails and tap <strong>Manage Subscription</strong> &mdash; that is Square&rsquo;s own page for your plan.</p>
-                </div>
-                <p class="acct-muted" id="mm-free-note" style="text-align:left;padding:0;">You are on the free plan &mdash; there is nothing to cancel. Upgrade anytime above.</p>
-              </div>
-            </div>
+            
 
-            <button class="acct-menu-item acct-flat-row" type="button" data-acct-menu="settings" aria-expanded="false"><i class="fas fa-gear"></i> Account Settings <i class="fas fa-chevron-down acct-menu-chev" aria-hidden="true"></i></button>
 
-            <div id="acct-view-settings" hidden>
-            <!-- My profile -->
-            <div class="acct-profile" id="authx-profile">
-              <h4><i class="fas fa-id-card"></i> My Profile</h4>
-              <p class="acct-profile-line"><strong id="authx-profile-name"></strong><br>
-              <span class="acct-muted" id="authx-profile-email"></span></p>
-              <label class="acct-field">
-                <span>Phone</span>
-                <input type="tel" id="authx-profile-phone" placeholder="(937) 555-1234" autocomplete="tel" aria-label="Phone number">
-              </label>
-              <label class="acct-field">
-                <span>Service address</span>
-                <input type="text" id="authx-profile-address" placeholder="Street, City, OH ZIP" autocomplete="street-address" aria-label="Service address">
-              </label>
-              <button class="btn btn-outline btn-sm" id="authx-profile-save" type="button"><i class="fas fa-save"></i> Save profile</button>
-              <button class="btn btn-outline btn-sm" id="authx-passkey-setup-btn" type="button"><i class="fas fa-fingerprint"></i> Set up a passkey</button><span class="acct-muted" id="authx-profile-msg"></span><div id="authx-passkey-list"></div>
-              <!-- VERSION_VISIBILITY_2026_11_10: the guest's own
-                   version line — support may ask them to read it out.
-                   Filled by paintAppVersion() once the build stamp
-                   resolves; hidden until then. -->
-              <p class="acct-muted" id="acct-app-version" hidden></p>
-            </div>
-
-            <!-- My birthday (optional) -->
-            <div class="acct-birthday" id="acct-birthday-wrap" hidden>
-              <div class="acct-field">
-                <span><i class="fas fa-cake-candles"></i> My birthday (optional) &mdash; month and day only, no year</span>
-                <div class="acct-row2">
-                  <select id="acct-birthday-month" aria-label="Birth month">
-                    <option value="">Month</option>
-                    <option value="01">January</option>
-                    <option value="02">February</option>
-                    <option value="03">March</option>
-                    <option value="04">April</option>
-                    <option value="05">May</option>
-                    <option value="06">June</option>
-                    <option value="07">July</option>
-                    <option value="08">August</option>
-                    <option value="09">September</option>
-                    <option value="10">October</option>
-                    <option value="11">November</option>
-                    <option value="12">December</option>
-                  </select>
-                  <select id="acct-birthday-day" aria-label="Birth day">
-                    <option value="">Day</option>
-                    <option value="01">1</option>
-                    <option value="02">2</option>
-                    <option value="03">3</option>
-                    <option value="04">4</option>
-                    <option value="05">5</option>
-                    <option value="06">6</option>
-                    <option value="07">7</option>
-                    <option value="08">8</option>
-                    <option value="09">9</option>
-                    <option value="10">10</option>
-                    <option value="11">11</option>
-                    <option value="12">12</option>
-                    <option value="13">13</option>
-                    <option value="14">14</option>
-                    <option value="15">15</option>
-                    <option value="16">16</option>
-                    <option value="17">17</option>
-                    <option value="18">18</option>
-                    <option value="19">19</option>
-                    <option value="20">20</option>
-                    <option value="21">21</option>
-                    <option value="22">22</option>
-                    <option value="23">23</option>
-                    <option value="24">24</option>
-                    <option value="25">25</option>
-                    <option value="26">26</option>
-                    <option value="27">27</option>
-                    <option value="28">28</option>
-                    <option value="29">29</option>
-                    <option value="30">30</option>
-                    <option value="31">31</option>
-                  </select>
-                </div>
-              </div>
-              <p class="acct-muted">Add it and we&rsquo;ll have a little something for you on your day &mdash; 15% off your next repair. Totally optional.</p>
-              <button class="btn btn-outline btn-sm" id="acct-birthday-save" type="button"><i class="fas fa-save"></i> Save birthday</button>
-              <span class="acct-muted" id="acct-birthday-msg"></span>
-            </div>
-            <!-- Password -->
-            <div class="acct-password">
-              <h4><i class="fas fa-lock"></i> Password</h4>
-              <p class="acct-muted">Change your password by email.</p>
-              <button class="btn btn-outline btn-sm" id="acct-change-password" type="button">Change password</button>
-              <span class="acct-muted" id="acct-password-msg"></span>
-            </div>
-            <div class="acct-earn">
-              <p><i class="fas fa-gift"></i> <strong>How to earn:</strong> points on every completed repair &mdash; 1 point per $1 on ATR One Free, 5 points per $1 on ATR One Plus Individual &amp; Family, 10 points per $1 on ATR One Plus Business plans.</p>
-              <p><i class="fas fa-tag"></i> <strong>Redeem:</strong> every 100 points = $5 off your next repair. Just mention your points when you book.</p>
-            </div>
-            </div>
+            
             <button class="acct-menu-item acct-flat-row" type="button" id="authx-logout"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
           </div>
           <p class="acct-error" id="acct-dash-error" hidden></p>
@@ -2747,11 +2451,11 @@
           <div class="price-block" id="b2b-pricing">
             <p class="eyebrow">Business pricing</p>
             <h2 class="section-title" style="font-size:1.6rem;">What it costs for your business <span class="price-asterisk" aria-label="See note 3 in the footer">*</span></h2>
-            <p class="lead-line"><strong>Dispatch fee is $35.99.</strong></p>
+            <p class="lead-line"><strong>Dispatch fee is $34.99.</strong></p>
             <p><strong>Diagnostics $64.99</strong></p>
-            <p><strong>One-on-one is $49.99 an hour, plus a $35.99 visit fee.</strong></p>
+            <p><strong>One-on-one is $49.99 an hour, plus a $34.99 visit fee.</strong></p>
             <p>Common repairs starting at $69.99.</p>
-            <p>Custom repairs are $100 an hour, plus parts.</p>
+            <p>Custom repairs are $99.99 an hour, plus parts.</p>
             <p class="price-note">Within 25 miles, the dispatch fee is the price listed above. Over 25 miles, add $1 per mile.</p>
             <p class="price-note">ATRG Business Plus and Business Pro members pay no visit fee on covered devices.</p>
             <p class="price-note">To schedule, sign in with your business account. Your EIN is already on file from sign-up.</p>
@@ -2851,8 +2555,8 @@
             </div>
             <div class="perk-card">
               <i class="fas fa-house"></i>
-              <h4>Free Diagnostics &mdash; No Visit Fee</h4>
-              <p>ATR One Plus members pay no visit fee on covered devices &mdash; the visit and the full diagnosis are included with the paid membership.</p>
+              <h4>No Visit Fee or Diagnostics</h4>
+              <p>ATR One Plus members pay no visit fee and no diagnostics on covered devices &mdash; the visit and the full diagnosis are included with the paid membership.</p>
             </div>
           </div>
 
@@ -2992,8 +2696,8 @@
             </div>
             <div class="perk-card">
               <i class="fas fa-house"></i>
-              <h4>Free Diagnostics &mdash; No Visit Fee</h4>
-              <p>ATR One Plus members pay no visit fee on covered devices &mdash; the visit and the full diagnosis are included with the paid membership.</p>
+              <h4>No Visit Fee or Diagnostics</h4>
+              <p>ATR One Plus members pay no visit fee and no diagnostics on covered devices &mdash; the visit and the full diagnosis are included with the paid membership.</p>
             </div>
           </div>
 
@@ -3344,7 +3048,7 @@
             <div class="section-header center" style="margin-top:2rem;">
             <p class="eyebrow">Coverage map</p>
             <h3 class="section-title" style="font-size:1.7rem;">See if we cover your area</h3>
-            <p class="section-copy">We&rsquo;re a mobile shop &mdash; this map shows where we travel &mdash; roughly 25 miles around Spring Valley and the Dayton area. Type in your address and we&rsquo;ll tell you right away if you&rsquo;re in our area. Every visit carries one flat visit fee: $14.99 for guests, $35.99 for business. Diagnostics is $34.99 for guests, $64.99 for business, when your device needs a full diagnosis.</p>
+            <p class="section-copy">We&rsquo;re a mobile shop &mdash; this map shows where we travel &mdash; roughly 25 miles around Spring Valley and the Dayton area. Type in your address and we&rsquo;ll tell you right away if you&rsquo;re in our area. Every visit carries one flat visit fee: $14.99 for guests, $34.99 for business. Diagnostics is $34.99 for guests, $64.99 for business, when your device needs a full diagnosis.</p>
           </div>
           <div id="service-map" style="height:340px; border-radius:14px; overflow:hidden; margin-bottom:1rem; background:#e8e2d6;"></div>
           <div style="display:flex; gap:0.6rem; flex-wrap:wrap; margin-bottom:0.8rem;">
@@ -3353,7 +3057,7 @@
             <button class="btn btn-outline" type="button" id="sa-locate"><i class="fas fa-crosshairs"></i> Use My Location</button>
           </div>
           <div id="sa-result" style="display:none; border-radius:12px; padding:1rem 1.1rem; margin-bottom:0.5rem; line-height:1.5;"></div>
-          <p style="font-size:0.82rem; color:var(--muted);">The visit fee is the same anywhere in our service area &mdash; $14.99 for guests, $35.99 for business &mdash; no mileage math, no surprises. Diagnostics is $34.99 for guests, $64.99 for business, when one is needed.</p>
+          <p style="font-size:0.82rem; color:var(--muted);">The visit fee is the same anywhere in our service area &mdash; $14.99 for guests, $34.99 for business &mdash; over 25 miles is an extra $1 per mile. Diagnostics is $34.99 for guests, $64.99 for business, when one is needed.</p>
             <div class="section-header center" style="margin-bottom:1rem;">
               <h3 style="font-size:1.3rem;">Send a quick message</h3>
               <p class="section-copy">Just a question, not a repair? Send it here.</p>
@@ -3472,7 +3176,7 @@
             </article>
             <article class="service-card qa-item">
               <h3>What does a visit cost?</h3>
-              <p>Guests: dispatch $14.99 to cover travel to your home, non-refundable; diagnostics $34.99. Businesses: dispatch $35.99, diagnostics $64.99. ATR One members pay no visit fee or diagnostics on covered devices.</p>
+              <p>Guests: dispatch $14.99 to cover travel to your home, non-refundable; diagnostics $34.99. Businesses: dispatch $34.99, diagnostics $64.99. ATR One members pay no visit fee or diagnostics on covered devices.</p>
             </article>
             <article class="service-card qa-item">
               <h3>Do you come to me, or do I bring my device to you?</h3>
@@ -3890,14 +3594,14 @@
 
             <h3>2. Fees, Parts &amp; Payment</h3>
             <ul>
-              <li><strong>Visit fee:</strong> A visit fee applies to every mobile visit &mdash; $14.99 for guests, $35.99 for business &mdash; covering travel only. Diagnostics is separate (see below). It is <strong>non-refundable in all cases</strong>, is due at scheduling, is charged separately from the repair price, and is never credited toward a repair. ATR One Plus (paid) members pay no visit fee for devices covered under their plan.</li>
+              <li><strong>Visit fee:</strong> A visit fee applies to every mobile visit &mdash; $14.99 for guests, $34.99 for business &mdash; covering travel only. It covers the first 25 miles; over 25 miles is $1 per mile. Diagnostics is separate (see below). It is <strong>non-refundable in all cases</strong>, is due at scheduling, is charged separately from the repair price, and is never credited toward a repair. ATR One Plus (paid) members pay no visit fee for devices covered under their plan.</li>
               <li><strong>Diagnostics:</strong> Estimates are free. A full diagnosis &mdash; including disassembly or deep board-level diagnostics when required &mdash; is $34.99 for guests and $64.99 for business, charged separately from the repair price. Paid ATR One members pay no diagnostics fee for covered devices.</li>
               <li><strong>Estimated repairs:</strong> Common repairs (screens, batteries, charging ports, back glass) are quoted as one estimated repair price &mdash; parts and labor included. Repair labor is never billed hourly. One-on-one sessions are billed by the hour ($24.99 per hour for guests, $49.99 per hour for business).</li>
               <li><strong>One-on-one sessions:</strong> One-on-one sessions are billed by the hour: <strong>$24.99 per hour for guests, $49.99 per hour for business.</strong> This is the only service we bill hourly; repair labor is never billed hourly. Sessions run in person at your home or business, or virtually through ATRG Connect. A session covers setup, teaching, and troubleshooting on your own devices, at your pace. If a session runs longer than booked, the extra time is settled at the visit at the same hourly rate. Virtual sessions are paid before the session begins, through our payment provider. One-on-one sessions are for guests and businesses only. We do not teach people to code or to build websites.</li>
               <li><strong>Online estimator:</strong> Prices shown by the online estimator are <strong>starting prices</strong> for the most common models. Your estimated repair price is confirmed for your exact model after diagnostics, and the price we confirm is the price you pay.</li>
               <li><strong>Price changes:</strong> The prices on this site are the prices in effect when you book. If a price changes after you book, the price confirmed to you at booking is the price you pay.</li>
               <li><strong>If a device cannot be repaired:</strong> If diagnostics shows the device cannot be repaired, or the repair would cost more than the device is worth, we will tell you plainly and you owe nothing beyond the visit fee and diagnostics already charged.</li>
-              <li><strong>Custom repairs:</strong> Repairs outside the standard list are quoted individually as an estimated repair price &mdash; parts plus labor ($50 an hour for guests, $100 an hour for business) &mdash; and begin only with your approval.</li>
+              <li><strong>Custom repairs:</strong> Repairs outside the standard list are quoted individually as an estimated repair price &mdash; parts plus labor ($49.99 an hour for guests, $99.99 an hour for business) &mdash; and begin only with your approval.</li>
               <li><strong>Parts:</strong> Parts for your job are ordered by us through our suppliers and delivered to us. Because parts are ordered for your specific job, the parts cost is paid upfront before we order. If you cancel after parts are ordered, we keep the part and refund what you paid for the part.</li>
               <li><strong>Replaced parts:</strong> Parts we remove during a repair are taken with us and disposed of properly to protect the environment. Some original manufacturer parts must be returned to the manufacturer.</li>
               <li><strong>Parts you supply:</strong> We do not accept guest-supplied repair parts &mdash; screens, batteries, charging ports, and other parts that are the repair itself must come from us. If you supply your own everyday part you can buy at retail &mdash; such as a hard drive, memory, or accessory &mdash; we will install it as-is; our 1-Year Limited Warranty does not cover guest-supplied parts.</li>
@@ -4027,7 +3731,7 @@
             <p>We may change plan prices. If we do, we will tell you before your next renewal, and you may cancel before the new price applies.</p>
 
             <h3>5. Cancellation</h3>
-            <p>You may cancel at any time, right in your account under Manage Membership &mdash; no call, text, or email to us is needed. To stop the next monthly charge, cancel at least 3 days before your next billing date. If a monthly payment has already gone through and you cancel within 4 days of that payment, that payment is refunded in full. Your benefits continue to the end of the current billing period. After cancellation, your account returns to ATR One Free, and you keep earning points at the Free rate of 1 point for every $1.</p>
+            <p>You may cancel at any time, right in your Guest Hub under ATR One Membership &mdash; no call, text, or email to us is needed. To stop the next monthly charge, cancel at least 3 days before your next billing date. If a monthly payment has already gone through and you cancel within 4 days of that payment, that payment is refunded in full. Your benefits continue to the end of the current billing period. After cancellation, your account returns to ATR One Free, and you keep earning points at the Free rate of 1 point for every $1.</p>
 
             <h3>6. Changes to Membership Terms</h3>
             <p>We may change this agreement from time to time. The version posted on this site when your plan renews governs that renewal period. If a change affects your price or your benefits, we will tell you before your next renewal, and you may cancel before it takes effect.</p>
@@ -4297,7 +4001,7 @@
     </section>
 
     <!-- SITE_CLASSES_PAGE_2026_10_30: dedicated One-on-One Classes page, built like the other service pages, copy from Austin -->
-    <!-- V143_CLASSES_2026_11_13 (owner, Nov 13, 2026): straightened — short sections in one order, the "What we can help with" list left-aligned in a centered narrow column (the old centered bullets read ragged), ready-made help as Help Guides dropdown rows instead of five cards. One page, two faces: the guest face (at your home, $24.99/hr + $14.99 visit fee) and the business face (at your business, teaching your team, $49.99/hr + $35.99 visit fee), switched by the same session audience flag as the other landing pages (body.aud-business). No coding or website-building help — standing rule. -->
+    <!-- V143_CLASSES_2026_11_13 (owner, Nov 13, 2026): straightened — short sections in one order, the "What we can help with" list left-aligned in a centered narrow column (the old centered bullets read ragged), ready-made help as Help Guides dropdown rows instead of five cards. One page, two faces: the guest face (at your home, $24.99/hr + $14.99 visit fee) and the business face (at your business, teaching your team, $49.99/hr + $34.99 visit fee), switched by the same session audience flag as the other landing pages (body.aud-business). No coding or website-building help — standing rule. -->
     <section id="classes" class="page">
       <div class="section">
         <div class="container">
@@ -4321,7 +4025,7 @@
           <div class="class-box">
           <h3>What it costs</h3>
           <p class="aud-g">One-on-one help is $24.99 per hour &mdash; the whole hour, right at your home. That covers setup help, troubleshooting guidance, and teaching. A $14.99 visit fee covers the trip to you, charged separately from the hourly time.</p>
-          <p class="aud-b">One-on-one help is $49.99 per hour &mdash; the whole hour, right at your business. That covers setup help, troubleshooting guidance, and teaching. A $35.99 visit fee covers the trip to you, charged separately from the hourly time.</p>
+          <p class="aud-b">One-on-one help is $49.99 per hour &mdash; the whole hour, right at your business. That covers setup help, troubleshooting guidance, and teaching. A $34.99 visit fee covers the trip to you, charged separately from the hourly time.</p>
           </div>
           <!-- SUPPORT_BOOKING_2026_11_06: booking a class goes through the
                Support path in the booking card now, not the Contact page. -->
@@ -4343,11 +4047,11 @@
                of help on the form's service step. Pricing law: time is
                quoted pure ($24.99 an hour guest, $49.99 an hour business,
                from $24.99 / $49.99 for the first hour); the visit fee
-               ($14.99 guest, $35.99 business) is stated separately and
+               ($14.99 guest, $34.99 business) is stated separately and
                is never blended into a package or hour price. -->
           <h3>Ready-made help</h3>
           <p class="aud-g">Pick a package and book it like any one-on-one visit &mdash; at your home, on your own device. Time is $24.99 an hour, booked by the hour, and every package starts at $24.99 for the first hour. The $14.99 visit fee covers the trip to you; it is charged once, separately, when you book &mdash; it is never added into the hourly price. ATR One Plus (paid) members pay no visit fee on covered devices.</p>
-          <p class="aud-b">Pick a package and book it like any one-on-one visit &mdash; at your business, on your team's own devices. Time is $49.99 an hour, booked by the hour, and every package starts at $49.99 for the first hour. The $35.99 visit fee covers the trip to you; it is charged once, separately, when you book &mdash; it is never added into the hourly price. ATR One Plus (paid) members pay no visit fee on covered devices.</p>
+          <p class="aud-b">Pick a package and book it like any one-on-one visit &mdash; at your business, on your team's own devices. Time is $49.99 an hour, booked by the hour, and every package starts at $49.99 for the first hour. The $34.99 visit fee covers the trip to you; it is charged once, separately, when you book &mdash; it is never added into the hourly price. ATR One Plus (paid) members pay no visit fee on covered devices.</p>
           <div class="hg-list classes-pkgs">
           <details class="hg-guide" id="pkg-new-device">
             <summary><i class="fas fa-box-open"></i><h3>New Device Setup</h3><span class="hg-chev" aria-hidden="true"><i class="fas fa-chevron-down"></i></span></summary>
@@ -4800,7 +4504,7 @@
       </p>
       <!-- FOOTNOTE_NUMBERS_2026_11_09 (owner FOOTNOTE LAW, Nov 9, 2026), renumbered FOOTER_NUMBERING_2026_11_10: in Apple fashion, claim-specific footer notes are numbered and the claim up in the copy carries the same number as a small superscript marker (sup.fnote). Note 1 = the brand disclaimer (no in-page marker); Note 2 = ATR One membership disclaimer (marker on the ATR One section lead); Note 3 = estimates/visit fee (markers on the Visit Fee and Diagnostics cards under "How pricing works"). The Cloudflare line stays unnumbered at the very bottom of the page. -->
       <!-- SMALL_PRINT_FOOTER_2026_11_09 (owner rule, Nov 9, 2026): fine print never sits inside a content topic - asterisk small print lives here in the footer with the other small print. This note (now note 3) moved down from the Diagnostics card under "How pricing works". -->
-      <p class="footer-disclaimer">3. Estimates are always free. The visit covers the trip to you &mdash; $14.99 for guests, $35.99 for business. Diagnostics is $34.99 for guests, $64.99 for business. ATR One members pay no visit fee or diagnostics on covered devices.</p>
+      <p class="footer-disclaimer">3. Estimates are always free. The visit covers the trip to you &mdash; $14.99 for guests, $34.99 for business. Diagnostics is $34.99 for guests, $64.99 for business. ATR One members pay no visit fee or diagnostics on covered devices.</p>
       </div>
 
       <div class="footer-bottom">
@@ -4898,7 +4602,7 @@
     'use strict';
     function $(id) { return document.getElementById(id); }
     function showAcctView(view) {
-      var r = $('acct-view-repairs'), s = $('acct-view-settings'), w = $('acct-view-rewards'), m = $('acct-view-messages'), o = $('acct-view-orders'), c = $('acct-view-cart'), mmv = $('acct-view-membership'), dv = $('acct-view-devices'), cn = $('acct-view-connect');
+      var r = $('acct-view-repairs'), s = $('acct-view-settings'), w = $('acct-view-rewards'), m = $('acct-view-messages'), o = $('acct-view-orders'), c = $('acct-view-cart'), mmv = $('acct-view-membership'), dv = $('acct-view-devices');
       /* CUSTOMER_INBOX_2026_11_05: the Messages view joins the set,
          and the switch is a TOGGLE, same as the script.js module —
          owner bug fix (Nov 5, 2026): tapping a closed row opens it
@@ -4907,7 +4611,7 @@
          ACCOUNT_FIX_PASS_3_2_2026_11_06 (ITEM C): the Orders view
          joins the set the same way.
          ACCOUNT_FIX_PASS_3_3_2026_11_06: the Cart view joins too. */
-      var panels = { repairs: r, settings: s, rewards: w, messages: m, orders: o, cart: c, membership: mmv, devices: dv, connect: cn };
+      var panels = { repairs: r, settings: s, rewards: w, messages: m, orders: o, cart: c, membership: mmv, devices: dv };
       var target = (panels[view] && !panels[view].hidden) ? null : view;
       if (r) r.hidden = target !== 'repairs';
       if (s) s.hidden = target !== 'settings';
@@ -4917,7 +4621,6 @@
       if (c) c.hidden = target !== 'cart';
       if (mmv) mmv.hidden = target !== 'membership';
       if (dv) dv.hidden = target !== 'devices';
-      if (cn) cn.hidden = target !== 'connect';
       document.querySelectorAll('[data-acct-menu]').forEach(function (b) {
         var on = b.getAttribute('data-acct-menu') === target;
         b.classList.toggle('is-active', on);
@@ -4928,6 +4631,8 @@
         if (list) list.hidden = false;
         if (th) th.hidden = true;
         if (nt) nt.hidden = true;
+        var rv2 = $('acct-view-repairs');
+        if (rv2 && rv2.scrollIntoView) { try { rv2.scrollIntoView({ behavior: 'auto', block: 'start' }); } catch (e2) {} }
       }
       if (target === 'messages') {
         var ib = $('acct-inbox'), th2 = $('acct-thread');
@@ -5123,12 +4828,16 @@
     d.hidden = false;
     if (btn) { btn.disabled = false; btn.textContent = 'Set my new password'; }
     if (recoveryMode && sb) { sb.auth.signOut().catch(function () {}); }
-    setTimeout(function () { close(); window.location.href = '/portal.html'; }, 1800);
+    setTimeout(function () { close(); window.location.href = '/#account'; }, 1800);
   }
 
+  var lastCodeSentAt = 0; /* V158_GUEST_PORTAL_2026_11_17: Supabase refuses a fresh OTP
+   * inside 60 seconds of the last one — tell the guest to wait
+   * instead of looking like nothing happened. */
   function sendCode() {
     var email = el('atr-reset-email').value.trim();
     var btn = el('atr-reset-send');
+    if (Date.now() - lastCodeSentAt < 60000) { showErr('atr-reset-req-err', 'We just sent a code — give it a moment, then tap again.'); showStep('code'); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showErr('atr-reset-req-err', 'Please enter a valid email address.'); return; }
     var client = getClient();
     if (!client) { showErr('atr-reset-req-err', 'Could not start the reset. Please try again in a moment.'); return; }
@@ -5141,6 +4850,7 @@
     client.auth.resetPasswordForEmail(email).then(function (res) {
       btn.disabled = false; btn.textContent = 'Email me a code';
       if (res.error) { showErr('atr-reset-req-err', 'We could not send that code. Double-check the email and try again.'); return; }
+      lastCodeSentAt = Date.now();
       showErr('atr-reset-req-err', '');
       showStep('code');
     }).catch(function () {
@@ -5190,7 +4900,15 @@
   document.addEventListener('DOMContentLoaded', function () {
     el('atr-reset-close').addEventListener('click', close);
     el('atr-reset-send').addEventListener('click', sendCode);
-    el('atr-reset-resend').addEventListener('click', function () { showStep('request'); showErr('atr-reset-code-err', ''); });
+    /* V158_GUEST_PORTAL_2026_11_17: "Email me a new code" used to send NOTHING — it
+     * only flipped back to the email step. It now sends a fresh code
+     * for the email already typed (or returns to the email step if
+     * there is none to send to). */
+    el('atr-reset-resend').addEventListener('click', function () {
+      showErr('atr-reset-code-err', '');
+      if (!el('atr-reset-email').value.trim()) { showStep('request'); return; }
+      sendCode();
+    });
     /* SITE_DEADEND_MINORS_2026_10_30: "Use a different email" returns to
      * the email step with the code-step state (code, new passwords,
      * errors, done note, verify button) cleared; the email field itself
@@ -5210,15 +4928,37 @@
 
     // Expose for the account modal's "Forgot password" button and other pages.
     window.atrOpenReset = function () { showStep('request'); open(); };
+    /* V158_GUEST_PORTAL_2026_11_17: an invite / confirmation / magic link signs the
+     * guest straight in with NO password prompt (no type=invite /
+     * email / magiclink handler existed anywhere). The account module
+     * sets 'atr-set-password-after-signin' when such a link arrives;
+     * this opens the set-password step right after that sign-in, so
+     * the guest leaves with a password they chose — signing out no
+     * longer strands them. */
+    window.atrOpenResetLink = function () { showStep('link'); open(); };
+    try {
+      var _h = window.location.hash || '', _q = window.location.search || '';
+      if (/type=(invite|email|magiclink|signup)/.test(_h + _q)) sessionStorage.setItem('atr-set-password-after-signin', '1');
+    } catch (e) {}
 
     var client = getClient();
     // Recovery links that arrive dead (expired/invalid) land back here with an
     // error in the URL — turn that dead end into the working code flow.
-    if (window.location.hash && window.location.hash.indexOf('error_code=otp_expired') > -1) {
+    /* V158_GUEST_PORTAL_2026_11_17: the old check read the hash only, only for
+     * otp_expired, called every link a "reset link", and left the
+     * error fragment in the URL so the message reappeared on every
+     * reload. Now: hash AND query, any error code, the real link
+     * type named, and the fragment cleared after showing once. */
+    (function () {
+      var _u = (window.location.hash || '') + '&' + (window.location.search || '');
+      var _em = /[?&#]error=([^&]+)/.exec(_u), _ec = /[?&#]error_code=([^&]+)/.exec(_u);
+      if (!_em && !_ec) return;
+      var _kind = /type=magiclink/.test(_u) ? 'sign-in link' : /type=invite/.test(_u) ? 'invite link' : /type=email/.test(_u) ? 'confirmation link' : 'reset link';
       showStep('request');
-      showErr('atr-reset-req-err', 'That reset link had expired. No problem — request a fresh code here and set your password on this page.');
+      showErr('atr-reset-req-err', 'That ' + _kind + ' had expired. No problem — request a fresh code here and set your password on this page.');
       open();
-    }
+      try { history.replaceState(null, '', window.location.pathname + window.location.search.replace(/[?&#]error[^&]*/g, '').replace(/[?&#]error_code[^&]*/g, '')); } catch (e) {}
+    })();
     if (client) {
       client.auth.onAuthStateChange(function (event) {
         if (event === 'PASSWORD_RECOVERY') {
@@ -5402,6 +5142,90 @@
   .acct-cardbox-qr{flex:none;width:76px;height:76px;padding:5px;margin:0;background:#fff;border:1.5px solid var(--line,#e5d9c8);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center}
   .acct-cardbox-qr svg{width:100%;height:auto;display:block}
   .acct-cardbox-qr:empty{display:none}
+  /* V156_DOC_SIGNING_2026_11_16: the "Sign your documents here" list
+     and the sign dialog. Rows are left-aligned inside the centered
+     cardbox; signed rows show green. */
+  #acct-sign-docs{text-align:left}
+  .acct-signdoc-row{border:1px solid var(--line,#e5d9c8);border-radius:10px;padding:.7rem .8rem;margin:0 0 .6rem;background:#fff}
+  .acct-signdoc-row:last-child{margin-bottom:0}
+  .acct-signdoc-title{font-weight:800;font-size:.95rem}
+  .acct-signdoc-meta{font-size:.85rem;color:var(--muted,#8a7a68);margin-top:.15rem}
+  .acct-signdoc-btns{display:flex;gap:.5rem;margin-top:.55rem;flex-wrap:wrap}
+  .acct-signdoc-btn{appearance:none;border:2px solid #0057b8;background:#0057b8;color:#fff;border-radius:10px;padding:.45rem .9rem;font-size:.88rem;font-weight:700;cursor:pointer;font-family:inherit}
+  .acct-signdoc-btn--ghost{background:transparent;color:#0057b8}
+  .acct-signdoc-btn:disabled{opacity:.55;cursor:default}
+  .acct-signdoc-signed{color:#1d7a1d;font-weight:800}
+  .atr-signmodal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:2000;display:flex;align-items:center;justify-content:center;padding:1rem}
+  .atr-signmodal{background:#fff;color:#1c1c1e;border-radius:14px;max-width:440px;width:100%;padding:1.25rem;box-shadow:0 12px 40px rgba(0,0,0,.3)}
+  .atr-signmodal h3{margin:0 0 .5rem;font-size:1.1rem}
+  .atr-signmodal p{margin:.4rem 0;font-size:.92rem;line-height:1.5}
+  .atr-signmodal label{display:block;font-weight:700;font-size:.88rem;margin:.7rem 0 .3rem}
+  .atr-signmodal input{width:100%;padding:.6rem .7rem;font-size:1rem;border:1px solid #c7c7cc;border-radius:10px;font-family:inherit}
+  .atr-signmodal .atr-signmodal-btns{display:flex;gap:.5rem;margin-top:1rem}
+  .atr-signmodal .atr-signmodal-err{color:#b3261e;font-weight:700}
+  /* V158_GUEST_PORTAL_2026_11_17: appointment box + ticket actions — same card
+     language as the rest of the account page, nothing restyled. */
+  .acct-appt-box{border:1px solid var(--line,#e5d9c8);border-radius:10px;padding:.7rem .8rem;margin:0 0 .9rem;background:#fff;text-align:left}
+  .acct-appt-line{font-size:.92rem;margin-bottom:.3rem}
+  .acct-actions-row{margin:0 0 .9rem;text-align:left}
+  .acct-hub-bar{border:2px solid #0057b8;border-radius:12px;padding:.7rem .8rem;margin:0 0 .9rem;background:#fff;text-align:left}
+  .acct-hub-title{font-size:1rem;margin-bottom:.55rem}
+  .acct-hub-actions{display:flex;flex-wrap:wrap;gap:.45rem}
+  /* V158_SCREENSHOT_FIX_2026_11_17: the guest-account layout rules,
+     copied from live styles.css so the guest view renders even if
+     that file fails to load (the test server never served it, and the
+     unstyled render ran every card/timeline/message span together as
+     one paragraph). Same values as styles.css, so the live look is
+     unchanged — except .acct-repairs-head, which gains flex-wrap:
+     at 390 px the heading + Schedule button overflowed and the
+     button was clipped at the right edge. The form-field rules
+     (.acct-field / .acct-row2) are the same copy: without them the
+     new-ticket form rendered with labels and inputs flowing inline. */
+  .acct-ticket-card{display:block;width:100%;text-align:left;background:var(--surface,#fff);border:2px solid var(--blue);border-radius:14px;padding:14px 16px;margin:0 0 10px;cursor:pointer;font-family:inherit;color:var(--text,#2b2118)}
+  .acct-ticket-card:hover{border-color:var(--brand,#b4551f)}
+  .acct-ticket-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px}
+  .acct-ticket-top strong{font-size:.95rem;color:var(--ink)}
+  .acct-ticket-issue{display:block;font-size:.95rem;margin-bottom:4px}
+  .acct-ticket-meta{display:block;font-size:.85rem;color:var(--muted,#6f6152)}
+  .acct-ticket-cta{display:block;margin-top:8px;font-size:.85rem;font-weight:700;color:var(--brand,#b4551f)}
+  .acct-status{flex:none;font-size:.72rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;border-radius:999px;padding:4px 10px;background:#eee;color:#444;white-space:nowrap}
+  .acct-status-waiting{background:#fdf0e2;color:#9a5a13}
+  .acct-status-inprogress{background:#e3ecfd;color:#1d4ed8}
+  .acct-status-waitingforparts{background:#f3e8fd;color:#7c3aed}
+  .acct-status-readyforpickup{background:#e2f7e3;color:#15803d}
+  .acct-status-completed{background:#e8e8e8;color:#555}
+  .acct-repairs-head{display:flex;align-items:center;justify-content:space-between;gap:.75rem;margin-bottom:.9rem;flex-wrap:wrap}
+  .acct-field{display:block;margin-bottom:1rem}
+  .acct-field span{display:block;font-weight:700;font-size:.85rem;margin-bottom:.4rem;color:var(--ink)}
+  .acct-field input,.acct-field select,.acct-field textarea{width:100%;padding:.85rem 1rem;border:2px solid var(--line);border-radius:var(--radius-sm);background:var(--bg);color:var(--ink);font-size:.95rem;font-family:var(--font-body);box-sizing:border-box}
+  .acct-field input:focus,.acct-field select:focus,.acct-field textarea:focus{outline:none;border-color:var(--brand)}
+  .acct-field textarea{resize:vertical}
+  .acct-row2{display:flex;gap:.75rem}
+  .acct-row2 .acct-field{flex:1;min-width:0}
+  .acct-repairs-head h4{font-family:var(--font-display);font-size:1.15rem;color:var(--ink);margin:0}
+  .acct-thread-info{background:var(--bg);border:1px solid var(--line);border-radius:var(--radius-md);padding:.85rem 1rem;margin-bottom:.9rem;font-size:.88rem;color:var(--ink-soft)}
+  .acct-thread-info strong{color:var(--ink)}
+  .acct-tl-note{font-size:.88rem;color:var(--ink-soft);margin:0 0 .85rem}
+  .acct-tl{list-style:none;margin:0 0 .4rem;padding:0}
+  .acct-tl-step{position:relative;display:flex;gap:.7rem;padding-bottom:1rem}
+  .acct-tl-step::before{content:'';position:absolute;left:8px;top:20px;bottom:0;width:2px;background:var(--line)}
+  .acct-tl-step:last-child{padding-bottom:.25rem}
+  .acct-tl-step:last-child::before{display:none}
+  .acct-tl-step.is-done::before{background:var(--brand,#b4551f)}
+  .acct-tl-dot{flex:none;width:18px;height:18px;border-radius:50%;border:2px solid var(--line);background:var(--surface,#fff);margin-top:1px;position:relative;z-index:1}
+  .acct-tl-step.is-done .acct-tl-dot{background:var(--brand,#b4551f);border-color:var(--brand,#b4551f)}
+  .acct-tl-step.is-current .acct-tl-dot{border-color:var(--brand,#b4551f);box-shadow:0 0 0 3px rgba(180,85,31,.22)}
+  .acct-tl-step.is-next .acct-tl-dot{border-style:dashed;border-color:var(--brand,#b4551f)}
+  .acct-tl-main{display:flex;flex-wrap:wrap;align-items:baseline;gap:.15rem .55rem}
+  .acct-tl-label{font-weight:700;color:var(--ink);font-size:.92rem}
+  .acct-tl-step.is-todo .acct-tl-label{color:var(--muted,#8a7a68);font-weight:600}
+  .acct-tl-tag{font-size:.68rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--brand,#b4551f)}
+  .acct-tl-extra{font-size:.82rem;color:var(--ink-soft);flex-basis:100%}
+  .acct-messages{display:flex;flex-direction:column;gap:8px;max-height:340px;overflow-y:auto;padding:6px 2px}
+  .acct-msg{max-width:85%;padding:9px 12px;border-radius:14px;font-size:.92rem;line-height:1.45;white-space:pre-wrap;word-wrap:break-word}
+  .acct-msg-who{display:block;font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;opacity:.75;margin-bottom:2px}
+  .acct-msg-shop{background:var(--surface,#fffaf2);border:1px solid var(--line,#e5d9c8);align-self:flex-start}
+  .acct-msg-me{background:var(--brand,#b4551f);color:#fff;align-self:flex-end}
   /* QR_FIX_PASS_2_2026_11_05 (owner idea): quick-glance drop-down
      anchored to the header account button. The button itself goes to
      the account page; the chevron toggles this compact panel — name,
@@ -6018,7 +5842,7 @@
       if (res.error || !data || data.ok !== true) {
         var reason = data && data.reason;
         if (reason === 'cap_reached') mdShowError(d.id, 'That is more than your plan covers — take coverage off another device first.');
-        else if (reason === 'no_paid_plan') mdShowError(d.id, 'Coverage comes with ATR One Plus — see Manage Membership in your account.');
+        else if (reason === 'no_paid_plan') mdShowError(d.id, 'Coverage comes with ATR One Plus — see ATR One Membership in your Guest Hub.');
         else mdShowError(d.id, 'Coverage could not be updated online just yet — nothing was changed.');
         if (done) done(false);
         return;
@@ -6338,6 +6162,8 @@
   window.atrCustomer = function () { return currentCust; };
   var STATUS_COPY = {
     'Support Requested': { label: 'Support requested', note: 'We got your support booking — we\'ll reach out shortly to confirm your visit.' },
+    'Awaiting Scheduling': { label: 'Awaiting scheduling', note: "We got your request — we'll text you to confirm your appointment window." },
+    'Awaiting Repair': { label: 'Awaiting repair', note: 'Your repair is booked in — see your appointment time below.' },
     'Awaiting Diagnostics': { label: 'Awaiting diagnostics', note: "We'll diagnose it and text you to confirm your appointment window." },
     'Awaiting Estimate': { label: 'Awaiting estimate', note: 'We are working out your price and will text it to you.' },
     'Awaiting Customer Response': { label: 'Awaiting your response', note: 'We sent you an estimate. Reply to it and we will get your repair moving.' },
@@ -6359,6 +6185,8 @@
   function showRepairsView() {
     var r = $('acct-repairs'), th = $('acct-thread'), nt = $('acct-newticket');
     if (r) r.hidden = false; if (th) th.hidden = true; if (nt) nt.hidden = true;
+    var rv = $('acct-view-repairs');
+    if (rv && rv.scrollIntoView) { try { rv.scrollIntoView({ behavior: 'auto', block: 'start' }); } catch (e) {} }
   }
   /* ACCOUNT_FIX_PASS_3_2_2026_11_06 (ITEM D): the loading watchdog.
      Live diagnostic (Nov 6, 2026): in a stale/hung session the
@@ -6380,7 +6208,7 @@
   function paintRepairsFallback() {
     var list = $('acct-ticket-list');
     if (!list) return;
-    list.innerHTML = '<p class="acct-muted">Your repairs are taking longer than usual to load.</p><button type="button" class="btn btn-secondary btn-sm" id="acct-repairs-retry">Retry</button>';
+    list.innerHTML = '<p class="acct-muted">Your services are taking longer than usual to load.</p><button type="button" class="btn btn-secondary btn-sm" id="acct-repairs-retry">Retry</button>';
     var b = $('acct-repairs-retry');
     if (b) b.addEventListener('click', function () { if (currentCust) loadMyRepairs(currentCust); });
   }
@@ -6396,7 +6224,7 @@
     if (!list || !sb || !cust) return;
     list.innerHTML = '<p class="acct-muted">Loading your repairs\u2026</p>';
     repairsSettled = false; armWatchdog('repairs'); /* ACCOUNT_FIX_PASS_3_2_2026_11_06 ITEM D */
-    sb.from('tickets').select('id, created_at, device_type, brand, model, issue, status')
+    sb.from('tickets').select('id, created_at, device_type, brand, model, issue, status, job_date, appointment_at, service_address') /* V158_GUEST_PORTAL_2026_11_17: appointment + address were never even asked for */
       .eq('customer_id', cust.id).order('created_at', { ascending: false }).limit(50)
       .then(function (res) {
         repairsSettled = true;
@@ -6415,7 +6243,8 @@
             '<span class="acct-ticket-top"><strong>' + chip + escX(dev) + '</strong>' + statusPill(t.status) + '</span>' +
             '<span class="acct-ticket-issue">' + escX(t.issue || '') + '</span>' +
             '<span class="acct-ticket-meta">' + escX(ticketDate(t)) + ' \u00b7 ' + escX(c.note) + '</span>' +
-            '<span class="acct-ticket-cta">View messages <i class="fas fa-arrow-right"></i></span>' +
+            (window.atrFmtAppt ? '<span class="acct-ticket-meta">' + escX(window.atrFmtAppt(t)) + '</span>' : '') +
+            '<span class="acct-ticket-cta">View service request <i class="fas fa-arrow-right"></i></span>' +
           '</button>';
         }
         function wireCards(container) {
@@ -6429,7 +6258,7 @@
         }
         list.innerHTML = repairRows.length
           ? repairRows.map(function (t) { return ticketCard(t, false); }).join('')
-          : '<p class="acct-muted">No repairs yet \u2014 when you book a repair, you\'ll see its progress here, step by step.</p>';
+          : '<p class="acct-muted">No services yet \u2014 when you book a service, you\'ll see its progress here, step by step.</p>';
         wireCards(list);
         var supList = $('acct-support-list');
         if (supList) {
@@ -6441,7 +6270,7 @@
       })
       .catch(function () {
         repairsSettled = true;
-        list.innerHTML = '<p class="acct-muted">We couldn\'t load your repairs just now \u2014 pull this page up again in a moment, or call or text (937) 280-6243.</p>';
+        list.innerHTML = '<p class="acct-muted">We couldn\'t load your services just now \u2014 pull this page up again in a moment, or call or text (937) 280-6243.</p>';
         var supListErr = $('acct-support-list');
         if (supListErr) supListErr.innerHTML = '<p class="acct-muted">We couldn\'t load your one-on-ones just now \u2014 try again in a moment.</p>';
       });
@@ -6530,8 +6359,8 @@
      conversation from the Messages inbox moves that same element
      into the Messages panel (and back again for Repairs), so there
      is only ever ONE thread, ONE message list, and ONE reply box —
-     the Repairs "View messages" and the inbox row render and send
-     through the identical code path. */
+     the Services "View service request" button and the inbox row
+     render and send through the identical code path. */
   var threadOrigin = 'repairs', threadHomeParent = null, threadHomeNext = null;
   function placeThread(origin) {
     var th = $('acct-thread');
@@ -6556,12 +6385,17 @@
        in wireRepairs for why it no longer renders at page load. */
     if (window.atrTurnstile) window.atrTurnstile.mount($('ts-acct-msg'));
     var back = $('acct-thread-back');
-    if (back) back.innerHTML = '<i class="fas fa-arrow-left"></i> Back to ' + (threadOrigin === 'messages' ? 'messages' : 'repairs');
+    if (back) back.innerHTML = '<i class="fas fa-arrow-left"></i> Back to ' + (threadOrigin === 'messages' ? 'messages' : 'services');
     var info = $('acct-thread-info');
     if (info) info.innerHTML = t.__general
       ? '<strong>General conversation</strong><br><span class="acct-muted">Not tied to a repair \u2014 write us here any time.</span>'
       : '<strong>' + escX(ticketDevice(t)) + '</strong> ' + statusPill(t.status) + '<br><span class="acct-muted">' + escX(t.issue || '') + '</span>';
+    var thEl = $('acct-thread');
+    if (thEl && thEl.scrollIntoView) { try { thEl.scrollIntoView({ behavior: 'auto', block: 'start' }); } catch (e) {} }
     renderTicketTimeline(t); /* REPAIR_TIMELINE_2026_11_06: paint from status now; the parts read refines it */
+    if (window.atrRenderTicketAppt) window.atrRenderTicketAppt(t);
+    if (window.atrLoadTicketDocuments) window.atrLoadTicketDocuments(t);
+    if (window.atrLoadTicketActions) window.atrLoadTicketActions(t);
     loadTicketParts(t);
     loadTicketCharges(t);
     loadThreadMessages(t);
@@ -6584,7 +6418,7 @@
     return '';
   }
   var PART_STATUS_COPY = { 'Ordered': 'Ordered \u2014 on its way to us', 'Received': 'In hand', 'Cancelled': 'Cancelled' };
-  var CHARGE_KIND_COPY = { 'part': 'Part', 'labor': 'Labor', 'one_off': 'Other charge', 'dispatch': 'Visit fee', 'visit': 'Visit fee', 'deposit_credit': 'Deposit received' };
+  var CHARGE_KIND_COPY = { 'part': 'Part', 'labor': 'Labor', 'one_off': 'Other charge', 'dispatch': 'Visit fee', 'visit': 'Visit fee', 'deposit_credit': 'Deposit received', 'discount': 'Discount' };
   function loadTicketParts(t) {
     var box = $('acct-parts');
     if (!box || !sb) return;
@@ -6629,12 +6463,18 @@
         var lines = rows.map(function (c) {
           var qty = Number(c.qty || 0), price = Number(c.unit_price || 0), amt = qty * price;
           var isDeposit = c.kind === 'deposit_credit';
+          var isDiscount = c.kind === 'discount';
           if (isDeposit) deposits += amt; else subtotal += amt;
           return '<div class="acct-line"><div class="acct-line-main"><strong>' + escX(CHARGE_KIND_COPY[c.kind] || 'Charge') + '</strong>' +
-            '<span class="acct-line-meta">' + escX(c.description || '') + ' \u00b7 ' + escX(qty) + ' \u00d7 ' + fmtMoneyX(price) + '</span></div>' +
-            '<div class="acct-line-amt">' + (isDeposit ? '\u2212' : '') + fmtMoneyX(amt) + '</div></div>';
+            '<span class="acct-line-meta">' + escX(c.description || '') + ' \u00b7 ' + escX(qty) + ' \u00d7 ' + ((isDiscount ? '\u2212' : '') + fmtMoneyX(Math.abs(price))) + '</span></div>' +
+            '<div class="acct-line-amt">' + ((isDeposit || isDiscount) ? '\u2212' : '') + fmtMoneyX(Math.abs(amt)) + '</div></div>';
         }).join('');
-        var totals = '<div class="acct-line acct-total-row"><div class="acct-line-main"><strong>Subtotal</strong></div><div class="acct-line-amt">' + fmtMoneyX(subtotal) + '</div></div>';
+        var partTotal = 0, laborTotal = 0;
+        rows.forEach(function (c) { var a = Number(c.qty || 0) * Number(c.unit_price || 0); if (c.kind === 'part') partTotal += a; if (c.kind === 'labor') laborTotal += a; });
+        var totals = '';
+        if (partTotal) totals += '<div class="acct-line"><div class="acct-line-main"><strong>Part total</strong></div><div class="acct-line-amt">' + fmtMoneyX(partTotal) + '</div></div>';
+        if (laborTotal) totals += '<div class="acct-line"><div class="acct-line-main"><strong>Labor total</strong></div><div class="acct-line-amt">' + fmtMoneyX(laborTotal) + '</div></div>';
+        totals += '<div class="acct-line acct-total-row"><div class="acct-line-main"><strong>Subtotal</strong></div><div class="acct-line-amt">' + fmtMoneyX(subtotal) + '</div></div>';
         if (deposits) {
           totals += '<div class="acct-line"><div class="acct-line-main"><strong>Deposits received</strong></div><div class="acct-line-amt">\u2212' + fmtMoneyX(deposits) + '</div></div>' +
             '<div class="acct-line acct-total-row"><div class="acct-line-main"><strong>Balance due</strong></div><div class="acct-line-amt">' + fmtMoneyX(subtotal - deposits) + '</div></div>';
@@ -6643,6 +6483,227 @@
       })
       .catch(function () { box.innerHTML = ''; });
   }
+
+
+  /* ---------- V158_GUEST_PORTAL_2026_11_17: the guest ticket page ----------
+     My Services stays slim — one row per service, one button,
+     "View service request" — and that button opens THIS page:
+     appointment + address, Repair progress, Documents, Charges,
+     messages. View-only: the guest cannot edit the ticket. They can
+     request a time change (a message to staff), accept the estimate
+     (a message to staff), pay the balance (Square), and read + sign
+     documents. No placeholder data anywhere: every line comes from
+     the ticket's own rows. */
+  function fmtHourX(d) {
+    var h = d.getHours(), ap = h >= 12 ? 'PM' : 'AM', hh = h % 12; if (hh === 0) hh = 12;
+    return hh + ' ' + ap;
+  }
+  function fmtAppt(t) {
+    if (!t) return '';
+    try {
+      if (t.appointment_at) {
+        var d = new Date(t.appointment_at), e = new Date(d.getTime() + 2 * 60 * 60 * 1000);
+        var day = d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+        return day + ' · ' + fmtHourX(d) + '–' + fmtHourX(e);
+      }
+      if (t.job_date) return new Date(t.job_date + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+    } catch (e) {}
+    return '';
+  }
+  window.atrFmtAppt = fmtAppt;
+  window.atrRenderTicketAppt = function (t) {
+    var box = $('acct-appt');
+    if (!box) return;
+    window.atrRenderTicketHub(t);
+    if (!t || t.__general) { box.innerHTML = ''; return; }
+    var appt = fmtAppt(t), addr = (t.service_address || '').trim();
+    var html = '<div class="acct-appt-box">';
+    html += '<div class="acct-appt-line"><strong>Appointment:</strong> ' + (appt ? escX(appt) : 'We will text you your arrival window.') + '</div>';
+    if (addr) html += '<div class="acct-appt-line"><strong>Where:</strong> ' + escX(addr) + '</div>';
+    html += '<button type="button" class="btn btn-outline btn-sm" id="acct-appt-change">Request a time change</button>';
+    html += '</div>';
+    box.innerHTML = html;
+    var btn = $('acct-appt-change');
+    if (btn) btn.addEventListener('click', function () {
+      var input = $('acct-msg-input');
+      if (!input) return;
+      input.value = 'Please change my appointment time for ' + ticketDevice(t) + '. My preferred time is: ';
+      try { input.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
+      input.focus();
+    });
+  };
+  /* ---------- V158_GUEST_PORTAL_2026_11_17: the Guest Hub bar ----------
+     View service request opens the GUEST Hub — a separate guest hub,
+     not the Associate Hub (portal.html). It looks like the Associate
+     Hub on purpose — same action panel, same Quick Actions row —
+     but VERY LIMITED: only this guest's own service, ticket,
+     documents, charges and messages. No staff tools, no other
+     guests, no internal machinery, no portal admin. The buttons
+     only jump to parts of this same ticket page, or prefill a
+     message to staff. Nothing here edits the ticket. */
+  window.atrRenderTicketHub = function (t) {
+    var bar = $('acct-hub-bar');
+    if (!bar) return;
+    if (!t || t.__general) { bar.innerHTML = ''; return; }
+    bar.innerHTML = '<div class="acct-hub-bar">'
+      + '<div class="acct-hub-title"><strong>Guest Hub</strong> <span class="acct-muted">— ' + escX(ticketDevice(t)) + ' · only you can see this</span></div>'
+      + '<div class="acct-hub-actions">'
+      + '<button type="button" class="btn btn-outline btn-sm" data-hub="docs">Documents</button>'
+      + '<button type="button" class="btn btn-outline btn-sm" data-hub="charges">Charges</button>'
+      + '<button type="button" class="btn btn-outline btn-sm" data-hub="messages">Messages</button>'
+      + '<button type="button" class="btn btn-outline btn-sm" data-hub="time">Request a time change</button>'
+      + '<button type="button" class="btn btn-outline btn-sm" data-hub="pay">Pay balance</button>'
+      + '</div></div>';
+    if (!bar.__hubWired) {
+      bar.__hubWired = true;
+      bar.addEventListener('click', function (e) {
+        var b = e.target && e.target.closest ? e.target.closest('[data-hub]') : null;
+        if (!b || !openTicket) return;
+        var k = b.getAttribute('data-hub');
+        function go(id) { var el = $(id); if (el) { try { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (err) {} } }
+        if (k === 'docs') go('acct-ticket-docs');
+        if (k === 'charges') go('acct-charges');
+        if (k === 'messages') go('acct-messages');
+        if (k === 'time') { var c = $('acct-appt-change'); if (c) c.click(); }
+        if (k === 'pay') { go('acct-ticket-actions'); var pb = $('atr-pay-balance'); if (pb) pb.focus(); }
+      });
+    }
+  };
+  /* V160_GUEST_HUB_FIXES_2026_11_17: Terms & Conditions of Service and the Repair Authorization are the same thing (Austin) — the separate Terms row is gone. The merged document is the Repair Authorization and Service Agreement; the preloaded set is that, the 1-Year Limited Warranty, and the Media Release. */
+  var V158_STD_DOCS = [
+    { type: 'agreement', label: 'Repair Authorization and Service Agreement' },
+    { type: 'warranty', label: '1-Year Limited Warranty' },
+    { type: 'media', label: 'Media Release' }
+  ];
+  function v158LatestSig(sigs, type) {
+    var best = null;
+    (sigs || []).forEach(function (s) {
+      if (s && s.document_type === type && s.signed_at && (!best || String(s.signed_at) > String(best.signed_at))) best = s;
+    });
+    return best;
+  }
+  function v158DocRow(ticketId, type, label, filedAt, sig, path) {
+    var meta = 'Ticket #' + escX(String(ticketId || '').slice(0, 8).toUpperCase()) + (filedAt ? ' · Filed ' + escX(fmtDayX(filedAt)) : '');
+    var h = '<div class="acct-signdoc-row"><div class="acct-signdoc-title">' + escX(label) + '</div><div class="acct-signdoc-meta">' + meta + '</div>';
+    if (sig) {
+      h += '<div class="acct-signdoc-meta"><span class="acct-signdoc-signed">Signed</span> — ' + escX(sig.signer_name || '') + ', ' + escX(fmtDayX(sig.signed_at)) + '</div>';
+      h += '<div class="acct-signdoc-btns"><button type="button" class="acct-signdoc-btn acct-signdoc-btn--ghost" data-v158doc="preview" data-ticket="' + escX(ticketId) + '" data-type="' + escX(type) + '">View</button></div>';
+    } else {
+      h += '<div class="acct-signdoc-meta">Waiting for your signature.</div>';
+      h += '<div class="acct-signdoc-btns"><button type="button" class="acct-signdoc-btn acct-signdoc-btn--ghost" data-v158doc="preview" data-ticket="' + escX(ticketId) + '" data-type="' + escX(type) + '">Preview</button>' +
+        '<button type="button" class="acct-signdoc-btn" data-v158doc="sign" data-ticket="' + escX(ticketId) + '" data-type="' + escX(type) + '">Sign</button></div>';
+    }
+    return h + '</div>';
+  }
+  window.atrLoadTicketDocuments = function (t) {
+    var box = $('acct-ticket-docs');
+    if (!box || !sb) return;
+    if (!t || t.__general) { box.innerHTML = ''; return; }
+    box.innerHTML = '<h4 class="acct-detail-h"><i class="fas fa-file-signature"></i> Documents</h4><p class="acct-muted">Loading your documents…</p>';
+    Promise.all([
+      sb.from('ticket_documents').select('id,ticket_id,doc_type,file_name,storage_path,created_at').eq('ticket_id', t.id).order('created_at', { ascending: true }),
+      sb.from('document_signatures').select('id,ticket_id,document_type,signer_name,signed_at').eq('ticket_id', t.id).order('signed_at', { ascending: false })
+    ]).then(function (pair) {
+      var docs = (pair[0] && pair[0].data) || [];
+      var sigs = (pair[1] && pair[1].data) || [];
+      var rows = '';
+      /* The standard documents are automatic — they wait on every open
+       * ticket from the start, no staff push, no filed file needed. */
+      if (t.status !== 'Job Complete') {
+        V158_STD_DOCS.forEach(function (sd) {
+          rows += v158DocRow(t.id, sd.type, sd.label, t.created_at, v158LatestSig(sigs, sd.type), null);
+        });
+      } else {
+        V158_STD_DOCS.forEach(function (sd) {
+          var s = v158LatestSig(sigs, sd.type);
+          if (s) rows += v158DocRow(t.id, sd.type, sd.label, t.created_at, s, null);
+        });
+      }
+      docs.forEach(function (d) {
+        if (d.doc_type !== 'estimate' && d.doc_type !== 'invoice' && d.doc_type !== 'receipt') return;
+        var label = d.doc_type === 'estimate' ? 'Estimate' : d.doc_type === 'invoice' ? 'Invoice' : 'Receipt';
+        rows += v158DocRow(t.id, d.doc_type, label, d.created_at, v158LatestSig(sigs, d.doc_type), d.storage_path);
+      });
+      box.innerHTML = '<h4 class="acct-detail-h"><i class="fas fa-file-signature"></i> Documents</h4>' + (rows || '<p class="acct-muted">No documents yet — your estimate and agreement will show here.</p>');
+    }).catch(function () {
+      box.innerHTML = '<h4 class="acct-detail-h"><i class="fas fa-file-signature"></i> Documents</h4><p class="acct-muted">We couldn\'t load your documents just now — try again in a moment, or call or text (937) 280-6243.</p>';
+    });
+    if (!box.__v158wired) {
+      box.__v158wired = true;
+      box.addEventListener('click', function (e) {
+        var btn = e.target && e.target.closest ? e.target.closest('[data-v158doc]') : null;
+        if (!btn || !openTicket) return;
+        var action = btn.getAttribute('data-v158doc'), type = btn.getAttribute('data-type'), ticketId = btn.getAttribute('data-ticket');
+        if (action === 'preview') {
+          if (type === 'agreement' || type === 'terms' || type === 'warranty') {
+            window.open('view-doc.html?doc=' + encodeURIComponent(type) + '&t=' + encodeURIComponent(ticketId), '_blank');
+            return;
+          }
+          if (!sb) return;
+          btn.disabled = true;
+          sb.auth.getSession().then(function (sres) {
+            var token = sres && sres.data && sres.data.session ? sres.data.session.access_token : null;
+            if (!token) throw new Error('Please sign in again, then try the preview.');
+            return fetch(SUPABASE_URL + '/functions/v1/doc-view', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'apikey': SUPABASE_ANON_KEY }, body: JSON.stringify({ ticket_id: ticketId, kind: type }) });
+          }).then(function (res) { return res.json(); }).then(function (out) {
+            if (!out || !out.ok || !out.url) throw new Error('That preview could not be opened — please use the link in your email.');
+            window.open(out.url, '_blank');
+          }).catch(function (err) { btn.textContent = (err && err.message) || 'Preview unavailable.'; }).then(function () { btn.disabled = false; });
+        }
+        if (action === 'sign') {
+          if (window.__atrDocSigning && window.__atrDocSigning.openSign) { window.__atrDocSigning.openSign(ticketId, type); return; }
+          window.open('view-doc.html?doc=' + encodeURIComponent(type) + '&t=' + encodeURIComponent(ticketId), '_blank');
+        }
+      });
+    }
+  };
+  window.atrLoadTicketActions = function (t) {
+    var box = $('acct-ticket-actions');
+    if (!box || !sb) return;
+    if (!t || t.__general) { box.innerHTML = ''; return; }
+    sb.from('customer_ticket_charges').select('id, kind, description, qty, unit_price, created_at').eq('ticket_id', t.id).order('created_at', { ascending: true })
+      .then(function (res) {
+        if (res.error) throw res.error;
+        var rows = res.data || [], subtotal = 0, deposits = 0;
+        rows.forEach(function (c) { var amt = Number(c.qty || 0) * Number(c.unit_price || 0); if (c.kind === 'deposit_credit') deposits += amt; else subtotal += amt; });
+        var balance = subtotal - deposits, html = '';
+        if (t.status === 'Awaiting Customer Response') {
+          html += '<div class="acct-actions-row"><p class="acct-muted" style="text-align:left;margin:0 0 .5rem;">Your estimate is ready — ' + escX(fmtMoneyX(subtotal)) + '. Accept it and we will get your repair moving.</p>' +
+            '<button type="button" class="btn btn-primary" id="atr-accept-estimate">Accept estimate</button> <span class="acct-muted" id="atr-accept-note"></span></div>';
+        }
+        if (balance > 0) {
+          html += '<div class="acct-actions-row"><button type="button" class="btn btn-primary" id="atr-pay-balance">Pay balance ' + escX(fmtMoneyX(balance)) + '</button> <span class="acct-muted" id="atr-pay-note"></span></div>';
+        } else if (rows.length) {
+          html += '<div class="acct-actions-row"><p class="acct-muted" style="text-align:left;margin:0;">Paid in full — thank you!</p></div>';
+        }
+        box.innerHTML = html;
+        var acc = $('atr-accept-estimate');
+        if (acc) acc.addEventListener('click', function () {
+          acc.disabled = true;
+          var note = $('atr-accept-note'); if (note) note.textContent = 'Sending…';
+          sb.from('messages').insert({ ticket_id: t.id, sender: 'customer', message: 'I accept the estimate for ' + ticketDevice(t) + ' (' + fmtMoneyX(subtotal) + '). Please send the payment link.' }).then(function (res2) {
+            if (res2.error) throw res2.error;
+            if (note) note.textContent = 'Thanks — we got your acceptance. Your payment button is below.';
+            loadThreadMessages(t);
+            window.atrLoadTicketActions(t);
+          }).catch(function () { acc.disabled = false; if (note) note.textContent = 'Couldn\'t send — try again, or call or text (937) 280-6243.'; });
+        });
+        var pay = $('atr-pay-balance');
+        if (pay) pay.addEventListener('click', function () {
+          pay.disabled = true;
+          var note = $('atr-pay-note'); if (note) note.textContent = 'Opening Square…';
+          sb.auth.getSession().then(function (sres) {
+            var token = sres && sres.data && sres.data.session ? sres.data.session.access_token : null;
+            if (!token) throw new Error('To pay, sign in first with the same email you booked with, then tap Pay again.');
+            return fetch(SUPABASE_URL + '/functions/v1/square-ticket-checkout', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'apikey': SUPABASE_ANON_KEY }, body: JSON.stringify({ mode: 'ticket-balance', ticket_id: t.id, email: (currentCust && currentCust.email) || '', name: (currentCust && currentCust.name) || '' }) });
+          }).then(function (r) { return r.json().catch(function () { return null; }); }).then(function (j) {
+            if (j && j.ok && j.url) { window.open(j.url, '_blank', 'noopener'); if (note) note.textContent = 'Square is open in a new tab.'; }
+            else { if (note) note.textContent = (j && j.error) ? j.error : 'The payment step is not connected yet — we will text you the payment link.'; pay.disabled = false; }
+          }).catch(function (err) { if (note) note.textContent = (err && err.message) || 'The payment step is not connected yet — we will text you the payment link.'; pay.disabled = false; });
+        });
+      }).catch(function () { box.innerHTML = ''; });
+  };
+
   /* ---------- REPAIR_TIMELINE_2026_11_06: the job timeline ----------
      Roadmap build (Austin approved, Nov 6, 2026): the repair detail
      — the view a My Repairs card opens — gains a vertical TIMELINE
@@ -6661,14 +6722,13 @@
        * The sentence under the heading is the shop's existing
          STATUS_COPY note for the status — the raw status value is
          never printed here, and no new claims are invented.
-       * Estimate / Invoice / Receipt FILES are not listed:
-         public.ticket_documents is staff-only under RLS
-         (portal-documents-2026-10-30 — "customers signed into the
-         website get nothing here"), so the account can neither read
-         nor open them today. The itemized Charges in this same view
-         are the customer's live bill. A draft view that would list
-         document presence rides in this build's folder — NOT run,
-         and this build does not depend on it.
+       * Documents ARE listed now (V158_GUEST_PORTAL_2026_11_17): the Documents
+         section sits between Repair progress and Charges on this
+         page, reading public.ticket_documents under the guest-read
+         policy staged in document-signatures.sql, plus the three
+         standard documents (agreement, terms, warranty) that wait
+         on every open ticket automatically. The itemized Charges
+         below are still the guest's live bill.
        * Support ([SERVICE]) bookings and the general conversation
          get NO timeline — repairs only. */
   var TL_STAGES = ['Request received', 'Diagnosed', 'Part ordered', 'Part on the way', 'On the way to you', 'Quality check', 'Complete', 'Warranty active'];
@@ -6880,7 +6940,7 @@
       var seedG = window.localStorage.getItem('atr-general-read-' + cust.id);
       if (seedG && !inboxReads.__general) inboxReads.__general = seedG;
     } catch (e) { /* marker is best-effort */ }
-    sb.from('tickets').select('id, created_at, device_type, brand, model, issue, status')
+    sb.from('tickets').select('id, created_at, device_type, brand, model, issue, status, job_date, appointment_at, service_address') /* V158_GUEST_PORTAL_2026_11_17: appointment + address were never even asked for */
       .eq('customer_id', cust.id).order('created_at', { ascending: false }).limit(50)
       .then(function (res) {
         if (res.error) throw res.error;
@@ -7024,7 +7084,7 @@
   var ASSISTANT_REPAIRS = { screen: 'Screen', battery: 'Battery', backglass: 'Back glass', chargeport: 'Charging port' };
   var ASSISTANT_FAQ = {
     warranty: 'Every standard repair includes our 1-Year Limited Warranty — parts and labor — for the repair on your invoice. New physical damage, liquid damage, or work by another shop is not covered. Covered claim? There is no second visit fee for it.',
-    dispatch: 'There is a visit fee for a mobile visit: $14.99 for guests, $35.99 for business. Diagnostics is $34.99 for guests, $64.99 for business, when your device needs a full diagnosis. It covers travel to you, it is due when you book, and it is non-refundable — separate from the repair price, never credited toward a repair.',
+    dispatch: 'There is a visit fee for a mobile visit: $14.99 for guests, $34.99 for business. Diagnostics is $34.99 for guests, $64.99 for business, when your device needs a full diagnosis. It covers travel to you, it is due when you book, and it is non-refundable — separate from the repair price, never credited toward a repair.',
     diagnostics: 'Estimates are free. Diagnostics is $34.99 for guests, $64.99 for business — even if we have to open your device or run deep board-level diagnostics to identify the problem, there is no extra diagnostic charge beyond that.',
     area: 'We are a mobile service — we come to you in the Miami Valley (Xenia, Dayton, and surrounding areas). Most repairs are finished in a single visit, right at your home or office.',
     parts: 'Parts are ordered by us through our suppliers and delivered to us — we bring them to your install visit. Because parts are ordered for your specific job, the parts cost is paid upfront before we order, and those parts belong to you.',
@@ -7217,9 +7277,9 @@
       { label: 'Speak to an associate', action: 'escalate' }
     ];
     if (r === 'custom') {
-      return assistantTurn(["For that one there's no set starting price \u2014 custom repairs are quoted individually as an estimated repair price, parts plus labor ($50 an hour for guests, $100 an hour for business), and your estimated repair price is always quoted upfront before any work and confirmed after diagnostics. Diagnostics is $34.99 for guests, $64.99 for business, even if we have to open the device to identify the problem."], chips);
+      return assistantTurn(["For that one there's no set starting price \u2014 custom repairs are quoted individually as an estimated repair price, parts plus labor ($49.99 an hour for guests, $99.99 an hour for business), and your estimated repair price is always quoted upfront before any work and confirmed after diagnostics. Diagnostics is $34.99 for guests, $64.99 for business, even if we have to open the device to identify the problem."], chips);
     }
-    return assistantTurn([p.label + ' ' + ASSISTANT_REPAIRS[r].toLowerCase() + ' repairs start at $' + p[r] + ' \u2014 parts and labor included. Your estimated repair price is confirmed for your exact model after diagnostics. A separate visit fee (due at booking, non-refundable) covers the trip out \u2014 $14.99 for guests, $35.99 for business \u2014 plus diagnostics of $34.99 for guests, $64.99 for business, if a diagnosis is needed first.'], chips);
+    return assistantTurn([p.label + ' ' + ASSISTANT_REPAIRS[r].toLowerCase() + ' repairs start at $' + p[r] + ' \u2014 parts and labor included. Your estimated repair price is confirmed for your exact model after diagnostics. A separate visit fee (due at booking, non-refundable) covers the trip out \u2014 $14.99 for guests, $34.99 for business \u2014 plus diagnostics of $34.99 for guests, $64.99 for business, if a diagnosis is needed first.'], chips);
   }
   function assistantHandleChip(c) {
     var f = assistantFlow;
@@ -7524,6 +7584,8 @@
     var ntBtn = $('acct-new-ticket-btn'); if (ntBtn) ntBtn.addEventListener('click', function () {
       var r = $('acct-repairs'), th = $('acct-thread'), nt = $('acct-newticket');
       if (r) r.hidden = true; if (th) th.hidden = true; if (nt) nt.hidden = false;
+      var pv = $('acct-view-repairs'); if (pv) pv.hidden = false;
+      if (nt && nt.scrollIntoView) { try { nt.scrollIntoView({ behavior: 'auto', block: 'start' }); } catch (e) {} }
       /* ACCOUNT_FIX_PASS_3_2026_11_06: the new-request human check
          renders NOW, with its view on screen — not at page load
          inside the hidden view, where the one-shot Turnstile render
@@ -7575,6 +7637,22 @@
         model: $('acct-t-model').value.trim() || null,
         issue: $('acct-t-issue').value.trim(),
         source: 'website-account',
+        /* V158_GUEST_PORTAL_2026_11_17: the form finally writes the appointment it
+         * collects — date + 2-hour window + service address. The
+         * window start hour becomes appointment_at; the address
+         * falls back to the address on the guest's account. */
+        job_date: (function () { var d = $('acct-t-visit-date'); return d && d.value ? d.value : null; })(),
+        appointment_at: (function () {
+          var d = $('acct-t-visit-date'), w = $('acct-t-window');
+          if (!d || !d.value || !w || !w.value) return null;
+          var p = d.value.split('-'), hh = parseInt(w.value.split(':')[0], 10) || 0;
+          return new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]), hh, 0, 0).toISOString();
+        })(),
+        service_address: (function () {
+          var a = $('acct-t-address');
+          if (a && a.value.trim()) return a.value.trim();
+          return (currentCust && currentCust.address) || null;
+        })(),
         terms_accepted: !!(termsBox && termsBox.checked),
         dispatch_acknowledged: !!(dispatchBox && dispatchBox.checked),
         work_auth_accepted: !!(workAuthBox && workAuthBox.checked),
@@ -7592,6 +7670,8 @@
       var ptsBlocks = (ptsUseBox && ptsUseBox.checked && ptsBlocksSel) ? (parseInt(ptsBlocksSel.value, 10) || 0) : 0;
       if (ptsBlocks > 0) row.points_blocks_requested = ptsBlocks;
       if (!row.issue) { err.textContent = 'Tell us what\'s wrong with the device.'; err.hidden = false; return; }
+      if (!row.job_date) { err.textContent = 'Pick a visit date.'; err.hidden = false; return; }
+      if (!row.appointment_at) { err.textContent = 'Pick an arrival window.'; err.hidden = false; return; }
       if (!row.terms_accepted) { err.textContent = 'Please accept the Terms and Conditions to continue.'; err.hidden = false; return; }
       if (!row.dispatch_acknowledged) { err.textContent = 'Please acknowledge the dispatch fee to continue.'; err.hidden = false; return; }
       if (!row.work_auth_accepted) { err.textContent = 'Please authorize the work order to continue.'; err.hidden = false; return; }
@@ -7647,7 +7727,7 @@
          only, per that table's RLS) — fails completely silent, the
          table not existing yet included, and never blocks the page;
        - paintAppVersion(): the guest's own "App version vNN" line
-         in Account Settings, so support can ask them to read it out. */
+         in the Guest Hub Account tab, so support can ask them to read it out. */
   var atrVersionValue = null, atrVersionWaiters = [];
   function resolveAtrVersion(cb) {
     if (atrVersionValue) { cb(atrVersionValue); return; }
@@ -8196,12 +8276,32 @@
     /* ---------- session restore + auth changes ---------- */
     sb.auth.getSession().then(function (res) {
       var s = res.data && res.data.session;
-      if (s) { enterAccount(s); }
+      if (s) {
+        enterAccount(s);
+        try {
+          if (sessionStorage.getItem('atr-set-password-after-signin') === '1') {
+            sessionStorage.removeItem('atr-set-password-after-signin');
+            setTimeout(function () { if (window.atrOpenResetLink) window.atrOpenResetLink(); }, 1200);
+          }
+        } catch (e) {}
+      }
       else { clearLocalSession(); renderHeader(null, 0); }
     }).catch(function () {});
 
     sb.auth.onAuthStateChange(function (event, session) {
-      if (event === 'SIGNED_IN' && session) enterAccount(session);
+      if (event === 'SIGNED_IN' && session) {
+        enterAccount(session);
+        /* V158_GUEST_PORTAL_2026_11_17: an invite / confirmation / magic link just
+         * signed this guest in with no password set — open the
+         * set-password step once they land, so signing out later
+         * does not strand them. */
+        try {
+          if (sessionStorage.getItem('atr-set-password-after-signin') === '1') {
+            sessionStorage.removeItem('atr-set-password-after-signin');
+            setTimeout(function () { if (window.atrOpenResetLink) window.atrOpenResetLink(); }, 1200);
+          }
+        } catch (e) {}
+      }
       if (event === 'SIGNED_OUT') exitAccount();
     });
   });
@@ -8269,9 +8369,9 @@
   function present(miles, label) {
     var milesTxt = (Math.round(miles * 10) / 10).toFixed(1);
     if (miles <= INCLUDED_MILES) {
-      showResult('<strong>You\'re in our area.</strong> ' + label + ' is about <strong>' + milesTxt + ' miles</strong> from us. Your visit fee is <strong>$14.99 for guests, $35.99 for business</strong> &mdash; plus <strong>$34.99 / $64.99 diagnostics</strong> if your device needs a full diagnosis \u2014 due at booking.', true);
+      showResult('<strong>You\'re in our area.</strong> ' + label + ' is about <strong>' + milesTxt + ' miles</strong> from us. Your visit fee is <strong>$14.99 for guests, $34.99 for business</strong> &mdash; plus <strong>$34.99 / $64.99 diagnostics</strong> if the cause is unknown and your device needs a full diagnosis \u2014 due at booking.', true);
     } else {
-      showResult('<strong>' + label + '</strong> is about <strong>' + milesTxt + ' road miles</strong> from us \u2014 just outside our usual 25-mile area. Reach out anyway: if we can make the trip, the visit fee is the same \u2014 <strong>$14.99 for guests, $35.99 for business</strong>.', true);
+      showResult('<strong>' + label + '</strong> is about <strong>' + milesTxt + ' road miles</strong> from us \u2014 just outside our usual 25-mile area. Reach out anyway: if we can make the trip, the visit fee is the same \u2014 <strong>$14.99 for guests, $34.99 for business</strong>.', true);
     }
   }
   function routeTo(lat, lng, label) {
@@ -8504,7 +8604,7 @@
         if (disc) disc.hidden = true;
         label.textContent = 'We fix that \u2014 price confirmed up front';
         amount.style.display = 'none';
-        note.textContent = 'There is no set price for ' + name + ' on the ' + state.model + ' yet, so there is no honest percentage to show you. Book the visit and we confirm the exact price for your exact device before any work starts \u2014 and we will tell you straight if it is not worth fixing. The visit fee covers the trip \u2014 $14.99 for guests, $35.99 for business. Diagnostics is $34.99 for guests, $64.99 for business, if a full diagnosis is needed.';
+        note.textContent = 'There is no set price for ' + name + ' on the ' + state.model + ' yet, so there is no honest percentage to show you. Book the visit and we confirm the exact price for your exact device before any work starts \u2014 and we will tell you straight if it is not worth fixing. The visit fee covers the trip \u2014 $14.99 for guests, $34.99 for business. Diagnostics is $34.99 for guests, $64.99 for business, if a full diagnosis is needed.';
         bookResult.innerHTML = 'Book This Visit <i class="fas fa-arrow-right"></i>';
         replaceStep.hidden = true;
       }
@@ -8573,5 +8673,668 @@
     </div>
   </div>
 
+<!-- V159_GUEST_HUB_2026_11_17 (Austin, Nov 17, 2026): Guest Hub — a stripped-down replica of the Associate Hub, same app for associate and guest. Same layout: top bar with Quick Actions, left Action Button sidebar, right Action Panel, bottom thumb bar. Guest-only: no staff tools, no other guests, no Service Queue / Leads / ATRG Remote / Admin / Financials / Time Clock / Team Chat. Everything that lived under Services in the account dropdown lives here now. -->
+<style>
+#guest-hub[hidden]{display:none!important}
+#guest-hub{position:fixed;inset:0;z-index:2000;background:#FAF6EE;color:#2C231A;font-family:'Plus Jakarta Sans',-apple-system,sans-serif;overflow:hidden}
+.ghub-topbar{background:#FFFDF8;border-bottom:1px solid #E6D9C0;padding:.6rem .9rem}
+.ghub-brand{font-weight:800;font-size:1rem}
+.ghub-tag{display:inline-block;background:#D9540D;color:#fff;border-radius:999px;padding:.1rem .6rem;font-size:.72rem;font-weight:800;margin-left:.5rem}
+.ghub-qa-label{font-size:.68rem;font-weight:800;letter-spacing:1.5px;color:#7D6C5B;margin-top:.45rem}
+.ghub-qa{display:flex;gap:.45rem;flex-wrap:wrap;margin-top:.3rem}
+.ghub-qa .btn{padding:.5rem .9rem;font-size:.85rem}
+.ghub-body{display:flex;height:calc(100% - 118px)}
+.ghub-side{width:230px;flex:none;background:#FFFDF8;border-right:1px solid #E6D9C0;overflow-y:auto;padding:.7rem .6rem 5.5rem}
+.ghub-side-label{font-size:.68rem;font-weight:800;letter-spacing:1.5px;color:#7D6C5B;padding:.2rem .5rem .5rem}
+.ghub-tab{display:flex;align-items:center;gap:.6rem;width:100%;text-align:left;background:none;border:none;border-radius:.7rem;padding:.65rem .7rem;font-size:.95rem;font-weight:700;color:#2C231A;cursor:pointer;font-family:inherit}
+.ghub-tab.active,.ghub-tab:hover{background:#FBEADB;color:#A63E06}
+.ghub-panel{flex:1;overflow-y:auto;padding:1rem 1rem 6rem}
+.ghub-panel h2{font-size:1.35rem;margin:.2rem 0 .6rem}
+.ghub-card{background:#FFFDF8;border:1px solid #E6D9C0;border-radius:1rem;padding:1rem;margin-bottom:.9rem}
+.ghub-muted{color:#7D6C5B;font-size:.92rem}
+.ghub-greet{font-size:1.5rem;font-weight:800;margin:.2rem 0}
+.ghub-status{display:inline-block;background:#DFF0EA;color:#0E7C6B;border-radius:999px;padding:.15rem .7rem;font-weight:800;font-size:.8rem}
+.ghub-steps{list-style:none;padding:0;margin:.5rem 0}
+.ghub-steps li{padding:.3rem 0;border-bottom:1px solid #EFE6D2}
+.ghub-steps li.done{font-weight:700}
+.ghub-barcode{display:flex;align-items:flex-end;gap:2px;height:64px;background:#fff;border:1px solid #E6D9C0;border-radius:.7rem;padding:.6rem;margin:.6rem 0}
+.ghub-barcode i{display:block;background:#2C231A}
+.ghub-thumb{position:fixed;left:0;right:0;bottom:0;z-index:2001;background:#FFFDF8;border-top:1px solid #E6D9C0;display:flex;justify-content:space-around;padding:.55rem 0 calc(.55rem + env(safe-area-inset-bottom))}
+.ghub-thumb button{background:none;border:none;font-size:.68rem;font-weight:700;color:#7D6C5B;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:3px}
+.ghub-thumb button.active{color:#D9540D}
+.ghub-thumb button i{font-size:1.1rem}
+/* V160_GUEST_HUB_FIXES_2026_11_17: on phone viewports the site black bottom nav (.mobile-bottom-nav, z-index 2100 in styles.css) painted over the Guest Hub thumb bar (#guest-hub 2000 / .ghub-thumb 2001), so a guest could not see Home / Service Request / Documents / Chat / Account. Raise the Hub above it only at phone widths (max-width 920px, the breakpoint where the site nav shows). Desktop keeps 2000/2001; styles.css is untouched, so the Associate Hub and the site nav are unaffected. */
+@media (max-width:920px){#guest-hub{z-index:2200}.ghub-thumb{z-index:2201}}
+@media (max-width:720px){.ghub-side{width:200px}.ghub-body{height:calc(100% - 132px)}}
+</style>
+<div id="guest-hub" hidden role="dialog" aria-label="Guest Hub">
+  <div class="ghub-topbar">
+    <div><span class="ghub-brand"><i class="fas fa-screwdriver-wrench"></i> Austin&rsquo;s Tech Repair Group</span><span class="ghub-tag">Guest Hub</span></div>
+    <div class="ghub-qa-label">QUICK ACTIONS</div>
+    <div class="ghub-qa">
+      <button class="btn btn-primary btn-sm" type="button" data-ghub-qa="service"><i class="fas fa-calendar-check"></i> New Service Request</button>
+      <button class="btn btn-outline btn-sm" type="button" data-ghub-qa="refresh"><i class="fas fa-rotate-right"></i> Refresh</button>
+      <button class="btn btn-outline btn-sm" type="button" data-ghub-qa="back"><i class="fas fa-arrow-left"></i> Back to account</button>
+    </div>
+  </div>
+  <div class="ghub-body">
+    <nav class="ghub-side" aria-label="Guest Hub actions">
+      <div class="ghub-side-label">ACTION BUTTONS</div>
+      <button class="ghub-tab active" type="button" data-ghub="home"><i class="fas fa-house"></i> Home</button>
+      <button class="ghub-tab" type="button" data-ghub="service"><i class="fas fa-tools"></i> Service Request</button>
+      <button class="ghub-tab" type="button" data-ghub="scanin"><i class="fas fa-qrcode"></i> Scan In</button>
+      <button class="ghub-tab" type="button" data-ghub="account"><i class="fas fa-user"></i> Account</button>
+      <button class="ghub-tab" type="button" data-ghub="chat"><i class="fas fa-comment-dots"></i> Service Messages <span class="acct-msg-badge" id="acct-msg-badge" hidden>0</span></button>
+      <button class="ghub-tab" type="button" data-ghub="connect"><i class="fas fa-display"></i> ATRG Connect</button>
+      <button class="ghub-tab" type="button" data-ghub="membership"><i class="fas fa-star"></i> ATR One Membership</button>
+      <button class="ghub-tab" type="button" data-ghub="documents"><i class="fas fa-folder-open"></i> Documents</button>
+      <button class="ghub-tab" type="button" data-ghub="warranty"><i class="fas fa-shield-halved"></i> Warranty</button>
+    </nav>
+    <div class="ghub-panel" id="ghub-panel">
+      <div class="ghub-pane" data-pane="home">
+        <h2 id="ghub-greet" class="ghub-greet">Hello</h2>
+        <p><span class="ghub-status">Guest</span></p>
+        <p class="ghub-muted" id="ghub-clock"></p>
+        <div class="ghub-qa" style="margin:.6rem 0 .9rem"><button class="btn btn-outline btn-sm" type="button" id="ghub-home-guides-btn"><i class="fas fa-book-open"></i> Help Guides</button></div>
+        <div class="ghub-card" id="ghub-home-next"><p class="ghub-muted">Loading your service requests&hellip;</p></div>
+      </div>
+      <div class="ghub-pane" data-pane="service" hidden>
+        <h2>Service Request</h2>
+        <div id="acct-view-repairs" hidden>
+        <!-- My Repairs -->
+        <div class="acct-repairs" id="acct-repairs">
+          <div class="acct-repairs-head">
+            <h4><i class="fas fa-tools"></i> My Services</h4>
+            <!-- CUSTOMER_INBOX_2026_11_05 (owner vocabulary rule): on the customer side, starting a repair is always called "Schedule a repair" — one name everywhere. This button opens the same in-account form it always did. -->
+            <button class="btn btn-primary btn-sm" id="acct-new-ticket-btn" type="button"><i class="fas fa-calendar-check"></i> Schedule a repair</button>
+          </div>
+          <div id="acct-ticket-list"><p class="acct-muted">Loading your services…</p></div>
+        </div>
+
+        <!-- Ticket thread view -->
+        <div class="acct-thread" id="acct-thread" hidden>
+          <button class="btn btn-outline btn-sm" id="acct-thread-back" type="button"><i class="fas fa-arrow-left"></i> Back to services</button>
+          <div class="acct-thread-info" id="acct-thread-info"></div>
+          <!-- V158_GUEST_PORTAL_2026_11_17 (owner, Nov 17, 2026): the full ticket page.
+               Appointment + address live here, above the progress
+               timeline — the guest sees the whole job in one place. -->
+          <div id="acct-hub-bar"></div>
+          <div id="acct-appt"></div>
+          <!-- REPAIR_TIMELINE_2026_11_06: the job timeline paints
+               here — stage states from the ticket's real status
+               plus its own part rows; repairs only, never for
+               support bookings or the general conversation. -->
+          <div id="acct-timeline"></div>
+          <div id="acct-ticket-docs"></div>
+          <div id="acct-charges"></div>
+          <div id="acct-ticket-actions"></div>
+          <div id="acct-parts"></div>
+          <div class="acct-messages" id="acct-messages"></div>
+          <!-- GUEST_ASSISTANT_2026_11_10: the assistant bar —
+               quick-question chips and the Speak to an associate
+               button. It belongs to the General conversation
+               only; paintAssistantBar() in the account module
+               decides when it shows. -->
+          <div id="acct-assistant-bar" hidden>
+            <p class="acct-assistant-note" id="acct-assistant-note"></p>
+            <div class="acct-assistant-chips" id="acct-assistant-chips"></div>
+            <button class="btn btn-outline btn-sm" id="acct-assistant-escalate" type="button"><i class="fas fa-headset"></i> Speak to an associate</button>
+          </div>
+          <form id="acct-msg-form" novalidate>
+            <div class="acct-msg-row">
+              <input type="text" id="acct-msg-input" placeholder="Write a message…" autocomplete="off" maxlength="1000" aria-label="Write a message">
+              <button class="btn btn-primary btn-sm" type="submit" aria-label="Send message"><i class="fas fa-paper-plane"></i></button>
+            </div>
+            <div class="atr-turnstile" id="ts-acct-msg"></div>
+            <p class="acct-error" id="acct-msg-error" hidden></p>
+          </form>
+        </div>
+
+        <!-- New ticket form -->
+        <div class="acct-newticket" id="acct-newticket" hidden>
+          <button class="btn btn-outline btn-sm" id="acct-newticket-back" type="button"><i class="fas fa-arrow-left"></i> Back to services</button>
+          <h4><i class="fas fa-calendar-check"></i> Schedule a Repair</h4>
+          <form id="acct-ticket-form" novalidate>
+            <label class="acct-field">
+              <span>Device type</span>
+              <select id="acct-t-device" required>
+                <option value="Phone">Phone</option>
+                <option value="Tablet">Tablet</option>
+                <option value="Laptop">Laptop</option>
+                <option value="Desktop">Desktop</option>
+                <option value="Game Console">Game Console</option>
+                <option value="Smartwatch">Smartwatch</option>
+                <option value="Other">Other</option>
+              </select>
+            </label>
+            <div class="acct-row2">
+              <label class="acct-field">
+                <span>Make</span>
+                <input type="text" id="acct-t-brand" placeholder="e.g. Apple" autocomplete="off">
+              </label>
+              <label class="acct-field">
+                <span>Model</span>
+                <input type="text" id="acct-t-model" placeholder="e.g. iPhone 13" autocomplete="off">
+              </label>
+            </div>
+            <label class="acct-field">
+              <span>What's wrong?</span>
+              <textarea id="acct-t-issue" placeholder="Describe the problem…" rows="3" required></textarea>
+            </label>
+            <!-- V158_GUEST_PORTAL_2026_11_17: the in-account form had no date, no
+                 window, and no address at all — a guest booking
+                 from inside My Account created a ticket with no
+                 appointment. Same three fields the signed-out
+                 form already collects. -->
+            <div class="acct-row2">
+              <label class="acct-field">
+                <span>Visit date</span>
+                <input type="date" id="acct-t-visit-date" required>
+              </label>
+              <label class="acct-field">
+                <span>Arrival window</span>
+                <select id="acct-t-window" required>
+                  <option value="">Pick a time</option>
+                  <option value="08:00">8–10 AM</option>
+                  <option value="10:00">10 AM–12 PM</option>
+                  <option value="12:00">12–2 PM</option>
+                  <option value="14:00">2–4 PM</option>
+                  <option value="16:00">4–6 PM</option>
+                  <option value="18:00">6–8 PM</option>
+                </select>
+              </label>
+            </div>
+            <label class="acct-field">
+              <span>Service address</span>
+              <input type="text" id="acct-t-address" placeholder="Street address where we meet you" autocomplete="street-address">
+            </label>
+            <label class="atr-check">
+              <input type="checkbox" id="acct-t-marketing">
+              <span>Email me occasional offers and repair tips. <em>(Optional — no spam, ever.)</em></span>
+            </label>
+            <label class="atr-check">
+              <input type="checkbox" id="acct-t-terms">
+              <span>I agree to the <strong>Terms and Conditions</strong> of service. *</span>
+            </label>
+            <label class="atr-check">
+              <input type="checkbox" id="acct-t-dispatch">
+              <span>I understand the <strong>visit fee is $14.99 for guests, $34.99 for business</strong> &mdash; and <strong>diagnostics is $34.99 for guests, $64.99 for business</strong>, if my device needs a full diagnosis &mdash; covers the trip to me, is due at scheduling, and is <strong>non-refundable</strong>. *</span>
+            </label>
+            <label class="atr-check">
+              <input type="checkbox" id="acct-t-work-auth">
+              <span>I <strong>authorize</strong> Austin&rsquo;s Tech Repair Group to perform the requested diagnostic and repair work on my device. *</span>
+            </label>
+            <!-- SITE_POINTS_SPEND_2026_10_30: intent only — nothing
+                 is deducted at booking; the discount lands at the
+                 visit. The block stays hidden without a balance. -->
+            <div class="acct-ticket-points" id="acct-t-points-wrap" hidden>
+              <label class="atr-check">
+                <input type="checkbox" id="acct-t-use-points">
+                <span><strong>Use my reward points toward this repair.</strong> <span id="acct-t-points-detail"></span></span>
+              </label>
+              <label class="acct-field" id="acct-t-points-amount" hidden>
+                <span>How much? (100 points = $5)</span>
+                <select id="acct-t-points-blocks"></select>
+              </label>
+              <p class="acct-muted" style="text-align:left;padding:0;">Nothing is deducted now — we apply the discount at your visit.</p>
+            </div>
+            <div class="atr-turnstile" id="ts-acct-ticket"></div>
+            <p class="acct-error" id="acct-ticket-error" hidden></p>
+            <button class="btn btn-primary btn-lg acct-submit" type="submit">Submit Request <i class="fas fa-arrow-right"></i></button>
+          </form>
+        </div>
+
+        <!-- SUPPORT_BOOKING_2026_11_06 (Austin, Nov 6, 2026): the Service
+             section holds two labeled groups — My Repairs above, and My
+             One-on-Ones here: the customer's support bookings, each with
+             its Support label, plus the door into the Support path. -->
+        <div class="acct-repairs" id="acct-oneonones" style="margin-top:1.5rem;">
+          <div class="acct-repairs-head">
+            <h4><i class="fas fa-graduation-cap"></i> My One-on-Ones</h4>
+            <a class="btn btn-primary btn-sm" href="#repair" data-page="repair" data-open-oneonone><i class="fas fa-calendar-check"></i> Schedule a one-on-one</a>
+          </div>
+          <div id="acct-support-list"><p class="acct-muted">Loading your one-on-ones…</p></div>
+        </div>
+
+        </div>
+      </div>
+      <div class="ghub-pane" data-pane="scanin" hidden>
+        <h2>Scan In</h2>
+        <div class="ghub-card"><p class="ghub-muted" style="margin-top:0">Your own code — show it at your visit and we pull up your service right away.</p>
+        <div class="ghub-barcode" id="ghub-barcode"></div>
+        <p><strong id="ghub-scan-code"></strong></p>
+        <p class="ghub-muted" id="ghub-scan-name"></p></div>
+      </div>
+      <div class="ghub-pane" data-pane="account" hidden>
+        <h2>Account</h2>
+        <div class="ghub-card" id="ghub-account-card"><p class="ghub-muted">Loading your details&hellip;</p></div>
+<div id="acct-view-settings" hidden>
+        <!-- My profile -->
+        <div class="acct-profile" id="authx-profile">
+          <h4><i class="fas fa-id-card"></i> My Profile</h4>
+          <p class="acct-profile-line"><strong id="authx-profile-name"></strong><br>
+          <span class="acct-muted" id="authx-profile-email"></span></p>
+          <label class="acct-field">
+            <span>Phone</span>
+            <input type="tel" id="authx-profile-phone" placeholder="(937) 555-1234" autocomplete="tel" aria-label="Phone number">
+          </label>
+          <label class="acct-field">
+            <span>Service address</span>
+            <input type="text" id="authx-profile-address" placeholder="Street, City, OH ZIP" autocomplete="street-address" aria-label="Service address">
+          </label>
+          <button class="btn btn-outline btn-sm" id="authx-profile-save" type="button"><i class="fas fa-save"></i> Save profile</button>
+          <button class="btn btn-outline btn-sm" id="authx-passkey-setup-btn" type="button"><i class="fas fa-fingerprint"></i> Set up a passkey</button><span class="acct-muted" id="authx-profile-msg"></span><div id="authx-passkey-list"></div>
+          <!-- VERSION_VISIBILITY_2026_11_10: the guest's own
+               version line — support may ask them to read it out.
+               Filled by paintAppVersion() once the build stamp
+               resolves; hidden until then. -->
+          <p class="acct-muted" id="acct-app-version" hidden></p>
+        </div>
+
+        <!-- My birthday (optional) -->
+        <div class="acct-birthday" id="acct-birthday-wrap" hidden>
+          <div class="acct-field">
+            <span><i class="fas fa-cake-candles"></i> My birthday (optional) &mdash; month and day only, no year</span>
+            <div class="acct-row2">
+              <select id="acct-birthday-month" aria-label="Birth month">
+                <option value="">Month</option>
+                <option value="01">January</option>
+                <option value="02">February</option>
+                <option value="03">March</option>
+                <option value="04">April</option>
+                <option value="05">May</option>
+                <option value="06">June</option>
+                <option value="07">July</option>
+                <option value="08">August</option>
+                <option value="09">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+              </select>
+              <select id="acct-birthday-day" aria-label="Birth day">
+                <option value="">Day</option>
+                <option value="01">1</option>
+                <option value="02">2</option>
+                <option value="03">3</option>
+                <option value="04">4</option>
+                <option value="05">5</option>
+                <option value="06">6</option>
+                <option value="07">7</option>
+                <option value="08">8</option>
+                <option value="09">9</option>
+                <option value="10">10</option>
+                <option value="11">11</option>
+                <option value="12">12</option>
+                <option value="13">13</option>
+                <option value="14">14</option>
+                <option value="15">15</option>
+                <option value="16">16</option>
+                <option value="17">17</option>
+                <option value="18">18</option>
+                <option value="19">19</option>
+                <option value="20">20</option>
+                <option value="21">21</option>
+                <option value="22">22</option>
+                <option value="23">23</option>
+                <option value="24">24</option>
+                <option value="25">25</option>
+                <option value="26">26</option>
+                <option value="27">27</option>
+                <option value="28">28</option>
+                <option value="29">29</option>
+                <option value="30">30</option>
+                <option value="31">31</option>
+              </select>
+            </div>
+          </div>
+          <p class="acct-muted">Add it and we&rsquo;ll have a little something for you on your day &mdash; 15% off your next repair. Totally optional.</p>
+          <button class="btn btn-outline btn-sm" id="acct-birthday-save" type="button"><i class="fas fa-save"></i> Save birthday</button>
+          <span class="acct-muted" id="acct-birthday-msg"></span>
+        </div>
+        <!-- V159_NOTIFICATIONS_2026_11_17 (Austin, Nov 17, 2026): the guest controls the flood — Email alerts on/off, Text alerts on/off, stored per guest in public.guest_notification_prefs. Default: email ON, text OFF (text needs a texting service; Google Voice cannot auto-send). -->
+        <div class="acct-notifications" id="acct-notifications">
+          <h4><i class="fas fa-bell"></i> Notifications</h4>
+          <p class="acct-muted">Choose what we send you. Your account email (estimate + login together) always sends — that one is not an alert.</p>
+          <label class="atr-check">
+            <input type="checkbox" id="acct-notif-email" checked>
+            <span><strong>Email alerts</strong> — repair updates, estimates and invoices in your Guest Hub.</span>
+          </label>
+          <label class="atr-check">
+            <input type="checkbox" id="acct-notif-text">
+            <span><strong>Text alerts</strong> — repair updates by text. Texting needs a texting service first, so this stays off until that is set up.</span>
+          </label>
+          <span class="acct-muted" id="acct-notif-msg"></span>
+        </div>
+        <!-- Password -->
+        <div class="acct-password">
+          <h4><i class="fas fa-lock"></i> Password</h4>
+          <p class="acct-muted">Change your password by email.</p>
+          <button class="btn btn-outline btn-sm" id="acct-change-password" type="button">Change password</button>
+          <span class="acct-muted" id="acct-password-msg"></span>
+        </div>
+        <div class="acct-earn">
+          <p><i class="fas fa-gift"></i> <strong>How to earn:</strong> points on every completed repair &mdash; 1 point per $1 on ATR One Free, 5 points per $1 on ATR One Plus Individual &amp; Family, 10 points per $1 on ATR One Plus Business plans.</p>
+          <p><i class="fas fa-tag"></i> <strong>Redeem:</strong> every 100 points = $5 off your next repair. Just mention your points when you book.</p>
+        </div>
+        </div>
+      </div>
+      <div class="ghub-pane" data-pane="chat" hidden>
+        <h2>Service Messages</h2>
+        <!-- Messages inbox — CUSTOMER_INBOX_2026_11_05 (owner,
+             Nov 5, 2026): "our message to them goes to their
+             message/inbox button on their account page… and vice
+             versa." One conversation per repair that has messages,
+             newest activity first; the badge on the row counts the
+             conversations with something new from the shop, and a
+             New marker rides on each of those rows. Opening a
+             conversation shows the same thread and reply box the
+             Repairs section uses — one thread, two doors. -->
+        <div id="acct-view-messages" hidden>
+          <div class="acct-inbox" id="acct-inbox">
+            <!-- ACCOUNT_FIX_PASS_3_2_2026_11_06 (owner's final spec,
+                 Nov 6, 2026 — supersedes the pass-3 thread routing
+                 AND the pass-3.1 route-to-Schedule behavior): "Send
+                 us a message" opens a composer RIGHT HERE in the
+                 account page — a text box and a Send button — for
+                 every customer, and never routes anyone away.
+                 With a repair on file the button opens the thread
+                 for the most recent repair (the same thread element
+                 and insert path the conversation rows use). With no
+                 repairs it opens the composer below: the message is
+                 stored as a general message in the same
+                 public.messages store (see staged/general-messages.sql),
+                 appears in this list as the General conversation,
+                 and an alert copy goes to the shop's service inbox
+                 through the site's own form-alert sender, exactly
+                 like every other form on the site. -->
+            <button class="btn btn-primary btn-sm" id="acct-inbox-new" type="button" style="margin:0 0 .6rem;"><i class="fas fa-pen"></i> Send us a message</button>
+            <div id="acct-inbox-compose" hidden>
+              <p class="acct-muted" style="text-align:left;padding:0;">No repair on file yet — no problem. Write us a general message here and we will reply right in this Messages list. If you meant to book a repair instead, <a href="#repair" data-page="repair">Schedule a repair</a>.</p>
+              <form id="acct-general-form" novalidate>
+                <div class="acct-msg-row">
+                  <input type="text" id="acct-general-input" placeholder="Write a message…" autocomplete="off" maxlength="1000" aria-label="Write a message">
+                  <button class="btn btn-primary btn-sm" type="submit" id="acct-general-send" disabled>Send <i class="fas fa-paper-plane"></i></button>
+                </div>
+                <p class="acct-error" id="acct-general-error" hidden></p>
+              </form>
+            </div>
+            <p class="acct-muted" style="text-align:left;padding:0;">Messages between you and our shop. Tap a conversation to read it or reply.</p>
+            <div id="acct-inbox-list"><p class="acct-muted">Loading your messages…</p></div>
+          </div>
+        </div>
+      </div>
+      <div class="ghub-pane" data-pane="connect" hidden>
+        <h2>ATRG Connect</h2>
+        <div class="ghub-card"><p>Your virtual one-on-one, right here. When your associate sends you a session code, open ATRG Connect, type the code, and we can see your screen and help.</p>
+        <a class="btn btn-primary btn-sm" href="#virtual-oneonone" data-page="virtual-oneonone"><i class="fas fa-display"></i> Open ATRG Connect</a></div>
+      </div>
+      <div class="ghub-pane" data-pane="membership" hidden>
+        <h2>ATR One Membership</h2>
+        <div class="ghub-card" id="ghub-member-card"><p class="ghub-muted">Loading your membership&hellip;</p></div>
+<!-- Manage Membership — ATRONE_POINTS_TIERS_2026_11_06 (Austin, Nov 6, 2026):
+             he asked where a customer upgrades, changes, or cancels
+             — the member card only ever SHOWED the plan. This panel
+             now lives in the Guest Hub under ATR One Membership (v162,
+             Nov 17, 2026) and holds the controls: the customer's own plan + points rate,
+             join/switch links for every paid tier (the same Square
+             checkouts the plan cards use), billing handled by
+             Square (we never take card info), and a REAL self-serve
+             cancel — his correction later the same morning: no
+             calling, texting, emailing, or messaging us to cancel.
+             The button calls the narrow cancel_my_membership() RPC
+             (draft SQL in this build's folder, NOT run yet): our
+             record cancels on the spot and the account drops back
+             to Free. The Square subscription itself is stopped by
+             the customer on Square's own side, through the Manage
+             Subscription link in their Square subscription emails. -->
+        <div id="acct-view-membership" hidden>
+          <div class="acct-membership">
+            <p class="acct-muted" style="text-align:left;padding:0;">Your plan: <strong id="mm-plan-line">ATR One Free</strong></p>
+            <p class="acct-muted" style="text-align:left;padding:0;" id="mm-rate-line">You earn 1 point for every $1 of a completed repair.</p>
+            <h4 class="acct-detail-h"><i class="fas fa-arrow-up"></i> Upgrade or switch to ATR One Plus</h4>
+            <p class="acct-muted" style="text-align:left;padding:0;">Paid plans are billed monthly through Square. Switching plans starts the new plan at checkout &mdash; if you are switching mid-month, text us at (937) 280-6243 and we will make sure you are not double-billed.</p>
+            <div class="mm-tier-list">
+              <div class="mm-tier-row"><div class="mm-tier-info"><strong>Individual &mdash; 1 Device</strong><span>$9.99/mo &middot; Earn 5 points per $1</span></div><a class="btn btn-outline btn-sm mm-join" data-mm-tier="single" href="https://square.link/u/eFKxDvyo" target="_blank" rel="noopener">Join</a></div>
+              <div class="mm-tier-row"><div class="mm-tier-info"><strong>Family &mdash; 5 Devices</strong><span>$19.99/mo &middot; Earn 5 points per $1</span></div><a class="btn btn-outline btn-sm mm-join" data-mm-tier="family" href="https://square.link/u/ZA7502vD" target="_blank" rel="noopener">Join</a></div>
+              <div class="mm-tier-row"><div class="mm-tier-info"><strong>Business &mdash; 10 Devices</strong><span>$49.99/mo &middot; Earn 10 points per $1</span></div><a class="btn btn-outline btn-sm mm-join" data-mm-tier="business_plus" href="https://square.link/u/HtnQBIG1" target="_blank" rel="noopener">Join</a></div>
+              <div class="mm-tier-row"><div class="mm-tier-info"><strong>Business Pro &mdash; 25 Devices</strong><span>$99.99/mo &middot; Earn 10 points per $1</span></div><a class="btn btn-outline btn-sm mm-join" data-mm-tier="business_pro" href="https://square.link/u/V8WCkjbW" target="_blank" rel="noopener">Join</a></div>
+            </div>
+            <div id="mm-cancel-wrap" hidden>
+              <h4 class="acct-detail-h"><i class="fas fa-ban"></i> Cancel ATR One Plus</h4>
+              <p class="acct-muted" style="text-align:left;padding:0;">You can cancel anytime, right here &mdash; no call, text, or email to us, ever. Cancel at least 3 days before your next billing date and that charge never happens. If a payment just went through and you cancel within 3 days of it, that payment is refunded in full. Your paid benefits run to the end of the current billing period, and you keep ATR One Free either way.</p>
+              <p class="acct-muted" style="text-align:left;padding:0;"><strong>Step 1 &mdash; cancel with us:</strong> the button below ends your Plus membership on our side the moment you confirm. You drop back to ATR One Free and the free points rate (1 point per $1).</p>
+              <p class="acct-muted" style="text-align:left;padding:0;"><strong>Step 2 &mdash; stop the billing at Square:</strong> Square runs the payments, so stop the subscription there too &mdash; open any of your Square subscription emails and tap <strong>Manage Subscription</strong>. Do both steps and nothing is charged again.</p>
+              <button class="btn btn-outline btn-sm" type="button" id="mm-cancel-btn">Cancel membership with us</button>
+              <p class="acct-error" id="mm-cancel-error" hidden></p>
+              <p class="pts-success" id="mm-cancel-success" hidden></p>
+            </div>
+            <div id="mm-billing">
+              <h4 class="acct-detail-h"><i class="fas fa-credit-card"></i> Billing &mdash; handled by Square</h4>
+              <p class="acct-muted" style="text-align:left;padding:0;">We never take or store card information &mdash; not here, not anywhere. Square runs the payments for ATR One Plus. To update your card, pause, or manage the billing, open any of your Square subscription emails and tap <strong>Manage Subscription</strong> &mdash; that is Square&rsquo;s own page for your plan.</p>
+            </div>
+            <p class="acct-muted" id="mm-free-note" style="text-align:left;padding:0;">You are on the free plan &mdash; there is nothing to cancel. Upgrade anytime above.</p>
+          </div>
+        </div>
+      </div>
+      <div class="ghub-pane" data-pane="documents" hidden>
+        <h2>Documents</h2>
+        <div class="ghub-card" id="ghub-docs-list"><p class="ghub-muted">Loading your documents&hellip;</p></div>
+      </div>
+      <div class="ghub-pane" data-pane="warranty" hidden>
+        <h2>Warranty</h2>
+        <div class="ghub-card"><p>Every repair carries our 1-Year Limited Warranty on parts we supply and on our labor.</p>
+        <p class="ghub-muted">To request warranty service, use our warranty request form.</p>
+        <a class="btn btn-outline btn-sm" href="#warranty-request" data-page="warranty-request">Warranty request form</a></div>
+      </div>
+    </div>
+  </div>
+  <div class="ghub-thumb" role="navigation" aria-label="Guest Hub">
+    <button type="button" data-ghub="home" class="active"><i class="fas fa-house"></i> Home</button>
+    <button type="button" data-ghub="service"><i class="fas fa-tools"></i> Service Request</button>
+    <button type="button" data-ghub="documents"><i class="fas fa-folder-open"></i> Documents</button>
+    <button type="button" data-ghub="chat"><i class="fas fa-comment-dots"></i> Service Messages</button>
+    <button type="button" data-ghub="account"><i class="fas fa-user"></i> Account</button>
+  </div>
+</div>
+
+<script>
+/* V159_GUEST_HUB_2026_11_17 — Guest Hub logic. Guest-only replica of the Associate Hub.
+   Own Supabase client (same URL/anon key as the account module). No placeholder data:
+   every line comes from the signed-in guest's own rows. No email is ever sent from here. */
+(function () {
+  'use strict';
+  var URL = 'https://lyujxpuicarblpkdzuuc.supabase.co';
+  var KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function money(n) { return '$' + (Number(n || 0)).toFixed(2); }
+  function client() { try { return window.supabase.createClient(URL, KEY); } catch (e) { return null; } }
+  var sb = null, user = null, cust = null, tickets = [], loaded = false;
+  var KIND = { part: 'Part', labor: 'Labor', one_off: 'Other charge', dispatch: 'Visit fee', visit: 'Visit fee', deposit_credit: 'Deposit received', tip: 'Tip', discount: 'Discount' };
+  var STEPS = ['Booked', 'Awaiting Repair', 'In Progress', 'Job Complete'];
+  function stepIdx(status) {
+    if (!status) return 0;
+    if (/complete/i.test(status)) return 3;
+    if (/progress|repairing|working/i.test(status)) return 2;
+    if (/awaiting repair/i.test(status)) return 1;
+    return 0;
+  }
+  function apptLine(t) {
+    try {
+      if (t.appointment_at) {
+        var d = new Date(t.appointment_at), e = new Date(d.getTime() + 2 * 60 * 60 * 1000);
+        var fmt = function (x) { var h = x.getHours(), ap = h >= 12 ? 'PM' : 'AM', hh = h % 12 || 12; return hh + ' ' + ap; };
+        return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'America/New_York' }) + ' · ' + fmt(d) + '–' + fmt(e);
+      }
+      if (t.job_date) return new Date(t.job_date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    } catch (err) {}
+    return '';
+  }
+  function deviceOf(t) { return [t.device_type, t.brand, t.model].filter(Boolean).join(' '); }
+  function chargesHtml(rows) {
+    if (!rows || !rows.length) return '<p class="ghub-muted">No charges on this service request yet.</p>';
+    var sub = 0, dep = 0, part = 0, labor = 0, visit = 0;
+    var lines = rows.map(function (c) {
+      var amt = Number(c.qty || 0) * Number(c.unit_price || 0);
+      if (c.kind === 'deposit_credit') { dep += amt; return ''; }
+      sub += amt;
+      if (c.kind === 'part') part += amt;
+      if (c.kind === 'labor') labor += amt;
+      if (c.kind === 'dispatch' || c.kind === 'visit') visit += amt;
+      var lbl = KIND[c.kind] || 'Charge'; var desc = (c.description || ''); if (desc === lbl) desc = ''; return '<div style="display:flex;justify-content:space-between;gap:.6rem;padding:.3rem 0;border-bottom:1px solid #EFE6D2"><span style="min-width:0;overflow-wrap:break-word"><strong>' + esc(lbl) + '</strong>' + (desc ? ' — ' + esc(desc) : '') + ' · ' + esc(c.qty || 1) + ' × ' + (c.kind === 'discount' ? '−' + money(Math.abs(c.unit_price)) : money(c.unit_price)) + '</span><strong>' + (c.kind === 'discount' ? '−' + money(Math.abs(amt)) : money(amt)) + '</strong></div>';
+    }).join('');
+    var tot = '';
+    if (part) tot += '<div style="display:flex;justify-content:space-between;padding:.3rem 0"><span>Part total</span><strong>' + money(part) + '</strong></div>';
+    if (labor) tot += '<div style="display:flex;justify-content:space-between;padding:.3rem 0"><span>Labor total</span><strong>' + money(labor) + '</strong></div>';
+    if (visit) tot += '<div style="display:flex;justify-content:space-between;padding:.3rem 0"><span>Visit fee total</span><strong>' + money(visit) + '</strong></div>';
+    tot += '<div style="display:flex;justify-content:space-between;padding:.3rem 0;border-top:2px solid #E6D9C0"><span><strong>Subtotal</strong></span><strong>' + money(sub) + '</strong></div>';
+    if (dep) tot += '<div style="display:flex;justify-content:space-between;padding:.3rem 0"><span>Deposit received</span><strong>−' + money(dep) + '</strong></div>';
+    tot += '<div style="display:flex;justify-content:space-between;padding:.3rem 0;border-top:2px solid #E6D9C0"><span><strong>Balance due</strong></span><strong>' + money(sub - dep) + '</strong></div>';
+    return lines + tot;
+  }
+  window.atrGuestHubChargesHtml = chargesHtml;
+  function showTab(name) {
+    document.querySelectorAll('#guest-hub .ghub-tab').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-ghub') === name); });
+    document.querySelectorAll('#guest-hub .ghub-thumb button').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-ghub') === name); });
+    document.querySelectorAll('#guest-hub .ghub-pane').forEach(function (p) { p.hidden = p.getAttribute('data-pane') !== name; });
+    var panel = $('ghub-panel'); if (panel) panel.scrollTop = 0;
+    /* V162_ACCOUNT_DROPDOWN_2026_11_17: the five moved panels live
+     * inside the Hub panes now — opening a tab unhides its panel
+     * and resets it to its list view (thread / form hidden). The
+     * account module still paints them by id wherever they sit. */
+    if (name === 'service') { var pv = $('acct-view-repairs'); if (pv) pv.hidden = false; var sr = $('acct-repairs'), sth = $('acct-thread'), snt = $('acct-newticket'); if (sr) sr.hidden = false; if (sth) sth.hidden = true; if (snt) snt.hidden = true; }
+    if (name === 'documents') renderDocs();
+    if (name === 'chat') { var mv = $('acct-view-messages'); if (mv) mv.hidden = false; var ib = $('acct-inbox'), cth = $('acct-thread'); if (ib) ib.hidden = false; if (cth) cth.hidden = true; }
+    if (name === 'membership') { var mm = $('acct-view-membership'); if (mm) mm.hidden = false; }
+    if (name === 'account') { var sv = $('acct-view-settings'); if (sv) sv.hidden = false; }
+  }
+  window.atrGuestHubShowTab = showTab;
+  function renderDocs() {
+    var box = $('ghub-docs-list'); if (!box) return;
+    var std = [{ label: 'Repair Authorization and Service Agreement' }, { label: '1-Year Limited Warranty' }, { label: 'Media Release' }];
+    var html = '<p class="ghub-muted">Your documents live here in the Guest Hub — nothing is emailed unless you ask for it.</p>' + std.map(function (s) { return '<div style="padding:.4rem 0;border-bottom:1px solid #EFE6D2">• <strong>' + esc(s.label) + '</strong> — waiting for your signature</div>'; }).join('');
+    if (!tickets.length) { box.innerHTML = html; return; }
+    var ids = tickets.map(function (t) { return t.id; });
+    sb.from('ticket_documents').select('id,ticket_id,doc_type,file_name,created_at').in('ticket_id', ids).order('created_at', { ascending: true }).then(function (r) {
+      var filed = (r.data || []).map(function (d) { return '<div style="padding:.4rem 0;border-bottom:1px solid #EFE6D2">• ' + esc(d.file_name || d.doc_type || 'Document') + '</div>'; }).join('');
+      box.innerHTML = html + (filed || '<p class="ghub-muted">No estimates or invoices filed yet.</p>');
+    }).catch(function () { box.innerHTML = html; });
+  }
+  function loadAll() {
+    if (loaded) return; loaded = true;
+    sb = client(); if (!sb) return;
+    sb.auth.getSession().then(function (s) {
+      var u = s && s.data && s.data.session && s.data.session.user;
+      if (!u) return;
+      user = u;
+      return sb.from('customers').select('id,name,email,phone,address,account_number').eq('id', u.id).maybeSingle().then(function (r) {
+        cust = r.data || { id: u.id, name: (u.user_metadata && u.user_metadata.full_name) || '', email: u.email || '' };
+        paintHome();
+        return sb.from('tickets').select('id,created_at,device_type,brand,model,issue,status,job_date,appointment_at,service_address,customer_id').eq('customer_id', cust.id).order('created_at', { ascending: false });
+      }).then(function (r) {
+        tickets = (r && r.data) || [];
+        var next = $('ghub-home-next');
+        if (next) next.innerHTML = tickets.length ? '<strong>Your next service:</strong> ' + esc(deviceOf(tickets[0])) + ' — ' + esc(tickets[0].status || '') + (apptLine(tickets[0]) ? '<br>' + esc(apptLine(tickets[0])) : '') : '<p class="ghub-muted">No service requests yet.</p>';
+      });
+    }).catch(function () {});
+  }
+  function paintHome() {
+    var first = ((cust && cust.name) || '').trim().split(/\s+/)[0] || 'there';
+    var h = new Date().getHours();
+    var greet = h < 12 ? 'Good morning' : (h < 18 ? 'Good afternoon' : 'Good evening');
+    var g = $('ghub-greet'); if (g) g.textContent = greet + ', ' + first;
+    var c = $('ghub-clock');
+    if (c) c.textContent = new Date().toLocaleString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' });
+    var ac = $('ghub-account-card');
+    if (ac && cust) ac.innerHTML = '<p><strong>' + esc(cust.name || '') + '</strong></p><p>' + esc(cust.email || '') + '</p><p>' + esc(cust.phone || '') + '</p><p>' + esc(cust.address || '') + '</p><p class="ghub-muted">Only your own details are shown here.</p>';
+    var sc = $('ghub-scan-code'); if (sc) sc.textContent = 'Account #' + esc(cust.account_number != null ? cust.account_number : (cust.id || '').slice(0, 8).toUpperCase());
+    var sn = $('ghub-scan-name'); if (sn) sn.textContent = esc(cust.name || '');
+    var bc = $('ghub-barcode');
+    if (bc) { var code = String(cust.account_number != null ? cust.account_number : '216'); bc.innerHTML = code.split('').map(function (d) { var w = 2 + (Number(d) % 4); return '<i style="width:' + w + 'px;height:' + (34 + (Number(d) % 3) * 8) + 'px"></i>'; }).join(''); }
+    var mc = $('ghub-member-card');
+    if (mc) { var tier = $('acct-qr-tier'), pts = $('acct-points-num'); mc.innerHTML = '<p><strong>' + esc(tier ? tier.textContent : 'ATR One Free') + '</strong></p><p>Reward points: <strong>' + esc(pts ? pts.textContent : '0') + '</strong></p>'; }
+  }
+  /* Notifications prefs (V159): Email alerts ON, Text alerts OFF by default. */
+  function loadPrefs() {
+    var e = $('acct-notif-email'), t = $('acct-notif-text');
+    if (!e || !t || !cust) return;
+    sb.from('guest_notification_prefs').select('email_alerts,text_alerts').eq('customer_id', cust.id).maybeSingle().then(function (r) {
+      if (r.data) { e.checked = r.data.email_alerts !== false; t.checked = r.data.text_alerts === true; }
+    }).catch(function () {});
+  }
+  function savePrefs() {
+    var e = $('acct-notif-email'), t = $('acct-notif-text');
+    if (!e || !t || !cust || !sb) return;
+    var row = { customer_id: cust.id, email_alerts: !!e.checked, text_alerts: !!t.checked };
+    sb.from('guest_notification_prefs').select('id').eq('customer_id', cust.id).maybeSingle().then(function (r) {
+      if (r.data && r.data.id) sb.from('guest_notification_prefs').update(row).eq('id', r.data.id);
+      else sb.from('guest_notification_prefs').insert(row);
+    }).catch(function () {});
+  }
+  window.atrGuestHubLoadPrefs = loadPrefs;
+  function gate() {
+    var btn = $('acct-guesthub-btn');
+    sb = sb || client(); if (!sb || !btn) return;
+    sb.auth.getSession().then(function (s) {
+      var u = s && s.data && s.data.session && s.data.session.user;
+      if (!u) { btn.hidden = true; return; }
+      return sb.from('employee_profiles').select('id').eq('id', u.id).maybeSingle().then(function (r) {
+        var staff = !!(r.data && r.data.id);
+        btn.hidden = staff;
+        /* V162: the Services row is gone — the account repairs panel
+         * lives inside the Guest Hub Service tab now, so there is
+         * nothing to hide here anymore. */
+        if (!staff) loadAll(), loadPrefs();
+      });
+    }).catch(function () {});
+  }
+  function openHub(tab) {
+    var hub = $('guest-hub'); if (!hub) return;
+    hub.hidden = false; document.body.style.overflow = 'hidden';
+    loadAll(); setTimeout(loadPrefs, 600);
+    showTab(tab || 'home');
+    hub.scrollTop = 0;
+  }
+  function closeHub() {
+    var hub = $('guest-hub'); if (!hub) return;
+    hub.hidden = true; document.body.style.overflow = '';
+  }
+  window.atrOpenGuestHub = openHub;
+  window.atrCloseGuestHub = closeHub;
+  document.addEventListener('DOMContentLoaded', function () {
+    var btn = $('acct-guesthub-btn');
+    if (btn) btn.addEventListener('click', function () { openHub('service'); });
+    document.querySelectorAll('#guest-hub [data-ghub]').forEach(function (b) {
+      b.addEventListener('click', function () { showTab(b.getAttribute('data-ghub')); });
+    });
+    document.querySelectorAll('#guest-hub [data-ghub-qa]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var k = b.getAttribute('data-ghub-qa');
+        if (k === 'back') closeHub();
+        if (k === 'refresh') { loaded = false; loadAll(); showTab('home'); }
+        if (k === 'service') { showTab('service'); var nb2 = $('acct-new-ticket-btn'); if (nb2) nb2.click(); }
+      });
+    });
+    var ne = $('acct-notif-email'), nt2 = $('acct-notif-text');
+    /* V162_GUEST_GUIDES_2026_11_17 (Austin, Nov 17, 2026): the Guides
+     * button on Guest Hub Home opens the self-help Help Guides — the
+     * six guest-facing guides that help a guest help themselves and
+     * lead into getting a repair from us. Never the staff Tech Hub
+     * guides: guests do not see those. Same close-then-click pattern
+     * as the booking-form button below it. */
+    var gg = $('ghub-home-guides-btn');
+    if (gg) gg.addEventListener('click', function () {
+      closeHub();
+      var link = document.querySelector('a[data-page="help-guides"]');
+      if (link) link.click();
+    });
+    if (ne) ne.addEventListener('change', savePrefs);
+    if (nt2) nt2.addEventListener('change', savePrefs);
+    gate();
+    setTimeout(gate, 2500);
+  });
+})();
+
+</script>
 </body>
 </html>

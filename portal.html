@@ -362,7 +362,7 @@
       <div class="portal-panel" id="portal-panel-home" role="tabpanel" hidden>
         <div class="portal-panel-head">
           <h2 class="portal-h2"><i class="fas fa-house"></i> Home</h2>
-          <!-- HUB_POLISH_2026_11_11 (v119, Austin, Nov 11, 2026): Home's own Refresh button removed — he called it out twice ("the refresh button is still in home for some reason"); the Quick Actions Refresh in the top bar (a plain F5 reload) is the one refresh now. The other panels keep theirs. -->
+          <!-- HUB_POLISH_2026_11_11 (v119, Austin, Nov 11, 2026): Home's own Refresh button removed — he called it out twice ("the refresh button is still in home for some reason"); the Quick Actions Refresh in the top bar (a plain F5 reload) is the one refresh now. The other panels kept theirs until v162 (Nov 17, 2026) removed every per-panel Refresh &mdash; the Quick Actions Refresh is the only one now. -->
         </div>
         <p class="portal-muted portal-small">Company updates, what we are working on this month, and the days off ahead — posted by Austin and the office team.</p>
 
@@ -620,9 +620,6 @@
               <option value="Ready">Ready</option>
               <option value="Job Complete">Job Complete</option>
             </select>
-            <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="tickets">
-              <i class="fas fa-rotate-right"></i> Refresh
-            </button>
           </div>
         </div>
         <!-- SCAN_TICKET_2026_11_11: queue search + device-label scan. The Scan button opens the camera; a read lands in the search box and a ticket code pops its ticket. -->
@@ -680,9 +677,6 @@
           <button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="portal-warranty-new-claim">
             <i class="fas fa-pen-to-square"></i> New claim &mdash; we fill it in
           </button>
-          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="warranty">
-            <i class="fas fa-rotate-right"></i> Refresh
-          </button>
         </div>
         <p class="portal-muted portal-small">Warranty requests, newest first. Start rework right on a card &mdash; it links the original ticket, sets it to Rework / Warranty, and exempts its charges, so the guest owes $0.</p>
         <!-- WARRANTY_CONTROLS_2026_11_04: internal claim intake. The website form is not the only door — when a customer calls, texts, or emails instead, staff file the claim for them here. The pickers attach the claim to the customer and their original repair in the database, and saving starts the rework on that ticket exactly like Start rework does on a card. Wired in portal.js (wireWarrantyClaimForm). -->
@@ -717,9 +711,6 @@
       <div class="portal-panel" id="portal-panel-applications" role="tabpanel" hidden>
         <div class="portal-panel-head">
           <h2 class="portal-h2">Job Applications</h2>
-          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="applications">
-            <i class="fas fa-rotate-right"></i> Refresh
-          </button>
         </div>
         <div id="portal-application-list"><p class="portal-muted">Loading applications&hellip;</p></div>
       </div>
@@ -728,9 +719,6 @@
       <div class="portal-panel" id="portal-panel-investors" role="tabpanel" hidden>
         <div class="portal-panel-head">
           <h2 class="portal-h2">Investor Inquiries</h2>
-          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="investors">
-            <i class="fas fa-rotate-right"></i> Refresh
-          </button>
         </div>
         <div id="portal-investor-list"><p class="portal-muted">Loading investor inquiries&hellip;</p></div>
       </div>
@@ -739,9 +727,6 @@
       <div class="portal-panel" id="portal-panel-feedback" role="tabpanel" hidden>
         <div class="portal-panel-head">
           <h2 class="portal-h2">&ldquo;How Did We Do&rdquo; Feedback</h2>
-          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="feedback">
-            <i class="fas fa-rotate-right"></i> Refresh
-          </button>
         </div>
         <div id="portal-feedback-list"><p class="portal-muted">Loading feedback&hellip;</p></div>
       </div>
@@ -750,9 +735,6 @@
       <div class="portal-panel" id="portal-panel-associateaccounts" role="tabpanel" hidden>
         <div class="portal-panel-head">
           <h2 class="portal-h2">Associate Accounts</h2>
-          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="associateaccounts">
-            <i class="fas fa-rotate-right"></i> Refresh
-          </button>
         </div>
         <p class="portal-muted portal-small">Profiles and logins for everyone who can sign in to this portal, managed in one place. Tap a person to open their full record &mdash; their profile on top, their login below it: change a login email, set a new password, or deactivate an account that should not sign in anymore (deactivated accounts can be activated again here) &mdash; and from the management section of a card, change a role or a profile picture. Changes take effect right away. Pay rates are set by the top tier; the Admin tier manages Technician and Guest Service accounts.</p>
         <!-- PICTURE_MOVE_2026_11_04 (Austin, Nov 4, 2026): this is the exact "My picture" card that used to sit at the top of Team Chat — Austin: "take that exact thing and put it in associate accounts." Picture changes live in Associate Accounts only now, in the same place accounts are managed and moderated (the per-card Change picture / Remove picture controls on the cards below), never from the chat, because these pictures are customer-facing. Same ids as before: portal.js renderMyAvatarRow / uploadMyAvatar drive it unchanged. -->
@@ -808,7 +790,7 @@
         <button class="portal-btn portal-btn-primary" type="button" data-acct-add>
           <i class="fas fa-user-plus"></i> Add staff login
         </button>
-        <!-- ACCOUNT_AUDIT_2026_11_03 (Austin, Nov 3, 2026): account changes are signed like ticket work — who did it, what they did, to whom, and when. The staff-admin Edge Function writes one row per change to staff_admin_audit; this card reads the latest 20 back through the normal portal client (the table's RLS lets only owners read). Rows are rendered by renderAccountAudit in portal.js; the panel's own Refresh button reloads this list along with the staff list. -->
+        <!-- ACCOUNT_AUDIT_2026_11_03 (Austin, Nov 3, 2026): account changes are signed like ticket work — who did it, what they did, to whom, and when. The staff-admin Edge Function writes one row per change to staff_admin_audit; this card reads the latest 20 back through the normal portal client (the table's RLS lets only owners read). Rows are rendered by renderAccountAudit in portal.js; the global Quick Actions Refresh reloads the page, this list included. -->
         <div class="portal-panel-head portal-subhead">
           <h2 class="portal-h2">Account activity</h2>
         </div>
@@ -821,9 +803,6 @@
       <div class="portal-panel" id="portal-panel-setup" role="tabpanel" hidden>
         <div class="portal-panel-head">
           <h2 class="portal-h2">Setup</h2>
-          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="setup">
-            <i class="fas fa-rotate-right"></i> Refresh
-          </button>
         </div>
         <p class="portal-muted portal-small">Make the portal yours: add your own buttons from a template, and keep the shop&rsquo;s printers and devices in one place. Everything here saves to the database, so it shows the same on every signed-in device.</p>
         <p class="portal-error" id="portal-setup-db-note" hidden>Setup needs the database step first &mdash; the setup table is not in place yet, so nothing here can save. Everything else in the portal works as normal.</p>
@@ -955,9 +934,6 @@
           <button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="portal-leads-new">
             <i class="fas fa-user-plus"></i> New lead
           </button>
-          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="leads">
-            <i class="fas fa-rotate-right"></i> Refresh
-          </button>
         </div>
         <p class="portal-muted portal-small">People who reached out but are not guests yet. Add them when they call, text, walk in, or get referred, and follow up from here until they book or go cold.</p>
         <!-- LEADS_2026_11_15: the add form. Name, phone, and what they need are required; how they reached us and notes are optional. Wired in portal.js (wireLeadForm). -->
@@ -988,9 +964,6 @@
       <div class="portal-panel" id="portal-panel-members" role="tabpanel" hidden>
         <div class="portal-panel-head">
           <h2 class="portal-h2">ATR One Members</h2>
-          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="members">
-            <i class="fas fa-rotate-right"></i> Refresh
-          </button>
         </div>
         <!-- ATRONE_POINTS_TIERS_2026_11_06: the intro below states the tiered points rates -->
         <p class="portal-muted portal-small">Everyone with an ATR One membership on file. Green dot: the membership is on (good standing). Red dot: it is off. Tap a member to turn their membership off or on, or to correct their tier. New memberships are still added from a guest&rsquo;s ticket. Points: ATR One Free earns 1 point per $1 of a completed repair; ATR One Plus earns 5 points per $1 (Individual, Family) or 10 points per $1 (Business, Business Pro), credited at Job Complete.</p>
@@ -1001,9 +974,6 @@
       <div class="portal-panel" id="portal-panel-virtual" role="tabpanel" hidden>
         <div class="portal-panel-head">
           <h2 class="portal-h2">ATRG Remote</h2>
-          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="virtual">
-            <i class="fas fa-rotate-right"></i> Refresh
-          </button>
         </div>
         <p class="portal-muted portal-small">Make a one-time code for a guest&rsquo;s virtual session. The code works once, for 4 hours, and only for that guest. Read it to the guest, or send it in a message &mdash; it is shown here once and never stored in plain sight. ATR One members do not need a code; their member key is theirs alone and works any time.</p>
         <div class="virtual-secnav">
@@ -1100,9 +1070,6 @@
               <option value="van">Van</option>
               <option value="shop">Shop</option>
             </select>
-            <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="inventory">
-              <i class="fas fa-rotate-right"></i> Refresh
-            </button>
           </div>
         </div>
         <p class="portal-muted portal-small">Van + shop stock. Use +/&minus; to adjust counts, Edit to change an item, and the form below to add stock. Parts pulled from stock onto a ticket come off the count automatically &mdash; and go back on if the part is removed. To receive a part, tap Scan UPC by the form and scan the code on its box.</p>
@@ -1188,9 +1155,6 @@
       <div class="portal-panel" id="portal-panel-guestchat" role="tabpanel" hidden>
         <div class="portal-panel-head">
           <h2 class="portal-h2">Guest Chat</h2>
-          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="guestchat">
-            <i class="fas fa-rotate-right"></i> Refresh
-          </button>
         </div>
         <p class="portal-muted portal-small">Every guest conversation in one place &mdash; messages on a repair, and general messages from Send us a message in their account. Tap a conversation to read it and reply.</p>
         <div class="guestchat-list" id="portal-guestchat-list"><p class="portal-muted">Loading conversations&hellip;</p></div>
@@ -1214,9 +1178,6 @@
       <div class="portal-panel" id="portal-panel-teamchat" role="tabpanel" hidden>
         <div class="portal-panel-head">
           <h2 class="portal-h2">Team Chat</h2>
-          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="teamchat">
-            <i class="fas fa-rotate-right"></i> Refresh
-          </button>
         </div>
         <p class="portal-muted portal-small">The office channel: every associate, Alfred and Abigail in one thread. Staff only &mdash; guests never see this.</p>
         <!-- PICTURE_MOVE_2026_11_04 (Austin, Nov 4, 2026): the "My picture / Change picture" card that used to sit here is REMOVED from Team Chat. It lives in Associate Accounts now (same card, same ids; portal.js renderMyAvatarRow paints it there). Picture changes happen in that one place only, beside the account controls, because these pictures are customer-facing. -->
@@ -1398,9 +1359,6 @@
       <div class="portal-panel" id="portal-panel-guides" role="tabpanel" hidden>
         <div class="portal-panel-head">
           <h2 class="portal-h2">Repair Guides &amp; How-Tos</h2>
-          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="guides">
-            <i class="fas fa-rotate-right"></i> Refresh
-          </button>
         </div>
         <p class="portal-muted portal-small">Search the shop&rsquo;s how-to database: iFixit guides, internal procedures, and videos. Type a device, repair, or tag (try &ldquo;iPhone 13 battery&rdquo;).</p>
         <div class="portal-guide-tools">
@@ -1535,7 +1493,7 @@
       <!-- CHECK-IN / TRIAGE -->
       <div class="portal-panel" id="portal-panel-checkin" role="tabpanel" hidden>
         <div class="portal-panel-head"><h2 class="portal-h2">New Service Request &mdash; Triage</h2></div>
-        <p class="portal-muted portal-small">Walk-in and phone check-ins. Find the guest (or add them) &mdash; email and service address are required, because we come to them. For a repair, pick the device and the reason and run the power test. For a one-on-one lesson, tap One-on-One in the Service tiles, pick 1, 2, or 3 hours, and write what they want to get done. Either way the ticket lands straight in the Service Queue. Confirm the money with the guest before submitting &mdash; repairs: $14.99 visit fee for a known repair, $35 if the job needs diagnostics. One-on-one: $25 an hour for the time booked, and the $14.99 visit fee charged separately. ATR One members pay no visit fee.</p>
+        <p class="portal-muted portal-small">Walk-in and phone check-ins. Find the guest (or add them) &mdash; email and service address are required, because we come to them. For a repair, pick the device and the reason and run the power test. For a one-on-one lesson, tap One-on-One in the Service tiles, pick 1, 2, or 3 hours, and write what they want to get done. Either way the ticket lands straight in the Service Queue. Confirm the money with the guest before submitting &mdash; repairs: $14.99 visit fee for guests ($34.99 for business) for a known repair, plus $34.99 diagnostics for guests ($64.99 for business) only if the job needs a full diagnosis &mdash; we tell the guest first. One-on-one: $24.99 an hour for guests ($49.99 for business) for the time booked, and the visit fee charged separately. ATR One members pay no visit fee or diagnostics on covered devices.</p>
         <form id="ci-form" novalidate>
           <!-- CHECKIN_COLLAPSE_2026_11_04 (Austin, Nov 4, 2026): the check-in form folds into tappable sections, like the ticket drawer's sections in the Service Queue — Customer starts open, the rest start closed, and the Create ticket button and Clear check-in stay outside the sections at the bottom, always visible. Every field id is exactly as it was; only the folding wrappers were added. -->
           <div class="ci-acc" data-ci-acc="customer">
@@ -1553,7 +1511,30 @@
             <div class="portal-field"><label for="ci-address">Service address *</label><input type="text" id="ci-address" required placeholder="Street, city, ZIP" /></div>
           </div>
           <div class="v154-map" id="ci-address-map" hidden><iframe id="ci-address-map-frame" title="Map of the service address" loading="lazy" src=""></iframe><p class="portal-muted portal-small" id="ci-address-map-note"></p></div>
-          <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">ATR One</h3></div>
+          <!-- V161_CHECKIN_LAYOUT_2026_11_17 (Austin, Nov 17, 2026): When — date & time moved up from after Device and issue to directly under the service address, inside the Guest accordion. Whole accordion moved verbatim; ids, classes and JS wiring unchanged; starts closed as before. -->
+          <div class="ci-acc" data-ci-acc="when">
+          <button type="button" class="ci-acc-head" data-ci-acc-toggle="when" aria-expanded="false"><span class="ci-acc-title">When &mdash; date &amp; time</span><i class="fas fa-chevron-down ci-acc-chev" aria-hidden="true"></i></button>
+          <div class="ci-acc-body" data-ci-acc-body="when" hidden>
+          <p class="portal-muted portal-small">Pick the visit date and the 2-hour arrival window together &mdash; the ticket lands on the calendar with both.</p>
+          <div class="portal-nh-grid">
+            <div class="portal-field"><label for="ci-jobdate">Visit date</label><input type="date" id="ci-jobdate" /></div>
+            <div class="portal-field"><label>Arrival window</label><div class="v154-win-row" id="ci-windows" role="group" aria-label="Arrival window">
+              <button type="button" class="portal-btn portal-btn-outline portal-btn-sm v154-win-btn" data-ci-window="8" aria-pressed="false">8&ndash;10 AM</button>
+              <button type="button" class="portal-btn portal-btn-outline portal-btn-sm v154-win-btn" data-ci-window="10" aria-pressed="false">10 AM&ndash;12 PM</button>
+              <button type="button" class="portal-btn portal-btn-outline portal-btn-sm v154-win-btn" data-ci-window="12" aria-pressed="false">12&ndash;2 PM</button>
+              <button type="button" class="portal-btn portal-btn-outline portal-btn-sm v154-win-btn" data-ci-window="14" aria-pressed="false">2&ndash;4 PM</button>
+              <button type="button" class="portal-btn portal-btn-outline portal-btn-sm v154-win-btn" data-ci-window="16" aria-pressed="false">4&ndash;6 PM</button>
+              <button type="button" class="portal-btn portal-btn-outline portal-btn-sm v154-win-btn" data-ci-window="18" aria-pressed="false">6&ndash;8 PM</button>
+            </div></div>
+          </div>
+          </div>
+          </div>
+          </div>
+          </div>
+          <!-- V161_CHECKIN_LAYOUT_2026_11_17 (Austin, Nov 17, 2026): ATR One is now its own dropdown, not a block sitting open under Guest. Same ci-acc-head / ci-acc-body pattern as the other sections, starts CLOSED; select id, options, signup box and Square links unchanged. The old ATR One subhead is retired — the accordion head carries the label, so it is not duplicated inside the dropdown. -->
+          <div class="ci-acc" data-ci-acc="atrone">
+          <button type="button" class="ci-acc-head" data-ci-acc-toggle="atrone" aria-expanded="false"><span class="ci-acc-title">ATR One</span><i class="fas fa-chevron-down ci-acc-chev" aria-hidden="true"></i></button>
+          <div class="ci-acc-body" data-ci-acc-body="atrone" hidden>
           <div class="portal-field">
             <label for="ci-atrone">Is this guest an ATR One Plus (paid) member?</label>
             <select id="ci-atrone">
@@ -1573,9 +1554,10 @@
           </div>
           </div>
           </div>
-          <div class="ci-acc" data-ci-acc="device">
-          <button type="button" class="ci-acc-head" data-ci-acc-toggle="device" aria-expanded="false"><span class="ci-acc-title">Device and issue</span><i class="fas fa-chevron-down ci-acc-chev" aria-hidden="true"></i></button>
-          <div class="ci-acc-body" data-ci-acc-body="device" hidden>
+          <!-- V161_REPAIR_TRIAGE_2026_11_17 (Austin, Nov 17, 2026): Device and issue + Power test are ONE section now — Repair Triage. The standalone Power accordion is gone; its grid lives inside this body under a Power test subhead (see #ci-power-block below), so a lesson can still hide just the power fields. -->
+          <div class="ci-acc" data-ci-acc="triage">
+          <button type="button" class="ci-acc-head" data-ci-acc-toggle="triage" aria-expanded="false"><span class="ci-acc-title">Repair Triage</span><i class="fas fa-chevron-down ci-acc-chev" aria-hidden="true"></i></button>
+          <div class="ci-acc-body" data-ci-acc-body="triage" hidden>
           <div class="portal-nh-grid">
             <div class="portal-field"><label for="ci-type">Device type</label>
               <select id="ci-type"><option>Phone</option><option>Tablet</option><option>Laptop</option><option>Desktop</option><option>Game Console</option><option>Smartwatch</option><option>Earbuds / Hearable</option><option>Other</option></select></div>
@@ -1601,35 +1583,15 @@
             <!-- PORTAL_SERVICE_QUEUE_2026_11_06 (intake refinements): the One-on-One tile lives in the Service grid itself. Tapping it opens the three hour buttons under it; Other stays last, underneath them. Wired in portal.js. -->
             <button type="button" class="ci-tile ci-tile-oneonone" id="ci-oneonone" data-oneonone="1" aria-pressed="false"><i class="fas fa-chalkboard-user" aria-hidden="true"></i><span>One-on-One</span></button>
             <div class="ci-hours" id="ci-hours" hidden role="group" aria-label="One-on-One time">
-              <button type="button" class="ci-hour-btn" data-hours="1" aria-pressed="false">One-on-One &mdash; 1 hour &middot; $25</button>
-              <button type="button" class="ci-hour-btn" data-hours="2" aria-pressed="false">One-on-One &mdash; 2 hours &middot; $50</button>
-              <button type="button" class="ci-hour-btn" data-hours="3" aria-pressed="false">One-on-One &mdash; 3 hours &middot; $75</button>
-              <p class="portal-muted portal-small ci-hours-note">Time is $25 an hour, picked here. The $14.99 visit fee is charged separately &mdash; never folded into the hourly price &mdash; and ATR One members pay no visit fee. Runs over the booked time? Extra time is $25 an hour, settled at the visit.</p>
+              <button type="button" class="ci-hour-btn" data-hours="1" aria-pressed="false">One-on-One &mdash; 1 hour &middot; $24.99</button>
+              <button type="button" class="ci-hour-btn" data-hours="2" aria-pressed="false">One-on-One &mdash; 2 hours &middot; $49.98</button>
+              <button type="button" class="ci-hour-btn" data-hours="3" aria-pressed="false">One-on-One &mdash; 3 hours &middot; $74.97</button>
+              <p class="portal-muted portal-small ci-hours-note">Time is $24.99 an hour for guests ($49.99 for business), picked here. The visit fee ($14.99 for guests, $34.99 for business) is charged separately &mdash; never folded into the hourly price &mdash; and ATR One members pay no visit fee. Runs over the booked time? Extra time is $24.99 an hour for guests ($49.99 for business), settled at the visit.</p>
             </div>
             <button type="button" class="ci-tile" data-label="Other" aria-pressed="false"><i class="fas fa-ellipsis" aria-hidden="true"></i><span>Other</span></button>
           </div>
-          </div>
-          </div>
-          <div class="ci-acc" data-ci-acc="when">
-          <button type="button" class="ci-acc-head" data-ci-acc-toggle="when" aria-expanded="false"><span class="ci-acc-title">When &mdash; date &amp; time</span><i class="fas fa-chevron-down ci-acc-chev" aria-hidden="true"></i></button>
-          <div class="ci-acc-body" data-ci-acc-body="when" hidden>
-          <p class="portal-muted portal-small">Pick the visit date and the 2-hour arrival window together &mdash; the ticket lands on the calendar with both.</p>
-          <div class="portal-nh-grid">
-            <div class="portal-field"><label for="ci-jobdate">Visit date</label><input type="date" id="ci-jobdate" /></div>
-            <div class="portal-field"><label>Arrival window</label><div class="v154-win-row" id="ci-windows" role="group" aria-label="Arrival window">
-              <button type="button" class="portal-btn portal-btn-outline portal-btn-sm v154-win-btn" data-ci-window="8" aria-pressed="false">8&ndash;10 AM</button>
-              <button type="button" class="portal-btn portal-btn-outline portal-btn-sm v154-win-btn" data-ci-window="10" aria-pressed="false">10 AM&ndash;12 PM</button>
-              <button type="button" class="portal-btn portal-btn-outline portal-btn-sm v154-win-btn" data-ci-window="12" aria-pressed="false">12&ndash;2 PM</button>
-              <button type="button" class="portal-btn portal-btn-outline portal-btn-sm v154-win-btn" data-ci-window="14" aria-pressed="false">2&ndash;4 PM</button>
-              <button type="button" class="portal-btn portal-btn-outline portal-btn-sm v154-win-btn" data-ci-window="16" aria-pressed="false">4&ndash;6 PM</button>
-              <button type="button" class="portal-btn portal-btn-outline portal-btn-sm v154-win-btn" data-ci-window="18" aria-pressed="false">6&ndash;8 PM</button>
-            </div></div>
-          </div>
-          </div>
-          </div>
-          <div class="ci-acc" data-ci-acc="power">
-          <button type="button" class="ci-acc-head" data-ci-acc-toggle="power" aria-expanded="false"><span class="ci-acc-title">Power test</span><i class="fas fa-chevron-down ci-acc-chev" aria-hidden="true"></i></button>
-          <div class="ci-acc-body" data-ci-acc-body="power" hidden>
+          <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Power test</h3></div>
+          <div id="ci-power-block">
           <div class="portal-nh-grid">
             <div class="portal-field"><label for="ci-volts">Voltage at power source (V)</label><input type="text" id="ci-volts" inputmode="decimal" placeholder="e.g. 5.1" /></div>
             <div class="portal-field"><label for="ci-amps">Draw (A)</label><input type="text" id="ci-amps" inputmode="decimal" placeholder="e.g. 0.8" /></div>
@@ -1641,6 +1603,7 @@
               <select id="ci-prior"><option value="">Unknown</option><option>Yes</option><option>No</option></select></div>
             <div class="portal-field"><label for="ci-warranty">Under manufacturer warranty?</label>
               <select id="ci-warranty"><option value="">Unknown</option><option>Yes &mdash; customer told our work may void it</option><option>No</option></select></div>
+          </div>
           </div>
           </div>
           </div>
@@ -1664,7 +1627,7 @@
             <label for="ci-svc-goal">What do they want to get done? *</label>
             <textarea id="ci-svc-goal" rows="3" placeholder="e.g. Show her how to use the new iPad &mdash; mail, photos, and FaceTime with the grandkids."></textarea>
           </div>
-          <p class="portal-muted portal-small">A one-on-one is booked from the One-on-One tile in the Service grid above: pick 1, 2, or 3 hours there. Time is $25 an hour and the $14.99 visit fee is charged separately &mdash; never the $35, because a lesson has no diagnostics. Both charges are added to the ticket as their own lines when you submit. ATR One members pay no visit fee, same as repairs.</p>
+          <p class="portal-muted portal-small">A one-on-one is booked from the One-on-One tile in the Service grid above: pick 1, 2, or 3 hours there. Time is $24.99 an hour for guests ($49.99 for business) and the visit fee ($14.99 for guests, $34.99 for business) is charged separately &mdash; a lesson has no diagnostics. Both charges are added to the ticket as their own lines when you submit. ATR One members pay no visit fee, same as repairs.</p>
           </div>
           </div>
           <div class="ci-acc" data-ci-acc="notes">
@@ -1725,9 +1688,6 @@
       <div class="portal-panel" id="portal-panel-mileage" role="tabpanel" hidden>
         <div class="portal-panel-head">
           <h2 class="portal-h2">Mileage</h2>
-          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="ml-refresh">
-            <i class="fas fa-rotate-right"></i> Refresh
-          </button>
         </div>
         <p class="portal-muted portal-small">Log a trip and the road miles and drive time are worked out for you. Saving files it on the time card as a Driving entry — driving pays mileage, not hourly. Wrong numbers? The owner can adjust the entry on the time card afterwards.</p>
         <!-- LOC_SETTINGS_2026_11_03: the Location tracking settings card renders into this slot (portal.js geoRenderLocSettings) — the location consent choice as a normal setting in this panel, replacing the retired sign-in pop-up banner. -->
@@ -1815,7 +1775,7 @@
       <div class="portal-panel" id="portal-panel-prices" role="tabpanel" hidden>
         <div class="portal-panel-head"><h2 class="portal-h2">Price Book</h2></div>
         <!-- PRICEBOOK_CLEANUP_2026_11_04: Price Book header cleaned up at Austin's direction (Nov 4, 2026, iPad walkthrough: "This needs cleaned up more"). The old single run-on paragraph is now a short Updated line plus a "How pricing works" rule list, one rule per line, in the panel idiom (subhead + muted small lines). Presentation only — every fact from the old paragraph is preserved; the Google Sheet button, search field, brand filter, results rendering, and all price data are untouched. -->
-        <p class="portal-muted portal-small">Updated Nov 16, 2026</p>
+        <p class="portal-muted portal-small">Updated Nov 17, 2026</p>
         <!-- V152_PRICE_SYNC_2026_11_16: the note below says whether the
              book on screen is the LIVE price_book table (edits here update
              the website too) or the saved copy baked into this page (the
@@ -1825,10 +1785,10 @@
         <!-- V143_PRICEBOOK_PRICES_2026_11_13 (owner, Nov 13, 2026): "How pricing works" now carries the full settled price list, so anyone logging in sees how prices are built. The old "$50 for standard repairs / $100 for soldering and folding devices / $15 or $35 visit fee" lines were the pre-Nov-12 model and are gone; "folding devices" has no standard time of its own — flag it if one is needed. -->
         <ul class="portal-muted portal-small" style="margin:0 0 4px; padding-left:1.25rem; line-height:2;">
           <li>Repair prices are shown flat &mdash; parts plus labor for the time the job typically takes: phones about 1 hour, tablets 2 to 3 hours, computers about 3 hours for a complete build, soldering 4 to 5 hours, HDMI repair about 3 hours</li>
-          <li>Labor is <strong>$50 an hour</strong> for guests, <strong>$100 an hour</strong> for business</li>
-          <li>The dispatch (visit) fee is added once per job &mdash; <strong>$15.99</strong> for guests, <strong>$35.99</strong> for business &mdash; non-refundable. Diagnostics is separate: <strong>$34.99</strong> for guests, <strong>$64.99</strong> for business</li>
-          <li>One-on-one is <strong>$24.99 an hour</strong> for guests plus a $15.99 visit fee; <strong>$49.99 an hour</strong> for business plus a $35.99 visit fee. ATR One Plus (paid) members pay no visit fee or diagnostics on covered devices</li>
-          <li>Service work that is not a repair is billed at <strong>$25/hr</strong></li>
+          <li>Labor is <strong>$49.99 an hour</strong> for guests, <strong>$99.99 an hour</strong> for business</li>
+          <li>The dispatch (visit) fee is added once per job &mdash; <strong>$14.99</strong> for guests, <strong>$34.99</strong> for business &mdash; non-refundable, and it covers the first 25 miles &mdash; over 25 miles is $1 per mile. Diagnostics is separate: <strong>$34.99</strong> for guests, <strong>$64.99</strong> for business, only when the cause is unknown</li>
+          <li>One-on-one is <strong>$24.99 an hour</strong> for guests plus a $14.99 visit fee; <strong>$49.99 an hour</strong> for business plus a $34.99 visit fee. ATR One Plus (paid) members pay no visit fee or diagnostics on covered devices</li>
+          <li>Service work that is not a repair is billed at <strong>$24.99/hr</strong> for guests, <strong>$49.99/hr</strong> for business, plus the visit fee</li>
           <li>ATR One: Individual <strong>$9.99</strong>, Family <strong>$19.99</strong>, Business <strong>$49.99</strong>, Business Pro <strong>$99.99</strong> a month &mdash; members earn points and save on repairs and accessories</li>
           <li>Member tier discounts apply to the repair price</li>
           <li>Every line carries a standard price &mdash; part cost plus flat labor &mdash; so you can quote straight from the book</li>
@@ -1864,9 +1824,6 @@
       <div class="portal-panel" id="portal-panel-financials" role="tabpanel" hidden>
         <div class="portal-panel-head">
           <h2 class="portal-h2">Financials</h2>
-          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="financials">
-            <i class="fas fa-rotate-right"></i> Refresh
-          </button>
         </div>
         <p class="portal-muted portal-small">The money picture from your own ticket records: what repairs billed, what guests have actually paid, what went out on parts, and what is left. Revenue is billed charges on tickets; parts cost is our cost on part orders.</p>
         <div class="fin-periods" role="group" aria-label="Time period">
@@ -1881,9 +1838,6 @@
       <div class="portal-panel" id="portal-panel-payroll" role="tabpanel" hidden>
         <div class="portal-panel-head">
           <h2 class="portal-h2">Payroll</h2>
-          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="payroll">
-            <i class="fas fa-rotate-right"></i> Refresh
-          </button>
         </div>
         <p class="portal-muted portal-small">The payroll workspace: what each associate worked, what it pays, and the Tuesday approval for Friday pay. Financials keeps the money picture &mdash; its bottom line reads the approved and awaiting totals from right here.</p>
         <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Payroll totals</h3></div>
@@ -1900,9 +1854,6 @@
       <div class="portal-panel" id="portal-panel-requests" role="tabpanel" hidden>
         <div class="portal-panel-head">
           <h2 class="portal-h2">Requests</h2>
-          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-refresh="requests">
-            <i class="fas fa-rotate-right"></i> Refresh
-          </button>
         </div>
         <p class="portal-muted portal-small">The shop&rsquo;s ask-for-anything queue: swag &amp; merch, tools, parts, a website or account fix, a clock fix, an admin task &mdash; separate from per-ticket part orders. New requests land at the top; move them to Ordered, Done, or Denied as they&rsquo;re handled.</p>
         <!-- PORTAL_CUSTOMER_PROFILE_2026_11_02 (Austin correction, Nov 2, 2026): the "Customer update" section — associate-submitted customer-info changes wait here for the owner's approval, in the same Requests queue as everything else an associate asks for. portal.js renders it (owner only); the shop list below is untouched and keeps its own renderer. -->
@@ -3816,10 +3767,10 @@
      * atr-one-employee-agreement.txt in this build folder.
      * PORTAL_ATRONE_TIERS_2026_11_02: AO_GET now names the tier —
      * employees receive ATR One Business Pro, free — with the
-     * Business Pro numbers (50% off repairs, 65% off accessories),
+     * Business Pro numbers (45% off repairs, 55% off accessories),
      * per Austin's tier dictation, Nov 2, 2026. AO_RULES untouched. */
     var AO_PARTIES = 'This agreement is between Austin\u2019s Tech Repair Group (ATRG), a sole proprietorship in Spring Valley, Ohio, and the associate named below.';
-    var AO_GET = 'As an ATRG associate, you get an ATR One Business Pro membership \u2014 the Business Pro plan \u2014 provided by the company free, at no charge to you, while you are an associate. On your own devices, you get the Business Pro benefits: 50% off repairs; 65% off accessories; parts at wholesale cost, with no markup; no visit fee and free diagnostics on covered devices; free priority shipping on parts; and priority in the queue.';
+    var AO_GET = 'As an ATRG associate, you get an ATR One Business Pro membership \u2014 the Business Pro plan \u2014 provided by the company free, at no charge to you, while you are an associate. On your own devices, you get the Business Pro benefits: 45% off repairs; 55% off accessories; parts at wholesale cost, with no markup; no visit fee and free diagnostics on covered devices; free priority shipping on parts; and priority in the queue.';
     var AO_RULES = 'Your membership is for you only \u2014 you, the associate. You will not misuse the membership. You will not share it with anyone else \u2014 it is not to be shared. You will not show, present, or lend your membership in any way so that someone who is not an associate gets member pricing or member benefits, and you will not give it to anyone \u2014 it is not to be given away. The membership is not transferable \u2014 you cannot pass it to another person. The membership is not sellable \u2014 you cannot sell it or trade it for anything.';
     var AO_END = 'The membership is a benefit of working at ATRG. It starts when the company sets it up for you and ends when your employment with ATRG ends. If you misuse the membership or break the rules in this agreement, the company can end your membership.';
     function openAtrOneEmployeeForm() {
@@ -4715,8 +4666,6 @@
           t = t.parentNode;
         }
       });
-      var refresh = document.querySelector('[data-refresh="guides"]');
-      if (refresh) refresh.addEventListener('click', function () { loaded = false; loadGuides(true); });
       var guideCancelEdit = $('portal-guide-cancel-edit');
       if (guideCancelEdit) guideCancelEdit.addEventListener('click', function () { resetGuideEdit(); });
       resolveGuideRole();
@@ -5439,8 +5388,6 @@
           t = t.parentNode;
         }
       });
-      var refresh = document.querySelector('[data-refresh="requests"]');
-      if (refresh) refresh.addEventListener('click', function () { loaded = false; loadRequests(true); });
       var list = $('portal-request-list');
       if (list) {
         list.addEventListener('change', function (e) {
