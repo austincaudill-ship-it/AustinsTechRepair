@@ -12,16 +12,15 @@
  * Consumers:
  *   - atr-forms.js  — the five data-form forms (gate() below).
  *   - script.js     — account forms acct-ticket-form / acct-msg-form
- *                     (gate() below).
- *   - index.html    — authx login used to pass the token to Supabase
- *                     Auth as captchaToken instead (token() below);
- *                     the chat lead flow verifies via verify() before
- *                     its tickets insert.
- *                     V157 (expanded scope, Nov 17, 2026): NO auth
- *                     flow sends a token any more — not sign-in,
- *                     not sign-up, not password reset. The check
- *                     lives only on website form submissions, by
- *                     the owner's order.
+ *                     (gate() below) and the virtual one-on-one
+ *                     waiver start (verify() below).
+ *
+ * V157_NO_TURNSTILE_AUTH_2026_11_17 (owner, Nov 17, 2026): auth flows no longer use
+ * this helper at all — sign-in, sign-up, password reset, invite
+ * accept and set-password carry no human check. The check is only
+ * for guests submitting forms. The auth-only freshToken() and the
+ * page-load autofill watch that mounted the login/signup widgets
+ * are gone with it.
  *
  * FAILS CLOSED on purpose: if the widget or the verification call
  * cannot be reached, submits are blocked with a message that points
@@ -35,33 +34,12 @@
  * gap and a silent wait (owner's laptop: the check box simply
  * was not there).
  *
- * LOGIN_SPEED_2026_11_10 (staged): this copy adds freshToken() —
- * the login form waits for a fresh token instead of dead-ending
- * when the widget is still verifying or its token went stale on a
- * slow connection. This staged file is the copy to publish; the
- * test harness prefers it over the skeleton helper when present.
- *
- * TURNSTILE_AUTOFILL_2026_11_12 (v130b): the owner found it live —
- * typing the password works, autofill does not. Autofill fills
- * email + password at once and Log In is tapped before the widget
- * (which only mounted when the account box opened) has rendered or
- * produced a token. So the login + signup widgets now mount on
- * page load, a short autofill watch (field-value poll + the
- * :-webkit-autofill animation signal + focus) makes sure they are
- * mounted whenever the fields fill without typing, and freshToken()
- * waits out the first challenge instead of resetting it — it only
- * restarts a check that already went stale.
- *
- * TURNSTILE_SIGNIN_WAIT_2026_11_12 (v132): the owner proved the
- * 45s wait still gives up too soon — on his 5 Mbps hotspot the
- * token landed after about a minute, past the wait, while the
- * widget itself showed Success a moment later. freshToken() now
- * waits 120s and never resets a first challenge that has never
- * produced a token merely for being slow (the old 20s STUCK_MS
- * reset is gone — it restarted the very challenge that was about
- * to finish). The wait ends early only on a true failure: the
- * widget's error-callback fired, or the Cloudflare script never
- * loaded. See freshToken() for the full rule.
+ * (History: LOGIN_SPEED_2026_11_10 added freshToken() so the
+ * login form waited for a fresh token instead of dead-ending; v130b
+ * mounted the auth widgets on page load for autofill; v132 stretched
+ * the wait to 120s. All of that auth machinery is gone in v157 —
+ * auth carries no check at all now, so there is nothing left to
+ * wait on.)
  *
  * Style: ES5, matching the rest of the site.
  * ===================================================================== */
@@ -177,66 +155,6 @@
     if (entry.id !== null && apiReady()) { try { window.turnstile.reset(entry.id); } catch (e) {} }
   }
 
-  /* LOGIN_SPEED_2026_11_10: hand back a FRESH token, waiting for one
-   * if that is what it takes. The login form passes its token
-   * straight to Supabase Auth, and on a slow connection the widget
-   * can still be sitting on "Verifying…" — or its token can have
-   * gone stale (over ~4 minutes old) — when the guest taps Log In.
-   * The old flow stopped right there with "complete the human check
-   * and log in again", a dead end on exactly the connections that
-   * need the most patience.
-   * TURNSTILE_AUTOFILL_2026_11_12 (v130b): freshToken waits out the
-   * FIRST challenge — it must NOT reset a widget that is still on
-   * its first "Verifying…" just because no token exists yet (that
-   * is exactly the autofill case: fields filled at once, Log In
-   * tapped at once). Reset happens only when a token already existed
-   * and went stale/expired.
-   * TURNSTILE_SIGNIN_WAIT_2026_11_12 (v132): the owner proved the
-   * 45s wait still gives up too soon — on his 5 Mbps hotspot the
-   * token landed after about a minute, past the wait, while the
-   * widget itself showed Success a moment later (his laptop photo:
-   * Success badge + "did not finish" error at the same time). Two
-   * changes: (1) the wait is 120s — twice his observed minute, with
-   * margin for a slow Managed challenge end to end. (2) The old
-   * STUCK_MS reset is GONE: a first challenge that has never
-   * produced a token is never reset for being slow — resetting it
-   * restarts the very challenge that was about to finish, making
-   * the total even longer. The wait now ends early ONLY on a true
-   * failure: the widget's error-callback fired (entry.failed), or
-   * the Cloudflare script never loaded (entry.loadFailed — blocked
-   * or network down). A merely slow challenge is waited out. A
-   * fresh token comes back at once; otherwise this polls every
-   * 250ms until a fresh token lands, a true failure reports, or
-   * the 120s wait runs out, and calls back with the token or ''.
-   * no caller uses it now (V157 expanded scope: every auth flow is check-free) — every other form keeps the gate() /
-   * token() behavior it already had. */
-  function freshToken(el, cb, opts) {
-    opts = opts || {};
-    var waitMs = opts.waitMs || 120000; // TURNSTILE_SIGNIN_WAIT_2026_11_12 (v132): 45s -> 120s, twice the owner's observed ~60s token time on his 5 Mbps hotspot, with margin — the wait gives up only after two full minutes, by which time something is actually wrong, not merely slow
-    var entry = mount(el);
-    if (!entry) { cb(''); return; }
-    if (entry.token && (Date.now() - entry.issuedAt <= TOKEN_MAX_AGE_MS)) { cb(entry.token); return; }
-    /* A previous challenge REPORTED failure (error-callback): that
-     * challenge is dead, so a new attempt starts a fresh one instead
-     * of failing at once. This is recovery from a reported failure,
-     * not a reset of a slow challenge. */
-    if (entry.failed) { entry.failed = false; reset(el); }
-    var resetDone = false;
-    if (entry.token || entry.hadToken) { reset(el); resetDone = true; } // stale/expired token: one fresh check
-    var started = Date.now();
-    (function poll() {
-      var t = token(el);
-      if (t) { cb(t); return; }
-      /* True failure only: the widget reported failure, or the
-       * Cloudflare script never loaded (blocked / network down). A
-       * merely slow challenge keeps waiting — the wait ends early
-       * on a reported failure, never on slowness. */
-      if (entry.failed || entry.loadFailed) { cb(''); return; }
-      if (Date.now() - started >= waitMs) { cb(''); return; }
-      setTimeout(poll, 250);
-    })();
-  }
-
   /* Server-side confirmation through the verify-turnstile Edge
    * Function. bearer: a user JWT when signed in, otherwise null and
    * the public anon key is used (anonymous public forms have no user
@@ -300,14 +218,6 @@
     });
   }
 
-  /* V157 (expanded scope, Nov 17, 2026): the auth auto-mount /
-   * autofill watch is DELETED. There are no auth widgets any more —
-   * no ts-login, no ts-signup — so there is nothing to mount on page
-   * load and nothing to watch autofill for. This helper now serves
-   * website forms only: atr-forms.js gate() and the ts-voo session
-   * start verify(). mount() / token() / reset() / verify() / gate()
-   * / freshToken() stay exported — freshToken() currently has no
-   * caller left, kept so nothing else breaks if a form re-adopts it. */
   window.atrTurnstile = {
     SITE_KEY: SITE_KEY,
     mount: mount,
@@ -315,7 +225,6 @@
     reset: reset,
     verify: verify,
     gate: gate,
-    freshToken: freshToken,
     mountCalls: function () { return mountCalls; }
   };
 })();
