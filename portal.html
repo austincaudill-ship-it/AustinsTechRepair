@@ -37,6 +37,19 @@
        MFA elements could never actually hide. Give them the same
        treatment so their hidden attribute works. */
     #portal-mfa-enroll-view[hidden], #portal-mfa-banner[hidden] { display: none !important; }
+    /* v154 ticket form styles: date + window picker buttons, service-address map, grouped document menus, mileage box. */
+    .v154-win-row { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+    .v154-win-btn.on { background: var(--brand, #D9540D) !important; border-color: var(--brand, #D9540D) !important; color: #fff !important; }
+    .v154-map { margin-top: 0.5rem; }
+    .v154-map iframe { width: 100%; height: 220px; border: 2px solid var(--line, #d8cbb6); border-radius: 12px; background: #eef2f5; }
+    .p2-doc-menu { position: relative; display: inline-block; }
+    .p2-doc-menu-list { position: absolute; left: 0; top: calc(100% + 4px); z-index: 60; display: none; min-width: 210px; background: var(--bg, #fff); border: 2px solid var(--line, #d8cbb6); border-radius: 12px; padding: 0.4rem; box-shadow: 0 8px 24px rgba(0,0,0,0.18); }
+    .p2-doc-menu.open .p2-doc-menu-list { display: block; }
+    .p2-doc-menu-list .portal-btn { display: block; width: 100%; text-align: left; margin: 0.15rem 0; }
+    .p2-doc-menu-list .portal-muted { display: block; padding: 0.2rem 0.4rem; }
+    .v154-mileage { border: 2px solid var(--line, #d8cbb6); border-radius: 12px; padding: 0.7rem 0.8rem; margin-top: 0.7rem; }
+    .v154-mileage .p2-form-row { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+    .v154-mileage input[type="number"] { max-width: 140px; padding: 0.4rem; border: 2px solid var(--line, #d8cbb6); border-radius: 8px; background: var(--bg, #fff); color: var(--ink, #2c231a); }
   </style>
 </head>
 <body class="portal-body">
@@ -1518,10 +1531,11 @@
       
       <!-- TIME CLOCK -->
       
+      <!-- V154_TICKET_FORM_2026_11_16: date + 2-hour window picker in New Service Request (same box), map under the service address, ticket-detail Receipt/Estimate/Invoice menus, mileage calculator in Charges (portal.js). -->
       <!-- CHECK-IN / TRIAGE -->
       <div class="portal-panel" id="portal-panel-checkin" role="tabpanel" hidden>
         <div class="portal-panel-head"><h2 class="portal-h2">New Service Request &mdash; Triage</h2></div>
-        <p class="portal-muted portal-small">Walk-in and phone check-ins. Find the guest (or add them) &mdash; email and service address are required, because we come to them. For a repair, pick the device and the reason and run the power test. For a one-on-one lesson, tap One-on-One in the Service tiles, pick 1, 2, or 3 hours, and write what they want to get done. Either way the ticket lands straight in the Service Queue. Confirm the money with the guest before submitting &mdash; repairs: $15 visit fee for a known repair, $35 if the job needs diagnostics. One-on-one: $25 an hour for the time booked, and the $15 visit fee charged separately. ATR One members pay no visit fee.</p>
+        <p class="portal-muted portal-small">Walk-in and phone check-ins. Find the guest (or add them) &mdash; email and service address are required, because we come to them. For a repair, pick the device and the reason and run the power test. For a one-on-one lesson, tap One-on-One in the Service tiles, pick 1, 2, or 3 hours, and write what they want to get done. Either way the ticket lands straight in the Service Queue. Confirm the money with the guest before submitting &mdash; repairs: $14.99 visit fee for a known repair, $35 if the job needs diagnostics. One-on-one: $25 an hour for the time booked, and the $14.99 visit fee charged separately. ATR One members pay no visit fee.</p>
         <form id="ci-form" novalidate>
           <!-- CHECKIN_COLLAPSE_2026_11_04 (Austin, Nov 4, 2026): the check-in form folds into tappable sections, like the ticket drawer's sections in the Service Queue — Customer starts open, the rest start closed, and the Create ticket button and Clear check-in stay outside the sections at the bottom, always visible. Every field id is exactly as it was; only the folding wrappers were added. -->
           <div class="ci-acc" data-ci-acc="customer">
@@ -1538,6 +1552,7 @@
             <div class="portal-field"><label for="ci-email">Email *</label><input type="email" id="ci-email" required /></div>
             <div class="portal-field"><label for="ci-address">Service address *</label><input type="text" id="ci-address" required placeholder="Street, city, ZIP" /></div>
           </div>
+          <div class="v154-map" id="ci-address-map" hidden><iframe id="ci-address-map-frame" title="Map of the service address" loading="lazy" src=""></iframe><p class="portal-muted portal-small" id="ci-address-map-note"></p></div>
           <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">ATR One</h3></div>
           <div class="portal-field">
             <label for="ci-atrone">Is this guest an ATR One Plus (paid) member?</label>
@@ -1589,9 +1604,26 @@
               <button type="button" class="ci-hour-btn" data-hours="1" aria-pressed="false">One-on-One &mdash; 1 hour &middot; $25</button>
               <button type="button" class="ci-hour-btn" data-hours="2" aria-pressed="false">One-on-One &mdash; 2 hours &middot; $50</button>
               <button type="button" class="ci-hour-btn" data-hours="3" aria-pressed="false">One-on-One &mdash; 3 hours &middot; $75</button>
-              <p class="portal-muted portal-small ci-hours-note">Time is $25 an hour, picked here. The $15 visit fee is charged separately &mdash; never folded into the hourly price &mdash; and ATR One members pay no visit fee. Runs over the booked time? Extra time is $25 an hour, settled at the visit.</p>
+              <p class="portal-muted portal-small ci-hours-note">Time is $25 an hour, picked here. The $14.99 visit fee is charged separately &mdash; never folded into the hourly price &mdash; and ATR One members pay no visit fee. Runs over the booked time? Extra time is $25 an hour, settled at the visit.</p>
             </div>
             <button type="button" class="ci-tile" data-label="Other" aria-pressed="false"><i class="fas fa-ellipsis" aria-hidden="true"></i><span>Other</span></button>
+          </div>
+          </div>
+          </div>
+          <div class="ci-acc" data-ci-acc="when">
+          <button type="button" class="ci-acc-head" data-ci-acc-toggle="when" aria-expanded="false"><span class="ci-acc-title">When &mdash; date &amp; time</span><i class="fas fa-chevron-down ci-acc-chev" aria-hidden="true"></i></button>
+          <div class="ci-acc-body" data-ci-acc-body="when" hidden>
+          <p class="portal-muted portal-small">Pick the visit date and the 2-hour arrival window together &mdash; the ticket lands on the calendar with both.</p>
+          <div class="portal-nh-grid">
+            <div class="portal-field"><label for="ci-jobdate">Visit date</label><input type="date" id="ci-jobdate" /></div>
+            <div class="portal-field"><label>Arrival window</label><div class="v154-win-row" id="ci-windows" role="group" aria-label="Arrival window">
+              <button type="button" class="portal-btn portal-btn-outline portal-btn-sm v154-win-btn" data-ci-window="8" aria-pressed="false">8&ndash;10 AM</button>
+              <button type="button" class="portal-btn portal-btn-outline portal-btn-sm v154-win-btn" data-ci-window="10" aria-pressed="false">10 AM&ndash;12 PM</button>
+              <button type="button" class="portal-btn portal-btn-outline portal-btn-sm v154-win-btn" data-ci-window="12" aria-pressed="false">12&ndash;2 PM</button>
+              <button type="button" class="portal-btn portal-btn-outline portal-btn-sm v154-win-btn" data-ci-window="14" aria-pressed="false">2&ndash;4 PM</button>
+              <button type="button" class="portal-btn portal-btn-outline portal-btn-sm v154-win-btn" data-ci-window="16" aria-pressed="false">4&ndash;6 PM</button>
+              <button type="button" class="portal-btn portal-btn-outline portal-btn-sm v154-win-btn" data-ci-window="18" aria-pressed="false">6&ndash;8 PM</button>
+            </div></div>
           </div>
           </div>
           </div>
@@ -1632,7 +1664,7 @@
             <label for="ci-svc-goal">What do they want to get done? *</label>
             <textarea id="ci-svc-goal" rows="3" placeholder="e.g. Show her how to use the new iPad &mdash; mail, photos, and FaceTime with the grandkids."></textarea>
           </div>
-          <p class="portal-muted portal-small">A one-on-one is booked from the One-on-One tile in the Service grid above: pick 1, 2, or 3 hours there. Time is $25 an hour and the $15 visit fee is charged separately &mdash; never the $35, because a lesson has no diagnostics. Both charges are added to the ticket as their own lines when you submit. ATR One members pay no visit fee, same as repairs.</p>
+          <p class="portal-muted portal-small">A one-on-one is booked from the One-on-One tile in the Service grid above: pick 1, 2, or 3 hours there. Time is $25 an hour and the $14.99 visit fee is charged separately &mdash; never the $35, because a lesson has no diagnostics. Both charges are added to the ticket as their own lines when you submit. ATR One members pay no visit fee, same as repairs.</p>
           </div>
           </div>
           <div class="ci-acc" data-ci-acc="notes">
@@ -1783,7 +1815,12 @@
       <div class="portal-panel" id="portal-panel-prices" role="tabpanel" hidden>
         <div class="portal-panel-head"><h2 class="portal-h2">Price Book</h2></div>
         <!-- PRICEBOOK_CLEANUP_2026_11_04: Price Book header cleaned up at Austin's direction (Nov 4, 2026, iPad walkthrough: "This needs cleaned up more"). The old single run-on paragraph is now a short Updated line plus a "How pricing works" rule list, one rule per line, in the panel idiom (subhead + muted small lines). Presentation only — every fact from the old paragraph is preserved; the Google Sheet button, search field, brand filter, results rendering, and all price data are untouched. -->
-        <p class="portal-muted portal-small">Updated Nov 13, 2026</p>
+        <p class="portal-muted portal-small">Updated Nov 16, 2026</p>
+        <!-- V152_PRICE_SYNC_2026_11_16: the note below says whether the
+             book on screen is the LIVE price_book table (edits here update
+             the website too) or the saved copy baked into this page (the
+             live list could not be reached). It is filled in by pbLoadLive. -->
+        <p class="portal-muted portal-small" id="pb-live-note" hidden></p>
         <div class="portal-panel-head portal-subhead" style="margin-top:0.5rem;"><h3 class="portal-h3">How pricing works</h3></div>
         <!-- V143_PRICEBOOK_PRICES_2026_11_13 (owner, Nov 13, 2026): "How pricing works" now carries the full settled price list, so anyone logging in sees how prices are built. The old "$50 for standard repairs / $100 for soldering and folding devices / $15 or $35 visit fee" lines were the pre-Nov-12 model and are gone; "folding devices" has no standard time of its own — flag it if one is needed. -->
         <ul class="portal-muted portal-small" style="margin:0 0 4px; padding-left:1.25rem; line-height:2;">
@@ -1796,12 +1833,12 @@
           <li>Member tier discounts apply to the repair price</li>
           <li>Every line carries a standard price &mdash; part cost plus flat labor &mdash; so you can quote straight from the book</li>
         </ul>
-        <!-- PASS9_2026_11_04: the "Open master price list (Google Sheet)" button is REMOVED at Austin's direction (Nov 4, 2026: the price sheet belongs IN the price book, "instead of clicking into another thing"). The book now lives in this panel — brand pages under the search below render the same price data. The sheet remains the master source the in-panel data is rebuilt from; its URL is preserved here for recovery: https://docs.google.com/spreadsheets/d/1EquiqzZUvjoxLiJ-yE446HgiFFsKKHP3a9fVLggRyxo/edit?usp=drivesdk
+        <!-- PASS9_2026_11_04: the "Open master price list (Google Sheet)" button is REMOVED at Austin's direction (Nov 4, 2026: the price sheet belongs IN the price book, "instead of clicking into another thing"). The book now lives in this panel — brand pages under the search below render the same price data. V152_PRICE_SYNC_2026_11_16: the master source is now the public.price_book table in Supabase, and the website reads the same table, so an edit here updates everywhere. The sheet URL below is kept only as a recovery reference: https://docs.google.com/spreadsheets/d/1EquiqzZUvjoxLiJ-yE446HgiFFsKKHP3a9fVLggRyxo/edit?usp=drivesdk
              EMBED SLOT: a live sheet embed belongs in this spot, above the search, the day Austin publishes the sheet to the web (in the sheet: File, Share, Publish to web) and hands over the embed URL — an iframe with class "p2-sheet-embed" (styles in portal.css) drops in here with that URL. Until then the panel shows the browsable book, never a possibly-blocked frame. -->
         <!-- PASS9_2026_11_04: the search is a real search bar now — bigger, pill-rounded, with a search icon (Austin, Nov 4, 2026: the old box "just looks like generic text box"; it needs to be bigger, better looking, with rounded edges). Same input id and behavior, so the filter wiring is unchanged; the brand select stays beside it at the same height. Styles: .p2-price-searchbar in portal.css. -->
         <div class="p2-form-row p2-price-searchbar"><span class="p2-search-wrap"><i class="fas fa-magnifying-glass" aria-hidden="true"></i><input type="text" id="p2-price-search" placeholder="Search device or repair, e.g. iPhone 13 screen" aria-label="Search price book" /></span>
         <select id="p2-price-brand" aria-label="Filter by brand"><option value="">All brands</option><option>Apple</option><option>Samsung</option><option>Google</option><option>Motorola</option><option>Microsoft</option><option>Sony</option><option>Nintendo</option><option>Valve</option><option>Fitbit</option><option>Garmin</option><option>Fossil</option><option>Amazfit</option><option>Services</option></select></div>
-        <!-- PRICEBOOK_NAV_EDIT_2026_11_05: navigation rebuilt as Make -> Category -> Model drill-down (brands only on top; device types underneath) and prices are editable in place by Admin-tier staff, with an Add new entry form (overrides + additions in public.price_book_edits); script block carries the same marker. -->
+        <!-- PRICEBOOK_NAV_EDIT_2026_11_05: navigation rebuilt as Make -> Category -> Model drill-down (brands only on top; device types underneath) and prices are editable in place by Admin-tier staff, with an Add new entry form (edits and additions write straight to public.price_book, the one price source the website reads too; the old public.price_book_edits overlay is retired — see V152_PRICE_SYNC_2026_11_16); script block carries the same marker. -->
         <!-- PB_TILES_CLEANUP_2026_11_06: top level is now big square brand tiles (Links-card style); category and device levels render as structured nav rows instead of loose pill buttons (the old .p2-book-tab classes had no CSS at all and .portal-btn pills made the "bubbles" the owner reported); the PB seed is re-sorted into true model order, completed (iPhone 16e, Galaxy A16 / A17, Note 10, FE line, Pixel Fold, PS5 Pro, Motorola, Apple Watch SE, Xbox console repair set), stripped of out-of-scope rows (iPhone Duo, Switch / Steam Deck HDMI port, Xbox Speaker / Mic), and every row carries an exact price. Styles: PB_TILES_CLEANUP_2026_11_06 block in portal.css. -->
         <!-- (the drill-down levels were the bug: pbListBtn stacked .portal-btn pills — border-radius 999px — in loose paragraphs; the tab bar at portal.css .p2-book-tabs was already styled and stays) -->
         <!-- PASS9_2026_11_04: the book's pages — brand tabs rendered by the price-book script (portal.html, PASS9 block at render()). -->
@@ -6345,13 +6382,17 @@ function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').repl
  * items... if it says price on request I can put in that price so
  * we have a standard price"): Admin-tier staff (super_admin,
  * co_super_admin, admin) get an Edit button on every repair row.
- * A saved price is upserted into public.price_book_edits and
- * overrides the seed book for everyone; "Reset to book price"
- * deletes the override and the seed price comes back. Admins also
- * get "Add new entry": a brand / device / repair / price saved the
- * same way whose key is not in the seed becomes an ADDITION to the
- * book (it joins the drill-down and search); resetting an addition
- * removes it. See work/price-book-edits.sql in this build folder.
+ * V152_PRICE_SYNC_2026_11_16: a saved price now updates the row in
+ * public.price_book directly — the one price source the website reads
+ * too, so the edit shows on the site with no publish step. "Reset to
+ * book price" writes back the price the row had when this panel
+ * loaded. "Add new entry" inserts a row into the same table (it joins
+ * the drill-down and search); resetting an addition deletes it.
+ * The old public.price_book_edits override table is retired (Austin's
+ * latest edits in it migrate into price_book at publish time — see the
+ * v152 build report);
+ * the baked seed below is only the fallback when the live list cannot
+ * be reached.
  * PB_TILES_CLEANUP_2026_11_06: the index level renders big square
  * brand tiles (Links-card style) instead of a stack of pill buttons;
  * category and device levels render structured nav rows; devices
@@ -6423,7 +6464,7 @@ function pbCategoryOf(brand, device){
 }
 /* PB_TILES_CLEANUP_2026_11_06: true model order per brand —
  * the seed is stored in this order; the map also sorts rows that
- * arrive later from price_book_edits so the list can never fall
+ * arrive later from the live table so the list can never fall
  * back into a mixed-up pile. Unknown devices sort after, by name. */
 var PB_DEVICE_ORDER = {"Apple":["iPhone 8 / 8 Plus","iPhone X / XS / XR","iPhone SE (2020 / 2022)","iPhone 11","iPhone 12","iPhone 13","iPhone 14","iPhone 15","iPhone 16","iPhone 16e","iPhone 17","iPhone 17 Pro","iPhone 17 Pro Max","iPhone Air","iPhone 17e","iPhone 18","iPhone 18 Pro","iPhone 18 Pro Max","iPad 5th / 6th gen","iPad 7th / 8th / 9th gen","iPad 10th gen","iPad 11th gen","iPad mini","iPad Air","iPad Pro 11-inch","iPad Pro 12.9-inch","MacBook Air","MacBook Pro","iMac","Apple Watch Series","Apple Watch SE","Apple Watch Ultra"],"Samsung":["Galaxy A13 / A14 / A15","Galaxy A16 / A17","Galaxy A26","Galaxy A34 / A54 / A55","Galaxy A36 / A56","Galaxy S9 / S9 Plus","Galaxy S10 / S10 Plus / S10e","Galaxy Note 10 / Note 10 Plus","Galaxy Note 20","Galaxy S20 / S21","Galaxy S20 Ultra / S21 Ultra","Galaxy S22 / S23","Galaxy S22 Ultra / S23 Ultra","Galaxy S21 FE / S23 FE","Galaxy S24 / S25","Galaxy S24 FE / S25 FE","Galaxy S24 Ultra / S25 Ultra","Galaxy S26","Galaxy S26 Ultra","Galaxy Z Flip / Flip 5G","Galaxy Z Flip3 / Flip4","Galaxy Z Flip5 / Flip6","Galaxy Z Flip7 / Flip8","Galaxy Z Fold / Fold2","Galaxy Z Fold3 / Fold4","Galaxy Z Fold5 / Fold6","Galaxy Z Fold7 / Fold8","Galaxy Tab A","Galaxy Tab S","Galaxy Watch"],"Google":["Pixel 6 / 6a","Pixel 7 / 7a","Pixel 8 / 8a","Pixel 9 / 9a","Pixel 10 / 10a","Pixel 11 / 11a","Pixel Fold / 9 Pro Fold","Pixel Tablet","Chromebook","Pixel Watch"],"Motorola":["Moto G (2024 / 2025)","Moto G Power","Moto G Stylus","Moto Edge","Motorola Razr / Razr+"],"Microsoft":["Surface Pro","Surface Laptop","Surface Book","Windows Laptop","Windows Desktop","All-in-One PC","Gaming PC","Xbox One","Xbox Series X / S"],"Sony":["PlayStation 4","PlayStation 5","PlayStation 5 Pro"],"Nintendo":["Nintendo Switch","Nintendo Switch OLED","Nintendo Switch 2"],"Valve":["Steam Deck"],"Fitbit":["Fitbit"],"Garmin":["Garmin"],"Fossil":["Fossil / Wear OS"],"Amazfit":["Amazfit"],"Services":["Visit fee — known repair (no diagnostics)","Visit fee — with diagnostics","Internet cabling - Per drop","Internet cabling - Wall plate","Internet cabling - Attic / crawl run","Network install - Router setup","Network install - Access point","Network install - Switch setup","Network install - Whole-home Wi-Fi","Website build - Basic","Website build - Business","Website build - E-commerce","Website update / fix"]};
 function pbDeviceOrderIdx(brand, device){
@@ -6457,7 +6498,7 @@ function pbDevicesFor(brand, cat){
   });
   return mapped;
 }
-/* ---- price edits + additions: public.price_book_edits over the seed ---- */
+/* ---- V152_PRICE_SYNC_2026_11_16: the live price_book table ---- */
 var PB_SUPABASE_URL = 'https://lyujxpuicarblpkdzuuc.supabase.co';
 var PB_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
 var pbClientCache = null;
@@ -6481,7 +6522,7 @@ function pbGetClient(){
 function pbKey(brand, device, repair){ return brand + '\u0001' + device + '\u0001' + repair; }
 function pbApplyEdit(r, price){
   if (!r._seed) r._seed = { price: r.price, member_price: r.member_price, all_in_price: r.all_in_price, status: r.status };
-  r.price = price; r.member_price = price; r.all_in_price = price + 35; r.status = 'priced'; r.edited = true;
+  r.price = price; r.member_price = price; r.all_in_price = (r.kind === 'service' ? price : price + 35); r.status = 'priced'; r.edited = true;
 }
 function pbClearEdit(r){
   if (r._seed) { r.price = r._seed.price; r.member_price = r._seed.member_price; r.all_in_price = r._seed.all_in_price; r.status = r._seed.status; }
@@ -6503,36 +6544,117 @@ function pbRegisterBrand(brand){
     } catch (e) { /* the tabs and index still carry the new brand */ }
   }
 }
+/* ---- V152_PRICE_SYNC_2026_11_16: the live price list ---- */
+/* public.price_book is the one price source now. The baked PB seed above
+ * stays as the fallback that renders first; this loader fetches the live
+ * table (paginated — the table holds ~2,500 rows) and swaps it in place,
+ * so the panel, the drill-down, and search all read the live list.
+ * If the fetch fails the seed keeps rendering exactly as before.
+ * pbLiveLoaded is true once the live list is on screen; edits are gated
+ * on it, because an edit has nowhere safe to go while the table is
+ * unreachable. The old public.price_book_edits overlay is retired. */
+var pbLiveLoaded = false;
+function pbLiveNoteSet(msg){
+  var el = document.getElementById('pb-live-note');
+  if (!el) return;
+  if (!msg) { el.hidden = true; el.textContent = ''; return; }
+  el.textContent = msg;
+  el.hidden = false;
+}
+function pbSiteTypeFor(brand, device){
+  var cat = pbCategoryOf(brand, device);
+  if (cat === 'Phones') return 'Phone';
+  if (cat === 'Tablets') return 'Tablet';
+  if (cat === 'Computers') return 'Computer';
+  if (cat === 'Smartwatches') return 'Smartwatch';
+  if (cat === 'Gaming Consoles') return 'Game Console';
+  return null;
+}
+function pbSnapshotRow(r){
+  r._seed = { price: r.price, member_price: r.member_price, all_in_price: r.all_in_price, status: r.status };
+}
+function pbReplaceBook(rows){
+  var keepBrand = pbBrandOf();
+  var keepCat = pbCat;
+  var keepDevice = pbDevice;
+  PB.length = 0;
+  rows.forEach(function (r) { PB.push(r); });
+  PB_BRANDS.length = 0;
+  PB.forEach(function (r) { if (PB_BRANDS.indexOf(r.brand) === -1) PB_BRANDS.push(r.brand); });
+  PB.forEach(pbSnapshotRow);
+  /* Keep the open drill-down where it still exists; a device or category
+   * the live list no longer carries drops back a level instead of
+   * rendering an empty page. */
+  pbEditIdx = -1; pbEditError = '';
+  if (keepDevice) {
+    var stillThere = PB.some(function (r) { return r.brand === keepBrand && r.device === keepDevice; });
+    pbDevice = stillThere ? keepDevice : null;
+  }
+  if (pbDevice && keepCat) {
+    var catStillThere = PB.some(function (r) { return r.brand === keepBrand && r.device === pbDevice && pbCategoryOf(r.brand, r.device) === keepCat; });
+    if (!catStillThere) pbCat = null;
+  } else if (keepCat) {
+    var catHasRows = PB.some(function (r) { return r.brand === keepBrand && pbCategoryOf(r.brand, r.device) === keepCat; });
+    pbCat = catHasRows ? keepCat : null;
+  }
+  pbLastBrand = keepBrand;
+}
+function pbFetchPage(client, from, acc, done){
+  client.from('price_book')
+    .select('id,device_type,brand,device,repair,price,member_price,all_in_price,kind,status')
+    .order('brand', { ascending: true })
+    .order('device', { ascending: true })
+    .order('repair', { ascending: true })
+    .range(from, from + 999)
+    .then(function (res) {
+      if (res.error) { done(res.error); return; }
+      var rows = res.data || [];
+      acc.push.apply(acc, rows);
+      if (rows.length === 1000) pbFetchPage(client, from + 1000, acc, done);
+      else done(null, acc);
+    })
+    .catch(function (e) { done(e); });
+}
+function pbLoadLive(){
+  var client = pbGetClient();
+  if (!client) { pbLiveNoteSet('Showing the saved price book — the live list is unreachable.'); return; }
+  pbFetchPage(client, 0, [], function (err, rows) {
+    if (err || !rows || !rows.length) {
+      pbLiveLoaded = false;
+      pbLiveNoteSet('Showing the saved price book — the live list is unreachable.');
+      return;
+    }
+    var mapped = rows.map(function (r) {
+      return {
+        id: r.id, device_type: r.device_type, kind: r.kind,
+        brand: r.brand, device: r.device, repair: r.repair,
+        price: (r.price == null ? null : Number(r.price)),
+        member_price: (r.member_price == null ? null : Number(r.member_price)),
+        all_in_price: (r.all_in_price == null ? null : Number(r.all_in_price)),
+        status: r.status || (r.price == null ? 'on-request' : 'priced')
+      };
+    });
+    pbReplaceBook(mapped);
+    pbLiveLoaded = true;
+    pbLiveNoteSet('Live price list — edits here update the website too.');
+    render();
+  });
+}
 function pbInitEdits(){
   var client = pbGetClient();
-  if (!client) return;
+  if (!client) { pbLiveNoteSet('Showing the saved price book — the live list is unreachable.'); return; }
   client.auth.getUser().then(function(res){
     var user = res && res.data ? res.data.user : null;
-    if (!user) return;
+    if (!user) { pbLoadLive(); return; }
     pbUid = user.id;
     return client.from('employee_profiles').select('role').eq('id', user.id).maybeSingle()
       .then(function(roleRes){
         var role = roleRes && roleRes.data ? roleRes.data.role : null;
         pbIsAdmin = role === 'super_admin' || role === 'co_super_admin' || role === 'admin';
-        return client.from('price_book_edits').select('brand, device, repair, price');
-      })
-      .then(function(editsRes){
-        var rows = editsRes && editsRes.data ? editsRes.data : [];
-        var byKey = {};
-        PB.forEach(function(r){ byKey[pbKey(r.brand, r.device, r.repair)] = r; });
-        rows.forEach(function(e){
-          var r = byKey[pbKey(e.brand, e.device, e.repair)];
-          if (r) { pbApplyEdit(r, e.price); return; }
-          /* not in the seed: an addition saved from the Add form */
-          var nr = { brand: e.brand, device: e.device, repair: e.repair, price: null, member_price: null, all_in_price: null, status: 'needs-check', added: true };
-          PB.push(nr);
-          byKey[pbKey(e.brand, e.device, e.repair)] = nr;
-          pbApplyEdit(nr, e.price);
-          pbRegisterBrand(e.brand);
-        });
         render();
+        pbLoadLive();
       });
-  }).catch(function(){ /* the seed book still renders; edits are best-effort */ });
+  }).catch(function(){ /* the seed book still renders; the live list is best-effort */ pbLoadLive(); });
 }
 function pbSaveEdit(i){
   var r = PB[i];
@@ -6542,11 +6664,17 @@ function pbSaveEdit(i){
   var v = parseInt(raw, 10);
   var client = pbGetClient();
   if (!client || !pbUid) { pbEditError = 'Not signed in — reload the portal and try again.'; render(); return; }
+  /* V152_PRICE_SYNC_2026_11_16: an edit updates the row in
+   * public.price_book directly, so the website picks it up with no
+   * publish step. It is refused while the live list is not on screen,
+   * because a row with no table id has nowhere safe to write to. */
+  if (!pbLiveLoaded || !r.id) { pbEditError = 'The live price list is not connected — check your connection and reload the portal.'; render(); return; }
   pbEditError = '';
-  client.from('price_book_edits').upsert(
-    { brand: r.brand, device: r.device, repair: r.repair, price: v, updated_by: pbUid, updated_at: new Date().toISOString() },
-    { onConflict: 'brand,device,repair' }
-  ).then(function(res){
+  client.from('price_book').update({
+    price: v, member_price: v,
+    all_in_price: (r.kind === 'service' ? v : v + 35),
+    status: 'priced', updated_by: pbUid, updated_at: new Date().toISOString()
+  }).eq('id', r.id).then(function(res){
     if (res && res.error) { pbEditError = 'Could not save that price: ' + res.error.message; render(); return; }
     pbApplyEdit(r, v); pbEditIdx = -1; render();
   });
@@ -6555,27 +6683,40 @@ function pbResetEdit(i){
   var r = PB[i];
   var client = pbGetClient();
   if (!client) { pbEditError = 'Not signed in — reload the portal and try again.'; render(); return; }
+  if (!pbLiveLoaded || !r.id) { pbEditError = 'The live price list is not connected — check your connection and reload the portal.'; render(); return; }
   pbEditError = '';
-  client.from('price_book_edits').delete().eq('brand', r.brand).eq('device', r.device).eq('repair', r.repair)
-    .then(function(res){
-      if (res && res.error) { pbEditError = 'Could not reset that price: ' + res.error.message; render(); return; }
-      pbEditIdx = -1;
-      if (r.added) {
-        /* an addition has no seed price to restore — it leaves the book */
-        var at = PB.indexOf(r);
-        if (at > -1) PB.splice(at, 1);
-        pbDevice = null; pbCat = null;
-        if (!pbBrandIdx(r.brand).length && pbBrandOf() === r.brand) {
-          var sel = document.getElementById('p2-price-brand');
-          if (sel) sel.value = '';
-          var bi = PB_BRANDS.indexOf(r.brand);
-          if (bi > -1) PB_BRANDS.splice(bi, 1);
-        }
-      } else {
-        pbClearEdit(r);
+  /* V152_PRICE_SYNC_2026_11_16: "Reset to book price" writes back the
+   * price the row had when this panel loaded (stashed in r._seed by
+   * pbLoadLive). An addition has no book price to restore — it leaves
+   * the book entirely. */
+  var done = function (res) {
+    if (res && res.error) { pbEditError = 'Could not reset that price: ' + res.error.message; render(); return; }
+    pbEditIdx = -1;
+    if (r.added) {
+      /* an addition has no book price to restore — it leaves the book */
+      var at = PB.indexOf(r);
+      if (at > -1) PB.splice(at, 1);
+      pbDevice = null; pbCat = null;
+      if (!pbBrandIdx(r.brand).length && pbBrandOf() === r.brand) {
+        var sel = document.getElementById('p2-price-brand');
+        if (sel) sel.value = '';
+        var bi = PB_BRANDS.indexOf(r.brand);
+        if (bi > -1) PB_BRANDS.splice(bi, 1);
       }
-      render();
-    });
+    } else {
+      pbClearEdit(r);
+    }
+    render();
+  };
+  if (r.added) {
+    client.from('price_book').delete().eq('id', r.id).then(done);
+  } else {
+    var s = r._seed || { price: r.price, member_price: r.member_price, all_in_price: r.all_in_price, status: r.status };
+    client.from('price_book').update({
+      price: s.price, member_price: s.member_price, all_in_price: s.all_in_price,
+      status: s.status, updated_by: pbUid, updated_at: new Date().toISOString()
+    }).eq('id', r.id).then(done);
+  }
 }
 function pbGotoEntry(r){
   pbRegisterBrand(r.brand);
@@ -6604,20 +6745,26 @@ function pbAddSave(){
   var v = parseInt(raw, 10);
   var client = pbGetClient();
   if (!client || !pbUid) { pbAddError = 'Not signed in — reload the portal and try again.'; render(); return; }
+  /* V152_PRICE_SYNC_2026_11_16: an addition inserts a row into
+   * public.price_book directly, so the website picks it up with no
+   * publish step. Refused while the live list is not on screen. The
+   * device type is derived from the name; a name that matches no book
+   * type stores NULL and stays portal-only. */
+  if (!pbLiveLoaded) { pbAddError = 'The live price list is not connected — check your connection and reload the portal.'; render(); return; }
   pbAddError = '';
-  client.from('price_book_edits').upsert(
-    { brand: brand, device: device, repair: repair, price: v, updated_by: pbUid, updated_at: new Date().toISOString() },
-    { onConflict: 'brand,device,repair' }
-  ).then(function(res){
+  var deviceType = pbSiteTypeFor(brand, device);
+  client.from('price_book').insert({
+    device_type: deviceType, kind: 'repair',
+    brand: brand, device: device, repair: repair,
+    price: v, member_price: v, all_in_price: v + 35, status: 'priced',
+    updated_by: pbUid, updated_at: new Date().toISOString()
+  }).select('id').single().then(function(res){
     if (res && res.error) { pbAddError = 'Could not save that entry: ' + res.error.message; render(); return; }
     pbAddOpen = false;
-    var r = pbFindRow(brand, device, repair);
-    if (r) { pbApplyEdit(r, v); }
-    else {
-      r = { brand: brand, device: device, repair: repair, price: null, member_price: null, all_in_price: null, status: 'needs-check', added: true };
-      PB.push(r);
-      pbApplyEdit(r, v);
-    }
+    var id = res && res.data ? res.data.id : null;
+    var r = { id: id, device_type: deviceType, kind: 'repair', brand: brand, device: device, repair: repair, price: null, member_price: null, all_in_price: null, status: 'needs-check', added: true };
+    PB.push(r);
+    pbApplyEdit(r, v);
     pbGotoEntry(r);
   });
 }

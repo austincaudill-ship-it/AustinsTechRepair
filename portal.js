@@ -234,6 +234,76 @@
     return '$' + Number(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
+  /* V154_TICKET_FORM_2026_11_16 (Austin, Nov 16, 2026): date + 2-hour
+   * window picker (same box), service-address map, mileage calculator.
+   * appointment_at is the window START on the date — the same rule the
+   * website booking form uses (atr-forms.js REPAIR_FLOW_UPDATE): a
+   * browser-local date+time turned into an ISO string, so daylight
+   * saving is right. The visit fee covers the first 25 miles; over 25
+   * miles is $1 a mile. The map reuses the portal's own free
+   * OpenStreetMap geocoder (nominatimGeocode, the throttled/cached
+   * helper the Mileage panel already uses) — no key, no new service. */
+  var V154_WINDOWS = [
+    { label: '8\u201310 AM', start: 8 }, { label: '10 AM\u201312 PM', start: 10 },
+    { label: '12\u20132 PM', start: 12 }, { label: '2\u20134 PM', start: 14 },
+    { label: '4\u20136 PM', start: 16 }, { label: '6\u20138 PM', start: 18 }
+  ];
+  var V154_MILEAGE_INCLUDED = 25;
+  var V154_MILEAGE_PER_MILE = 1;
+  function v154ApptAt(dateStr, startHour) {
+    if (!dateStr || startHour == null) return null;
+    var hh = String(startHour).padStart(2, '0');
+    var d = new Date(dateStr + 'T' + hh + ':00:00');
+    if (isNaN(d.getTime())) return null;
+    return d.toISOString();
+  }
+  function v154WindowStartForAppt(iso) {
+    /* Which 2-hour window holds this appointment — by containment,
+     * not just the start hour, so a 4:30 PM appointment still lights
+     * up the 4-6 PM window. Outside 8 AM-8 PM there is no window. */
+    if (!iso) return null;
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return null;
+    var h = d.getHours();
+    if (h < 8 || h >= 20) return null;
+    var best = null;
+    for (var i = 0; i < V154_WINDOWS.length; i++) if (V154_WINDOWS[i].start <= h) best = V154_WINDOWS[i].start;
+    return best;
+  }
+  function v154EditWindowStart() {
+    var b = document.querySelector('#p2-edit-windows .v154-win-btn.on');
+    return b ? parseInt(b.getAttribute('data-edit-window'), 10) : null;
+  }
+  function v154Mileage(miles) {
+    var m = parseFloat(miles);
+    if (isNaN(m) || m < 0) return null;
+    var over = Math.max(0, Math.round((m - V154_MILEAGE_INCLUDED) * 10) / 10);
+    return { miles: m, over: over, extra: Math.round(over * V154_MILEAGE_PER_MILE * 100) / 100 };
+  }
+  function v154MileageDesc(m) {
+    return 'Mileage \u2014 ' + (Math.round(m.miles * 10) / 10) + ' miles (' + (Math.round(m.over * 10) / 10) + ' over the ' + V154_MILEAGE_INCLUDED + ' included)';
+  }
+  function v154OsmEmbedUrl(lat, lng) {
+    return 'https://www.openstreetmap.org/export/embed.html?bbox=' + (lng - 0.03).toFixed(5) + ',' + (lat - 0.02).toFixed(5) + ',' + (lng + 0.03).toFixed(5) + ',' + (lat + 0.02).toFixed(5) + '&layer=mapnik&marker=' + lat.toFixed(5) + ',' + lng.toFixed(5);
+  }
+  function v154UpdateAddressMap(inputEl, boxEl) {
+    if (!inputEl || !boxEl) return;
+    var frame = boxEl.querySelector('iframe'), note = boxEl.querySelector('p');
+    var q = trim(inputEl.value || '');
+    if (boxEl._v154t) clearTimeout(boxEl._v154t);
+    if (!q || q.length < 4) { boxEl.hidden = true; if (frame) frame.src = ''; return; }
+    boxEl._v154q = q;
+    boxEl._v154t = setTimeout(function () {
+      nominatimGeocode(q).then(function (g) {
+        if (!g || boxEl._v154q !== trim(inputEl.value || '')) return;
+        if (frame) frame.src = v154OsmEmbedUrl(g.lat, g.lng);
+        if (note) note.textContent = 'Map: ' + (g.label || q);
+        boxEl.hidden = false;
+      }).catch(function () {});
+    }, 800);
+  }
+  function v154HideAddressMap(boxEl) { if (!boxEl) return; boxEl.hidden = true; var f = boxEl.querySelector('iframe'); if (f) f.src = ''; }
+
   function fmtBool(v) {
     if (v === true) return '<span class="portal-check"><i class="fas fa-circle-check"></i> Yes</span>';
     if (v === false) return '<span class="portal-check no"><i class="fas fa-circle-xmark"></i> No</span>';
@@ -1943,7 +2013,7 @@
   function ciServiceChargeRows(ticketId, kindLabel, hoursVal, atrVal) {
     var rows = [];
     if (atrVal !== 'member') {
-      rows.push({ ticket_id: ticketId, kind: 'visit', description: 'Visit fee — no diagnostics', qty: 1, unit_price: 15, unit_cost: null });
+      rows.push({ ticket_id: ticketId, kind: 'visit', description: 'Visit fee — no diagnostics', qty: 1, unit_price: 14.99, unit_cost: null });
     }
     var n = parseInt(hoursVal, 10);
     if (n) {
@@ -2788,39 +2858,38 @@ function loadTicketThread(client, ticketId) {
            * section. The row used to render below Edit details.
            * Same markup, same ids, same by-id wiring — only
            * the seat moved. */
-'<div class="portal-drawer-section p2-actions"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-receipt-btn"><i class="fas fa-receipt"></i> Print receipt</button>' +
-          /* DEVICE_LABEL_2026_11_11: Print device label sits beside
-           * Print receipt — one tap prints the device's tracking
-           * label (guest, device, ticket code, barcode, scan QR).
-           * printDeviceLabel is wired in wireTicketActions. */
-          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-device-label-btn"><i class="fas fa-barcode"></i> Print device label</button>' +
-          /* PORTAL_RECEIPT_TOP_2026_11_03: the receipt actions live
-           * together at the top of the ticket, beside Print receipt —
-           * Generate / Download / Email moved up here out of Charges
-           * (Austin, Nov 3, 2026). Same IDs, same handlers, same
-           * status line beside the buttons; only the location moved. */
+'<div class="portal-drawer-section p2-actions">' +
+          /* V154_TICKET_FORM_2026_11_16 (Austin, Nov 16, 2026): the
+           * sixteen loose buttons were "a mess" — Receipt, Estimate
+           * and Invoice are grouped menus now. Same buttons, same
+           * ids, same handlers in wireTicketActions; only the seat
+           * changed. Print device label, Save status, Save
+           * assignment and Delete ticket stay separate buttons. */
+          '<div class="p2-doc-menu"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-menu-receipt-btn" aria-haspopup="true" aria-expanded="false"><i class="fas fa-receipt"></i> Receipt</button>' +
+          '<div class="p2-doc-menu-list" role="menu">' +
+          '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-receipt-btn"><i class="fas fa-receipt"></i> Print receipt</button>' +
           '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-gen-receipt-btn"><i class="fas fa-file"></i> Generate receipt</button>' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-download-receipt-btn"><i class="fas fa-download"></i> Download receipt</button>' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-email-receipt-btn"><i class="fas fa-envelope"></i> Email receipt</button>' +
-          '<span class="portal-muted portal-small" id="p2-gen-receipt-msg"></span>' +
-          /* PORTAL_DOCUMENTS_SET_2026_11_05: the Estimate and
-           * Invoice rows — same four actions as the receipt,
-           * generated from the same charges (see the document
-           * engine below). Each row carries its own status line. */
-          '<div class="p2-doc-row"><span class="portal-muted portal-small">Estimate</span>' +
+          '<span class="portal-muted portal-small" id="p2-gen-receipt-msg"></span></div></div>' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-device-label-btn"><i class="fas fa-barcode"></i> Print device label</button>' +
+          '<div class="p2-doc-menu"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-menu-estimate-btn" aria-haspopup="true" aria-expanded="false"><i class="fas fa-file"></i> Estimate</button>' +
+          '<div class="p2-doc-menu-list" role="menu">' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-print-estimate-btn"><i class="fas fa-print"></i> Print estimate</button>' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-gen-estimate-btn"><i class="fas fa-file"></i> Generate estimate</button>' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-download-estimate-btn"><i class="fas fa-download"></i> Download estimate</button>' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-email-estimate-btn"><i class="fas fa-envelope"></i> Email estimate</button>' +
-          '<span class="portal-muted portal-small" id="p2-doc-estimate-msg"></span></div>' +
-          '<div class="p2-doc-row"><span class="portal-muted portal-small">Invoice</span>' +
+          '<span class="portal-muted portal-small" id="p2-doc-estimate-msg"></span></div></div>' +
+          '<div class="p2-doc-menu"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-menu-invoice-btn" aria-haspopup="true" aria-expanded="false"><i class="fas fa-file"></i> Invoice</button>' +
+          '<div class="p2-doc-menu-list" role="menu">' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-print-invoice-btn"><i class="fas fa-print"></i> Print invoice</button>' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-gen-invoice-btn"><i class="fas fa-file"></i> Generate invoice</button>' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-download-invoice-btn"><i class="fas fa-download"></i> Download invoice</button>' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-email-invoice-btn"><i class="fas fa-envelope"></i> Email invoice</button>' +
-          '<span class="portal-muted portal-small" id="p2-doc-invoice-msg"></span></div>' +
+          '<span class="portal-muted portal-small" id="p2-doc-invoice-msg"></span></div></div>' +
           '<button class="portal-btn p2-btn-danger portal-btn-sm" type="button" id="p2-delete-btn"><i class="fas fa-trash"></i> Delete ticket</button>' +
-          '<span class="portal-muted portal-small" id="p2-action-msg"></span>' +
+          
+'<span class="portal-muted portal-small" id="p2-action-msg"></span>' +
           '<div id="p2-delete-confirm" hidden><p class="portal-error">Permanently delete this ticket? Its charges and messages go with it. Part orders stay on file but detach from the ticket. This cannot be undone.</p>' +
           '<button class="portal-btn p2-btn-danger portal-btn-sm" type="button" id="p2-delete-yes">Yes, delete it</button> ' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-delete-no">Keep ticket</button></div></div>' +
@@ -2858,8 +2927,12 @@ function loadTicketThread(client, ticketId) {
           '<div class="portal-drawer-section tk-acc" data-acc="edit">' + tkAccHead('edit', 'Edit details') + tkAccBodyOpen('edit') +
           '<p class="portal-muted portal-small">Update the triage and job details here. Save, and the Ticket details above refresh.</p>' +
           '<div class="portal-field"><label for="p2-edit-jobdate">Job date</label><input type="date" id="p2-edit-jobdate" value="' + esc(t.job_date || String(t.created_at || '').slice(0, 10)) + '" /></div>' +
+          '<div class="portal-field"><label>Arrival window</label><div class="v154-win-row" id="p2-edit-windows" role="group" aria-label="Arrival window">' +
+          V154_WINDOWS.map(function (w) { return '<button class="portal-btn portal-btn-outline portal-btn-sm v154-win-btn" type="button" data-edit-window="' + w.start + '" aria-pressed="false">' + w.label + '</button>'; }).join('') +
+          '</div><p class="portal-muted portal-small">Pick a window to set the appointment time for the job date above. Leave it alone and the appointment stays as it is.</p></div>' +
           '<div class="portal-field"><label for="p2-edit-issue">Issue</label><textarea id="p2-edit-issue" rows="2">' + esc(t.issue || '') + '</textarea></div>' +
           '<div class="portal-field"><label for="p2-edit-address">Service address</label><input type="text" id="p2-edit-address" value="' + esc(t.service_address || '') + '" /></div>' +
+          '<div class="v154-map" id="p2-edit-map" hidden><iframe id="p2-edit-map-frame" title="Map of the service address" loading="lazy" src=""></iframe><p class="portal-muted portal-small" id="p2-edit-map-note"></p></div>' +
           '<div class="portal-field"><label for="p2-edit-serial">Serial / IMEI</label><input type="text" id="p2-edit-serial" value="' + esc(t.serial_imei || '') + '" /></div>' +
           '<div class="portal-field"><label for="p2-edit-reason">Reason</label><input type="text" id="p2-edit-reason" value="' + esc(t.issue_reason || '') + '" /></div>' +
           '<div class="p2-form-row"><div class="portal-field"><label for="p2-edit-volts">Voltage (V)</label><input type="text" id="p2-edit-volts" value="' + esc(t.triage_volts || '') + '" /></div>' +
@@ -2967,6 +3040,15 @@ function loadTicketThread(client, ticketId) {
           '<label class="p2-check"><input type="checkbox" id="p2-charge-waive" /> Waive this charge &mdash; show it as waived, counting $0</label>' +
           '<button class="portal-btn portal-btn-primary portal-btn-sm" type="submit">Add charge</button>' +
           '<p class="portal-error" id="p2-charge-error" hidden></p></form>' +
+          /* V154_TICKET_FORM_2026_11_16: mileage calculator — type the
+           * one-way miles and it works out the $1-a-mile extra over
+           * the 25 miles the visit fee already covers. */
+          '<div class="v154-mileage"><p style="margin:0 0 0.4rem;"><strong>Mileage</strong> <span class="portal-muted portal-small">The $14.99 visit fee covers the first 25 miles. Over 25 miles is $1 a mile.</span></p>' +
+          '<div class="p2-form-row"><label for="p2-mileage-miles" class="portal-muted portal-small">Miles from home (one way)</label>' +
+          '<input id="p2-mileage-miles" type="number" step="0.1" min="0" inputmode="decimal" placeholder="e.g. 35" aria-label="Miles from home" />' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-mileage-add">Add mileage to charges</button></div>' +
+          '<p class="portal-muted portal-small" id="p2-mileage-breakdown">Type the miles to see the extra.</p>' +
+          '<p class="portal-error" id="p2-mileage-msg" hidden></p></div>' +
           /* PORTAL_RECEIPT_TOP_2026_11_03: the Generate / Download /
            * Email receipt row that used to sit here moved to the top
            * of the ticket, beside Print receipt (Austin, Nov 3, 2026).
@@ -3039,6 +3121,7 @@ function loadTicketThread(client, ticketId) {
         var gvCheckEl = $('portal-gv-text-check');
         if (gvCheckEl) gvCheckEl.addEventListener('change', function () { gvCheckEl.setAttribute('data-gv-touched', '1'); });
         wireTicketActions(client, t);
+        wireV154TicketDetail(t);
         wirePaymentActions(client, t);
 
         var editSave = $('p2-edit-save');
@@ -3062,6 +3145,11 @@ function loadTicketThread(client, ticketId) {
             work_auth_accepted: $('p2-edit-workauth').value === 'true',
             marketing_opt_in: $('p2-edit-marketing').value === 'true'
           };
+          /* V154_TICKET_FORM_2026_11_16: a picked window sets the
+           * appointment at the window start on the job date; no
+           * window picked leaves the appointment exactly as it is. */
+          var _v154w = v154EditWindowStart();
+          if (_v154w != null) patch.appointment_at = v154ApptAt($('p2-edit-jobdate').value, _v154w);
           client.from('tickets').update(patch).eq('id', t.id).then(function (res2) {
             if (res2.error) { if (msg) msg.textContent = 'Couldn\u2019t save \u2014 try again.'; return; }
             openTicket(t.id);
@@ -5658,6 +5746,44 @@ function loadTicketThread(client, ticketId) {
     } catch (e) { /* fire-and-forget: never surface */ }
   }
 
+  /* V155_TICKET_EMAILS_2026_11_16 (Austin, Nov 16, 2026: the guest
+   * gets an email after every ticket interaction — ticket made,
+   * ticket changed, quote updated): the automatic guest email for
+   * ticket creation and for generated estimates/invoices, sent by
+   * the ticket-email Edge Function (Zoho SMTP, From no-reply@,
+   * Reply-To service@ — warranty@ for Rework / Warranty). The body
+   * carries ONLY the ticket id and the kind — the function resolves
+   * the guest, the charges and the filed document server-side. Same
+   * fetch shape as notifyStatusEmail: the caller's own session JWT
+   * plus the anon key, JSON in, JSON out. FIRE-AND-FORGET by design:
+   * every failure is swallowed, so a dead email path can never block
+   * or fail the ticket action itself. */
+  function notifyTicketEmail(client, ticketId, kind) {
+    try {
+      if (!client || !ticketId || (kind !== 'ticket-created' && kind !== 'estimate' && kind !== 'invoice')) return;
+      client.auth.getSession().then(function (sres) {
+        var token = sres && sres.data && sres.data.session ? sres.data.session.access_token : '';
+        if (!token) return null;
+        return fetch(SUPABASE_URL + '/functions/v1/ticket-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'apikey': SUPABASE_ANON_KEY },
+          body: JSON.stringify({ ticket_id: ticketId, kind: kind })
+        });
+      }).catch(function () { /* fire-and-forget: never surface */ });
+    } catch (e) { /* fire-and-forget: never surface */ }
+  }
+
+  /* V155_TICKET_EMAILS_2026_11_16: the ticket-created call — the
+   * same email-shape guard notifyStatusEmail uses (no usable guest
+   * email on the row, no call). The function itself creates the
+   * guest's login account when none exists for the email. */
+  function notifyTicketCreated(client, t, ticketId) {
+    if (!t) return;
+    var to = trim(t.customer_email || '');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) return;
+    notifyTicketEmail(client, ticketId, 'ticket-created');
+  }
+
   /* PORTAL_EMAIL_RECEIPT_MAILTO_2026_11_03 (Austin, Nov 3, 2026:
    * "When you push the email receipt button, just have that open
    * the native emailer app that's on the device that you're using.
@@ -5940,7 +6066,7 @@ function loadTicketThread(client, ticketId) {
    * refreshed on regenerate so copies never pile up. No
    * authorization is fetched: the signature and the signed
    * paperwork belong to the receipt alone. */
-  function generateTicketDoc(client, t, kind, onFiled) {
+  function generateTicketDoc(client, t, kind, onFiled, autoEmail) {
     var spec = TICKET_DOC_SPECS[kind];
     var btn = $(spec.genBtn);
     var msg = $(spec.msg);
@@ -5966,7 +6092,17 @@ function loadTicketThread(client, ticketId) {
         var noteText = 'Generated from the ticket charges \u2014 generating again after a charge change replaces this copy.';
         function filed() {
           if (btn) btn.disabled = false;
-          note(spec.label + ' saved to Documents.');
+          /* V155_TICKET_EMAILS_2026_11_16: generating from the
+           * Generate button sends the fresh estimate/invoice to the
+           * guest automatically. Download / manual Email flows call
+           * this same function without the flag and send nothing
+           * automatically — no duplicates. */
+          if (autoEmail) {
+            notifyTicketEmail(client, t.id, kind);
+            note(spec.label + ' saved to Documents — emailed to the guest.');
+          } else {
+            note(spec.label + ' saved to Documents.');
+          }
           loadDocuments(client, t);
           reportFiled(true);
         }
@@ -6475,6 +6611,65 @@ function loadTicketThread(client, ticketId) {
     }
   }
 
+  /* V154_TICKET_FORM_2026_11_16: ticket-detail wiring — the three
+   * document menus, the edit window picker, and the edit map. The
+   * menu buttons only open and close the menus; the Print / Generate
+   * / Download / Email buttons inside keep their own handlers from
+   * wireTicketActions, unchanged. */
+  function wireV154TicketDetail(t) {
+    ['receipt', 'estimate', 'invoice'].forEach(function (kind) {
+      var btn = $('p2-menu-' + kind + '-btn');
+      var wrap = btn ? btn.closest('.p2-doc-menu') : null;
+      if (!btn || !wrap) return;
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var wasOpen = wrap.classList.contains('open');
+        document.querySelectorAll('.p2-doc-menu.open').forEach(function (m) { m.classList.remove('open'); });
+        if (!wasOpen) { wrap.classList.add('open'); btn.setAttribute('aria-expanded', 'true'); }
+        else btn.setAttribute('aria-expanded', 'false');
+      });
+      wrap.querySelectorAll('.p2-doc-menu-list .portal-btn').forEach(function (b) {
+        b.addEventListener('click', function () { wrap.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); });
+      });
+    });
+    if (!window.__v154DocMenuWired) {
+      window.__v154DocMenuWired = true;
+      document.addEventListener('click', function (e) {
+        if (!e.target.closest || !e.target.closest('.p2-doc-menu')) {
+          document.querySelectorAll('.p2-doc-menu.open').forEach(function (m) { m.classList.remove('open'); });
+        }
+      });
+      /* Capture phase, so this runs before the drawer's own Escape
+       * handler (initDrawer, bubble phase, closes the drawer): with
+       * a menu open, Escape closes just the menu and the ticket
+       * stays open. With no menu open the key passes through and
+       * the drawer closes exactly as it always has. */
+      document.addEventListener('keydown', function (e) {
+        if (e.key !== 'Escape') return;
+        var open = document.querySelectorAll('.p2-doc-menu.open');
+        if (!open.length) return;
+        open.forEach(function (m) { m.classList.remove('open'); });
+        e.stopPropagation();
+      }, true);
+    }
+    var editWinBtns = Array.prototype.slice.call(document.querySelectorAll('#p2-edit-windows [data-edit-window]'));
+    var startHour = v154WindowStartForAppt(t.appointment_at);
+    editWinBtns.forEach(function (b) {
+      var on = startHour != null && String(startHour) === b.getAttribute('data-edit-window');
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      b.addEventListener('click', function () {
+        editWinBtns.forEach(function (x) { x.classList.remove('on'); x.setAttribute('aria-pressed', 'false'); });
+        b.classList.add('on'); b.setAttribute('aria-pressed', 'true');
+      });
+    });
+    var editAddr = $('p2-edit-address');
+    if (editAddr) {
+      editAddr.addEventListener('input', function () { v154UpdateAddressMap(editAddr, $('p2-edit-map')); });
+      v154UpdateAddressMap(editAddr, $('p2-edit-map'));
+    }
+  }
+
   function wireTicketActions(client, t) {
     var receiptBtn = $('p2-receipt-btn');
     if (receiptBtn) receiptBtn.addEventListener('click', function () { printReceipt(client, t); });
@@ -6501,7 +6696,7 @@ function loadTicketThread(client, ticketId) {
      * engine: generateTicketDoc / downloadTicketDoc /
      * emailTicketDoc / printTicketDoc). */
     var genEstimateBtn = $('p2-gen-estimate-btn');
-    if (genEstimateBtn) genEstimateBtn.addEventListener('click', function () { generateTicketDoc(client, t, 'estimate'); });
+    if (genEstimateBtn) genEstimateBtn.addEventListener('click', function () { generateTicketDoc(client, t, 'estimate', null, true); });
     var dlEstimateBtn = $('p2-download-estimate-btn');
     if (dlEstimateBtn) dlEstimateBtn.addEventListener('click', function () { downloadTicketDoc(client, t, 'estimate'); });
     var emailEstimateBtn = $('p2-email-estimate-btn');
@@ -6509,7 +6704,7 @@ function loadTicketThread(client, ticketId) {
     var printEstimateBtn = $('p2-print-estimate-btn');
     if (printEstimateBtn) printEstimateBtn.addEventListener('click', function () { printTicketDoc(client, t, 'estimate'); });
     var genInvoiceBtn = $('p2-gen-invoice-btn');
-    if (genInvoiceBtn) genInvoiceBtn.addEventListener('click', function () { generateTicketDoc(client, t, 'invoice'); });
+    if (genInvoiceBtn) genInvoiceBtn.addEventListener('click', function () { generateTicketDoc(client, t, 'invoice', null, true); });
     var dlInvoiceBtn = $('p2-download-invoice-btn');
     if (dlInvoiceBtn) dlInvoiceBtn.addEventListener('click', function () { downloadTicketDoc(client, t, 'invoice'); });
     var emailInvoiceBtn = $('p2-email-invoice-btn');
@@ -6562,7 +6757,7 @@ function loadTicketThread(client, ticketId) {
       }
       if (kindSel.value === 'visit') {
         if (!$('p2-charge-desc').value) $('p2-charge-desc').value = 'Visit fee — no diagnostics (non-refundable)';
-        if (!$('p2-charge-price').value) $('p2-charge-price').value = '15';
+        if (!$('p2-charge-price').value) $('p2-charge-price').value = '14.99';
       }
       if (kindSel.value === 'deposit_credit' && !$('p2-charge-desc').value) {
         $('p2-charge-desc').value = 'Parts deposit received';
@@ -6620,6 +6815,45 @@ function loadTicketThread(client, ticketId) {
         syncChargeKind();
         loadCharges(client, t);
       }).catch(function () { err.textContent = 'Couldn&rsquo;t add that charge. Try again.'; err.hidden = false; });
+    });
+
+    /* V154_TICKET_FORM_2026_11_16: mileage calculator wiring. The
+     * breakdown updates as miles are typed; Add mileage writes one
+     * mileage line on the ticket (updating it if one is already
+     * there, never doubling it), then the charges reload. */
+    var mlMilesEl = $('p2-mileage-miles'), mlBreakEl = $('p2-mileage-breakdown'),
+        mlAddBtn = $('p2-mileage-add'), mlMsgEl = $('p2-mileage-msg');
+    function v154PaintMileage() {
+      if (!mlMilesEl || !mlBreakEl) return null;
+      var m = v154Mileage(mlMilesEl.value);
+      if (!m) { mlBreakEl.textContent = 'Type the miles to see the extra.'; return null; }
+      mlBreakEl.textContent = m.miles + ' miles \u2014 ' + V154_MILEAGE_INCLUDED + ' included, ' + m.over + ' over \u00d7 $1.00 = ' + fmtMoney(m.extra) + ' extra' + (m.extra > 0 ? ' on top of the $14.99 visit fee.' : ' \u2014 inside the 25 miles, no extra.');
+      return m;
+    }
+    if (mlMilesEl) mlMilesEl.addEventListener('input', v154PaintMileage);
+    /* Prefill from a mileage line already on the ticket, so reopening
+     * the ticket shows the miles that were charged. */
+    if (mlMilesEl) client.from('ticket_charges').select('description').eq('ticket_id', t.id).ilike('description', 'Mileage \u2014 %').order('created_at', { ascending: false }).limit(1).maybeSingle().then(function (res) {
+      if (res && res.data && res.data.description) {
+        var mm = String(res.data.description).match(/([\d.]+) miles/);
+        if (mm) { mlMilesEl.value = mm[1]; v154PaintMileage(); }
+      }
+    }).catch(function () {});
+    if (mlAddBtn) mlAddBtn.addEventListener('click', function () {
+      var m = v154PaintMileage();
+      if (mlMsgEl) { mlMsgEl.hidden = true; mlMsgEl.textContent = ''; }
+      if (!m) { if (mlMsgEl) { mlMsgEl.textContent = 'Type the miles first.'; mlMsgEl.hidden = false; } return; }
+      if (m.extra <= 0) { if (mlMsgEl) { mlMsgEl.textContent = 'Inside the 25 miles \u2014 no extra mileage to add.'; mlMsgEl.hidden = false; } return; }
+      mlAddBtn.disabled = true;
+      var row = { ticket_id: t.id, kind: 'one_off', description: v154MileageDesc(m), qty: 1, unit_price: m.extra, unit_cost: null };
+      client.from('ticket_charges').select('id').eq('ticket_id', t.id).ilike('description', 'Mileage \u2014 %').order('created_at', { ascending: false }).limit(1).maybeSingle().then(function (res) {
+        if (res && res.data && res.data.id) return client.from('ticket_charges').update({ description: row.description, qty: 1, unit_price: row.unit_price, unit_cost: null }).eq('id', res.data.id);
+        return client.from('ticket_charges').insert(row);
+      }).then(function (res2) {
+        mlAddBtn.disabled = false;
+        if (res2 && res2.error) { if (mlMsgEl) { mlMsgEl.textContent = 'Couldn\u2019t add the mileage \u2014 try again.'; mlMsgEl.hidden = false; } return; }
+        loadCharges(client, t);
+      }).catch(function () { mlAddBtn.disabled = false; if (mlMsgEl) { mlMsgEl.textContent = 'Couldn\u2019t add the mileage \u2014 try again.'; mlMsgEl.hidden = false; } });
     });
 
     var stockSelEl = $('p2-part-stock');
@@ -19521,6 +19755,7 @@ function loadTicketThread(client, ticketId) {
    * the hours picked there ('' until an hour button is tapped). */
   var ciRequestType = 'repair';
   var ciServiceHours = '';
+  var ciWindowStart = null; /* V154_TICKET_FORM_2026_11_16: picked arrival-window start hour, or null */
   /* PORTAL_ATRONE_PER_TIER_2026_11_02: the tier picked at check-in
    * — set when a Square tier card in the signup box is tapped (each
    * card's plan link identifies its tier), read at submit so the
@@ -19581,6 +19816,7 @@ function loadTicketThread(client, ticketId) {
           if (!cu) return;
           ciCustomerId = cu.id;
           $('ci-name').value = cu.name || ''; $('ci-phone').value = cu.phone || ''; $('ci-email').value = cu.email || ''; $('ci-address').value = cu.address || '';
+          v154UpdateAddressMap($('ci-address'), $('ci-address-map'));
           box.innerHTML = '<p class="portal-muted portal-small">Guest linked &mdash; their account will see this repair.</p>';
         });
       });
@@ -19678,6 +19914,27 @@ function loadTicketThread(client, ticketId) {
       });
     });
     wireCiConsent();
+    /* V154_TICKET_FORM_2026_11_16: date + window picker in the same box,
+     * and the map under the service address. Tapping a picked window
+     * again unsets it (same toggle pattern as the hour buttons). */
+    var ciJobDateEl = $('ci-jobdate');
+    var ciWinBtns = Array.prototype.slice.call(document.querySelectorAll('#ci-windows [data-ci-window]'));
+    function ciPaintWindows() {
+      ciWinBtns.forEach(function (b) {
+        var on = String(ciWindowStart) === b.getAttribute('data-ci-window');
+        b.classList.toggle('on', on);
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+    }
+    ciWinBtns.forEach(function (b) {
+      b.addEventListener('click', function () {
+        var h = parseInt(b.getAttribute('data-ci-window'), 10);
+        ciWindowStart = (ciWindowStart === h) ? null : h;
+        ciPaintWindows();
+      });
+    });
+    var ciAddressEl = $('ci-address');
+    if (ciAddressEl) ciAddressEl.addEventListener('input', function () { v154UpdateAddressMap(ciAddressEl, $('ci-address-map')); });
     /* PORTAL_DEADEND_MINORS_2026_10_30: "Clear check-in" — abandon a
      * half-finished check-in and start over without hand-clearing every
      * field. Mirrors the post-submit reset below (form.reset, customer
@@ -19706,6 +19963,8 @@ function loadTicketThread(client, ticketId) {
       ciSetRequestType('repair'); /* PORTAL_SERVICE_QUEUE_2026_11_06 */
       ciCustomerId = null;
       ciAtroneTier = null;
+      ciWindowStart = null; ciPaintWindows();
+      v154HideAddressMap($('ci-address-map'));
       document.querySelectorAll('#ci-reasons .ci-tile.on').forEach(function (c) { c.classList.remove('on'); c.setAttribute('aria-pressed', 'false'); });
       var res = $('ci-results'); if (res) res.innerHTML = '';
       var err = $('ci-error'); if (err) { err.textContent = ''; err.hidden = true; }
@@ -19736,6 +19995,13 @@ function loadTicketThread(client, ticketId) {
        * Scheduling (build of record, with the one-time insert
        * fallback below). Both rows carry the service address
        * (tickets.service_address). */
+      /* V154_TICKET_FORM_2026_11_16: the visit date + window ride the
+       * ticket — job_date plus appointment_at at the window start, so
+       * the ticket shows on the calendar. A window with no date means
+       * today. No date and no window: both stay empty, as before. */
+      var ciJobDate = ciJobDateEl ? ciJobDateEl.value : '';
+      if (ciWindowStart != null && !ciJobDate) { ciJobDate = new Date().toISOString().slice(0, 10); if (ciJobDateEl) ciJobDateEl.value = ciJobDate; }
+      var ciApptAt = v154ApptAt(ciJobDate, ciWindowStart);
       var isSvc = ciRequestType === 'service' || !!(ciOneOnOne && ciOneOnOne.classList.contains('on'));
       var svcKind = isSvc ? $('ci-svc-kind').value : '';
       var svcGoal = isSvc ? $('ci-svc-goal').value.trim() : '';
@@ -19759,6 +20025,8 @@ function loadTicketThread(client, ticketId) {
         backed_up: null,
         prior_repair: null,
         warranty_status: null,
+        job_date: ciJobDate || null,
+        appointment_at: ciApptAt,
         source: 'check-in',
         status: 'Awaiting Scheduling',
         terms_accepted: true,
@@ -19794,6 +20062,8 @@ function loadTicketThread(client, ticketId) {
         backed_up: $('ci-backup').value || null,
         prior_repair: $('ci-prior').value || null,
         warranty_status: $('ci-warranty').value || null,
+        job_date: ciJobDate || null,
+        appointment_at: ciApptAt,
         source: 'check-in',
         status: 'Awaiting Diagnostics',
         terms_accepted: true,
@@ -19846,8 +20116,14 @@ function loadTicketThread(client, ticketId) {
           var newId = res.data && res.data.id;
           /* PORTAL_SERVICE_QUEUE_2026_11_06: charges ride the row's final status — the receipt and agreement builders read row.status. */
           var proceed = function (consentFailed, atroneAttachFailed, svcChargeFailed) {
+            /* V155_TICKET_EMAILS_2026_11_16: the ticket exists now,
+             * so the guest gets the automatic confirmation email
+             * (and a login account when none exists for their
+             * email). Fire-and-forget — never blocks the form. */
+            if (newId) notifyTicketCreated(client, row, newId);
             btn.disabled = false;
             $('ci-form').reset(); ciCustomerId = null; ciAtroneTier = null;
+            ciWindowStart = null; ciPaintWindows(); v154HideAddressMap($('ci-address-map'));
             ciSetRequestType('repair'); /* PORTAL_SERVICE_QUEUE_2026_11_06 */
             document.querySelectorAll('#ci-reasons .ci-tile.on').forEach(function (c) { c.classList.remove('on'); c.setAttribute('aria-pressed', 'false'); });
             ciConsentReset();
