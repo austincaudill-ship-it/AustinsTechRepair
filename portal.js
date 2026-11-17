@@ -20430,10 +20430,14 @@ function loadTicketThread(client, ticketId) {
    * documents in one act. In person, the customer signs on the iPad
    * or phone right there \u2014 the same signature popup the ticket
    * drawer uses (openSignatureCapture, shared, not a copy). Over the
-   * phone \u2014 most check-ins \u2014 staff read CI_CONSENT_SCRIPT
-   * aloud, the customer verbally agrees, and staff tick the
-   * attestation box; that "virtually signs" the customer to the
-   * Repair Authorization, the Terms & Conditions, and the 1-Year
+   * phone \u2014 most check-ins \u2014 staff read the script matching the
+   * Guest/Business choice aloud (CI_CONSENT_SCRIPT_GUEST or
+   * CI_CONSENT_SCRIPT_BUSINESS), the customer verbally agrees,
+   * and staff tick the attestation box. The verbal agreement is
+   * consent to send the information and to make the guest account
+   * \u2014 it is NOT the signature; the agreements still need signing
+   * in writing (one signature covers the Repair Authorization and
+   * the 1-Year Warranty). Either way, when the ticket is created the agreement
    * Warranty. Either way, when the ticket is created the agreement
    * files itself on the ticket exactly like a drawer signing does: a
    * ticket_documents row plus the consent flags, via
@@ -20445,7 +20449,48 @@ function loadTicketThread(client, ticketId) {
    * Oct 30, 2026 wording (parts taken with us and disposed of
    * properly for the environment, some manufacturer parts
    * returned; fee stated for credit or debit card). */
-  var CI_CONSENT_SCRIPT = "Before we book your repair, I need to go over our terms \u2014 it only takes a moment. By agreeing, you accept our Repair Authorization and Service Agreement and our 1-Year Limited Warranty. There is a visit fee due when we schedule your visit — $14.99 for guests, $34.99 for business; it covers the trip, and it is non-refundable. If your device needs a full diagnosis, diagnostics is $34.99 for guests, $64.99 for business — and we will tell you first before we assess it. You are giving us permission to diagnose your device, including taking it apart when that is needed to find the problem. Please make sure your device is backed up before we work on it: you are responsible for your data, and we are not liable if data is lost during a repair. The parts we supply and our labor are covered by a 1-year warranty. We take the parts we remove with us after your repair and dispose of them properly to protect the environment, and some original manufacturer parts have to be returned to the manufacturer. If your device is left unclaimed for more than 60 days after we tell you it is ready, it may be disposed of. And if you pay by credit or debit card, the total includes a processing fee equal to what Square charges us. Do you agree to these terms?";
+  /* V164_GUEST_BUSINESS_2026_11_17 (Austin, Nov 17, 2026, APPROVED): the
+   * read-aloud phone script, split — one version per audience, each with
+   * ONLY that audience's prices. Guest: $14.99 visit / $34.99 diagnostics.
+   * Business: $34.99 visit / $64.99 diagnostics. Every other word is
+   * identical (the build script asserts the two differ only in the two
+   * price figures). The old single CI_CONSENT_SCRIPT mixed both prices
+   * in one breath ("$14.99 for guests, $34.99 for business") and read
+   * wrong on the phone. ciConsentScript() picks the version matching
+   * the Guest or Business selector; the filed verbal record quotes the
+   * same string the staff read. */
+  var CI_CONSENT_SCRIPT_GUEST = "Before we book your repair, I just need to go over our terms with you. It only takes a moment. If you agree to these terms, you accept our Repair Authorization and Service Agreement and our 1-Year Limited Warranty. There is a $14.99 visit fee due when we schedule your visit. It covers the trip out to you, and it is non-refundable. If your device needs a full diagnosis, diagnostics is $34.99, and we will tell you first before we assess it. You are giving us permission to diagnose your device, including taking it apart when that is needed to find the problem. Please make sure your device is backed up before we work on it. You are responsible for your data, and we are not liable if data is lost during a repair. The parts we supply and our labor are covered by a 1-year warranty. We take the parts we remove with us after your repair and dispose of them properly to protect the environment, and some original manufacturer parts have to be returned to the manufacturer. If your device is left unclaimed for more than 60 days after we tell you it is ready, it may be disposed of. And if you pay by credit or debit card, the total includes a processing fee equal to what Square charges us. Do you agree to these terms?";
+  var CI_CONSENT_SCRIPT_BUSINESS = "Before we book your repair, I just need to go over our terms with you. It only takes a moment. If you agree to these terms, you accept our Repair Authorization and Service Agreement and our 1-Year Limited Warranty. There is a $34.99 visit fee due when we schedule your visit. It covers the trip out to you, and it is non-refundable. If your device needs a full diagnosis, diagnostics is $64.99, and we will tell you first before we assess it. You are giving us permission to diagnose your device, including taking it apart when that is needed to find the problem. Please make sure your device is backed up before we work on it. You are responsible for your data, and we are not liable if data is lost during a repair. The parts we supply and our labor are covered by a 1-year warranty. We take the parts we remove with us after your repair and dispose of them properly to protect the environment, and some original manufacturer parts have to be returned to the manufacturer. If your device is left unclaimed for more than 60 days after we tell you it is ready, it may be disposed of. And if you pay by credit or debit card, the total includes a processing fee equal to what Square charges us. Do you agree to these terms?";
+  /* V164_GUEST_BUSINESS_2026_11_17: the check-in type selector.
+   * customers / tickets have NO business-name or customer-type column
+   * (verified: only name/email/phone/address/account_number on customers;
+   * tickets carry customer_name), so the business NAME rides the name
+   * field (customers.name + tickets.customer_name) and the CONTACT
+   * person is filed as a repair-log note on the ticket (ticket_notes,
+   * the existing staff note table) at creation — see the submit
+   * handler. No DB column is invented here and no SQL runs. */
+  function ciCustomerType() {
+    var s = $('ci-customer-type');
+    return (s && s.value === 'business') ? 'business' : 'guest';
+  }
+  function ciConsentScript() {
+    return ciCustomerType() === 'business' ? CI_CONSENT_SCRIPT_BUSINESS : CI_CONSENT_SCRIPT_GUEST;
+  }
+  function ciContactName() {
+    var c = $('ci-contact');
+    return c ? c.value.trim() : '';
+  }
+  function ciPaintType() {
+    var biz = ciCustomerType() === 'business';
+    var lbl = $('ci-name-label');
+    if (lbl) lbl.textContent = biz ? 'Business name *' : 'Name *';
+    var cw = $('ci-contact-wrap');
+    if (cw) cw.hidden = !biz;
+    var al = $('ci-atrone-label');
+    if (al) al.textContent = biz ? 'Is this business an ATR One Plus (paid) member?' : 'Is this guest an ATR One Plus (paid) member?';
+    var box = $('ci-consent-script');
+    if (box) box.textContent = ciConsentScript();
+  }
   var ciConsent = null;
 
   function ciConsentStatus() {
@@ -20505,7 +20550,7 @@ function loadTicketThread(client, ticketId) {
 
   function wireCiConsent() {
     var scriptBox = $('ci-consent-script');
-    if (scriptBox && !trim(scriptBox.textContent)) scriptBox.textContent = CI_CONSENT_SCRIPT;
+    if (scriptBox) scriptBox.textContent = ciConsentScript();
     var termsBtn = $('ci-terms-btn');
     if (termsBtn && !termsBtn.getAttribute('data-wired')) {
       termsBtn.setAttribute('data-wired', '1');
@@ -20515,8 +20560,8 @@ function loadTicketThread(client, ticketId) {
     if (signBtn && !signBtn.getAttribute('data-wired')) {
       signBtn.setAttribute('data-wired', '1');
       signBtn.addEventListener('click', function () {
-        var nameEl = $('ci-name');
-        openSignatureCapture(nameEl ? nameEl.value : '', function (blob, name, finish) {
+        var signer = ciCustomerType() === 'business' ? (ciContactName() || ($('ci-name') ? $('ci-name').value : '')) : ($('ci-name') ? $('ci-name').value : '');
+        openSignatureCapture(signer, function (blob, name, finish) {
           ciConsent = { mode: 'signed', blob: blob, signerName: name };
           ciConsentStatus();
           finish();
@@ -20550,7 +20595,7 @@ function loadTicketThread(client, ticketId) {
    * storage paths match the drawer flow's shape, the drawer's
    * Documents section lists them exactly like a drawer-signed
    * document. done(errText): errText is null on success. */
-  function fileCiConsent(client, ticketId, row, consent, done) {
+  function fileCiConsent(client, ticketId, row, consent, done, contactName) {
     if (!consent) { done(null); return; }
     if (consent.mode === 'signed') {
       fileSignedAuthorization(client, ticketId, consent.blob, consent.signerName, done,
@@ -20559,11 +20604,13 @@ function loadTicketThread(client, ticketId) {
     }
     var when = new Date();
     var staff = (state.profile && state.profile.name) || (state.user && state.user.email) || 'Staff';
+    var guestLine = 'Guest: ' + (row.customer_name || '');
+    if (contactName) guestLine += '\nBusiness contact: ' + contactName;
     var text = [
       'Verbal Consent Record',
       "Austin's Tech Repair Group",
       '',
-      'Guest: ' + (row.customer_name || ''),
+      guestLine,
       'Phone: ' + (row.customer_phone || ''),
       'Ticket ID: ' + ticketId,
       'Device: ' + deviceLabel(row),
@@ -20573,7 +20620,7 @@ function loadTicketThread(client, ticketId) {
       'How this consent was taken: the staff member named above read the statement below aloud to the guest by phone, and the guest verbally agreed to it. By that agreement, the guest agreed to the Repair Authorization & Service Agreement, the Terms & Conditions of Service, and the 1-Year Limited Warranty of Austin\u2019s Tech Repair Group, in full.',
       '',
       'Statement read to the guest:',
-      '\u201C' + CI_CONSENT_SCRIPT + '\u201D'
+      '\u201C' + ciConsentScript() + '\u201D'
     ].join('\n');
     var blob = new Blob([text], { type: 'text/plain' });
     var path = ticketId + '/verbal-consent-' + docStamp() + '.txt';
@@ -20783,6 +20830,11 @@ function loadTicketThread(client, ticketId) {
         if (box) box.hidden = atrSel.value !== 'signup';
       });
     }
+    var typeSel = $('ci-customer-type');
+    if (typeSel && !typeSel.getAttribute('data-wired')) {
+      typeSel.setAttribute('data-wired', '1');
+      typeSel.addEventListener('change', ciPaintType);
+    }
     /* PORTAL_ATRONE_PER_TIER_2026_11_02: tapping a tier card in the
      * signup box records the tier — each card links to its own
      * Square plan, and the plan link identifies the tier. */
@@ -20868,6 +20920,7 @@ function loadTicketThread(client, ticketId) {
       });
     });
     wireCiConsent();
+    ciPaintType(); /* V164_GUEST_BUSINESS_2026_11_17: fields, ATR One label and script follow the selector from the start */
     /* V154_TICKET_FORM_2026_11_16: date + window picker in the same box,
      * and the map under the service address. Tapping a picked window
      * again unsets it (same toggle pattern as the hour buttons). */
@@ -20923,6 +20976,7 @@ function loadTicketThread(client, ticketId) {
     }
     function ciResetForm() {
       $('ci-form').reset();
+      ciPaintType();
       ciSetRequestType('repair'); /* PORTAL_SERVICE_QUEUE_2026_11_06 */
       ciCustomerId = null;
       ciAtroneTier = null;
@@ -20973,9 +21027,15 @@ function loadTicketThread(client, ticketId) {
       var svcGoal = isSvc ? $('ci-svc-goal').value.trim() : '';
       var svcHours = isSvc ? ciServiceHours : '';
       var ciAddress = $('ci-address').value.trim();
+      /* V164_GUEST_BUSINESS_2026_11_17: the display name is the guest
+       * name or the business name, from the same field; the contact
+       * person only exists for a business. */
+      var ciType = ciCustomerType();
+      var ciNameVal = $('ci-name').value.trim();
+      var ciContactVal = ciType === 'business' ? ciContactName() : '';
       var row = isSvc ? {
         customer_id: ciCustomerId || null,
-        customer_name: $('ci-name').value.trim(),
+        customer_name: ciNameVal,
         customer_phone: $('ci-phone').value.trim(),
         customer_email: $('ci-email').value.trim() || null,
         service_address: ciAddress || null,
@@ -21001,7 +21061,7 @@ function loadTicketThread(client, ticketId) {
         marketing_opt_in: false
       } : {
         customer_id: ciCustomerId || null,
-        customer_name: $('ci-name').value.trim(),
+        customer_name: ciNameVal,
         customer_phone: $('ci-phone').value.trim(),
         customer_email: $('ci-email').value.trim() || null,
         service_address: ciAddress || null,
@@ -21038,11 +21098,11 @@ function loadTicketThread(client, ticketId) {
         marketing_opt_in: false
       };
       if (isSvc) {
-        if (!row.customer_name || !row.customer_phone || !row.customer_email || !row.service_address || !svcKind || !svcGoal) {
-          err.textContent = 'Name, phone, email, service address, the kind of help, and what they want to get done are required for a service request.'; err.hidden = false; return;
+        if (!row.customer_name || !row.customer_phone || !row.customer_email || !row.service_address || !svcKind || !svcGoal || (ciType === 'business' && !ciContactVal)) {
+          err.textContent = ciType === 'business' ? 'Business name, contact name, phone, email, service address, the kind of help, and what they want to get done are required for a service request.' : 'Name, phone, email, service address, the kind of help, and what they want to get done are required for a service request.'; err.hidden = false; return;
         }
-      } else if (!row.customer_name || !row.customer_phone || !row.customer_email || !row.service_address || !row.issue) {
-        err.textContent = 'Name, phone, email, service address, and an issue are required — tap an issue tile or write check-in notes.'; err.hidden = false; return;
+      } else if (!row.customer_name || !row.customer_phone || !row.customer_email || !row.service_address || !row.issue || (ciType === 'business' && !ciContactVal)) {
+        err.textContent = ciType === 'business' ? 'Business name, contact name, phone, email, service address, and an issue are required \u2014 tap an issue tile or write check-in notes.' : 'Name, phone, email, service address, and an issue are required \u2014 tap an issue tile or write check-in notes.'; err.hidden = false; return;
       }
       var btn = $('ci-submit'); btn.disabled = true;
       var consent = ciConsent;
@@ -21088,8 +21148,17 @@ function loadTicketThread(client, ticketId) {
              * (and a login account when none exists for their
              * email). Fire-and-forget — never blocks the form. */
             if (newId) notifyTicketCreated(client, row, newId);
+            /* V164_GUEST_BUSINESS_2026_11_17: the business contact person
+             * rides a repair-log note on the ticket (ticket_notes, the
+             * existing staff note table) — see ciCustomerType().
+             * Fire-and-forget: a failed note never blocks the ticket. */
+            if (newId && ciType === 'business' && ciContactVal) {
+              try {
+                client.from('ticket_notes').insert({ ticket_id: newId, author: (state.profile && state.profile.name) || 'Associate', note: 'Business contact: ' + ciContactVal + ' \u2014 the person who spoke for the business at check-in.' }).then(function () {}, function () {});
+              } catch (e) { /* note is staff convenience only; never blocks */ }
+            }
             btn.disabled = false;
-            $('ci-form').reset(); ciCustomerId = null; ciAtroneTier = null;
+            $('ci-form').reset(); ciPaintType(); ciCustomerId = null; ciAtroneTier = null;
             ciWindowStart = null; ciPaintWindows(); v154HideAddressMap($('ci-address-map'));
             ciSetRequestType('repair'); /* PORTAL_SERVICE_QUEUE_2026_11_06 */
             document.querySelectorAll('#ci-reasons .ci-tile.on').forEach(function (c) { c.classList.remove('on'); c.setAttribute('aria-pressed', 'false'); });
@@ -21130,7 +21199,7 @@ function loadTicketThread(client, ticketId) {
            * surfaces as a note so staff add it in Charges. */
           var startChain = function (svcChargeFailed) {
             if (consent && newId) {
-              fileCiConsent(client, newId, row, consent, function (fileErr) { afterConsent(!!fileErr, svcChargeFailed); });
+              fileCiConsent(client, newId, row, consent, function (fileErr) { afterConsent(!!fileErr, svcChargeFailed); }, ciContactVal);
             } else {
               afterConsent(!!consent, svcChargeFailed);
             }

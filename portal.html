@@ -1497,15 +1497,24 @@
         <form id="ci-form" novalidate>
           <!-- CHECKIN_COLLAPSE_2026_11_04 (Austin, Nov 4, 2026): the check-in form folds into tappable sections, like the ticket drawer's sections in the Service Queue — Customer starts open, the rest start closed, and the Create ticket button and Clear check-in stay outside the sections at the bottom, always visible. Every field id is exactly as it was; only the folding wrappers were added. -->
           <div class="ci-acc" data-ci-acc="customer">
-          <button type="button" class="ci-acc-head ci-acc-open" data-ci-acc-toggle="customer" aria-expanded="true"><span class="ci-acc-title">Guest</span><i class="fas fa-chevron-down ci-acc-chev" aria-hidden="true"></i></button>
+          <button type="button" class="ci-acc-head ci-acc-open" data-ci-acc-toggle="customer" aria-expanded="true"><span class="ci-acc-title">Guest or Business</span><i class="fas fa-chevron-down ci-acc-chev" aria-hidden="true"></i></button>
           <div class="ci-acc-body" data-ci-acc-body="customer">
+          <!-- V164_GUEST_BUSINESS_2026_11_17 (Austin, Nov 17, 2026): the form asks Guest or Business FIRST — before the Name field — and the fields, the ATR One label and the read-aloud script follow the choice. Guest: Name. Business: Business name + Contact name (the person speaking). -->
+          <div class="portal-field">
+            <label for="ci-customer-type">Guest or Business *</label>
+            <select id="ci-customer-type">
+              <option value="guest" selected>Guest</option>
+              <option value="business">Business</option>
+            </select>
+          </div>
           <div class="portal-field">
             <label for="ci-search">Find existing guest</label>
             <input type="search" id="ci-search" placeholder="Start typing a name&hellip;" autocomplete="off" />
             <div id="ci-results"></div>
           </div>
           <div class="portal-nh-grid">
-            <div class="portal-field"><label for="ci-name">Name *</label><input type="text" id="ci-name" required /></div>
+            <div class="portal-field"><label for="ci-name" id="ci-name-label">Name *</label><input type="text" id="ci-name" required /></div>
+            <div class="portal-field" id="ci-contact-wrap" hidden><label for="ci-contact">Contact name *</label><input type="text" id="ci-contact" placeholder="Person you are speaking to" /></div>
             <div class="portal-field"><label for="ci-phone">Phone *</label><input type="tel" id="ci-phone" required /></div>
             <div class="portal-field"><label for="ci-email">Email *</label><input type="email" id="ci-email" required /></div>
             <div class="portal-field"><label for="ci-address">Service address *</label><input type="text" id="ci-address" required placeholder="Street, city, ZIP" /></div>
@@ -1536,7 +1545,7 @@
           <button type="button" class="ci-acc-head" data-ci-acc-toggle="atrone" aria-expanded="false"><span class="ci-acc-title">ATR One</span><i class="fas fa-chevron-down ci-acc-chev" aria-hidden="true"></i></button>
           <div class="ci-acc-body" data-ci-acc-body="atrone" hidden>
           <div class="portal-field">
-            <label for="ci-atrone">Is this guest an ATR One Plus (paid) member?</label>
+            <label for="ci-atrone" id="ci-atrone-label">Is this guest an ATR One Plus (paid) member?</label>
             <select id="ci-atrone">
               <option value="">No paid plan (ATR One Free)</option>
               <option value="member">Yes &mdash; ATR One Plus member</option>
@@ -1639,7 +1648,7 @@
             <label for="ci-notes">Check-in notes &mdash; the symptom, and how you verified it</label>
             <textarea id="ci-notes" rows="3" placeholder="e.g. Left bud silent; swapped buds in case, fault follows the bud. Case charges fine."></textarea>
           </div>
-          <!-- PORTAL_CHECKIN_CONSENT_2026_10_30: Agreements section (one contiguous block; wired in portal.js by wireCiConsent). The read-aloud script text itself lives in portal.js (CI_CONSENT_SCRIPT) so the filed verbal record quotes the same string the staff read. -->
+          <!-- PORTAL_CHECKIN_CONSENT_2026_10_30: Agreements section (one contiguous block; wired in portal.js by wireCiConsent). The read-aloud script text itself lives in portal.js (CI_CONSENT_SCRIPT_GUEST / CI_CONSENT_SCRIPT_BUSINESS, picked by the Guest or Business selector) so the filed verbal record quotes the same string the staff read. -->
           <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Agreements</h3></div>
           <p class="portal-muted portal-small">One agreement covers everything &mdash; the Repair Authorization, the Terms &amp; Conditions, and the 1-Year Warranty. Take it now, in person or by phone, and it files itself on the ticket. Skipping is fine too &mdash; it can be signed later from the ticket&rsquo;s Documents section.</p>
           <p class="portal-muted portal-small" style="margin-bottom:0.25rem;">By phone, read this statement to the guest, word for word:</p>
@@ -1649,7 +1658,7 @@
             <button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="ci-sign-btn"><i class="fas fa-pen-nib"></i> Guest signs now</button>
             <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="ci-consent-clear" hidden>Clear agreement</button>
           </div>
-          <label class="ci-consent-verbal"><input type="checkbox" id="ci-verbal-check" /> <span>Verbal agreement by phone &mdash; I read the statement above to the guest and they verbally agreed</span></label>
+          <label class="ci-consent-verbal"><input type="checkbox" id="ci-verbal-check" /> <span>Verbal agreement by phone &mdash; I read the statement above and they verbally agreed</span></label>
           <p class="portal-muted portal-small" id="ci-consent-status">No agreement captured yet.</p>
           </div>
           </div>
