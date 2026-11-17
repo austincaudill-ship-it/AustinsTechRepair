@@ -320,6 +320,10 @@
         <button class="portal-tab" id="portal-tab-mileage" type="button" role="tab" data-tab="mileage">
           <i class="fas fa-route"></i> Mileage
         </button>
+        <!-- V166_BUSINESS_CARD_2026_11_17 (Austin, Nov 17, 2026): a Business Card action button in the Associates group — Austin's digital business card with a scannable QR code to the About page, so he can show it off when someone asks for a card. Same tier as the other Associates buttons (no TAB_GATES entry). Panel: portal-panel-businesscard, static — no loader. -->
+        <button class="portal-tab" id="portal-tab-businesscard" type="button" role="tab" data-tab="businesscard">
+          <i class="fas fa-id-card"></i> Business Card
+        </button>
         <!-- ACCOUNT_CONTROLS_2026_11_03 (Austin, Nov 3, 2026): Employee Onboarding, Documents and Job Applications moved OUT of this group into the Admin group below — they are owner-side tools, not associate tools. Buttons only: ids, data-tab values and panels are unchanged, so every handler keyed to them works exactly as before. -->
         <div class="portal-nav-group" id="portal-nav-group-admin">Admin</div>
         <!-- ASSOCIATE_ACCOUNTS_2026_11_03 (Austin, Nov 3, 2026): the Associates roster (PORTAL_SIDEBAR_ROSTER_2026_11_02 — every employee_profiles row as a profile card; TEAMCHAT_CHANNELS_2026_11_03 moved its button into Admin, first in the group) and Account Controls (ACCOUNT_CONTROLS_2026_11_03 — the same people as logins) were "kinda the same thing", so Austin merged them: ONE "Associate Accounts" Action Button, first in the Admin group, opening portal-panel-associateaccounts — each person's card carries their profile AND their login in one place. Austin's chosen name for the merged panel: "Associate Accounts". -->
@@ -1844,6 +1848,32 @@
         <div class="p2-form-row"><input type="text" id="p2-track-number" placeholder="Tracking number" aria-label="Tracking number" />
         <button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-track-btn"><i class="fas fa-truck-fast"></i> Track</button></div>
         <div id="p2-track-result" hidden></div>
+      </div>
+
+      <!-- V166_BUSINESS_CARD_2026_11_17 (Austin, Nov 17, 2026): the Business Card panel — Austin's digital business card. The QR code encodes exactly https://austinstechrepairgroup.com/#about (the About page), embedded as a base64 data URI from atrg-qr-about.png (business-card-pass-2026-11-17), so the card works with no extra file to publish. Static panel — no loader, no database reads. -->
+      <div class="portal-panel" id="portal-panel-businesscard" role="tabpanel" hidden>
+        <div class="portal-panel-head"><h2 class="portal-h2">Business Card</h2></div>
+        <p class="portal-muted portal-small">Austin's digital business card. Show the QR code and anyone can scan it to visit the About page.</p>
+        <div class="bizcard">
+          <div class="bizcard-top">
+            <div class="bizcard-name">Austin Caudill</div>
+            <div class="bizcard-role">Owner</div>
+            <div class="bizcard-company">Austin's Tech Repair Group</div>
+            <div class="bizcard-slogan">Every technology, big or small — we tackle them all.</div>
+          </div>
+          <div class="bizcard-qr">
+            <a href="https://austinstechrepairgroup.com/#about" target="_blank" rel="noopener" aria-label="Open the About page"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAzQAAAM0AQAAAABFCVraAAAEfUlEQVR4nO3dQW7cMAxAUarI3r5B7n+s3EA6AbswZZGy3KRoGsCcz8VgZqzxA7SJIpNUUfmJaL9+hBHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHB+XlH9IzLpU1VtYqo1vUFu0G1u6xvoKqqNdu84eDg4ODgZHbe/Ietug/leNm0v4iIHt+1IiqbhsFbXd6gR7Z5w8HBwcHBeSWnHLFfBqpWu6qqqn5c2E64uUH2ecPBwcHBwXkhR/WjFP+xikyrgtsVxd843xY4ODg4ODg4/x5vnw8RlVZEjgcKmx7PFyza3p85fBLZ5g0HBwcHByezM68PbtslqVsVhDSDr90g27zh4ODg4OBkdsL6oF22AXx+4vFSz8TF6r67vUGPbPOGg4ODg4OT2XHrg9V//rZr0Eq42spxQc+fjZebyDZvODg4ODg4L+M0yzW0d7uIyKZqLyFKeVcVaWW5Y2B3uXP+Y+Dg4ODg4OB8Q6iLevZCmjogqS0SxrjVXexdvwH9kXBwcHBwcB7qLOsXfElCTy5Q95AhZCKotF2skqHt53fTvkK2ecPBwcHBwcnszPsH/j//eg4KWwejofLYWPD3q3EXgv0DHBwcHBycpznX+sa+TTAVJ/QOylbJ4L9zv93PbYcpYSHbvOHg4ODg4GR23PpgHLMw+h71lULtjxb6hRG+dGGsCuZx2eYNBwcHBwcns/OV8xt9EcMqSTFc9b91Ty6yzRsODg4ODk5mZ14fXCoZboasDnn271gf4ODg4ODgPNcJ/ZF6IYKISE8zaPucZmCDR/RKBnE9FefINm84ODg4ODiZnfv6Rv/RlTZWsSWEq2+MywGX4FjPL7PNGw4ODg4OTmZnmZ/YD1eo/YKI2Kqgn+RoSwMRV87Qr1Z3tUe2ecPBwcHBwcnsSMwTcDmGvs1BjYOryCVnsS4SE+h/gIODg4OD80gn7B+If1rgHxqMhgc99BzsSxuPJoqrIxmyzRsODg4ODk5m59oIMVQerJojrs9sCr/l/AUcHBwcHJwnO/fnO1tXpOMs571XN8i5axByDSz6YOH8BRwcHBwcnAc7oX6hNz1c1SVYGuLIRRxljOGkpmtqoojkmzccHBwcHJzMzv1BS1M3xD8kJE4RHjLwfAEHBwcHB+d5zvx84frn3ucijpgyFX0xZM9ZpL4RBwcHBwfn+U6ZY7eExFL2c1ArZZQ72oVWiv+4LfYUMs8bDg4ODg5OOifkH4Q2yuV8GX/uNbZbnvYU+hGPJXw8Itu84eDg4ODgvJIztg5ExDIMStnjJoKIiGx2waLZL0eKQvhF9nnDwcHBwcHJ5CzPXxhhRY4jNu0ZBqM1Ui978P2RqG/EwcHBwcF5rvPJ+kBExBUvjtMdR8PEMWQE9Y04ODg4ODiZnOnABUs+7CmHpbzHhwfX7oo2RKYnEtnnDQcHBwcHJ5MT+h9Mce20PHU9sI/ju9AxwUfNNm84ODg4ODiZnbJqePD90bLNGw4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODs6I3/V8Bt/DGC2XAAAAAElFTkSuQmCC" alt="QR code to the Austin's Tech Repair Group About page" width="220" height="220"></a>
+            <div class="bizcard-qr-cap">Scan to visit our About page</div>
+            <div class="bizcard-qr-url">austinstechrepairgroup.com/#about</div>
+          </div>
+          <div class="bizcard-contact">
+            <div class="bizcard-row"><i class="fas fa-phone"></i> <a href="tel:+19372806243">+1 (937) 280-6243</a></div>
+            <div class="bizcard-row"><i class="fas fa-envelope"></i> <a href="mailto:service@austinstechrepairgroup.com">service@austinstechrepairgroup.com</a></div>
+            <div class="bizcard-row"><i class="fas fa-globe"></i> <a href="https://austinstechrepairgroup.com/" target="_blank" rel="noopener">austinstechrepairgroup.com</a></div>
+            <div class="bizcard-row"><i class="fas fa-house"></i> House calls — we come to you</div>
+          </div>
+          <a class="portal-btn portal-btn-primary bizcard-open" href="https://austinstechrepairgroup.com/#about" target="_blank" rel="noopener">Open About page</a>
+        </div>
       </div>
 
       <!-- PRICE BOOK -->

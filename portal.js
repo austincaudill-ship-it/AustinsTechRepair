@@ -1845,7 +1845,7 @@
     var tabs = document.querySelectorAll('.portal-tab');
     tabs.forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === name); });
     /* PASS10_2026_11_04: 'tracking' (the Live Tracking panel) hides and shows with the rest too */
-    ['tickets', 'estimates', 'applications', 'investors', 'feedback', 'customers', 'leads', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'tracking', 'documents', 'financials', 'payroll', 'mileage', 'teamchat', 'guestchat', 'associateaccounts', 'warranty', 'setup', 'home', 'virtual'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too; ASSOCIATE_ACCOUNTS_2026_11_03: 'associateaccounts' hides and shows with the rest too (it absorbed ACCOUNT_CONTROLS_2026_11_03's 'accountcontrols' and the roster's 'associates'); WARRANTY_PORTAL_2026_11_03: 'warranty' hides and shows with the rest too; PORTAL_SETUP_2026_11_04: 'setup' hides and shows with the rest too; PORTAL_HOME_2026_11_09: 'home' hides and shows with the rest too; LEADS_2026_11_15: 'leads' hides and shows with the rest too; QR_FIX_PASS_2026_11_05: 'scanin' is GONE from this list — the scanner is a popup now, there is no scanin panel to hide or show */
+    ['tickets', 'estimates', 'applications', 'investors', 'feedback', 'customers', 'leads', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'tracking', 'documents', 'financials', 'payroll', 'mileage', 'businesscard', /* V166_BUSINESS_CARD_2026_11_17: the Business Card panel hides and shows with the rest too */ 'teamchat', 'guestchat', 'associateaccounts', 'warranty', 'setup', 'home', 'virtual'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too; ASSOCIATE_ACCOUNTS_2026_11_03: 'associateaccounts' hides and shows with the rest too (it absorbed ACCOUNT_CONTROLS_2026_11_03's 'accountcontrols' and the roster's 'associates'); WARRANTY_PORTAL_2026_11_03: 'warranty' hides and shows with the rest too; PORTAL_SETUP_2026_11_04: 'setup' hides and shows with the rest too; PORTAL_HOME_2026_11_09: 'home' hides and shows with the rest too; LEADS_2026_11_15: 'leads' hides and shows with the rest too; QR_FIX_PASS_2026_11_05: 'scanin' is GONE from this list — the scanner is a popup now, there is no scanin panel to hide or show */
       $('portal-panel-' + n).hidden = n !== name;
     });
     closeDrawer();
@@ -22464,7 +22464,7 @@ function loadTicketThread(client, ticketId) {
     documents: 'Documents', warranty: 'Warranty', inventory: 'Inventory',
     links: 'Links', prices: 'Prices', guides: 'Guides', tracking: 'Tracking',
     teamchat: 'Team Chat', requests: 'Requests', timeclock: 'Time Clock',
-    mileage: 'Mileage', associateaccounts: 'Accounts', investors: 'Investors',
+    mileage: 'Mileage', businesscard: 'Business Card', /* V166_BUSINESS_CARD_2026_11_17 */ associateaccounts: 'Accounts', investors: 'Investors',
     feedback: 'Feedback', square: 'Square', newhires: 'Onboarding',
     teamdocs: 'Team Docs', applications: 'Applications', setup: 'Setup',
     financials: 'Financials', payroll: 'Payroll', pay: 'Pay', search: 'Search'

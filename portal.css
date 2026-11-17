@@ -2283,3 +2283,20 @@ html[data-theme="dark"] .portal-quickactions-label {
 .ci-choose span{font-weight:400;opacity:.85;font-size:.85rem}
 .ci-est-type{display:flex;gap:.5rem}
 #ci-est-form .ci-consent-script{margin:.25rem 0 .75rem}
+
+/* V166_BUSINESS_CARD_2026_11_17 (Austin, Nov 17, 2026): the digital business card in the Associate Hub. Company colors — black header band, orange accent, blue outline. Uses the portal surface/text/muted vars so dark mode keeps working; the QR area stays white in every mode so the code always scans. */
+.bizcard { max-width: 420px; width: 100%; margin: 0 auto; border: 2px solid #0057B8; border-radius: 16px; overflow: hidden; background: var(--surface, #fff); color: var(--text, #2b2118); }
+.bizcard-top { background: #111111; color: #ffffff; padding: 20px 20px 16px; text-align: center; border-bottom: 4px solid #C24A09; }
+.bizcard-name { font-size: 1.5rem; line-height: 1.2; }
+.bizcard-role { color: #F5A623; margin-top: 2px; }
+.bizcard-company { margin-top: 8px; }
+.bizcard-slogan { margin-top: 8px; font-size: 0.9rem; color: #CCCCCC; }
+.bizcard-qr { background: #ffffff; text-align: center; padding: 20px 16px 12px; }
+.bizcard-qr img { width: 220px; max-width: 80vw; height: auto; display: block; margin: 0 auto; }
+.bizcard-qr-cap { margin-top: 10px; color: #2b2118; }
+.bizcard-qr-url { font-size: 0.85rem; color: #6f6152; margin-top: 2px; }
+.bizcard-contact { padding: 12px 20px 16px; display: flex; flex-direction: column; gap: 8px; }
+.bizcard-row { display: flex; align-items: center; gap: 10px; }
+.bizcard-row i { color: #0057B8; width: 18px; text-align: center; }
+.bizcard-row a { color: var(--text, #2b2118); }
+.bizcard-open { display: block; margin: 0 20px 20px; text-align: center; }
