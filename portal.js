@@ -1759,7 +1759,7 @@
 
   /* ================= TABS ================= */
   var LOADERS = {
-    tickets: loadTickets, applications: loadApplications, investors: loadInvestors,
+    tickets: loadTickets, estimates: loadEstimates, applications: loadApplications, investors: loadInvestors,
     feedback: loadFeedback, customers: loadCustomers, members: loadAtrOneMembers, inventory: loadInventory,
     documents: loadDocumentsTab, financials: loadFinancials,
     /* PAYROLL_SPLIT_2026_11_03: Payroll is its own tab now (see loadPayroll). */
@@ -1822,6 +1822,14 @@
      * not see it — a remembered tab or a stale click lands on
      * the ticket queue instead. */
     if (!tabAllowed(name)) name = 'tickets';
+    /* V165_ESTIMATE_2026_11_17: New Service Estimate is its own sidebar button directly above New Service Request. It opens this same panel on the estimate sheet instead of the request form. */
+    if (name === 'estimate') {
+      activateTab('checkin');
+      saveActiveTab('estimate');
+      lastPortalTab = 'estimate';
+      ciChooseEstimate();
+      return;
+    }
     /* QR_FIX_PASS_2026_11_05: Scan In is a popup, not a tab — hand it
      * to openScanInPopup and leave the current view, the active-tab
      * marker, and the remembered tab exactly as they are. (Pass 4's
@@ -1837,7 +1845,7 @@
     var tabs = document.querySelectorAll('.portal-tab');
     tabs.forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === name); });
     /* PASS10_2026_11_04: 'tracking' (the Live Tracking panel) hides and shows with the rest too */
-    ['tickets', 'applications', 'investors', 'feedback', 'customers', 'leads', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'tracking', 'documents', 'financials', 'payroll', 'mileage', 'teamchat', 'guestchat', 'associateaccounts', 'warranty', 'setup', 'home', 'virtual'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too; ASSOCIATE_ACCOUNTS_2026_11_03: 'associateaccounts' hides and shows with the rest too (it absorbed ACCOUNT_CONTROLS_2026_11_03's 'accountcontrols' and the roster's 'associates'); WARRANTY_PORTAL_2026_11_03: 'warranty' hides and shows with the rest too; PORTAL_SETUP_2026_11_04: 'setup' hides and shows with the rest too; PORTAL_HOME_2026_11_09: 'home' hides and shows with the rest too; LEADS_2026_11_15: 'leads' hides and shows with the rest too; QR_FIX_PASS_2026_11_05: 'scanin' is GONE from this list — the scanner is a popup now, there is no scanin panel to hide or show */
+    ['tickets', 'estimates', 'applications', 'investors', 'feedback', 'customers', 'leads', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'tracking', 'documents', 'financials', 'payroll', 'mileage', 'teamchat', 'guestchat', 'associateaccounts', 'warranty', 'setup', 'home', 'virtual'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too; ASSOCIATE_ACCOUNTS_2026_11_03: 'associateaccounts' hides and shows with the rest too (it absorbed ACCOUNT_CONTROLS_2026_11_03's 'accountcontrols' and the roster's 'associates'); WARRANTY_PORTAL_2026_11_03: 'warranty' hides and shows with the rest too; PORTAL_SETUP_2026_11_04: 'setup' hides and shows with the rest too; PORTAL_HOME_2026_11_09: 'home' hides and shows with the rest too; LEADS_2026_11_15: 'leads' hides and shows with the rest too; QR_FIX_PASS_2026_11_05: 'scanin' is GONE from this list — the scanner is a popup now, there is no scanin panel to hide or show */
       $('portal-panel-' + n).hidden = n !== name;
     });
     closeDrawer();
@@ -1846,6 +1854,8 @@
      * inside its popup, and the popup never survives a tab change. */
     closeScanInPopup();
     lastPortalTab = name;
+    /* V165_ESTIMATE_2026_11_17: opening New Service Request shows the request form as built — the Guest/Business toggle inside it (v164) does the version work. */
+    if (name === 'checkin') ciShowNsr();
     /* TEAMCHAT_2026_11_03: reopening Team Chat restarts its refresh
      * poll and pulls anything new; switching to any other tab stops
      * the poll so a closed panel is never polled. */
@@ -2112,6 +2122,489 @@
         '<div class="portal-card-actions"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-view-ticket="' + esc(t.id) + '"><i class="fas fa-eye"></i> View details</button></div>' +
         '</article>';
     }).join('');
+  }
+
+  /* ================= V165_ESTIMATE_2026_11_17 =================
+   * New Service Estimate + Estimates list (Austin, Nov 17, 2026).
+   * THE ACCOUNT RULE, stated once so no later edit can drift it:
+   * creating an estimate writes ONE row in public.estimates and
+   * emails the guest a link to their estimate page. NO account is
+   * made, NO guest record is created, NO ticket is created, NOTHING
+   * enters the Service Queue. The account is made ONLY when the
+   * guest taps the link in that email (estimate page, index.html).
+   * The ticket is made ONLY when the guest presses Confirm there,
+   * or staff Record Confirm on the phone (live path). Deny sends
+   * the no-hard-feelings email and never makes a ticket.
+   * On Confirm the ticket is created with status Awaiting
+   * Scheduling, the visit fee is charged on the ticket ($14.99
+   * guest / $34.99 business, skipped for ATR One members), and
+   * staff then book the date and time with the guest — the
+   * estimate itself never books an appointment. */
+  var FORM_ALERT_URL = SUPABASE_URL + '/functions/v1/form-alert';
+  var ESTIMATE_DECIDE_URL = SUPABASE_URL + '/functions/v1/estimate-decide';
+  function v165NewId() {
+    if (window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID();
+    var d = new Date().getTime();
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+      var r = (d + Math.random() * 16) % 16 | 0; d = Math.floor(d / 16);
+      return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
+  }
+  /* Same fire-and-forget form-alert POST the website forms use
+   * (atr-forms.js sendAlert): kind + subject + rows. The new kinds
+   * (estimate-link, estimate-declined) are a deploy companion for
+   * the form-alert Edge Function — see estimates.sql / REPORT.md. */
+  function v165SendAlert(subject, rows, kind, token) {
+    var clean = (rows || []).map(function (r) {
+      return [String(r[0]), r[1] === '' || r[1] == null ? '(not provided)' : String(r[1])];
+    });
+    var body = { kind: kind, subject: subject, rows: clean };
+    if (token) body.token = token;
+    try {
+      fetch(FORM_ALERT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY, 'apikey': SUPABASE_ANON_KEY },
+        body: JSON.stringify(body)
+      }).catch(function () {});
+    } catch (e) {}
+  }
+  function v165VisitFee(audience) { return audience === 'business' ? 34.99 : 14.99; }
+  function estimatePageLink(e) {
+    return window.location.origin + '/#estimate/' + (e.public_token || e.id);
+  }
+  function estimateDeviceLabel(e) {
+    return [e.device_type, e.brand, e.model].filter(Boolean).join(' ') || 'Device';
+  }
+  function estimateMoney(n) {
+    var v = Number(n);
+    return isNaN(v) ? '—' : '$' + v.toFixed(2);
+  }
+  function estimateDeclineRows(e) {
+    return [
+      ['Email', e.email || ''],
+      ['Name', e.name || ''],
+      ['Message', "Thank you for considering Austin's Tech Repair Group. We appreciate your business, and we understand it was not a good time for you. If we can help you in the future, please let us know — we'd be glad to hear from you."]
+    ];
+  }
+
+  /* ---------- New Service Request vs New Service Estimate ----------
+   * V165_ESTIMATE_2026_11_17 (Austin, Nov 17, 2026 — supersedes the
+   * earlier "two versions" wording): ONE New Service Request button;
+   * the Guest/Business toggle INSIDE the form (v164) changes it.
+   * New Service Estimate is its own sidebar button directly ABOVE
+   * New Service Request, and it opens this same panel on the
+   * estimate sheet instead. */
+  function ciShowNsr() {
+    var f = $('ci-form'), ef = $('ci-est-form');
+    if (f) f.hidden = false;
+    if (ef) ef.hidden = true;
+    var et = $('portal-tab-estimate'), ct = $('portal-tab-checkin');
+    if (et) et.classList.remove('active');
+    if (ct) ct.classList.add('active');
+    saveActiveTab('checkin');
+  }
+  function ciChooseEstimate() {
+    var f = $('ci-form'), ef = $('ci-est-form');
+    if (f) f.hidden = true;
+    if (ef) ef.hidden = false;
+    var et = $('portal-tab-estimate'), ct = $('portal-tab-checkin');
+    if (et) et.classList.add('active');
+    if (ct) ct.classList.remove('active');
+    wireCiEstForm();
+    ciEstPaintType();
+  }
+
+  /* ---------- the ONE estimate sheet ---------- */
+  var ciEstType = 'guest';
+  var ciEstWired = false;
+  function ciEstPaintType() {
+    var biz = ciEstType === 'business';
+    var g = $('ci-est-type-guest'), b = $('ci-est-type-business');
+    if (g) { g.className = 'portal-btn portal-btn-sm ' + (biz ? 'portal-btn-outline' : 'portal-btn-primary'); g.setAttribute('aria-pressed', biz ? 'false' : 'true'); }
+    if (b) { b.className = 'portal-btn portal-btn-sm ' + (biz ? 'portal-btn-primary' : 'portal-btn-outline'); b.setAttribute('aria-pressed', biz ? 'true' : 'false'); }
+    var lbl = $('ci-est-name-label');
+    if (lbl) lbl.textContent = biz ? 'Business name *' : 'Name *';
+    var cw = $('ci-est-contact-wrap');
+    if (cw) cw.hidden = !biz;
+    var al = $('ci-est-atrone-label');
+    if (al) al.textContent = biz ? 'Is this business an ATR One Plus (paid) member?' : 'Is this guest an ATR One Plus (paid) member?';
+    var sc = $('ci-est-script');
+    if (sc) sc.textContent = biz ? CI_CONSENT_SCRIPT_BUSINESS : CI_CONSENT_SCRIPT_GUEST;
+  }
+  function wireCiEstForm() {
+    if (ciEstWired) return;
+    var g = $('ci-est-type-guest'), b = $('ci-est-type-business');
+    if (!g || !b) return;
+    ciEstWired = true;
+    g.addEventListener('click', function () { ciEstType = 'guest'; ciEstPaintType(); });
+    b.addEventListener('click', function () { ciEstType = 'business'; ciEstPaintType(); });
+    var back = $('ci-est-back');
+    if (back) back.addEventListener('click', ciShowNsr);
+    var sub = $('ci-est-submit');
+    if (sub) sub.addEventListener('click', ciEstSubmit);
+  }
+  function ciEstReset() {
+    ['ci-est-name', 'ci-est-contact', 'ci-est-phone', 'ci-est-email', 'ci-est-address', 'ci-est-brand', 'ci-est-model', 'ci-est-issue', 'ci-est-amount'].forEach(function (id) { var el = $(id); if (el) el.value = ''; });
+    var dv = $('ci-est-device'); if (dv) dv.selectedIndex = 0;
+    var at = $('ci-est-atrone'); if (at) at.value = '';
+    ciEstType = 'guest'; ciEstPaintType();
+  }
+  function ciEstSubmit() {
+    var err = $('ci-est-error');
+    function fail(msg) { if (err) { err.textContent = msg; err.hidden = false; } }
+    if (err) err.hidden = true;
+    var biz = ciEstType === 'business';
+    var name = trim($('ci-est-name') ? $('ci-est-name').value : '');
+    var contact = trim($('ci-est-contact') ? $('ci-est-contact').value : '');
+    var phone = trim($('ci-est-phone') ? $('ci-est-phone').value : '');
+    var email = trim($('ci-est-email') ? $('ci-est-email').value : '');
+    var address = trim($('ci-est-address') ? $('ci-est-address').value : '');
+    var device = $('ci-est-device') ? $('ci-est-device').value : '';
+    var brand = trim($('ci-est-brand') ? $('ci-est-brand').value : '');
+    var model = trim($('ci-est-model') ? $('ci-est-model').value : '');
+    var issue = trim($('ci-est-issue') ? $('ci-est-issue').value : '');
+    var amount = Number($('ci-est-amount') ? $('ci-est-amount').value : NaN);
+    if (!name || !phone || !email || !address || !issue || (biz && !contact)) {
+      fail(biz ? 'Business name, contact name, phone, email, service address, and an issue are required for an estimate.' : 'Name, phone, email, service address, and an issue are required for an estimate.');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { fail("That email address doesn't look right."); return; }
+    if (isNaN(amount) || amount <= 0) { fail('Enter the estimate amount — the price you quoted the guest.'); return; }
+    var btn = $('ci-est-submit');
+    if (btn) btn.disabled = true;
+    /* NO account, NO guest record, NO ticket: the estimate row
+     * carries the person's details itself, and customer_id stays
+     * null until the guest taps the email link and makes an
+     * account. That link step lives on the estimate page. */
+    var row = {
+      id: v165NewId(), public_token: v165NewId(),
+      customer_id: null, ticket_id: null,
+      audience: ciEstType, name: name, contact_name: biz ? contact : null,
+      phone: phone, email: email, service_address: address,
+      device_type: device, brand: brand || null, model: model || null,
+      issue: issue, estimate_amount: amount, estimate_note: null,
+      atr_one: $('ci-est-atrone') ? $('ci-est-atrone').value : '',
+      status: 'Awaiting Estimate', source: 'check-in',
+      terms_accepted: false, work_auth_accepted: false
+    };
+    withClient(function (client) {
+      if (!client) { if (btn) btn.disabled = false; fail("Couldn't reach the database — try again."); return; }
+      client.from('estimates').insert(row).select('id').single().then(function (res) {
+        if (btn) btn.disabled = false;
+        if (res.error) { fail('Could not create the estimate — try again.'); return; }
+        v165SendAlert("Your estimate from Austin's Tech Repair Group", [
+          ['Email', email],
+          ['Name', name],
+          ['Device', estimateDeviceLabel(row)],
+          ["What's wrong", issue],
+          ['Estimate', estimateMoney(amount)],
+          ['Your estimate page', estimatePageLink(row)],
+          ['What happens next', 'Tap the link above to view your estimate. You can confirm or decline it there — nothing is booked until you confirm.']
+        ], 'estimate-link', row.public_token);
+        ciEstReset();
+        state.loaded.estimates = false;
+        activateTab('estimates');
+        loadEstimates(true);
+        setTimeout(function () { docMsg('Estimate created — the guest gets an email with their estimate link.'); }, 450);
+      }).catch(function () { if (btn) btn.disabled = false; fail('Could not create the estimate — try again.'); });
+    });
+  }
+
+  /* ---------- Estimates list ---------- */
+  var estimatesAllRows = [];
+  var estimatesSearchTerm = '';
+  var estimatesSearchWired = false;
+  function estimateRowMatches(e, term) {
+    var q = String(term || '').trim().toLowerCase();
+    if (!q) return true;
+    if (String(e.name || '').toLowerCase().indexOf(q) !== -1) return true;
+    if (String(e.contact_name || '').toLowerCase().indexOf(q) !== -1) return true;
+    if (estimateDeviceLabel(e).toLowerCase().indexOf(q) !== -1) return true;
+    var digits = q.replace(/\D/g, '');
+    if (digits && !/[a-z]/.test(q) && String(e.phone || '').replace(/\D/g, '').indexOf(digits) !== -1) return true;
+    return false;
+  }
+  function renderEstimates(rows) {
+    var list = $('portal-estimates-list');
+    estimatesAllRows = rows || [];
+    var view = estimatesSearchTerm ? estimatesAllRows.filter(function (e) { return estimateRowMatches(e, estimatesSearchTerm); }) : estimatesAllRows;
+    if (!view.length) {
+      emptyState(list, estimatesSearchTerm ? 'No estimates match that search. Clear the search to see them all.' : 'No estimates yet — create one from New Service Request.');
+      return;
+    }
+    list.innerHTML = view.map(function (e) {
+      var pill = '<span class="portal-badge">' + esc(e.status || '') + '</span>';
+      var amt = '<p class="portal-card-meta"><strong>Estimate: ' + esc(estimateMoney(e.estimate_amount)) + '</strong> &middot; visit fee ' + esc(estimateMoney(v165VisitFee(e.audience))) + ' due only when confirmed</p>';
+      var who = esc(e.name || 'No name given') + (e.audience === 'business' && e.contact_name ? ' &middot; ' + esc(e.contact_name) : '') + (e.audience === 'business' ? ' <span class="portal-badge portal-badge-source">Business</span>' : '');
+      var phone = trim(e.phone);
+      var phoneHtml = phone ? ' &middot; <a href="tel:' + esc(phone.replace(/[^0-9+]/g, '')) + '">' + esc(phone) + '</a>' : '';
+      var actions = '';
+      if (e.status === 'Awaiting Estimate') {
+        actions = '<div class="portal-card-actions">' +
+          '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-est-confirm="' + esc(e.id) + '"><i class="fas fa-check"></i> Confirm</button>' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-est-decline="' + esc(e.id) + '"><i class="fas fa-xmark"></i> Deny</button>' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-view-estimate="' + esc(e.id) + '"><i class="fas fa-eye"></i> View details</button></div>';
+      } else if (e.status === 'Accepted' && e.ticket_id) {
+        actions = '<div class="portal-card-actions"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-view-ticket="' + esc(e.ticket_id) + '"><i class="fas fa-eye"></i> View ticket</button></div>';
+      } else {
+        actions = '<div class="portal-card-actions"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-view-estimate="' + esc(e.id) + '"><i class="fas fa-eye"></i> View details</button></div>';
+      }
+      return '<article class="portal-card" data-view-estimate="' + esc(e.id) + '" style="cursor:pointer">' +
+        '<div class="portal-card-top"><p class="portal-card-title">' + esc(estimateDeviceLabel(e)) + '</p><span class="portal-card-topright">' + pill + '</span></div>' +
+        '<p class="portal-card-meta"><i class="fas fa-user"></i> ' + who + phoneHtml + '</p>' +
+        (e.email ? '<p class="portal-card-meta"><i class="fas fa-envelope"></i> ' + esc(e.email) + '</p>' : '') +
+        amt +
+        '<p class="portal-card-issue">' + esc(e.issue || '') + '</p>' +
+        '<p class="portal-card-meta">Received ' + esc(fmtDateTime(e.created_at)) + '</p>' +
+        actions + '</article>';
+    }).join('');
+  }
+  function loadEstimates(force) {
+    var list = $('portal-estimates-list');
+    if (!list) return;
+    if (!force) list.innerHTML = '<p class="portal-muted">Loading estimates&hellip;</p>';
+    wireEstimatesSearch();
+    withClient(function (client) {
+      if (!client) { listError(list, 'estimates'); return; }
+      var filter = $('portal-estimates-filter') ? $('portal-estimates-filter').value : 'all';
+      var q = client.from('estimates').select('*').order('created_at', { ascending: false }).limit(200);
+      if (filter !== 'all') q = q.eq('status', filter);
+      q.then(function (res) {
+        if (res.error) { listError(list, 'estimates'); return; }
+        state.loaded.estimates = true;
+        renderEstimates(res.data || []);
+        var open = (res.data || []).filter(function (e) { return e.status === 'Awaiting Estimate'; }).length;
+        setCount('portal-count-estimates', $('portal-estimates-filter') && $('portal-estimates-filter').value === 'all' ? open : 0);
+      }).catch(function () { listError(list, 'estimates'); });
+    });
+  }
+  function syncEstimatesSearchClear() {
+    var btn = $('portal-estimates-search-clear'), inp = $('portal-estimates-search');
+    if (btn && inp) btn.hidden = !inp.value;
+  }
+  function applyEstimatesSearch() {
+    var inp = $('portal-estimates-search');
+    estimatesSearchTerm = inp ? inp.value : '';
+    syncEstimatesSearchClear();
+    renderEstimates(estimatesAllRows);
+  }
+  function wireEstimatesSearch() {
+    if (estimatesSearchWired) return;
+    var inp = $('portal-estimates-search');
+    if (!inp) return;
+    estimatesSearchWired = true;
+    inp.addEventListener('input', applyEstimatesSearch);
+    var clearBtn = $('portal-estimates-search-clear');
+    if (clearBtn) clearBtn.addEventListener('click', function () { inp.value = ''; applyEstimatesSearch(); try { inp.focus(); } catch (e) {} });
+    var filter = $('portal-estimates-filter');
+    if (filter) filter.addEventListener('change', function () { loadEstimates(true); });
+  }
+  function estimateTicketRow(e, guestId) {
+    return {
+      customer_id: guestId || e.customer_id || null,
+      customer_name: e.name,
+      customer_phone: e.phone,
+      customer_email: e.email || null,
+      service_address: e.service_address || null,
+      device_type: e.device_type,
+      brand: e.brand || null,
+      model: e.model || null,
+      issue: e.issue,
+      issue_reason: e.issue,
+      job_date: null, appointment_at: null,
+      source: 'estimate',
+      status: 'Awaiting Scheduling',
+      terms_accepted: true,
+      dispatch_acknowledged: true,
+      work_auth_accepted: true,
+      marketing_opt_in: false
+    };
+  }
+  /* Staff Record Confirm — the LIVE PATH: the guest is on the phone,
+   * staff read the script, the guest confirmed and signed. The
+   * checkbox is the record of that; without it the button does
+   * nothing. Same result as the guest pressing Confirm on their
+   * estimate page. */
+  function acceptEstimate(id, fromRow) {
+    if (fromRow) { openEstimate(id, true); return; }
+    var box = $('est-phone-confirm');
+    var msg = $('est-msg');
+    function fail(m) { if (msg) { msg.textContent = m; } }
+    if (box && !box.checked) { fail('Tick the box first — the guest must confirm on the phone and sign before this becomes a ticket.'); return; }
+    if (msg) msg.textContent = 'Confirming…';
+    withClient(function (client) {
+      if (!client) { fail("Couldn't reach the database — try again."); return; }
+      client.from('estimates').select('*').eq('id', id).maybeSingle().then(function (res) {
+        var e = res.data;
+        if (res.error || !e) { fail("Couldn't load that estimate — try again."); return; }
+        if (e.status !== 'Awaiting Estimate') { fail('This estimate was already decided.'); return; }
+        var row = estimateTicketRow(e, null);
+        var insertRow = function (r) { return client.from('tickets').insert(r).select('id').single(); };
+        if (!row.customer_id) {
+          insertRow = (function (orig) {
+            return function (r) {
+              if (r.customer_id) return orig(r);
+              return ensureGuestForTicket(client, { name: r.customer_name, email: r.customer_email, phone: r.customer_phone, address: r.service_address }).then(function (guestId) {
+                if (guestId) r.customer_id = guestId;
+                return orig(r);
+              });
+            };
+          })(insertRow);
+        }
+        insertRow(row).then(function (ires) {
+          if (ires.error) { fail('Could not create the ticket — try again.'); return; }
+          var newId = ires.data && ires.data.id;
+          var fee = (e.atr_one === 'member') ? 0 : v165VisitFee(e.audience);
+          var finish = function () {
+            client.from('estimates').update({ status: 'Accepted', ticket_id: newId, decided_at: new Date().toISOString() }).eq('id', id).then(function () {
+              if (newId) notifyTicketCreated(client, row, newId);
+              if (newId && e.audience === 'business' && e.contact_name) {
+                try {
+                  client.from('ticket_notes').insert({ ticket_id: newId, author: (state.profile && state.profile.name) || 'Associate', note: 'Business contact: ' + e.contact_name + ' — the person who spoke for the business at check-in.' }).then(function () {}, function () {});
+                } catch (err) {}
+              }
+              state.loaded.tickets = false; state.loaded.estimates = false;
+              closeDrawer();
+              loadEstimates(true); loadTickets(true);
+              if (newId) setTimeout(function () { openTicket(newId); }, 450);
+              setTimeout(function () { docMsg('Estimate confirmed — book the date and time with the guest. The visit fee is on the ticket.'); }, 900);
+            });
+          };
+          if (fee > 0 && newId) {
+            client.from('ticket_charges').insert({ ticket_id: newId, kind: 'dispatch', description: 'Visit fee', qty: 1, unit_price: fee }).then(function () { finish(); }, function () { finish(); });
+          } else { finish(); }
+        }).catch(function () { fail('Could not create the ticket — try again.'); });
+      }).catch(function () { fail("Couldn't load that estimate — try again."); });
+    });
+  }
+  function declineEstimate(id) {
+    var msg = $('est-msg');
+    function fail(m) { if (msg) { msg.textContent = m; } }
+    if (msg) msg.textContent = 'Recording…';
+    withClient(function (client) {
+      if (!client) { fail("Couldn't reach the database — try again."); return; }
+      client.from('estimates').select('*').eq('id', id).maybeSingle().then(function (res) {
+        var e = res.data;
+        if (res.error || !e) { fail("Couldn't load that estimate — try again."); return; }
+        if (e.status !== 'Awaiting Estimate') { fail('This estimate was already decided.'); return; }
+        client.from('estimates').update({ status: 'Declined', decided_at: new Date().toISOString() }).eq('id', id).then(function (ures) {
+          if (ures.error) { fail('Could not record the decline — try again.'); return; }
+          v165SendAlert("Thanks for considering Austin's Tech Repair Group", estimateDeclineRows(e), 'estimate-declined', e.public_token);
+          state.loaded.estimates = false;
+          closeDrawer();
+          loadEstimates(true);
+          setTimeout(function () { docMsg('Declined — the guest gets the no-hard-feelings email. No ticket was created.'); }, 450);
+        });
+      }).catch(function () { fail("Couldn't load that estimate — try again."); });
+    });
+  }
+  function sendEstimateEmail(id) {
+    var msg = $('est-msg');
+    withClient(function (client) {
+      if (!client) { if (msg) msg.textContent = "Couldn't reach the database — try again."; return; }
+      client.from('estimates').select('*').eq('id', id).maybeSingle().then(function (res) {
+        var e = res.data;
+        if (res.error || !e) { if (msg) msg.textContent = "Couldn't load that estimate — try again."; return; }
+        v165SendAlert("Your estimate from Austin's Tech Repair Group", [
+          ['Email', e.email || ''],
+          ['Name', e.name || ''],
+          ['Device', estimateDeviceLabel(e)],
+          ["What's wrong", e.issue || ''],
+          ['Estimate', estimateMoney(e.estimate_amount)],
+          ['Your estimate page', estimatePageLink(e)],
+          ['What happens next', 'Tap the link above to view your estimate. You can confirm or decline it there — nothing is booked until you confirm.']
+        ], 'estimate-link', e.public_token);
+        if (msg) msg.textContent = 'Estimate email sent to ' + (e.email || 'the guest') + '.';
+      });
+    });
+  }
+  function openEstimate(id, focusConfirm) {
+    drawerLoading('Estimate details');
+    withClient(function (client) {
+      if (!client) { $('portal-drawer-body').innerHTML = '<p class="portal-error">Couldn&rsquo;t reach the database.</p>'; return; }
+      client.from('estimates').select('*').eq('id', id).maybeSingle().then(function (res) {
+        if (res.error || !res.data) {
+          $('portal-drawer-body').innerHTML = '<p class="portal-error">Couldn&rsquo;t load that estimate. It may have been deleted.</p>';
+          return;
+        }
+        var e = res.data;
+        var body =
+          '<div class="portal-drawer-section"><h3>Estimate</h3>' +
+          '<dl class="portal-kv">' +
+          '<dt>Status</dt><dd>' + esc(e.status || '') + '</dd>' +
+          '<dt>' + (e.audience === 'business' ? 'Business' : 'Guest') + '</dt><dd>' + esc(e.name || 'No name given') + (e.contact_name ? ' &middot; ' + esc(e.contact_name) : '') + '</dd>' +
+          '<dt>Phone</dt><dd>' + esc(e.phone || '—') + '</dd>' +
+          '<dt>Email</dt><dd>' + esc(e.email || '—') + '</dd>' +
+          '<dt>Service address</dt><dd>' + esc(e.service_address || '—') + '</dd>' +
+          '<dt>Device</dt><dd>' + esc(estimateDeviceLabel(e)) + '</dd>' +
+          '<dt>Issue</dt><dd>' + esc(e.issue || '—') + '</dd>' +
+          '<dt>Estimate</dt><dd><strong>' + esc(estimateMoney(e.estimate_amount)) + '</strong></dd>' +
+          '<dt>Visit fee when confirmed</dt><dd>' + esc(estimateMoney(v165VisitFee(e.audience))) + (e.atr_one === 'member' ? ' (ATR One member — no visit fee)' : '') + '</dd>' +
+          '<dt>Received</dt><dd>' + esc(fmtDateTime(e.created_at)) + '</dd>' +
+          '</dl></div>';
+        if (e.status === 'Awaiting Estimate') {
+          body += '<div class="portal-drawer-section" id="est-confirm-block"><h3>Confirm or deny</h3>' +
+            '<p class="portal-muted portal-small">Live path: the guest is on the phone now. Read them the estimate, and when they confirm, tick the box and tap Record Confirm — the estimate becomes a ticket in the Service Queue, the visit fee goes on the ticket, and you book the date and time with them.</p>' +
+            '<label class="ci-consent-verbal"><input type="checkbox" id="est-phone-confirm" /> <span>The guest confirmed on the phone and signed the Repair Authorization and Service Agreement and the 1-Year Limited Warranty.</span></label>' +
+            '<div class="p2-actions">' +
+            '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="est-accept-btn">Record Confirm</button>' +
+            '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="est-decline-btn">Record Deny</button>' +
+            '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="est-send-email-btn"><i class="fas fa-envelope"></i> Send estimate email</button>' +
+            '</div><p class="portal-muted portal-small" id="est-msg"></p></div>';
+          body += '<div class="portal-drawer-section"><h3>Edit estimate</h3>' +
+            '<div class="p2-form">' +
+            '<div class="portal-field"><label for="est-edit-name">Name</label><input type="text" id="est-edit-name" value="' + esc(e.name || '') + '" /></div>' +
+            '<div class="portal-field"><label for="est-edit-phone">Phone</label><input type="tel" id="est-edit-phone" value="' + esc(e.phone || '') + '" /></div>' +
+            '<div class="portal-field"><label for="est-edit-email">Email</label><input type="email" id="est-edit-email" value="' + esc(e.email || '') + '" /></div>' +
+            '<div class="portal-field"><label for="est-edit-address">Service address</label><input type="text" id="est-edit-address" value="' + esc(e.service_address || '') + '" /></div>' +
+            '<div class="portal-field"><label for="est-edit-issue">Issue</label><textarea id="est-edit-issue" rows="2">' + esc(e.issue || '') + '</textarea></div>' +
+            '<div class="portal-field"><label for="est-edit-amount">Estimate amount ($)</label><input type="number" id="est-edit-amount" min="0" step="0.01" value="' + esc(e.estimate_amount == null ? '' : String(e.estimate_amount)) + '" /></div>' +
+            '<div class="p2-actions"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="est-save-btn">Save changes</button><span class="portal-muted portal-small" id="est-save-msg"></span></div>' +
+            '</div></div>';
+        } else if (e.status === 'Accepted' && e.ticket_id) {
+          body += '<div class="portal-drawer-section"><h3>Confirmed</h3>' +
+            '<p class="portal-muted">This estimate became a ticket. Book the date and time on the ticket.</p>' +
+            '<div class="p2-actions"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-view-ticket="' + esc(e.ticket_id) + '">View ticket</button></div></div>';
+        } else {
+          body += '<div class="portal-drawer-section"><h3>Declined</h3>' +
+            '<p class="portal-muted">No ticket was created for this estimate. The guest got the no-hard-feelings email.</p></div>';
+        }
+        $('portal-drawer-body').innerHTML = body;
+        var ab = $('est-accept-btn');
+        if (ab) ab.addEventListener('click', function () { acceptEstimate(id, false); });
+        var db = $('est-decline-btn');
+        if (db) db.addEventListener('click', function () {
+          if (db.getAttribute('data-armed') === '1') { declineEstimate(id); return; }
+          db.setAttribute('data-armed', '1');
+          db.textContent = 'Tap again to deny';
+        });
+        var sb = $('est-send-email-btn');
+        if (sb) sb.addEventListener('click', function () { sendEstimateEmail(id); });
+        var sv = $('est-save-btn');
+        if (sv) sv.addEventListener('click', function () {
+          var amt = Number($('est-edit-amount') ? $('est-edit-amount').value : NaN);
+          var sm = $('est-save-msg');
+          if (isNaN(amt) || amt <= 0) { if (sm) sm.textContent = 'Enter an estimate amount above $0.'; return; }
+          withClient(function (c2) {
+            if (!c2) return;
+            c2.from('estimates').update({
+              name: trim($('est-edit-name').value), phone: trim($('est-edit-phone').value),
+              email: trim($('est-edit-email').value) || null, service_address: trim($('est-edit-address').value) || null,
+              issue: trim($('est-edit-issue').value), estimate_amount: amt
+            }).eq('id', id).then(function (r2) {
+              if (sm) sm.textContent = r2.error ? "Couldn't save — try again." : 'Saved.';
+              if (!r2.error) { state.loaded.estimates = false; loadEstimates(true); }
+            });
+          });
+        });
+        if (focusConfirm) {
+          var cb = $('est-confirm-block');
+          if (cb) setTimeout(function () { try { cb.scrollIntoView({ block: 'start' }); } catch (err) {} }, 60);
+        }
+      }).catch(function () {
+        $('portal-drawer-body').innerHTML = '<p class="portal-error">Couldn&rsquo;t load that estimate.</p>';
+      });
+    });
   }
 
   function loadTickets(force) {
@@ -9113,7 +9606,7 @@ function loadTicketThread(client, ticketId) {
    * custom panels again whenever a built-in tab is tapped. */
   var CAB_TEMPLATES = { links: 'Links', info: 'Info page', checklist: 'Checklist', training: 'Training program' }; /* PORTAL_TRAINING_PROGRAM_2026_11_06: 'training' template */
   var CAB_GROUPS = {
-    guest: 'Guest', parts_tools: 'Parts & Tools', associates: 'Associates',
+    guest: 'Guest Accounts', parts_tools: 'Parts & Tools', associates: 'Associates',
     admin: 'Admin', financials: 'Financials'
   };
   var CAB_MINROLE_LABELS = {
@@ -15663,6 +16156,71 @@ function loadTicketThread(client, ticketId) {
       .catch(function () { done.docs = []; maybe(); });
   }
 
+  /* V165_MANUAL_POINTS_2026_11_17: the Add points save path. Reads the
+   * guest's rewards row, adds the amount (inserting the row when there
+   * is none — the same read-then-write shape awardPointsOnComplete
+   * uses), then logs the adjustment. Until points-adjustments.sql has
+   * run, the log insert fails soft and the message says so, while the
+   * points themselves still save. */
+  function refreshCustPoints(customerId) {
+    var bal = $('cust-prof-points-balance'), log = $('cust-prof-points-log');
+    if (!bal && !log) return;
+    withClient(function (client) {
+      if (!client) { if (bal) bal.textContent = '—'; return; }
+      client.from('rewards').select('points').eq('customer_id', customerId).limit(1).then(function (r) {
+        if (bal) bal.textContent = (r.error || !(r.data || []).length) ? '0' : String(Number((r.data[0] || {}).points) || 0);
+      }).catch(function () { if (bal) bal.textContent = '—'; });
+      if (log) {
+        client.from('points_adjustments').select('amount,reason,created_at,balance_after').eq('customer_id', customerId).order('created_at', { ascending: false }).limit(5).then(function (r2) {
+          if (r2.error || !(r2.data || []).length) { log.innerHTML = '<p class="portal-muted portal-small">No manual adjustments yet.</p>'; return; }
+          log.innerHTML = '<p class="portal-muted portal-small">Recent manual adjustments:</p>' + (r2.data || []).map(function (a) {
+            return '<p class="portal-muted portal-small">+' + esc(String(a.amount)) + ' pts — ' + esc(a.reason || '') + ' · ' + esc(fmtDate(a.created_at) || '') + ' (balance ' + esc(String(a.balance_after == null ? '—' : a.balance_after)) + ')</p>';
+          }).join('');
+        }).catch(function () { log.innerHTML = '<p class="portal-muted portal-small">The points log is not set up yet — run points-adjustments.sql.</p>'; });
+      }
+    });
+  }
+  function saveCustPoints(customerId) {
+    var msg = $('cust-prof-points-msg');
+    var amtEl = $('cust-prof-points-amount'), rsnEl = $('cust-prof-points-reason');
+    if (!amtEl || !rsnEl) return;
+    var amt = Math.floor(Number(amtEl.value));
+    var reason = trim(rsnEl.value || '');
+    if (!(amt > 0)) { if (msg) msg.textContent = 'Enter a whole number of points to add.'; amtEl.focus(); return; }
+    if (!reason) { if (msg) msg.textContent = 'Add a reason — it goes in the log.'; rsnEl.focus(); return; }
+    if (msg) msg.textContent = 'Saving…';
+    withClient(function (client) {
+      if (!client) { if (msg) msg.textContent = 'Couldn’t reach the database — try again.'; return; }
+      client.from('rewards').select('points').eq('customer_id', customerId).limit(1).then(function (r) {
+        if (r.error) throw r.error;
+        var rows = r.data || [];
+        var next = (rows.length ? (Number(rows[0].points) || 0) : 0) + amt;
+        function logIt() {
+          client.from('points_adjustments').insert({ customer_id: customerId, amount: amt, reason: reason, adjusted_by: (state.user && state.user.id) || null, balance_after: next }).then(function (lr) {
+            if (msg) msg.textContent = lr.error ? ('Saved — +' + amt + ' points. (The points log is not set up yet, so this was not logged — run points-adjustments.sql.)') : ('Saved — +' + amt + ' points.');
+            amtEl.value = ''; rsnEl.value = '';
+            refreshCustPoints(customerId);
+          }).catch(function () {
+            if (msg) msg.textContent = 'Saved — +' + amt + ' points. (The points log is not set up yet, so this was not logged — run points-adjustments.sql.)';
+            amtEl.value = ''; rsnEl.value = '';
+            refreshCustPoints(customerId);
+          });
+        }
+        if (rows.length) {
+          client.from('rewards').update({ points: next }).eq('customer_id', customerId).then(function (u) {
+            if (u.error) throw u.error;
+            logIt();
+          }).catch(function (err) { if (msg) msg.textContent = (err && err.message) || 'That did not save. Please try again.'; });
+        } else {
+          client.from('rewards').insert({ customer_id: customerId, points: next }).then(function (ins) {
+            if (ins.error) throw ins.error;
+            logIt();
+          }).catch(function (err) { if (msg) msg.textContent = (err && err.message) || 'That did not save. Please try again.'; });
+        }
+      }).catch(function (err) { if (msg) msg.textContent = (err && err.message) || 'That did not save. Please try again.'; });
+    });
+  }
+
   function renderCustProfile(cust, tickets, charges, warrantyReqs, agreements) {
     var body = $('portal-drawer-body');
     if (!body) return;
@@ -15777,6 +16335,24 @@ function loadTicketThread(client, ticketId) {
     else html += agRows.join('');
     html += '</div>';
 
+    /* V165_MANUAL_POINTS_2026_11_17 (Austin, Nov 17, 2026): staff add
+     * points by hand here — amount, reason, Save — Admin and above
+     * only. It writes public.rewards.points for this guest and logs
+     * the adjustment (public.points_adjustments; the SQL ships staged
+     * with this build, NOT run yet). Guests never see this control. */
+    if (owner) {
+      html += '<div class="portal-drawer-section"><h3>Add points</h3>' +
+        '<p class="portal-muted portal-small">Current balance: <strong id="cust-prof-points-balance">Loading…</strong></p>' +
+        '<div class="portal-field"><label for="cust-prof-points-amount">Points to add</label>' +
+        '<input type="number" id="cust-prof-points-amount" min="1" step="1" inputmode="numeric" placeholder="e.g. 50" /></div>' +
+        '<div class="portal-field"><label for="cust-prof-points-reason">Reason</label>' +
+        '<input type="text" id="cust-prof-points-reason" placeholder="e.g. Goodwill — late part" autocomplete="off" /></div>' +
+        '<p><button class="portal-btn" type="button" id="cust-prof-points-save">Save points</button> ' +
+        '<span class="portal-muted portal-small" id="cust-prof-points-msg"></span></p>' +
+        '<div id="cust-prof-points-log"><p class="portal-muted portal-small">Loading recent adjustments…</p></div>' +
+        '</div>';
+    }
+
     /* WARRANTY_CONTROLS_2026_11_04: this customer's warranty claims —
      * website submissions staff linked by starting the rework, and
      * claims staff filed for them by call, text, or email. */
@@ -15863,6 +16439,11 @@ function loadTicketThread(client, ticketId) {
       memSel.addEventListener('change', function () {
         memTierSel.disabled = memSel.value !== 'yes';
       });
+    }
+    if (owner) {
+      refreshCustPoints(cust.id);
+      var ptsSave = $('cust-prof-points-save');
+      if (ptsSave) ptsSave.addEventListener('click', function () { saveCustPoints(cust.id); });
     }
   }
 
@@ -16809,6 +17390,18 @@ function loadTicketThread(client, ticketId) {
         if (t.getAttribute) {
           var tid = t.getAttribute('data-view-ticket');
           if (tid) { openTicket(tid); return; }
+          /* V165_ESTIMATE_2026_11_17: estimate rows — Confirm opens the drawer at the confirm step (the phone confirmation is recorded there); Deny is two-tap, inline; View opens the drawer. The walk reaches the buttons before the card, so they act instead of opening it. */
+          var ec = t.getAttribute('data-est-confirm');
+          if (ec) { openEstimate(ec, true); return; }
+          var ed = t.getAttribute('data-est-decline');
+          if (ed) {
+            if (t.getAttribute('data-armed') === '1') { declineEstimate(ed); return; }
+            t.setAttribute('data-armed', '1');
+            t.textContent = 'Tap again to deny';
+            return;
+          }
+          var ev = t.getAttribute('data-view-estimate');
+          if (ev) { openEstimate(ev, false); return; }
           var aid = t.getAttribute('data-view-application');
           if (aid) { openApplication(aid); return; }
           var iid = t.getAttribute('data-view-investor');
@@ -21308,6 +21901,7 @@ function loadTicketThread(client, ticketId) {
 
     var guestRows = null, guestFetching = false;   /* read-only fill, until state.customersCache lands */
     var ticketRows = null, ticketFetchedAt = 0, ticketFetching = false;
+    var estimateRows = null, estimateFetchedAt = 0, estimateFetching = false;   /* V165_ESTIMATE_2026_11_17: same 30-second read-only fill as tickets */
 
     function digits(v) { return String(v == null ? '' : v).replace(/\D/g, ''); }
 
@@ -21319,7 +21913,7 @@ function loadTicketThread(client, ticketId) {
      * group label are the Action Buttons (Home). Role gates still
      * rule: hidden tabs are skipped, so a group with nothing visible
      * never renders. */
-    var HS_GROUP_ORDER = ['ACTION BUTTONS', 'GUEST', 'PARTS & TOOLS', 'ASSOCIATES', 'ADMIN', 'FINANCIALS'];
+    var HS_GROUP_ORDER = ['ACTION BUTTONS', 'GUEST ACCOUNTS', 'PARTS & TOOLS', 'ASSOCIATES', 'ADMIN', 'FINANCIALS'];
     function sections() {
       var out = [], group = 'ACTION BUTTONS';
       document.querySelectorAll('#portal-nav > *').forEach(function (el) {
@@ -21383,10 +21977,40 @@ function loadTicketThread(client, ticketId) {
       return ticketRows || [];
     }
 
+    function estimates() {
+      var now = Date.now();
+      if (estimateRows && now - estimateFetchedAt < 30000) return estimateRows;
+      if (!estimateFetching) {
+        estimateFetching = true;
+        withClient(function (client) {
+          if (!client) { estimateFetching = false; estimateRows = estimateRows || []; return; }
+          client.from('estimates').select('*').order('created_at', { ascending: false }).limit(200)
+            .then(function (res) {
+              estimateRows = res.error ? [] : (res.data || []); estimateFetchedAt = Date.now(); estimateFetching = false;
+              if (!panel.hidden) renderResults();
+            }).catch(function () { estimateFetching = false; });
+        });
+      }
+      return estimateRows || [];
+    }
+
     function matchPhone(q, phone) {
       var qd = digits(q), pd = digits(phone);
       if (qd.length >= 3 && pd.indexOf(qd) !== -1) return true;
       return !!phone && String(phone).toLowerCase().indexOf(q) !== -1;
+    }
+
+    /* V165_SEARCH_BLOCKS_2026_11_17 (Austin, Nov 17, 2026): the sheet
+     * was one long run-on list. Items now sit in blocks of three or
+     * four, with a clear break between blocks; the group label stays
+     * once at the top of its group. Balanced split: 9 items become
+     * 3+3+3, 8 become 4+4, never a lone straggler. */
+    function hsChunkBlocks(list) {
+      var n = list.length, out = [];
+      if (!n) return out;
+      var chunks = Math.ceil(n / 4), size = Math.ceil(n / chunks);
+      for (var i = 0; i < n; i += size) out.push(list.slice(i, i + size));
+      return out;
     }
 
     function renderResults() {
@@ -21396,9 +22020,10 @@ function loadTicketThread(client, ticketId) {
       HS_GROUP_ORDER.forEach(function (g) {
         var inGroup = secs.filter(function (s) { return s.group === g; });
         if (!inGroup.length) return;
-        html += '<p class="portal-hubsearch-group">' + g + '</p>' + inGroup.map(function (s) {
+        var items = inGroup.map(function (s) {
           return '<button type="button" class="portal-hubsearch-item" data-hs-kind="section" data-hs-tab="' + esc(s.tab) + '"><i class="' + esc(s.icon) + '"></i><span class="hs-main">' + esc(s.label) + '</span></button>';
-        }).join('');
+        });
+        html += '<p class="portal-hubsearch-group">' + g + '</p>' + hsChunkBlocks(items).map(function (block) { return block.join(''); }).join('<div class="portal-hubsearch-blockbreak" aria-hidden="true"></div>');
       });
       if (q) {
         var gs = guests().filter(function (c) {
@@ -21420,7 +22045,18 @@ function loadTicketThread(client, ticketId) {
             return '<button type="button" class="portal-hubsearch-item" data-hs-kind="ticket" data-hs-id="' + esc(t.id) + '"><i class="fas fa-ticket"></i><span class="hs-main">' + esc(ticketTitle(t)) + '</span><span class="hs-sub">' + esc(t.customer_name || 'No name given') + ' &middot; ' + esc(t.status || '') + '</span></button>';
           }).join('');
         }
-        if (!secs.length && !gs.length && !ts.length) {
+        var es = estimates().filter(function (e) {
+          return String(e.name || '').toLowerCase().indexOf(q) !== -1 ||
+            estimateDeviceLabel(e).toLowerCase().indexOf(q) !== -1 ||
+            String(e.issue || '').toLowerCase().indexOf(q) !== -1 ||
+            matchPhone(q, e.phone);
+        }).slice(0, 6);
+        if (es.length) {
+          html += '<p class="portal-hubsearch-group">Estimates</p>' + es.map(function (e) {
+            return '<button type="button" class="portal-hubsearch-item" data-hs-kind="estimate" data-hs-id="' + esc(e.id) + '"><i class="fas fa-file-invoice-dollar"></i><span class="hs-main">' + esc(estimateDeviceLabel(e)) + '</span><span class="hs-sub">' + esc(e.name || 'No name given') + ' &middot; ' + esc(e.status || '') + '</span></button>';
+          }).join('');
+        }
+        if (!secs.length && !gs.length && !ts.length && !es.length) {
           html = '<p class="portal-hubsearch-empty">Nothing in the Hub matches &ldquo;' + esc(trim(input.value)) + '&rdquo;.</p>';
         }
       }
@@ -21508,7 +22144,7 @@ function loadTicketThread(client, ticketId) {
         var tb = document.querySelector('.portal-topbar');
         panel.style.top = (tb ? tb.getBoundingClientRect().bottom : 0) + 'px';
       }
-      guests(); tickets();
+      guests(); tickets(); estimates();
       panel.hidden = false;
       panel.classList.remove('hs-open');
       void panel.offsetWidth;
@@ -21564,6 +22200,11 @@ function loadTicketThread(client, ticketId) {
         closeSearch();
         var tt = $('portal-tab-tickets'); if (tt) tt.click();
         openTicket(tid);
+      } else if (kind === 'estimate') {
+        var eid = item.getAttribute('data-hs-id');
+        closeSearch();
+        var et = $('portal-tab-estimates'); if (et) et.click();
+        openEstimate(eid, false);
       }
     });
     /* SEARCH_SHEET_FIX_2026_11_09 (v68): voice search, the
@@ -22055,17 +22696,23 @@ function loadTicketThread(client, ticketId) {
   function buildTray() {
     var list = $('portal-bartray-list');
     if (!list) return;
+    /* V165_BAR_COPY_2026_11_17 (Austin, Nov 17, 2026): dragging a tab
+     * to the bar COPIES it — the tray always lists every visible tab,
+     * and one already on the bar stays in the list with an "On bar"
+     * tag. The old filter dropped in-bar tabs from the tray, so a
+     * dragged tab looked gone from the list forever. */
     var inBar = {};
     (barState.editList || []).forEach(function (id) { inBar[id] = 1; });
-    var avail = catalog().filter(function (m) { return !inBar[m.id] && isVisibleTab(m.id); });
-    if (!inBar.pay) avail.push(PAY_META);
-    if (!inBar.search) avail.push(SEARCH_META);
+    var avail = catalog().filter(function (m) { return isVisibleTab(m.id); });
+    avail.push(PAY_META);
+    avail.push(SEARCH_META);
     if (!avail.length) {
-      list.innerHTML = '<p class="portal-bartray-empty">Every tab you can see is already in the bar.</p>';
+      list.innerHTML = '<p class="portal-bartray-empty">No tabs are available right now.</p>';
       return;
     }
     list.innerHTML = avail.map(function (m) {
-      return '<button type="button" class="portal-bartray-row" data-drag-id="' + barEsc(m.id) + '"><i class="' + barEsc(m.icon) + '"></i><span>' + barEsc(m.full || m.label) + '</span><i class="fas fa-grip-lines portal-bartray-grip" aria-hidden="true"></i></button>';
+      var onBar = !!inBar[m.id];
+      return '<button type="button" class="portal-bartray-row' + (onBar ? ' in-bar' : '') + '" data-drag-id="' + barEsc(m.id) + '"><i class="' + barEsc(m.icon) + '"></i><span>' + barEsc(m.full || m.label) + '</span>' + (onBar ? '<em class="portal-bartray-onbar">On bar</em>' : '') + '<i class="fas fa-grip-lines portal-bartray-grip" aria-hidden="true"></i></button>';
     }).join('');
   }
   function enterBarEdit() {

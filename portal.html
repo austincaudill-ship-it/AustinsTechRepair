@@ -194,7 +194,7 @@
           <p class="portal-bartray-title">Customize your thumb bar</p>
           <button class="portal-bartray-x" id="portal-bartray-close" type="button" aria-label="Cancel editing"><i class="fas fa-xmark"></i></button>
         </div>
-        <p class="portal-bartray-hint">Scroll the list to see every tab. Drag a tab by its handle to drop it in the bar. Drag bar items down here to remove them, or tap the &times; on a bar item. Up to five across the bottom.</p>
+        <p class="portal-bartray-hint">Scroll the list to see every tab. Drag a tab by its handle to drop it in the bar — adding a tab copies it, so it stays in the list too. Drag bar items down here to remove them, or tap the &times; on a bar item. Up to five across the bottom.</p>
         <div class="portal-bartray-list" id="portal-bartray-list"></div>
         <div class="portal-bartray-actions">
           <button class="portal-bartray-reset" id="portal-bartray-reset" type="button">Reset to the standard bar</button>
@@ -239,7 +239,11 @@
         <button class="portal-tab" id="portal-tab-home" type="button" role="tab" data-tab="home">
           <i class="fas fa-house"></i> Home
         </button>
-        <div class="portal-nav-group">Guest</div>
+        <div class="portal-nav-group">Guest Accounts</div>
+        <!-- V165_ESTIMATE_2026_11_17 (Austin, Nov 17, 2026): New Service Estimate — one button, right above New Service Request. It opens the same panel on the estimate sheet instead of the request form. -->
+        <button class="portal-tab" id="portal-tab-estimate" type="button" role="tab" data-tab="estimate">
+          <i class="fas fa-file-invoice-dollar"></i> New Service Estimate
+        </button>
         <!-- CUSTOMER_INBOX_2026_11_05 (owner naming ruling, Nov 5, 2026): this tab's visible label is "New Service Request" now — the customer's side dropped its own "Check In" name the same day, so the two no longer collide. Ids, data-tab, handlers, and behavior are unchanged; Scan In below keeps its name. -->
         <button class="portal-tab" id="portal-tab-checkin" type="button" role="tab" data-tab="checkin">
           <i class="fas fa-clipboard-check"></i> New Service Request
@@ -250,6 +254,10 @@
         </button>
         <button class="portal-tab active" id="portal-tab-tickets" type="button" role="tab" data-tab="tickets">
           <i class="fas fa-list-ol"></i> Service Queue <span class="portal-count" id="portal-count-tickets" hidden></span>
+        </button>
+        <!-- V165_ESTIMATE_2026_11_17 (Austin, Nov 17, 2026): Estimates live in their own list, next to the Service Queue — every estimate sits here before acceptance, guest or business, and it is NOT in the queue until it is confirmed. Same tier as the queue (no TAB_GATES entry). Panel: portal-panel-estimates, loader loadEstimates in portal.js. -->
+        <button class="portal-tab" id="portal-tab-estimates" type="button" role="tab" data-tab="estimates">
+          <i class="fas fa-file-invoice-dollar"></i> Estimates <span class="portal-count" id="portal-count-estimates" hidden></span>
         </button>
         <!-- PORTAL_SIDEBAR_ROSTER_2026_11_02 (Austin, Nov 2, 2026): this button's display label is "Guest" — his word for customers. Display text ONLY: the tab id (portal-tab-customers) and data-tab="customers" are unchanged, and every handler stays keyed to those ids, never to the label text. -->
         <button class="portal-tab" id="portal-tab-customers" type="button" role="tab" data-tab="customers">
@@ -635,6 +643,27 @@
         </div>
         <p class="q-legend"><span><i class="q-dot q-red"></i> Needs diagnostics</span><span><i class="q-dot q-orange"></i> Waiting on parts</span><span><i class="q-dot q-yellow"></i> In progress</span><span><i class="q-dot q-rework"></i> Rework / warranty</span><span><i class="q-dot q-lime"></i> Quality check</span><span><i class="q-dot q-green"></i> Ready</span></p>
         <div id="portal-ticket-list"><p class="portal-muted">Loading tickets&hellip;</p></div>
+      </div>
+
+      <!-- ESTIMATES -->
+      <div class="portal-panel" id="portal-panel-estimates" role="tabpanel" hidden>
+        <div class="portal-panel-head">
+          <h2 class="portal-h2">Estimates</h2>
+          <div class="portal-panel-tools">
+            <select id="portal-estimates-filter" aria-label="Filter estimates by status">
+              <option value="all">All statuses</option>
+              <option value="Awaiting Estimate">Awaiting Estimate</option>
+              <option value="Accepted">Accepted</option>
+              <option value="Declined">Declined</option>
+            </select>
+          </div>
+        </div>
+        <div class="portal-queue-search">
+          <input type="search" id="portal-estimates-search" placeholder="Search estimates &mdash; name, device, or phone" aria-label="Search estimates" autocomplete="off" />
+          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="portal-estimates-search-clear" aria-label="Clear the estimates search" hidden>&times;</button>
+        </div>
+        <p class="portal-muted portal-small">Estimates live here until the guest confirms. An estimate is never a ticket and never enters the Service Queue &mdash; Confirm turns it into one. No account is made when an estimate is created; the account is made only when the guest taps the link in their estimate email.</p>
+        <div id="portal-estimates-list"><p class="portal-muted">Loading estimates&hellip;</p></div>
       </div>
 
       <!-- DOCUMENTS -->
@@ -1669,6 +1698,42 @@
             <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="ci-clear"><i class="fas fa-eraser"></i> Clear check-in</button>
           </div>
         </form>
+        <!-- V165_ESTIMATE_2026_11_17 (Austin, Nov 17, 2026): ONE estimate sheet for guest and business. The Guest / Business buttons at the top switch the fields, the prices and the read-aloud script. Creating an estimate writes ONE row in public.estimates and emails the guest a link to their estimate page — no account is made, no ticket is created, nothing enters the Service Queue. The account is made only when the guest taps the link in that email; the ticket is made only when they press Confirm (or staff Record Confirm on the phone). -->
+        <div id="ci-est-form" hidden>
+          <div class="p2-actions" style="margin-bottom:0.75rem;"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="ci-est-back"><i class="fas fa-arrow-left"></i> Back to New Service Request</button></div>
+          <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">New Service Estimate</h3></div>
+          <p class="portal-muted portal-small">An estimate is an inquiry &mdash; the services offered and what they cost. No diagnostics and no estimate are done yet. It creates no ticket and no queue entry; it sits in the Estimates list until the guest confirms it.</p>
+          <div class="portal-field">
+            <label>Guest or Business *</label>
+            <div class="ci-est-type" role="group" aria-label="Guest or Business">
+              <button type="button" class="portal-btn portal-btn-primary portal-btn-sm" id="ci-est-type-guest" aria-pressed="true">Guest</button>
+              <button type="button" class="portal-btn portal-btn-outline portal-btn-sm" id="ci-est-type-business" aria-pressed="false">Business</button>
+            </div>
+          </div>
+          <div class="portal-nh-grid">
+            <div class="portal-field"><label for="ci-est-name" id="ci-est-name-label">Name *</label><input type="text" id="ci-est-name" required /></div>
+            <div class="portal-field" id="ci-est-contact-wrap" hidden><label for="ci-est-contact">Contact name *</label><input type="text" id="ci-est-contact" placeholder="Person you are speaking to" /></div>
+            <div class="portal-field"><label for="ci-est-phone">Phone *</label><input type="tel" id="ci-est-phone" required /></div>
+            <div class="portal-field"><label for="ci-est-email">Email *</label><input type="email" id="ci-est-email" required /></div>
+            <div class="portal-field"><label for="ci-est-address">Service address *</label><input type="text" id="ci-est-address" required placeholder="Street, city, ZIP" /></div>
+          </div>
+          <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Device and issue</h3></div>
+          <div class="portal-nh-grid">
+            <div class="portal-field"><label for="ci-est-device">Device type *</label><select id="ci-est-device"><option>Phone</option><option>Tablet</option><option>Laptop</option><option>Desktop</option><option>Game Console</option><option>Smartwatch</option><option>Earbuds / Hearable</option><option>Other</option></select></div>
+            <div class="portal-field"><label for="ci-est-brand">Brand</label><input type="text" id="ci-est-brand" placeholder="e.g. Samsung" /></div>
+            <div class="portal-field"><label for="ci-est-model">Model</label><input type="text" id="ci-est-model" placeholder="e.g. Galaxy A15" /></div>
+          </div>
+          <div class="portal-field"><label for="ci-est-issue">What&rsquo;s wrong? *</label><textarea id="ci-est-issue" rows="3" placeholder="Describe the problem&hellip;"></textarea></div>
+          <div class="portal-nh-grid">
+            <div class="portal-field"><label for="ci-est-amount">Estimate amount ($) *</label><input type="number" id="ci-est-amount" min="0" step="0.01" inputmode="decimal" placeholder="0.00" required /></div>
+            <div class="portal-field"><label for="ci-est-atrone" id="ci-est-atrone-label">Is this guest an ATR One Plus (paid) member?</label><select id="ci-est-atrone"><option value="">No paid plan (ATR One Free)</option><option value="member">Yes &mdash; ATR One Plus member</option><option value="signup">Wants to sign up for ATR One Plus</option></select></div>
+          </div>
+          <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Read this to the guest, word for word</h3></div>
+          <div class="ci-consent-script" id="ci-est-script" aria-label="Statement to read to the guest by phone"></div>
+          <p class="portal-muted portal-small">No account is made now. The guest gets an email with a link to this estimate &mdash; only when they tap that link is their account made, and only when they press Confirm does this become a ticket. On the phone, read the statement above, and when they confirm, Record Confirm from the Estimates list.</p>
+          <p class="portal-error" id="ci-est-error" hidden></p>
+          <button class="portal-btn portal-btn-primary" id="ci-est-submit" type="button"><i class="fas fa-file-invoice-dollar"></i> Create estimate</button>
+        </div>
       </div>
 
       <div class="portal-panel" id="portal-panel-timeclock" role="tabpanel" hidden>

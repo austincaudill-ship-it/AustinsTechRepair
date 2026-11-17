@@ -5866,7 +5866,7 @@ if ("serviceWorker" in navigator) {
       if (user && sessionUser && sessionUser.id !== user.id) retriedFor = '';
       sessionUser = user || null;
       var client = getClient();
-      if (!user || !client) { hide(); return; }
+      if (!user || !client) { hide(); if (!client) clientRetry(); return; }
       try {
         client.from('employee_profiles').select('id').eq('id', user.id).maybeSingle()
           .then(function (res) {
@@ -5876,9 +5876,29 @@ if ("serviceWorker" in navigator) {
           .catch(function () { rpcFallback(client, user, allowRetry); });
       } catch (e) { rpcFallback(client, user, allowRetry); }
     }
+    /* V165_STAFF_RECHECK_2026_11_17 (Austin, Nov 17, 2026): the staff
+     * check died silently when supabase-js had not loaded by
+     * DOMContentLoaded — checkFresh hid the link and returned, wire()
+     * retried once at 1.5s and then stopped, so a slow library left a
+     * signed-in associate with no Associate Hub entry for the whole
+     * page life (and the same late library stalled the account chain
+     * behind the services list). A missing client now re-asks on a
+     * bounded timer (6 tries, 1.5s apart); a clean "no row" answer is
+     * still final and never retried. */
+    var clientTries = 0;
+    var clientTimer = null;
+    function clientRetry() {
+      if (clientTimer || clientTries >= 6) return;
+      clientTries++;
+      clientTimer = setTimeout(function () {
+        clientTimer = null;
+        checkFresh(true);
+        wire();
+      }, 1500);
+    }
     function checkFresh(allowRetry) {
       var client = getClient();
-      if (!client || !client.auth || typeof client.auth.getSession !== 'function') { hide(); return; }
+      if (!client || !client.auth || typeof client.auth.getSession !== 'function') { hide(); clientRetry(); return; }
       try {
         client.auth.getSession().then(function (res) {
           var session = res && res.data ? res.data.session : null;
@@ -5906,7 +5926,7 @@ if ("serviceWorker" in navigator) {
     function wire() {
       if (wired) return;
       var client = getClient();
-      if (!client) return;
+      if (!client) { clientRetry(); return; }
       wired = true;
       try {
         if (client.auth && typeof client.auth.onAuthStateChange === 'function') {
@@ -5920,7 +5940,9 @@ if ("serviceWorker" in navigator) {
     try {
       checkFresh(true);
       wire();
-      if (!wired) setTimeout(wire, 1500); /* library a beat late: subscribe once more, then stop */
+      /* the single 1.5s re-subscribe is gone: a missing client now
+       * re-asks through clientRetry (bounded, 6 tries), so a library
+       * that arrives late still gets the check and the subscription. */
     } catch (e) { hide(); }
   });
 })();

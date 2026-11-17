@@ -2274,7 +2274,7 @@
             <!-- Rewards & Gift Cards (SITE_POINTS_SPEND_2026_10_30; panel renamed and gift cards added, GIFT_CARDS_2026_11_06) -->
             <div id="acct-view-rewards" hidden>
               <div class="acct-rewards">
-                <p class="acct-muted" style="text-align:left;padding:0;"><span id="pts-earn-rate">You earn 1 point for every $1 of a completed repair.</span> ATR One Plus members earn more &mdash; 5 points per $1 on Individual &amp; Family, 10 points per $1 on Business plans. Trade points for a voucher — 100 points = $5 — and use it at your next visit, or pay for accessories with points right in the Shop.</p>
+                <p class="acct-muted" style="text-align:left;padding:0;"><span id="pts-earn-rate">You earn 1 point for every $1 of a completed repair.</span></p>
                 <div id="pts-exchange">
                   <p class="pts-balance-line">Your balance: <strong id="pts-balance-num">0</strong> points</p>
                   <div class="pts-stepper">
@@ -4389,6 +4389,15 @@
       </div>
     </section>
 
+  <!-- V165_ESTIMATE_2026_11_17 (Austin, Nov 17, 2026): public estimate page, reached ONLY from the link in the estimate email (#estimate/<token>). No account is needed to VIEW it. The account is made on this page, only when the guest presses Confirm — never at estimate creation, never by viewing. Confirm makes the ticket; Deny sends the no-hard-feelings email and never makes a ticket. -->
+  <section id="est-view" hidden aria-label="Your estimate">
+    <div class="est-view-inner">
+      <p><a href="#account" id="est-view-back">&larr; Back to my account</a></p>
+      <p class="est-view-eyebrow">Austin&rsquo;s Tech Repair Group</p>
+      <h2>Your estimate</h2>
+      <div id="est-view-body"><p class="acct-muted">Loading your estimate&hellip;</p></div>
+    </div>
+  </section>
   </main>
 
   <!-- ==================== FOOTER ==================== -->
@@ -5193,6 +5202,12 @@
   .acct-status-readyforpickup{background:#e2f7e3;color:#15803d}
   .acct-status-completed{background:#e8e8e8;color:#555}
   .acct-repairs-head{display:flex;align-items:center;justify-content:space-between;gap:.75rem;margin-bottom:.9rem;flex-wrap:wrap}
+  /* V165_ESTIMATE_2026_11_17: public estimate page overlay + cards. */
+  #est-view{position:fixed;inset:0;z-index:200;background:var(--paper,#fff);overflow:auto;padding:1.25rem}
+  .est-view-inner{max-width:640px;margin:0 auto}
+  .est-view-eyebrow{letter-spacing:.12em;text-transform:uppercase;font-size:.8rem;color:var(--muted,#666);margin:0 0 .25rem}
+  .est-view-card{border:1px solid #e3ddd2;border-radius:12px;padding:1rem;margin:.75rem 0}
+  .est-actions{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1rem}
   .acct-field{display:block;margin-bottom:1rem}
   .acct-field span{display:block;font-weight:700;font-size:.85rem;margin-bottom:.4rem;color:var(--ink)}
   .acct-field input,.acct-field select,.acct-field textarea{width:100%;padding:.85rem 1rem;border:2px solid var(--line);border-radius:var(--radius-sm);background:var(--bg);color:var(--ink);font-size:.95rem;font-family:var(--font-body);box-sizing:border-box}
@@ -5352,6 +5367,7 @@
     currentCust = cust;
     wireRepairs();
     loadMyRepairs(cust);
+    loadMyEstimates(cust); /* V165_ESTIMATE_2026_11_17 */
     loadInbox(cust); /* CUSTOMER_INBOX_2026_11_05: conversations + unread badge */
     loadMyOrders(cust); /* ACCOUNT_FIX_PASS_3_2_2026_11_06 ITEM C */
     loadMyDevices(cust); /* MY_DEVICES_2026_11_06 */
@@ -6208,7 +6224,7 @@
     if (!list) return;
     list.innerHTML = '<p class="acct-muted">Your services are taking longer than usual to load.</p><button type="button" class="btn btn-secondary btn-sm" id="acct-repairs-retry">Retry</button>';
     var b = $('acct-repairs-retry');
-    if (b) b.addEventListener('click', function () { if (currentCust) loadMyRepairs(currentCust); });
+    if (b) b.addEventListener('click', function () { if (window.atrReloadMyRepairs) window.atrReloadMyRepairs(); else if (currentCust) loadMyRepairs(currentCust); });
   }
   function paintInboxFallback() {
     var list = $('acct-inbox-list');
@@ -6219,7 +6235,18 @@
   }
   function loadMyRepairs(cust) {
     var list = $('acct-ticket-list');
-    if (!list || !sb || !cust) return;
+    if (!list) return;
+    /* V165_SERVICES_SELFHEAL_2026_11_17: the guard used to return
+     * silently when sb/cust were missing, leaving the static
+     * "Loading your services…" placeholder forever with no retry and
+     * no error. It paints the couldn't-load fallback instead, with a
+     * Retry button that re-runs the whole account load. */
+    if (!sb || !cust) {
+      list.innerHTML = '<p class="acct-muted">We couldn\'t load your services.</p><button type="button" class="btn btn-secondary btn-sm" id="acct-repairs-retry">Retry</button>';
+      var rb = $('acct-repairs-retry');
+      if (rb) rb.addEventListener('click', function () { if (window.atrReloadMyRepairs) window.atrReloadMyRepairs(); });
+      return;
+    }
     list.innerHTML = '<p class="acct-muted">Loading your repairs\u2026</p>';
     repairsSettled = false; armWatchdog('repairs'); /* ACCOUNT_FIX_PASS_3_2_2026_11_06 ITEM D */
     sb.from('tickets').select('id, created_at, device_type, brand, model, issue, issue_reason, status, job_date, appointment_at, service_address') /* V158_GUEST_PORTAL_2026_11_17: appointment + address were never even asked for */
@@ -6273,6 +6300,287 @@
         if (supListErr) supListErr.innerHTML = '<p class="acct-muted">We couldn\'t load your one-on-ones just now \u2014 try again in a moment.</p>';
       });
   }
+  /* ================= V165_ESTIMATE_2026_11_17 =================
+   * Public estimate page (#estimate/<token>) + My Estimates list.
+   * Reached ONLY from the link in the estimate email. No account
+   * is needed to VIEW an estimate. THE ACCOUNT RULE: the account
+   * is made on THIS page, only when the guest presses Confirm —
+   * never at estimate creation, never by viewing. Confirm makes
+   * the ticket (Service Queue, visit fee, date/time to follow);
+   * Deny sends the no-hard-feelings email and never makes a
+   * ticket. The decision runs through the estimate-decide Edge
+   * Function (deploy companion); the direct-write path below is
+   * the fallback while that function is not deployed, and it only
+   * runs for a signed-in guest. */
+  function estDeviceLabel(e) {
+    return [e.device_type, e.brand, e.model].filter(Boolean).join(' ') || 'Device';
+  }
+  function estMoney(n) {
+    var v = Number(n);
+    return isNaN(v) ? '—' : '$' + v.toFixed(2);
+  }
+  function estDate(e) {
+    try { return new Date(e.created_at).toLocaleDateString(); } catch (err) { return ''; }
+  }
+  function loadMyEstimates(cust) {
+    var list = $('acct-estimates-list');
+    if (!list || !sb || !cust) return;
+    list.innerHTML = '<p class="acct-muted">Loading your estimates…</p>';
+    sb.from('estimates').select('id, public_token, created_at, device_type, brand, model, issue, estimate_amount, status, audience')
+      .eq('customer_id', cust.id).order('created_at', { ascending: false }).limit(50)
+      .then(function (res) {
+        if (res.error) throw res.error;
+        var rows = res.data || [];
+        if (!rows.length) {
+          list.innerHTML = '<p class="acct-muted">No estimates yet — when you ask for an estimate, it will show up here for you to confirm or decline.</p>';
+          return;
+        }
+        list.innerHTML = rows.map(function (e) {
+          var awaiting = e.status === 'Awaiting Estimate';
+          var cls = e.status === 'Accepted' ? 'acct-st-done' : 'acct-st-waiting';
+          return '<div class="acct-ticket-card" style="cursor:default">' +
+            '<span class="acct-ticket-top"><strong>' + escX(estDeviceLabel(e)) + '</strong><span class="acct-status ' + cls + '">' + escX(e.status || '') + '</span></span>' +
+            '<span class="acct-ticket-issue">' + escX(e.issue || '') + '</span>' +
+            '<span class="acct-ticket-meta">' + escX(estMoney(e.estimate_amount)) + (awaiting ? ' · waiting for your answer' : '') + '</span>' +
+            (awaiting && e.public_token ? '<span class="acct-ticket-cta"><a class="btn btn-primary btn-sm" href="#estimate/' + escX(e.public_token) + '">View estimate</a></span>' : '') +
+          '</div>';
+        }).join('');
+      })
+      .catch(function () {
+        list.innerHTML = '<p class="acct-muted">We couldn\'t load your estimates just now — pull this page up again in a moment.</p>';
+      });
+  }
+  var estViewToken = null, estViewRow = null;
+  function estViewTokenFromHash() {
+    var h = window.location.hash || '';
+    var m = h.match(/^#estimate\/([A-Za-z0-9-]+)/);
+    return m ? m[1] : null;
+  }
+  function estViewShow() {
+    var v = $('est-view');
+    if (v) v.hidden = false;
+    document.body.style.overflow = 'hidden';
+  }
+  function estViewHide() {
+    var v = $('est-view');
+    if (v) v.hidden = true;
+    document.body.style.overflow = '';
+  }
+  function estViewLoad(token) {
+    /* V165_FIX_2026_11_17: estViewCheckHash runs at parse time, but
+     * sb is only assigned on DOMContentLoaded — without this, the
+     * estimate page ALWAYS failed on a fresh email-link load (sb null
+     * -> "We couldn't open that estimate"), and nothing retried it.
+     * Resolve the client lazily here; getClient() is this IIFE's own. */
+    if (!sb) sb = getClient();
+    estViewToken = token; estViewRow = null;
+    var body = $('est-view-body');
+    if (body) body.innerHTML = '<p class="acct-muted">Loading your estimate…</p>';
+    estViewShow();
+    if (!sb) { estViewRenderError(); return; }
+    function direct() {
+      sb.from('estimates').select('*').eq('public_token', token).maybeSingle().then(function (res) {
+        if (!res.error && res.data) { estViewRow = res.data; estViewRender(); return; }
+        estViewRenderError();
+      }).catch(function () { estViewRenderError(); });
+    }
+    if (sb.rpc) {
+      sb.rpc('get_estimate_by_token', { p_token: token }).then(function (res) {
+        if (!res.error && res.data) { estViewRow = res.data; estViewRender(); return; }
+        direct();
+      }).catch(function () { direct(); });
+    } else direct();
+    /* The session restore lands after this page opens; re-render
+     * once so a just-signed-in guest sees the signed-in buttons. */
+    setTimeout(function () { if (estViewRow && $('est-view') && !$('est-view').hidden) estViewRender(); }, 3000);
+  }
+  function estViewRenderError() {
+    var body = $('est-view-body');
+    if (!body) return;
+    body.innerHTML = '<div class="est-view-card"><p><strong>We couldn\'t open that estimate.</strong></p>' +
+      '<p class="acct-muted">The link may be old, or the estimate may have been withdrawn. Call or text (937) 280-6243 and we will sort it out.</p>' +
+      '<p><a class="btn btn-outline btn-sm" href="#account">Back to my account</a></p></div>';
+  }
+  function estViewRender() {
+    var body = $('est-view-body');
+    if (!body || !estViewRow) return;
+    var e = estViewRow;
+    var fee = e.audience === 'business' ? 34.99 : 14.99;
+    var html = '<div class="est-view-card">' +
+      '<p class="acct-muted" style="margin-top:0">' + escX(e.audience === 'business' ? 'For your business' : 'For you') + ' · ' + escX(estDate(e)) + '</p>' +
+      '<h3 style="margin-top:0">' + escX(estDeviceLabel(e)) + '</h3>' +
+      '<p>' + escX(e.issue || '') + '</p>' +
+      '<p><strong>Estimate: ' + escX(estMoney(e.estimate_amount)) + '</strong></p>' +
+      '<p class="acct-muted">When you confirm, the visit fee (' + escX(estMoney(fee)) + ') is due as we schedule your visit, and we will confirm your date and time with you. Nothing is booked until you confirm.</p>' +
+      '</div>';
+    if (e.status === 'Accepted') {
+      html += '<div class="est-view-card"><p><strong>You confirmed this estimate.</strong></p><p class="acct-muted">Your repair is booked in — you can follow it in My Services.</p><p><a class="btn btn-primary btn-sm" href="#account">View my services</a></p></div>';
+    } else if (e.status === 'Declined') {
+      html += '<div class="est-view-card"><p><strong>No hard feelings.</strong></p><p class="acct-muted">This estimate is declined. If we can help you in the future, please let us know.</p></div>';
+    } else {
+      var signedIn = !!(typeof currentCust !== 'undefined' && currentCust);
+      html += '<div class="est-view-card"><h4 style="margin-top:0">Confirm or deny</h4>' +
+        '<label class="atr-check"><input type="checkbox" id="est-view-agree"><span>I agree to the <strong>Repair Authorization and Service Agreement</strong> and the <strong>1-Year Limited Warranty</strong>. *</span></label>';
+      if (!signedIn) {
+        html += '<div id="est-view-account"><p class="acct-muted">To confirm, first create your account — it takes a moment, and it is made here, on this page. Your email is already filled in from your estimate.</p>' +
+          '<label class="acct-field"><span>Email</span><input type="email" id="est-view-email" value="' + escX(e.email || '') + '" readonly></label>' +
+          '<label class="acct-field"><span>Choose a password (at least 8 characters)</span><input type="password" id="est-view-pass" autocomplete="new-password"></label>' +
+          '<p class="acct-muted">Already have an account? <a href="#account">Log in</a>, then come back to this page from your estimate email.</p></div>';
+      }
+      html += '<p class="acct-error" id="est-view-error" hidden></p>' +
+        '<div class="est-actions">' +
+        '<button type="button" class="btn btn-primary" id="est-view-confirm">Yes — confirm my estimate</button>' +
+        '<button type="button" class="btn btn-outline" id="est-view-deny">No — not right now</button>' +
+        '</div></div>';
+    }
+    body.innerHTML = html;
+    var cf = $('est-view-confirm');
+    if (cf) cf.addEventListener('click', function () { estViewDecide('confirm'); });
+    var dn = $('est-view-deny');
+    if (dn) dn.addEventListener('click', function () { estViewDecide('deny'); });
+  }
+  function estDecideCall(payload, cb) {
+    var base = '';
+    try { base = (typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : ''); } catch (e) {}
+    if (!base || !window.fetch) { cb(false); return; }
+    function post(token) {
+      var headers = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
+      try {
+        if (typeof SUPABASE_ANON_KEY !== 'undefined') { headers['Authorization'] = 'Bearer ' + SUPABASE_ANON_KEY; headers['apikey'] = SUPABASE_ANON_KEY; }
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+      } catch (e2) {}
+      fetch(base + '/functions/v1/estimate-decide', { method: 'POST', headers: headers, body: JSON.stringify(payload) })
+        .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { cb(r.ok && j && j.ok !== false, j); }); })
+        .catch(function () { cb(false); });
+    }
+    try {
+      if (sb && sb.auth && sb.auth.getSession) {
+        sb.auth.getSession().then(function (res) {
+          var t = res && res.data && res.data.session && res.data.session.access_token;
+          post(t || null);
+        }).catch(function () { post(null); });
+      } else post(null);
+    } catch (e) { post(null); }
+  }
+  function estViewDecide(decision) {
+    var err = $('est-view-error');
+    function fail(m) { if (err) { err.textContent = m; err.hidden = false; } }
+    if (err) err.hidden = true;
+    var e = estViewRow;
+    if (!e || e.status !== 'Awaiting Estimate') return;
+    if (decision === 'confirm') {
+      var ag = $('est-view-agree');
+      if (ag && !ag.checked) { fail('Please tick the agreement box first.'); return; }
+    }
+    var signedIn = !!(typeof currentCust !== 'undefined' && currentCust);
+    var btn = decision === 'confirm' ? $('est-view-confirm') : $('est-view-deny');
+    if (btn) btn.disabled = true;
+    /* Signed-out Confirm: the account is made by the function, in
+     * this same call — the guest chose their password above, and it
+     * rides the payload. No account payload on Deny: declining
+     * never makes an account. */
+    var account = null;
+    if (decision === 'confirm' && !signedIn) {
+      var pw = $('est-view-pass') ? String($('est-view-pass').value || '') : '';
+      if (!pw || pw.length < 8) { fail('Please choose a password of at least 8 characters.'); if (btn) btn.disabled = false; return; }
+      account = { email: e.email, password: pw, name: e.name };
+    }
+    function done(ok, note) {
+      if (btn) btn.disabled = false;
+      if (!ok) { fail(note || 'Something went wrong — please try again, or call or text (937) 280-6243.'); return; }
+      estViewRow.status = decision === 'confirm' ? 'Accepted' : 'Declined';
+      estViewRender();
+      /* The function just made this guest's account: sign them in
+       * with the password they chose, so they land in it. */
+      if (account && sb && sb.auth && sb.auth.signInWithPassword) {
+        try {
+          sb.auth.signInWithPassword({ email: account.email, password: account.password }).then(function (res) {
+            if (res && res.data && res.data.session) { try { enterAccount(res.data.session); } catch (e2) {} }
+          }).catch(function () {});
+        } catch (e3) {}
+      }
+      try {
+        if (decision === 'confirm' && typeof currentCust !== 'undefined' && currentCust) { loadMyRepairs(currentCust); loadMyEstimates(currentCust); }
+      } catch (err2) {}
+    }
+    estDecideCall({ token: estViewToken, decision: decision, account: account }, function (ok) {
+      if (ok) { done(true); return; }
+      /* Fallback while the function is not deployed: a signed-in
+       * guest decides directly; a signed-out guest creates their
+       * account here first (same signUp the account page uses),
+       * then decides directly. A signed-out Deny sends the email. */
+      if (!signedIn && decision === 'confirm') { estViewSignupThenDecide(decision, done); return; }
+      if (!signedIn) { estViewSendDeclineEmail(estViewRow); done(true); return; }
+      estViewDecideDirect(decision, done);
+    });
+  }
+  function estViewSignupThenDecide(decision, done) {
+    var err = $('est-view-error');
+    var pass = $('est-view-pass') ? String($('est-view-pass').value || '') : '';
+    var e = estViewRow;
+    function fail(m) { if (err) { err.textContent = m; err.hidden = false; } var cf = $('est-view-confirm'); if (cf) cf.disabled = false; }
+    if (!pass || pass.length < 8) { fail('Please choose a password of at least 8 characters.'); return; }
+    if (!sb || !sb.auth || !sb.auth.signUp) { fail('Account creation is not available right now — call or text (937) 280-6243.'); return; }
+    sb.auth.signUp({
+      email: e.email, password: pass,
+      options: { data: { full_name: e.name, account_type: e.audience === 'business' ? 'business' : 'guest' }, emailRedirectTo: window.location.origin + window.location.pathname }
+    }).then(function (res) {
+      if (res.error) {
+        fail(/already/i.test(res.error.message || '') ? 'An account already exists for that email. Log in from your account page, then come back to this estimate.' : 'We could not create that account. Please try again.');
+        return;
+      }
+      if (res.data && res.data.session) {
+        try { enterAccount(res.data.session); } catch (e2) {}
+        var newUid = res.data.session.user && res.data.session.user.id;
+        estViewDecideDirect(decision, done, newUid || null);
+        return;
+      }
+      fail('Account created — check your email for a confirmation link, then come back and log in to confirm this estimate.');
+    }).catch(function () { fail('Something went wrong — please try again.'); });
+  }
+  function estViewDecideDirect(decision, done, custId) {
+    var e = estViewRow;
+    var cust = custId ? { id: custId } : ((typeof currentCust !== 'undefined' && currentCust) ? currentCust : null);
+    if (!sb || !cust) { done(false); return; }
+    if (decision === 'deny') {
+      sb.from('estimates').update({ status: 'Declined', decided_at: new Date().toISOString() }).eq('id', e.id).then(function (r) {
+        if (r.error) { done(false); return; }
+        estViewSendDeclineEmail(e);
+        done(true);
+      }).catch(function () { done(false); });
+      return;
+    }
+    var fee = (e.atr_one === 'member') ? 0 : (e.audience === 'business' ? 34.99 : 14.99);
+    var row = { customer_id: cust.id, customer_name: e.name, customer_phone: e.phone, customer_email: e.email || null, service_address: e.service_address || null, device_type: e.device_type, brand: e.brand || null, model: e.model || null, issue: e.issue, issue_reason: e.issue, job_date: null, appointment_at: null, source: 'estimate', status: 'Awaiting Scheduling', terms_accepted: true, dispatch_acknowledged: true, work_auth_accepted: true, marketing_opt_in: false };
+    sb.from('tickets').insert(row).select('id').single().then(function (ires) {
+      if (ires.error) { done(false); return; }
+      var newId = ires.data && ires.data.id;
+      var finish = function () {
+        sb.from('estimates').update({ status: 'Accepted', ticket_id: newId, customer_id: cust.id, decided_at: new Date().toISOString() }).eq('id', e.id).then(function () { done(true); }).catch(function () { done(true); });
+      };
+      if (fee > 0 && newId) {
+        sb.from('ticket_charges').insert({ ticket_id: newId, kind: 'dispatch', description: 'Visit fee', qty: 1, unit_price: fee }).then(function () { finish(); }, function () { finish(); });
+      } else finish();
+    }).catch(function () { done(false); });
+  }
+  function estViewSendDeclineEmail(e) {
+    try {
+      var base = (typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : '');
+      if (!base || !window.fetch) return;
+      var rows = [['Email', e.email || ''], ['Name', e.name || ''], ['Message', "Thank you for considering Austin's Tech Repair Group. We appreciate your business, and we understand it was not a good time for you. If we can help you in the future, please let us know — we'd be glad to hear from you."]];
+      var headers = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
+      if (typeof SUPABASE_ANON_KEY !== 'undefined') { headers['Authorization'] = 'Bearer ' + SUPABASE_ANON_KEY; headers['apikey'] = SUPABASE_ANON_KEY; }
+      fetch(base + '/functions/v1/form-alert', { method: 'POST', headers: headers, body: JSON.stringify({ kind: 'estimate-declined', token: e.public_token, subject: "Thanks for considering Austin's Tech Repair Group", rows: rows }) }).catch(function () {});
+    } catch (e2) {}
+  }
+  function estViewCheckHash() {
+    var t = estViewTokenFromHash();
+    if (t) { if (t !== estViewToken || !$('est-view') || $('est-view').hidden) estViewLoad(t); }
+    else estViewHide();
+  }
+  window.addEventListener('hashchange', estViewCheckHash);
+  estViewCheckHash();
+
   /* ACCOUNT_FIX_PASS_3_2_2026_11_06 (ITEM C): the customer's shop
      orders, read exactly the way Repairs reads tickets — the
      customer's own session, their own rows only (the read policy is
@@ -6710,14 +7018,59 @@
     var h = '<div class="acct-signdoc-row"><div class="acct-signdoc-title">' + escX(label) + '</div><div class="acct-signdoc-meta">' + meta + '</div>';
     if (sig) {
       h += '<div class="acct-signdoc-meta"><span class="acct-signdoc-signed">Signed</span> — ' + escX(sig.signer_name || '') + ', ' + escX(fmtDayX(sig.signed_at)) + '</div>';
-      h += '<div class="acct-signdoc-btns"><button type="button" class="acct-signdoc-btn acct-signdoc-btn--ghost" data-v158doc="preview" data-ticket="' + escX(ticketId) + '" data-type="' + escX(type) + '">View</button></div>';
+      h += '<div class="acct-signdoc-btns"><button type="button" class="acct-signdoc-btn acct-signdoc-btn--ghost" data-v158doc="preview" data-ticket="' + escX(ticketId) + '" data-type="' + escX(type) + '">View</button>' +
+        '<button type="button" class="acct-signdoc-btn acct-signdoc-btn--ghost" data-v158doc="download" data-ticket="' + escX(ticketId) + '" data-type="' + escX(type) + '">Download</button></div>';
     } else {
       h += '<div class="acct-signdoc-meta">Waiting for your signature.</div>';
       h += '<div class="acct-signdoc-btns"><button type="button" class="acct-signdoc-btn acct-signdoc-btn--ghost" data-v158doc="preview" data-ticket="' + escX(ticketId) + '" data-type="' + escX(type) + '">Preview</button>' +
+        '<button type="button" class="acct-signdoc-btn acct-signdoc-btn--ghost" data-v158doc="download" data-ticket="' + escX(ticketId) + '" data-type="' + escX(type) + '">Download</button>' +
         '<button type="button" class="acct-signdoc-btn" data-v158doc="sign" data-ticket="' + escX(ticketId) + '" data-type="' + escX(type) + '">Sign</button></div>';
     }
     return h + '</div>';
   }
+  /* V165_GUEST_DOCS_2026_11_17: Download on the ticket-page Documents
+   * section. Template docs (agreement / warranty) download as the
+   * current site text — the same section view-doc renders; filed docs
+   * (estimate / invoice / receipt) download through the doc-view
+   * signed URL, the same door Preview uses. */
+  function v158SaveBlob(filename, blob) {
+    var url = window.URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = filename; document.body.appendChild(a); a.click();
+    setTimeout(function () { document.body.removeChild(a); window.URL.revokeObjectURL(url); }, 500);
+  }
+  function v158DownloadDoc(btn, ticketId, type) {
+    if (!btn || !ticketId) return;
+    var old = btn.textContent;
+    btn.textContent = 'Opening…'; btn.disabled = true;
+    function done() { if (btn.textContent === 'Opening…') { btn.textContent = old; btn.disabled = false; } }
+    function fail(msg) { btn.textContent = msg || 'Download unavailable.'; setTimeout(done, 2500); }
+    if (type === 'agreement' || type === 'terms' || type === 'warranty') {
+      var section = type === 'warranty' ? 'warranty' : type === 'terms' ? 'terms' : 'service-agreement';
+      fetch('/index.html', { credentials: 'same-origin' }).then(function (r) { if (!r.ok) throw new Error('x'); return r.text(); })
+        .then(function (siteHtml) {
+          var doc = new DOMParser().parseFromString(siteHtml, 'text/html');
+          var sec = doc.getElementById(section);
+          if (!sec) throw new Error('x');
+          v158SaveBlob(section + '.html', new Blob(['<!doctype html><html><head><meta charset="utf-8"><title>' + section + '</title></head><body>' + sec.outerHTML + '</body></html>'], { type: 'text/html' }));
+          done();
+        }).catch(function () { fail(); });
+      return;
+    }
+    if (!sb) { fail(); return; }
+    sb.auth.getSession().then(function (sres) {
+      var token = sres && sres.data && sres.data.session ? sres.data.session.access_token : null;
+      if (!token) throw new Error('Please sign in again, then try the download.');
+      return fetch(SUPABASE_URL + '/functions/v1/doc-view', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'apikey': SUPABASE_ANON_KEY }, body: JSON.stringify({ ticket_id: ticketId, kind: type }) });
+    }).then(function (res) { return res.json(); }).then(function (out) {
+      if (!out || !out.ok || !out.url) throw new Error('No file to download yet.');
+      return fetch(out.url).then(function (r) { if (!r.ok) throw new Error('Download failed.'); return r.blob(); });
+    }).then(function (blob) {
+      v158SaveBlob((type || 'document') + '.html', blob);
+      done();
+    }).catch(function (err) { fail((err && err.message) || 'Download unavailable.'); });
+  }
+
   window.atrLoadTicketDocuments = function (t) {
     var box = $('acct-ticket-docs');
     if (!box || !sb) return;
@@ -6777,6 +7130,7 @@
           if (window.__atrDocSigning && window.__atrDocSigning.openSign) { window.__atrDocSigning.openSign(ticketId, type); return; }
           window.open('view-doc.html?doc=' + encodeURIComponent(type) + '&t=' + encodeURIComponent(ticketId), '_blank');
         }
+        if (action === 'download') { v158DownloadDoc(btn, ticketId, type); return; }
       });
     }
   };
@@ -7834,6 +8188,7 @@
         var ptsAmt = $('acct-t-points-amount'); if (ptsAmt) ptsAmt.hidden = true;
         showRepairsView();
         loadMyRepairs(currentCust);
+        loadMyEstimates(currentCust); /* V165_ESTIMATE_2026_11_17 */
       }).catch(function () { err.textContent = 'Couldn\'t submit \u2014 try again.'; err.hidden = false; });
     });
   }
@@ -8037,7 +8392,18 @@
     recordAppVersion(cust); /* VERSION_VISIBILITY_2026_11_10 */
     paintAppVersion();
   }
+  /* V165_SERVICES_SELFHEAL_2026_11_17 (Austin, Nov 17, 2026): the Guest
+   * Hub services list sat on "Loading your services…" forever when the
+   * account chain never reached renderDash. Two silent guards caused
+   * it: enterAccount bailed when sb was null (supabase-js had not
+   * loaded when DOMContentLoaded fired — the client is resolved lazily
+   * here now, the same fix the estimate page already carries), and an
+   * in-flight attempt that never settled blocked every later attempt
+   * (linkInFlightFor stayed set). A stale in-flight (>20s) is cleared
+   * so a later attempt can proceed. */
+  var enterAttemptAt = 0;
   function enterAccount(session) {
+    if (!sb) sb = getClient();
     if (!session || !session.user || !sb) return;
     var uid = session.user.id;
     var userEmail = session.user.email || '';
@@ -8056,8 +8422,9 @@
         if (window.atrApplyAudience) window.atrApplyAudience();
       }
     } catch (e) {}
+    if (linkInFlightFor === uid && enterAttemptAt && Date.now() - enterAttemptAt > 20000) linkInFlightFor = null;
     if (linkedUid === uid || linkInFlightFor === uid) return;
-    linkInFlightFor = uid;
+    linkInFlightFor = uid; enterAttemptAt = Date.now();
     var settled = false;
     function stop() { settled = true; linkInFlightFor = null; }
     /* ACCOUNT_STAFF_EMAILS_2026_11_10: the RPC answered 'created'
@@ -8183,6 +8550,27 @@
     showErr($('authx-signup-error'), '');
   }
   window.atrSignupType = function () { return signupType; };
+
+  /* V165_SERVICES_SELFHEAL_2026_11_17 (Austin, Nov 17, 2026): the Hub
+   * opens its Service Request pane without ever asking the account
+   * loader for the list, so a session where renderDash never ran left
+   * the static "Loading your services…" placeholder forever. The Hub's
+   * showTab('service') calls this hook when the list still shows that
+   * never-loaded placeholder. With a loaded guest it re-runs the list
+   * load; without one it re-runs the whole account load for the current
+   * session (enterAccount's lazy client recovery covers a library that
+   * was not ready at boot). The watchdog Retry button uses it too. */
+  window.atrReloadMyRepairs = function () {
+    if (currentCust) { loadMyRepairs(currentCust); return true; }
+    if (currentCustomer) { loadMyRepairs(currentCustomer); return true; }
+    var c = sb || getClient(); if (c) sb = c;
+    if (!sb || !sb.auth || typeof sb.auth.getSession !== 'function') return false;
+    sb.auth.getSession().then(function (s) {
+      var sess = s && s.data && s.data.session;
+      if (sess) enterAccount(sess);
+    }).catch(function () {});
+    return true;
+  };
 
   document.addEventListener('DOMContentLoaded', function () {
     sb = getClient(); try{ if(window.supabase&&window.supabase.createClient){ var pkc=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{experimental:{passkey:true}}}); if(pkc) sb=pkc; } }catch(e){}
@@ -8411,6 +8799,7 @@
        "Send us a message" tap is never a dead tap. */
     wireGeneralComposer();
 
+    if (!sb) sb = getClient();
     if (!sb) {
       showErr($('authx-login-error'), SB_UNAVAILABLE);
       return;
@@ -8631,6 +9020,87 @@
 </script>
 
 <script>
+/* ==================== V165_PRICE_SYNC_2026_11_17 ====================
+   ONE PRICE SOURCE: public.price_book in Supabase holds the full price
+   list (seeded from this page's v151 ATR_PRICE_DATA). A price edited in
+   the portal Price Book updates that table, and this loader fetches it
+   on every page load — so a portal edit reaches the website with no
+   publish step. (Owner, Nov 12, 2026: "the prices, they update
+   everywhere if you update a price." Rebased onto v151 in v152, Nov 16,
+   2026 — the seed is value-identical to v130's because ATR_PRICE_DATA
+   has not changed since Nov 12.)
+   SAFETY: the inline DATA above stays as the fallback and renders
+   FIRST. The fetch is async and never blocks rendering; if it fails
+   (table not seeded yet, offline, RLS) the page simply keeps the
+   fallback book. When the fetch succeeds the table rows are swapped
+   into the SAME window.ATR_PRICE_DATA object in place, so every
+   consumer already holding a reference to it (booking wizard,
+   Repair or Replace, Services flow, search index) sees the fresh
+   prices without any re-wire. Service rows (kind 'service') and rows
+   outside the five book types never reach the site.
+   window.__atrPriceBookLive is true once the live list has replaced
+   the fallback, false if the fallback is still in force. */
+(function () {
+  var SUPABASE_URL = 'https://lyujxpuicarblpkdzuuc.supabase.co';
+  var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
+  var BOOK_TYPES = ['Phone', 'Tablet', 'Computer', 'Smartwatch', 'Game Console'];
+  function applyRows(rows) {
+    var target = window.ATR_PRICE_DATA;
+    if (!target || !rows || !rows.length) return false;
+    var rebuilt = {};
+    rows.forEach(function (r) {
+      if (r.kind !== 'repair') return;
+      if (BOOK_TYPES.indexOf(r.device_type) === -1) return;
+      if (!r.brand || !r.device || !r.repair) return;
+      var t = rebuilt[r.device_type] || (rebuilt[r.device_type] = {});
+      var b = t[r.brand] || (t[r.brand] = {});
+      var m = b[r.device] || (b[r.device] = {});
+      m[r.repair] = (r.price == null ? null : Number(r.price));
+    });
+    if (!Object.keys(rebuilt).length) return false;
+    /* Swap in place: every closure holding the old object sees fresh data. */
+    Object.keys(target).forEach(function (k) { delete target[k]; });
+    Object.keys(rebuilt).forEach(function (k) { target[k] = rebuilt[k]; });
+    window.__atrPriceBookLive = true;
+    return true;
+  }
+  function fetchPage(client, from, acc, done) {
+    client.from('price_book')
+      .select('device_type,brand,device,repair,price,kind')
+      .eq('kind', 'repair')
+      .range(from, from + 999)
+      .then(function (res) {
+        if (res.error) { done(res.error); return; }
+        var rows = res.data || [];
+        acc.push.apply(acc, rows);
+        if (rows.length === 1000) fetchPage(client, from + 1000, acc, done);
+        else done(null, acc);
+      })
+      .catch(function (e) { done(e); });
+  }
+  function load() {
+    try {
+      if (!window.supabase || !window.supabase.createClient) {
+        window.__atrPriceBookLive = false;
+        return;
+      }
+      var client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      fetchPage(client, 0, [], function (err, rows) {
+        if (err || !rows || !rows.length) { window.__atrPriceBookLive = false; return; }
+        try { if (!applyRows(rows)) window.__atrPriceBookLive = false; }
+        catch (e) { window.__atrPriceBookLive = false; }
+      });
+    } catch (e) { window.__atrPriceBookLive = false; }
+  }
+  load();
+  if (!window.supabase) {
+    /* Supabase-js had not executed yet when this block ran; retry once. */
+    document.addEventListener('DOMContentLoaded', load);
+  }
+})();
+</script>
+
+<script>
 /* ==================== REPAIR_OR_REPLACE_2026_11_06 ====================
    The Repair or Replace helper. Reads the SAME price book the Prices
    lookup and the repair wizard read (window.ATR_PRICE_DATA, defined
@@ -8840,8 +9310,20 @@
 .ghub-steps{list-style:none;padding:0;margin:.5rem 0}
 .ghub-steps li{padding:.3rem 0;border-bottom:1px solid #EFE6D2}
 .ghub-steps li.done{font-weight:700}
-.ghub-barcode{display:flex;align-items:flex-end;gap:2px;height:64px;background:#fff;border:1px solid #E6D9C0;border-radius:.7rem;padding:.6rem;margin:.6rem 0}
-.ghub-barcode i{display:block;background:#2C231A}
+.ghub-signed{color:#0E7C6B;font-weight:800}
+.ghub-signblock{border:1px solid #E6D9C0;border-radius:1rem;padding:1rem;margin:.9rem 0;background:#FFFDF8}
+.ghub-signblock h4{margin:.1rem 0 .5rem}
+.ghub-docbtns{display:flex;gap:.45rem;flex-wrap:wrap;margin-top:.35rem}
+.ghub-search-blockbreak{height:1px;background:var(--line,#E6D9C0);margin:.55rem 0}
+.ghub-details{margin-bottom:.9rem}
+.ghub-details summary{cursor:pointer;font-weight:800;font-size:1rem;padding:.7rem .9rem;background:#FFFDF8;border:1px solid #E6D9C0;border-radius:1rem;list-style:none;display:flex;align-items:center;gap:.6rem}
+.ghub-details summary::-webkit-details-marker{display:none}
+.ghub-details summary::after{content:'\25B8';margin-left:auto;color:#7D6C5B}
+.ghub-details[open] summary::after{content:'\25BE'}
+.ghub-details .ghub-details-body{padding:.9rem .2rem 0}
+html[data-theme="dark"] .ghub-signblock{background:var(--surface,#221B14);border-color:var(--line,#3A2F24)}
+html[data-theme="dark"] .ghub-details summary{background:var(--surface,#221B14);border-color:var(--line,#3A2F24);color:var(--ink,#F0E8DA)}
+html[data-theme="dark"] .ghub-signed{color:#7BDDB4}
 .ghub-thumb{position:fixed;left:0;right:0;bottom:0;z-index:2001;background:#FFFDF8;border-top:1px solid #E6D9C0;display:flex;justify-content:space-around;padding:.55rem 0 calc(.55rem + env(safe-area-inset-bottom))}
 .ghub-thumb button{background:none;border:none;font-size:.68rem;font-weight:700;color:#7D6C5B;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:3px}
 .ghub-thumb button.active{color:#D9540D}
@@ -8872,8 +9354,6 @@ html[data-theme="dark"] .ghub-card{background:var(--surface,#221B14);border-colo
 html[data-theme="dark"] .ghub-muted{color:var(--muted,#A89880)}
 html[data-theme="dark"] .ghub-status{background:#14332C;color:#7BDDB4}
 html[data-theme="dark"] .ghub-steps li{border-bottom-color:var(--line,#3A2F24)}
-html[data-theme="dark"] .ghub-barcode{background:var(--surface,#221B14);border-color:var(--line,#3A2F24)}
-html[data-theme="dark"] .ghub-barcode i{background:var(--ink,#F0E8DA)}
 html[data-theme="dark"] .ghub-thumb{background:var(--surface,#221B14);border-top-color:var(--line,#3A2F24)}
 html[data-theme="dark"] .ghub-thumb button{color:var(--muted,#A89880)}
 html[data-theme="dark"] .ghub-thumb button.active{color:var(--brand,#D9540D)}
@@ -8927,7 +9407,6 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
       <div class="ghub-side-label">ACTION BUTTONS</div>
       <button class="ghub-tab active" type="button" data-ghub="home"><i class="fas fa-house"></i> Home</button>
       <button class="ghub-tab" type="button" data-ghub="service"><i class="fas fa-tools"></i> Service Request</button>
-      <button class="ghub-tab" type="button" data-ghub="scanin"><i class="fas fa-qrcode"></i> Scan In</button>
       <button class="ghub-tab" type="button" data-ghub="account"><i class="fas fa-user"></i> Account</button>
       <button class="ghub-tab" type="button" data-ghub="chat"><i class="fas fa-comment-dots"></i> Service Messages <span class="acct-msg-badge" id="acct-msg-badge" hidden>0</span></button>
       <button class="ghub-tab" type="button" data-ghub="connect"><i class="fas fa-display"></i> ATRG Connect</button>
@@ -9101,22 +9580,24 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
           <div id="acct-support-list"><p class="acct-muted">Loading your one-on-ones…</p></div>
         </div>
 
+        <!-- V165_ESTIMATE_2026_11_17: the guest's own estimates — awaiting ones link out to the estimate page, where they confirm or decline. Estimates are not tickets and never appear in My Services until confirmed. -->
+        <div class="acct-repairs" id="acct-myestimates" style="margin-top:1.5rem;">
+          <div class="acct-repairs-head">
+            <h4><i class="fas fa-file-invoice-dollar"></i> My Estimates</h4>
+          </div>
+          <div id="acct-estimates-list"><p class="acct-muted">Loading your estimates…</p></div>
         </div>
-      </div>
-      <div class="ghub-pane" data-pane="scanin" hidden>
-        <h2>Scan In</h2>
-        <div class="ghub-card"><p class="ghub-muted" style="margin-top:0">Your own code — show it at your visit and we pull up your service right away.</p>
-        <div class="ghub-barcode" id="ghub-barcode"></div>
-        <p><strong id="ghub-scan-code"></strong></p>
-        <p class="ghub-muted" id="ghub-scan-name"></p></div>
+
+        </div>
       </div>
       <div class="ghub-pane" data-pane="account" hidden>
         <h2>Account</h2>
         <div class="ghub-card" id="ghub-account-card"><p class="ghub-muted">Loading your details&hellip;</p></div>
 <div id="acct-view-settings" hidden>
         <!-- My profile -->
-        <div class="acct-profile" id="authx-profile">
-          <h4><i class="fas fa-id-card"></i> My Profile</h4>
+        <details class="ghub-details" open>
+          <summary><i class="fas fa-id-card"></i> My Profile</summary>
+          <div class="ghub-details-body"><div class="acct-profile" id="authx-profile">
           <p class="acct-profile-line"><strong id="authx-profile-name"></strong><br>
           <span class="acct-muted" id="authx-profile-email"></span></p>
           <label class="acct-field">
@@ -9134,10 +9615,13 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
                Filled by paintAppVersion() once the build stamp
                resolves; hidden until then. -->
           <p class="acct-muted" id="acct-app-version" hidden></p>
-        </div>
+        </div></div>
+        </details>
 
         <!-- My birthday (optional) -->
-        <div class="acct-birthday" id="acct-birthday-wrap" hidden>
+        <details class="ghub-details">
+          <summary><i class="fas fa-cake-candles"></i> My birthday</summary>
+          <div class="ghub-details-body"><div class="acct-birthday" id="acct-birthday-wrap" hidden>
           <div class="acct-field">
             <span><i class="fas fa-cake-candles"></i> My birthday (optional) &mdash; month and day only, no year</span>
             <div class="acct-row2">
@@ -9195,10 +9679,12 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
           <p class="acct-muted">Add it and we&rsquo;ll have a little something for you on your day &mdash; 15% off your next repair. Totally optional.</p>
           <button class="btn btn-outline btn-sm" id="acct-birthday-save" type="button"><i class="fas fa-save"></i> Save birthday</button>
           <span class="acct-muted" id="acct-birthday-msg"></span>
-        </div>
+        </div></div>
+        </details>
         <!-- V159_NOTIFICATIONS_2026_11_17 (Austin, Nov 17, 2026): the guest controls the flood — Email alerts on/off, Text alerts on/off, stored per guest in public.guest_notification_prefs. Default: email ON, text OFF (text needs a texting service; Google Voice cannot auto-send). -->
-        <div class="acct-notifications" id="acct-notifications">
-          <h4><i class="fas fa-bell"></i> Notifications</h4>
+        <details class="ghub-details">
+          <summary><i class="fas fa-bell"></i> Notifications</summary>
+          <div class="ghub-details-body"><div class="acct-notifications" id="acct-notifications">
           <p class="acct-muted">Choose what we send you. Your account email (estimate + login together) always sends — that one is not an alert.</p>
           <label class="atr-check">
             <input type="checkbox" id="acct-notif-email" checked>
@@ -9209,14 +9695,17 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
             <span><strong>Text alerts</strong> — repair updates by text. Texting needs a texting service first, so this stays off until that is set up.</span>
           </label>
           <span class="acct-muted" id="acct-notif-msg"></span>
-        </div>
+        </div></div>
+        </details>
         <!-- Password -->
-        <div class="acct-password">
-          <h4><i class="fas fa-lock"></i> Password</h4>
+        <details class="ghub-details">
+          <summary><i class="fas fa-lock"></i> Password</summary>
+          <div class="ghub-details-body"><div class="acct-password">
           <p class="acct-muted">Change your password by email.</p>
           <button class="btn btn-outline btn-sm" id="acct-change-password" type="button">Change password</button>
           <span class="acct-muted" id="acct-password-msg"></span>
-        </div>
+        </div></div>
+        </details>
         <div class="acct-earn">
           <p><i class="fas fa-gift"></i> <strong>How to earn:</strong> points on every completed repair &mdash; 1 point per $1 on ATR One Free, 5 points per $1 on ATR One Plus Individual &amp; Family, 10 points per $1 on ATR One Plus Business plans.</p>
           <p><i class="fas fa-tag"></i> <strong>Redeem:</strong> every 100 points = $5 off your next repair. Just mention your points when you book.</p>
@@ -9328,8 +9817,86 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
       <div class="ghub-pane" data-pane="warranty" hidden>
         <h2>Warranty</h2>
         <div class="ghub-card"><p>Every repair carries our 1-Year Limited Warranty on parts we supply and on our labor.</p>
-        <p class="ghub-muted">To request warranty service, use our warranty request form.</p>
-        <a class="btn btn-outline btn-sm" href="#warranty-request" data-page="warranty-request">Warranty request form</a></div>
+        <p class="ghub-muted">To request warranty service, fill out the form right here — it files the same warranty request as the website form, and we will reach out.</p></div>
+        <div class="ghub-card" id="ghub-wr-coverage"><p class="ghub-muted">Loading your warranty coverage&hellip;</p></div>
+        <div class="ghub-card" id="ghub-wr-mine"><p class="ghub-muted">Loading your support requests&hellip;</p></div>
+        <!-- V165_HUB_WARRANTY_2026_11_17 (Austin, Nov 17, 2026): the Hub Warranty pane was only a link to #warranty-request, which navigated away to the standalone website form. The form lives inside the Hub now — same fields, same names, same data-form="warranty-request", so the same atr-forms.js handler files the same public.warranty_requests row and sends the same alert. Pre-filled from the signed-in guest (name, phone, email) with their tickets as the ticket-number picker; picking a ticket fills the device and the approximate repair date too. -->
+        <div class="ghub-card">
+          <div class="atr-form-wrap" data-form-wrap="warranty-request">
+            <form class="atr-form" id="ghub-wr-form" data-form="warranty-request" novalidate>
+              <div class="atr-form-error" role="alert" hidden></div>
+              <div class="atr-field">
+                <label class="field-label" for="ghub-wr-name">Full name *</label>
+                <input class="form-field" type="text" id="ghub-wr-name" name="customer_name" autocomplete="name" placeholder="Your full name">
+                <span class="atr-field-error" data-error-for="customer_name"></span>
+              </div>
+              <div class="atr-row">
+                <div class="atr-field">
+                  <label class="field-label" for="ghub-wr-phone">Phone *</label>
+                  <input class="form-field" type="tel" id="ghub-wr-phone" name="phone" autocomplete="tel" placeholder="937-555-0123">
+                  <span class="atr-field-error" data-error-for="phone"></span>
+                </div>
+                <div class="atr-field">
+                  <label class="field-label" for="ghub-wr-email">Email *</label>
+                  <input class="form-field" type="email" id="ghub-wr-email" name="email" autocomplete="email" placeholder="you@example.com">
+                  <span class="atr-field-error" data-error-for="email"></span>
+                </div>
+              </div>
+              <div class="atr-field">
+                <label class="field-label" for="ghub-wr-device">Device make and model *</label>
+                <input class="form-field" type="text" id="ghub-wr-device" name="device" placeholder="e.g., iPhone 13 Pro Max, Galaxy S23, HP Pavilion laptop">
+                <span class="atr-field-error" data-error-for="device"></span>
+              </div>
+              <div class="atr-row">
+                <div class="atr-field">
+                  <label class="field-label" for="ghub-wr-ticket">Ticket number</label>
+                  <select class="form-field" id="ghub-wr-ticket" name="ticket_ref">
+                    <option value="">I don't have it / not sure</option>
+                  </select>
+                  <p class="atr-help">Pick the repair from your service requests, or leave this blank and we will look you up.</p>
+                  <span class="atr-field-error" data-error-for="ticket_ref"></span>
+                </div>
+                <div class="atr-field">
+                  <label class="field-label" for="ghub-wr-date">Approximate date of the original repair *</label>
+                  <input class="form-field" type="date" id="ghub-wr-date" name="repair_date">
+                  <p class="atr-help">An approximate date is fine — the closest you can remember.</p>
+                  <span class="atr-field-error" data-error-for="repair_date"></span>
+                </div>
+              </div>
+              <div class="atr-field">
+                <label class="field-label" for="ghub-wr-part">Which part or service is under warranty? *</label>
+                <input class="form-field" type="text" id="ghub-wr-part" name="part_service" placeholder="e.g., Screen replacement, battery, charging port">
+                <span class="atr-field-error" data-error-for="part_service"></span>
+              </div>
+              <div class="atr-field">
+                <label class="field-label" for="ghub-wr-problem">Describe the problem *</label>
+                <textarea class="form-field" id="ghub-wr-problem" name="problem" rows="4" placeholder="Tell us what the device is doing now — what stopped working, and when you first noticed it."></textarea>
+                <span class="atr-field-error" data-error-for="problem"></span>
+              </div>
+              <div class="atr-field">
+                <label class="field-label" for="ghub-wr-contact">Preferred contact method *</label>
+                <select class="form-field" id="ghub-wr-contact" name="contact_pref">
+                  <option value="">Choose one…</option>
+                  <option value="Call">Call</option>
+                  <option value="Text">Text</option>
+                  <option value="Email">Email</option>
+                </select>
+                <span class="atr-field-error" data-error-for="contact_pref"></span>
+              </div>
+              <div class="atr-honeypot" aria-hidden="true">
+                <label>Leave this field empty<input type="text" name="_honey" tabindex="-1" autocomplete="off"></label>
+              </div>
+              <button class="btn btn-primary btn-block btn-lg" type="submit">
+                <i class="fas fa-shield-halved"></i> Submit warranty request
+              </button>
+            </form>
+            <div class="form-success atr-success" id="ghub-wr-success" hidden>
+              <h3><i class="fas fa-circle-check"></i> Request received</h3>
+              <p data-success-msg>Your warranty request is in. Your repair is covered by our 1-year warranty on the parts we supplied, and we will reach out to you to go over the next steps.</p>
+              <p style="margin-bottom:0;"><button class="btn btn-outline" type="button" id="ghub-wr-done">Done</button></p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -9356,7 +9923,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
       <div class="ghub-search-head"><strong>Search the Guest Hub</strong><button type="button" id="ghub-search-close" aria-label="Close search">&times;</button></div>
       <input type="search" id="ghub-search-input" placeholder="Try &ldquo;membership&rdquo; or &ldquo;warranty&rdquo;&hellip;" aria-label="Search the Guest Hub" autocomplete="off">
       <div id="ghub-search-results"></div>
-      <p class="ghub-muted">Every section of the Hub is here — Home, Service Request, Scan In, Account, Service Messages, ATRG Connect, ATR One Membership, Documents, Warranty.</p>
+      <p class="ghub-muted">Every section of the Hub is here — Home, Service Request, Account, Service Messages, ATRG Connect, ATR One Membership, Documents, Warranty.</p>
     </div>
   </div>
 </div>
@@ -9418,6 +9985,92 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
     return lines + tot;
   }
   window.atrGuestHubChargesHtml = chargesHtml;
+  /* V165_WARRANTY_STATUS_2026_11_17 (Austin, Nov 17, 2026 — support
+   * tab): the Warranty section is the guest's support tab. They see
+   * their own warranty status here — every covered repair with how
+   * long is left on its 1-year warranty — and their own support
+   * requests. Staff warranty requests are never listed here.
+   * Repair date is the ticket's job_date, falling back to created_at;
+   * coverage runs 1 year from that date. */
+  function ghubWarrantyDate(t) {
+    var d = (t && (t.job_date || (t.created_at || '').slice(0, 10))) || '';
+    return d ? d.slice(0, 10) : '';
+  }
+  function ghubWarrantyLine(t) {
+    var d = ghubWarrantyDate(t);
+    if (!d) return '<p><strong>' + esc(deviceOf(t)) + '</strong> — repair date unknown; ask us and we will check it.</p>';
+    var rep = new Date(d + 'T12:00:00');
+    var exp = new Date(rep); exp.setFullYear(exp.getFullYear() + 1);
+    var today = new Date(); today.setHours(0, 0, 0, 0);
+    var expStr = exp.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    var repStr = rep.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    var days = Math.ceil((exp.getTime() - today.getTime()) / 86400000);
+    var status;
+    if (rep.getTime() > today.getTime()) status = 'Covered until ' + expStr + ' (starts at your repair)';
+    else if (days >= 0) status = 'Covered until ' + expStr + ' — ' + days + (days === 1 ? ' day left' : ' days left');
+    else status = 'Expired ' + expStr;
+    return '<p><strong>' + esc(deviceOf(t)) + '</strong><br>Repair ' + esc(repStr) + ' — ' + esc(status) + '</p>';
+  }
+  function paintGhubWarrantyLists() {
+    var cov = $('ghub-wr-coverage');
+    if (cov) {
+      var repairs = (tickets || []).filter(function (t) { return !/^\[SERVICE\]/.test(t.issue || '') && t.device_type !== 'Support'; });
+      cov.innerHTML = repairs.length
+        ? '<h3>Your warranty coverage</h3>' + repairs.map(ghubWarrantyLine).join('')
+        : '<h3>Your warranty coverage</h3><p class="ghub-muted">No repairs yet — when you book a service, its 1-year warranty will show here.</p>';
+    }
+    var mine = $('ghub-wr-mine');
+    if (!mine || !cust || !cust.email || !sb) {
+      if (mine) mine.innerHTML = '<h3>Your support requests</h3><p class="ghub-muted">Could not load your requests right now.</p>';
+      return;
+    }
+    mine.innerHTML = '<h3>Your support requests</h3><p class="ghub-muted">Loading&hellip;</p>';
+    sb.from('warranty_requests').select('id,ticket_ref,device,part_service,problem,repair_date')
+      .eq('email', cust.email)
+      .then(function (r) {
+        var rows = (r && r.data) || [];
+        mine.innerHTML = '<h3>Your support requests</h3>' + (rows.length
+          ? rows.slice().reverse().map(function (w) {
+              return '<p><strong>' + esc(w.device || 'Warranty request') + '</strong>' +
+                (w.ticket_ref ? ' — Ticket #' + esc(w.ticket_ref) : '') + '<br>' +
+                esc(w.part_service || '') + (w.problem ? ' — ' + esc(w.problem) : '') +
+                (w.repair_date ? '<br>Repair ' + esc(String(w.repair_date).slice(0, 10)) : '') + '</p>';
+            }).join('')
+          : '<p class="ghub-muted">No support requests yet.</p>');
+      }).catch(function () {
+        mine.innerHTML = '<h3>Your support requests</h3><p class="ghub-muted">Could not load your requests right now.</p>';
+      });
+  }
+  function prefillGhubWarranty(fromTicket) {
+    if (!cust) return;
+    paintGhubWarrantyLists();
+    var n = $('ghub-wr-name'), p = $('ghub-wr-phone'), e = $('ghub-wr-email'), tk = $('ghub-wr-ticket');
+    if (n && !n.value) n.value = cust.name || '';
+    if (p && !p.value) p.value = cust.phone || '';
+    if (e && !e.value) e.value = cust.email || '';
+    if (tk) {
+      var cur = tk.value;
+      var opts = '<option value="">I don\'t have it / not sure</option>' + tickets.map(function (t) {
+        var code = String(t.id || '').slice(0, 8).toUpperCase();
+        return '<option value="' + esc(code) + '">Ticket #' + esc(code) + ' — ' + esc(deviceOf(t)) + '</option>';
+      }).join('');
+      if (tk.innerHTML !== opts) tk.innerHTML = opts;
+      if (cur) tk.value = cur;
+      if (fromTicket && tk.value) {
+        var sel = null;
+        tickets.forEach(function (t) { if (String(t.id || '').slice(0, 8).toUpperCase() === tk.value) sel = t; });
+        if (sel) {
+          var dv = $('ghub-wr-device'), dt = $('ghub-wr-date');
+          if (dv && !dv.value) dv.value = deviceOf(sel);
+          if (dt && !dt.value) {
+            var d = sel.job_date || (sel.created_at || '').slice(0, 10);
+            if (d) dt.value = d;
+          }
+        }
+      }
+    }
+  }
+
   function showTab(name) {
     document.querySelectorAll('#guest-hub .ghub-tab').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-ghub') === name); });
     document.querySelectorAll('#guest-hub .ghub-thumb button').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-ghub') === name); });
@@ -9428,22 +10081,206 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
      * and resets it to its list view (thread / form hidden). The
      * account module still paints them by id wherever they sit. */
     if (name === 'service') { var pv = $('acct-view-repairs'); if (pv) pv.hidden = false; var sr = $('acct-repairs'), sth = $('acct-thread'), snt = $('acct-newticket'); if (sr) sr.hidden = false; if (sth) sth.hidden = true; if (snt) snt.hidden = true; }
+    /* V165_SERVICES_SELFHEAL_2026_11_17: the list is painted only by the
+     * account loader (renderDash -> loadMyRepairs). If the account chain
+     * never ran for this session, opening this tab used to show the
+     * static "Loading your services…" placeholder forever. When the list
+     * still shows that never-loaded placeholder, ask the account loader
+     * to run now. A list mid-load ("Loading your repairs…") or a painted
+     * fallback is left alone — the fallback carries its own Retry. */
+    if (name === 'service') {
+      var sl = $('acct-ticket-list');
+      if (sl && sl.innerHTML.indexOf('Loading your services') !== -1
+        && typeof window.atrReloadMyRepairs === 'function') window.atrReloadMyRepairs();
+    }
     if (name === 'documents') renderDocs();
+    if (name === 'warranty') prefillGhubWarranty();
     if (name === 'chat') { var mv = $('acct-view-messages'); if (mv) mv.hidden = false; var ib = $('acct-inbox'), cth = $('acct-thread'); if (ib) ib.hidden = false; if (cth) cth.hidden = true; }
     if (name === 'membership') { var mm = $('acct-view-membership'); if (mm) mm.hidden = false; }
     if (name === 'account') { var sv = $('acct-view-settings'); if (sv) sv.hidden = false; }
   }
   window.atrGuestHubShowTab = showTab;
+  /* V165_GUEST_DOCS_2026_11_17 (Austin, Nov 17, 2026): the Documents tab
+   * showed "waiting for your signature" for all three standard docs,
+   * never read signature state, and had no Sign, View or Download.
+   * It reads the real state now — document_signatures across the
+   * guest's tickets — and every document carries View/Preview and
+   * Download, plus Sign where it is still unsigned. One signature
+   * block signs BOTH the Repair Authorization and Service Agreement
+   * AND the 1-Year Limited Warranty: one check to agree, then sign,
+   * date, print name. The Media Release keeps its own Sign button.
+   * Filed estimate / invoice / receipt rows ride the same buttons. */
+  var GHUB_STD_DOCS = [
+    { type: 'agreement', label: 'Repair Authorization and Service Agreement' },
+    { type: 'warranty', label: '1-Year Limited Warranty' },
+    { type: 'media', label: 'Media Release' }
+  ];
+  var ghubSigs = [];
+  function ghubLatestSig(sigs, type) {
+    var best = null;
+    (sigs || []).forEach(function (s) {
+      if (s && s.document_type === type && s.signed_at && (!best || String(s.signed_at) > String(best.signed_at))) best = s;
+    });
+    return best;
+  }
+  function ghubAnchorTicket() {
+    if (!tickets.length) return null;
+    for (var i = 0; i < tickets.length; i++) { if (tickets[i].status !== 'Job Complete') return tickets[i]; }
+    return tickets[0];
+  }
+  function ghubDocDay(iso) {
+    try { var d = new Date(iso); if (isNaN(d.getTime())) return ''; return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }); } catch (e) { return ''; }
+  }
+  function ghubSaveBlob(filename, blob) {
+    var url = window.URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = filename; document.body.appendChild(a); a.click();
+    setTimeout(function () { document.body.removeChild(a); window.URL.revokeObjectURL(url); }, 500);
+  }
+  function ghubPreviewDoc(type, ticketId) {
+    if (!ticketId) return;
+    if (type === 'agreement' || type === 'terms' || type === 'warranty') {
+      window.open('view-doc.html?doc=' + encodeURIComponent(type) + '&t=' + encodeURIComponent(ticketId), '_blank');
+      return;
+    }
+    if (!sb) return;
+    sb.auth.getSession().then(function (sres) {
+      var token = sres && sres.data && sres.data.session ? sres.data.session.access_token : null;
+      if (!token) throw new Error('Please sign in again, then try the preview.');
+      return fetch(URL + '/functions/v1/doc-view', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'apikey': KEY }, body: JSON.stringify({ ticket_id: ticketId, kind: type }) });
+    }).then(function (res) { return res.json(); }).then(function (out) {
+      if (!out || !out.ok || !out.url) throw new Error('That preview could not be opened — please use the link in your email.');
+      window.open(out.url, '_blank');
+    }).catch(function () {});
+  }
+  function ghubDownloadDoc(btn, type, ticketId) {
+    if (!btn) return;
+    if (type === 'agreement' || type === 'terms' || type === 'warranty') { ghubDownloadSiteDoc(btn, type); return; }
+    if (!sb || !ticketId) return;
+    var old = btn.textContent; btn.textContent = 'Opening…'; btn.disabled = true;
+    function done() { if (btn.textContent === 'Opening…') { btn.textContent = old; btn.disabled = false; } }
+    sb.auth.getSession().then(function (sres) {
+      var token = sres && sres.data && sres.data.session ? sres.data.session.access_token : null;
+      if (!token) throw new Error('Please sign in again.');
+      return fetch(URL + '/functions/v1/doc-view', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'apikey': KEY }, body: JSON.stringify({ ticket_id: ticketId, kind: type }) });
+    }).then(function (res) { return res.json(); }).then(function (out) {
+      if (!out || !out.ok || !out.url) throw new Error('No file to download yet.');
+      return fetch(out.url).then(function (r) { if (!r.ok) throw new Error('Download failed.'); return r.blob(); });
+    }).then(function (blob) { ghubSaveBlob((type || 'document') + '.html', blob); done(); })
+      .catch(function (err) { btn.textContent = (err && err.message) || 'Download unavailable.'; setTimeout(done, 2500); });
+  }
+  function ghubDownloadSiteDoc(btn, type) {
+    var section = type === 'warranty' ? 'warranty' : type === 'terms' ? 'terms' : 'service-agreement';
+    var old = btn.textContent; btn.textContent = 'Opening…'; btn.disabled = true;
+    function done() { if (btn.textContent === 'Opening…') { btn.textContent = old; btn.disabled = false; } }
+    fetch('/index.html', { credentials: 'same-origin' }).then(function (r) { if (!r.ok) throw new Error('x'); return r.text(); })
+      .then(function (siteHtml) {
+        var doc = new DOMParser().parseFromString(siteHtml, 'text/html');
+        var sec = doc.getElementById(section);
+        if (!sec) throw new Error('x');
+        ghubSaveBlob(section + '.html', new Blob(['<!doctype html><html><head><meta charset="utf-8"><title>' + section + '</title></head><body>' + sec.outerHTML + '</body></html>'], { type: 'text/html' }));
+        done();
+      }).catch(function () { btn.textContent = 'Download unavailable.'; setTimeout(done, 2500); });
+  }
+  function ghubSignBoth() {
+    var agree = $('ghub-sign-agree'), nameEl = $('ghub-sign-name'), msg = $('ghub-sign-msg'), go = $('ghub-sign-go');
+    var anchor = ghubAnchorTicket();
+    if (!agree || !nameEl || !anchor || !sb || !user) return;
+    var name = (nameEl.value || '').trim();
+    if (!agree.checked) { if (msg) msg.textContent = 'Tick the box to agree first.'; return; }
+    if (!name) { if (msg) msg.textContent = 'Please type your full name first.'; nameEl.focus(); return; }
+    if (msg) msg.textContent = 'Signing…';
+    if (go) go.disabled = true;
+    var types = [];
+    if (!ghubLatestSig(ghubSigs, 'agreement')) types.push('agreement');
+    if (!ghubLatestSig(ghubSigs, 'warranty')) types.push('warranty');
+    if (!types.length) { renderDocs(); return; }
+    var rows = types.map(function (t) { return { ticket_id: anchor.id, customer_id: cust ? cust.id : null, document_type: t, document_path: null, signer_name: name, signer_email: user.email }; });
+    sb.from('document_signatures').insert(rows).then(function (res) {
+      if (res.error) throw res.error;
+      renderDocs();
+    }).catch(function (err) {
+      if (msg) msg.textContent = (err && err.message) || 'That did not save. Please try again.';
+      if (go) go.disabled = false;
+    });
+  }
+  function ghubSignMedia(btn) {
+    var anchor = ghubAnchorTicket();
+    if (!anchor || !sb || !user || !cust) return;
+    var old = btn.textContent; btn.textContent = 'Signing…'; btn.disabled = true;
+    sb.from('document_signatures').insert([{ ticket_id: anchor.id, customer_id: cust.id, document_type: 'media', document_path: null, signer_name: cust.name || '', signer_email: user.email }]).then(function (res) {
+      if (res.error) throw res.error;
+      renderDocs();
+    }).catch(function () { btn.textContent = 'That did not save — try again.'; btn.disabled = false; });
+  }
   function renderDocs() {
     var box = $('ghub-docs-list'); if (!box) return;
-    var std = [{ label: 'Repair Authorization and Service Agreement' }, { label: '1-Year Limited Warranty' }, { label: 'Media Release' }];
-    var html = '<p class="ghub-muted">Your documents live here in the Guest Hub — nothing is emailed unless you ask for it.</p>' + std.map(function (s) { return '<div class="ghub-docline">• <strong>' + esc(s.label) + '</strong> — waiting for your signature</div>'; }).join(''); /* V163_GUEST_DARK_2026_11_17: class, not an inline flat-light border, so dark mode can flip it */
-    if (!tickets.length) { box.innerHTML = html; return; }
+    if (!box.__ghubWired) {
+      box.__ghubWired = true;
+      box.addEventListener('click', function (e) {
+        var btn = e.target && e.target.closest ? e.target.closest('[data-ghub-doc]') : null;
+        if (btn) {
+          var kind = btn.getAttribute('data-ghub-doc'), type = btn.getAttribute('data-type');
+          var tid = btn.getAttribute('data-ticket') || (ghubAnchorTicket() || {}).id || null;
+          if (kind === 'view') ghubPreviewDoc(type, tid);
+          if (kind === 'download') ghubDownloadDoc(btn, type, tid);
+          if (kind === 'sign-media') ghubSignMedia(btn);
+          return;
+        }
+        if (e.target && e.target.id === 'ghub-sign-go') ghubSignBoth();
+      });
+    }
+    var head = '<p class="ghub-muted">Your documents live here in the Guest Hub — nothing is emailed unless you ask for it.</p>';
+    function paint(sigs, filed) {
+      ghubSigs = sigs || [];
+      var anchor = ghubAnchorTicket();
+      var html = head;
+      GHUB_STD_DOCS.forEach(function (s) {
+        var sig = ghubLatestSig(ghubSigs, s.type);
+        html += '<div class="ghub-docline"><strong>' + esc(s.label) + '</strong>';
+        if (sig) html += '<br><span class="ghub-signed">Signed</span> — ' + esc(sig.signer_name || '') + ', ' + esc(ghubDocDay(sig.signed_at));
+        else html += '<br><span class="ghub-muted">Waiting for your signature.</span>';
+        html += '<div class="ghub-docbtns">';
+        html += '<button class="btn btn-outline btn-sm" type="button" data-ghub-doc="view" data-type="' + s.type + '"' + (anchor ? '' : ' disabled') + '>View</button>';
+        html += '<button class="btn btn-outline btn-sm" type="button" data-ghub-doc="download" data-type="' + s.type + '"' + (anchor ? '' : ' disabled') + '>Download</button>';
+        if (!sig && s.type === 'media' && anchor) html += '<button class="btn btn-primary btn-sm" type="button" data-ghub-doc="sign-media" data-type="media">Sign</button>';
+        html += '</div></div>';
+      });
+      (filed || []).forEach(function (d) {
+        var label = d.doc_type === 'estimate' ? 'Estimate' : d.doc_type === 'invoice' ? 'Invoice' : d.doc_type === 'receipt' ? 'Receipt' : (d.file_name || d.doc_type || 'Document');
+        var sig = ghubLatestSig(ghubSigs, d.doc_type);
+        html += '<div class="ghub-docline"><strong>' + esc(d.file_name || label) + '</strong>';
+        if (sig) html += '<br><span class="ghub-signed">Signed</span> — ' + esc(sig.signer_name || '') + ', ' + esc(ghubDocDay(sig.signed_at));
+        html += '<div class="ghub-docbtns">';
+        html += '<button class="btn btn-outline btn-sm" type="button" data-ghub-doc="view" data-type="' + esc(d.doc_type) + '" data-ticket="' + esc(d.ticket_id) + '">View</button>';
+        html += '<button class="btn btn-outline btn-sm" type="button" data-ghub-doc="download" data-type="' + esc(d.doc_type) + '" data-ticket="' + esc(d.ticket_id) + '">Download</button>';
+        html += '</div></div>';
+      });
+      if (!tickets.length) {
+        html += '<p class="ghub-muted">No service requests on your account yet — your documents will appear here once you have one.</p>';
+      } else if (anchor && user) {
+        var needA = !ghubLatestSig(ghubSigs, 'agreement'), needW = !ghubLatestSig(ghubSigs, 'warranty');
+        if (needA || needW) {
+          html += '<div class="ghub-signblock" id="ghub-signblock"><h4>Sign your documents</h4>' +
+            '<p class="ghub-muted">One signature covers both the Repair Authorization and Service Agreement and the 1-Year Limited Warranty.</p>' +
+            '<label class="atr-check"><input type="checkbox" id="ghub-sign-agree"> <span>I agree to the Repair Authorization and Service Agreement and the 1-Year Limited Warranty.</span></label>' +
+            '<label class="acct-field"><span>Print your full name</span><input type="text" id="ghub-sign-name" autocomplete="name" placeholder="Type your full name" value="' + esc(cust && cust.name ? cust.name : '') + '"></label>' +
+            '<p class="ghub-muted">Date: ' + esc(new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })) + '</p>' +
+            '<p><button class="btn btn-primary btn-sm" type="button" id="ghub-sign-go">Sign both documents</button> <span class="ghub-muted" id="ghub-sign-msg"></span></p></div>';
+        }
+      }
+      box.innerHTML = html;
+    }
+    if (!sb || !tickets.length) { paint([], []); return; }
     var ids = tickets.map(function (t) { return t.id; });
-    sb.from('ticket_documents').select('id,ticket_id,doc_type,file_name,created_at').in('ticket_id', ids).order('created_at', { ascending: true }).then(function (r) {
-      var filed = (r.data || []).map(function (d) { return '<div class="ghub-docline">• ' + esc(d.file_name || d.doc_type || 'Document') + '</div>'; }).join(''); /* V163_GUEST_DARK_2026_11_17: class, not an inline flat-light border, so dark mode can flip it */
-      box.innerHTML = html + (filed || '<p class="ghub-muted">No estimates or invoices filed yet.</p>');
-    }).catch(function () { box.innerHTML = html; });
+    Promise.all([
+      sb.from('document_signatures').select('id,ticket_id,document_type,signer_name,signed_at').in('ticket_id', ids).order('signed_at', { ascending: false }),
+      sb.from('ticket_documents').select('id,ticket_id,doc_type,file_name,created_at').in('ticket_id', ids).order('created_at', { ascending: true })
+    ]).then(function (pair) {
+      var sigs = (pair[0] && pair[0].data) || [];
+      var filed = ((pair[1] && pair[1].data) || []).filter(function (d) { return d.doc_type === 'estimate' || d.doc_type === 'invoice' || d.doc_type === 'receipt'; });
+      paint(sigs, filed);
+    }).catch(function () { paint([], []); });
   }
   function loadAll() {
     if (loaded) return; loaded = true;
@@ -9458,11 +10295,20 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
         return sb.from('tickets').select('id,created_at,device_type,brand,model,issue,issue_reason,status,job_date,appointment_at,service_address,customer_id').eq('customer_id', cust.id).order('created_at', { ascending: false });
       }).then(function (r) {
         tickets = (r && r.data) || [];
+        prefillGhubWarranty();
         var next = $('ghub-home-next');
         if (next) next.innerHTML = tickets.length ? '<strong>Your next service:</strong> ' + esc(deviceOf(tickets[0])) + ' — ' + esc(tickets[0].status || '') + (apptLine(tickets[0]) ? '<br>' + esc(apptLine(tickets[0])) : '') : '<p class="ghub-muted">No service requests yet.</p>';
       });
     }).catch(function () {});
   }
+  /* V165_SCANIN_REMOVED_2026_11_17 (Austin, Nov 17, 2026, corrected
+   * same call — supersedes the v165 QR fix that sat here): Scan In is
+   * REMOVED from the Guest Hub entirely — no sidebar section, no
+   * button, no Quick Action. The guest's QR lives in the quick-glance
+   * dropdown (renderGlance draws it with drawQrInto); that dropdown IS
+   * the scan-in. The Associate Hub Scan In scanner is untouched. The
+   * ghubQrPayload/drawGhubQr helpers and the scanin pane are deleted
+   * here, not left dead. */
   function paintHome() {
     var first = ((cust && cust.name) || '').trim().split(/\s+/)[0] || 'there';
     var h = new Date().getHours();
@@ -9472,10 +10318,6 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
     if (c) c.textContent = new Date().toLocaleString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' });
     var ac = $('ghub-account-card');
     if (ac && cust) ac.innerHTML = '<p><strong>' + esc(cust.name || '') + '</strong></p><p>' + esc(cust.email || '') + '</p><p>' + esc(cust.phone || '') + '</p><p>' + esc(cust.address || '') + '</p><p class="ghub-muted">Only your own details are shown here.</p>';
-    var sc = $('ghub-scan-code'); if (sc) sc.textContent = 'Account #' + esc(cust.account_number != null ? cust.account_number : (cust.id || '').slice(0, 8).toUpperCase());
-    var sn = $('ghub-scan-name'); if (sn) sn.textContent = esc(cust.name || '');
-    var bc = $('ghub-barcode');
-    if (bc) { var code = String(cust.account_number != null ? cust.account_number : '216'); bc.innerHTML = code.split('').map(function (d) { var w = 2 + (Number(d) % 4); return '<i style="width:' + w + 'px;height:' + (34 + (Number(d) % 3) * 8) + 'px"></i>'; }).join(''); }
     var mc = $('ghub-member-card');
     if (mc) { var tier = $('acct-qr-tier'), pts = $('acct-points-num'); mc.innerHTML = '<p><strong>' + esc(tier ? tier.textContent : 'ATR One Free') + '</strong></p><p>Reward points: <strong>' + esc(pts ? pts.textContent : '0') + '</strong></p>'; }
   }
@@ -9537,13 +10379,12 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
   /* V163_GUEST_SEARCH_2026_11_17 (Austin, Nov 17, 2026): the Guest Hub
      Search sheet — every Hub section reachable on mobile, where the
      sidebar is hidden and the thumb nav carries only five buttons.
-     Fixed list (not customizable, per Austin): the same nine sections
+     Fixed list (not customizable, per Austin): the same eight sections
      as the sidebar, same labels and icons. Typing filters; tapping a
      result opens that section; closing returns to the current tab. */
   var GHUB_SECTIONS = [
     { name: 'home', label: 'Home', icon: 'fas fa-house' },
     { name: 'service', label: 'Service Request', icon: 'fas fa-tools' },
-    { name: 'scanin', label: 'Scan In', icon: 'fas fa-qrcode' },
     { name: 'account', label: 'Account', icon: 'fas fa-user' },
     { name: 'chat', label: 'Service Messages', icon: 'fas fa-comment-dots' },
     { name: 'connect', label: 'ATRG Connect', icon: 'fas fa-display' },
@@ -9574,18 +10415,17 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
   /* V163_GUEST_SEARCH_2026_11_17 (Austin, Nov 17, 2026): the Guest Hub
      Search sheet — every Hub section reachable on mobile, where the
      sidebar is hidden and the thumb nav carries only five buttons.
-     Fixed list (not customizable, per Austin): the same nine sections
+     Fixed list (not customizable, per Austin): the same eight sections
      as the sidebar, same labels and icons. Typing filters; tapping a
      result opens that section; closing returns to the current tab. */
   /* V163_SEARCH_GROUPS_2026_11_17 (Austin, Nov 17, 2026): every Guest
    * Hub section sits under the sidebar's own group label — the guest
-   * sidebar has one group, ACTION BUTTONS, so all nine sections sit
+   * sidebar has one group, ACTION BUTTONS, so all eight sections sit
    * under that heading. No ADMIN, no FINANCIALS, no staff tool ever
    * renders in Guest Hub Search. */
   var GHUB_SECTIONS = [
     { name: 'home', label: 'Home', icon: 'fas fa-house', group: 'ACTION BUTTONS' },
     { name: 'service', label: 'Service Request', icon: 'fas fa-tools', group: 'ACTION BUTTONS' },
-    { name: 'scanin', label: 'Scan In', icon: 'fas fa-qrcode', group: 'ACTION BUTTONS' },
     { name: 'account', label: 'Account', icon: 'fas fa-user', group: 'ACTION BUTTONS' },
     { name: 'chat', label: 'Service Messages', icon: 'fas fa-comment-dots', group: 'ACTION BUTTONS' },
     { name: 'connect', label: 'ATRG Connect', icon: 'fas fa-display', group: 'ACTION BUTTONS' },
@@ -9601,9 +10441,16 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
     var groups = {};
     hits.forEach(function (s) { (groups[s.group] = groups[s.group] || []).push(s); });
     box.innerHTML = Object.keys(groups).map(function (g) {
-      return '<p class="ghub-search-group">' + esc(g) + '</p>' + groups[g].map(function (s) {
+      var items = groups[g].map(function (s) {
         return '<button class="ghub-tab" type="button" data-ghub-search="' + s.name + '"><i class="' + s.icon + '"></i> ' + esc(s.label) + '</button>';
-      }).join('');
+      });
+      /* V165_SEARCH_BLOCKS_2026_11_17: blocks of three or four, clear
+       * break between blocks — the same rule as the Associate Hub
+       * sheet. Nine sections become 3+3+3 under the one ACTION
+       * BUTTONS heading. */
+      var n = items.length, chunks = Math.ceil(n / 4), size = Math.ceil(n / chunks), blocks = [];
+      for (var i = 0; i < n; i += size) blocks.push(items.slice(i, i + size).join(''));
+      return '<p class="ghub-search-group">' + esc(g) + '</p>' + blocks.join('<div class="ghub-search-blockbreak" aria-hidden="true"></div>');
     }).join('');
   }
   function openGhubSearch() {
@@ -9677,6 +10524,34 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
      * lead into getting a repair from us. Never the staff Tech Hub
      * guides: guests do not see those. Same close-then-click pattern
      * as the booking-form button below it. */
+    var gwd = $('ghub-wr-done');
+    if (gwd) gwd.addEventListener('click', function () {
+      var w = $('ghub-wr-success'); if (w) w.hidden = true;
+      var f = $('ghub-wr-form'); if (f) { f.hidden = false; f.reset(); }
+      prefillGhubWarranty();
+    });
+    var gwt = $('ghub-wr-ticket');
+    if (gwt) gwt.addEventListener('change', function () { prefillGhubWarranty(true); });
+    var gwd = $('ghub-wr-done');
+    if (gwd) gwd.addEventListener('click', function () {
+      var w = $('ghub-wr-success'); if (w) w.hidden = true;
+      var f = $('ghub-wr-form'); if (f) { f.hidden = false; f.reset(); }
+      prefillGhubWarranty();
+    });
+    /* V165_WARRANTY_STATUS_2026_11_17: the warranty form files through
+     * atr-forms.js, which shows #ghub-wr-success on success. Watch for
+     * that panel unhiding and re-paint the coverage + requests lists
+     * then, so a request the guest just filed shows up without them
+     * having to leave the tab and come back. (The Done button above
+     * already re-runs prefill; this covers the submit itself.) */
+    var gws = $('ghub-wr-success');
+    if (gws && typeof MutationObserver === 'function') {
+      new MutationObserver(function () {
+        if (!gws.hidden) prefillGhubWarranty();
+      }).observe(gws, { attributes: true, attributeFilter: ['hidden'] });
+    }
+    var gwt = $('ghub-wr-ticket');
+    if (gwt) gwt.addEventListener('change', function () { prefillGhubWarranty(true); });
     var gg = $('ghub-home-guides-btn');
     if (gg) gg.addEventListener('click', function () {
       closeHub();

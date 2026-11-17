@@ -392,6 +392,8 @@
       var first = trim(values.first_name) || 'there';
       var text = {
         'service-request': 'Thanks ' + first + '! Your service request is in. We&rsquo;ll reach out shortly to confirm your appointment.',
+        /* V165_ESTIMATE_2026_11_17: the repair branch of the service-request form is an estimate now — nothing is booked until the guest confirms it. */
+        'service-estimate': 'Thanks ' + first + '! Your estimate request is in. We&rsquo;ll email your estimate shortly &mdash; nothing is booked until you confirm it.',
         'contact': 'Thanks ' + first + '! Your message is in &mdash; we typically reply within the hour during business hours.',
         'job-application': 'Thank you for submitting your application. One of our HR associates will be with you shortly.',
         'investors': 'Thanks ' + first + '! Your inquiry is in &mdash; Austin will follow up with you personally.',
@@ -571,10 +573,12 @@
    * client above already uses. Runs in parallel with the database
    * insert and is never awaited: the database insert alone decides
    * success or failure. */
-  function sendAlert(subject, rows, formKey) {
+  function sendAlert(subject, rows, formKey, token) {
     var clean = rows.map(function (r) {
       return [String(r[0]), r[1] === '' || r[1] == null ? '(not provided)' : String(r[1])];
     });
+    var body = { kind: formKey, subject: subject, rows: clean };
+    if (token) body.token = token;
     try {
       fetch(FORM_ALERT_URL, {
         method: 'POST',
@@ -584,7 +588,7 @@
           'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
           'apikey': SUPABASE_ANON_KEY
         },
-        body: JSON.stringify({ kind: formKey, subject: subject, rows: clean })
+        body: JSON.stringify(body)
       }).catch(function () { /* alert is best-effort; DB is the record */ });
     } catch (e) { /* ignore */ }
   }
@@ -633,6 +637,7 @@
   var webSignature = null; // { signerName: string, dataUrl: string }
   var signWired = false;
 
+  function newEstimateId() { return newTicketId(); }
   function newTicketId() {
     if (window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID();
     var d = new Date().getTime();
@@ -1062,13 +1067,13 @@
           ['Marketing emails opt-in', row.marketing_opt_in ? 'Yes' : 'No']
         ], 'service-request');
       } else {
-      sendAlert('New service request: ' + v.device_type + ' – ' + (v.repair_needed || 'Service request'), [
+      sendAlert('New service estimate request: ' + v.device_type + ' – ' + (v.repair_needed || 'Service estimate'), [
           ['Name', row.customer_name],
           ['Phone', v.phone],
           ['Email', v.email],
           ['Preferred contact method', row.contact_method],
           ['Service address', address],
-          ['Appointment requested', appointmentAt ? new Date(appointmentAt).toLocaleString() : ''],
+          ['Status', 'Estimate requested — no appointment booked, no fee charged yet'],
           ['Preferred visit date', visitDate],
           ['Arrival window (2-hour)', arrivalWindow],
           ['Covered by ATR One', atrOneCovered],
@@ -1097,6 +1102,37 @@
          * before (no customer_id), so a booking can never be
          * stranded by the guest step. */
         var doInsert = function () {
+        if (!isOO) {
+          /* V165_ESTIMATE_2026_11_17 (Austin, Nov 17, 2026): estimate-first — a repair request from the website becomes an ESTIMATE, never a ticket and never a queue entry. No appointment is booked, no visit fee is charged, no account is made or offered here: the guest gets the estimate by email, and the account is made only when they tap the link in it. The web signature they drew is recorded as signer + accepted on the estimate row; the signature document itself is collected when the ticket is created (see REPORT.md). */
+          var estRow = {
+            id: newEstimateId(), public_token: newEstimateId(),
+            customer_id: null, ticket_id: null,
+            audience: (guidedEarly && guidedEarly.business) ? 'business' : 'guest',
+            name: row.customer_name, contact_name: null,
+            phone: v.phone, email: v.email, service_address: address || null,
+            device_type: v.device_type, brand: guided && guided.brand ? guided.brand : null, model: v.device_info || null,
+            issue: issue, estimate_amount: null,
+            estimate_note: guided && guided.priceRange ? ('Guided estimate shown: ' + guided.priceRange) : null,
+            atr_one: atrOneCovered || '',
+            status: 'Awaiting Estimate', source: leadSource(form) || 'website',
+            terms_accepted: !!field(form, 'terms_accepted'),
+            work_auth_accepted: !!field(form, 'work_auth_accepted'),
+            preferred_date: visitDate || null, preferred_window: arrivalWindow || null
+          };
+          client.from('estimates').insert(estRow).then(function (res) {
+            setBusy(form, false);
+            if (res.error) { showFormError(form, dbFailMessage()); return; }
+            sendAlert("Your estimate from Austin's Tech Repair Group", [
+              ['Email', v.email], ['Name', row.customer_name],
+              ['Device', [v.device_type, v.device_info].filter(Boolean).join(' · ')],
+              ["What's wrong", v.problem || v.repair_needed || ''],
+              ['Your estimate page', window.location.origin + '/#estimate/' + estRow.public_token],
+              ['What happens next', 'Tap the link above to view your estimate. You can confirm or decline it there — nothing is booked until you confirm.']
+            ], 'estimate-link', estRow.public_token);
+            showSuccess(form, 'service-estimate', v);
+          }).catch(function () { setBusy(form, false); showFormError(form, dbFailMessage()); });
+          return;
+        }
         client.from('tickets').insert(row).then(function (res) {
           setBusy(form, false);
           if (res.error) { showFormError(form, dbFailMessage()); return; }
@@ -1142,7 +1178,8 @@
           showFormError(form, dbFailMessage());
         });
         };
-        ensureGuestRecord(client, { name: row.customer_name, email: v.email, phone: v.phone, address: address }).then(function (guestId) {
+        if (!isOO) { doInsert(); /* V165_ESTIMATE_2026_11_17: no guest record at estimate creation — the account is made only when the guest taps the link in their estimate email. */ }
+        else ensureGuestRecord(client, { name: row.customer_name, email: v.email, phone: v.phone, address: address }).then(function (guestId) {
           if (guestId) row.customer_id = guestId;
           doInsert();
         }, doInsert);
