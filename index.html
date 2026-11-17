@@ -1163,14 +1163,14 @@
         </select>
       </div>
       <div class="atr-field">
-        <!-- REPAIR_FLOW_UPDATE_2026_11_05: a visit is a date plus a 2-hour arrival window — appointments
+        <!-- REPAIR_FLOW_UPDATE_2026_11_05: a visit is a date plus an arrival window — appointments
              are never booked to an exact time. atr-forms.js derives the stored
              appointment_at from the window start so the portal keeps working. -->
         <label class="field-label" for="sr-visit-date">Preferred visit date</label>
         <input class="form-field" type="date" id="sr-visit-date" name="visit_date">
       </div>
       <div class="atr-field">
-        <label class="field-label" for="sr-arrival-window">Arrival window <span class="atr-optional">(we arrive within this 2-hour window)</span></label>
+        <label class="field-label" for="sr-arrival-window">Arrival window <span class="atr-optional">(we arrive within this window)</span></label>
         <select class="form-field" id="sr-arrival-window" name="arrival_window">
           <option value="">Choose a window&hellip;</option>
           <option value="8:00 AM &ndash; 10:00 AM">8:00 AM &ndash; 10:00 AM</option>
@@ -2100,20 +2100,16 @@
             <div class="acct-cardbox-statusrow"><span class="acct-cardbox-status acct-cardbox-status--compact" id="acct-qr-status">Loading…</span></div>
           </div>
 
-          <!-- V156_DOC_SIGNING_2026_11_16 (Austin, Nov 16, 2026): the
-               guest signs their documents here — the service agreement,
-               estimates and invoices waiting for a signature, listed
-               under this exact heading. The list is filled by the
-               signing module at the end of script.js; the cardbox ships
-               hidden and only shows when the guest is signed in. -->
-          <div class="acct-cardbox" id="acct-sign-docs" hidden>
-            <div class="acct-cardbox-head">
-              <span class="acct-cardbox-title"><i class="fas fa-pen"></i> Sign your documents here</span>
-            </div>
-            <p class="acct-muted" style="margin:.5rem 0 .75rem;">Documents waiting for your signature — read each one first, then sign it yourself. Only you can sign for yourself.</p>
-            <div id="acct-sign-docs-list"><p class="acct-muted">Loading your documents…</p></div>
-          </div>
-
+          <!-- V163_SIGN_DOCS_MOVE_2026_11_17 (Austin, Nov 17, 2026): the
+               "Sign your documents here" cardbox that sat here on the
+               main site account view is GONE — documents the guest signs
+               belong ONLY inside the Guest Hub (the ticket page's
+               Documents section, with Preview/Sign, and the Documents
+               tab summary). No duplicate on this page. The signing
+               module in script.js (loadSignDocs) is untouched and
+               guards a missing list, so it no-ops here now; the
+               ticket-page signing flow (window.__atrDocSigning) is the
+               live path. -->
           <!-- ACCOUNT_FIX_PASS_3_2026_11_06 (owner, Nov 6, 2026): the
                standalone "Schedule a repair" row that sat here is GONE —
                it duplicated the Schedule a repair button inside the
@@ -5145,8 +5141,10 @@
   /* V156_DOC_SIGNING_2026_11_16: the "Sign your documents here" list
      and the sign dialog. Rows are left-aligned inside the centered
      cardbox; signed rows show green. */
-  #acct-sign-docs{text-align:left}
-  .acct-signdoc-row{border:1px solid var(--line,#e5d9c8);border-radius:10px;padding:.7rem .8rem;margin:0 0 .6rem;background:#fff}
+  /* V163_SIGN_DOCS_MOVE_2026_11_17: the #acct-sign-docs cardbox is gone
+     from the account view — its one rule went with it. The rows below
+     live on the ticket page's Documents section inside the Guest Hub. */
+  .acct-signdoc-row{border:1px solid var(--line,#e5d9c8);border-radius:10px;padding:.7rem .8rem;margin:0 0 .6rem;background:var(--surface,#fff)} /* V163_GUEST_DARK_2026_11_17: var(--surface) so the ticket page flips dark with the Hub */
   .acct-signdoc-row:last-child{margin-bottom:0}
   .acct-signdoc-title{font-weight:800;font-size:.95rem}
   .acct-signdoc-meta{font-size:.85rem;color:var(--muted,#8a7a68);margin-top:.15rem}
@@ -5165,10 +5163,10 @@
   .atr-signmodal .atr-signmodal-err{color:#b3261e;font-weight:700}
   /* V158_GUEST_PORTAL_2026_11_17: appointment box + ticket actions — same card
      language as the rest of the account page, nothing restyled. */
-  .acct-appt-box{border:1px solid var(--line,#e5d9c8);border-radius:10px;padding:.7rem .8rem;margin:0 0 .9rem;background:#fff;text-align:left}
+  .acct-appt-box{border:1px solid var(--line,#e5d9c8);border-radius:10px;padding:.7rem .8rem;margin:0 0 .9rem;background:var(--surface,#fff);text-align:left} /* V163_GUEST_DARK_2026_11_17: var(--surface) so the ticket page flips dark with the Hub */
   .acct-appt-line{font-size:.92rem;margin-bottom:.3rem}
   .acct-actions-row{margin:0 0 .9rem;text-align:left}
-  .acct-hub-bar{border:2px solid #0057b8;border-radius:12px;padding:.7rem .8rem;margin:0 0 .9rem;background:#fff;text-align:left}
+  .acct-hub-bar{border:2px solid #0057b8;border-radius:12px;padding:.7rem .8rem;margin:0 0 .9rem;background:var(--surface,#fff);text-align:left} /* V163_GUEST_DARK_2026_11_17: var(--surface) so the ticket page flips dark with the Hub */
   .acct-hub-title{font-size:1rem;margin-bottom:.55rem}
   .acct-hub-actions{display:flex;flex-wrap:wrap;gap:.45rem}
   /* V158_SCREENSHOT_FIX_2026_11_17: the guest-account layout rules,
@@ -6224,7 +6222,7 @@
     if (!list || !sb || !cust) return;
     list.innerHTML = '<p class="acct-muted">Loading your repairs\u2026</p>';
     repairsSettled = false; armWatchdog('repairs'); /* ACCOUNT_FIX_PASS_3_2_2026_11_06 ITEM D */
-    sb.from('tickets').select('id, created_at, device_type, brand, model, issue, status, job_date, appointment_at, service_address') /* V158_GUEST_PORTAL_2026_11_17: appointment + address were never even asked for */
+    sb.from('tickets').select('id, created_at, device_type, brand, model, issue, issue_reason, status, job_date, appointment_at, service_address') /* V158_GUEST_PORTAL_2026_11_17: appointment + address were never even asked for */
       .eq('customer_id', cust.id).order('created_at', { ascending: false }).limit(50)
       .then(function (res) {
         repairsSettled = true;
@@ -6494,17 +6492,56 @@
      (a message to staff), pay the balance (Square), and read + sign
      documents. No placeholder data anywhere: every line comes from
      the ticket's own rows. */
+  /* V163_WINDOWS_DAY_AWARE_2026_11_17 (Austin, Nov 17, 2026 — confirmed):
+     arrival windows are day-aware — Mon-Fri six 2-hour windows 8-10 …
+     6-8; Saturday five (10:30-12:30, 12:30-2:30, 2:30-4:30, 4:30-6:30,
+     6:30-8 — the last one ends at 8 PM, 90 minutes); Sunday two
+     (11 AM-1 PM, 1-3 PM). The window END comes from this list, never
+     from start + 2 hours, so Saturday 6:30 PM ends at 8 PM, not 8:30.
+     Exposed on window: the Hub ticket page runs in a separate IIFE. */
+  var ATR_WINDOWS_WEEKDAY = [ { label: '8–10 AM', start: 8, end: 10 }, { label: '10 AM–12 PM', start: 10, end: 12 }, { label: '12–2 PM', start: 12, end: 14 }, { label: '2–4 PM', start: 14, end: 16 }, { label: '4–6 PM', start: 16, end: 18 }, { label: '6–8 PM', start: 18, end: 20 } ];
+  var ATR_WINDOWS_SAT = [ { label: '10:30 AM–12:30 PM', start: 10.5, end: 12.5 }, { label: '12:30–2:30 PM', start: 12.5, end: 14.5 }, { label: '2:30–4:30 PM', start: 14.5, end: 16.5 }, { label: '4:30–6:30 PM', start: 16.5, end: 18.5 }, { label: '6:30–8 PM', start: 18.5, end: 20 } ];
+  var ATR_WINDOWS_SUN = [ { label: '11 AM–1 PM', start: 11, end: 13 }, { label: '1–3 PM', start: 13, end: 15 } ];
+  function atrWindowsForDate(dateStr) {
+    if (!dateStr) return ATR_WINDOWS_WEEKDAY;
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(dateStr));
+    if (!m) return ATR_WINDOWS_WEEKDAY;
+    var dow = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).getDay();
+    return dow === 0 ? ATR_WINDOWS_SUN : (dow === 6 ? ATR_WINDOWS_SAT : ATR_WINDOWS_WEEKDAY);
+  }
+  function atrWindowValue(w) {
+    return String(Math.floor(w.start)).padStart(2, '0') + ':' + String(Math.round((w.start - Math.floor(w.start)) * 60)).padStart(2, '0');
+  }
+  function atrWindowEndLabel(d) {
+    try {
+      var ws = atrWindowsForDate(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'));
+      var mins = d.getHours() * 60 + d.getMinutes();
+      for (var i = 0; i < ws.length; i++) {
+        if (mins >= ws[i].start * 60 && mins < ws[i].end * 60) {
+          var eh = Math.floor(ws[i].end), em = Math.round((ws[i].end - eh) * 60);
+          return fmtHourX(new Date(d.getFullYear(), d.getMonth(), d.getDate(), eh, em, 0));
+        }
+      }
+    } catch (e) {}
+    return fmtHourX(new Date(d.getTime() + 2 * 60 * 60 * 1000));
+  }
+  window.atrWindowsForDate = atrWindowsForDate;
+  window.atrWindowEndLabel = atrWindowEndLabel;
+  window.atrWindowValue = atrWindowValue;
   function fmtHourX(d) {
     var h = d.getHours(), ap = h >= 12 ? 'PM' : 'AM', hh = h % 12; if (hh === 0) hh = 12;
-    return hh + ' ' + ap;
+    /* V163_WINDOWS_DAY_AWARE_2026_11_17: half-hour starts (Saturday
+     * 10:30, 12:30 …) show their minutes — a 10:30 AM window must not
+     * read as 10 AM. Whole-hour times read exactly as before. */
+    return hh + (d.getMinutes() ? ':' + String(d.getMinutes()).padStart(2, '0') : '') + ' ' + ap;
   }
   function fmtAppt(t) {
     if (!t) return '';
     try {
       if (t.appointment_at) {
-        var d = new Date(t.appointment_at), e = new Date(d.getTime() + 2 * 60 * 60 * 1000);
+        var d = new Date(t.appointment_at);
         var day = d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
-        return day + ' · ' + fmtHourX(d) + '–' + fmtHourX(e);
+        return day + ' · ' + fmtHourX(d) + '–' + atrWindowEndLabel(d);
       }
       if (t.job_date) return new Date(t.job_date + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
     } catch (e) {}
@@ -6516,11 +6553,39 @@
     if (!box) return;
     window.atrRenderTicketHub(t);
     if (!t || t.__general) { box.innerHTML = ''; return; }
+    /* V163_GUEST_TICKET_EDIT_2026_11_17 (Austin, Nov 17, 2026): the guest
+       has full control of THEIR ticket — name, service address and phone
+       number are editable here, on the ticket itself. The address edit
+       writes the ticket's own service_address (tickets.service_address);
+       the Account profile Save only updates the customers row and never
+       touches a ticket, so it cannot do this job. Name/phone update the
+       guest's customers record. Charges, payment, ticket status and
+       staff-only fields stay locked view-only — no edit control for
+       them exists anywhere on this page. Device/issue editing is NOT
+       built — open question, see v163 REPORT.md. */
     var appt = fmtAppt(t), addr = (t.service_address || '').trim();
+    var custName = (currentCust && currentCust.name) || '';
+    var custPhone = (currentCust && currentCust.phone) || '';
     var html = '<div class="acct-appt-box">';
+    /* V163_ISSUE_TOP_2026_11_17 (Austin, Nov 17, 2026): the Issue is the
+     * first line of the ticket page — Issue and Reason are the same
+     * thing, one field labeled Issue. */
+    html += '<div class="acct-appt-line" id="acct-appt-issue-line"><strong>Issue:</strong> ' + escX((t.issue || t.issue_reason || '\u2014')) + '</div>';
+    html += '<div class="acct-appt-line" id="acct-appt-name-line"><strong>Name:</strong> ' + escX(custName || '\u2014') + '</div>';
     html += '<div class="acct-appt-line"><strong>Appointment:</strong> ' + (appt ? escX(appt) : 'We will text you your arrival window.') + '</div>';
-    if (addr) html += '<div class="acct-appt-line"><strong>Where:</strong> ' + escX(addr) + '</div>';
-    html += '<button type="button" class="btn btn-outline btn-sm" id="acct-appt-change">Request a time change</button>';
+    html += '<div class="acct-appt-line" id="acct-appt-addr-line"><strong>Where:</strong> ' + escX(addr || '\u2014') + '</div>';
+    html += '<div class="acct-appt-line" id="acct-appt-phone-line"><strong>Phone:</strong> ' + escX(custPhone || '\u2014') + '</div>';
+    html += '<button type="button" class="btn btn-outline btn-sm" id="acct-appt-change">Request a time change</button> ';
+    html += '<button type="button" class="btn btn-outline btn-sm" id="acct-edit-details-btn">Edit my details</button>';
+    html += '<div id="acct-edit-details-form" hidden>';
+    html += '<label class="acct-field"><span>Your name</span><input type="text" id="acct-edit-name" autocomplete="name"></label>';
+    html += '<label class="acct-field"><span>Service address</span><input type="text" id="acct-edit-address" autocomplete="street-address"></label>';
+    html += '<label class="acct-field"><span>Phone number</span><input type="tel" id="acct-edit-phone" autocomplete="tel"></label>';
+    html += '<p class="acct-muted">Only your name, service address and phone number change here. Charges, payment and ticket status stay exactly as they are.</p>';
+    html += '<button type="button" class="btn btn-primary btn-sm" id="acct-edit-save">Save my details</button> ';
+    html += '<button type="button" class="btn btn-outline btn-sm" id="acct-edit-cancel">Cancel</button>';
+    html += '</div>';
+    html += '<p class="acct-muted" id="acct-edit-msg" hidden></p>';
     html += '</div>';
     box.innerHTML = html;
     var btn = $('acct-appt-change');
@@ -6531,6 +6596,61 @@
       try { input.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
       input.focus();
     });
+    var editBtn = $('acct-edit-details-btn');
+    var form = $('acct-edit-details-form');
+    if (editBtn && form) editBtn.addEventListener('click', function () {
+      var n = $('acct-edit-name'), a = $('acct-edit-address'), p = $('acct-edit-phone');
+      if (n) n.value = custName;
+      if (a) a.value = addr || ((currentCust && currentCust.address) || '');
+      if (p) p.value = custPhone;
+      form.hidden = false;
+      var m = $('acct-edit-msg'); if (m) m.hidden = true;
+      try { form.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
+      if (n) n.focus();
+    });
+    var cancelBtn = $('acct-edit-cancel');
+    if (cancelBtn && form) cancelBtn.addEventListener('click', function () { form.hidden = true; });
+    var saveBtn = $('acct-edit-save');
+    if (saveBtn) saveBtn.addEventListener('click', function () {
+      var n = $('acct-edit-name'), a = $('acct-edit-address'), p = $('acct-edit-phone'), m = $('acct-edit-msg');
+      var name = n ? String(n.value || '').trim() : '';
+      var address = a ? String(a.value || '').trim() : '';
+      var phone = p ? String(p.value || '').trim() : '';
+      function say(text) { if (m) { m.textContent = text; m.hidden = false; } }
+      if (!name) { say('Please enter your name.'); return; }
+      if (!address) { say('Please enter the service address \u2014 that is where we come to do the repair.'); return; }
+      if (!sb) { say('Couldn\u2019t save just now \u2014 please try again in a moment.'); return; }
+      saveBtn.disabled = true;
+      say('Saving\u2026');
+      var custId = currentCust && currentCust.id;
+      var jobs = [sb.from('tickets').update({ service_address: address }).eq('id', t.id)];
+      if (custId) jobs.push(sb.from('customers').update({ name: name, phone: phone || null }).eq('id', custId));
+      Promise.all(jobs).then(function (ress) {
+        var bad = (ress || []).filter(function (r) { return r && r.error; });
+        if (bad.length) throw new Error('save failed');
+        t.service_address = address;
+        if (currentCust) { currentCust.name = name; currentCust.phone = phone || null; }
+        var nl = $('acct-appt-name-line'); if (nl) nl.innerHTML = '<strong>Name:</strong> ' + escX(name);
+        var al = $('acct-appt-addr-line'); if (al) al.innerHTML = '<strong>Where:</strong> ' + escX(address);
+        var pl = $('acct-appt-phone-line'); if (pl) pl.innerHTML = '<strong>Phone:</strong> ' + escX(phone || '\u2014');
+        var pn = $('authx-profile-name'); if (pn) pn.textContent = name;
+        var pp = $('authx-profile-phone'); if (pp) pp.value = phone;
+        var pa = $('authx-profile-address'); if (pa) pa.value = address;
+        form.hidden = true;
+        /* Staff are notified the same way a time-change request notifies
+           them — a message on this ticket's thread, sender 'customer',
+           so it lands in the Service Messages inbox staff already watch. */
+        var note = 'I updated my details on this service request \u2014 name: ' + name + '; service address: ' + address + '; phone: ' + (phone || 'not given') + '.';
+        return sb.from('messages').insert({ ticket_id: t.id, sender: 'customer', message: note }).then(function (mres) {
+          if (mres && mres.error) { say('Saved \u2014 but the note to our team did not send. Please send us a message below so we see the change.'); return; }
+          say('Saved \u2014 our team has been notified of the change.');
+          loadThreadMessages(t);
+          if (currentCust) loadInbox(currentCust);
+        });
+      }).catch(function () {
+        say('Couldn\u2019t save \u2014 please try again, or call or text (937) 280-6243.');
+      }).then(function () { saveBtn.disabled = false; });
+    });
   };
   /* ---------- V158_GUEST_PORTAL_2026_11_17: the Guest Hub bar ----------
      View service request opens the GUEST Hub — a separate guest hub,
@@ -6540,7 +6660,10 @@
      documents, charges and messages. No staff tools, no other
      guests, no internal machinery, no portal admin. The buttons
      only jump to parts of this same ticket page, or prefill a
-     message to staff. Nothing here edits the ticket. */
+     message to staff. V163: the guest CAN edit their own name,
+     service address and phone number on the ticket (Edit my details
+     in the appointment box) — charges, payment, status and staff
+     fields stay locked. */
   window.atrRenderTicketHub = function (t) {
     var bar = $('acct-hub-bar');
     if (!bar) return;
@@ -6940,7 +7063,7 @@
       var seedG = window.localStorage.getItem('atr-general-read-' + cust.id);
       if (seedG && !inboxReads.__general) inboxReads.__general = seedG;
     } catch (e) { /* marker is best-effort */ }
-    sb.from('tickets').select('id, created_at, device_type, brand, model, issue, status, job_date, appointment_at, service_address') /* V158_GUEST_PORTAL_2026_11_17: appointment + address were never even asked for */
+    sb.from('tickets').select('id, created_at, device_type, brand, model, issue, issue_reason, status, job_date, appointment_at, service_address') /* V158_GUEST_PORTAL_2026_11_17: appointment + address were never even asked for */
       .eq('customer_id', cust.id).order('created_at', { ascending: false }).limit(50)
       .then(function (res) {
         if (res.error) throw res.error;
@@ -7620,6 +7743,26 @@
         if (currentCust) loadInbox(currentCust); /* CUSTOMER_INBOX_2026_11_05: keep the inbox preview + badge current */
       }).catch(function () { err.textContent = 'Couldn\'t send \u2014 try again.'; err.hidden = false; });
     });
+    /* V163_WINDOWS_DAY_AWARE_2026_11_17: the arrival-window options
+     * follow the picked visit date — see the ATR_WINDOWS_* model above.
+     * A window the new day does not offer is cleared, never carried. */
+    function atrPaintGuestWindows() {
+      var d = $('acct-t-visit-date'), w = $('acct-t-window');
+      if (!d || !w) return;
+      var cur = w.value;
+      var ws = atrWindowsForDate(d.value);
+      var keep = ws.some(function (x) { return atrWindowValue(x) === cur; });
+      w.innerHTML = '<option value="">Pick a time</option>' + ws.map(function (x) {
+        var v = atrWindowValue(x);
+        return '<option value="' + v + '"' + (v === cur && keep ? ' selected' : '') + '>' + x.label + '</option>';
+      }).join('');
+      if (!keep) w.value = '';
+    }
+    (function () {
+      var dv = $('acct-t-visit-date');
+      if (dv) dv.addEventListener('change', atrPaintGuestWindows);
+      atrPaintGuestWindows();
+    })();
     var tForm = $('acct-ticket-form');
     if (tForm) tForm.addEventListener('submit', function (e) {
       e.preventDefault();
@@ -7645,8 +7788,8 @@
         appointment_at: (function () {
           var d = $('acct-t-visit-date'), w = $('acct-t-window');
           if (!d || !d.value || !w || !w.value) return null;
-          var p = d.value.split('-'), hh = parseInt(w.value.split(':')[0], 10) || 0;
-          return new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]), hh, 0, 0).toISOString();
+          var p = d.value.split('-'), wp = w.value.split(':'), hh = parseInt(wp[0], 10) || 0, mm = parseInt(wp[1], 10) || 0;
+          return new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]), hh, mm, 0).toISOString();
         })(),
         service_address: (function () {
           var a = $('acct-t-address');
@@ -8706,15 +8849,77 @@
 /* V160_GUEST_HUB_FIXES_2026_11_17: on phone viewports the site black bottom nav (.mobile-bottom-nav, z-index 2100 in styles.css) painted over the Guest Hub thumb bar (#guest-hub 2000 / .ghub-thumb 2001), so a guest could not see Home / Service Request / Documents / Chat / Account. Raise the Hub above it only at phone widths (max-width 920px, the breakpoint where the site nav shows). Desktop keeps 2000/2001; styles.css is untouched, so the Associate Hub and the site nav are unaffected. */
 @media (max-width:920px){#guest-hub{z-index:2200}.ghub-thumb{z-index:2201}}
 @media (max-width:720px){.ghub-side{width:200px}.ghub-body{height:calc(100% - 132px)}}
+.ghub-line{display:flex;justify-content:space-between;gap:.6rem;padding:.3rem 0;border-bottom:1px solid #EFE6D2}
+.ghub-row{display:flex;justify-content:space-between;padding:.3rem 0}
+.ghub-total{display:flex;justify-content:space-between;padding:.3rem 0;border-top:2px solid #E6D9C0}
+.ghub-docline{padding:.4rem 0;border-bottom:1px solid #EFE6D2}
+/* V163_GUEST_DARK_2026_11_17 (Austin, Nov 17, 2026): Guest Hub dark-mode
+   parity with the Associate Hub. The Hub's own rules above paint flat
+   light colors, so the site's dark switch changed nothing inside it —
+   the same gap v117 fixed for the Associate Hub in portal.css
+   (HUB_DARK_THEME). Every rule here is scoped to
+   html[data-theme="dark"] and reuses the site's own dark tokens
+   (styles.css), so the two Hubs match. Light theme is untouched. */
+html[data-theme="dark"] #guest-hub{background:var(--bg,#14100B);color:var(--ink,#F0E8DA)}
+html[data-theme="dark"] .ghub-topbar{background:var(--surface,#221B14);border-bottom-color:var(--line,#3A2F24)}
+html[data-theme="dark"] .ghub-brand{color:var(--ink,#F0E8DA)}
+html[data-theme="dark"] .ghub-qa-label,html[data-theme="dark"] .ghub-side-label{color:var(--muted,#A89880)}
+html[data-theme="dark"] .ghub-side{background:var(--surface,#221B14);border-right-color:var(--line,#3A2F24)}
+html[data-theme="dark"] .ghub-tab{color:var(--ink,#F0E8DA)}
+html[data-theme="dark"] .ghub-tab.active,html[data-theme="dark"] .ghub-tab:hover{background:var(--brand-soft,#3A2113);color:#F5B98A}
+html[data-theme="dark"] .ghub-panel h2{color:var(--ink,#F0E8DA)}
+html[data-theme="dark"] .ghub-card{background:var(--surface,#221B14);border-color:var(--line,#3A2F24)}
+html[data-theme="dark"] .ghub-muted{color:var(--muted,#A89880)}
+html[data-theme="dark"] .ghub-status{background:#14332C;color:#7BDDB4}
+html[data-theme="dark"] .ghub-steps li{border-bottom-color:var(--line,#3A2F24)}
+html[data-theme="dark"] .ghub-barcode{background:var(--surface,#221B14);border-color:var(--line,#3A2F24)}
+html[data-theme="dark"] .ghub-barcode i{background:var(--ink,#F0E8DA)}
+html[data-theme="dark"] .ghub-thumb{background:var(--surface,#221B14);border-top-color:var(--line,#3A2F24)}
+html[data-theme="dark"] .ghub-thumb button{color:var(--muted,#A89880)}
+html[data-theme="dark"] .ghub-thumb button.active{color:var(--brand,#D9540D)}
+html[data-theme="dark"] .ghub-line{border-bottom-color:var(--line,#3A2F24)}
+html[data-theme="dark"] .ghub-total{border-top-color:var(--line,#3A2F24)}
+html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
+/* V163_GUEST_SEARCH_2026_11_17 (Austin, Nov 17, 2026): the Guest Hub
+   Search sheet — the thumb nav's last button. On mobile the sidebar
+   does not work, so every Hub section must be reachable from here:
+   the sheet lists all nine sections; typing filters them; tapping one
+   opens it. Token colors, so dark mode flips it with the Hub. */
+#ghub-search-sheet{position:absolute;inset:0;z-index:2205;background:rgba(44,35,26,.45);display:flex;flex-direction:column;justify-content:flex-end}
+#ghub-search-sheet[hidden]{display:none!important}
+.ghub-search-card{background:var(--surface,#FFFDF8);border:1px solid var(--line,#E6D9C0);border-bottom:0;border-radius:18px 18px 0 0;padding:.9rem .9rem calc(1rem + env(safe-area-inset-bottom));max-height:82%;overflow-y:auto}
+.ghub-search-head{display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-bottom:.6rem}
+.ghub-search-head strong{font-size:1rem}
+#ghub-search-close{appearance:none;border:1px solid var(--line,#E6D9C0);background:transparent;color:var(--ink,#2C231A);border-radius:999px;width:2rem;height:2rem;font-size:1.2rem;line-height:1;cursor:pointer;font-family:inherit}
+#ghub-search-input{width:100%;padding:.7rem .8rem;border:2px solid var(--line,#E6D9C0);border-radius:10px;background:var(--bg,#fff);color:var(--ink,#2C231A);font-size:1rem;font-family:inherit;box-sizing:border-box;margin-bottom:.5rem}
+.ghub-search-group{font-size:.72rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--muted,#7D6C5B);margin:.55rem 0 .3rem}
+.ghub-search-empty{color:var(--muted,#7D6C5B);font-size:.92rem;padding:.4rem 0}
+/* V163_GUEST_THUMB_2026_11_17: at phone widths the sidebar is gone —
+   the thumb nav ARE the action buttons on mobile. iPad/desktop keep it. */
+@media (max-width:720px){.ghub-side{display:none}}
 </style>
 <div id="guest-hub" hidden role="dialog" aria-label="Guest Hub">
   <div class="ghub-topbar">
     <div><span class="ghub-brand"><i class="fas fa-screwdriver-wrench"></i> Austin&rsquo;s Tech Repair Group</span><span class="ghub-tag">Guest Hub</span></div>
     <div class="ghub-qa-label">QUICK ACTIONS</div>
+    <!-- V163_GUEST_QA_2026_11_17 (Austin, Nov 17, 2026): Quick Actions
+         parity with the Associate Hub — same row, same order, same
+         behaviour, minus guest-inappropriate features: Home, New Service
+         Request, Get App, Refresh, Back to site, Log Out, moon LAST.
+         Home is FIRST in both hubs. Guests NEVER get the Square button
+         (the Associate Hub has Square; the Guest Hub does not). Exactly
+         ONE Refresh in the Hub, here only — no per-panel Refresh
+         anywhere. The button reads "Back to site" in BOTH hubs, never
+         the old account-return label — the live row said that, it was
+         wrong. -->
     <div class="ghub-qa">
+      <button class="btn btn-outline btn-sm" type="button" data-ghub-qa="home"><i class="fas fa-house"></i> Home</button>
       <button class="btn btn-primary btn-sm" type="button" data-ghub-qa="service"><i class="fas fa-calendar-check"></i> New Service Request</button>
+      <button class="btn btn-outline btn-sm" type="button" data-ghub-qa="getapp"><i class="fas fa-download"></i> Get App</button>
       <button class="btn btn-outline btn-sm" type="button" data-ghub-qa="refresh"><i class="fas fa-rotate-right"></i> Refresh</button>
-      <button class="btn btn-outline btn-sm" type="button" data-ghub-qa="back"><i class="fas fa-arrow-left"></i> Back to account</button>
+      <a class="btn btn-outline btn-sm" href="https://austinstechrepairgroup.com/" data-ghub-qa="backsite"><i class="fas fa-arrow-left"></i> Back to site</a>
+      <button class="btn btn-outline btn-sm" type="button" data-ghub-qa="logout"><i class="fas fa-sign-out-alt"></i> Log Out</button>
+      <button class="btn btn-outline btn-sm" type="button" data-ghub-qa="theme" aria-label="Toggle dark mode" title="Toggle dark/light mode"><i class="fas fa-moon" id="ghub-theme-icon"></i></button>
     </div>
   </div>
   <div class="ghub-body">
@@ -9128,12 +9333,31 @@
       </div>
     </div>
   </div>
+  <!-- V163_GUEST_THUMB_2026_11_17 (Austin, Nov 17, 2026): the guest thumb
+       nav IS the action buttons on mobile — the sidebar does not work on
+       phones. Fixed order, five buttons, NO Home button for guests (Home
+       lives in Quick Actions only): Service Request, Account, Documents,
+       Service Messages, Search last. Search opens the sheet with every
+       other section. NOT customizable (Austin confirmed that is fine).
+       The Associate Hub thumb bar is untouched. -->
   <div class="ghub-thumb" role="navigation" aria-label="Guest Hub">
-    <button type="button" data-ghub="home" class="active"><i class="fas fa-house"></i> Home</button>
     <button type="button" data-ghub="service"><i class="fas fa-tools"></i> Service Request</button>
+    <button type="button" data-ghub="account"><i class="fas fa-user"></i> Account</button>
     <button type="button" data-ghub="documents"><i class="fas fa-folder-open"></i> Documents</button>
     <button type="button" data-ghub="chat"><i class="fas fa-comment-dots"></i> Service Messages</button>
-    <button type="button" data-ghub="account"><i class="fas fa-user"></i> Account</button>
+    <button type="button" data-ghub="search"><i class="fas fa-magnifying-glass"></i> Search</button>
+  </div>
+  <!-- V163_GUEST_SEARCH_2026_11_17 (Austin, Nov 17, 2026): the Guest Hub
+       Search sheet — opened by the thumb nav's Search button. All nine
+       Hub sections live here so none is unreachable on mobile, where
+       the sidebar is hidden. Fixed list, not customizable. -->
+  <div id="ghub-search-sheet" hidden role="dialog" aria-label="Search the Guest Hub">
+    <div class="ghub-search-card">
+      <div class="ghub-search-head"><strong>Search the Guest Hub</strong><button type="button" id="ghub-search-close" aria-label="Close search">&times;</button></div>
+      <input type="search" id="ghub-search-input" placeholder="Try &ldquo;membership&rdquo; or &ldquo;warranty&rdquo;&hellip;" aria-label="Search the Guest Hub" autocomplete="off">
+      <div id="ghub-search-results"></div>
+      <p class="ghub-muted">Every section of the Hub is here — Home, Service Request, Scan In, Account, Service Messages, ATRG Connect, ATR One Membership, Documents, Warranty.</p>
+    </div>
   </div>
 </div>
 
@@ -9162,9 +9386,10 @@
   function apptLine(t) {
     try {
       if (t.appointment_at) {
-        var d = new Date(t.appointment_at), e = new Date(d.getTime() + 2 * 60 * 60 * 1000);
-        var fmt = function (x) { var h = x.getHours(), ap = h >= 12 ? 'PM' : 'AM', hh = h % 12 || 12; return hh + ' ' + ap; };
-        return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'America/New_York' }) + ' · ' + fmt(d) + '–' + fmt(e);
+        var d = new Date(t.appointment_at);
+        var fmt = function (x) { var h = x.getHours(), ap = h >= 12 ? 'PM' : 'AM', hh = h % 12 || 12; return hh + (x.getMinutes() ? ':' + String(x.getMinutes()).padStart(2, '0') : '') + ' ' + ap; };
+        var endLabel = (window.atrWindowEndLabel ? window.atrWindowEndLabel(d) : fmt(new Date(d.getTime() + 2 * 60 * 60 * 1000)));
+        return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) + ' · ' + fmt(d) + '–' + endLabel;
       }
       if (t.job_date) return new Date(t.job_date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
     } catch (err) {}
@@ -9181,15 +9406,15 @@
       if (c.kind === 'part') part += amt;
       if (c.kind === 'labor') labor += amt;
       if (c.kind === 'dispatch' || c.kind === 'visit') visit += amt;
-      var lbl = KIND[c.kind] || 'Charge'; var desc = (c.description || ''); if (desc === lbl) desc = ''; return '<div style="display:flex;justify-content:space-between;gap:.6rem;padding:.3rem 0;border-bottom:1px solid #EFE6D2"><span style="min-width:0;overflow-wrap:break-word"><strong>' + esc(lbl) + '</strong>' + (desc ? ' — ' + esc(desc) : '') + ' · ' + esc(c.qty || 1) + ' × ' + (c.kind === 'discount' ? '−' + money(Math.abs(c.unit_price)) : money(c.unit_price)) + '</span><strong>' + (c.kind === 'discount' ? '−' + money(Math.abs(amt)) : money(amt)) + '</strong></div>';
+      var lbl = KIND[c.kind] || 'Charge'; var desc = (c.description || ''); if (desc === lbl) desc = ''; return '<div class="ghub-line"><span style="min-width:0;overflow-wrap:break-word"><strong>' + esc(lbl) + '</strong>' + (desc ? ' — ' + esc(desc) : '') + ' · ' + esc(c.qty || 1) + ' × ' + (c.kind === 'discount' ? '−' + money(Math.abs(c.unit_price)) : money(c.unit_price)) + '</span><strong>' + (c.kind === 'discount' ? '−' + money(Math.abs(amt)) : money(amt)) + '</strong></div>'; /* V163_GUEST_DARK_2026_11_17: class, not an inline flat-light border, so dark mode can flip it */
     }).join('');
     var tot = '';
-    if (part) tot += '<div style="display:flex;justify-content:space-between;padding:.3rem 0"><span>Part total</span><strong>' + money(part) + '</strong></div>';
-    if (labor) tot += '<div style="display:flex;justify-content:space-between;padding:.3rem 0"><span>Labor total</span><strong>' + money(labor) + '</strong></div>';
-    if (visit) tot += '<div style="display:flex;justify-content:space-between;padding:.3rem 0"><span>Visit fee total</span><strong>' + money(visit) + '</strong></div>';
-    tot += '<div style="display:flex;justify-content:space-between;padding:.3rem 0;border-top:2px solid #E6D9C0"><span><strong>Subtotal</strong></span><strong>' + money(sub) + '</strong></div>';
-    if (dep) tot += '<div style="display:flex;justify-content:space-between;padding:.3rem 0"><span>Deposit received</span><strong>−' + money(dep) + '</strong></div>';
-    tot += '<div style="display:flex;justify-content:space-between;padding:.3rem 0;border-top:2px solid #E6D9C0"><span><strong>Balance due</strong></span><strong>' + money(sub - dep) + '</strong></div>';
+    if (part) tot += '<div class="ghub-row"><span>Part total</span><strong>' + money(part) + '</strong></div>';
+    if (labor) tot += '<div class="ghub-row"><span>Labor total</span><strong>' + money(labor) + '</strong></div>';
+    if (visit) tot += '<div class="ghub-row"><span>Visit fee total</span><strong>' + money(visit) + '</strong></div>';
+    tot += '<div class="ghub-total"><span><strong>Subtotal</strong></span><strong>' + money(sub) + '</strong></div>';
+    if (dep) tot += '<div class="ghub-row"><span>Deposit received</span><strong>−' + money(dep) + '</strong></div>';
+    tot += '<div class="ghub-total"><span><strong>Balance due</strong></span><strong>' + money(sub - dep) + '</strong></div>'; /* V163_GUEST_DARK_2026_11_17: classes, not inline flat-light borders, so dark mode can flip them */
     return lines + tot;
   }
   window.atrGuestHubChargesHtml = chargesHtml;
@@ -9212,11 +9437,11 @@
   function renderDocs() {
     var box = $('ghub-docs-list'); if (!box) return;
     var std = [{ label: 'Repair Authorization and Service Agreement' }, { label: '1-Year Limited Warranty' }, { label: 'Media Release' }];
-    var html = '<p class="ghub-muted">Your documents live here in the Guest Hub — nothing is emailed unless you ask for it.</p>' + std.map(function (s) { return '<div style="padding:.4rem 0;border-bottom:1px solid #EFE6D2">• <strong>' + esc(s.label) + '</strong> — waiting for your signature</div>'; }).join('');
+    var html = '<p class="ghub-muted">Your documents live here in the Guest Hub — nothing is emailed unless you ask for it.</p>' + std.map(function (s) { return '<div class="ghub-docline">• <strong>' + esc(s.label) + '</strong> — waiting for your signature</div>'; }).join(''); /* V163_GUEST_DARK_2026_11_17: class, not an inline flat-light border, so dark mode can flip it */
     if (!tickets.length) { box.innerHTML = html; return; }
     var ids = tickets.map(function (t) { return t.id; });
     sb.from('ticket_documents').select('id,ticket_id,doc_type,file_name,created_at').in('ticket_id', ids).order('created_at', { ascending: true }).then(function (r) {
-      var filed = (r.data || []).map(function (d) { return '<div style="padding:.4rem 0;border-bottom:1px solid #EFE6D2">• ' + esc(d.file_name || d.doc_type || 'Document') + '</div>'; }).join('');
+      var filed = (r.data || []).map(function (d) { return '<div class="ghub-docline">• ' + esc(d.file_name || d.doc_type || 'Document') + '</div>'; }).join(''); /* V163_GUEST_DARK_2026_11_17: class, not an inline flat-light border, so dark mode can flip it */
       box.innerHTML = html + (filed || '<p class="ghub-muted">No estimates or invoices filed yet.</p>');
     }).catch(function () { box.innerHTML = html; });
   }
@@ -9230,7 +9455,7 @@
       return sb.from('customers').select('id,name,email,phone,address,account_number').eq('id', u.id).maybeSingle().then(function (r) {
         cust = r.data || { id: u.id, name: (u.user_metadata && u.user_metadata.full_name) || '', email: u.email || '' };
         paintHome();
-        return sb.from('tickets').select('id,created_at,device_type,brand,model,issue,status,job_date,appointment_at,service_address,customer_id').eq('customer_id', cust.id).order('created_at', { ascending: false });
+        return sb.from('tickets').select('id,created_at,device_type,brand,model,issue,issue_reason,status,job_date,appointment_at,service_address,customer_id').eq('customer_id', cust.id).order('created_at', { ascending: false });
       }).then(function (r) {
         tickets = (r && r.data) || [];
         var next = $('ghub-home-next');
@@ -9293,26 +9518,156 @@
     hub.hidden = false; document.body.style.overflow = 'hidden';
     loadAll(); setTimeout(loadPrefs, 600);
     showTab(tab || 'home');
+    syncGhubThemeIcon();
     hub.scrollTop = 0;
   }
   function closeHub() {
     var hub = $('guest-hub'); if (!hub) return;
     hub.hidden = true; document.body.style.overflow = '';
   }
+  /* V163_GUEST_QA_2026_11_17: the Hub moon mirrors the site header moon
+     — same 'atr-theme' switch, same sun-in-dark / moon-in-light icon.
+     Both icons are synced here so the header and the Hub never disagree. */
+  function syncGhubThemeIcon() {
+    var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    var gi = $('ghub-theme-icon'); if (gi) gi.className = dark ? 'fas fa-sun' : 'fas fa-moon';
+    var si = document.getElementById('theme-icon'); if (si) si.className = dark ? 'fas fa-sun' : 'fas fa-moon';
+  }
+  window.atrGuestHubSyncThemeIcon = syncGhubThemeIcon;
+  /* V163_GUEST_SEARCH_2026_11_17 (Austin, Nov 17, 2026): the Guest Hub
+     Search sheet — every Hub section reachable on mobile, where the
+     sidebar is hidden and the thumb nav carries only five buttons.
+     Fixed list (not customizable, per Austin): the same nine sections
+     as the sidebar, same labels and icons. Typing filters; tapping a
+     result opens that section; closing returns to the current tab. */
+  var GHUB_SECTIONS = [
+    { name: 'home', label: 'Home', icon: 'fas fa-house' },
+    { name: 'service', label: 'Service Request', icon: 'fas fa-tools' },
+    { name: 'scanin', label: 'Scan In', icon: 'fas fa-qrcode' },
+    { name: 'account', label: 'Account', icon: 'fas fa-user' },
+    { name: 'chat', label: 'Service Messages', icon: 'fas fa-comment-dots' },
+    { name: 'connect', label: 'ATRG Connect', icon: 'fas fa-display' },
+    { name: 'membership', label: 'ATR One Membership', icon: 'fas fa-star' },
+    { name: 'documents', label: 'Documents', icon: 'fas fa-folder-open' },
+    { name: 'warranty', label: 'Warranty', icon: 'fas fa-shield-halved' }
+  ];
+  function renderGhubSearch(q) {
+    var box = $('ghub-search-results'); if (!box) return;
+    var needle = String(q || '').toLowerCase();
+    var hits = GHUB_SECTIONS.filter(function (s) { return !needle || s.label.toLowerCase().indexOf(needle) !== -1; });
+    box.innerHTML = hits.length ? hits.map(function (s) {
+      return '<button class="ghub-tab" type="button" data-ghub-search="' + s.name + '"><i class="' + s.icon + '"></i> ' + esc(s.label) + '</button>';
+    }).join('') : '<p class="ghub-search-empty">Nothing in the Hub matches that \u2014 try \u201cservice\u201d, \u201cdocuments\u201d, or \u201caccount\u201d.</p>';
+  }
+  function openGhubSearch() {
+    var sheet = $('ghub-search-sheet'); if (!sheet) return;
+    renderGhubSearch('');
+    var inp = $('ghub-search-input'); if (inp) inp.value = '';
+    sheet.hidden = false;
+    if (inp) inp.focus();
+  }
+  function closeGhubSearch() {
+    var sheet = $('ghub-search-sheet'); if (!sheet) return;
+    sheet.hidden = true;
+  }
+  window.atrGuestHubSearch = { open: openGhubSearch, close: closeGhubSearch, sections: GHUB_SECTIONS };
+  /* V163_GUEST_SEARCH_2026_11_17 (Austin, Nov 17, 2026): the Guest Hub
+     Search sheet — every Hub section reachable on mobile, where the
+     sidebar is hidden and the thumb nav carries only five buttons.
+     Fixed list (not customizable, per Austin): the same nine sections
+     as the sidebar, same labels and icons. Typing filters; tapping a
+     result opens that section; closing returns to the current tab. */
+  /* V163_SEARCH_GROUPS_2026_11_17 (Austin, Nov 17, 2026): every Guest
+   * Hub section sits under the sidebar's own group label — the guest
+   * sidebar has one group, ACTION BUTTONS, so all nine sections sit
+   * under that heading. No ADMIN, no FINANCIALS, no staff tool ever
+   * renders in Guest Hub Search. */
+  var GHUB_SECTIONS = [
+    { name: 'home', label: 'Home', icon: 'fas fa-house', group: 'ACTION BUTTONS' },
+    { name: 'service', label: 'Service Request', icon: 'fas fa-tools', group: 'ACTION BUTTONS' },
+    { name: 'scanin', label: 'Scan In', icon: 'fas fa-qrcode', group: 'ACTION BUTTONS' },
+    { name: 'account', label: 'Account', icon: 'fas fa-user', group: 'ACTION BUTTONS' },
+    { name: 'chat', label: 'Service Messages', icon: 'fas fa-comment-dots', group: 'ACTION BUTTONS' },
+    { name: 'connect', label: 'ATRG Connect', icon: 'fas fa-display', group: 'ACTION BUTTONS' },
+    { name: 'membership', label: 'ATR One Membership', icon: 'fas fa-star', group: 'ACTION BUTTONS' },
+    { name: 'documents', label: 'Documents', icon: 'fas fa-folder-open', group: 'ACTION BUTTONS' },
+    { name: 'warranty', label: 'Warranty', icon: 'fas fa-shield-halved', group: 'ACTION BUTTONS' }
+  ];
+  function renderGhubSearch(q) {
+    var box = $('ghub-search-results'); if (!box) return;
+    var needle = String(q || '').toLowerCase();
+    var hits = GHUB_SECTIONS.filter(function (s) { return !needle || s.label.toLowerCase().indexOf(needle) !== -1; });
+    if (!hits.length) { box.innerHTML = '<p class="ghub-search-empty">Nothing in the Hub matches that \u2014 try \u201cservice\u201d, \u201cdocuments\u201d, or \u201caccount\u201d.</p>'; return; }
+    var groups = {};
+    hits.forEach(function (s) { (groups[s.group] = groups[s.group] || []).push(s); });
+    box.innerHTML = Object.keys(groups).map(function (g) {
+      return '<p class="ghub-search-group">' + esc(g) + '</p>' + groups[g].map(function (s) {
+        return '<button class="ghub-tab" type="button" data-ghub-search="' + s.name + '"><i class="' + s.icon + '"></i> ' + esc(s.label) + '</button>';
+      }).join('');
+    }).join('');
+  }
+  function openGhubSearch() {
+    var sheet = $('ghub-search-sheet'); if (!sheet) return;
+    renderGhubSearch('');
+    var inp = $('ghub-search-input'); if (inp) inp.value = '';
+    sheet.hidden = false;
+    if (inp) inp.focus();
+  }
+  function closeGhubSearch() {
+    var sheet = $('ghub-search-sheet'); if (!sheet) return;
+    sheet.hidden = true;
+  }
+  window.atrGuestHubSearch = { open: openGhubSearch, close: closeGhubSearch, sections: GHUB_SECTIONS };
   window.atrOpenGuestHub = openHub;
   window.atrCloseGuestHub = closeHub;
   document.addEventListener('DOMContentLoaded', function () {
     var btn = $('acct-guesthub-btn');
     if (btn) btn.addEventListener('click', function () { openHub('service'); });
     document.querySelectorAll('#guest-hub [data-ghub]').forEach(function (b) {
-      b.addEventListener('click', function () { showTab(b.getAttribute('data-ghub')); });
+      b.addEventListener('click', function () {
+        if (b.getAttribute('data-ghub') === 'search') { openGhubSearch(); return; }
+        showTab(b.getAttribute('data-ghub'));
+      });
+    });
+    var gsInput = $('ghub-search-input');
+    if (gsInput) gsInput.addEventListener('input', function () { renderGhubSearch(gsInput.value); });
+    var gsClose = $('ghub-search-close');
+    if (gsClose) gsClose.addEventListener('click', closeGhubSearch);
+    var gsSheet = $('ghub-search-sheet');
+    if (gsSheet) gsSheet.addEventListener('click', function (e) { if (e.target === gsSheet) closeGhubSearch(); });
+    var gsResults = $('ghub-search-results');
+    if (gsResults) gsResults.addEventListener('click', function (e) {
+      var r = e.target && e.target.closest ? e.target.closest('[data-ghub-search]') : null;
+      if (!r) return;
+      closeGhubSearch();
+      showTab(r.getAttribute('data-ghub-search'));
     });
     document.querySelectorAll('#guest-hub [data-ghub-qa]').forEach(function (b) {
       b.addEventListener('click', function () {
         var k = b.getAttribute('data-ghub-qa');
-        if (k === 'back') closeHub();
+        if (k === 'backsite') return; /* a real link to the public site — the browser takes it from here, same as the Associate Hub */
         if (k === 'refresh') { loaded = false; loadAll(); showTab('home'); }
+        if (k === 'home') showTab('home');
         if (k === 'service') { showTab('service'); var nb2 = $('acct-new-ticket-btn'); if (nb2) nb2.click(); }
+        if (k === 'getapp') {
+          /* Same install door as the site's own Get App: close the Hub
+             and open the Add to Home Screen prompt the guest asked for.
+             An explicit tap overrides a past dismissal — the prompt's
+             own close button still dismisses it. */
+          closeHub();
+          var ip = document.getElementById('install-prompt');
+          if (ip) { ip.hidden = false; try { ip.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {} }
+        }
+        if (k === 'logout') {
+          if (sb) { try { var pr = sb.auth.signOut(); if (pr && pr.catch) pr.catch(function () {}); } catch (e) {} }
+          closeHub(); /* the account module's SIGNED_OUT listener shows the sign-in view */
+        }
+        if (k === 'theme') {
+          var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          try { localStorage.setItem('atr-theme', next); } catch (e) {}
+          syncGhubThemeIcon();
+        }
       });
     });
     var ne = $('acct-notif-email'), nt2 = $('acct-notif-text');

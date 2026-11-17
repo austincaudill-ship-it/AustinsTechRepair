@@ -155,6 +155,7 @@
   border-radius: 12px; padding: 1rem 1.1rem; margin-bottom: 0.85rem;
 }
 .portal-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; flex-wrap: wrap; }
+.p2-issue-top { margin: 0 0 0.75rem; font-size: 1.05rem; }
 .portal-card-title { font-weight: 700; margin: 0 0 0.25rem; }
 .portal-card-meta { color: var(--muted, #7D6C5B); font-size: 0.86rem; margin: 0.15rem 0; }
 .portal-card-meta a { color: var(--brand-deep, #A63E06); }
@@ -1478,11 +1479,12 @@ body.portal-body #portal-dash-view textarea {
 /* The top-row buttons follow Log Out's rule exactly: hidden
    whenever the dashboard is not the showing view, so the sign-in,
    reset and two-step screens never offer them. */
+body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-hub-home-btn,
 body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-hub-new-btn,
 body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-hub-square-btn,
 body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-hub-refresh-btn,
 body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-hub-search-btn { display: none; }
-/* GLOBAL_REFRESH_2026_11_11 (Austin, Nov 11, 2026): the top-bar Refresh button follows the same hide rule as its neighbours (added to the list above), and sits LAST in the row — HUB_HEADER_2026_11_11 put Get App between Square and Refresh, so Refresh is order 6 in both width blocks below (Get App is 5; Square is 4 on phones, Search is 4 on wide screens, where Square itself is hidden). */
+/* GLOBAL_REFRESH_2026_11_11 (Austin, Nov 11, 2026): the top-bar Refresh button follows the same hide rule as its neighbours (added to the list above), and sits LAST in the row — HUB_HEADER_2026_11_11 put Get App between Square and Refresh, so Refresh is order 5 in both width blocks below (Home is 1, Get App is 4; Square is 3 on phones, Search is 0 on wide screens, where Square itself is hidden). */
 /* The top row now carries four buttons, and the actions span must be
    allowed to wrap AND to shrink below its longest row: measured on
    the staged build, unwrapped it sized to a 412px row inside a
@@ -1494,6 +1496,13 @@ body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-hub-search-bt
   #portal-dash-view .portal-head-actions { display: none; }
   #portal-dash-view #portal-nav-toggle { display: none; }
   #portal-dash-view .portal-panel { padding: 0.5rem 0.75rem 0.75rem; box-sizing: border-box; }
+/* V163_HUB_GAP_PHONE_2026_11_17 (Austin, Nov 17, 2026): the v162 fix left
+   a 37px dead band on phones — the margin-bottom:0 rules at 641-920px
+   never covered <=640px, so the base .portal-panel 2rem bottom margin
+   survived there. Zero it inside this <=920px block, matching the iPad
+   5.25px flush gap. Desktop (>920px) keeps its 2rem panel margin: this
+   rule stays inside this block. */
+  #portal-dash-view .portal-panel { margin-bottom: 0; }
   a.portal-thumb-item { text-decoration: none; }
   .portal-thumbbar { padding-bottom: max(22px, calc(6px + env(safe-area-inset-bottom))); }
 /* V162_HUB_GAP_2026_11_17 (Austin, Nov 17, 2026): the action panel sat
@@ -1688,13 +1697,14 @@ body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-hub-search-bt
 @media (max-width: 920px) {
   .portal-topbar-actions { gap: 0.45rem; }
   .portal-topbar-actions .portal-btn { padding: 0.55rem 0.7rem; font-size: 0.88rem; min-width: 0; }
-  .portal-topbar-actions #portal-hub-new-btn { order: 1; } /* QA_ORDER_2026_11_11 (Amendment 2, Austin, Nov 11, 2026): the Quick Actions row runs New Service Request, Square, Get App, Refresh, Back to site, Log Out, and the theme toggle last — at every width */
-  .portal-topbar-actions #portal-hub-square-btn { order: 2; }
-  .portal-topbar-actions #portal-getapp-btn { order: 3; }
-  .portal-topbar-actions #portal-hub-refresh-btn { order: 4; }
-  .portal-topbar-actions > a:first-of-type { order: 5; } /* Back to site — the row's first anchor */
-  .portal-topbar-actions #portal-logout { order: 6; }
-  .portal-topbar-actions #portal-theme-btn { order: 7; } /* dark/light toggle last, like the moon on the website */
+  .portal-topbar-actions #portal-hub-home-btn { order: 1; } /* V163_QA_HOME_2026_11_17 (Austin, Nov 17, 2026): Home goes FIRST in Quick Actions in BOTH hubs — the row runs Home, New Service Request, Square, Get App, Refresh, Back to site, Log Out, and the theme toggle last, at every width */
+  .portal-topbar-actions #portal-hub-new-btn { order: 2; }
+  .portal-topbar-actions #portal-hub-square-btn { order: 3; }
+  .portal-topbar-actions #portal-getapp-btn { order: 4; }
+  .portal-topbar-actions #portal-hub-refresh-btn { order: 5; }
+  .portal-topbar-actions > a:first-of-type { order: 6; } /* Back to site — the row's first anchor */
+  .portal-topbar-actions #portal-logout { order: 7; }
+  .portal-topbar-actions #portal-theme-btn { order: 8; } /* dark/light toggle last, like the moon on the website */
   .portal-hubsearch {
     top: var(--hs-vv-top, 0px); height: var(--hs-vv-height, 100dvh); bottom: auto;
     display: flex; flex-direction: column; justify-content: flex-end;
@@ -1784,13 +1794,14 @@ body:has(#portal-dash-view[hidden]) .portal-thumbbar { display: none; }
 @media (min-width: 921px) {
   .portal-topbar-actions #portal-hub-square-btn { display: none; }
   .portal-topbar-actions #portal-hub-search-btn { order: 0; } /* QA_ORDER_2026_11_11: Search is not in the owner's row list; it keeps its wide-only seat ahead of the row so desktop keeps its search door (v68) — flagged in REPORT.md */
-  .portal-topbar-actions #portal-hub-new-btn { order: 1; }
-  .portal-topbar-actions #portal-hub-square-btn { order: 2; }
-  .portal-topbar-actions #portal-getapp-btn { order: 3; }
-  .portal-topbar-actions #portal-hub-refresh-btn { order: 4; }
-  .portal-topbar-actions > a:first-of-type { order: 5; } /* Back to site */
-  .portal-topbar-actions #portal-logout { order: 6; }
-  .portal-topbar-actions #portal-theme-btn { order: 7; }
+  .portal-topbar-actions #portal-hub-home-btn { order: 1; } /* V163_QA_HOME_2026_11_17: Home first, same as the <=920px block */
+  .portal-topbar-actions #portal-hub-new-btn { order: 2; }
+  .portal-topbar-actions #portal-hub-square-btn { order: 3; }
+  .portal-topbar-actions #portal-getapp-btn { order: 4; }
+  .portal-topbar-actions #portal-hub-refresh-btn { order: 5; }
+  .portal-topbar-actions > a:first-of-type { order: 6; } /* Back to site */
+  .portal-topbar-actions #portal-logout { order: 7; }
+  .portal-topbar-actions #portal-theme-btn { order: 8; }
 }
 @media (max-width: 920px) {
   .portal-topbar-actions #portal-hub-search-btn { display: none; }

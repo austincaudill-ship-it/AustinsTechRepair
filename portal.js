@@ -243,36 +243,72 @@
    * miles is $1 a mile. The map reuses the portal's own free
    * OpenStreetMap geocoder (nominatimGeocode, the throttled/cached
    * helper the Mileage panel already uses) — no key, no new service. */
-  var V154_WINDOWS = [
-    { label: '8\u201310 AM', start: 8 }, { label: '10 AM\u201312 PM', start: 10 },
-    { label: '12\u20132 PM', start: 12 }, { label: '2\u20134 PM', start: 14 },
-    { label: '4\u20136 PM', start: 16 }, { label: '6\u20138 PM', start: 18 }
+  /* V163_WINDOWS_DAY_AWARE_2026_11_17 (Austin, Nov 17, 2026 — confirmed):
+   * arrival windows are day-aware — Mon-Fri six 2-hour windows 8-10 …
+   * 6-8; Saturday five (10:30-12:30, 12:30-2:30, 2:30-4:30, 4:30-6:30,
+   * 6:30-8 — the last one ends at 8 PM, 90 minutes, not two hours);
+   * Sunday two (11 AM-1 PM, 1-3 PM). Every window carries its own end,
+   * so no display ever adds 2 hours to a start again. */
+  var V154_WINDOWS_WEEKDAY = [
+    { label: '8\u201310 AM', start: 8, end: 10 }, { label: '10 AM\u201312 PM', start: 10, end: 12 },
+    { label: '12\u20132 PM', start: 12, end: 14 }, { label: '2\u20134 PM', start: 14, end: 16 },
+    { label: '4\u20136 PM', start: 16, end: 18 }, { label: '6\u20138 PM', start: 18, end: 20 }
   ];
+  var V154_WINDOWS_SAT = [
+    { label: '10:30 AM\u201312:30 PM', start: 10.5, end: 12.5 }, { label: '12:30\u20132:30 PM', start: 12.5, end: 14.5 },
+    { label: '2:30\u20134:30 PM', start: 14.5, end: 16.5 }, { label: '4:30\u20136:30 PM', start: 16.5, end: 18.5 },
+    { label: '6:30\u20138 PM', start: 18.5, end: 20 }
+  ];
+  var V154_WINDOWS_SUN = [
+    { label: '11 AM\u20131 PM', start: 11, end: 13 }, { label: '1\u20133 PM', start: 13, end: 15 }
+  ];
+  var V154_WINDOWS = V154_WINDOWS_WEEKDAY;
+  function v154LocalDateStr(d) {
+    d = d || new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function v154WindowsForDate(dateStr) {
+    if (!dateStr) return V154_WINDOWS_WEEKDAY;
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(dateStr));
+    if (!m) return V154_WINDOWS_WEEKDAY;
+    var dow = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).getDay();
+    return dow === 0 ? V154_WINDOWS_SUN : (dow === 6 ? V154_WINDOWS_SAT : V154_WINDOWS_WEEKDAY);
+  }
+  function v154WindowForAppt(iso) {
+    if (!iso) return null;
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return null;
+    var mins = d.getHours() * 60 + d.getMinutes();
+    var ws = v154WindowsForDate(v154LocalDateStr(d));
+    for (var i = 0; i < ws.length; i++) if (mins >= ws[i].start * 60 && mins < ws[i].end * 60) return ws[i];
+    return null;
+  }
   var V154_MILEAGE_INCLUDED = 25;
   var V154_MILEAGE_PER_MILE = 1;
   function v154ApptAt(dateStr, startHour) {
     if (!dateStr || startHour == null) return null;
-    var hh = String(startHour).padStart(2, '0');
-    var d = new Date(dateStr + 'T' + hh + ':00:00');
+    var h = Math.floor(startHour), m = Math.round((startHour - h) * 60);
+    var hh = String(h).padStart(2, '0'), mm = String(m).padStart(2, '0');
+    var d = new Date(dateStr + 'T' + hh + ':' + mm + ':00');
     if (isNaN(d.getTime())) return null;
     return d.toISOString();
   }
   function v154WindowStartForAppt(iso) {
-    /* Which 2-hour window holds this appointment — by containment,
-     * not just the start hour, so a 4:30 PM appointment still lights
-     * up the 4-6 PM window. Outside 8 AM-8 PM there is no window. */
-    if (!iso) return null;
-    var d = new Date(iso);
-    if (isNaN(d.getTime())) return null;
-    var h = d.getHours();
-    if (h < 8 || h >= 20) return null;
-    var best = null;
-    for (var i = 0; i < V154_WINDOWS.length; i++) if (V154_WINDOWS[i].start <= h) best = V154_WINDOWS[i].start;
-    return best;
+    /* Which window holds this appointment — by containment in the
+     * day-aware list, so a 4:30 PM appointment still lights up the
+     * 4-6 PM window and a Saturday 6:30 PM appointment lights up
+     * 6:30-8 PM. Outside every window for that day there is none. */
+    var w = v154WindowForAppt(iso);
+    return w ? w.start : null;
   }
   function v154EditWindowStart() {
     var b = document.querySelector('#p2-edit-windows .v154-win-btn.on');
-    return b ? parseInt(b.getAttribute('data-edit-window'), 10) : null;
+    return b ? parseFloat(b.getAttribute('data-edit-window')) : null;
+  }
+  function v154EditJobDateValue(t) {
+    if (t.job_date) return t.job_date;
+    if (t.appointment_at) { var d = new Date(t.appointment_at); if (!isNaN(d.getTime())) return v154LocalDateStr(d); }
+    return String(t.created_at || '').slice(0, 10);
   }
   function v154Mileage(miles) {
     var m = parseFloat(miles);
@@ -2759,14 +2795,16 @@ function loadTicketThread(client, ticketId) {
    * Default open: Message customer + Repair log — the two sections
    * a tech works in during a job (talk to the customer, log the
    * work), and the pair Austin's approved order already joins.
-   * PORTAL_TICKET_DETAILS_COLLAPSE_2026_11_03: Ticket details uses
-   * this same accordion and is deliberately absent from the default
-   * list below, so it starts collapsed while Status stays visible.
+   * V163_DETAILS_INLINE_2026_11_17 (Austin, Nov 17, 2026): Ticket
+   * details is directly editable inline and opens by default — no
+   * second click to edit. It used to start collapsed (see
+   * PORTAL_TICKET_DETAILS_COLLAPSE_2026_11_03); the separate Edit
+   * details dropdown is gone — its form lives inside this section.
    * A closed header can carry a right-side hint (tkAccSetHint),
    * fed by the section's own loader — balance due, tracking
    * status, an unsigned authorization, a running timer — so
    * closed never means invisible. */
-  var TK_ACC_DEFAULT_OPEN = { message: true, repairlog: true };
+  var TK_ACC_DEFAULT_OPEN = { message: true, repairlog: true, details: true };
   var tkAccState = {};
   function tkAccOpen(key) {
     return Object.prototype.hasOwnProperty.call(tkAccState, key) ? tkAccState[key] : !!TK_ACC_DEFAULT_OPEN[key];
@@ -2816,6 +2854,11 @@ function loadTicketThread(client, ticketId) {
     });
   }
 
+  /* V163_GUEST_EDIT_2026_11_17: one-shot notice the edit-save
+   * handler sets before re-rendering the drawer — the re-render
+   * rebuilds the form, so the notice rides in #p2-edit-msg (G2)
+   * and is cleared as it renders, never shown twice. */
+  var p2EditNotice = '';
   function openTicket(id) {
     drawerLoading('Ticket details');
     withClient(function (client) {
@@ -2830,6 +2873,11 @@ function loadTicketThread(client, ticketId) {
           ? '<div class="portal-gate"><i class="fas fa-triangle-exclamation"></i> <strong>Parts not on hand yet.</strong> Don&rsquo;t start this repair until the part is in and scanned to the ticket.</div>'
           : '';
         var body = gateBanner +
+          /* V163_ISSUE_TOP_2026_11_17 (Austin, Nov 17, 2026): the Issue
+           * sits at the top of the ticket, above Status — the first
+           * thing staff see when the drawer opens. Issue and Reason
+           * are the same thing: one line, labeled Issue. */
+          (t.issue || t.issue_reason ? '<p class="p2-issue-top"><strong>Issue:</strong> ' + esc(t.issue || t.issue_reason) + '</p>' : '') +
           /* PORTAL_TICKET_DRAWER_2026_11_02 (Austin, Nov 2, 2026):
            * drawer section order — the Status control opens the
            * drawer, first thing under the Ticket details heading
@@ -2895,47 +2943,37 @@ function loadTicketThread(client, ticketId) {
           '<button class="portal-btn p2-btn-danger portal-btn-sm" type="button" id="p2-delete-yes">Yes, delete it</button> ' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-delete-no">Keep ticket</button></div></div>' +
                     /* PORTAL_TICKET_DETAILS_COLLAPSE_2026_11_03: Ticket details
-           * is an accordion section like Edit details and Documents;
-           * it is not in TK_ACC_DEFAULT_OPEN, so it starts collapsed. */
+           * is an accordion section that now holds the edit form
+           * inline too (V163_DETAILS_INLINE_2026_11_17) and opens
+           * by default, so there is no second click to edit. */
           '<div class="portal-drawer-section tk-acc" data-acc="details">' + tkAccHead('details', 'Ticket details') + tkAccBodyOpen('details') +
           '<div class="portal-card-top"><p class="portal-card-title">' + esc(ticketTitle(t)) + '</p><span>' + (isServiceTicket(t) ? '<span class="portal-badge portal-badge-service">SERVICE</span> ' : '') + badge(t.status) + '</span></div>' +
-          kvRows([
-            ['Request type', isServiceTicket(t) ? 'Service' : 'Repair'],
-            ['Guest', valOrDash(t.customer_name)],
-            ['Phone', valOrDash(t.customer_phone)],
-            ['Email', valOrDash(t.customer_email)],
-            ['Issue', valOrDash(t.issue)],
-            ['Appointment', esc(fmtDateTime(t.appointment_at))],
-            ['Service address', valOrDash(t.service_address)],
-            ['Preferred contact', valOrDash(t.contact_method)],
-            ['Serial / IMEI', valOrDash(t.serial_imei)],
-            ['Reason', valOrDash(t.issue_reason)],
-            ['Power test', (t.triage_volts || t.triage_amps) ? esc([t.triage_volts ? t.triage_volts + ' V' : '', t.triage_amps ? t.triage_amps + ' A' : ''].filter(Boolean).join(' / ')) : '—'],
-            ['Powers on?', valOrDash(t.power_on)],
-            ['Backed up?', valOrDash(t.backed_up)],
-            ['Repaired before?', valOrDash(t.prior_repair)],
-            ['Under warranty?', valOrDash(t.warranty_status)],
-            ['Terms accepted', fmtBool(t.terms_accepted)],
-            ['Visit fee ack.', fmtBool(t.dispatch_acknowledged)],
-            ['Work authorized', fmtBool(t.work_auth_accepted)],
-            ['Marketing opt-in', fmtBool(t.marketing_opt_in)],
-            ['Source', valOrDash(t.source)],
-            ['Guest account', t.customer_id ? esc(t.customer_id) : 'Web submission — no account'],
-            ['Received', esc(fmtJobDate(t.job_date) || fmtDateTime(t.created_at))],
-            ['Last updated', esc(fmtDateTime(t.updated_at))]
-          ]) +
-          '</div></div>' + /* PORTAL_TICKET_DETAILS_COLLAPSE_2026_11_03: close the Ticket details accordion body and section. */
-          '<div class="portal-drawer-section tk-acc" data-acc="edit">' + tkAccHead('edit', 'Edit details') + tkAccBodyOpen('edit') +
-          '<p class="portal-muted portal-small">Update the triage and job details here. Save, and the Ticket details above refresh.</p>' +
-          '<div class="portal-field"><label for="p2-edit-jobdate">Job date</label><input type="date" id="p2-edit-jobdate" value="' + esc(t.job_date || String(t.created_at || '').slice(0, 10)) + '" /></div>' +
-          '<div class="portal-field"><label>Arrival window</label><div class="v154-win-row" id="p2-edit-windows" role="group" aria-label="Arrival window">' +
-          V154_WINDOWS.map(function (w) { return '<button class="portal-btn portal-btn-outline portal-btn-sm v154-win-btn" type="button" data-edit-window="' + w.start + '" aria-pressed="false">' + w.label + '</button>'; }).join('') +
-          '</div><p class="portal-muted portal-small">Pick a window to set the appointment time for the job date above. Leave it alone and the appointment stays as it is.</p></div>' +
+          /* V163_DETAILS_INLINE_2026_11_17 (Austin, Nov 17, 2026): the
+           * edit form lives here now, right under the Ticket details
+           * heading — the separate Edit details dropdown is gone. */
+          '<p class="portal-muted portal-small">Edit the ticket details here. Save, and the reference rows below refresh.</p>' +
+          /* V163_GUEST_EDIT_2026_11_17 (Austin, Nov 17, 2026): Issue is
+           * the first editable field in Ticket Details, and the guest
+           * name / phone / email / address sit right with it. Guest
+           * fields write to the customers record; the service address
+           * writes to the ticket row. Two separate address fields on
+           * purpose — a guest can be serviced somewhere other than
+           * home, so the guest address and the service address are
+           * never merged. */
           '<div class="portal-field"><label for="p2-edit-issue">Issue</label><textarea id="p2-edit-issue" rows="2">' + esc(t.issue || '') + '</textarea></div>' +
+          '<p class="portal-muted portal-small">Guest details — these update the guest&rsquo;s record, not just this ticket.</p>' +
+          '<div class="portal-field"><label for="p2-edit-guest-name">Guest name</label><input type="text" id="p2-edit-guest-name" value="' + esc(t.customer_name || '') + '" /></div>' +
+          '<div class="p2-form-row"><div class="portal-field"><label for="p2-edit-guest-phone">Guest phone number</label><input type="tel" id="p2-edit-guest-phone" value="' + esc(t.customer_phone || '') + '" /></div>' +
+          '<div class="portal-field"><label for="p2-edit-guest-email">Guest email</label><input type="email" id="p2-edit-guest-email" value="' + esc(t.customer_email || '') + '" /></div></div>' +
+          '<div class="portal-field"><label for="p2-edit-guest-address">Guest address</label><input type="text" id="p2-edit-guest-address" value="' + esc(((custRowById(t.customer_id) || {}).address) || '') + '" /></div>' +
+          '<div class="portal-field"><label for="p2-edit-jobdate">Job date</label><input type="date" id="p2-edit-jobdate" value="' + esc(v154EditJobDateValue(t)) + '" /></div>' +
+          '<div class="portal-field"><label>Arrival window</label><div class="v154-win-row" id="p2-edit-windows" role="group" aria-label="Arrival window">' +
+          v154WindowsForDate(t.job_date || v154LocalDateStr()).map(function (w) { return '<button class="portal-btn portal-btn-outline portal-btn-sm v154-win-btn" type="button" data-edit-window="' + w.start + '" aria-pressed="false">' + w.label + '</button>'; }).join('') +
+          '</div><p class="portal-muted portal-small">Pick a window to set the appointment time for the job date above. Leave it alone and the appointment stays as it is.</p><p class="portal-error portal-small" id="p2-edit-window-warn" hidden></p></div>' +
           '<div class="portal-field"><label for="p2-edit-address">Service address</label><input type="text" id="p2-edit-address" value="' + esc(t.service_address || '') + '" /></div>' +
           '<div class="v154-map" id="p2-edit-map" hidden><iframe id="p2-edit-map-frame" title="Map of the service address" loading="lazy" src=""></iframe><p class="portal-muted portal-small" id="p2-edit-map-note"></p></div>' +
           '<div class="portal-field"><label for="p2-edit-serial">Serial / IMEI</label><input type="text" id="p2-edit-serial" value="' + esc(t.serial_imei || '') + '" /></div>' +
-          '<div class="portal-field"><label for="p2-edit-reason">Reason</label><input type="text" id="p2-edit-reason" value="' + esc(t.issue_reason || '') + '" /></div>' +
+          /* V163_ISSUE_MERGE_2026_11_17: the Reason field is gone — Issue and Reason are the same thing, and the Issue textarea above is the one field. issue_reason keeps its creation-time value for the one-on-one kind label; nothing on the ticket page edits it anymore. */
           '<div class="p2-form-row"><div class="portal-field"><label for="p2-edit-volts">Voltage (V)</label><input type="text" id="p2-edit-volts" value="' + esc(t.triage_volts || '') + '" /></div>' +
           '<div class="portal-field"><label for="p2-edit-amps">Draw (A)</label><input type="text" id="p2-edit-amps" value="' + esc(t.triage_amps || '') + '" /></div></div>' +
           '<div class="p2-form-row"><div class="portal-field"><label for="p2-edit-power">Powers on?</label><select id="p2-edit-power"><option value="">Not checked</option><option value="Yes"' + (t.power_on === 'Yes' ? ' selected' : '') + '>Yes</option><option value="No"' + (t.power_on === 'No' ? ' selected' : '') + '>No</option></select></div>' +
@@ -2947,7 +2985,55 @@ function loadTicketThread(client, ticketId) {
           '<div class="p2-form-row"><div class="portal-field"><label for="p2-edit-workauth">Work authorized</label><select id="p2-edit-workauth"><option value="true"' + (t.work_auth_accepted ? ' selected' : '') + '>Yes</option><option value="false"' + (!t.work_auth_accepted ? ' selected' : '') + '>No</option></select></div>' +
           '<div class="portal-field"><label for="p2-edit-marketing">Marketing opt-in</label><select id="p2-edit-marketing"><option value="true"' + (t.marketing_opt_in ? ' selected' : '') + '>Yes</option><option value="false"' + (!t.marketing_opt_in ? ' selected' : '') + '>No</option></select></div></div>' +
           '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-edit-save">Save details</button> ' +
-          '<span class="portal-muted portal-small" id="p2-edit-msg"></span></div></div>' +
+          '<p class="portal-muted portal-small" id="p2-edit-msg">' + (function () { var n = p2EditNotice; p2EditNotice = ''; return n ? esc(n) : ''; })() + '</p>' +
+          /* V163_DETAILS_INLINE_2026_11_17: the reference rows below
+           * are the facts the form above does not edit — Issue,
+           * address, window, serial and triage all live in the edit
+           * fields now, so they are not repeated here. */
+          kvRows([
+            ['Request type', isServiceTicket(t) ? 'Service' : 'Repair'],
+            ['Guest', valOrDash(t.customer_name)],
+            ['Phone', valOrDash(t.customer_phone)],
+            ['Email', valOrDash(t.customer_email)],
+            ['Appointment', esc(fmtDateTime(t.appointment_at))],
+            ['Preferred contact', valOrDash(t.contact_method)],
+            ['Source', valOrDash(t.source)],
+            ['Guest account', t.customer_id ? esc(t.customer_id) : 'Web submission — no account'],
+            ['Received', esc(fmtJobDate(t.job_date) || fmtDateTime(t.created_at))],
+            ['Last updated', esc(fmtDateTime(t.updated_at))]
+          ]) +
+          '</div></div>' + /* PORTAL_TICKET_DETAILS_COLLAPSE_2026_11_03: close the Ticket details accordion body and section. */
+          /* V163_DETAILS_INLINE_2026_11_17 (Austin, Nov 17, 2026): Parts
+           * sits right on the main ticket screen, directly under Ticket
+           * Details — not tucked behind a dropdown. */
+          '<div class="portal-drawer-section" id="p2-parts-section"><h3>Parts on this ticket</h3>' +
+          '<div id="p2-parts"><p class="portal-muted">Loading parts&hellip;</p></div>' +
+          '<div class="p2-actions"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-scan-btn"><i class="fas fa-barcode"></i> Scan barcode</button>' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-part-upload-invoice-btn"><i class="fas fa-upload"></i> Upload invoice</button>' +
+          '<span class="portal-muted portal-small" id="p2-scan-msg"></span></div>' +
+          '<div id="p2-scan-box" hidden><video id="p2-scan-video" playsinline muted style="width:100%;max-width:420px;border-radius:12px;background:#000"></video>' +
+          '<div class="p2-actions"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-scan-stop">Stop camera</button>' +
+          '<input id="p2-scan-manual" type="text" placeholder="Or type the code" aria-label="Barcode code" />' +
+          '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-scan-use">Use code</button></div>' +
+          '<p class="portal-muted portal-small" id="p2-scan-status">Point the camera at the barcode on the Sentrix packaging. If the camera cannot read it, type the code instead.</p></div>' +
+          '<input id="p2-part-invoice-existing-file" type="file" accept="application/pdf,image/*,.txt" hidden />' +
+          '<form id="p2-part-form" class="p2-form">' +
+          '<select id="p2-part-stock" aria-label="Pull a part from stock"><option value="">Loading stock\u2026</option></select>' +
+          '<input id="p2-part-desc" type="text" placeholder="Part description (e.g. iPhone 13 Pro Max battery — OEM)" maxlength="200" aria-label="Part description" />' +
+          '<div class="p2-form-row"><input id="p2-part-supplier" type="text" placeholder="Supplier" maxlength="80" aria-label="Supplier" />' +
+          '<input id="p2-part-sku" type="text" placeholder="Supplier SKU" maxlength="80" aria-label="Supplier SKU" /></div>' +
+          '<div class="p2-form-row"><input id="p2-part-cost" type="number" step="0.01" min="0" placeholder="Our cost $" aria-label="Our cost" />' +
+          '<input id="p2-part-retail" type="number" step="0.01" min="0" placeholder="Guest price $" aria-label="Guest price" />' +
+          '<input id="p2-part-qty" type="number" step="1" min="1" value="1" aria-label="Quantity" /></div>' +
+          '<div class="p2-form-row"><select id="p2-part-carrier" aria-label="Carrier"><option value="">Carrier</option><option value="FedEx">FedEx</option><option value="UPS">UPS</option><option value="USPS">USPS</option><option value="Other">Other</option></select>' +
+          '<input id="p2-part-tracking" type="text" placeholder="Tracking number" maxlength="80" aria-label="Tracking number" />' +
+          '<input id="p2-part-ordernum" type="text" placeholder="Order number" maxlength="80" aria-label="Order number" /></div>' +
+          '<input id="p2-part-invoice-file" type="file" accept="application/pdf,image/*,.txt" hidden />' +
+          '<div class="p2-form-row"><span class="portal-muted portal-small" id="p2-part-invoice-name">No invoice attached \u2014 PDF or photo.</span></div>' +
+          '<p class="portal-muted portal-small" id="p2-part-invoice-msg" hidden></p>' +
+          '<label class="p2-check"><input type="checkbox" id="p2-part-addcharge" checked /> Add the guest price to Charges as a part line</label>' +
+          '<button class="portal-btn portal-btn-primary portal-btn-sm" type="submit">Add part order</button>' +
+          '<p class="portal-error" id="p2-part-error" hidden></p></form></div>' +
                     /* DRAWER_ACTIONS_TOP_2026_11_04: the receipt/delete
            * actions row that used to sit here now renders up
            * beside Status, under Assigned to. */
@@ -3060,7 +3146,8 @@ function loadTicketThread(client, ticketId) {
            * Every discount is kind 'discount' at a negative price. */
           '<div class="v162-discount"><p style="margin:0 0 0.4rem;"><strong>Discounts &amp; vouchers</strong> <span class="portal-muted portal-small">ATR One member discount, a $5 voucher, or a fixed amount / percent off the repair charges.</span></p>' +
           '<div class="p2-form-row"><select id="p2-disc-kind" aria-label="Discount type"><option value="member">ATR One member discount</option><option value="voucher">Voucher \u2014 $5 off</option><option value="fixed">Fixed amount off</option><option value="percent">Percent off repair charges</option></select>' +
-          '<select id="p2-disc-tier" aria-label="Membership tier"><option value="single">Individual \u2014 20% off repairs</option><option value="family">Family \u2014 25% off repairs</option><option value="business_plus">Business \u2014 35% off repairs</option><option value="business_pro">Business Pro \u2014 45% off repairs</option></select></div>' +
+          '<select id="p2-disc-tier" aria-label="Membership tier"><option value="" selected>Not a member \u2014 no tier</option><option value="single">Individual \u2014 20% off repairs</option><option value="family">Family \u2014 25% off repairs</option><option value="business_plus">Business \u2014 35% off repairs</option><option value="business_pro">Business Pro \u2014 45% off repairs</option></select></div>' +
+          '<p class="portal-muted portal-small" id="p2-disc-member-note" hidden>This guest is not an ATR One member, so the member discount is not available on this ticket.</p>' +
           '<div class="p2-form-row"><input id="p2-disc-value" type="text" placeholder="Voucher code or amount" aria-label="Voucher code or amount" />' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-disc-add">Add to ticket</button></div>' +
           '<p class="portal-muted portal-small" id="p2-disc-hint">Member discount: a percent off part + labor only, one line per ticket \u2014 re-applying updates it.</p>' +
@@ -3084,29 +3171,6 @@ function loadTicketThread(client, ticketId) {
               '<span class="portal-muted portal-small" id="p3-pay-msg"></span></div>'
             : '<p class="portal-muted portal-small">Payments on this ticket are handled by Austin or Alfred.</p>') +
           '<div id="p3-checkout-link" hidden></div></div></div>' +
-          '<div class="portal-drawer-section tk-acc" data-acc="parts">' + tkAccHead('parts', 'Parts on this ticket') + tkAccBodyOpen('parts') +
-          '<div id="p2-parts"><p class="portal-muted">Loading parts&hellip;</p></div>' +
-          '<div class="p2-actions"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-scan-btn"><i class="fas fa-barcode"></i> Scan barcode</button>' +
-          '<span class="portal-muted portal-small" id="p2-scan-msg"></span></div>' +
-          '<div id="p2-scan-box" hidden><video id="p2-scan-video" playsinline muted style="width:100%;max-width:420px;border-radius:12px;background:#000"></video>' +
-          '<div class="p2-actions"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-scan-stop">Stop camera</button>' +
-          '<input id="p2-scan-manual" type="text" placeholder="Or type the code" aria-label="Barcode code" />' +
-          '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-scan-use">Use code</button></div>' +
-          '<p class="portal-muted portal-small" id="p2-scan-status">Point the camera at the barcode on the Sentrix packaging. If the camera cannot read it, type the code instead.</p></div>' +
-          '<form id="p2-part-form" class="p2-form">' +
-          '<select id="p2-part-stock" aria-label="Pull a part from stock"><option value="">Loading stock\u2026</option></select>' +
-          '<input id="p2-part-desc" type="text" placeholder="Part description (e.g. iPhone 13 Pro Max battery — OEM)" maxlength="200" aria-label="Part description" />' +
-          '<div class="p2-form-row"><input id="p2-part-supplier" type="text" placeholder="Supplier" maxlength="80" aria-label="Supplier" />' +
-          '<input id="p2-part-sku" type="text" placeholder="Supplier SKU" maxlength="80" aria-label="Supplier SKU" /></div>' +
-          '<div class="p2-form-row"><input id="p2-part-cost" type="number" step="0.01" min="0" placeholder="Our cost $" aria-label="Our cost" />' +
-          '<input id="p2-part-retail" type="number" step="0.01" min="0" placeholder="Guest price $" aria-label="Guest price" />' +
-          '<input id="p2-part-qty" type="number" step="1" min="1" value="1" aria-label="Quantity" /></div>' +
-          '<div class="p2-form-row"><select id="p2-part-carrier" aria-label="Carrier"><option value="">Carrier</option><option value="FedEx">FedEx</option><option value="UPS">UPS</option><option value="USPS">USPS</option><option value="Other">Other</option></select>' +
-          '<input id="p2-part-tracking" type="text" placeholder="Tracking number" maxlength="80" aria-label="Tracking number" />' +
-          '<input id="p2-part-ordernum" type="text" placeholder="Order number" maxlength="80" aria-label="Order number" /></div>' +
-          '<label class="p2-check"><input type="checkbox" id="p2-part-addcharge" checked /> Add the guest price to Charges as a part line</label>' +
-          '<button class="portal-btn portal-btn-primary portal-btn-sm" type="submit">Add part order</button>' +
-          '<p class="portal-error" id="p2-part-error" hidden></p></form></div></div>' +
           '<div class="portal-drawer-section tk-acc" data-acc="timer">' + tkAccHead('timer', 'Job timer') + tkAccBodyOpen('timer') +
           '<p class="portal-muted" id="portal-timer-total">Loading time on this job&hellip;</p>' +
           '<div class="portal-status-row"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="portal-timer-btn">Start timer</button>' +
@@ -3137,6 +3201,34 @@ function loadTicketThread(client, ticketId) {
         var gvCheckEl = $('portal-gv-text-check');
         if (gvCheckEl) gvCheckEl.addEventListener('change', function () { gvCheckEl.setAttribute('data-gv-touched', '1'); });
         wireTicketActions(client, t);
+        /* V163_GUEST_EDIT_2026_11_17: prefill the guest fields from
+         * the customers record. The form was prefilled from the
+         * ticket's copies at render time; the fetch corrects them
+         * from the record — but only where staff have not typed
+         * anything yet, so their keystrokes always win. */
+        var p2GuestRow = null;
+        (function () {
+          var cached = t.customer_id ? custRowById(t.customer_id) : null;
+          if (cached) p2GuestRow = cached;
+          var init = {};
+          ['name', 'phone', 'email', 'address'].forEach(function (k) {
+            var el = $('p2-edit-guest-' + k);
+            if (el) init[k] = el.value;
+          });
+          function p2GuestFill(row) {
+            [['name', row.name], ['phone', row.phone], ['email', row.email], ['address', row.address]].forEach(function (pair) {
+              var el = $('p2-edit-guest-' + pair[0]);
+              if (el && el.value === init[pair[0]]) el.value = pair[1] || '';
+            });
+          }
+          if (cached) p2GuestFill(cached);
+          if (!t.customer_id) return;
+          client.from('customers').select('id, name, email, phone, address').eq('id', t.customer_id).maybeSingle().then(function (res) {
+            if (!res || !res.data) return;
+            p2GuestRow = res.data;
+            p2GuestFill(res.data);
+          }).catch(function () {});
+        })();
         wireV154TicketDetail(t);
         wirePaymentActions(client, t);
 
@@ -3147,8 +3239,11 @@ function loadTicketThread(client, ticketId) {
           var patch = {
             issue: $('p2-edit-issue').value.trim() || null,
             service_address: $('p2-edit-address').value.trim() || null,
+            customer_name: $('p2-edit-guest-name').value.trim() || null,
+            customer_phone: $('p2-edit-guest-phone').value.trim() || null,
+            customer_email: $('p2-edit-guest-email').value.trim() || null,
             serial_imei: $('p2-edit-serial').value.trim() || null,
-            issue_reason: $('p2-edit-reason').value.trim() || null,
+            /* V163_ISSUE_MERGE_2026_11_17: issue_reason is not edited here anymore — the Issue textarea above is the one field. */
             triage_volts: $('p2-edit-volts').value.trim() || null,
             triage_amps: $('p2-edit-amps').value.trim() || null,
             power_on: $('p2-edit-power').value || null,
@@ -3161,6 +3256,25 @@ function loadTicketThread(client, ticketId) {
             work_auth_accepted: $('p2-edit-workauth').value === 'true',
             marketing_opt_in: $('p2-edit-marketing').value === 'true'
           };
+          /* V163_GUEST_EDIT_2026_11_17: the guest fields diff
+           * against the customers record — p2GuestRow when the
+           * prefill fetch (G6) has landed, else the ticket's own
+           * copies, which is what the form was prefilled from.
+           * Only changed fields write, so a stale ticket copy can
+           * never overwrite a newer guest record. */
+          var guestChanges = {};
+          var _gBefore = p2GuestRow || { name: t.customer_name, phone: t.customer_phone, email: t.customer_email, address: '' };
+          /* V163_NAME_SYNC_2026_11_17: the old guest address, captured
+           * before any write — the address only flows to tickets
+           * whose service address still matches it. */
+          var _gOldAddress = (p2GuestRow && p2GuestRow.address) || '';
+          [['name', 'p2-edit-guest-name'], ['phone', 'p2-edit-guest-phone'], ['email', 'p2-edit-guest-email'], ['address', 'p2-edit-guest-address']].forEach(function (pair) {
+            var el = $(pair[1]);
+            var v = el ? trim(el.value) : '';
+            if (v !== trim(_gBefore[pair[0]] || '')) guestChanges[pair[0]] = v;
+          });
+          if (guestChanges.name !== undefined && !guestChanges.name) { if (msg) msg.textContent = 'Guest name cannot be empty.'; return; }
+          if (guestChanges.email !== undefined && !guestChanges.email) { if (msg) msg.textContent = 'Guest email cannot be empty.'; return; }
           /* V154_TICKET_FORM_2026_11_16: a picked window sets the
            * appointment at the window start on the job date; no
            * window picked leaves the appointment exactly as it is. */
@@ -3168,7 +3282,53 @@ function loadTicketThread(client, ticketId) {
           if (_v154w != null) patch.appointment_at = v154ApptAt($('p2-edit-jobdate').value, _v154w);
           client.from('tickets').update(patch).eq('id', t.id).then(function (res2) {
             if (res2.error) { if (msg) msg.textContent = 'Couldn\u2019t save \u2014 try again.'; return; }
-            openTicket(t.id);
+            /* V163_GUEST_EDIT_2026_11_17: the guest fields write to
+             * the customers record on the SAME guarded path as the
+             * customer profile editor (saveCustomerEdit) — admin
+             * writes direct, an associate files one
+             * customer_edit_requests row for the owner to approve,
+             * and the record is never touched by a lower tier. The
+             * ticket's own name/phone/email copies rode in the
+             * patch above, so the queue and the drawer stay in sync
+             * with what staff just typed. */
+            if (!t.customer_id || Object.keys(guestChanges).length === 0) { openTicket(t.id); return; }
+            if (isAdminOrAbove()) {
+              client.from('customers').update(guestChanges).eq('id', t.customer_id).then(function (res3) {
+                if (res3.error) { p2EditNotice = 'Ticket saved, but the guest details could not be saved \u2014 update them from the Guest panel.'; openTicket(t.id); return; }
+                var row = custRowById(t.customer_id);
+                if (row) Object.keys(guestChanges).forEach(function (k) { row[k] = guestChanges[k]; });
+                p2EditNotice = 'Saved \u2014 ticket and guest record updated.';
+                /* V163_NAME_SYNC_2026_11_17: the new name/phone/email
+                 * flow to the guest's OTHER tickets too (this ticket's
+                 * copies already rode in the patch above). */
+                propagateGuestContact(client, t.customer_id, guestChanges, _gOldAddress, function (ok) {
+                  if (!ok) p2EditNotice = 'Saved \u2014 ticket and guest record updated, but the guest\u2019s other tickets could not be updated. Check the name on them.';
+                  /* V163_NAME_SYNC_QUEUE_2026_11_17: the Service Queue
+                   * loads once per tab open (activateTab only loads a
+                   * tab the first time), so refresh it here — the
+                   * queue shows the new name with no extra step. */
+                  state.loaded.tickets = false;
+                  loadTickets(true);
+                  openTicket(t.id);
+                });
+              }).catch(function () {
+                p2EditNotice = 'Ticket saved, but the guest details could not be saved \u2014 update them from the Guest panel.';
+                openTicket(t.id);
+              });
+            } else {
+              client.from('customer_edit_requests').insert({
+                customer_id: t.customer_id, submitted_by: state.user.id,
+                changes: guestChanges, status: 'pending'
+              }).then(function (res3) {
+                p2EditNotice = res3.error
+                  ? 'Ticket saved, but the guest change could not be submitted \u2014 update it from the Guest panel.'
+                  : 'Ticket saved. Guest details submitted for approval \u2014 the guest record has not changed yet.';
+                openTicket(t.id);
+              }).catch(function () {
+                p2EditNotice = 'Ticket saved, but the guest change could not be submitted \u2014 update it from the Guest panel.';
+                openTicket(t.id);
+              });
+            }
           }).catch(function () { if (msg) msg.textContent = 'Couldn\u2019t save \u2014 try again.'; });
         });
         $('portal-ticket-status-save').addEventListener('click', function () {
@@ -3611,6 +3771,15 @@ function loadTicketThread(client, ticketId) {
     return '<a class="portal-btn portal-btn-outline portal-btn-sm" href="' + esc(inv.reorder_url) + '" target="_blank" rel="noopener"><i class="fas fa-cart-shopping"></i> Reorder</a>';
   }
 
+  function p2PartInvoicesHtml(t, p) {
+    var invs = (t._partInvoices || []).filter(function (d) { return d.note && d.note.indexOf(PART_INVOICE_NOTE_PREFIX + p.id + ' ') === 0; });
+    if (!invs.length) return '';
+    return '<div class="p2-part-invoices" data-part-invoices="' + esc(p.id) + '">' + invs.map(function (d) {
+      return '<span class="portal-muted portal-small"><i class="fas fa-paperclip"></i> ' + esc(d.file_name || 'Supplier invoice') +
+        ' <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-part-inv-view="' + esc(d.storage_path) + '">View</button></span>';
+    }).join(' ') + '</div>';
+  }
+
   function renderParts(t, rows) {
     var box = $('p2-parts');
     if (!box) return;
@@ -3635,6 +3804,7 @@ function loadTicketThread(client, ticketId) {
         '<select class="p2-part-status" data-part-id="' + esc(p.id) + '" aria-label="Part status">' + statusOpts + '</select>' +
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-part-label="' + esc(p.id) + '"><i class="fas fa-tag"></i> Label</button>' +
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-part-track="' + esc(p.id) + '"><i class="fas fa-truck"></i> Tracking</button>' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-part-invoice="' + esc(p.id) + '"><i class="fas fa-paperclip"></i> Invoice</button>' +
         /* PORTAL_PARTS_TO_INVENTORY_2026_11_02 */ partReorderHtml(t, p) +
         '<button class="p2-x" type="button" data-part-del="' + esc(p.id) + '" aria-label="Remove part order">&times;</button></div>' +
         liveTrackHtml(p) +
@@ -3643,7 +3813,8 @@ function loadTicketThread(client, ticketId) {
         '<input type="text" data-track-number placeholder="Tracking number" maxlength="80" aria-label="Tracking number" value="' + esc(p.tracking_number || '') + '" />' +
         '<input type="text" data-track-order placeholder="Order number" maxlength="80" aria-label="Order number" value="' + esc(p.order_number || '') + '" /></div>' +
         '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-part-track-save="' + esc(p.id) + '">Save tracking</button> ' +
-        '<span class="portal-muted portal-small" data-track-msg></span></div>';
+        '<span class="portal-muted portal-small" data-track-msg></span></div>' +
+        p2PartInvoicesHtml(t, p);
     }).join('');
     box.querySelectorAll('.p2-part-status').forEach(function (sel) {
       sel.addEventListener('change', function () {
@@ -3703,6 +3874,20 @@ function loadTicketThread(client, ticketId) {
         });
       });
     });
+    /* V163_PART_INVOICE_2026_11_17: per-part Invoice button (attach a
+     * supplier invoice to this part) and View on each filed invoice. */
+    box.querySelectorAll('[data-part-invoice]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        p2InvoiceForPart = btn.getAttribute('data-part-invoice');
+        var inp = $('p2-part-invoice-existing-file');
+        if (inp) inp.click();
+      });
+    });
+    box.querySelectorAll('[data-part-inv-view]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        withClient(function (client) { viewDocument(client, btn.getAttribute('data-part-inv-view')); });
+      });
+    });
     /* V162_REFRESH_2026_11_17: the per-shipment Refresh button is gone
      * with the other per-panel Refresh buttons — re-check a shipment
      * with the global Quick Actions Refresh (it reloads the ticket)
@@ -3730,18 +3915,29 @@ function loadTicketThread(client, ticketId) {
     client.from('part_orders').select('*').eq('ticket_id', t.id).order('created_at', { ascending: true }).then(function (res) {
       if (res.error) { var b = $('p2-parts'); if (b) b.innerHTML = '<p class="portal-error">Couldn&rsquo;t load parts.</p>'; return; }
       t._parts = res.data || [];
-      /* PORTAL_PARTS_TO_INVENTORY_2026_11_02: fetch the linked inventory
-       * rows so part rows can show a Reorder link where one is saved.
-       * A failed fetch just renders the parts without links. */
-      var invIds = [];
-      t._parts.forEach(function (p) { if (p.inventory_id && invIds.indexOf(p.inventory_id) === -1) invIds.push(p.inventory_id); });
-      if (!invIds.length) { t._invById = {}; renderParts(t, t._parts); return; }
-      client.from('inventory').select('id, reorder_url').in('id', invIds).then(function (ires) {
-        t._invById = {};
-        if (!ires.error) (ires.data || []).forEach(function (r) { t._invById[r.id] = r; });
-        renderParts(t, t._parts);
-      }).catch(function () { t._invById = {}; renderParts(t, t._parts); });
+      /* V163_PART_INVOICE_2026_11_17: supplier invoices ride the same
+       * ticket_documents read as everything else on the ticket — the
+       * list under each part row is filtered from these rows (see
+       * p2PartInvoicesHtml). A failed fetch just renders the parts
+       * without their invoices. */
+      client.from('ticket_documents').select('*').eq('ticket_id', t.id).order('created_at', { ascending: true }).then(function (dres) {
+        t._partInvoices = (dres.error ? [] : (dres.data || [])).filter(function (d) { return d.file_name && d.file_name.indexOf(PART_INVOICE_PREFIX) === 0; });
+        loadPartsInventory(client, t);
+      }).catch(function () { t._partInvoices = []; loadPartsInventory(client, t); });
     }).catch(function () {});
+  }
+  function loadPartsInventory(client, t) {
+    /* PORTAL_PARTS_TO_INVENTORY_2026_11_02: fetch the linked inventory
+     * rows so part rows can show a Reorder link where one is saved.
+     * A failed fetch just renders the parts without links. */
+    var invIds = [];
+    t._parts.forEach(function (p) { if (p.inventory_id && invIds.indexOf(p.inventory_id) === -1) invIds.push(p.inventory_id); });
+    if (!invIds.length) { t._invById = {}; renderParts(t, t._parts); return; }
+    client.from('inventory').select('id, reorder_url').in('id', invIds).then(function (ires) {
+      t._invById = {};
+      if (!ires.error) (ires.data || []).forEach(function (r) { t._invById[r.id] = r; });
+      renderParts(t, t._parts);
+    }).catch(function () { t._invById = {}; renderParts(t, t._parts); });
   }
 
   /* Awaiting Parts popup: when a ticket is set to Awaiting Parts, ask for the
@@ -3777,6 +3973,134 @@ function loadTicketThread(client, ticketId) {
    * CHANGES.md; until that SQL runs, filing a Part order fails the
    * insert exactly like any other bad type, so run the SQL first. */
   var DOC_TYPE_LABELS = { repair_authorization: 'Repair authorization', receipt: 'Receipt', part_order: 'Part order', other: 'Other document', estimate: 'Estimate', invoice: 'Invoice' };
+  /* V163_PART_INVOICE_2026_11_17 (Austin, Nov 17, 2026): supplier invoices
+   * file themselves on the ticket's Parts section — same storage the
+   * portal already uses for every ticket document (the private
+   * 'ticket-documents' bucket + ticket_documents table; the repair-log
+   * photo precedent). No new table, no SQL. The file is doc_type
+   * 'other' with a 'Supplier invoice — ' file_name prefix and a note
+   * naming the part it belongs to ('Supplier invoice — part:<id> — …').
+   * 'other' is deliberate: the guest ticket page only ever lists filed
+   * docs of type estimate / invoice / receipt, so a supplier invoice
+   * can never leak to a guest. The purpose-built 'part_order' type
+   * exists in code (Nov 2) but its CHECK widening is unverified —
+   * when that SQL is confirmed run, the filing type switches in one
+   * place (PART_INVOICE_DOC_TYPE below). */
+  var PART_INVOICE_PREFIX = 'Supplier invoice \u2014 ';
+  var PART_INVOICE_NOTE_PREFIX = 'Supplier invoice \u2014 part:';
+  var PART_INVOICE_DOC_TYPE = 'other';
+  var p2InvoiceForPart = null;
+  function p2PdfTextFromStream(str) {
+    var out = [], re = /\((?:\\.|[^\\()])*\)/g, m;
+    while ((m = re.exec(str)) !== null) {
+      var s = m[0].slice(1, -1).replace(/\\([()\\])/g, '$1').replace(/\\n/g, '\n').replace(/\\r/g, '\r').replace(/\\t/g, '\t');
+      if (s) out.push(s);
+    }
+    return out.join('\n');
+  }
+  function p2ExtractPdfText(file) {
+    return file.arrayBuffer().then(function (buf) {
+      var bytes = new Uint8Array(buf), latin = '';
+      for (var i = 0; i < bytes.length; i++) latin += String.fromCharCode(bytes[i]);
+      var streams = [], re = /stream\r?\n([\s\S]*?)\r?\nendstream/g, m;
+      while ((m = re.exec(latin)) !== null) streams.push(m[1]);
+      if (typeof DecompressionStream === 'undefined') return p2PdfTextFromStream(latin);
+      var jobs = streams.map(function (s) {
+        var arr = new Uint8Array(s.length);
+        for (var j = 0; j < s.length; j++) arr[j] = s.charCodeAt(j) & 255;
+        return new Response(new Blob([arr]).stream().pipeThrough(new DecompressionStream('deflate'))).arrayBuffer().then(function (dbuf) {
+          var u = new Uint8Array(dbuf), t = '';
+          for (var k = 0; k < u.length; k++) t += String.fromCharCode(u[k]);
+          return p2PdfTextFromStream(t);
+        }).catch(function () { return ''; });
+      });
+      return Promise.all(jobs).then(function (texts) {
+        var joined = texts.filter(Boolean).join('\n');
+        return joined.trim() ? joined : p2PdfTextFromStream(latin);
+      });
+    }).catch(function () { return ''; });
+  }
+  function p2ExtractInvoiceText(file) {
+    if (!file) return Promise.resolve('');
+    var type = String(file.type || '').toLowerCase(), name = String(file.name || '').toLowerCase();
+    if (type === 'text/plain' || /\.txt$|\.csv$/.test(name)) return file.text().then(function (t) { return t; }).catch(function () { return ''; });
+    if (type === 'application/pdf' || /\.pdf$/.test(name)) return p2ExtractPdfText(file);
+    return Promise.resolve('');
+  }
+  function p2ParseInvoiceFields(text) {
+    var f = { description: '', supplier: '', cost: '', tracking_number: '', order_number: '' };
+    if (!text) return f;
+    var lines = String(text).split(/\r?\n/).map(function (l) { return l.trim(); }).filter(Boolean);
+    var m;
+    m = /(?:order\s*(?:no\.?|number|#)?|po|p\.o\.)\s*:?\s*#?\s*([A-Za-z0-9][A-Za-z0-9\-]{2,40})/i.exec(text);
+    if (m) f.order_number = m[1];
+    m = /(?:tracking\s*(?:no\.?|number|#)?)\s*:?\s*#?\s*([A-Za-z0-9]{8,40})/i.exec(text) || /\b(1Z[0-9A-Z]{16})\b/i.exec(text) || /\b((?:94|95)\d{20})\b/.exec(text) || /\b(\d{12,15})\b/.exec(text);
+    if (m) f.tracking_number = m[1];
+    /* V163_TG_INVOICE_2026_11_17 (Amazon Order #114-2213985-2555450):
+     * cost is the ITEM price, never the order total — the $19.19
+     * total bundles shipping ($2.99) and tax ($1.21) on top of the
+     * $14.99 item. Prefer the item subtotal, then a price on the
+     * item's own line; the grand/order total is only the fallback
+     * for plain supplier invoices where it IS the item cost. */
+    var sub = /(?:item(?:s)?\s+subtotal|subtotal)\s*:?\s*\$?\s*([\d,]+\.\d{2})/i.exec(text);
+    if (sub) f.cost = sub[1].replace(/,/g, '');
+    if (!f.cost) {
+      for (var k = 0; k < lines.length; k++) {
+        var lm = /^(.{20,})\s+\$([\d,]+\.\d{2})\s*$/.exec(lines[k]);
+        if (lm && !/total|tax|shipping|balance|amount due/i.test(lm[1])) { f.cost = lm[2].replace(/,/g, ''); break; }
+      }
+    }
+    if (!f.cost) {
+      var totals = [], tre = /(?:grand\s+total|total|amount\s+due|balance\s+due|amount)\s*:?\s*\$?\s*([\d,]+\.\d{2})/gi, tm;
+      while ((tm = tre.exec(text)) !== null) totals.push(tm[1]);
+      if (totals.length) f.cost = totals[totals.length - 1].replace(/,/g, '');
+    }
+    m = /on behalf of:\s*(.+)/i.exec(text) || /(?:from|sold\s+by|bill\s+from|supplier|vendor)\s*:?\s*(.+)/i.exec(text);
+    if (m) f.supplier = m[1].trim().replace(/^and invoiced on behalf of:\s*/i, '').trim().slice(0, 80);
+    if (!f.supplier) {
+      for (var i = 0; i < lines.length; i++) {
+        var l = lines[i];
+        if (/invoice|receipt|order|total|tax|ship|bill|date|page \d/i.test(l)) continue;
+        if (/[A-Za-z]/.test(l) && l.length <= 60) { f.supplier = l; break; }
+      }
+    }
+    m = /description\s*:?\s*(.+)/i.exec(text);
+    if (m) f.description = m[1].trim().slice(0, 200);
+    if (!f.description) {
+      for (var j = 0; j < lines.length; j++) {
+        var qm = /^\d+\s*[x\u00d7]\s+(.+)$/.exec(lines[j]);
+        if (qm) { f.description = qm[1].trim().slice(0, 200); break; }
+      }
+    }
+    /* V163_TG_INVOICE_2026_11_17: Amazon invoices list the item as a
+     * bare title line (no 'Description:' label, no '1 x' prefix) —
+     * fall back to the longest non-label line (the item title), with
+     * a leading quantity and a trailing price stripped off. */
+    if (!f.description) {
+      var best = '';
+      for (var j = 0; j < lines.length; j++) {
+        var dl = lines[j];
+        if (/invoice|receipt|order|total|tax|ship|bill|date|page \d|sold by|subtotal|status|shipping speed|placed on|amazon/i.test(dl)) continue;
+        if (dl.length > 25 && dl.length > best.length) best = dl;
+      }
+      if (best) f.description = best.replace(/^\d+\s*(?:x|\u00d7)?\s*/, '').replace(/\s*[-–—]?\s*\$[\d,]+\.\d{2}\s*$/, '').trim().slice(0, 200);
+    }
+    return f;
+  }
+  function p2FilePartInvoice(client, t, part, file, done) {
+    if (!file) { if (done) done(true); return; }
+    if (file.size > 15 * 1024 * 1024) { if (done) done(false); return; }
+    var path = t.id + '/part-invoice-' + docStamp() + '-' + safeFileName(file.name);
+    client.storage.from(DOC_BUCKET).upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: false }).then(function (up) {
+      if (up.error) { if (done) done(false); return; }
+      client.from('ticket_documents').insert({
+        ticket_id: t.id, doc_type: PART_INVOICE_DOC_TYPE, storage_path: path,
+        file_name: PART_INVOICE_PREFIX + file.name,
+        note: PART_INVOICE_NOTE_PREFIX + part.id + ' \u2014 ' + (part.description || ''),
+        signed_at: null
+      }).then(function (res) { if (done) done(!res.error); }).catch(function () { if (done) done(false); });
+    }).catch(function () { if (done) done(false); });
+  }
   /* PORTAL_DOCUMENTS_SET_2026_11_05: 'estimate' and 'invoice' join the labels — their ticket_documents CHECK widening is documents-set.sql in this build folder. */
   var AUTH_TERMS_TEXT = "Repair Authorization & Service Agreement\nAustin's Tech Repair Group \u2014 State of Ohio, USA \u2014 Last updated November 17, 2026\nPLEASE READ THIS DOCUMENT CAREFULLY. By scheduling an appointment, submitting a repair request, or handing us your device, you (\"Guest,\" \"you\") authorize the services below and agree to these terms with Austin's Tech Repair Group (\"Company,\" \"we,\" \"us,\" \"our\"), a sole proprietorship operating in the State of Ohio.\n1. Authorization to Perform Services\nBy requesting service, you authorize Austin's Tech Repair Group to:\nReceive, handle, open, disassemble, diagnose, test, and repair your device;\nOrder and install the replacement parts you approve;\nRun software diagnostics and updates, and access device functions \u2014 using any passcode you provide \u2014 only as needed to complete and verify the repair;\nTake the device to our bench for advanced work (such as board-level repair) when on-site repair is not possible, and return it when finished.\nYou confirm that you own the device or have the owner's permission to authorize service on it. We service consumer and business electronics only; we do not service medical devices or equipment.\n2. Fees, Parts & Payment\nVisit fee: A visit fee applies to every mobile visit \u2014 $14.99 for guests, $34.99 for business \u2014 covering travel only. It covers the first 25 miles; over 25 miles is $1 per mile. It is non-refundable in all cases, is due at scheduling, is charged separately from the repair price, and is never credited toward a repair. ATR One members pay no visit fee for devices covered under their subscription.\nDiagnostics: Estimates are free. A full diagnosis \u2014 including disassembly or deep board-level diagnostics when required \u2014 is $34.99 for guests and $64.99 for business, and is charged only when the cause of the problem is unknown \u2014 never when you can say with certainty it is the screen or the battery. We tell you first before assessing diagnostics on arrival.\nEstimated repairs: Common repairs (screens, batteries, charging ports, back glass) are quoted as one estimated repair price \u2014 parts and labor included. No hourly billing.\nCustom repairs: Repairs outside the standard list are quoted individually as an estimated repair price and begin only with your approval.\nParts: Parts for your job are ordered by us through our suppliers and delivered to us. Because parts are ordered for your specific job, the parts cost is paid upfront before we order. If you cancel after parts are ordered, we keep the part and refund what you paid for the part.\nReplaced parts: Parts we remove during a repair are taken with us and disposed of properly to protect the environment. Some original manufacturer parts must be returned to the manufacturer.\nParts you supply: If you supply your own part, we will install it as-is; our 1-Year Limited Warranty does not cover guest-supplied parts.\nContact about your repair: You agree we may call and text you at the number you provide about your repair \u2014 scheduling, status updates, and completion.\nEstimate approval: We confirm your price before beginning work. If hidden damage, corrosion, or additional failures are found during disassembly, we notify you and obtain your approval before proceeding with any extra work.\nPayment due: The balance is due upon completion, before the device is released. We accept Visa, Mastercard, American Express, Discover, Apple Pay, Google Pay, Samsung Pay, Cash App Pay, PayPal, Venmo, and cash.\nCard processing fee: If you pay by credit or debit card, a processing fee is added to your total. Card payments are processed through Square, and the fee is exactly what Square charges for the transaction \u2014 passed through at Square's actual rate, never more than Square charges.\n3. Repair Risks You Accept\nData: Diagnostics and repair can result in data loss or corruption. Back up your device before service. We are not responsible for lost data, files, photos, accounts, or settings.\nPre-existing damage: Devices with prior liquid exposure, corrosion, structural damage, or earlier repair attempts are fragile and can fail during normal handling. We are not responsible for a device that stops working because of a pre-existing condition.\nAlready-cracked parts: Removing a cracked screen or back glass can cause it to break further. If a damaged part cannot survive disassembly, replacing it becomes part of the repair and is quoted to you before we proceed.\nCosmetics: Minor marks from opening a device are a normal risk of repair work.\nManufacturer warranties & seals: Third-party repair can affect a manufacturer's warranty; unless the manufacturer explicitly states that opening the device does not void the warranty, our work may void it. A device's water-resistance rating cannot be guaranteed after any repair.\n4. Liability Waiver\nExcept in cases of gross negligence or willful misconduct, you release Austin's Tech Repair Group, its owner, and its representatives from liability for claims or damages arising from the repair services, and you agree that our total liability is limited to the amount you paid for the service. We are not liable for incidental, indirect, or consequential damages, including loss of data, loss of use, or loss of business.\n5. Warranty\nStandard repairs include a one (1) year limited warranty on the parts installed and labor performed, under our Warranty Policy.\nThe warranty is void for the affected repair if the device later suffers physical damage, liquid exposure, or is opened or repaired by another party.\nWarranty service requires your original repair invoice or receipt.\n6. Unclaimed Devices\nWe will notify you when your repair is complete. Equipment left unclaimed for more than sixty (60) days after that notice will be considered abandoned and may be disposed of, recycled, or sold to recover costs, as permitted by Ohio law.\n7. Governing Law & Entire Agreement\nThis Agreement is governed by the laws of the State of Ohio. Disputes will first be addressed through good-faith negotiation; if unresolved, they will be submitted to a court of competent jurisdiction in Greene County, Ohio. This document is the entire agreement between you and Austin's Tech Repair Group for repair services. If any provision is found unenforceable, the rest remain in effect.\nAustin's Tech Repair Group\nAustin Tyler Caudill, Owner\nState of Ohio, USA \u2014 (937) 280-6243";
 
@@ -6754,17 +7078,42 @@ function loadTicketThread(client, ticketId) {
         e.stopPropagation();
       }, true);
     }
-    var editWinBtns = Array.prototype.slice.call(document.querySelectorAll('#p2-edit-windows [data-edit-window]'));
-    var startHour = v154WindowStartForAppt(t.appointment_at);
-    editWinBtns.forEach(function (b) {
-      var on = startHour != null && String(startHour) === b.getAttribute('data-edit-window');
-      b.classList.toggle('on', on);
-      b.setAttribute('aria-pressed', on ? 'true' : 'false');
-      b.addEventListener('click', function () {
-        editWinBtns.forEach(function (x) { x.classList.remove('on'); x.setAttribute('aria-pressed', 'false'); });
+    var editWinWarn = $('p2-edit-window-warn');
+    function paintEditWindows() {
+      var box = $('p2-edit-windows'); if (!box) return;
+      var dateVal = ($('p2-edit-jobdate') && $('p2-edit-jobdate').value) || '';
+      var ws = v154WindowsForDate(dateVal);
+      var stored = v154WindowStartForAppt(t.appointment_at);
+      var lit = document.querySelector('#p2-edit-windows .v154-win-btn.on');
+      var picked = lit ? parseFloat(lit.getAttribute('data-edit-window')) : null;
+      var want = picked != null ? (ws.some(function (w) { return w.start === picked; }) ? picked : null) : stored;
+      if (want != null && !ws.some(function (w) { return w.start === want; })) want = null;
+      box.innerHTML = ws.map(function (w) {
+        var on = want != null && want === w.start;
+        return '<button class="portal-btn portal-btn-outline portal-btn-sm v154-win-btn' + (on ? ' on' : '') + '" type="button" data-edit-window="' + w.start + '" aria-pressed="' + (on ? 'true' : 'false') + '">' + w.label + '</button>';
+      }).join('');
+      if (editWinWarn) {
+        var litAny = want != null;
+        editWinWarn.hidden = !t.appointment_at || litAny;
+        if (t.appointment_at && !litAny) {
+          editWinWarn.textContent = stored == null
+            ? 'The saved appointment isn\u2019t inside any window \u2014 pick a window so the date and time match.'
+            : 'That saved window isn\u2019t offered on this date \u2014 pick a window so the date and time match.';
+        }
+      }
+    }
+    (function () {
+      var box = $('p2-edit-windows'); if (!box) return;
+      box.addEventListener('click', function (e) {
+        var b = e.target && e.target.closest ? e.target.closest('[data-edit-window]') : null;
+        if (!b) return;
+        box.querySelectorAll('.v154-win-btn').forEach(function (x) { x.classList.remove('on'); x.setAttribute('aria-pressed', 'false'); });
         b.classList.add('on'); b.setAttribute('aria-pressed', 'true');
       });
-    });
+    })();
+    var editDateEl = $('p2-edit-jobdate');
+    if (editDateEl) editDateEl.addEventListener('change', paintEditWindows);
+    paintEditWindows();
     var editAddr = $('p2-edit-address');
     if (editAddr) {
       editAddr.addEventListener('input', function () { v154UpdateAddressMap(editAddr, $('p2-edit-map')); });
@@ -6996,10 +7345,34 @@ function loadTicketThread(client, ticketId) {
         discValEl = $('p2-disc-value'), discAddBtn = $('p2-disc-add'),
         discMsgEl = $('p2-disc-msg'), discHintEl = $('p2-disc-hint');
     function v162DiscShowMsg(msg) { if (discMsgEl) { discMsgEl.textContent = msg; discMsgEl.hidden = !msg; } }
+    /* V163_DISC_GATE_2026_11_17 (Austin, Nov 17, 2026): the member
+     * discount is gated on a real ACTIVE membership — Daniel Shilt
+     * has none (0 rows in customer_memberships, verified Nov 17),
+     * yet the form offered it with the tier defaulting to
+     * Individual 20%, so it looked like he had one. No active
+     * membership: the member option leaves the kind select (voucher
+     * / fixed / percent stay), the tier select hides, and the plain
+     * not-a-member note shows. An active membership keeps
+     * everything exactly as it was (tier pre-filled from the row).
+     * The Add handler refuses a member discount once this check
+     * has completed with no membership — belt and braces for a tap
+     * that lands before the option is removed. */
+    var discHasMember = false, discMemberChecked = false;
+    function v163DiscGateOff() {
+      discMemberChecked = true;
+      var opt = discKindEl && discKindEl.querySelector('option[value="member"]');
+      if (opt) opt.parentNode.removeChild(opt);
+      if (discKindEl && discKindEl.value === 'member') { discKindEl.value = 'voucher'; discKindEl.dispatchEvent(new Event('change')); }
+      if (discTierEl) discTierEl.style.display = 'none';
+      var note = $('p2-disc-member-note'); if (note) note.hidden = false;
+    }
     function v162DiscPrefillTier() {
-      if (!discTierEl || !t || !t.customer_id) return;
+      if (!discTierEl || !t) return;
+      if (!t.customer_id) { v163DiscGateOff(); return; }
       client.from('customer_memberships').select('tier').eq('customer_id', t.customer_id).eq('status', 'active').order('started_on', { ascending: false }).limit(1).maybeSingle().then(function (res) {
         if (res && res.data && res.data.tier && discTierEl.querySelector('option[value="' + res.data.tier + '"]')) discTierEl.value = res.data.tier;
+        if (res && res.data && res.data.tier) { discHasMember = true; discMemberChecked = true; return; }
+        v163DiscGateOff();
       }).catch(function () {});
     }
     v162DiscPrefillTier();
@@ -7016,7 +7389,12 @@ function loadTicketThread(client, ticketId) {
       var kind = discKindEl ? discKindEl.value : 'member';
       var desc = '', amt = 0;
       if (kind === 'member') {
-        var tier = (discTierEl && discTierEl.value) || 'single';
+        if (discMemberChecked && !discHasMember) { v162DiscShowMsg('This guest is not an ATR One member \u2014 the member discount cannot be added to this ticket.'); return; }
+        /* V163_TIER_BLANK_2026_11_17: no tier is pre-selected for a
+         * non-member — a blank tier is not a tier, so the member
+         * discount can never be added on a guessed Individual. */
+        if (!discTierEl || !discTierEl.value) { v162DiscShowMsg('Pick a tier first.'); return; }
+        var tier = discTierEl.value;
         var tp = (typeof ATRONE_TIERS !== 'undefined' && ATRONE_TIERS[tier]) ? ATRONE_TIERS[tier] : { name: 'Individual', repairPct: 20 };
         var base = v162DiscRepairBase(rows);
         if (base <= 0) { v162DiscShowMsg('No repair charges yet \u2014 add the part and labor lines first.'); return; }
@@ -7165,6 +7543,61 @@ function loadTicketThread(client, ticketId) {
       applyScannedCode(code, client);
     });
 
+    /* V163_PART_INVOICE_2026_11_17: the supplier-invoice attach on the
+     * add-part form. Picking a file reads its text (PDF text streams,
+     * plain text) and fills the EMPTY fields only — stock picks and
+     * scans already work that way, and staff-typed values are never
+     * overwritten. Nothing saves here: the fields stay editable and
+     * the invoice files itself only when Add part order is tapped.
+     * Photos and scanned-image PDFs carry no readable text in the
+     * browser (no OCR, no service) — the note says so and manual
+     * entry carries on. */
+    var p2InvoiceFile = null;
+    function p2FillInvoiceFields(f) {
+      var filled = [];
+      [['p2-part-desc', f.description, 'description'], ['p2-part-supplier', f.supplier, 'supplier'], ['p2-part-cost', f.cost, 'cost'], ['p2-part-tracking', f.tracking_number, 'tracking number'], ['p2-part-ordernum', f.order_number, 'order number']].forEach(function (row) {
+        var el = $(row[0]);
+        if (el && !String(el.value || '').trim() && row[1]) { el.value = row[1]; filled.push(row[2]); }
+      });
+      return filled;
+    }
+    var p2InvInput = $('p2-part-invoice-file');
+    if (p2InvInput) p2InvInput.addEventListener('change', function () {
+      var file = p2InvInput.files && p2InvInput.files[0];
+      var nameEl = $('p2-part-invoice-name'), msgEl = $('p2-part-invoice-msg');
+      p2InvoiceFile = file || null;
+      if (nameEl) nameEl.textContent = file ? ('Attached: ' + file.name + ' \u2014 check the fields, then Add part order.') : 'No invoice attached \u2014 PDF or photo.';
+      if (!file) { if (msgEl) msgEl.hidden = true; return; }
+      if (msgEl) { msgEl.textContent = 'Reading ' + file.name + '\u2026'; msgEl.hidden = false; }
+      p2ExtractInvoiceText(file).then(function (text) {
+        var f = p2ParseInvoiceFields(text);
+        var filled = p2FillInvoiceFields(f);
+        if (!msgEl) return;
+        if (filled.length) msgEl.textContent = 'Filled from the invoice: ' + filled.join(', ') + ' \u2014 check them before saving. Anything blank, type it in.';
+        else msgEl.textContent = 'Couldn\u2019t read any text from this file, so nothing was filled in \u2014 type the fields in by hand. The invoice itself still attaches when you save.';
+      });
+    });
+    var p2InvExisting = $('p2-part-invoice-existing-file');
+    if (p2InvExisting) p2InvExisting.addEventListener('change', function () {
+      var file = p2InvExisting.files && p2InvExisting.files[0];
+      p2InvExisting.value = '';
+      if (!file || !p2InvoiceForPart) return;
+      var part = null;
+      (t._parts || []).forEach(function (r) { if (r.id === p2InvoiceForPart) part = r; });
+      if (!part) return;
+      var msg = $('p2-scan-msg');
+      if (msg) msg.textContent = 'Uploading invoice\u2026';
+      p2FilePartInvoice(client, t, part, file, function (ok) {
+        if (msg) msg.textContent = ok ? 'Invoice attached.' : 'The invoice didn\u2019t upload \u2014 try again.';
+        loadParts(client, t); loadDocuments(client, t);
+      });
+    });
+    /* V163_UPLOAD_INVOICE_2026_11_17 (Austin, Nov 17, 2026): the
+     * Upload invoice button beside Scan barcode opens the same hidden
+     * file input the form uses — picking a file reads its text and
+     * fills the empty part fields (see the wiring just above). */
+    var p2UploadInvBtn = $('p2-part-upload-invoice-btn');
+    if (p2UploadInvBtn) p2UploadInvBtn.addEventListener('click', function () { var inp = $('p2-part-invoice-file'); if (inp) inp.click(); });
     var partForm = $('p2-part-form');
     if (partForm) partForm.addEventListener('submit', function (e) {
       e.preventDefault();
@@ -7205,8 +7638,20 @@ function loadTicketThread(client, ticketId) {
          * (not picked from stock) also lands in the inventory database. */
         if (!stockItem && res.data && res.data[0]) landPartInInventory(client, res.data[0], part);
         var addCharge = $('p2-part-addcharge').checked && part.retail_price != null && part.retail_price > 0;
+        var invFile = p2InvoiceFile; p2InvoiceFile = null;
+        var invNameEl = $('p2-part-invoice-name'); if (invNameEl) invNameEl.textContent = 'No invoice attached \u2014 PDF or photo.';
+        var invMsgEl = $('p2-part-invoice-msg'); if (invMsgEl) invMsgEl.hidden = true;
         partForm.reset(); $('p2-part-qty').value = '1'; $('p2-part-addcharge').checked = true;
         loadParts(client, t);
+        /* V163_PART_INVOICE_2026_11_17: the invoice chosen in the form
+         * files itself against the part that was just saved — the part
+         * is already in, so a failed upload never loses it. */
+        if (invFile && res.data && res.data[0]) {
+          p2FilePartInvoice(client, t, res.data[0], invFile, function (ok) {
+            if (!ok) { err.textContent = 'Part saved, but the invoice didn\u2019t upload \u2014 attach it from the part\u2019s Invoice button below.'; err.hidden = false; }
+            loadParts(client, t); loadDocuments(client, t);
+          });
+        }
         if (addCharge) {
           client.from('ticket_charges').insert({
             ticket_id: t.id, kind: 'part', description: desc, qty: qty,
@@ -10392,10 +10837,14 @@ function loadTicketThread(client, ticketId) {
       }
       return;
     }
-    var opts = Object.keys(ATRONE_TIERS).map(function (k) {
-      var tr = ATRONE_TIERS[k];
-      return '<option value="' + k + '">' + esc(tr.name) + ' — ' + fmtMoney(tr.price) + '/mo</option>';
-    }).join('');
+    /* V163_TIER_BLANK_2026_11_17 (Austin, Nov 17, 2026): a non-member
+     * shows NO tier — the blank option is selected, never Individual,
+     * so the Add handler's "Pick a tier first" guard can finally fire. */
+    var opts = '<option value="" selected>Not a member \u2014 no tier</option>' +
+      Object.keys(ATRONE_TIERS).map(function (k) {
+        var tr = ATRONE_TIERS[k];
+        return '<option value="' + k + '">' + esc(tr.name) + ' — ' + fmtMoney(tr.price) + '/mo</option>';
+      }).join('');
     box.innerHTML =
       '<p class="portal-muted" style="margin-top:0">No ATR One Plus membership on this guest — they are on ATR One Free (1 point per $1). If they sign up during this visit (through the Square signup links), record it here so it lives on the ticket.</p>' +
       '<div class="p2-form-row"><select id="p5-atr-tier" aria-label="ATR One tier">' + opts + '</select>' +
@@ -15379,6 +15828,7 @@ function loadTicketThread(client, ticketId) {
       '<select id="cust-prof-mem"><option value="no">No</option><option value="yes">Yes</option></select></div>' +
       '<div class="portal-field"><label for="cust-prof-mem-tier">ATR One tier</label>' +
       '<select id="cust-prof-mem-tier">' +
+      '<option value="" selected>Not a member \u2014 no tier</option>' +
       Object.keys(ATRONE_TIERS).map(function (k) {
         var tr = ATRONE_TIERS[k];
         return '<option value="' + k + '">' + esc(tr.name) + ' — ' + esc(fmtMoney(tr.price)) + '/mo</option>';
@@ -15408,7 +15858,7 @@ function loadTicketThread(client, ticketId) {
     var memSel = $('cust-prof-mem'), memTierSel = $('cust-prof-mem-tier');
     if (memSel && memTierSel) {
       memSel.value = (mem && mem.status === 'active') ? 'yes' : 'no';
-      memTierSel.value = mem ? mem.tier : 'single';
+      memTierSel.value = (mem && mem.status === 'active') ? mem.tier : '';
       memTierSel.disabled = memSel.value !== 'yes';
       memSel.addEventListener('change', function () {
         memTierSel.disabled = memSel.value !== 'yes';
@@ -15434,9 +15884,54 @@ function loadTicketThread(client, ticketId) {
    * A membership recorded from the profile carries no ticket, so —
    * unlike the ticket drawer's signup — no signup charge line is
    * filed here; the record is the membership itself. */
+  /* V163_NAME_SYNC_2026_11_17 (Austin, Nov 17, 2026): a guest's name,
+   * phone and email are ONE source of truth — the customers record.
+   * Whenever the record changes, the same values write to every
+   * ticket belonging to that guest (tickets.customer_name /
+   * customer_phone / customer_email where tickets.customer_id
+   * matches), so the Service Queue, the ticket, receipts and labels
+   * all show the new name at once with no extra step. The guest
+   * address flows to a ticket's service address ONLY when that
+   * service address still matches the old guest address — a service
+   * address deliberately set somewhere else is never overwritten.
+   * Fail-soft: a failed propagation never blocks the guest save;
+   * the caller surfaces it as a note. */
+  function propagateGuestContact(client, customerId, changes, oldAddress, done) {
+    var map = { name: 'customer_name', phone: 'customer_phone', email: 'customer_email' };
+    var contact = {};
+    Object.keys(map).forEach(function (k) { if (changes[k] !== undefined) contact[map[k]] = changes[k]; });
+    var hasContact = Object.keys(contact).length > 0;
+    var newAddress = (changes.address !== undefined) ? changes.address : null;
+    function finish(ok) { if (done) done(ok); }
+    function propagateAddress() {
+      if (newAddress === null || newAddress === undefined) { finish(true); return; }
+      client.from('tickets').select('id, service_address').eq('customer_id', customerId).then(function (res) {
+        if (res.error || !res.data) { finish(false); return; }
+        var oldA = trim(oldAddress || '');
+        var ids = [];
+        res.data.forEach(function (row) { if (trim(row.service_address || '') === oldA) ids.push(row.id); });
+        if (!ids.length) { finish(true); return; }
+        client.from('tickets').update({ service_address: newAddress }).in('id', ids).then(function (res2) {
+          finish(!res2.error);
+        }).catch(function () { finish(false); });
+      }).catch(function () { finish(false); });
+    }
+    if (hasContact) {
+      client.from('tickets').update(contact).eq('customer_id', customerId).then(function (res) {
+        if (res.error) { finish(false); return; }
+        propagateAddress();
+      }).catch(function () { finish(false); });
+    } else {
+      propagateAddress();
+    }
+  }
   function saveCustomerEdit(customerId) {
     var msg = $('cust-prof-edit-msg');
     var cust = custProfileCurrent;
+    /* V163_NAME_SYNC_2026_11_17: the old guest address, captured
+     * before the save — the address only flows to tickets whose
+     * service address still matches it. */
+    var _oldAddress = cust ? cust.address : '';
     if (!cust || cust.id !== customerId) return;
     var changes = {};
     CUST_EDIT_FIELDS.forEach(function (f) {
@@ -15456,7 +15951,10 @@ function loadTicketThread(client, ticketId) {
     /* Membership intent from the Yes/No + tier controls. */
     var memSel = $('cust-prof-mem'), memTierSel = $('cust-prof-mem-tier');
     var wantMember = !!(memSel && memSel.value === 'yes');
-    var wantTier = memTierSel ? memTierSel.value : 'single';
+    var wantTier = memTierSel ? memTierSel.value : '';
+    /* V163_TIER_BLANK_2026_11_17: a member needs a real tier — the
+     * blank "Not a member" option is not one. */
+    if (wantMember && !wantTier) { if (msg) msg.textContent = 'Pick a tier first.'; return; }
     var mem = custProfileMembership;
     var activeRow = (mem && mem.status === 'active') ? mem : null;
     var memChange = null; /* { create:true, tier } or { create:false, patch } */
@@ -15503,10 +16001,27 @@ function loadTicketThread(client, ticketId) {
           Object.keys(changes).forEach(function (k) { cust[k] = changes[k]; });
           var row = custRowById(customerId);
           if (row) Object.keys(changes).forEach(function (k) { row[k] = changes[k]; });
-          custProfileNotice = 'Saved.';
-          if (memChange) loadAtrOneMembers(true);
-          openCustomerProfile(customerId);
-          applyCustomerSearch();
+          if (!hasContact) {
+            custProfileNotice = 'Saved.';
+            if (memChange) loadAtrOneMembers(true);
+            openCustomerProfile(customerId);
+            applyCustomerSearch();
+            return;
+          }
+          /* V163_NAME_SYNC_2026_11_17: the new name/phone/email flow
+           * to the guest's tickets (the address only where the
+           * service address still matches the old guest address). */
+          propagateGuestContact(client, customerId, changes, _oldAddress, function (ok) {
+            custProfileNotice = ok ? 'Saved.' : 'Saved, but the guest\u2019s tickets could not be updated \u2014 check the name on the ticket.';
+            if (memChange) loadAtrOneMembers(true);
+            /* V163_NAME_SYNC_QUEUE_2026_11_17: the Service Queue
+             * loads once per tab open, so refresh it here — the
+             * queue shows the new name with no extra step. */
+            state.loaded.tickets = false;
+            loadTickets(true);
+            openCustomerProfile(customerId);
+            applyCustomerSearch();
+          });
         }).catch(function () {
           if (msg) msg.textContent = 'Couldn\u2019t save \u2014 that email may already be on another guest, or the membership table is not set up yet.';
         });
@@ -15654,6 +16169,10 @@ function loadTicketThread(client, ticketId) {
        * apply gets stamped approved. A failed apply (e.g. the new
        * email already belongs to another customer) leaves the
        * request pending with a plain explanation. */
+      /* V163_NAME_SYNC_2026_11_17: capture the old guest address
+       * BEFORE the apply — the cached row is the live row object,
+       * so reading it after the update would give the new address. */
+      var _decOldAddr = (function () { var r = custRowById(req.customer_id); return r ? r.address : ''; })();
       client.from('customers').update(req.changes || {}).eq('id', req.customer_id)
         .then(function (res) {
           if (res.error) {
@@ -15665,7 +16184,9 @@ function loadTicketThread(client, ticketId) {
           if (custProfileCurrent && custProfileCurrent.id === req.customer_id) {
             Object.keys(req.changes || {}).forEach(function (k) { custProfileCurrent[k] = req.changes[k]; });
           }
-          stamp('approved', finish);
+          /* V163_NAME_SYNC_2026_11_17: an approved guest change flows
+           * to the guest's tickets too (same rule as a direct edit). */
+          propagateGuestContact(client, req.customer_id, req.changes || {}, _decOldAddr, function () { loadTickets(true); stamp('approved', finish); });
         })
         .catch(function () { renderCustEditPanel('Could not apply that change. The request is still waiting.'); });
     });
@@ -20351,21 +20872,30 @@ function loadTicketThread(client, ticketId) {
      * and the map under the service address. Tapping a picked window
      * again unsets it (same toggle pattern as the hour buttons). */
     var ciJobDateEl = $('ci-jobdate');
-    var ciWinBtns = Array.prototype.slice.call(document.querySelectorAll('#ci-windows [data-ci-window]'));
+    var ciWinBox = $('ci-windows');
+    /* V163_WINDOWS_DAY_AWARE_2026_11_17: the window buttons are rebuilt
+     * from the picked date — Mon-Fri six, Saturday five, Sunday two.
+     * A picked window the new day does not offer is cleared, never
+     * carried over silently. */
     function ciPaintWindows() {
-      ciWinBtns.forEach(function (b) {
-        var on = String(ciWindowStart) === b.getAttribute('data-ci-window');
-        b.classList.toggle('on', on);
-        b.setAttribute('aria-pressed', on ? 'true' : 'false');
-      });
+      if (!ciWinBox) return;
+      var d = (ciJobDateEl && ciJobDateEl.value) || v154LocalDateStr();
+      var ws = v154WindowsForDate(d);
+      if (ciWindowStart != null && !ws.some(function (w) { return w.start === ciWindowStart; })) ciWindowStart = null;
+      ciWinBox.innerHTML = ws.map(function (w) {
+        var on = ciWindowStart != null && ciWindowStart === w.start;
+        return '<button type="button" class="portal-btn portal-btn-outline portal-btn-sm v154-win-btn' + (on ? ' on' : '') + '" data-ci-window="' + w.start + '" aria-pressed="' + (on ? 'true' : 'false') + '">' + w.label + '</button>';
+      }).join('');
     }
-    ciWinBtns.forEach(function (b) {
-      b.addEventListener('click', function () {
-        var h = parseInt(b.getAttribute('data-ci-window'), 10);
-        ciWindowStart = (ciWindowStart === h) ? null : h;
-        ciPaintWindows();
-      });
+    if (ciWinBox) ciWinBox.addEventListener('click', function (e) {
+      var b = e.target && e.target.closest ? e.target.closest('[data-ci-window]') : null;
+      if (!b) return;
+      var h = parseFloat(b.getAttribute('data-ci-window'));
+      ciWindowStart = (ciWindowStart === h) ? null : h;
+      ciPaintWindows();
     });
+    if (ciJobDateEl) ciJobDateEl.addEventListener('change', ciPaintWindows);
+    ciPaintWindows();
     var ciAddressEl = $('ci-address');
     if (ciAddressEl) ciAddressEl.addEventListener('input', function () { v154UpdateAddressMap(ciAddressEl, $('ci-address-map')); });
     /* PORTAL_DEADEND_MINORS_2026_10_30: "Clear check-in" — abandon a
@@ -20433,9 +20963,12 @@ function loadTicketThread(client, ticketId) {
        * the ticket shows on the calendar. A window with no date means
        * today. No date and no window: both stay empty, as before. */
       var ciJobDate = ciJobDateEl ? ciJobDateEl.value : '';
-      if (ciWindowStart != null && !ciJobDate) { ciJobDate = new Date().toISOString().slice(0, 10); if (ciJobDateEl) ciJobDateEl.value = ciJobDate; }
+      if (ciWindowStart != null && !ciJobDate) { ciJobDate = v154LocalDateStr(); if (ciJobDateEl) ciJobDateEl.value = ciJobDate; }
       var ciApptAt = v154ApptAt(ciJobDate, ciWindowStart);
       var isSvc = ciRequestType === 'service' || !!(ciOneOnOne && ciOneOnOne.classList.contains('on'));
+      /* V163_CLEANING_2026_11_17: Cleaning is a repair service, not a
+       * one-on-one — its $49.99 flat charge files at intake below. */
+      var isCleaning = !isSvc && reasons.split(', ').indexOf('Cleaning') !== -1;
       var svcKind = isSvc ? $('ci-svc-kind').value : '';
       var svcGoal = isSvc ? $('ci-svc-goal').value.trim() : '';
       var svcHours = isSvc ? ciServiceHours : '';
@@ -20548,6 +21081,7 @@ function loadTicketThread(client, ticketId) {
           if (res.error) { btn.disabled = false; err.textContent = 'Could not create the ticket — try again.'; err.hidden = false; return; }
           var newId = res.data && res.data.id;
           /* PORTAL_SERVICE_QUEUE_2026_11_06: charges ride the row's final status — the receipt and agreement builders read row.status. */
+          var cleanFailed = false;
           var proceed = function (consentFailed, atroneAttachFailed, svcChargeFailed) {
             /* V155_TICKET_EMAILS_2026_11_16: the ticket exists now,
              * so the guest gets the automatic confirmation email
@@ -20567,6 +21101,7 @@ function loadTicketThread(client, ticketId) {
             if (consentFailed) setTimeout(function () { docMsg('The ticket was created, but the check-in agreement could not be filed — take the signature here in Documents.'); }, 900);
             if (atroneAttachFailed) setTimeout(function () { docMsg('The ticket was created, but the ATR One membership agreement could not be attached — take the signature here in Documents.'); }, 900);
             if (svcChargeFailed) setTimeout(function () { docMsg('The service ticket was created, but its charges could not be added — add the $14.99 visit fee and the $24.99/hr service time in Charges.'); }, 900);
+            if (cleanFailed) setTimeout(function () { docMsg('The ticket was created, but the $49.99 cleaning charge could not be added — add it in Charges.'); }, 900);
           };
           /* PORTAL_CHECKIN_CONSENT_2026_10_30: consent captured on the
            * form files itself on the new ticket, in the drawer flow's
@@ -20605,6 +21140,17 @@ function loadTicketThread(client, ticketId) {
             if (svcRows.length) {
               client.from('ticket_charges').insert(svcRows).then(function (cres) { startChain(!!cres.error); }).catch(function () { startChain(true); });
             } else { startChain(false); }
+          } else if (isCleaning && newId) {
+            /* V163_CLEANING_2026_11_17 (Austin, Nov 17, 2026): a Cleaning
+             * check-in is a repair ticket with the settled $49.99 flat
+             * cleaning charge on it from intake — one labor line, every
+             * device; liquid metal is part of cleaning, never itemized.
+             * Same shape as the service charges above: a failed charge
+             * never blocks the ticket, it surfaces as a note. */
+            var cleanRow = { ticket_id: newId, kind: 'labor',
+              description: 'Cleaning \u2014 ' + ([row.device_type, row.brand, row.model].filter(function (x) { return x; }).join(' ') || 'device'),
+              qty: 1, unit_price: 49.99 };
+            client.from('ticket_charges').insert(cleanRow).then(function (cres) { cleanFailed = !!cres.error; startChain(!!cres.error); }).catch(function () { cleanFailed = true; startChain(true); });
           } else {
             startChain(false);
           }
@@ -20696,15 +21242,36 @@ function loadTicketThread(client, ticketId) {
 
     function digits(v) { return String(v == null ? '' : v).replace(/\D/g, ''); }
 
+    /* V163_SEARCH_GROUPS_2026_11_17 (Austin, Nov 17, 2026): Search
+     * groups its sections under the sidebar's own group labels, in
+     * sidebar order — ACTION BUTTONS, GUEST, PARTS & TOOLS,
+     * ASSOCIATES, ADMIN, FINANCIALS. The group is read off the live
+     * sidebar (nearest preceding .portal-nav-group); tabs before any
+     * group label are the Action Buttons (Home). Role gates still
+     * rule: hidden tabs are skipped, so a group with nothing visible
+     * never renders. */
+    var HS_GROUP_ORDER = ['ACTION BUTTONS', 'GUEST', 'PARTS & TOOLS', 'ASSOCIATES', 'ADMIN', 'FINANCIALS'];
     function sections() {
-      var out = [];
-      document.querySelectorAll('#portal-nav .portal-tab').forEach(function (t) {
-        if (window.getComputedStyle(t).display === 'none') return;
+      var out = [], group = 'ACTION BUTTONS';
+      document.querySelectorAll('#portal-nav > *').forEach(function (el) {
+        if (el.classList && el.classList.contains('portal-nav-group')) {
+          var g = String(el.textContent || '').replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, '').toUpperCase();
+          if (HS_GROUP_ORDER.indexOf(g) !== -1) group = g;
+          return;
+        }
+        if (!el.classList || !el.classList.contains('portal-tab')) return;
+        var t = el;
+        /* Role gate ONLY, read off the tab's own inline style:
+         * applyRoleNav() writes inline display:none on gated tabs.
+         * The phone CSS hides the nav CONTAINER (.portal-tabs at
+         * <=640px), never the tabs — computed display would read
+         * 'none' for every tab on a phone and empty the sheet. */
+        if (t.style.display === 'none') return;
         var clone = t.cloneNode(true);
         clone.querySelectorAll('.portal-count').forEach(function (n) { n.parentNode.removeChild(n); });
         var label = String(clone.textContent || '').replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, '');
         var icon = t.querySelector('i');
-        out.push({ tab: t.getAttribute('data-tab'), label: label, icon: icon ? icon.getAttribute('class') : 'fas fa-circle' });
+        out.push({ tab: t.getAttribute('data-tab'), label: label, icon: icon ? icon.getAttribute('class') : 'fas fa-circle', group: group });
       });
       return out;
     }
@@ -20757,11 +21324,13 @@ function loadTicketThread(client, ticketId) {
       var q = trim(input.value).toLowerCase();
       var html = '';
       var secs = sections().filter(function (s) { return !q || s.label.toLowerCase().indexOf(q) !== -1; });
-      if (secs.length) {
-        html += '<p class="portal-hubsearch-group">Sections</p>' + secs.map(function (s) {
+      HS_GROUP_ORDER.forEach(function (g) {
+        var inGroup = secs.filter(function (s) { return s.group === g; });
+        if (!inGroup.length) return;
+        html += '<p class="portal-hubsearch-group">' + g + '</p>' + inGroup.map(function (s) {
           return '<button type="button" class="portal-hubsearch-item" data-hs-kind="section" data-hs-tab="' + esc(s.tab) + '"><i class="' + esc(s.icon) + '"></i><span class="hs-main">' + esc(s.label) + '</span></button>';
         }).join('');
-      }
+      });
       if (q) {
         var gs = guests().filter(function (c) {
           return String(c.name || '').toLowerCase().indexOf(q) !== -1 || matchPhone(q, c.phone);
@@ -20986,6 +21555,14 @@ function loadTicketThread(client, ticketId) {
     }
     if (newBtn) newBtn.addEventListener('click', function () {
       var t = $('portal-tab-checkin');
+      if (t) t.click();
+    });
+    /* V163_QA_HOME_2026_11_17 (Austin, Nov 17, 2026): Home first in Quick
+       Actions — clicks the real sidebar Home tab, same pattern as
+       New Service Request above. */
+    var homeBtn = $('portal-hub-home-btn');
+    if (homeBtn) homeBtn.addEventListener('click', function () {
+      var t = $('portal-tab-home');
       if (t) t.click();
     });
   })();
