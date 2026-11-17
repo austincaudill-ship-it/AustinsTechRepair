@@ -3916,11 +3916,7 @@
       repairsSection.hidden = true;
       newTicketView.hidden = true;
       threadView.hidden = false;
-      /* ACCOUNT_FIX_PASS_3_2026_11_06: the thread is on screen now —
-         this is the moment the message form's human check renders,
-         so it is born visible (see the gate wiring below). mount()
-         is idempotent: later opens are no-ops. */
-      if (window.atrTurnstile) window.atrTurnstile.mount(document.getElementById('ts-acct-msg'));
+      /* V157: no human check on the message form — account flows are check-free. */
     }
     function showNewTicket() {
       stopPolling();
@@ -3928,10 +3924,7 @@
       threadView.hidden = true;
       newTicketView.hidden = false;
       showError(ticketError, '');
-      /* ACCOUNT_FIX_PASS_3_2026_11_06: same as showThread — the
-         new-request human check renders when its view opens, not at
-         page load inside the hidden view. */
-      if (window.atrTurnstile) window.atrTurnstile.mount(document.getElementById('ts-acct-ticket'));
+      /* V157: no human check on the new-request form — account flows are check-free. */
     }
 
     /* ---------- ticket list ---------- */
@@ -4059,48 +4052,13 @@
     if (newTicketBack) newTicketBack.addEventListener('click', showRepairsList);
     if (newTicketBtn) newTicketBtn.addEventListener('click', showNewTicket);
 
-    /* ---------- SITE_TURNSTILE_2026_11_02 (staged): Turnstile gate
-       * for both account forms. Registered BEFORE the real submit
-       * handlers below so the shared gate (turnstile.js) can hold a
-       * submit until the verify-turnstile Edge Function confirms the
-       * token server-side. These forms are signed-in only, so the
-       * session JWT is passed as the bearer when one is available.
-       * Containers (#ts-acct-msg / #ts-acct-ticket) live in
-       * index.html next to each form's submit button. */
-    if (window.atrTurnstile) {
-      var tsBearer = function (cb) {
-        if (sb && sb.auth && sb.auth.getSession) {
-          sb.auth.getSession().then(function (r) {
-            cb(r && r.data && r.data.session ? r.data.session.access_token : null);
-          }).catch(function () { cb(null); });
-        } else cb(null);
-      };
-      var tsMsgSlot = document.getElementById('ts-acct-msg');
-      if (msgForm && tsMsgSlot) {
-        /* ACCOUNT_FIX_PASS_3_2026_11_06: no eager mount here any
-           more. This block runs at page load, when the message form
-           sits inside the hidden thread view, inside the hidden
-           dashboard, inside the not-yet-active account page — and
-           turnstile.js mount() renders exactly once and can never
-           re-render, so the widget was born inside a display:none
-           stack and never recovered when the thread opened (owner,
-           Nov 6, 2026: the human check "is not popping up… waiting
-           for Cloudflare"). The mount now happens when the view
-           opens (showThread / showNewTicket below), and the gate
-           still mounts at submit time as a backstop. */
-        window.atrTurnstile.gate(msgForm, tsMsgSlot, {
-          getBearer: tsBearer,
-          onBlocked: function () { showError(msgError, 'Please complete the quick human check, then send again.'); }
-        });
-      }
-      var tsTicketSlot = document.getElementById('ts-acct-ticket');
-      if (ticketForm && tsTicketSlot) {
-        window.atrTurnstile.gate(ticketForm, tsTicketSlot, {
-          getBearer: tsBearer,
-          onBlocked: function () { showError(ticketError, 'Please complete the quick human check above the button, then submit again.'); }
-        });
-      }
-    }
+    /* V157 (expanded scope, Nov 17, 2026): NO Turnstile gate on the
+     * account forms any more. The check lives only on website form
+     * submissions — never on account / portal flows. The old gate
+     * block (ts-acct-msg / ts-acct-ticket, with the session-JWT
+     * bearer) is deleted outright; the real submit handlers below
+     * are untouched and now run ungated, exactly as they did once
+     * a token had passed. */
 
     /* ---------- send message ---------- */
     if (msgForm) msgForm.addEventListener('submit', function (e) {

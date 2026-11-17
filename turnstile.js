@@ -13,10 +13,15 @@
  *   - atr-forms.js  — the five data-form forms (gate() below).
  *   - script.js     — account forms acct-ticket-form / acct-msg-form
  *                     (gate() below).
- *   - index.html    — authx login/signup + password reset pass the
- *                     token to Supabase Auth as captchaToken instead
- *                     (token() below); the chat lead flow verifies via
- *                     verify() before its tickets insert.
+ *   - index.html    — authx login used to pass the token to Supabase
+ *                     Auth as captchaToken instead (token() below);
+ *                     the chat lead flow verifies via verify() before
+ *                     its tickets insert.
+ *                     V157 (expanded scope, Nov 17, 2026): NO auth
+ *                     flow sends a token any more — not sign-in,
+ *                     not sign-up, not password reset. The check
+ *                     lives only on website form submissions, by
+ *                     the owner's order.
  *
  * FAILS CLOSED on purpose: if the widget or the verification call
  * cannot be reached, submits are blocked with a message that points
@@ -203,7 +208,7 @@
    * fresh token comes back at once; otherwise this polls every
    * 250ms until a fresh token lands, a true failure reports, or
    * the 120s wait runs out, and calls back with the token or ''.
-   * Login AND signup use it — every other form keeps the gate() /
+   * no caller uses it now (V157 expanded scope: every auth flow is check-free) — every other form keeps the gate() /
    * token() behavior it already had. */
   function freshToken(el, cb, opts) {
     opts = opts || {};
@@ -295,74 +300,14 @@
     });
   }
 
-  /* TURNSTILE_AUTOFILL_2026_11_12 (v130b): mount on page load +
-   * autofill watch. The old flow mounted the auth widgets only when
-   * the account box opened, so an autofilled sign-in raced the
-   * mount: both fields filled at once, Log In tapped at once, no
-   * token yet. Mounting at load gives the Managed check its whole
-   * run-up before anyone taps anything, however fast they fill.
-   * Autofill fires no input/change event, so the watch does not
-   * rely on them: (a) a 500ms poll of the four auth fields for a
-   * non-empty value, for up to 30s or until both widgets render;
-   * (b) the :-webkit-autofill CSS-animation signal (a 0.01s
-   * animation on autofilled inputs; the animationstart event
-   * carries it); (c) focus on any auth field. All three just call
-   * mount(), which is idempotent — the worst case is a no-op.
-   * Managed mode stays automatic: no checkbox, no puzzle, no click
-   * step. The v89 load-help box is untouched. */
-  var AUTH_WIDGET_IDS = ['ts-login', 'ts-signup'];
-  var AUTH_FIELD_IDS = ['authx-login-email', 'authx-login-password', 'authx-signup-email', 'authx-signup-password'];
-  function mountAuthWidgets() {
-    for (var i = 0; i < AUTH_WIDGET_IDS.length; i++) {
-      var w = document.getElementById(AUTH_WIDGET_IDS[i]);
-      if (w) mount(w);
-    }
-  }
-  function authWidgetsRendered() {
-    for (var i = 0; i < AUTH_WIDGET_IDS.length; i++) {
-      var w = document.getElementById(AUTH_WIDGET_IDS[i]);
-      var en = w ? entryFor(w) : null;
-      if (!en || en.id === null) return false;
-    }
-    return true;
-  }
-  function autofillWatchTick() {
-    for (var i = 0; i < AUTH_FIELD_IDS.length; i++) {
-      var f = document.getElementById(AUTH_FIELD_IDS[i]);
-      if (f && f.value) { mountAuthWidgets(); return; }
-    }
-  }
-  function installAutofillSignal() {
-    try {
-      var st = document.createElement('style');
-      st.setAttribute('data-atr-turnstile', 'autofill-signal');
-      st.textContent = '@keyframes atrAutofill { from { opacity: 1; } to { opacity: 1; } } input:-webkit-autofill { animation-name: atrAutofill; animation-duration: 0.01s; }';
-      document.head.appendChild(st);
-    } catch (e) {}
-  }
-  function startAutofillWatch() {
-    installAutofillSignal();
-    mountAuthWidgets();
-    var ticks = 0;
-    var poll = setInterval(function () {
-      ticks++;
-      autofillWatchTick();
-      if (authWidgetsRendered() || ticks >= 60) clearInterval(poll);
-    }, 500);
-  }
-  document.addEventListener('animationstart', function (e) {
-    if (e && e.animationName === 'atrAutofill') mountAuthWidgets();
-  }, true);
-  document.addEventListener('focus', function (e) {
-    var t = e && e.target;
-    if (t && t.id && AUTH_FIELD_IDS.indexOf(t.id) !== -1) mountAuthWidgets();
-  }, true);
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', startAutofillWatch);
-  } else {
-    startAutofillWatch();
-  }
-
+  /* V157 (expanded scope, Nov 17, 2026): the auth auto-mount /
+   * autofill watch is DELETED. There are no auth widgets any more —
+   * no ts-login, no ts-signup — so there is nothing to mount on page
+   * load and nothing to watch autofill for. This helper now serves
+   * website forms only: atr-forms.js gate() and the ts-voo session
+   * start verify(). mount() / token() / reset() / verify() / gate()
+   * / freshToken() stay exported — freshToken() currently has no
+   * caller left, kept so nothing else breaks if a form re-adopts it. */
   window.atrTurnstile = {
     SITE_KEY: SITE_KEY,
     mount: mount,

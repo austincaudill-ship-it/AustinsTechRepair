@@ -1994,9 +1994,7 @@
               <span class="pw-wrap"><input type="password" id="authx-login-password" placeholder="••••••••" autocomplete="current-password" aria-label="Password" required><button class="pw-eye" type="button" data-pw-eye aria-label="Show password"><i class="fas fa-eye"></i></button></span>
             </label>
             <p class="acct-error" id="authx-login-error" hidden></p>
-            <div class="atr-turnstile" id="ts-login"></div>
             <button class="btn btn-primary btn-lg acct-submit" type="submit">Log In <i class="fas fa-arrow-right"></i></button>
-            <p class="acct-muted" id="authx-login-check" hidden>Still running the quick human check — this can take a moment on a slow connection.</p>
             <button class="authx-forgot" id="authx-forgot-btn" type="button">Forgot your password?</button>
           </form>
 
@@ -2027,9 +2025,7 @@
             </label>
             <p class="acct-error" id="authx-signup-error" hidden></p>
             <p class="acct-muted" id="authx-signup-note" hidden></p>
-            <div class="atr-turnstile" id="ts-signup"></div>
             <button class="btn btn-primary btn-lg acct-submit" type="submit">Create Account <i class="fas fa-arrow-right"></i></button>
-            <p class="acct-muted" id="authx-signup-check" hidden>Still running the quick human check — this can take a moment on a slow connection.</p>
           </form>
 
         </div>
@@ -2251,7 +2247,6 @@
                   <input type="text" id="acct-msg-input" placeholder="Write a message…" autocomplete="off" maxlength="1000" aria-label="Write a message">
                   <button class="btn btn-primary btn-sm" type="submit" aria-label="Send message"><i class="fas fa-paper-plane"></i></button>
                 </div>
-                <div class="atr-turnstile" id="ts-acct-msg"></div>
                 <p class="acct-error" id="acct-msg-error" hidden></p>
               </form>
             </div>
@@ -2317,7 +2312,6 @@
                   </label>
                   <p class="acct-muted" style="text-align:left;padding:0;">Nothing is deducted now — we apply the discount at your visit.</p>
                 </div>
-                <div class="atr-turnstile" id="ts-acct-ticket"></div>
                 <p class="acct-error" id="acct-ticket-error" hidden></p>
                 <button class="btn btn-primary btn-lg acct-submit" type="submit">Submit Request <i class="fas fa-arrow-right"></i></button>
               </form>
@@ -3574,13 +3568,13 @@
               <li><strong>Square</strong> &mdash; card payments, gift cards, and ATR One membership billing.</li>
               <li><strong>Calendly</strong> &mdash; scheduling.</li>
               <li><strong>Supabase</strong> &mdash; service records, guest accounts, and portal data.</li>
-              <li><strong>Cloudflare Turnstile</strong> &mdash; the automatic human check on sign-in and on forms, which keeps automated submissions out.</li>
+              <li><strong>Cloudflare Turnstile</strong> &mdash; the automatic human check on website forms only (contact and service request forms), which keeps automated submissions out. There is no human check on sign-in, creating an account, or resetting or changing your password.</li>
               <li><strong>GitHub Pages</strong> &mdash; website hosting.</li>
             </ul>
             <p>Each provider handles data under its own privacy policy. We do not sell your personal information, and we do not share it with anyone else except when the law requires it, or when it is needed to protect the safety of our guests, our team, or the business.</p>
 
             <h3>4. Cookies and Similar Technology</h3>
-            <p>Our website stores a small amount of information on your own device so it works properly &mdash; for example, what is in your shopping bag, your display settings, and items you have chosen to hide. The human check on sign-in and on forms may also set a cookie to confirm you are a real person. We do not use third-party advertising trackers on our website. You can clear stored data from your browser settings at any time; some parts of the site, such as your bag, may not remember your choices after you do.</p>
+            <p>Our website stores a small amount of information on your own device so it works properly &mdash; for example, what is in your shopping bag, your display settings, and items you have chosen to hide. The human check on website forms may also set a cookie to confirm you are a real person. We do not use third-party advertising trackers on our website. You can clear stored data from your browser settings at any time; some parts of the site, such as your bag, may not remember your choices after you do.</p>
 
             <h3>5. Data Retention</h3>
             <p>Service records are kept for warranty and tax purposes. Account records are kept while your account is active. When records are no longer needed for warranty, tax, or legal reasons, they are deleted. If you ask us to delete your information, we will do so except for records we are required to keep for tax or legal reasons, and except for records tied to a repair or warranty claim that is still open.</p>
@@ -5059,7 +5053,6 @@
       <p>Enter your email and we'll send you a code. Type the code here with your new password — no need to click anything in the email.</p>
       <label for="atr-reset-email">Email</label>
       <input id="atr-reset-email" type="email" autocomplete="email" placeholder="you@example.com" />
-      <div class="atr-turnstile" id="ts-reset"></div>
       <button class="atr-reset-btn" id="atr-reset-send" type="button">Email me a code</button>
       <div class="atr-reset-err" id="atr-reset-req-err" hidden></div>
     </div>
@@ -5137,18 +5130,18 @@
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showErr('atr-reset-req-err', 'Please enter a valid email address.'); return; }
     var client = getClient();
     if (!client) { showErr('atr-reset-req-err', 'Could not start the reset. Please try again in a moment.'); return; }
-    /* SITE_TURNSTILE_2026_11_02 (staged): reset requests carry a
-     * Turnstile token as captchaToken, verified by Supabase Auth
-     * itself once captcha protection is enabled (see CHANGES.md). */
-    var tsTokReset = window.atrTurnstile ? window.atrTurnstile.token(el('ts-reset')) : '';
-    if (!tsTokReset) {
-      if (window.atrTurnstile) window.atrTurnstile.mount(el('ts-reset'));
-      showErr('atr-reset-req-err', 'Please complete the quick human check, then tap again.');
-      return;
-    }
+    /* V157_NO_TURNSTILE_FIRST_LOGIN_2026_11_17 (owner, Nov 17, 2026):
+     * NO human check on a first-time login. A guest with no password
+     * yet gets in through this reset code (or an invite link) — the
+     * old Turnstile gate here was the exact "please complete the
+     * human check" dead end the owner hit on his Yahoo test account
+     * (and Daniel hit too). The emailed code itself is the proof
+     * they own the address, so no captchaToken is sent. If Supabase
+     * Auth captcha protection is switched ON in the dashboard, this
+     * call will be rejected for a missing token — see REPORT.md,
+     * "Before publish" check 1. */
     btn.disabled = true; btn.textContent = 'Sending…';
-    client.auth.resetPasswordForEmail(email, { captchaToken: tsTokReset }).then(function (res) {
-      if (window.atrTurnstile) window.atrTurnstile.reset(el('ts-reset'));
+    client.auth.resetPasswordForEmail(email).then(function (res) {
       btn.disabled = false; btn.textContent = 'Email me a code';
       if (res.error) { showErr('atr-reset-req-err', 'We could not send that code. Double-check the email and try again.'); return; }
       showErr('atr-reset-req-err', '');
@@ -5219,7 +5212,7 @@
     el('atr-reset-link-set').addEventListener('click', linkSet);
 
     // Expose for the account modal's "Forgot password" button and other pages.
-    window.atrOpenReset = function () { showStep('request'); open(); if (window.atrTurnstile) window.atrTurnstile.mount(el('ts-reset')); };
+    window.atrOpenReset = function () { showStep('request'); open(); /* V157: no human check on reset — ts-reset removed */ };
 
     var client = getClient();
     // Recovery links that arrive dead (expired/invalid) land back here with an
@@ -6308,7 +6301,7 @@
     var sn = $('authx-signup-note'); if (sn) { sn.textContent = ''; sn.hidden = true; }
     var create = $('acct-signup-create');
     if (create) { create.disabled = true; create.innerHTML = 'Creating account\u2026'; }
-    if (window.atrTurnstile) window.atrTurnstile.mount($('ts-signup'));
+    /* V157: no human check on sign-up — the real signup form no longer mounts ts-signup. */
     if (form.requestSubmit) form.requestSubmit();
     else form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
     /* Mirror the existing handler's own outcomes into the popup. */
@@ -6334,8 +6327,9 @@
         clearInterval(signupOfferWatch); signupOfferWatch = null;
         if (create) { create.disabled = false; create.innerHTML = 'Create account'; }
         if (/human check/i.test(err.textContent)) {
-          /* The quick human check has to happen in the account box —
-             hand them over with every field already filled in. */
+          /* V157: the human check was removed from sign-up, so this
+             branch should no longer fire — kept as a safety net in
+             case a check error ever surfaces again. */
           closeSignupOffer();
           var ob2 = $('account-open-btn'); if (ob2) { try { ob2.click(); } catch (e) {} }
           selectTab('signup');
@@ -6569,11 +6563,8 @@
     placeThread(threadOrigin);
     var r = $('acct-repairs'), th = $('acct-thread'), nt = $('acct-newticket'), ib = $('acct-inbox');
     if (r) r.hidden = true; if (nt) nt.hidden = true; if (ib) ib.hidden = true; if (th) th.hidden = false;
-    /* ACCOUNT_FIX_PASS_3_2026_11_06: the reply box's human check
-       renders as the thread opens (either door — Repairs or
-       Messages), while it is on screen; see the new-request mount
-       in wireRepairs for why it no longer renders at page load. */
-    if (window.atrTurnstile) window.atrTurnstile.mount($('ts-acct-msg'));
+    /* V157 (expanded scope): the reply box has no human check any
+     * more — account / portal flows are check-free. */
     var back = $('acct-thread-back');
     if (back) back.innerHTML = '<i class="fas fa-arrow-left"></i> Back to ' + (threadOrigin === 'messages' ? 'messages' : 'repairs');
     var info = $('acct-thread-info');
@@ -7543,12 +7534,8 @@
     var ntBtn = $('acct-new-ticket-btn'); if (ntBtn) ntBtn.addEventListener('click', function () {
       var r = $('acct-repairs'), th = $('acct-thread'), nt = $('acct-newticket');
       if (r) r.hidden = true; if (th) th.hidden = true; if (nt) nt.hidden = false;
-      /* ACCOUNT_FIX_PASS_3_2026_11_06: the new-request human check
-         renders NOW, with its view on screen — not at page load
-         inside the hidden view, where the one-shot Turnstile render
-         could sit dead ("waiting for Cloudflare"). Same mount as
-         script.js's showNewTicket; mount() is idempotent. */
-      if (window.atrTurnstile) window.atrTurnstile.mount($('ts-acct-ticket'));
+      /* V157 (expanded scope): the new-request form has no human
+       * check any more — account / portal flows are check-free. */
     });
     var msgForm = $('acct-msg-form');
     if (msgForm) msgForm.addEventListener('submit', function (e) {
@@ -7948,9 +7935,8 @@
     if (st) st.hidden = isLogin;
     showErr($('authx-login-error'), '');
     showErr($('authx-signup-error'), '');
-    /* SITE_TURNSTILE_2026_11_02 (staged): (re)mount whichever auth
-     * widget just became visible; mounting is idempotent. */
-    if (window.atrTurnstile) window.atrTurnstile.mount($(isLogin ? 'ts-login' : 'ts-signup'));
+    /* V157 (expanded scope): no auth widget is mounted on tab switch
+     * any more — Log In and Sign Up both have no human check. */
   }
 
   /* V146_SIGNUP_SPLIT_2026_11_13 (owner, Nov 13, 2026): one Sign Up
@@ -7992,14 +7978,12 @@
        the client guard on sb and explain instead of dying silently. */
     var SB_UNAVAILABLE = 'Sign-in could not load \u2014 check your connection and refresh the page. If it keeps happening, call or text us at (937) 280-6243.';
 
-    /* SITE_TURNSTILE_2026_11_02 (staged): mount the login + signup
-     * human checks when the account box opens. TURNSTILE_AUTOFILL_2026_11_12
-     * (v130b): turnstile.js also mounts them on page load now, so an
-     * autofilled sign-in is not racing the mount; this re-mount is a
-     * no-op. Supabase Auth verifies
-     * these tokens itself once captcha protection is enabled in the
-     * project (see CHANGES.md) — the token travels as captchaToken on
-     * the sign-in / sign-up calls below. */
+    /* V157 (expanded scope, Nov 17, 2026): NO human check is mounted
+     * for the account box any more. The Turnstile check lives only on
+     * website form submissions (atr-forms.js, ts-voo) — never on
+     * sign-in, sign-up, or password reset. The old SITE_TURNSTILE
+     * mount-on-open and TURNSTILE_AUTOFILL page-load mount are gone
+     * with the ts-login / ts-signup widgets. */
     var acctOpenBtn = $('account-open-btn');
     if (acctOpenBtn) acctOpenBtn.addEventListener('click', function () {
       /* ACCOUNT_FIX_PASS_3_2026_11_06: the button is a toggle — when
@@ -8031,12 +8015,8 @@
          them inside the still-hidden page — mount() renders exactly
          once and can never re-render, so the check could sit dead
          ("waiting for Cloudflare") when the customer reached it. */
-      setTimeout(function () {
-        if (window.atrTurnstile) {
-          window.atrTurnstile.mount($('ts-login'));
-          window.atrTurnstile.mount($('ts-signup'));
-        }
-      }, 60);
+      /* V157 (expanded scope): no auth widget is mounted on account
+       * open any more — Log In and Sign Up both have no human check. */
     });
 
     /* QR_FIX_PASS_2_2026_11_05: quick-glance wiring — the chevron
@@ -8113,17 +8093,18 @@
     if (loginForm) loginForm.addEventListener('submit', function (e) {
       e.preventDefault();
       showErr($('authx-login-error'), '');
-      var loginCheck = $('authx-login-check'); if (loginCheck) loginCheck.hidden = true;
+      /* V157 (expanded scope, Nov 17, 2026): NO human check on
+       * sign-in at all — the check lives only on website form
+       * submissions now. loginCheck element removed with ts-login. */
       var email = String($('authx-login-email').value || '').trim().toLowerCase();
       var pass = $('authx-login-password').value || '';
       if (!validEmail(email)) { showErr($('authx-login-error'), 'Please enter a valid email address.'); return; }
       if (!pass) { showErr($('authx-login-error'), 'Please enter your password.'); return; }
       if (!sb) { showErr($('authx-login-error'), SB_UNAVAILABLE); return; }
       var btn = loginForm.querySelector('button[type="submit"]');
-      function submitLogin(tsTokLogin) {
+      function submitLogin() {
         if (btn) { btn.disabled = true; btn.innerHTML = 'Logging in…'; }
-        sb.auth.signInWithPassword({ email: email, password: pass, options: { captchaToken: tsTokLogin } }).then(function (res) {
-          if (window.atrTurnstile) window.atrTurnstile.reset($('ts-login'));
+        sb.auth.signInWithPassword({ email: email, password: pass }).then(function (res) {
           if (btn) { btn.disabled = false; btn.innerHTML = 'Log In <i class="fas fa-arrow-right"></i>'; }
           if (res.error) {
             showErr($('authx-login-error'), 'That email and password did not match. New here? Tap Sign Up — or use "Forgot your password?" below.');
@@ -8135,52 +8116,26 @@
           showErr($('authx-login-error'), 'Something went wrong. Please try again.');
         });
       }
-      /* LOGIN_SPEED_2026_11_10: never dead-end on the human check.
-         The widget can still be sitting on "Verifying…" — or its
-         token can have gone stale — when Log In is tapped, above
-         all on a slow connection (the owner's own hotspot). Wait
-         for a fresh token (the helper waits out the check — it only
-         restarts a check that already went stale) and only then
-         submit. The old
-         "complete the check, then log in again" stop is gone; the
-         only failure left is the check truly never finishing.
-         TURNSTILE_SIGNIN_WAIT_2026_11_12 (v132): the helper now
-         waits 120s and never restarts a slow first challenge; while
-         it waits the button stays disabled and the plain line under
-         it (#authx-login-check) says the check is still running, so
-         the guest knows it is working, not dead. */
-      if (window.atrTurnstile && window.atrTurnstile.freshToken) {
-        if (btn) { btn.disabled = true; btn.innerHTML = 'One moment — finishing the quick human check…'; }
-        if (loginCheck) loginCheck.hidden = false;
-        window.atrTurnstile.freshToken($('ts-login'), function (tsTokLogin) {
-          if (loginCheck) loginCheck.hidden = true;
-          if (btn) { btn.disabled = false; btn.innerHTML = 'Log In <i class="fas fa-arrow-right"></i>'; }
-          if (!tsTokLogin) {
-            showErr($('authx-login-error'), 'The human check did not finish. Check your connection and tap Log In again — or call or text us at (937) 280-6243.');
-            return;
-          }
-          submitLogin(tsTokLogin);
-        });
-        return;
-      }
-      var tsTokLogin = window.atrTurnstile ? window.atrTurnstile.token($('ts-login')) : '';
-      if (!tsTokLogin) {
-        if (window.atrTurnstile) window.atrTurnstile.mount($('ts-login'));
-        showErr($('authx-login-error'), 'Please complete the quick human check above the button, then log in again.');
-        return;
-      }
-      submitLogin(tsTokLogin);
+      /* V157 (expanded scope): no human check on sign-in — submit straight away. */
+      submitLogin();
     });
 
     var signupForm = $('authx-signup-form');
     if (signupForm) signupForm.addEventListener('submit', function (e) {
       e.preventDefault();
       showErr($('authx-signup-error'), '');
-      var signupCheck = $('authx-signup-check'); if (signupCheck) signupCheck.hidden = true;
+      var signupCheck = $('authx-signup-check'); /* V157: element removed with the check — always null now, guard kept */ if (signupCheck) signupCheck.hidden = true;
       var name = String($('authx-signup-name').value || '').trim();
       var email = String($('authx-signup-email').value || '').trim().toLowerCase();
       var phone = String($('authx-signup-phone').value || '').trim();
       var address = String($('authx-signup-address').value || '').trim();
+      /* V157_BUGFIX_2026_11_17: `pass` was read below but never defined
+       * in this handler (the only `var pass` in the file lived in the
+       * sign-up-offer popup) — every live sign-up threw
+       * "pass is not defined" before it could create an account.
+       * Defined here with the other fields; found by the v157 smoke
+       * test, not by a guest report. */
+      var pass = String($('authx-signup-password').value || '');
       /* V146_SIGNUP_SPLIT_2026_11_13: phone and address are required
          for both faces (the old "Phone (optional)" is gone); business
          also needs its EIN — 9 digits, typed with or without the dash. */
@@ -8197,13 +8152,18 @@
       var signupMeta = { full_name: name, account_type: signupType };
       if (bizSignup) { signupMeta.business_name = name; signupMeta.ein = ein; }
       var btn = signupForm.querySelector('button[type="submit"]');
-      function submitSignup(tsTokSignup) {
+      /* V157_NO_TURNSTILE_FIRST_LOGIN_2026_11_17 (owner, Nov 17, 2026):
+       * NO human check on sign-up — it IS the first login. The old
+       * freshToken wait was the dead end for guests whose check never
+       * finished (ad blocker / tracking protection). No captchaToken
+       * is sent; email confirmation is still required before any
+       * session is created (see the note below). */
+      function submitSignup() {
       if (btn) { btn.disabled = true; btn.innerHTML = 'Creating account…'; }
       sb.auth.signUp({
         email: email, password: pass,
-        options: { data: signupMeta, emailRedirectTo: window.location.origin + window.location.pathname, captchaToken: tsTokSignup }
+        options: { data: signupMeta, emailRedirectTo: window.location.origin + window.location.pathname }
       }).then(function (res) {
-        if (window.atrTurnstile) window.atrTurnstile.reset($('ts-signup'));
         if (btn) { btn.disabled = false; btn.innerHTML = 'Create Account <i class="fas fa-arrow-right"></i>'; }
         if (res.error) {
           showErr($('authx-signup-error'), /already/i.test(res.error.message || '')
@@ -8222,36 +8182,8 @@
         showErr($('authx-signup-error'), 'Something went wrong. Please try again.');
       });
       }
-      /* TURNSTILE_AUTOFILL_2026_11_12 (v130b): same wait as Log In.
-         Autofill fills the fields at once and Create Account can be
-         tapped before the widget has produced a token — never dead-end
-         with "complete the check and try again". Wait for a fresh token
-         (the helper waits out the first challenge) and only then submit.
-         TURNSTILE_SIGNIN_WAIT_2026_11_12 (v132): the wait is 120s and
-         never restarts a slow first challenge; the plain line under
-         the button (#authx-signup-check) says the check is still
-         running while it waits. */
-      if (window.atrTurnstile && window.atrTurnstile.freshToken) {
-        if (btn) { btn.disabled = true; btn.innerHTML = 'One moment — finishing the quick human check…'; }
-        if (signupCheck) signupCheck.hidden = false;
-        window.atrTurnstile.freshToken($('ts-signup'), function (tsTokSignup) {
-          if (signupCheck) signupCheck.hidden = true;
-          if (btn) { btn.disabled = false; btn.innerHTML = 'Create Account <i class="fas fa-arrow-right"></i>'; }
-          if (!tsTokSignup) {
-            showErr($('authx-signup-error'), 'The human check did not finish. Check your connection and tap Create Account again — or call or text us at (937) 280-6243.');
-            return;
-          }
-          submitSignup(tsTokSignup);
-        });
-        return;
-      }
-      var tsTokSignup = window.atrTurnstile ? window.atrTurnstile.token($('ts-signup')) : '';
-      if (!tsTokSignup) {
-        if (window.atrTurnstile) window.atrTurnstile.mount($('ts-signup'));
-        showErr($('authx-signup-error'), 'Please complete the quick human check above the button, then create the account again.');
-        return;
-      }
-      submitSignup(tsTokSignup);
+      /* V157: no human check on sign-up — submit straight away. */
+      submitSignup();
     });
 
     var logoutBtn = $('authx-logout');
