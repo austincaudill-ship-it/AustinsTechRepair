@@ -5770,7 +5770,7 @@
           ups.sort(function (a, b) { return a.u.days - b.u.days; });
           var head = '<div class="portal-card p3-celeb"><p class="portal-card-title"><i class="fas fa-cake-candles"></i> Celebrations &mdash; birthdays in the next 30 days</p>';
           if (!ups.length) {
-            box.innerHTML = head + '<p class="portal-card-meta">No guest birthdays coming up. Birthdays are added on each guest card &mdash; or by the guest from their account page on the website. /* V173_CELEBRATIONS_HOME_2026_11_18: below made sense only while the block sat above the guest list; on Home the cards are on the Guest panel. */</p></div>';
+            box.innerHTML = head + '<p class="portal-card-meta">No guest birthdays coming up. Birthdays are added on each guest card &mdash; or by the guest from their account page on the website.</p></div>';
             return;
           }
           var rows = ups.map(function (x) {
