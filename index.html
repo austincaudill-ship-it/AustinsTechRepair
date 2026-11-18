@@ -9516,6 +9516,10 @@
 .ghub-greet-line{margin:.5rem 0 0;font-size:.95rem;color:#7D6C5B}
 .ghub-greet-line #ghub-greet{font-weight:800;color:#2C231A}
 .ghub-greet-role{display:inline-block;background:#D9540D;color:#fff;border-radius:999px;padding:.05rem .55rem;font-size:.72rem;font-weight:800}
+/* V171_PREVIEW_2026_11_18: staff-only "Preview as" switcher — sits under the greeting in Quick Actions, never a guest feature. */
+.ghub-preview{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;margin:.45rem 0 0;font-size:.8rem;color:var(--muted,#7D6C5B)}
+.ghub-preview-label{font-weight:800;letter-spacing:.03em}
+.ghub-preview button[aria-pressed="true"]{background:#D9540D;border-color:#D9540D;color:#fff}
 .ghub-greet-sep{margin:0 .1rem}
 html[data-theme="dark"] .ghub-greet-line{color:var(--muted,#A89880)}
 html[data-theme="dark"] .ghub-greet-line #ghub-greet{color:var(--ink,#F0E8DA)}
@@ -9629,6 +9633,12 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
          every pane, so no pane switch can hide it. Same ids the Home pane
          used to carry, so paintHome() below needs no id changes. -->
     <p class="ghub-greet-line"><span id="ghub-greet">Hello</span> <span class="ghub-greet-sep" aria-hidden="true">&middot;</span> <span class="ghub-greet-role" id="ghub-greet-role">Guest</span> <span class="ghub-greet-sep" aria-hidden="true">&middot;</span> <span class="ghub-clock" id="ghub-clock"></span></p>
+    <!-- V171_PREVIEW_2026_11_18 (Austin, Nov 18, 2026): staff-only "Preview as" switcher — Super Admin / staff can flip the Hub between the Guest face and the Business face to test what each audience sees. Hidden by default; only a confirmed staff role reveals it. Session-only override, nothing stored — a reload returns to the account's real audience. -->
+    <div class="ghub-preview" id="ghub-preview" hidden>
+      <span class="ghub-preview-label">Preview as (staff testing):</span>
+      <button class="btn btn-outline btn-sm" type="button" data-ghub-preview="guest" aria-pressed="false">Guest</button>
+      <button class="btn btn-outline btn-sm" type="button" data-ghub-preview="business" aria-pressed="false">Business</button>
+    </div>
   </div>
   <div class="ghub-body">
     <nav class="ghub-side" id="ghub-side" aria-label="Guest Hub actions">
@@ -10713,12 +10723,94 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
      same source. The hub reads its own session user first and the
      global second, so the face is right even before the hub's own
      loader resolves. No picker, no toggle, no new detection rule. */
-  function ghubIsBusiness() {
+  /* V171_HUB_GREETING_STAFF_ROLE_2026_11_18 (Austin, Nov 18, 2026): the hub greeting shows the staff role
+     when the signed-in user is staff — "Super Admin" for Austin, never the
+     account type. The role comes from the sign-in user's OWN employee_profiles
+     row (the same own-row read gate() below and the site's staff gate already
+     do; RLS policy "Employees read own profile", auth.uid() = id), and the
+     labels are the Associate Hub's own ROLE_LADDER display map verbatim
+     (portal.js:12939-12948) via the same normRole rule ('owner' ->
+     'super_admin', 'associate' -> 'customer_service'). A failed read or no
+     row is NOT staff — the greeting falls back to the account type, never a
+     wrong role. The read is cached per user id; a different sign-in on the
+     same page life invalidates it. */
+  var GHUB_STAFF_ROLE_LABELS = { super_admin: 'Super Admin', co_super_admin: 'Co-Super Admin', admin: 'Admin', technician_1: 'Technician 1', technician_2: 'Technician 2', technician_3: 'Technician 3', technician_4: 'Technician 4', customer_service: 'Guest Service Associate' };
+  function ghubStaffRoleLabel(role) {
+    var r = String(role || '').trim().toLowerCase();
+    if (r === 'owner') r = 'super_admin';
+    if (r === 'associate') r = 'customer_service';
+    if (!r) return '';
+    return GHUB_STAFF_ROLE_LABELS[r] || String(role || '').trim();
+  }
+  var ghubStaffRole = undefined; /* undefined = not read yet; null = not staff; otherwise the stored role string */
+  var ghubStaffRoleUid = '';
+  var ghubStaffRoleLoading = false;
+  function loadGhubStaffRole() {
+    var uid = (user && user.id) || '';
+    if (uid && ghubStaffRoleUid !== uid) { ghubStaffRole = undefined; ghubStaffRoleLoading = false; }
+    if (ghubStaffRole !== undefined || ghubStaffRoleLoading) return;
+    sb = sb || client(); if (!sb) return;
+    function run(u) {
+      if (!u) { ghubStaffRole = null; ghubStaffRoleUid = ''; paintGhubPreview(); return; }
+      ghubStaffRoleUid = u; ghubStaffRoleLoading = true;
+      sb.from('employee_profiles').select('id,role').eq('id', u).maybeSingle().then(function (r) {
+        ghubStaffRoleLoading = false;
+        ghubStaffRole = (r.data && r.data.id) ? (r.data.role || '') : null;
+        paintHome(); paintGhubPreview();
+      }).catch(function () { ghubStaffRoleLoading = false; paintGhubPreview(); /* transient: stays unread, a later paint retries */ });
+    }
+    if (uid) run(uid);
+    else sb.auth.getSession().then(function (s) { var u2 = s && s.data && s.data.session && s.data.session.user; run(u2 && u2.id); }).catch(function () { paintGhubPreview(); });
+  }
+  /* V171_PREVIEW_2026_11_18 (Austin, Nov 18, 2026): staff-only preview override —
+     in-memory only, nothing stored. A reload returns to the account's real
+     audience. While previewing, the Hub paints the previewed face everywhere
+     paintBhubAudience reaches (tag, offers, consent prices, door label,
+     Documents head) and the greeting role reads the previewed audience, so
+     the preview is faithful. */
+  var ghubPreview = null; /* null = real audience; 'guest' | 'business' = staff preview */
+  function ghubRealIsBusiness() {
     var t = (user && user.user_metadata && user.user_metadata.account_type) || '';
     if (t) return String(t).toLowerCase() === 'business';
     return window.atrAccountType === 'business';
   }
+  function ghubIsBusiness() {
+    if (ghubPreview) return ghubPreview === 'business';
+    return ghubRealIsBusiness();
+  }
   function ghubHubName() { return ghubIsBusiness() ? 'Business Hub' : 'Guest Hub'; }
+  function ghubGreetRole() {
+    /* V171_HUB_GREETING_STAFF_ROLE_2026_11_18: while previewing, the previewed audience wins
+       (faithful preview); otherwise the staff role wins over the account
+       type; non-staff keep Business / Guest as before. */
+    if (ghubPreview) return ghubPreview === 'business' ? 'Business' : 'Guest';
+    var lbl = ghubStaffRole ? ghubStaffRoleLabel(ghubStaffRole) : '';
+    if (lbl) return lbl;
+    return ghubIsBusiness() ? 'Business' : 'Guest';
+  }
+  function paintGhubPreview() {
+    var box = $('ghub-preview'); if (!box) return;
+    var staff = !!ghubStaffRole;
+    box.hidden = !staff;
+    if (!staff) return;
+    var eff = ghubPreview || (ghubRealIsBusiness() ? 'business' : 'guest');
+    box.querySelectorAll('[data-ghub-preview]').forEach(function (b) {
+      b.setAttribute('aria-pressed', b.getAttribute('data-ghub-preview') === eff ? 'true' : 'false');
+    });
+  }
+  function setGhubPreview(aud) {
+    if (!ghubStaffRole) return; /* staff-only: a tap can only land while the switcher is shown */
+    ghubPreview = (aud === 'guest' || aud === 'business') ? aud : null;
+    paintBhubAudience();
+    paintHome();
+    paintGhubPreview();
+  }
+  window.atrGhubPreview = setGhubPreview;
+  window.atrGhubGreetRole = ghubGreetRole;
+  window.atrGhubStaffRole = function () { return ghubStaffRole; };
+  window.atrGhubPreviewValue = function () { return ghubPreview; };
+  window.atrGhubRealIsBusiness = ghubRealIsBusiness;
+  window.atrGhubLoadStaffRole = loadGhubStaffRole;
   var ghubFeeNoteGuestInner = null;
   /* V170_PRICING_2026_11_18: the Business Hub quotes business figures only — visit
      $34.99, diagnostics $64.99. The guest wording (both prices) is
@@ -10758,6 +10850,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
   window.atrPaintBhubAudience = paintBhubAudience;
   function paintHome() {
     paintBhubAudience(); /* V170_ROUTING_2026_11_18: the face follows the account — see helpers below */
+    loadGhubStaffRole(); /* V171_HUB_GREETING_STAFF_ROLE_2026_11_18: the staff-role read starts on first paint; the greeting repaints when it resolves */
     /* V169_GUEST_GREETING_2026_11_18 (Austin, Nov 18, 2026): Quick Actions must show what
        the Associate Hub shows at the top — "Good morning, [first name]"
        + Guest status + time + date. The name falls back
@@ -10777,11 +10870,10 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
     /* V169_GUEST_GREETING_2026_11_18: the status rides with the greeting — Guest, or
        Business when the sign-in profile says business. It is read from
        the same profile paintHome already falls back through. */
+    /* V171_HUB_GREETING_STAFF_ROLE_2026_11_18: the staff role wins over the account type (see ghubGreetRole);
+       non-staff keep Business / Guest exactly as v169/v170 painted them. */
     var roleEl = $('ghub-greet-role');
-    if (roleEl) {
-      var acctType = (user && user.user_metadata && user.user_metadata.account_type) || '';
-      roleEl.textContent = String(acctType).toLowerCase() === 'business' ? 'Business' : 'Guest';
-    }
+    if (roleEl) roleEl.textContent = ghubGreetRole();
     var c = $('ghub-clock');
     if (c) {
       var now = new Date();
@@ -10793,6 +10885,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
     if (ac && cust) ac.innerHTML = '<p><strong>' + esc(cust.name || '') + '</strong></p><p>' + esc(cust.email || '') + '</p><p>' + esc(cust.phone || '') + '</p><p>' + esc(cust.address || '') + '</p><p class="ghub-muted">Only your own details are shown here.</p>';
     var mc = $('ghub-member-card');
     if (mc) { var tier = $('acct-qr-tier'), pts = $('acct-points-num'); mc.innerHTML = '<p><strong>' + esc(tier ? tier.textContent : 'ATR One Free') + '</strong></p><p>Reward points: <strong>' + esc(pts ? pts.textContent : '0') + '</strong></p>'; }
+    paintGhubPreview(); /* V171_PREVIEW_2026_11_18: keep the switcher state fresh on every paint */
   }
   /* V169_GUEST_HOME_2026_11_18: the Home landing page reads the same two tables the
      Associate Hub Home reads — company news (portal_home_posts) and
@@ -10881,6 +10974,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
   function openHub(tab) {
     var hub = $('guest-hub'); if (!hub) return;
     paintBhubAudience(); /* V170_ROUTING_2026_11_18: the face is set before the Hub is shown */
+    loadGhubStaffRole(); /* V171_HUB_GREETING_STAFF_ROLE_2026_11_18: the staff role is read when the Hub opens; the greeting repaints when it resolves */
     hub.hidden = false; document.body.style.overflow = 'hidden';
     loadAll(); setTimeout(loadPrefs, 600);
     showTab(tab || 'home');
@@ -11044,6 +11138,10 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
           syncGhubThemeIcon();
         }
       });
+    });
+    /* V171_PREVIEW_2026_11_18: the staff-only "Preview as" switcher — same direct-listener pattern as the Quick Actions row above. */
+    document.querySelectorAll('#guest-hub [data-ghub-preview]').forEach(function (b) {
+      b.addEventListener('click', function () { setGhubPreview(b.getAttribute('data-ghub-preview')); });
     });
     var ne = $('acct-notif-email'), nt2 = $('acct-notif-text');
     /* V162_GUEST_GUIDES_2026_11_17 (Austin, Nov 17, 2026): the Guides
