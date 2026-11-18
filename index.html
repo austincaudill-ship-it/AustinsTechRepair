@@ -2151,6 +2151,7 @@
                  it only for a signed-in associate (employee_profiles row);
                  guests never see it. Tapping it opens the Associate Hub. -->
             <button class="acct-menu-item acct-flat-row" id="acct-guesthub-btn" type="button" hidden><i class="fas fa-house"></i> <span id="acct-guesthub-label">Guest Hub</span> <i class="fas fa-arrow-right acct-menu-chev" aria-hidden="true"></i></button>
+            <button class="acct-menu-item acct-flat-row" id="acct-bizhub-btn" type="button" hidden><i class="fas fa-building"></i> Business Hub <i class="fas fa-arrow-right acct-menu-chev" aria-hidden="true"></i></button> <!-- V172_BUSINESS_HUB_ROW_2026_11_18 (Austin, Nov 18, 2026): staff-only Business Hub row — order is Guest Hub, Business Hub, Associate Hub. -->
              <a class="acct-menu-item acct-flat-row" id="emp-dash-link" href="portal.html" hidden><i class="fas fa-briefcase"></i> Associate Hub <i class="fas fa-arrow-right acct-menu-chev" aria-hidden="true"></i></a>
             <!-- V162_ACCOUNT_DROPDOWN_2026_11_17 (Austin, Nov 17, 2026): the ATRG Connect dropdown row is gone — Connect lives in the Guest Hub only now (the Connect tab). The protection is the human-issued code on the gated page, not the door. -->
 
@@ -7762,9 +7763,11 @@
      too. A guest asking about fees hears $14.99 / $34.99; a business
      hears $34.99 / $64.99. The effective audience is the hub's
      (preview-aware via window.atrHubIsBusiness); if the hook is missing
-     the answer fails safe to the guest figures. The membership answer
-     stays the four-tier catalogue — it matches the Home offers, which
-     show all four tiers to guests by the v170 design. */
+     the answer fails safe to the guest figures.
+     V172_AUDIENCE_OFFERS_2026_11_18 (Austin, Nov 18, 2026): the membership answer is
+     audience-aware too — it follows the Home offers, which are now
+     audience-only (a guest hears Individual + Family, a business hears
+     Business + Business Pro). */
   function assistantFeeBiz() {
     try { return typeof window.atrHubIsBusiness === 'function' ? !!window.atrHubIsBusiness() : false; }
     catch (e) { return false; }
@@ -7777,6 +7780,9 @@
     if (key === 'diagnostics') return biz
       ? 'Estimates are free. Diagnostics is $64.99 — even if we have to open your device or run deep board-level diagnostics to identify the problem, there is no extra diagnostic charge beyond that.'
       : 'Estimates are free. Diagnostics is $34.99 — even if we have to open your device or run deep board-level diagnostics to identify the problem, there is no extra diagnostic charge beyond that.';
+    if (key === 'membership') return biz /* V172_AUDIENCE_OFFERS_2026_11_18: the assistant's membership answer follows the Home offers — a guest hears Individual + Family, a business hears Business + Business Pro. */
+      ? 'ATR One membership: $49.99/mo Business (10 devices), $99.99/mo Business Pro (25 devices). Members get 35% off repairs and 40% off accessories on Business, and 45% off repairs and 55% off accessories on Business Pro, plus wholesale parts pricing, a free screen protector installed with every repair, free priority shipping on parts, priority scheduling, same-day diagnostics, free remote support, and 14 days to exchange or return accessories bought from us &mdash; every accessory carries its manufacturer&rsquo;s warranty, and we add 90 days on top of it. Business and Business Pro memberships require your business EIN at signup. On a business plan, we come out and set up your point of sale — Square, cash drawers, your systems; we help with the setup, we do not process payments. Points: every completed repair earns points — 1 point per $1 on ATR One Free, and 10 points per $1 on ATR One Plus Business and Business Pro; 100 points = $5.' /* V172_AUDIENCE_OFFERS_2026_11_18 */
+      : 'ATR One membership: $9.99/mo Individual (1 device), $19.99/mo Family (5 devices). Members get 20% off repairs and 25% off accessories on Individual, 25% off repairs and 30% off accessories on Family, plus wholesale parts pricing, a free screen protector installed with every repair, free priority shipping on parts, priority scheduling, same-day diagnostics, free remote support, and 14 days to exchange or return accessories bought from us &mdash; every accessory carries its manufacturer&rsquo;s warranty, and we add 90 days on top of it. Points: every completed repair earns points — 1 point per $1 on ATR One Free, 5 points per $1 on ATR One Plus Individual and Family; 100 points = $5.'; /* V172_AUDIENCE_OFFERS_2026_11_18 */
     return ASSISTANT_FAQ[key];
   }
   function assistantIntent(text) {
@@ -8880,6 +8886,7 @@
          gets a fresh answer here instead of a button hidden for the
          whole session. Fail-closed inside; guests notice nothing. */
       if (window.atrStaffRecheck) { try { window.atrStaffRecheck(); } catch (e) {} }
+      if (window.atrGhubGate) { try { window.atrGhubGate(); } catch (e) {} } /* V172_BUSINESS_HUB_ROW_2026_11_18: opening My Account re-runs the hub-row gate too, so the Guest/Business Hub rows always match the current session (same pattern as the staff recheck above). */
       /* QR_FIX_PASS_2_2026_11_05: My Account is a page — the account
          button navigates to it like any other page switch. Wired here
          as well as in script.js so the button works even against a
@@ -8906,6 +8913,7 @@
       closeGlance();
       /* STAFF_GATE_HARDEN_2026_11_10: same re-ask as the account button. */
       if (window.atrStaffRecheck) { try { window.atrStaffRecheck(); } catch (e) {} }
+      if (window.atrGhubGate) { try { window.atrGhubGate(); } catch (e) {} } /* V172_BUSINESS_HUB_ROW_2026_11_18: opening My Account re-runs the hub-row gate too, so the Guest/Business Hub rows always match the current session (same pattern as the staff recheck above). */
       if (window.location.hash !== '#account') { window.location.hash = '#account'; }
     });
     document.addEventListener('click', function (e) {
@@ -9607,6 +9615,7 @@
 .ghub-greet-role{display:inline-block;background:#D9540D;color:#fff;border-radius:999px;padding:.05rem .55rem;font-size:.72rem;font-weight:800}
 /* V171_PREVIEW_2026_11_18: staff-only "Preview as" switcher — sits under the greeting in Quick Actions, never a guest feature. */
 .ghub-preview{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;margin:.45rem 0 0;font-size:.8rem;color:var(--muted,#7D6C5B)}
+.ghub-preview[hidden]{display:none} /* V172_AUDIENCE_OFFERS_2026_11_18 (Austin, Nov 18, 2026): the "Preview as" switcher is staff-only — without this guard its display:flex rule beats [hidden] and it renders for guests too (caught by v172's visual proof; same class of bug as the v171 signup EIN field). */
 .ghub-preview-label{font-weight:800;letter-spacing:.03em}
 .ghub-preview button[aria-pressed="true"]{background:#D9540D;border-color:#D9540D;color:#fff}
 .ghub-greet-sep{margin:0 .1rem}
@@ -10927,15 +10936,23 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
     var sheet = $('ghub-search-sheet'); if (sheet) sheet.setAttribute('aria-label', 'Search the ' + name);
     var st = $('ghub-search-title'); if (st) st.textContent = 'Search the ' + name;
     var si = $('ghub-search-input'); if (si) si.setAttribute('aria-label', 'Search the ' + name);
-    var bl = $('acct-guesthub-label'); if (bl) bl.textContent = name;
+    var bl = $('acct-guesthub-label'); if (bl) bl.textContent = ghubStaffRole ? 'Guest Hub' : name; /* V172_BUSINESS_HUB_ROW_2026_11_18: for staff the row is the fixed "Guest Hub" entry (it opens the Guest face); only a non-staff account's own row reads its hub. */
     var nh = $('acct-notif-hub'); if (nh) nh.textContent = name;
     /* display:none inline (not the hidden property): .mm-tier-row
        carries author display rules, which would beat [hidden]. */
+    /* V172_AUDIENCE_OFFERS_2026_11_18 (Austin, Nov 18, 2026): the Home offers are
+       audience-only — a guest sees Individual + Family only, a business sees
+       Business + Business Pro only. (v170 hid the guest rows for business
+       only; the business rows showed to guests too.) */
     document.querySelectorAll('#ghub-home-offers [data-offer-tier]').forEach(function (el) {
-      el.style.display = (biz && el.getAttribute('data-offer-tier') === 'guest') ? 'none' : '';
+      var tier = el.getAttribute('data-offer-tier'); /* V172_AUDIENCE_OFFERS_2026_11_18 */
+      el.style.display = ((biz && tier === 'guest') || (!biz && tier === 'business')) ? 'none' : ''; /* V172_AUDIENCE_OFFERS_2026_11_18 */
     });
+    /* V172_AUDIENCE_OFFERS_2026_11_18 (Austin, Nov 18, 2026): the membership tier list is
+       audience-only too — the same rule as the Home offers above. */
     document.querySelectorAll('.mm-tier-row[data-mm-audience]').forEach(function (el) {
-      el.style.display = (biz && el.getAttribute('data-mm-audience') === 'guest') ? 'none' : '';
+      var aud = el.getAttribute('data-mm-audience'); /* V172_AUDIENCE_OFFERS_2026_11_18 */
+      el.style.display = ((biz && aud === 'guest') || (!biz && aud === 'business')) ? 'none' : ''; /* V172_AUDIENCE_OFFERS_2026_11_18 */
     });
     var fee = $('acct-t-fee-note');
     if (fee) {
@@ -11053,10 +11070,14 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
     sb = sb || client(); if (!sb || !btn) return;
     sb.auth.getSession().then(function (s) {
       var u = s && s.data && s.data.session && s.data.session.user;
-      if (!u) { btn.hidden = true; return; }
-      return sb.from('employee_profiles').select('id').eq('id', u.id).maybeSingle().then(function (r) {
+      if (!u) { btn.hidden = true; var _bb0 = $('acct-bizhub-btn'); if (_bb0) _bb0.hidden = true; /* V172_BUSINESS_HUB_ROW_2026_11_18 */ return; }
+      return sb.from('employee_profiles').select('id,role').eq('id', u.id).maybeSingle().then(function (r) {
         var staff = !!(r.data && r.data.id);
-        btn.hidden = staff;
+        /* V172_BUSINESS_HUB_ROW_2026_11_18 (Austin, Nov 18, 2026): staff see all three hub rows — Guest Hub opens the Guest face, Business Hub opens the Business face, Associate Hub is the real Associate Hub. The Guest Hub row is no longer hidden for staff (it was); non-staff still see only their own hub row, and never the Business Hub row. */
+        btn.hidden = false; /* V172_BUSINESS_HUB_ROW_2026_11_18 */
+        var bizBtn = $('acct-bizhub-btn'); if (bizBtn) bizBtn.hidden = !staff; /* V172_BUSINESS_HUB_ROW_2026_11_18 */
+        /* V172_BUSINESS_HUB_ROW_2026_11_18: stash the staff role where the hub's preview helpers read it, so the row taps can set the preview synchronously — the hub's own role read may not have run yet when the account page opens. Only on a clean read: a transient error leaves the cached role alone, same as loadGhubStaffRole. */
+        if (!r.error) { ghubStaffRole = staff ? ((r.data && r.data.role) || '') : null; ghubStaffRoleUid = u.id; } /* V172_BUSINESS_HUB_ROW_2026_11_18 */
         /* V170_ROUTING_2026_11_18: the account-page door reads the hub the account
            actually lands in — Business Hub for a business account, Guest
            Hub for a guest. Same metadata rule as the greeting. */
@@ -11186,9 +11207,17 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
   window.atrGuestHubSearch = { open: openGhubSearch, close: closeGhubSearch, sections: GHUB_SECTIONS };
   window.atrOpenGuestHub = openHub;
   window.atrCloseGuestHub = closeHub;
+  window.atrGhubGate = gate; /* V172_BUSINESS_HUB_ROW_2026_11_18: opening My Account re-runs the hub-row gate (see the account-open handler) so the rows always match the current session. */
+  /* V172_BUSINESS_HUB_ROW_2026_11_18 (Austin, Nov 18, 2026): the account dropdown's hub rows open the Hub in a face — staff tap Guest Hub for the Guest face, Business Hub for the Business face. The preview is the same session-only override as the "Preview as" switcher (reload resets, nothing stored). The row is hidden unless gate() confirmed staff, and setGhubPreview itself refuses non-staff, so a tap from a non-staff account simply opens the real audience. Both rows land on the Service tab, exactly like the Guest Hub row always has. */
+  function openHubAs(aud) {
+    if (ghubStaffRole) setGhubPreview(aud); /* V172_BUSINESS_HUB_ROW_2026_11_18 */
+    openHub('service');
+  }
   document.addEventListener('DOMContentLoaded', function () {
     var btn = $('acct-guesthub-btn');
-    if (btn) btn.addEventListener('click', function () { openHub('service'); });
+    if (btn) btn.addEventListener('click', function () { openHubAs('guest'); }); /* V172_BUSINESS_HUB_ROW_2026_11_18: staff preview the Guest face; non-staff open their own hub, unchanged. */
+    var bizBtn = $('acct-bizhub-btn'); /* V172_BUSINESS_HUB_ROW_2026_11_18 */
+    if (bizBtn) bizBtn.addEventListener('click', function () { openHubAs('business'); }); /* V172_BUSINESS_HUB_ROW_2026_11_18 */
     document.querySelectorAll('#guest-hub [data-ghub]').forEach(function (b) {
       b.addEventListener('click', function () {
         if (b.getAttribute('data-ghub') === 'search') { openGhubSearch(); return; }
