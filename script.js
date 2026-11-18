@@ -7359,8 +7359,11 @@ document.addEventListener('click', function (e) {
   }
 
   function renderList(tickets, docs, sigs) {
-    var list = $('acct-sign-docs-list');
-    if (!list) return;
+    /* V169_TICKET_SIGN_FIX_2026_11_18 (audit, Nov 18, 2026): the rows are computed
+     * whether or not the "Sign your documents here" list exists — v163
+     * removed that box, so this used to return early, lastRows stayed
+     * empty, and the ticket-page Sign buttons silently did nothing.
+     * Only the painting below touches the DOM. */
     var rows = [];
     tickets.forEach(function (t) {
       var tSigs = sigs.filter(function (x) { return x.ticket_id === t.id; });
@@ -7394,6 +7397,8 @@ document.addEventListener('click', function (e) {
       });
     });
     lastRows = rows;
+    var list = $('acct-sign-docs-list');
+    if (!list) return;
         if (!tickets.length) {
           /* Nothing waiting — the standard documents are still here to
            * read (signing waits for an open service, because a
@@ -7423,7 +7428,10 @@ document.addEventListener('click', function (e) {
   }
 
   function openPreview(btn, ticketId, type) {
-    if (type === 'agreement' || type === 'terms' || type === 'warranty') {
+    if (type === 'agreement' || type === 'terms' || type === 'warranty' || type === 'media') {
+      /* V169_DOC_OVERLAY_2026_11_18: the Hub overlay when it exists (the Hub script
+         defines it); a plain new tab only when it does not. */
+      if (window.atrOpenDocOverlay) { window.atrOpenDocOverlay('view-doc.html?doc=' + encodeURIComponent(type) + '&t=' + encodeURIComponent(ticketId), 'Your document'); return; }
       window.open('view-doc.html?doc=' + encodeURIComponent(type) + '&t=' + encodeURIComponent(ticketId), '_blank');
       return;
     }
@@ -7442,6 +7450,7 @@ document.addEventListener('click', function (e) {
     }).then(function (res) { return res.json(); })
       .then(function (out) {
         if (!out || !out.ok || !out.url) throw new Error('That preview could not be opened — please use the link in your email.');
+        if (window.atrOpenDocOverlay) { window.atrOpenDocOverlay(out.url, 'Your document'); return; }
         window.open(out.url, '_blank');
       })
       .catch(function (err) {
@@ -7467,6 +7476,9 @@ document.addEventListener('click', function (e) {
       '<p>By signing, you confirm you have read this document and agree to it. Your signature is recorded with your name and today&rsquo;s date.</p>' +
       '<label for="atr-signdoc-name">Your full name</label>' +
       '<input id="atr-signdoc-name" type="text" autocomplete="name" placeholder="Type your full name">' +
+      '<label>Draw your signature</label>' +
+      '<canvas id="atr-signdoc-pad" width="520" height="160" style="width:100%;height:160px;border:1px solid #c7c7cc;border-radius:10px;background:#fff;touch-action:none;"></canvas>' +
+      '<button type="button" class="acct-signdoc-btn acct-signdoc-btn--ghost" id="atr-signdoc-pad-clear">Clear signature</button>' +
       '<p class="atr-signmodal-err" id="atr-signdoc-err" hidden></p>' +
       '<div class="atr-signmodal-btns">' +
       '<button type="button" class="acct-signdoc-btn" id="atr-signdoc-go">Sign</button>' +
@@ -7478,6 +7490,9 @@ document.addEventListener('click', function (e) {
     var goBtn = overlay.querySelector('#atr-signdoc-go');
     input.value = (s && s.name) || '';
     input.focus();
+    /* V169_SIGN_PAD_2026_11_18: the same finger pad as the viewer — the drawing is
+       kept for this ticket + type, so the downloads carry it. */
+    var signPad = window.__atrSigPadSetup ? window.__atrSigPadSetup(overlay.querySelector('#atr-signdoc-pad'), overlay.querySelector('#atr-signdoc-pad-clear')) : null;
     function close() { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }
     overlay.querySelector('#atr-signdoc-cancel').addEventListener('click', close);
     overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });
@@ -7489,6 +7504,7 @@ document.addEventListener('click', function (e) {
         input.focus();
         return;
       }
+      if (signPad && signPad.getDataUrl() && window.__atrDrawnSigSet) window.__atrDrawnSigSet(ticketId, type, signPad.getDataUrl());
       goBtn.disabled = true;
       errEl.hidden = true;
       if (!sb) {
@@ -7516,6 +7532,9 @@ document.addEventListener('click', function (e) {
         if (res && res.error) throw res.error;
         close();
         loadSignDocs();
+        /* V169_TICKET_SIGN_FIX_2026_11_18: the ticket page's Documents section
+         * re-reads, so the signed row shows "Signed" without a reload. */
+        if (window.atrLoadTicketDocuments && window.__atrOpenTicket) window.atrLoadTicketDocuments(window.__atrOpenTicket);
       }).catch(function (err) {
         errEl.textContent = (err && err.message) || 'That did not save. Please try again.';
         errEl.hidden = false;
@@ -7540,13 +7559,17 @@ document.addEventListener('click', function (e) {
   }
 
   function loadSignDocs() {
+    /* V169_TICKET_SIGN_FIX_2026_11_18 (audit, Nov 18, 2026): the box and list may not
+     * exist — v163 removed the "Sign your documents here" box from the
+     * account page. The data still loads and lastRows still fills, so
+     * the ticket-page Sign dialog works; only the painting touches
+     * the DOM. */
     var box = $('acct-sign-docs');
     var list = $('acct-sign-docs-list');
-    if (!box || !list) return Promise.resolve();
     var s = getSession();
-    if (!s || !s.id || !sb) { box.hidden = true; return Promise.resolve(); }
-    box.hidden = false;
-    list.innerHTML = '<p class="acct-muted">Loading your documents…</p>';
+    if (!s || !s.id || !sb) { if (box) box.hidden = true; return Promise.resolve(); }
+    if (box) box.hidden = false;
+    if (list) list.innerHTML = '<p class="acct-muted">Loading your documents…</p>';
     return sb.from('tickets').select('id,device_type,brand,model,status,created_at')
       .eq('customer_id', s.id)
       .order('created_at', { ascending: false })
@@ -7554,7 +7577,7 @@ document.addEventListener('click', function (e) {
       .then(function (tres) {
         var tickets = (tres && tres.data) || [];
         if (!tickets.length) {
-          list.innerHTML = '<p class="acct-muted">Nothing needs your signature right now.</p>';
+          if (list) list.innerHTML = '<p class="acct-muted">Nothing needs your signature right now.</p>';
           lastRows = [];
           return;
         }
@@ -7569,7 +7592,7 @@ document.addEventListener('click', function (e) {
         });
       })
       .catch(function () {
-        list.innerHTML = '<p class="acct-muted">We could not load your documents. Please try again, or call or text us at (937) 280-6243.</p>';
+        if (list) list.innerHTML = '<p class="acct-muted">We could not load your documents. Please try again, or call or text us at (937) 280-6243.</p>';
       });
   }
 

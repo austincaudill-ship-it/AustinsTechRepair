@@ -22307,8 +22307,9 @@ function loadTicketThread(client, ticketId) {
        New Service Request above. */
     var homeBtn = $('portal-hub-home-btn');
     if (homeBtn) homeBtn.addEventListener('click', function () {
-      var t = $('portal-tab-home');
-      if (t) t.click();
+      /* V169_GUEST_HUB_2026_11_18: the sidebar Home tab is gone (Home is a Quick Action
+         now) — open the Home panel directly instead of clicking it. */
+      activateTab('home');
     });
   })();
   /* ================= end HUB_SEARCH_2026_11_09 ================= */

@@ -3556,6 +3556,21 @@
     <!-- END SECTION: warranty-request (WARRANTY_FORM_2026_11_03) -->
 
     <!-- ==================== SERVICE AGREEMENT ==================== -->
+    <section id="media" class="page">
+      <div class="container" style="max-width: 860px; margin: 0 auto; padding: 2.5rem 1rem;">
+        <h2 style="color: var(--atr-dark, #171512);">Media Release</h2>
+        <p style="font-size: 1.05rem; color: #555;">Austin&rsquo;s Tech Repair Group &mdash; &ldquo;Every technology, big or small &mdash; we tackle them all.&rdquo;</p>
+        <p>I give Austin&rsquo;s Tech Repair Group permission to take photographs and short video clips of my device and of the repair work while it is being done.</p>
+        <p>Austin&rsquo;s Tech Repair Group may use these photographs and clips on its website, its social media pages, and in its advertising and portfolio, to show the kind of work it does.</p>
+        <p>Photographs and clips focus on the device and the work area. Photographs of people are taken only with their own agreement.</p>
+        <p>Signing is always the guest&rsquo;s choice. Service, pricing, and warranty are the same either way. A guest may take back this permission at any time with a written note or email, and Austin&rsquo;s Tech Repair Group will stop using the photographs and clips from that point on.</p>
+        <p>The guest signing below confirms they own the device, or are authorized by its owner, and agrees to the terms above.</p>
+        <!-- V169_MEDIA_PREVIEW_2026_11_18 (Austin, Nov 18, 2026): the Media Release had no
+             viewable document at all — no site section and no file in the
+             viewer — so its preview failed. This section is the document,
+             word for word from the release text the portal already carries. -->
+      </div>
+    </section>
     <section id="service-agreement" class="page">
       <div class="section">
         <div class="container">
@@ -5171,7 +5186,7 @@
   .acct-signdoc-btn--ghost{background:transparent;color:#0057b8}
   .acct-signdoc-btn:disabled{opacity:.55;cursor:default}
   .acct-signdoc-signed{color:#1d7a1d;font-weight:800}
-  .atr-signmodal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:2000;display:flex;align-items:center;justify-content:center;padding:1rem}
+  .atr-signmodal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:2300;display:flex;align-items:center;justify-content:center;padding:1rem} /* V169_TICKET_SIGN_FIX_2026_11_18: 2300, above the Guest Hub (2000) — the dialog must be tappable on the ticket page, not just visible under it. */
   .atr-signmodal{background:#fff;color:#1c1c1e;border-radius:14px;max-width:440px;width:100%;padding:1.25rem;box-shadow:0 12px 40px rgba(0,0,0,.3)}
   .atr-signmodal h3{margin:0 0 .5rem;font-size:1.1rem}
   .atr-signmodal p{margin:.4rem 0;font-size:.92rem;line-height:1.5}
@@ -6203,6 +6218,9 @@
     return '<span class="acct-status acct-status-' + cls + '">' + escX(c.label) + '</span>';
   }
   function showRepairsView() {
+    /* V169_HUB_SPLIT_2026_11_18: the list lives in its own My Services pane now —
+       Back goes there. */
+    if (window.atrGuestHubShowTab) { window.atrGuestHubShowTab('myservices'); return; }
     var r = $('acct-repairs'), th = $('acct-thread'), nt = $('acct-newticket');
     if (r) r.hidden = false; if (th) th.hidden = true; if (nt) nt.hidden = true;
     var rv = $('acct-view-repairs');
@@ -6687,7 +6705,12 @@
   }
   function openThread(t, origin) {
     openTicket = t;
+    window.__atrOpenTicket = t; /* V169_TICKET_SIGN_FIX_2026_11_18: the sign dialog's
+       success refresh reads the open ticket through this. */
     threadOrigin = origin === 'messages' ? 'messages' : 'repairs';
+    /* V169_HUB_SPLIT_2026_11_18: the list and the thread no longer share a pane —
+       open the pane that holds the thread first. */
+    if (window.atrGuestHubShowTab) window.atrGuestHubShowTab(threadOrigin === 'messages' ? 'chat' : 'service');
     placeThread(threadOrigin);
     var r = $('acct-repairs'), th = $('acct-thread'), nt = $('acct-newticket'), ib = $('acct-inbox');
     if (r) r.hidden = true; if (nt) nt.hidden = true; if (ib) ib.hidden = true; if (th) th.hidden = false;
@@ -7029,6 +7052,119 @@
     a.href = url; a.download = filename; document.body.appendChild(a); a.click();
     setTimeout(function () { document.body.removeChild(a); window.URL.revokeObjectURL(url); }, 500);
   }
+  /* V169_SIGNED_DOC_2026_11_18 (Austin, Nov 18, 2026): the signature block
+     that goes ON the document itself. Signing used to record only a
+     database row and a "Signed — name, date" status line — the document
+     never carried the signature, print hid the sign box, and downloads
+     saved the raw section. The block reads the real signer name and
+     real signed date from the document_signatures row — never invented
+     — and is injected into the document copy itself (viewer + download),
+     so it prints with the document. One-signature rule stands: each
+     document shows its own row (agreement row on the agreement,
+     warranty row on the warranty). Exposed on window so the Guest Hub
+     download path (a separate IIFE below) uses the same block. */
+  window.__atrSigBlockHtml = function (row, img) {
+    function e(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+    var date = new Date(row.signed_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+    /* V169_SIGN_PAD_2026_11_18: the drawn signature rides in the block when the guest
+       drew one this session; otherwise the block is name + date only. */
+    var imgHtml = img ? '<img src="' + img + '" alt="Signature" style="max-width:280px;height:auto;display:block;margin:0 0 6px;">' : '';
+    return '<section class="atr-signed-block" style="margin-top:32px;padding-top:16px;border-top:2px solid #1c1c1e;">'
+      + imgHtml
+      + '<p style="font-weight:700;margin:0 0 4px;">Signed by ' + e(row.signer_name) + ' on ' + e(date) + '</p>'
+      + '<p style="margin:0;color:#3a3a3c;">Recorded in your Guest Hub account.</p></section>';
+  };
+  window.__atrSigBlockInject = function (htmlText, row, img) {
+    if (!row || !htmlText) return htmlText;
+    var block = window.__atrSigBlockHtml(row, img);
+    if (htmlText.indexOf('</body>') !== -1) return htmlText.replace('</body>', block + '</body>');
+    return htmlText + block;
+  };
+  /* V169_SIGN_PAD_2026_11_18 (Austin, Nov 18, 2026): a finger signature pad — draw
+     with a finger (touch) or a mouse, on any sign surface that offers
+     one. The typed name stays as the printed name; the drawing is the
+     signature itself. Pointer events cover touch + mouse; touch-action
+     none stops the page scrolling under the finger while drawing. */
+  window.__atrDrawnSig = {};
+  window.__atrDrawnSigGet = function (ticketId, type) {
+    return (window.__atrDrawnSig && window.__atrDrawnSig[ticketId + '|' + type]) || '';
+  };
+  window.__atrDrawnSigSet = function (ticketId, type, dataUrl) {
+    if (!window.__atrDrawnSig) window.__atrDrawnSig = {};
+    if (dataUrl) window.__atrDrawnSig[ticketId + '|' + type] = dataUrl;
+  };
+  window.__atrSigPadSetup = function (canvas, clearBtn) {
+    var api = { getDataUrl: function () { return ''; }, clear: function () {}, hasStroke: function () { return false; } };
+    if (!canvas || !canvas.getContext) return api;
+    var ctx = canvas.getContext('2d');
+    var drawing = false, stroked = false;
+    ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#1c1c1e';
+    function pos(e) {
+      var r = canvas.getBoundingClientRect();
+      var t = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]) || e;
+      return { x: (t.clientX - r.left) * (canvas.width / r.width), y: (t.clientY - r.top) * (canvas.height / r.height) };
+    }
+    function start(e) { e.preventDefault(); drawing = true; var p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }
+    function move(e) { if (!drawing) return; e.preventDefault(); var p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); stroked = true; }
+    function end(e) { if (e) e.preventDefault(); drawing = false; }
+    canvas.addEventListener('pointerdown', start);
+    canvas.addEventListener('pointermove', move);
+    canvas.addEventListener('pointerup', end);
+    canvas.addEventListener('pointerleave', end);
+    canvas.addEventListener('touchstart', start, { passive: false });
+    canvas.addEventListener('touchmove', move, { passive: false });
+    canvas.addEventListener('touchend', end);
+    function clear() { ctx.clearRect(0, 0, canvas.width, canvas.height); stroked = false; }
+    if (clearBtn) clearBtn.addEventListener('click', function (e) { e.preventDefault(); clear(); });
+    api.getDataUrl = function () { return stroked ? canvas.toDataURL('image/png') : ''; };
+    api.clear = clear;
+    api.hasStroke = function () { return stroked; };
+    return api;
+  };
+  /* V169_DOC_OVERLAY_2026_11_18: one helper for every View/Preview in the Hub — the
+     document opens in the overlay above, never in a new tab. The frame
+     loads the same view-doc.html (or a filed-document URL), so the
+     viewer's own sign box works inside the overlay. Print talks to the
+     frame; a filed file from another origin cannot be printed through
+     the frame, so that path opens the file instead. */
+  window.atrOpenDocOverlay = function (url, label) {
+    var ov = document.getElementById('ghub-doc-overlay');
+    var fr = document.getElementById('ghub-doc-overlay-frame');
+    var ti = document.getElementById('ghub-doc-overlay-title');
+    if (!ov || !fr) { window.open(url, '_blank'); return; }
+    window.__atrDocOverlayUrl = url;
+    if (ti) ti.textContent = label || 'Your document';
+    fr.src = url;
+    ov.hidden = false;
+    var cl = document.getElementById('ghub-doc-overlay-close');
+    if (cl) cl.focus();
+  };
+  window.atrCloseDocOverlay = function () {
+    var ov = document.getElementById('ghub-doc-overlay');
+    var fr = document.getElementById('ghub-doc-overlay-frame');
+    if (!ov) return;
+    ov.hidden = true;
+    if (fr) fr.src = 'about:blank';
+    window.__atrDocOverlayUrl = '';
+  };
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (t && t.id === 'ghub-doc-overlay-close') window.atrCloseDocOverlay();
+    if (t && t.id === 'ghub-doc-overlay-print') {
+      var fr = document.getElementById('ghub-doc-overlay-frame');
+      try {
+        if (fr && fr.contentWindow) fr.contentWindow.print();
+      } catch (err) {
+        if (window.__atrDocOverlayUrl) window.open(window.__atrDocOverlayUrl, '_blank');
+      }
+    }
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      var ov = document.getElementById('ghub-doc-overlay');
+      if (ov && !ov.hidden) window.atrCloseDocOverlay();
+    }
+  });
   function v158DownloadDoc(btn, ticketId, type) {
     if (!btn || !ticketId) return;
     var old = btn.textContent;
@@ -7036,13 +7172,21 @@
     function done() { if (btn.textContent === 'Opening…') { btn.textContent = old; btn.disabled = false; } }
     function fail(msg) { btn.textContent = msg || 'Download unavailable.'; setTimeout(done, 2500); }
     if (type === 'agreement' || type === 'terms' || type === 'warranty') {
-      var section = type === 'warranty' ? 'warranty' : type === 'terms' ? 'terms' : 'service-agreement';
-      fetch('/index.html', { credentials: 'same-origin' }).then(function (r) { if (!r.ok) throw new Error('x'); return r.text(); })
-        .then(function (siteHtml) {
+      var section = type === 'warranty' ? 'warranty' : type === 'terms' ? 'terms' : type === 'media' ? 'media' : 'service-agreement';
+      /* V169_SIGNED_DOC_2026_11_18: the downloaded copy carries the
+         signature block when this document is signed. */
+      var sigP = sb ? sb.from('document_signatures').select('signer_name,signed_at').eq('ticket_id', ticketId).eq('document_type', type).order('signed_at', { ascending: false }).limit(1)
+        .then(function (r) { return (r && r.data && r.data[0]) || null; }).catch(function () { return null; }) : Promise.resolve(null);
+      Promise.all([
+        fetch('/index.html', { credentials: 'same-origin' }).then(function (r) { if (!r.ok) throw new Error('x'); return r.text(); }),
+        sigP
+      ]).then(function (pair) {
+          var siteHtml = pair[0], sig = pair[1];
           var doc = new DOMParser().parseFromString(siteHtml, 'text/html');
           var sec = doc.getElementById(section);
           if (!sec) throw new Error('x');
-          v158SaveBlob(section + '.html', new Blob(['<!doctype html><html><head><meta charset="utf-8"><title>' + section + '</title></head><body>' + sec.outerHTML + '</body></html>'], { type: 'text/html' }));
+          var full = '<!doctype html><html><head><meta charset="utf-8"><title>' + section + '</title></head><body>' + sec.outerHTML + '</body></html>';
+          v158SaveBlob(section + '.html', new Blob([window.__atrSigBlockInject ? window.__atrSigBlockInject(full, sig, window.__atrDrawnSigGet ? window.__atrDrawnSigGet(ticketId, type) : '') : full], { type: 'text/html' }));
           done();
         }).catch(function () { fail(); });
       return;
@@ -7054,9 +7198,26 @@
       return fetch(SUPABASE_URL + '/functions/v1/doc-view', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'apikey': SUPABASE_ANON_KEY }, body: JSON.stringify({ ticket_id: ticketId, kind: type }) });
     }).then(function (res) { return res.json(); }).then(function (out) {
       if (!out || !out.ok || !out.url) throw new Error('No file to download yet.');
-      return fetch(out.url).then(function (r) { if (!r.ok) throw new Error('Download failed.'); return r.blob(); });
-    }).then(function (blob) {
-      v158SaveBlob((type || 'document') + '.html', blob);
+      return fetch(out.url).then(function (r) {
+        if (!r.ok) throw new Error('Download failed.');
+        var ct = (r.headers.get('content-type') || '');
+        /* V169_SIGNED_DOC_2026_11_18: an HTML copy carries the signature
+           block when signed; anything else downloads exactly as stored. */
+        if (ct.indexOf('html') !== -1) return r.text().then(function (txt) { return { html: txt }; });
+        return r.blob().then(function (b) { return { blob: b }; });
+      });
+    }).then(function (got) {
+      if (got.html) {
+        if (type === 'receipt') { v158SaveBlob((type || 'document') + '.html', new Blob([got.html], { type: 'text/html' })); done(); return; }
+        sb.from('document_signatures').select('signer_name,signed_at').eq('ticket_id', ticketId).eq('document_type', type).order('signed_at', { ascending: false }).limit(1)
+          .then(function (r) { return (r && r.data && r.data[0]) || null; }).catch(function () { return null; })
+          .then(function (sig) {
+            v158SaveBlob((type || 'document') + '.html', new Blob([window.__atrSigBlockInject ? window.__atrSigBlockInject(got.html, sig, window.__atrDrawnSigGet ? window.__atrDrawnSigGet(ticketId, type) : '') : got.html], { type: 'text/html' }));
+            done();
+          });
+        return;
+      }
+      v158SaveBlob((type || 'document') + '.html', got.blob);
       done();
     }).catch(function (err) { fail((err && err.message) || 'Download unavailable.'); });
   }
@@ -7109,8 +7270,8 @@
         if (!btn || !openTicket) return;
         var action = btn.getAttribute('data-v158doc'), type = btn.getAttribute('data-type'), ticketId = btn.getAttribute('data-ticket');
         if (action === 'preview') {
-          if (type === 'agreement' || type === 'terms' || type === 'warranty') {
-            window.open('view-doc.html?doc=' + encodeURIComponent(type) + '&t=' + encodeURIComponent(ticketId), '_blank');
+          if (type === 'agreement' || type === 'terms' || type === 'warranty' || type === 'media') {
+            window.atrOpenDocOverlay('view-doc.html?doc=' + encodeURIComponent(type) + '&t=' + encodeURIComponent(ticketId), 'Your document');
             return;
           }
           if (!sb) return;
@@ -7121,12 +7282,12 @@
             return fetch(SUPABASE_URL + '/functions/v1/doc-view', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'apikey': SUPABASE_ANON_KEY }, body: JSON.stringify({ ticket_id: ticketId, kind: type }) });
           }).then(function (res) { return res.json(); }).then(function (out) {
             if (!out || !out.ok || !out.url) throw new Error('That preview could not be opened — please use the link in your email.');
-            window.open(out.url, '_blank');
+            window.atrOpenDocOverlay(out.url, 'Your document');
           }).catch(function (err) { btn.textContent = (err && err.message) || 'Preview unavailable.'; }).then(function () { btn.disabled = false; });
         }
         if (action === 'sign') {
           if (window.__atrDocSigning && window.__atrDocSigning.openSign) { window.__atrDocSigning.openSign(ticketId, type); return; }
-          window.open('view-doc.html?doc=' + encodeURIComponent(type) + '&t=' + encodeURIComponent(ticketId), '_blank');
+          window.atrOpenDocOverlay('view-doc.html?doc=' + encodeURIComponent(type) + '&t=' + encodeURIComponent(ticketId), 'Your document');
         }
         if (action === 'download') { v158DownloadDoc(btn, ticketId, type); return; }
       });
@@ -7310,6 +7471,7 @@
           return '<div class="acct-msg ' + (mine ? 'acct-msg-me' : 'acct-msg-shop') + '"><span class="acct-msg-who">' + (mine ? 'You' : assistantWhoLabel(m.sender)) + '</span>' + escX(m.message || '') + '</div>';
         }).join('');
         atrSecShow('acct-sec-messages', 'acct-sec-messages-hint', rows.length + (rows.length === 1 ? ' message' : ' messages')); /* V168_GUEST_TICKET_COLLAPSE_2026_11_18 */
+        if (t.__general) { var _vd = $('acct-sec-messages'); if (_vd) _vd.open = true; } /* V169_AI_MESSAGES_2026_11_18: the general conversation is the chat — its messages stay open so the guest sees the reply arrive. Ticket threads keep the V168 closed default. */
         box.scrollTop = box.scrollHeight;
         if (t.__general) paintAssistantBar(); /* GUEST_ASSISTANT_2026_11_10 */
       })
@@ -7895,6 +8057,27 @@
      through the site's own form-alert sender so the team sees it
      where they already work. Never awaited; a failed alert never
      fails the send. */
+  /* V169_AI_MESSAGES_2026_11_18 (Austin, Nov 18, 2026): the Service Messages assistant
+     is a REAL AI — it answers from the guest's own tickets, charges and
+     status, and it answers DIRECTLY (this surface only; draft-only
+     still stands for every other portal guest message). The model call
+     lives in the service-messages-ai Edge Function; this is only the
+     caller. No canned replies anywhere: if the function is not
+     configured yet (no model key — Austin has not decided paid vs
+     free), it returns not_configured and the message falls through to
+     the team with one honest note, never a canned answer. */
+  function atrAiReply(text) {
+    if (!sb || !currentCust) return Promise.resolve({ ok: false, error: 'no_session' });
+    return sb.auth.getSession().then(function (sres) {
+      var token = sres && sres.data && sres.data.session ? sres.data.session.access_token : null;
+      if (!token) return { ok: false, error: 'no_session' };
+      return fetch(SUPABASE_URL + '/functions/v1/service-messages-ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'apikey': SUPABASE_ANON_KEY },
+        body: JSON.stringify({ message: text })
+      }).then(function (res) { return res.json(); }).catch(function () { return { ok: false, error: 'unreachable' }; });
+    }).catch(function () { return { ok: false, error: 'unreachable' }; });
+  }
   function fireGeneralAlert(text) {
     if (!currentCust || typeof fetch !== 'function') return;
     try {
@@ -7938,18 +8121,24 @@
     function afterInsert() {
       if (assistantEscalated || assistantLegacy) { fireGeneralAlert(text); done(true); return; }
       if (assistantEscalationPhrase(text)) { assistantEscalate('typed', function () { done(true); }); return; }
-      if (!greeted) {
-        assistantInsert('auto', ASSISTANT_AUTO_TEXT).then(function () {
-          return assistantInsert('bot', ASSISTANT_OFFER_TEXT);
-        }).then(function () {
-          try { window.localStorage.setItem(greetedKey, new Date().toISOString()); } catch (e) { /* marker is best-effort */ }
-          assistantChipsNow = assistantMainChips();
-          paintAssistantBar();
-          done(true);
-        });
-        return;
-      }
-      assistantDeliverTurn(assistantHandleText(text), function () { done(true); });
+      /* V169_AI_MESSAGES_2026_11_18: no canned opening, no option menu — the AI answers
+         from the guest's own tickets. On any failure (or while the model
+         is not configured yet) the message still reaches the team
+         through the alert, plus ONE honest note per conversation that
+         the assistant is still being set up — never a canned answer. */
+      atrAiReply(text).then(function (out) {
+        if (out && out.ok && out.reply) {
+          assistantInsert('bot', out.reply).then(function () { paintAssistantBar(); done(true); });
+          return;
+        }
+        fireGeneralAlert(text);
+        if (!window.__atrAiSetupNoteShown) {
+          window.__atrAiSetupNoteShown = true;
+          assistantInsert('auto', 'Thanks for messaging us — your message is with the team, and an associate will reply right here.').then(function () { paintAssistantBar(); done(true); });
+          return;
+        }
+        paintAssistantBar(); done(true);
+      });
     }
     sb.from('messages').insert({ ticket_id: null, customer_id: custId, sender: 'customer', message: text })
       .then(function (res) {
@@ -8060,6 +8249,9 @@
     });
     var ntBack = $('acct-newticket-back'); if (ntBack) ntBack.addEventListener('click', showRepairsView);
     var ntBtn = $('acct-new-ticket-btn'); if (ntBtn) ntBtn.addEventListener('click', function () {
+      /* V169_HUB_SPLIT_2026_11_18: the button lives in the My Services pane now —
+         switch to the Service Request pane, where the form lives. */
+      if (window.atrGuestHubShowTab) window.atrGuestHubShowTab('service');
       var r = $('acct-repairs'), th = $('acct-thread'), nt = $('acct-newticket');
       if (r) r.hidden = true; if (th) th.hidden = true; if (nt) nt.hidden = false;
       var pv = $('acct-view-repairs'); if (pv) pv.hidden = false;
@@ -8564,6 +8756,19 @@
   window.atrReloadMyRepairs = function () {
     if (currentCust) { loadMyRepairs(currentCust); return true; }
     if (currentCustomer) { loadMyRepairs(currentCustomer); return true; }
+    var c = sb || getClient(); if (c) sb = c;
+    if (!sb || !sb.auth || typeof sb.auth.getSession !== 'function') return false;
+    sb.auth.getSession().then(function (s) {
+      var sess = s && s.data && s.data.session;
+      if (sess) enterAccount(sess);
+    }).catch(function () {});
+    return true;
+  };
+  /* V169_HUB_SPLIT_2026_11_18: the My Estimates self-heal (see showTab) mirrors
+     atrReloadMyRepairs — same fallbacks, same shape. */
+  window.atrReloadMyEstimates = function () {
+    if (currentCust) { loadMyEstimates(currentCust); return true; }
+    if (currentCustomer) { loadMyEstimates(currentCustomer); return true; }
     var c = sb || getClient(); if (c) sb = c;
     if (!sb || !sb.auth || typeof sb.auth.getSession !== 'function') return false;
     sb.auth.getSession().then(function (s) {
@@ -9300,13 +9505,20 @@
 .ghub-body{display:flex;height:calc(100% - 118px)}
 .ghub-side{width:230px;flex:none;background:#FFFDF8;border-right:1px solid #E6D9C0;overflow-y:auto;padding:.7rem .6rem 5.5rem}
 .ghub-side-label{font-size:.68rem;font-weight:800;letter-spacing:1.5px;color:#7D6C5B;padding:.2rem .5rem .5rem}
-.ghub-tab{display:flex;align-items:center;gap:.6rem;width:100%;text-align:left;background:none;border:none;border-radius:.7rem;padding:.65rem .7rem;font-size:.95rem;font-weight:700;color:#2C231A;cursor:pointer;font-family:inherit}
-.ghub-tab.active,.ghub-tab:hover{background:#FBEADB;color:#A63E06}
+.ghub-tab{display:flex;align-items:center;gap:.6rem;width:100%;text-align:left;background:#FFFDF8;border:1px solid #E6D9C0;border-radius:.7rem;padding:.65rem .7rem;font-size:.95rem;font-weight:700;color:#2C231A;cursor:pointer;font-family:inherit;margin-bottom:.45rem}
+.ghub-tab:hover{border-color:#D9540D;color:#A63E06}
+.ghub-tab.active{background:#D9540D;border-color:#D9540D;color:#fff}
 .ghub-panel{flex:1;overflow-y:auto;padding:1rem 1rem 6rem}
 .ghub-panel h2{font-size:1.35rem;margin:.2rem 0 .6rem}
 .ghub-card{background:#FFFDF8;border:1px solid #E6D9C0;border-radius:1rem;padding:1rem;margin-bottom:.9rem}
 .ghub-muted{color:#7D6C5B;font-size:.92rem}
 .ghub-greet{font-size:1.5rem;font-weight:800;margin:.2rem 0}
+.ghub-greet-line{margin:.5rem 0 0;font-size:.95rem;color:#7D6C5B}
+.ghub-greet-line #ghub-greet{font-weight:800;color:#2C231A}
+.ghub-greet-role{display:inline-block;background:#D9540D;color:#fff;border-radius:999px;padding:.05rem .55rem;font-size:.72rem;font-weight:800}
+.ghub-greet-sep{margin:0 .1rem}
+html[data-theme="dark"] .ghub-greet-line{color:var(--muted,#A89880)}
+html[data-theme="dark"] .ghub-greet-line #ghub-greet{color:var(--ink,#F0E8DA)}
 .ghub-status{display:inline-block;background:#DFF0EA;color:#0E7C6B;border-radius:999px;padding:.15rem .7rem;font-weight:800;font-size:.8rem}
 .ghub-steps{list-style:none;padding:0;margin:.5rem 0}
 .ghub-steps li{padding:.3rem 0;border-bottom:1px solid #EFE6D2}
@@ -9326,6 +9538,13 @@ html[data-theme="dark"] .ghub-signblock{background:var(--surface,#221B14);border
 html[data-theme="dark"] .ghub-details summary{background:var(--surface,#221B14);border-color:var(--line,#3A2F24);color:var(--ink,#F0E8DA)}
 html[data-theme="dark"] .ghub-signed{color:#7BDDB4}
 .ghub-thumb{position:fixed;left:0;right:0;bottom:0;z-index:2001;background:#FFFDF8;border-top:1px solid #E6D9C0;display:flex;justify-content:space-around;padding:.55rem 0 calc(.55rem + env(safe-area-inset-bottom))}
+#ghub-doc-overlay{position:fixed;inset:0;z-index:2300;background:#FAF6EE;display:flex;flex-direction:column}
+#ghub-doc-overlay[hidden]{display:none}
+.ghub-doc-overlay-bar{display:flex;align-items:center;gap:.6rem;padding:.7rem .9rem;background:#FFFDF8;border-bottom:1px solid #E6D9C0}
+.ghub-doc-overlay-actions{margin-left:auto;display:flex;gap:.45rem}
+#ghub-doc-overlay-frame{flex:1;width:100%;border:0;background:#fff}
+html[data-theme="dark"] #ghub-doc-overlay{background:var(--surface,#221B14)}
+html[data-theme="dark"] .ghub-doc-overlay-bar{background:var(--surface,#221B14);border-bottom-color:var(--line,#3A2F24)}
 .ghub-thumb button{background:none;border:none;font-size:.68rem;font-weight:700;color:#7D6C5B;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:3px}
 .ghub-thumb button.active{color:#D9540D}
 .ghub-thumb button i{font-size:1.1rem}
@@ -9348,8 +9567,9 @@ html[data-theme="dark"] .ghub-topbar{background:var(--surface,#221B14);border-bo
 html[data-theme="dark"] .ghub-brand{color:var(--ink,#F0E8DA)}
 html[data-theme="dark"] .ghub-qa-label,html[data-theme="dark"] .ghub-side-label{color:var(--muted,#A89880)}
 html[data-theme="dark"] .ghub-side{background:var(--surface,#221B14);border-right-color:var(--line,#3A2F24)}
-html[data-theme="dark"] .ghub-tab{color:var(--ink,#F0E8DA)}
-html[data-theme="dark"] .ghub-tab.active,html[data-theme="dark"] .ghub-tab:hover{background:var(--brand-soft,#3A2113);color:#F5B98A}
+html[data-theme="dark"] .ghub-tab{color:var(--ink,#F0E8DA);background:var(--surface,#221B14);border-color:var(--line,#3A2F24)}
+html[data-theme="dark"] .ghub-tab:hover{border-color:#D9540D;color:#F5B98A}
+html[data-theme="dark"] .ghub-tab.active{background:#D9540D;border-color:#D9540D;color:#fff}
 html[data-theme="dark"] .ghub-panel h2{color:var(--ink,#F0E8DA)}
 html[data-theme="dark"] .ghub-card{background:var(--surface,#221B14);border-color:var(--line,#3A2F24)}
 html[data-theme="dark"] .ghub-muted{color:var(--muted,#A89880)}
@@ -9402,13 +9622,30 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
       <button class="btn btn-outline btn-sm" type="button" data-ghub-qa="logout"><i class="fas fa-sign-out-alt"></i> Log Out</button>
       <button class="btn btn-outline btn-sm" type="button" data-ghub-qa="theme" aria-label="Toggle dark mode" title="Toggle dark/light mode"><i class="fas fa-moon" id="ghub-theme-icon"></i></button>
     </div>
+    <!-- V169_GUEST_GREETING_2026_11_18 (Austin, Nov 18, 2026): the daypart greeting + first
+         name + status + time + date lives IN QUICK ACTIONS under the Home
+         button — NOT inside the Home pane — and it ALWAYS STAYS no matter
+         what pane is open, in both hubs. It lives in the topbar, outside
+         every pane, so no pane switch can hide it. Same ids the Home pane
+         used to carry, so paintHome() below needs no id changes. -->
+    <p class="ghub-greet-line"><span id="ghub-greet">Hello</span> <span class="ghub-greet-sep" aria-hidden="true">&middot;</span> <span class="ghub-greet-role" id="ghub-greet-role">Guest</span> <span class="ghub-greet-sep" aria-hidden="true">&middot;</span> <span class="ghub-clock" id="ghub-clock"></span></p>
   </div>
   <div class="ghub-body">
     <nav class="ghub-side" aria-label="Guest Hub actions">
       <div class="ghub-side-label">ACTION BUTTONS</div>
-      <button class="ghub-tab active" type="button" data-ghub="home"><i class="fas fa-house"></i> Home</button>
+      <!-- V169_GUEST_HUB_2026_11_18 (Austin, Nov 18, 2026): Home is gone from the sidebar
+           ACTION BUTTON list in BOTH hubs — Home is already a Quick Action,
+           no redundancy. The Home pane itself stays; only the duplicate
+           sidebar button goes. -->
       <button class="ghub-tab" type="button" data-ghub="service"><i class="fas fa-tools"></i> Service Request</button>
       <button class="ghub-tab" type="button" data-ghub="account"><i class="fas fa-user"></i> Account</button>
+      <!-- V169_HUB_SPLIT_2026_11_18 (Austin, Nov 18, 2026): three separate action
+           buttons right under Account — My Services (the repair tickets;
+           "service request is literally the services"), My One-on-Ones,
+           My Estimates — each its own, never mixed. -->
+      <button class="ghub-tab" type="button" data-ghub="myservices"><i class="fas fa-clipboard-list"></i> My Services</button>
+      <button class="ghub-tab" type="button" data-ghub="oneonones"><i class="fas fa-graduation-cap"></i> My One-on-Ones</button>
+      <button class="ghub-tab" type="button" data-ghub="estimates"><i class="fas fa-file-invoice-dollar"></i> My Estimates</button>
       <button class="ghub-tab" type="button" data-ghub="chat"><i class="fas fa-comment-dots"></i> Service Messages <span class="acct-msg-badge" id="acct-msg-badge" hidden>0</span></button>
       <button class="ghub-tab" type="button" data-ghub="connect"><i class="fas fa-display"></i> ATRG Connect</button>
       <button class="ghub-tab" type="button" data-ghub="membership"><i class="fas fa-star"></i> ATR One Membership</button>
@@ -9417,24 +9654,44 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
     </nav>
     <div class="ghub-panel" id="ghub-panel">
       <div class="ghub-pane" data-pane="home">
-        <h2 id="ghub-greet" class="ghub-greet">Hello</h2>
-        <p><span class="ghub-status">Guest</span></p>
-        <p class="ghub-muted" id="ghub-clock"></p>
+        <h2>Welcome back</h2>
+        <p class="ghub-muted">News, offers, and your upcoming service — all in one place.</p>
         <div class="ghub-qa" style="margin:.6rem 0 .9rem"><button class="btn btn-outline btn-sm" type="button" id="ghub-home-guides-btn"><i class="fas fa-book-open"></i> Help Guides</button></div>
+        <!-- V169_GUEST_HOME_2026_11_18 (Austin, Nov 18, 2026): Home is a landing page
+             for guests — ATR One offers, company news, occasional coupons,
+             a contact button, a calendar of the guest's upcoming repair,
+             and the days we are closed for the holidays. The greeting does
+             NOT live here — it lives in Quick Actions under the Home
+             button, and it always stays. No "Your day", no "Tips of the
+             day" — those are associate-only. -->
+        <div class="ghub-card" id="ghub-home-offers">
+          <h3>ATR One offers</h3>
+          <p><strong>Individual — $9.99/month</strong><br>20% off repairs &middot; 25% off accessories &middot; 1 device</p>
+          <p><strong>Family — $19.99/month</strong><br>25% off repairs &middot; 30% off accessories &middot; 5 devices</p>
+          <p><strong>Business — $49.99/month</strong><br>35% off repairs &middot; 40% off accessories &middot; 10 devices</p>
+          <p><strong>Business Pro — $99.99/month</strong><br>45% off repairs &middot; 55% off accessories &middot; 25 devices</p>
+          <p class="ghub-muted">Members pay no visit fee or diagnostics on covered devices.</p>
+          <button class="btn btn-primary btn-sm" type="button" id="ghub-home-offers-btn">See ATR One Membership</button>
+        </div>
         <div class="ghub-card" id="ghub-home-next"><p class="ghub-muted">Loading your service requests&hellip;</p></div>
+        <div class="ghub-card" id="ghub-home-news">
+          <h3>Company news</h3>
+          <div id="ghub-home-news-list"><p class="ghub-muted">Loading news&hellip;</p></div>
+        </div>
+        <div class="ghub-card" id="ghub-home-coupons">
+          <h3>Coupons</h3>
+          <p class="ghub-muted">No coupons right now — check back soon.</p>
+        </div>
+        <div class="ghub-card" id="ghub-home-holidays">
+          <h3>Days we are closed</h3>
+          <div id="ghub-home-holidays-list"><p class="ghub-muted">Loading closure days&hellip;</p></div>
+        </div>
+        <div class="ghub-qa" style="margin:.9rem 0"><button class="btn btn-primary btn-sm" type="button" id="ghub-home-contact-btn"><i class="fas fa-comment-dots"></i> Contact us</button></div>
       </div>
       <div class="ghub-pane" data-pane="service" hidden>
         <h2>Service Request</h2>
         <div id="acct-view-repairs" hidden>
-        <!-- My Repairs -->
-        <div class="acct-repairs" id="acct-repairs">
-          <div class="acct-repairs-head">
-            <h4><i class="fas fa-tools"></i> My Services</h4>
-            <!-- CUSTOMER_INBOX_2026_11_05 (owner vocabulary rule): on the customer side, starting a repair is always called "Schedule a repair" — one name everywhere. This button opens the same in-account form it always did. -->
-            <button class="btn btn-primary btn-sm" id="acct-new-ticket-btn" type="button"><i class="fas fa-calendar-check"></i> Schedule a repair</button>
-          </div>
-          <div id="acct-ticket-list"><p class="acct-muted">Loading your services…</p></div>
-        </div>
+        <!-- V169_HUB_SPLIT_2026_11_18: My Services moved to its own pane (below) — the Service Request pane keeps only the thread + the new-ticket form. -->
 
         <!-- Ticket thread view -->
         <div class="acct-thread" id="acct-thread" hidden>
@@ -9584,26 +9841,49 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
           </form>
         </div>
 
+        <!-- V169_HUB_SPLIT_2026_11_18: My One-on-Ones moved to its own pane (below). -->
+
+        <!-- V169_HUB_SPLIT_2026_11_18: My Estimates moved to its own pane (below). -->
+
+        </div>
+      </div>
+      <!-- V169_HUB_SPLIT_2026_11_18: the three split panes. The lists keep their
+           own ids, so the account loaders paint them wherever they sit;
+           only the pane around them changed. -->
+      <div class="ghub-pane" data-pane="myservices" hidden>
+        <h2>My Services</h2>
+        <!-- My Repairs -->
+        <div class="acct-repairs" id="acct-repairs">
+          <div class="acct-repairs-head">
+            <h4><i class="fas fa-tools"></i> My Services</h4>
+            <!-- CUSTOMER_INBOX_2026_11_05 (owner vocabulary rule): on the customer side, starting a repair is always called "Schedule a repair" — one name everywhere. This button opens the same in-account form it always did. -->
+            <button class="btn btn-primary btn-sm" id="acct-new-ticket-btn" type="button"><i class="fas fa-calendar-check"></i> Schedule a repair</button>
+          </div>
+          <div id="acct-ticket-list"><p class="acct-muted">Loading your services…</p></div>
+        </div>
+      </div>
+      <div class="ghub-pane" data-pane="oneonones" hidden>
+        <h2>My One-on-Ones</h2>
         <!-- SUPPORT_BOOKING_2026_11_06 (Austin, Nov 6, 2026): the Service
              section holds two labeled groups — My Repairs above, and My
              One-on-Ones here: the customer's support bookings, each with
              its Support label, plus the door into the Support path. -->
-        <div class="acct-repairs" id="acct-oneonones" style="margin-top:1.5rem;">
+        <div class="acct-repairs" id="acct-oneonones">
           <div class="acct-repairs-head">
             <h4><i class="fas fa-graduation-cap"></i> My One-on-Ones</h4>
             <a class="btn btn-primary btn-sm" href="#repair" data-page="repair" data-open-oneonone><i class="fas fa-calendar-check"></i> Schedule a one-on-one</a>
           </div>
           <div id="acct-support-list"><p class="acct-muted">Loading your one-on-ones…</p></div>
         </div>
-
+      </div>
+      <div class="ghub-pane" data-pane="estimates" hidden>
+        <h2>My Estimates</h2>
         <!-- V165_ESTIMATE_2026_11_17: the guest's own estimates — awaiting ones link out to the estimate page, where they confirm or decline. Estimates are not tickets and never appear in My Services until confirmed. -->
-        <div class="acct-repairs" id="acct-myestimates" style="margin-top:1.5rem;">
+        <div class="acct-repairs" id="acct-myestimates">
           <div class="acct-repairs-head">
             <h4><i class="fas fa-file-invoice-dollar"></i> My Estimates</h4>
           </div>
           <div id="acct-estimates-list"><p class="acct-muted">Loading your estimates…</p></div>
-        </div>
-
         </div>
       </div>
       <div class="ghub-pane" data-pane="account" hidden>
@@ -9939,8 +10219,22 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
       <div class="ghub-search-head"><strong>Search the Guest Hub</strong><button type="button" id="ghub-search-close" aria-label="Close search">&times;</button></div>
       <input type="search" id="ghub-search-input" placeholder="Try &ldquo;membership&rdquo; or &ldquo;warranty&rdquo;&hellip;" aria-label="Search the Guest Hub" autocomplete="off">
       <div id="ghub-search-results"></div>
-      <p class="ghub-muted">Every section of the Hub is here — Home, Service Request, Account, Service Messages, ATRG Connect, ATR One Membership, Documents, Warranty.</p>
+      <p class="ghub-muted">Every section of the Hub is here — Home, Service Request, Account, My Services, My One-on-Ones, My Estimates, Service Messages, ATRG Connect, ATR One Membership, Documents, Warranty.</p>
     </div>
+  </div>
+  <!-- V169_DOC_OVERLAY_2026_11_18 (Austin, Nov 18, 2026): the document preview is an
+       on-screen overlay, NOT a new tab — View used to open view-doc.html
+       in a new tab with no way back. The viewer itself still runs inside
+       the frame, so signing and printing work exactly as on the page. -->
+  <div id="ghub-doc-overlay" hidden role="dialog" aria-label="Document preview">
+    <div class="ghub-doc-overlay-bar">
+      <strong id="ghub-doc-overlay-title">Your document</strong>
+      <span class="ghub-doc-overlay-actions">
+        <button type="button" class="btn btn-outline btn-sm" id="ghub-doc-overlay-print">Print</button>
+        <button type="button" class="btn btn-outline btn-sm" id="ghub-doc-overlay-close">Close</button>
+      </span>
+    </div>
+    <iframe id="ghub-doc-overlay-frame" title="Document preview"></iframe>
   </div>
 </div>
 
@@ -9956,7 +10250,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function money(n) { return '$' + (Number(n || 0)).toFixed(2); }
   function client() { try { return window.supabase.createClient(URL, KEY); } catch (e) { return null; } }
-  var sb = null, user = null, cust = null, tickets = [], loaded = false;
+  var sb = null, user = null, cust = null, tickets = [], loaded = false, loading = false;
   var KIND = { part: 'Part', labor: 'Labor', one_off: 'Other charge', dispatch: 'Visit fee', visit: 'Visit fee', deposit_credit: 'Deposit received', tip: 'Tip', discount: 'Discount' };
   var STEPS = ['Booked', 'Awaiting Repair', 'In Progress', 'Job Complete'];
   function stepIdx(status) {
@@ -10030,10 +10324,15 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
   function paintGhubWarrantyLists() {
     var cov = $('ghub-wr-coverage');
     if (cov) {
-      var repairs = (tickets || []).filter(function (t) { return !/^\[SERVICE\]/.test(t.issue || '') && t.device_type !== 'Support'; });
+      /* V169_WARRANTY_GATE_2026_11_18 (Austin, Nov 18, 2026): warranty coverage shows
+         ONLY after the repair is complete — never while a ticket is in
+         progress. A ticket still in Awaiting Diagnostics wrongly showed
+         a full year of coverage. Gate on the completion state, not the
+         job date. */
+      var repairs = (tickets || []).filter(function (t) { return t.status === 'Job Complete' && !/^\[SERVICE\]/.test(t.issue || '') && t.device_type !== 'Support'; });
       cov.innerHTML = repairs.length
         ? '<h3>Your warranty coverage</h3>' + repairs.map(ghubWarrantyLine).join('')
-        : '<h3>Your warranty coverage</h3><p class="ghub-muted">No repairs yet — when you book a service, its 1-year warranty will show here.</p>';
+        : '<h3>Your warranty coverage</h3><p class="ghub-muted">Your warranty coverage lives here. When you have a repair or service done, your warranty will show here.</p>';
     }
     var mine = $('ghub-wr-mine');
     if (!mine || !cust || !cust.email || !sb) {
@@ -10096,7 +10395,9 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
      * inside the Hub panes now — opening a tab unhides its panel
      * and resets it to its list view (thread / form hidden). The
      * account module still paints them by id wherever they sit. */
-    if (name === 'service') { var pv = $('acct-view-repairs'); if (pv) pv.hidden = false; var sr = $('acct-repairs'), sth = $('acct-thread'), snt = $('acct-newticket'); if (sr) sr.hidden = false; if (sth) sth.hidden = true; if (snt) snt.hidden = true; }
+    /* V169_HUB_SPLIT_2026_11_18: Service Request is now "put in a ticket" — it
+       opens on the new-ticket form. The list lives in My Services. */
+    if (name === 'service') { var pv = $('acct-view-repairs'); if (pv) pv.hidden = false; var sth = $('acct-thread'), snt = $('acct-newticket'); if (sth) sth.hidden = true; if (snt) snt.hidden = false; }
     /* V165_SERVICES_SELFHEAL_2026_11_17: the list is painted only by the
      * account loader (renderDash -> loadMyRepairs). If the account chain
      * never ran for this session, opening this tab used to show the
@@ -10104,16 +10405,27 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
      * still shows that never-loaded placeholder, ask the account loader
      * to run now. A list mid-load ("Loading your repairs…") or a painted
      * fallback is left alone — the fallback carries its own Retry. */
-    if (name === 'service') {
+    if (name === 'myservices') {
       var sl = $('acct-ticket-list');
       if (sl && sl.innerHTML.indexOf('Loading your services') !== -1
         && typeof window.atrReloadMyRepairs === 'function') window.atrReloadMyRepairs();
+    }
+    if (name === 'oneonones') {
+      var ol = $('acct-support-list');
+      if (ol && ol.innerHTML.indexOf('Loading your one-on-ones') !== -1
+        && typeof window.atrReloadMyRepairs === 'function') window.atrReloadMyRepairs();
+    }
+    if (name === 'estimates') {
+      var el = $('acct-estimates-list');
+      if (el && el.innerHTML.indexOf('Loading your estimates') !== -1
+        && typeof window.atrReloadMyEstimates === 'function') window.atrReloadMyEstimates();
     }
     if (name === 'documents') renderDocs();
     if (name === 'warranty') prefillGhubWarranty();
     if (name === 'chat') { var mv = $('acct-view-messages'); if (mv) mv.hidden = false; var ib = $('acct-inbox'), cth = $('acct-thread'); if (ib) ib.hidden = false; if (cth) cth.hidden = true; }
     if (name === 'membership') { var mm = $('acct-view-membership'); if (mm) mm.hidden = false; }
     if (name === 'account') { var sv = $('acct-view-settings'); if (sv) sv.hidden = false; }
+    if (name === 'home') paintHome();
   }
   window.atrGuestHubShowTab = showTab;
   /* V165_GUEST_DOCS_2026_11_17 (Austin, Nov 17, 2026): the Documents tab
@@ -10155,8 +10467,8 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
   }
   function ghubPreviewDoc(type, ticketId) {
     if (!ticketId) return;
-    if (type === 'agreement' || type === 'terms' || type === 'warranty') {
-      window.open('view-doc.html?doc=' + encodeURIComponent(type) + '&t=' + encodeURIComponent(ticketId), '_blank');
+    if (type === 'agreement' || type === 'terms' || type === 'warranty' || type === 'media') {
+      window.atrOpenDocOverlay('view-doc.html?doc=' + encodeURIComponent(type) + '&t=' + encodeURIComponent(ticketId), 'Your document');
       return;
     }
     if (!sb) return;
@@ -10166,12 +10478,12 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
       return fetch(URL + '/functions/v1/doc-view', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'apikey': KEY }, body: JSON.stringify({ ticket_id: ticketId, kind: type }) });
     }).then(function (res) { return res.json(); }).then(function (out) {
       if (!out || !out.ok || !out.url) throw new Error('That preview could not be opened — please use the link in your email.');
-      window.open(out.url, '_blank');
+      window.atrOpenDocOverlay(out.url, 'Your document');
     }).catch(function () {});
   }
   function ghubDownloadDoc(btn, type, ticketId) {
     if (!btn) return;
-    if (type === 'agreement' || type === 'terms' || type === 'warranty') { ghubDownloadSiteDoc(btn, type); return; }
+    if (type === 'agreement' || type === 'terms' || type === 'warranty') { ghubDownloadSiteDoc(btn, type, ticketId); return; }
     if (!sb || !ticketId) return;
     var old = btn.textContent; btn.textContent = 'Opening…'; btn.disabled = true;
     function done() { if (btn.textContent === 'Opening…') { btn.textContent = old; btn.disabled = false; } }
@@ -10181,20 +10493,48 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
       return fetch(URL + '/functions/v1/doc-view', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'apikey': KEY }, body: JSON.stringify({ ticket_id: ticketId, kind: type }) });
     }).then(function (res) { return res.json(); }).then(function (out) {
       if (!out || !out.ok || !out.url) throw new Error('No file to download yet.');
-      return fetch(out.url).then(function (r) { if (!r.ok) throw new Error('Download failed.'); return r.blob(); });
-    }).then(function (blob) { ghubSaveBlob((type || 'document') + '.html', blob); done(); })
+      return fetch(out.url).then(function (r) {
+        if (!r.ok) throw new Error('Download failed.');
+        var ct = (r.headers.get('content-type') || '');
+        /* V169_SIGNED_DOC_2026_11_18: an HTML copy carries the signature
+           block when signed; anything else downloads exactly as stored. */
+        if (ct.indexOf('html') !== -1) return r.text().then(function (txt) { return { html: txt }; });
+        return r.blob().then(function (b) { return { blob: b }; });
+      });
+    }).then(function (got) {
+      if (got.html) {
+        if (type === 'receipt') { ghubSaveBlob((type || 'document') + '.html', new Blob([got.html], { type: 'text/html' })); done(); return; }
+        sb.from('document_signatures').select('signer_name,signed_at').eq('ticket_id', ticketId).eq('document_type', type).order('signed_at', { ascending: false }).limit(1)
+          .then(function (r) { return (r && r.data && r.data[0]) || null; }).catch(function () { return null; })
+          .then(function (sig) {
+            ghubSaveBlob((type || 'document') + '.html', new Blob([window.__atrSigBlockInject ? window.__atrSigBlockInject(got.html, sig, window.__atrDrawnSigGet ? window.__atrDrawnSigGet(ticketId, type) : '') : got.html], { type: 'text/html' }));
+            done();
+          });
+        return;
+      }
+      ghubSaveBlob((type || 'document') + '.html', got.blob); done();
+    })
       .catch(function (err) { btn.textContent = (err && err.message) || 'Download unavailable.'; setTimeout(done, 2500); });
   }
-  function ghubDownloadSiteDoc(btn, type) {
-    var section = type === 'warranty' ? 'warranty' : type === 'terms' ? 'terms' : 'service-agreement';
+  /* V169_SIGNED_DOC_2026_11_18: the downloaded copy carries the
+     signature block when this document is signed (ticketId threaded
+     through from ghubDownloadDoc). */
+  function ghubDownloadSiteDoc(btn, type, ticketId) {
+    var section = type === 'warranty' ? 'warranty' : type === 'terms' ? 'terms' : type === 'media' ? 'media' : 'service-agreement';
     var old = btn.textContent; btn.textContent = 'Opening…'; btn.disabled = true;
     function done() { if (btn.textContent === 'Opening…') { btn.textContent = old; btn.disabled = false; } }
-    fetch('/index.html', { credentials: 'same-origin' }).then(function (r) { if (!r.ok) throw new Error('x'); return r.text(); })
-      .then(function (siteHtml) {
+    var sigP = (sb && ticketId) ? sb.from('document_signatures').select('signer_name,signed_at').eq('ticket_id', ticketId).eq('document_type', type).order('signed_at', { ascending: false }).limit(1)
+      .then(function (r) { return (r && r.data && r.data[0]) || null; }).catch(function () { return null; }) : Promise.resolve(null);
+    Promise.all([
+      fetch('/index.html', { credentials: 'same-origin' }).then(function (r) { if (!r.ok) throw new Error('x'); return r.text(); }),
+      sigP
+    ]).then(function (pair) {
+        var siteHtml = pair[0], sig = pair[1];
         var doc = new DOMParser().parseFromString(siteHtml, 'text/html');
         var sec = doc.getElementById(section);
         if (!sec) throw new Error('x');
-        ghubSaveBlob(section + '.html', new Blob(['<!doctype html><html><head><meta charset="utf-8"><title>' + section + '</title></head><body>' + sec.outerHTML + '</body></html>'], { type: 'text/html' }));
+        var full = '<!doctype html><html><head><meta charset="utf-8"><title>' + section + '</title></head><body>' + sec.outerHTML + '</body></html>';
+        ghubSaveBlob(section + '.html', new Blob([window.__atrSigBlockInject ? window.__atrSigBlockInject(full, sig, window.__atrDrawnSigGet ? window.__atrDrawnSigGet(ticketId, type) : '') : full], { type: 'text/html' }));
         done();
       }).catch(function () { btn.textContent = 'Download unavailable.'; setTimeout(done, 2500); });
   }
@@ -10298,24 +10638,62 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
       paint(sigs, filed);
     }).catch(function () { paint([], []); });
   }
+  /* V169_GUEST_GREETING_2026_11_18 (Austin, Nov 18, 2026): the Home
+     greeting never rendered because loadAll() set `loaded = true` BEFORE
+     the session check — a first run before the session was ready returned
+     early with no user and poisoned the flag forever, so paintHome()
+     never fired. Now `loaded` is set only after a user is confirmed,
+     and an in-flight `loading` guard stops concurrent double-runs.
+     The guest record is resolved by EMAIL (resolveGuestCust): customers.id
+     is NOT the auth uid — Austin's own customers row and his auth uid
+     differ, and so do Daniel's — so the old `.eq('id', u.id)` lookup
+     found nothing and the name fell back to blank. */
+  function resolveGuestCust(u) {
+    var em = (u && u.email) || '';
+    function fallback() {
+      var meta = (u && u.user_metadata && u.user_metadata.full_name) || '';
+      return { id: u.id, name: meta, email: em };
+    }
+    if (!sb || !em) return Promise.resolve(fallback());
+    return sb.from('customers').select('id,name,email,phone,address,account_number').ilike('email', em).maybeSingle()
+      .then(function (r) {
+        if (r && r.data) return r.data;
+        return sb.from('customers').select('id,name,email,phone,address,account_number').eq('id', u.id).maybeSingle()
+          .then(function (r2) { return (r2 && r2.data) || fallback(); });
+      })
+      .catch(function () { return fallback(); });
+  }
   function loadAll() {
-    if (loaded) return; loaded = true;
-    sb = client(); if (!sb) return;
+    if (loaded || loading) return; loading = true;
+    sb = client(); if (!sb) { loading = false; return; }
+    loadGhubHomeFeed(); loadGhubHomeHolidays();
     sb.auth.getSession().then(function (s) {
       var u = s && s.data && s.data.session && s.data.session.user;
-      if (!u) return;
+      if (!u) { loading = false; return; }
       user = u;
-      return sb.from('customers').select('id,name,email,phone,address,account_number').eq('id', u.id).maybeSingle().then(function (r) {
-        cust = r.data || { id: u.id, name: (u.user_metadata && u.user_metadata.full_name) || '', email: u.email || '' };
+      return resolveGuestCust(u).then(function (c) {
+        cust = c; loaded = true; loading = false;
         paintHome();
         return sb.from('tickets').select('id,created_at,device_type,brand,model,issue,issue_reason,status,job_date,appointment_at,service_address,customer_id').eq('customer_id', cust.id).order('created_at', { ascending: false });
-      }).then(function (r) {
-        tickets = (r && r.data) || [];
-        prefillGhubWarranty();
-        var next = $('ghub-home-next');
-        if (next) next.innerHTML = tickets.length ? '<strong>Your next service:</strong> ' + esc(deviceOf(tickets[0])) + ' — ' + esc(tickets[0].status || '') + (apptLine(tickets[0]) ? '<br>' + esc(apptLine(tickets[0])) : '') : '<p class="ghub-muted">No service requests yet.</p>';
       });
-    }).catch(function () {});
+    }).then(function (r) {
+      tickets = (r && r.data) || [];
+      prefillGhubWarranty();
+      var next = $('ghub-home-next');
+      if (next) {
+        /* V169_GUEST_HOME_2026_11_18: the Home calendar — the guest's upcoming
+           repairs (not finished, newest first), each with its device,
+           status, date and arrival window. */
+        var upcoming = (tickets || []).filter(function (t) { return t.status !== 'Job Complete' && !/^\[SERVICE\]/.test(t.issue || '') && t.device_type !== 'Support'; });
+        if (!upcoming.length) {
+          next.innerHTML = '<h3>Your upcoming repairs</h3><p class="ghub-muted">No upcoming repairs — when you book a service, it will show here.</p>';
+        } else {
+          next.innerHTML = '<h3>Your upcoming repairs</h3>' + upcoming.map(function (t) {
+            return '<p><strong>' + esc(deviceOf(t)) + '</strong> — ' + esc(t.status || '') + (apptLine(t) ? '<br>' + esc(apptLine(t)) : '') + '</p>';
+          }).join('');
+        }
+      }
+    }).catch(function () { loading = false; });
   }
   /* V165_SCANIN_REMOVED_2026_11_17 (Austin, Nov 17, 2026, corrected
    * same call — supersedes the v165 QR fix that sat here): Scan In is
@@ -10326,16 +10704,87 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
    * ghubQrPayload/drawGhubQr helpers and the scanin pane are deleted
    * here, not left dead. */
   function paintHome() {
-    var first = ((cust && cust.name) || '').trim().split(/\s+/)[0] || 'there';
+    /* V169_GUEST_GREETING_2026_11_18 (Austin, Nov 18, 2026): Quick Actions must show what
+       the Associate Hub shows at the top — "Good morning, [first name]"
+       + Guest status + time + date. The name falls back
+       through the guest record, then the sign-in profile name, then the
+       first part of the sign-in email — never a blank. Dayparts and the
+       time-first, no-year clock match the Associate Hub tickClock
+       (5–12 Good morning, 12–17 Good afternoon, 17–22 Good evening,
+       else Good night; "7:48 AM · Wednesday, November 18"). No "Your
+       day" and no "Tips of the day" are added — guests never get those. */
+    var name = ((cust && cust.name) || '').trim();
+    if (!name && user && user.user_metadata && user.user_metadata.full_name) name = String(user.user_metadata.full_name).trim();
+    if (!name && user && user.email) { var local = String(user.email).split('@')[0].replace(/[._-]+/g, ' ').trim(); if (local) name = local.charAt(0).toUpperCase() + local.slice(1); }
+    var first = (name.split(/\s+/)[0] || 'there');
     var h = new Date().getHours();
-    var greet = h < 12 ? 'Good morning' : (h < 18 ? 'Good afternoon' : 'Good evening');
+    var greet = (h >= 5 && h < 12) ? 'Good morning' : (h < 17 ? 'Good afternoon' : (h < 22 ? 'Good evening' : 'Good night'));
     var g = $('ghub-greet'); if (g) g.textContent = greet + ', ' + first;
+    /* V169_GUEST_GREETING_2026_11_18: the status rides with the greeting — Guest, or
+       Business when the sign-in profile says business. It is read from
+       the same profile paintHome already falls back through. */
+    var roleEl = $('ghub-greet-role');
+    if (roleEl) {
+      var acctType = (user && user.user_metadata && user.user_metadata.account_type) || '';
+      roleEl.textContent = String(acctType).toLowerCase() === 'business' ? 'Business' : 'Guest';
+    }
     var c = $('ghub-clock');
-    if (c) c.textContent = new Date().toLocaleString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' });
+    if (c) {
+      var now = new Date();
+      var time = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' });
+      var date = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'America/New_York' });
+      c.textContent = time + ' \u00b7 ' + date;
+    }
     var ac = $('ghub-account-card');
     if (ac && cust) ac.innerHTML = '<p><strong>' + esc(cust.name || '') + '</strong></p><p>' + esc(cust.email || '') + '</p><p>' + esc(cust.phone || '') + '</p><p>' + esc(cust.address || '') + '</p><p class="ghub-muted">Only your own details are shown here.</p>';
     var mc = $('ghub-member-card');
     if (mc) { var tier = $('acct-qr-tier'), pts = $('acct-points-num'); mc.innerHTML = '<p><strong>' + esc(tier ? tier.textContent : 'ATR One Free') + '</strong></p><p>Reward points: <strong>' + esc(pts ? pts.textContent : '0') + '</strong></p>'; }
+  }
+  /* V169_GUEST_HOME_2026_11_18: the Home landing page reads the same two tables the
+     Associate Hub Home reads — company news (portal_home_posts) and
+     holiday closures (portal_home_holidays) — title/body/date only, no
+     images, no edit buttons. If the read fails (the guest role may not
+     be allowed to read them), the card says so honestly instead of
+     pretending. Coupons have no table — that card stays an honest
+     empty slot until Austin supplies coupons. */
+  function loadGhubHomeFeed() {
+    var box = $('ghub-home-news-list');
+    if (!box || !sb) return;
+    sb.from('portal_home_posts').select('*').order('pinned', { ascending: false }).order('created_at', { ascending: false }).limit(200)
+      .then(function (res) {
+        if (res.error) { box.innerHTML = '<p class="ghub-muted">Company news is not set up yet.</p>'; return; }
+        var rows = res.data || [];
+        if (!rows.length) { box.innerHTML = '<p class="ghub-muted">No news yet — company updates will show up here.</p>'; return; }
+        box.innerHTML = rows.map(function (p) {
+          var meta = p.created_at ? esc(new Date(p.created_at).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })) : '';
+          return '<article><p><strong>' + (p.pinned ? '<i class="fas fa-thumbtack"></i> ' : '') + esc(p.title || 'Update') + '</strong></p>'
+            + (meta ? '<p class="ghub-muted">' + meta + '</p>' : '')
+            + (p.body ? '<p>' + esc(p.body) + '</p>' : '') + '</article>';
+        }).join('');
+      })
+      .catch(function () { box.innerHTML = '<p class="ghub-muted">Company news is not set up yet.</p>'; });
+  }
+  function loadGhubHomeHolidays() {
+    var box = $('ghub-home-holidays-list');
+    if (!box || !sb) return;
+    sb.from('portal_home_holidays').select('*').order('day', { ascending: true }).limit(200)
+      .then(function (res) {
+        if (res.error) { box.innerHTML = '<p class="ghub-muted">Closure days are not set up yet.</p>'; return; }
+        var rows = res.data || [];
+        if (!rows.length) { box.innerHTML = '<p class="ghub-muted">No closure days posted yet.</p>'; return; }
+        var today = new Date().toISOString().slice(0, 10);
+        var upcoming = rows.filter(function (h) { return String(h.day) >= today; });
+        var past = rows.filter(function (h) { return String(h.day) < today; });
+        box.innerHTML = upcoming.concat(past).map(function (h) {
+          var isPast = String(h.day) < today;
+          var day = '';
+          try { day = new Date(h.day + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }); } catch (e) { day = String(h.day); }
+          return '<p><strong>' + esc(day) + '</strong> — <span' + (isPast ? ' class="ghub-muted"' : '') + '>' + esc(h.name || '') + '</span>'
+            + (h.note ? '<br><span class="ghub-muted">' + esc(h.note) + '</span>' : '')
+            + (isPast ? '<br><span class="ghub-muted">Past</span>' : '') + '</p>';
+        }).join('');
+      })
+      .catch(function () { box.innerHTML = '<p class="ghub-muted">Closure days are not set up yet.</p>'; });
   }
   /* Notifications prefs (V159): Email alerts ON, Text alerts OFF by default. */
   function loadPrefs() {
@@ -10376,6 +10825,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
     hub.hidden = false; document.body.style.overflow = 'hidden';
     loadAll(); setTimeout(loadPrefs, 600);
     showTab(tab || 'home');
+    paintHome();
     syncGhubThemeIcon();
     hub.scrollTop = 0;
   }
@@ -10402,6 +10852,9 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
     { name: 'home', label: 'Home', icon: 'fas fa-house' },
     { name: 'service', label: 'Service Request', icon: 'fas fa-tools' },
     { name: 'account', label: 'Account', icon: 'fas fa-user' },
+    { name: 'myservices', label: 'My Services', icon: 'fas fa-clipboard-list' },
+    { name: 'oneonones', label: 'My One-on-Ones', icon: 'fas fa-graduation-cap' },
+    { name: 'estimates', label: 'My Estimates', icon: 'fas fa-file-invoice-dollar' },
     { name: 'chat', label: 'Service Messages', icon: 'fas fa-comment-dots' },
     { name: 'connect', label: 'ATRG Connect', icon: 'fas fa-display' },
     { name: 'membership', label: 'ATR One Membership', icon: 'fas fa-star' },
@@ -10574,10 +11027,20 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
       var link = document.querySelector('a[data-page="help-guides"]');
       if (link) link.click();
     });
+    /* V169_GUEST_HOME_2026_11_18: the landing page's two buttons — Contact opens
+       Service Messages; the offers button opens the Membership pane. */
+    var gcb = $('ghub-home-contact-btn');
+    if (gcb) gcb.addEventListener('click', function () { showTab('chat'); });
+    var gob = $('ghub-home-offers-btn');
+    if (gob) gob.addEventListener('click', function () { showTab('membership'); });
     if (ne) ne.addEventListener('change', savePrefs);
     if (nt2) nt2.addEventListener('change', savePrefs);
     gate();
     setTimeout(gate, 2500);
+    /* V169_GUEST_GREETING_2026_11_18: the greeting line lives outside every pane, so it
+       stays put — but its clock would freeze at the load time without a
+       tick. Same 30-second tick as the Associate Hub. */
+    if (!window.__ghubGreetTimer) window.__ghubGreetTimer = setInterval(function () { try { paintHome(); } catch (e) {} }, 30000);
   });
 })();
 

@@ -55,6 +55,11 @@
   .vd-frame { display: block; width: 100%; min-height: 70vh; border: 0; background: #fff; }
   .vd-fallback { margin: 16px; padding: 18px; border: 1px solid #e5e5ea; border-radius: 12px; background: #fff; font-size: 14px; line-height: 1.6; }
   @media (prefers-color-scheme: dark) { .vd-fallback { background: #1c1c1e; border-color: #38383a; } }
+  /* V169_SIGNED_DOC_2026_11_18 (Austin, Nov 18, 2026): PRINT BLANK was the defect —
+     Print on a signed document printed nothing. The frame's load
+     handler (below) grows it to the full document height, so the whole
+     document — signature block at its end included — reaches the paper;
+     only the page chrome (top bar, buttons, sign box) hides here. */
   @media print {
     .vd-top, .vd-actions, .vd-sign { display: none; }
     body { background: #fff; }
@@ -79,6 +84,13 @@
     <p id="vd-sign-text">Read it above, then type your full name and tap Sign. Your signature is recorded with your name and today's date.</p>
     <label for="vd-name">Your full name</label>
     <input id="vd-name" type="text" autocomplete="name" placeholder="Type your full name">
+    <!-- V169_SIGN_PAD_2026_11_18 (Austin, Nov 18, 2026): draw the signature with a
+         finger — touch-action none so the page does not scroll under
+         the finger. The typed name above stays as the printed name;
+         drawing is optional. -->
+    <label for="vd-pad">Draw your signature</label>
+    <canvas id="vd-pad" width="520" height="160" style="width:100%;height:160px;border:1px solid #c7c7cc;border-radius:10px;background:#fff;touch-action:none;"></canvas>
+    <div class="vd-row"><button class="vd-btn" type="button" id="vd-pad-clear">Clear signature</button><span class="vd-note">Drawing is optional — your typed name is the printed name.</span></div>
     <div class="vd-row">
       <button class="vd-btn vd-btn--primary" type="button" id="vd-sign-btn">Sign</button>
       <button class="vd-btn" type="button" id="vd-signin-btn" hidden>Sign in to sign</button>
@@ -88,7 +100,11 @@
   </section>
 
   <div class="vd-frame-wrap" id="vd-frame-wrap" hidden>
-    <iframe class="vd-frame" id="vd-frame" title="Document preview" sandbox=""></iframe>
+    <!-- V169_SIGNED_DOC_2026_11_18: sandbox="allow-same-origin" (no
+         allow-scripts) — the document's own scripts stay blocked, but
+         the page can size the frame to the full document so the
+         signature block at its end is visible and prints. -->
+    <iframe class="vd-frame" id="vd-frame" title="Document preview" sandbox="allow-same-origin"></iframe>
   </div>
 
   <div class="vd-fallback" id="vd-fallback" hidden>
@@ -102,7 +118,37 @@
   'use strict';
   var SUPABASE_URL = 'https://lyujxpuicarblpkdzuuc.supabase.co';
   var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
-  var DOC_LABELS = { agreement: 'Service Agreement', estimate: 'Estimate', invoice: 'Invoice', terms: 'Terms & Conditions', warranty: '1-Year Limited Warranty' };
+  var DOC_LABELS = { agreement: 'Service Agreement', estimate: 'Estimate', invoice: 'Invoice', terms: 'Terms & Conditions', warranty: '1-Year Limited Warranty', media: 'Media Release' };
+  /* V169_SIGN_PAD_2026_11_18: the same finger pad as the Hub helper, self-contained
+     for this page. Pointer events cover touch + mouse. */
+  function vdPadSetup(canvas, clearBtn) {
+    var api = { getDataUrl: function () { return ''; }, clear: function () {}, hasStroke: function () { return false; } };
+    if (!canvas || !canvas.getContext) return api;
+    var ctx = canvas.getContext('2d');
+    var drawing = false, stroked = false;
+    ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#1c1c1e';
+    function pos(e) {
+      var r = canvas.getBoundingClientRect();
+      var t = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]) || e;
+      return { x: (t.clientX - r.left) * (canvas.width / r.width), y: (t.clientY - r.top) * (canvas.height / r.height) };
+    }
+    function start(e) { e.preventDefault(); drawing = true; var p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }
+    function move(e) { if (!drawing) return; e.preventDefault(); var p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); stroked = true; }
+    function end(e) { if (e) e.preventDefault(); drawing = false; }
+    canvas.addEventListener('pointerdown', start);
+    canvas.addEventListener('pointermove', move);
+    canvas.addEventListener('pointerup', end);
+    canvas.addEventListener('pointerleave', end);
+    canvas.addEventListener('touchstart', start, { passive: false });
+    canvas.addEventListener('touchmove', move, { passive: false });
+    canvas.addEventListener('touchend', end);
+    function clear() { ctx.clearRect(0, 0, canvas.width, canvas.height); stroked = false; }
+    if (clearBtn) clearBtn.addEventListener('click', function (e) { e.preventDefault(); clear(); });
+    api.getDataUrl = function () { return stroked ? canvas.toDataURL('image/png') : ''; };
+    api.clear = clear;
+    api.hasStroke = function () { return stroked; };
+    return api;
+  }
   var params = new URLSearchParams(location.search);
   var rawUrl = params.get('u') || '';
   var docKind = params.get('doc') || '';
@@ -120,6 +166,38 @@
   var signText = document.getElementById('vd-sign-text');
   var docType = 'agreement';
   var docPath = '';
+  /* V169_SIGNED_DOC_2026_11_18 (Austin, Nov 18, 2026): the signature
+     goes ON the document itself. The viewer keeps the document's base
+     HTML and the latest signature row; applySignatureBlock() rebuilds
+     the frame from base + block, so the block is there after signing
+     AND on reload already-signed. sigDocType is the document_type used
+     for the signature lookup/insert: usually the same as docType, except
+     a filed repair_authorization copy signs as 'agreement', and receipt
+     / part_order copies are never signed (no row can exist for them).
+     The block reads the real signer name and real signed date from the
+     row — never invented. It lives inside the document, so it prints
+     with the document (the print CSS hides only the page chrome). */
+  var sigDocType = 'agreement';
+  var baseShell = '', signedRow = null;
+  function sigBlockHtml(row) {
+    var date = new Date(row.signed_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+    /* V169_SIGN_PAD_2026_11_18: the finger drawing, when this session has one. */
+    var imgHtml = row.sigImage ? '<img src="' + row.sigImage + '" alt="Signature" style="max-width:280px;height:auto;display:block;margin:0 0 6px;">' : '';
+    return '<section class="atr-signed-block" style="margin-top:32px;padding-top:16px;border-top:2px solid #1c1c1e;">'
+      + imgHtml
+      + '<p style="font-weight:700;margin:0 0 4px;">Signed by ' + esc(row.signer_name) + ' on ' + esc(date) + '</p>'
+      + '<p style="margin:0;color:#3a3a3c;">Recorded in your Guest Hub account.</p></section>';
+  }
+  function injectSigBlock(htmlText, row) {
+    if (!row || !htmlText) return htmlText;
+    var block = sigBlockHtml(row);
+    if (htmlText.indexOf('</body>') !== -1) return htmlText.replace('</body>', block + '</body>');
+    return htmlText + block;
+  }
+  function applySignatureBlock() {
+    if (!baseShell) return;
+    frame.srcdoc = signedRow ? injectSigBlock(baseShell, signedRow) : baseShell;
+  }
 
   function showFallback() { frameWrap.hidden = true; fallback.hidden = false; }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -138,14 +216,23 @@
   function parseDocFromUrl(u) {
     try {
       var m = decodeURIComponent(u).match(/ticket-documents\/([0-9a-f-]{36})\/(estimate|invoice|receipt|part_order|repair_authorization)(?:-generated)?\.html/i);
-      if (m) { ticketId = m[1]; docType = (m[2] === 'estimate' || m[2] === 'invoice') ? m[2] : 'agreement'; }
+      if (m) {
+        ticketId = m[1];
+        docType = (m[2] === 'estimate' || m[2] === 'invoice') ? m[2] : 'agreement';
+        /* V169_SIGNED_DOC_2026_11_18: docType above is only the display
+           label — the signature lookup uses the exact kind. A filed
+           repair_authorization copy is the agreement, so it signs as
+           'agreement'; a receipt or part_order copy is never signed. */
+        sigDocType = (m[2] === 'repair_authorization') ? 'agreement' : m[2].toLowerCase();
+      }
     } catch (e) { /* leave the defaults */ }
   }
 
   function renderDoc(html, label) {
     titleEl.textContent = label;
     frameWrap.hidden = false;
-    frame.srcdoc = html;
+    baseShell = html;
+    applySignatureBlock(); /* V169_SIGNED_DOC_2026_11_18: the block paints with the document */
   }
 
   /* V158_GUEST_PORTAL_2026_11_17: the standard three render from the live site's own
@@ -156,11 +243,13 @@
   var SITE_DOCS = {
     agreement: { section: 'service-agreement', label: 'Service Agreement', open: '/#service-agreement', openText: 'Open the full agreement' },
     terms: { section: 'terms', label: 'Terms & Conditions', open: '/#terms', openText: 'Open the full terms' },
-    warranty: { section: 'warranty', label: '1-Year Limited Warranty', open: '/#warranty', openText: 'Open the full warranty' }
+    warranty: { section: 'warranty', label: '1-Year Limited Warranty', open: '/#warranty', openText: 'Open the full warranty' },
+    media: { section: 'media', label: 'Media Release', open: '/#media', openText: 'Open the full media release' }
   };
   function loadSiteDoc(kind) {
     var cfg = SITE_DOCS[kind] || SITE_DOCS.agreement;
     docType = kind;
+    sigDocType = kind; /* V169_SIGNED_DOC_2026_11_18: agreement/terms/warranty sign as themselves */
     fetch('/index.html', { credentials: 'same-origin' })
       .then(function (r) { if (!r.ok) throw new Error('site fetch failed'); return r.text(); })
       .then(function (siteHtml) {
@@ -205,6 +294,8 @@
   }
 
   function setSignedState(row) {
+    signedRow = row;
+    applySignatureBlock(); /* V169_SIGNED_DOC_2026_11_18: signing puts the block on the document */
     signText.innerHTML = '<span class="vd-signed">Signed</span> — ' + esc(row.signer_name) + ', ' + esc(new Date(row.signed_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })) + '. Thank you.';
     nameInput.disabled = true;
     signBtn.disabled = true;
@@ -215,7 +306,7 @@
   function checkSigned(session) {
     if (!sb || !session || !ticketId) return;
     sb.from('document_signatures').select('signer_name,signed_at')
-      .eq('ticket_id', ticketId).eq('document_type', docType)
+      .eq('ticket_id', ticketId).eq('document_type', sigDocType)
       .order('signed_at', { ascending: false }).limit(1)
       .then(function (res) {
         if (res && res.data && res.data.length) setSignedState(res.data[0]);
@@ -224,7 +315,10 @@
   }
 
   function setupSigning() {
-    if (!ticketId) { signBox.hidden = true; return; }
+    /* V169_SIGNED_DOC_2026_11_18: a receipt or part_order copy is a
+       record, not a document the guest signs — no signature row can
+       exist for it, so the sign box stays hidden here. */
+    if (!ticketId || sigDocType === 'receipt' || sigDocType === 'part_order') { signBox.hidden = true; return; }
     signBox.hidden = false;
     var session = getSiteSession();
     if (!session || !session.email) {
@@ -232,11 +326,14 @@
       signinBtn.hidden = false;
       signNote.textContent = 'Sign in first, then come back here to sign.';
       signinBtn.addEventListener('click', function () {
-        try { sessionStorage.setItem('atr-pending-sign', JSON.stringify({ ticket_id: ticketId, document_type: docType })); } catch (e) { /* storage unavailable */ }
+        try { sessionStorage.setItem('atr-pending-sign', JSON.stringify({ ticket_id: ticketId, document_type: sigDocType })); } catch (e) { /* storage unavailable */ }
         location.href = '/#account';
       });
       return;
     }
+    /* V169_SIGN_PAD_2026_11_18: the pad is wired once; the drawing is read when the
+       guest taps Sign, and kept on the signed row for this session. */
+    var pad = vdPadSetup(document.getElementById('vd-pad'), document.getElementById('vd-pad-clear'));
     nameInput.value = session.name || '';
     signBtn.hidden = false;
     signinBtn.hidden = true;
@@ -244,6 +341,10 @@
     signBtn.addEventListener('click', function () {
       var name = (nameInput.value || '').trim();
       if (!name) { signNote.textContent = 'Please type your full name first.'; signNote.className = 'vd-note vd-error'; nameInput.focus(); return; }
+      /* V169_SIGN_PAD_2026_11_18: keep the drawing with this signature, for this
+         session only — the table has no image column (see the optional
+         staged SQL). On reload the block falls back to name + date. */
+      window.__vdDrawnSig = pad.getDataUrl();
       signBtn.disabled = true;
       signNote.textContent = 'Signing…';
       signNote.className = 'vd-note';
@@ -256,14 +357,16 @@
         return sb.from('document_signatures').insert([{
           ticket_id: ticketId,
           customer_id: session.id || null,
-          document_type: docType,
+          document_type: sigDocType,
           document_path: docPath || null,
           signer_name: name,
           signer_email: user.email
         }]).select('signer_name,signed_at').single();
       }).then(function (res) {
         if (res.error) throw res.error;
-        setSignedState(res.data || { signer_name: name, signed_at: new Date().toISOString() });
+        var signedRow = res.data || { signer_name: name, signed_at: new Date().toISOString() };
+        if (window.__vdDrawnSig) signedRow.sigImage = window.__vdDrawnSig;
+        setSignedState(signedRow);
       }).catch(function (err) {
         signBtn.disabled = false;
         signNote.textContent = (err && err.message) || 'That did not save. Please try again.';
@@ -272,9 +375,18 @@
     });
   }
 
+  /* V169_SIGNED_DOC_2026_11_18: the frame grows to the full document, so
+     the signature block at its end is on screen and in print. */
+  frame.addEventListener('load', function () {
+    try {
+      var d = frame.contentDocument;
+      if (d && d.body) frame.style.height = d.body.scrollHeight + 'px';
+    } catch (e) { /* sizing is best-effort; the frame still renders */ }
+  });
+
   document.getElementById('vd-print').addEventListener('click', function () { window.print(); });
 
-  if ((docKind === 'agreement' || docKind === 'terms' || docKind === 'warranty') && ticketId) {
+  if ((docKind === 'agreement' || docKind === 'terms' || docKind === 'warranty' || docKind === 'media') && ticketId) {
     loadSiteDoc(docKind);
   } else if (rawUrl) {
     loadFileUrl();

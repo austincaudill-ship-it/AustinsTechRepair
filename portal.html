@@ -235,10 +235,13 @@
         <div class="portal-nav-group portal-nav-label">Action Button</div>
         <nav class="portal-tabs" id="portal-nav" role="tablist" aria-label="Portal sections">
 
-        <!-- PORTAL_HOME_2026_11_09 (Austin, Nov 9, 2026): a Home action button pinned at the very top of the sidebar, above the Guest group — the portal's front door, carrying the month card, the company feed and the holiday schedule. Fresh sign-ins land here (see showDashboard in portal.js). Panel: portal-panel-home, loader loadHome in portal.js. -->
-        <button class="portal-tab" id="portal-tab-home" type="button" role="tab" data-tab="home">
-          <i class="fas fa-house"></i> Home
-        </button>
+        <!-- V169_GUEST_HUB_2026_11_18 (Austin, Nov 18, 2026): the sidebar Home action button
+             is gone in BOTH hubs — Home is already a Quick Action (the top-bar
+             Home button), no redundancy. The Home panel itself stays and fresh
+             sign-ins still land here (see showDashboard in portal.js); only the
+             duplicate sidebar button goes. The top-bar Home button now calls
+             activateTab('home') directly (portal.js) instead of clicking this
+             button. -->
         <div class="portal-nav-group">Guest Accounts</div>
         <!-- V165_ESTIMATE_2026_11_17 (Austin, Nov 17, 2026): New Service Estimate — one button, right above New Service Request. It opens the same panel on the estimate sheet instead of the request form. -->
         <button class="portal-tab" id="portal-tab-estimate" type="button" role="tab" data-tab="estimate">
