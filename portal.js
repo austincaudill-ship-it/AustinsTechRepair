@@ -1759,7 +1759,7 @@
 
   /* ================= TABS ================= */
   var LOADERS = {
-    tickets: loadTickets, estimates: loadEstimates, applications: loadApplications, investors: loadInvestors,
+    tickets: loadTickets, estimates: loadEstimates, invoices: loadInvoices, applications: loadApplications, investors: loadInvestors,
     feedback: loadFeedback, customers: loadCustomers, members: loadAtrOneMembers, inventory: loadInventory,
     documents: loadDocumentsTab, financials: loadFinancials,
     /* PAYROLL_SPLIT_2026_11_03: Payroll is its own tab now (see loadPayroll). */
@@ -1845,7 +1845,7 @@
     var tabs = document.querySelectorAll('.portal-tab');
     tabs.forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === name); });
     /* PASS10_2026_11_04: 'tracking' (the Live Tracking panel) hides and shows with the rest too */
-    ['tickets', 'estimates', 'applications', 'investors', 'feedback', 'customers', 'leads', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'tracking', 'documents', 'financials', 'payroll', 'mileage', 'businesscard', /* V166_BUSINESS_CARD_2026_11_17: the Business Card panel hides and shows with the rest too */ 'teamchat', 'guestchat', 'associateaccounts', 'warranty', 'setup', 'home', 'virtual'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too; ASSOCIATE_ACCOUNTS_2026_11_03: 'associateaccounts' hides and shows with the rest too (it absorbed ACCOUNT_CONTROLS_2026_11_03's 'accountcontrols' and the roster's 'associates'); WARRANTY_PORTAL_2026_11_03: 'warranty' hides and shows with the rest too; PORTAL_SETUP_2026_11_04: 'setup' hides and shows with the rest too; PORTAL_HOME_2026_11_09: 'home' hides and shows with the rest too; LEADS_2026_11_15: 'leads' hides and shows with the rest too; QR_FIX_PASS_2026_11_05: 'scanin' is GONE from this list — the scanner is a popup now, there is no scanin panel to hide or show */
+    ['tickets', 'estimates', 'invoices', 'applications', 'investors', 'feedback', 'customers', 'leads', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'tracking', 'documents', 'financials', 'payroll', 'mileage', 'businesscard', /* V166_BUSINESS_CARD_2026_11_17: the Business Card panel hides and shows with the rest too */ 'teamchat', 'guestchat', 'associateaccounts', 'warranty', 'setup', 'home', 'virtual'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too; ASSOCIATE_ACCOUNTS_2026_11_03: 'associateaccounts' hides and shows with the rest too (it absorbed ACCOUNT_CONTROLS_2026_11_03's 'accountcontrols' and the roster's 'associates'); WARRANTY_PORTAL_2026_11_03: 'warranty' hides and shows with the rest too; PORTAL_SETUP_2026_11_04: 'setup' hides and shows with the rest too; PORTAL_HOME_2026_11_09: 'home' hides and shows with the rest too; LEADS_2026_11_15: 'leads' hides and shows with the rest too; QR_FIX_PASS_2026_11_05: 'scanin' is GONE from this list — the scanner is a popup now, there is no scanin panel to hide or show */
       $('portal-panel-' + n).hidden = n !== name;
     });
     closeDrawer();
@@ -2398,6 +2398,111 @@
     if (clearBtn) clearBtn.addEventListener('click', function () { inp.value = ''; applyEstimatesSearch(); try { inp.focus(); } catch (e) {} });
     var filter = $('portal-estimates-filter');
     if (filter) filter.addEventListener('change', function () { loadEstimates(true); });
+  }
+  /* ---------- Invoices list ---------- */
+  /* V171_INVOICE_BUTTON_2026_11_18 (Austin, Nov 18, 2026): the Invoices list mirrors the Estimates list
+     (guest name, ticket, amount, status) — the tickets with a filed invoice. The
+     invoices still live on their tickets in the Service Queue; this list is the
+     shortcut in. A ticket with no invoice filed never appears here. The count
+     badge counts the invoices with a balance still due. */
+  var invoicesAllRows = [];
+  var invoicesSearchTerm = '';
+  var invoicesSearchWired = false;
+  function invoiceRowMatches(r, term) {
+    var q = String(term || '').trim().toLowerCase();
+    if (!q) return true;
+    var t = r.ticket || {};
+    if (String(t.customer_name || '').toLowerCase().indexOf(q) !== -1) return true;
+    if (deviceLabel(t).toLowerCase().indexOf(q) !== -1) return true;
+    var digits = q.replace(/\D/g, '');
+    if (digits && !/[a-z]/.test(q) && String(t.customer_phone || '').replace(/\D/g, '').indexOf(digits) !== -1) return true;
+    return false;
+  }
+  function renderInvoices(rows) {
+    var list = $('portal-invoices-list');
+    invoicesAllRows = rows || [];
+    var view = invoicesSearchTerm ? invoicesAllRows.filter(function (r) { return invoiceRowMatches(r, invoicesSearchTerm); }) : invoicesAllRows;
+    if (!view.length) {
+      emptyState(list, invoicesSearchTerm ? 'No invoices match that search. Clear the search to see them all.' : 'No invoices yet — generate one from a ticket.');
+      return;
+    }
+    list.innerHTML = view.map(function (r) {
+      var t = r.ticket;
+      var pill = r.balance == null ? '<span class="portal-badge">Invoice filed</span>'
+        : r.balance > 0 ? '<span class="portal-badge">Balance due</span>'
+        : '<span class="portal-badge">Paid in full</span>';
+      var amt = r.balance == null ? '<p class="portal-card-meta"><strong>Invoice filed</strong></p>'
+        : '<p class="portal-card-meta"><strong>Balance due: ' + esc(fmtMoney(r.balance)) + '</strong></p>';
+      var who = esc(t.customer_name || 'No name given');
+      var phone = trim(t.customer_phone);
+      var phoneHtml = phone ? ' &middot; <a href="tel:' + esc(phone.replace(/[^0-9+]/g, '')) + '">' + esc(phone) + '</a>' : '';
+      return '<article class="portal-card" data-view-invoice="' + esc(t.id) + '" style="cursor:pointer">' +
+        '<div class="portal-card-top"><p class="portal-card-title">' + esc(deviceLabel(t)) + '</p><span class="portal-card-topright">' + pill + '</span></div>' +
+        '<p class="portal-card-meta"><i class="fas fa-user"></i> ' + who + phoneHtml + '</p>' +
+        '<p class="portal-card-meta">Ticket #' + esc(shortCode(t)) + ' &middot; ' + esc(t.status || '') + '</p>' +
+        amt +
+        '<p class="portal-card-issue">' + esc(t.issue || '') + '</p>' +
+        '<p class="portal-card-meta">Invoice filed ' + esc(fmtDateTime(r.doc.created_at)) + '</p>' +
+        '<div class="portal-card-actions"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-view-invoice="' + esc(t.id) + '"><i class="fas fa-eye"></i> View invoice</button></div></article>';
+    }).join('');
+  }
+  function loadInvoices(force) {
+    var list = $('portal-invoices-list');
+    if (!list) return;
+    if (!force) list.innerHTML = '<p class="portal-muted">Loading invoices&hellip;</p>';
+    wireInvoicesSearch();
+    withClient(function (client) {
+      if (!client) { listError(list, 'invoices'); return; }
+      client.from('ticket_documents').select('*').eq('doc_type', 'invoice').order('created_at', { ascending: false }).limit(200).then(function (res) {
+        if (res.error) { listError(list, 'invoices'); return; }
+        var docs = (res.data || []).filter(function (d) { return d && d.doc_type === 'invoice'; });
+        var seen = {}, ids = [];
+        docs.forEach(function (d) { if (d.ticket_id && !seen[d.ticket_id]) { seen[d.ticket_id] = d; ids.push(d.ticket_id); } });
+        if (!ids.length) { state.loaded.invoices = true; renderInvoices([]); setCount('portal-count-invoices', 0); return; }
+        var done = 0, rows = [];
+        ids.forEach(function (tid) {
+          client.from('tickets').select('*').eq('id', tid).maybeSingle().then(function (tr) {
+            if (tr.error || !tr.data) { finishOne(); return; }
+            var t = tr.data;
+            client.from('ticket_charges').select('*').eq('ticket_id', tid).order('created_at', { ascending: true }).then(function (cr) {
+              var charges = (!cr.error && cr.data) ? cr.data : [];
+              var tot = null;
+              try { tot = chargeTotals(charges); } catch (e) { tot = null; }
+              rows.push({ ticket: t, doc: seen[tid], balance: tot ? tot.balance : null, subtotal: tot ? tot.subtotal : null });
+              finishOne();
+            }).catch(function () { rows.push({ ticket: t, doc: seen[tid], balance: null, subtotal: null }); finishOne(); });
+          }).catch(function () { finishOne(); });
+        });
+        function finishOne() {
+          done++;
+          if (done < ids.length) return;
+          rows.sort(function (a, b) { return String(b.doc.created_at || '').localeCompare(String(a.doc.created_at || '')); });
+          state.loaded.invoices = true;
+          renderInvoices(rows);
+          var unpaid = rows.filter(function (r) { return r.balance != null && r.balance > 0; }).length;
+          setCount('portal-count-invoices', unpaid);
+        }
+      }).catch(function () { listError(list, 'invoices'); });
+    });
+  }
+  function syncInvoicesSearchClear() {
+    var btn = $('portal-invoices-search-clear'), inp = $('portal-invoices-search');
+    if (btn && inp) btn.hidden = !inp.value;
+  }
+  function applyInvoicesSearch() {
+    var inp = $('portal-invoices-search');
+    invoicesSearchTerm = inp ? inp.value : '';
+    syncInvoicesSearchClear();
+    renderInvoices(invoicesAllRows);
+  }
+  function wireInvoicesSearch() {
+    if (invoicesSearchWired) return;
+    var inp = $('portal-invoices-search');
+    if (!inp) return;
+    invoicesSearchWired = true;
+    inp.addEventListener('input', applyInvoicesSearch);
+    var clearBtn = $('portal-invoices-search-clear');
+    if (clearBtn) clearBtn.addEventListener('click', function () { inp.value = ''; applyInvoicesSearch(); try { inp.focus(); } catch (e) {} });
   }
   function estimateTicketRow(e, guestId) {
     return {
@@ -3360,7 +3465,27 @@ function loadTicketThread(client, ticketId) {
    * rebuilds the form, so the notice rides in #p2-edit-msg (G2)
    * and is cleared as it renders, never shown twice. */
   var p2EditNotice = '';
-  function openTicket(id) {
+  /* V171_INVOICE_BUTTON_2026_11_18: the Invoices list opens the ticket straight at its invoice —
+     the Documents accordion opens and the drawer scrolls to it, with the filed
+     invoice row highlighted. The invoice itself still lives on the ticket; this
+     is only the way in. */
+  function focusDrawerInvoice() {
+    var body = $('portal-drawer-body');
+    if (!body) return;
+    var sec = body.querySelector('[data-acc="documents"]');
+    if (!sec) return;
+    if (!tkAccOpen('documents')) {
+      var head = body.querySelector('[data-acc-toggle="documents"]');
+      if (head) head.click();
+    }
+    setTimeout(function () { try { sec.scrollIntoView({ block: 'start' }); } catch (e) { /* best-effort */ } }, 300);
+    var view = body.querySelector('[data-p4-view*="invoice-generated"]');
+    if (view) {
+      var row = view.closest ? view.closest('.p2-line') : null;
+      if (row) row.style.background = '#FFF3E0';
+    }
+  }
+  function openTicket(id, section) {
     drawerLoading('Ticket details');
     withClient(function (client) {
       if (!client) { $('portal-drawer-body').innerHTML = '<p class="portal-error">Couldn&rsquo;t reach the database.</p>'; return; }
@@ -3374,19 +3499,21 @@ function loadTicketThread(client, ticketId) {
           ? '<div class="portal-gate"><i class="fas fa-triangle-exclamation"></i> <strong>Parts not on hand yet.</strong> Don&rsquo;t start this repair until the part is in and scanned to the ticket.</div>'
           : '';
         var body = gateBanner +
-          /* V163_ISSUE_TOP_2026_11_17 (Austin, Nov 17, 2026): the Issue
-           * sits at the top of the ticket, above Status — the first
-           * thing staff see when the drawer opens. Issue and Reason
-           * are the same thing: one line, labeled Issue. */
-          (t.issue || t.issue_reason ? '<p class="p2-issue-top"><strong>Issue:</strong> ' + esc(t.issue || t.issue_reason) + '</p>' : '') +
-          /* PORTAL_TICKET_DRAWER_2026_11_02 (Austin, Nov 2, 2026):
-           * drawer section order — the Status control opens the
-           * drawer, first thing under the Ticket details heading
-           * (it used to sit below Parts), and Message customer
-           * sits directly above the Repair log (see below). Every
-           * section's markup and wiring are unchanged; only the
-           * order moved. */
-          '<div class="portal-drawer-section"><h3>Status</h3>' +
+          /* V171_STATUS_ACTION_2026_11_18 (Austin, Nov 18, 2026): the Issue line that used to sit
+           * here is gone — it duplicated the Issue field inside Ticket details
+           * (V163_ISSUE_TOP is retired). Issue lives exactly once now, as the
+           * editable Issue field in Ticket details. */
+          /* V171_STATUS_ACTION_2026_11_18 (Austin, Nov 18, 2026): the whole top area — Status,
+           * Assigned to, and the document / label / delete buttons below —
+           * is ONE collapsible section titled "Status action", default closed
+           * like every drawer section (v167). It is NEVER called by the Hub
+           * Quick Actions name — that name belongs to the hub and reusing it
+           * here risks the code. The Status control used to sit open at the
+           * top of the drawer (PORTAL_TICKET_DRAWER); the order is unchanged
+           * — Status action first, then Ticket details — only the seat
+           * changed (inside the accordion). Message customer still sits
+           * directly above the Repair log. */
+          '<div class="portal-drawer-section tk-acc" data-acc="statusaction">' + tkAccHead('statusaction', 'Status action') + tkAccBodyOpen('statusaction') +
           '<div class="portal-status-row"><select id="portal-ticket-status" aria-label="Ticket status">' +
           statusOptions(TICKET_STATUSES, t.status) + '</select>' +
           '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="portal-ticket-status-save">Save status</button>' +
@@ -3398,7 +3525,7 @@ function loadTicketThread(client, ticketId) {
           '<div class="portal-status-row"><label for="portal-ticket-assignee">Assigned to</label>' +
           '<select id="portal-ticket-assignee" aria-label="Assigned technician"><option value="">Unassigned</option></select>' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="portal-ticket-assignee-save">Save assignment</button>' +
-          '<span class="portal-muted portal-small" id="portal-ticket-assignee-msg"></span></div></div>' +
+          '<span class="portal-muted portal-small" id="portal-ticket-assignee-msg"></span></div>' +
           /* DRAWER_ACTIONS_TOP_2026_11_04 (Austin, Nov 4, 2026):
            * the receipt and delete actions live up here now,
            * right under Assigned to, beside Status — Print
@@ -3408,14 +3535,21 @@ function loadTicketThread(client, ticketId) {
            * section. The row used to render below Edit details.
            * Same markup, same ids, same by-id wiring — only
            * the seat moved. */
-'<div class="portal-drawer-section p2-actions">' +
+          /* V171_TICKET_BUTTON_LABELS_2026_11_18 (Austin, Nov 18, 2026): "What are these?" — the three document
+             menu buttons at the top of the ticket were bare nouns ("Receipt" /
+             "Estimate" / "Invoice") that said nothing about what tapping them
+             does. They now say they hold those actions ("Receipt actions" /
+             "Estimate actions" / "Invoice actions"). The Print / Generate /
+             Download / Email items inside the menus, Print device label, and
+             Delete ticket already say what they do, unchanged. */
+'<div class="p2-actions">' +
           /* V154_TICKET_FORM_2026_11_16 (Austin, Nov 16, 2026): the
            * sixteen loose buttons were "a mess" — Receipt, Estimate
            * and Invoice are grouped menus now. Same buttons, same
            * ids, same handlers in wireTicketActions; only the seat
            * changed. Print device label, Save status, Save
            * assignment and Delete ticket stay separate buttons. */
-          '<div class="p2-doc-menu"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-menu-receipt-btn" aria-haspopup="true" aria-expanded="false"><i class="fas fa-receipt"></i> Receipt</button>' +
+          '<div class="p2-doc-menu"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-menu-receipt-btn" aria-haspopup="true" aria-expanded="false"><i class="fas fa-receipt"></i> Receipt actions</button>' +
           '<div class="p2-doc-menu-list" role="menu">' +
           '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-receipt-btn"><i class="fas fa-receipt"></i> Print receipt</button>' +
           '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-gen-receipt-btn"><i class="fas fa-file"></i> Generate receipt</button>' +
@@ -3423,14 +3557,14 @@ function loadTicketThread(client, ticketId) {
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-email-receipt-btn"><i class="fas fa-envelope"></i> Email receipt</button>' +
           '<span class="portal-muted portal-small" id="p2-gen-receipt-msg"></span></div></div>' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-device-label-btn"><i class="fas fa-barcode"></i> Print device label</button>' +
-          '<div class="p2-doc-menu"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-menu-estimate-btn" aria-haspopup="true" aria-expanded="false"><i class="fas fa-file"></i> Estimate</button>' +
+          '<div class="p2-doc-menu"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-menu-estimate-btn" aria-haspopup="true" aria-expanded="false"><i class="fas fa-file"></i> Estimate actions</button>' +
           '<div class="p2-doc-menu-list" role="menu">' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-print-estimate-btn"><i class="fas fa-print"></i> Print estimate</button>' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-gen-estimate-btn"><i class="fas fa-file"></i> Generate estimate</button>' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-download-estimate-btn"><i class="fas fa-download"></i> Download estimate</button>' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-email-estimate-btn"><i class="fas fa-envelope"></i> Email estimate</button>' +
           '<span class="portal-muted portal-small" id="p2-doc-estimate-msg"></span></div></div>' +
-          '<div class="p2-doc-menu"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-menu-invoice-btn" aria-haspopup="true" aria-expanded="false"><i class="fas fa-file"></i> Invoice</button>' +
+          '<div class="p2-doc-menu"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-menu-invoice-btn" aria-haspopup="true" aria-expanded="false"><i class="fas fa-file"></i> Invoice actions</button>' +
           '<div class="p2-doc-menu-list" role="menu">' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-print-invoice-btn"><i class="fas fa-print"></i> Print invoice</button>' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-gen-invoice-btn"><i class="fas fa-file"></i> Generate invoice</button>' +
@@ -3442,7 +3576,7 @@ function loadTicketThread(client, ticketId) {
 '<span class="portal-muted portal-small" id="p2-action-msg"></span>' +
           '<div id="p2-delete-confirm" hidden><p class="portal-error">Permanently delete this ticket? Its charges and messages go with it. Part orders stay on file but detach from the ticket. This cannot be undone.</p>' +
           '<button class="portal-btn p2-btn-danger portal-btn-sm" type="button" id="p2-delete-yes">Yes, delete it</button> ' +
-          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-delete-no">Keep ticket</button></div></div>' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-delete-no">Keep ticket</button></div></div></div></div>' +
                     /* PORTAL_TICKET_DETAILS_COLLAPSE_2026_11_03: Ticket details
            * is an accordion section that now holds the edit form
            * inline too (V163_DETAILS_INLINE_2026_11_17) and opens
@@ -3475,8 +3609,12 @@ function loadTicketThread(client, ticketId) {
           '<div class="v154-map" id="p2-edit-map" hidden><iframe id="p2-edit-map-frame" title="Map of the service address" loading="lazy" src=""></iframe><p class="portal-muted portal-small" id="p2-edit-map-note"></p></div>' +
           '<div class="portal-field"><label for="p2-edit-serial">Serial / IMEI</label><input type="text" id="p2-edit-serial" value="' + esc(t.serial_imei || '') + '" /></div>' +
           /* V163_ISSUE_MERGE_2026_11_17: the Reason field is gone — Issue and Reason are the same thing, and the Issue textarea above is the one field. issue_reason keeps its creation-time value for the one-on-one kind label; nothing on the ticket page edits it anymore. */
-          '<div class="p2-form-row"><div class="portal-field"><label for="p2-edit-volts">Voltage (V)</label><input type="text" id="p2-edit-volts" value="' + esc(t.triage_volts || '') + '" /></div>' +
-          '<div class="portal-field"><label for="p2-edit-amps">Draw (A)</label><input type="text" id="p2-edit-amps" value="' + esc(t.triage_amps || '') + '" /></div></div>' +
+          /* V171_POWER_TEST_2026_11_18 (Austin, Nov 18, 2026): the old label is now "Amps (A)" — label
+           * only, the field id (p2-edit-amps) and triage_amps column are unchanged —
+           * and a third field, Watts (W), joins it, reading t.triage_watts. */
+          '<div class="p2-form-row atr-tri3"><div class="portal-field"><label for="p2-edit-volts">Voltage (V)</label><input type="text" id="p2-edit-volts" value="' + esc(t.triage_volts || '') + '" /></div>' +
+          '<div class="portal-field"><label for="p2-edit-amps">Amps (A)</label><input type="text" id="p2-edit-amps" value="' + esc(t.triage_amps || '') + '" /></div>' +
+          '<div class="portal-field"><label for="p2-edit-watts">Watts (W)</label><input type="text" id="p2-edit-watts" value="' + esc(t.triage_watts || '') + '" /></div></div>' +
           '<div class="p2-form-row"><div class="portal-field"><label for="p2-edit-power">Powers on?</label><select id="p2-edit-power"><option value="">Not checked</option><option value="Yes"' + (t.power_on === 'Yes' ? ' selected' : '') + '>Yes</option><option value="No"' + (t.power_on === 'No' ? ' selected' : '') + '>No</option></select></div>' +
           '<div class="portal-field"><label for="p2-edit-backup">Backed up?</label><select id="p2-edit-backup"><option value="">Unknown</option><option value="Yes"' + (t.backed_up === 'Yes' ? ' selected' : '') + '>Yes</option><option value="No"' + (t.backed_up === 'No' ? ' selected' : '') + '>No</option></select></div>' +
           '<div class="portal-field"><label for="p2-edit-prior">Repaired before?</label><select id="p2-edit-prior"><option value="">Unknown</option><option value="Yes"' + (t.prior_repair === 'Yes' ? ' selected' : '') + '>Yes</option><option value="No"' + (t.prior_repair === 'No' ? ' selected' : '') + '>No</option></select></div></div>' +
@@ -3697,7 +3835,11 @@ function loadTicketThread(client, ticketId) {
         loadTicketThread(client, t.id); resolveGvPhone(client, t); /* PORTAL_GV_TEXTS_2026_11_02 */ loadRepairLog(client, t.id); loadTicketDirectory(client); loadRepairLogPhotos(client, t); wireRepairLogPhotos(client, t); var repairForm = $("portal-repair-log-form"); if (repairForm) { repairForm.addEventListener("submit", function (e) { e.preventDefault(); var input = $("portal-repair-log-input"); var err = $("portal-repair-log-error"); var status = $("portal-repair-log-status"); if (err) { err.hidden = true; err.textContent = ""; } if (status) { status.hidden = true; status.textContent = ""; } var text = input ? trim(input.value) : ""; if (!text) { return; } /* TICKET_MENTIONS_2026_11_03: the tag set is recomputed from the final text (computeNoteTags), stored on the note, and surfaced to Team Chat only after the note itself is safely saved. */ var tags = computeNoteTags(text); var authorName = (state.profile && state.profile.name) || null; var saveErr = function () { if (err) { err.textContent = "Could not save that update. Try again."; err.hidden = false; } }; var finishSave = function () { if (input) { input.value = ""; } rlPickedMentions = {}; hideMentionMenu(); loadRepairLog(client, t.id); if (tags.length) { postNoteTagToTeamChat(client, t, text, tags, status); } }; client.from("ticket_notes").insert({ ticket_id: t.id, author: authorName, note: text, mentions: tags.map(function (p) { return p.id; }) }).then(function (res2) { if (res2.error) { /* The mentions column is not live yet - the note still saves in its old shape rather than failing over a tag. */ client.from("ticket_notes").insert({ ticket_id: t.id, author: authorName, note: text }).then(function (res3) { if (res3.error) { saveErr(); return; } finishSave(); }).catch(function () { saveErr(); }); return; } finishSave(); }).catch(function () { saveErr(); }); }); } wireMentionPicker();
         loadCharges(client, t);
         loadParts(client, t);
-        loadDocuments(client, t);
+        var docsP = loadDocuments(client, t);
+        /* V171_INVOICE_BUTTON_2026_11_18: the Invoices list opens the ticket straight at its invoice —
+           once the Documents section has rendered, open it and scroll to the
+           filed invoice row. */
+        if (section === 'invoice' && docsP && docsP.then) docsP.then(function () { focusDrawerInvoice(); });
         wireDocuments(client, t);
         loadMembership(client, t);
         loadStockItems(client, t);
@@ -3761,6 +3903,7 @@ function loadTicketThread(client, ticketId) {
             /* V163_ISSUE_MERGE_2026_11_17: issue_reason is not edited here anymore — the Issue textarea above is the one field. */
             triage_volts: $('p2-edit-volts').value.trim() || null,
             triage_amps: $('p2-edit-amps').value.trim() || null,
+            triage_watts: $('p2-edit-watts').value.trim() || null, /* V171_POWER_TEST_2026_11_18 */
             power_on: $('p2-edit-power').value || null,
             backed_up: $('p2-edit-backup').value || null,
             prior_repair: $('p2-edit-prior').value || null,
@@ -4654,6 +4797,7 @@ function loadTicketThread(client, ticketId) {
    * screen on a failed delete. Both handlers re-check the tier
    * on every tap, the warranty-delete pattern. */
   var p4DocRows = [];
+  var p4SigById = {}; /* V171_SIGNATURE_VIEW_2026_11_18: signature rows keyed by id, for the View affix. */
   function deleteTicketDocumentRow(client, row, done) {
     client.from('ticket_documents').delete().eq('id', row.id).select('id').then(function (res) {
       if (res.error || !res.data || !res.data.length) { done(false); return; }
@@ -4690,6 +4834,41 @@ function loadTicketThread(client, ticketId) {
     });
   }
 
+  /* V171_SIGNATURE_VIEW_2026_11_18 (Austin, Nov 18, 2026): deleting a signature removes only the
+   * document_signatures row — the guest would need to sign again. The filed
+   * document itself stays on the ticket (staff can delete it separately with
+   * its own Delete if needed). Same two-tap confirm and Admin+ gate as
+   * deleteDrawerDocument. */
+  function deleteTicketSignature(client, t, btn) {
+    var id = btn.getAttribute('data-p4-sig-del');
+    if (!id) return;
+    if (!isAdminOrAbove()) { docMsg('Deletes sit with Admin and above.'); return; }
+    if (btn.getAttribute('data-confirm') !== '1') {
+      btn.setAttribute('data-confirm', '1');
+      btn.innerHTML = '<i class="fas fa-trash"></i> Confirm delete?';
+      docMsg('Delete this signature? The guest would need to sign again. This cannot be undone.');
+      return;
+    }
+    btn.disabled = true;
+    docMsg('Deleting…');
+    client.from('document_signatures').delete().eq('id', id).then(function (res) {
+      if (res.error) {
+        btn.disabled = false;
+        btn.removeAttribute('data-confirm');
+        btn.innerHTML = '<i class="fas fa-trash"></i> Delete';
+        docMsg('Couldn’t delete that signature — try again.');
+        return;
+      }
+      docMsg('Signature deleted.');
+      loadDocuments(client, t);
+    }).catch(function () {
+      btn.disabled = false;
+      btn.removeAttribute('data-confirm');
+      btn.innerHTML = '<i class="fas fa-trash"></i> Delete';
+      docMsg('Couldn’t delete that signature — try again.');
+    });
+  }
+
   /* V156_DOC_SIGNING_2026_11_16: the ticket drawer's Signatures
    * block — the guest's own signatures from the site ("Sign your
    * documents here"), shown on the ticket next to the filed
@@ -4711,14 +4890,38 @@ function loadTicketThread(client, ticketId) {
       .order('signed_at', { ascending: false })
       .then(function (res) {
         var sigs = res.error ? [] : (res.data || []);
-        var labels = { agreement: 'Service Agreement', estimate: 'Estimate', invoice: 'Invoice' };
+        var labels = { agreement: 'Service Agreement', estimate: 'Estimate', invoice: 'Invoice', warranty: '1-Year Limited Warranty', media: 'Media Release', terms: 'Terms & Conditions' }; /* V171_SIGNATURE_VIEW_2026_11_18 */
         if (!sigs.length) { sigBox.innerHTML = ''; }
         else {
+          /* V171_SIGNATURE_VIEW_2026_11_18 (Austin, Nov 18, 2026): every signature row carries View
+             and Delete like the estimate row has. View opens the signed document
+             with the signature on it — the filed copy for agreement / estimate /
+             invoice, matched from the ticket's filed documents (warranty / media /
+             terms have no filed copy, so they carry Delete only). Delete is gated
+             Admin+ with the same two-tap confirm as document deletes and removes
+             only the signature row. */
+          var sigDocByType = {};
+          docRows.forEach(function (d) { if (!sigDocByType[d.doc_type]) sigDocByType[d.doc_type] = d; });
+          var sigFiledType = { agreement: 'repair_authorization', estimate: 'estimate', invoice: 'invoice' };
           sigBox.innerHTML = '<div class="portal-drawer-section" style="margin-top:.75rem"><h3>Signatures</h3>' +
             sigs.map(function (sg) {
+              p4SigById[sg.id] = sg;
+              var filed = sigDocByType[sigFiledType[sg.document_type] || ''];
               return '<div class="p2-line"><div class="p2-line-main"><span class="p2-kind">' + esc(labels[sg.document_type] || 'Document') + '</span>' +
-                '<span class="portal-muted portal-small">' + esc(fmtDateTime(sg.signed_at)) + ' &middot; Signed online by the guest — ' + esc(sg.signer_name || '') + '</span></div></div>';
+                '<span class="portal-muted portal-small">' + esc(fmtDateTime(sg.signed_at)) + ' &middot; Signed online by the guest — ' + esc(sg.signer_name || '') + '</span></div>' +
+                (filed ? '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-p4-sig-view="' + esc(filed.storage_path) + '" data-p4-sig-id="' + esc(sg.id) + '" data-p4-view-name="' + esc(filed.file_name || '') + '"><i class="fas fa-eye"></i> View</button>' : '') +
+                (isAdminOrAbove() ? ' <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-p4-sig-del="' + esc(sg.id) + '"><i class="fas fa-trash"></i> Delete</button>' : '') + '</div>';
             }).join('') + '</div>';
+          var sigViewBtns = sigBox.querySelectorAll('[data-p4-sig-view]');
+          for (var vi = 0; vi < sigViewBtns.length; vi++) {
+            sigViewBtns[vi].addEventListener('click', function () {
+              viewDocument(client, this.getAttribute('data-p4-sig-view'), this.getAttribute('data-p4-view-name'), p4SigById[this.getAttribute('data-p4-sig-id')]);
+            });
+          }
+          var sigDelBtns = sigBox.querySelectorAll('[data-p4-sig-del]');
+          for (var di = 0; di < sigDelBtns.length; di++) {
+            sigDelBtns[di].addEventListener('click', function () { deleteTicketSignature(client, t, this); });
+          }
         }
         var hasAuth = docRows.some(function (d) { return d.doc_type === 'repair_authorization'; }) ||
           sigs.some(function (sg) { return sg.document_type === 'agreement'; });
@@ -4730,7 +4933,10 @@ function loadTicketThread(client, ticketId) {
   function loadDocuments(client, t) {
     var box = $('p4-docs');
     if (!box) return;
-    client.from('ticket_documents').select('*').eq('ticket_id', t.id).order('created_at', { ascending: false }).then(function (res) {
+    /* V171_INVOICE_BUTTON_2026_11_18: returns the load promise so openTicket can run the invoice
+       focus after the Documents section has rendered. Callers that ignore the
+       return are unaffected. */
+    return client.from('ticket_documents').select('*').eq('ticket_id', t.id).order('created_at', { ascending: false }).then(function (res) {
       if (res.error) { box.innerHTML = '<p class="portal-muted">Documents are not set up for this portal yet.</p>'; return; }
       var rows = res.data || [];
       p4DocRows = rows;
@@ -4779,20 +4985,44 @@ function loadTicketThread(client, ticketId) {
   }
   function docIsHtml(path, fileName) { return docNameIsHtml(path) || docNameIsHtml(fileName); }
 
-  function viewStoredDocument(client, path, fileName, fail) {
+  function viewStoredDocument(client, path, fileName, fail, sigRow) {
     if (!path) return;
     client.storage.from(DOC_BUCKET).createSignedUrl(path, SIGNED_URL_SECONDS).then(function (res) {
       if (res.error || !res.data || !res.data.signedUrl) { fail(); return; }
-      if (docIsHtml(path, fileName)) previewHtmlDocument(res.data.signedUrl);
+      if (docIsHtml(path, fileName)) previewHtmlDocument(res.data.signedUrl, sigRow);
       else window.open(res.data.signedUrl, '_blank');
     }).catch(fail);
   }
 
-  function viewDocument(client, path, fileName) {
-    viewStoredDocument(client, path, fileName, function () { docMsg('Could not open that document — try again.'); });
+  function viewDocument(client, path, fileName, sigRow) {
+    viewStoredDocument(client, path, fileName, function () { docMsg('Could not open that document — try again.'); }, sigRow);
   }
 
-  function previewHtmlDocument(signedUrl) {
+  /* V171_SIGNATURE_VIEW_2026_11_18 (Austin, Nov 18, 2026): the signed block for the in-portal
+   * preview — the same shape as the viewer's (name + date), without the finger
+   * drawing (the portal has no drawing for a guest's online signature).
+   * portalInjectSigBlock fills the signature field a generated estimate/invoice
+   * carries (see composeTicketDocHtml) and never double-signs a document that
+   * already carries one. */
+  function portalSigBlockHtml(row) {
+    var date = '';
+    try { date = new Date(row.signed_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }); } catch (e) { date = String(row.signed_at || ''); }
+    return '<section class="atr-signed-block" style="margin-top:32px;padding-top:16px;border-top:2px solid #1c1c1e;">' +
+      '<p style="font-weight:700;margin:0 0 4px;">Signed by ' + esc(row.signer_name || '') + ' on ' + esc(date) + '</p></section>';
+  }
+  function portalInjectSigBlock(htmlText, row) {
+    if (!row || !htmlText) return htmlText;
+    if (htmlText.indexOf('atr-signed-block') !== -1 || htmlText.indexOf('Signed by:') !== -1) return htmlText;
+    var block = portalSigBlockHtml(row);
+    var start = htmlText.indexOf('<!--ATR_SIGN_FIELD_START-->');
+    var end = htmlText.indexOf('<!--ATR_SIGN_FIELD_END-->');
+    if (start !== -1 && end !== -1 && end > start) {
+      return htmlText.slice(0, start) + block + htmlText.slice(end + '<!--ATR_SIGN_FIELD_END-->'.length);
+    }
+    if (htmlText.indexOf('</body>') !== -1) return htmlText.replace('</body>', block + '</body>');
+    return htmlText + block;
+  }
+  function previewHtmlDocument(signedUrl, sigRow) {
     var old = document.getElementById('doc-preview-modal');
     if (old && old.parentNode) old.parentNode.removeChild(old);
     var wrap = document.createElement('div');
@@ -4823,10 +5053,10 @@ function loadTicketThread(client, ticketId) {
       return r.text();
     }).then(function (html) {
       if (!wrap.parentNode) return; /* closed while loading */
-      loadedHtml = html;
+      loadedHtml = portalInjectSigBlock(html, sigRow);
       var loading = wrap.querySelector('#doc-preview-loading');
       var frame = wrap.querySelector('#doc-preview-frame');
-      frame.srcdoc = html;
+      frame.srcdoc = loadedHtml;
       if (loading) loading.style.display = 'none';
       frame.style.display = 'block';
       openBtn.disabled = false;
@@ -6061,7 +6291,17 @@ function loadTicketThread(client, ticketId) {
     }
     window.addEventListener('afterprint', finish);
     printCleanupTimer = setTimeout(finish, 60000);
-    setTimeout(function () { window.print(); }, 60);
+    /* V171_PRINT_FIX_2026_11_18 (Austin, Nov 18, 2026): Print receipt / Print device label /
+       Print estimate / Print invoice all came out BLANK on his iPad, even though
+       the Nov 11 fix (hold the content until afterprint) is live — and View of a
+       filed document works (Daniel's $69.99 estimate shows fine), so the documents
+       are good and only this print step is blank. The setup race: print() fired
+       60 ms after the area was filled, before iPad Safari had laid the newly
+       visible content out. Now the layout is forced and the print gets a real
+       settle (500 ms) before window.print(). The content still stays until
+       afterprint (60 s safety), as the Nov 11 fix set up. */
+    try { void area.offsetHeight; } catch (e) { /* best-effort */ }
+    setTimeout(function () { window.print(); }, 500);
   }
 
   /* PORTAL_SIGNED_RECEIPT_2026_10_30 (Austin, Oct 30, 2026): the
@@ -6993,6 +7233,20 @@ function loadTicketThread(client, ticketId) {
         ? 'Thank you for choosing Austin&rsquo;s Tech Repair Group.'
         : 'Repairs are backed by our 1-Year Limited Warranty (parts &amp; labor). Thank you for your business!') +
       '</p>' +
+      /* V171_ESTIMATE_INVOICE_SIGN_2026_11_18 (Austin, Nov 18, 2026): the estimate / invoice the guest gets
+         now carries a signature field at the bottom — the guest reads the
+         document, scrolls to the bottom, and signs in the field (typed name +
+         finger pad) in the viewer. Signing fills THIS field (see injectSigBlock
+         in view-doc.html); it is NOT a new document and NOT a new page. The
+         Generate / file path is untouched — this only adds the field to the
+         document that path already builds. */
+      '<!--ATR_SIGN_FIELD_START--><div class="rc-sign" id="atr-sign-field">' +
+      '<p class="rc-terms-head">Signature</p>' +
+      '<p style="font-size:9pt;color:#333;line-height:1.45;margin:0 0 8pt;">Sign below to accept this ' + (kind === 'estimate' ? 'estimate' : 'invoice') + '. Your signature is recorded with your name and today&rsquo;s date.</p>' +
+      '<div style="border:1px solid #bbb;border-radius:8px;padding:12pt;background:#fff;">' +
+      '<p style="margin:0 0 8pt;">Signature: ________________________________________</p>' +
+      '<p style="margin:0;">Date: ________________________________________</p>' +
+      '</div></div><!--ATR_SIGN_FIELD_END-->' +
       '</div>';
     return html;
   }
@@ -17423,6 +17677,12 @@ function loadTicketThread(client, ticketId) {
       var t = e.target;
       while (t && t !== document) {
         if (t.getAttribute) {
+          /* V171_INVOICE_BUTTON_2026_11_18: an Invoices row opens its ticket straight at the invoice —
+             the drawer opens with the Documents section open and scrolled to the
+             invoice row. The walk reaches this before data-view-ticket, so a row
+             carrying both still lands on the invoice. */
+          var iv = t.getAttribute('data-view-invoice');
+          if (iv) { openTicket(iv, 'invoice'); return; }
           var tid = t.getAttribute('data-view-ticket');
           if (tid) { openTicket(tid); return; }
           /* V165_ESTIMATE_2026_11_17: estimate rows — Confirm opens the drawer at the confirm step (the phone confirmation is recorded there); Deny is two-tap, inline; View opens the drawer. The walk reaches the buttons before the card, so they act instead of opening it. */
@@ -21675,6 +21935,7 @@ function loadTicketThread(client, ticketId) {
         issue: svcKind ? ciServiceIssueText(svcKind, svcGoal, svcHours, $('ci-atrone') ? $('ci-atrone').value : '') : '',
         triage_volts: null,
         triage_amps: null,
+        triage_watts: null, /* V171_POWER_TEST_2026_11_18 */
         power_on: null,
         backed_up: null,
         prior_repair: null,
@@ -21712,6 +21973,7 @@ function loadTicketThread(client, ticketId) {
         })(),
         triage_volts: $('ci-volts').value.trim() || null,
         triage_amps: $('ci-amps').value.trim() || null,
+        triage_watts: $('ci-watts').value.trim() || null, /* V171_POWER_TEST_2026_11_18 */
         power_on: $('ci-power').value || null,
         backed_up: $('ci-backup').value || null,
         prior_repair: $('ci-prior').value || null,

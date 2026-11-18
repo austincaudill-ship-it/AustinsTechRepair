@@ -1972,13 +1972,15 @@
             <button class="acct-tab" id="authx-tab-signup" type="button">Sign Up</button>
           </div>
 
-          <!-- V146_SIGNUP_SPLIT_2026_11_13 (owner, Nov 13, 2026): one Sign Up
+          <!-- V171_SIGNUP_SPLIT_2026_11_18 (owner, Nov 18, 2026): one Sign Up
                button with a Guest/Business toggle right underneath the Log In /
                Sign Up buttons, side by side like them. Tapping switches the
                fields below: guest asks for full name, email, phone, address,
-               password; business asks for full business name, business email,
-               phone, address, password, EIN. The EIN lives on the business
-               account from sign-up only — the booking form never asks for it. -->
+               password — no EIN, ever; business asks for the person creating
+               the account, business name, business email, business phone,
+               personal phone, business address, business EIN, password. The
+               EIN lives on the business account from sign-up only — the
+               booking form never asks for it. -->
           <div class="acct-tabs" id="authx-signup-type" hidden role="group" aria-label="Guest or business account">
             <button class="acct-tab active" id="authx-type-guest" type="button" aria-pressed="true">Guest</button>
             <button class="acct-tab" id="authx-type-business" type="button" aria-pressed="false">Business</button>
@@ -1999,20 +2001,28 @@
           </form>
 
           <form id="authx-signup-form" novalidate hidden>
+            <label class="acct-field" id="authx-signup-person-wrap" hidden>
+              <span>Person creating account</span>
+              <input type="text" id="authx-signup-person" placeholder="Jane Smith" autocomplete="name" aria-label="Person creating account">
+            </label>
             <label class="acct-field">
               <span id="authx-signup-name-label">Full name</span>
               <input type="text" id="authx-signup-name" placeholder="Jane Smith" autocomplete="name" aria-label="Full name" required>
             </label>
             <label class="acct-field">
-              <span>Email address</span>
+              <span id="authx-signup-email-label">Email address</span>
               <input type="email" id="authx-signup-email" placeholder="you@example.com" autocomplete="email" aria-label="Email address" required>
             </label>
             <label class="acct-field">
-              <span>Phone</span>
+              <span id="authx-signup-phone-label">Phone</span>
               <input type="tel" id="authx-signup-phone" placeholder="(937) 555-1234" autocomplete="tel" aria-label="Phone number" required>
             </label>
+            <label class="acct-field" id="authx-signup-personal-phone-wrap" hidden>
+              <span>Personal phone</span>
+              <input type="tel" id="authx-signup-personal-phone" placeholder="(937) 555-1234" autocomplete="tel" aria-label="Personal phone">
+            </label>
             <label class="acct-field">
-              <span>Address</span>
+              <span id="authx-signup-address-label">Address</span>
               <input type="text" id="authx-signup-address" placeholder="Street address, city, state, ZIP" autocomplete="street-address" aria-label="Address" required>
             </label>
             <label class="acct-field" id="authx-signup-ein-wrap" hidden>
@@ -5230,6 +5240,8 @@
   .est-view-card{border:1px solid #e3ddd2;border-radius:12px;padding:1rem;margin:.75rem 0}
   .est-actions{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1rem}
   .acct-field{display:block;margin-bottom:1rem}
+  /* V171_SIGNUP_SPLIT_2026_11_18 (owner, Nov 18, 2026): a hidden .acct-field must actually hide — the author display:block above beats the browser's [hidden] handling, which is why the Business EIN showed on Guest sign-up. */
+  .acct-field[hidden]{display:none}
   .acct-field span{display:block;font-weight:700;font-size:.85rem;margin-bottom:.4rem;color:var(--ink)}
   .acct-field input,.acct-field select,.acct-field textarea{width:100%;padding:.85rem 1rem;border:2px solid var(--line);border-radius:var(--radius-sm);background:var(--bg);color:var(--ink);font-size:.95rem;font-family:var(--font-body);box-sizing:border-box}
   .acct-field input:focus,.acct-field select:focus,.acct-field textarea:focus{outline:none;border-color:var(--brand)}
@@ -7165,6 +7177,15 @@
       if (ov && !ov.hidden) window.atrCloseDocOverlay();
     }
   });
+  /* V171_DOC_SIGNER_2026_11_18 (Austin, Nov 18, 2026): the document viewer (view-doc.html, inside
+     the overlay frame) posts this when the guest taps I Decline — the viewer
+     has already shown the call/text note, so the overlay closes after a short
+     read delay. Same-origin only: the frame is our own view-doc.html. */
+  window.addEventListener('message', function (e) {
+    if (!e || !e.data || e.data.type !== 'atr-doc-declined') return;
+    if (e.origin !== window.location.origin) return;
+    setTimeout(function () { window.atrCloseDocOverlay(); }, 3000);
+  });
   function v158DownloadDoc(btn, ticketId, type) {
     if (!btn || !ticketId) return;
     var old = btn.textContent;
@@ -7724,8 +7745,8 @@
   var ASSISTANT_REPAIRS = { screen: 'Screen', battery: 'Battery', backglass: 'Back glass', chargeport: 'Charging port' };
   var ASSISTANT_FAQ = {
     warranty: 'Every standard repair includes our 1-Year Limited Warranty — parts and labor — for the repair on your invoice. New physical damage, liquid damage, or work by another shop is not covered. Covered claim? There is no second visit fee for it.',
-    dispatch: 'There is a visit fee for a mobile visit: $14.99 for guests, $34.99 for business. Diagnostics is $34.99 for guests, $64.99 for business, when your device needs a full diagnosis. It covers travel to you, it is due when you book, and it is non-refundable — separate from the repair price, never credited toward a repair.',
-    diagnostics: 'Estimates are free. Diagnostics is $34.99 for guests, $64.99 for business — even if we have to open your device or run deep board-level diagnostics to identify the problem, there is no extra diagnostic charge beyond that.',
+    dispatch: 'There is a visit fee for a mobile visit: $14.99. Diagnostics is $34.99, when your device needs a full diagnosis. It covers travel to you, it is due when you book, and it is non-refundable — separate from the repair price, never credited toward a repair.', /* V171_AUDIENCE_FEES_2026_11_18: guest figures only — the business variant lives in assistantFaqText above. */
+    diagnostics: 'Estimates are free. Diagnostics is $34.99 — even if we have to open your device or run deep board-level diagnostics to identify the problem, there is no extra diagnostic charge beyond that.', /* V171_AUDIENCE_FEES_2026_11_18: guest figure only — the business variant lives in assistantFaqText above. */
     area: 'We are a mobile service — we come to you in the Miami Valley (Xenia, Dayton, and surrounding areas). Most repairs are finished in a single visit, right at your home or office.',
     parts: 'Parts are ordered by us through our suppliers and delivered to us — we bring them to your install visit. Because parts are ordered for your specific job, the parts cost is paid upfront before we order, and those parts belong to you.',
     howlong: 'Most common repairs (screens, batteries, charge ports) are finished in a single visit once your part is in. If a job needs bench or board-level work, we will tell you the timeline upfront before you commit.',
@@ -7736,6 +7757,28 @@
     hours: 'Our hours are Monday\u2013Friday 5:30 AM\u201310:00 PM, Saturday 8:30 AM\u20139:00 PM, and Sunday 9:00 AM\u20135:00 PM. We book by appointment \u2014 send a request here or through the Repair page and we will confirm your time. For anything urgent, call or text ' + ASSISTANT_PHONE + '.',
     human: 'No problem — tap "Speak to an associate" at the top of this chat and a real person will take over. Or call or text Austin directly at ' + ASSISTANT_PHONE + '.'
   };
+  /* V171_AUDIENCE_FEES_2026_11_18 (Austin, Nov 18, 2026): the hub shows each audience
+     ONLY its own fees — the assistant's fee answers are audience-aware
+     too. A guest asking about fees hears $14.99 / $34.99; a business
+     hears $34.99 / $64.99. The effective audience is the hub's
+     (preview-aware via window.atrHubIsBusiness); if the hook is missing
+     the answer fails safe to the guest figures. The membership answer
+     stays the four-tier catalogue — it matches the Home offers, which
+     show all four tiers to guests by the v170 design. */
+  function assistantFeeBiz() {
+    try { return typeof window.atrHubIsBusiness === 'function' ? !!window.atrHubIsBusiness() : false; }
+    catch (e) { return false; }
+  }
+  function assistantFaqText(key) {
+    var biz = assistantFeeBiz();
+    if (key === 'dispatch') return biz
+      ? 'There is a visit fee for a mobile visit: $34.99. Diagnostics is $64.99, when your device needs a full diagnosis. It covers travel to you, it is due when you book, and it is non-refundable — separate from the repair price, never credited toward a repair.'
+      : 'There is a visit fee for a mobile visit: $14.99. Diagnostics is $34.99, when your device needs a full diagnosis. It covers travel to you, it is due when you book, and it is non-refundable — separate from the repair price, never credited toward a repair.';
+    if (key === 'diagnostics') return biz
+      ? 'Estimates are free. Diagnostics is $64.99 — even if we have to open your device or run deep board-level diagnostics to identify the problem, there is no extra diagnostic charge beyond that.'
+      : 'Estimates are free. Diagnostics is $34.99 — even if we have to open your device or run deep board-level diagnostics to identify the problem, there is no extra diagnostic charge beyond that.';
+    return ASSISTANT_FAQ[key];
+  }
   function assistantIntent(text) {
     var t = ' ' + text.toLowerCase() + ' ';
     function has() { for (var i = 0; i < arguments.length; i++) { if (t.indexOf(arguments[i]) > -1) return true; } return false; }
@@ -7908,6 +7951,7 @@
   }
   function assistantPriceAnswer() {
     var f = assistantFlow;
+    var biz = assistantFeeBiz(); /* V171_AUDIENCE_FEES_2026_11_18: labor + diagnostics quoted for this audience only. */
     var p = ASSISTANT_PRICES[f.priceCtx.deviceKey];
     var r = f.priceCtx.repairKey;
     f.state = 'idle';
@@ -7917,15 +7961,15 @@
       { label: 'Speak to an associate', action: 'escalate' }
     ];
     if (r === 'custom') {
-      return assistantTurn(["For that one there's no set starting price \u2014 custom repairs are quoted individually as an estimated repair price, parts plus labor ($49.99 an hour for guests, $99.99 an hour for business), and your estimated repair price is always quoted upfront before any work and confirmed after diagnostics. Diagnostics is $34.99 for guests, $64.99 for business, even if we have to open the device to identify the problem."], chips);
+      return assistantTurn(["For that one there's no set starting price \u2014 custom repairs are quoted individually as an estimated repair price, parts plus labor (" + (biz ? "$99.99" : "$49.99") + " an hour), and your estimated repair price is always quoted upfront before any work and confirmed after diagnostics. Diagnostics is " + (biz ? "$64.99" : "$34.99") + ", even if we have to open the device to identify the problem."], chips);
     }
-    return assistantTurn([p.label + ' ' + ASSISTANT_REPAIRS[r].toLowerCase() + ' repairs start at $' + p[r] + ' \u2014 parts and labor included. Your estimated repair price is confirmed for your exact model after diagnostics. A separate visit fee (due at booking, non-refundable) covers the trip out \u2014 $14.99 for guests, $34.99 for business \u2014 plus diagnostics of $34.99 for guests, $64.99 for business, if a diagnosis is needed first.'], chips);
+    return assistantTurn([p.label + ' ' + ASSISTANT_REPAIRS[r].toLowerCase() + ' repairs start at $' + p[r] + ' \u2014 parts and labor included. Your estimated repair price is confirmed for your exact model after diagnostics. A separate visit fee (due at booking, non-refundable) covers the trip out \u2014 ' + (biz ? "$34.99" : "$14.99") + ' \u2014 plus diagnostics of ' + (biz ? "$64.99" : "$34.99") + ', if a diagnosis is needed first.'], chips);
   }
   function assistantHandleChip(c) {
     var f = assistantFlow;
     f.miss = 0;
     if (c.action === 'price') { f.priceCtx = {}; return assistantPriceDevices(); }
-    if (c.action === 'faq') { f.state = 'idle'; return assistantTurn([ASSISTANT_FAQ[c.faq]], assistantMainChips()); }
+    if (c.action === 'faq') { f.state = 'idle'; return assistantTurn([assistantFaqText(c.faq)], assistantMainChips()); }
     if (c.action === 'device') {
       if (c.key === 'samsung') {
         f.state = 'price_samsung';
@@ -7938,7 +7982,8 @@
       if (c.key === 'custom') {
         f.priceCtx = {};
         f.state = 'idle';
-        return assistantTurn(["Computers, consoles, and other devices are quoted individually \u2014 your estimated repair price is always quoted upfront and confirmed after diagnostics. Diagnostics is $34.99 for guests, $64.99 for business, even if disassembly or deep board-level work is required to identify the problem."], [
+        var biz = assistantFeeBiz(); /* V171_AUDIENCE_FEES_2026_11_18: diagnostics quoted for this audience only. */
+        return assistantTurn(["Computers, consoles, and other devices are quoted individually — your estimated repair price is always quoted upfront and confirmed after diagnostics. Diagnostics is " + (biz ? "$64.99" : "$34.99") + ", even if disassembly or deep board-level work is required to identify the problem."], [
           { label: 'Book a repair', action: 'book' },
           { label: 'Speak to an associate', action: 'escalate' }
         ]);
@@ -7966,7 +8011,7 @@
          flow stays right where it was (the widget's rule, kept). */
       var qi = assistantIntent(t);
       if (qi && ASSISTANT_FAQ[qi]) {
-        return assistantTurn([ASSISTANT_FAQ[qi], 'Back to your price \u2014 tap one of the options above for that step whenever you are ready, or type "menu" to start over.'], assistantChipsNow);
+        return assistantTurn([assistantFaqText(qi), 'Back to your price \u2014 tap one of the options above for that step whenever you are ready, or type "menu" to start over.'], assistantChipsNow);
       }
       return assistantTurn(['Tap one of the options above for that step \u2014 it keeps me from quoting the wrong device. You can also type a question (like "hours" or "warranty") and I will answer it, or type "menu" to start over.'], assistantChipsNow);
     }
@@ -7974,7 +8019,7 @@
     if (i === 'PRICE') { f.miss = 0; f.priceCtx = {}; return assistantPriceDevices(); }
     if (i === 'BOOK') { f.miss = 0; return { book: true }; }
     if (i === 'HELLO') { f.miss = 0; return assistantTurn(['Hi there! Great to meet you.'], assistantMainChips()); }
-    if (i && ASSISTANT_FAQ[i]) { f.miss = 0; return assistantTurn([ASSISTANT_FAQ[i]], assistantMainChips()); }
+    if (i && ASSISTANT_FAQ[i]) { f.miss = 0; return assistantTurn([assistantFaqText(i)], assistantMainChips()); }
     f.miss++;
     if (f.miss >= 2) {
       f.miss = 0;
@@ -7993,6 +8038,11 @@
     });
     chain.then(function () { paintAssistantBar(); if (cb) cb(); });
   }
+  /* Test hooks for the render suite — drive the assistant's answers
+     and assert audience-only fee figures. */
+  window.atrAssistantFaq = assistantFaqText;
+  window.atrAssistantHandleText = assistantHandleText;
+  window.atrAssistantHandleChip = assistantHandleChip;
   function assistantChipTap(c) {
     if (!sb || !currentCust || assistantEscalated || assistantMuted) return;
     if (c.action === 'escalate') {
@@ -8710,33 +8760,57 @@
        Sign Up form only — it shows with the form and hides with it. */
     var st = $('authx-signup-type');
     if (st) st.hidden = isLogin;
+    /* V171_SIGNUP_SPLIT_2026_11_18: opening Sign Up re-applies the current
+       Guest/Business face, so a reopened form (or a reload that lands
+       on it) never shows the wrong fields. */
+    if (!isLogin) setSignupType(signupType);
     showErr($('authx-login-error'), '');
     showErr($('authx-signup-error'), '');
   }
 
-  /* V146_SIGNUP_SPLIT_2026_11_13 (owner, Nov 13, 2026): one Sign Up
-     button with a Guest/Business toggle right underneath the Log In /
-     Sign Up buttons. Guest asks for full name, email, phone, address,
-     password. Business asks for full business name, business email,
-     phone, address, password, EIN. The EIN lives on the business
-     account from sign-up only — the booking form never asks for it.
-     The mode rides in the signUp user_metadata (account_type /
-     business_name / ein) — no schema change — and a business sign-in
-     sets window.atrAccountType plus the session audience flag, so the
+  /* V171_SIGNUP_SPLIT_2026_11_18 (owner, Nov 18, 2026): one Sign Up button with a
+     Guest/Business toggle right underneath the Log In / Sign Up buttons.
+     Guest asks for full name, email, phone, address, password — no EIN,
+     ever. Business asks for the person creating the account, business
+     name, business email, business phone, personal phone, business
+     address, business EIN, password. full_name is always the PERSON (the
+     greeting uses their first name, never the business name); the
+     business record rides in the signUp user_metadata (account_type /
+     business_name / business_phone / personal_phone / business_address /
+     ein) — no schema change — and a business sign-in sets
+     window.atrAccountType plus the session audience flag, so the
      greeting and the chooser treat the account as business even before
      any Business ATR One plan. NOTE for the portal pass: the
      customers table has no EIN column the site can see — the EIN
      lives in auth metadata only until that column exists. */
   var signupType = 'guest';
-  function setSignupType(type) {
+  function setSignupType(type) { /* V171_SIGNUP_SPLIT_2026_11_18 */
     signupType = (type === 'business') ? 'business' : 'guest';
     var biz = signupType === 'business';
     var g = $('authx-type-guest'), b = $('authx-type-business');
     if (g) { g.classList.toggle('active', !biz); g.setAttribute('aria-pressed', String(!biz)); }
     if (b) { b.classList.toggle('active', biz); b.setAttribute('aria-pressed', String(biz)); }
+    /* The name field is the person's full name for a guest and the
+       business name for a business; the person creating a business
+       account gets their own field, first in the business face. */
+    var pw = $('authx-signup-person-wrap'), pfi = $('authx-signup-person');
+    if (pw) pw.hidden = !biz;
+    if (pfi) { pfi.required = biz; if (!biz) pfi.value = ''; }
     var nl = $('authx-signup-name-label'), ni = $('authx-signup-name');
-    if (nl) nl.textContent = biz ? 'Full business name' : 'Full name';
-    if (ni) { ni.placeholder = biz ? 'Your business name' : 'Jane Smith'; ni.setAttribute('aria-label', biz ? 'Full business name' : 'Full name'); }
+    if (nl) nl.textContent = biz ? 'Business name' : 'Full name';
+    if (ni) { ni.placeholder = biz ? 'Your business name' : 'Jane Smith'; ni.setAttribute('aria-label', biz ? 'Business name' : 'Full name'); }
+    var el = $('authx-signup-email-label'), ei2 = $('authx-signup-email');
+    if (el) el.textContent = biz ? 'Business email' : 'Email address';
+    if (ei2) ei2.setAttribute('aria-label', biz ? 'Business email' : 'Email address');
+    var pl = $('authx-signup-phone-label'), pi = $('authx-signup-phone');
+    if (pl) pl.textContent = biz ? 'Business phone' : 'Phone';
+    if (pi) pi.setAttribute('aria-label', biz ? 'Business phone' : 'Phone number');
+    var ppw = $('authx-signup-personal-phone-wrap'), ppi = $('authx-signup-personal-phone');
+    if (ppw) ppw.hidden = !biz;
+    if (ppi) { ppi.required = biz; if (!biz) ppi.value = ''; }
+    var al = $('authx-signup-address-label'), ai = $('authx-signup-address');
+    if (al) al.textContent = biz ? 'Business address' : 'Address';
+    if (ai) ai.setAttribute('aria-label', biz ? 'Business address' : 'Address');
     var ew = $('authx-signup-ein-wrap'), ei = $('authx-signup-ein');
     if (ew) ew.hidden = !biz;
     if (ei) { ei.required = biz; if (!biz) ei.value = ''; }
@@ -8922,25 +8996,40 @@
     if (signupForm) signupForm.addEventListener('submit', function (e) {
       e.preventDefault();
       showErr($('authx-signup-error'), '');
+      /* V171_SIGNUP_SPLIT_2026_11_18 (owner, Nov 18, 2026): the business face asks
+         for the person creating the account, the business name, business
+         email, business phone, personal phone, business address, business
+         EIN and password. Guest stays full name, email, phone, address,
+         password — no EIN, ever. full_name is always the PERSON (the
+         greeting uses their first name, never the business name); the
+         business record rides in metadata. Business-only values are read
+         only in the business face, so a guest submit can never send or
+         retain them. */
+      var bizSignup = signupType === 'business';
+      var person = bizSignup ? String($('authx-signup-person').value || '').trim() : '';
       var name = String($('authx-signup-name').value || '').trim();
       var email = String($('authx-signup-email').value || '').trim().toLowerCase();
       var phone = String($('authx-signup-phone').value || '').trim();
+      var personalPhone = bizSignup ? String($('authx-signup-personal-phone').value || '').trim() : '';
       var address = String($('authx-signup-address').value || '').trim();
-      /* V146_SIGNUP_SPLIT_2026_11_13: phone and address are required
-         for both faces (the old "Phone (optional)" is gone); business
-         also needs its EIN — 9 digits, typed with or without the dash. */
-      var bizSignup = signupType === 'business';
-      var ein = String($('authx-signup-ein').value || '').replace(/\D/g, '');
-      if (!name) { showErr($('authx-signup-error'), bizSignup ? 'Please enter your full business name.' : 'Please enter your name.'); return; }
-      if (!validEmail(email)) { showErr($('authx-signup-error'), 'Please enter a valid email address.'); return; }
-      if (!phone) { showErr($('authx-signup-error'), 'Please enter your phone number.'); return; }
-      if (!address) { showErr($('authx-signup-error'), 'Please enter your address.'); return; }
+      var ein = bizSignup ? String($('authx-signup-ein').value || '').replace(/\D/g, '') : '';
+      /* V171_SIGNUP_SPLIT_2026_11_18: the password was read below as `pass` but never
+         declared in this handler — every valid sign-up threw a
+         ReferenceError at the check and never reached signUp. The read
+         is declared here now (same shape as the login handler). */
+      var pass = String($('authx-signup-password').value || '');
+      if (bizSignup && !person) { showErr($('authx-signup-error'), 'Please enter the name of the person creating the account.'); return; }
+      if (!name) { showErr($('authx-signup-error'), bizSignup ? 'Please enter the business name.' : 'Please enter your full name.'); return; }
+      if (!validEmail(email)) { showErr($('authx-signup-error'), bizSignup ? 'Please enter a valid business email address.' : 'Please enter a valid email address.'); return; }
+      if (!phone) { showErr($('authx-signup-error'), bizSignup ? 'Please enter the business phone number.' : 'Please enter your phone number.'); return; }
+      if (bizSignup && !personalPhone) { showErr($('authx-signup-error'), 'Please enter your personal phone number.'); return; }
+      if (!address) { showErr($('authx-signup-error'), bizSignup ? 'Please enter the business address.' : 'Please enter your address.'); return; }
       if (bizSignup && ein.length !== 9) { showErr($('authx-signup-error'), 'Please enter your 9-digit business EIN (for example 12-3456789).'); return; }
       if (!pass || pass.length < 8) { showErr($('authx-signup-error'), 'Please use a password of at least 8 characters.'); return; }
       if (!sb) { showErr($('authx-signup-error'), SB_UNAVAILABLE); return; }
       pendingName = name; pendingPhone = phone; pendingAddress = address;
-      var signupMeta = { full_name: name, account_type: signupType };
-      if (bizSignup) { signupMeta.business_name = name; signupMeta.ein = ein; }
+      var signupMeta = { full_name: bizSignup ? person : name, account_type: signupType };
+      if (bizSignup) { signupMeta.business_name = name; signupMeta.business_phone = phone; signupMeta.personal_phone = personalPhone; signupMeta.business_address = address; signupMeta.ein = ein; }
       var btn = signupForm.querySelector('button[type="submit"]');
       /* V157_NO_TURNSTILE_AUTH_2026_11_17 (owner, Nov 17, 2026): sign-up carries no
        * human check — the check is only for guests submitting forms.
@@ -9633,11 +9722,13 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
          every pane, so no pane switch can hide it. Same ids the Home pane
          used to carry, so paintHome() below needs no id changes. -->
     <p class="ghub-greet-line"><span id="ghub-greet">Hello</span> <span class="ghub-greet-sep" aria-hidden="true">&middot;</span> <span class="ghub-greet-role" id="ghub-greet-role">Guest</span> <span class="ghub-greet-sep" aria-hidden="true">&middot;</span> <span class="ghub-clock" id="ghub-clock"></span></p>
-    <!-- V171_PREVIEW_2026_11_18 (Austin, Nov 18, 2026): staff-only "Preview as" switcher — Super Admin / staff can flip the Hub between the Guest face and the Business face to test what each audience sees. Hidden by default; only a confirmed staff role reveals it. Session-only override, nothing stored — a reload returns to the account's real audience. -->
+    <!-- V171_PREVIEW_2026_11_18 (Austin, Nov 18, 2026): staff-only "Preview as" switcher — Super Admin / staff can flip the Hub between the Guest face, the Business face, and the Associate Hub to test what each audience sees. Hidden by default; only a confirmed staff role reveals it. Session-only override, nothing stored — a reload returns to the account's real audience. -->
     <div class="ghub-preview" id="ghub-preview" hidden>
       <span class="ghub-preview-label">Preview as (staff testing):</span>
       <button class="btn btn-outline btn-sm" type="button" data-ghub-preview="guest" aria-pressed="false">Guest</button>
       <button class="btn btn-outline btn-sm" type="button" data-ghub-preview="business" aria-pressed="false">Business</button>
+      <!-- V171_VIEW_SWITCHER_2026_11_18 (Austin, Nov 18, 2026): third option — Associate opens the Associate Hub (portal.html), the real one staff already reach; the switcher is one control for all three views. No preview state inside the Associate Hub. -->
+      <button class="btn btn-outline btn-sm" type="button" data-ghub-preview="associate" aria-pressed="false">Associate</button>
     </div>
   </div>
   <div class="ghub-body">
@@ -9825,7 +9916,8 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
             </label>
             <label class="atr-check">
               <input type="checkbox" id="acct-t-dispatch">
-              <span id="acct-t-fee-note">I understand the <strong>visit fee is $14.99 for guests, $34.99 for business</strong> &mdash; and <strong>diagnostics is $34.99 for guests, $64.99 for business</strong>, if my device needs a full diagnosis &mdash; covers the trip to me, is due at scheduling, and is <strong>non-refundable</strong>. *</span>
+              <!-- V171_AUDIENCE_FEES_2026_11_18 (Austin, Nov 18, 2026): the Guest Hub shows ONLY the guest fees — $14.99 visit / $34.99 diagnostics. The business figures live in ghubFeeNoteBizInner below and are swapped in only for the Business Hub. -->
+              <span id="acct-t-fee-note">I understand the <strong>visit fee is $14.99</strong> &mdash; and <strong>diagnostics is $34.99</strong>, if my device needs a full diagnosis &mdash; covers the trip to me, is due at scheduling, and is <strong>non-refundable</strong>. *</span>
             </label>
             <label class="atr-check">
               <input type="checkbox" id="acct-t-work-auth">
@@ -10800,6 +10892,11 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
   }
   function setGhubPreview(aud) {
     if (!ghubStaffRole) return; /* staff-only: a tap can only land while the switcher is shown */
+    /* V171_VIEW_SWITCHER_2026_11_18 (Austin, Nov 18, 2026): the Associate option opens
+       the Associate Hub (portal.html) — the real one staff already reach.
+       It is a navigation, not a preview: no preview state is set and
+       nothing is stored. */
+    if (aud === 'associate') { window.location.href = 'portal.html'; return; }
     ghubPreview = (aud === 'guest' || aud === 'business') ? aud : null;
     paintBhubAudience();
     paintHome();

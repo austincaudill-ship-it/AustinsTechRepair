@@ -79,25 +79,7 @@
     <a class="vd-btn" id="vd-open" href="#" target="_blank" rel="noopener">Open full document</a>
   </div>
 
-  <section class="vd-sign" id="vd-sign" hidden>
-    <h2>Sign this document</h2>
-    <p id="vd-sign-text">Read it above, then type your full name and tap Sign. Your signature is recorded with your name and today's date.</p>
-    <label for="vd-name">Your full name</label>
-    <input id="vd-name" type="text" autocomplete="name" placeholder="Type your full name">
-    <!-- V169_SIGN_PAD_2026_11_18 (Austin, Nov 18, 2026): draw the signature with a
-         finger — touch-action none so the page does not scroll under
-         the finger. The typed name above stays as the printed name;
-         drawing is optional. -->
-    <label for="vd-pad">Draw your signature</label>
-    <canvas id="vd-pad" width="520" height="160" style="width:100%;height:160px;border:1px solid #c7c7cc;border-radius:10px;background:#fff;touch-action:none;"></canvas>
-    <div class="vd-row"><button class="vd-btn" type="button" id="vd-pad-clear">Clear signature</button><span class="vd-note">Drawing is optional — your typed name is the printed name.</span></div>
-    <div class="vd-row">
-      <button class="vd-btn vd-btn--primary" type="button" id="vd-sign-btn">Sign</button>
-      <button class="vd-btn" type="button" id="vd-signin-btn" hidden>Sign in to sign</button>
-      <span class="vd-note" id="vd-sign-note"></span>
-    </div>
-    <p class="vd-note">Only you can sign for yourself. If you are not the guest this document belongs to, please do not sign it.</p>
-  </section>
+  
 
   <div class="vd-frame-wrap" id="vd-frame-wrap" hidden>
     <!-- V169_SIGNED_DOC_2026_11_18: sandbox="allow-same-origin" (no
@@ -106,6 +88,42 @@
          signature block at its end is visible and prints. -->
     <iframe class="vd-frame" id="vd-frame" title="Document preview" sandbox="allow-same-origin"></iframe>
   </div>
+
+  <section class="vd-sign" id="vd-sign" hidden>
+    <h2>Sign this document</h2>
+    <p id="vd-sign-text">Read it above, then type your full name and tap Sign. Your signature is recorded with your name and today's date.</p>
+    <!-- V171_DOC_SIGNER_2026_11_18 (Austin, Nov 18, 2026): the document comes first and the sign
+         controls stay out of reach until the guest has scrolled to the bottom
+         of it — then I Agree / I Decline appear. -->
+    <p class="vd-note" id="vd-gate-note">Please read the whole document first — scroll to the bottom, and the I Agree and I Decline buttons will appear here.</p>
+    <div class="vd-row" id="vd-agree-row" hidden>
+      <button class="vd-btn vd-btn--primary" type="button" id="vd-agree-btn">I Agree</button>
+      <button class="vd-btn" type="button" id="vd-decline-btn">I Decline</button>
+    </div>
+    <div class="vd-row" id="vd-signin-row" hidden>
+      <button class="vd-btn" type="button" id="vd-signin-btn">Sign in to sign</button>
+    </div>
+    <div id="vd-sign-form" hidden>
+      <label for="vd-name">Your full name</label>
+      <input id="vd-name" type="text" autocomplete="name" placeholder="Type your full name">
+      <!-- V169_SIGN_PAD_2026_11_18 (Austin, Nov 18, 2026): draw the signature with a
+           finger — touch-action none so the page does not scroll under
+           the finger. The typed name above stays as the printed name;
+           drawing is optional. -->
+      <label for="vd-pad">Draw your signature</label>
+      <canvas id="vd-pad" width="520" height="160" style="width:100%;height:160px;border:1px solid #c7c7cc;border-radius:10px;background:#fff;touch-action:none;"></canvas>
+      <div class="vd-row"><button class="vd-btn" type="button" id="vd-pad-clear">Clear signature</button><span class="vd-note">Drawing is optional — your typed name is the printed name.</span></div>
+      <div class="vd-row">
+        <button class="vd-btn vd-btn--primary" type="button" id="vd-sign-btn">Sign</button>
+        <span class="vd-note" id="vd-sign-note"></span>
+      </div>
+    </div>
+    <div id="vd-decline-note" hidden>
+      <p>No problem — nothing was signed. If you have questions, call or text us at (937) 280-6243 and we will help.</p>
+      <p><a href="/#account">Back to your account</a></p>
+    </div>
+    <p class="vd-note">Only you can sign for yourself. If you are not the guest this document belongs to, please do not sign it.</p>
+  </section>
 
   <div class="vd-fallback" id="vd-fallback" hidden>
     <strong>This link could not be opened as a preview.</strong><br>
@@ -180,6 +198,37 @@
   var sigDocType = 'agreement';
   var baseShell = '', signedRow = null;
   var vdIsBusiness = false; /* V170_ROUTING_2026_11_18: resolved from the Supabase session in setupSigning — same metadata rule as the site greeting */
+  /* V171_DOC_SIGNER_2026_11_18 (Austin, Nov 18, 2026): the document comes first and the sign
+     controls stay out of reach until the guest has scrolled to the bottom of
+     it — "you get to see the document and then you scroll through ... if you
+     get to the bottom then the I agree or I decline pops up." The gate opens
+     once (a short document that already fits opens at once); an already-signed
+     document never shows the gate at all (setSignedState marks it opened and
+     hides the note). */
+  var vdGateOpened = false;
+  var vdGateNote = document.getElementById('vd-gate-note');
+  var vdAgreeRow = document.getElementById('vd-agree-row');
+  var vdSigninRow = document.getElementById('vd-signin-row');
+  var vdSignForm = document.getElementById('vd-sign-form');
+  var vdDeclineNote = document.getElementById('vd-decline-note');
+  var vdAgreeBtn = document.getElementById('vd-agree-btn');
+  var vdDeclineBtn = document.getElementById('vd-decline-btn');
+  function vdCheckGate() {
+    if (vdGateOpened || signedRow || !baseShell) return;
+    var doc = document.documentElement;
+    var nearBottom = (window.innerHeight + window.scrollY) >= (doc.scrollHeight - 120);
+    if (nearBottom) vdOpenGate();
+  }
+  function vdOpenGate() {
+    vdGateOpened = true;
+    if (vdGateNote) vdGateNote.hidden = true;
+    var session = getSiteSession();
+    if (!session || !session.email) {
+      if (vdSigninRow) vdSigninRow.hidden = false;
+      return;
+    }
+    if (vdAgreeRow) vdAgreeRow.hidden = false;
+  }
   function sigBlockHtml(row) {
     var date = new Date(row.signed_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
     /* V169_SIGN_PAD_2026_11_18: the finger drawing, when this session has one. */
@@ -191,7 +240,21 @@
   }
   function injectSigBlock(htmlText, row) {
     if (!row || !htmlText) return htmlText;
+    /* V171_SIGNATURE_VIEW_2026_11_18 (Austin, Nov 18, 2026): a document that already carries its
+       signature — the portal's filed authorization ("Signed by: ...") or a block
+       the viewer already affixed ("atr-signed-block") — is returned unchanged,
+       never double-signed. The site sections never contain either string, so a
+       fresh site document still gets its block. */
+    if (htmlText.indexOf('atr-signed-block') !== -1 || htmlText.indexOf('Signed by:') !== -1) return htmlText;
     var block = sigBlockHtml(row);
+    /* V171_ESTIMATE_INVOICE_SIGN_2026_11_18 (Austin, Nov 18, 2026): a generated estimate/invoice carries a
+       signature field at its bottom (see composeTicketDocHtml in portal.js) —
+       signing fills THAT field instead of appending a second block after it. */
+    var start = htmlText.indexOf('<!--ATR_SIGN_FIELD_START-->');
+    var end = htmlText.indexOf('<!--ATR_SIGN_FIELD_END-->');
+    if (start !== -1 && end !== -1 && end > start) {
+      return htmlText.slice(0, start) + block + htmlText.slice(end + '<!--ATR_SIGN_FIELD_END-->'.length);
+    }
     if (htmlText.indexOf('</body>') !== -1) return htmlText.replace('</body>', block + '</body>');
     return htmlText + block;
   }
@@ -200,7 +263,10 @@
     frame.srcdoc = signedRow ? injectSigBlock(baseShell, signedRow) : baseShell;
   }
 
-  function showFallback() { frameWrap.hidden = true; fallback.hidden = false; }
+  /* V171_DOC_SIGNER_2026_11_18: no document, nothing to sign — the sign box (and its scroll
+     gate) hides with the frame, so a failed load never leaves the guest
+     staring at a gate that can never open. */
+  function showFallback() { frameWrap.hidden = true; fallback.hidden = false; signBox.hidden = true; }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 
   /* The same allowlist the v71 viewer used: only a signed URL for an
@@ -234,6 +300,7 @@
     frameWrap.hidden = false;
     baseShell = html;
     applySignatureBlock(); /* V169_SIGNED_DOC_2026_11_18: the block paints with the document */
+    vdCheckGate(); /* a short document that already fits opens the gate at once */
   }
 
   /* V158_GUEST_PORTAL_2026_11_17: the standard three render from the live site's own
@@ -257,10 +324,19 @@
         var doc = new DOMParser().parseFromString(siteHtml, 'text/html');
         var section = doc.getElementById(cfg.section);
         if (!section) throw new Error('document section missing');
+        /* V171_DOC_SIGNER_2026_11_18 (Austin, Nov 18, 2026): the document text NEVER showed — every
+           section here is .page and /styles.css hides .page unless .active,
+           which this viewer never added, so the document was display:none in
+           the viewer and in print. Add .active AND an overriding display rule
+           in the shell, so the document is visible here even if the
+           stylesheet changes. Filed copies (estimate / invoice / receipt)
+           carry no .page section, so this changes nothing for them — their
+           viewer path is untouched. */
+        section.classList.add('active');
         var shell = '<!doctype html><html><head><meta charset="utf-8">'
           + '<meta name="viewport" content="width=device-width, initial-scale=1">'
           + '<link rel="stylesheet" href="/styles.css">'
-          + '<style>body{padding:24px;max-width:820px;margin:0 auto}</style></head><body>'
+          + '<style>body{padding:24px;max-width:820px;margin:0 auto}.page{display:block!important}</style></head><body>'
           + section.outerHTML + '</body></html>';
         renderDoc(shell, cfg.label);
         openLink.href = cfg.open;
@@ -296,6 +372,11 @@
 
   function setSignedState(row) {
     signedRow = row;
+    vdGateOpened = true; /* already signed: no gate, no Agree/Decline — the Signed state shows as-is */
+    if (vdGateNote) vdGateNote.hidden = true;
+    if (vdAgreeRow) vdAgreeRow.hidden = true;
+    if (vdSigninRow) vdSigninRow.hidden = true;
+    if (vdSignForm) vdSignForm.hidden = true;
     applySignatureBlock(); /* V169_SIGNED_DOC_2026_11_18: signing puts the block on the document */
     signText.innerHTML = '<span class="vd-signed">Signed</span> — ' + esc(row.signer_name) + ', ' + esc(new Date(row.signed_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })) + '. Thank you.';
     nameInput.disabled = true;
@@ -323,8 +404,9 @@
     signBox.hidden = false;
     var session = getSiteSession();
     if (!session || !session.email) {
-      signBtn.hidden = true;
-      signinBtn.hidden = false;
+      /* V171_DOC_SIGNER_2026_11_18: signed-out guests still read first — the Sign in to sign
+         button stays in its hidden row until the scroll gate opens it
+         (vdOpenGate), so the document is read before anyone is sent to sign in. */
       signNote.textContent = 'Sign in first, then come back here to sign.';
       signinBtn.addEventListener('click', function () {
         try { sessionStorage.setItem('atr-pending-sign', JSON.stringify({ ticket_id: ticketId, document_type: sigDocType })); } catch (e) { /* storage unavailable */ }
@@ -336,9 +418,21 @@
        guest taps Sign, and kept on the signed row for this session. */
     var pad = vdPadSetup(document.getElementById('vd-pad'), document.getElementById('vd-pad-clear'));
     nameInput.value = session.name || '';
-    signBtn.hidden = false;
-    signinBtn.hidden = true;
     checkSigned(session);
+    /* V171_DOC_SIGNER_2026_11_18: I Agree opens the sign form (typed name + finger pad, as
+       today); I Decline records nothing, shows the call/text note, and tells
+       the parent page (the Hub overlay) to close the viewer after the guest
+       has had a moment to read it. */
+    if (vdAgreeBtn) vdAgreeBtn.addEventListener('click', function () {
+      if (vdAgreeRow) vdAgreeRow.hidden = true;
+      if (vdSignForm) vdSignForm.hidden = false;
+      nameInput.focus();
+    });
+    if (vdDeclineBtn) vdDeclineBtn.addEventListener('click', function () {
+      if (vdAgreeRow) vdAgreeRow.hidden = true;
+      if (vdDeclineNote) vdDeclineNote.hidden = false;
+      try { window.parent.postMessage({ type: 'atr-doc-declined' }, window.location.origin); } catch (e) { /* standalone page: the note above is the whole flow */ }
+    });
     /* V170_ROUTING_2026_11_18: the signature block names the hub the signer actually
        uses. The session here is the Supabase auth session, so the rule is
        the same metadata the greeting reads. Re-applies the block in case
@@ -393,9 +487,19 @@
       var d = frame.contentDocument;
       if (d && d.body) frame.style.height = d.body.scrollHeight + 'px';
     } catch (e) { /* sizing is best-effort; the frame still renders */ }
+    vdCheckGate(); /* the page grew to the full document — re-check the bottom */
   });
+  window.addEventListener('scroll', vdCheckGate, { passive: true });
+  window.addEventListener('resize', vdCheckGate);
 
-  document.getElementById('vd-print').addEventListener('click', function () { window.print(); });
+  /* V171_PRINT_FIX_2026_11_18 (Austin, Nov 18, 2026): Print from the viewer came out blank on
+     his iPad — the frame content was display:none (the .page fix above) and
+     the print fired with no settle. Force a layout read, then give the print
+     engine a moment before print(). */
+  document.getElementById('vd-print').addEventListener('click', function () {
+    try { void frame.contentDocument.body.offsetHeight; } catch (e) { /* best-effort */ }
+    setTimeout(function () { window.print(); }, 300);
+  });
 
   if ((docKind === 'agreement' || docKind === 'terms' || docKind === 'warranty' || docKind === 'media') && ticketId) {
     loadSiteDoc(docKind);

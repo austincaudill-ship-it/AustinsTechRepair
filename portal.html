@@ -262,6 +262,10 @@
         <button class="portal-tab" id="portal-tab-estimates" type="button" role="tab" data-tab="estimates">
           <i class="fas fa-file-invoice-dollar"></i> Estimates <span class="portal-count" id="portal-count-estimates" hidden></span>
         </button>
+        <!-- V171_INVOICE_BUTTON_2026_11_18 (Austin, Nov 18, 2026): Invoices live in their own list, directly under Estimates — every ticket with a filed invoice sits here (guest or business), with its balance due. The invoices still live on their tickets in the Service Queue; this button is the shortcut in. Same tier as the queue (no TAB_GATES entry). Panel: portal-panel-invoices, loader loadInvoices in portal.js. -->
+        <button class="portal-tab" id="portal-tab-invoices" type="button" role="tab" data-tab="invoices">
+          <i class="fas fa-file-invoice"></i> Invoices <span class="portal-count" id="portal-count-invoices" hidden></span>
+        </button>
         <!-- PORTAL_SIDEBAR_ROSTER_2026_11_02 (Austin, Nov 2, 2026): this button's display label is "Guest" — his word for customers. Display text ONLY: the tab id (portal-tab-customers) and data-tab="customers" are unchanged, and every handler stays keyed to those ids, never to the label text. -->
         <button class="portal-tab" id="portal-tab-customers" type="button" role="tab" data-tab="customers">
           <i class="fas fa-users"></i> Guest
@@ -671,6 +675,19 @@
         </div>
         <p class="portal-muted portal-small">Estimates live here until the guest confirms. An estimate is never a ticket and never enters the Service Queue &mdash; Confirm turns it into one. No account is made when an estimate is created; the account is made only when the guest taps the link in their estimate email.</p>
         <div id="portal-estimates-list"><p class="portal-muted">Loading estimates&hellip;</p></div>
+      </div>
+
+      <!-- V171_INVOICE_BUTTON_2026_11_18: the Invoices panel — the shortcut list of the tickets with a filed invoice. -->
+      <div class="portal-panel" id="portal-panel-invoices" role="tabpanel" hidden>
+        <div class="portal-panel-head">
+          <h2 class="portal-h2">Invoices</h2>
+        </div>
+        <div class="portal-queue-search">
+          <input type="search" id="portal-invoices-search" placeholder="Search invoices &mdash; name, device, or phone" aria-label="Search invoices" autocomplete="off" />
+          <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="portal-invoices-search-clear" aria-label="Clear the invoices search" hidden>&times;</button>
+        </div>
+        <p class="portal-muted portal-small">Invoices live on their tickets in the Service Queue — this list is the shortcut in. Every ticket with a filed invoice sits here, with its balance due; tap a row to open that ticket at its invoice. A ticket with no invoice filed never appears here.</p>
+        <div id="portal-invoices-list"><p class="portal-muted">Loading invoices&hellip;</p></div>
       </div>
 
       <!-- DOCUMENTS -->
@@ -1639,9 +1656,18 @@
           </div>
           <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Power test</h3></div>
           <div id="ci-power-block">
+          <div class="atr-tri3">
+            <!-- V171_POWER_TEST_2026_11_18 (Austin, Nov 18, 2026): the old label is now "Amps (A)" — label only, the
+               field id (ci-amps) and triage_amps column are unchanged — and a third field, Watts (W),
+               joins it (ci-watts, wired into the check-in submit like the other two).
+               LAYOUT (same call, photo of the ticket drawer): the three readings share one compact row of
+               three smaller boxes instead of the grid's stacked full-width cells — the volts label
+               shortens to "Voltage (V)" to match the drawer and fit the narrow box. -->
+            <div class="portal-field"><label for="ci-volts">Voltage (V)</label><input type="text" id="ci-volts" inputmode="decimal" placeholder="e.g. 5.1" /></div>
+            <div class="portal-field"><label for="ci-amps">Amps (A)</label><input type="text" id="ci-amps" inputmode="decimal" placeholder="e.g. 0.8" /></div>
+            <div class="portal-field"><label for="ci-watts">Watts (W)</label><input type="text" id="ci-watts" inputmode="decimal" placeholder="e.g. 4.1" /></div>
+          </div>
           <div class="portal-nh-grid">
-            <div class="portal-field"><label for="ci-volts">Voltage at power source (V)</label><input type="text" id="ci-volts" inputmode="decimal" placeholder="e.g. 5.1" /></div>
-            <div class="portal-field"><label for="ci-amps">Draw (A)</label><input type="text" id="ci-amps" inputmode="decimal" placeholder="e.g. 0.8" /></div>
             <div class="portal-field"><label for="ci-power">Powers on?</label>
               <select id="ci-power"><option value="">Not checked</option><option>Yes</option><option>No</option></select></div>
             <div class="portal-field"><label for="ci-backup">Backed up?</label>
@@ -4533,6 +4559,7 @@
       var g = null;
       for (var i = 0; i < allGuides.length; i++) { if (allGuides[i].id === id) { g = allGuides[i]; break; } }
       if (!g) return;
+      if (g.builtin) return; /* a built-in entry is not a database row — nothing to edit */
       editingGuideId = id;
       confirmDeleteId = null;
       $('portal-guide-title').value = g.title || '';
@@ -4572,6 +4599,9 @@
       list.innerHTML = rows.map(function (g) {
         var url = safeUrl(g.url);
         var confirming = confirmDeleteId === g.id;
+        /* V171_USB_TESTER_GUIDE_2026_11_18: a built-in entry (g.builtin) renders its diagram +
+           cheat sheet in an expandable detail and carries no Edit/Delete buttons — it is not
+           a database row, so there is nothing to edit or delete. */
         return '<article class="portal-card">' +
           '<div class="portal-card-top"><p class="portal-card-title">' + esc(g.title) + '</p>' +
           '<span class="portal-badge">' + esc(kindLabel(g.kind)) + '</span></div>' +
@@ -4582,12 +4612,38 @@
           '<p class="portal-card-meta portal-guide-actions">' +
             (g.file_path ? '<button type="button" class="portal-guide-pdf" data-guide-pdf="' + esc(g.file_path) + '"><i class="fas fa-file-pdf"></i> View PDF</button>'
               : (url ? '<a href="' + esc(url) + '" target="_blank" rel="noopener"><i class="fas fa-arrow-up-right-from-square"></i> Open guide</a>' : '<span class="portal-muted">Internal how-to</span>')) +
-            '<button type="button" class="portal-guide-edit" data-guide-edit="' + esc(g.id) + '">Edit</button>' +
-            (guidesIsAdmin ? '<button type="button" class="portal-guide-del' + (confirming ? ' confirming' : '') + '" data-guide-del="' + esc(g.id) + '">' +
-            (confirming ? 'Confirm delete?' : 'Delete') + '</button>' : '') +
-          '</p></article>';
+            (g.builtin ? '<span class="portal-badge">Built-in</span>'
+              : '<button type="button" class="portal-guide-edit" data-guide-edit="' + esc(g.id) + '">Edit</button>' +
+                (guidesIsAdmin ? '<button type="button" class="portal-guide-del' + (confirming ? ' confirming' : '') + '" data-guide-del="' + esc(g.id) + '">' +
+                (confirming ? 'Confirm delete?' : 'Delete') + '</button>' : '')) +
+          '</p>' +
+          (g.builtin ? '<details class="portal-guide-detail"><summary>Read the guide — volts, amps, watts</summary>' + USB_TESTER_DETAIL_HTML + '</details>' : '') + '</article>';
       }).join('');
     }
+
+    /* V171_USB_TESTER_GUIDE_2026_11_18 (Austin, Nov 18, 2026 — CORRECTED: Associate Hub ONLY,
+       never the public Help Guides, never guest or business): the USB tester guide is a
+       BUILT-IN staff entry, not a database row. It lives only in this file, inside the
+       Associate Hub Guides tab, so no guest or business surface can ever see it — the public
+       Help Guides are separate static sections in index.html and never read the guides table,
+       and the portal dashboard itself is staff-gated by the employee gate. It is prepended on
+       every load so it searches and filters exactly like a filed guide; renderGuides hides its
+       Edit/Delete buttons, so it can never be edited or deleted into a broken state. The
+       diagram is the repo asset usb-tester-diagram.png (beside portal.html at the repo root);
+       the text below is real HTML too, so the guide still reads if the image ever fails. */
+    var USB_TESTER_GUIDE = { id: 'builtin-usb-tester', title: 'How to test a charger with a USB power meter', device: 'All devices', category: 'Charge Port', kind: 'internal', tags: 'usb tester, charger, volts, amps, watts, power meter', notes: 'Plug the tester in-line between the charger and the device and read volts, amps and watts live — the diagram and the readings cheat sheet are inside.', builtin: true };
+    var USB_TESTER_DETAIL_HTML =
+      '<img class="portal-guide-diagram" src="usb-tester-diagram.png" alt="Diagram: charger, USB tester and phone in a line, with volts, amps and watts readouts" />' +
+      '<h4>What each number means</h4>' +
+      '<p><b>Volts (V) — the pressure the charger is offering.</b> The charger sets this. A 20W charger offers 5V, 9V or 12V. If volts stay steady, the charger is doing its job.</p>' +
+      '<p><b>Amps (A) — how much current the device actually pulls.</b> The device decides this, not the charger. 0.00 A means the device is pulling nothing.</p>' +
+      '<p><b>Watts (W) — total power.</b> Just volts times amps. Nothing to measure separately, it is the math. 9V times 2.22A is 20W, the charger max.</p>' +
+      '<h4>Reading it on a repair</h4>' +
+      '<ul><li><b>Volts there, 0.00 amps:</b> power is not getting into the board — dock, port or power path is suspect.</li>' +
+      '<li><b>Amps flowing but the battery never charges or holds it:</b> battery or charging circuit is suspect.</li>' +
+      '<li><b>Volts drop the second you plug in:</b> something is shorted or the connection is bad.</li></ul>' +
+      '<h4>Your charger label, decoded</h4>' +
+      '<p><b>5V × 3A = 15W</b> &nbsp;·&nbsp; <b>9V × 2.22A = 20W</b> &nbsp;·&nbsp; <b>12V × 1.67A = 20W</b></p>';
 
     function loadGuides(force) {
       var list = $('portal-guides-list');
@@ -4599,7 +4655,7 @@
         .then(function (res) {
           if (res.error) { list.innerHTML = '<p class="portal-error">Couldn&rsquo;t load guides: ' + esc(res.error.message) + '</p>'; return; }
           loaded = true;
-          allGuides = res.data || [];
+          allGuides = [USB_TESTER_GUIDE].concat(res.data || []);
           renderGuides();
         })
         .catch(function () { list.innerHTML = '<p class="portal-error">Couldn&rsquo;t load guides. Check your connection and hit Refresh.</p>'; });
@@ -4825,6 +4881,12 @@
     .portal-guide-del.confirming { font-weight: 700; text-decoration: underline; }
     #portal-guide-form textarea { width: 100%; padding: 0.6rem 0.7rem; border: 2px solid var(--line, #d8cbb6); border-radius: 8px; background: var(--bg, #fff); color: var(--ink, #2c231a); font-size: 0.95rem; font-family: inherit; }
     #portal-guide-form .portal-btn-primary { margin-top: 0.25rem; }
+    /* V171_USB_TESTER_GUIDE_2026_11_18: the built-in USB tester guide's expandable detail + diagram. */
+    .portal-guide-detail { margin-top: 0.6rem; }
+    .portal-guide-detail summary { cursor: pointer; color: var(--brand-deep, #A63E06); font-weight: 700; font-size: 0.9rem; }
+    .portal-guide-diagram { display: block; width: 100%; max-width: 640px; height: auto; margin: 0.6rem 0; border: 1px solid var(--line, #E6D9C0); border-radius: 8px; }
+    .portal-guide-detail h4 { margin: 0.8rem 0 0.3rem; font-size: 0.95rem; }
+    .portal-guide-detail p, .portal-guide-detail li { font-size: 0.9rem; line-height: 1.5; }
   </style>
   <style>
     .portal-nh-grid { display: grid; grid-template-columns: 1fr; gap: 0 1rem; }
@@ -5880,6 +5942,14 @@
     }
     .p2-form-row { display: flex; gap: 0.55rem; }
     .p2-form-row > * { flex: 1; min-width: 0; }
+    /* Power test single-row layout (Austin, Nov 18, 2026 — photo of the ticket drawer):
+       the three readings share one compact row of three smaller boxes, in the
+       check-in Power test block and in the ticket drawer edit alike. Grid, not
+       flex, so the three boxes stay equal thirds at every width — including
+       phone width, where the old check-in grid stacked them full-width. */
+    .atr-tri3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.55rem; }
+    .atr-tri3 > .portal-field { min-width: 0; margin: 0; }
+    .atr-tri3 input { width: 100%; min-width: 0; box-sizing: border-box; }
     .p2-check { display: flex; gap: 0.5rem; align-items: center; font-size: 0.9rem; cursor: pointer; }
     .p2-check input { width: 1.1rem; height: 1.1rem; margin: 0; flex: none; }
     .p2-line { display: flex; gap: 0.6rem; align-items: center; padding: 0.55rem 0; border-bottom: 1px solid var(--line-soft, #e7dcc8); }
@@ -5915,14 +5985,27 @@
     .p2-totals > div { display: flex; justify-content: space-between; padding: 0.25rem 0; }
     .p2-grand { border-top: 2px solid var(--line, #d8cbb6); font-weight: 800; font-size: 1.05rem; margin-top: 0.3rem; padding-top: 0.5rem !important; }
     /* ===== Print: receipt + Zebra label ===== */
-    #portal-print-area { display: none; }
+    /* V171_PRINT_FIX_2026_11_18 (Austin, Nov 18, 2026): Print receipt / Print device label /
+       Print estimate / Print invoice all came out BLANK on his iPad, even though
+       the Nov 11 fix (hold the content until afterprint) is live — and View of a
+       filed document works (Daniel's $69.99 estimate shows fine), so the documents
+       are good and only this print step is blank. Root cause: this area was
+       display:none on screen and only shown inside @media print, and iOS Safari's
+       print snapshot can come from the screen render tree — content hidden on
+       screen prints blank. Now the area stays IN the layout (fixed, 1px, overflow
+       hidden — invisible on screen, no scrollable-area cost) so the print snapshot
+       has real laid-out content; @media print brings it back into flow. Generate
+       and the filed-doc viewer are untouched. */
+    #portal-print-area { position: fixed; left: 0; top: 0; width: 1px; height: 1px; overflow: hidden; }
     @page atr-receipt { size: letter; margin: 0.6in; }
     @page atr-label { size: 2.25in 1.25in; margin: 0; }
     #portal-print-area.receipt { page: atr-receipt; }
     #portal-print-area.label { page: atr-label; }
     @media print {
       body.portal-printing > *:not(#portal-print-area) { display: none !important; }
-      body.portal-printing #portal-print-area { display: block !important; }
+      /* V171_PRINT_FIX_2026_11_18: the area is kept in layout off-screen on screen (see above) —
+         in print it comes back into flow, full width. */
+      body.portal-printing #portal-print-area { display: block !important; position: static !important; left: auto !important; top: auto !important; width: auto !important; height: auto !important; overflow: visible !important; }
       /* PRINT_HOLD_2026_11_11: the label page has zero margin, so the
          browser's own 8px body margin pushed the label past the page
          and every print carried a second, blank label. Pulling the
