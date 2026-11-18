@@ -5112,6 +5112,15 @@
   .acct-profile-line{margin:0 0 10px}
   .acct-detail-h{font-family:var(--font-display);font-size:1.05rem;color:var(--ink);margin:18px 0 6px}
   .acct-detail-h i{color:var(--brand);margin-right:.35rem}
+  /* V168_GUEST_TICKET_COLLAPSE_2026_11_18 (Austin, Nov 18, 2026): every titled section on the guest ticket page is a native <details> block — same pattern as the Help Guides (.hg-guide): tap the header to open, tap again to close. All start closed. The <summary> reuses .acct-detail-h for the title and .hg-chev for the flipping chevron. */
+  .acct-sec{margin:0 0 .9rem}
+  .acct-sec summary{display:flex;align-items:center;gap:.6rem;cursor:pointer;list-style:none;padding:.55rem .1rem;-webkit-tap-highlight-color:transparent}
+  .acct-sec summary::-webkit-details-marker{display:none}
+  .acct-sec summary:focus-visible{outline:2px solid var(--blue,#1050A0);outline-offset:2px}
+  .acct-sec summary h4{margin:0;flex:1;text-align:left}
+  .acct-sec .acct-sec-hint{font-size:.85rem;color:var(--muted);text-align:right}
+  .acct-sec .acct-sec-hint:empty{display:none}
+  .acct-sec[open] .hg-chev{transform:rotate(180deg)}
   .acct-line{display:flex;gap:.75rem;align-items:flex-start;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid var(--line,#e5d9c8)}
   .acct-line-main{display:flex;flex-direction:column;gap:.15rem;min-width:0}
   .acct-line-meta{color:var(--muted,#8a7a68);font-size:.88rem}
@@ -5175,9 +5184,6 @@
   .acct-appt-box{border:1px solid var(--line,#e5d9c8);border-radius:10px;padding:.7rem .8rem;margin:0 0 .9rem;background:var(--surface,#fff);text-align:left} /* V163_GUEST_DARK_2026_11_17: var(--surface) so the ticket page flips dark with the Hub */
   .acct-appt-line{font-size:.92rem;margin-bottom:.3rem}
   .acct-actions-row{margin:0 0 .9rem;text-align:left}
-  .acct-hub-bar{border:2px solid #0057b8;border-radius:12px;padding:.7rem .8rem;margin:0 0 .9rem;background:var(--surface,#fff);text-align:left} /* V163_GUEST_DARK_2026_11_17: var(--surface) so the ticket page flips dark with the Hub */
-  .acct-hub-title{font-size:1rem;margin-bottom:.55rem}
-  .acct-hub-actions{display:flex;flex-wrap:wrap;gap:.45rem}
   /* V158_SCREENSHOT_FIX_2026_11_17: the guest-account layout rules,
      copied from live styles.css so the guest view renders even if
      that file fails to load (the test server never served it, and the
@@ -6725,10 +6731,14 @@
   }
   var PART_STATUS_COPY = { 'Ordered': 'Ordered \u2014 on its way to us', 'Received': 'In hand', 'Cancelled': 'Cancelled' };
   var CHARGE_KIND_COPY = { 'part': 'Part', 'labor': 'Labor', 'one_off': 'Other charge', 'dispatch': 'Visit fee', 'visit': 'Visit fee', 'deposit_credit': 'Deposit received', 'discount': 'Discount' };
+  /* V168_GUEST_TICKET_COLLAPSE_2026_11_18: show/hide one collapsible ticket-section shell (<details>) and set its closed-state hint. The shells are static markup, never re-created, so a guest's open/closed choice survives loader repaints. */
+  function atrSecShow(shellId, hintId, hintText) { var s = $(shellId); if (s) s.hidden = false; var h = hintId && $(hintId); if (h) h.textContent = hintText || ''; }
+  function atrSecHide(shellId, hintId) { var s = $(shellId); if (s) s.hidden = true; var h = hintId && $(hintId); if (h) h.textContent = ''; }
   function loadTicketParts(t) {
     var box = $('acct-parts');
     if (!box || !sb) return;
     box.innerHTML = '';
+    atrSecHide('acct-sec-parts', 'acct-sec-parts-hint'); /* V168_GUEST_TICKET_COLLAPSE_2026_11_18: shell stays hidden until parts arrive */
     if (!t || t.__general) return; /* ACCOUNT_FIX_PASS_3_2_2026_11_06: no repair, no parts */
     sb.from('customer_part_orders').select('id, description, retail_price, qty, status, carrier, tracking_number, order_number, received_at, created_at')
       .eq('ticket_id', t.id).order('created_at', { ascending: true })
@@ -6737,7 +6747,8 @@
         var rows = res.data || [];
         refineTimelineParts(t, rows); /* REPAIR_TIMELINE_2026_11_06: parts signals refine the timeline */
         if (!rows.length) { box.innerHTML = ''; return; }
-        box.innerHTML = '<h4 class="acct-detail-h"><i class="fas fa-box-open"></i> Parts for this repair</h4>' + rows.map(function (p) {
+        atrSecShow('acct-sec-parts', 'acct-sec-parts-hint', rows.length + (rows.length === 1 ? ' part' : ' parts')); /* V168_GUEST_TICKET_COLLAPSE_2026_11_18 */
+        box.innerHTML = rows.map(function (p) {
           var meta = escX(PART_STATUS_COPY[p.status] || p.status || '') + ' \u00b7 Qty ' + escX(p.qty == null ? 1 : p.qty) +
             (p.order_number ? ' \u00b7 Order #' + escX(p.order_number) : '') +
             (p.received_at ? ' \u00b7 Received ' + escX(fmtDayX(p.received_at)) : '');
@@ -6752,19 +6763,20 @@
           return html;
         }).join('');
       })
-      .catch(function () { box.innerHTML = ''; refineTimelineParts(t, null); /* REPAIR_TIMELINE_2026_11_06: parts unknown — timeline stays status-only */ });
+      .catch(function () { box.innerHTML = ''; atrSecHide('acct-sec-parts', 'acct-sec-parts-hint'); refineTimelineParts(t, null); /* REPAIR_TIMELINE_2026_11_06: parts unknown — timeline stays status-only */ });
   }
   function loadTicketCharges(t) {
     var box = $('acct-charges');
     if (!box || !sb) return;
     box.innerHTML = '';
+    atrSecHide('acct-sec-charges', 'acct-sec-charges-hint'); /* V168_GUEST_TICKET_COLLAPSE_2026_11_18: shell stays hidden until charges arrive */
     if (!t || t.__general) return; /* ACCOUNT_FIX_PASS_3_2_2026_11_06: no repair, no charges */
     sb.from('customer_ticket_charges').select('id, kind, description, qty, unit_price, created_at')
       .eq('ticket_id', t.id).order('created_at', { ascending: true })
       .then(function (res) {
         if (res.error) throw res.error;
         var rows = res.data || [];
-        if (!rows.length) { box.innerHTML = ''; return; }
+        if (!rows.length) { box.innerHTML = ''; atrSecHide('acct-sec-charges', 'acct-sec-charges-hint'); return; }
         var subtotal = 0, deposits = 0;
         var lines = rows.map(function (c) {
           var qty = Number(c.qty || 0), price = Number(c.unit_price || 0), amt = qty * price;
@@ -6785,9 +6797,10 @@
           totals += '<div class="acct-line"><div class="acct-line-main"><strong>Deposits received</strong></div><div class="acct-line-amt">\u2212' + fmtMoneyX(deposits) + '</div></div>' +
             '<div class="acct-line acct-total-row"><div class="acct-line-main"><strong>Balance due</strong></div><div class="acct-line-amt">' + fmtMoneyX(subtotal - deposits) + '</div></div>';
         }
-        box.innerHTML = '<h4 class="acct-detail-h"><i class="fas fa-receipt"></i> Charges</h4>' + lines + totals;
+        atrSecShow('acct-sec-charges', 'acct-sec-charges-hint', (subtotal - deposits) > 0 ? 'Balance due ' + fmtMoneyX(subtotal - deposits) : 'Paid in full'); /* V168_GUEST_TICKET_COLLAPSE_2026_11_18 */
+        box.innerHTML = lines + totals;
       })
-      .catch(function () { box.innerHTML = ''; });
+      .catch(function () { box.innerHTML = ''; atrSecHide('acct-sec-charges', 'acct-sec-charges-hint'); });
   }
 
 
@@ -6972,33 +6985,10 @@
      service address and phone number on the ticket (Edit my details
      in the appointment box) — charges, payment, status and staff
      fields stay locked. */
+  /* V168_GUEST_TICKET_COLLAPSE_2026_11_18 (Austin, Nov 18, 2026): the Guest Hub pill bar is gone — the jump buttons (Documents / Charges / Messages / Request a time change / Pay balance) are removed. Every pill's action still exists on the page: Documents, Charges and Messages open from their own collapsible headers below; Request a time change is the appointment box's own button (#acct-appt-change); Pay balance is the Charges section's own button (#atr-pay-balance in #acct-ticket-actions). This function stays as a no-op so the atrRenderTicketAppt call site needs no change. */
   window.atrRenderTicketHub = function (t) {
     var bar = $('acct-hub-bar');
-    if (!bar) return;
-    if (!t || t.__general) { bar.innerHTML = ''; return; }
-    bar.innerHTML = '<div class="acct-hub-bar">'
-      + '<div class="acct-hub-title"><strong>Guest Hub</strong> <span class="acct-muted">— ' + escX(ticketDevice(t)) + ' · only you can see this</span></div>'
-      + '<div class="acct-hub-actions">'
-      + '<button type="button" class="btn btn-outline btn-sm" data-hub="docs">Documents</button>'
-      + '<button type="button" class="btn btn-outline btn-sm" data-hub="charges">Charges</button>'
-      + '<button type="button" class="btn btn-outline btn-sm" data-hub="messages">Messages</button>'
-      + '<button type="button" class="btn btn-outline btn-sm" data-hub="time">Request a time change</button>'
-      + '<button type="button" class="btn btn-outline btn-sm" data-hub="pay">Pay balance</button>'
-      + '</div></div>';
-    if (!bar.__hubWired) {
-      bar.__hubWired = true;
-      bar.addEventListener('click', function (e) {
-        var b = e.target && e.target.closest ? e.target.closest('[data-hub]') : null;
-        if (!b || !openTicket) return;
-        var k = b.getAttribute('data-hub');
-        function go(id) { var el = $(id); if (el) { try { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (err) {} } }
-        if (k === 'docs') go('acct-ticket-docs');
-        if (k === 'charges') go('acct-charges');
-        if (k === 'messages') go('acct-messages');
-        if (k === 'time') { var c = $('acct-appt-change'); if (c) c.click(); }
-        if (k === 'pay') { go('acct-ticket-actions'); var pb = $('atr-pay-balance'); if (pb) pb.focus(); }
-      });
-    }
+    if (bar) bar.innerHTML = '';
   };
   /* V160_GUEST_HUB_FIXES_2026_11_17: Terms & Conditions of Service and the Repair Authorization are the same thing (Austin) — the separate Terms row is gone. The merged document is the Repair Authorization and Service Agreement; the preloaded set is that, the 1-Year Limited Warranty, and the Media Release. */
   var V158_STD_DOCS = [
@@ -7074,8 +7064,9 @@
   window.atrLoadTicketDocuments = function (t) {
     var box = $('acct-ticket-docs');
     if (!box || !sb) return;
-    if (!t || t.__general) { box.innerHTML = ''; return; }
-    box.innerHTML = '<h4 class="acct-detail-h"><i class="fas fa-file-signature"></i> Documents</h4><p class="acct-muted">Loading your documents…</p>';
+    if (!t || t.__general) { box.innerHTML = ''; atrSecHide('acct-sec-docs', 'acct-sec-docs-hint'); return; }
+    box.innerHTML = '<p class="acct-muted">Loading your documents…</p>';
+    atrSecShow('acct-sec-docs', 'acct-sec-docs-hint', ''); /* V168_GUEST_TICKET_COLLAPSE_2026_11_18: the header carries the title now; the loader fills only the body */
     Promise.all([
       sb.from('ticket_documents').select('id,ticket_id,doc_type,file_name,storage_path,created_at').eq('ticket_id', t.id).order('created_at', { ascending: true }),
       sb.from('document_signatures').select('id,ticket_id,document_type,signer_name,signed_at').eq('ticket_id', t.id).order('signed_at', { ascending: false })
@@ -7083,11 +7074,14 @@
       var docs = (pair[0] && pair[0].data) || [];
       var sigs = (pair[1] && pair[1].data) || [];
       var rows = '';
+      var waiting = 0; /* V168_GUEST_TICKET_COLLAPSE_2026_11_18: unsigned count feeds the closed header's hint */
       /* The standard documents are automatic — they wait on every open
        * ticket from the start, no staff push, no filed file needed. */
       if (t.status !== 'Job Complete') {
         V158_STD_DOCS.forEach(function (sd) {
-          rows += v158DocRow(t.id, sd.type, sd.label, t.created_at, v158LatestSig(sigs, sd.type), null);
+          var s = v158LatestSig(sigs, sd.type);
+          if (!s) waiting++;
+          rows += v158DocRow(t.id, sd.type, sd.label, t.created_at, s, null);
         });
       } else {
         V158_STD_DOCS.forEach(function (sd) {
@@ -7098,11 +7092,15 @@
       docs.forEach(function (d) {
         if (d.doc_type !== 'estimate' && d.doc_type !== 'invoice' && d.doc_type !== 'receipt') return;
         var label = d.doc_type === 'estimate' ? 'Estimate' : d.doc_type === 'invoice' ? 'Invoice' : 'Receipt';
-        rows += v158DocRow(t.id, d.doc_type, label, d.created_at, v158LatestSig(sigs, d.doc_type), d.storage_path);
+        var s = v158LatestSig(sigs, d.doc_type);
+        if (!s) waiting++;
+        rows += v158DocRow(t.id, d.doc_type, label, d.created_at, s, d.storage_path);
       });
-      box.innerHTML = '<h4 class="acct-detail-h"><i class="fas fa-file-signature"></i> Documents</h4>' + (rows || '<p class="acct-muted">No documents yet — your estimate and agreement will show here.</p>');
+      box.innerHTML = (rows || '<p class="acct-muted">No documents yet — your estimate and agreement will show here.</p>');
+      atrSecShow('acct-sec-docs', 'acct-sec-docs-hint', rows ? (waiting > 0 ? waiting + ' waiting for your signature' : 'All signed') : '');
     }).catch(function () {
-      box.innerHTML = '<h4 class="acct-detail-h"><i class="fas fa-file-signature"></i> Documents</h4><p class="acct-muted">We couldn\'t load your documents just now — try again in a moment, or call or text (937) 280-6243.</p>';
+      box.innerHTML = '<p class="acct-muted">We couldn\'t load your documents just now — try again in a moment, or call or text (937) 280-6243.</p>';
+      atrSecShow('acct-sec-docs', 'acct-sec-docs-hint', '');
     });
     if (!box.__v158wired) {
       box.__v158wired = true;
@@ -7234,7 +7232,7 @@
     var box = $('acct-timeline');
     if (!box) return;
     tlTicketId = (t && t.id) || null; tlParts = undefined;
-    if (!t || t.__general || /^\[SERVICE\]/.test(t.issue || '')) { box.innerHTML = ''; return; }
+    if (!t || t.__general || /^\[SERVICE\]/.test(t.issue || '')) { box.innerHTML = ''; atrSecHide('acct-sec-timeline', 'acct-sec-timeline-hint'); return; }
     paintTimeline(t);
   }
   function refineTimelineParts(t, rows) {
@@ -7249,7 +7247,7 @@
     /* The guard lives HERE, not only in renderTicketTimeline: the
        parts refinement repaints through this same door, and support
        bookings must stay timeline-free on every path. */
-    if (!t || t.__general || /^\[SERVICE\]/.test(t.issue || '')) { box.innerHTML = ''; return; }
+    if (!t || t.__general || /^\[SERVICE\]/.test(t.issue || '')) { box.innerHTML = ''; atrSecHide('acct-sec-timeline', 'acct-sec-timeline-hint'); return; }
     var states = tlModel(t.status);
     var copy = STATUS_COPY[t.status] || null;
     var note = (copy && copy.note) ? copy.note : 'We got your request — we will update this page as your repair moves along.';
@@ -7282,14 +7280,16 @@
       return '<li class="acct-tl-step is-' + st + '"><span class="acct-tl-dot" aria-hidden="true"></span>' +
         '<div class="acct-tl-main"><span class="acct-tl-label">' + escX(label) + '</span>' + tag + extra + '</div></li>';
     }).join('');
-    box.innerHTML = '<h4 class="acct-detail-h"><i class="fas fa-route"></i> Repair progress</h4>' +
-      '<p class="acct-tl-note">' + escX(note) + '</p>' +
+    var curStage = states.indexOf('current'); /* V168_GUEST_TICKET_COLLAPSE_2026_11_18: closed header shows where the repair stands */
+    atrSecShow('acct-sec-timeline', 'acct-sec-timeline-hint', curStage >= 0 ? TL_STAGES[curStage] : (t.status || ''));
+    box.innerHTML = '<p class="acct-tl-note">' + escX(note) + '</p>' +
       '<ol class="acct-tl">' + steps + '</ol>';
   }
   function loadThreadMessages(t) {
     var box = $('acct-messages');
     if (!box || !sb) return;
     box.innerHTML = '<p class="acct-muted">Loading messages\u2026</p>';
+    atrSecShow('acct-sec-messages', 'acct-sec-messages-hint', ''); /* V168_GUEST_TICKET_COLLAPSE_2026_11_18 */
     /* ACCOUNT_FIX_PASS_3_2_2026_11_06: one renderer for both doors AND
        for the general conversation — only the row filter changes
        (the customer's own rows with no ticket attached). */
@@ -7304,15 +7304,16 @@
       .then(function (res) {
         if (res.error) throw res.error;
         var rows = res.data || [];
-        if (!rows.length) { box.innerHTML = '<p class="acct-muted">' + (t.__general ? 'No messages yet \u2014 write us here any time.' : 'No messages yet \u2014 write us here any time about this repair.') + '</p>'; return; }
+        if (!rows.length) { box.innerHTML = '<p class="acct-muted">' + (t.__general ? 'No messages yet \u2014 write us here any time.' : 'No messages yet \u2014 write us here any time about this repair.') + '</p>'; atrSecShow('acct-sec-messages', 'acct-sec-messages-hint', 'No messages yet'); return; }
         box.innerHTML = rows.map(function (m) {
           var mine = m.sender === 'customer';
           return '<div class="acct-msg ' + (mine ? 'acct-msg-me' : 'acct-msg-shop') + '"><span class="acct-msg-who">' + (mine ? 'You' : assistantWhoLabel(m.sender)) + '</span>' + escX(m.message || '') + '</div>';
         }).join('');
+        atrSecShow('acct-sec-messages', 'acct-sec-messages-hint', rows.length + (rows.length === 1 ? ' message' : ' messages')); /* V168_GUEST_TICKET_COLLAPSE_2026_11_18 */
         box.scrollTop = box.scrollHeight;
         if (t.__general) paintAssistantBar(); /* GUEST_ASSISTANT_2026_11_10 */
       })
-      .catch(function () { box.innerHTML = '<p class="acct-muted">Messages couldn\'t load \u2014 try again in a moment.</p>'; });
+      .catch(function () { box.innerHTML = '<p class="acct-muted">Messages couldn\'t load \u2014 try again in a moment.</p>'; atrSecShow('acct-sec-messages', 'acct-sec-messages-hint', ''); });
   }
 
   /* ---------- CUSTOMER_INBOX_2026_11_05: the Messages inbox ----------
@@ -9442,18 +9443,33 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
           <!-- V158_GUEST_PORTAL_2026_11_17 (owner, Nov 17, 2026): the full ticket page.
                Appointment + address live here, above the progress
                timeline — the guest sees the whole job in one place. -->
-          <div id="acct-hub-bar"></div>
           <div id="acct-appt"></div>
           <!-- REPAIR_TIMELINE_2026_11_06: the job timeline paints
                here — stage states from the ticket's real status
                plus its own part rows; repairs only, never for
                support bookings or the general conversation. -->
-          <div id="acct-timeline"></div>
-          <div id="acct-ticket-docs"></div>
-          <div id="acct-charges"></div>
+          <!-- V168_GUEST_TICKET_COLLAPSE_2026_11_18 (Austin, Nov 18, 2026): every titled section on this page is a native <details> block, closed by default — same pattern as the Help Guides (.hg-guide). The Guest Hub pill bar (#acct-hub-bar) is gone; its actions live on the page itself (the headers below, the appointment box, the Charges pay button). -->
+          <details class="acct-sec" id="acct-sec-timeline" hidden>
+            <summary><h4 class="acct-detail-h"><i class="fas fa-route"></i> Repair progress</h4><span class="acct-sec-hint" id="acct-sec-timeline-hint"></span><span class="hg-chev" aria-hidden="true"><i class="fas fa-chevron-down"></i></span></summary>
+            <div id="acct-timeline"></div>
+          </details>
+          <details class="acct-sec" id="acct-sec-docs" hidden>
+            <summary><h4 class="acct-detail-h"><i class="fas fa-file-signature"></i> Documents</h4><span class="acct-sec-hint" id="acct-sec-docs-hint"></span><span class="hg-chev" aria-hidden="true"><i class="fas fa-chevron-down"></i></span></summary>
+            <div id="acct-ticket-docs"></div>
+          </details>
+          <details class="acct-sec" id="acct-sec-charges" hidden>
+            <summary><h4 class="acct-detail-h"><i class="fas fa-receipt"></i> Charges</h4><span class="acct-sec-hint" id="acct-sec-charges-hint"></span><span class="hg-chev" aria-hidden="true"><i class="fas fa-chevron-down"></i></span></summary>
+            <div id="acct-charges"></div>
+          </details>
           <div id="acct-ticket-actions"></div>
-          <div id="acct-parts"></div>
-          <div class="acct-messages" id="acct-messages"></div>
+          <details class="acct-sec" id="acct-sec-parts" hidden>
+            <summary><h4 class="acct-detail-h"><i class="fas fa-box-open"></i> Parts for this repair</h4><span class="acct-sec-hint" id="acct-sec-parts-hint"></span><span class="hg-chev" aria-hidden="true"><i class="fas fa-chevron-down"></i></span></summary>
+            <div id="acct-parts"></div>
+          </details>
+          <details class="acct-sec" id="acct-sec-messages" hidden>
+            <summary><h4 class="acct-detail-h"><i class="fas fa-comments"></i> Messages</h4><span class="acct-sec-hint" id="acct-sec-messages-hint"></span><span class="hg-chev" aria-hidden="true"><i class="fas fa-chevron-down"></i></span></summary>
+            <div class="acct-messages" id="acct-messages"></div>
+          </details>
           <!-- GUEST_ASSISTANT_2026_11_10: the assistant bar —
                quick-question chips and the Speak to an associate
                button. It belongs to the General conversation
