@@ -3288,6 +3288,9 @@ function loadTicketThread(client, ticketId) {
    * Default open: Message customer + Repair log — the two sections
    * a tech works in during a job (talk to the customer, log the
    * work), and the pair Austin's approved order already joins.
+   * V167_PARTS_COLLAPSE_2026_11_18 (Austin, Nov 18, 2026): that default is gone —
+   * every section starts closed now. The paragraph above is the
+   * history of what used to open, not what opens today.
    * V163_DETAILS_INLINE_2026_11_17 (Austin, Nov 17, 2026): Ticket
    * details is directly editable inline and opens by default — no
    * second click to edit. It used to start collapsed (see
@@ -3297,7 +3300,12 @@ function loadTicketThread(client, ticketId) {
    * fed by the section's own loader — balance due, tracking
    * status, an unsigned authorization, a running timer — so
    * closed never means invisible. */
-  var TK_ACC_DEFAULT_OPEN = { message: true, repairlog: true, details: true };
+  var TK_ACC_DEFAULT_OPEN = {}; /* V167_PARTS_COLLAPSE_2026_11_18 (Austin, Nov 18, 2026):
+   * ALL drawer sections start closed by default — his call, back to
+   * the Nov 2 reason for the accordion (a drawer stacked open is
+   * "very hard to read... very overwhelming for a technician"). Tap a
+   * header to open it; the choice sticks for the session (tkAccState),
+   * and every closed header still carries its hint. */
   var tkAccState = {};
   function tkAccOpen(key) {
     return Object.prototype.hasOwnProperty.call(tkAccState, key) ? tkAccState[key] : !!TK_ACC_DEFAULT_OPEN[key];
@@ -3499,7 +3507,16 @@ function loadTicketThread(client, ticketId) {
           /* V163_DETAILS_INLINE_2026_11_17 (Austin, Nov 17, 2026): Parts
            * sits right on the main ticket screen, directly under Ticket
            * Details — not tucked behind a dropdown. */
-          '<div class="portal-drawer-section" id="p2-parts-section"><h3>Parts on this ticket</h3>' +
+          /* V167_PARTS_COLLAPSE_2026_11_18 (Austin, Nov 18, 2026): the Parts
+           * section was the only drawer section with no collapsible
+           * header — the long new-part form stayed open and pushed
+           * everything below it off screen on the iPad. It now uses
+           * the same ticket accordion as every other section; nothing
+           * inside it changed. The closed header already carries a
+           * hint (renderParts calls tkAccSetHint('parts', ...) with
+           * the freshest tracking word, a count, or the empty state),
+           * so it starts working here. */
+          '<div class="portal-drawer-section tk-acc" id="p2-parts-section" data-acc="parts">' + tkAccHead('parts', 'Parts on this ticket') + tkAccBodyOpen('parts') +
           '<div id="p2-parts"><p class="portal-muted">Loading parts&hellip;</p></div>' +
           '<div class="p2-actions"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-scan-btn"><i class="fas fa-barcode"></i> Scan barcode</button>' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-part-upload-invoice-btn"><i class="fas fa-upload"></i> Upload invoice</button>' +
@@ -3516,6 +3533,11 @@ function loadTicketThread(client, ticketId) {
           '<div class="p2-form-row"><input id="p2-part-supplier" type="text" placeholder="Supplier" maxlength="80" aria-label="Supplier" />' +
           '<input id="p2-part-sku" type="text" placeholder="Supplier SKU" maxlength="80" aria-label="Supplier SKU" /></div>' +
           '<div class="p2-form-row"><input id="p2-part-cost" type="number" step="0.01" min="0" placeholder="Our cost $" aria-label="Our cost" />' +
+          /* V167_PART_SHIPPING_2026_11_18 (Austin, Nov 18, 2026): a spot for the
+           * shipping cost on a part order — our cost, never added to
+           * the guest charge. Sits between Our cost and Guest price,
+           * the two money fields it belongs with. */
+          '<input id="p2-part-shipping" type="number" step="0.01" min="0" placeholder="Shipping $" aria-label="Shipping cost" />' +
           '<input id="p2-part-retail" type="number" step="0.01" min="0" placeholder="Guest price $" aria-label="Guest price" />' +
           '<input id="p2-part-qty" type="number" step="1" min="1" value="1" aria-label="Quantity" /></div>' +
           '<div class="p2-form-row"><select id="p2-part-carrier" aria-label="Carrier"><option value="">Carrier</option><option value="FedEx">FedEx</option><option value="UPS">UPS</option><option value="USPS">USPS</option><option value="Other">Other</option></select>' +
@@ -3526,7 +3548,7 @@ function loadTicketThread(client, ticketId) {
           '<p class="portal-muted portal-small" id="p2-part-invoice-msg" hidden></p>' +
           '<label class="p2-check"><input type="checkbox" id="p2-part-addcharge" checked /> Add the guest price to Charges as a part line</label>' +
           '<button class="portal-btn portal-btn-primary portal-btn-sm" type="submit">Add part order</button>' +
-          '<p class="portal-error" id="p2-part-error" hidden></p></form></div>' +
+          '<p class="portal-error" id="p2-part-error" hidden></p></form></div></div>' + /* V167_PARTS_COLLAPSE_2026_11_18: close the Parts accordion body and section. */
                     /* DRAWER_ACTIONS_TOP_2026_11_04: the receipt/delete
            * actions row that used to sit here now renders up
            * beside Status, under Assigned to. */
@@ -4278,7 +4300,7 @@ function loadTicketThread(client, ticketId) {
     if (!box) return;
     if (!rows.length) {
       box.innerHTML = '<p class="portal-muted">No parts ordered for this ticket yet.</p>';
-      tkAccSetHint('parts', ''); /* PORTAL_TICKET_ACCORDION_2026_11_02 */
+      tkAccSetHint('parts', 'No parts ordered yet'); /* V167_PARTS_COLLAPSE_2026_11_18: a closed Parts header says so — every section starts closed now. */
       return;
     }
     box.innerHTML = rows.map(function (p) {
@@ -4290,6 +4312,9 @@ function loadTicketThread(client, ticketId) {
         (p.supplier ? ' · ' + esc(p.supplier) : '') + (p.supplier_sku ? ' · SKU ' + esc(p.supplier_sku) : '') +
         ' &times;' + esc(p.qty) +
         (p.our_cost != null ? ' · our cost ' + fmtMoney(p.our_cost) : '') +
+        /* V167_PART_SHIPPING_2026_11_18: shipping shows only when a shipping cost
+         * was saved on the part order. */
+        (p.shipping_cost != null ? ' · shipping ' + fmtMoney(p.shipping_cost) : '') +
         (p.retail_price != null ? ' · guest ' + fmtMoney(p.retail_price) : '') +
         (p.carrier ? ' · ' + esc(p.carrier) : '') +
         (p.order_number ? ' · order #' + esc(p.order_number) : '') +
@@ -4399,9 +4424,14 @@ function loadTicketThread(client, ticketId) {
      * shipment update is never hidden behind the fold. */
     var accOpenParts = rows.filter(function (p) { return p.status !== 'Received' && p.status !== 'Cancelled'; });
     var accTracked = accOpenParts.filter(function (p) { return !!p.tracking_status; });
+    /* V167_PARTS_COLLAPSE_2026_11_18: every section starts closed now, so the
+     * Parts header must always say what is behind it — a count when
+     * no other case applies, and 'No parts ordered yet' when there
+     * is nothing at all (the empty branch above sets that one). */
     tkAccSetHint('parts', accTracked.length ? accTracked[0].tracking_status :
       (accOpenParts.length ? accOpenParts.length + (accOpenParts.length === 1 ? ' part on the way' : ' parts on the way') :
-      (rows.some(function (p) { return p.status === 'Received'; }) ? 'All received' : '')));
+      (rows.some(function (p) { return p.status === 'Received'; }) ? 'All received' :
+      (rows.length ? rows.length + (rows.length === 1 ? ' part' : ' parts') : 'No parts ordered yet'))));
   }
 
   function loadParts(client, t) {
@@ -8107,6 +8137,10 @@ function loadTicketThread(client, ticketId) {
         err.textContent = 'Only ' + stockItem.stock_qty + ' of that part in stock.'; err.hidden = false; return;
       }
       var costRaw = $('p2-part-cost').value, retailRaw = $('p2-part-retail').value;
+      /* V167_PART_SHIPPING_2026_11_18: shipping is our cost — it rides on the part
+       * order only, never on the guest charge below. */
+      var shipEl = $('p2-part-shipping');
+      var shipRaw = shipEl ? shipEl.value : '';
       var qty = parseInt($('p2-part-qty').value, 10) || 1;
       var part = {
         ticket_id: t.id,
@@ -8115,6 +8149,7 @@ function loadTicketThread(client, ticketId) {
         supplier: trim($('p2-part-supplier').value) || null,
         supplier_sku: trim($('p2-part-sku').value) || null,
         our_cost: costRaw === '' ? null : parseFloat(costRaw),
+        shipping_cost: shipRaw === '' ? null : parseFloat(shipRaw),
         retail_price: retailRaw === '' ? null : parseFloat(retailRaw),
         qty: qty,
         carrier: trim($('p2-part-carrier').value) || null,
