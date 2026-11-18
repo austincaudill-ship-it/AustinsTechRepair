@@ -2140,7 +2140,7 @@
                  hidden and the staff check at the end of script.js unhides
                  it only for a signed-in associate (employee_profiles row);
                  guests never see it. Tapping it opens the Associate Hub. -->
-            <button class="acct-menu-item acct-flat-row" id="acct-guesthub-btn" type="button" hidden><i class="fas fa-house"></i> Guest Hub <i class="fas fa-arrow-right acct-menu-chev" aria-hidden="true"></i></button>
+            <button class="acct-menu-item acct-flat-row" id="acct-guesthub-btn" type="button" hidden><i class="fas fa-house"></i> <span id="acct-guesthub-label">Guest Hub</span> <i class="fas fa-arrow-right acct-menu-chev" aria-hidden="true"></i></button>
              <a class="acct-menu-item acct-flat-row" id="emp-dash-link" href="portal.html" hidden><i class="fas fa-briefcase"></i> Associate Hub <i class="fas fa-arrow-right acct-menu-chev" aria-hidden="true"></i></a>
             <!-- V162_ACCOUNT_DROPDOWN_2026_11_17 (Austin, Nov 17, 2026): the ATRG Connect dropdown row is gone — Connect lives in the Guest Hub only now (the Connect tab). The protection is the human-issued code on the gated page, not the door. -->
 
@@ -3742,7 +3742,7 @@
             <p>We may change plan prices. If we do, we will tell you before your next renewal, and you may cancel before the new price applies.</p>
 
             <h3>5. Cancellation</h3>
-            <p>You may cancel at any time, right in your Guest Hub under ATR One Membership &mdash; no call, text, or email to us is needed. To stop the next monthly charge, cancel at least 3 days before your next billing date. If a monthly payment has already gone through and you cancel within 4 days of that payment, that payment is refunded in full. Your benefits continue to the end of the current billing period. After cancellation, your account returns to ATR One Free, and you keep earning points at the Free rate of 1 point for every $1.</p>
+            <p>You may cancel at any time, right in your Hub under ATR One Membership &mdash; no call, text, or email to us is needed. To stop the next monthly charge, cancel at least 3 days before your next billing date. If a monthly payment has already gone through and you cancel within 4 days of that payment, that payment is refunded in full. Your benefits continue to the end of the current billing period. After cancellation, your account returns to ATR One Free, and you keep earning points at the Free rate of 1 point for every $1.</p>
 
             <h3>6. Changes to Membership Terms</h3>
             <p>We may change this agreement from time to time. The version posted on this site when your plan renews governs that renewal period. If a change affects your price or your benefits, we will tell you before your next renewal, and you may cancel before it takes effect.</p>
@@ -5877,7 +5877,7 @@
       if (res.error || !data || data.ok !== true) {
         var reason = data && data.reason;
         if (reason === 'cap_reached') mdShowError(d.id, 'That is more than your plan covers — take coverage off another device first.');
-        else if (reason === 'no_paid_plan') mdShowError(d.id, 'Coverage comes with ATR One Plus — see ATR One Membership in your Guest Hub.');
+        else if (reason === 'no_paid_plan') mdShowError(d.id, 'Coverage comes with ATR One Plus — see ATR One Membership in your ' + (window.atrAccountType === 'business' ? 'Business' : 'Guest') + ' Hub.');
         else mdShowError(d.id, 'Coverage could not be updated online just yet — nothing was changed.');
         if (done) done(false);
         return;
@@ -7072,7 +7072,7 @@
     return '<section class="atr-signed-block" style="margin-top:32px;padding-top:16px;border-top:2px solid #1c1c1e;">'
       + imgHtml
       + '<p style="font-weight:700;margin:0 0 4px;">Signed by ' + e(row.signer_name) + ' on ' + e(date) + '</p>'
-      + '<p style="margin:0;color:#3a3a3c;">Recorded in your Guest Hub account.</p></section>';
+      + '<p style="margin:0;color:#3a3a3c;">Recorded in your ' + (window.atrAccountType === 'business' ? 'Business' : 'Guest') + ' Hub account.</p></section>';
   };
   window.__atrSigBlockInject = function (htmlText, row, img) {
     if (!row || !htmlText) return htmlText;
@@ -9601,7 +9601,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
 </style>
 <div id="guest-hub" hidden role="dialog" aria-label="Guest Hub">
   <div class="ghub-topbar">
-    <div><span class="ghub-brand"><i class="fas fa-screwdriver-wrench"></i> Austin&rsquo;s Tech Repair Group</span><span class="ghub-tag">Guest Hub</span></div>
+    <div><span class="ghub-brand"><i class="fas fa-screwdriver-wrench"></i> Austin&rsquo;s Tech Repair Group</span><span class="ghub-tag" id="ghub-tag">Guest Hub</span></div>
     <div class="ghub-qa-label">QUICK ACTIONS</div>
     <!-- V163_GUEST_QA_2026_11_17 (Austin, Nov 17, 2026): Quick Actions
          parity with the Associate Hub — same row, same order, same
@@ -9631,7 +9631,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
     <p class="ghub-greet-line"><span id="ghub-greet">Hello</span> <span class="ghub-greet-sep" aria-hidden="true">&middot;</span> <span class="ghub-greet-role" id="ghub-greet-role">Guest</span> <span class="ghub-greet-sep" aria-hidden="true">&middot;</span> <span class="ghub-clock" id="ghub-clock"></span></p>
   </div>
   <div class="ghub-body">
-    <nav class="ghub-side" aria-label="Guest Hub actions">
+    <nav class="ghub-side" id="ghub-side" aria-label="Guest Hub actions">
       <div class="ghub-side-label">ACTION BUTTONS</div>
       <!-- V169_GUEST_HUB_2026_11_18 (Austin, Nov 18, 2026): Home is gone from the sidebar
            ACTION BUTTON list in BOTH hubs — Home is already a Quick Action,
@@ -9666,10 +9666,10 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
              day" — those are associate-only. -->
         <div class="ghub-card" id="ghub-home-offers">
           <h3>ATR One offers</h3>
-          <p><strong>Individual — $9.99/month</strong><br>20% off repairs &middot; 25% off accessories &middot; 1 device</p>
-          <p><strong>Family — $19.99/month</strong><br>25% off repairs &middot; 30% off accessories &middot; 5 devices</p>
-          <p><strong>Business — $49.99/month</strong><br>35% off repairs &middot; 40% off accessories &middot; 10 devices</p>
-          <p><strong>Business Pro — $99.99/month</strong><br>45% off repairs &middot; 55% off accessories &middot; 25 devices</p>
+          <p data-offer-tier="guest"><strong>Individual — $9.99/month</strong><br>20% off repairs &middot; 25% off accessories &middot; 1 device</p>
+          <p data-offer-tier="guest"><strong>Family — $19.99/month</strong><br>25% off repairs &middot; 30% off accessories &middot; 5 devices</p>
+          <p data-offer-tier="business"><strong>Business — $49.99/month</strong><br>35% off repairs &middot; 40% off accessories &middot; 10 devices</p>
+          <p data-offer-tier="business"><strong>Business Pro — $99.99/month</strong><br>45% off repairs &middot; 55% off accessories &middot; 25 devices</p>
           <p class="ghub-muted">Members pay no visit fee or diagnostics on covered devices.</p>
           <button class="btn btn-primary btn-sm" type="button" id="ghub-home-offers-btn">See ATR One Membership</button>
         </div>
@@ -9815,7 +9815,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
             </label>
             <label class="atr-check">
               <input type="checkbox" id="acct-t-dispatch">
-              <span>I understand the <strong>visit fee is $14.99 for guests, $34.99 for business</strong> &mdash; and <strong>diagnostics is $34.99 for guests, $64.99 for business</strong>, if my device needs a full diagnosis &mdash; covers the trip to me, is due at scheduling, and is <strong>non-refundable</strong>. *</span>
+              <span id="acct-t-fee-note">I understand the <strong>visit fee is $14.99 for guests, $34.99 for business</strong> &mdash; and <strong>diagnostics is $34.99 for guests, $64.99 for business</strong>, if my device needs a full diagnosis &mdash; covers the trip to me, is due at scheduling, and is <strong>non-refundable</strong>. *</span>
             </label>
             <label class="atr-check">
               <input type="checkbox" id="acct-t-work-auth">
@@ -9984,7 +9984,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
           <p class="acct-muted">Choose what we send you. Your account email (estimate + login together) always sends — that one is not an alert.</p>
           <label class="atr-check">
             <input type="checkbox" id="acct-notif-email" checked>
-            <span><strong>Email alerts</strong> — repair updates, estimates and invoices in your Guest Hub.</span>
+            <span><strong>Email alerts</strong> — repair updates, estimates and invoices in your <span id="acct-notif-hub">Guest Hub</span>.</span>
           </label>
           <label class="atr-check">
             <input type="checkbox" id="acct-notif-text">
@@ -10084,10 +10084,10 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
             <h4 class="acct-detail-h"><i class="fas fa-arrow-up"></i> Upgrade or switch to ATR One Plus</h4>
             <p class="acct-muted" style="text-align:left;padding:0;">Paid plans are billed monthly through Square. Switching plans starts the new plan at checkout &mdash; if you are switching mid-month, text us at (937) 280-6243 and we will make sure you are not double-billed.</p>
             <div class="mm-tier-list">
-              <div class="mm-tier-row"><div class="mm-tier-info"><strong>Individual &mdash; 1 Device</strong><span>$9.99/mo &middot; Earn 5 points per $1</span></div><a class="btn btn-outline btn-sm mm-join" data-mm-tier="single" href="https://square.link/u/eFKxDvyo" target="_blank" rel="noopener">Join</a></div>
-              <div class="mm-tier-row"><div class="mm-tier-info"><strong>Family &mdash; 5 Devices</strong><span>$19.99/mo &middot; Earn 5 points per $1</span></div><a class="btn btn-outline btn-sm mm-join" data-mm-tier="family" href="https://square.link/u/ZA7502vD" target="_blank" rel="noopener">Join</a></div>
-              <div class="mm-tier-row"><div class="mm-tier-info"><strong>Business &mdash; 10 Devices</strong><span>$49.99/mo &middot; Earn 10 points per $1</span></div><a class="btn btn-outline btn-sm mm-join" data-mm-tier="business_plus" href="https://square.link/u/HtnQBIG1" target="_blank" rel="noopener">Join</a></div>
-              <div class="mm-tier-row"><div class="mm-tier-info"><strong>Business Pro &mdash; 25 Devices</strong><span>$99.99/mo &middot; Earn 10 points per $1</span></div><a class="btn btn-outline btn-sm mm-join" data-mm-tier="business_pro" href="https://square.link/u/V8WCkjbW" target="_blank" rel="noopener">Join</a></div>
+              <div class="mm-tier-row" data-mm-audience="guest"><div class="mm-tier-info"><strong>Individual &mdash; 1 Device</strong><span>$9.99/mo &middot; Earn 5 points per $1</span></div><a class="btn btn-outline btn-sm mm-join" data-mm-tier="single" href="https://square.link/u/eFKxDvyo" target="_blank" rel="noopener">Join</a></div>
+              <div class="mm-tier-row" data-mm-audience="guest"><div class="mm-tier-info"><strong>Family &mdash; 5 Devices</strong><span>$19.99/mo &middot; Earn 5 points per $1</span></div><a class="btn btn-outline btn-sm mm-join" data-mm-tier="family" href="https://square.link/u/ZA7502vD" target="_blank" rel="noopener">Join</a></div>
+              <div class="mm-tier-row" data-mm-audience="business"><div class="mm-tier-info"><strong>Business &mdash; 10 Devices</strong><span>$49.99/mo &middot; Earn 10 points per $1</span></div><a class="btn btn-outline btn-sm mm-join" data-mm-tier="business_plus" href="https://square.link/u/HtnQBIG1" target="_blank" rel="noopener">Join</a></div>
+              <div class="mm-tier-row" data-mm-audience="business"><div class="mm-tier-info"><strong>Business Pro &mdash; 25 Devices</strong><span>$99.99/mo &middot; Earn 10 points per $1</span></div><a class="btn btn-outline btn-sm mm-join" data-mm-tier="business_pro" href="https://square.link/u/V8WCkjbW" target="_blank" rel="noopener">Join</a></div>
             </div>
             <div id="mm-cancel-wrap" hidden>
               <h4 class="acct-detail-h"><i class="fas fa-ban"></i> Cancel ATR One Plus</h4>
@@ -10203,7 +10203,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
        Service Messages, Search last. Search opens the sheet with every
        other section. NOT customizable (Austin confirmed that is fine).
        The Associate Hub thumb bar is untouched. -->
-  <div class="ghub-thumb" role="navigation" aria-label="Guest Hub">
+  <div class="ghub-thumb" id="ghub-thumb" role="navigation" aria-label="Guest Hub">
     <button type="button" data-ghub="service"><i class="fas fa-tools"></i> Service Request</button>
     <button type="button" data-ghub="account"><i class="fas fa-user"></i> Account</button>
     <button type="button" data-ghub="documents"><i class="fas fa-folder-open"></i> Documents</button>
@@ -10216,7 +10216,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
        the sidebar is hidden. Fixed list, not customizable. -->
   <div id="ghub-search-sheet" hidden role="dialog" aria-label="Search the Guest Hub">
     <div class="ghub-search-card">
-      <div class="ghub-search-head"><strong>Search the Guest Hub</strong><button type="button" id="ghub-search-close" aria-label="Close search">&times;</button></div>
+      <div class="ghub-search-head"><strong id="ghub-search-title">Search the Guest Hub</strong><button type="button" id="ghub-search-close" aria-label="Close search">&times;</button></div>
       <input type="search" id="ghub-search-input" placeholder="Try &ldquo;membership&rdquo; or &ldquo;warranty&rdquo;&hellip;" aria-label="Search the Guest Hub" autocomplete="off">
       <div id="ghub-search-results"></div>
       <p class="ghub-muted">Every section of the Hub is here — Home, Service Request, Account, My Services, My One-on-Ones, My Estimates, Service Messages, ATRG Connect, ATR One Membership, Documents, Warranty.</p>
@@ -10586,7 +10586,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
         if (e.target && e.target.id === 'ghub-sign-go') ghubSignBoth();
       });
     }
-    var head = '<p class="ghub-muted">Your documents live here in the Guest Hub — nothing is emailed unless you ask for it.</p>';
+    var head = '<p class="ghub-muted">Your documents live here in the ' + ghubHubName() + ' — nothing is emailed unless you ask for it.</p>';
     function paint(sigs, filed) {
       ghubSigs = sigs || [];
       var anchor = ghubAnchorTicket();
@@ -10703,7 +10703,61 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
    * the scan-in. The Associate Hub Scan In scanner is untouched. The
    * ghubQrPayload/drawGhubQr helpers and the scanin pane are deleted
    * here, not left dead. */
+  /* V170_ROUTING_2026_11_18 (Austin, Nov 18, 2026): one Hub, two faces — a business
+     account lands in the Business Hub automatically, a guest account
+     lands in the Guest Hub. The rule is the EXACT rule the greeting
+     already uses (paintHome below): the sign-in profile's
+     user_metadata.account_type is 'business'. enterAccount mirrors
+     the same metadata onto window.atrAccountType at sign-in
+     (index.html ~8611), so the global is the same fact from the
+     same source. The hub reads its own session user first and the
+     global second, so the face is right even before the hub's own
+     loader resolves. No picker, no toggle, no new detection rule. */
+  function ghubIsBusiness() {
+    var t = (user && user.user_metadata && user.user_metadata.account_type) || '';
+    if (t) return String(t).toLowerCase() === 'business';
+    return window.atrAccountType === 'business';
+  }
+  function ghubHubName() { return ghubIsBusiness() ? 'Business Hub' : 'Guest Hub'; }
+  var ghubFeeNoteGuestInner = null;
+  /* V170_PRICING_2026_11_18: the Business Hub quotes business figures only — visit
+     $34.99, diagnostics $64.99. The guest wording (both prices) is
+     captured on first paint and restored for guests. Labor
+     ($99.99/hr) and one-on-one ($49.99/hr) are never quoted
+     anywhere inside the Hub — charges are real ticket data and the
+     one-on-one door goes to the audience-switched site page — so
+     there is nothing else to swap. */
+  var ghubFeeNoteBizInner = 'I understand the <strong>visit fee is $34.99</strong> &mdash; and <strong>diagnostics is $64.99</strong>, if my device needs a full diagnosis &mdash; covers the trip to me, is due at scheduling, and is <strong>non-refundable</strong>. *';
+  function paintBhubAudience() {
+    var biz = ghubIsBusiness();
+    var name = biz ? 'Business Hub' : 'Guest Hub';
+    var tag = $('ghub-tag'); if (tag) tag.textContent = name;
+    var hub = $('guest-hub'); if (hub) hub.setAttribute('aria-label', name);
+    var side = $('ghub-side'); if (side) side.setAttribute('aria-label', name + ' actions');
+    var thumb = $('ghub-thumb'); if (thumb) thumb.setAttribute('aria-label', name);
+    var sheet = $('ghub-search-sheet'); if (sheet) sheet.setAttribute('aria-label', 'Search the ' + name);
+    var st = $('ghub-search-title'); if (st) st.textContent = 'Search the ' + name;
+    var si = $('ghub-search-input'); if (si) si.setAttribute('aria-label', 'Search the ' + name);
+    var bl = $('acct-guesthub-label'); if (bl) bl.textContent = name;
+    var nh = $('acct-notif-hub'); if (nh) nh.textContent = name;
+    /* display:none inline (not the hidden property): .mm-tier-row
+       carries author display rules, which would beat [hidden]. */
+    document.querySelectorAll('#ghub-home-offers [data-offer-tier]').forEach(function (el) {
+      el.style.display = (biz && el.getAttribute('data-offer-tier') === 'guest') ? 'none' : '';
+    });
+    document.querySelectorAll('.mm-tier-row[data-mm-audience]').forEach(function (el) {
+      el.style.display = (biz && el.getAttribute('data-mm-audience') === 'guest') ? 'none' : '';
+    });
+    var fee = $('acct-t-fee-note');
+    if (fee) {
+      if (ghubFeeNoteGuestInner === null) ghubFeeNoteGuestInner = fee.innerHTML;
+      fee.innerHTML = biz ? ghubFeeNoteBizInner : ghubFeeNoteGuestInner;
+    }
+  }
+  window.atrHubIsBusiness = ghubIsBusiness;
+  window.atrPaintBhubAudience = paintBhubAudience;
   function paintHome() {
+    paintBhubAudience(); /* V170_ROUTING_2026_11_18: the face follows the account — see helpers below */
     /* V169_GUEST_GREETING_2026_11_18 (Austin, Nov 18, 2026): Quick Actions must show what
        the Associate Hub shows at the top — "Good morning, [first name]"
        + Guest status + time + date. The name falls back
@@ -10813,6 +10867,10 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
       return sb.from('employee_profiles').select('id').eq('id', u.id).maybeSingle().then(function (r) {
         var staff = !!(r.data && r.data.id);
         btn.hidden = staff;
+        /* V170_ROUTING_2026_11_18: the account-page door reads the hub the account
+           actually lands in — Business Hub for a business account, Guest
+           Hub for a guest. Same metadata rule as the greeting. */
+        if (!staff) { var _lbl = $('acct-guesthub-label'); if (_lbl) _lbl.textContent = (String((u.user_metadata && u.user_metadata.account_type) || '').toLowerCase() === 'business') ? 'Business Hub' : 'Guest Hub'; }
         /* V162: the Services row is gone — the account repairs panel
          * lives inside the Guest Hub Service tab now, so there is
          * nothing to hide here anymore. */
@@ -10822,6 +10880,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
   }
   function openHub(tab) {
     var hub = $('guest-hub'); if (!hub) return;
+    paintBhubAudience(); /* V170_ROUTING_2026_11_18: the face is set before the Hub is shown */
     hub.hidden = false; document.body.style.overflow = 'hidden';
     loadAll(); setTimeout(loadPrefs, 600);
     showTab(tab || 'home');

@@ -179,6 +179,7 @@
      with the document (the print CSS hides only the page chrome). */
   var sigDocType = 'agreement';
   var baseShell = '', signedRow = null;
+  var vdIsBusiness = false; /* V170_ROUTING_2026_11_18: resolved from the Supabase session in setupSigning — same metadata rule as the site greeting */
   function sigBlockHtml(row) {
     var date = new Date(row.signed_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
     /* V169_SIGN_PAD_2026_11_18: the finger drawing, when this session has one. */
@@ -186,7 +187,7 @@
     return '<section class="atr-signed-block" style="margin-top:32px;padding-top:16px;border-top:2px solid #1c1c1e;">'
       + imgHtml
       + '<p style="font-weight:700;margin:0 0 4px;">Signed by ' + esc(row.signer_name) + ' on ' + esc(date) + '</p>'
-      + '<p style="margin:0;color:#3a3a3c;">Recorded in your Guest Hub account.</p></section>';
+      + '<p style="margin:0;color:#3a3a3c;">Recorded in your ' + (vdIsBusiness ? 'Business' : 'Guest') + ' Hub account.</p></section>';
   }
   function injectSigBlock(htmlText, row) {
     if (!row || !htmlText) return htmlText;
@@ -338,6 +339,16 @@
     signBtn.hidden = false;
     signinBtn.hidden = true;
     checkSigned(session);
+    /* V170_ROUTING_2026_11_18: the signature block names the hub the signer actually
+       uses. The session here is the Supabase auth session, so the rule is
+       the same metadata the greeting reads. Re-applies the block in case
+       the signed row painted before this resolved. */
+    if (sb) sb.auth.getSession().then(function (sres) {
+      var su = sres && sres.data && sres.data.session ? sres.data.session.user : null;
+      var t = su && su.user_metadata && su.user_metadata.account_type;
+      vdIsBusiness = String(t || '').toLowerCase() === 'business';
+      applySignatureBlock();
+    }).catch(function () {});
     signBtn.addEventListener('click', function () {
       var name = (nameInput.value || '').trim();
       if (!name) { signNote.textContent = 'Please type your full name first.'; signNote.className = 'vd-note vd-error'; nameInput.focus(); return; }
