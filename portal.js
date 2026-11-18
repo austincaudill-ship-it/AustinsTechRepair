@@ -1854,6 +1854,8 @@
      * inside its popup, and the popup never survives a tab change. */
     closeScanInPopup();
     lastPortalTab = name;
+    /* V173_ADD_GUEST_COLLAPSED_2026_11_18 (Austin, Nov 18, 2026): the Add Guest form starts closed on every visit to the Guest panel — the list is what shows first. setCustAddFormOpen only flips hidden + the chevron, so a half-filled form keeps its values when the panel is reopened. */
+    if (name === 'customers') setCustAddFormOpen(false);
     /* V165_ESTIMATE_2026_11_17: opening New Service Request shows the request form as built — the Guest/Business toggle inside it (v164) does the version work. */
     if (name === 'checkin') ciShowNsr();
     /* TEAMCHAT_2026_11_03: reopening Team Chat restarts its refresh
@@ -2179,6 +2181,9 @@
     var v = Number(n);
     return isNaN(v) ? '—' : '$' + v.toFixed(2);
   }
+  /* V173_PRICING_FLOOR_2026_11_18 (Austin, Nov 18, 2026): no estimated price below $60 — base labor is $50.
+     Floors ESTIMATE amounts only; visit fees use estimateMoney directly and are never floored. */
+  function estFloorAmt(n) { if (n === null || n === undefined || n === '') return n; var v = Number(n); return isNaN(v) ? n : Math.max(60, v); } /* V173_PRICING_FLOOR_2026_11_18: a missing amount passes through untouched — Number(null) is 0, and flooring that to 60 would invent a $60 price for an estimate that has no amount yet. */
   function estimateDeclineRows(e) {
     return [
       ['Email', e.email || ''],
@@ -2269,7 +2274,7 @@
       return;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { fail("That email address doesn't look right."); return; }
-    if (isNaN(amount) || amount <= 0) { fail('Enter the estimate amount — the price you quoted the guest.'); return; }
+    if (isNaN(amount) || amount < 60) { fail('Estimates start at $60 — base labor is $50. Enter the estimate amount — the price you quoted the guest.'); return; } /* V173_PRICING_FLOOR_2026_11_18 */
     var btn = $('ci-est-submit');
     if (btn) btn.disabled = true;
     /* NO account, NO guest record, NO ticket: the estimate row
@@ -2297,7 +2302,7 @@
           ['Name', name],
           ['Device', estimateDeviceLabel(row)],
           ["What's wrong", issue],
-          ['Estimate', estimateMoney(amount)],
+          ['Estimate', estimateMoney(estFloorAmt(amount)) /* V173_PRICING_FLOOR_2026_11_18 */],
           ['Your estimate page', estimatePageLink(row)],
           ['What happens next', 'Tap the link above to view your estimate. You can confirm or decline it there — nothing is booked until you confirm.']
         ], 'estimate-link', row.public_token);
@@ -2334,7 +2339,7 @@
     }
     list.innerHTML = view.map(function (e) {
       var pill = '<span class="portal-badge">' + esc(e.status || '') + '</span>';
-      var amt = '<p class="portal-card-meta"><strong>Estimate: ' + esc(estimateMoney(e.estimate_amount)) + '</strong> &middot; visit fee ' + esc(estimateMoney(v165VisitFee(e.audience))) + ' due only when confirmed</p>';
+      var amt = '<p class="portal-card-meta"><strong>Estimate: ' + esc(estimateMoney(estFloorAmt(e.estimate_amount)) /* V173_PRICING_FLOOR_2026_11_18 */) + '</strong> &middot; visit fee ' + esc(estimateMoney(v165VisitFee(e.audience))) + ' due only when confirmed</p>';
       var who = esc(e.name || 'No name given') + (e.audience === 'business' && e.contact_name ? ' &middot; ' + esc(e.contact_name) : '') + (e.audience === 'business' ? ' <span class="portal-badge portal-badge-source">Business</span>' : '');
       var phone = trim(e.phone);
       var phoneHtml = phone ? ' &middot; <a href="tel:' + esc(phone.replace(/[^0-9+]/g, '')) + '">' + esc(phone) + '</a>' : '';
@@ -2615,7 +2620,7 @@
           ['Name', e.name || ''],
           ['Device', estimateDeviceLabel(e)],
           ["What's wrong", e.issue || ''],
-          ['Estimate', estimateMoney(e.estimate_amount)],
+          ['Estimate', estimateMoney(estFloorAmt(e.estimate_amount)) /* V173_PRICING_FLOOR_2026_11_18 */],
           ['Your estimate page', estimatePageLink(e)],
           ['What happens next', 'Tap the link above to view your estimate. You can confirm or decline it there — nothing is booked until you confirm.']
         ], 'estimate-link', e.public_token);
@@ -2643,7 +2648,7 @@
           '<dt>Service address</dt><dd>' + esc(e.service_address || '—') + '</dd>' +
           '<dt>Device</dt><dd>' + esc(estimateDeviceLabel(e)) + '</dd>' +
           '<dt>Issue</dt><dd>' + esc(e.issue || '—') + '</dd>' +
-          '<dt>Estimate</dt><dd><strong>' + esc(estimateMoney(e.estimate_amount)) + '</strong></dd>' +
+          '<dt>Estimate</dt><dd><strong>' + esc(estimateMoney(estFloorAmt(e.estimate_amount)) /* V173_PRICING_FLOOR_2026_11_18 */) + '</strong></dd>' +
           '<dt>Visit fee when confirmed</dt><dd>' + esc(estimateMoney(v165VisitFee(e.audience))) + (e.atr_one === 'member' ? ' (ATR One member — no visit fee)' : '') + '</dd>' +
           '<dt>Received</dt><dd>' + esc(fmtDateTime(e.created_at)) + '</dd>' +
           '</dl></div>';
@@ -2689,7 +2694,7 @@
         if (sv) sv.addEventListener('click', function () {
           var amt = Number($('est-edit-amount') ? $('est-edit-amount').value : NaN);
           var sm = $('est-save-msg');
-          if (isNaN(amt) || amt <= 0) { if (sm) sm.textContent = 'Enter an estimate amount above $0.'; return; }
+          if (isNaN(amt) || amt < 60) { if (sm) sm.textContent = 'Estimates start at $60 — base labor is $50.'; return; } /* V173_PRICING_FLOOR_2026_11_18 */
           withClient(function (c2) {
             if (!c2) return;
             c2.from('estimates').update({
@@ -4886,36 +4891,50 @@ function loadTicketThread(client, ticketId) {
       sigBox.id = 'p4-signatures';
       box.parentNode.insertBefore(sigBox, box.nextSibling);
     }
-    client.from('document_signatures').select('id,document_type,signer_name,signed_at').eq('ticket_id', t.id)
+    client.from('document_signatures').select('id,document_type,signer_name,signed_at,signature_image') /* V173_SIGNATURE_ON_LINE_2026_11_18 */ .eq('ticket_id', t.id)
       .order('signed_at', { ascending: false })
       .then(function (res) {
         var sigs = res.error ? [] : (res.data || []);
         var labels = { agreement: 'Service Agreement', estimate: 'Estimate', invoice: 'Invoice', warranty: '1-Year Limited Warranty', media: 'Media Release', terms: 'Terms & Conditions' }; /* V171_SIGNATURE_VIEW_2026_11_18 */
         if (!sigs.length) { sigBox.innerHTML = ''; }
         else {
-          /* V171_SIGNATURE_VIEW_2026_11_18 (Austin, Nov 18, 2026): every signature row carries View
-             and Delete like the estimate row has. View opens the signed document
-             with the signature on it — the filed copy for agreement / estimate /
-             invoice, matched from the ticket's filed documents (warranty / media /
-             terms have no filed copy, so they carry Delete only). Delete is gated
-             Admin+ with the same two-tap confirm as document deletes and removes
-             only the signature row. */
+          /* V173_SIG_VIEW_ALL_2026_11_18 (Austin, Nov 18, 2026): every signature row carries View and Delete.
+             View opens the signed document with the signature on it — the filed copy for
+             agreement / estimate / invoice when one is filed on the ticket; otherwise the
+             built-in site document through view-doc.html (?doc=kind&t=ticket), the same door
+             the guest-side Documents View uses (agreement / warranty / media / terms all have
+             a site section). The v171 map only covered the three filed kinds, so warranty /
+             media / terms could never get a View button — Daniel's ticket (Estimate file +
+             verbal consent only, no filed authorization) showed exactly that: View on the
+             Estimate row, Delete only on the Warranty and Service Agreement rows. An
+             estimate / invoice row with no filed copy has no built-in document to render,
+             so it keeps Delete only. Delete is gated Admin+ with the same two-tap confirm
+             as document deletes and removes only the signature row. */
           var sigDocByType = {};
           docRows.forEach(function (d) { if (!sigDocByType[d.doc_type]) sigDocByType[d.doc_type] = d; });
           var sigFiledType = { agreement: 'repair_authorization', estimate: 'estimate', invoice: 'invoice' };
+          var sigSiteDoc = { agreement: 'agreement', warranty: 'warranty', media: 'media', terms: 'terms' }; /* V173_SIG_VIEW_ALL_2026_11_18: the built-in site documents view-doc.html renders — the same sections the guest-side Documents View opens. Estimate / invoice are generated files, never site sections, so they are not here. */
           sigBox.innerHTML = '<div class="portal-drawer-section" style="margin-top:.75rem"><h3>Signatures</h3>' +
             sigs.map(function (sg) {
               p4SigById[sg.id] = sg;
               var filed = sigDocByType[sigFiledType[sg.document_type] || ''];
+              var siteKind = !filed && sigSiteDoc[sg.document_type] ? sigSiteDoc[sg.document_type] : '';
               return '<div class="p2-line"><div class="p2-line-main"><span class="p2-kind">' + esc(labels[sg.document_type] || 'Document') + '</span>' +
                 '<span class="portal-muted portal-small">' + esc(fmtDateTime(sg.signed_at)) + ' &middot; Signed online by the guest — ' + esc(sg.signer_name || '') + '</span></div>' +
                 (filed ? '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-p4-sig-view="' + esc(filed.storage_path) + '" data-p4-sig-id="' + esc(sg.id) + '" data-p4-view-name="' + esc(filed.file_name || '') + '"><i class="fas fa-eye"></i> View</button>' : '') +
+                (siteKind ? '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-p4-sig-site="' + esc(siteKind) + '" data-p4-sig-id="' + esc(sg.id) + '"><i class="fas fa-eye"></i> View</button>' : '') +
                 (isAdminOrAbove() ? ' <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-p4-sig-del="' + esc(sg.id) + '"><i class="fas fa-trash"></i> Delete</button>' : '') + '</div>';
             }).join('') + '</div>';
           var sigViewBtns = sigBox.querySelectorAll('[data-p4-sig-view]');
           for (var vi = 0; vi < sigViewBtns.length; vi++) {
             sigViewBtns[vi].addEventListener('click', function () {
               viewDocument(client, this.getAttribute('data-p4-sig-view'), this.getAttribute('data-p4-view-name'), p4SigById[this.getAttribute('data-p4-sig-id')]);
+            });
+          }
+          var sigSiteBtns = sigBox.querySelectorAll('[data-p4-sig-site]'); /* V173_SIG_VIEW_ALL_2026_11_18 */
+          for (var si = 0; si < sigSiteBtns.length; si++) {
+            sigSiteBtns[si].addEventListener('click', function () {
+              previewSiteDoc(this.getAttribute('data-p4-sig-site'), t.id, p4SigById[this.getAttribute('data-p4-sig-id')]);
             });
           }
           var sigDelBtns = sigBox.querySelectorAll('[data-p4-sig-del]');
@@ -5007,8 +5026,14 @@ function loadTicketThread(client, ticketId) {
   function portalSigBlockHtml(row) {
     var date = '';
     try { date = new Date(row.signed_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }); } catch (e) { date = String(row.signed_at || ''); }
+    /* V173_SIGNATURE_ON_LINE_2026_11_18 (Austin, Nov 18, 2026): the signature sits ON the bottom line — the stored drawing when there is one (signature_image column), otherwise the typed name rendered in a script hand automatically. The line is the border under the signature; the "Signed by name, date" text stays alongside it. */
+    var sigImg = (row && row.signature_image) || '';
+    var sigHtml = sigImg
+      ? '<img src="' + esc(sigImg) + '" alt="Signature" style="max-width:280px;height:auto;display:block;margin:0 0 2px;border-bottom:2px solid #1c1c1e;padding-bottom:2px;">'
+      : '<div style="font-family:\'Snell Roundhand\',\'Brush Script MT\',\'Segoe Script\',cursive;font-size:32px;line-height:1.2;display:inline-block;min-width:280px;border-bottom:2px solid #1c1c1e;padding:0 8px;">' + esc(row.signer_name || '') + '</div>';
     return '<section class="atr-signed-block" style="margin-top:32px;padding-top:16px;border-top:2px solid #1c1c1e;">' +
-      '<p style="font-weight:700;margin:0 0 4px;">Signed by ' + esc(row.signer_name || '') + ' on ' + esc(date) + '</p></section>';
+      sigHtml +
+      '<p style="font-weight:700;margin:6px 0 4px;">Signed by ' + esc(row.signer_name || '') + ' on ' + esc(date) + '</p></section>';
   }
   function portalInjectSigBlock(htmlText, row) {
     if (!row || !htmlText) return htmlText;
@@ -5063,6 +5088,86 @@ function loadTicketThread(client, ticketId) {
     }).catch(function () {
       close();
       window.open(signedUrl, '_blank');
+    });
+  }
+
+  /* V173_SIG_VIEW_ALL_2026_11_18 (Austin, Nov 18, 2026): a signature row with no filed copy (warranty / media /
+   * terms, or an agreement with nothing filed on the ticket) still gets a View button — it opens
+   * the built-in site document through view-doc.html, the same door the guest-side Documents View
+   * uses (?doc=kind&t=ticket), inside the portal's own document preview overlay
+   * (#doc-preview-modal, the same shell previewHtmlDocument builds). The viewer renders the
+   * current site section; left alone it would show its sign box to staff — staff never sign for
+   * a guest — so the box is hidden once the viewer loads. The viewer also cannot paint the
+   * signature block on its own here: its signed-state lookup reads the site's 'atr-account'
+   * session mirror, which the portal never writes, so the block is injected from the signature
+   * row this function already holds (portalSigBlockHtml — the stored drawing, or the typed name
+   * in a script hand, exactly as Item 14 renders it). The injection is a no-op when the document
+   * already carries a block, so a staff member who is also signed into the site never gets a
+   * double signature. The frame runs the viewer with scripts + same-origin (our own page, same
+   * origin); the filed-copy preview keeps sandbox="" — an untrusted file must never run scripts. */
+  function previewSiteDoc(docKind, ticketId, sigRow) {
+    var url = 'view-doc.html?doc=' + encodeURIComponent(docKind) + '&t=' + encodeURIComponent(ticketId);
+    var old = document.getElementById('doc-preview-modal');
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+    var wrap = document.createElement('div');
+    wrap.id = 'doc-preview-modal';
+    wrap.setAttribute('style', 'position:fixed;inset:0;background:rgba(44,35,26,0.55);z-index:3000;display:flex;align-items:center;justify-content:center;padding:1rem;');
+    wrap.innerHTML = '<div style="background:#FFFFFF;color:#2C231A;border-radius:14px;max-width:860px;width:100%;height:92vh;display:flex;flex-direction:column;padding:1rem;box-shadow:0 18px 50px rgba(0,0,0,0.35);">' +
+      '<div class="p2-actions" style="margin:0 0 0.75rem;">' +
+      '<span class="p2-kind" style="margin-right:auto;">Document</span>' +
+      '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="doc-preview-open">Open in new tab</button> ' +
+      '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="doc-preview-close">Close</button></div>' +
+      '<div id="doc-preview-loading" class="portal-muted" style="flex:1;display:flex;align-items:center;justify-content:center;">Loading&hellip;</div>' +
+      '<iframe id="doc-preview-frame" title="Document preview" sandbox="allow-scripts allow-same-origin" src="' + esc(url) + '" style="flex:1;width:100%;border:1px solid #E6D9C0;border-radius:8px;background:#fff;display:none;"></iframe>' +
+      '</div>';
+    document.body.appendChild(wrap);
+    function close() { if (wrap.parentNode) wrap.parentNode.removeChild(wrap); }
+    wrap.addEventListener('click', function (e) { if (e.target === wrap) close(); });
+    wrap.querySelector('#doc-preview-close').addEventListener('click', close);
+    wrap.querySelector('#doc-preview-open').addEventListener('click', function () { window.open(url, '_blank'); });
+    var frame = wrap.querySelector('#doc-preview-frame');
+    var loading = wrap.querySelector('#doc-preview-loading');
+    var tries = 0, timer = null;
+    function hideViewerSignBox() {
+      try {
+        var outerDoc = frame.contentDocument;
+        if (outerDoc) { var signBox = outerDoc.getElementById('vd-sign'); if (signBox) signBox.hidden = true; }
+      } catch (e) { /* same-origin only; a frame that cannot be read keeps its box */ }
+    }
+    function finish() {
+      if (!wrap.parentNode) return true;
+      hideViewerSignBox();
+      var inner = null;
+      try {
+        var outerDoc = frame.contentDocument;
+        if (outerDoc) {
+          var innerFrame = outerDoc.getElementById('vd-frame');
+          if (innerFrame && innerFrame.contentDocument && innerFrame.contentDocument.body) inner = innerFrame.contentDocument;
+        }
+      } catch (e) { inner = null; }
+      if (!inner) return false;
+      var bodyHtml = '';
+      try { bodyHtml = inner.body.innerHTML || ''; } catch (e2) { return false; }
+      if (bodyHtml.length < 1000) return false; /* the viewer has not rendered the document yet — before its srcdoc lands the inner frame is about:blank, tiny; injecting now would be wiped when the document loads. The viewer sets srcdoc exactly once in here (no session, so its own signed-state lookup never runs and never re-renders), so once the body is real the injection sticks. */
+      if (sigRow) {
+        try {
+          if (bodyHtml.indexOf('atr-signed-block') === -1 && bodyHtml.indexOf('Signed by:') === -1) {
+            inner.body.insertAdjacentHTML('beforeend', portalSigBlockHtml(sigRow));
+          }
+        } catch (e2) { /* the block stays missing rather than breaking the view */ }
+      }
+      if (loading) loading.style.display = 'none';
+      frame.style.display = 'block';
+      return true;
+    }
+    frame.addEventListener('load', function () {
+      if (loading) loading.style.display = 'none';
+      frame.style.display = 'block';
+      hideViewerSignBox();
+      timer = setInterval(function () {
+        tries++;
+        if (!wrap.parentNode || tries > 120 || finish()) { if (timer) clearInterval(timer); }
+      }, 250);
     });
   }
 
@@ -5950,7 +6055,7 @@ function loadTicketThread(client, ticketId) {
     box.innerHTML = BLANK_DOCS.map(function (d, i) {
       return '<div class="p2-line"><div class="p2-line-main"><span class="p2-line-amt">' + esc(d.title) + '</span></div>' +
         (d.signer ? '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-blank-sign="' + i + '"><i class="fas fa-pen-nib"></i> Sign</button> ' : '') +
-        (d.signer && !d.mediaRelease ? '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-blank-send="' + i + '"><i class="fas fa-paper-plane"></i> Send to guest to sign</button> ' : '') +
+        (d.signer ? '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-blank-send="' + i + '"><i class="fas fa-paper-plane"></i> Send to guest to sign</button> ' : '') + /* V173_SEND_ALL_DOCS_2026_11_18 (Austin, Nov 18, 2026): the !d.mediaRelease condition is gone — the flag only keeps a document out of the check-in popup; Send now renders on all 7 blank rows that have a signer. */
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-blank-doc="' + i + '"><i class="fas fa-eye"></i> View</button></div>';
     }).join('');
     var btns = box.querySelectorAll('[data-blank-doc]');
@@ -7224,7 +7329,7 @@ function loadTicketThread(client, ticketId) {
       '<table class="rc-table rc-totals"><tbody>' +
       '<tr><td>Subtotal</td><td class="rc-num">' + fmtMoney(tot.subtotal) + '</td></tr>' +
       (tot.deposits ? '<tr><td>Deposits received</td><td class="rc-num">&minus;' + fmtMoney(tot.deposits) + '</td></tr>' : '') +
-      '<tr class="rc-grand"><td>' + (kind === 'estimate' ? 'Estimated total' : 'Balance due') + '</td><td class="rc-num">' + fmtMoney(tot.balance) + '</td></tr>' +
+      '<tr class="rc-grand"><td>' + (kind === 'estimate' ? 'Estimated total' : 'Balance due') + '</td><td class="rc-num">' + fmtMoney(kind === 'estimate' ? Math.max(60, tot.balance) : tot.balance) + '</td></tr>' + /* V173_PRICING_FLOOR_2026_11_18: the Estimated total shown never drops below $60; the charge lines above it stay the real figures. */
       '</tbody></table>' +
       (kind === 'invoice' && tot.balance <= 0 && tot.subtotal > 0 ? '<p class="rc-paid">PAID IN FULL — thank you!</p>' : '') +
       noteHtml +
@@ -7458,7 +7563,7 @@ function loadTicketThread(client, ticketId) {
         'Subtotal: ' + fmtMoney(tot.subtotal)
       ];
       if (tot.deposits) lines.push('Deposits received: -' + fmtMoney(tot.deposits));
-      if (kind === 'estimate') lines.push('Estimated total: ' + fmtMoney(tot.balance));
+      if (kind === 'estimate') lines.push('Estimated total: ' + fmtMoney(Math.max(60, tot.balance))); /* V173_PRICING_FLOOR_2026_11_18 */
       else if (tot.balance <= 0 && tot.subtotal > 0) lines.push('Paid in full \u2014 thank you!');
       else lines.push('Balance due: ' + fmtMoney(tot.balance));
       lines.push('');
@@ -16090,10 +16195,17 @@ function loadTicketThread(client, ticketId) {
     var list = $('portal-customer-list');
     if (!list || !list.parentNode) return;
     if (document.getElementById('portal-cust-add-form')) return;
+    var toggle = document.createElement('button'); /* V173_ADD_GUEST_COLLAPSED_2026_11_18 (Austin, Nov 18, 2026): the Add Guest form sat open at the top of the Guest panel and pushed the guest list down. It now lives behind one header button you push to open it (his words: "the add a guest, that's a button that you push"). Same header family as the ticket-drawer sections: tk-acc-head + chevron-down, closed by default. */
+    toggle.type = 'button';
+    toggle.id = 'portal-cust-add-toggle';
+    toggle.className = 'tk-acc-head';
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.innerHTML = '<span class="tk-acc-title"><i class="fas fa-user-plus"></i> Add guest</span><span class="tk-acc-hint"></span><i class="fas fa-chevron-down tk-acc-chev" aria-hidden="true"></i>';
     var form = document.createElement('form');
     form.id = 'portal-cust-add-form';
     form.className = 'p2-form';
     form.setAttribute('autocomplete', 'off');
+    form.hidden = true; /* V173_ADD_GUEST_COLLAPSED_2026_11_18: closed by default — the guest list is what shows first. */
     form.innerHTML =
       '<p class="portal-card-title" style="margin:0 0 0.5rem;"><i class="fas fa-user-plus"></i> Add guest</p>' +
       '<div class="portal-field"><label for="portal-cust-add-name">Name</label><input id="portal-cust-add-name" type="text" placeholder="Guest name" /></div>' +
@@ -16102,8 +16214,17 @@ function loadTicketThread(client, ticketId) {
       '<div class="portal-field"><label for="portal-cust-add-address">Address <span class="portal-muted">(optional)</span></label><input id="portal-cust-add-address" type="text" placeholder="Street, city, ZIP" /></div>' +
       '<p style="margin:0.5rem 0 0;"><button class="portal-btn portal-btn-primary portal-btn-sm" type="submit"><i class="fas fa-plus"></i> Add guest</button> ' +
       '<span class="portal-muted portal-small" id="portal-cust-add-msg"></span></p>';
+    list.parentNode.insertBefore(toggle, list);
     list.parentNode.insertBefore(form, list);
+    toggle.addEventListener('click', function () { setCustAddFormOpen(form.hidden); });
     form.addEventListener('submit', function (e) { e.preventDefault(); addCustomer(); });
+  }
+
+  function setCustAddFormOpen(open) { /* V173_ADD_GUEST_COLLAPSED_2026_11_18: hide/show only — the form is never rebuilt and never reset on toggle, so typed values survive a close/reopen in the same visit. (The submit path's form.reset() after a successful add is unchanged.) */
+    var form = document.getElementById('portal-cust-add-form');
+    var toggle = document.getElementById('portal-cust-add-toggle');
+    if (form) form.hidden = !open;
+    if (toggle) { toggle.setAttribute('aria-expanded', open ? 'true' : 'false'); toggle.classList.toggle('tk-acc-open', open); }
   }
 
   function addCustomer() {

@@ -76,6 +76,7 @@
       });
       window.scrollTo({ top: 0, behavior: 'smooth' });
       atrApplyAudience();
+      svcRefreshServicesAudience(); /* V173_SIGNED_IN_AUDIENCE_2026_11_18: a Services page landing never shows the chooser — it routes to the signed-in / remembered audience, on any visit. */
     }
 
     /* V143_AUDIENCE_2026_11_13 (owner, Nov 13, 2026): one page,
@@ -132,25 +133,23 @@
     });
 
     /* ---------------- Services chooser ---------------- */
-    /* SERVICES_CHOOSER_2026_11_13 (owner, Nov 13, 2026): Start a
-       Service and the thumb-nav Services button used to go straight
-       to guest services no matter who was signed in. Now they route
-       by account type, and ask first when the account type cannot
-       tell us which side to use.
-       - Associate first (the owner's standing order): an associate
-         is always asked, because associates book on behalf of others.
-       - Business tier (window.mmPlan tier business, business_plus
-         or business_pro) goes straight to Business Services (#b2b).
-         V146_SIGNUP_SPLIT_2026_11_13: a business ACCOUNT
-         (window.atrAccountType === 'business', from the signUp
-         metadata) counts the same way, even before any plan.
-       - Signed in as a guest (a site session, not business, not
-         associate) goes straight to Guest Services (#whatwedo).
-       - Signed out gets the chooser.
-       Every check below is a pure read of state the site already
-       holds (window.mmPlan, the site session, the greeting text,
-       the associate cache the greeting itself trusts). Nothing is
-       fetched, nothing is remembered, nothing is written. */
+    /* V173_SIGNED_IN_AUDIENCE_2026_11_18 (owner, Nov 18, 2026): the chooser asks once, then never again.
+       - Signed in: the site already knows the account, so the chooser NEVER appears.
+         Staff preview wins first (Guest / Business from the "Preview as" switcher);
+         otherwise the account type decides — business account goes straight to
+         Business Services (#b2b), guest account straight to Guest Services (#whatwedo).
+         The old Nov 13 rule that always asked associates is gone: Austin's own
+         account is business AND staff, and he was asked on every Services visit.
+         Staff who want the other side use the "Preview as" switcher in the Hub.
+       - Signed out: the visitor sees the chooser ONCE; their pick is remembered on
+         this browser (localStorage 'atrAudience', audience only, no personal data)
+         and later Services visits route straight there. A small "Switch to ..."
+         link on each Services page flips the remembered pick.
+       - Signing in always beats the remembered pick (the account decides); signing
+         out falls back to it. The chooser still exists for the truly unknown:
+         signed out with no remembered pick.
+       Every check below is a pure read of state the site already holds. Nothing
+       is fetched. The only thing written is the remembered audience pick. */
     var SVC_BUSINESS_TIERS = { business: true, business_plus: true, business_pro: true };
     var svcChooserEl = document.getElementById('svc-chooser');
     var svcChooserGuestEl = document.getElementById('svc-chooser-guest');
@@ -220,17 +219,96 @@
       svcChooserEl.style.display = 'none';
       try { unlockPageScroll(); } catch (e) {}
     }
+    function svcRememberedAudience() {
+      /* V173_SIGNED_IN_AUDIENCE_2026_11_18: the signed-out visitor's one pick, remembered on this browser. */
+      try {
+        var v = localStorage.getItem('atrAudience');
+        return (v === 'guest' || v === 'business') ? v : null;
+      } catch (e) { return null; }
+    }
+    function svcRememberAudience(aud) {
+      /* V173_SIGNED_IN_AUDIENCE_2026_11_18: audience only ('guest' / 'business') — no personal data is stored. */
+      try { localStorage.setItem('atrAudience', aud); } catch (e) {}
+    }
+    function svcEffectiveAudience() {
+      /* V173_SIGNED_IN_AUDIENCE_2026_11_18: the audience the Services pages should show, in priority order —
+         staff preview, then the signed-in account, then the remembered pick.
+         Returns 'business' | 'guest' | null (null = truly unknown, show the chooser). */
+      try {
+        var prev = null;
+        try { if (typeof window.atrGhubPreviewValue === 'function') prev = window.atrGhubPreviewValue(); } catch (e2) {}
+        if (prev === 'business') return 'business';
+        if (prev === 'guest') return 'guest';
+        if (svcIsBusinessAccount()) return 'business';
+        if (svcIsSignedIn()) return 'guest';
+        return svcRememberedAudience();
+      } catch (e) { return null; }
+    }
+    function svcSyncCurrentServicesPage() {
+      /* V173_SIGNED_IN_AUDIENCE_2026_11_18: a Services page landing (nav tap, bookmark, reload, session restore)
+         never shows the chooser — it routes to the effective audience. Also keeps the
+         session face flag in step, so shared pages paint the right face. A no-op on
+         any other page, and a no-op when the audience is truly unknown. */
+      var cur = document.querySelector('.page.active');
+      if (!cur || (cur.id !== 'whatwedo' && cur.id !== 'b2b')) return;
+      var aud = svcEffectiveAudience();
+      if (!aud) return;
+      var want = (aud === 'business') ? 'b2b' : 'whatwedo';
+      try {
+        if (aud === 'business') sessionStorage.setItem('atr-business', '1');
+        else sessionStorage.removeItem('atr-business');
+      } catch (e) {}
+      atrApplyAudience();
+      if (cur.id !== want) {
+        var href = '#' + want;
+        if (window.location.hash !== href) window.location.hash = href;
+        switchPage(href);
+      }
+    }
+    function svcPaintSwitch() {
+      /* V173_SIGNED_IN_AUDIENCE_2026_11_18: the "Switch to ..." link is the signed-out visitor's escape hatch
+         (shared device, wrong pick). Signed-in accounts never see it — the account
+         decides, and staff switch faces with the "Preview as" switcher instead. */
+      var g = document.getElementById('svc-switch-guest');
+      var b = document.getElementById('svc-switch-business');
+      var show = false;
+      try { show = !svcIsSignedIn(); } catch (e) {}
+      try { if (typeof window.atrGhubPreviewValue === 'function' && window.atrGhubPreviewValue()) show = false; } catch (e2) {}
+      if (g) g.hidden = !show;
+      if (b) b.hidden = !show;
+    }
+    function svcRefreshServicesAudience() {
+      /* V173_SIGNED_IN_AUDIENCE_2026_11_18: one hook for every audience change — page switch, sign-in (incl.
+         reload / session restore), sign-out. Repaints the switch link and re-routes
+         a Services page sitting on the wrong audience. */
+      svcPaintSwitch();
+      svcSyncCurrentServicesPage();
+    }
+    window.atrRefreshServicesAudience = svcRefreshServicesAudience; /* V173_SIGNED_IN_AUDIENCE_2026_11_18 */
     function svcRouteServices() {
-      if (svcIsAssociateAccount()) { svcShowChooser(); return; }
-      if (svcIsBusinessAccount()) { svcGoServices('b2b'); return; }
-      if (svcIsSignedIn()) { svcGoServices('whatwedo'); return; }
+      var aud = svcEffectiveAudience(); /* V173_SIGNED_IN_AUDIENCE_2026_11_18 */
+      if (aud === 'business') { svcGoServices('b2b'); return; }
+      if (aud === 'guest') { svcGoServices('whatwedo'); return; }
       svcShowChooser();
     }
     window.atrServicesRoute = svcRouteServices;
-    if (svcChooserGuestEl) svcChooserGuestEl.addEventListener('click', function () { svcHideChooser(); svcGoServices('whatwedo'); });
-    if (svcChooserBusinessEl) svcChooserBusinessEl.addEventListener('click', function () { svcHideChooser(); svcGoServices('b2b'); });
+    if (svcChooserGuestEl) svcChooserGuestEl.addEventListener('click', function () { svcRememberAudience('guest'); svcHideChooser(); svcGoServices('whatwedo'); }); /* V173_SIGNED_IN_AUDIENCE_2026_11_18: the pick is remembered, so the chooser asks once. */
+    if (svcChooserBusinessEl) svcChooserBusinessEl.addEventListener('click', function () { svcRememberAudience('business'); svcHideChooser(); svcGoServices('b2b'); }); /* V173_SIGNED_IN_AUDIENCE_2026_11_18 */
     if (svcChooserCloseEl) svcChooserCloseEl.addEventListener('click', svcHideChooser);
     if (svcChooserEl) svcChooserEl.addEventListener('click', function (e) { if (e.target === svcChooserEl) svcHideChooser(); });
+    document.addEventListener('click', function (e) {
+      /* V173_SIGNED_IN_AUDIENCE_2026_11_18: the "Switch to ..." link on a Services page flips the remembered
+         pick and routes to the other side. Signed-in taps are ignored — the link is
+         hidden while signed in, so a tap that still lands is a stale-UI artifact. */
+      var sw = e.target && e.target.closest ? e.target.closest('[data-svc-switch]') : null;
+      if (!sw) return;
+      try { if (svcIsSignedIn()) return; } catch (e2) {}
+      e.preventDefault();
+      var aud = sw.getAttribute('data-svc-switch') === 'business' ? 'business' : 'guest';
+      svcRememberAudience(aud);
+      svcHideChooser();
+      svcGoServices(aud === 'business' ? 'b2b' : 'whatwedo');
+    });
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && svcChooserEl && svcChooserEl.style.display === 'flex') svcHideChooser();
     });
@@ -314,7 +392,7 @@
     }
 
     /* ---------------- Repair wizard ---------------- */
-    var repairState = { device: '', brand: '', model: '', issue: '', issues: [], atrOne: '', describe: '', modelState: 'pending', priceRange: '$50 \u2013 $150', priceExact: null,
+    var repairState = { device: '', brand: '', model: '', issue: '', issues: [], atrOne: '', describe: '', modelState: 'pending', priceRange: '$60 \u2013 $150', priceExact: null, /* V173_PRICING_FLOOR_2026_11_18 */
       /* SUPPORT_BOOKING_2026_11_06 (design pivot): One-on-One mode of this
          same wizard — serviceKind is one of the eight service bubbles,
          ooHours is 1 or 2 (pure $24.99/hr). */
@@ -390,7 +468,7 @@
          summed priceRange rfToggleIssue maintains) instead of
          "Starting at" a single repair's figure. One repair keeps the
          exact wording it always had. */
-      if (repairState.mode !== 'oneonone') rfSet('rf-sum-estimate', repairState.issues.length ? (repairState.priceExact !== null && repairState.priceExact !== undefined ? (repairState.issues.length > 1 ? repairState.priceRange : 'Starting at ' + repairState.priceRange) : (repairState.issues.length > 1 && repairState.priceRange && (repairState.priceRange.charAt(0) === '$' || repairState.priceRange.indexOf('From ') === 0) ? repairState.priceRange : 'Confirmed up front')) : '\u2014');
+      if (repairState.mode !== 'oneonone') rfSet('rf-sum-estimate', repairState.issues.length ? (repairState.priceExact !== null && repairState.priceExact !== undefined ? (repairState.issues.length > 1 ? repairState.priceRange : repairState.priceRange) : (repairState.issues.length > 1 && repairState.priceRange && (repairState.priceRange.charAt(0) === '$') ? repairState.priceRange : 'Price on request')) : '\u2014'); /* V173_PRICING_FLOOR_2026_11_18 */
       rfSet('rf-sum-atrone', repairState.atrOne ? ('Covered by ATR One: ' + repairState.atrOne) : 'Not answered yet');
       var loc = [rfVal('sr-address-street'), rfVal('sr-address-line2'), rfVal('sr-address-city'), rfVal('sr-address-state'), rfVal('sr-address-zip')].filter(Boolean).join(', ');
       rfSet('rf-sum-location', loc || '\u2014');
@@ -723,7 +801,7 @@
         seBtn.setAttribute('data-bk-something-else', '1');
         seBtn.style.alignItems = 'flex-start';
         seBtn.style.textAlign = 'left';
-        seBtn.innerHTML = bkIconHtml('Something else') + '<strong>Something else</strong><span style="font-size:0.78rem; color: var(--brand-deep); font-weight:800;">Price confirmed up front</span>';
+        seBtn.innerHTML = bkIconHtml('Something else') + '<strong>Something else</strong><span style="font-size:0.78rem; color: var(--brand-deep); font-weight:800;">Price on request</span>'; /* V173_PRICING_FLOOR_2026_11_18 */
         seBtn.addEventListener('click', function () {
           rfToggleIssue('Something else', null, seBtn, null);
         });
@@ -748,9 +826,9 @@
        same type -> brand -> model -> repair picker as the Prices page,
        fed by the shared price book the lookup exposes as
        window.ATR_PRICE_DATA. Priced repairs show their book price;
-       unpriced ones carry the confirmed-up-front wording, never an
+       unpriced ones carry the price-on-request wording, never an
        invented number. Business / Other keeps the brand + issue path
-       above (custom-quoted work). */
+       above (custom-quoted work). */ /* V173_PRICING_FLOOR_2026_11_18 */
     var BK_TYPE_MAP = { 'Smart Watch': 'Smartwatch' };
     var BK_FRIENDLY = { 'Screen': 'Screen replacement', 'Battery': 'Battery replacement', 'Charging port': 'Charging port repair', 'Charging': 'Charging port repair' };
     var BK_REPAIR_ORDER = ['Screen', 'Battery', 'Charging port', 'Back glass', 'Camera', 'Speaker / Mic', 'HDMI port', 'Disc drive', 'Fan / Overheat', 'Controller repair', 'Storage upgrade', 'RAM upgrade', 'Keyboard / Trackpad', 'Keyboard', 'Virus / Software cleanup', 'Charging', 'Band / Button', 'Board / Solder'];
@@ -981,9 +1059,8 @@
       }
       repairs.forEach(function (r) {
         var price = priceOf(r);
-        /* V127_2026_11_12 (owner, Nov 12, 2026): iPad service prices read as estimates — the tile shows "Starting at $X" for Apple tablets (iPads). Every other device keeps the bare price, as before. */
-        var isIpad = (typeKey === 'Tablet' && brandKey === 'Apple');
-        var b = bkTile(BK_FRIENDLY[r] || r, (typeof price === 'number') ? (isIpad ? 'Starting at ' + bkFmt(price) : bkFmt(price)) : 'Price confirmed up front', bkIconHtml(r));
+        /* V173_PRICING_FLOOR_2026_11_18 (Austin, Nov 18, 2026): repair prices show as estimates with no "starting at" — the bare estimated price, never below $60 (base labor is $50). No price in the book means "Price on request", never "confirmed up front". The Nov 12 iPad "Starting at" rule is gone with it. */
+        var b = bkTile(BK_FRIENDLY[r] || r, (typeof price === 'number') ? bkFmt(Math.max(60, price)) : 'Price on request', bkIconHtml(r));
         /* REPAIR_FLOW_UPDATE_2026_11_05: repairs are multi-select — tapping toggles, nothing
            auto-advances; Continue is gated below the ATR One question. */
         b.addEventListener('click', function () {
@@ -995,10 +1072,10 @@
          2026): "Something else" — the catch-all repair tile, so the
          standard grid reads eight buttons like the lesson grid. It
          is an unpriced pick exactly like Board / Solder ("Price
-         confirmed up front"), toggles through rfToggleIssue like any
+         on request"), toggles through rfToggleIssue like any
          other pick, and always renders, for every device and model,
-         right before the One-on-One tile (which stays last). */
-      var seTile = bkTile('Something else', 'Price confirmed up front', bkIconHtml('Something else'));
+         right before the One-on-One tile (which stays last). */ /* V173_PRICING_FLOOR_2026_11_18 */
+      var seTile = bkTile('Something else', 'Price on request', bkIconHtml('Something else')); /* V173_PRICING_FLOOR_2026_11_18 */
       seTile.setAttribute('data-bk-something-else', '1');
       seTile.addEventListener('click', function () {
         rfToggleIssue('Something else', null, seTile, null);
@@ -1069,6 +1146,10 @@
         var r = rfParseRange(it.priceRange);
         if (r) { lo += r.lo; hi += r.hi; any = true; } else { unpriced++; }
       });
+      /* V173_PRICING_FLOOR_2026_11_18 (Austin, Nov 18, 2026): no estimated price below $60 — base labor is $50.
+         The floor lands here, the one place every site estimate total is summed, so the
+         summary, the estimate step, and the intake handoff all read the same floored total. */
+      if (any) { lo = Math.max(60, lo); hi = Math.max(60, hi); }
       return { any: any, unpriced: unpriced, lo: lo, hi: hi };
     }
     function rfCombinedText(t) {
@@ -1095,7 +1176,7 @@
         repairState.priceRange = rfCombinedText(t);
       } else if (t.any) {
         repairState.priceExact = null;
-        repairState.priceRange = 'From ' + rfCombinedText(t);
+        repairState.priceRange = rfCombinedText(t); /* V173_PRICING_FLOOR_2026_11_18 */
       } else {
         repairState.priceExact = null;
         if (first && first.priceRange) repairState.priceRange = first.priceRange;
@@ -1138,9 +1219,9 @@
           if (typeof it.price === 'number' || rfParseRange(it.priceRange)) pricedNames.push(it.name); else unpricedNames.push(it.name);
         });
         var partial = rfCombinedText(t);
-        repairState.priceRange = 'From ' + partial;
+        repairState.priceRange = partial; /* V173_PRICING_FLOOR_2026_11_18 */
         repairState.priceExact = null;
-        if (amt) amt.textContent = 'From ' + partial;
+        if (amt) amt.textContent = partial; /* V173_PRICING_FLOOR_2026_11_18 */
         if (note) note.innerHTML = escapeHtml(pricedNames.join(', ')) + ' for ' + escapeHtml(modelLabel) + ' &mdash; estimated from ' + escapeHtml(partial) + ', parts and labor included. ' + escapeHtml(unpricedNames.join(', ')) + ' ' + (unpricedNames.length > 1 ? 'do' : 'does') + ' not have a set price yet &mdash; we confirm the exact price after diagnostics, before any work starts. ' + feeNote;
       } else {
         repairState.priceRange = 'Confirmed after diagnostics';
@@ -5336,7 +5417,7 @@ if ("serviceWorker" in navigator) {
               var title = brand + ' ' + model + ' \u2014 ' + rname;
               index.push({
                 kind: 'repair', title: title,
-                sub: (typeof price === 'number') ? 'Starting at ' + fmtPrice(price) : 'Price confirmed up front',
+                sub: (typeof price === 'number') ? fmtPrice(Math.max(60, price)) : 'Price on request', /* V173_PRICING_FLOOR_2026_11_18 */
                 type: type, brand: brand, model: model, repair: rname,
                 price: (typeof price === 'number') ? price : null,
                 hay: norm(title + ' ' + type)
@@ -6439,9 +6520,7 @@ if ("serviceWorker" in navigator) {
       grid.innerHTML = '';
       if (isPicker(pane)) {
         var typeKey = shared.typeKey(st.device);
-        /* V127_IPAD_STARTING_AT_2026_11_12: iPad prices read as estimates —
-           same rule as the booking-flow tiles (renderBkRepairs). */
-        var isIpad = (typeKey === 'Tablet' && st.brandKey === 'Apple');
+        /* V173_PRICING_FLOOR_2026_11_18 (Austin, Nov 18, 2026): repair prices show as estimates with no "starting at" — the bare estimated price, never below $60. No price in the book means "Price on request". */
         var repairs, priceOf;
         if (st.brandKey !== '__other__' && st.modelKey !== '__notlisted__') {
           repairs = Object.keys(DATA[typeKey][st.brandKey][st.modelKey]);
@@ -6455,7 +6534,7 @@ if ("serviceWorker" in navigator) {
             var price = priceOf(r);
             var label = shared.friendly[r] || r;
             var b = tileShell(shared.iconHtml(r) + '<strong>' + esc(label) + '</strong>' +
-              subSpan(typeof price === 'number' ? (isIpad ? 'Starting at ' + shared.fmt(price) : shared.fmt(price)) : 'Price confirmed up front'));
+              subSpan(typeof price === 'number' ? shared.fmt(Math.max(60, price)) : 'Price on request')) /* V173_PRICING_FLOOR_2026_11_18 */;
             b.setAttribute('data-raw', r);
             b.addEventListener('click', function () {
               togglePick(pane, { name: label, price: typeof price === 'number' ? price : null, priceRange: null }, b);
@@ -6476,7 +6555,7 @@ if ("serviceWorker" in navigator) {
       }
       /* The catch-all renders for every device, and the One-on-One
          tile closes the grid — same as the booking form. */
-      var se = tileShell(shared.iconHtml('Something else') + '<strong>Something else</strong>' + subSpan('Price confirmed up front'));
+      var se = tileShell(shared.iconHtml('Something else') + '<strong>Something else</strong>' + subSpan('Price on request')); /* V173_PRICING_FLOOR_2026_11_18 */
       se.setAttribute('data-svc-something-else', '1');
       se.addEventListener('click', function () {
         togglePick(pane, { name: 'Something else', price: null, priceRange: null }, se);
@@ -6543,6 +6622,9 @@ if ("serviceWorker" in navigator) {
         var r = parseRange(it.priceRange);
         if (r) { lo += r.lo; hi += r.hi; any = true; } else { unpriced++; }
       });
+      /* V173_PRICING_FLOOR_2026_11_18 (Austin, Nov 18, 2026): no estimated price below $60 — base labor is $50.
+         Same floor as the booking-flow totals, for the service-picker estimate. */
+      if (any) { lo = Math.max(60, lo); hi = Math.max(60, hi); }
       return { any: any, unpriced: unpriced, lo: lo, hi: hi };
     }
 
@@ -6566,7 +6648,7 @@ if ("serviceWorker" in navigator) {
           if (typeof it.price === 'number' || parseRange(it.priceRange)) pricedNames.push(it.name); else unpricedNames.push(it.name);
         });
         var partial = combinedText(t);
-        amt.textContent = 'From ' + partial;
+        amt.textContent = partial; /* V173_PRICING_FLOOR_2026_11_18 */
         note.innerHTML = esc(pricedNames.join(', ')) + ' for ' + esc(modelLabel) + ' &mdash; estimated from ' + esc(partial) +
           ', parts and labor included. ' + esc(unpricedNames.join(', ')) + ' ' + (unpricedNames.length > 1 ? 'do' : 'does') +
           ' not have a set price yet &mdash; we confirm the exact price after diagnostics, before any work starts. ' + feeNoteText();
@@ -7526,7 +7608,8 @@ document.addEventListener('click', function (e) {
           document_type: type,
           document_path: row.path || null,
           signer_name: name,
-          signer_email: user.email
+          signer_email: user.email,
+          signature_image: (signPad && signPad.getDataUrl()) || null /* V173_SIGNATURE_ON_LINE_2026_11_18: the drawn signature is stored with the row now (column added by the staged optional-signature-image.sql — it must run before the v173 publish, or this insert fails). A typed-only signature stores null and renders the name in script on the line. */
         }]);
       }).then(function (res) {
         if (res && res.error) throw res.error;

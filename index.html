@@ -813,6 +813,7 @@
           <div class="section-header center">
             <p class="eyebrow">Services We Offer</p>
             <h1 class="section-title">Guest Services</h1>
+            <p class="svc-switch" id="svc-switch-guest" hidden style="margin-top:0.5rem;"><button type="button" data-svc-switch="business" style="background:none;border:0;padding:0;color:#0057B8;text-decoration:underline;cursor:pointer;font:inherit;">Switch to business services</button></p><!-- V173_SIGNED_IN_AUDIENCE_2026_11_18 -->
           </div>
           <!-- MIRROR_RULE_2026_11_12 (owner, Nov 12, 2026): Guest Services mirrors Business Services — same structure, same order: intro, four trust blocks, ATR One pitch, service cards, Why we should fix it, pricing at the bottom. Guest wording and guest prices only. All body copy reuses the page's own words; no new claims, prices, or services. -->
           <div class="card-grid">
@@ -884,7 +885,7 @@
             <p class="lead-line"><strong>Dispatch fee is $14.99.</strong> This covers our travel to your home, and it is non-refundable.</p>
             <p><strong>Diagnostics $34.99</strong></p>
             <p><strong>One-on-one is $24.99 an hour, plus a $14.99 visit fee.</strong></p>
-            <p>Common repairs starting at $37.99 for phones, $52.99 for tablets, $50.99 for computers, $58.99 for game consoles, $66.99 for smartwatches.</p>
+            <!-- V173_PRICING_FLOOR_2026_11_18 (Austin, Nov 18, 2026): "Common repairs starting at" line removed — no repair starting prices anywhere. -->
             <p>Custom repairs are $49.99 an hour, plus parts.</p>
             <p class="price-note">Within 25 miles, the dispatch fee is the price listed above. Over 25 miles, add $1 per mile.</p>
             <p class="price-note">* See note 3 in the footer below.</p>
@@ -1085,7 +1086,7 @@
               </div>
               <div class="estimate-box oo-repair-only">
                 <p class="label" id="estimate-label">Estimated price range</p>
-                <p class="price" id="estimate-price">$50 &ndash; $150</p>
+                <p class="price" id="estimate-price">$60 &ndash; $150</p><!-- V173_PRICING_FLOOR_2026_11_18 -->
                 <p class="note" id="estimate-note">Final pricing is confirmed once we've inspected the device. Estimates are always free. A non-refundable visit fee secures your mobile appointment &mdash; $14.99 for guests, $34.99 for business &mdash; plus diagnostics of $34.99 for guests, $64.99 for business, when one is needed. It covers the trip to you, and it&rsquo;s due when you book. ATR One Plus (paid) members pay no visit fee or diagnostics for devices covered under their plan.</p>
               </div>
               <!-- REPAIR_WIZARD_ESTIMATE_FIX_2026_11_06: standing estimate
@@ -1456,7 +1457,7 @@
               <div class="dt-tiles" id="ror-repairs" role="group" aria-labelledby="ror-label-repair"></div>
             </div>
             <div class="price-result" id="ror-result" hidden>
-              <div class="price-result-label" id="ror-result-label">Your estimated repair price &mdash; starting at</div>
+              <div class="price-result-label" id="ror-result-label">Your estimated repair price</div><!-- V173_PRICING_FLOOR_2026_11_18 -->
               <div class="price-result-amount" id="ror-amount">$0</div>
               <p class="price-result-note" id="ror-note"></p>
               <a class="btn btn-primary" href="#repair" data-page="repair" id="ror-book-result">Book This Repair <i class="fas fa-arrow-right"></i></a>
@@ -1662,6 +1663,8 @@
           <div class="section-header center">
             <p class="eyebrow">About us</p>
             <h2 class="section-title">A repair shop that comes to you</h2>
+            <!-- V173_ABOUT_COPY_2026_11_18 (Austin, Nov 18, 2026): his own words as a subheader under ABOUT US, right under "A repair shop that comes to you" — NOT under Meet Austin. Meet Austin and the photo sit below it in the flow, pushed down, not moved. -->
+            <p class="section-copy">A repair shop that comes to you that honestly cares about your electronics and your relationship with your technology. We&rsquo;re not here for financial gain &mdash; we&rsquo;re here to give a real, honest, caring service. Not like the big guys who price gouge and overprice parts for everything. We foster a fun, loving, inviting, happy environment for our guests and associates, and we care about our associates, the environment, and our guests. We believe in peace, love, happiness and positive energy for all.</p><!-- V173_ABOUT_COPY_2026_11_18 -->
           </div>
         </div>
       </div>
@@ -2391,6 +2394,7 @@
           <div class="section-header center">
             <p class="eyebrow">ATRG for Business</p>
             <h2 class="section-title">Business Services</h2>
+            <p class="svc-switch" id="svc-switch-business" hidden style="margin-top:0.5rem;"><button type="button" data-svc-switch="guest" style="background:none;border:0;padding:0;color:#0057B8;text-decoration:underline;cursor:pointer;font:inherit;">Switch to guest services</button></p><!-- V173_SIGNED_IN_AUDIENCE_2026_11_18 -->
                       </div>
           <div class="card-grid">
             <div class="perk-card">
@@ -2461,7 +2465,7 @@
             <p class="lead-line"><strong>Dispatch fee is $34.99.</strong></p>
             <p><strong>Diagnostics $64.99</strong></p>
             <p><strong>One-on-one is $49.99 an hour, plus a $34.99 visit fee.</strong></p>
-            <p>Common repairs starting at $69.99.</p>
+            <!-- V173_PRICING_FLOOR_2026_11_18 (Austin, Nov 18, 2026): "Common repairs starting at" line removed — no repair starting prices anywhere. -->
             <p>Custom repairs are $99.99 an hour, plus parts.</p>
             <p class="price-note">Within 25 miles, the dispatch fee is the price listed above. Over 25 miles, add $1 per mile.</p>
             <p class="price-note">ATRG Business Plus and Business Pro members pay no visit fee on covered devices.</p>
@@ -3152,10 +3156,10 @@
           <h2 class="qa-subhead">Choose a product to get service on.</h2>
           <p class="qa-subcopy">Find out about service options and repairs, and see what you expect to pay.</p>
           <div class="card-grid qa-products">
-            <a class="service-card" href="#phones" data-page="phones" data-guest="1"><img class="service-card-img" src="images/work/phone-repair.jpg" alt="Phone opened for screen repair on a bench" loading="lazy" /><div class="service-icon"><i class="fas fa-mobile-screen"></i></div><h3>Phones</h3><p>Cracked screens, battery swaps, charging ports, cameras, and water damage recovery.</p><p><strong>Common repairs starting at $37.99.</strong></p></a>
-            <a class="service-card" href="#computers" data-page="computers" data-guest="1"><img class="service-card-img" src="images/work/hp-laptop-board.jpg" alt="Laptop computer on a repair bench" loading="lazy" /><div class="service-icon"><i class="fas fa-laptop"></i></div><h3>Computers</h3><p>SSD upgrades, RAM installs, virus cleanup, display repair, and data rescue.</p><p><strong>Common repairs starting at $50.99.</strong></p></a>
-            <a class="service-card" href="#tablets" data-page="tablets" data-guest="1"><img class="service-card-img" src="images/work/tablet-teardown-real.webp" alt="Tablet opened for repair on a work mat" loading="lazy" /><div class="service-icon"><i class="fas fa-tablet-screen-button"></i></div><h3>Tablets</h3><p>Display replacement, charging port repair, touch issues, and battery service.</p><p><strong>Common repairs starting at $52.99.</strong></p></a>
-            <a class="service-card" href="#smartwatches" data-page="smartwatches" data-guest="1"><img class="service-card-img" src="images/work/smartwatch-real.webp" alt="Cracked smartwatch on a wrist" loading="lazy" /><div class="service-icon"><i class="fas fa-clock"></i></div><h3>Watches</h3><p>Screen and battery service for smartwatches of all kinds.</p><p><strong>Common repairs starting at $66.99.</strong></p></a>
+            <a class="service-card" href="#phones" data-page="phones" data-guest="1"><img class="service-card-img" src="images/work/phone-repair.jpg" alt="Phone opened for screen repair on a bench" loading="lazy" /><div class="service-icon"><i class="fas fa-mobile-screen"></i></div><h3>Phones</h3><p>Cracked screens, battery swaps, charging ports, cameras, and water damage recovery.</p></a><!-- V173_PRICING_FLOOR_2026_11_18 -->
+            <a class="service-card" href="#computers" data-page="computers" data-guest="1"><img class="service-card-img" src="images/work/hp-laptop-board.jpg" alt="Laptop computer on a repair bench" loading="lazy" /><div class="service-icon"><i class="fas fa-laptop"></i></div><h3>Computers</h3><p>SSD upgrades, RAM installs, virus cleanup, display repair, and data rescue.</p></a><!-- V173_PRICING_FLOOR_2026_11_18 -->
+            <a class="service-card" href="#tablets" data-page="tablets" data-guest="1"><img class="service-card-img" src="images/work/tablet-teardown-real.webp" alt="Tablet opened for repair on a work mat" loading="lazy" /><div class="service-icon"><i class="fas fa-tablet-screen-button"></i></div><h3>Tablets</h3><p>Display replacement, charging port repair, touch issues, and battery service.</p></a><!-- V173_PRICING_FLOOR_2026_11_18 -->
+            <a class="service-card" href="#smartwatches" data-page="smartwatches" data-guest="1"><img class="service-card-img" src="images/work/smartwatch-real.webp" alt="Cracked smartwatch on a wrist" loading="lazy" /><div class="service-icon"><i class="fas fa-clock"></i></div><h3>Watches</h3><p>Screen and battery service for smartwatches of all kinds.</p></a><!-- V173_PRICING_FLOOR_2026_11_18 -->
           </div>
           <h2 class="qa-subhead">Questions? Answers.</h2>
           <div class="qa-list">
@@ -5410,7 +5414,7 @@
     var n = $('authx-profile-name'), e = $('authx-profile-email'),
         p = $('authx-profile-phone'), a = $('authx-profile-address');
     if (n) n.textContent = cust.name || '';
-    if (e) e.textContent = cust.email || '';
+    if (e) e.value = cust.email || ''; /* V173_ACCOUNT_EMAIL_2026_11_18: email is an editable field now, not a display line. */
     if (p) p.value = cust.phone || '';
     if (a) a.value = cust.address || '';
     /* The Phase 3 birthday block keys off customers.id = auth uid, which
@@ -6356,6 +6360,9 @@
     var v = Number(n);
     return isNaN(v) ? '—' : '$' + v.toFixed(2);
   }
+  /* V173_PRICING_FLOOR_2026_11_18 (Austin, Nov 18, 2026): no estimated price below $60 — base labor is $50.
+     Floors ESTIMATE amounts only; visit fees use estMoney directly and are never floored. */
+  function estFloor(n) { if (n === null || n === undefined || n === '') return n; var v = Number(n); return isNaN(v) ? n : Math.max(60, v); } /* V173_PRICING_FLOOR_2026_11_18: a missing amount passes through untouched — Number(null) is 0, and flooring that to 60 would invent a $60 price for an estimate that has no amount yet. */
   function estDate(e) {
     try { return new Date(e.created_at).toLocaleDateString(); } catch (err) { return ''; }
   }
@@ -6378,7 +6385,7 @@
           return '<div class="acct-ticket-card" style="cursor:default">' +
             '<span class="acct-ticket-top"><strong>' + escX(estDeviceLabel(e)) + '</strong><span class="acct-status ' + cls + '">' + escX(e.status || '') + '</span></span>' +
             '<span class="acct-ticket-issue">' + escX(e.issue || '') + '</span>' +
-            '<span class="acct-ticket-meta">' + escX(estMoney(e.estimate_amount)) + (awaiting ? ' · waiting for your answer' : '') + '</span>' +
+            '<span class="acct-ticket-meta">' + escX(estMoney(estFloor(e.estimate_amount))) /* V173_PRICING_FLOOR_2026_11_18 */ + (awaiting ? ' · waiting for your answer' : '') + '</span>' +
             (awaiting && e.public_token ? '<span class="acct-ticket-cta"><a class="btn btn-primary btn-sm" href="#estimate/' + escX(e.public_token) + '">View estimate</a></span>' : '') +
           '</div>';
         }).join('');
@@ -6447,7 +6454,7 @@
       '<p class="acct-muted" style="margin-top:0">' + escX(e.audience === 'business' ? 'For your business' : 'For you') + ' · ' + escX(estDate(e)) + '</p>' +
       '<h3 style="margin-top:0">' + escX(estDeviceLabel(e)) + '</h3>' +
       '<p>' + escX(e.issue || '') + '</p>' +
-      '<p><strong>Estimate: ' + escX(estMoney(e.estimate_amount)) + '</strong></p>' +
+      '<p><strong>Estimate: ' + escX(estMoney(estFloor(e.estimate_amount))) /* V173_PRICING_FLOOR_2026_11_18 */ + '</strong></p>' +
       '<p class="acct-muted">When you confirm, the visit fee (' + escX(estMoney(fee)) + ') is due as we schedule your visit, and we will confirm your date and time with you. Nothing is booked until you confirm.</p>' +
       '</div>';
     if (e.status === 'Accepted') {
@@ -6938,7 +6945,9 @@
     html += '<label class="acct-field"><span>Your name</span><input type="text" id="acct-edit-name" autocomplete="name"></label>';
     html += '<label class="acct-field"><span>Service address</span><input type="text" id="acct-edit-address" autocomplete="street-address"></label>';
     html += '<label class="acct-field"><span>Phone number</span><input type="tel" id="acct-edit-phone" autocomplete="tel"></label>';
-    html += '<p class="acct-muted">Only your name, service address and phone number change here. Charges, payment and ticket status stay exactly as they are.</p>';
+    html += '<label class="acct-field"><span>Email address</span><input type="email" id="acct-edit-email" autocomplete="email"></label>'; /* V173_ACCOUNT_EMAIL_2026_11_18 */
+    html += '<p class="acct-muted">We\u2019ll send a confirmation email to the new address \u2014 tap the link in it and the change completes; until then your old email still signs you in.</p>'; /* V173_ACCOUNT_EMAIL_2026_11_18 */
+    html += '<p class="acct-muted">Only your name, service address, phone number and email change here. Charges, payment and ticket status stay exactly as they are.</p>'; /* V173_ACCOUNT_EMAIL_2026_11_18 */
     html += '<button type="button" class="btn btn-primary btn-sm" id="acct-edit-save">Save my details</button> ';
     html += '<button type="button" class="btn btn-outline btn-sm" id="acct-edit-cancel">Cancel</button>';
     html += '</div>';
@@ -6956,10 +6965,11 @@
     var editBtn = $('acct-edit-details-btn');
     var form = $('acct-edit-details-form');
     if (editBtn && form) editBtn.addEventListener('click', function () {
-      var n = $('acct-edit-name'), a = $('acct-edit-address'), p = $('acct-edit-phone');
+      var n = $('acct-edit-name'), a = $('acct-edit-address'), p = $('acct-edit-phone'), em = $('acct-edit-email'); /* V173_ACCOUNT_EMAIL_2026_11_18 */
       if (n) n.value = custName;
       if (a) a.value = addr || ((currentCust && currentCust.address) || '');
       if (p) p.value = custPhone;
+      if (em) em.value = (currentCust && currentCust.email) || ''; /* V173_ACCOUNT_EMAIL_2026_11_18 */
       form.hidden = false;
       var m = $('acct-edit-msg'); if (m) m.hidden = true;
       try { form.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
@@ -6969,19 +6979,26 @@
     if (cancelBtn && form) cancelBtn.addEventListener('click', function () { form.hidden = true; });
     var saveBtn = $('acct-edit-save');
     if (saveBtn) saveBtn.addEventListener('click', function () {
-      var n = $('acct-edit-name'), a = $('acct-edit-address'), p = $('acct-edit-phone'), m = $('acct-edit-msg');
+      var n = $('acct-edit-name'), a = $('acct-edit-address'), p = $('acct-edit-phone'), em = $('acct-edit-email'), m = $('acct-edit-msg'); /* V173_ACCOUNT_EMAIL_2026_11_18 */
       var name = n ? String(n.value || '').trim() : '';
       var address = a ? String(a.value || '').trim() : '';
       var phone = p ? String(p.value || '').trim() : '';
+      var newEmail = em ? String(em.value || '').trim() : '';
       function say(text) { if (m) { m.textContent = text; m.hidden = false; } }
       if (!name) { say('Please enter your name.'); return; }
       if (!address) { say('Please enter the service address \u2014 that is where we come to do the repair.'); return; }
+      if (!newEmail) { say('Please enter your email address.'); return; } /* V173_ACCOUNT_EMAIL_2026_11_18 */
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) { say('That email address doesn\u2019t look right.'); return; } /* V173_ACCOUNT_EMAIL_2026_11_18 */
       if (!sb) { say('Couldn\u2019t save just now \u2014 please try again in a moment.'); return; }
       saveBtn.disabled = true;
       say('Saving\u2026');
+      /* V173_ACCOUNT_EMAIL_2026_11_18: the email is the sign-in identity — a change goes through Supabase Auth first (confirmation email to the NEW address; the old email keeps signing them in until they tap the link). The guest record keeps the old email until the sign-in email actually flips; resolveGuestCust syncs it on the next load, so the two never drift apart. Unchanged email means no Auth call at all. */
+      var oldEmail = (currentCust && currentCust.email) || '';
+      var emailChanged = !!newEmail && newEmail.toLowerCase() !== String(oldEmail).toLowerCase();
+      function runDetailSave() { /* V173_ACCOUNT_EMAIL_2026_11_18 */
       var custId = currentCust && currentCust.id;
       var jobs = [sb.from('tickets').update({ service_address: address }).eq('id', t.id)];
-      if (custId) jobs.push(sb.from('customers').update({ name: name, phone: phone || null }).eq('id', custId));
+      if (custId) jobs.push(sb.from('customers').update({ name: name, phone: phone || null }).eq('id', custId)); /* V173_ACCOUNT_EMAIL_2026_11_18: email is NOT written here — it stays the old (still signing-in) address until the guest confirms the new one. */
       Promise.all(jobs).then(function (ress) {
         var bad = (ress || []).filter(function (r) { return r && r.error; });
         if (bad.length) throw new Error('save failed');
@@ -6997,16 +7014,26 @@
         /* Staff are notified the same way a time-change request notifies
            them — a message on this ticket's thread, sender 'customer',
            so it lands in the Service Messages inbox staff already watch. */
-        var note = 'I updated my details on this service request \u2014 name: ' + name + '; service address: ' + address + '; phone: ' + (phone || 'not given') + '.';
+        var note = 'I updated my details on this service request \u2014 name: ' + name + '; service address: ' + address + '; phone: ' + (phone || 'not given') + '; email: ' + (emailChanged ? 'asked to change to ' + newEmail + ' (confirmation email sent \u2014 not complete until they tap the link)' : (oldEmail || 'not given')) + '.'; /* V173_ACCOUNT_EMAIL_2026_11_18 */
         return sb.from('messages').insert({ ticket_id: t.id, sender: 'customer', message: note }).then(function (mres) {
           if (mres && mres.error) { say('Saved \u2014 but the note to our team did not send. Please send us a message below so we see the change.'); return; }
-          say('Saved \u2014 our team has been notified of the change.');
+          say(emailChanged ? 'Saved \u2014 our team has been notified. We sent a confirmation email to ' + newEmail + ' \u2014 tap the link in it and the change completes; until then your old email still signs you in.' : 'Saved \u2014 our team has been notified of the change.'); /* V173_ACCOUNT_EMAIL_2026_11_18 */
           loadThreadMessages(t);
           if (currentCust) loadInbox(currentCust);
         });
       }).catch(function () {
         say('Couldn\u2019t save \u2014 please try again, or call or text (937) 280-6243.');
       }).then(function () { saveBtn.disabled = false; });
+      } /* V173_ACCOUNT_EMAIL_2026_11_18: end runDetailSave */
+      if (emailChanged) {
+        if (!sb.auth || !sb.auth.updateUser) { say('Email changes are not available just now \u2014 please try again in a moment.'); saveBtn.disabled = false; return; }
+        sb.auth.updateUser({ email: newEmail }).then(function (ures) {
+          if (ures && ures.error) { say(ures.error.message || 'That email address could not be used \u2014 please check it and try again.'); saveBtn.disabled = false; return; }
+          runDetailSave();
+        }).catch(function () { say('Couldn\u2019t send the confirmation email \u2014 please check the address and try again.'); saveBtn.disabled = false; });
+        return;
+      }
+      runDetailSave();
     });
   };
   /* ---------- V158_GUEST_PORTAL_2026_11_17: the Guest Hub bar ----------
@@ -7045,7 +7072,8 @@
     if (sig) {
       h += '<div class="acct-signdoc-meta"><span class="acct-signdoc-signed">Signed</span> — ' + escX(sig.signer_name || '') + ', ' + escX(fmtDayX(sig.signed_at)) + '</div>';
       h += '<div class="acct-signdoc-btns"><button type="button" class="acct-signdoc-btn acct-signdoc-btn--ghost" data-v158doc="preview" data-ticket="' + escX(ticketId) + '" data-type="' + escX(type) + '">View</button>' +
-        '<button type="button" class="acct-signdoc-btn acct-signdoc-btn--ghost" data-v158doc="download" data-ticket="' + escX(ticketId) + '" data-type="' + escX(type) + '">Download</button></div>';
+        '<button type="button" class="acct-signdoc-btn acct-signdoc-btn--ghost" data-v158doc="download" data-ticket="' + escX(ticketId) + '" data-type="' + escX(type) + '">Download</button>' +
+        (type === 'receipt' ? '' : '<button type="button" class="acct-signdoc-btn acct-signdoc-btn--ghost" data-v158doc="resign" data-ticket="' + escX(ticketId) + '" data-type="' + escX(type) + '">Re-sign</button>') + '</div>'; /* V173_RESIGN_2026_11_18: receipts are never signed, so they never carry Re-sign. */
     } else {
       h += '<div class="acct-signdoc-meta">Waiting for your signature.</div>';
       h += '<div class="acct-signdoc-btns"><button type="button" class="acct-signdoc-btn acct-signdoc-btn--ghost" data-v158doc="preview" data-ticket="' + escX(ticketId) + '" data-type="' + escX(type) + '">Preview</button>' +
@@ -7079,12 +7107,14 @@
   window.__atrSigBlockHtml = function (row, img) {
     function e(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
     var date = new Date(row.signed_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
-    /* V169_SIGN_PAD_2026_11_18: the drawn signature rides in the block when the guest
-       drew one this session; otherwise the block is name + date only. */
-    var imgHtml = img ? '<img src="' + img + '" alt="Signature" style="max-width:280px;height:auto;display:block;margin:0 0 6px;">' : '';
+    /* V173_SIGNATURE_ON_LINE_2026_11_18 (Austin, Nov 18, 2026): the signature sits ON the bottom line — the stored drawing when there is one (signature_image column, or this session's pad), otherwise the typed name rendered in a script hand automatically. The line is the border under the signature; the "Signed by name, date" text stays alongside it. */
+    var sigImg = (row && row.signature_image) || img || '';
+    var sigHtml = sigImg
+      ? '<img src="' + e(sigImg) + '" alt="Signature" style="max-width:280px;height:auto;display:block;margin:0 0 2px;border-bottom:2px solid #1c1c1e;padding-bottom:2px;">'
+      : '<div style="font-family:\'Snell Roundhand\',\'Brush Script MT\',\'Segoe Script\',cursive;font-size:32px;line-height:1.2;display:inline-block;min-width:280px;border-bottom:2px solid #1c1c1e;padding:0 8px;">' + e(row.signer_name) + '</div>';
     return '<section class="atr-signed-block" style="margin-top:32px;padding-top:16px;border-top:2px solid #1c1c1e;">'
-      + imgHtml
-      + '<p style="font-weight:700;margin:0 0 4px;">Signed by ' + e(row.signer_name) + ' on ' + e(date) + '</p>'
+      + sigHtml
+      + '<p style="font-weight:700;margin:6px 0 4px;">Signed by ' + e(row.signer_name) + ' on ' + e(date) + '</p>'
       + '<p style="margin:0;color:#3a3a3c;">Recorded in your ' + (window.atrAccountType === 'business' ? 'Business' : 'Guest') + ' Hub account.</p></section>';
   };
   window.__atrSigBlockInject = function (htmlText, row, img) {
@@ -7160,17 +7190,31 @@
     if (fr) fr.src = 'about:blank';
     window.__atrDocOverlayUrl = '';
   };
+  /* V173_PRINT_BUTTON_2026_11_18 (Austin, Nov 18, 2026): the overlay Print button prints from the
+     TOP-LEVEL page. window.print() called on the overlay frame does nothing on iPad Safari — the
+     frame is an iframe, and iOS never opens the print sheet for it. So the parent asks the viewer
+     (view-doc.html, same origin) for the document it is showing — the exact rendered HTML,
+     signature block on the line included — and prints that from the parent's own print area
+     (same pattern as the Associate Hub's #portal-print-area). If the viewer never answers
+     (a filed copy opened straight from storage has no viewer scripts), the fallback prints the
+     frame directly after 1.5s — that works on desktop, and on iPad the guest still has Open. */
+  window.atrPrintOverlayDoc = function () {
+    var fr = document.getElementById('ghub-doc-overlay-frame');
+    if (!fr || !fr.contentWindow) return;
+    var area = document.getElementById('atr-print-area');
+    if (!area) { try { fr.contentWindow.print(); } catch (err) {} return; }
+    window.__atrDocPrintDone = false;
+    try { fr.contentWindow.postMessage({ type: 'atr-doc-print-request' }, window.location.origin); } catch (err) {}
+    window.__atrDocPrintTimer = setTimeout(function () {
+      if (window.__atrDocPrintDone) return;
+      window.__atrDocPrintDone = true;
+      try { fr.contentWindow.print(); } catch (err) {}
+    }, 1500);
+  };
   document.addEventListener('click', function (e) {
     var t = e.target;
     if (t && t.id === 'ghub-doc-overlay-close') window.atrCloseDocOverlay();
-    if (t && t.id === 'ghub-doc-overlay-print') {
-      var fr = document.getElementById('ghub-doc-overlay-frame');
-      try {
-        if (fr && fr.contentWindow) fr.contentWindow.print();
-      } catch (err) {
-        if (window.__atrDocOverlayUrl) window.open(window.__atrDocOverlayUrl, '_blank');
-      }
-    }
+    if (t && t.id === 'ghub-doc-overlay-print') atrPrintOverlayDoc(); /* V173_PRINT_BUTTON_2026_11_18 */
   });
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {
@@ -7187,6 +7231,64 @@
     if (e.origin !== window.location.origin) return;
     setTimeout(function () { window.atrCloseDocOverlay(); }, 3000);
   });
+  /* V173_WARRANTY_DOC_BUTTON_2026_11_18 (Austin, Nov 18, 2026): a link inside a viewed
+     document cannot navigate on its own — the document renders inside the overlay
+     frame, which has no router, so the click only moved the frame's own fragment and
+     the guest never reached the form. view-doc.html intercepts those clicks and posts
+     them here; the parent closes the overlay and routes: a signed-in guest gets the
+     Hub Warranty pane — the working form, pre-filled the same way the Hub form
+     pre-fills (showTab runs prefillGhubWarranty); anything else goes to the site
+     page, exactly as the link means on the main site (the router picks the hash up).
+     Same-origin only: the frame is our own view-doc.html. */
+  window.addEventListener('message', function (e) {
+    if (!e || !e.data || e.data.type !== 'atr-doc-nav') return;
+    if (e.origin !== window.location.origin) return;
+    var page = String((e.data && e.data.page) || '').replace(/^#/, '').trim();
+    if (!page) return;
+    window.atrCloseDocOverlay();
+    /* V173_WARRANTY_DOC_BUTTON_2026_11_18: this listener lives in a plain
+       top-level script block — the Hub's `user` and `openHub` are NOT in
+       scope here (they live inside the Guest Hub IIFE), so a bare `user`
+       reference throws and the guest lands nowhere. Read the signed-in
+       state from the site's own localStorage session mirror instead
+       (written on sign-in, cleared on sign-out) and route through the
+       Hub's global entry point, window.atrOpenGuestHub. A live session
+       whose mirror is missing still gets the working site form below. */
+    var navSignedIn = false;
+    try { navSignedIn = !!JSON.parse(localStorage.getItem('atr-account') || 'null'); } catch (e2) {}
+    if (page === 'warranty-request' && navSignedIn) { window.atrOpenGuestHub('warranty'); return; }
+    if (window.location.hash !== '#' + page) window.location.hash = '#' + page;
+  });
+  /* V173_RESIGN_2026_11_18 (Austin, Nov 18, 2026): the viewer posts this when a signature lands — first sign or re-sign — so the guest's document rows repaint with the new "Signed — name, date" without a reload. Same-origin only: the frame is our own view-doc.html. */
+  window.addEventListener('message', function (e) {
+    if (!e || !e.data || e.data.type !== 'atr-doc-signed') return;
+    if (e.origin !== window.location.origin) return;
+    try { if (typeof window.atrDocSigningRefresh === 'function') window.atrDocSigningRefresh(); } catch (err) {}
+    try { if (window.atrLoadTicketDocuments && window.__atrOpenTicket) window.atrLoadTicketDocuments(window.__atrOpenTicket); } catch (err) {}
+  });
+  /* V173_PRINT_BUTTON_2026_11_18: the viewer answers atr-doc-print-request with the document it is
+     showing — print it from the top-level page (see atrPrintOverlayDoc). Same-origin only. */
+  window.addEventListener('message', function (e) {
+    if (!e || !e.data || e.data.type !== 'atr-doc-print-html') return;
+    if (e.origin !== window.location.origin) return;
+    var html = (e.data && e.data.html) || '';
+    if (!html) return; /* the viewer could not read its frame — the fallback timer prints the frame directly */
+    if (window.__atrDocPrintTimer) { clearTimeout(window.__atrDocPrintTimer); window.__atrDocPrintTimer = null; }
+    window.__atrDocPrintDone = true;
+    var area = document.getElementById('atr-print-area');
+    if (!area) return;
+    area.innerHTML = html;
+    area.hidden = false;
+    document.body.classList.add('atr-printing');
+    setTimeout(function () {
+      window.print();
+      setTimeout(function () {
+        document.body.classList.remove('atr-printing');
+        area.hidden = true;
+        area.innerHTML = '';
+      }, 400);
+    }, 60);
+  });
   function v158DownloadDoc(btn, ticketId, type) {
     if (!btn || !ticketId) return;
     var old = btn.textContent;
@@ -7197,7 +7299,7 @@
       var section = type === 'warranty' ? 'warranty' : type === 'terms' ? 'terms' : type === 'media' ? 'media' : 'service-agreement';
       /* V169_SIGNED_DOC_2026_11_18: the downloaded copy carries the
          signature block when this document is signed. */
-      var sigP = sb ? sb.from('document_signatures').select('signer_name,signed_at').eq('ticket_id', ticketId).eq('document_type', type).order('signed_at', { ascending: false }).limit(1)
+      var sigP = sb ? sb.from('document_signatures').select('signer_name,signed_at,signature_image') /* V173_SIGNATURE_ON_LINE_2026_11_18 */.eq('ticket_id', ticketId).eq('document_type', type).order('signed_at', { ascending: false }).limit(1)
         .then(function (r) { return (r && r.data && r.data[0]) || null; }).catch(function () { return null; }) : Promise.resolve(null);
       Promise.all([
         fetch('/index.html', { credentials: 'same-origin' }).then(function (r) { if (!r.ok) throw new Error('x'); return r.text(); }),
@@ -7231,7 +7333,7 @@
     }).then(function (got) {
       if (got.html) {
         if (type === 'receipt') { v158SaveBlob((type || 'document') + '.html', new Blob([got.html], { type: 'text/html' })); done(); return; }
-        sb.from('document_signatures').select('signer_name,signed_at').eq('ticket_id', ticketId).eq('document_type', type).order('signed_at', { ascending: false }).limit(1)
+        sb.from('document_signatures').select('signer_name,signed_at,signature_image') /* V173_SIGNATURE_ON_LINE_2026_11_18 */.eq('ticket_id', ticketId).eq('document_type', type).order('signed_at', { ascending: false }).limit(1)
           .then(function (r) { return (r && r.data && r.data[0]) || null; }).catch(function () { return null; })
           .then(function (sig) {
             v158SaveBlob((type || 'document') + '.html', new Blob([window.__atrSigBlockInject ? window.__atrSigBlockInject(got.html, sig, window.__atrDrawnSigGet ? window.__atrDrawnSigGet(ticketId, type) : '') : got.html], { type: 'text/html' }));
@@ -7310,6 +7412,23 @@
         if (action === 'sign') {
           if (window.__atrDocSigning && window.__atrDocSigning.openSign) { window.__atrDocSigning.openSign(ticketId, type); return; }
           window.atrOpenDocOverlay('view-doc.html?doc=' + encodeURIComponent(type) + '&t=' + encodeURIComponent(ticketId), 'Your document');
+        }
+        if (action === 'resign') {
+          /* V173_RESIGN_2026_11_18 (Austin, Nov 18, 2026): re-signing reopens the document viewer flow — scroll gate, I Agree, finger pad, typed name — with resign mode armed, so the new signature replaces the earlier one. Site documents open by kind; filed estimate/invoice copies open through the same signed-URL door Preview uses, with resign mode on the URL. */
+          if (type === 'agreement' || type === 'terms' || type === 'warranty' || type === 'media') {
+            window.atrOpenDocOverlay('view-doc.html?doc=' + encodeURIComponent(type) + '&t=' + encodeURIComponent(ticketId) + '&resign=1', 'Your document');
+            return;
+          }
+          if (!sb) return;
+          btn.disabled = true;
+          sb.auth.getSession().then(function (sres) {
+            var token = sres && sres.data && sres.data.session ? sres.data.session.access_token : null;
+            if (!token) throw new Error('Please sign in again, then try the preview.');
+            return fetch(SUPABASE_URL + '/functions/v1/doc-view', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'apikey': SUPABASE_ANON_KEY }, body: JSON.stringify({ ticket_id: ticketId, kind: type }) });
+          }).then(function (res) { return res.json(); }).then(function (out) {
+            if (!out || !out.ok || !out.url) throw new Error('That preview could not be opened — please use the link in your email.');
+            window.atrOpenDocOverlay(out.url + (out.url.indexOf('?') === -1 ? '?' : '&') + 'resign=1', 'Your document');
+          }).catch(function (err) { btn.textContent = (err && err.message) || 'Preview unavailable.'; }).then(function () { btn.disabled = false; });
         }
         if (action === 'download') { v158DownloadDoc(btn, ticketId, type); return; }
       });
@@ -8671,6 +8790,9 @@
         if (window.atrApplyAudience) window.atrApplyAudience();
       }
     } catch (e) {}
+    /* V173_SIGNED_IN_AUDIENCE_2026_11_18: the session just landed (sign-in or reload restore) — if the visitor is
+       sitting on a Services page with the wrong audience, route to the right one now. */
+    try { if (window.atrRefreshServicesAudience) window.atrRefreshServicesAudience(); } catch (e2) {}
     if (linkInFlightFor === uid && enterAttemptAt && Date.now() - enterAttemptAt > 20000) linkInFlightFor = null;
     if (linkedUid === uid || linkInFlightFor === uid) return;
     linkInFlightFor = uid; enterAttemptAt = Date.now();
@@ -8732,6 +8854,14 @@
           if (settled) return;
           if (res && !res.error && res.data && res.data.id) {
             stop();
+            /* V173_ACCOUNT_EMAIL_2026_11_18: keep the guest record in step with the sign-in email — after a confirmed email change the auth email is new but the row still has the old one. The row is in hand here (found by id), so sync it now, best-effort and silent. Never fires when the guest has not confirmed. */
+            try {
+              var _ae = (session && session.user && session.user.email) || '';
+              if (_ae && res.data.email && String(res.data.email).toLowerCase() !== String(_ae).toLowerCase()) {
+                sb.from('customers').update({ email: _ae }).eq('id', res.data.id).then(function () {}).catch(function () {});
+                res.data.email = _ae;
+              }
+            } catch (e2) {}
             finishAccountLoad(uid, res.data);
             return;
           }
@@ -8750,6 +8880,8 @@
     renderHeader(null, 0);
     renderGlance();
     showAuth();
+    /* V173_SIGNED_IN_AUDIENCE_2026_11_18: signed out — the account no longer decides, so the remembered pick (if any) takes over. */
+    try { if (window.atrRefreshServicesAudience) window.atrRefreshServicesAudience(); } catch (e2) {}
   }
 
   /* ---------- tabs ---------- */
@@ -9083,7 +9215,14 @@
       if (!currentCustomer) return;
       var phone = String($('authx-profile-phone').value || '').trim();
       var address = String($('authx-profile-address').value || '').trim();
+      var emailEl = $('authx-profile-email');
+      var newEmail = emailEl ? String(emailEl.value || '').trim() : ''; /* V173_ACCOUNT_EMAIL_2026_11_18 */
+      var oldEmail = currentCustomer.email || ''; /* V173_ACCOUNT_EMAIL_2026_11_18 */
+      var emailChanged = !!newEmail && newEmail.toLowerCase() !== String(oldEmail).toLowerCase(); /* V173_ACCOUNT_EMAIL_2026_11_18 */
+      if (!newEmail) { if (msg) msg.textContent = 'Please enter your email address.'; return; } /* V173_ACCOUNT_EMAIL_2026_11_18 */
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) { if (msg) msg.textContent = 'That email address doesn’t look right.'; return; } /* V173_ACCOUNT_EMAIL_2026_11_18 */
       if (msg) msg.textContent = 'Saving…';
+      function runProfileSave() { /* V173_ACCOUNT_EMAIL_2026_11_18: the guest record keeps the old email until the sign-in email actually flips (see resolveGuestCust). */
       sb.from('customers').update({ phone: phone || null, address: address || null }).eq('id', currentCustomer.id)
         .then(function (res) {
           if (!msg) return;
@@ -9091,9 +9230,19 @@
           currentCustomer.phone = phone || null;
           currentCustomer.address = address || null;
           patchLocalSessionPhone(phone);
-          msg.textContent = 'Saved.';
+          msg.textContent = emailChanged ? 'Saved. We sent a confirmation email to ' + newEmail + ' — tap the link in it and the change completes; until then your old email still signs you in.' : 'Saved.'; /* V173_ACCOUNT_EMAIL_2026_11_18 */
         })
         .catch(function () { if (msg) msg.textContent = 'Couldn’t save — please try again.'; });
+      } /* V173_ACCOUNT_EMAIL_2026_11_18: end runProfileSave */
+      if (emailChanged) {
+        if (!sb || !sb.auth || !sb.auth.updateUser) { if (msg) msg.textContent = 'Email changes are not available just now — please try again in a moment.'; return; } /* V173_ACCOUNT_EMAIL_2026_11_18 */
+        sb.auth.updateUser({ email: newEmail }).then(function (ures) {
+          if (ures && ures.error) { if (msg) msg.textContent = ures.error.message || 'That email address could not be used — please check it and try again.'; return; }
+          runProfileSave();
+        }).catch(function () { if (msg) msg.textContent = 'Couldn’t send the confirmation email — please check the address and try again.'; });
+        return;
+      }
+      runProfileSave();
     });
 
     /* ACCOUNT_FIX_PASS_3_2_2026_11_06 (ITEM A hardening): wire the
@@ -9504,21 +9653,21 @@
       replInput.value = '';
       hideVerdict();
       if (state.price !== null) {
-        /* Same wording law as the Prices lookup: an estimated,
-           starting-at price; the exact price is confirmed after
+        /* Same wording law as the Prices lookup: an estimated price,
+           never below $60; the exact price is confirmed after
            a full diagnostics. Never flat, never final. */
-        label.textContent = 'Your estimated repair price \u2014 starting at';
-        amount.style.display = ''; amount.textContent = fmt(state.price);
+        label.textContent = 'Your estimated repair price'; /* V173_PRICING_FLOOR_2026_11_18 */
+        amount.style.display = ''; amount.textContent = fmt(Math.max(60, state.price)); /* V173_PRICING_FLOOR_2026_11_18 */
         note.textContent = name + ' for ' + state.model + ' \u2014 estimate covering parts and labor. Your exact price is confirmed once we have checked your device.';
         if (disc) disc.hidden = false;
         bookResult.innerHTML = 'Book This Repair <i class="fas fa-arrow-right"></i>';
         replaceStep.hidden = false;
       } else {
-        /* No set price in the book: no verdict, honest confirmed-
-           up-front state, booking path still open (mirrors the
+        /* No set price in the book: no verdict, honest price-on-
+           request state, booking path still open (mirrors the
            Prices lookup's own no-price wording). */
         if (disc) disc.hidden = true;
-        label.textContent = 'We fix that \u2014 price confirmed up front';
+        label.textContent = 'We fix that \u2014 price on request'; /* V173_PRICING_FLOOR_2026_11_18 */
         amount.style.display = 'none';
         note.textContent = 'There is no set price for ' + name + ' on the ' + state.model + ' yet, so there is no honest percentage to show you. Book the visit and we confirm the exact price for your exact device before any work starts \u2014 and we will tell you straight if it is not worth fixing. The visit fee covers the trip \u2014 $14.99 for guests, $34.99 for business. Diagnostics is $34.99 for guests, $64.99 for business, if a full diagnosis is needed.';
         bookResult.innerHTML = 'Book This Visit <i class="fas fa-arrow-right"></i>';
@@ -9538,10 +9687,12 @@
       var raw = String(replInput.value || '').replace(/[^0-9.]/g, '');
       var repl = parseFloat(raw);
       if (!isFinite(repl) || repl <= 0) { hideVerdict(); return; }
-      var pct = (state.price / repl) * 100;
+      /* V173_PRICING_FLOOR_2026_11_18: the verdict judges the price the guest will actually be quoted — never below $60 — so the shown price, the percentage, and the band all read from the floored price. */
+      var shown = Math.max(60, state.price);
+      var pct = (shown / repl) * 100;
       var band = (pct <= 40) ? 'fix' : (pct <= 65) ? 'borderline' : 'replace';
       verdict.setAttribute('data-band', band);
-      vMath.textContent = 'Your estimated repair price of ' + fmt(state.price) + ' is about ' + Math.round(pct) + '% of the ' + fmt(repl) + ' replacement cost you entered.';
+      vMath.textContent = 'Your estimated repair price of ' + fmt(shown) + ' is about ' + Math.round(pct) + '% of the ' + fmt(repl) + ' replacement cost you entered.';
       if (band === 'fix') {
         vTitle.textContent = 'Usually worth fixing';
         vNote.textContent = 'When you are ready, book the repair \u2014 your exact price is confirmed once we have checked your device, before any work starts.';
@@ -9576,7 +9727,7 @@
 })();
 </script>
 
-  <!-- SERVICES_CHOOSER_2026_11_13 (owner, Nov 13, 2026): the guest-or-business chooser. Start a Service and the thumb-nav Services button ask first, then route to the right services page. Hidden until script.js opens it. -->
+  <!-- SERVICES_CHOOSER_2026_11_13 (owner, Nov 13, 2026): the guest-or-business chooser. V173_SIGNED_IN_AUDIENCE_2026_11_18 (owner, Nov 18, 2026): it now asks only the truly unknown — signed out with no remembered pick. Signed-in accounts never see it (the account decides); a signed-out visitor picks once and the pick is remembered on this browser. Hidden until script.js opens it. -->
   <div id="svc-chooser" role="dialog" aria-modal="true" aria-labelledby="svc-chooser-title" style="position:fixed; inset:0; z-index:10000; display:none; align-items:center; justify-content:center; padding:1rem; background:rgba(20,16,11,0.55);">
     <div style="background:var(--surface); color:var(--ink); border:1px solid var(--line); border-radius:1.4rem; box-shadow:0 18px 50px rgba(0,0,0,0.35); max-width:26rem; width:100%; padding:1.6rem 1.6rem 1.4rem; text-align:center; position:relative;">
       <button type="button" id="svc-chooser-close" aria-label="Close" style="position:absolute; top:0.6rem; right:0.6rem; width:2rem; height:2rem; border-radius:50%; border:1px solid var(--line); background:var(--surface); color:var(--ink); cursor:pointer; font-size:1rem; line-height:1;"><i class="fas fa-times" aria-hidden="true"></i></button>
@@ -9592,29 +9743,31 @@
 <!-- V159_GUEST_HUB_2026_11_17 (Austin, Nov 17, 2026): Guest Hub — a stripped-down replica of the Associate Hub, same app for associate and guest. Same layout: top bar with Quick Actions, left Action Button sidebar, right Action Panel, bottom thumb bar. Guest-only: no staff tools, no other guests, no Service Queue / Leads / ATRG Remote / Admin / Financials / Time Clock / Team Chat. Everything that lived under Services in the account dropdown lives here now. -->
 <style>
 #guest-hub[hidden]{display:none!important}
-#guest-hub{position:fixed;inset:0;z-index:2000;background:#FAF6EE;color:#2C231A;font-family:'Plus Jakarta Sans',-apple-system,sans-serif;overflow:hidden}
-.ghub-topbar{background:#FFFDF8;border-bottom:1px solid #E6D9C0;padding:.6rem .9rem}
+#guest-hub{position:fixed;inset:0;z-index:2000;background:#FAF6EE;color:#2C231A;font-family:'Plus Jakarta Sans',-apple-system,sans-serif;overflow:hidden;display:flex;flex-direction:column} /* V173_SIDEBAR_SCROLL_2026_11_18: the only in-flow children are the topbar and the body (thumb nav, doc overlay and search sheet are fixed/absolute) — the body now takes exactly the space below the real topbar. */
+.ghub-topbar{background:#FFFDF8;border-bottom:1px solid #E6D9C0;padding:.6rem .9rem;text-align:center;flex:none} /* V173_CENTER_QUICK_ACTIONS_2026_11_18 */ /* V173_SIDEBAR_SCROLL_2026_11_18: the topbar never shrinks — the body takes what is left. */
 .ghub-brand{font-weight:800;font-size:1rem}
 .ghub-tag{display:inline-block;background:#D9540D;color:#fff;border-radius:999px;padding:.1rem .6rem;font-size:.72rem;font-weight:800;margin-left:.5rem}
 .ghub-qa-label{font-size:.68rem;font-weight:800;letter-spacing:1.5px;color:#7D6C5B;margin-top:.45rem}
 .ghub-qa{display:flex;gap:.45rem;flex-wrap:wrap;margin-top:.3rem}
+.ghub-topbar .ghub-qa{justify-content:center} /* V173_CENTER_QUICK_ACTIONS_2026_11_18: the top-block Quick Actions row centers, and its wrap stays centered on narrow screens. Scoped to the topbar on purpose — the in-panel .ghub-qa rows (Help Guides, Contact us) are not in the top block and keep their left layout. */
 .ghub-qa .btn{padding:.5rem .9rem;font-size:.85rem}
-.ghub-body{display:flex;height:calc(100% - 118px)}
-.ghub-side{width:230px;flex:none;background:#FFFDF8;border-right:1px solid #E6D9C0;overflow-y:auto;padding:.7rem .6rem 5.5rem}
+.ghub-body{display:flex;flex:1;min-height:0} /* V173_SIDEBAR_SCROLL_2026_11_18: was height:calc(100% - 118px) — see the hub rule above. */
+.ghub-side{width:230px;flex:none;min-height:0;background:#FFFDF8;border-right:1px solid #E6D9C0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;padding:.7rem .6rem 5.5rem} /* V173_SIDEBAR_SCROLL_2026_11_18 */
 .ghub-side-label{font-size:.68rem;font-weight:800;letter-spacing:1.5px;color:#7D6C5B;padding:.2rem .5rem .5rem}
+.ghub-panel-label{font-size:.68rem;font-weight:800;letter-spacing:1.5px;color:#7D6C5B;padding:.2rem 0 .5rem} /* V173_ACTION_PANEL_LABEL_2026_11_18 */
 .ghub-tab{display:flex;align-items:center;gap:.6rem;width:100%;text-align:left;background:#FFFDF8;border:1px solid #E6D9C0;border-radius:.7rem;padding:.65rem .7rem;font-size:.95rem;font-weight:700;color:#2C231A;cursor:pointer;font-family:inherit;margin-bottom:.45rem}
 .ghub-tab:hover{border-color:#D9540D;color:#A63E06}
 .ghub-tab.active{background:#D9540D;border-color:#D9540D;color:#fff}
-.ghub-panel{flex:1;overflow-y:auto;padding:1rem 1rem 6rem}
+.ghub-panel{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;padding:1rem 1rem 6rem} /* V173_SIDEBAR_SCROLL_2026_11_18 */
 .ghub-panel h2{font-size:1.35rem;margin:.2rem 0 .6rem}
 .ghub-card{background:#FFFDF8;border:1px solid #E6D9C0;border-radius:1rem;padding:1rem;margin-bottom:.9rem}
 .ghub-muted{color:#7D6C5B;font-size:.92rem}
 .ghub-greet{font-size:1.5rem;font-weight:800;margin:.2rem 0}
-.ghub-greet-line{margin:.5rem 0 0;font-size:.95rem;color:#7D6C5B}
+.ghub-greet-line{margin:.5rem 0 0;font-size:.95rem;color:#7D6C5B;text-align:center} /* V173_CENTER_QUICK_ACTIONS_2026_11_18 */
 .ghub-greet-line #ghub-greet{font-weight:800;color:#2C231A}
 .ghub-greet-role{display:inline-block;background:#D9540D;color:#fff;border-radius:999px;padding:.05rem .55rem;font-size:.72rem;font-weight:800}
 /* V171_PREVIEW_2026_11_18: staff-only "Preview as" switcher — sits under the greeting in Quick Actions, never a guest feature. */
-.ghub-preview{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;margin:.45rem 0 0;font-size:.8rem;color:var(--muted,#7D6C5B)}
+.ghub-preview{display:flex;gap:.4rem;align-items:center;justify-content:center;flex-wrap:wrap;margin:.45rem 0 0;font-size:.8rem;color:var(--muted,#7D6C5B)} /* V173_CENTER_QUICK_ACTIONS_2026_11_18 */
 .ghub-preview[hidden]{display:none} /* V172_AUDIENCE_OFFERS_2026_11_18 (Austin, Nov 18, 2026): the "Preview as" switcher is staff-only — without this guard its display:flex rule beats [hidden] and it renders for guests too (caught by v172's visual proof; same class of bug as the v171 signup EIN field). */
 .ghub-preview-label{font-weight:800;letter-spacing:.03em}
 .ghub-preview button[aria-pressed="true"]{background:#D9540D;border-color:#D9540D;color:#fff}
@@ -9639,12 +9792,15 @@ html[data-theme="dark"] .ghub-greet-line #ghub-greet{color:var(--ink,#F0E8DA)}
 html[data-theme="dark"] .ghub-signblock{background:var(--surface,#221B14);border-color:var(--line,#3A2F24)}
 html[data-theme="dark"] .ghub-details summary{background:var(--surface,#221B14);border-color:var(--line,#3A2F24);color:var(--ink,#F0E8DA)}
 html[data-theme="dark"] .ghub-signed{color:#7BDDB4}
-.ghub-thumb{position:fixed;left:0;right:0;bottom:0;z-index:2001;background:#FFFDF8;border-top:1px solid #E6D9C0;display:flex;justify-content:space-around;padding:.55rem 0 calc(.55rem + env(safe-area-inset-bottom))}
+.ghub-thumb{position:fixed;left:0;right:0;bottom:0;z-index:2001;background:#FFFDF8;border-top:1px solid #E6D9C0;display:none;justify-content:space-around;padding:.55rem 0 calc(.55rem + env(safe-area-inset-bottom))} /* V173_THUMB_GATE_2026_11_18: the thumb bar is gated exactly like the Associate Hub bar (portal.css .portal-thumbbar) — display:none by default, flex only at <=920px. It used to be display:flex at every width, so it showed in iPad landscape (1180px) where the Quick Actions row already carries navigation. */
 #ghub-doc-overlay{position:fixed;inset:0;z-index:2300;background:#FAF6EE;display:flex;flex-direction:column}
 #ghub-doc-overlay[hidden]{display:none}
 .ghub-doc-overlay-bar{display:flex;align-items:center;gap:.6rem;padding:.7rem .9rem;background:#FFFDF8;border-bottom:1px solid #E6D9C0}
 .ghub-doc-overlay-actions{margin-left:auto;display:flex;gap:.45rem}
 #ghub-doc-overlay-frame{flex:1;width:100%;border:0;background:#fff}
+/* V173_PRINT_BUTTON_2026_11_18: the print area is 1px while idle; while printing, everything else hides and the area takes the page. The .page rule is scoped to the area — the unscoped version would unhide every site page. */
+#atr-print-area{position:fixed;left:0;top:0;width:1px;height:1px;overflow:hidden}
+@media print{body.atr-printing > *:not(#atr-print-area){display:none !important}body.atr-printing #atr-print-area{display:block !important;position:static !important;left:auto !important;top:auto !important;width:auto !important;height:auto !important;overflow:visible !important;padding:24px;max-width:820px;margin:0 auto}body.atr-printing #atr-print-area .page{display:block !important}}
 html[data-theme="dark"] #ghub-doc-overlay{background:var(--surface,#221B14)}
 html[data-theme="dark"] .ghub-doc-overlay-bar{background:var(--surface,#221B14);border-bottom-color:var(--line,#3A2F24)}
 .ghub-thumb button{background:none;border:none;font-size:.68rem;font-weight:700;color:#7D6C5B;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:3px}
@@ -9652,7 +9808,8 @@ html[data-theme="dark"] .ghub-doc-overlay-bar{background:var(--surface,#221B14);
 .ghub-thumb button i{font-size:1.1rem}
 /* V160_GUEST_HUB_FIXES_2026_11_17: on phone viewports the site black bottom nav (.mobile-bottom-nav, z-index 2100 in styles.css) painted over the Guest Hub thumb bar (#guest-hub 2000 / .ghub-thumb 2001), so a guest could not see Home / Service Request / Documents / Chat / Account. Raise the Hub above it only at phone widths (max-width 920px, the breakpoint where the site nav shows). Desktop keeps 2000/2001; styles.css is untouched, so the Associate Hub and the site nav are unaffected. */
 @media (max-width:920px){#guest-hub{z-index:2200}.ghub-thumb{z-index:2201}}
-@media (max-width:720px){.ghub-side{width:200px}.ghub-body{height:calc(100% - 132px)}}
+@media (max-width:920px){.ghub-thumb{display:flex}} /* V173_THUMB_GATE_2026_11_18: phone widths only (iPad portrait 820px and below) — the same 920px breakpoint as the Associate Hub. */
+@media (max-width:720px){.ghub-side{width:200px}} /* V173_SIDEBAR_SCROLL_2026_11_18: the 132px body calc goes with the 118px one — flex sizing tracks the real topbar height on phones too (the QA row wraps there, so the old number was even further off). */
 .ghub-line{display:flex;justify-content:space-between;gap:.6rem;padding:.3rem 0;border-bottom:1px solid #EFE6D2}
 .ghub-row{display:flex;justify-content:space-between;padding:.3rem 0}
 .ghub-total{display:flex;justify-content:space-between;padding:.3rem 0;border-top:2px solid #E6D9C0}
@@ -9667,7 +9824,7 @@ html[data-theme="dark"] .ghub-doc-overlay-bar{background:var(--surface,#221B14);
 html[data-theme="dark"] #guest-hub{background:var(--bg,#14100B);color:var(--ink,#F0E8DA)}
 html[data-theme="dark"] .ghub-topbar{background:var(--surface,#221B14);border-bottom-color:var(--line,#3A2F24)}
 html[data-theme="dark"] .ghub-brand{color:var(--ink,#F0E8DA)}
-html[data-theme="dark"] .ghub-qa-label,html[data-theme="dark"] .ghub-side-label{color:var(--muted,#A89880)}
+html[data-theme="dark"] .ghub-qa-label,html[data-theme="dark"] .ghub-side-label,html[data-theme="dark"] .ghub-panel-label{color:var(--muted,#A89880)} /* V173_ACTION_PANEL_LABEL_2026_11_18 */
 html[data-theme="dark"] .ghub-side{background:var(--surface,#221B14);border-right-color:var(--line,#3A2F24)}
 html[data-theme="dark"] .ghub-tab{color:var(--ink,#F0E8DA);background:var(--surface,#221B14);border-color:var(--line,#3A2F24)}
 html[data-theme="dark"] .ghub-tab:hover{border-color:#D9540D;color:#F5B98A}
@@ -9730,7 +9887,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
          what pane is open, in both hubs. It lives in the topbar, outside
          every pane, so no pane switch can hide it. Same ids the Home pane
          used to carry, so paintHome() below needs no id changes. -->
-    <p class="ghub-greet-line"><span id="ghub-greet">Hello</span> <span class="ghub-greet-sep" aria-hidden="true">&middot;</span> <span class="ghub-greet-role" id="ghub-greet-role">Guest</span> <span class="ghub-greet-sep" aria-hidden="true">&middot;</span> <span class="ghub-clock" id="ghub-clock"></span></p>
+    <p class="ghub-greet-line"><span id="ghub-greet">Hello</span> <span class="ghub-greet-sep" aria-hidden="true">&middot;</span> <span class="ghub-greet-role" id="ghub-greet-role">Guest</span> <span class="ghub-greet-sep" aria-hidden="true">&middot;</span> <span class="ghub-clock" id="ghub-clock"></span> <span class="ghub-greet-sep" aria-hidden="true">&middot;</span> <span class="acct-muted" id="acct-app-version" hidden></span></p><!-- V173_APP_VERSION_MOVE_2026_11_18 (owner, Nov 18, 2026): the version line lives here now, next to the date in the greeting line under Quick Actions — visible in every pane, never buried. Same id, same fill logic (paintAppVersion), same recording. -->
     <!-- V171_PREVIEW_2026_11_18 (Austin, Nov 18, 2026): staff-only "Preview as" switcher — Super Admin / staff can flip the Hub between the Guest face, the Business face, and the Associate Hub to test what each audience sees. Hidden by default; only a confirmed staff role reveals it. Session-only override, nothing stored — a reload returns to the account's real audience. -->
     <div class="ghub-preview" id="ghub-preview" hidden>
       <span class="ghub-preview-label">Preview as (staff testing):</span>
@@ -9761,8 +9918,11 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
       <button class="ghub-tab" type="button" data-ghub="membership"><i class="fas fa-star"></i> ATR One Membership</button>
       <button class="ghub-tab" type="button" data-ghub="documents"><i class="fas fa-folder-open"></i> Documents</button>
       <button class="ghub-tab" type="button" data-ghub="warranty"><i class="fas fa-shield-halved"></i> Warranty</button>
+      <button class="ghub-tab" type="button" data-ghub="search"><i class="fas fa-magnifying-glass"></i> Search</button><!-- V173_THUMB_GATE_2026_11_18 (Austin, Nov 18, 2026): Search lived only on the thumb bar, which is now gated to phone widths — the sidebar carries it so it stays reachable at wide widths (iPad landscape, desktop). Same data-ghub="search" wiring as the thumb button (the #guest-hub [data-ghub] click delegation opens the search sheet), no JS change. -->
     </nav>
     <div class="ghub-panel" id="ghub-panel">
+      <!-- V173_ACTION_PANEL_LABEL_2026_11_18 (Amendment 3, Austin, Nov 11, 2026): the sidebar buttons are the action buttons and the area that opens on the right is the ACTION PANEL, "and that needs a label." The Associate Hub has it (portal.html:378); the Guest/Business Hub never carried it over. It labels the COLUMN, not the pane — it always reads ACTION PANEL, whatever pane is open; the per-pane h2 below still names the pane. Static markup, first child of the panel: showTab only toggles .ghub-pane hidden, so it survives every pane switch. -->
+      <div class="ghub-panel-label">ACTION PANEL</div>
       <div class="ghub-pane" data-pane="home">
         <h2>Welcome back</h2>
         <p class="ghub-muted">News, offers, and your upcoming service — all in one place.</p>
@@ -10005,8 +10165,12 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
         <details class="ghub-details" open>
           <summary><i class="fas fa-id-card"></i> My Profile</summary>
           <div class="ghub-details-body"><div class="acct-profile" id="authx-profile">
-          <p class="acct-profile-line"><strong id="authx-profile-name"></strong><br>
-          <span class="acct-muted" id="authx-profile-email"></span></p>
+          <p class="acct-profile-line"><strong id="authx-profile-name"></strong></p>
+          <label class="acct-field">
+            <span>Email address</span>
+            <input type="email" id="authx-profile-email" placeholder="you@example.com" autocomplete="email" aria-label="Email address">
+          </label><!-- V173_ACCOUNT_EMAIL_2026_11_18 -->
+          <p class="acct-muted">We’ll send a confirmation email to the new address — tap the link in it and the change completes; until then your old email still signs you in.</p><!-- V173_ACCOUNT_EMAIL_2026_11_18 -->
           <label class="acct-field">
             <span>Phone</span>
             <input type="tel" id="authx-profile-phone" placeholder="(937) 555-1234" autocomplete="tel" aria-label="Phone number">
@@ -10017,11 +10181,8 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
           </label>
           <button class="btn btn-outline btn-sm" id="authx-profile-save" type="button"><i class="fas fa-save"></i> Save profile</button>
           <button class="btn btn-outline btn-sm" id="authx-passkey-setup-btn" type="button"><i class="fas fa-fingerprint"></i> Set up a passkey</button><span class="acct-muted" id="authx-profile-msg"></span><div id="authx-passkey-list"></div>
-          <!-- VERSION_VISIBILITY_2026_11_10: the guest's own
-               version line — support may ask them to read it out.
-               Filled by paintAppVersion() once the build stamp
-               resolves; hidden until then. -->
-          <p class="acct-muted" id="acct-app-version" hidden></p>
+          <!-- V173_APP_VERSION_MOVE_2026_11_18: moved to the greeting line under Quick Actions (owner, Nov 18, 2026) — the My profile bottom buried it. -->
+          <!-- (version line moved — see the greeting line) -->
         </div></div>
         </details>
 
@@ -10348,6 +10509,8 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
     <iframe id="ghub-doc-overlay-frame" title="Document preview"></iframe>
   </div>
 </div>
+<!-- V173_PRINT_BUTTON_2026_11_18 (Austin, Nov 18, 2026): the parent-driven print area — the overlay Print button prints the document from the top-level page (see atrPrintOverlayDoc), because window.print() from inside the iframe does nothing on iPad Safari. Mirrors the Associate Hub's #portal-print-area pattern. A direct child of <body>: the print CSS hides every other top-level child. -->
+<div id="atr-print-area" hidden></div>
 
 <script>
 /* V159_GUEST_HUB_2026_11_17 — Guest Hub logic. Guest-only replica of the Associate Hub.
@@ -10576,10 +10739,11 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
     a.href = url; a.download = filename; document.body.appendChild(a); a.click();
     setTimeout(function () { document.body.removeChild(a); window.URL.revokeObjectURL(url); }, 500);
   }
-  function ghubPreviewDoc(type, ticketId) {
+  function ghubPreviewDoc(type, ticketId, resign) {
     if (!ticketId) return;
+    var rq = resign ? '&resign=1' : ''; /* V173_RESIGN_2026_11_18 */
     if (type === 'agreement' || type === 'terms' || type === 'warranty' || type === 'media') {
-      window.atrOpenDocOverlay('view-doc.html?doc=' + encodeURIComponent(type) + '&t=' + encodeURIComponent(ticketId), 'Your document');
+      window.atrOpenDocOverlay('view-doc.html?doc=' + encodeURIComponent(type) + '&t=' + encodeURIComponent(ticketId) + rq, 'Your document');
       return;
     }
     if (!sb) return;
@@ -10589,7 +10753,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
       return fetch(URL + '/functions/v1/doc-view', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'apikey': KEY }, body: JSON.stringify({ ticket_id: ticketId, kind: type }) });
     }).then(function (res) { return res.json(); }).then(function (out) {
       if (!out || !out.ok || !out.url) throw new Error('That preview could not be opened — please use the link in your email.');
-      window.atrOpenDocOverlay(out.url, 'Your document');
+      window.atrOpenDocOverlay(resign ? (out.url + (out.url.indexOf('?') === -1 ? '?' : '&') + 'resign=1') : out.url, 'Your document'); /* V173_RESIGN_2026_11_18 */
     }).catch(function () {});
   }
   function ghubDownloadDoc(btn, type, ticketId) {
@@ -10615,7 +10779,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
     }).then(function (got) {
       if (got.html) {
         if (type === 'receipt') { ghubSaveBlob((type || 'document') + '.html', new Blob([got.html], { type: 'text/html' })); done(); return; }
-        sb.from('document_signatures').select('signer_name,signed_at').eq('ticket_id', ticketId).eq('document_type', type).order('signed_at', { ascending: false }).limit(1)
+        sb.from('document_signatures').select('signer_name,signed_at,signature_image') /* V173_SIGNATURE_ON_LINE_2026_11_18 */.eq('ticket_id', ticketId).eq('document_type', type).order('signed_at', { ascending: false }).limit(1)
           .then(function (r) { return (r && r.data && r.data[0]) || null; }).catch(function () { return null; })
           .then(function (sig) {
             ghubSaveBlob((type || 'document') + '.html', new Blob([window.__atrSigBlockInject ? window.__atrSigBlockInject(got.html, sig, window.__atrDrawnSigGet ? window.__atrDrawnSigGet(ticketId, type) : '') : got.html], { type: 'text/html' }));
@@ -10634,7 +10798,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
     var section = type === 'warranty' ? 'warranty' : type === 'terms' ? 'terms' : type === 'media' ? 'media' : 'service-agreement';
     var old = btn.textContent; btn.textContent = 'Opening…'; btn.disabled = true;
     function done() { if (btn.textContent === 'Opening…') { btn.textContent = old; btn.disabled = false; } }
-    var sigP = (sb && ticketId) ? sb.from('document_signatures').select('signer_name,signed_at').eq('ticket_id', ticketId).eq('document_type', type).order('signed_at', { ascending: false }).limit(1)
+    var sigP = (sb && ticketId) ? sb.from('document_signatures').select('signer_name,signed_at,signature_image') /* V173_SIGNATURE_ON_LINE_2026_11_18 */.eq('ticket_id', ticketId).eq('document_type', type).order('signed_at', { ascending: false }).limit(1)
       .then(function (r) { return (r && r.data && r.data[0]) || null; }).catch(function () { return null; }) : Promise.resolve(null);
     Promise.all([
       fetch('/index.html', { credentials: 'same-origin' }).then(function (r) { if (!r.ok) throw new Error('x'); return r.text(); }),
@@ -10690,6 +10854,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
           var kind = btn.getAttribute('data-ghub-doc'), type = btn.getAttribute('data-type');
           var tid = btn.getAttribute('data-ticket') || (ghubAnchorTicket() || {}).id || null;
           if (kind === 'view') ghubPreviewDoc(type, tid);
+          if (kind === 'resign') ghubPreviewDoc(type, tid, true); /* V173_RESIGN_2026_11_18 */
           if (kind === 'download') ghubDownloadDoc(btn, type, tid);
           if (kind === 'sign-media') ghubSignMedia(btn);
           return;
@@ -10697,32 +10862,24 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
         if (e.target && e.target.id === 'ghub-sign-go') ghubSignBoth();
       });
     }
-    var head = '<p class="ghub-muted">Your documents live here in the ' + ghubHubName() + ' — nothing is emailed unless you ask for it.</p>';
-    function paint(sigs, filed) {
+    var head = '<p class="ghub-muted">These are the blank documents — read them here and sign them when you are ready. Once a document is signed, it lives on the repair ticket, under Documents.</p>'; /* V173_DOCS_SPLIT_2026_11_18 */
+    function paint(sigs) {
       ghubSigs = sigs || [];
       var anchor = ghubAnchorTicket();
       var html = head;
+      var signedCount = 0;
       GHUB_STD_DOCS.forEach(function (s) {
         var sig = ghubLatestSig(ghubSigs, s.type);
+        if (sig) { signedCount++; return; } /* V173_DOCS_SPLIT_2026_11_18 (Austin, Nov 18, 2026): a signed document leaves this panel — its signed copy lives on the repair ticket, under Documents (View, Download, Re-sign there). This panel holds the blanks only. */
         html += '<div class="ghub-docline"><strong>' + esc(s.label) + '</strong>';
-        if (sig) html += '<br><span class="ghub-signed">Signed</span> — ' + esc(sig.signer_name || '') + ', ' + esc(ghubDocDay(sig.signed_at));
-        else html += '<br><span class="ghub-muted">Waiting for your signature.</span>';
+        html += '<br><span class="ghub-muted">Waiting for your signature.</span>';
         html += '<div class="ghub-docbtns">';
         html += '<button class="btn btn-outline btn-sm" type="button" data-ghub-doc="view" data-type="' + s.type + '"' + (anchor ? '' : ' disabled') + '>View</button>';
         html += '<button class="btn btn-outline btn-sm" type="button" data-ghub-doc="download" data-type="' + s.type + '"' + (anchor ? '' : ' disabled') + '>Download</button>';
-        if (!sig && s.type === 'media' && anchor) html += '<button class="btn btn-primary btn-sm" type="button" data-ghub-doc="sign-media" data-type="media">Sign</button>';
+        if (s.type === 'media' && anchor) html += '<button class="btn btn-primary btn-sm" type="button" data-ghub-doc="sign-media" data-type="media">Sign</button>';
         html += '</div></div>';
       });
-      (filed || []).forEach(function (d) {
-        var label = d.doc_type === 'estimate' ? 'Estimate' : d.doc_type === 'invoice' ? 'Invoice' : d.doc_type === 'receipt' ? 'Receipt' : (d.file_name || d.doc_type || 'Document');
-        var sig = ghubLatestSig(ghubSigs, d.doc_type);
-        html += '<div class="ghub-docline"><strong>' + esc(d.file_name || label) + '</strong>';
-        if (sig) html += '<br><span class="ghub-signed">Signed</span> — ' + esc(sig.signer_name || '') + ', ' + esc(ghubDocDay(sig.signed_at));
-        html += '<div class="ghub-docbtns">';
-        html += '<button class="btn btn-outline btn-sm" type="button" data-ghub-doc="view" data-type="' + esc(d.doc_type) + '" data-ticket="' + esc(d.ticket_id) + '">View</button>';
-        html += '<button class="btn btn-outline btn-sm" type="button" data-ghub-doc="download" data-type="' + esc(d.doc_type) + '" data-ticket="' + esc(d.ticket_id) + '">Download</button>';
-        html += '</div></div>';
-      });
+      if (signedCount) html += '<p class="ghub-muted">Your signed documents live on the repair ticket — open My Services, pick the repair, and look under Documents.</p>'; /* V173_DOCS_SPLIT_2026_11_18 */
       if (!tickets.length) {
         html += '<p class="ghub-muted">No service requests on your account yet — your documents will appear here once you have one.</p>';
       } else if (anchor && user) {
@@ -10738,16 +10895,12 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
       }
       box.innerHTML = html;
     }
-    if (!sb || !tickets.length) { paint([], []); return; }
+    if (!sb || !tickets.length) { paint([]); return; }
     var ids = tickets.map(function (t) { return t.id; });
-    Promise.all([
-      sb.from('document_signatures').select('id,ticket_id,document_type,signer_name,signed_at').in('ticket_id', ids).order('signed_at', { ascending: false }),
-      sb.from('ticket_documents').select('id,ticket_id,doc_type,file_name,created_at').in('ticket_id', ids).order('created_at', { ascending: true })
-    ]).then(function (pair) {
-      var sigs = (pair[0] && pair[0].data) || [];
-      var filed = ((pair[1] && pair[1].data) || []).filter(function (d) { return d.doc_type === 'estimate' || d.doc_type === 'invoice' || d.doc_type === 'receipt'; });
-      paint(sigs, filed);
-    }).catch(function () { paint([], []); });
+    /* V173_DOCS_SPLIT_2026_11_18: this panel reads signatures only — the filed estimate / invoice / receipt copies used to ride along here, but signed copies live on the repair ticket now, not in this panel, so there is no second query. */
+    sb.from('document_signatures').select('id,ticket_id,document_type,signer_name,signed_at').in('ticket_id', ids).order('signed_at', { ascending: false })
+      .then(function (res) { paint((res && res.data) || []); })
+      .catch(function () { paint([]); });
   }
   /* V169_GUEST_GREETING_2026_11_18 (Austin, Nov 18, 2026): the Home
      greeting never rendered because loadAll() set `loaded = true` BEFORE
@@ -10770,7 +10923,15 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
       .then(function (r) {
         if (r && r.data) return r.data;
         return sb.from('customers').select('id,name,email,phone,address,account_number').eq('id', u.id).maybeSingle()
-          .then(function (r2) { return (r2 && r2.data) || fallback(); });
+          .then(function (r2) {
+            var row = (r2 && r2.data) || fallback();
+            /* V173_ACCOUNT_EMAIL_2026_11_18: keep the guest record in step with the sign-in email — after a confirmed email change the auth email is new but the row still has the old one. The row is in hand here (found by id), so sync it now, best-effort and silent; the next load then matches by email again. Never fires when the guest has not confirmed (old email still matches). */
+            if (row && r2 && r2.data && row.email && em && String(row.email).toLowerCase() !== String(em).toLowerCase()) {
+              try { sb.from('customers').update({ email: em }).eq('id', row.id).then(function () {}).catch(function () {}); } catch (e2) {}
+              row.email = em;
+            }
+            return row;
+          });
       })
       .catch(function () { return fallback(); });
   }
@@ -10867,8 +11028,9 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
      in-memory only, nothing stored. A reload returns to the account's real
      audience. While previewing, the Hub paints the previewed face everywhere
      paintBhubAudience reaches (tag, offers, consent prices, door label,
-     Documents head) and the greeting role reads the previewed audience, so
-     the preview is faithful. */
+     Documents head) — but the greeting badge does NOT follow the preview:
+     it always shows the staff role for staff (V173_GREETING_BADGE_2026_11_18), because the badge
+     says who is signed in, not which face is showing. */
   var ghubPreview = null; /* null = real audience; 'guest' | 'business' = staff preview */
   function ghubRealIsBusiness() {
     var t = (user && user.user_metadata && user.user_metadata.account_type) || '';
@@ -10881,12 +11043,10 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
   }
   function ghubHubName() { return ghubIsBusiness() ? 'Business Hub' : 'Guest Hub'; }
   function ghubGreetRole() {
-    /* V171_HUB_GREETING_STAFF_ROLE_2026_11_18: while previewing, the previewed audience wins
-       (faithful preview); otherwise the staff role wins over the account
-       type; non-staff keep Business / Guest as before. */
-    if (ghubPreview) return ghubPreview === 'business' ? 'Business' : 'Guest';
+    /* V173_GREETING_BADGE_2026_11_18 (Austin, Nov 18, 2026): the staff role wins over the account type AND over the preview — the badge says who is signed in, not which face is showing. v171 let the previewed audience win, so the v172 Business Hub row (which previews Business) clobbered "Super Admin" with "Business" for the whole session. Non-staff keep Business / Guest as before; until the staff-role read resolves the badge shows the audience, then it flips to the staff role and stays there through every later repaint. */
     var lbl = ghubStaffRole ? ghubStaffRoleLabel(ghubStaffRole) : '';
     if (lbl) return lbl;
+    if (ghubPreview) return ghubPreview === 'business' ? 'Business' : 'Guest';
     return ghubIsBusiness() ? 'Business' : 'Guest';
   }
   function paintGhubPreview() {
@@ -11055,14 +11215,24 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
       if (r.data) { e.checked = r.data.email_alerts !== false; t.checked = r.data.text_alerts === true; }
     }).catch(function () {});
   }
+  var ghubNotifMsgTimer = null; /* V173_NOTIF_SAVED_2026_11_18 */
   function savePrefs() {
     var e = $('acct-notif-email'), t = $('acct-notif-text');
     if (!e || !t || !cust || !sb) return;
     var row = { customer_id: cust.id, email_alerts: !!e.checked, text_alerts: !!t.checked };
+    /* V173_NOTIF_SAVED_2026_11_18: the toggles auto-save (no Save button), but the save was completely silent — write a short confirmation into #acct-notif-msg so the guest sees it saved, and clear it again shortly after. */
+    var msg = $('acct-notif-msg');
+    function say(text) {
+      if (!msg) return;
+      msg.textContent = text;
+      try { if (ghubNotifMsgTimer) clearTimeout(ghubNotifMsgTimer); } catch (e2) {}
+      ghubNotifMsgTimer = setTimeout(function () { if (msg) msg.textContent = ''; }, 3000);
+    }
     sb.from('guest_notification_prefs').select('id').eq('customer_id', cust.id).maybeSingle().then(function (r) {
-      if (r.data && r.data.id) sb.from('guest_notification_prefs').update(row).eq('id', r.data.id);
-      else sb.from('guest_notification_prefs').insert(row);
-    }).catch(function () {});
+      var p = (r.data && r.data.id) ? sb.from('guest_notification_prefs').update(row).eq('id', r.data.id) : sb.from('guest_notification_prefs').insert(row);
+      if (p && p.then) p.then(function (res) { if (res && res.error) say('Couldn’t save — please try again.'); else say('Saved.'); }).catch(function () { say('Couldn’t save — please try again.'); });
+      else say('Saved.');
+    }).catch(function () { say('Couldn’t save — please try again.'); });
   }
   window.atrGuestHubLoadPrefs = loadPrefs;
   function gate() {
@@ -11077,7 +11247,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
         btn.hidden = false; /* V172_BUSINESS_HUB_ROW_2026_11_18 */
         var bizBtn = $('acct-bizhub-btn'); if (bizBtn) bizBtn.hidden = !staff; /* V172_BUSINESS_HUB_ROW_2026_11_18 */
         /* V172_BUSINESS_HUB_ROW_2026_11_18: stash the staff role where the hub's preview helpers read it, so the row taps can set the preview synchronously — the hub's own role read may not have run yet when the account page opens. Only on a clean read: a transient error leaves the cached role alone, same as loadGhubStaffRole. */
-        if (!r.error) { ghubStaffRole = staff ? ((r.data && r.data.role) || '') : null; ghubStaffRoleUid = u.id; } /* V172_BUSINESS_HUB_ROW_2026_11_18 */
+        if (!r.error && staff && r.data && r.data.role) { ghubStaffRole = r.data.role; ghubStaffRoleUid = u.id; } else if (!r.error && !staff) { ghubStaffRole = null; ghubStaffRoleUid = u.id; } /* V173_GREETING_BADGE_2026_11_18: never stash an empty role — '' would pin ghubStaffRole to a falsy 'read' value, loadGhubStaffRole would never re-read, and the badge would stay on the audience forever. A staff row with no role leaves the cached role alone so the Hub's own read can still resolve it. */
         /* V170_ROUTING_2026_11_18: the account-page door reads the hub the account
            actually lands in — Business Hub for a business account, Guest
            Hub for a guest. Same metadata rule as the greeting. */

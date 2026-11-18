@@ -171,6 +171,7 @@
   var rawUrl = params.get('u') || '';
   var docKind = params.get('doc') || '';
   var ticketId = params.get('t') || '';
+  var vdResign = params.get('resign') === '1'; /* V173_RESIGN_2026_11_18: re-signing reopens the full sign flow for a document the guest already signed — the new signature replaces the earlier one. */
   var titleEl = document.getElementById('vd-title');
   var frameWrap = document.getElementById('vd-frame-wrap');
   var frame = document.getElementById('vd-frame');
@@ -182,6 +183,11 @@
   var signinBtn = document.getElementById('vd-signin-btn');
   var signNote = document.getElementById('vd-sign-note');
   var signText = document.getElementById('vd-sign-text');
+  /* V173_PRINT_BUTTON_2026_11_18 (Austin, Nov 18, 2026): inside the Hub overlay the parent's own Print
+     button is the only one — this viewer button would be a dead duplicate (window.print() from an
+     iframe does nothing on iPad Safari). Standalone (email link, top-level page) this button stays
+     and prints the page. */
+  if (window.parent && window.parent !== window) { var vdPrintBtn = document.getElementById('vd-print'); if (vdPrintBtn) vdPrintBtn.hidden = true; }
   var docType = 'agreement';
   var docPath = '';
   /* V169_SIGNED_DOC_2026_11_18 (Austin, Nov 18, 2026): the signature
@@ -231,11 +237,17 @@
   }
   function sigBlockHtml(row) {
     var date = new Date(row.signed_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
-    /* V169_SIGN_PAD_2026_11_18: the finger drawing, when this session has one. */
-    var imgHtml = row.sigImage ? '<img src="' + row.sigImage + '" alt="Signature" style="max-width:280px;height:auto;display:block;margin:0 0 6px;">' : '';
+    /* V173_SIGNATURE_ON_LINE_2026_11_18 (Austin, Nov 18, 2026): the signature sits ON the bottom
+       line — the stored drawing when there is one (signature_image column, or this session's pad),
+       otherwise the typed name rendered in a script hand automatically. The line is the
+       border under the signature; the "Signed by name, date" text stays alongside it. */
+    var sigImg = (row && (row.signature_image || row.sigImage)) || '';
+    var sigHtml = sigImg
+      ? '<img src="' + esc(sigImg) + '" alt="Signature" style="max-width:280px;height:auto;display:block;margin:0 0 2px;border-bottom:2px solid #1c1c1e;padding-bottom:2px;">'
+      : '<div style="font-family:\'Snell Roundhand\',\'Brush Script MT\',\'Segoe Script\',cursive;font-size:32px;line-height:1.2;display:inline-block;min-width:280px;border-bottom:2px solid #1c1c1e;padding:0 8px;">' + esc(row.signer_name) + '</div>';
     return '<section class="atr-signed-block" style="margin-top:32px;padding-top:16px;border-top:2px solid #1c1c1e;">'
-      + imgHtml
-      + '<p style="font-weight:700;margin:0 0 4px;">Signed by ' + esc(row.signer_name) + ' on ' + esc(date) + '</p>'
+      + sigHtml
+      + '<p style="font-weight:700;margin:6px 0 4px;">Signed by ' + esc(row.signer_name) + ' on ' + esc(date) + '</p>'
       + '<p style="margin:0;color:#3a3a3c;">Recorded in your ' + (vdIsBusiness ? 'Business' : 'Guest') + ' Hub account.</p></section>';
   }
   function injectSigBlock(htmlText, row) {
@@ -386,8 +398,9 @@
   }
 
   function checkSigned(session) {
-    if (!sb || !session || !ticketId) return;
-    sb.from('document_signatures').select('signer_name,signed_at')
+    /* V173_RESIGN_2026_11_18: re-signing never takes the already-signed shortcut — the gate stays closed until the guest scrolls, and the sign form stays usable, exactly as for a first sign. */
+    if (!sb || !session || !ticketId || vdResign) return;
+    sb.from('document_signatures').select('signer_name,signed_at,signature_image') /* V173_SIGNATURE_ON_LINE_2026_11_18 */
       .eq('ticket_id', ticketId).eq('document_type', sigDocType)
       .order('signed_at', { ascending: false }).limit(1)
       .then(function (res) {
@@ -402,6 +415,8 @@
        exist for it, so the sign box stays hidden here. */
     if (!ticketId || sigDocType === 'receipt' || sigDocType === 'part_order') { signBox.hidden = true; return; }
     signBox.hidden = false;
+    /* V173_RESIGN_2026_11_18: the guest already signed this one — say so plainly, and that signing again replaces the earlier signature. */
+    if (vdResign && signText) signText.textContent = 'You have already signed this document. Read it again, then sign — your new signature replaces the earlier one.';
     var session = getSiteSession();
     if (!session || !session.email) {
       /* V171_DOC_SIGNER_2026_11_18: signed-out guests still read first — the Sign in to sign
@@ -459,19 +474,28 @@
         /* The signer email is always the signed-in user's own email — the
          * database only accepts a signature whose signer email matches
          * the signed-in user, so nobody can sign for someone else. */
-        return sb.from('document_signatures').insert([{
-          ticket_id: ticketId,
-          customer_id: session.id || null,
-          document_type: sigDocType,
-          document_path: docPath || null,
-          signer_name: name,
-          signer_email: user.email
-        }]).select('signer_name,signed_at').single();
+        /* V173_RESIGN_2026_11_18: re-signing replaces the earlier signature — one row per ticket + document, never two. Delete the existing row(s) for this ticket + document first, then insert the new one; if the delete fails the new signature is NOT written, so a half-replaced signature can never leave two rows. (The guest delete policy ships in the staged document-signatures-resign-delete.sql — it must run before this path can succeed.) */
+        var writeP = vdResign
+          ? sb.from('document_signatures').delete().eq('ticket_id', ticketId).eq('document_type', sigDocType).then(function (dres) { if (dres.error) throw dres.error; })
+          : Promise.resolve();
+        return writeP.then(function () {
+          return sb.from('document_signatures').insert([{
+            ticket_id: ticketId,
+            customer_id: session.id || null,
+            document_type: sigDocType,
+            document_path: docPath || null,
+            signer_name: name,
+            signer_email: user.email,
+            signature_image: window.__vdDrawnSig || null /* V173_SIGNATURE_ON_LINE_2026_11_18: the drawn signature is stored with the row now (column added by the staged optional-signature-image.sql — it must run before the v173 publish, or this insert fails). A typed-only signature stores null and renders the name in script on the line. */
+          }]).select('signer_name,signed_at,signature_image').single();
+        });
       }).then(function (res) {
         if (res.error) throw res.error;
         var signedRow = res.data || { signer_name: name, signed_at: new Date().toISOString() };
         if (window.__vdDrawnSig) signedRow.sigImage = window.__vdDrawnSig;
         setSignedState(signedRow);
+        /* V173_RESIGN_2026_11_18: tell the parent page (the Hub overlay) a signature just landed — first sign or re-sign — so the document rows repaint with the new "Signed — name, date" without a reload. A standalone viewer has no parent listening; the post is a no-op there. */
+        try { window.parent.postMessage({ type: 'atr-doc-signed' }, window.location.origin); } catch (e) {}
       }).catch(function (err) {
         signBtn.disabled = false;
         signNote.textContent = (err && err.message) || 'That did not save. Please try again.';
@@ -480,6 +504,38 @@
     });
   }
 
+  /* V173_WARRANTY_DOC_BUTTON_2026_11_18 (Austin, Nov 18, 2026): a link inside a viewed
+     document — the Section 6 "Submit a Warranty Request" button in the 1-Year Limited
+     Warranty, and the same kind of link in the Service Agreement and Terms documents —
+     cannot navigate on its own. The document renders in this frame with no router, so
+     the click only moved the frame's own fragment and the guest never reached the form.
+     Intercept every in-document router link (a[data-page]) and hand it to the parent
+     page, which closes the overlay and routes to the working form; a standalone viewer
+     (email link, no parent) goes to the site page itself. Same-origin only, so the
+     frame document is readable here; a frame whose document is not readable keeps its
+     links untouched. */
+  function vdRouteDocLink(page) {
+    if (window.parent && window.parent !== window) {
+      try { window.parent.postMessage({ type: 'atr-doc-nav', page: page }, window.location.origin); } catch (e) { /* the parent owns routing; a failed post leaves the document as-is */ }
+      return;
+    }
+    window.location.href = '/#' + page;
+  }
+  function vdWireDocLinks() {
+    try {
+      var d = frame.contentDocument;
+      if (!d || !d.addEventListener || d.__atrDocNavWired) return;
+      d.__atrDocNavWired = true;
+      d.addEventListener('click', function (ev) {
+        var t = ev.target && ev.target.closest ? ev.target.closest('a[data-page]') : null;
+        if (!t) return;
+        var page = t.getAttribute('data-page') || '';
+        if (!page) return;
+        ev.preventDefault();
+        vdRouteDocLink(page);
+      });
+    } catch (e) { /* the frame document is not readable — links behave as before */ }
+  }
   /* V169_SIGNED_DOC_2026_11_18: the frame grows to the full document, so
      the signature block at its end is on screen and in print. */
   frame.addEventListener('load', function () {
@@ -487,6 +543,7 @@
       var d = frame.contentDocument;
       if (d && d.body) frame.style.height = d.body.scrollHeight + 'px';
     } catch (e) { /* sizing is best-effort; the frame still renders */ }
+    vdWireDocLinks(); /* V173_WARRANTY_DOC_BUTTON_2026_11_18: the frame reloads on every srcdoc set (signing re-renders it) — re-wire the in-document links each time. */
     vdCheckGate(); /* the page grew to the full document — re-check the bottom */
   });
   window.addEventListener('scroll', vdCheckGate, { passive: true });
@@ -499,6 +556,20 @@
   document.getElementById('vd-print').addEventListener('click', function () {
     try { void frame.contentDocument.body.offsetHeight; } catch (e) { /* best-effort */ }
     setTimeout(function () { window.print(); }, 300);
+  });
+  /* V173_PRINT_BUTTON_2026_11_18: the parent page (the Hub overlay) asks for the document this viewer
+     is showing, so it can print it from the top level — window.print() from this iframe does nothing
+     on iPad Safari. Answer with the frame's rendered body HTML (signature block on the line
+     included); an unreadable frame answers empty and the parent falls back. Same-origin only. */
+  window.addEventListener('message', function (e) {
+    if (!e || !e.data || e.data.type !== 'atr-doc-print-request') return;
+    if (e.origin !== window.location.origin) return;
+    var html = '';
+    try {
+      var d = frame.contentDocument;
+      if (d && d.body) html = d.body.innerHTML;
+    } catch (err) { html = ''; }
+    try { window.parent.postMessage({ type: 'atr-doc-print-html', html: html }, window.location.origin); } catch (err2) {}
   });
 
   if ((docKind === 'agreement' || docKind === 'terms' || docKind === 'warranty' || docKind === 'media') && ticketId) {

@@ -143,12 +143,14 @@
             <span class="pw-wrap"><input type="password" id="portal-login-password" autocomplete="current-password"
                    placeholder="Your password" required /><button class="pw-eye" type="button" id="portal-login-pw-eye" aria-label="Show password"><i class="fas fa-eye"></i></button></span>
           </div>
+          <!-- V173_SIGNIN_ORDER_2026_11_18 (Austin, Nov 18, 2026): the Remember-this-device control moved here — directly UNDER the Password field, inside the form, ahead of Sign In (it used to sit under Forgot your password, outside the form). Same checkbox, same id, same behavior: portal.js snapshots its state in the sign-in submit handler (noteSignInTrustChoice) and, when checked, creates the existing 30-day device trust after a successful sign-in (applySignInTrustChoice in afterMfaGate, reusing PORTAL_DEVICE_TRUST_2026_11_02's createDeviceTrust). The 30-day trust is what the Nov 2 build can actually grant — it does not save the password itself. -->
+          <div class="portal-field"><label for="portal-remember-device"><input type="checkbox" id="portal-remember-device" /> Remember this device for 30 days</label><p class="portal-muted portal-small">Save your sign-in on this device: if you have the two-step code turned on, this device skips the code for 30 days. Only check this on a device that is yours.</p></div>
           <p class="portal-error" id="portal-login-error" hidden></p>
           <button class="portal-btn portal-btn-primary portal-btn-block" id="portal-login-btn" type="submit">
             <i class="fas fa-right-to-bracket"></i> Sign In
           </button>
         </form>
-        <button class="portal-btn portal-btn-outline portal-btn-block" id="portal-forgot-btn" type="button">Forgot your password?</button><p class="portal-muted portal-small" id="portal-forgot-msg" hidden></p><!-- PORTAL_SIGNIN_LAYOUT_2026_11_03 (Austin, Nov 3, 2026): the visible remember/save control Austin asked for, placed directly UNDER the Forgot your password button. It is a plain checkbox in the login card (outside the form element, beside the Forgot button it follows); portal.js snapshots its state in the sign-in submit handler (noteSignInTrustChoice) and, when it is checked, creates the existing 30-day device trust after a successful sign-in (applySignInTrustChoice in afterMfaGate, reusing PORTAL_DEVICE_TRUST_2026_11_02's createDeviceTrust). Label uses Austin's intent in honest words: it does not save the password itself — the 30-day trust is what the Nov 2 build can actually grant. --><div class="portal-field"><label for="portal-remember-device"><input type="checkbox" id="portal-remember-device" /> Remember this device for 30 days</label><p class="portal-muted portal-small">Save your sign-in on this device: if you have the two-step code turned on, this device skips the code for 30 days. Only check this on a device that is yours.</p></div><!-- PORTAL_DEADEND_2026_10_30: reset view gains a Back to sign in exit (button after Set new password). --><!-- PORTAL_DEVICE_TRUST_2026_11_02: the forced 30-day password rotation reuses this reset view (plumbing in portal.js); the note below is shown only in forced mode. --><div id="portal-reset-view" hidden><p class="portal-muted" id="portal-reset-note" hidden>Your password is 30 days old. Set a new one to continue. This comes up every 30 days.</p><div class="portal-field"><label for="portal-reset-password">New password</label><span class="pw-wrap"><input type="password" id="portal-reset-password" autocomplete="new-password" placeholder="New password" /><button class="pw-eye" type="button" id="portal-reset-pw-eye" aria-label="Show password"><i class="fas fa-eye"></i></button></span></div><div class="portal-field"><label for="portal-reset-confirm">Confirm new password</label><span class="pw-wrap"><input type="password" id="portal-reset-confirm" autocomplete="new-password" placeholder="Confirm new password" /><button class="pw-eye" type="button" id="portal-reset-confirm-pw-eye" aria-label="Show password"><i class="fas fa-eye"></i></button></span></div><p class="portal-error" id="portal-reset-error" hidden></p><button class="portal-btn portal-btn-primary portal-btn-block" id="portal-reset-btn" type="button">Set new password</button><button class="portal-btn portal-btn-outline portal-btn-block" id="portal-reset-back-btn" type="button">Back to sign in</button></div><!-- PORTAL_MFA_2026_11_02: two-step sign-in check. After a correct password, staff with an authenticator app enrolled land here; the dashboard does not load until the code verifies. "Back to sign in" signs the session out and returns to the plain sign-in form. --><div id="portal-mfa-view" hidden><h2 class="portal-h2"><i class="fas fa-shield-halved"></i> Two-step sign-in</h2><p class="portal-muted">Open your authenticator app and enter the 6-digit code for Austin's Tech Repair Group. <a href="https://apps.apple.com/us/app/idme-authenticator/id1446335066" target="_blank" rel="noopener">Get the ID.me Authenticator app</a> &middot; <a href="https://play.google.com/store/apps/details?id=me.id.auth" target="_blank" rel="noopener">Get it on Google Play</a></p><div class="portal-field"><label for="portal-mfa-code">6-digit code</label><input type="text" id="portal-mfa-code" class="portal-mfa-code-input" inputmode="numeric" autocomplete="one-time-code" maxlength="7" placeholder="123456" /></div><p class="portal-error" id="portal-mfa-error" hidden></p><button class="portal-btn portal-btn-primary portal-btn-block" id="portal-mfa-verify-btn" type="button"><i class="fas fa-circle-check"></i> Verify and continue</button><button class="portal-btn portal-btn-outline portal-btn-block" id="portal-mfa-newcheck-btn" type="button">Start a new check</button><button class="portal-btn portal-btn-outline portal-btn-block" id="portal-mfa-back-btn" type="button">Back to sign in</button></div><!-- PORTAL_SIGNIN_LAYOUT_2026_11_03 (Austin, Nov 3, 2026): "Back to site" as a real BUTTON at the BOTTOM of the sign-in card, where Austin asked for it — this replaces the plain text link that used to sit in this same last spot (same target: the public site home, https://austinstechrepairgroup.com/, and the same portal-btn outline styling as the top bar's Back to site). --><a class="portal-btn portal-btn-outline portal-btn-block" href="https://austinstechrepairgroup.com/">Back to site</a>
+        <button class="portal-btn portal-btn-outline portal-btn-block" id="portal-forgot-btn" type="button">Forgot your password?</button><p class="portal-muted portal-small" id="portal-forgot-msg" hidden></p><!-- V173_SIGNIN_ORDER_2026_11_18 (Austin, Nov 18, 2026): the Remember-this-device control moved up — it now sits directly under the Password field, inside the form, ahead of Sign In. Forgot stays here, after Sign In; Back to site stays last. --><!-- PORTAL_DEADEND_2026_10_30: reset view gains a Back to sign in exit (button after Set new password). --><!-- PORTAL_DEVICE_TRUST_2026_11_02: the forced 30-day password rotation reuses this reset view (plumbing in portal.js); the note below is shown only in forced mode. --><div id="portal-reset-view" hidden><p class="portal-muted" id="portal-reset-note" hidden>Your password is 30 days old. Set a new one to continue. This comes up every 30 days.</p><div class="portal-field"><label for="portal-reset-password">New password</label><span class="pw-wrap"><input type="password" id="portal-reset-password" autocomplete="new-password" placeholder="New password" /><button class="pw-eye" type="button" id="portal-reset-pw-eye" aria-label="Show password"><i class="fas fa-eye"></i></button></span></div><div class="portal-field"><label for="portal-reset-confirm">Confirm new password</label><span class="pw-wrap"><input type="password" id="portal-reset-confirm" autocomplete="new-password" placeholder="Confirm new password" /><button class="pw-eye" type="button" id="portal-reset-confirm-pw-eye" aria-label="Show password"><i class="fas fa-eye"></i></button></span></div><p class="portal-error" id="portal-reset-error" hidden></p><button class="portal-btn portal-btn-primary portal-btn-block" id="portal-reset-btn" type="button">Set new password</button><button class="portal-btn portal-btn-outline portal-btn-block" id="portal-reset-back-btn" type="button">Back to sign in</button></div><!-- PORTAL_MFA_2026_11_02: two-step sign-in check. After a correct password, staff with an authenticator app enrolled land here; the dashboard does not load until the code verifies. "Back to sign in" signs the session out and returns to the plain sign-in form. --><div id="portal-mfa-view" hidden><h2 class="portal-h2"><i class="fas fa-shield-halved"></i> Two-step sign-in</h2><p class="portal-muted">Open your authenticator app and enter the 6-digit code for Austin's Tech Repair Group. <a href="https://apps.apple.com/us/app/idme-authenticator/id1446335066" target="_blank" rel="noopener">Get the ID.me Authenticator app</a> &middot; <a href="https://play.google.com/store/apps/details?id=me.id.auth" target="_blank" rel="noopener">Get it on Google Play</a></p><div class="portal-field"><label for="portal-mfa-code">6-digit code</label><input type="text" id="portal-mfa-code" class="portal-mfa-code-input" inputmode="numeric" autocomplete="one-time-code" maxlength="7" placeholder="123456" /></div><p class="portal-error" id="portal-mfa-error" hidden></p><button class="portal-btn portal-btn-primary portal-btn-block" id="portal-mfa-verify-btn" type="button"><i class="fas fa-circle-check"></i> Verify and continue</button><button class="portal-btn portal-btn-outline portal-btn-block" id="portal-mfa-newcheck-btn" type="button">Start a new check</button><button class="portal-btn portal-btn-outline portal-btn-block" id="portal-mfa-back-btn" type="button">Back to sign in</button></div><!-- PORTAL_SIGNIN_LAYOUT_2026_11_03 (Austin, Nov 3, 2026): "Back to site" as a real BUTTON at the BOTTOM of the sign-in card, where Austin asked for it — this replaces the plain text link that used to sit in this same last spot (same target: the public site home, https://austinstechrepairgroup.com/, and the same portal-btn outline styling as the top bar's Back to site). --><a class="portal-btn portal-btn-outline portal-btn-block" href="https://austinstechrepairgroup.com/">Back to site</a>
       </div>
     </section>
 
@@ -392,6 +394,9 @@
           <h3 class="portal-h3">Your day</h3>
         </div>
         <div id="portal-home-yourday"><p class="portal-muted">Loading&hellip;</p></div>
+
+        <!-- V173_CELEBRATIONS_HOME_2026_11_18 (Austin, Nov 18, 2026): Celebrations moved here from the Guest panel — guest birthdays in the next 30 days live on Home now, so the guest list is the first thing on the Guest panel. Same block, same 30-day window, same read-only list. -->
+        <div id="portal-celebrations"></div>
 
         <!-- HUB_HOME_2026_11_09 (v62): TIPS OF THE DAY — one repair tip and one safety tip, the same pair for the whole team all day, turning over each morning from public.portal_home_tips. The whole section hides when the bank has no active tip to show (never a placeholder). Admin+ manages the bank in-panel below. Logic: loadHomeTips in portal.js. -->
         <div id="portal-home-tips-section">
@@ -976,7 +981,6 @@
           <input type="search" id="portal-cust-search" placeholder="Search name or email&hellip;" aria-label="Search guests" />
         </div>
         <p class="portal-muted portal-small">Delete removes the guest account only, and asks you to confirm first. If a guest has tickets or orders linked, the delete is blocked and you will see a message.</p>
-        <div id="portal-celebrations"></div>
         <div id="portal-customer-list"><p class="portal-muted">Loading guests&hellip;</p></div>
       </div>
 
@@ -4617,7 +4621,7 @@
                 (guidesIsAdmin ? '<button type="button" class="portal-guide-del' + (confirming ? ' confirming' : '') + '" data-guide-del="' + esc(g.id) + '">' +
                 (confirming ? 'Confirm delete?' : 'Delete') + '</button>' : '')) +
           '</p>' +
-          (g.builtin ? '<details class="portal-guide-detail"><summary>Read the guide — volts, amps, watts</summary>' + USB_TESTER_DETAIL_HTML + '</details>' : '') + '</article>';
+          (g.builtin ? '<details class="portal-guide-detail"><summary>' + esc(g.detailSummary || 'Read the guide') + '</summary>' + (g.detailHtml || '') + '</details>' : '') + '</article>'; /* V173_GUIDES_2026_11_18: the builtin detail is generic now — every built-in guide carries its own summary + HTML (detailSummary/detailHtml), so the USB tester and the four new guides all render through this one branch. */
       }).join('');
     }
 
@@ -4644,6 +4648,83 @@
       '<li><b>Volts drop the second you plug in:</b> something is shorted or the connection is bad.</li></ul>' +
       '<h4>Your charger label, decoded</h4>' +
       '<p><b>5V × 3A = 15W</b> &nbsp;·&nbsp; <b>9V × 2.22A = 20W</b> &nbsp;·&nbsp; <b>12V × 1.67A = 20W</b></p>';
+    /* V173_GUIDES_2026_11_18 (Austin, Nov 18, 2026): the USB tester entry now carries its detail through the generic builtin fields — same summary, same HTML, so it renders exactly as before. */
+    USB_TESTER_GUIDE.detailSummary = 'Read the guide — volts, amps, watts';
+    USB_TESTER_GUIDE.detailHtml = USB_TESTER_DETAIL_HTML;
+
+    /* V173_GUIDES_2026_11_18 (Austin, Nov 18, 2026): four more built-in technician guides, same pattern as the USB tester — built-in objects + detail HTML, prepended on every load so they search and filter exactly like filed guides. Staff only, Associate Hub Guides tab only: nothing here touches index.html or the public Help Guides. Guide 2 is the refined Workshop Safety & ESD guide (ESD + chemicals & harsh abrasives + soldering safety, Austin three rules verbatim); soldering technique stays in guide 4. Categories reuse the existing filter options. Diagrams are repo-root PNGs beside portal.html; the text is real HTML too, so each guide still reads if its image ever fails. */
+    var MULTIMETER_DETAIL_HTML =
+      '<img class="portal-guide-diagram" src="multimeter-diagram.png" alt="Diagram: a multimeter with its dial positions labeled, red and black leads on a battery" />' +
+      '<h4>What it measures</h4>' +
+      '<p><b>Volts (V) — the pressure in the circuit.</b> V with a straight line is DC — batteries, chargers, boards. V with a wavy line is AC — wall power.</p>' +
+      '<p><b>Amps (A) — how much current is flowing.</b> Amps is the only setting where the red lead moves to the A jack.</p>' +
+      '<p><b>Ohms — resistance.</b> High ohms means the path resists; near zero means a straight wire or a short.</p>' +
+      '<p><b>Continuity — the beep.</b> Beep means connected. OL on the screen means open — no connection at all.</p>' +
+      '<h4>The dial, decoded</h4>' +
+      '<p>V with a straight line is DC. V with a wavy line is AC. The omega sign is ohms. The sound-wave mark is the continuity beep. Start on the highest range and step down — never guess low.</p>' +
+      '<h4>The leads</h4>' +
+      '<p>Black lead stays in COM, always. Red lead goes in the V-ohm jack for volts, ohms and continuity, and in the A jack only when you measure amps.</p>' +
+      '<h4>How to test</h4>' +
+      '<ul><li><b>Charger:</b> DC volts across + and - — compare with the label. Right volts means the charger is fine.</li>' +
+      '<li><b>Cable:</b> continuity end to end — beep is good, OL is a broken wire inside.</li>' +
+      '<li><b>Battery:</b> DC volts — a healthy phone battery reads near its rated volts, not near zero.</li>' +
+      '<li><b>Fuse:</b> continuity across it — beep means good, OL means blown.</li></ul>' +
+      '<h4>Never do this</h4>' +
+      '<ul><li>Never measure amps across a live circuit the wrong way — it blows the meter fuse.</li>' +
+      '<li>Never measure resistance on a live circuit.</li>' +
+      '<li>Never touch the metal tips while measuring.</li>' +
+      '<li>Never guess a low range first — start high.</li></ul>';
+    var MULTIMETER_GUIDE = { id: 'builtin-multimeter', title: 'How to use a multimeter', device: 'All devices', category: 'Board-Level', kind: 'internal', tags: 'multimeter, volts, amps, ohms, continuity, meter, leads, dial', notes: 'The meter that tells you what the power is really doing — volts, amps, ohms and continuity, in plain words.', builtin: true, detailSummary: 'Read the guide — volts, amps, ohms, continuity', detailHtml: MULTIMETER_DETAIL_HTML };
+    var WORKSHOP_SAFETY_DETAIL_HTML =
+      '<img class="portal-guide-diagram" src="esd-diagram.png" alt="Diagram: a safe bench — wrist strap, grounded mat, solder fan, air purifier and goggles" />' +
+      '<h4>Part 1 — ESD: static kills boards you cannot see</h4>' +
+      '<p><b>Static is charge building up on you — and it jumps to the board.</b> The damage is invisible: a board can die days later and still look fine.</p>' +
+      '<p>Wrist strap on, grounded. Mat grounded, board on the mat. Touch grounded metal first. No carpet, no sweaters. Boards live in anti-static bags when they are not on the mat. Hold boards by the edges — never touch chips or pins.</p>' +
+      '<h4>Part 2 — Chemicals and harsh abrasives</h4>' +
+      '<p><b>Read the label first.</b> Gloves on, eye protection on, air moving. Keep chemicals off skin and out of eyes. Wash your hands after. Store them upright and closed, away from heat.</p>' +
+      '<h4>Part 3 — Soldering safety</h4>' +
+      '<p><b>Austin rules — the solder fan (fume extractor) ON, the air purifier ON, protective goggles ON when soldering.</b></p>' +
+      '<ul><li><b>Solder fan (fume extractor) ON.</b></li>' +
+      '<li><b>Air purifier ON.</b></li>' +
+      '<li><b>Protective goggles ON.</b></li></ul>' +
+      '<p>Do not breathe the smoke. Wash your hands after — solder has lead. The iron is hot: treat it that way. Rest the iron in its stand, never leave it on the bench.</p>' +
+      '<h4>Bench check — before every job</h4>' +
+      '<ul><li><b>Strap on and grounded?</b> If not, the board is unprotected.</li>' +
+      '<li><b>Mat grounded, board on the mat?</b> Boards live in anti-static bags when they are not on the mat.</li>' +
+      '<li><b>Fan and purifier on?</b> If the smoke is in your face, the fan is not doing its job.</li>' +
+      '<li><b>Goggles on before the iron heats?</b> Solder spits. Eyes first, always.</li>' +
+      '<li><b>Chemicals read, gloves on?</b> If you have not read the label, you have not started.</li></ul>';
+    var WORKSHOP_SAFETY_GUIDE = { id: 'builtin-workshop-safety-esd', title: 'Workshop Safety & ESD', device: 'All devices', category: 'General', kind: 'internal', tags: 'esd, static, safety, wrist strap, mat, chemicals, goggles, fume extractor, air purifier, soldering safety', notes: 'Static, chemicals and soldering smoke — the safety setup that keeps boards and people whole.', builtin: true, detailSummary: 'Read the guide — ESD, chemicals, soldering safety', detailHtml: WORKSHOP_SAFETY_DETAIL_HTML };
+    var BATTERY_SAFETY_DETAIL_HTML =
+      '<img class="portal-guide-diagram" src="battery-safety-diagram.png" alt="Diagram: a swollen battery next to a normal battery, with do and do-not marks" />' +
+      '<h4>A swollen battery means stop</h4>' +
+      '<p><b>Screen lifting, case bulging, battery soft or puffed — stop work right there.</b> Never puncture, press or bend it. Never charge it. Never put it back in the device.</p>' +
+      '<p>Gloves and eye protection on. Isolate it somewhere fire-safe — a metal tray, a concrete floor, away from anything that burns. Keep it cool and dry. Tell Austin right away.</p>' +
+      '<h4>If it vents or smokes</h4>' +
+      '<p><b>A lithium fire gets no water.</b> Get it outside if it is safe to do so. Clear the room. Call the fire service. Do not breathe the smoke. Get out first, deal with the battery second.</p>' +
+      '<h4>Everyday battery rules</h4>' +
+      '<ul><li>Never puncture or bend any battery — swollen or not, the inside is live chemistry.</li>' +
+      '<li>Never charge a damaged or swollen battery — charging is what pushes it over the edge.</li>' +
+      '<li>Keep batteries away from heat and metal tools — heat and shorts are how fires start.</li>' +
+      '<li>Never leave a charging battery alone on a soft surface.</li>' +
+      '<li>Never bin a battery — recyclers take them, bins do not.</li></ul>';
+    var BATTERY_SAFETY_GUIDE = { id: 'builtin-battery-safety', title: 'Battery safety — swollen, hot or damaged batteries', device: 'All devices', category: 'Battery', kind: 'internal', tags: 'battery, swollen, lithium, fire, safety, puncture, vent', notes: 'A swollen battery means stop. What to do, what never to do, and what a lithium fire needs.', builtin: true, detailSummary: 'Read the guide — swollen batteries and lithium fires', detailHtml: BATTERY_SAFETY_DETAIL_HTML };
+    var SOLDERING_DETAIL_HTML =
+      '<img class="portal-guide-diagram" src="soldering-diagram.png" alt="Diagram: a soldering iron on a joint, a good shiny joint next to a dull cold joint" />' +
+      '<h4>The setup</h4>' +
+      '<p><b>Temperature around 320 to 350 C</b> for most phone and board work. Clean tip — wipe it and tin it. A shiny tip transfers heat; a black tip does not. Flux first — flux cleans the joint so solder flows where it should.</p>' +
+      '<h4>The joint</h4>' +
+      '<p><b>Heat the joint, not the solder.</b> Touch the iron to the pad and the pin together, then feed solder into the joint. A good joint is shiny, smooth, a gentle cone.</p>' +
+      '<p>Dull, cracked or blobby is a cold joint — redo it. It will fail later if you leave it.</p>' +
+      '<h4>Removal</h4>' +
+      '<p><b>Wick (braid) for removal:</b> lay the braid on the joint, heat through it, the solder wicks up into the braid. A pump clears bigger blobs. Never overheat the board — lifted pads do not come back.</p>' +
+      '<h4>Good joint, bad joint</h4>' +
+      '<ul><li><b>Good:</b> shiny, smooth, cone-shaped, flows onto the pad and the pin.</li>' +
+      '<li><b>Cold joint:</b> dull, grainy, cracked or blobby — heat it again with fresh flux, or wick it off and start over.</li>' +
+      '<li><b>Too much solder:</b> a ball that bridges to the next pad — wick the extra off.</li>' +
+      '<li><b>Too little heat:</b> solder sits on top instead of flowing in — the joint was never hot enough.</li></ul>' +
+      '<p>Safety lives in the Workshop Safety &amp; ESD guide — fan ON, purifier ON, goggles ON. The iron lives in its stand, never on the bench.</p>';
+    var SOLDERING_GUIDE = { id: 'builtin-soldering-basics', title: 'Soldering basics — clean joints that hold', device: 'All devices', category: 'Board-Level', kind: 'internal', tags: 'soldering, iron, flux, joint, wick, braid, tip, cold joint', notes: 'Temperature, clean tip, flux and the joint itself — the technique half. Safety lives in the Workshop Safety & ESD guide.', builtin: true, detailSummary: 'Read the guide — temperature, tip, flux, joints', detailHtml: SOLDERING_DETAIL_HTML };
 
     function loadGuides(force) {
       var list = $('portal-guides-list');
@@ -4655,7 +4736,7 @@
         .then(function (res) {
           if (res.error) { list.innerHTML = '<p class="portal-error">Couldn&rsquo;t load guides: ' + esc(res.error.message) + '</p>'; return; }
           loaded = true;
-          allGuides = [USB_TESTER_GUIDE].concat(res.data || []);
+          allGuides = [USB_TESTER_GUIDE, MULTIMETER_GUIDE, WORKSHOP_SAFETY_GUIDE, BATTERY_SAFETY_GUIDE, SOLDERING_GUIDE].concat(res.data || []); /* V173_GUIDES_2026_11_18: all five built-ins prepend on every load, so the four new guides search and filter exactly like the USB tester. */
           renderGuides();
         })
         .catch(function () { list.innerHTML = '<p class="portal-error">Couldn&rsquo;t load guides. Check your connection and hit Refresh.</p>'; });
@@ -5689,7 +5770,7 @@
           ups.sort(function (a, b) { return a.u.days - b.u.days; });
           var head = '<div class="portal-card p3-celeb"><p class="portal-card-title"><i class="fas fa-cake-candles"></i> Celebrations &mdash; birthdays in the next 30 days</p>';
           if (!ups.length) {
-            box.innerHTML = head + '<p class="portal-card-meta">No guest birthdays coming up. Birthdays are added on each guest card below &mdash; or by the guest from their account page on the website.</p></div>';
+            box.innerHTML = head + '<p class="portal-card-meta">No guest birthdays coming up. Birthdays are added on each guest card &mdash; or by the guest from their account page on the website. /* V173_CELEBRATIONS_HOME_2026_11_18: below made sense only while the block sat above the guest list; on Home the cards are on the Guest panel. */</p></div>';
             return;
           }
           var rows = ups.map(function (x) {
@@ -5711,7 +5792,7 @@
         var t = e.target;
         while (t && t !== document) {
           if (t.getAttribute) {
-            if (t.getAttribute('data-tab') === 'customers') { renderCelebrations(); return; }
+            if (t.getAttribute('data-tab') === 'home') { renderCelebrations(); return; } /* V173_CELEBRATIONS_HOME_2026_11_18: the block lives on Home now, so it re-renders when Home opens (it still renders once at boot, and still re-renders 900ms after a birthday save). */
             if (t.getAttribute('data-bday-save')) { window.setTimeout(renderCelebrations, 900); return; }
           }
           t = t.parentNode;
@@ -6597,7 +6678,13 @@ function pbCategoryOf(brand, device){
     if (d.indexOf('Surface Pro') === 0) return 'Tablets';
     return 'Computers';
   }
-  if (brand === 'Sony' || brand === 'Nintendo' || brand === 'Valve') return 'Gaming Consoles';
+  if (brand === 'Sony'){
+    /* V173_SONY_CATEGORY_2026_11_18 (Austin, Nov 18, 2026): Sony is device-driven like Apple / Samsung / Google / Microsoft — the old brand lump forced every Sony row into Gaming Consoles, so the Xperia phones showed under "Sony Gaming Consoles". Every Sony row in the live book is a phone (Xperia, 49 rows); PlayStation consoles live under their own PlayStation brand. An Xperia goes to Phones; a PlayStation device sitting under Sony (none in the book today) stays Gaming Consoles; anything else falls to the generic derivation. */
+    if (d.indexOf('Xperia') === 0) return 'Phones';
+    if (d.indexOf('PlayStation') > -1) return 'Gaming Consoles';
+    return pbCategoryGeneric(d);
+  }
+  if (brand === 'Nintendo' || brand === 'Valve') return 'Gaming Consoles';
   if (brand === 'Fitbit' || brand === 'Garmin' || brand === 'Fossil' || brand === 'Amazfit') return 'Smartwatches';
   if (brand === 'Motorola') return 'Phones'; /* PB_TILES_CLEANUP_2026_11_06: new make — every Motorola row in the book is a phone (Moto G / Edge / Razr) */
   if (brand === 'Services') return null;
@@ -6607,7 +6694,7 @@ function pbCategoryOf(brand, device){
  * the seed is stored in this order; the map also sorts rows that
  * arrive later from the live table so the list can never fall
  * back into a mixed-up pile. Unknown devices sort after, by name. */
-var PB_DEVICE_ORDER = {"Apple":["iPhone 8 / 8 Plus","iPhone X / XS / XR","iPhone SE (2020 / 2022)","iPhone 11","iPhone 12","iPhone 13","iPhone 14","iPhone 15","iPhone 16","iPhone 16e","iPhone 17","iPhone 17 Pro","iPhone 17 Pro Max","iPhone Air","iPhone 17e","iPhone 18","iPhone 18 Pro","iPhone 18 Pro Max","iPad 5th / 6th gen","iPad 7th / 8th / 9th gen","iPad 10th gen","iPad 11th gen","iPad mini","iPad Air","iPad Pro 11-inch","iPad Pro 12.9-inch","MacBook Air","MacBook Pro","iMac","Apple Watch Series","Apple Watch SE","Apple Watch Ultra"],"Samsung":["Galaxy A13 / A14 / A15","Galaxy A16 / A17","Galaxy A26","Galaxy A34 / A54 / A55","Galaxy A36 / A56","Galaxy S9 / S9 Plus","Galaxy S10 / S10 Plus / S10e","Galaxy Note 10 / Note 10 Plus","Galaxy Note 20","Galaxy S20 / S21","Galaxy S20 Ultra / S21 Ultra","Galaxy S22 / S23","Galaxy S22 Ultra / S23 Ultra","Galaxy S21 FE / S23 FE","Galaxy S24 / S25","Galaxy S24 FE / S25 FE","Galaxy S24 Ultra / S25 Ultra","Galaxy S26","Galaxy S26 Ultra","Galaxy Z Flip / Flip 5G","Galaxy Z Flip3 / Flip4","Galaxy Z Flip5 / Flip6","Galaxy Z Flip7 / Flip8","Galaxy Z Fold / Fold2","Galaxy Z Fold3 / Fold4","Galaxy Z Fold5 / Fold6","Galaxy Z Fold7 / Fold8","Galaxy Tab A","Galaxy Tab S","Galaxy Watch"],"Google":["Pixel 6 / 6a","Pixel 7 / 7a","Pixel 8 / 8a","Pixel 9 / 9a","Pixel 10 / 10a","Pixel 11 / 11a","Pixel Fold / 9 Pro Fold","Pixel Tablet","Chromebook","Pixel Watch"],"Motorola":["Moto G (2024 / 2025)","Moto G Power","Moto G Stylus","Moto Edge","Motorola Razr / Razr+"],"Microsoft":["Surface Pro","Surface Laptop","Surface Book","Windows Laptop","Windows Desktop","All-in-One PC","Gaming PC","Xbox One","Xbox Series X / S"],"Sony":["PlayStation 4","PlayStation 5","PlayStation 5 Pro"],"Nintendo":["Nintendo Switch","Nintendo Switch OLED","Nintendo Switch 2"],"Valve":["Steam Deck"],"Fitbit":["Fitbit"],"Garmin":["Garmin"],"Fossil":["Fossil / Wear OS"],"Amazfit":["Amazfit"],"Services":["Visit fee — known repair (no diagnostics)","Visit fee — with diagnostics","Internet cabling - Per drop","Internet cabling - Wall plate","Internet cabling - Attic / crawl run","Network install - Router setup","Network install - Access point","Network install - Switch setup","Network install - Whole-home Wi-Fi","Website build - Basic","Website build - Business","Website build - E-commerce","Website update / fix"]};
+var PB_DEVICE_ORDER = {"Apple":["iPhone 8 / 8 Plus","iPhone X / XS / XR","iPhone SE (2020 / 2022)","iPhone 11","iPhone 12","iPhone 13","iPhone 14","iPhone 15","iPhone 16","iPhone 16e","iPhone 17","iPhone 17 Pro","iPhone 17 Pro Max","iPhone Air","iPhone 17e","iPhone 18","iPhone 18 Pro","iPhone 18 Pro Max","iPad 5th / 6th gen","iPad 7th / 8th / 9th gen","iPad 10th gen","iPad 11th gen","iPad mini","iPad Air","iPad Pro 11-inch","iPad Pro 12.9-inch","MacBook Air","MacBook Pro","iMac","Apple Watch Series","Apple Watch SE","Apple Watch Ultra"],"Samsung":["Galaxy A13 / A14 / A15","Galaxy A16 / A17","Galaxy A26","Galaxy A34 / A54 / A55","Galaxy A36 / A56","Galaxy S9 / S9 Plus","Galaxy S10 / S10 Plus / S10e","Galaxy Note 10 / Note 10 Plus","Galaxy Note 20","Galaxy S20 / S21","Galaxy S20 Ultra / S21 Ultra","Galaxy S22 / S23","Galaxy S22 Ultra / S23 Ultra","Galaxy S21 FE / S23 FE","Galaxy S24 / S25","Galaxy S24 FE / S25 FE","Galaxy S24 Ultra / S25 Ultra","Galaxy S26","Galaxy S26 Ultra","Galaxy Z Flip / Flip 5G","Galaxy Z Flip3 / Flip4","Galaxy Z Flip5 / Flip6","Galaxy Z Flip7 / Flip8","Galaxy Z Fold / Fold2","Galaxy Z Fold3 / Fold4","Galaxy Z Fold5 / Fold6","Galaxy Z Fold7 / Fold8","Galaxy Tab A","Galaxy Tab S","Galaxy Watch"],"Google":["Pixel 6 / 6a","Pixel 7 / 7a","Pixel 8 / 8a","Pixel 9 / 9a","Pixel 10 / 10a","Pixel 11 / 11a","Pixel Fold / 9 Pro Fold","Pixel Tablet","Chromebook","Pixel Watch"],"Motorola":["Moto G (2024 / 2025)","Moto G Power","Moto G Stylus","Moto Edge","Motorola Razr / Razr+"],"Microsoft":["Surface Pro","Surface Laptop","Surface Book","Windows Laptop","Windows Desktop","All-in-One PC","Gaming PC","Xbox One","Xbox Series X / S"],"Sony":["Xperia 1 IV","Xperia 1 V","Xperia 1 VI","Xperia 1 VII","Xperia 5 IV","Xperia 5 V","Xperia 10 VI"], /* V173_SONY_CATEGORY_2026_11_18: the live book's Sony rows are all Xperia phones (7 models, seed order: 1-series IV-VII, then 5-series IV-V, then 10 VI) — the old list named PlayStation consoles that live under their own brand. */"Nintendo":["Nintendo Switch","Nintendo Switch OLED","Nintendo Switch 2"],"Valve":["Steam Deck"],"Fitbit":["Fitbit"],"Garmin":["Garmin"],"Fossil":["Fossil / Wear OS"],"Amazfit":["Amazfit"],"Services":["Visit fee — known repair (no diagnostics)","Visit fee — with diagnostics","Internet cabling - Per drop","Internet cabling - Wall plate","Internet cabling - Attic / crawl run","Network install - Router setup","Network install - Access point","Network install - Switch setup","Network install - Whole-home Wi-Fi","Website build - Basic","Website build - Business","Website build - E-commerce","Website update / fix"]};
 function pbDeviceOrderIdx(brand, device){
   var list = PB_DEVICE_ORDER[brand] || [];
   var i = list.indexOf(device);
@@ -6985,7 +7072,7 @@ function pbNavRowHtml(attrs, label, count){
 function pbNavListHtml(rowsHtml){
   return '<div class="pb-nav-list">' + rowsHtml + '</div>';
 }
-var PB_BRAND_ICONS = { 'Apple': 'fa-brands fa-apple', 'Samsung': 'fa-solid fa-mobile-screen', 'Google': 'fa-brands fa-google', 'Motorola': 'fa-solid fa-mobile', 'Microsoft': 'fa-brands fa-windows', 'Sony': 'fa-brands fa-playstation', 'Nintendo': 'fa-solid fa-gamepad', 'Valve': 'fa-brands fa-steam', 'Fitbit': 'fa-solid fa-heart-pulse', 'Garmin': 'fa-solid fa-compass', 'Fossil': 'fa-solid fa-clock', 'Amazfit': 'fa-solid fa-stopwatch', 'Services': 'fa-solid fa-screwdriver-wrench' };
+var PB_BRAND_ICONS = { 'Apple': 'fa-brands fa-apple', 'Samsung': 'fa-solid fa-mobile-screen', 'Google': 'fa-brands fa-google', 'Motorola': 'fa-solid fa-mobile', 'Microsoft': 'fa-brands fa-windows', 'Sony': 'fa-solid fa-mobile-screen', 'PlayStation': 'fa-brands fa-playstation', /* V173_SONY_ICONS_2026_11_18: the PlayStation logo belongs to the PlayStation tile — Sony wore it while PlayStation fell back to the plain tag. Sony takes the phone icon, same as Samsung. */ 'Nintendo': 'fa-solid fa-gamepad', 'Valve': 'fa-brands fa-steam', 'Fitbit': 'fa-solid fa-heart-pulse', 'Garmin': 'fa-solid fa-compass', 'Fossil': 'fa-solid fa-clock', 'Amazfit': 'fa-solid fa-stopwatch', 'Services': 'fa-solid fa-screwdriver-wrench' };
 function pbTilesHtml(){
   var html = '<div class="p2-book-tiles">';
   PB_BRANDS.forEach(function(brand){

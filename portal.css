@@ -39,13 +39,14 @@
    QUICK ACTIONS heads the buttons row wearing the pill's own styling,
    on the line the pill used to occupy above the buttons; at wide
    widths the header is a single row with no such line, so the label
-   is hidden there. On phones the brand and pill shrink a step so the
-   pair shares one line. */
+   was hidden there until v173 removed the hide (Austin, Nov 18, 2026:
+   labels stay at every width — see V173_LABELS_STAY_2026_11_18). On phones the brand
+   and pill shrink a step so the pair shares one line. */
 .portal-brandline { display: inline-flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; min-width: 0; }
 .portal-brandline .portal-brand { white-space: nowrap; }
 .portal-brandline .portal-topbar-tag { white-space: nowrap; flex: none; }
 .portal-quickactions-label { flex-basis: 100%; }
-@media (min-width: 921px) { .portal-quickactions-label { display: none; } }
+/* V173_LABELS_STAY_2026_11_18 (Austin, Nov 18, 2026): the 921px hide is gone — the QUICK ACTIONS label shows at every width now, matching the Guest Hub label (.ghub-qa-label, which has no such hide). Same styling (flex-basis:100% takes its own row above the buttons; dark-mode orange #E07B2A with 2px line, untouched). The old rule was: @media (min-width: 921px) { .portal-quickactions-label { display: none; } } */
 @media (max-width: 920px) {
   .portal-brand { font-size: 0.95rem; }
   .portal-topbar-tag { font-size: 0.7rem; }
@@ -591,6 +592,8 @@ body.portal-scroll-locked{position:fixed;left:0;right:0;width:100%;overflow:hidd
 .tk-acc-head.tk-acc-open .tk-acc-chev { transform: rotate(180deg); }
 .tk-acc-body { overflow: hidden; transition: height .22s ease; }
 .tk-acc-body[hidden] { display: none; }
+/* V173_ADD_GUEST_COLLAPSED_2026_11_18 (Austin, Nov 18, 2026): the closed Add Guest form must take no space — .p2-form{display:flex} in portal.html beats the browser's [hidden] rule, so without this the form still rendered and pushed the list down. */
+#portal-cust-add-form[hidden] { display: none; }
 /* end PORTAL_TICKET_ACCORDION_2026_11_02 */
 
 /* CHECKIN_COLLAPSE_2026_11_04: the Check-In form's folding sections.
