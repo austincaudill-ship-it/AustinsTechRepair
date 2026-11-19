@@ -8110,7 +8110,7 @@
   var ASSISTANT_AUTO_TEXT = "Thanks for messaging us! Your message is in, and an associate will be with you shortly.";
   var ASSISTANT_OFFER_TEXT = "I may be able to help in the meantime \u2014 I can check a price, or answer questions about diagnostics, fees, and our warranty. What do you need?";
   var ASSISTANT_CONNECTED_TEXT = "You're connected \u2014 we've let the team know you'd like to speak to an associate. An associate will reply right here shortly, and you can keep typing in the meantime.";
-  var ASSISTANT_BOOK_TEXT = "Booking lives right here in your account \u2014 open Schedule a service and your request comes to us with your details already attached. Is there anything else I can answer first?";
+  var ASSISTANT_BOOK_TEXT = "Booking lives right here in your account \u2014 open Request an estimate and your request comes to us with your details already attached. Is there anything else I can answer first?";
   var ASSISTANT_PRIVACY_NOTE = "You're chatting with our automated assistant. This chat stays private unless you ask for an associate \u2014 tap Speak to an associate any time and a person takes over.";
   var assistantEscalated = false;  /* the marker exists: the team is in */
   var assistantLegacy = false;     /* marker table unreachable: pre-redesign behavior */
@@ -8692,19 +8692,17 @@
     });
     var ntBack = $('acct-newticket-back'); if (ntBack) ntBack.addEventListener('click', showRepairsView);
     var ntBtn = $('acct-new-ticket-btn'); if (ntBtn) ntBtn.addEventListener('click', function () {
-      /* V169_HUB_SPLIT_2026_11_18: the button lives in the My Services pane now —
-         switch to the Service Request pane, where the form lives. */
-      if (window.atrGuestHubShowTab) window.atrGuestHubShowTab('service');
-      var r = $('acct-repairs'), th = $('acct-thread'), nt = $('acct-newticket');
-      if (r) r.hidden = true; if (th) th.hidden = true; if (nt) nt.hidden = false;
-      var pv = $('acct-view-repairs'); if (pv) pv.hidden = false;
-      if (nt && nt.scrollIntoView) { try { nt.scrollIntoView({ behavior: 'auto', block: 'start' }); } catch (e) {} }
-      /* ACCOUNT_FIX_PASS_3_2026_11_06: the new-request human check
-         renders NOW, with its view on screen — not at page load
-         inside the hidden view, where the one-shot Turnstile render
-         could sit dead ("waiting for Cloudflare"). Same mount as
-         script.js's showNewTicket; mount() is idempotent. */
-      if (window.atrTurnstile) window.atrTurnstile.mount($('ts-acct-ticket'));
+      /* V176_6_2_REQUEST_ESTIMATE_2026_11_19 (Austin, Nov 19, 2026): no more in-account form from this button — it only opens the repair / one-on-one question. Tapping again hides it. */
+      var c = $('acct-new-choice'); if (c) c.hidden = !c.hidden;
+    });
+    var chR = $('acct-choice-repair'); if (chR) chR.addEventListener('click', function () {
+      var c = $('acct-new-choice'); if (c) c.hidden = true;
+      if (window.atrCloseGuestHub) window.atrCloseGuestHub();
+      window.location.hash = '#repair';
+    });
+    var chO = $('acct-choice-oneonone'); if (chO) chO.addEventListener('click', function () {
+      var c = $('acct-new-choice'); if (c) c.hidden = true;
+      var oo = $('acct-new-oneonone-btn'); if (oo) oo.click();
     });
     var msgForm = $('acct-msg-form');
     if (msgForm) msgForm.addEventListener('submit', function (e) {
@@ -10072,9 +10070,8 @@
 .ghub-greet-line #ghub-greet{font-weight:800;color:#2C231A}
 .ghub-greet-role{display:inline-block;background:#D9540D;color:#fff;border-radius:999px;padding:.05rem .55rem;font-size:.72rem;font-weight:800}
 /* V171_PREVIEW_2026_11_18: staff-only "Preview as" switcher — sits under the greeting in Quick Actions, never a guest feature. */
-.ghub-preview{display:flex;gap:.4rem;align-items:center;justify-content:center;flex-wrap:wrap;margin:.45rem 0 0;font-size:.8rem;color:var(--muted,#7D6C5B)} /* V173_CENTER_QUICK_ACTIONS_2026_11_18 */
+.ghub-preview{display:contents} /* V176_6_2_PREVIEW_INLINE_2026_11_19 (Austin, Nov 19, 2026): the wrapper makes no box of its own — the three buttons lay out as Quick Actions row items. The .ghub-preview[hidden] guard below still hides them for guests; the aria-pressed ring rule below still marks the active preview. */
 .ghub-preview[hidden]{display:none} /* V172_AUDIENCE_OFFERS_2026_11_18 (Austin, Nov 18, 2026): the "Preview as" switcher is staff-only — without this guard its display:flex rule beats [hidden] and it renders for guests too (caught by v172's visual proof; same class of bug as the v171 signup EIN field). */
-.ghub-preview-label{font-weight:800;letter-spacing:.03em}
 .ghub-preview button[aria-pressed="true"]{background:transparent;border-color:#D9540D;color:var(--ghub-text);outline:2px solid #D9540D;outline-offset:1px}
 .ghub-greet-sep{margin:0 .1rem}
 html[data-theme="dark"] .ghub-greet-line{color:var(--muted,#A89880)}
@@ -10189,6 +10186,8 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
       <a class="btn btn-outline btn-sm" href="https://austinstechrepairgroup.com/" data-ghub-qa="backsite"><i class="fas fa-arrow-left"></i> Back to site</a>
       <button class="btn btn-outline btn-sm" type="button" data-ghub-qa="logout"><i class="fas fa-sign-out-alt"></i> Log Out</button>
       <button class="btn btn-outline btn-sm" type="button" data-ghub-qa="theme" aria-label="Toggle dark mode" title="Toggle dark/light mode"><i class="fas fa-moon" id="ghub-theme-icon"></i></button>
+      <!-- V176_6_2_PREVIEW_INLINE_2026_11_19 (Austin, Nov 19, 2026): the "Preview as (staff testing)" row ate a whole strip of iPad height. The three buttons live in the Quick Actions row now, next to the moon button — same buttons, same staff-only gating (paintGhubPreview still owns #ghub-preview), no label, no extra row. -->
+      <span class="ghub-preview" id="ghub-preview" hidden><button class="btn btn-outline btn-sm" type="button" data-ghub-preview="guest" aria-pressed="false">Guest</button><button class="btn btn-outline btn-sm" type="button" data-ghub-preview="business" aria-pressed="false">Business</button><!-- V171_VIEW_SWITCHER_2026_11_18 (Austin, Nov 18, 2026): third option — Associate opens the Associate Hub (portal.html), the real one staff already reach; the switcher is one control for all three views. No preview state inside the Associate Hub. --><button class="btn btn-outline btn-sm" type="button" data-ghub-preview="associate" aria-pressed="false">Associate</button></span>
     </div>
     <!-- V169_GUEST_GREETING_2026_11_18 (Austin, Nov 18, 2026): the daypart greeting + first
          name + status + time + date lives IN QUICK ACTIONS under the Home
@@ -10198,13 +10197,6 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
          used to carry, so paintHome() below needs no id changes. -->
     <p class="ghub-greet-line"><span id="ghub-greet">Hello</span> <span class="ghub-greet-sep" aria-hidden="true">&middot;</span> <span class="ghub-greet-role" id="ghub-greet-role">Guest</span> <span class="ghub-greet-sep" aria-hidden="true">&middot;</span> <span class="ghub-clock" id="ghub-clock"></span> <span class="ghub-greet-sep" aria-hidden="true">&middot;</span> <span class="acct-muted" id="acct-app-version" hidden></span></p><!-- V173_APP_VERSION_MOVE_2026_11_18 (owner, Nov 18, 2026): the version line lives here now, next to the date in the greeting line under Quick Actions — visible in every pane, never buried. Same id, same fill logic (paintAppVersion), same recording. -->
     <!-- V171_PREVIEW_2026_11_18 (Austin, Nov 18, 2026): staff-only "Preview as" switcher — Super Admin / staff can flip the Hub between the Guest face, the Business face, and the Associate Hub to test what each audience sees. Hidden by default; only a confirmed staff role reveals it. Session-only override, nothing stored — a reload returns to the account's real audience. -->
-    <div class="ghub-preview" id="ghub-preview" hidden>
-      <span class="ghub-preview-label">Preview as (staff testing):</span>
-      <button class="btn btn-outline btn-sm" type="button" data-ghub-preview="guest" aria-pressed="false">Guest</button>
-      <button class="btn btn-outline btn-sm" type="button" data-ghub-preview="business" aria-pressed="false">Business</button>
-      <!-- V171_VIEW_SWITCHER_2026_11_18 (Austin, Nov 18, 2026): third option — Associate opens the Associate Hub (portal.html), the real one staff already reach; the switcher is one control for all three views. No preview state inside the Associate Hub. -->
-      <button class="btn btn-outline btn-sm" type="button" data-ghub-preview="associate" aria-pressed="false">Associate</button>
-    </div>
       <!-- V176_GETAPP_2026_11_19 (Austin, Nov 19, 2026): Get App opens the
            install steps right here inside the hub - it never closes the hub
            and never jumps to the main page. iOS: Share -> Add to Home Screen.
@@ -10223,7 +10215,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
            ACTION BUTTON list in BOTH hubs — Home is already a Quick Action,
            no redundancy. The Home pane itself stays; only the duplicate
            sidebar button goes. -->
-      <!-- V176_6_NO_SR_BUTTON_2026_11_19 (Austin, Nov 19, 2026): the Service Request sidebar button is GONE - pressing too many buttons broke the page, so My Services is the one entry point now: the list lives there and its "Schedule a service" button opens the form. The service PANE itself stays (ticket thread + new-service form), reached from My Services and from a ticket. -->
+      <!-- V176_6_NO_SR_BUTTON_2026_11_19 (Austin, Nov 19, 2026): the Service Request sidebar button is GONE - pressing too many buttons broke the page, so My Services is the one entry point now: the list lives there and its "Request an estimate" button asks repair or one-on-one first (v176.6.2). The service PANE itself stays (ticket thread + new-service form), reached from a ticket and from Refresh. -->
       <button class="ghub-tab" type="button" data-ghub="account"><i class="fas fa-user"></i> Account</button>
       <!-- V169_HUB_SPLIT_2026_11_18 (Austin, Nov 18, 2026): three separate action
            buttons right under Account — My Services (the repair tickets;
@@ -10446,8 +10438,14 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
         <div class="acct-repairs" id="acct-repairs">
           <div class="acct-repairs-head">
             <h4><i class="fas fa-tools"></i> My Services</h4>
-            <!-- V176_6_SCHEDULE_SERVICE_2026_11_19 (Austin, Nov 19, 2026): on the customer side, booking is always called "Schedule a service" — one name everywhere. We do not just repair, so it never says "Schedule a repair". This button opens the same in-account form it always did. -->
-            <button class="btn btn-primary btn-sm" id="acct-new-ticket-btn" type="button"><i class="fas fa-calendar-check"></i> Schedule a service</button>
+            <!-- V176_6_2_REQUEST_ESTIMATE_2026_11_19 (Austin, Nov 19, 2026): the button is "Request an estimate" now — "Schedule a service" is gone. Tapping it asks first (repair or one-on-one, #acct-new-choice below) instead of opening the in-account form, which never asked and went straight to device type. -->
+            <button class="btn btn-primary btn-sm" id="acct-new-ticket-btn" type="button"><i class="fas fa-file-invoice-dollar"></i> Request an estimate</button>
+          </div>
+          <!-- V176_6_2_REQUEST_ESTIMATE_2026_11_19 (Austin, Nov 19, 2026): the question the old form never asked. Tapping "Request an estimate" opens this, not the form. Repair goes to the estimate form (#repair); one-on-one reuses the existing one-on-one link, which opens the same form in one-on-one mode. -->
+          <div id="acct-new-choice" hidden style="margin:.6rem 0;">
+            <p class="acct-muted" style="margin:0 0 .4rem">Repair or one-on-one?</p>
+            <button class="btn btn-primary btn-sm" id="acct-choice-repair" type="button"><i class="fas fa-wrench"></i> Repair</button>
+            <button class="btn btn-outline btn-sm" id="acct-choice-oneonone" type="button"><i class="fas fa-graduation-cap"></i> One-on-one</button>
           </div>
           <!-- V174_MYSERVICES_FILTER_2026_11_18 (Austin, Nov 18, 2026): Open Tickets (default) and Completed Services — two views of the same list. Completed Services is the full history: every service the guest has ever done with us. A completed ticket never leaves the list; the filter only decides which view shows it. -->
           <div class="acct-services-filter" role="group" aria-label="Filter services" style="display:flex;gap:.5rem;flex-wrap:wrap;margin:.5rem 0;">
@@ -10637,7 +10635,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
                  like every other form on the site. -->
             <button class="btn btn-primary btn-sm" id="acct-inbox-new" type="button" style="margin:0 0 .6rem;"><i class="fas fa-pen"></i> Send us a message</button>
             <div id="acct-inbox-compose" hidden>
-              <p class="acct-muted" style="text-align:left;padding:0;">No repair on file yet — no problem. Write us a general message here and we will reply right in this Messages list. If you meant to book a service instead, <a id="acct-msg-schedule-link" href="#repair" data-page="repair">Schedule a service</a>.</p>
+              <p class="acct-muted" style="text-align:left;padding:0;">No repair on file yet — no problem. Write us a general message here and we will reply right in this Messages list. If you meant to book a service instead, <a id="acct-msg-schedule-link" href="#repair" data-page="repair">Request an estimate</a>.</p>
               <form id="acct-general-form" novalidate>
                 <div class="acct-msg-row">
                   <input type="text" id="acct-general-input" placeholder="Write a message…" autocomplete="off" maxlength="1000" aria-label="Write a message">
@@ -11037,6 +11035,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
       if (sl && sl.innerHTML.indexOf('Loading your services') !== -1
         && typeof window.atrReloadMyRepairs === 'function') window.atrReloadMyRepairs();
       else if (myRepairsRows) renderMyServicesList();
+      var nc = $('acct-new-choice'); if (nc) nc.hidden = true; /* V176_6_2_REQUEST_ESTIMATE_2026_11_19: the question starts closed every time the pane opens. */
     }
     if (name === 'oneonones') {
       var ol = $('acct-support-list');
