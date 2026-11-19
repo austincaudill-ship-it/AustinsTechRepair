@@ -2027,6 +2027,11 @@
     if (/playstation/.test(hay)) return 'PlayStation';
     if (/xbox/.test(hay)) return 'Xbox';
     if (/switch/.test(hay) || /nintendo/.test(hay)) return 'Switch';
+    /* V176_1_SMARTWATCH_2026_11_19 (Austin, Nov 19, 2026): Apple
+       smartwatch tickets read "Apple Watch" in the drawer header
+       ("Austin's Apple Watch") instead of the model-words fallback
+       ("Watch Series"). Non-Apple smartwatches keep the fallback. */
+    if (dt.toLowerCase() === 'smartwatch' && b.toLowerCase() === 'apple') return 'Apple Watch';
     if (/^iphone/.test(m.toLowerCase())) return 'iPhone';
     if (/^ipad/.test(m.toLowerCase())) return 'iPad';
     if (/^galaxy/.test(m.toLowerCase())) return 'Galaxy';
