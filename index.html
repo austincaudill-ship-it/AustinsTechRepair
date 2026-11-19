@@ -6274,6 +6274,79 @@
     var b = $('acct-inbox-retry');
     if (b) b.addEventListener('click', function () { if (currentCust) loadInbox(currentCust); });
   }
+  /* V174_MYSERVICES_FILTER_2026_11_18 (Austin, Nov 18, 2026): My Services is two views of the same list — Open Tickets (default) and Completed Services (full history: every service the guest has ever done with us). A completed ticket never leaves the list; the filter only decides which view shows it. The rows live here so a filter tap repaints without another read. */
+  var myRepairsRows = null;
+  var myServicesFilter = 'open'; /* 'open' | 'completed' */
+  var myServicesFilterWired = false;
+  function myServicesIsComplete(t) { return t.status === 'Job Complete'; }
+  function myServicesTicketCard(t, isSupport) {
+    var c = STATUS_COPY[t.status] || { note: '' };
+    var dev = isSupport ? (t.model || 'One-on-one support') : ticketDevice(t);
+    var chip = isSupport ? '<span class="acct-support-chip">Support</span> ' : '';
+    return '<button type="button" class="acct-ticket-card" data-ticket="' + t.id + '">' +
+      '<span class="acct-ticket-top"><strong>' + chip + escX(dev) + '</strong>' + statusPill(t.status) + '</span>' +
+      '<span class="acct-ticket-issue">' + escX(t.issue || '') + '</span>' +
+      '<span class="acct-ticket-meta">' + escX(ticketDate(t)) + ' \u00b7 ' + escX(c.note) + '</span>' +
+      (window.atrFmtAppt ? '<span class="acct-ticket-meta">' + escX(window.atrFmtAppt(t)) + '</span>' : '') +
+      '<span class="acct-ticket-cta">View service request <i class="fas fa-arrow-right"></i></span>' +
+    '</button>';
+  }
+  function myServicesWireCards(container) {
+    if (!container) return;
+    Array.prototype.forEach.call(container.querySelectorAll('[data-ticket]'), function (btn) {
+      btn.addEventListener('click', function () {
+        var t = (myRepairsRows || []).filter(function (r) { return String(r.id) === btn.getAttribute('data-ticket'); })[0];
+        if (t) openThread(t);
+      });
+    });
+  }
+  function renderMyServicesList() {
+    var list = $('acct-ticket-list');
+    if (!list || !myRepairsRows) return;
+    var rows = myRepairsRows;
+    /* SUPPORT_BOOKING_2026_11_06: one read, two groups — repairs under
+       My Repairs, support tickets (device_type 'Support') under My
+       One-on-Ones with a Support label on every card. */
+    var repairRows = rows.filter(function (t) { return !/^\[SERVICE\]/.test(t.issue || ''); });
+    var supportRows = rows.filter(function (t) { return /^\[SERVICE\]/.test(t.issue || ''); });
+    var openRows = repairRows.filter(function (t) { return !myServicesIsComplete(t); });
+    var doneRows = repairRows.filter(myServicesIsComplete);
+    var shown = myServicesFilter === 'completed' ? doneRows : openRows;
+    var oc = document.querySelector('[data-myservices-count="open"]');
+    if (oc) oc.textContent = openRows.length ? '(' + openRows.length + ')' : '';
+    var dc = document.querySelector('[data-myservices-count="completed"]');
+    if (dc) dc.textContent = doneRows.length ? '(' + doneRows.length + ')' : '';
+    document.querySelectorAll('[data-myservices-filter]').forEach(function (b) {
+      b.classList.toggle('btn-primary', b.getAttribute('data-myservices-filter') === myServicesFilter);
+      b.classList.toggle('btn-outline', b.getAttribute('data-myservices-filter') !== myServicesFilter);
+    });
+    if (!myServicesFilterWired) {
+      myServicesFilterWired = true;
+      document.querySelectorAll('[data-myservices-filter]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          var f = b.getAttribute('data-myservices-filter');
+          if (f === 'open' || f === 'completed') { myServicesFilter = f; renderMyServicesList(); }
+        });
+      });
+    }
+    list.innerHTML = shown.length
+      ? shown.map(function (t) { return myServicesTicketCard(t, false); }).join('')
+      : (myServicesFilter === 'completed'
+        ? '<p class="acct-muted">No completed services yet \u2014 when a repair is finished, it will show up here.</p>'
+        : (repairRows.length
+          ? '<p class="acct-muted">No open services right now \u2014 your finished services are under Completed Services.</p>'
+          : '<p class="acct-muted">No services yet \u2014 when you book a service, you\'ll see its progress here, step by step.</p>'));
+    myServicesWireCards(list);
+    var supList = $('acct-support-list');
+    if (supList) {
+      supList.innerHTML = supportRows.length
+        ? supportRows.map(function (t) { return myServicesTicketCard(t, true); }).join('')
+        : '<p class="acct-muted">No one-on-ones yet \u2014 book a support visit and it will show up here.</p>';
+      myServicesWireCards(supList);
+    }
+  }
+  window.atrMyServicesFilter = function (f) { if (f === 'open' || f === 'completed') { myServicesFilter = f; renderMyServicesList(); } };
+
   function loadMyRepairs(cust) {
     var list = $('acct-ticket-list');
     if (!list) return;
@@ -6296,43 +6369,8 @@
         repairsSettled = true;
         if (res.error) throw res.error;
         var rows = res.data || [];
-        /* SUPPORT_BOOKING_2026_11_06: one read, two groups — repairs under
-           My Repairs, support tickets (device_type 'Support') under My
-           One-on-Ones with a Support label on every card. */
-        var repairRows = rows.filter(function (t) { return !/^\[SERVICE\]/.test(t.issue || ''); });
-        var supportRows = rows.filter(function (t) { return /^\[SERVICE\]/.test(t.issue || ''); });
-        function ticketCard(t, isSupport) {
-          var c = STATUS_COPY[t.status] || { note: '' };
-          var dev = isSupport ? (t.model || 'One-on-one support') : ticketDevice(t);
-          var chip = isSupport ? '<span class="acct-support-chip">Support</span> ' : '';
-          return '<button type="button" class="acct-ticket-card" data-ticket="' + t.id + '">' +
-            '<span class="acct-ticket-top"><strong>' + chip + escX(dev) + '</strong>' + statusPill(t.status) + '</span>' +
-            '<span class="acct-ticket-issue">' + escX(t.issue || '') + '</span>' +
-            '<span class="acct-ticket-meta">' + escX(ticketDate(t)) + ' \u00b7 ' + escX(c.note) + '</span>' +
-            (window.atrFmtAppt ? '<span class="acct-ticket-meta">' + escX(window.atrFmtAppt(t)) + '</span>' : '') +
-            '<span class="acct-ticket-cta">View service request <i class="fas fa-arrow-right"></i></span>' +
-          '</button>';
-        }
-        function wireCards(container) {
-          if (!container) return;
-          Array.prototype.forEach.call(container.querySelectorAll('[data-ticket]'), function (btn) {
-            btn.addEventListener('click', function () {
-              var t = rows.filter(function (r) { return String(r.id) === btn.getAttribute('data-ticket'); })[0];
-              if (t) openThread(t);
-            });
-          });
-        }
-        list.innerHTML = repairRows.length
-          ? repairRows.map(function (t) { return ticketCard(t, false); }).join('')
-          : '<p class="acct-muted">No services yet \u2014 when you book a service, you\'ll see its progress here, step by step.</p>';
-        wireCards(list);
-        var supList = $('acct-support-list');
-        if (supList) {
-          supList.innerHTML = supportRows.length
-            ? supportRows.map(function (t) { return ticketCard(t, true); }).join('')
-            : '<p class="acct-muted">No one-on-ones yet \u2014 book a support visit and it will show up here.</p>';
-          wireCards(supList);
-        }
+        myRepairsRows = rows;
+        renderMyServicesList();
       })
       .catch(function () {
         repairsSettled = true;
@@ -6757,6 +6795,7 @@
     paintAssistantBar(); /* GUEST_ASSISTANT_2026_11_10: the bar belongs to the general conversation only */
     markThreadRead(t); /* CUSTOMER_INBOX_2026_11_05: opening a conversation marks it read */
   }
+  window.atrOpenGuestTicket = function (t) { if (t) openThread(t); }; /* V174_TICKET_SEARCH_2026_11_18: the Hub search sheet opens a ticket by its number — the search lives in the Hub script, openThread lives here. */
   function showInboxList() {
     var th = $('acct-thread'), ib = $('acct-inbox');
     if (th) th.hidden = true; if (ib) ib.hidden = false;
@@ -7448,12 +7487,36 @@
           html += '<div class="acct-actions-row"><p class="acct-muted" style="text-align:left;margin:0 0 .5rem;">Your estimate is ready — ' + escX(fmtMoneyX(subtotal)) + '. Accept it and we will get your repair moving.</p>' +
             '<button type="button" class="btn btn-primary" id="atr-accept-estimate">Accept estimate</button> <span class="acct-muted" id="atr-accept-note"></span></div>';
         }
-        if (balance > 0) {
+        /* V174_PAY_GATE_2026_11_18 (Austin, Nov 18, 2026): the repair balance opens for payment ONLY after Job Complete is pushed — never before, "we're never going to scam anybody". Job Complete, Quality Control and Ready are all past that push (QC follows Job Complete, Ready follows QC); every earlier status reads plainly that the balance opens once the job is complete. Parts and dispatch keep their own up-front flows and never ride this button. */
+        var payOpen = t.status === 'Job Complete' || t.status === 'Quality Control' || t.status === 'Ready';
+        if (balance > 0 && payOpen) {
           html += '<div class="acct-actions-row"><button type="button" class="btn btn-primary" id="atr-pay-balance">Pay balance ' + escX(fmtMoneyX(balance)) + '</button> <span class="acct-muted" id="atr-pay-note"></span></div>';
+        } else if (balance > 0) {
+          html += '<div class="acct-actions-row"><p class="acct-muted" style="text-align:left;margin:0;">Balance due ' + escX(fmtMoneyX(balance)) + ' \u2014 it opens for payment right here once the job is complete. We never charge for repair work before it is done.</p></div>';
         } else if (rows.length) {
-          html += '<div class="acct-actions-row"><p class="acct-muted" style="text-align:left;margin:0;">Paid in full — thank you!</p></div>';
+          html += '<div class="acct-actions-row"><p class="acct-muted" style="text-align:left;margin:0;">Paid in full \u2014 thank you!</p><p class="acct-muted" style="text-align:left;margin:0;" id="atr-receipt-note"></p></div>';
+        }
+        /* V174_REWORK_TICKET_2026_11_18 (Austin, Nov 18, 2026): the warranty-repair request lives on the service itself — the guest asks right here on the ticket, no warranty form needed. Warranty coverage shows only after the repair is complete, so the button renders only once Job Complete has been pushed (Job Complete, Quality Control, Ready — the same past-that-push set as the pay gate). */
+        if (t.status === 'Job Complete' || t.status === 'Quality Control' || t.status === 'Ready') {
+          html += '<div class="acct-actions-row"><button type="button" class="btn btn-outline" id="atr-warranty-rework">Request warranty repair</button> <span class="acct-muted" id="atr-warranty-note"></span></div>';
         }
         box.innerHTML = html;
+        /* V174_RECEIPT_AUTOSEND_2026_11_18 (Austin, Nov 18, 2026): the receipt carries the ticket number (composeReceiptHtml — 'Receipt \u00b7 Ticket #' + short code) and, once the guest hits payment complete, it auto-sends. The Pay button below leaves a return flag before Square opens; when this ticket re-reads with a $0 balance the flag fires one send-receipt call (ticket id only, the same fetch shape as the portal's callSendReceipt) and the note says honestly whether the email went out. A $0 balance with no flag — a payment recorded by staff — sends nothing; the portal already generates the receipt there. */
+        try {
+          if (balance <= 0 && rows.length && window.sessionStorage && sessionStorage.getItem('atr-pay-return') === String(t.id)) {
+            sessionStorage.removeItem('atr-pay-return');
+            (function () {
+              var note = $('atr-receipt-note');
+              sb.auth.getSession().then(function (sres) {
+                var token = sres && sres.data && sres.data.session ? sres.data.session.access_token : null;
+                if (!token) throw new Error('no session');
+                return fetch(SUPABASE_URL + '/functions/v1/send-receipt', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'apikey': SUPABASE_ANON_KEY }, body: JSON.stringify({ ticket_id: t.id }) });
+              }).then(function (r) { return r.json().catch(function () { return null; }); }).then(function (j) {
+                if (note) note.textContent = (j && j.ok) ? 'Your receipt was emailed to you.' : 'Your receipt is saved on this ticket \u2014 if the email does not arrive, call or text (937) 280-6243.';
+              }).catch(function () { if (note) note.textContent = 'Your receipt is saved on this ticket \u2014 if the email does not arrive, call or text (937) 280-6243.'; });
+            })();
+          }
+        } catch (e) {}
         var acc = $('atr-accept-estimate');
         if (acc) acc.addEventListener('click', function () {
           acc.disabled = true;
@@ -7474,9 +7537,41 @@
             if (!token) throw new Error('To pay, sign in first with the same email you booked with, then tap Pay again.');
             return fetch(SUPABASE_URL + '/functions/v1/square-ticket-checkout', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'apikey': SUPABASE_ANON_KEY }, body: JSON.stringify({ mode: 'ticket-balance', ticket_id: t.id, email: (currentCust && currentCust.email) || '', name: (currentCust && currentCust.name) || '' }) });
           }).then(function (r) { return r.json().catch(function () { return null; }); }).then(function (j) {
-            if (j && j.ok && j.url) { window.open(j.url, '_blank', 'noopener'); if (note) note.textContent = 'Square is open in a new tab.'; }
-            else { if (note) note.textContent = (j && j.error) ? j.error : 'The payment step is not connected yet — we will text you the payment link.'; pay.disabled = false; }
-          }).catch(function (err) { if (note) note.textContent = (err && err.message) || 'The payment step is not connected yet — we will text you the payment link.'; pay.disabled = false; });
+            if (j && j.ok && j.url) { try { if (window.sessionStorage) sessionStorage.setItem('atr-pay-return', String(t.id)); } catch (e) {} window.open(j.url, '_blank', 'noopener'); if (note) note.textContent = 'Square is open in a new tab.'; }
+            else { if (note) note.textContent = (j && j.error) ? j.error : 'We could not open the payment page just now — try again, or call or text (937) 280-6243 and we will send the payment link.'; pay.disabled = false; }
+          }).catch(function (err) { if (note) note.textContent = (err && err.message) || 'We could not open the payment page just now — try again, or call or text (937) 280-6243 and we will send the payment link.'; pay.disabled = false; });
+        });
+        /* V174_REWORK_TICKET_2026_11_18 (Austin, Nov 18, 2026): the warranty-repair request on the service itself — two-tap confirm, then a rework ticket saying inspection needed. The signed-in guest's own record (currentCust) links it; the device and issue come from this ticket. Best-effort: a failed insert says so plainly and the request can be retried — the ticket itself is untouched. */
+        var wr = $('atr-warranty-rework');
+        if (wr) wr.addEventListener('click', function () {
+          if (wr.getAttribute('data-confirm') !== '1') {
+            wr.setAttribute('data-confirm', '1');
+            wr.textContent = 'Confirm \u2014 request warranty repair?';
+            return;
+          }
+          wr.removeAttribute('data-confirm');
+          wr.disabled = true;
+          var wnote = $('atr-warranty-note'); if (wnote) wnote.textContent = 'Sending\u2026';
+          var cust = (typeof currentCust !== 'undefined' && currentCust) ? currentCust : null;
+          if (!cust || !cust.id) { wr.disabled = false; if (wnote) wnote.textContent = 'We could not find your account \u2014 sign out and back in, then try again.'; return; }
+          var code = String(t.id || '').slice(0, 8).toUpperCase();
+          sb.from('tickets').insert({
+            customer_id: cust.id,
+            customer_name: cust.name || t.customer_name || '',
+            customer_phone: cust.phone || t.customer_phone || '',
+            customer_email: cust.email || t.customer_email || '',
+            device_type: t.device_type || null,
+            brand: t.brand || null,
+            model: t.model || null,
+            issue: 'Warranty rework \u2014 inspection needed: ' + ticketDevice(t) + ' \u2014 ' + (t.issue || 'repair') + ' \u2014 original ticket #' + code,
+            service_address: t.service_address || null,
+            status: 'Rework / Warranty',
+            source: 'guest-hub'
+          }).then(function (res) {
+            if (res.error) { wr.disabled = false; if (wnote) wnote.textContent = 'Could not send that request \u2014 try again, or call or text (937) 280-6243.'; return; }
+            if (wnote) wnote.textContent = 'Warranty repair requested \u2014 we will reach out to arrange the inspection.';
+            if (window.atrReloadMyRepairs) window.atrReloadMyRepairs();
+          }).catch(function () { wr.disabled = false; if (wnote) wnote.textContent = 'Could not send that request \u2014 try again, or call or text (937) 280-6243.'; });
         });
       }).catch(function () { box.innerHTML = ''; });
   };
@@ -8876,6 +8971,7 @@
     currentCustomer = null;
     currentCust = null; /* QR_FIX_PASS_2_2026_11_05: the glance keys off this too */
     try { window.atrAccountType = 'guest'; } catch (e) {} /* V146_SIGNUP_SPLIT_2026_11_13: sign-out clears the account-type global */
+    try { if (window.atrClearGhubStaffRole) window.atrClearGhubStaffRole(); } catch (e2) {} /* V174_BOTH_HUBS_2026_11_18: sign-out clears the cached staff role, so the next sign-in on this page life never inherits the last session's hubs. */
     clearLocalSession();
     renderHeader(null, 0);
     renderGlance();
@@ -9874,7 +9970,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
          wrong. -->
     <div class="ghub-qa">
       <button class="btn btn-outline btn-sm" type="button" data-ghub-qa="home"><i class="fas fa-house"></i> Home</button>
-      <button class="btn btn-primary btn-sm" type="button" data-ghub-qa="service"><i class="fas fa-calendar-check"></i> New Service Request</button>
+      <button class="btn btn-primary btn-sm" type="button" data-ghub-qa="myservices"><i class="fas fa-clipboard-list"></i> My Services</button> <!-- V174_QA_MYSERVICES_2026_11_18 (Austin, Nov 18, 2026): this button used to read "New Service Request" — it now reads "My Services" and opens the guest's services list. The new-request form stays reachable from the "Schedule a repair" button inside My Services. -->
       <button class="btn btn-outline btn-sm" type="button" data-ghub-qa="getapp"><i class="fas fa-download"></i> Get App</button>
       <button class="btn btn-outline btn-sm" type="button" data-ghub-qa="refresh"><i class="fas fa-rotate-right"></i> Refresh</button>
       <a class="btn btn-outline btn-sm" href="https://austinstechrepairgroup.com/" data-ghub-qa="backsite"><i class="fas fa-arrow-left"></i> Back to site</a>
@@ -10129,6 +10225,11 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
             <h4><i class="fas fa-tools"></i> My Services</h4>
             <!-- CUSTOMER_INBOX_2026_11_05 (owner vocabulary rule): on the customer side, starting a repair is always called "Schedule a repair" — one name everywhere. This button opens the same in-account form it always did. -->
             <button class="btn btn-primary btn-sm" id="acct-new-ticket-btn" type="button"><i class="fas fa-calendar-check"></i> Schedule a repair</button>
+          </div>
+          <!-- V174_MYSERVICES_FILTER_2026_11_18 (Austin, Nov 18, 2026): Open Tickets (default) and Completed Services — two views of the same list. Completed Services is the full history: every service the guest has ever done with us. A completed ticket never leaves the list; the filter only decides which view shows it. -->
+          <div class="acct-services-filter" role="group" aria-label="Filter services" style="display:flex;gap:.5rem;flex-wrap:wrap;margin:.5rem 0;">
+            <button class="btn btn-outline btn-sm" type="button" data-myservices-filter="open">Open Tickets <span data-myservices-count="open"></span></button>
+            <button class="btn btn-outline btn-sm" type="button" data-myservices-filter="completed">Completed Services <span data-myservices-count="completed"></span></button>
           </div>
           <div id="acct-ticket-list"><p class="acct-muted">Loading your services…</p></div>
         </div>
@@ -10470,13 +10571,14 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
   </div>
   <!-- V163_GUEST_THUMB_2026_11_17 (Austin, Nov 17, 2026): the guest thumb
        nav IS the action buttons on mobile — the sidebar does not work on
-       phones. Fixed order, five buttons, NO Home button for guests (Home
-       lives in Quick Actions only): Service Request, Account, Documents,
-       Service Messages, Search last. Search opens the sheet with every
+       phones. Fixed order, four buttons, NO Home button for guests (Home
+       lives in Quick Actions only): Account, Documents,
+       Service Messages, Search last. Service Request is NOT here — the
+       new-request entry point lives in Quick Actions / My Services
+       (V174_THUMB_NAV_2026_11_18). Search opens the sheet with every
        other section. NOT customizable (Austin confirmed that is fine).
        The Associate Hub thumb bar is untouched. -->
   <div class="ghub-thumb" id="ghub-thumb" role="navigation" aria-label="Guest Hub">
-    <button type="button" data-ghub="service"><i class="fas fa-tools"></i> Service Request</button>
     <button type="button" data-ghub="account"><i class="fas fa-user"></i> Account</button>
     <button type="button" data-ghub="documents"><i class="fas fa-folder-open"></i> Documents</button>
     <button type="button" data-ghub="chat"><i class="fas fa-comment-dots"></i> Service Messages</button>
@@ -10489,7 +10591,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
   <div id="ghub-search-sheet" hidden role="dialog" aria-label="Search the Guest Hub">
     <div class="ghub-search-card">
       <div class="ghub-search-head"><strong id="ghub-search-title">Search the Guest Hub</strong><button type="button" id="ghub-search-close" aria-label="Close search">&times;</button></div>
-      <input type="search" id="ghub-search-input" placeholder="Try &ldquo;membership&rdquo; or &ldquo;warranty&rdquo;&hellip;" aria-label="Search the Guest Hub" autocomplete="off">
+      <input type="search" id="ghub-search-input" placeholder="Try &ldquo;membership&rdquo;, &ldquo;warranty&rdquo;, or a ticket number&hellip;" aria-label="Search the Guest Hub" autocomplete="off">
       <div id="ghub-search-results"></div>
       <p class="ghub-muted">Every section of the Hub is here — Home, Service Request, Account, My Services, My One-on-Ones, My Estimates, Service Messages, ATRG Connect, ATR One Membership, Documents, Warranty.</p>
     </div>
@@ -11007,6 +11109,9 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
   var ghubStaffRole = undefined; /* undefined = not read yet; null = not staff; otherwise the stored role string */
   var ghubStaffRoleUid = '';
   var ghubStaffRoleLoading = false;
+  /* V174_BOTH_HUBS_2026_11_18 (Austin, Nov 18, 2026): the cached staff role is cleared on sign-out (hub Log Out + exitAccount) and re-checked on entering the hub — a stale staff session must never show a guest both hubs again. A failed role read fails closed (not staff), never leaves a stale staff role behind. */
+  function clearGhubStaffRole() { ghubStaffRole = undefined; ghubStaffRoleUid = ''; ghubStaffRoleLoading = false; }
+  window.atrClearGhubStaffRole = clearGhubStaffRole;
   function loadGhubStaffRole() {
     var uid = (user && user.id) || '';
     if (uid && ghubStaffRoleUid !== uid) { ghubStaffRole = undefined; ghubStaffRoleLoading = false; }
@@ -11019,10 +11124,10 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
         ghubStaffRoleLoading = false;
         ghubStaffRole = (r.data && r.data.id) ? (r.data.role || '') : null;
         paintHome(); paintGhubPreview();
-      }).catch(function () { ghubStaffRoleLoading = false; paintGhubPreview(); /* transient: stays unread, a later paint retries */ });
+      }).catch(function () { ghubStaffRoleLoading = false; ghubStaffRole = null; ghubStaffRoleUid = u; paintHome(); paintGhubPreview(); /* V174_BOTH_HUBS_2026_11_18: a failed read fails closed — not staff — so a stale role can never survive a bad read. The role re-reads on the next sign-in (a new uid invalidates the cache) or reload. */ });
     }
     if (uid) run(uid);
-    else sb.auth.getSession().then(function (s) { var u2 = s && s.data && s.data.session && s.data.session.user; run(u2 && u2.id); }).catch(function () { paintGhubPreview(); });
+    else sb.auth.getSession().then(function (s) { var u2 = s && s.data && s.data.session && s.data.session.user; run(u2 && u2.id); }).catch(function () { ghubStaffRole = null; paintHome(); paintGhubPreview(); /* V174_BOTH_HUBS_2026_11_18: fail closed on a failed session read too. */ });
   }
   /* V171_PREVIEW_2026_11_18 (Austin, Nov 18, 2026): staff-only preview override —
      in-memory only, nothing stored. A reload returns to the account's real
@@ -11247,7 +11352,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
         btn.hidden = false; /* V172_BUSINESS_HUB_ROW_2026_11_18 */
         var bizBtn = $('acct-bizhub-btn'); if (bizBtn) bizBtn.hidden = !staff; /* V172_BUSINESS_HUB_ROW_2026_11_18 */
         /* V172_BUSINESS_HUB_ROW_2026_11_18: stash the staff role where the hub's preview helpers read it, so the row taps can set the preview synchronously — the hub's own role read may not have run yet when the account page opens. Only on a clean read: a transient error leaves the cached role alone, same as loadGhubStaffRole. */
-        if (!r.error && staff && r.data && r.data.role) { ghubStaffRole = r.data.role; ghubStaffRoleUid = u.id; } else if (!r.error && !staff) { ghubStaffRole = null; ghubStaffRoleUid = u.id; } /* V173_GREETING_BADGE_2026_11_18: never stash an empty role — '' would pin ghubStaffRole to a falsy 'read' value, loadGhubStaffRole would never re-read, and the badge would stay on the audience forever. A staff row with no role leaves the cached role alone so the Hub's own read can still resolve it. */
+        if (!r.error && staff && r.data && r.data.role) { ghubStaffRole = r.data.role; ghubStaffRoleUid = u.id; } else if (!r.error && !staff) { ghubStaffRole = null; ghubStaffRoleUid = u.id; } else if (r.error) { ghubStaffRole = null; ghubStaffRoleUid = u.id; } /* V173_GREETING_BADGE_2026_11_18: never stash an empty role — '' would pin ghubStaffRole to a falsy 'read' value, loadGhubStaffRole would never re-read, and the badge would stay on the audience forever. A staff row with no role leaves the cached role alone so the Hub's own read can still resolve it. V174_BOTH_HUBS_2026_11_18: a failed read (r.error) fails closed to not-staff instead — a stale staff role is what showed Daniel both hubs. */
         /* V170_ROUTING_2026_11_18: the account-page door reads the hub the account
            actually lands in — Business Hub for a business account, Guest
            Hub for a guest. Same metadata rule as the greeting. */
@@ -11257,7 +11362,9 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
          * nothing to hide here anymore. */
         if (!staff) loadAll(), loadPrefs();
       });
-    }).catch(function () {});
+    }).catch(function () { /* V174_BOTH_HUBS_2026_11_18: fail closed — a failed gate read hides the staff-only Business Hub row, so a bad read can never show a guest both hubs. The guest's own Hub row is left as it is. */
+      var _bb1 = $('acct-bizhub-btn'); if (_bb1) _bb1.hidden = true;
+    });
   }
   function openHub(tab) {
     var hub = $('guest-hub'); if (!hub) return;
@@ -11347,10 +11454,26 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
     var box = $('ghub-search-results'); if (!box) return;
     var needle = String(q || '').toLowerCase();
     var hits = GHUB_SECTIONS.filter(function (s) { return !needle || s.label.toLowerCase().indexOf(needle) !== -1; });
-    if (!hits.length) { box.innerHTML = '<p class="ghub-search-empty">Nothing in the Hub matches that \u2014 try \u201cservice\u201d, \u201cdocuments\u201d, or \u201caccount\u201d.</p>'; return; }
+    /* V174_TICKET_SEARCH_2026_11_18 (Austin, Nov 18, 2026): a ticket number typed here pops the guest's own ticket up — even when it is not showing in the visible list. The number is the first 8 characters of the ticket id, as printed on the receipt (Ticket #C070056C). A leading # or T- is stripped; only a hex-shaped needle (4-8 characters) is treated as a number, so ordinary words never match a ticket. */
+    var ticketHtml = '';
+    var code = String(q || '').trim().toUpperCase().replace(/^#/, '').replace(/^T-?/, '');
+    if (/^[0-9A-F]{4,8}$/.test(code)) {
+      var found = (tickets || []).filter(function (t) { return String(t.id || '').slice(0, 8).toUpperCase() === code; });
+      if (found.length) {
+        ticketHtml = '<p class="ghub-search-group">YOUR TICKETS</p>' + found.map(function (t) {
+          return '<button class="ghub-tab" type="button" data-ghub-ticket="' + esc(t.id) + '"><i class="fas fa-ticket"></i> Ticket #' + esc(code) + ' \u2014 ' + esc(deviceOf(t)) + ' \u2014 ' + esc(t.status || '') + '</button>';
+        }).join('');
+      } else if (!loaded) {
+        ticketHtml = '<p class="ghub-search-empty">Loading your services \u2014 try the number again in a moment.</p>';
+        if (typeof loadAll === 'function') loadAll();
+      } else {
+        ticketHtml = '<p class="ghub-search-empty">No ticket #' + esc(code) + ' in your account \u2014 check the number on your receipt.</p>';
+      }
+    }
+    if (!hits.length && !ticketHtml) { box.innerHTML = '<p class="ghub-search-empty">Nothing in the Hub matches that \u2014 try \u201cservice\u201d, \u201cdocuments\u201d, or \u201caccount\u201d.</p>'; return; }
     var groups = {};
     hits.forEach(function (s) { (groups[s.group] = groups[s.group] || []).push(s); });
-    box.innerHTML = Object.keys(groups).map(function (g) {
+    box.innerHTML = ticketHtml + Object.keys(groups).map(function (g) {
       var items = groups[g].map(function (s) {
         return '<button class="ghub-tab" type="button" data-ghub-search="' + s.name + '"><i class="' + s.icon + '"></i> ' + esc(s.label) + '</button>';
       });
@@ -11378,10 +11501,10 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
   window.atrOpenGuestHub = openHub;
   window.atrCloseGuestHub = closeHub;
   window.atrGhubGate = gate; /* V172_BUSINESS_HUB_ROW_2026_11_18: opening My Account re-runs the hub-row gate (see the account-open handler) so the rows always match the current session. */
-  /* V172_BUSINESS_HUB_ROW_2026_11_18 (Austin, Nov 18, 2026): the account dropdown's hub rows open the Hub in a face — staff tap Guest Hub for the Guest face, Business Hub for the Business face. The preview is the same session-only override as the "Preview as" switcher (reload resets, nothing stored). The row is hidden unless gate() confirmed staff, and setGhubPreview itself refuses non-staff, so a tap from a non-staff account simply opens the real audience. Both rows land on the Service tab, exactly like the Guest Hub row always has. */
+  /* V172_BUSINESS_HUB_ROW_2026_11_18 (Austin, Nov 18, 2026): the account dropdown's hub rows open the Hub in a face — staff tap Guest Hub for the Guest face, Business Hub for the Business face. The preview is the same session-only override as the "Preview as" switcher (reload resets, nothing stored). The row is hidden unless gate() confirmed staff, and setGhubPreview itself refuses non-staff, so a tap from a non-staff account simply opens the real audience. Both rows land on Home — opening the Hub lands on Home, never straight into the Service Request (V174_HUB_LANDING_2026_11_18). */
   function openHubAs(aud) {
     if (ghubStaffRole) setGhubPreview(aud); /* V172_BUSINESS_HUB_ROW_2026_11_18 */
-    openHub('service');
+    openHub('home'); /* V174_HUB_LANDING_2026_11_18 (Austin, Nov 18, 2026): opening the Guest Hub or the Business Hub lands on Home, never straight into the Service Request. */
   }
   document.addEventListener('DOMContentLoaded', function () {
     var btn = $('acct-guesthub-btn');
@@ -11402,6 +11525,14 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
     if (gsSheet) gsSheet.addEventListener('click', function (e) { if (e.target === gsSheet) closeGhubSearch(); });
     var gsResults = $('ghub-search-results');
     if (gsResults) gsResults.addEventListener('click', function (e) {
+      var tk = e.target && e.target.closest ? e.target.closest('[data-ghub-ticket]') : null;
+      if (tk) {
+        closeGhubSearch();
+        var tid = tk.getAttribute('data-ghub-ticket');
+        var found = (tickets || []).filter(function (t) { return String(t.id) === tid; })[0];
+        if (found && window.atrOpenGuestTicket) window.atrOpenGuestTicket(found);
+        return;
+      }
       var r = e.target && e.target.closest ? e.target.closest('[data-ghub-search]') : null;
       if (!r) return;
       closeGhubSearch();
@@ -11413,7 +11544,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
         if (k === 'backsite') return; /* a real link to the public site — the browser takes it from here, same as the Associate Hub */
         if (k === 'refresh') { loaded = false; loadAll(); showTab('home'); }
         if (k === 'home') showTab('home');
-        if (k === 'service') { showTab('service'); var nb2 = $('acct-new-ticket-btn'); if (nb2) nb2.click(); }
+        if (k === 'myservices') { showTab('myservices'); } /* V174_QA_MYSERVICES_2026_11_18 */
         if (k === 'getapp') {
           /* Same install door as the site's own Get App: close the Hub
              and open the Add to Home Screen prompt the guest asked for.
@@ -11424,6 +11555,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
           if (ip) { ip.hidden = false; try { ip.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {} }
         }
         if (k === 'logout') {
+          clearGhubStaffRole(); /* V174_BOTH_HUBS_2026_11_18: sign-out clears the cached staff role. */
           if (sb) { try { var pr = sb.auth.signOut(); if (pr && pr.catch) pr.catch(function () {}); } catch (e) {} }
           closeHub(); /* the account module's SIGNED_OUT listener shows the sign-in view */
         }

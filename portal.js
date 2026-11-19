@@ -3523,6 +3523,26 @@ function loadTicketThread(client, ticketId) {
           statusOptions(TICKET_STATUSES, t.status) + '</select>' +
           '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="portal-ticket-status-save">Save status</button>' +
           '<span class="portal-muted portal-small" id="portal-ticket-status-msg"></span></div>' +
+          /* V174_STATUS_BUTTONS_2026_11_18 (Austin, Nov 18, 2026): the six status buttons — Pre-inspection, Need to order parts, Job completed, Customer needs to pay, Status paid, En Route. A tap picks the status the button stands for and opens the note box (V174_STATUS_NOTE_2026_11_18); nothing saves until the note is submitted. Status paid is not a status — it confirms the ticket is paid and pops the receipt. */
+          '<div class="p2-actions" id="portal-status-quick">' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-v174-status-btn="Awaiting Diagnostics">Pre-inspection</button>' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-v174-status-btn="Awaiting Parts">Need to order parts</button>' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-v174-status-btn="Job Complete">Job completed</button>' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-v174-status-btn="Ready" data-v174-pay-link="1">Customer needs to pay</button>' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="portal-status-paid-btn">Status paid</button>' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-v174-status-btn="En Route to Customer">En Route</button></div>' +
+          /* V174_STATUS_NOTE_2026_11_18 (Austin, Nov 18, 2026): every status change requires a note — the dropdown opens asking for a brief description of the new status; submit, it goes away. No status change without a note. */
+          '<div id="portal-status-note-box" hidden><div class="portal-field"><label for="portal-status-note-input">Brief description of the new status</label>' +
+          '<input type="text" id="portal-status-note-input" placeholder="e.g. Screen arrived, starting the swap" aria-label="Brief description of the new status" /></div>' +
+          '<div class="p2-actions"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="portal-status-note-submit">Submit</button> ' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="portal-status-note-cancel">Cancel</button> ' +
+          '<span class="portal-muted portal-small" id="portal-status-note-msg"></span></div></div>' +
+          /* V174_QC_2026_11_18 (Austin, Nov 18, 2026): after Job Complete comes Quality Control — QC pass or fail, inside the status update. Pass moves the ticket to Ready; fail sends it back to Awaiting Repair. Both go through the note box, like every status change. */
+          (t.status === 'Job Complete'
+            ? '<div class="p2-actions" id="portal-qc-row"><span class="portal-muted portal-small"><strong>Quality Control</strong> — did the repair pass?</span>' +
+              '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-v174-qc="pass">QC pass</button>' +
+              '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-v174-qc="fail">QC fail</button></div>'
+            : '') +
           /* AVATARS_2026_11_03: who is on this job. The assignee is
            * the person the customer sees in their repair view —
            * picture + name as "Your technician" (ticket_technician
@@ -3823,9 +3843,12 @@ function loadTicketThread(client, ticketId) {
            * transactional line: she never spends, sends, receives
            * or processes a payment), just the note. The ticket's
            * charges, balance and receipt stay fully visible. */
+          /* V174_PAID_METHODS_2026_11_18 (Austin, Nov 18, 2026): Paid by card and Paid by Square app join them — paid in person / paid by app. Each marks the payment as paid and generates the receipt. The description strings are the standard ones (see payment-method-strings.md): "Paid by card" / "Paid by Square app". */
           (canMoveMoney()
             ? '<div class="p2-actions"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p3-checkout-btn"><i class="fas fa-credit-card"></i> Charge / Check out</button>' +
               '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p3-cash-btn"><i class="fas fa-money-bill-wave"></i> Mark paid — cash</button>' +
+              '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p3-card-btn"><i class="fas fa-credit-card"></i> Paid by card</button>' +
+              '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p3-squareapp-btn"><i class="fas fa-mobile-screen"></i> Paid by Square app</button>' +
               '<span class="portal-muted portal-small" id="p3-pay-msg"></span></div>'
             : '<p class="portal-muted portal-small">Payments on this ticket are handled by Austin or Alfred.</p>') +
           '<div id="p3-checkout-link" hidden></div></div></div>' +
@@ -3994,13 +4017,30 @@ function loadTicketThread(client, ticketId) {
             }
           }).catch(function () { if (msg) msg.textContent = 'Couldn\u2019t save \u2014 try again.'; });
         });
-        $('portal-ticket-status-save').addEventListener('click', function () {
-          var next = $('portal-ticket-status').value;
+        /* V174_STATUS_NOTE_2026_11_18 (Austin, Nov 18, 2026): the Save button no longer saves directly — it opens the note box. The note is required; the save below runs only from Submit. */
+        var v174PayLinkPending = false;
+        function v174OpenStatusNote() {
+          var box = $('portal-status-note-box');
+          var input = $('portal-status-note-input');
+          var nmsg = $('portal-status-note-msg');
+          if (!box) return;
+          box.hidden = false;
+          if (nmsg) nmsg.textContent = '';
+          if (input) { input.value = ''; try { input.focus(); } catch (e) {} }
+        }
+        function v174CloseStatusNote() {
+          var box = $('portal-status-note-box');
+          if (box) box.hidden = true;
+          v174PayLinkPending = false;
+        }
+        function v174SaveTicketStatus(next, noteText) {
           var msg = $('portal-ticket-status-msg');
-          msg.textContent = 'Saving…';
+          if (msg) msg.textContent = 'Saving…';
           client.from('tickets').update({ status: next }).eq('id', t.id).then(function (res2) {
-            if (res2.error) { msg.textContent = 'Couldn&rsquo;t save — try again.'; return; }
-            msg.textContent = 'Saved.';
+            if (res2.error) { if (msg) msg.textContent = 'Couldn’t save — try again.'; return; }
+            if (msg) msg.textContent = 'Saved.';
+            /* V174_STATUS_NOTE_2026_11_18: the note is filed on the repair log, so the reason for the status change stays with the ticket. Fire-and-forget — a failed note never fails the status change itself. */
+            client.from('ticket_notes').insert({ ticket_id: t.id, author: (state.profile && state.profile.name) || null, note: 'Status → ' + next + ': ' + noteText }).then(function () { loadRepairLog(client, t.id); }).catch(function () {});
             notifyStatusEmail(client, t, next); /* STATUS_UPDATE_EMAILS_2026_11_06: automatic customer status email (no-reply), fire-and-forget */
             if (next === 'Job Complete') {
               /* PORTAL_POINTS_EARN_2026_10_30: credit the customer's
@@ -4019,11 +4059,79 @@ function loadTicketThread(client, ticketId) {
               var first = trim(t.customer_name || '').split(' ')[0] || 'there';
               var dev = [t.device_type, t.brand, t.model].map(trim).filter(function (x) { return x !== ''; }).join(' ') || 'device';
               var body = 'Hi ' + first + ', great news from Austin\'s Tech Repair Group — your ' + dev + ' repair is complete and ready! We\'ll arrange getting it back to you. Reply here or call (937) 280-6243. Thank you!';
-              msg.innerHTML = 'Saved. <a class="portal-btn portal-btn-primary portal-btn-sm" style="margin-left:0.5rem;text-decoration:none" href="sms:+' + digits + '?&body=' + encodeURIComponent(body) + '">Text ' + esc(first) + ' it\'s ready</a>';
+              if (msg) msg.innerHTML = 'Saved. <a class="portal-btn portal-btn-primary portal-btn-sm" style="margin-left:0.5rem;text-decoration:none" href="sms:+' + digits + '?&body=' + encodeURIComponent(body) + '">Text ' + esc(first) + ' it\'s ready</a>';
             }
+            if (v174PayLinkPending) { v174PayLinkPending = false; v174SendGuestPayLink(client, t); }
             state.loaded.tickets = false;
             loadTickets(true);
-          }).catch(function () { msg.textContent = 'Couldn&rsquo;t save — try again.'; });
+            v174CloseStatusNote();
+            /* The drawer re-renders only when the QC row must appear — after Job Complete is saved the drawer re-opens on the same ticket so Quality Control shows. Any other status keeps the drawer as it is. */
+            if (next === 'Job Complete') openTicket(t.id);
+          }).catch(function () { if (msg) msg.textContent = 'Couldn’t save — try again.'; });
+        }
+        /* V174_STATUS_BUTTONS_2026_11_18: Customer needs to pay sends the guest the Square link — the same checkout the Charge / Check out button builds, then the link goes to the guest's own message thread so it is waiting in their hub. The status email for Ready fires with the save above. */
+        function v174SendGuestPayLink(client, t) {
+          var msg = $('portal-ticket-status-msg');
+          client.auth.getSession().then(function (sres) {
+            var token = sres && sres.data && sres.data.session ? sres.data.session.access_token : '';
+            if (!token) { if (msg) msg.textContent = 'Saved. Session expired — sign in again to send the payment link.'; return; }
+            return fetch(SUPABASE_URL + '/functions/v1/square-ticket-checkout', {
+              method: 'POST',
+              headers: { 'Authorization': 'Bearer ' + token, 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ ticket_id: t.id })
+            }).then(function (r) { return r.json().then(function (data) { return { ok: r.ok, data: data }; }); });
+          }).then(function (out2) {
+            if (!out2 || !out2.ok || !out2.data || !out2.data.url) {
+              if (msg) msg.textContent = 'Saved, but the payment link could not be made — ' + ((out2 && out2.data && out2.data.error) || 'try Charge / Check out in the Payment section.');
+              return;
+            }
+            var url = out2.data.url;
+            client.from('messages').insert({ ticket_id: t.id, sender: 'tech', message: 'Your repair is ready — here is your payment link: ' + url }).then(function () { loadTicketThread(client, t.id); }).catch(function () {});
+            if (msg) msg.textContent = 'Saved. Payment link sent to the guest.';
+            var lb = $('p3-checkout-link');
+            if (lb) { lb.innerHTML = '<p class="portal-card-meta"><a href="' + esc(url) + '" target="_blank" rel="noopener">' + esc(url) + '</a></p>'; lb.hidden = false; }
+          }).catch(function () { if (msg) msg.textContent = 'Saved, but the payment link could not be made — try Charge / Check out in the Payment section.'; });
+        }
+        $('portal-ticket-status-save').addEventListener('click', function () { v174OpenStatusNote(); });
+        var v174NoteSubmit = $('portal-status-note-submit');
+        if (v174NoteSubmit) v174NoteSubmit.addEventListener('click', function () {
+          var input = $('portal-status-note-input');
+          var nmsg = $('portal-status-note-msg');
+          var noteText = input ? trim(input.value) : '';
+          if (!noteText) { if (nmsg) nmsg.textContent = 'Add a brief description first — no status change without a note.'; return; }
+          v174SaveTicketStatus($('portal-ticket-status').value, noteText);
+        });
+        var v174NoteCancel = $('portal-status-note-cancel');
+        if (v174NoteCancel) v174NoteCancel.addEventListener('click', function () { v174CloseStatusNote(); });
+        document.querySelectorAll('[data-v174-status-btn]').forEach(function (b) {
+          b.addEventListener('click', function () {
+            var sel = $('portal-ticket-status');
+            if (sel) sel.value = b.getAttribute('data-v174-status-btn');
+            if (b.getAttribute('data-v174-pay-link') === '1') v174PayLinkPending = true;
+            v174OpenStatusNote();
+          });
+        });
+        document.querySelectorAll('[data-v174-qc]').forEach(function (b) {
+          b.addEventListener('click', function () {
+            var sel = $('portal-ticket-status');
+            if (sel) sel.value = b.getAttribute('data-v174-qc') === 'pass' ? 'Ready' : 'Awaiting Repair';
+            v174OpenStatusNote();
+          });
+        });
+        /* V174_STATUS_BUTTONS_2026_11_18: Status paid — the ticket is paid, generate the receipt and pop it open. The balance must already be $0: the payment itself is recorded in the Payment section (cash / card / Square app / Square link), where the method is written down. A balance still due is refused here, plainly. */
+        var v174PaidBtn = $('portal-status-paid-btn');
+        if (v174PaidBtn) v174PaidBtn.addEventListener('click', function () {
+          var msg = $('portal-ticket-status-msg');
+          var tot = chargeTotals(t._charges || []);
+          if (tot.balance > 0) { if (msg) msg.textContent = 'There is still ' + fmtMoney(tot.balance) + ' due — record the payment in the Payment section first, then tap Status paid.'; return; }
+          if (msg) msg.textContent = 'Generating receipt…';
+          generateReceipt(client, t, function (ok) {
+            if (!ok) { if (msg) msg.textContent = 'Couldn’t generate the receipt — try again.'; return; }
+            if (msg) msg.textContent = 'Paid — receipt ready.';
+            client.from('ticket_documents').select('id, storage_path, file_name').eq('ticket_id', t.id).eq('doc_type', 'receipt').order('created_at', { ascending: false }).limit(1).then(function (q) {
+              if (!q.error && q.data && q.data.length) viewStoredDocument(client, q.data[0].storage_path, q.data[0].file_name, function () {});
+            }).catch(function () {});
+          });
         });
 
         /* AVATARS_2026_11_03: the Assigned to picker beside the
@@ -8709,8 +8817,39 @@ function loadTicketThread(client, ticketId) {
         if (res.error) { msg.textContent = 'Couldn\u2019t record that payment. Try again.'; return; }
         msg.textContent = 'Marked paid \u2014 cash. Balance is now $0.00.';
         loadCharges(client, t);
+        /* V174_PAID_METHODS_2026_11_18: the receipt is generated when a payment is marked paid — same as the new card / Square app buttons below. */
+        generateReceipt(client, t);
       }).catch(function () { cashBtn.disabled = false; msg.textContent = 'Couldn\u2019t record that payment. Try again.'; });
     });
+    /* V174_PAID_METHODS_2026_11_18 (Austin, Nov 18, 2026): Paid by card / Paid by Square app — the same two-tap confirm and deposit_credit record as cash, with the standard description strings ("Paid by card" / "Paid by Square app", see payment-method-strings.md — the method lives as free text in ticket_charges.description, there is no payment_method column). Pressing one marks the payment as paid and generates the receipt. */
+    function v174MarkPaid(desc, btn, icon, doingText, doneText) {
+      if (!btn) return;
+      btn.addEventListener('click', function () {
+        if (btn.getAttribute('data-confirm') !== '1') {
+          btn.setAttribute('data-confirm', '1');
+          btn.innerHTML = icon + ' Confirm \u2014 ' + desc.toLowerCase() + '?';
+          return;
+        }
+        btn.removeAttribute('data-confirm');
+        btn.innerHTML = icon + ' ' + doneText;
+        var tot = chargeTotals(t._charges || []);
+        if (tot.balance <= 0) { msg.textContent = 'Nothing due on this ticket.'; return; }
+        btn.disabled = true;
+        msg.textContent = doingText;
+        client.from('ticket_charges').insert({
+          ticket_id: t.id, kind: 'deposit_credit', description: desc,
+          qty: 1, unit_price: Math.round(tot.balance * 100) / 100
+        }).then(function (res) {
+          btn.disabled = false;
+          if (res.error) { msg.textContent = 'Couldn\u2019t record that payment. Try again.'; return; }
+          msg.textContent = 'Marked paid \u2014 ' + desc.toLowerCase() + '. Balance is now $0.00.';
+          loadCharges(client, t);
+          generateReceipt(client, t);
+        }).catch(function () { btn.disabled = false; msg.textContent = 'Couldn\u2019t record that payment. Try again.'; });
+      });
+    }
+    v174MarkPaid('Paid by card', $('p3-card-btn'), '<i class="fas fa-credit-card"></i>', 'Recording card payment\u2026', 'Paid by card');
+    v174MarkPaid('Paid by Square app', $('p3-squareapp-btn'), '<i class="fas fa-mobile-screen"></i>', 'Recording Square app payment\u2026', 'Paid by Square app');
   }
 
   /* ================= JOB APPLICATIONS ================= */
@@ -12543,6 +12682,13 @@ function loadTicketThread(client, ticketId) {
       '<p class="portal-muted portal-small">Square payments made outside the portal — a link made by hand in the Square Dashboard, an ATR One subscription payment — do not reach Financials by themselves. Check Square for the ones we have not recorded yet, pick the ticket or membership, and record them. Amounts always come from Square, never from this screen.</p>' +
       '<p><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-fin-reconcile><i class="fas fa-sync-alt"></i> Check Square for unrecorded payments</button></p>' +
       '<div data-fin-reconcile-box></div>';
+    /* V174_FIN_MANUAL_ADD_2026_11_18 (Austin, Nov 18, 2026): Financials is editable — record a payment by hand. The ticket picker lists every ticket, completed ones included; the method writes the standard description string into ticket_charges.description (no payment_method column exists — see payment-method-strings.md). The record is a deposit_credit, the same kind the drawer cash / card / Square-app buttons write, so it lands in Financials and on the ticket the same way. */
+    html += '<div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Record a payment manually</h3></div>' +
+      '<p class="portal-muted portal-small">A payment that came in outside the portal — cash in hand, a card run through the reader, the Square app — record it here against the ticket. It shows in Financials and on the ticket, and the receipt can be generated from the ticket afterwards.</p>' +
+      '<div class="portal-field"><label for="fin-manual-ticket">Ticket</label><select id="fin-manual-ticket" aria-label="Ticket"><option value="">Loading tickets\u2026</option></select></div>' +
+      '<div class="portal-field"><label for="fin-manual-amount">Amount received ($)</label><input type="number" id="fin-manual-amount" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" aria-label="Amount received" /></div>' +
+      '<div class="portal-field"><label for="fin-manual-method">How was it paid?</label><select id="fin-manual-method" aria-label="How was it paid?"><option value="Paid in cash">Paid in cash</option><option value="Paid by card">Paid by card</option><option value="Paid by Square app">Paid by Square app</option><option value="Paid in Venmo">Paid in Venmo</option></select></div>' +
+      '<p><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="fin-manual-go">Record payment</button> <span class="portal-muted portal-small" id="fin-manual-msg"></span></p>';
     html += '<div class="fin-chart-wrap">' + finDonut(t.revenue, t.partsCost, t.gross) +
       '<div class="fin-legend">' +
       '<p><span class="fin-dot" style="background:#D9540D"></span>Gross profit &mdash; <strong>' + esc(fmtMoney(t.gross)) + '</strong>' + (t.revenue > 0 ? ' (' + Math.round(t.gross / t.revenue * 100) + '%)' : '') + '</p>' +
@@ -12564,6 +12710,7 @@ function loadTicketThread(client, ticketId) {
     body.innerHTML = html;
     wireFinSettings(body);
     finWireReconcile(body);
+    finWireManualAdd(body);
     renderPayrollSummary(); /* PAYROLL_SPLIT_2026_11_03: the Payroll panel's totals ride the same render — same finCache, same figures */
   }
 
@@ -12662,6 +12809,53 @@ function loadTicketThread(client, ticketId) {
             });
           });
         }).catch(function () { box.innerHTML = '<p class="portal-error">Could not load tickets. Try Refresh.</p>'; });
+    });
+  }
+
+  /* V174_FIN_MANUAL_ADD_2026_11_18 (Austin, Nov 18, 2026): the manual-add form's wiring. The ticket picker is filled from the tickets table (every ticket, completed ones included — a payment can arrive after the job is done); the record is a deposit_credit with the standard method string. Recording reloads Financials so the figures move at once. */
+  function finWireManualAdd(body) {
+    var sel = body ? body.querySelector('#fin-manual-ticket') : null;
+    var amt = body ? body.querySelector('#fin-manual-amount') : null;
+    var method = body ? body.querySelector('#fin-manual-method') : null;
+    var go = body ? body.querySelector('#fin-manual-go') : null;
+    var msg = body ? body.querySelector('#fin-manual-msg') : null;
+    if (!sel || !go || go.getAttribute('data-wired') === '1') return;
+    go.setAttribute('data-wired', '1');
+    withClient(function (client) {
+      if (!client) { sel.innerHTML = '<option value="">Could not load tickets</option>'; return; }
+      client.from('tickets').select('id, customer_name, device_type, brand, model, status').order('created_at', { ascending: false }).limit(200)
+        .then(function (res) {
+          if (res.error || !res.data) { sel.innerHTML = '<option value="">Could not load tickets</option>'; return; }
+          var rows = res.data || [];
+          sel.innerHTML = rows.length
+            ? '<option value="">Pick a ticket\u2026</option>' + rows.map(function (tk) {
+                var code = String(tk.id || '').slice(0, 8).toUpperCase();
+                var dev = [tk.device_type, tk.brand, tk.model].filter(function (x) { return x; }).join(' ') || 'Device';
+                return '<option value="' + esc(tk.id) + '">Ticket #' + esc(code) + ' \u2014 ' + esc(tk.customer_name || 'Guest') + ' \u2014 ' + esc(dev) + ' \u2014 ' + esc(tk.status || '') + '</option>';
+              }).join('')
+            : '<option value="">No tickets yet</option>';
+        }).catch(function () { sel.innerHTML = '<option value="">Could not load tickets</option>'; });
+    });
+    go.addEventListener('click', function () {
+      var ticketId = sel.value || '';
+      var amount = amt ? Number(amt.value) : NaN;
+      var how = method ? method.value : '';
+      if (!ticketId) { if (msg) msg.textContent = 'Pick a ticket first.'; return; }
+      if (!amount || amount <= 0) { if (msg) msg.textContent = 'Enter the amount received.'; return; }
+      go.disabled = true;
+      if (msg) msg.textContent = 'Recording\u2026';
+      withClient(function (client) {
+        if (!client) { go.disabled = false; if (msg) msg.textContent = 'Could not reach the portal. Try again.'; return; }
+        client.from('ticket_charges').insert({
+          ticket_id: ticketId, kind: 'deposit_credit', description: how,
+          qty: 1, unit_price: Math.round(amount * 100) / 100
+        }).then(function (res) {
+          go.disabled = false;
+          if (res.error) { if (msg) msg.textContent = 'Could not record that payment. Try again.'; return; }
+          if (msg) msg.textContent = 'Recorded ' + fmtMoney(amount) + ' \u2014 ' + how.toLowerCase() + '.';
+          loadFinancials(true);
+        }).catch(function () { go.disabled = false; if (msg) msg.textContent = 'Could not record that payment. Try again.'; });
+      });
     });
   }
 

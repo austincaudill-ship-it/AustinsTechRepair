@@ -1537,6 +1537,42 @@
    * form here and is best-effort only. The ticket number from the
    * customer's receipt is optional on purpose: a customer who lost the
    * receipt can still file, and staff can look them up. */
+  /* V174_REWORK_TICKET_2026_11_18 (Austin, Nov 18, 2026): a warranty request from a signed-in guest also opens a rework ticket saying inspection needed — the guest's ticket stays viewable for the whole repair cycle including after completion, and this is how they ask for the warranty repair. Signed-out submissions keep today's behaviour (the request alone; staff press Start rework in the portal). Best-effort: a failed rework insert never fails the warranty request itself. */
+  function v174WarrantyDeviceType(device) {
+    var d = String(device || '').toLowerCase();
+    if (/iphone|galaxy/.test(d)) return 'Phone';
+    if (/ipad/.test(d)) return 'Tablet';
+    if (/watch/.test(d)) return 'Smartwatch';
+    if (/playstation|ps5|ps4|xbox/.test(d)) return 'Game Console';
+    if (/laptop|macbook|notebook|computer/.test(d)) return 'Computer';
+    return null;
+  }
+  function v174CreateReworkTicket(client, v) {
+    try {
+      client.auth.getSession().then(function (sres) {
+        var u = sres && sres.data && sres.data.session && sres.data.session.user;
+        if (!u || !u.email) return;
+        return client.from('customers').select('id').ilike('email', u.email).maybeSingle().then(function (r) {
+          var custId = (r && r.data && r.data.id) || null;
+          if (!custId) return;
+          var issue = 'Warranty rework — inspection needed: ' + (v.device || '') + ' — ' + (v.part_service || '');
+          if (v.ticket_ref) issue += ' — original ticket #' + String(v.ticket_ref).trim().toUpperCase();
+          return client.from('tickets').insert({
+            customer_id: custId,
+            customer_name: v.customer_name || '',
+            customer_phone: v.phone || '',
+            customer_email: v.email || '',
+            device_type: v174WarrantyDeviceType(v.device),
+            brand: null,
+            model: v.device || null,
+            issue: issue,
+            status: 'Rework / Warranty',
+            source: 'warranty-request'
+          });
+        });
+      }).catch(function () {});
+    } catch (e) {}
+  }
   function handleWarrantyRequest(form) {
     form.addEventListener('submit', function (e) {
       e.preventDefault();
@@ -1600,6 +1636,7 @@
         client.from('warranty_requests').insert(row).then(function (res) {
           setBusy(form, false);
           if (res.error) { showFormError(form, dbFailMessage()); return; }
+          v174CreateReworkTicket(client, v); /* V174_REWORK_TICKET_2026_11_18: signed-in guests get the rework ticket; signed-out submissions skip it silently. */
           showSuccess(form, 'warranty-request', v);
         }).catch(function () {
           setBusy(form, false);
