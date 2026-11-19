@@ -10037,10 +10037,10 @@
        V176_6_TAP_TO_SEE_2026_11_19 (Austin, Nov 19, 2026): the row used to look
        like plain text - no guest would know it taps. It is a real card button
        now (blue outline at rest, orange ring on hover/focus/tap, same as every
-       card on the site) with a "Tap to see" label on it. */
-    .ghub-next-btn{ display: block; width: 100%; text-align: left; background: var(--ghub-card); border: 2px solid #0057B8; border-radius: 12px; padding: 10px 12px; margin-top: 6px; cursor: pointer; color: inherit; font: inherit; }
-    .ghub-next-btn:hover, .ghub-next-btn:focus-visible{ outline: 2px solid #D9540D; outline-offset: 2px; }
-    .ghub-next-cta{ display: block; margin-top: 4px; font-weight: 700; color: #C24A09; }
+       card on the site) with a "Tap to see" label on it. V176_6_1_TAP_TO_VIEW_2026_11_19 (Austin, Nov 19, 2026): "Tap to see" was not his wording - it is a solid orange button now that says exactly "Tap to view your upcoming repairs". */
+    .ghub-next-btn{ display: block; width: 100%; text-align: left; background: #C24A09; border: 2px solid #C24A09; border-radius: 12px; padding: 10px 12px; margin-top: 6px; cursor: pointer; color: #fff; font: inherit; } /* V176_6_1_TAP_TO_VIEW_2026_11_19 (Austin, Nov 19, 2026): solid orange button that says exactly "Tap to view your upcoming repairs" - a guest has to see it is tappable. */
+    .ghub-next-btn:hover, .ghub-next-btn:focus-visible{ outline: 2px solid #0057B8; outline-offset: 2px; }
+    .ghub-next-cta{ display: block; margin-top: 4px; font-weight: 700; color: #fff; }
     /* V176_6_CHAT_ONLY_2026_11_19 (Austin, Nov 19, 2026): a ticket thread opened from Service Messages is a chat, not the ticket page. */
     .acct-thread-chat #acct-appt, .acct-thread-chat #acct-sec-timeline, .acct-thread-chat #acct-sec-docs, .acct-thread-chat #acct-sec-charges, .acct-thread-chat #acct-sec-parts, .acct-thread-chat #acct-ticket-actions{ display: none; }
     /* V176_MSG_LABELS_2026_11_19 (Austin, Nov 19, 2026): inbox cards in
@@ -10156,7 +10156,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
 .ghub-search-head{display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-bottom:.6rem}
 .ghub-search-head strong{font-size:1rem}
 #ghub-search-close{appearance:none;border:1px solid var(--line,#E6D9C0);background:transparent;color:var(--ink,#2C231A);border-radius:999px;width:2rem;height:2rem;font-size:1.2rem;line-height:1;cursor:pointer;font-family:inherit}
-#ghub-search-input{width:100%;padding:.7rem .8rem;border:2px solid var(--line,#E6D9C0);border-radius:10px;background:var(--bg,#fff);color:var(--ink,#2C231A);font-size:1rem;font-family:inherit;box-sizing:border-box;margin-bottom:.5rem}
+#ghub-search-input{width:100%;padding:.7rem .8rem;border:2px solid var(--line,#E6D9C0);border-radius:10px;background:var(--bg,#fff);color:var(--ink,#2C231A);font-size:1rem;font-family:inherit;box-sizing:border-box;margin:.5rem 0}
 .ghub-search-group{font-size:.72rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--muted,#7D6C5B);margin:.55rem 0 .3rem}
 .ghub-search-empty{color:var(--muted,#7D6C5B);font-size:.92rem;padding:.4rem 0}
 /* V163_GUEST_THUMB_2026_11_17: at phone widths the sidebar is gone —
@@ -10185,6 +10185,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
       <button class="btn btn-outline btn-sm" type="button" data-ghub-qa="home"><i class="fas fa-house"></i> Home</button>
       <button class="btn btn-outline btn-sm" type="button" data-ghub-qa="getapp"><i class="fas fa-download"></i> Get App</button>
       <button class="btn btn-outline btn-sm" type="button" data-ghub-qa="refresh"><i class="fas fa-rotate-right"></i> Refresh</button>
+      <button class="btn btn-outline btn-sm" type="button" data-ghub-qa="search"><i class="fas fa-magnifying-glass"></i> Search</button> <!-- V176_6_1_QA_SEARCH_2026_11_19 (Austin, Nov 19, 2026): Search was never in Quick Actions - it lived only in the sidebar and thumb bar. The Associate Hub already has a Search Quick Action; the Guest Hub gets one too, right after Refresh. -->
       <a class="btn btn-outline btn-sm" href="https://austinstechrepairgroup.com/" data-ghub-qa="backsite"><i class="fas fa-arrow-left"></i> Back to site</a>
       <button class="btn btn-outline btn-sm" type="button" data-ghub-qa="logout"><i class="fas fa-sign-out-alt"></i> Log Out</button>
       <button class="btn btn-outline btn-sm" type="button" data-ghub-qa="theme" aria-label="Toggle dark mode" title="Toggle dark/light mode"><i class="fas fa-moon" id="ghub-theme-icon"></i></button>
@@ -10816,8 +10817,8 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
   <div id="ghub-search-sheet" hidden role="dialog" aria-label="Search the Guest Hub">
     <div class="ghub-search-card">
       <div class="ghub-search-head"><strong id="ghub-search-title">Search the Guest Hub</strong><button type="button" id="ghub-search-close" aria-label="Close search">&times;</button></div>
-      <input type="search" id="ghub-search-input" placeholder="Try &ldquo;membership&rdquo;, &ldquo;warranty&rdquo;, or a ticket number&hellip;" aria-label="Search the Guest Hub" autocomplete="off">
       <div id="ghub-search-results"></div>
+      <input type="search" id="ghub-search-input" placeholder="Try &ldquo;membership&rdquo;, &ldquo;warranty&rdquo;, or a ticket number&hellip;" aria-label="Search the Guest Hub" autocomplete="off"> <!-- V176_6_1_SEARCH_FLIP_2026_11_19 (Austin, Nov 19, 2026): the field is LAST now - action buttons above it, field right above the keyboard when it opens. Same stack as the Associate Hub sheet (Nov 9 fix); the Guest sheet still had the field on top. -->
       <p class="ghub-muted">Every section of the Hub is here — Home, Account, My Services, My One-on-Ones, My Estimates, Service Messages, ATRG Connect, ATR One Membership, Documents, Warranty.</p>
     </div>
   </div>
@@ -11325,7 +11326,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
           next.innerHTML = '<h3>Your upcoming repairs</h3><p class="ghub-muted">No upcoming repairs — when you book a service, it will show here.</p>';
         } else {
           next.innerHTML = '<h3>Your upcoming repairs</h3>' + upcoming.map(function (t) {
-            return '<button type="button" class="ghub-next-btn" data-ghub-ticket="' + t.id + '"><strong>' + esc(deviceOf(t)) + '</strong> — ' + esc(t.status || '') + (apptLine(t) ? '<br>' + esc(apptLine(t)) : '') + '<span class="ghub-next-cta">Tap to see ›</span></button>';
+            return '<button type="button" class="ghub-next-btn" data-ghub-ticket="' + t.id + '"><strong>' + esc(deviceOf(t)) + '</strong> — ' + esc(t.status || '') + (apptLine(t) ? '<br>' + esc(apptLine(t)) : '') + '<span class="ghub-next-cta">Tap to view your upcoming repairs</span></button>';
           }).join('');
         }
       }
@@ -11894,6 +11895,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
         var k = b.getAttribute('data-ghub-qa');
         if (k === 'backsite') { try { sessionStorage.removeItem('atr-ghub-state'); } catch (e) {} return; } /* a real link to the public site — the browser takes it from here, same as the Associate Hub. The saved hub state clears first, or a later reload would bounce the guest straight back into the hub. */
         if (k === 'refresh') { ghubRefreshCurrent(); }
+        if (k === 'search') { if (window.atrGuestHubSearch) window.atrGuestHubSearch.open(); } /* V176_6_1_QA_SEARCH_2026_11_19 */
         if (k === 'home') showTab('home');
         if (k === 'getapp') { ghubToggleGetApp(); }
         if (k === 'logout') {
