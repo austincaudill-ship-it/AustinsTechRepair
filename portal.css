@@ -2308,3 +2308,8 @@ html[data-theme="dark"] .portal-quickactions-label {
    not zoom the page and break the layout on iPad/phone. manipulation kills
    double-tap zoom only - pinch zoom still works. */
 body{ touch-action: manipulation; }
+/* V176_QA_RING_2026_11_19 (Austin, Nov 19, 2026): the Quick Actions button
+   for the open pane gets the orange RING, never a solid fill - HUB PARITY
+   RULE, same as the Guest Hub (.ghub-qa-active there). Toggled by
+   activateTab in portal.js. The Preview-as toggle uses the same ring. */
+.qa-active{ outline: 2px solid #D9540D !important; outline-offset: 2px; }

@@ -792,18 +792,19 @@
           });
           grid.appendChild(iBtn);
         });
-        /* SERVICES_SINGLE_DOOR_2026_11_09 (icon amendment): the
-           fallback grid carries the same catch-all — an unpriced
-           "Something else" pick, so every device path offers it. */
+        /* V176_CLEANING_ALL_2026_11_19 (Austin, Nov 19, 2026): the fallback
+           grid carries the same tile as every other picker - "Cleaning and
+           liquid metal replacement" at the flat $49.99 cleaning price.
+           There is no "Something else" tile any more. */
         var seBtn = document.createElement('button');
         seBtn.type = 'button';
         seBtn.className = 'option-btn';
         seBtn.setAttribute('data-bk-something-else', '1');
         seBtn.style.alignItems = 'flex-start';
         seBtn.style.textAlign = 'left';
-        seBtn.innerHTML = bkIconHtml('Something else') + '<strong>Something else</strong><span style="font-size:0.78rem; color: var(--brand-deep); font-weight:800;">Price on request</span>'; /* V173_PRICING_FLOOR_2026_11_18 */
+        seBtn.innerHTML = bkIconHtml('Cleaning and liquid metal replacement') + '<strong>Cleaning and liquid metal replacement</strong><span style="font-size:0.78rem; color: var(--brand-deep); font-weight:800;">' + bkFmt(49.99) + '</span>';
         seBtn.addEventListener('click', function () {
-          rfToggleIssue('Something else', null, seBtn, null);
+          rfToggleIssue('Cleaning and liquid metal replacement', 49.99, seBtn, null);
         });
         grid.appendChild(seBtn);
         /* BOOKING_OO_TILE_2026_11_09: the fallback grid (Business /
@@ -1075,20 +1076,16 @@
          is an unpriced pick exactly like Board / Solder ("Price
          on request"), toggles through rfToggleIssue like any
          other pick, and always renders, for every device and model,
-         right before the One-on-One tile (which stays last). V176_PS5_CLEANING_2026_11_19: on the PlayStation 5 picker this tile is "Cleaning and liquid metal replacement" at $49.99 instead. */ /* V173_PRICING_FLOOR_2026_11_18 */
-      /* V176_PS5_CLEANING_2026_11_19 (Austin, Nov 19, 2026): on the PlayStation 5
+         right before the One-on-One tile (which stays last). V176_CLEANING_ALL_2026_11_19: on EVERY device picker this tile is "Cleaning and liquid metal replacement" at $49.99. */ /* V173_PRICING_FLOOR_2026_11_18 */
+      /* V176_CLEANING_ALL_2026_11_19 (Austin, Nov 19, 2026): on EVERY device
          picker the catch-all tile is "Cleaning and liquid metal replacement"
          at the flat $49.99 cleaning price - liquid metal is part of cleaning,
          never itemized, and the $60 estimate floor does not apply to a flat
-         service. Every other device keeps the "Something else" tile. */
-      var isPs5Picker = (typeKey === 'Game Console' && brandKey === 'PlayStation' && modelKey === 'PlayStation 5');
-      var seTile = isPs5Picker
-        ? bkTile('Cleaning and liquid metal replacement', bkFmt(49.99), bkIconHtml('Cleaning and liquid metal replacement'))
-        : bkTile('Something else', 'Price on request', bkIconHtml('Something else')); /* V173_PRICING_FLOOR_2026_11_18 */
+         service. There is no "Something else" tile any more. */
+      var seTile = bkTile('Cleaning and liquid metal replacement', bkFmt(49.99), bkIconHtml('Cleaning and liquid metal replacement'));
       seTile.setAttribute('data-bk-something-else', '1');
       seTile.addEventListener('click', function () {
-        if (isPs5Picker) rfToggleIssue('Cleaning and liquid metal replacement', 49.99, seTile, null);
-        else rfToggleIssue('Something else', null, seTile, null);
+        rfToggleIssue('Cleaning and liquid metal replacement', 49.99, seTile, null);
       });
       repairGrid.appendChild(seTile);
       /* BOOKING_OO_TILE_2026_11_09 (Austin, Nov 9, 2026): One-on-One is
@@ -1159,7 +1156,7 @@
       /* V173_PRICING_FLOOR_2026_11_18 (Austin, Nov 18, 2026): no estimated price below $60 — base labor is $50.
          The floor lands here, the one place every site estimate total is summed, so the
          summary, the estimate step, and the intake handoff all read the same floored total.
-         V176_PS5_CLEANING_2026_11_19: cleaning is a FLAT $49.99 service, not a repair
+         V176_CLEANING_ALL_2026_11_19: cleaning is a FLAT $49.99 service, not a repair
          estimate - the floor never lifts it. The floor applies to the repair portion
          only; a cleaning-only total stays $49.99. */
       var cleanAmt = 0;
@@ -1303,7 +1300,10 @@
       'Board / Solder': 'Other / not sure',
       /* SERVICES_SINGLE_DOOR_2026_11_09: the catch-all tile maps to
          the same intake bucket as Board / Solder. */
-      'Something else': 'Other / not sure'
+      'Something else': 'Other / not sure',
+      /* V176_CLEANING_ALL_2026_11_19 (Austin, Nov 19, 2026): cleaning is a
+         real service now, so it prefills its own intake option. */
+      'Cleaning and liquid metal replacement': 'Cleaning and liquid metal replacement'
     };
     function prefillIntakeFromGuided() {
       window.atrGuidedSelection = {
@@ -6574,17 +6574,13 @@ if ("serviceWorker" in navigator) {
         });
       }
       /* The catch-all renders for every device, and the One-on-One
-         tile closes the grid — same as the booking form. V176_PS5_CLEANING_2026_11_19:
-         on the PlayStation 5 picker the catch-all is "Cleaning and liquid metal
-         replacement" at $49.99 instead. */
-      var isPs5Picker = (typeKey === 'Game Console' && st.brandKey === 'PlayStation' && st.modelKey === 'PlayStation 5');
-      var se = isPs5Picker
-        ? tileShell(shared.iconHtml('Cleaning and liquid metal replacement') + '<strong>Cleaning and liquid metal replacement</strong>' + subSpan(shared.fmt(49.99)))
-        : tileShell(shared.iconHtml('Something else') + '<strong>Something else</strong>' + subSpan('Price on request')); /* V173_PRICING_FLOOR_2026_11_18 */
+         tile closes the grid — same as the booking form. V176_CLEANING_ALL_2026_11_19:
+         on every device the catch-all is "Cleaning and liquid metal
+         replacement" at $49.99. */
+      var se = tileShell(shared.iconHtml('Cleaning and liquid metal replacement') + '<strong>Cleaning and liquid metal replacement</strong>' + subSpan(shared.fmt(49.99)));
       se.setAttribute('data-svc-something-else', '1');
       se.addEventListener('click', function () {
-        if (isPs5Picker) togglePick(pane, { name: 'Cleaning and liquid metal replacement', price: 49.99, priceRange: null }, se);
-        else togglePick(pane, { name: 'Something else', price: null, priceRange: null }, se);
+        togglePick(pane, { name: 'Cleaning and liquid metal replacement', price: 49.99, priceRange: null }, se);
       });
       grid.appendChild(se);
       var oo = doorTile('fas fa-graduation-cap', 'One-on-One', 'Lessons & help on this device \u2014 $' + (document.body.classList.contains('aud-business') ? 49.99 : 24.99) + ' an hour');
@@ -6650,7 +6646,7 @@ if ("serviceWorker" in navigator) {
       });
       /* V173_PRICING_FLOOR_2026_11_18 (Austin, Nov 18, 2026): no estimated price below $60 — base labor is $50.
          Same floor as the booking-flow totals, for the service-picker estimate.
-         V176_PS5_CLEANING_2026_11_19: cleaning is a FLAT $49.99 service - the floor
+         V176_CLEANING_ALL_2026_11_19: cleaning is a FLAT $49.99 service - the floor
          never lifts it (repair portion only; cleaning-only stays $49.99). */
       var cleanAmt = 0;
       picks.forEach(function (it) { if (it.name === 'Cleaning and liquid metal replacement' && typeof it.price === 'number') cleanAmt += it.price; });
@@ -6865,7 +6861,7 @@ if ("serviceWorker" in navigator) {
       driveFormPicker(pane);
       if (isPicker(pane)) {
         st.picks.forEach(function (pick) {
-          if (pick.name === 'Something else') {
+          if (pick.name === 'Something else' || pick.name === 'Cleaning and liquid metal replacement') {
             var se = document.querySelector('#bk-repair-grid [data-bk-something-else]');
             if (se) se.click();
             return;
@@ -6878,7 +6874,7 @@ if ("serviceWorker" in navigator) {
         });
       } else {
         st.picks.forEach(function (pick) {
-          if (pick.name === 'Something else') {
+          if (pick.name === 'Something else' || pick.name === 'Cleaning and liquid metal replacement') {
             var sef = document.querySelector('#issue-list [data-bk-something-else]');
             if (sef) sef.click();
             return;

@@ -64,7 +64,31 @@
    * — a warranty rework ticket is active work that still flows
    * Quality Control -> Ready -> Job Complete. No existing status is
    * renamed or removed. */
-  var TICKET_STATUSES = ['Awaiting Estimate', 'Awaiting Scheduling', 'Support Requested', 'Awaiting Diagnostics', 'Awaiting Customer Response', 'Awaiting Parts', 'Awaiting Repair', 'En Route to Customer', 'Rework / Warranty', 'In Progress', 'Quality Control', 'Ready', 'Job Complete'];
+  /* V176_STATUS_EIGHT_2026_11_19 (Austin, Nov 19, 2026): the Ticket status
+     * dropdown holds Austin's eight options only - display labels, QC pass/fail
+     * last. The DB statuses live in TICKET_DB_STATUSES (practice ticket) and
+     * the label -> value map below. */
+  var TICKET_STATUSES = ['Pre-inspection', 'Need to order parts', 'Job completed', 'Customer needs to pay', 'Status paid', 'En Route', 'QC pass', 'QC fail'];
+  var TICKET_DB_STATUSES = ['Awaiting Estimate', 'Awaiting Scheduling', 'Support Requested', 'Awaiting Diagnostics', 'Awaiting Customer Response', 'Awaiting Parts', 'Awaiting Repair', 'En Route to Customer', 'Rework / Warranty', 'In Progress', 'Quality Control', 'Ready', 'Job Complete'];
+  var TICKET_STATUS_DB = { 'Pre-inspection': 'Awaiting Diagnostics', 'Need to order parts': 'Awaiting Parts', 'Job completed': 'Job Complete', 'Customer needs to pay': 'Ready', 'Status paid': '__paid', 'En Route': 'En Route to Customer', 'QC pass': '__qcpass', 'QC fail': '__qcfail' };
+  function ticketStatusLabel(db) {
+    var m = { 'Awaiting Diagnostics': 'Pre-inspection', 'Awaiting Parts': 'Need to order parts', 'Job Complete': 'Job completed', 'Ready': 'Customer needs to pay', 'En Route to Customer': 'En Route' };
+    return m[db] || db;
+  }
+  function ticketStatusOptions(currentDb) {
+    /* V176_STATUS_EIGHT_2026_11_19: each option carries the DB value (or the
+     * __paid / __qcpass / __qcfail choice) and shows Austin's label. A ticket
+     * sitting in a DB status with no label (Awaiting Scheduling, In Progress,
+     * Quality Control...) keeps that status as a selected extra option, so
+     * the dropdown never lies about where the ticket stands. */
+    var cur = ticketStatusLabel(currentDb);
+    var opts = TICKET_STATUSES.map(function (label) {
+      var val = TICKET_STATUS_DB[label] || label;
+      return '<option value="' + esc(val) + '"' + (label === cur ? ' selected' : '') + '>' + esc(label) + '</option>';
+    }).join('');
+    if (TICKET_STATUSES.indexOf(cur) === -1) opts = '<option value="' + esc(currentDb) + '" selected>' + esc(currentDb) + '</option>' + opts;
+    return opts;
+  }
   var APPLICATION_STATUSES = ['New', 'Reviewed', 'Contacted', 'Rejected'];
   var INVESTOR_STATUSES = ['New', 'Reviewed', 'Contacted', 'Closed'];
 
@@ -1844,6 +1868,12 @@
     var nav = $('portal-nav'); if (nav) nav.classList.remove('open');
     var tabs = document.querySelectorAll('.portal-tab');
     tabs.forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === name); });
+    /* V176_QA_RING_2026_11_19 (Austin, Nov 19, 2026): the Quick Actions button
+       for the open pane gets the orange RING (.qa-active), never a solid
+       fill - HUB PARITY RULE, same as the Guest Hub. Only Home and New
+       Service Request map to Quick Actions buttons. */
+    var qaBtn = name === 'home' ? $('portal-hub-home-btn') : ((name === 'checkin' || name === 'estimate') ? $('portal-hub-new-btn') : null);
+    ['portal-hub-home-btn', 'portal-hub-new-btn'].forEach(function (id) { var b = $(id); if (b) b.classList.toggle('qa-active', b === qaBtn); });
     /* PASS10_2026_11_04: 'tracking' (the Live Tracking panel) hides and shows with the rest too */
     ['tickets', 'estimates', 'invoices', 'applications', 'investors', 'feedback', 'customers', 'leads', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'tracking', 'documents', 'records', 'financials', 'payroll', 'mileage', 'businesscard', /* V166_BUSINESS_CARD_2026_11_17: the Business Card panel hides and shows with the rest too */ 'teamchat', 'guestchat', 'associateaccounts', 'warranty', 'setup', 'home', 'virtual'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too; ASSOCIATE_ACCOUNTS_2026_11_03: 'associateaccounts' hides and shows with the rest too (it absorbed ACCOUNT_CONTROLS_2026_11_03's 'accountcontrols' and the roster's 'associates'); WARRANTY_PORTAL_2026_11_03: 'warranty' hides and shows with the rest too; PORTAL_SETUP_2026_11_04: 'setup' hides and shows with the rest too; PORTAL_HOME_2026_11_09: 'home' hides and shows with the rest too; LEADS_2026_11_15: 'leads' hides and shows with the rest too; QR_FIX_PASS_2026_11_05: 'scanin' is GONE from this list — the scanner is a popup now, there is no scanin panel to hide or show */
       $('portal-panel-' + n).hidden = n !== name;
@@ -2021,10 +2051,13 @@
        reads the guest's first name + "'s " + a short device label - never
        "Ticket details" (the dropdown button already says that). Console
        brand for PlayStation / Xbox / Switch, iPhone / iPad for Apple phone
-       / tablet, otherwise the model or brand. */
-    var m = String(t.model || ''), b = String(t.brand || ''), dt = String(t.device_type || '');
-    var hay = (dt + ' ' + b + ' ' + m).toLowerCase();
-    if (/playstation/.test(hay)) return 'PlayStation';
+       / tablet, otherwise the model or brand. V176 (corrected): the issue
+       text is in the haystack too, and ps5/ps4 count as PlayStation -
+       Daniel's ticket says model "5 disc" with no PlayStation anywhere
+       else, so without the issue it read "Daniel's 5 disc". */
+    var m = String(t.model || ''), b = String(t.brand || ''), dt = String(t.device_type || ''), iss = String(t.issue || '');
+    var hay = (dt + ' ' + b + ' ' + m + ' ' + iss).toLowerCase();
+    if (/playstation|ps5|ps4/.test(hay)) return 'PlayStation';
     if (/xbox/.test(hay)) return 'Xbox';
     if (/switch/.test(hay) || /nintendo/.test(hay)) return 'Switch';
     /* V176_1_SMARTWATCH_2026_11_19 (Austin, Nov 19, 2026): Apple
@@ -2216,7 +2249,7 @@
   }
   /* V173_PRICING_FLOOR_2026_11_18 (Austin, Nov 18, 2026): no estimated price below $60 — base labor is $50.
      Floors ESTIMATE amounts only; visit fees use estimateMoney directly and are never floored. */
-  function estFloorAmt(n) { if (n === null || n === undefined || n === '') return n; var v = Number(n); return isNaN(v) ? n : Math.max(60, v); } /* V173_PRICING_FLOOR_2026_11_18: a missing amount passes through untouched — Number(null) is 0, and flooring that to 60 would invent a $60 price for an estimate that has no amount yet. */
+  function estFloorAmt(n, issue) { if (n === null || n === undefined || n === '') return n; var v = Number(n); if (isNaN(v)) return n; if (issue === 'Cleaning and liquid metal replacement') return v; return Math.max(60, v); } /* V173_PRICING_FLOOR_2026_11_18: a missing amount passes through untouched — Number(null) is 0, and flooring that to 60 would invent a $60 price for an estimate that has no amount yet. V176_CLEANING_ALL_2026_11_19: cleaning is a FLAT $49.99 service - the floor never lifts it. */
   function estimateDeclineRows(e) {
     return [
       ['Email', e.email || ''],
@@ -2335,7 +2368,7 @@
           ['Name', name],
           ['Device', estimateDeviceLabel(row)],
           ["What's wrong", issue],
-          ['Estimate', estimateMoney(estFloorAmt(amount)) /* V173_PRICING_FLOOR_2026_11_18 */],
+          ['Estimate', estimateMoney(estFloorAmt(amount, issue)) /* V173_PRICING_FLOOR_2026_11_18 */],
           ['Your estimate page', estimatePageLink(row)],
           ['What happens next', 'Tap the link above to view your estimate. You can confirm or decline it there — nothing is booked until you confirm.']
         ], 'estimate-link', row.public_token);
@@ -2372,8 +2405,8 @@
     }
     list.innerHTML = view.map(function (e) {
       var pill = '<span class="portal-badge">' + esc(e.status || '') + '</span>';
-      var v175EstTax = atrTaxEstimate(estFloorAmt(e.estimate_amount), e.atr_one === 'member' ? 0 : v165VisitFee(e.audience), e.service_address);
-      var amt = '<p class="portal-card-meta"><strong>Estimate: ' + esc(estimateMoney(estFloorAmt(e.estimate_amount)) /* V173_PRICING_FLOOR_2026_11_18 */) + '</strong> &middot; visit fee ' + esc(estimateMoney(v165VisitFee(e.audience))) + ' due only when confirmed' + (v175EstTax ? ' &middot; est. sales tax ' + esc(estimateMoney(v175EstTax.amount)) + ' (' + esc(v175EstTax.county) + ' County, ' + esc(v175EstTax.rate.toFixed(2)) + '%)' : '') + '</p>';
+      var v175EstTax = atrTaxEstimate(estFloorAmt(e.estimate_amount, e.issue), e.atr_one === 'member' ? 0 : v165VisitFee(e.audience), e.service_address);
+      var amt = '<p class="portal-card-meta"><strong>Estimate: ' + esc(estimateMoney(estFloorAmt(e.estimate_amount, e.issue)) /* V173_PRICING_FLOOR_2026_11_18 */) + '</strong> &middot; visit fee ' + esc(estimateMoney(v165VisitFee(e.audience))) + ' due only when confirmed' + (v175EstTax ? ' &middot; est. sales tax ' + esc(estimateMoney(v175EstTax.amount)) + ' (' + esc(v175EstTax.county) + ' County, ' + esc(v175EstTax.rate.toFixed(2)) + '%)' : '') + '</p>';
       var who = esc(e.name || 'No name given') + (e.audience === 'business' && e.contact_name ? ' &middot; ' + esc(e.contact_name) : '') + (e.audience === 'business' ? ' <span class="portal-badge portal-badge-source">Business</span>' : '');
       var phone = trim(e.phone);
       var phoneHtml = phone ? ' &middot; <a href="tel:' + esc(phone.replace(/[^0-9+]/g, '')) + '">' + esc(phone) + '</a>' : '';
@@ -2654,7 +2687,7 @@
           ['Name', e.name || ''],
           ['Device', estimateDeviceLabel(e)],
           ["What's wrong", e.issue || ''],
-          ['Estimate', estimateMoney(estFloorAmt(e.estimate_amount)) /* V173_PRICING_FLOOR_2026_11_18 */],
+          ['Estimate', estimateMoney(estFloorAmt(e.estimate_amount, e.issue)) /* V173_PRICING_FLOOR_2026_11_18 */],
           ['Your estimate page', estimatePageLink(e)],
           ['What happens next', 'Tap the link above to view your estimate. You can confirm or decline it there — nothing is booked until you confirm.']
         ], 'estimate-link', e.public_token);
@@ -2672,7 +2705,7 @@
           return;
         }
         var e = res.data;
-        var v175EstTax = atrTaxEstimate(estFloorAmt(e.estimate_amount), e.atr_one === 'member' ? 0 : v165VisitFee(e.audience), e.service_address);
+        var v175EstTax = atrTaxEstimate(estFloorAmt(e.estimate_amount, e.issue), e.atr_one === 'member' ? 0 : v165VisitFee(e.audience), e.service_address);
         var body =
           '<div class="portal-drawer-section"><h3>Estimate</h3>' +
           '<dl class="portal-kv">' +
@@ -2683,7 +2716,7 @@
           '<dt>Service address</dt><dd>' + esc(e.service_address || '—') + '</dd>' +
           '<dt>Device</dt><dd>' + esc(estimateDeviceLabel(e)) + '</dd>' +
           '<dt>Issue</dt><dd>' + esc(e.issue || '—') + '</dd>' +
-          '<dt>Estimate</dt><dd><strong>' + esc(estimateMoney(estFloorAmt(e.estimate_amount)) /* V173_PRICING_FLOOR_2026_11_18 */) + '</strong></dd>' +
+          '<dt>Estimate</dt><dd><strong>' + esc(estimateMoney(estFloorAmt(e.estimate_amount, e.issue)) /* V173_PRICING_FLOOR_2026_11_18 */) + '</strong></dd>' +
           '<dt>Visit fee when confirmed</dt><dd>' + esc(estimateMoney(v165VisitFee(e.audience))) + (e.atr_one === 'member' ? ' (ATR One member — no visit fee)' : '') + '</dd>' +
           (v175EstTax ? '<dt>Estimated sales tax</dt><dd>' + esc(estimateMoney(v175EstTax.amount)) + ' (' + esc(v175EstTax.county) + ' County, ' + esc(v175EstTax.rate.toFixed(2)) + '%)' + (v175EstTax.fallback ? ' \u2014 county not determined from the service address, Greene County rate applied' : '') + '</dd>' + '<dt>Estimated total</dt><dd><strong>' + esc(estimateMoney(v175EstTax.total)) + '</strong></dd>' : '') +
           '<dt>Received</dt><dd>' + esc(fmtDateTime(e.created_at)) + '</dd>' +
@@ -3579,11 +3612,15 @@ function loadTicketThread(client, ticketId) {
           '<div class="portal-status-row"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="portal-timer-btn">Start timer</button>' +
           '<span class="portal-muted portal-small" id="portal-timer-msg"></span></div>' +
           '<div id="portal-timer-list"></div>' +
-          /* V176_STATUS_REWORK_2026_11_19: Ticket status - one dropdown with
-           * every status, including Quality Control. Picking a status saves
-           * at once (after the repair-log note) - no Save button. */
+          /* V176_STATUS_EIGHT_2026_11_19: Ticket status - one dropdown with
+           * Austin's eight options only (Pre-inspection, Need to order parts,
+           * Job completed, Customer needs to pay, Status paid, En Route, QC
+           * pass, QC fail - QC last). Picking a status saves at once (after
+           * the repair-log note) - no Save button. Status paid is the __paid
+           * choice: it runs the paid flow instead of a status save. QC pass /
+           * fail map to Ready / Awaiting Repair. */
           '<div class="portal-status-row"><label for="portal-ticket-status">Ticket status</label><select id="portal-ticket-status" aria-label="Ticket status">' +
-          statusOptions(TICKET_STATUSES, t.status) + '</select>' +
+          ticketStatusOptions(t.status) + '</select>' +
           '<span class="portal-muted portal-small" id="portal-ticket-status-msg"></span></div>' +
           /* V174_STATUS_NOTE_2026_11_18 (Austin, Nov 18, 2026): every status change requires a note — the dropdown opens asking for a brief description of the new status; submit, it goes away. No status change without a note.
            * V176: this box IS the repair log for the change - it asks what is happening with the repair and why the status changed. */
@@ -3593,11 +3630,6 @@ function loadTicketThread(client, ticketId) {
           '<div class="p2-actions"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="portal-status-note-submit">Submit</button> ' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="portal-status-note-cancel">Cancel</button> ' +
           '<span class="portal-muted portal-small" id="portal-status-note-msg"></span></div></div>' +
-          /* V174_QC_2026_11_18 (Austin, Nov 18, 2026): after Job Complete comes Quality Control — QC pass or fail, inside the status update. Pass moves the ticket to Ready; fail sends it back to Awaiting Repair. Both go through the note box, like every status change.
-           * V176: the QC row is always in the drawer (hidden until Quality Control is picked from the dropdown) - it is the last step before Job Complete. */
-          '<div class="p2-actions" id="portal-qc-row" hidden><span class="portal-muted portal-small"><strong>Quality Control</strong> — did the repair pass?</span>' +
-          '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-v174-qc="pass">QC pass</button>' +
-          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-v174-qc="fail">QC fail</button></div>' +
           /* V176_REPAIR_LOG_IN_STATUS_2026_11_19 (Austin, Nov 19, 2026): the
            * repair log lives here now, inside Status action - it used to be
            * its own section below Message guest. The log entries, the
@@ -4033,13 +4065,11 @@ function loadTicketThread(client, ticketId) {
         function v174CloseStatusNote() {
           var box = $('portal-status-note-box');
           if (box) box.hidden = true;
-          /* V176_STATUS_REWORK_2026_11_19: cancelling a status change puts the
-             dropdown back to the saved status and hides the QC row. (On a
-             successful save t.status was already updated, so the revert
-             keeps the new value.) */
+          /* V176_STATUS_EIGHT_2026_11_19: cancelling a status change puts the
+             dropdown back to the saved status. (On a successful save t.status
+             was already updated, so the revert keeps the new value.) */
           var sel = $('portal-ticket-status');
           if (sel) sel.value = t.status;
-          var qcRow = $('portal-qc-row'); if (qcRow) qcRow.hidden = true;
           v174PayLinkPending = false;
         }
         function v174SaveTicketStatus(next, noteText) {
@@ -4077,9 +4107,9 @@ function loadTicketThread(client, ticketId) {
             state.loaded.tickets = false;
             loadTickets(true);
             v174CloseStatusNote();
-            /* V176_STATUS_REWORK_2026_11_19: no re-open after Job Complete any
-               more - the QC row is always in the drawer (hidden until Quality
-               Control is picked), so there is nothing to re-render for. */
+            /* V176_STATUS_EIGHT_2026_11_19: no re-open after Job Complete any
+               more - the dropdown holds every status (QC pass/fail included),
+               so there is nothing to re-render for. */
           }).catch(function () { if (msg) msg.textContent = 'Couldn’t save — try again.'; });
         }
         /* V174_STATUS_BUTTONS_2026_11_18: Customer needs to pay sends the guest the Square link — the same checkout the Charge / Check out button builds, then the link goes to the guest's own message thread so it is waiting in their hub. The status email for Ready fires with the save above. */
@@ -4105,16 +4135,17 @@ function loadTicketThread(client, ticketId) {
             if (lb) { lb.innerHTML = '<p class="portal-card-meta"><a href="' + esc(url) + '" target="_blank" rel="noopener">' + esc(url) + '</a></p>'; lb.hidden = false; }
           }).catch(function () { if (msg) msg.textContent = 'Saved, but the payment link could not be made — try Charge / Check out in Charges and Payment.'; });
         }
-        /* V176_STATUS_REWORK_2026_11_19 (Austin, Nov 19, 2026): picking a
+        /* V176_STATUS_EIGHT_2026_11_19 (Austin, Nov 19, 2026): picking a
            status auto-saves after the repair-log note - there is no Save
-           status button any more. Quality Control shows the pass/fail row;
-           Ready sends the guest the Square pay link on save (the old
-           "Customer needs to pay" button's job). */
+           status button any more. "Status paid" (__paid) is not a status:
+           it runs the paid flow at once (balance must be $0, receipt
+           generated) and never opens the note box. "Customer needs to pay"
+           sends the guest the Square pay link on save (the old button's
+           job); QC pass moves to Ready with no pay link. */
         var v176StatusSel = $('portal-ticket-status');
         if (v176StatusSel) v176StatusSel.addEventListener('change', function () {
           var val = v176StatusSel.value;
-          var qcRow = $('portal-qc-row');
-          if (qcRow) qcRow.hidden = val !== 'Quality Control';
+          if (val === '__paid') { v174RunStatusPaid(); return; }
           if (val === 'Ready') v174PayLinkPending = true;
           v174OpenStatusNote();
         });
@@ -4124,7 +4155,13 @@ function loadTicketThread(client, ticketId) {
           var nmsg = $('portal-status-note-msg');
           var noteText = input ? trim(input.value) : '';
           if (!noteText) { if (nmsg) nmsg.textContent = 'Add a brief description first — no status change without a note.'; return; }
-          v174SaveTicketStatus($('portal-ticket-status').value, noteText);
+          /* V176_STATUS_EIGHT_2026_11_19: the dropdown carries choices, not DB
+             statuses - translate before saving. */
+          var rawChoice = $('portal-ticket-status').value;
+          if (rawChoice === '__paid') { v174RunStatusPaid(); return; }
+          if (rawChoice === '__qcpass') rawChoice = 'Ready';
+          if (rawChoice === '__qcfail') rawChoice = 'Awaiting Repair';
+          v174SaveTicketStatus(rawChoice, noteText);
         });
         var v174NoteCancel = $('portal-status-note-cancel');
         if (v174NoteCancel) v174NoteCancel.addEventListener('click', function () { v174CloseStatusNote(); });
@@ -4132,17 +4169,39 @@ function loadTicketThread(client, ticketId) {
            row (Pre-inspection, Need to order parts, Job completed, Customer
            needs to pay, Status paid, En Route) is GONE - the dropdown holds
            every status. Its wiring is deleted with it. */
-        document.querySelectorAll('[data-v174-qc]').forEach(function (b) {
-          b.addEventListener('click', function () {
-            var sel = $('portal-ticket-status');
-            if (sel) sel.value = b.getAttribute('data-v174-qc') === 'pass' ? 'Ready' : 'Awaiting Repair';
-            var row = $('portal-qc-row'); if (row) row.hidden = true;
-            v174OpenStatusNote();
+        /* V176_STATUS_EIGHT_2026_11_19: the QC pass/fail row is GONE - QC pass
+           and QC fail are choices in the Ticket status dropdown itself
+           (__qcpass / __qcfail), so there is no [data-v174-qc] wiring any
+           more. The note-submit handler translates them to Ready /
+           Awaiting Repair. */
+        /* V176_STATUS_EIGHT_2026_11_19: Status paid is the __paid choice in
+           the Ticket status dropdown now - the paid flow below runs from the
+           change listener (and from the note-submit guard), not from a
+           button. The balance must already be $0: the payment itself is
+           recorded in Charges and Payment (cash / card / Square app /
+           Square link), where the method is written down. A balance still
+           due is refused here, plainly. The dropdown always goes back to
+           the ticket's saved status afterwards - Status paid is not a
+           status, so it never sticks as the selection. */
+        function v174RunStatusPaid() {
+          var msg = $('portal-ticket-status-msg');
+          var sel = $('portal-ticket-status');
+          var tot = chargeTotals(t._charges || []);
+          if (tot.balance > 0) {
+            if (msg) msg.textContent = 'There is still ' + fmtMoney(tot.balance) + ' due — record the payment in Charges and Payment first, then pick Status paid.';
+            if (sel) sel.value = t.status;
+            return;
+          }
+          if (msg) msg.textContent = 'Generating receipt…';
+          generateReceipt(client, t, function (ok) {
+            if (!ok) { if (msg) msg.textContent = 'Couldn’t generate the receipt — try again.'; return; }
+            if (msg) msg.textContent = 'Paid — receipt ready.';
+            if (sel) sel.value = t.status;
+            client.from('ticket_documents').select('id, storage_path, file_name').eq('ticket_id', t.id).eq('doc_type', 'receipt').order('created_at', { ascending: false }).limit(1).then(function (q) {
+              if (!q.error && q.data && q.data.length) viewStoredDocument(client, q.data[0].storage_path, q.data[0].file_name, function () {});
+            }).catch(function () {});
           });
-        });
-        /* V176_STATUS_REWORK_2026_11_19: the Status paid button is GONE -
-           its job is covered by the four Payment buttons in Charges and
-           Payment (they mark the ticket paid and generate the receipt). */
+        }
 
         /* AVATARS_2026_11_03: the Assigned to picker beside the
          * status control — options from the staff directory, the
@@ -4304,8 +4363,21 @@ function loadTicketThread(client, ticketId) {
     if (info.fallback) s += ' (fallback \u2014 county not determined from the service address)';
     return s;
   }
-  function atrTaxEffective(rows, address) {
+  function atrTaxClosedPaid(t, rows) {
+    /* V176_TAX_GUARD_2026_11_19 (Austin, Nov 19, 2026): Job Complete + paid
+       in full means the figures are final - no tax row is ever added to
+       such a ticket. Future tickets only: Daniel's closed ticket stays
+       $69.99 and is never touched. A tax row synced while the ticket was
+       open is part of the paid record and stays; only a NEW row is
+       stopped. */
+    if (!t || t.status !== 'Job Complete') return false;
+    /* Money is compared in whole cents: 20 + 49.99 - 69.99 is 1.4e-14 in
+       float, not 0, so an unrounded compare would never fire. */
+    return Math.round(chargeTotals(rows || []).balance * 100) / 100 <= 0;
+  }
+  function atrTaxEffective(rows, address, closedPaid) {
     var synced = atrTaxRowIn(rows);
+    if (closedPaid && !synced) return { amount: 0, hasSynced: false, info: null };
     if (synced) {
       var amt = Math.round(Number(synced.unit_price || 0) * Number(synced.qty || 1) * 100) / 100;
       return { amount: amt, hasSynced: true, info: atrTaxCompute(rows, address) };
@@ -4339,6 +4411,8 @@ function loadTicketThread(client, ticketId) {
   var v175TaxSyncNote = '';
   function v175SyncTaxRow(client, t, rows, done) {
     function finish(fresh) { try { done(fresh || rows); } catch (e) {} }
+    /* V176_TAX_GUARD_2026_11_19: Job Complete + paid in full - the figures are final. Skip the sync entirely: no tax row is added, and a row synced while the ticket was open is left exactly as it is (it is part of the paid record). */
+    if (atrTaxClosedPaid(t, rows)) { v175TaxSyncNote = ''; finish(rows); return; }
     var info = null;
     try { info = atrTaxCompute(rows, t.service_address); } catch (e) { info = null; }
     var existing = (rows || []).filter(function (ch) { return ch.kind === 'tax'; });
@@ -4548,7 +4622,7 @@ function loadTicketThread(client, ticketId) {
     } else {
       var tot = chargeTotals(rows);
       /* V175_COUNTY_TAX_2026_11_19: the drawer totals are tax-inclusive - the synced tax row when one exists (it is already inside tot), else the same computed figure the guest page shows. */
-      var v175TaxView = atrTaxEffective(rows, t.service_address);
+      var v175TaxView = atrTaxEffective(rows, t.service_address, atrTaxClosedPaid(t, rows)); /* V176_TAX_GUARD_2026_11_19 */
       var v175Subtotal = tot.subtotal + (v175TaxView.hasSynced ? 0 : v175TaxView.amount);
       var v175Balance = v175Subtotal - tot.deposits;
       var html = rows.map(function (c) {
@@ -4607,7 +4681,7 @@ function loadTicketThread(client, ticketId) {
      * instead — its balance due is $0 however the lines add up. */
     var accTot = chargeTotals(rows);
     /* V175_COUNTY_TAX_2026_11_19: the closed Charges header carries the tax-inclusive balance, like the totals above. */
-    var v175AccTax = atrTaxEffective(rows, t.service_address);
+    var v175AccTax = atrTaxEffective(rows, t.service_address, atrTaxClosedPaid(t, rows)); /* V176_TAX_GUARD_2026_11_19 */
     var v175AccBalance = accTot.balance + (v175AccTax.hasSynced ? 0 : v175AccTax.amount);
     tkAccSetHint('charges', t.warranty_exempt ? 'Warranty — exempt' : (rows.length ? (v175AccBalance > 0 ? fmtMoney(v175AccBalance) + ' due' : 'Paid in full') : ''));
   }
@@ -6456,39 +6530,26 @@ function loadTicketThread(client, ticketId) {
       var dev = d.tickets ? esc(deviceLabel(d.tickets)) : '';
       var head = cust ? '<span class="p2-line-amt">' + cust + '</span>' : '<span class="p2-kind">Unattached</span>';
       var meta = esc(fmtDateTime(d.signed_at || d.created_at));
+      if (d.ticket_id) meta += ' &middot; Ticket #' + esc(String(d.ticket_id).slice(0, 8).toUpperCase()); /* V176_RECORDS_2026_11_19: a filed document shows which ticket it belongs to. */
       if (dev) meta += ' &middot; ' + dev;
       if (d.signer_name) meta += ' &middot; Signed by ' + esc(d.signer_name);
       if (d.file_name) meta += ' &middot; ' + esc(d.file_name);
       var html = '<div class="p2-line"><div class="p2-line-main"><span class="p2-kind">' + esc(DOC_TYPE_LABELS[d.doc_type] || 'Document') + '</span>' + head +
         '<br /><span class="portal-muted portal-small">' + meta + '</span></div>' +
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-doc-view="' + esc(d.storage_path) + '" data-doc-view-name="' + esc(d.file_name || '') + '"><i class="fas fa-eye"></i> View</button>';
-      if (!d.ticket_id) {
-        html += ' <button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-doc-attach="' + esc(d.id) + '"><i class="fas fa-paperclip"></i> Attach</button>';
-      }
+      /* V176_RECORDS_2026_11_19: no per-row Attach button any more - a document is filed onto a repair from the ticket itself (Service Queue), never from Records. */
       /* PORTAL_CRUD_BATCH_A_2026_11_05: per-row Delete, Admin-or-above. */
       if (isAdminOrAbove()) {
         html += ' <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-doc-del="' + esc(d.id) + '"><i class="fas fa-trash"></i> Delete</button>';
       }
       html += '</div>';
-      if (!d.ticket_id) {
-        html += '<div class="p2-form" id="picker-' + esc(d.id) + '" hidden><div class="p2-form-row">' +
-          '<select data-pick-select="' + esc(d.id) + '" aria-label="Choose the ticket for this document"><option value="">Loading tickets&hellip;</option></select>' +
-          '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-attach-confirm="' + esc(d.id) + '">Attach to this ticket</button></div></div>';
-      }
       return html;
     }).join('');
     var views = box.querySelectorAll('[data-doc-view]');
     for (var i = 0; i < views.length; i++) {
       views[i].addEventListener('click', function () { viewDocTab(client, this.getAttribute('data-doc-view'), this.getAttribute('data-doc-view-name')); });
     }
-    var attaches = box.querySelectorAll('[data-doc-attach]');
-    for (var j = 0; j < attaches.length; j++) {
-      attaches[j].addEventListener('click', function () { toggleDocPicker(client, this.getAttribute('data-doc-attach')); });
-    }
-    var confirms = box.querySelectorAll('[data-attach-confirm]');
-    for (var k = 0; k < confirms.length; k++) {
-      confirms[k].addEventListener('click', function () { confirmDocAttach(client, this.getAttribute('data-attach-confirm')); });
-    }
+    /* V176_RECORDS_2026_11_19: the per-row Attach button and its ticket picker are gone (see above) - their wiring goes with them. toggleDocPicker / confirmDocAttach stay defined but unwired; a document is filed onto a repair from the ticket itself. */
     var dels = box.querySelectorAll('[data-doc-del]');
     for (var m = 0; m < dels.length; m++) {
       dels[m].addEventListener('click', function () { deleteDocTabDocument(client, this); });
@@ -11277,8 +11338,8 @@ function loadTicketThread(client, ticketId) {
    * The steps and fields mirror the real intake (New Service
    * Request / check-in): the same fields in the same order, the
    * same required set (name, phone, email, service address, what
-   * they need), the real ci-type device list, the same
-   * TICKET_STATUSES list in the status control, a repair-log style
+   * they need), the real ci-type device list, the same DB status list
+   * (TICKET_DB_STATUSES) in the status control, a repair-log style
    * notes list, charge lines, and the eight-item Connect handoff
    * checklist from the Connect Handoff topic. The scenario guest
    * is authored here, consistent with the Practice Ticket topic:
@@ -11490,7 +11551,7 @@ function loadTicketThread(client, ticketId) {
       '<p class="portal-card-meta">What they need: ' + esc(f.need) + '</p></article>' +
       '<div class="portal-drawer-section"><h3>Status</h3>' +
       '<div class="portal-status-row"><select id="pr-status" aria-label="Practice ticket status">' +
-      statusOptions(TICKET_STATUSES, run.statusSel || run.status) + '</select>' +
+      statusOptions(TICKET_DB_STATUSES, run.statusSel || run.status) + '</select>' +
       '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-training-btn="' + esc(r.id) + '" data-training-practice="save-status">Save status</button></div>' +
       '<p class="portal-muted portal-small">Same status list as a real ticket. A virtual job still moves \u2014 move this one at least once.</p></div>' +
       '<div class="portal-drawer-section"><h3>Notes</h3>' + notesHtml +

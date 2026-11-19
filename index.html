@@ -1221,6 +1221,7 @@
         <option value="Virus cleanup &amp; tuneup">Virus cleanup &amp; tuneup</option>
         <option value="HDMI port repair">HDMI port repair</option>
         <option value="Overheating / power fault">Overheating / power fault</option>
+        <option value="Cleaning and liquid metal replacement">Cleaning and liquid metal replacement</option>
         <option value="Other / not sure">Other / not sure</option>
       </select>
     </div>
@@ -6415,7 +6416,7 @@
   }
   /* V173_PRICING_FLOOR_2026_11_18 (Austin, Nov 18, 2026): no estimated price below $60 — base labor is $50.
      Floors ESTIMATE amounts only; visit fees use estMoney directly and are never floored. */
-  function estFloor(n) { if (n === null || n === undefined || n === '') return n; var v = Number(n); return isNaN(v) ? n : Math.max(60, v); } /* V173_PRICING_FLOOR_2026_11_18: a missing amount passes through untouched — Number(null) is 0, and flooring that to 60 would invent a $60 price for an estimate that has no amount yet. */
+  function estFloor(n, issue) { if (n === null || n === undefined || n === '') return n; var v = Number(n); if (isNaN(v)) return n; if (issue === 'Cleaning and liquid metal replacement') return v; return Math.max(60, v); } /* V173_PRICING_FLOOR_2026_11_18: a missing amount passes through untouched — Number(null) is 0, and flooring that to 60 would invent a $60 price for an estimate that has no amount yet. V176_CLEANING_ALL_2026_11_19: cleaning is a FLAT $49.99 service - the floor never lifts it. */
   function estDate(e) {
     try { return new Date(e.created_at).toLocaleDateString(); } catch (err) { return ''; }
   }
@@ -6434,12 +6435,12 @@
         }
         list.innerHTML = rows.map(function (e) {
           var awaiting = e.status === 'Awaiting Estimate';
-          var v175EstTax = atrTaxEstimate(estFloor(e.estimate_amount), e.atr_one === 'member' ? 0 : (e.audience === 'business' ? 34.99 : 14.99), e.service_address);
+          var v175EstTax = atrTaxEstimate(estFloor(e.estimate_amount, e.issue), e.atr_one === 'member' ? 0 : (e.audience === 'business' ? 34.99 : 14.99), e.service_address);
           var cls = e.status === 'Accepted' ? 'acct-st-done' : 'acct-st-waiting';
           return '<div class="acct-ticket-card" style="cursor:default">' +
             '<span class="acct-ticket-top"><strong>' + escX(estDeviceLabel(e)) + '</strong><span class="acct-status ' + cls + '">' + escX(e.status || '') + '</span></span>' +
             '<span class="acct-ticket-issue">' + escX(e.issue || '') + '</span>' +
-            '<span class="acct-ticket-meta">' + escX(estMoney(estFloor(e.estimate_amount))) /* V173_PRICING_FLOOR_2026_11_18 */ + (awaiting ? ' · waiting for your answer' : '') + (v175EstTax ? ' · + ' + escX(estMoney(v175EstTax.amount)) + ' est. tax (' + escX(v175EstTax.county) + ' County, ' + escX(v175EstTax.rate.toFixed(2)) + '%)' : '') + '</span>' +
+            '<span class="acct-ticket-meta">' + escX(estMoney(estFloor(e.estimate_amount, e.issue))) /* V173_PRICING_FLOOR_2026_11_18 */ + (awaiting ? ' · waiting for your answer' : '') + (v175EstTax ? ' · + ' + escX(estMoney(v175EstTax.amount)) + ' est. tax (' + escX(v175EstTax.county) + ' County, ' + escX(v175EstTax.rate.toFixed(2)) + '%)' : '') + '</span>' +
             (awaiting && e.public_token ? '<span class="acct-ticket-cta"><a class="btn btn-primary btn-sm" href="#estimate/' + escX(e.public_token) + '">View estimate</a></span>' : '') +
           '</div>';
         }).join('');
@@ -6508,8 +6509,8 @@
       '<p class="acct-muted" style="margin-top:0">' + escX(e.audience === 'business' ? 'For your business' : 'For you') + ' · ' + escX(estDate(e)) + '</p>' +
       '<h3 style="margin-top:0">' + escX(estDeviceLabel(e)) + '</h3>' +
       '<p>' + escX(e.issue || '') + '</p>' +
-      '<p><strong>Estimate: ' + escX(estMoney(estFloor(e.estimate_amount))) /* V173_PRICING_FLOOR_2026_11_18 */ + '</strong></p>' +
-      (function () { var tx = atrTaxEstimate(estFloor(e.estimate_amount), e.atr_one === 'member' ? 0 : fee, e.service_address); if (!tx) return ''; return '<p>Estimated sales tax (' + escX(tx.county) + ' County, ' + escX(tx.rate.toFixed(2)) + '%): <strong>' + escX(estMoney(tx.amount)) + '</strong>' + (tx.fallback ? ' <span class="acct-muted">\u2014 county not determined from the service address, Greene County rate applied</span>' : '') + '</p><p><strong>Estimated total: ' + escX(estMoney(tx.total)) + '</strong></p>'; })() +
+      '<p><strong>Estimate: ' + escX(estMoney(estFloor(e.estimate_amount, e.issue))) /* V173_PRICING_FLOOR_2026_11_18 */ + '</strong></p>' +
+      (function () { var tx = atrTaxEstimate(estFloor(e.estimate_amount, e.issue), e.atr_one === 'member' ? 0 : fee, e.service_address); if (!tx) return ''; return '<p>Estimated sales tax (' + escX(tx.county) + ' County, ' + escX(tx.rate.toFixed(2)) + '%): <strong>' + escX(estMoney(tx.amount)) + '</strong>' + (tx.fallback ? ' <span class="acct-muted">\u2014 county not determined from the service address, Greene County rate applied</span>' : '') + '</p><p><strong>Estimated total: ' + escX(estMoney(tx.total)) + '</strong></p>'; })() +
       '<p class="acct-muted">When you confirm, the visit fee (' + escX(estMoney(fee)) + ') is due as we schedule your visit, and we will confirm your date and time with you. Nothing is booked until you confirm.</p>' +
       '</div>';
     if (e.status === 'Accepted') {
@@ -6799,7 +6800,7 @@
     var info = $('acct-thread-info');
     if (info) info.innerHTML = t.__general
       ? '<strong>General conversation</strong><br><span class="acct-muted">Not tied to a repair \u2014 write us here any time.</span>'
-      : '<strong>Messages about this repair \u2014 Ticket #' + escX(String(t.id).slice(0, 8).toUpperCase()) + '</strong> ' + statusPill(t.status) + '<br><span class="acct-muted">' + escX(ticketDevice(t)) + ' \u00b7 ' + escX(t.issue || '') + '</span>';
+      : '<strong>' + escX(ticketDevice(t)) + '</strong> ' + statusPill(t.status) + '<br><span class="acct-muted">' + escX(t.issue || '') + '</span>';
     var thEl = $('acct-thread');
     if (thEl && thEl.scrollIntoView) { try { thEl.scrollIntoView({ behavior: 'auto', block: 'start' }); } catch (e) {} }
     renderTicketTimeline(t); /* REPAIR_TIMELINE_2026_11_06: paint from status now; the parts read refines it */
@@ -6943,8 +6944,26 @@
     if (info.fallback) s += ' (fallback \u2014 county not determined from the service address)';
     return s;
   }
-  function atrTaxEffective(rows, address) {
+  function atrTaxClosedPaid(t, rows) {
+    /* V176_TAX_GUARD_2026_11_19 (Austin, Nov 19, 2026): Job Complete + paid
+       in full means the figures are final - no tax line is ever added to
+       such a ticket. Future tickets only: Daniel's closed ticket stays
+       $69.99 and is never touched. A tax row synced while the ticket was
+       open is part of the paid record and stays; only a NEW line is
+       stopped. */
+    if (!t || t.status !== 'Job Complete') return false;
+    var sub = 0, dep = 0;
+    (rows || []).forEach(function (c) {
+      var amt = Number(c.qty || 0) * Number(c.unit_price || 0);
+      if (c.kind === 'deposit_credit') dep += amt; else sub += amt;
+    });
+    /* Money is compared in whole cents: 20 + 49.99 - 69.99 is 1.4e-14 in
+       float, not 0, so an unrounded compare would never fire. */
+    return Math.round((sub - dep) * 100) / 100 <= 0;
+  }
+  function atrTaxEffective(rows, address, closedPaid) {
     var synced = atrTaxRowIn(rows);
+    if (closedPaid && !synced) return { amount: 0, hasSynced: false, info: null };
     if (synced) {
       var amt = Math.round(Number(synced.unit_price || 0) * Number(synced.qty || 1) * 100) / 100;
       return { amount: amt, hasSynced: true, info: atrTaxCompute(rows, address) };
@@ -6975,7 +6994,7 @@
         var rows = res.data || [];
         if (!rows.length) { box.innerHTML = ''; atrSecHide('acct-sec-charges', 'acct-sec-charges-hint'); return; }
         /* V175_COUNTY_TAX_2026_11_19: the Charges section is tax-inclusive - the synced tax row when one exists, else the same computed figure the drawer syncs, so the guest always sees the right tax and the right balance even before staff opens the drawer. */
-        var taxView = atrTaxEffective(rows, t.service_address);
+        var taxView = atrTaxEffective(rows, t.service_address, atrTaxClosedPaid(t, rows)); /* V176_TAX_GUARD_2026_11_19 */
         var rowsSubtotal = 0, deposits = 0;
         var lines = rows.map(function (c) {
           var qty = Number(c.qty || 0), price = Number(c.unit_price || 0), amt = qty * price;
@@ -7616,7 +7635,7 @@
         var rows = res.data || [], rowsSubtotal = 0, deposits = 0;
         rows.forEach(function (c) { var amt = Number(c.qty || 0) * Number(c.unit_price || 0); if (c.kind === 'deposit_credit') deposits += amt; else if (c.kind !== 'tax') rowsSubtotal += amt; });
         /* V175_COUNTY_TAX_2026_11_19: the balance due is tax-inclusive - the synced tax row when one exists, else the same computed figure the Charges section shows - so the Pay button always opens Square for the full amount the guest owes. */
-        var taxView = atrTaxEffective(rows, t.service_address);
+        var taxView = atrTaxEffective(rows, t.service_address, atrTaxClosedPaid(t, rows)); /* V176_TAX_GUARD_2026_11_19 */
         var subtotal = rowsSubtotal + taxView.amount;
         var balance = subtotal - deposits, html = '';
         if (t.status === 'Awaiting Customer Response') {
@@ -7821,6 +7840,17 @@
   function loadThreadMessages(t) {
     var box = $('acct-messages');
     if (!box || !sb) return;
+    /* V176_ONE_THREAD_2026_11_19 (Austin, Nov 19, 2026): guest messages live
+       in ONE place only - Service Messages, the general conversation. Never
+       on the ticket. On the repairs door the messages section and the reply
+       box stay hidden and nothing loads. A ticket thread opened from the
+       Messages inbox keeps its history readable, but its reply box stays
+       hidden - sends go through the general conversation only. */
+    var _otSec = $('acct-sec-messages'), _otForm = $('acct-msg-form');
+    if (!t.__general) {
+      if (_otForm) _otForm.hidden = true;
+      if (threadOrigin === 'repairs') { if (_otSec) _otSec.hidden = true; return; }
+    } else if (_otForm) { _otForm.hidden = false; }
     box.innerHTML = '<p class="acct-muted">Loading messages\u2026</p>';
     atrSecShow('acct-sec-messages', 'acct-sec-messages-hint', ''); /* V168_GUEST_TICKET_COLLAPSE_2026_11_18 */
     /* ACCOUNT_FIX_PASS_3_2_2026_11_06: one renderer for both doors AND
@@ -7921,7 +7951,7 @@
     }
     convos.sort(function (a, b) { return String(b.last.created_at).localeCompare(String(a.last.created_at)); });
     if (!convos.length) {
-      list.innerHTML = '<p class="acct-muted">No messages yet \u2014 when we write to you about a repair, it will show up here, and you can reply right from this page.</p>';
+      list.innerHTML = '<p class="acct-muted">No messages yet \u2014 when we write to you about a repair, it will show up here. To write us, open the general conversation above.</p>'; /* V176_ONE_THREAD_2026_11_19 */
       return;
     }
     list.innerHTML = convos.map(function (c) {
@@ -8477,20 +8507,15 @@
      configured yet (no model key — Austin has not decided paid vs
      free), it returns not_configured and the message falls through to
      the team with one honest note, never a canned answer. */
-  /* V176_AI_TICKET_2026_11_19: one honest 'we got it' note per ticket
-     thread, when the AI cannot answer there. */
-  var atrAiTicketFallbackShown = {};
-  function atrAiReply(text, ticketId) {
+  function atrAiReply(text) {
     if (!sb || !currentCust) return Promise.resolve({ ok: false, error: 'no_session' });
     return sb.auth.getSession().then(function (sres) {
       var token = sres && sres.data && sres.data.session ? sres.data.session.access_token : null;
       if (!token) return { ok: false, error: 'no_session' };
-      var payload = { message: text };
-      if (ticketId) payload.ticket_id = ticketId;
       return fetch(SUPABASE_URL + '/functions/v1/service-messages-ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'apikey': SUPABASE_ANON_KEY },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ message: text })
       }).then(function (res) { return res.json(); }).catch(function () { return { ok: false, error: 'unreachable' }; });
     }).catch(function () { return { ok: false, error: 'unreachable' }; });
   }
@@ -8686,11 +8711,11 @@
       var text = (input.value || '').trim();
       if (!text || !openTicket || !sb) return;
       err.hidden = true;
-      /* ACCOUNT_FIX_PASS_3_2_2026_11_06: the general conversation's
-         replies ride the same form through sendGeneralMessage. The ticket
-         payload below sets customer_id (V176_AI_TICKET_2026_11_19) and,
-         after a successful insert, calls atrAiReply(text, openTicket.id)
-         so a ticket thread reaches the AI too. */
+      /* V176_ONE_THREAD_2026_11_19 (Austin, Nov 19, 2026): the general
+         conversation's replies ride the same form through
+         sendGeneralMessage. A ticket thread takes NO sends any more -
+         guest messages live in Service Messages only - so the old ticket
+         insert below is replaced by a refusal. Nothing is inserted here. */
       if (openTicket.__general) {
         sendGeneralMessage(text, function (ok) {
           if (!ok) { err.textContent = 'Couldn\'t send \u2014 try again, or call or text (937) 280-6243.'; err.hidden = false; return; }
@@ -8700,41 +8725,8 @@
         });
         return;
       }
-      sb.from('messages').insert({ ticket_id: openTicket.id, customer_id: (currentCust ? currentCust.id : null), sender: 'customer', message: text }).then(function (res) {
-        if (res.error) { err.textContent = 'Couldn\'t send \u2014 try again.'; err.hidden = false; return; }
-        input.value = '';
-        loadThreadMessages(openTicket);
-        if (currentCust) loadInbox(currentCust); /* CUSTOMER_INBOX_2026_11_05: keep the inbox preview + badge current */
-        /* V176_AI_TICKET_2026_11_19 (Austin, Nov 19, 2026): the ticket
-           thread reaches the AI too - the guest's message is already saved
-           above, so the AI can never block it. On success the AI's reply
-           lands in this same ticket thread; on failure (or no reply) ONE
-           honest note per thread, never a canned answer. No form-alert
-           here - staff already see the ticket thread in the portal.
-           Escalated / legacy phase, or an escalation phrase: the AI stays
-           out and the team takes the thread (same rule as the general
-           path, minus the alert). */
-        (function () {
-          var tid = openTicket.id;
-          if (assistantEscalated || assistantLegacy || assistantEscalationPhrase(text)) return;
-          atrAiReply(text, tid).then(function (out) {
-            if (out && out.ok && out.reply) {
-              sb.from('messages').insert({ ticket_id: tid, customer_id: (currentCust ? currentCust.id : null), sender: 'bot', message: out.reply }).then(function () {
-                loadThreadMessages(openTicket);
-                if (currentCust) loadInbox(currentCust);
-              });
-              return;
-            }
-            if (!atrAiTicketFallbackShown[tid]) {
-              atrAiTicketFallbackShown[tid] = true;
-              sb.from('messages').insert({ ticket_id: tid, customer_id: (currentCust ? currentCust.id : null), sender: 'auto', message: 'Thanks for messaging us — your message is with the team, and an associate will reply right here.' }).then(function () {
-                loadThreadMessages(openTicket);
-                if (currentCust) loadInbox(currentCust);
-              });
-            }
-          });
-        })();
-      }).catch(function () { err.textContent = 'Couldn\'t send \u2014 try again.'; err.hidden = false; });
+      err.textContent = 'Write us in Service Messages instead \u2014 that is where we reply.';
+      err.hidden = false;
     });
     /* V163_WINDOWS_DAY_AWARE_2026_11_17: the arrival-window options
      * follow the picked visit date — see the ATR_WINDOWS_* model above.
@@ -10041,10 +10033,12 @@
        Home are real buttons - tapping one opens that ticket in My Services. */
     .ghub-next-btn{ display: block; width: 100%; text-align: left; background: none; border: 0; padding: 6px 0; cursor: pointer; color: inherit; font: inherit; }
     .ghub-next-btn:hover{ text-decoration: underline; }
-    /* V176_MSG_LABELS_2026_11_19 (Austin, Nov 19, 2026): the two message
-       surfaces are labelled so nobody confuses them - Service Messages is
-       the general chat; a ticket thread is messages about one repair. */
-    .ghub-chat-sub{ margin: 2px 0 10px; font-size: .9rem; opacity: .85; }
+    /* V176_MSG_LABELS_2026_11_19 (Austin, Nov 19, 2026): inbox cards in
+       Service Messages carry a surface chip - General chat, or Ticket
+       #XXXX for a repair thread opened from the inbox. The two surfaces
+       are never merged. (V176_ONE_THREAD: the Service Messages sub-line
+       is gone - guest messages live in Service Messages only, never on
+       the ticket - so there is no .ghub-chat-sub rule any more.) */
     .ghub-chip{ display: inline-block; font-size: .72rem; font-weight: 700; border: 1px solid var(--ghub-line); border-radius: 999px; padding: 1px 8px; margin-left: 6px; vertical-align: middle; }
     /* V176_NO_ZOOM_BREAK_2026_11_19 (Austin, Nov 19, 2026): a double-tap must
        not zoom the page and break the layout on iPad/phone. manipulation
@@ -10601,7 +10595,6 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
       </div>
       <div class="ghub-pane" data-pane="chat" hidden>
         <h2>Service Messages</h2>
-        <p class="ghub-chat-sub">General chat with the shop. Messages about one repair live in that repair's thread — open the repair in My Services to see them.</p>
         <!-- Messages inbox — CUSTOMER_INBOX_2026_11_05 (owner,
              Nov 5, 2026): "our message to them goes to their
              message/inbox button on their account page… and vice
