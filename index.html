@@ -8868,8 +8868,9 @@
       ws.forEach(function (w) { try { w(atrVersionValue); } catch (e) {} });
     }
     function norm(name) {
-      var m = /^atrg-(v\d+)$/.exec(String(name || ''));
-      return m ? m[1] : null;
+      /* V176_4_VERSION_2026_11_19: the v176.3 cache name is "atrg-v176-3" and the old pattern only matched plain "atrg-vNNN", so the version line came up blank. Accept the -N suffix and show it as a dot: atrg-v176-3 reads v176.3, atrg-v176 still reads v176. */
+      var m = /^atrg-(v\d+(?:-\d+)?)$/.exec(String(name || ''));
+      return m ? m[1].replace('-', '.') : null;
     }
     function fromSwText() {
       try {
