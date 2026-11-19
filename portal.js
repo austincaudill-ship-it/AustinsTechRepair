@@ -470,7 +470,7 @@
   var state = {
     user: null,
     profile: null,
-    loaded: { tickets: false, applications: false, investors: false, feedback: false, customers: false, members: false, inventory: false, financials: false, associateaccounts: false, warranty: false, leads: false }, /* ASSOCIATE_ACCOUNTS_2026_11_03: one loaded flag for the merged panel (was 'associates' + the Account Controls loads); WARRANTY_PORTAL_2026_11_03: 'warranty' flag for the Warranty panel; LEADS_2026_11_15: 'leads' flag for the Leads panel */
+    loaded: { tickets: false, applications: false, investors: false, feedback: false, customers: false, members: false, inventory: false, financials: false, businessfiles: false, associateaccounts: false, warranty: false, leads: false }, /* ASSOCIATE_ACCOUNTS_2026_11_03: one loaded flag for the merged panel (was 'associates' + the Account Controls loads); WARRANTY_PORTAL_2026_11_03: 'warranty' flag for the Warranty panel; LEADS_2026_11_15: 'leads' flag for the Leads panel */
     customersCache: [], inventoryCache: []
   };
 
@@ -1811,6 +1811,7 @@
     documents: loadDocumentsTab, records: loadRecordsTab, financials: loadFinancials,
     /* PAYROLL_SPLIT_2026_11_03: Payroll is its own tab now (see loadPayroll). */
     payroll: loadPayroll,
+    businessfiles: loadBusinessFiles,
     /* ASSOCIATE_ACCOUNTS_2026_11_03: the merged Associate Accounts panel
      * (Admin group) — one loader where PORTAL_SIDEBAR_ROSTER_2026_11_02's
      * roster and ACCOUNT_CONTROLS_2026_11_03's Account Controls used to
@@ -1898,7 +1899,7 @@
     var qaBtn = name === 'home' ? $('portal-hub-home-btn') : ((name === 'checkin' || name === 'estimate') ? $('portal-hub-new-btn') : null);
     ['portal-hub-home-btn', 'portal-hub-new-btn'].forEach(function (id) { var b = $(id); if (b) b.classList.toggle('qa-active', b === qaBtn); });
     /* PASS10_2026_11_04: 'tracking' (the Live Tracking panel) hides and shows with the rest too */
-    ['tickets', 'estimates', 'invoices', 'applications', 'investors', 'feedback', 'customers', 'leads', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'tracking', 'documents', 'records', 'financials', 'payroll', 'mileage', 'businesscard', /* V166_BUSINESS_CARD_2026_11_17: the Business Card panel hides and shows with the rest too */ 'teamchat', 'guestchat', 'associateaccounts', 'warranty', 'setup', 'home', 'virtual'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too; ASSOCIATE_ACCOUNTS_2026_11_03: 'associateaccounts' hides and shows with the rest too (it absorbed ACCOUNT_CONTROLS_2026_11_03's 'accountcontrols' and the roster's 'associates'); WARRANTY_PORTAL_2026_11_03: 'warranty' hides and shows with the rest too; PORTAL_SETUP_2026_11_04: 'setup' hides and shows with the rest too; PORTAL_HOME_2026_11_09: 'home' hides and shows with the rest too; LEADS_2026_11_15: 'leads' hides and shows with the rest too; QR_FIX_PASS_2026_11_05: 'scanin' is GONE from this list — the scanner is a popup now, there is no scanin panel to hide or show */
+    ['tickets', 'estimates', 'invoices', 'applications', 'investors', 'feedback', 'customers', 'leads', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'tracking', 'documents', 'records', 'financials', 'payroll', 'businessfiles', 'mileage', 'businesscard', /* V166_BUSINESS_CARD_2026_11_17: the Business Card panel hides and shows with the rest too */ 'teamchat', 'guestchat', 'associateaccounts', 'warranty', 'setup', 'home', 'virtual'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too; ASSOCIATE_ACCOUNTS_2026_11_03: 'associateaccounts' hides and shows with the rest too (it absorbed ACCOUNT_CONTROLS_2026_11_03's 'accountcontrols' and the roster's 'associates'); WARRANTY_PORTAL_2026_11_03: 'warranty' hides and shows with the rest too; PORTAL_SETUP_2026_11_04: 'setup' hides and shows with the rest too; PORTAL_HOME_2026_11_09: 'home' hides and shows with the rest too; LEADS_2026_11_15: 'leads' hides and shows with the rest too; QR_FIX_PASS_2026_11_05: 'scanin' is GONE from this list — the scanner is a popup now, there is no scanin panel to hide or show */
       $('portal-panel-' + n).hidden = n !== name;
     });
     closeDrawer();
@@ -4369,7 +4370,7 @@ function loadTicketThread(client, ticketId) {
   function atrTaxBaseOf(rows) {
     var base = 0;
     (rows || []).forEach(function (ch) {
-      if (ch.kind === 'deposit_credit' || ch.kind === 'tax') return;
+      if (ch.kind === 'deposit_credit' || ch.kind === 'tax' || ch.kind === 'fee') return;
       base += Number(ch.qty || 0) * Number(ch.unit_price || 0);
     });
     return Math.round(base * 100) / 100;
@@ -4422,6 +4423,48 @@ function loadTicketThread(client, ticketId) {
     if (rate == null) return null;
     var tax = Math.round(base * rate) / 100;
     return { county: found.county, rate: rate, amount: tax, base: Math.round(base * 100) / 100, total: Math.round((base + tax) * 100) / 100, fallback: found.source === 'fallback' };
+  }
+
+  /* V176_7_CARD_FEE_2026_11_19 (Austin, Nov 19, 2026): the card
+   * processing fee is passed through to the guest at Square's actual
+   * rate, never more. Payment Links / online checkout: 2.9% + $0.30.
+   * In person (Square app / card terminal): 2.6% + $0.10. The fee is
+   * grossed up so it equals exactly what Square charges on the final
+   * total: fee = (rate x pre-fee amount + fixed) / (1 - rate),
+   * rounded to the cent. The fee is ONE ticket_charges row (kind
+   * 'fee', qty 1, description 'Square pass-through (rate)'), synced
+   * like the v175 tax row: exactly one row, reused when the amount
+   * already matches, replaced when the balance or the payment method
+   * changes, removed when there is nothing left to charge. Cash never
+   * carries a fee. The fee is NOT taxed (atrTaxBaseOf excludes it)
+   * and earns NO points (awardPointsOnComplete excludes it) — it is a
+   * separately stated payment-method charge, not part of the taxable
+   * sales price or the spend. This block is IDENTICAL in portal.js
+   * and index.html — keep the two copies in sync; the harness proves
+   * both against the same cases. */
+  var ATR_CARD_FEE_LINK = { rate: 0.029, fixed: 0.30 };
+  var ATR_CARD_FEE_INPERSON = { rate: 0.026, fixed: 0.10 };
+  function atrCardFeeCents(preFeeCents, rate, fixed) {
+    var x = (rate * preFeeCents + fixed * 100) / (1 - rate);
+    return Math.round(x);
+  }
+  function atrCardFeeFor(amount, which) {
+    var r = (which === 'inperson') ? ATR_CARD_FEE_INPERSON : ATR_CARD_FEE_LINK;
+    return atrCardFeeCents(Math.round(Number(amount || 0) * 100), r.rate, r.fixed) / 100;
+  }
+  function atrCardFeeDesc(which) {
+    return (which === 'inperson') ? 'Square pass-through (2.6% + $0.10)' : 'Square pass-through (2.9% + $0.30)';
+  }
+  function atrFeeTotalIn(rows) {
+    var f = 0;
+    (rows || []).forEach(function (ch) { if (ch.kind === 'fee') f += Number(ch.qty || 0) * Number(ch.unit_price || 0); });
+    return Math.round(f * 100) / 100;
+  }
+  function atrCardFeeTotalFor(balance, rows, which) {
+    var preFee = Math.round((Number(balance || 0) - atrFeeTotalIn(rows)) * 100) / 100;
+    if (!(preFee > 0)) return { preFee: 0, fee: 0, total: 0 };
+    var fee = atrCardFeeFor(preFee, which);
+    return { preFee: preFee, fee: fee, total: Math.round((preFee + fee) * 100) / 100 };
   }
 
   /* V175_COUNTY_TAX_2026_11_19: the tax-row sync - staff-side only.
@@ -4569,7 +4612,9 @@ function loadTicketThread(client, ticketId) {
       if (res.error) return;
       /* V175_COUNTY_TAX_2026_11_19: points are earned on the repair, never on the sales tax - the tax is pass-through to the state, not spend. The synced tax row (if any) is taken out of the base before flooring, so this build never changes a points award. */
       var v175TaxIn = 0; (res.data || []).forEach(function (ch) { if (ch.kind === 'tax') v175TaxIn += Number(ch.qty || 0) * Number(ch.unit_price || 0); });
-      var wholeDollars = Math.floor(chargeTotals(res.data || []).subtotal - v175TaxIn);
+      /* V176_7_CARD_FEE_2026_11_19: points are earned on the repair, never on the card processing fee — the fee is pass-through to Square, not spend. The fee row (if any) is taken out of the base before flooring, like the tax row above. */
+      var v176FeeIn = atrFeeTotalIn(res.data || []);
+      var wholeDollars = Math.floor(chargeTotals(res.data || []).subtotal - v175TaxIn - v176FeeIn);
       client.from('customer_memberships').select('tier').eq('customer_id', t.customer_id).eq('status', 'active')
         .order('started_on', { ascending: false }).limit(1).then(function (mem) {
           var tier = (!mem.error && mem.data && mem.data[0]) ? mem.data[0].tier : null;
@@ -4657,7 +4702,7 @@ function loadTicketThread(client, ticketId) {
       var html = rows.map(function (c) {
         var amt = Number(c.qty || 0) * Number(c.unit_price || 0);
         /* PORTAL_TIP_2026_11_02: tip rows carry the TIP pill. */
-        var kindLabel = { part: 'Part', labor: 'Labor', one_off: 'Other', dispatch: 'Visit fee', visit: 'Visit fee', tip: 'Tip', deposit_credit: 'Deposit', discount: 'Discount', tax: 'Sales tax' }[c.kind] || c.kind;
+        var kindLabel = { part: 'Part', labor: 'Labor', one_off: 'Other', dispatch: 'Visit fee', visit: 'Visit fee', tip: 'Tip', deposit_credit: 'Deposit', discount: 'Discount', tax: 'Sales tax', fee: 'Card processing fee' }[c.kind] || c.kind;
         var sign = (c.kind === 'deposit_credit' || c.kind === 'discount') ? '&minus;' : '';
         /* PORTAL_CHARGE_DEDUCTOR_2026_11_02: a waived line shows its
          * face amount struck through beside the $0 it counts. The
@@ -4684,13 +4729,16 @@ function loadTicketThread(client, ticketId) {
        * recorded amounts stand exactly as entered — the totals gain
        * a Warranty exemption line covering the balance, and the
        * Balance due reads $0.00. ticket_charges itself is untouched. */
+      /* V176_7_CARD_FEE_2026_11_19: the in-person card total — what Austin charges on the terminal when the guest pays by card at the job. The fee is NOT in the balance yet (it is added when the card payment is recorded); this line tells staff the exact amount to charge so the fee is never eaten. */
+      var v176CardView = null;
+      if (!t.warranty_exempt && v175Balance > 0) v176CardView = atrCardFeeTotalFor(v175Balance, rows, 'inperson');
       html += '<div class="p2-totals">' +
         '<div><span>Subtotal</span><span>' + fmtMoney(v175Subtotal) + '</span></div>' +
         (tot.deposits ? '<div><span>Deposits received</span><span>&minus;' + fmtMoney(tot.deposits) + '</span></div>' : '') +
         (t.warranty_exempt
           ? '<div><span>Warranty exemption</span><span>&minus;' + fmtMoney(v175Balance) + '</span></div>' +
             '<div class="p2-grand"><span>Balance due</span><span>' + fmtMoney(0) + '</span></div></div>'
-          : '<div class="p2-grand"><span>Balance due</span><span>' + fmtMoney(v175Balance) + '</span></div></div>');
+          : '<div class="p2-grand"><span>Balance due</span><span>' + fmtMoney(v175Balance) + '</span></div>' + (v176CardView && v176CardView.fee > 0 ? '<div><span>Card total (in person)</span><span>' + fmtMoney(v176CardView.total) + ' (includes ' + fmtMoney(v176CardView.fee) + ' fee)</span></div>' : '') + '</div>');
       if (v175TaxSyncNote) html += '<p class="portal-muted portal-small">' + esc(v175TaxSyncNote) + '</p>';
       box.innerHTML = exemptBar + html;
     }
@@ -6965,7 +7013,7 @@ function loadTicketThread(client, ticketId) {
     var tot = chargeTotals(rows);
     var lines = rows.map(function (c) {
       var amt = Number(c.qty || 0) * Number(c.unit_price || 0);
-      var kindLabel = { part: 'Part', labor: 'Labor', one_off: 'Other charge', dispatch: 'Visit fee', visit: 'Visit fee', tip: 'Tip', discount: 'Discount', tax: 'Sales tax' }[c.kind] || '';
+      var kindLabel = { part: 'Part', labor: 'Labor', one_off: 'Other charge', dispatch: 'Visit fee', visit: 'Visit fee', tip: 'Tip', discount: 'Discount', tax: 'Sales tax', fee: 'Card processing fee' }[c.kind] || '';
       var label = c.kind === 'deposit_credit' ? esc(c.description) + ' (deposit)' : (kindLabel ? esc(kindLabel) + ' — ' + esc(c.description) : esc(c.description));
       var sign = (c.kind === 'deposit_credit' || c.kind === 'discount') ? '&minus;' : '';
       /* PORTAL_CHARGE_DEDUCTOR_2026_11_02: a waived line prints its
@@ -7674,7 +7722,7 @@ function loadTicketThread(client, ticketId) {
   function ticketDocChargeLines(rows) {
     var lines = rows.map(function (c) {
       var amt = Number(c.qty || 0) * Number(c.unit_price || 0);
-      var label = c.kind === 'deposit_credit' ? esc(c.description) + ' (deposit)' : (c.kind === 'tax' ? 'Sales tax &mdash; ' + esc(c.description) : esc(c.description));
+      var label = c.kind === 'deposit_credit' ? esc(c.description) + ' (deposit)' : (c.kind === 'tax' ? 'Sales tax &mdash; ' + esc(c.description) : (c.kind === 'fee' ? 'Card processing fee &mdash; ' + esc(c.description) : esc(c.description)));
       var sign = (c.kind === 'deposit_credit' || c.kind === 'discount') ? '&minus;' : '';
       var face = waivedFace(c);
       if (face != null) {
@@ -9068,7 +9116,7 @@ function loadTicketThread(client, ticketId) {
               msg.textContent = (out2.data && out2.data.error) ? out2.data.error : 'Couldn\u2019t create the payment link.';
               return;
             }
-            msg.textContent = 'Payment link ready \u2014 ' + fmtMoney(out2.data.amount_cents / 100) + '.';
+            msg.textContent = 'Payment link ready \u2014 ' + fmtMoney(out2.data.amount_cents / 100) + (out2.data.fee_cents ? ' (includes ' + fmtMoney(out2.data.fee_cents / 100) + ' card processing fee).' : '.');
             if (linkBox) {
               linkBox.innerHTML = '<p class="portal-card-meta"><a href="' + esc(out2.data.url) + '" target="_blank" rel="noopener">' + esc(out2.data.url) + '</a></p>' +
                 '<p class="portal-muted portal-small">Send this link to the guest. When they pay, Square tells us automatically and the payment lands in Financials and zeroes the balance — no hand entry needed.</p>';
@@ -9087,28 +9135,76 @@ function loadTicketThread(client, ticketId) {
       cashBtn.removeAttribute('data-confirm');
       cashBtn.innerHTML = '<i class="fas fa-money-bill-wave"></i> Mark paid \u2014 cash';
       var tot = chargeTotals(t._charges || []);
-      if (tot.balance <= 0) { msg.textContent = 'Nothing due on this ticket.'; return; }
+      /* V176_7_CARD_FEE_2026_11_19: cash never carries the fee — a fee row left over from an abandoned card attempt is removed first, and the deposit is the fee-free balance. */
+      var v176CashFee = atrFeeTotalIn(t._charges || []);
+      var cashBalance = Math.round((tot.balance - v176CashFee) * 100) / 100;
+      if (cashBalance <= 0) { msg.textContent = 'Nothing due on this ticket.'; return; }
       cashBtn.disabled = true;
       msg.textContent = 'Recording cash payment\u2026';
-      client.from('ticket_charges').insert({
-        ticket_id: t.id, kind: 'deposit_credit', description: 'Paid in cash',
-        qty: 1, unit_price: Math.round(tot.balance * 100) / 100
-      }).then(function (res) {
-        cashBtn.disabled = false;
-        if (res.error) { msg.textContent = 'Couldn\u2019t record that payment. Try again.'; return; }
-        msg.textContent = 'Marked paid \u2014 cash. Balance is now $0.00.';
-        loadCharges(client, t);
-        /* V174_PAID_METHODS_2026_11_18: the receipt is generated when a payment is marked paid — same as the new card / Square app buttons below. */
-        generateReceipt(client, t);
-      }).catch(function () { cashBtn.disabled = false; msg.textContent = 'Couldn\u2019t record that payment. Try again.'; });
+      v176DeleteFeeRows(client, t, function () {
+        client.from('ticket_charges').insert({
+          ticket_id: t.id, kind: 'deposit_credit', description: 'Paid in cash',
+          qty: 1, unit_price: cashBalance
+        }).then(function (res) {
+          cashBtn.disabled = false;
+          if (res.error) { msg.textContent = 'Couldn\u2019t record that payment. Try again.'; return; }
+          msg.textContent = 'Marked paid \u2014 cash. Balance is now $0.00.';
+          loadCharges(client, t);
+          /* V174_PAID_METHODS_2026_11_18: the receipt is generated when a payment is marked paid — same as the new card / Square app buttons below. */
+          generateReceipt(client, t);
+        }).catch(function () { cashBtn.disabled = false; msg.textContent = 'Couldn\u2019t record that payment. Try again.'; });
+      });
     });
     /* V174_PAID_METHODS_2026_11_18 (Austin, Nov 18, 2026): Paid by card / Paid by Square app — the same two-tap confirm and deposit_credit record as cash, with the standard description strings ("Paid by card" / "Paid by Square app", see payment-method-strings.md — the method lives as free text in ticket_charges.description, there is no payment_method column). Pressing one marks the payment as paid and generates the receipt. */
+    /* V176_7_CARD_FEE_2026_11_19: sync the one card-fee row for an in-person card payment — same one-row rule as the v175 tax sync. Reads the ticket's charges fresh, computes the fee on the pre-fee balance at the in-person Square rate, reuses the row when the amount already matches, otherwise deletes the stale fee rows and inserts the right one. done(err, cardTotal) — cardTotal is the pre-fee balance plus the fee, the amount the deposit must record. A failed write never records a payment. */
+    function v176SyncCardFeeRow(client, t, done) {
+      function fail(e) { try { done(e || new Error('fee sync failed'), 0); } catch (e2) {} }
+      try {
+        client.from('ticket_charges').select('*').eq('ticket_id', t.id).order('created_at', { ascending: true }).then(function (r) {
+          if (r.error) { fail(r.error); return; }
+          var rows = r.data || [];
+          var preFee = Math.round((chargeTotals(rows).balance - atrFeeTotalIn(rows)) * 100) / 100;
+          if (!(preFee > 0)) { fail(new Error('nothing due')); return; }
+          var fee = atrCardFeeFor(preFee, 'inperson');
+          var existing = rows.filter(function (ch) { return ch.kind === 'fee'; });
+          if (existing.length === 1 && Number(existing[0].qty || 0) === 1 && Math.round(Number(existing[0].unit_price || 0) * 100) / 100 === fee) { try { done(null, Math.round((preFee + fee) * 100) / 100); } catch (e) {} return; }
+          var cardTotal = Math.round((preFee + fee) * 100) / 100;
+          (function delAll(list, i, next) {
+            if (i >= list.length) { next(); return; }
+            try { client.from('ticket_charges').delete().eq('id', list[i].id).then(function () { delAll(list, i + 1, next); }).catch(function () { delAll(list, i + 1, next); }); } catch (e) { delAll(list, i + 1, next); }
+          })(existing, 0, function () {
+            try {
+              client.from('ticket_charges').insert({ ticket_id: t.id, kind: 'fee', description: atrCardFeeDesc('inperson'), qty: 1, unit_price: fee }).then(function (ins) {
+                if (ins.error) { fail(ins.error); return; }
+                try { done(null, cardTotal); } catch (e) {}
+              }).catch(function (e) { fail(e); });
+            } catch (e) { fail(e); }
+          });
+        }).catch(function (e) { fail(e); });
+      } catch (e) { fail(e); }
+    }
+    function v176DeleteFeeRows(client, t, done) {
+      /* V176_7_CARD_FEE_2026_11_19: best-effort removal of stale fee rows (cash path) — done() always fires exactly once. */
+      function next() { try { done(); } catch (e) {} }
+      try {
+        client.from('ticket_charges').select('id').eq('ticket_id', t.id).eq('kind', 'fee').then(function (r) {
+          var list = (r && r.data) || [];
+          (function del(i) {
+            if (i >= list.length) { next(); return; }
+            try { client.from('ticket_charges').delete().eq('id', list[i].id).then(function () { del(i + 1); }).catch(function () { del(i + 1); }); } catch (e) { del(i + 1); }
+          })(0);
+        }).catch(function () { next(); });
+      } catch (e) { next(); }
+    }
     function v174MarkPaid(desc, btn, icon, doingText, doneText) {
       if (!btn) return;
       btn.addEventListener('click', function () {
         if (btn.getAttribute('data-confirm') !== '1') {
           btn.setAttribute('data-confirm', '1');
-          btn.innerHTML = icon + ' Confirm \u2014 ' + desc.toLowerCase() + '?';
+          /* V176_7_CARD_FEE_2026_11_19: the armed button names the card total — the amount to charge on the terminal, fee included — so the fee is never eaten by accident. */
+          var v176Arm = atrCardFeeTotalFor(chargeTotals(t._charges || []).balance, t._charges || [], 'inperson');
+          btn.innerHTML = icon + ' Confirm \u2014 ' + desc.toLowerCase() + (v176Arm.fee > 0 ? ' ' + fmtMoney(v176Arm.total) + '?' : '?');
+          if (v176Arm.fee > 0) msg.textContent = 'Card total ' + fmtMoney(v176Arm.total) + ' \u2014 includes a ' + fmtMoney(v176Arm.fee) + ' processing fee (Square pass-through). Charge that amount, then confirm.';
           return;
         }
         btn.removeAttribute('data-confirm');
@@ -9117,16 +9213,20 @@ function loadTicketThread(client, ticketId) {
         if (tot.balance <= 0) { msg.textContent = 'Nothing due on this ticket.'; return; }
         btn.disabled = true;
         msg.textContent = doingText;
-        client.from('ticket_charges').insert({
-          ticket_id: t.id, kind: 'deposit_credit', description: desc,
-          qty: 1, unit_price: Math.round(tot.balance * 100) / 100
-        }).then(function (res) {
-          btn.disabled = false;
-          if (res.error) { msg.textContent = 'Couldn\u2019t record that payment. Try again.'; return; }
-          msg.textContent = 'Marked paid \u2014 ' + desc.toLowerCase() + '. Balance is now $0.00.';
-          loadCharges(client, t);
-          generateReceipt(client, t);
-        }).catch(function () { btn.disabled = false; msg.textContent = 'Couldn\u2019t record that payment. Try again.'; });
+        /* V176_7_CARD_FEE_2026_11_19: a card payment carries the fee at the in-person Square rate. The fee row is synced first (one row, replaced when the balance changed), then the deposit is recorded for the card total — never the pre-fee balance. */
+        v176SyncCardFeeRow(client, t, function (syncErr, cardTotal) {
+          if (syncErr || !(cardTotal > 0)) { btn.disabled = false; msg.textContent = 'Couldn\u2019t add the processing fee \u2014 try again.'; return; }
+          client.from('ticket_charges').insert({
+            ticket_id: t.id, kind: 'deposit_credit', description: desc,
+            qty: 1, unit_price: cardTotal
+          }).then(function (res) {
+            btn.disabled = false;
+            if (res.error) { msg.textContent = 'Couldn\u2019t record that payment. Try again.'; return; }
+            msg.textContent = 'Marked paid \u2014 ' + desc.toLowerCase() + '. Balance is now $0.00.';
+            loadCharges(client, t);
+            generateReceipt(client, t);
+          }).catch(function () { btn.disabled = false; msg.textContent = 'Couldn\u2019t record that payment. Try again.'; });
+        });
       });
     }
     v174MarkPaid('Paid by card', $('p3-card-btn'), '<i class="fas fa-credit-card"></i>', 'Recording card payment\u2026', 'Paid by card');
@@ -12832,6 +12932,61 @@ function loadTicketThread(client, ticketId) {
     return { revenue: revenue, collected: collected, partsCost: partsCost, gross: revenue - partsCost };
   }
 
+  /* V176_8_FIN_TAX_2026_11_19 PURE (Austin, Nov 19, 2026): the TAX
+   * area's pure helpers — no DOM, no client, so the harness can
+   * extract and run them against fixtures. Sales tax collected is
+   * the ticket_charges tax rows (kind 'tax', v175), never the
+   * Square ledger figure — the ledger's tax is Square's own
+   * record, this is the portal's. Warranty-exempt tickets
+   * contribute $0 here, same as everywhere in finSum. */
+  function finTaxCollected(charges) {
+    var rows = [], total = 0;
+    (charges || []).forEach(function (c) {
+      if (!c || c.kind !== 'tax') return;
+      if (finChargeExempt(c)) return;
+      var amt = Math.round(Number(c.qty || 0) * Number(c.unit_price || 0) * 100) / 100;
+      rows.push({ ticket_id: c.ticket_id || '', amount: amt, description: c.description || '', created_at: c.created_at || '' });
+      total = Math.round((total + amt) * 100) / 100;
+    });
+    return { total: total, rows: rows };
+  }
+  function finTaxRemittedTotal(entries) {
+    var total = 0;
+    (entries || []).forEach(function (e) { total = Math.round((total + (Number(e.amount) || 0)) * 100) / 100; });
+    return total;
+  }
+  function finTaxStillOwed(collected, remitted) {
+    return Math.round((Number(collected || 0) - Number(remitted || 0)) * 100) / 100;
+  }
+  function finTaxVendorStatus(bfRow) {
+    var num = bfRow ? String(bfRow.vendor_license_number || '').trim() : '';
+    return num ? { status: 'ON FILE', number: num } : { status: 'PENDING', number: '' };
+  }
+  function bfMaskAccount(v) {
+    var digits = String(v == null ? '' : v).replace(/\D/g, '');
+    if (!digits) return '';
+    return digits.length > 4 ? '••••' + digits.slice(-4) : digits;
+  }
+  function bfSavePayload(f) {
+    function t(x) { return String(x == null ? '' : x).trim(); }
+    return {
+      ein: t(f.ein), vendor_license_number: t(f.vendor_license_number),
+      sales_tax_account_number: t(f.sales_tax_account_number),
+      bank_name: t(f.bank_name), square_account: t(f.square_account)
+    };
+  }
+  function finTaxRemitPayload(o) {
+    var amount = Number(o.amount);
+    if (!isFinite(amount) || amount <= 0) return { ok: false, error: 'Enter the amount remitted.' };
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(o.remitted_on || ''))) return { ok: false, error: 'Pick the date it was remitted.' };
+    return { ok: true, row: { amount: Math.round(amount * 100) / 100, remitted_on: String(o.remitted_on), confirmation: String(o.confirmation || '').trim(), note: String(o.note || '').trim() } };
+  }
+  function finMissingTable(err) {
+    var s = String((err && (err.message || err.code)) || '');
+    return /does not exist|42P01/i.test(s);
+  }
+  /* end V176_8_FIN_TAX_2026_11_19 PURE */
+
   /* V158_SQUARE_FINANCIALS_2026_11_17: the Square ledger rollup.
    * Square payments in the period, bucketed by the ticket's job date
    * when the payment belongs to a ticket (the same rule as charges)
@@ -12970,6 +13125,7 @@ function loadTicketThread(client, ticketId) {
       '<div class="portal-field"><label for="fin-manual-amount">Amount received ($)</label><input type="number" id="fin-manual-amount" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" aria-label="Amount received" /></div>' +
       '<div class="portal-field"><label for="fin-manual-method">How was it paid?</label><select id="fin-manual-method" aria-label="How was it paid?"><option value="Paid in cash">Paid in cash</option><option value="Paid by card">Paid by card</option><option value="Paid by Square app">Paid by Square app</option><option value="Paid in Venmo">Paid in Venmo</option></select></div>' +
       '<p><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="fin-manual-go">Record payment</button> <span class="portal-muted portal-small" id="fin-manual-msg"></span></p>';
+    html += finTaxHtml();
     html += '<div class="fin-chart-wrap">' + finDonut(t.revenue, t.partsCost, t.gross) +
       '<div class="fin-legend">' +
       '<p><span class="fin-dot" style="background:#D9540D"></span>Gross profit &mdash; <strong>' + esc(fmtMoney(t.gross)) + '</strong>' + (t.revenue > 0 ? ' (' + Math.round(t.gross / t.revenue * 100) + '%)' : '') + '</p>' +
@@ -12992,7 +13148,265 @@ function loadTicketThread(client, ticketId) {
     wireFinSettings(body);
     finWireReconcile(body);
     finWireManualAdd(body);
+    finWireTaxRemit(body);
     renderPayrollSummary(); /* PAYROLL_SPLIT_2026_11_03: the Payroll panel's totals ride the same render — same finCache, same figures */
+  }
+
+  /* V176_8_FIN_TAX_2026_11_19 (Austin, Nov 19, 2026): the TAX area
+   * inside Financials — business sales tax only. Collected is the
+   * ticket_charges tax rows (all time, running total); remitted is
+   * the hand-recorded tax_remittances rows; still owed is
+   * collected minus remitted. The vendor's license status reads
+   * the Business Files record (one source: the number is entered
+   * there, never here). */
+  function finTaxHtml() {
+    var c = finTaxCollected(finCache.charges);
+    var remitted = finTaxRemittedTotal(finCache.taxRemittances || []);
+    var owed = finTaxStillOwed(c.total, remitted);
+    var vend = finTaxVendorStatus(finCache.businessFiles || null);
+    var html = '';
+    html += '<div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Sales tax — Ohio</h3></div>' +
+      '<p class="portal-muted portal-small">Business sales tax, from your own records. Collected is the sales-tax line on tickets; remitted is what you have sent to Ohio. What is still owed is collected minus remitted. All-time running totals — the period buttons above do not change these.</p>';
+    html += '<div class="fin-cards">' +
+      finCard('Sales tax collected', c.total) +
+      finCard('Sales tax remitted', remitted) +
+      '<div class="fin-card fin-card-owed"><p class="fin-card-label">Still owed to Ohio</p><p class="fin-card-value">' + esc(fmtMoney(owed)) + '</p></div>' +
+      '</div>';
+    if (c.rows.length) {
+      html += '<div class="portal-table-wrap"><table class="portal-table"><thead><tr><th>Ticket</th><th>Date</th><th>Tax line</th><th>Amount</th></tr></thead><tbody>' +
+        c.rows.map(function (r) {
+          var code = String(r.ticket_id || '').slice(0, 8).toUpperCase();
+          var jd = finCache.jobByTicket && finCache.jobByTicket[r.ticket_id];
+          var d = jd ? new Date(String(jd).slice(0, 10) + 'T12:00:00') : (r.created_at ? new Date(r.created_at) : null);
+          var when = (d && !isNaN(d.getTime())) ? d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+          return '<tr><td>#' + esc(code) + '</td><td>' + esc(when) + '</td><td>' + esc(r.description || 'Sales tax') + '</td><td>' + esc(fmtMoney(r.amount)) + '</td></tr>';
+        }).join('') +
+        '</tbody></table></div>';
+    } else {
+      html += '<p class="portal-muted">No sales tax collected yet — the first tax line on a ticket will show here.</p>';
+    }
+    html += '<div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Vendor&rsquo;s license</h3></div>' +
+      '<p>Status: <strong>' + esc(vend.status) + '</strong>' + (vend.number ? ' &mdash; ' + esc(vend.number) : ' &mdash; Austin will get the Ohio vendor&rsquo;s license.') + '</p>' +
+      '<p><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-fin-tax-goto-files>' + (vend.number ? 'Edit the license number in Business Files' : 'Add the license number in Business Files') + '</button></p>';
+    html += '<div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Record sales tax remitted</h3></div>' +
+      '<p class="portal-muted portal-small">When you send sales tax to Ohio, record it here with the date and the confirmation or reference from the state. It lowers what is still owed above.</p>';
+    if (finCache.taxRemitMissing) {
+      html += '<p class="portal-error">Remittance records need the database step first (tax-business-files.sql) &mdash; nothing is saved yet.</p>';
+    }
+    html += '<div class="portal-field"><label for="fin-tax-remit-amount">Amount remitted ($)</label><input type="number" id="fin-tax-remit-amount" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" aria-label="Amount remitted"' + (finCache.taxRemitMissing ? ' disabled' : '') + ' /></div>' +
+      '<div class="portal-field"><label for="fin-tax-remit-date">Date remitted</label><input type="date" id="fin-tax-remit-date" aria-label="Date remitted"' + (finCache.taxRemitMissing ? ' disabled' : '') + ' /></div>' +
+      '<div class="portal-field"><label for="fin-tax-remit-confirm">Confirmation / reference</label><input type="text" id="fin-tax-remit-confirm" placeholder="e.g. Ohio confirmation number" aria-label="Confirmation or reference"' + (finCache.taxRemitMissing ? ' disabled' : '') + ' /></div>' +
+      '<div class="portal-field"><label for="fin-tax-remit-note">Note</label><input type="text" id="fin-tax-remit-note" placeholder="Optional note" aria-label="Note"' + (finCache.taxRemitMissing ? ' disabled' : '') + ' /></div>' +
+      '<p><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="fin-tax-remit-go"' + (finCache.taxRemitMissing ? ' disabled' : '') + '>Record remittance</button> <span class="portal-muted portal-small" id="fin-tax-remit-msg"></span></p>';
+    var remits = finCache.taxRemittances || [];
+    if (remits.length) {
+      html += '<div class="portal-table-wrap"><table class="portal-table"><thead><tr><th>Date</th><th>Amount</th><th>Confirmation / reference</th><th>Note</th><th></th></tr></thead><tbody>' +
+        remits.map(function (e) {
+          var d = e.remitted_on ? new Date(String(e.remitted_on).slice(0, 10) + 'T12:00:00') : null;
+          var when = (d && !isNaN(d.getTime())) ? d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+          return '<tr><td>' + esc(when) + '</td><td>' + esc(fmtMoney(e.amount)) + '</td><td>' + esc(e.confirmation || '') + '</td><td>' + esc(e.note || '') + '</td><td><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-fin-tax-del="' + esc(e.id) + '" aria-label="Remove this remittance">Remove</button></td></tr>';
+        }).join('') +
+        '</tbody></table></div>' +
+        '<p class="portal-muted portal-small">Remove takes a remittance back out — use it when a record was entered wrong, then record it again with the right figures.</p>';
+    }
+    return html;
+  }
+
+  function finWireTaxRemit(body) {
+    var go = body ? body.querySelector('#fin-tax-remit-go') : null;
+    if (!go || go.getAttribute('data-wired') === '1') return;
+    go.setAttribute('data-wired', '1');
+    var amt = body.querySelector('#fin-tax-remit-amount');
+    var dt = body.querySelector('#fin-tax-remit-date');
+    var cf = body.querySelector('#fin-tax-remit-confirm');
+    var nt = body.querySelector('#fin-tax-remit-note');
+    var msg = body.querySelector('#fin-tax-remit-msg');
+    if (dt && !dt.value) { try { dt.value = new Date().toISOString().slice(0, 10); } catch (e) {} }
+    var gotoBtn = body.querySelector('[data-fin-tax-goto-files]');
+    if (gotoBtn) gotoBtn.addEventListener('click', function () { activateTab('businessfiles'); });
+    body.querySelectorAll('[data-fin-tax-del]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = btn.getAttribute('data-fin-tax-del');
+        btn.disabled = true;
+        withClient(function (client) {
+          if (!client) { btn.disabled = false; return; }
+          client.from('tax_remittances').delete().eq('id', id).then(function () { loadFinancials(true); }).catch(function () { btn.disabled = false; });
+        });
+      });
+    });
+    go.addEventListener('click', function () {
+      var check = finTaxRemitPayload({ amount: amt ? amt.value : '', remitted_on: dt ? dt.value : '', confirmation: cf ? cf.value : '', note: nt ? nt.value : '' });
+      if (!check.ok) { if (msg) msg.textContent = check.error; return; }
+      go.disabled = true;
+      if (msg) msg.textContent = 'Recording…';
+      withClient(function (client) {
+        if (!client) { go.disabled = false; if (msg) msg.textContent = 'Could not reach the portal. Try again.'; return; }
+        client.from('tax_remittances').insert(check.row).then(function (res) {
+          go.disabled = false;
+          if (res.error) { if (msg) msg.textContent = finMissingTable(res.error) ? 'Remittance records need the database step first (tax-business-files.sql) — nothing was saved.' : 'Could not record that remittance. Try again.'; return; }
+          if (msg) msg.textContent = 'Recorded ' + fmtMoney(check.row.amount) + ' remitted.';
+          loadFinancials(true);
+        }).catch(function () { go.disabled = false; if (msg) msg.textContent = 'Could not record that remittance. Try again.'; });
+      });
+    });
+  }
+
+  /* V176_8_FIN_TAX_2026_11_19: Business Files — the business's
+   * official IDs, top-tier only. One row in public.business_files
+   * (see tax-business-files.sql — the table does not exist yet, so
+   * every read degrades to a blank, disabled form until the SQL
+   * runs). The bank field is the bank NAME only — no account
+   * number is ever collected here; bfMaskAccount above is the
+   * display rule for the day one is ever entered anywhere. Files
+   * ride the existing private ticket-documents bucket flow
+   * (DOC_BUCKET upload + path stored on the row, like the
+   * purchase-order receipts) — no new upload flow was built. */
+  var bfRow = null;
+  var bfRowKnown = false;
+  function bfFetch(client, cb) {
+    if (!client) { cb(null, true); return; }
+    client.from('business_files').select('id, ein, vendor_license_number, sales_tax_account_number, bank_name, square_account, ein_letter_path, vendor_license_path, updated_at').limit(1)
+      .then(function (res) {
+        bfRowKnown = !res.error;
+        bfRow = (!res.error && res.data && res.data[0]) ? res.data[0] : null;
+        cb(bfRow, !!res.error);
+      })
+      .catch(function () { bfRowKnown = false; bfRow = null; cb(null, true); });
+  }
+  function renderBusinessFiles() {
+    var body = $('portal-businessfiles-body');
+    if (!body) return;
+    /* V176_8_FIN_TAX_2026_11_19: top-tier only, same gate as
+     * Financials — a tier below the top tier never sees these IDs. */
+    if (!canSeeMoney()) { body.innerHTML = ''; return; }
+    var r = bfRow || {};
+    var dis = bfRowKnown ? '' : ' disabled';
+    function val(k, fb) { var v = r[k]; return esc(v != null && String(v) !== '' ? String(v) : (fb || '')); }
+    var html = '';
+    html += '<p class="portal-muted portal-small">The business&rsquo;s official IDs — EIN, Ohio vendor&rsquo;s license, Ohio sales tax account, bank, and Square account. Change them here; never in the database. Only the top tier can see this panel. The bank field is the bank name only — no account number is kept here.</p>';
+    if (!bfRowKnown) {
+      html += '<p class="portal-error">Business Files needs the database step first (tax-business-files.sql) &mdash; nothing is saved yet.</p>';
+    }
+    html += '<div class="portal-field"><label for="bf-ein">EIN (Employer Identification Number)</label><input type="text" id="bf-ein" inputmode="text" autocomplete="off" placeholder="XX-XXXXXXX" value="' + val('ein') + '" aria-label="EIN"' + dis + ' /></div>' +
+      '<div class="portal-field"><label for="bf-vendor-license">Ohio vendor&rsquo;s license number</label><input type="text" id="bf-vendor-license" autocomplete="off" placeholder="Not on file yet" value="' + val('vendor_license_number') + '" aria-label="Ohio vendor&rsquo;s license number"' + dis + ' /></div>' +
+      '<div class="portal-field"><label for="bf-tax-account">Ohio sales tax account number</label><input type="text" id="bf-tax-account" autocomplete="off" placeholder="Not on file yet" value="' + val('sales_tax_account_number') + '" aria-label="Ohio sales tax account number"' + dis + ' /></div>' +
+      '<div class="portal-field"><label for="bf-bank-name">Business bank</label><input type="text" id="bf-bank-name" autocomplete="off" value="' + val('bank_name', 'WPCU SimpleChoice Business Checking') + '" aria-label="Business bank"' + dis + ' /></div>' +
+      '<div class="portal-field"><label for="bf-square-account">Square account</label><input type="text" id="bf-square-account" autocomplete="off" placeholder="Not on file yet" value="' + val('square_account') + '" aria-label="Square account"' + dis + ' /></div>' +
+      '<p><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="bf-save"' + dis + '>Save business files</button> <span class="portal-muted portal-small" id="bf-msg"></span></p>';
+    html += '<div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Files</h3></div>' +
+      '<p class="portal-muted portal-small">Attach the EIN letter and the vendor&rsquo;s license once you have them. Files are kept in the private documents store, same as ticket files.</p>';
+    html += '<div class="portal-field"><label for="bf-ein-file">EIN letter</label>' +
+      (r.ein_letter_path ? '<p><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-bf-view="ein_letter_path">View EIN letter</button></p>' : '<p class="portal-muted portal-small">No EIN letter attached yet.</p>') +
+      '<input type="file" id="bf-ein-file" aria-label="EIN letter file"' + dis + ' /><p class="portal-muted portal-small" id="bf-ein-file-msg"></p></div>';
+    html += '<div class="portal-field"><label for="bf-license-file">Vendor&rsquo;s license</label>' +
+      (r.vendor_license_path ? '<p><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-bf-view="vendor_license_path">View vendor&rsquo;s license</button></p>' : '<p class="portal-muted portal-small">No vendor&rsquo;s license attached yet.</p>') +
+      '<input type="file" id="bf-license-file" aria-label="Vendor&rsquo;s license file"' + dis + ' /><p class="portal-muted portal-small" id="bf-license-file-msg"></p></div>';
+    body.innerHTML = html;
+    bfWireForm(body);
+    bfWireFiles(body);
+  }
+  function bfWireForm(body) {
+    var go = body ? body.querySelector('#bf-save') : null;
+    if (!go || go.getAttribute('data-wired') === '1') return;
+    go.setAttribute('data-wired', '1');
+    var msg = body.querySelector('#bf-msg');
+    go.addEventListener('click', function () {
+      var payload = bfSavePayload({
+        ein: (body.querySelector('#bf-ein') || {}).value,
+        vendor_license_number: (body.querySelector('#bf-vendor-license') || {}).value,
+        sales_tax_account_number: (body.querySelector('#bf-tax-account') || {}).value,
+        bank_name: (body.querySelector('#bf-bank-name') || {}).value,
+        square_account: (body.querySelector('#bf-square-account') || {}).value
+      });
+      go.disabled = true;
+      if (msg) msg.textContent = 'Saving…';
+      withClient(function (client) {
+        if (!client) { go.disabled = false; if (msg) msg.textContent = 'Could not reach the portal. Try again.'; return; }
+        var q = (bfRow && bfRow.id)
+          ? client.from('business_files').update(payload).eq('id', bfRow.id)
+          : client.from('business_files').insert(payload);
+        q.then(function (res) {
+          go.disabled = false;
+          if (res.error) { if (msg) msg.textContent = finMissingTable(res.error) ? 'Business Files needs the database step first (tax-business-files.sql) — nothing was saved.' : 'Could not save. Try again.'; return; }
+          if (msg) msg.textContent = 'Saved.';
+          bfFetch(client, function () { renderBusinessFiles(); loadFinancials(true); });
+        }).catch(function () { go.disabled = false; if (msg) msg.textContent = 'Could not save. Try again.'; });
+      });
+    });
+  }
+  function bfWireFiles(body) {
+    var einFile = body.querySelector('#bf-ein-file');
+    var licFile = body.querySelector('#bf-license-file');
+    if (einFile && einFile.getAttribute('data-wired') !== '1') {
+      einFile.setAttribute('data-wired', '1');
+      einFile.addEventListener('change', function () { bfAttachFile('ein_letter_path', einFile.files && einFile.files[0], body); });
+    }
+    if (licFile && licFile.getAttribute('data-wired') !== '1') {
+      licFile.setAttribute('data-wired', '1');
+      licFile.addEventListener('change', function () { bfAttachFile('vendor_license_path', licFile.files && licFile.files[0], body); });
+    }
+    body.querySelectorAll('[data-bf-view]').forEach(function (btn) {
+      btn.addEventListener('click', function () { bfViewFile(btn.getAttribute('data-bf-view')); });
+    });
+  }
+  function bfAttachFile(column, file, body) {
+    var msgId = column === 'ein_letter_path' ? 'bf-ein-file-msg' : 'bf-license-file-msg';
+    var msg = body ? body.querySelector('#' + msgId) : null;
+    if (!file) return;
+    if (!bfRowKnown) { if (msg) msg.textContent = 'Business Files needs the database step first (tax-business-files.sql) — nothing was saved.'; return; }
+    if (file.size > 15 * 1024 * 1024) { if (msg) msg.textContent = 'That file is over 15 MB — try a smaller scan or photo.'; return; }
+    if (msg) msg.textContent = 'Uploading…';
+    withClient(function (client) {
+      if (!client) { if (msg) msg.textContent = 'Could not reach the portal. Try again.'; return; }
+      var prefix = column === 'ein_letter_path' ? 'ein-letter' : 'vendor-license';
+      var path = 'business-files/' + prefix + '-' + docStamp() + '-' + safeFileName(file.name);
+      client.storage.from(DOC_BUCKET).upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: false }).then(function (up) {
+        if (up.error) { if (msg) msg.textContent = 'Upload failed — check the connection and try again.'; return; }
+        var patch = {}; patch[column] = path;
+        var old = bfRow ? bfRow[column] : null;
+        var q = (bfRow && bfRow.id)
+          ? client.from('business_files').update(patch).eq('id', bfRow.id)
+          : client.from('business_files').insert(patch);
+        q.then(function (res) {
+          if (res.error) {
+            try { client.storage.from(DOC_BUCKET).remove([path]); } catch (e) {}
+            if (msg) msg.textContent = 'The file uploaded but could not be filed — try again.';
+            return;
+          }
+          if (old && old !== path) { try { client.storage.from(DOC_BUCKET).remove([old]); } catch (e) {} }
+          if (msg) msg.textContent = 'Attached.';
+          bfFetch(client, function () { renderBusinessFiles(); });
+        }).catch(function () {
+          try { client.storage.from(DOC_BUCKET).remove([path]); } catch (e) {}
+          if (msg) msg.textContent = 'The file uploaded but could not be filed — try again.';
+        });
+      }).catch(function () { if (msg) msg.textContent = 'Upload failed — check the connection and try again.'; });
+    });
+  }
+  function bfViewFile(column) {
+    var path = bfRow ? bfRow[column] : null;
+    if (!path) return;
+    withClient(function (client) {
+      if (!client) return;
+      client.storage.from(DOC_BUCKET).createSignedUrl(path, SIGNED_URL_SECONDS).then(function (res) {
+        if (res.error || !res.data || !res.data.signedUrl) return;
+        window.open(res.data.signedUrl, '_blank');
+      }).catch(function () {});
+    });
+  }
+  function loadBusinessFiles(force) {
+    /* V176_8_FIN_TAX_2026_11_19: top-tier only — below the top
+     * tier this loader never runs, same as the money gate. */
+    if (!isTopTier()) return;
+    var body = $('portal-businessfiles-body');
+    if (body && !state.loaded.businessfiles) body.innerHTML = '<p class="portal-muted">Loading business files…</p>';
+    withClient(function (client) {
+      if (!client) { if (body) body.innerHTML = '<p class="portal-error">Couldn&rsquo;t load business files.</p>'; return; }
+      bfFetch(client, function () {
+        state.loaded.businessfiles = true;
+        renderBusinessFiles();
+      });
+    });
   }
 
   /* V158_SQUARE_FINANCIALS_2026_11_17: the Reconcile section.
@@ -13159,12 +13573,14 @@ function loadTicketThread(client, ticketId) {
     if (body) body.innerHTML = '<p class="portal-muted">Loading financials&hellip;</p>';
     withClient(function (client) {
       if (!client) { if (body) body.innerHTML = '<p class="portal-error">Couldn&rsquo;t load financials.</p>'; return; }
-      var got = { charges: null, parts: null, tickets: null, time: null, profiles: null, approvals: null, square: null, squareMissing: false }, failed = false;
+      var got = { charges: null, parts: null, tickets: null, time: null, profiles: null, approvals: null, square: null, squareMissing: false, remit: null, remitMissing: false, bf: null }, failed = false;
       /* PORTAL_FINANCIALS_2026_11_02: the payroll sources settle
        * separately — a missing one degrades only its own section
        * of the bottom line instead of blanking the whole panel. */
       var payrollSettled = { time: false, profiles: false, approvals: false };
       var squareSettled = false;
+      var remitSettled = false;
+      var bfSettled = false;
       function fail() {
         if (failed) return;
         failed = true;
@@ -13174,10 +13590,11 @@ function loadTicketThread(client, ticketId) {
         if (failed || !got.charges || !got.parts || !got.tickets) return;
         if (!payrollSettled.time || !payrollSettled.profiles || !payrollSettled.approvals) return;
         if (!squareSettled) return;
+        if (!remitSettled || !bfSettled) return;
         var jobByTicket = {};
         finExemptByTicket = {}; /* WARRANTY_PORTAL_2026_11_03: rebuilt with every load, alongside jobByTicket */
         got.tickets.forEach(function (tk) { jobByTicket[tk.id] = tk.job_date || null; if (tk.warranty_exempt) finExemptByTicket[tk.id] = true; });
-        finCache = { charges: got.charges, parts: got.parts, jobByTicket: jobByTicket, timeEntries: got.time || [], profiles: got.profiles || [], approvals: got.approvals || [], squarePayments: got.square || [], squareLedgerMissing: !!got.squareMissing };
+        finCache = { charges: got.charges, parts: got.parts, jobByTicket: jobByTicket, timeEntries: got.time || [], profiles: got.profiles || [], approvals: got.approvals || [], squarePayments: got.square || [], squareLedgerMissing: !!got.squareMissing, taxRemittances: got.remit || [], taxRemitMissing: !!got.remitMissing, businessFiles: got.bf || null };
         state.loaded.financials = true;
         renderFinancials();
       }
@@ -13211,6 +13628,15 @@ function loadTicketThread(client, ticketId) {
         .order('paid_at', { ascending: false }).limit(1000)
         .then(function (res) { got.square = res.error ? [] : (res.data || []); got.squareMissing = !!res.error; squareSettled = true; done(); })
         .catch(function () { got.square = []; got.squareMissing = true; squareSettled = true; done(); });
+      /* V176_8_FIN_TAX_2026_11_19: the TAX area's own sources.
+       * Both degrade like the Square ledger: a missing table
+       * leaves an empty list / blank record and a missing flag,
+       * never a blanked panel. */
+      client.from('tax_remittances').select('id, amount, remitted_on, confirmation, note, created_at')
+        .order('remitted_on', { ascending: false }).limit(500)
+        .then(function (res) { got.remit = res.error ? [] : (res.data || []); got.remitMissing = !!res.error; remitSettled = true; done(); })
+        .catch(function () { got.remit = []; got.remitMissing = true; remitSettled = true; done(); });
+      bfFetch(client, function (row) { got.bf = row; bfSettled = true; done(); });
       /* PORTAL_FINANCIALS_2026_11_02: payroll sources. Time entries
        * are asked for with the type/miles columns first and fall
        * back to the plain columns (finTimeKnown flags which world
@@ -13855,7 +14281,7 @@ function loadTicketThread(client, ticketId) {
     associateaccounts: 'adminAbove', investors: 'adminAbove', feedback: 'adminAbove',
     newhires: 'adminAbove', teamdocs: 'adminAbove', applications: 'adminAbove',
     setup: 'adminAbove', payroll: 'adminAbove',
-    square: 'money', financials: 'money'
+    square: 'money', financials: 'money', businessfiles: 'money'
   };
   function tabAllowed(name) {
     var g = TAB_GATES[name];
@@ -22787,7 +23213,7 @@ function loadTicketThread(client, ticketId) {
    *   writes: no insert, update, delete or upsert exists in
    *   this section — it only looks. */
   (function () {
-    var btn = $('portal-hub-search-btn'), newBtn = $('portal-hub-new-btn'); /* SEARCH_SHEET_FIX_2026_11_09 (v68): the top Search button is back for screens over 920px (portal.css gates it there and gates Square to phone widths in exchange) — iPad, Mac and PC had no door to this panel at all after the v65 swap took the button at every width. The phone door stays the thumb bar's Search item, reaching openSearch through window.portalOpenHubSearch below. The button toggles the panel exactly as it did before the swap. */
+    var newBtn = $('portal-hub-new-btn'); /* V176_9_QA_SEARCH_OUT_2026_11_19 (Austin, Nov 19, 2026): the top Search button is gone in all hubs — the thumb bar's Search item, reaching openSearch through window.portalOpenHubSearch below, is the only door to this panel now. The old SEARCH_SHEET_FIX (v68) wide-only button and its portal.css gating are removed with it. */
     var panel = $('portal-hubsearch'), input = $('portal-hubsearch-input');
     var xBtn = $('portal-hubsearch-close'), results = $('portal-hubsearch-results');
     if (!panel || !input || !results) return;
@@ -23042,7 +23468,6 @@ function loadTicketThread(client, ticketId) {
       panel.classList.remove('hs-open');
       void panel.offsetWidth;
       panel.classList.add('hs-open');
-      if (btn) btn.setAttribute('aria-expanded', 'true');
       renderResults();
       if (sheet) {
         setTimeout(function () { try { input.focus(); } catch (e) {} }, 30);
@@ -23056,7 +23481,6 @@ function loadTicketThread(client, ticketId) {
       input.value = '';
       hsWatchViewport(false);
       hsLock(false);
-      if (btn) btn.setAttribute('aria-expanded', 'false');
     }
 
     /* SEARCH_SWAP_2026_11_09 (v65): the thumb bar's Search item
@@ -23064,7 +23488,6 @@ function loadTicketThread(client, ticketId) {
        for the 'search' bar id. It toggles exactly as the old top
        button did: open when closed, close (and clear) when open. */
     window.portalOpenHubSearch = function () { if (panel.hidden) openSearch(); else closeSearch(); };
-    if (btn) btn.addEventListener('click', function () { if (panel.hidden) openSearch(); else closeSearch(); });
     if (xBtn) xBtn.addEventListener('click', closeSearch);
     input.addEventListener('input', renderResults);
     panel.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeSearch(); });
@@ -23361,7 +23784,7 @@ function loadTicketThread(client, ticketId) {
     mileage: 'Mileage', businesscard: 'Business Card', /* V166_BUSINESS_CARD_2026_11_17 */ associateaccounts: 'Accounts', investors: 'Investors',
     feedback: 'Feedback', square: 'Square', newhires: 'Onboarding',
     teamdocs: 'Team Docs', applications: 'Applications', setup: 'Setup',
-    financials: 'Financials', payroll: 'Payroll', pay: 'Pay', search: 'Search'
+    financials: 'Financials', payroll: 'Payroll', businessfiles: 'Business Files', pay: 'Pay', search: 'Search'
   };
   var PAY_META = { id: 'pay', label: 'Pay', full: 'Pay — open Square', icon: 'fas fa-credit-card' };
   var SEARCH_META = { id: 'search', label: 'Search', full: 'Search', icon: 'fas fa-magnifying-glass' };

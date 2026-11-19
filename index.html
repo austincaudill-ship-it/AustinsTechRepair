@@ -6843,7 +6843,7 @@
     return '';
   }
   var PART_STATUS_COPY = { 'Ordered': 'Ordered \u2014 on its way to us', 'Received': 'In hand', 'Cancelled': 'Cancelled' };
-  var CHARGE_KIND_COPY = { 'part': 'Part', 'labor': 'Labor', 'one_off': 'Other charge', 'dispatch': 'Visit fee', 'visit': 'Visit fee', 'deposit_credit': 'Deposit received', 'discount': 'Discount', 'tax': 'Sales tax' };
+  var CHARGE_KIND_COPY = { 'part': 'Part', 'labor': 'Labor', 'one_off': 'Other charge', 'dispatch': 'Visit fee', 'visit': 'Visit fee', 'deposit_credit': 'Deposit received', 'discount': 'Discount', 'tax': 'Sales tax', 'fee': 'Card processing fee' };
   /* V168_GUEST_TICKET_COLLAPSE_2026_11_18: show/hide one collapsible ticket-section shell (<details>) and set its closed-state hint. The shells are static markup, never re-created, so a guest's open/closed choice survives loader repaints. */
   function atrSecShow(shellId, hintId, hintText) { var s = $(shellId); if (s) s.hidden = false; var h = hintId && $(hintId); if (h) h.textContent = hintText || ''; }
   function atrSecHide(shellId, hintId) { var s = $(shellId); if (s) s.hidden = true; var h = hintId && $(hintId); if (h) h.textContent = ''; }
@@ -6934,7 +6934,7 @@
   function atrTaxBaseOf(rows) {
     var base = 0;
     (rows || []).forEach(function (ch) {
-      if (ch.kind === 'deposit_credit' || ch.kind === 'tax') return;
+      if (ch.kind === 'deposit_credit' || ch.kind === 'tax' || ch.kind === 'fee') return;
       base += Number(ch.qty || 0) * Number(ch.unit_price || 0);
     });
     return Math.round(base * 100) / 100;
@@ -6992,6 +6992,48 @@
     if (rate == null) return null;
     var tax = Math.round(base * rate) / 100;
     return { county: found.county, rate: rate, amount: tax, base: Math.round(base * 100) / 100, total: Math.round((base + tax) * 100) / 100, fallback: found.source === 'fallback' };
+  }
+
+  /* V176_7_CARD_FEE_2026_11_19 (Austin, Nov 19, 2026): the card
+   * processing fee is passed through to the guest at Square's actual
+   * rate, never more. Payment Links / online checkout: 2.9% + $0.30.
+   * In person (Square app / card terminal): 2.6% + $0.10. The fee is
+   * grossed up so it equals exactly what Square charges on the final
+   * total: fee = (rate x pre-fee amount + fixed) / (1 - rate),
+   * rounded to the cent. The fee is ONE ticket_charges row (kind
+   * 'fee', qty 1, description 'Square pass-through (rate)'), synced
+   * like the v175 tax row: exactly one row, reused when the amount
+   * already matches, replaced when the balance or the payment method
+   * changes, removed when there is nothing left to charge. Cash never
+   * carries a fee. The fee is NOT taxed (atrTaxBaseOf excludes it)
+   * and earns NO points (awardPointsOnComplete excludes it) — it is a
+   * separately stated payment-method charge, not part of the taxable
+   * sales price or the spend. This block is IDENTICAL in portal.js
+   * and index.html — keep the two copies in sync; the harness proves
+   * both against the same cases. */
+  var ATR_CARD_FEE_LINK = { rate: 0.029, fixed: 0.30 };
+  var ATR_CARD_FEE_INPERSON = { rate: 0.026, fixed: 0.10 };
+  function atrCardFeeCents(preFeeCents, rate, fixed) {
+    var x = (rate * preFeeCents + fixed * 100) / (1 - rate);
+    return Math.round(x);
+  }
+  function atrCardFeeFor(amount, which) {
+    var r = (which === 'inperson') ? ATR_CARD_FEE_INPERSON : ATR_CARD_FEE_LINK;
+    return atrCardFeeCents(Math.round(Number(amount || 0) * 100), r.rate, r.fixed) / 100;
+  }
+  function atrCardFeeDesc(which) {
+    return (which === 'inperson') ? 'Square pass-through (2.6% + $0.10)' : 'Square pass-through (2.9% + $0.30)';
+  }
+  function atrFeeTotalIn(rows) {
+    var f = 0;
+    (rows || []).forEach(function (ch) { if (ch.kind === 'fee') f += Number(ch.qty || 0) * Number(ch.unit_price || 0); });
+    return Math.round(f * 100) / 100;
+  }
+  function atrCardFeeTotalFor(balance, rows, which) {
+    var preFee = Math.round((Number(balance || 0) - atrFeeTotalIn(rows)) * 100) / 100;
+    if (!(preFee > 0)) return { preFee: 0, fee: 0, total: 0 };
+    var fee = atrCardFeeFor(preFee, which);
+    return { preFee: preFee, fee: fee, total: Math.round((preFee + fee) * 100) / 100 };
   }
 
   function loadTicketCharges(t) {
@@ -7646,8 +7688,11 @@
         }
         /* V174_PAY_GATE_2026_11_18 (Austin, Nov 18, 2026): the repair balance opens for payment ONLY after Job Complete is pushed — never before, "we're never going to scam anybody". Job Complete, Quality Control and Ready are all past that push (QC follows Job Complete, Ready follows QC); every earlier status reads plainly that the balance opens once the job is complete. Parts and dispatch keep their own up-front flows and never ride this button. */
         var payOpen = t.status === 'Job Complete' || t.status === 'Quality Control' || t.status === 'Ready';
+        /* V176_7_CARD_FEE_2026_11_19: the Square total — the link the Pay button opens adds the card processing fee at Square's actual rate, so the guest sees the full total before tapping, never a surprise at checkout. */
+        var v176CardView = atrCardFeeTotalFor(balance, rows, 'link');
         if (balance > 0 && payOpen) {
-          html += '<div class="acct-actions-row"><button type="button" class="btn btn-primary" id="atr-pay-balance">Pay balance ' + escX(fmtMoneyX(balance)) + '</button> <span class="acct-muted" id="atr-pay-note"></span></div>';
+          html += '<div class="acct-actions-row"><button type="button" class="btn btn-primary" id="atr-pay-balance">Pay balance ' + escX(fmtMoneyX(balance)) + '</button> <span class="acct-muted" id="atr-pay-note"></span></div>' +
+            (v176CardView.fee > 0 ? '<div class="acct-actions-row"><p class="acct-muted" style="text-align:left;margin:0;">Paying by card? Your Square total is ' + escX(fmtMoneyX(v176CardView.total)) + ' \u2014 that includes a ' + escX(fmtMoneyX(v176CardView.fee)) + ' card processing fee, exactly what Square charges.</p></div>' : '');
         } else if (balance > 0) {
           html += '<div class="acct-actions-row"><p class="acct-muted" style="text-align:left;margin:0;">Balance due ' + escX(fmtMoneyX(balance)) + ' \u2014 it opens for payment right here once the job is complete. We never charge for repair work before it is done.</p></div>';
         } else if (rows.length) {
@@ -7694,7 +7739,7 @@
             if (!token) throw new Error('To pay, sign in first with the same email you booked with, then tap Pay again.');
             return fetch(SUPABASE_URL + '/functions/v1/square-ticket-checkout', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'apikey': SUPABASE_ANON_KEY }, body: JSON.stringify({ mode: 'ticket-balance', ticket_id: t.id, email: (currentCust && currentCust.email) || '', name: (currentCust && currentCust.name) || '' }) });
           }).then(function (r) { return r.json().catch(function () { return null; }); }).then(function (j) {
-            if (j && j.ok && j.url) { try { if (window.sessionStorage) sessionStorage.setItem('atr-pay-return', String(t.id)); } catch (e) {} window.open(j.url, '_blank', 'noopener'); if (note) note.textContent = 'Square is open in a new tab.'; }
+            if (j && j.ok && j.url) { try { if (window.sessionStorage) sessionStorage.setItem('atr-pay-return', String(t.id)); } catch (e) {} window.open(j.url, '_blank', 'noopener'); if (note) note.textContent = (j.fee_cents ? 'Square is open in a new tab \u2014 total ' + fmtMoneyX((j.amount_cents || 0) / 100) + ' includes a ' + fmtMoneyX(j.fee_cents / 100) + ' card processing fee.' : 'Square is open in a new tab.'); }
             else { if (note) note.textContent = (j && j.error) ? j.error : 'We could not open the payment page just now — try again, or call or text (937) 280-6243 and we will send the payment link.'; pay.disabled = false; }
           }).catch(function (err) { if (note) note.textContent = (err && err.message) || 'We could not open the payment page just now — try again, or call or text (937) 280-6243 and we will send the payment link.'; pay.disabled = false; });
         });
@@ -10182,7 +10227,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
       <button class="btn btn-outline btn-sm" type="button" data-ghub-qa="home"><i class="fas fa-house"></i> Home</button>
       <button class="btn btn-outline btn-sm" type="button" data-ghub-qa="getapp"><i class="fas fa-download"></i> Get App</button>
       <button class="btn btn-outline btn-sm" type="button" data-ghub-qa="refresh"><i class="fas fa-rotate-right"></i> Refresh</button>
-      <button class="btn btn-outline btn-sm" type="button" data-ghub-qa="search"><i class="fas fa-magnifying-glass"></i> Search</button> <!-- V176_6_1_QA_SEARCH_2026_11_19 (Austin, Nov 19, 2026): Search was never in Quick Actions - it lived only in the sidebar and thumb bar. The Associate Hub already has a Search Quick Action; the Guest Hub gets one too, right after Refresh. -->
+      <!-- V176_9_QA_SEARCH_OUT_2026_11_19 (Austin, Nov 19, 2026): Search is out of Quick Actions in all hubs — it stays in the sidebar and thumb bar, and the search sheet still opens from there. -->
       <a class="btn btn-outline btn-sm" href="https://austinstechrepairgroup.com/" data-ghub-qa="backsite"><i class="fas fa-arrow-left"></i> Back to site</a>
       <button class="btn btn-outline btn-sm" type="button" data-ghub-qa="logout"><i class="fas fa-sign-out-alt"></i> Log Out</button>
       <button class="btn btn-outline btn-sm" type="button" data-ghub-qa="theme" aria-label="Toggle dark mode" title="Toggle dark/light mode"><i class="fas fa-moon" id="ghub-theme-icon"></i></button>
@@ -11894,7 +11939,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
         var k = b.getAttribute('data-ghub-qa');
         if (k === 'backsite') { try { sessionStorage.removeItem('atr-ghub-state'); } catch (e) {} return; } /* a real link to the public site — the browser takes it from here, same as the Associate Hub. The saved hub state clears first, or a later reload would bounce the guest straight back into the hub. */
         if (k === 'refresh') { ghubRefreshCurrent(); }
-        if (k === 'search') { if (window.atrGuestHubSearch) window.atrGuestHubSearch.open(); } /* V176_6_1_QA_SEARCH_2026_11_19 */
+        /* V176_9_QA_SEARCH_OUT_2026_11_19: the Quick Actions Search button is gone in all hubs; the search sheet still opens from the sidebar and thumb bar via the [data-ghub] delegation (openGhubSearch). No 'search' key reaches this handler any more. */
         if (k === 'home') showTab('home');
         if (k === 'getapp') { ghubToggleGetApp(); }
         if (k === 'logout') {

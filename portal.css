@@ -384,6 +384,10 @@
 .fin-donut-label{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;fill:var(--muted,#7D6C5B)}
 .fin-donut-value{font-size:19px;font-weight:800;fill:var(--ink,#2C231A)}
 
+/* V176_8_FIN_TAX_2026_11_19: the TAX area's Still-owed card gets the
+ * brand-orange edge so what is still owed to Ohio reads at a glance. */
+.fin-card-owed{border:2px solid var(--brand,#D9540D)}
+
 /* PORTAL_ATRONE_TICKET_2026_10_30: ATR One membership badge (ticket drawer + Customers cards) — solid brand orange so a member reads at a glance */
 .portal-badge-atrone { background: var(--brand, #D9540D); color: #fff; margin-left: .4rem; }
 
@@ -1486,9 +1490,8 @@ body.portal-body #portal-dash-view textarea {
 body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-hub-home-btn,
 body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-hub-new-btn,
 body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-hub-square-btn,
-body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-hub-refresh-btn,
-body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-hub-search-btn { display: none; }
-/* GLOBAL_REFRESH_2026_11_11 (Austin, Nov 11, 2026): the top-bar Refresh button follows the same hide rule as its neighbours (added to the list above), and sits LAST in the row — HUB_HEADER_2026_11_11 put Get App between Square and Refresh, so Refresh is order 5 in both width blocks below (Home is 1, Get App is 4; Square is 3 on phones, Search is 0 on wide screens, where Square itself is hidden). */
+body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-hub-refresh-btn { display: none; }
+/* GLOBAL_REFRESH_2026_11_11 (Austin, Nov 11, 2026): the top-bar Refresh button follows the same hide rule as its neighbours (added to the list above), and sits LAST in the row — HUB_HEADER_2026_11_11 put Get App between Square and Refresh, so Refresh is order 5 in both width blocks below (Home is 1, Get App is 4; Square is 3 on phones, where Square itself is hidden on wide screens). */
 /* The top row now carries four buttons, and the actions span must be
    allowed to wrap AND to shrink below its longest row: measured on
    the staged build, unwrapped it sized to a 412px row inside a
@@ -1799,7 +1802,6 @@ body:has(#portal-dash-view[hidden]) .portal-thumbbar { display: none; }
 @keyframes hubsearch-mic-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.25); } }
 @media (min-width: 921px) {
   .portal-topbar-actions #portal-hub-square-btn { display: none; }
-  .portal-topbar-actions #portal-hub-search-btn { order: 0; } /* QA_ORDER_2026_11_11: Search is not in the owner's row list; it keeps its wide-only seat ahead of the row so desktop keeps its search door (v68) — flagged in REPORT.md */
   .portal-topbar-actions #portal-hub-home-btn { order: 1; } /* V163_QA_HOME_2026_11_17: Home first, same as the <=920px block */
   .portal-topbar-actions #portal-hub-new-btn { order: 2; }
   .portal-topbar-actions #portal-hub-square-btn { order: 3; }
@@ -1810,7 +1812,6 @@ body:has(#portal-dash-view[hidden]) .portal-thumbbar { display: none; }
   .portal-topbar-actions #portal-theme-btn { order: 8; }
 }
 @media (max-width: 920px) {
-  .portal-topbar-actions #portal-hub-search-btn { display: none; }
   .portal-hubsearch { padding: 0.75rem; overflow: hidden; }
   .portal-hubsearch-inner {
     background: var(--surface, #FFFDF8);
