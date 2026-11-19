@@ -2339,7 +2339,8 @@
     }
     list.innerHTML = view.map(function (e) {
       var pill = '<span class="portal-badge">' + esc(e.status || '') + '</span>';
-      var amt = '<p class="portal-card-meta"><strong>Estimate: ' + esc(estimateMoney(estFloorAmt(e.estimate_amount)) /* V173_PRICING_FLOOR_2026_11_18 */) + '</strong> &middot; visit fee ' + esc(estimateMoney(v165VisitFee(e.audience))) + ' due only when confirmed</p>';
+      var v175EstTax = atrTaxEstimate(estFloorAmt(e.estimate_amount), e.atr_one === 'member' ? 0 : v165VisitFee(e.audience), e.service_address);
+      var amt = '<p class="portal-card-meta"><strong>Estimate: ' + esc(estimateMoney(estFloorAmt(e.estimate_amount)) /* V173_PRICING_FLOOR_2026_11_18 */) + '</strong> &middot; visit fee ' + esc(estimateMoney(v165VisitFee(e.audience))) + ' due only when confirmed' + (v175EstTax ? ' &middot; est. sales tax ' + esc(estimateMoney(v175EstTax.amount)) + ' (' + esc(v175EstTax.county) + ' County, ' + esc(v175EstTax.rate.toFixed(2)) + '%)' : '') + '</p>';
       var who = esc(e.name || 'No name given') + (e.audience === 'business' && e.contact_name ? ' &middot; ' + esc(e.contact_name) : '') + (e.audience === 'business' ? ' <span class="portal-badge portal-badge-source">Business</span>' : '');
       var phone = trim(e.phone);
       var phoneHtml = phone ? ' &middot; <a href="tel:' + esc(phone.replace(/[^0-9+]/g, '')) + '">' + esc(phone) + '</a>' : '';
@@ -2638,6 +2639,7 @@
           return;
         }
         var e = res.data;
+        var v175EstTax = atrTaxEstimate(estFloorAmt(e.estimate_amount), e.atr_one === 'member' ? 0 : v165VisitFee(e.audience), e.service_address);
         var body =
           '<div class="portal-drawer-section"><h3>Estimate</h3>' +
           '<dl class="portal-kv">' +
@@ -2650,6 +2652,7 @@
           '<dt>Issue</dt><dd>' + esc(e.issue || '—') + '</dd>' +
           '<dt>Estimate</dt><dd><strong>' + esc(estimateMoney(estFloorAmt(e.estimate_amount)) /* V173_PRICING_FLOOR_2026_11_18 */) + '</strong></dd>' +
           '<dt>Visit fee when confirmed</dt><dd>' + esc(estimateMoney(v165VisitFee(e.audience))) + (e.atr_one === 'member' ? ' (ATR One member — no visit fee)' : '') + '</dd>' +
+          (v175EstTax ? '<dt>Estimated sales tax</dt><dd>' + esc(estimateMoney(v175EstTax.amount)) + ' (' + esc(v175EstTax.county) + ' County, ' + esc(v175EstTax.rate.toFixed(2)) + '%)' + (v175EstTax.fallback ? ' \u2014 county not determined from the service address, Greene County rate applied' : '') + '</dd>' + '<dt>Estimated total</dt><dd><strong>' + esc(estimateMoney(v175EstTax.total)) + '</strong></dd>' : '') +
           '<dt>Received</dt><dd>' + esc(fmtDateTime(e.created_at)) + '</dd>' +
           '</dl></div>';
         if (e.status === 'Awaiting Estimate') {
@@ -4039,6 +4042,8 @@ function loadTicketThread(client, ticketId) {
           client.from('tickets').update({ status: next }).eq('id', t.id).then(function (res2) {
             if (res2.error) { if (msg) msg.textContent = 'Couldn’t save — try again.'; return; }
             if (msg) msg.textContent = 'Saved.';
+            /* V175_COUNTY_TAX_2026_11_19: backstop - the drawer open already syncs the tax row, and a status change never changes the charges, but this makes sure the row exists before Job Complete opens the pay gate even if the drawer was opened before this build. Fire-and-forget; the next drawer open re-renders. */
+            v175SyncTaxRow(client, t, t._charges || [], function (fresh) { try { t._charges = fresh; } catch (e) {} });
             /* V174_STATUS_NOTE_2026_11_18: the note is filed on the repair log, so the reason for the status change stays with the ticket. Fire-and-forget — a failed note never fails the status change itself. */
             client.from('ticket_notes').insert({ ticket_id: t.id, author: (state.profile && state.profile.name) || null, note: 'Status → ' + next + ': ' + noteText }).then(function () { loadRepairLog(client, t.id); }).catch(function () {});
             notifyStatusEmail(client, t, next); /* STATUS_UPDATE_EMAILS_2026_11_06: automatic customer status email (no-reply), fire-and-forget */
@@ -4214,6 +4219,157 @@ function loadTicketThread(client, ticketId) {
     });
     return { subtotal: subtotal, deposits: deposits, balance: subtotal - deposits, part: part, labor: labor };
   }
+  /* V175_COUNTY_TAX_2026_11_19 (Austin, Nov 19, 2026): ATRG is a mobile
+   * business, so sales tax is charged at the rate for the COUNTY WHERE
+   * THE SERVICE HAPPENS - the guest's county, from the ticket's service
+   * address. NOT a flat rate. Rates are the Ohio Department of Taxation
+   * county totals, October 2026 (state 5.75% + county permissive +
+   * transit), verified from the ODT rate table - the full table and
+   * sources are in REPORT.md. The county comes from the service
+   * address: first the 5-digit ZIP (U.S. Census 2020 ZCTA-to-county
+   * file, largest-share county per ZIP), then a city name when there
+   * is no ZIP (single-county cities only - a city that spans counties
+   * never matches), else the business home county Greene at 6.75%,
+   * labelled as the fallback. Tax base: every non-deposit charge line
+   * except a tax line itself - parts + labor + dispatch/visit +
+   * diagnostics + one-off - AFTER discounts (a discount row is
+   * negative and lowers the base). Deposits already paid lower the
+   * balance due but never the tax. The tax itself is ONE
+   * ticket_charges row (kind 'tax', qty 1, description '<County>
+   * County <rate>%'), synced by staff-side code - so every reader
+   * that sums qty x unit_price (receipt, invoice, the Square
+   * checkout function, Financials) already sees tax-inclusive
+   * figures with no math change anywhere. The guest page never
+   * writes: when no synced row exists yet it shows the same computed
+   * figure (this same pure function), so the guest always sees the
+   * right tax. This block is IDENTICAL in portal.js and index.html -
+   * keep the two copies in sync; the harness proves both against
+   * the same cases. */
+  var ATR_TAX_RATES = {"Adams":7.25,"Allen":6.85,"Ashland":7.0,"Ashtabula":6.75,"Athens":7.25,"Auglaize":7.25,"Belmont":7.25,"Brown":7.0,"Butler":6.5,"Carroll":6.75,"Champaign":7.25,"Clark":7.25,"Clermont":6.75,"Clinton":7.25,"Columbiana":7.25,"Coshocton":7.75,"Crawford":7.25,"Cuyahoga":8.0,"Darke":7.25,"Defiance":6.75,"Delaware":7.0,"Erie":6.75,"Fairfield":6.75,"Fayette":7.25,"Franklin":8.0,"Fulton":7.25,"Gallia":7.25,"Geauga":6.75,"Greene":6.75,"Guernsey":7.25,"Hamilton":7.8,"Hancock":6.75,"Hardin":7.25,"Harrison":7.25,"Henry":7.25,"Highland":7.25,"Hocking":7.25,"Holmes":7.0,"Huron":7.25,"Jackson":7.25,"Jefferson":7.25,"Knox":7.25,"Lake":7.25,"Lawrence":7.25,"Licking":7.25,"Logan":7.25,"Lorain":6.5,"Lucas":7.75,"Madison":7.0,"Mahoning":7.5,"Marion":7.25,"Medina":6.75,"Meigs":7.25,"Mercer":7.25,"Miami":7.0,"Monroe":7.25,"Montgomery":7.5,"Morgan":7.25,"Morrow":7.25,"Muskingum":7.25,"Noble":7.25,"Ottawa":7.0,"Paulding":7.25,"Perry":7.25,"Pickaway":7.25,"Pike":7.25,"Portage":7.0,"Preble":7.25,"Putnam":7.0,"Richland":7.0,"Ross":7.25,"Sandusky":7.25,"Scioto":7.25,"Seneca":7.25,"Shelby":7.25,"Stark":6.5,"Summit":6.75,"Trumbull":6.75,"Tuscarawas":6.75,"Union":7.0,"Van Wert":7.25,"Vinton":7.25,"Warren":7.25,"Washington":7.25,"Wayne":6.5,"Williams":7.25,"Wood":6.75,"Wyandot":7.25};
+  var ATR_TAX_ZIP_COUNTY = {"":"Portage","43001":"Licking","43002":"Franklin","43003":"Morrow","43004":"Franklin","43005":"Knox","43006":"Coshocton","43007":"Union","43008":"Licking","43009":"Champaign","43010":"Clark","43011":"Knox","43013":"Licking","43014":"Knox","43015":"Delaware","43016":"Franklin","43017":"Franklin","43018":"Licking","43019":"Knox","43021":"Delaware","43022":"Knox","43023":"Licking","43025":"Licking","43026":"Franklin","43027":"Licking","43028":"Knox","43029":"Madison","43030":"Licking","43031":"Licking","43032":"Delaware","43033":"Licking","43035":"Delaware","43036":"Union","43037":"Knox","43040":"Union","43044":"Champaign","43045":"Union","43046":"Fairfield","43047":"Champaign","43050":"Knox","43054":"Franklin","43055":"Licking","43056":"Licking","43060":"Champaign","43061":"Delaware","43062":"Licking","43064":"Madison","43065":"Delaware","43066":"Delaware","43067":"Union","43068":"Franklin","43070":"Champaign","43071":"Licking","43072":"Champaign","43074":"Delaware","43076":"Perry","43077":"Union","43078":"Champaign","43080":"Licking","43081":"Franklin","43082":"Delaware","43084":"Champaign","43085":"Franklin","43101":"Ross","43102":"Fairfield","43103":"Pickaway","43105":"Fairfield","43106":"Fayette","43107":"Fairfield","43109":"Franklin","43110":"Fairfield","43111":"Hocking","43112":"Fairfield","43113":"Pickaway","43115":"Ross","43116":"Pickaway","43117":"Pickaway","43119":"Franklin","43123":"Franklin","43125":"Franklin","43126":"Franklin","43127":"Hocking","43128":"Fayette","43130":"Fairfield","43135":"Hocking","43136":"Fairfield","43137":"Pickaway","43138":"Hocking","43140":"Madison","43142":"Fayette","43143":"Madison","43144":"Hocking","43145":"Pickaway","43146":"Pickaway","43147":"Fairfield","43148":"Fairfield","43149":"Hocking","43150":"Fairfield","43151":"Madison","43152":"Hocking","43153":"Madison","43154":"Fairfield","43155":"Fairfield","43156":"Pickaway","43157":"Fairfield","43158":"Hocking","43160":"Fayette","43162":"Madison","43164":"Pickaway","43201":"Franklin","43202":"Franklin","43203":"Franklin","43204":"Franklin","43205":"Franklin","43206":"Franklin","43207":"Franklin","43209":"Franklin","43210":"Franklin","43211":"Franklin","43212":"Franklin","43213":"Franklin","43214":"Franklin","43215":"Franklin","43217":"Franklin","43218":"Franklin","43219":"Franklin","43220":"Franklin","43221":"Franklin","43222":"Franklin","43223":"Franklin","43224":"Franklin","43227":"Franklin","43228":"Franklin","43229":"Franklin","43230":"Franklin","43231":"Franklin","43232":"Franklin","43235":"Franklin","43240":"Delaware","43302":"Marion","43310":"Hardin","43311":"Logan","43314":"Marion","43315":"Morrow","43316":"Wyandot","43317":"Morrow","43318":"Logan","43319":"Logan","43320":"Morrow","43321":"Morrow","43322":"Marion","43323":"Wyandot","43324":"Logan","43325":"Morrow","43326":"Hardin","43330":"Wyandot","43331":"Logan","43332":"Marion","43333":"Logan","43334":"Morrow","43336":"Logan","43337":"Marion","43338":"Morrow","43340":"Hardin","43341":"Marion","43342":"Marion","43343":"Logan","43344":"Union","43345":"Logan","43346":"Hardin","43347":"Logan","43348":"Logan","43350":"Morrow","43351":"Wyandot","43356":"Marion","43357":"Logan","43358":"Union","43359":"Wyandot","43360":"Logan","43402":"Wood","43403":"Wood","43406":"Wood","43407":"Sandusky","43408":"Ottawa","43410":"Sandusky","43412":"Lucas","43413":"Wood","43414":"Wood","43416":"Ottawa","43420":"Sandusky","43430":"Ottawa","43431":"Sandusky","43432":"Ottawa","43433":"Ottawa","43434":"Lucas","43435":"Sandusky","43436":"Ottawa","43437":"Wood","43438":"Erie","43439":"Ottawa","43440":"Ottawa","43442":"Sandusky","43443":"Wood","43445":"Ottawa","43446":"Ottawa","43447":"Wood","43449":"Ottawa","43450":"Wood","43451":"Wood","43452":"Ottawa","43456":"Ottawa","43457":"Wood","43458":"Ottawa","43460":"Wood","43462":"Wood","43463":"Wood","43464":"Sandusky","43465":"Wood","43466":"Wood","43467":"Wood","43468":"Ottawa","43469":"Sandusky","43501":"Williams","43502":"Fulton","43504":"Lucas","43505":"Williams","43506":"Williams","43510":"Henry","43511":"Wood","43512":"Defiance","43515":"Fulton","43516":"Henry","43517":"Williams","43518":"Williams","43519":"Defiance","43520":"Defiance","43521":"Fulton","43522":"Wood","43523":"Henry","43524":"Henry","43525":"Wood","43526":"Defiance","43527":"Henry","43528":"Lucas","43529":"Wood","43530":"Defiance","43531":"Williams","43532":"Henry","43533":"Fulton","43534":"Henry","43535":"Henry","43536":"Defiance","43537":"Lucas","43540":"Fulton","43541":"Wood","43542":"Lucas","43543":"Williams","43545":"Henry","43547":"Lucas","43548":"Henry","43549":"Defiance","43551":"Wood","43553":"Fulton","43554":"Williams","43555":"Henry","43556":"Defiance","43557":"Williams","43558":"Fulton","43560":"Lucas","43565":"Wood","43566":"Lucas","43567":"Fulton","43569":"Wood","43570":"Williams","43571":"Lucas","43604":"Lucas","43605":"Lucas","43606":"Lucas","43607":"Lucas","43608":"Lucas","43609":"Lucas","43610":"Lucas","43611":"Lucas","43612":"Lucas","43613":"Lucas","43614":"Lucas","43615":"Lucas","43616":"Lucas","43617":"Lucas","43619":"Wood","43620":"Lucas","43623":"Lucas","43701":"Muskingum","43711":"Noble","43713":"Belmont","43716":"Monroe","43717":"Noble","43718":"Belmont","43719":"Belmont","43720":"Muskingum","43721":"Licking","43722":"Guernsey","43723":"Guernsey","43724":"Noble","43725":"Guernsey","43727":"Muskingum","43728":"Morgan","43730":"Perry","43731":"Perry","43732":"Guernsey","43733":"Guernsey","43734":"Muskingum","43735":"Muskingum","43736":"Guernsey","43738":"Muskingum","43739":"Perry","43740":"Licking","43746":"Muskingum","43747":"Monroe","43748":"Perry","43749":"Guernsey","43750":"Guernsey","43754":"Monroe","43755":"Guernsey","43756":"Morgan","43758":"Morgan","43759":"Belmont","43760":"Perry","43761":"Perry","43762":"Muskingum","43764":"Perry","43766":"Perry","43767":"Muskingum","43768":"Guernsey","43771":"Muskingum","43772":"Noble","43773":"Guernsey","43777":"Muskingum","43778":"Guernsey","43779":"Noble","43780":"Guernsey","43782":"Perry","43783":"Perry","43786":"Monroe","43787":"Morgan","43788":"Noble","43791":"Muskingum","43793":"Monroe","43802":"Muskingum","43804":"Holmes","43805":"Coshocton","43811":"Coshocton","43812":"Coshocton","43821":"Muskingum","43822":"Muskingum","43824":"Coshocton","43830":"Muskingum","43832":"Tuscarawas","43836":"Coshocton","43837":"Tuscarawas","43840":"Tuscarawas","43842":"Muskingum","43843":"Coshocton","43844":"Coshocton","43845":"Coshocton","43901":"Jefferson","43902":"Belmont","43903":"Carroll","43905":"Belmont","43906":"Belmont","43907":"Harrison","43908":"Jefferson","43909":"Belmont","43910":"Jefferson","43912":"Belmont","43913":"Jefferson","43914":"Monroe","43915":"Monroe","43917":"Jefferson","43920":"Columbiana","43925":"Jefferson","43926":"Jefferson","43928":"Belmont","43930":"Jefferson","43931":"Monroe","43932":"Jefferson","43933":"Belmont","43934":"Belmont","43935":"Belmont","43938":"Jefferson","43939":"Jefferson","43940":"Belmont","43942":"Belmont","43943":"Jefferson","43944":"Jefferson","43945":"Columbiana","43946":"Monroe","43947":"Belmont","43948":"Jefferson","43950":"Belmont","43951":"Belmont","43952":"Jefferson","43953":"Jefferson","43961":"Jefferson","43962":"Columbiana","43963":"Jefferson","43964":"Jefferson","43967":"Belmont","43968":"Columbiana","43971":"Jefferson","43972":"Belmont","43973":"Harrison","43974":"Harrison","43976":"Harrison","43977":"Belmont","43981":"Harrison","43983":"Belmont","43985":"Belmont","43986":"Harrison","43988":"Harrison","44001":"Lorain","44003":"Ashtabula","44004":"Ashtabula","44010":"Ashtabula","44011":"Lorain","44012":"Lorain","44017":"Cuyahoga","44021":"Geauga","44022":"Cuyahoga","44023":"Geauga","44024":"Geauga","44026":"Geauga","44028":"Lorain","44030":"Ashtabula","44032":"Ashtabula","44035":"Lorain","44039":"Lorain","44040":"Cuyahoga","44041":"Ashtabula","44044":"Lorain","44045":"Lake","44046":"Geauga","44047":"Ashtabula","44048":"Ashtabula","44049":"Lorain","44050":"Lorain","44052":"Lorain","44053":"Lorain","44054":"Lorain","44055":"Lorain","44056":"Summit","44057":"Lake","44060":"Lake","44062":"Geauga","44064":"Geauga","44065":"Geauga","44067":"Summit","44068":"Ashtabula","44070":"Cuyahoga","44072":"Geauga","44074":"Lorain","44076":"Ashtabula","44077":"Lake","44080":"Geauga","44081":"Lake","44082":"Ashtabula","44084":"Ashtabula","44085":"Ashtabula","44086":"Geauga","44087":"Summit","44089":"Erie","44090":"Lorain","44092":"Lake","44093":"Ashtabula","44094":"Lake","44095":"Lake","44099":"Ashtabula","44101":"Cuyahoga","44102":"Cuyahoga","44103":"Cuyahoga","44104":"Cuyahoga","44105":"Cuyahoga","44106":"Cuyahoga","44107":"Cuyahoga","44108":"Cuyahoga","44109":"Cuyahoga","44110":"Cuyahoga","44111":"Cuyahoga","44112":"Cuyahoga","44113":"Cuyahoga","44114":"Cuyahoga","44115":"Cuyahoga","44116":"Cuyahoga","44117":"Cuyahoga","44118":"Cuyahoga","44119":"Cuyahoga","44120":"Cuyahoga","44121":"Cuyahoga","44122":"Cuyahoga","44123":"Cuyahoga","44124":"Cuyahoga","44125":"Cuyahoga","44126":"Cuyahoga","44127":"Cuyahoga","44128":"Cuyahoga","44129":"Cuyahoga","44130":"Cuyahoga","44131":"Cuyahoga","44132":"Cuyahoga","44133":"Cuyahoga","44134":"Cuyahoga","44135":"Cuyahoga","44136":"Cuyahoga","44137":"Cuyahoga","44138":"Cuyahoga","44139":"Cuyahoga","44140":"Cuyahoga","44141":"Cuyahoga","44142":"Cuyahoga","44143":"Cuyahoga","44144":"Cuyahoga","44145":"Cuyahoga","44146":"Cuyahoga","44147":"Cuyahoga","44149":"Cuyahoga","44201":"Portage","44202":"Portage","44203":"Summit","44212":"Medina","44214":"Wayne","44215":"Medina","44216":"Summit","44217":"Wayne","44221":"Summit","44223":"Summit","44224":"Summit","44230":"Wayne","44231":"Portage","44232":"Summit","44233":"Medina","44234":"Portage","44235":"Medina","44236":"Summit","44240":"Portage","44241":"Portage","44243":"Portage","44250":"Summit","44251":"Medina","44253":"Medina","44254":"Medina","44255":"Portage","44256":"Medina","44260":"Portage","44262":"Summit","44264":"Summit","44266":"Portage","44270":"Wayne","44272":"Portage","44273":"Medina","44274":"Medina","44275":"Medina","44276":"Wayne","44278":"Summit","44280":"Medina","44281":"Medina","44285":"Portage","44286":"Summit","44287":"Wayne","44288":"Portage","44301":"Summit","44302":"Summit","44303":"Summit","44304":"Summit","44305":"Summit","44306":"Summit","44307":"Summit","44308":"Summit","44310":"Summit","44311":"Summit","44312":"Summit","44313":"Summit","44314":"Summit","44319":"Summit","44320":"Summit","44321":"Summit","44325":"Summit","44333":"Summit","44401":"Mahoning","44402":"Trumbull","44403":"Trumbull","44404":"Trumbull","44405":"Mahoning","44406":"Mahoning","44408":"Columbiana","44410":"Trumbull","44411":"Portage","44412":"Portage","44413":"Columbiana","44415":"Columbiana","44417":"Trumbull","44418":"Trumbull","44420":"Trumbull","44423":"Columbiana","44424":"Trumbull","44425":"Trumbull","44427":"Carroll","44428":"Trumbull","44429":"Mahoning","44430":"Trumbull","44431":"Columbiana","44432":"Columbiana","44436":"Mahoning","44437":"Trumbull","44438":"Trumbull","44439":"Trumbull","44440":"Trumbull","44441":"Columbiana","44442":"Mahoning","44443":"Mahoning","44444":"Trumbull","44445":"Columbiana","44446":"Trumbull","44449":"Mahoning","44450":"Trumbull","44451":"Mahoning","44452":"Mahoning","44454":"Mahoning","44455":"Columbiana","44460":"Columbiana","44470":"Trumbull","44471":"Mahoning","44473":"Trumbull","44481":"Trumbull","44483":"Trumbull","44484":"Trumbull","44485":"Trumbull","44490":"Columbiana","44491":"Trumbull","44493":"Columbiana","44502":"Mahoning","44503":"Mahoning","44504":"Mahoning","44505":"Mahoning","44506":"Mahoning","44507":"Mahoning","44509":"Mahoning","44510":"Mahoning","44511":"Mahoning","44512":"Mahoning","44514":"Mahoning","44515":"Mahoning","44555":"Mahoning","44601":"Stark","44606":"Wayne","44607":"Carroll","44608":"Stark","44609":"Mahoning","44610":"Holmes","44611":"Holmes","44612":"Tuscarawas","44613":"Stark","44614":"Stark","44615":"Carroll","44618":"Wayne","44619":"Mahoning","44620":"Carroll","44621":"Tuscarawas","44622":"Tuscarawas","44624":"Holmes","44625":"Columbiana","44626":"Stark","44627":"Holmes","44628":"Holmes","44629":"Tuscarawas","44630":"Stark","44632":"Stark","44633":"Holmes","44634":"Columbiana","44637":"Holmes","44638":"Holmes","44639":"Carroll","44640":"Stark","44641":"Stark","44643":"Carroll","44644":"Carroll","44645":"Wayne","44646":"Stark","44647":"Stark","44651":"Carroll","44652":"Stark","44653":"Tuscarawas","44654":"Holmes","44656":"Tuscarawas","44657":"Carroll","44659":"Wayne","44660":"Holmes","44661":"Holmes","44662":"Stark","44663":"Tuscarawas","44665":"Columbiana","44666":"Stark","44667":"Wayne","44669":"Stark","44670":"Stark","44671":"Tuscarawas","44672":"Mahoning","44675":"Carroll","44676":"Wayne","44677":"Wayne","44678":"Tuscarawas","44680":"Tuscarawas","44681":"Tuscarawas","44682":"Tuscarawas","44683":"Tuscarawas","44685":"Summit","44687":"Holmes","44688":"Stark","44689":"Holmes","44690":"Holmes","44691":"Wayne","44693":"Harrison","44695":"Carroll","44697":"Tuscarawas","44699":"Harrison","44702":"Stark","44703":"Stark","44704":"Stark","44705":"Stark","44706":"Stark","44707":"Stark","44708":"Stark","44709":"Stark","44710":"Stark","44714":"Stark","44718":"Stark","44720":"Stark","44721":"Stark","44730":"Stark","44802":"Seneca","44804":"Hancock","44805":"Ashland","44807":"Seneca","44809":"Seneca","44811":"Huron","44813":"Richland","44814":"Erie","44815":"Seneca","44817":"Wood","44818":"Seneca","44820":"Crawford","44822":"Richland","44824":"Erie","44825":"Crawford","44826":"Huron","44827":"Crawford","44828":"Seneca","44830":"Seneca","44833":"Morrow","44836":"Seneca","44837":"Huron","44838":"Ashland","44839":"Erie","44840":"Ashland","44841":"Seneca","44842":"Ashland","44843":"Richland","44844":"Seneca","44846":"Erie","44847":"Huron","44849":"Wyandot","44850":"Huron","44851":"Huron","44853":"Seneca","44854":"Crawford","44855":"Huron","44856":"Crawford","44857":"Huron","44859":"Ashland","44861":"Seneca","44864":"Ashland","44865":"Huron","44866":"Ashland","44867":"Seneca","44870":"Erie","44874":"Ashland","44875":"Richland","44878":"Richland","44880":"Ashland","44881":"Crawford","44882":"Wyandot","44883":"Seneca","44887":"Crawford","44889":"Huron","44890":"Huron","44901":"Richland","44902":"Richland","44903":"Richland","44904":"Richland","44905":"Richland","44906":"Richland","44907":"Richland","45001":"Hamilton","45002":"Hamilton","45003":"Preble","45005":"Warren","45011":"Butler","45013":"Butler","45014":"Butler","45015":"Butler","45030":"Hamilton","45032":"Warren","45033":"Hamilton","45034":"Warren","45036":"Warren","45039":"Warren","45040":"Warren","45041":"Hamilton","45042":"Butler","45044":"Butler","45050":"Butler","45051":"Hamilton","45052":"Hamilton","45053":"Butler","45054":"Warren","45055":"Butler","45056":"Butler","45062":"Butler","45064":"Butler","45065":"Warren","45066":"Warren","45067":"Butler","45068":"Warren","45069":"Butler","45070":"Preble","45101":"Brown","45102":"Clermont","45103":"Clermont","45105":"Adams","45106":"Clermont","45107":"Clinton","45111":"Hamilton","45112":"Clermont","45113":"Clinton","45115":"Brown","45118":"Brown","45119":"Brown","45120":"Clermont","45121":"Brown","45122":"Clermont","45123":"Highland","45130":"Brown","45131":"Brown","45132":"Highland","45133":"Highland","45135":"Highland","45140":"Clermont","45142":"Highland","45144":"Adams","45146":"Clinton","45147":"Clermont","45148":"Clinton","45150":"Clermont","45152":"Warren","45153":"Clermont","45154":"Brown","45155":"Highland","45156":"Clermont","45157":"Clermont","45158":"Clermont","45159":"Clinton","45160":"Clermont","45162":"Warren","45164":"Clinton","45166":"Clinton","45167":"Brown","45168":"Brown","45169":"Clinton","45171":"Brown","45172":"Highland","45174":"Hamilton","45176":"Clermont","45177":"Clinton","45202":"Hamilton","45203":"Hamilton","45204":"Hamilton","45205":"Hamilton","45206":"Hamilton","45207":"Hamilton","45208":"Hamilton","45209":"Hamilton","45211":"Hamilton","45212":"Hamilton","45213":"Hamilton","45214":"Hamilton","45215":"Hamilton","45216":"Hamilton","45217":"Hamilton","45218":"Hamilton","45219":"Hamilton","45220":"Hamilton","45223":"Hamilton","45224":"Hamilton","45225":"Hamilton","45226":"Hamilton","45227":"Hamilton","45229":"Hamilton","45230":"Hamilton","45231":"Hamilton","45232":"Hamilton","45233":"Hamilton","45236":"Hamilton","45237":"Hamilton","45238":"Hamilton","45239":"Hamilton","45240":"Hamilton","45241":"Hamilton","45242":"Hamilton","45243":"Hamilton","45244":"Hamilton","45245":"Clermont","45246":"Hamilton","45247":"Hamilton","45248":"Hamilton","45249":"Hamilton","45251":"Hamilton","45252":"Hamilton","45255":"Hamilton","45267":"Hamilton","45301":"Greene","45302":"Shelby","45303":"Darke","45304":"Darke","45305":"Greene","45306":"Shelby","45307":"Greene","45308":"Darke","45309":"Montgomery","45310":"Mercer","45311":"Preble","45312":"Miami","45314":"Greene","45315":"Montgomery","45316":"Clark","45317":"Champaign","45318":"Miami","45319":"Clark","45320":"Preble","45321":"Preble","45322":"Montgomery","45323":"Clark","45324":"Greene","45325":"Montgomery","45326":"Miami","45327":"Montgomery","45328":"Darke","45330":"Preble","45331":"Darke","45332":"Darke","45333":"Shelby","45334":"Shelby","45335":"Greene","45336":"Shelby","45337":"Miami","45338":"Preble","45339":"Miami","45340":"Shelby","45341":"Clark","45342":"Montgomery","45344":"Clark","45345":"Montgomery","45346":"Darke","45347":"Preble","45348":"Darke","45349":"Clark","45350":"Darke","45351":"Darke","45352":"Darke","45353":"Shelby","45354":"Montgomery","45356":"Miami","45358":"Darke","45359":"Miami","45360":"Shelby","45361":"Miami","45362":"Darke","45363":"Shelby","45365":"Shelby","45368":"Clark","45369":"Clark","45370":"Greene","45371":"Miami","45372":"Clark","45373":"Miami","45377":"Montgomery","45378":"Preble","45380":"Darke","45381":"Preble","45382":"Preble","45383":"Miami","45384":"Greene","45385":"Greene","45387":"Greene","45388":"Darke","45389":"Champaign","45390":"Darke","45402":"Montgomery","45403":"Montgomery","45404":"Montgomery","45405":"Montgomery","45406":"Montgomery","45409":"Montgomery","45410":"Montgomery","45414":"Montgomery","45415":"Montgomery","45416":"Montgomery","45417":"Montgomery","45419":"Montgomery","45420":"Montgomery","45423":"Montgomery","45424":"Montgomery","45426":"Montgomery","45428":"Montgomery","45429":"Montgomery","45430":"Greene","45431":"Greene","45432":"Greene","45433":"Greene","45434":"Greene","45435":"Greene","45439":"Montgomery","45440":"Greene","45449":"Montgomery","45458":"Montgomery","45459":"Montgomery","45469":"Montgomery","45501":"Clark","45502":"Clark","45503":"Clark","45504":"Clark","45505":"Clark","45506":"Clark","45601":"Ross","45612":"Ross","45613":"Pike","45614":"Gallia","45616":"Adams","45617":"Ross","45618":"Adams","45619":"Lawrence","45620":"Gallia","45621":"Jackson","45622":"Vinton","45623":"Gallia","45624":"Pike","45628":"Ross","45629":"Scioto","45630":"Scioto","45631":"Gallia","45634":"Vinton","45636":"Scioto","45638":"Lawrence","45640":"Jackson","45642":"Pike","45644":"Ross","45645":"Lawrence","45646":"Pike","45647":"Vinton","45648":"Scioto","45650":"Adams","45651":"Vinton","45652":"Scioto","45653":"Scioto","45654":"Vinton","45656":"Jackson","45657":"Scioto","45658":"Gallia","45659":"Lawrence","45660":"Adams","45661":"Pike","45662":"Scioto","45663":"Scioto","45669":"Lawrence","45671":"Scioto","45672":"Vinton","45673":"Ross","45674":"Gallia","45677":"Scioto","45678":"Lawrence","45679":"Adams","45680":"Lawrence","45681":"Ross","45682":"Scioto","45684":"Adams","45685":"Jackson","45686":"Gallia","45688":"Lawrence","45690":"Pike","45692":"Jackson","45693":"Adams","45694":"Scioto","45695":"Vinton","45696":"Lawrence","45697":"Adams","45698":"Vinton","45699":"Scioto","45701":"Athens","45710":"Meigs","45711":"Athens","45714":"Washington","45715":"Morgan","45716":"Athens","45719":"Athens","45720":"Meigs","45721":"Washington","45723":"Athens","45724":"Washington","45727":"Noble","45729":"Washington","45732":"Athens","45734":"Monroe","45735":"Athens","45739":"Athens","45740":"Athens","45741":"Meigs","45742":"Washington","45743":"Meigs","45744":"Washington","45745":"Noble","45746":"Washington","45750":"Washington","45760":"Meigs","45761":"Athens","45764":"Hocking","45766":"Athens","45767":"Washington","45768":"Washington","45769":"Meigs","45770":"Meigs","45771":"Meigs","45772":"Meigs","45773":"Washington","45775":"Meigs","45776":"Meigs","45778":"Athens","45779":"Meigs","45780":"Athens","45782":"Athens","45783":"Meigs","45784":"Washington","45786":"Washington","45788":"Washington","45789":"Washington","45801":"Allen","45804":"Allen","45805":"Allen","45806":"Allen","45807":"Allen","45808":"Allen","45809":"Allen","45810":"Hardin","45812":"Hardin","45813":"Paulding","45814":"Hancock","45815":"Putnam","45816":"Hancock","45817":"Allen","45819":"Auglaize","45820":"Allen","45821":"Paulding","45822":"Mercer","45826":"Mercer","45827":"Putnam","45828":"Mercer","45830":"Putnam","45831":"Putnam","45832":"Van Wert","45833":"Allen","45835":"Hardin","45836":"Hardin","45838":"Van Wert","45840":"Hancock","45841":"Hancock","45843":"Hardin","45844":"Putnam","45845":"Shelby","45846":"Mercer","45848":"Putnam","45849":"Paulding","45850":"Allen","45851":"Paulding","45853":"Putnam","45854":"Allen","45855":"Paulding","45856":"Putnam","45858":"Hancock","45859":"Hardin","45860":"Mercer","45861":"Paulding","45862":"Mercer","45863":"Van Wert","45864":"Putnam","45865":"Auglaize","45866":"Mercer","45867":"Hancock","45868":"Hancock","45869":"Auglaize","45870":"Auglaize","45871":"Auglaize","45872":"Wood","45873":"Paulding","45874":"Van Wert","45875":"Putnam","45876":"Putnam","45877":"Putnam","45879":"Paulding","45880":"Paulding","45881":"Hancock","45882":"Mercer","45883":"Mercer","45884":"Auglaize","45885":"Auglaize","45886":"Paulding","45887":"Allen","45888":"Auglaize","45889":"Hancock","45890":"Hancock","45891":"Van Wert","45893":"Putnam","45894":"Van Wert","45895":"Auglaize","45896":"Auglaize","45897":"Hancock","45898":"Van Wert","45899":"Van Wert"};
+  var ATR_TAX_CITY_COUNTY = {"beavercreek":"Greene","bellbrook":"Greene","bellefontaine":"Logan","brookville":"Montgomery","cedarville":"Greene","eaton":"Preble","englewood":"Montgomery","enon":"Clark","fairborn":"Greene","germantown":"Montgomery","greenville":"Darke","hamilton":"Butler","huber heights":"Montgomery","lebanon":"Warren","logan":"Hocking","london":"Madison","marysville":"Union","miamisburg":"Montgomery","new carlisle":"Clark","oxford":"Butler","piqua":"Miami","sidney":"Shelby","springfield":"Clark","tipp city":"Miami","trenton":"Butler","troy":"Miami","urbana":"Champaign","vandalia":"Montgomery","washington court house":"Fayette","west carrollton":"Montgomery","west chester":"Butler","west milton":"Miami","wilmington":"Clinton","xenia":"Greene","yellow springs":"Greene"};
+  var ATR_TAX_FALLBACK_COUNTY = 'Greene';
+  function atrTaxCountyForAddress(address) {
+    var s = String(address || '');
+    var zips = s.match(/\b\d{5}(?:-\d{4})?\b/g) || [];
+    var i, z, c;
+    for (i = zips.length - 1; i >= 0; i--) {
+      z = zips[i].slice(0, 5);
+      c = ATR_TAX_ZIP_COUNTY[z];
+      if (c) return { county: c, source: 'zip' };
+    }
+    var low = s.toLowerCase().replace(/\b([a-z]+)\s+county\b/g, ' ');
+    var names = Object.keys(ATR_TAX_CITY_COUNTY).sort(function (a, b) { return b.length - a.length; });
+    for (i = 0; i < names.length; i++) {
+      var name = names[i];
+      var pat = new RegExp('(^|[^a-z])' + name.replace(/ /g, '\\s+') + '([^a-z]|$)');
+      if (pat.test(low)) return { county: ATR_TAX_CITY_COUNTY[name], source: 'city' };
+    }
+    return { county: ATR_TAX_FALLBACK_COUNTY, source: 'fallback' };
+  }
+  function atrTaxRateForCounty(county) {
+    var r = ATR_TAX_RATES[county];
+    return (typeof r === 'number') ? r : null;
+  }
+  function atrTaxBaseOf(rows) {
+    var base = 0;
+    (rows || []).forEach(function (ch) {
+      if (ch.kind === 'deposit_credit' || ch.kind === 'tax') return;
+      base += Number(ch.qty || 0) * Number(ch.unit_price || 0);
+    });
+    return Math.round(base * 100) / 100;
+  }
+  function atrTaxCompute(rows, address) {
+    var base = atrTaxBaseOf(rows);
+    if (!(base > 0)) return null;
+    var found = atrTaxCountyForAddress(address);
+    var rate = atrTaxRateForCounty(found.county);
+    if (rate == null) return null;
+    return { county: found.county, rate: rate, amount: Math.round(base * rate) / 100, base: base, fallback: found.source === 'fallback', source: found.source };
+  }
+  function atrTaxRowIn(rows) {
+    var found = null;
+    (rows || []).forEach(function (ch) { if (ch.kind === 'tax') found = ch; });
+    return found;
+  }
+  function atrTaxDescription(info) {
+    var s = info.county + ' County ' + info.rate.toFixed(2) + '%';
+    if (info.fallback) s += ' (fallback \u2014 county not determined from the service address)';
+    return s;
+  }
+  function atrTaxEffective(rows, address) {
+    var synced = atrTaxRowIn(rows);
+    if (synced) {
+      var amt = Math.round(Number(synced.unit_price || 0) * Number(synced.qty || 1) * 100) / 100;
+      return { amount: amt, hasSynced: true, info: atrTaxCompute(rows, address) };
+    }
+    var info = atrTaxCompute(rows, address);
+    return { amount: info ? info.amount : 0, hasSynced: false, info: info };
+  }
+  function atrTaxEstimate(amount, fee, address) {
+    if (!(Number(amount) > 0)) return null;
+    var base = Number(amount) + Number(fee || 0);
+    var found = atrTaxCountyForAddress(address);
+    var rate = atrTaxRateForCounty(found.county);
+    if (rate == null) return null;
+    var tax = Math.round(base * rate) / 100;
+    return { county: found.county, rate: rate, amount: tax, base: Math.round(base * 100) / 100, total: Math.round((base + tax) * 100) / 100, fallback: found.source === 'fallback' };
+  }
+
+  /* V175_COUNTY_TAX_2026_11_19: the tax-row sync - staff-side only.
+   * Called from loadCharges after every charges read (drawer open and
+   * every charge change, which funnels back through loadCharges) and
+   * as a backstop after a status save, so the one tax row exists
+   * before Job Complete opens the pay gate. Exactly one row: any
+   * stale tax rows are deleted first, then the one right row is
+   * inserted. When the computed tax is $0 (no taxable charges) any
+   * existing tax row is removed. done(freshRows) always fires
+   * exactly once; a failed write never fails the drawer - the note
+   * is shown in the Charges section and the computed figure is
+   * displayed instead, and the next drawer open retries. This
+   * function never calls loadCharges itself (no loop): after a
+   * write it re-reads the rows once and hands them to done. */
+  var v175TaxSyncNote = '';
+  function v175SyncTaxRow(client, t, rows, done) {
+    function finish(fresh) { try { done(fresh || rows); } catch (e) {} }
+    var info = null;
+    try { info = atrTaxCompute(rows, t.service_address); } catch (e) { info = null; }
+    var existing = (rows || []).filter(function (ch) { return ch.kind === 'tax'; });
+    function delAll(list, i, next) {
+      if (i >= list.length) { next(); return; }
+      try {
+        client.from('ticket_charges').delete().eq('id', list[i].id).then(function () { delAll(list, i + 1, next); }).catch(function () { delAll(list, i + 1, next); });
+      } catch (e) { delAll(list, i + 1, next); }
+    }
+    function reread() {
+      try {
+        client.from('ticket_charges').select('*').eq('ticket_id', t.id).order('created_at', { ascending: true }).then(function (r2) {
+          if (r2.error) { finish(rows); return; }
+          var fresh = r2.data || [];
+          try { t._charges = fresh; } catch (e) {}
+          finish(fresh);
+        }).catch(function () { finish(rows); });
+      } catch (e) { finish(rows); }
+    }
+    if (!info || info.amount <= 0) {
+      if (!existing.length) { v175TaxSyncNote = ''; finish(rows); return; }
+      delAll(existing, 0, function () { v175TaxSyncNote = ''; reread(); });
+      return;
+    }
+    var wantDesc = atrTaxDescription(info);
+    if (existing.length === 1 && Number(existing[0].qty || 0) === 1 && Number(existing[0].unit_price || 0) === info.amount && String(existing[0].description || '') === wantDesc) {
+      v175TaxSyncNote = ''; finish(rows); return;
+    }
+    delAll(existing, 0, function () {
+      try {
+        client.from('ticket_charges').insert({ ticket_id: t.id, kind: 'tax', description: wantDesc, qty: 1, unit_price: info.amount }).then(function (ins) {
+          if (ins.error) { v175TaxSyncNote = 'Sales tax could not be saved yet \u2014 the tax shown above is computed, not filed. Please reload the drawer or check the tax setup.'; finish(rows); return; }
+          v175TaxSyncNote = ''; reread();
+        }).catch(function () { v175TaxSyncNote = 'Sales tax could not be saved yet \u2014 the tax shown above is computed, not filed. Please reload the drawer or check the tax setup.'; finish(rows); });
+      } catch (e) { v175TaxSyncNote = 'Sales tax could not be saved yet \u2014 the tax shown above is computed, not filed. Please reload the drawer or check the tax setup.'; finish(rows); }
+    });
+  }
+
 
   /* V162_PRICE_WORDING_2026_11_17: discount helpers (pure — the harness proves
    * them without a database). A member discount is a percent off
@@ -4301,7 +4457,9 @@ function loadTicketThread(client, ticketId) {
     if (!t || !t.customer_id) return;
     client.from('ticket_charges').select('*').eq('ticket_id', t.id).then(function (res) {
       if (res.error) return;
-      var wholeDollars = Math.floor(chargeTotals(res.data || []).subtotal);
+      /* V175_COUNTY_TAX_2026_11_19: points are earned on the repair, never on the sales tax - the tax is pass-through to the state, not spend. The synced tax row (if any) is taken out of the base before flooring, so this build never changes a points award. */
+      var v175TaxIn = 0; (res.data || []).forEach(function (ch) { if (ch.kind === 'tax') v175TaxIn += Number(ch.qty || 0) * Number(ch.unit_price || 0); });
+      var wholeDollars = Math.floor(chargeTotals(res.data || []).subtotal - v175TaxIn);
       client.from('customer_memberships').select('tier').eq('customer_id', t.customer_id).eq('status', 'active')
         .order('started_on', { ascending: false }).limit(1).then(function (mem) {
           var tier = (!mem.error && mem.data && mem.data[0]) ? mem.data[0].tier : null;
@@ -4382,10 +4540,14 @@ function loadTicketThread(client, ticketId) {
       box.innerHTML = exemptBar + '<p class="portal-muted">No charges yet. Add the repair price, parts, and the visit fee here — the receipt is built from these lines.</p>';
     } else {
       var tot = chargeTotals(rows);
+      /* V175_COUNTY_TAX_2026_11_19: the drawer totals are tax-inclusive - the synced tax row when one exists (it is already inside tot), else the same computed figure the guest page shows. */
+      var v175TaxView = atrTaxEffective(rows, t.service_address);
+      var v175Subtotal = tot.subtotal + (v175TaxView.hasSynced ? 0 : v175TaxView.amount);
+      var v175Balance = v175Subtotal - tot.deposits;
       var html = rows.map(function (c) {
         var amt = Number(c.qty || 0) * Number(c.unit_price || 0);
         /* PORTAL_TIP_2026_11_02: tip rows carry the TIP pill. */
-        var kindLabel = { part: 'Part', labor: 'Labor', one_off: 'Other', dispatch: 'Visit fee', visit: 'Visit fee', tip: 'Tip', deposit_credit: 'Deposit', discount: 'Discount' }[c.kind] || c.kind;
+        var kindLabel = { part: 'Part', labor: 'Labor', one_off: 'Other', dispatch: 'Visit fee', visit: 'Visit fee', tip: 'Tip', deposit_credit: 'Deposit', discount: 'Discount', tax: 'Sales tax' }[c.kind] || c.kind;
         var sign = (c.kind === 'deposit_credit' || c.kind === 'discount') ? '&minus;' : '';
         /* PORTAL_CHARGE_DEDUCTOR_2026_11_02: a waived line shows its
          * face amount struck through beside the $0 it counts. The
@@ -4404,17 +4566,22 @@ function loadTicketThread(client, ticketId) {
           '<div class="p2-line-amt">' + sign + fmtMoney(Math.abs(amt)) + '</div>' +
           '<button class="p2-x" type="button" data-charge-del="' + esc(c.id) + '" aria-label="Remove charge">&times;</button></div>';
       }).join('');
+      /* V175_COUNTY_TAX_2026_11_19: no synced row yet (the sync runs on drawer open, so this is the failed-save path) - show the computed tax line so the drawer never hides the tax. */
+      if (!v175TaxView.hasSynced && v175TaxView.amount > 0 && v175TaxView.info) {
+        html += '<div class="p2-line"><div class="p2-line-main"><span class="p2-kind">Sales tax</span> ' + esc(atrTaxDescription(v175TaxView.info)) + '<span class="portal-muted portal-small"> &times;1 @ ' + fmtMoney(v175TaxView.amount) + '</span></div><div class="p2-line-amt">' + fmtMoney(v175TaxView.amount) + '</div></div>';
+      }
       /* WARRANTY_PORTAL_2026_11_03: on a warranty-exempt ticket the
        * recorded amounts stand exactly as entered — the totals gain
        * a Warranty exemption line covering the balance, and the
        * Balance due reads $0.00. ticket_charges itself is untouched. */
       html += '<div class="p2-totals">' +
-        '<div><span>Subtotal</span><span>' + fmtMoney(tot.subtotal) + '</span></div>' +
+        '<div><span>Subtotal</span><span>' + fmtMoney(v175Subtotal) + '</span></div>' +
         (tot.deposits ? '<div><span>Deposits received</span><span>&minus;' + fmtMoney(tot.deposits) + '</span></div>' : '') +
         (t.warranty_exempt
-          ? '<div><span>Warranty exemption</span><span>&minus;' + fmtMoney(tot.balance) + '</span></div>' +
+          ? '<div><span>Warranty exemption</span><span>&minus;' + fmtMoney(v175Balance) + '</span></div>' +
             '<div class="p2-grand"><span>Balance due</span><span>' + fmtMoney(0) + '</span></div></div>'
-          : '<div class="p2-grand"><span>Balance due</span><span>' + fmtMoney(tot.balance) + '</span></div></div>');
+          : '<div class="p2-grand"><span>Balance due</span><span>' + fmtMoney(v175Balance) + '</span></div></div>');
+      if (v175TaxSyncNote) html += '<p class="portal-muted portal-small">' + esc(v175TaxSyncNote) + '</p>';
       box.innerHTML = exemptBar + html;
     }
     box.querySelectorAll('[data-charge-del]').forEach(function (btn) {
@@ -4432,14 +4599,20 @@ function loadTicketThread(client, ticketId) {
      * WARRANTY_PORTAL_2026_11_03: an exempt ticket's header says so
      * instead — its balance due is $0 however the lines add up. */
     var accTot = chargeTotals(rows);
-    tkAccSetHint('charges', t.warranty_exempt ? 'Warranty — exempt' : (rows.length ? (accTot.balance > 0 ? fmtMoney(accTot.balance) + ' due' : 'Paid in full') : ''));
+    /* V175_COUNTY_TAX_2026_11_19: the closed Charges header carries the tax-inclusive balance, like the totals above. */
+    var v175AccTax = atrTaxEffective(rows, t.service_address);
+    var v175AccBalance = accTot.balance + (v175AccTax.hasSynced ? 0 : v175AccTax.amount);
+    tkAccSetHint('charges', t.warranty_exempt ? 'Warranty — exempt' : (rows.length ? (v175AccBalance > 0 ? fmtMoney(v175AccBalance) + ' due' : 'Paid in full') : ''));
   }
 
   function loadCharges(client, t) {
     client.from('ticket_charges').select('*').eq('ticket_id', t.id).order('created_at', { ascending: true }).then(function (res) {
       if (res.error) { var b = $('p2-charges'); if (b) b.innerHTML = '<p class="portal-error">Couldn&rsquo;t load charges.</p>'; return; }
-      t._charges = res.data || [];
-      renderCharges(t, t._charges);
+      /* V175_COUNTY_TAX_2026_11_19: every drawer open (and every charge change, which funnels back here) syncs the one sales-tax row first, so the drawer, the receipt, the invoice and the Square checkout all read the same tax-inclusive figures. */
+      v175SyncTaxRow(client, t, res.data || [], function (fresh) {
+        t._charges = fresh;
+        renderCharges(t, t._charges);
+      });
     }).catch(function () {});
   }
 
@@ -6688,7 +6861,7 @@ function loadTicketThread(client, ticketId) {
     var tot = chargeTotals(rows);
     var lines = rows.map(function (c) {
       var amt = Number(c.qty || 0) * Number(c.unit_price || 0);
-      var kindLabel = { part: 'Part', labor: 'Labor', one_off: 'Other charge', dispatch: 'Visit fee', visit: 'Visit fee', tip: 'Tip', discount: 'Discount' }[c.kind] || '';
+      var kindLabel = { part: 'Part', labor: 'Labor', one_off: 'Other charge', dispatch: 'Visit fee', visit: 'Visit fee', tip: 'Tip', discount: 'Discount', tax: 'Sales tax' }[c.kind] || '';
       var label = c.kind === 'deposit_credit' ? esc(c.description) + ' (deposit)' : (kindLabel ? esc(kindLabel) + ' — ' + esc(c.description) : esc(c.description));
       var sign = (c.kind === 'deposit_credit' || c.kind === 'discount') ? '&minus;' : '';
       /* PORTAL_CHARGE_DEDUCTOR_2026_11_02: a waived line prints its
@@ -7397,7 +7570,7 @@ function loadTicketThread(client, ticketId) {
   function ticketDocChargeLines(rows) {
     var lines = rows.map(function (c) {
       var amt = Number(c.qty || 0) * Number(c.unit_price || 0);
-      var label = c.kind === 'deposit_credit' ? esc(c.description) + ' (deposit)' : esc(c.description);
+      var label = c.kind === 'deposit_credit' ? esc(c.description) + ' (deposit)' : (c.kind === 'tax' ? 'Sales tax &mdash; ' + esc(c.description) : esc(c.description));
       var sign = (c.kind === 'deposit_credit' || c.kind === 'discount') ? '&minus;' : '';
       var face = waivedFace(c);
       if (face != null) {
