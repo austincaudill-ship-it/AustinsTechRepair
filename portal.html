@@ -682,7 +682,7 @@
           <input type="search" id="portal-estimates-search" placeholder="Search estimates &mdash; name, device, or phone" aria-label="Search estimates" autocomplete="off" />
           <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="portal-estimates-search-clear" aria-label="Clear the estimates search" hidden>&times;</button>
         </div>
-        <p class="portal-muted portal-small">Estimates live here until the guest confirms. An estimate is never a ticket and never enters the Service Queue &mdash; Confirm turns it into one. No account is made when an estimate is created; the account is made only when the guest taps the link in their estimate email.</p>
+        <p class="portal-muted portal-small">Estimates live and die here &mdash; an estimate stays here even after the guest answers it. When the guest confirms, a ticket is made for them and it shows in the Service Queue; the estimate itself never becomes a ticket. No account is made when an estimate is created; the account is made only when the guest taps the link in their estimate email.</p> <!-- V176_6_ESTIMATE_WORDS_2026_11_19 (Austin, Nov 19, 2026) -->
         <div id="portal-estimates-list"><p class="portal-muted">Loading estimates&hellip;</p></div>
       </div>
 
@@ -6199,6 +6199,35 @@
 
   var allGuides = null;      // null = not loaded yet; [] = loaded empty
   var loadFailed = false;
+  /* V176_6_GUIDE_AUTO_ATTACH_2026_11_19 (Austin, Nov 19, 2026): the guide is
+   * supposed to put itself on the ticket - nobody should have to search for
+   * it or tap Attach. When the drawer opens, if no guide is pinned to this
+   * ticket yet and the top match is an exact-model match, pin it
+   * automatically (guides.ticket_id). Generic rows never auto-attach. */
+  var autoAttachDoneFor = null;
+  function exactModelHit(g) {
+    var model = String(window.atrCurrentTicketModel || '').toLowerCase().trim();
+    if (!model) return false;
+    var dev = String(g.device || '').toLowerCase();
+    var tags = String(g.tags || '').toLowerCase();
+    if (dev.indexOf(model) !== -1 || tags.indexOf(model) !== -1) return true;
+    var mt = tokenize(model);
+    if (mt.length < 3) return false;
+    var hits = 0;
+    mt.forEach(function (t) { if (dev.indexOf(t) !== -1) hits++; });
+    return hits >= 3;
+  }
+  function autoAttachExactGuide() {
+    var ticketId = window.atrCurrentTicketId || null;
+    if (!ticketId || autoAttachDoneFor === ticketId) return;
+    if (!currentMatches || !currentMatches.length) return;
+    var pinned = currentMatches.some(function (m) { return m.pinned; });
+    if (pinned) { autoAttachDoneFor = ticketId; return; }
+    var top = currentMatches[0];
+    if (!top || !exactModelHit(top.g)) return;
+    autoAttachDoneFor = ticketId;
+    attachGuideToTicket(top.g.id);
+  }
   var currentKey = '';       // device key currently rendered in the drawer
   var currentMatches = [];   // scored matches for the current device
   var debounce = null;
@@ -6453,6 +6482,7 @@
         if (res.error) { loadFailed = true; renderList(); return; }
         allGuides = res.data || [];
         currentMatches = matchGuides(currentKey);
+        autoAttachExactGuide();
         renderList();
       })
       .catch(function () { loadFailed = true; renderList(); });
@@ -6646,7 +6676,7 @@
     currentKey = key;
     currentMatches = allGuides ? matchGuides(key) : [];
     wireSection(section, hasDevice ? deviceText : '');
-    if (allGuides || loadFailed) renderList();
+    if (allGuides || loadFailed) { autoAttachExactGuide(); renderList(); }
     else loadGuidesOnce();
   }
 

@@ -6334,8 +6334,9 @@
        One-on-Ones with a Support label on every card. */
     var repairRows = rows.filter(function (t) { return !/^\[SERVICE\]/.test(t.issue || ''); });
     var supportRows = rows.filter(function (t) { return /^\[SERVICE\]/.test(t.issue || ''); });
-    var openRows = repairRows.filter(function (t) { return !myServicesIsComplete(t); });
-    var doneRows = repairRows.filter(myServicesIsComplete);
+    /* V176_6_OO_IN_SERVICES_2026_11_19 (Austin, Nov 19, 2026): My Services houses everything a guest requests - repairs AND one-on-ones together in the open/completed lists, each in its correct area. A one-on-one keeps its Support chip (the card's second flag). The My One-on-Ones pane still shows the one-on-ones on their own as well. */
+    var openRows = rows.filter(function (t) { return !myServicesIsComplete(t); });
+    var doneRows = rows.filter(myServicesIsComplete);
     var shown = myServicesFilter === 'completed' ? doneRows : openRows;
     var oc = document.querySelector('[data-myservices-count="open"]');
     if (oc) oc.textContent = openRows.length ? '(' + openRows.length + ')' : '';
@@ -6355,10 +6356,10 @@
       });
     }
     list.innerHTML = shown.length
-      ? shown.map(function (t) { return myServicesTicketCard(t, false); }).join('')
+      ? shown.map(function (t) { return myServicesTicketCard(t, /^\[SERVICE\]/.test(t.issue || '')); }).join('')
       : (myServicesFilter === 'completed'
         ? '<p class="acct-muted">No completed services yet \u2014 when a repair is finished, it will show up here.</p>'
-        : (repairRows.length
+        : (rows.length
           ? '<p class="acct-muted">No open services right now \u2014 your finished services are under Completed Services.</p>'
           : '<p class="acct-muted">No services yet \u2014 when you book a service, you\'ll see its progress here, step by step.</p>'));
     myServicesWireCards(list);
@@ -6797,6 +6798,9 @@
        open the pane that holds the thread first. */
     if (window.atrGuestHubShowTab) window.atrGuestHubShowTab(threadOrigin === 'messages' ? 'chat' : 'service');
     placeThread(threadOrigin);
+    /* V176_6_CHAT_ONLY_2026_11_19 (Austin, Nov 19, 2026): a ticket thread opened from Service Messages lives IN CHAT - it never shows the ticket page. The class hides the appointment box, progress, documents, charges, parts and ticket actions (CSS below); only the header and the Messages section show. Opening the same ticket from My Services takes the class off and the full page is back. */
+    var _thEl = $('acct-thread');
+    if (_thEl) _thEl.classList.toggle('acct-thread-chat', threadOrigin === 'messages' && !t.__general);
     var r = $('acct-repairs'), th = $('acct-thread'), nt = $('acct-newticket'), ib = $('acct-inbox');
     if (r) r.hidden = true; if (nt) nt.hidden = true; if (ib) ib.hidden = true; if (th) th.hidden = false;
     /* ACCOUNT_FIX_PASS_3_2026_11_06: the reply box's human check
@@ -7552,18 +7556,7 @@
       var waiting = 0; /* V168_GUEST_TICKET_COLLAPSE_2026_11_18: unsigned count feeds the closed header's hint */
       /* The standard documents are automatic — they wait on every open
        * ticket from the start, no staff push, no filed file needed. */
-      if (t.status !== 'Job Complete') {
-        V158_STD_DOCS.forEach(function (sd) {
-          var s = v158LatestSig(sigs, sd.type);
-          if (!s) waiting++;
-          rows += v158DocRow(t.id, sd.type, sd.label, t.created_at, s, null);
-        });
-      } else {
-        V158_STD_DOCS.forEach(function (sd) {
-          var s = v158LatestSig(sigs, sd.type);
-          if (s) rows += v158DocRow(t.id, sd.type, sd.label, t.created_at, s, null);
-        });
-      }
+      /* V176_6_DOCS_HOME_2026_11_19 (Austin, Nov 19, 2026): the standard documents (Repair Authorization, Warranty, Media Release) do NOT live on the ticket - they live in Documents, where they are easy to find, and signing happens there. This section shows only the ticket's own paperwork: estimate, invoice, receipt, in that order. */
       /* V176_DOC_ORDER_2026_11_19 (Austin, Nov 19, 2026): documents read
          in order - estimate first, then invoice, then receipt, never out
          of order. */
@@ -7581,7 +7574,7 @@
         if (!s) waiting++;
         rows += v158DocRow(t.id, d.doc_type, label, d.created_at, s, d.storage_path);
       });
-      box.innerHTML = (rows || '<p class="acct-muted">No documents yet — your estimate and agreement will show here.</p>');
+      box.innerHTML = (rows || '<p class="acct-muted">No documents yet — your estimate, invoice, and receipt will show here. Your signed agreements live in Documents.</p>');
       atrSecShow('acct-sec-docs', 'acct-sec-docs-hint', rows ? (waiting > 0 ? waiting + ' waiting for your signature' : 'All signed') : '');
     }).catch(function () {
       box.innerHTML = '<p class="acct-muted">We couldn\'t load your documents just now — try again in a moment, or call or text (937) 280-6243.</p>';
@@ -7882,7 +7875,7 @@
           return '<div class="acct-msg ' + (mine ? 'acct-msg-me' : 'acct-msg-shop') + '"><span class="acct-msg-who">' + (mine ? 'You' : assistantWhoLabel(m.sender)) + '</span>' + escX(m.message || '') + '</div>';
         }).join('');
         atrSecShow('acct-sec-messages', 'acct-sec-messages-hint', rows.length + (rows.length === 1 ? ' message' : ' messages')); /* V168_GUEST_TICKET_COLLAPSE_2026_11_18 */
-        if (t.__general) { var _vd = $('acct-sec-messages'); if (_vd) _vd.open = true; } /* V169_AI_MESSAGES_2026_11_18: the general conversation is the chat — its messages stay open so the guest sees the reply arrive. Ticket threads keep the V168 closed default. */
+        if (t.__general || threadOrigin === 'messages') { var _vd = $('acct-sec-messages'); if (_vd) _vd.open = true; } /* V169_AI_MESSAGES_2026_11_18: the general conversation is the chat — its messages stay open so the guest sees the reply arrive. V176_6_CHAT_ONLY_2026_11_19: a ticket thread opened from the inbox is a chat too, so its messages open the same way. Ticket threads opened from My Services keep the V168 closed default. */
         box.scrollTop = box.scrollHeight;
         if (t.__general) paintAssistantBar(); /* GUEST_ASSISTANT_2026_11_10 */
       })
@@ -8117,7 +8110,7 @@
   var ASSISTANT_AUTO_TEXT = "Thanks for messaging us! Your message is in, and an associate will be with you shortly.";
   var ASSISTANT_OFFER_TEXT = "I may be able to help in the meantime \u2014 I can check a price, or answer questions about diagnostics, fees, and our warranty. What do you need?";
   var ASSISTANT_CONNECTED_TEXT = "You're connected \u2014 we've let the team know you'd like to speak to an associate. An associate will reply right here shortly, and you can keep typing in the meantime.";
-  var ASSISTANT_BOOK_TEXT = "Booking lives right here in your account \u2014 open Schedule a repair and your request comes to us with your details already attached. Is there anything else I can answer first?";
+  var ASSISTANT_BOOK_TEXT = "Booking lives right here in your account \u2014 open Schedule a service and your request comes to us with your details already attached. Is there anything else I can answer first?";
   var ASSISTANT_PRIVACY_NOTE = "You're chatting with our automated assistant. This chat stays private unless you ask for an associate \u2014 tap Speak to an associate any time and a person takes over.";
   var assistantEscalated = false;  /* the marker exists: the team is in */
   var assistantLegacy = false;     /* marker table unreachable: pre-redesign behavior */
@@ -9665,7 +9658,7 @@
     fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(q))
       .then(function (r) { return r.json(); })
       .then(function (d) {
-        if (!d || !d.length) { showResult('We couldn\'t find that address. Check the spelling, or call/text <strong>937-280-6243</strong> and we\'ll figure it out with you.', false); return; }
+        if (!d || !d.length || !/ohio/i.test(d[0].display_name || '')) { showResult('We couldn\'t find that address. Check the spelling, or call/text <strong>937-280-6243</strong> and we\'ll figure it out with you.', false); return; } /* V176_6_MAP_OHIO_2026_11_19: a geocode hit outside Ohio is a miss, not a distance - never route a guest from a Virginia or Texas pin. */
         routeTo(parseFloat(d[0].lat), parseFloat(d[0].lon), d[0].display_name.split(',').slice(0, 2).join(','));
       })
       .catch(function () { showResult('The lookup hiccuped \u2014 call or text <strong>937-280-6243</strong> and we\'ll check your distance for you.', false); });
@@ -10040,9 +10033,16 @@
     #ghub-getapp-panel .ghub-getapp-title{ font-weight: 700; margin-bottom: 6px; }
     #ghub-getapp-panel .ghub-getapp-steps{ margin: 0 0 8px; }
     /* V176_NEXT_CLICK_2026_11_19 (Austin, Nov 19, 2026): upcoming repairs on
-       Home are real buttons - tapping one opens that ticket in My Services. */
-    .ghub-next-btn{ display: block; width: 100%; text-align: left; background: none; border: 0; padding: 6px 0; cursor: pointer; color: inherit; font: inherit; }
-    .ghub-next-btn:hover{ text-decoration: underline; }
+       Home are real buttons - tapping one opens that ticket in My Services.
+       V176_6_TAP_TO_SEE_2026_11_19 (Austin, Nov 19, 2026): the row used to look
+       like plain text - no guest would know it taps. It is a real card button
+       now (blue outline at rest, orange ring on hover/focus/tap, same as every
+       card on the site) with a "Tap to see" label on it. */
+    .ghub-next-btn{ display: block; width: 100%; text-align: left; background: var(--ghub-card); border: 2px solid #0057B8; border-radius: 12px; padding: 10px 12px; margin-top: 6px; cursor: pointer; color: inherit; font: inherit; }
+    .ghub-next-btn:hover, .ghub-next-btn:focus-visible{ outline: 2px solid #D9540D; outline-offset: 2px; }
+    .ghub-next-cta{ display: block; margin-top: 4px; font-weight: 700; color: #C24A09; }
+    /* V176_6_CHAT_ONLY_2026_11_19 (Austin, Nov 19, 2026): a ticket thread opened from Service Messages is a chat, not the ticket page. */
+    .acct-thread-chat #acct-appt, .acct-thread-chat #acct-sec-timeline, .acct-thread-chat #acct-sec-docs, .acct-thread-chat #acct-sec-charges, .acct-thread-chat #acct-sec-parts, .acct-thread-chat #acct-ticket-actions{ display: none; }
     /* V176_MSG_LABELS_2026_11_19 (Austin, Nov 19, 2026): inbox cards in
        Service Messages carry a surface chip - General chat, or Ticket
        #XXXX for a repair thread opened from the inbox. The two surfaces
@@ -10161,7 +10161,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
 .ghub-search-empty{color:var(--muted,#7D6C5B);font-size:.92rem;padding:.4rem 0}
 /* V163_GUEST_THUMB_2026_11_17: at phone widths the sidebar is gone —
    the thumb nav ARE the action buttons on mobile. iPad/desktop keep it. */
-@media (max-width:720px){.ghub-side{display:none}}
+@media (max-width:920px){.ghub-side{display:none}} /* V176_6_NO_DUP_NAV_2026_11_19 (Austin, Nov 19, 2026): the sidebar hides at the same width the thumb bar appears, so a destination never shows twice at once. iPad portrait (820px) gets the thumb bar only; the full sidebar returns above 920px. */
 </style>
 <div id="guest-hub" hidden role="dialog" aria-label="Guest Hub">
   <div class="ghub-topbar">
@@ -10174,7 +10174,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
          2026_11_19, Austin, Nov 19, 2026: the My Services quick action is
          GONE - the sidebar already has a My Services action button, so the
          duplicate was removed. The new-request form stays reachable from the
-         "Schedule a repair" button inside My Services.)
+         "Schedule a service" button inside My Services.)
          Home is FIRST in both hubs. Guests NEVER get the Square button
          (the Associate Hub has Square; the Guest Hub does not). Exactly
          ONE Refresh in the Hub, here only — no per-panel Refresh
@@ -10222,7 +10222,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
            ACTION BUTTON list in BOTH hubs — Home is already a Quick Action,
            no redundancy. The Home pane itself stays; only the duplicate
            sidebar button goes. -->
-      <button class="ghub-tab" type="button" data-ghub="service"><i class="fas fa-tools"></i> Service Request</button>
+      <!-- V176_6_NO_SR_BUTTON_2026_11_19 (Austin, Nov 19, 2026): the Service Request sidebar button is GONE - pressing too many buttons broke the page, so My Services is the one entry point now: the list lives there and its "Schedule a service" button opens the form. The service PANE itself stays (ticket thread + new-service form), reached from My Services and from a ticket. -->
       <button class="ghub-tab" type="button" data-ghub="account"><i class="fas fa-user"></i> Account</button>
       <!-- V169_HUB_SPLIT_2026_11_18 (Austin, Nov 18, 2026): three separate action
            buttons right under Account — My Services (the repair tickets;
@@ -10338,7 +10338,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
         <!-- New ticket form -->
         <div class="acct-newticket" id="acct-newticket" hidden>
           <button class="btn btn-outline btn-sm" id="acct-newticket-back" type="button"><i class="fas fa-arrow-left"></i> Back to services</button>
-          <h4><i class="fas fa-calendar-check"></i> Schedule a Repair</h4>
+          <h4><i class="fas fa-calendar-check"></i> Schedule a service</h4>
           <form id="acct-ticket-form" novalidate>
             <label class="acct-field">
               <span>Device type</span>
@@ -10445,8 +10445,8 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
         <div class="acct-repairs" id="acct-repairs">
           <div class="acct-repairs-head">
             <h4><i class="fas fa-tools"></i> My Services</h4>
-            <!-- CUSTOMER_INBOX_2026_11_05 (owner vocabulary rule): on the customer side, starting a repair is always called "Schedule a repair" — one name everywhere. This button opens the same in-account form it always did. -->
-            <button class="btn btn-primary btn-sm" id="acct-new-ticket-btn" type="button"><i class="fas fa-calendar-check"></i> Schedule a repair</button>
+            <!-- V176_6_SCHEDULE_SERVICE_2026_11_19 (Austin, Nov 19, 2026): on the customer side, booking is always called "Schedule a service" — one name everywhere. We do not just repair, so it never says "Schedule a repair". This button opens the same in-account form it always did. -->
+            <button class="btn btn-primary btn-sm" id="acct-new-ticket-btn" type="button"><i class="fas fa-calendar-check"></i> Schedule a service</button>
           </div>
           <!-- V174_MYSERVICES_FILTER_2026_11_18 (Austin, Nov 18, 2026): Open Tickets (default) and Completed Services — two views of the same list. Completed Services is the full history: every service the guest has ever done with us. A completed ticket never leaves the list; the filter only decides which view shows it. -->
           <div class="acct-services-filter" role="group" aria-label="Filter services" style="display:flex;gap:.5rem;flex-wrap:wrap;margin:.5rem 0;">
@@ -10465,7 +10465,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
         <div class="acct-repairs" id="acct-oneonones">
           <div class="acct-repairs-head">
             <h4><i class="fas fa-graduation-cap"></i> My One-on-Ones</h4>
-            <a class="btn btn-primary btn-sm" href="#repair" data-page="repair" data-open-oneonone><i class="fas fa-calendar-check"></i> Schedule a one-on-one</a>
+            <a class="btn btn-primary btn-sm" id="acct-new-oneonone-btn" href="#repair" data-page="repair" data-open-oneonone><i class="fas fa-calendar-check"></i> Schedule a one-on-one</a>
           </div>
           <div id="acct-support-list"><p class="acct-muted">Loading your one-on-ones…</p></div>
         </div>
@@ -10476,6 +10476,8 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
         <div class="acct-repairs" id="acct-myestimates">
           <div class="acct-repairs-head">
             <h4><i class="fas fa-file-invoice-dollar"></i> My Estimates</h4>
+            <!-- V176_6_ESTIMATE_BTN_2026_11_19 (Austin, Nov 19, 2026): this is where a guest asks for an estimate - the button opens the website's estimate-first request form (#repair). A request from there becomes an ESTIMATE, emailed to the guest, and lands in this list to confirm or decline. -->
+            <button class="btn btn-primary btn-sm" id="acct-new-estimate-btn" type="button"><i class="fas fa-file-invoice-dollar"></i> Request an estimate</button>
           </div>
           <div id="acct-estimates-list"><p class="acct-muted">Loading your estimates…</p></div>
         </div>
@@ -10634,7 +10636,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
                  like every other form on the site. -->
             <button class="btn btn-primary btn-sm" id="acct-inbox-new" type="button" style="margin:0 0 .6rem;"><i class="fas fa-pen"></i> Send us a message</button>
             <div id="acct-inbox-compose" hidden>
-              <p class="acct-muted" style="text-align:left;padding:0;">No repair on file yet — no problem. Write us a general message here and we will reply right in this Messages list. If you meant to book a repair instead, <a href="#repair" data-page="repair">Schedule a repair</a>.</p>
+              <p class="acct-muted" style="text-align:left;padding:0;">No repair on file yet — no problem. Write us a general message here and we will reply right in this Messages list. If you meant to book a service instead, <a id="acct-msg-schedule-link" href="#repair" data-page="repair">Schedule a service</a>.</p>
               <form id="acct-general-form" novalidate>
                 <div class="acct-msg-row">
                   <input type="text" id="acct-general-input" placeholder="Write a message…" autocomplete="off" maxlength="1000" aria-label="Write a message">
@@ -10651,7 +10653,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
       <div class="ghub-pane" data-pane="connect" hidden>
         <h2>ATRG Connect</h2>
         <div class="ghub-card"><p>Your virtual one-on-one, right here. When your associate sends you a session code, open ATRG Connect, type the code, and we can see your screen and help.</p>
-        <a class="btn btn-primary btn-sm" href="#virtual-oneonone" data-page="virtual-oneonone"><i class="fas fa-display"></i> Open ATRG Connect</a></div>
+        <a class="btn btn-primary btn-sm" id="acct-open-connect-btn" href="#virtual-oneonone" data-page="virtual-oneonone"><i class="fas fa-display"></i> Open ATRG Connect</a></div>
       </div>
       <div class="ghub-pane" data-pane="membership" hidden>
         <h2>ATR One Membership</h2>
@@ -10801,21 +10803,22 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
        other section. NOT customizable (Austin confirmed that is fine).
        The Associate Hub thumb bar is untouched. -->
   <div class="ghub-thumb" id="ghub-thumb" role="navigation" aria-label="Guest Hub">
+    <!-- V176_6_THUMB_MYSERVICES_2026_11_19 (Austin, Nov 19, 2026): My Services is the main area - it gets the first thumb button so a guest reaches it in one tap on phone and iPad portrait. The [data-ghub] wiring sends it to showTab('myservices'), the same as the sidebar button. -->
+    <button type="button" data-ghub="myservices"><i class="fas fa-clipboard-list"></i> My Services</button>
     <button type="button" data-ghub="account"><i class="fas fa-user"></i> Account</button>
     <button type="button" data-ghub="documents"><i class="fas fa-folder-open"></i> Documents</button>
     <button type="button" data-ghub="chat"><i class="fas fa-comment-dots"></i> Service Messages</button>
     <button type="button" data-ghub="search"><i class="fas fa-magnifying-glass"></i> Search</button>
   </div>
   <!-- V163_GUEST_SEARCH_2026_11_17 (Austin, Nov 17, 2026): the Guest Hub
-       Search sheet — opened by the thumb nav's Search button. All nine
-       Hub sections live here so none is unreachable on mobile, where
+       Search sheet — opened by the thumb nav's Search button. All Hub sections live here so none is unreachable on mobile, where
        the sidebar is hidden. Fixed list, not customizable. -->
   <div id="ghub-search-sheet" hidden role="dialog" aria-label="Search the Guest Hub">
     <div class="ghub-search-card">
       <div class="ghub-search-head"><strong id="ghub-search-title">Search the Guest Hub</strong><button type="button" id="ghub-search-close" aria-label="Close search">&times;</button></div>
       <input type="search" id="ghub-search-input" placeholder="Try &ldquo;membership&rdquo;, &ldquo;warranty&rdquo;, or a ticket number&hellip;" aria-label="Search the Guest Hub" autocomplete="off">
       <div id="ghub-search-results"></div>
-      <p class="ghub-muted">Every section of the Hub is here — Home, Service Request, Account, My Services, My One-on-Ones, My Estimates, Service Messages, ATRG Connect, ATR One Membership, Documents, Warranty.</p>
+      <p class="ghub-muted">Every section of the Hub is here — Home, Account, My Services, My One-on-Ones, My Estimates, Service Messages, ATRG Connect, ATR One Membership, Documents, Warranty.</p>
     </div>
   </div>
   <!-- V169_DOC_OVERLAY_2026_11_18 (Austin, Nov 18, 2026): the document preview is an
@@ -11212,7 +11215,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
         if (e.target && e.target.id === 'ghub-sign-go') ghubSignBoth();
       });
     }
-    var head = '<p class="ghub-muted">These are the blank documents — read them here and sign them when you are ready. Once a document is signed, it lives on the repair ticket, under Documents.</p>'; /* V173_DOCS_SPLIT_2026_11_18 */
+    var head = '<p class="ghub-muted">These are your documents — read them here and sign them when you are ready. Once a document is signed, it stays right here in Documents, so it is easy to find.</p>'; /* V176_6_DOCS_HOME_2026_11_19 (Austin, Nov 19, 2026): signed documents live in Documents, not in the ticket - putting them in the ticket hides them. */
     function paint(sigs) {
       ghubSigs = sigs || [];
       var anchor = ghubAnchorTicket();
@@ -11220,7 +11223,17 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
       var signedCount = 0;
       GHUB_STD_DOCS.forEach(function (s) {
         var sig = ghubLatestSig(ghubSigs, s.type);
-        if (sig) { signedCount++; return; } /* V173_DOCS_SPLIT_2026_11_18 (Austin, Nov 18, 2026): a signed document leaves this panel — its signed copy lives on the repair ticket, under Documents (View, Download, Re-sign there). This panel holds the blanks only. */
+        if (sig) {
+          signedCount++;
+          html += '<div class="ghub-docline"><strong>' + esc(s.label) + '</strong>';
+          html += '<br><span class="ghub-muted">Signed — ' + esc(sig.signer_name || '') + (sig.signer_name ? ', ' : '') + esc(ghubDocDay(sig.signed_at)) + '.</span>';
+          html += '<div class="ghub-docbtns">';
+          html += '<button class="btn btn-outline btn-sm" type="button" data-ghub-doc="view" data-type="' + s.type + '"' + (anchor ? '' : ' disabled') + '>View</button>';
+          html += '<button class="btn btn-outline btn-sm" type="button" data-ghub-doc="download" data-type="' + s.type + '"' + (anchor ? '' : ' disabled') + '>Download</button>';
+          html += '<button class="btn btn-outline btn-sm" type="button" data-ghub-doc="resign" data-type="' + s.type + '"' + (anchor ? '' : ' disabled') + '>Re-sign</button>';
+          html += '</div></div>';
+          return;
+        } /* V176_6_DOCS_HOME_2026_11_19 (Austin, Nov 19, 2026): a signed document STAYS in this panel - Documents is its home, not the ticket. View, Download, Re-sign right here. */
         html += '<div class="ghub-docline"><strong>' + esc(s.label) + '</strong>';
         html += '<br><span class="ghub-muted">Waiting for your signature.</span>';
         html += '<div class="ghub-docbtns">';
@@ -11229,7 +11242,6 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
         if (s.type === 'media' && anchor) html += '<button class="btn btn-primary btn-sm" type="button" data-ghub-doc="sign-media" data-type="media">Sign</button>';
         html += '</div></div>';
       });
-      if (signedCount) html += '<p class="ghub-muted">Your signed documents live on the repair ticket — open My Services, pick the repair, and look under Documents.</p>'; /* V173_DOCS_SPLIT_2026_11_18 */
       if (!tickets.length) {
         html += '<p class="ghub-muted">No service requests on your account yet — your documents will appear here once you have one.</p>';
       } else if (anchor && user) {
@@ -11313,7 +11325,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
           next.innerHTML = '<h3>Your upcoming repairs</h3><p class="ghub-muted">No upcoming repairs — when you book a service, it will show here.</p>';
         } else {
           next.innerHTML = '<h3>Your upcoming repairs</h3>' + upcoming.map(function (t) {
-            return '<button type="button" class="ghub-next-btn" data-ghub-ticket="' + t.id + '"><strong>' + esc(deviceOf(t)) + '</strong> — ' + esc(t.status || '') + (apptLine(t) ? '<br>' + esc(apptLine(t)) : '') + ' ›</button>';
+            return '<button type="button" class="ghub-next-btn" data-ghub-ticket="' + t.id + '"><strong>' + esc(deviceOf(t)) + '</strong> — ' + esc(t.status || '') + (apptLine(t) ? '<br>' + esc(apptLine(t)) : '') + '<span class="ghub-next-cta">Tap to see ›</span></button>';
           }).join('');
         }
       }
@@ -11667,7 +11679,6 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
      result opens that section; closing returns to the current tab. */
   var GHUB_SECTIONS = [
     { name: 'home', label: 'Home', icon: 'fas fa-house' },
-    { name: 'service', label: 'Service Request', icon: 'fas fa-tools' },
     { name: 'account', label: 'Account', icon: 'fas fa-user' },
     { name: 'myservices', label: 'My Services', icon: 'fas fa-clipboard-list' },
     { name: 'oneonones', label: 'My One-on-Ones', icon: 'fas fa-graduation-cap' },
@@ -11711,7 +11722,6 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
    * renders in Guest Hub Search. */
   var GHUB_SECTIONS = [
     { name: 'home', label: 'Home', icon: 'fas fa-house', group: 'ACTION BUTTONS' },
-    { name: 'service', label: 'Service Request', icon: 'fas fa-tools', group: 'ACTION BUTTONS' },
     { name: 'account', label: 'Account', icon: 'fas fa-user', group: 'ACTION BUTTONS' },
     { name: 'chat', label: 'Service Messages', icon: 'fas fa-comment-dots', group: 'ACTION BUTTONS' },
     { name: 'connect', label: 'ATRG Connect', icon: 'fas fa-display', group: 'ACTION BUTTONS' },
@@ -11828,6 +11838,12 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
       else if (tab === 'chat') { loadInbox(currentCust); showTab('chat'); }
       else if (tab === 'documents') { renderDocs(); showTab('documents'); }
       else if (tab === 'warranty') { prefillGhubWarranty(); showTab('warranty'); }
+      else if (tab === 'service') {
+        /* V176_6_REFRESH_TICKET_2026_11_19 (Austin, Nov 19, 2026): Refresh on an open ticket re-opens that SAME ticket - it never drops back to the blank "Schedule a service" form. showTab('service') always resets to the new-ticket form, so the open ticket (window.__atrOpenTicket, V169) is re-opened through window.atrOpenGuestTicket, which re-fetches its parts, charges, documents and messages. When no ticket thread is showing, Refresh just shows the form, as before. */
+        var _th = $('acct-thread');
+        if (_th && !_th.hidden && window.__atrOpenTicket && typeof window.atrOpenGuestTicket === 'function') window.atrOpenGuestTicket(window.__atrOpenTicket);
+        else showTab('service');
+      }
       else { showTab(tab); }
     }
     /* V176_GETAPP_2026_11_19 (Austin, Nov 19, 2026): Get App opens the
@@ -11862,6 +11878,17 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
     }
     var ghubGetAppClose = $('ghub-getapp-close');
     if (ghubGetAppClose) ghubGetAppClose.addEventListener('click', function () { var p = $('ghub-getapp-panel'); if (p) p.hidden = true; });
+    var ghubEstBtn = $('acct-new-estimate-btn');
+    if (ghubEstBtn) ghubEstBtn.addEventListener('click', function () {
+      /* V176_6_ESTIMATE_BTN_2026_11_19 (Austin, Nov 19, 2026): My Estimates is where a guest asks for an estimate. The request form is the website's estimate-first form (#repair) - close the hub first so the form is on screen. Setting the hash routes there (script.js listens for hashchange). */
+      if (window.atrCloseGuestHub) window.atrCloseGuestHub();
+      window.location.hash = '#repair';
+    });
+    /* V176_6_HUB_LINKS_2026_11_19 (Austin, Nov 19, 2026): "Schedule a one-on-one does nothing" - a link inside the hub navigates the page UNDER the hub overlay, so the guest sees no change at all. These three in-hub page links close the hub first; the listener neither prevents nor stops the click, so each link's own navigation (data-page router, data-open-oneonone flag) still runs. */
+    ['acct-new-oneonone-btn', 'acct-msg-schedule-link', 'acct-open-connect-btn'].forEach(function (id) {
+      var a = $(id);
+      if (a) a.addEventListener('click', function () { if (window.atrCloseGuestHub) window.atrCloseGuestHub(); });
+    });
     document.querySelectorAll('#guest-hub [data-ghub-qa]').forEach(function (b) {
       b.addEventListener('click', function () {
         var k = b.getAttribute('data-ghub-qa');

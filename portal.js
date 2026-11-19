@@ -346,6 +346,21 @@
   function v154OsmEmbedUrl(lat, lng) {
     return 'https://www.openstreetmap.org/export/embed.html?bbox=' + (lng - 0.03).toFixed(5) + ',' + (lat - 0.02).toFixed(5) + ',' + (lng + 0.03).toFixed(5) + ',' + (lat + 0.02).toFixed(5) + '&layer=mapnik&marker=' + lat.toFixed(5) + ',' + lng.toFixed(5);
   }
+  function v154PinMap(boxEl, frame, note, g, q) {
+    if (frame) { frame.style.display = ''; frame.src = v154OsmEmbedUrl(g.lat, g.lng); }
+    if (note) note.textContent = 'Map: ' + (g.label || q);
+    boxEl.hidden = false;
+  }
+  function v154MapMiss(boxEl, frame, note) {
+    /* V176_6_MAP_OHIO_2026_11_19 (Austin, Nov 19, 2026): a wrong pin is worse than no pin - never leave a stale map up when the address cannot be placed. */
+    if (frame) { frame.src = ''; frame.style.display = 'none'; }
+    if (note) note.textContent = 'Map: could not place that address — check the spelling. The ticket still saves.';
+    boxEl.hidden = false;
+  }
+  function v154CleanAddress(q) {
+    /* "lot 115" is a mobile-home lot number, not a street address - Nominatim returns nothing for "1830 SR 725 lot 115 spring valley Ohio", and a partial match once pinned the map in Virginia. Strip it and retry. */
+    return trim(String(q || '').replace(/\blot\s*\d+[a-z]?\b/i, '').replace(/\s{2,}/g, ' '));
+  }
   function v154UpdateAddressMap(inputEl, boxEl) {
     if (!inputEl || !boxEl) return;
     var frame = boxEl.querySelector('iframe'), note = boxEl.querySelector('p');
@@ -355,10 +370,18 @@
     boxEl._v154q = q;
     boxEl._v154t = setTimeout(function () {
       nominatimGeocode(q).then(function (g) {
-        if (!g || boxEl._v154q !== trim(inputEl.value || '')) return;
-        if (frame) frame.src = v154OsmEmbedUrl(g.lat, g.lng);
-        if (note) note.textContent = 'Map: ' + (g.label || q);
-        boxEl.hidden = false;
+        if (boxEl._v154q !== trim(inputEl.value || '')) return;
+        if (g && /ohio/i.test(g.label || '')) { v154PinMap(boxEl, frame, note, g, q); return; }
+        var cleaned = v154CleanAddress(q);
+        if (cleaned && cleaned !== q) {
+          nominatimGeocode(cleaned).then(function (g2) {
+            if (boxEl._v154q !== trim(inputEl.value || '')) return;
+            if (g2 && /ohio/i.test(g2.label || '')) v154PinMap(boxEl, frame, note, g2, q);
+            else v154MapMiss(boxEl, frame, note);
+          }).catch(function () {});
+          return;
+        }
+        v154MapMiss(boxEl, frame, note);
       }).catch(function () {});
     }, 800);
   }
@@ -2400,7 +2423,7 @@
     estimatesAllRows = rows || [];
     var view = estimatesSearchTerm ? estimatesAllRows.filter(function (e) { return estimateRowMatches(e, estimatesSearchTerm); }) : estimatesAllRows;
     if (!view.length) {
-      emptyState(list, estimatesSearchTerm ? 'No estimates match that search. Clear the search to see them all.' : 'No estimates yet — create one from New Service Request.');
+      emptyState(list, estimatesSearchTerm ? 'No estimates match that search. Clear the search to see them all.' : 'No estimates yet — create one from New Service Estimate.' /* V176_6_ESTIMATE_WORDS_2026_11_19 */);
       return;
     }
     list.innerHTML = view.map(function (e) {
