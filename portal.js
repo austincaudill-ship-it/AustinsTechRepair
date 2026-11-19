@@ -3795,6 +3795,24 @@ function loadTicketThread(client, ticketId) {
           '<p class="portal-error" id="p5-atr-msg" hidden></p></div></div>' +
           '<div class="portal-drawer-section tk-acc" data-acc="charges">' + tkAccHead('charges', 'Charges and Payment') + tkAccBodyOpen('charges') +
           '<div id="p2-charges"><p class="portal-muted">Loading charges&hellip;</p></div>' +
+          /* V176_3_PAYMENT_BUTTONS_2026_11_19 (Austin, Nov 19, 2026): the four
+           * payment buttons moved up to sit DIRECTLY under Balance due — the
+           * #p2-charges block above is where renderCharges paints the line
+           * items + Balance due. Add Charges, Mileage and Discounts & vouchers
+           * now sit below the buttons, in that order. Markup move only: no id,
+           * label, handler, or wiring changed. */
+          /* V176_CHARGES_PAYMENT_2026_11_19 (Austin, Nov 19, 2026): Charges and
+           * Payment is ONE dropdown now - the four payment buttons live here
+           * under the balance due, and the Receipt / Estimate / Invoice
+           * actions + Print device label moved down here from Status action. */
+          (canMoveMoney()
+            ? '<div class="p2-actions"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p3-checkout-btn"><i class="fas fa-credit-card"></i> Charge / Check out</button>' +
+              '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p3-cash-btn"><i class="fas fa-money-bill-wave"></i> Mark paid — cash</button>' +
+              '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p3-card-btn"><i class="fas fa-credit-card"></i> Paid by card</button>' +
+              '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p3-squareapp-btn"><i class="fas fa-mobile-screen"></i> Paid by Square app</button>' +
+              '<span class="portal-muted portal-small" id="p3-pay-msg"></span></div>'
+            : '<p class="portal-muted portal-small">Payments on this ticket are handled by Austin or Alfred.</p>') +
+          '<div id="p3-checkout-link" hidden></div>' +
           '<form id="p2-charge-form" class="p2-form">' +
           '<p style="margin:0 0 0.4rem;"><strong>Add Charges</strong></p>' +
           /* PORTAL_TIP_2026_11_02 (Austin, Nov 2, 2026): "Add a tip
@@ -3850,18 +3868,6 @@ function loadTicketThread(client, ticketId) {
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-disc-add">Add to ticket</button></div>' +
           '<p class="portal-muted portal-small" id="p2-disc-hint">Member discount: a percent off part + labor only, one line per ticket \u2014 re-applying updates it.</p>' +
           '<p class="portal-error" id="p2-disc-msg" hidden></p></div></div></div>' +
-          /* V176_CHARGES_PAYMENT_2026_11_19 (Austin, Nov 19, 2026): Charges and
-           * Payment is ONE dropdown now - the four payment buttons live here
-           * under the balance due, and the Receipt / Estimate / Invoice
-           * actions + Print device label moved down here from Status action. */
-          (canMoveMoney()
-            ? '<div class="p2-actions"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p3-checkout-btn"><i class="fas fa-credit-card"></i> Charge / Check out</button>' +
-              '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p3-cash-btn"><i class="fas fa-money-bill-wave"></i> Mark paid — cash</button>' +
-              '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p3-card-btn"><i class="fas fa-credit-card"></i> Paid by card</button>' +
-              '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p3-squareapp-btn"><i class="fas fa-mobile-screen"></i> Paid by Square app</button>' +
-              '<span class="portal-muted portal-small" id="p3-pay-msg"></span></div>'
-            : '<p class="portal-muted portal-small">Payments on this ticket are handled by Austin or Alfred.</p>') +
-          '<div id="p3-checkout-link" hidden></div>' +
           '<div class="p2-actions">' +
           '<div class="p2-doc-menu"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-menu-receipt-btn" aria-haspopup="true" aria-expanded="false"><i class="fas fa-receipt"></i> Receipt actions</button>' +
           '<div class="p2-doc-menu-list" role="menu">' +
