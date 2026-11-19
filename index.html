@@ -6235,11 +6235,14 @@
     return '<span class="acct-status acct-status-' + cls + '">' + escX(c.label) + '</span>';
   }
   function showRepairsView() {
-    /* V169_HUB_SPLIT_2026_11_18: the list lives in its own My Services pane now —
-       Back goes there. */
-    if (window.atrGuestHubShowTab) { window.atrGuestHubShowTab('myservices'); return; }
+    /* V176_MYSERVICES_BLANKFIX_2026_11_19 (Austin, Nov 19, 2026): going back
+       from a ticket to the list - the list is unhidden FIRST, then the pane
+       opens. The old code returned through showTab('myservices') before
+       reaching the unhide lines, so the list stayed hidden and the pane
+       came back blank. */
     var r = $('acct-repairs'), th = $('acct-thread'), nt = $('acct-newticket');
     if (r) r.hidden = false; if (th) th.hidden = true; if (nt) nt.hidden = true;
+    if (window.atrGuestHubShowTab) { window.atrGuestHubShowTab('myservices'); return; }
     var rv = $('acct-view-repairs');
     if (rv && rv.scrollIntoView) { try { rv.scrollIntoView({ behavior: 'auto', block: 'start' }); } catch (e) {} }
   }
@@ -6302,7 +6305,19 @@
   }
   function renderMyServicesList() {
     var list = $('acct-ticket-list');
-    if (!list || !myRepairsRows) return;
+    if (!list) return;
+    if (!myRepairsRows) {
+      /* V176_MYSERVICES_BLANKFIX_2026_11_19 (Austin, Nov 19, 2026): never a
+         blank pane - if the rows have not landed yet, paint a visible retry
+         control instead of returning silently. */
+      list.innerHTML = '<p class="acct-muted">Your services are still loading.</p><button type="button" class="btn btn-secondary btn-sm" id="acct-repairs-retry">Retry loading your services</button>';
+      var rb = $('acct-repairs-retry');
+      if (rb) rb.addEventListener('click', function () {
+        if (typeof window.atrReloadMyRepairs === 'function') window.atrReloadMyRepairs();
+        else if (currentCust || currentCustomer) loadMyRepairs(currentCust || currentCustomer);
+      });
+      return;
+    }
     var rows = myRepairsRows;
     /* SUPPORT_BOOKING_2026_11_06: one read, two groups — repairs under
        My Repairs, support tickets (device_type 'Support') under My
@@ -6784,7 +6799,7 @@
     var info = $('acct-thread-info');
     if (info) info.innerHTML = t.__general
       ? '<strong>General conversation</strong><br><span class="acct-muted">Not tied to a repair \u2014 write us here any time.</span>'
-      : '<strong>' + escX(ticketDevice(t)) + '</strong> ' + statusPill(t.status) + '<br><span class="acct-muted">' + escX(t.issue || '') + '</span>';
+      : '<strong>Messages about this repair \u2014 Ticket #' + escX(String(t.id).slice(0, 8).toUpperCase()) + '</strong> ' + statusPill(t.status) + '<br><span class="acct-muted">' + escX(ticketDevice(t)) + ' \u00b7 ' + escX(t.issue || '') + '</span>';
     var thEl = $('acct-thread');
     if (thEl && thEl.scrollIntoView) { try { thEl.scrollIntoView({ behavior: 'auto', block: 'start' }); } catch (e) {} }
     renderTicketTimeline(t); /* REPAIR_TIMELINE_2026_11_06: paint from status now; the parts read refines it */
@@ -7521,6 +7536,16 @@
           if (s) rows += v158DocRow(t.id, sd.type, sd.label, t.created_at, s, null);
         });
       }
+      /* V176_DOC_ORDER_2026_11_19 (Austin, Nov 19, 2026): documents read
+         in order - estimate first, then invoice, then receipt, never out
+         of order. */
+      var DOC_ORDER = { estimate: 0, invoice: 1, receipt: 2 };
+      docs.sort(function (a, b) {
+        var ka = DOC_ORDER[a.doc_type]; if (ka === undefined) ka = 3;
+        var kb = DOC_ORDER[b.doc_type]; if (kb === undefined) kb = 3;
+        if (ka !== kb) return ka - kb;
+        return String(a.created_at).localeCompare(String(b.created_at));
+      });
       docs.forEach(function (d) {
         if (d.doc_type !== 'estimate' && d.doc_type !== 'invoice' && d.doc_type !== 'receipt') return;
         var label = d.doc_type === 'estimate' ? 'Estimate' : d.doc_type === 'invoice' ? 'Invoice' : 'Receipt';
@@ -7900,10 +7925,15 @@
       return;
     }
     list.innerHTML = convos.map(function (c) {
-      var preview = (c.last.sender === 'customer' ? 'You: ' : (c.last.sender === 'bot' ? 'Assistant: ' : '')) + (c.last.message || '');
+      /* V176_MSG_LABELS_2026_11_19 (Austin, Nov 19, 2026): every inbox card
+         says which surface it is - General chat, or Ticket #XXXX for a
+         repair thread. The two surfaces are never merged. */
+      var chip = c.general ? '<span class="ghub-chip">General chat</span>'
+        : '<span class="ghub-chip">Ticket #' + escX(String(c.t.id).slice(0, 8).toUpperCase()) + '</span>';
+      var preview = (c.last.sender === 'customer' ? 'You: ' : (c.last.sender === 'bot' || c.last.sender === 'auto' ? 'Assistant: ' : '')) + (c.last.message || '');
       if (preview.length > 90) preview = preview.slice(0, 90) + '\u2026';
       return '<button type="button" class="acct-convo-card" data-convo="' + (c.general ? '__general' : c.t.id) + '">' +
-        '<span class="acct-ticket-top"><strong>' + escX(c.general ? 'General conversation' : ticketDevice(c.t)) + '</strong>' +
+        '<span class="acct-ticket-top"><strong>' + escX(c.general ? 'General conversation' : ticketDevice(c.t)) + '</strong>' + chip +
         (c.unread > 0 ? '<span class="acct-new-chip">New</span>' : '') + (c.general ? '' : statusPill(c.t.status)) + '</span>' +
         '<span class="acct-convo-preview">' + escX(preview) + '</span>' +
         '<span class="acct-ticket-meta">' + escX(fmtConvoTime(c.last.created_at)) + '</span>' +
@@ -8447,15 +8477,20 @@
      configured yet (no model key — Austin has not decided paid vs
      free), it returns not_configured and the message falls through to
      the team with one honest note, never a canned answer. */
-  function atrAiReply(text) {
+  /* V176_AI_TICKET_2026_11_19: one honest 'we got it' note per ticket
+     thread, when the AI cannot answer there. */
+  var atrAiTicketFallbackShown = {};
+  function atrAiReply(text, ticketId) {
     if (!sb || !currentCust) return Promise.resolve({ ok: false, error: 'no_session' });
     return sb.auth.getSession().then(function (sres) {
       var token = sres && sres.data && sres.data.session ? sres.data.session.access_token : null;
       if (!token) return { ok: false, error: 'no_session' };
+      var payload = { message: text };
+      if (ticketId) payload.ticket_id = ticketId;
       return fetch(SUPABASE_URL + '/functions/v1/service-messages-ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'apikey': SUPABASE_ANON_KEY },
-        body: JSON.stringify({ message: text })
+        body: JSON.stringify(payload)
       }).then(function (res) { return res.json(); }).catch(function () { return { ok: false, error: 'unreachable' }; });
     }).catch(function () { return { ok: false, error: 'unreachable' }; });
   }
@@ -8652,9 +8687,10 @@
       if (!text || !openTicket || !sb) return;
       err.hidden = true;
       /* ACCOUNT_FIX_PASS_3_2_2026_11_06: the general conversation's
-         replies ride the same form through sendGeneralMessage; the
-         ticket payload below is untouched (the inbox suite asserts
-         it byte-identical from both doors). */
+         replies ride the same form through sendGeneralMessage. The ticket
+         payload below sets customer_id (V176_AI_TICKET_2026_11_19) and,
+         after a successful insert, calls atrAiReply(text, openTicket.id)
+         so a ticket thread reaches the AI too. */
       if (openTicket.__general) {
         sendGeneralMessage(text, function (ok) {
           if (!ok) { err.textContent = 'Couldn\'t send \u2014 try again, or call or text (937) 280-6243.'; err.hidden = false; return; }
@@ -8664,11 +8700,40 @@
         });
         return;
       }
-      sb.from('messages').insert({ ticket_id: openTicket.id, sender: 'customer', message: text }).then(function (res) {
+      sb.from('messages').insert({ ticket_id: openTicket.id, customer_id: (currentCust ? currentCust.id : null), sender: 'customer', message: text }).then(function (res) {
         if (res.error) { err.textContent = 'Couldn\'t send \u2014 try again.'; err.hidden = false; return; }
         input.value = '';
         loadThreadMessages(openTicket);
         if (currentCust) loadInbox(currentCust); /* CUSTOMER_INBOX_2026_11_05: keep the inbox preview + badge current */
+        /* V176_AI_TICKET_2026_11_19 (Austin, Nov 19, 2026): the ticket
+           thread reaches the AI too - the guest's message is already saved
+           above, so the AI can never block it. On success the AI's reply
+           lands in this same ticket thread; on failure (or no reply) ONE
+           honest note per thread, never a canned answer. No form-alert
+           here - staff already see the ticket thread in the portal.
+           Escalated / legacy phase, or an escalation phrase: the AI stays
+           out and the team takes the thread (same rule as the general
+           path, minus the alert). */
+        (function () {
+          var tid = openTicket.id;
+          if (assistantEscalated || assistantLegacy || assistantEscalationPhrase(text)) return;
+          atrAiReply(text, tid).then(function (out) {
+            if (out && out.ok && out.reply) {
+              sb.from('messages').insert({ ticket_id: tid, customer_id: (currentCust ? currentCust.id : null), sender: 'bot', message: out.reply }).then(function () {
+                loadThreadMessages(openTicket);
+                if (currentCust) loadInbox(currentCust);
+              });
+              return;
+            }
+            if (!atrAiTicketFallbackShown[tid]) {
+              atrAiTicketFallbackShown[tid] = true;
+              sb.from('messages').insert({ ticket_id: tid, customer_id: (currentCust ? currentCust.id : null), sender: 'auto', message: 'Thanks for messaging us — your message is with the team, and an associate will reply right here.' }).then(function () {
+                loadThreadMessages(openTicket);
+                if (currentCust) loadInbox(currentCust);
+              });
+            }
+          });
+        })();
       }).catch(function () { err.textContent = 'Couldn\'t send \u2014 try again.'; err.hidden = false; });
     });
     /* V163_WINDOWS_DAY_AWARE_2026_11_17: the arrival-window options
@@ -8958,6 +9023,9 @@
       writeLocalSession(cust, pts);
       renderDash(cust, pts);
       fillProfile(cust);
+      /* V176_HUB_STATE_2026_11_19 (Austin, Nov 19, 2026): re-open the hub on
+         the same pane after a reload, when the guest is still signed in. */
+      if (typeof window.atrRestoreGuestHub === 'function') window.atrRestoreGuestHub();
       /* QR_FIX_PASS_2_2026_11_05: the old "nudge the open hook when
              the modal is already open" block is gone with the modal —
              renderDash above already loaded My Repairs, and there is no
@@ -9956,7 +10024,33 @@
 .ghub-tag{display:inline-block;background:#D9540D;color:#fff;border-radius:999px;padding:.1rem .6rem;font-size:.72rem;font-weight:800;margin-left:.5rem}
 .ghub-qa-label{font-size:.68rem;font-weight:800;letter-spacing:1.5px;color:#7D6C5B;margin-top:.45rem}
 .ghub-qa{display:flex;gap:.45rem;flex-wrap:wrap;margin-top:.3rem}
-.ghub-topbar .ghub-qa{justify-content:center} /* V173_CENTER_QUICK_ACTIONS_2026_11_18: the top-block Quick Actions row centers, and its wrap stays centered on narrow screens. Scoped to the topbar on purpose — the in-panel .ghub-qa rows (Help Guides, Contact us) are not in the top block and keep their left layout. */
+.ghub-topbar .ghub-qa{justify-content:center}
+    /* V176_HUB_RING_2026_11_19 (Austin, Nov 19, 2026): the highlight for the
+       open pane is an orange RING, never a solid orange fill - same as the
+       Associate Hub's tap/focus ring (HUB PARITY RULE). Applied by showTab
+       to the Quick Actions button for the open pane. */
+    .ghub-qa-active{ outline: 2px solid #D9540D !important; outline-offset: 2px; }
+    /* V176_GETAPP_2026_11_19 (Austin, Nov 19, 2026): the install-steps panel
+       lives INSIDE the hub - Get App never closes the hub or jumps to the
+       main page. */
+    #ghub-getapp-panel{ margin: 10px 0 0; border: 1px solid var(--ghub-line); border-radius: 12px; padding: 12px 14px; background: var(--ghub-card); }
+    #ghub-getapp-panel[hidden]{ display: none; }
+    #ghub-getapp-panel .ghub-getapp-title{ font-weight: 700; margin-bottom: 6px; }
+    #ghub-getapp-panel .ghub-getapp-steps{ margin: 0 0 8px; }
+    /* V176_NEXT_CLICK_2026_11_19 (Austin, Nov 19, 2026): upcoming repairs on
+       Home are real buttons - tapping one opens that ticket in My Services. */
+    .ghub-next-btn{ display: block; width: 100%; text-align: left; background: none; border: 0; padding: 6px 0; cursor: pointer; color: inherit; font: inherit; }
+    .ghub-next-btn:hover{ text-decoration: underline; }
+    /* V176_MSG_LABELS_2026_11_19 (Austin, Nov 19, 2026): the two message
+       surfaces are labelled so nobody confuses them - Service Messages is
+       the general chat; a ticket thread is messages about one repair. */
+    .ghub-chat-sub{ margin: 2px 0 10px; font-size: .9rem; opacity: .85; }
+    .ghub-chip{ display: inline-block; font-size: .72rem; font-weight: 700; border: 1px solid var(--ghub-line); border-radius: 999px; padding: 1px 8px; margin-left: 6px; vertical-align: middle; }
+    /* V176_NO_ZOOM_BREAK_2026_11_19 (Austin, Nov 19, 2026): a double-tap must
+       not zoom the page and break the layout on iPad/phone. manipulation
+       kills double-tap zoom only - pinch zoom still works, and the viewport
+       meta is untouched (no maximum-scale, no user-scalable=no). */
+    body{ touch-action: manipulation; } /* V173_CENTER_QUICK_ACTIONS_2026_11_18: the top-block Quick Actions row centers, and its wrap stays centered on narrow screens. Scoped to the topbar on purpose — the in-panel .ghub-qa rows (Help Guides, Contact us) are not in the top block and keep their left layout. */
 .ghub-qa .btn{padding:.5rem .9rem;font-size:.85rem}
 .ghub-body{display:flex;flex:1;min-height:0} /* V173_SIDEBAR_SCROLL_2026_11_18: was height:calc(100% - 118px) — see the hub rule above. */
 .ghub-side{width:230px;flex:none;min-height:0;background:#FFFDF8;border-right:1px solid #E6D9C0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;padding:.7rem .6rem 5.5rem} /* V173_SIDEBAR_SCROLL_2026_11_18 */
@@ -9964,7 +10058,7 @@
 .ghub-panel-label{font-size:.68rem;font-weight:800;letter-spacing:1.5px;color:#7D6C5B;padding:.2rem 0 .5rem} /* V173_ACTION_PANEL_LABEL_2026_11_18 */
 .ghub-tab{display:flex;align-items:center;gap:.6rem;width:100%;text-align:left;background:#FFFDF8;border:1px solid #E6D9C0;border-radius:.7rem;padding:.65rem .7rem;font-size:.95rem;font-weight:700;color:#2C231A;cursor:pointer;font-family:inherit;margin-bottom:.45rem}
 .ghub-tab:hover{border-color:#D9540D;color:#A63E06}
-.ghub-tab.active{background:#D9540D;border-color:#D9540D;color:#fff}
+.ghub-tab.active{background:transparent;border-color:#D9540D;color:var(--ghub-accent,#D9540D);outline:2px solid #D9540D;outline-offset:2px}
 .ghub-panel{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;padding:1rem 1rem 6rem} /* V173_SIDEBAR_SCROLL_2026_11_18 */
 .ghub-panel h2{font-size:1.35rem;margin:.2rem 0 .6rem}
 .ghub-card{background:#FFFDF8;border:1px solid #E6D9C0;border-radius:1rem;padding:1rem;margin-bottom:.9rem}
@@ -9977,7 +10071,7 @@
 .ghub-preview{display:flex;gap:.4rem;align-items:center;justify-content:center;flex-wrap:wrap;margin:.45rem 0 0;font-size:.8rem;color:var(--muted,#7D6C5B)} /* V173_CENTER_QUICK_ACTIONS_2026_11_18 */
 .ghub-preview[hidden]{display:none} /* V172_AUDIENCE_OFFERS_2026_11_18 (Austin, Nov 18, 2026): the "Preview as" switcher is staff-only — without this guard its display:flex rule beats [hidden] and it renders for guests too (caught by v172's visual proof; same class of bug as the v171 signup EIN field). */
 .ghub-preview-label{font-weight:800;letter-spacing:.03em}
-.ghub-preview button[aria-pressed="true"]{background:#D9540D;border-color:#D9540D;color:#fff}
+.ghub-preview button[aria-pressed="true"]{background:transparent;border-color:#D9540D;color:var(--ghub-text);outline:2px solid #D9540D;outline-offset:1px}
 .ghub-greet-sep{margin:0 .1rem}
 html[data-theme="dark"] .ghub-greet-line{color:var(--muted,#A89880)}
 html[data-theme="dark"] .ghub-greet-line #ghub-greet{color:var(--ink,#F0E8DA)}
@@ -10011,7 +10105,7 @@ html[data-theme="dark"] .ghub-signed{color:#7BDDB4}
 html[data-theme="dark"] #ghub-doc-overlay{background:var(--surface,#221B14)}
 html[data-theme="dark"] .ghub-doc-overlay-bar{background:var(--surface,#221B14);border-bottom-color:var(--line,#3A2F24)}
 .ghub-thumb button{background:none;border:none;font-size:.68rem;font-weight:700;color:#7D6C5B;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:3px}
-.ghub-thumb button.active{color:#D9540D}
+.ghub-thumb button.active{color:#D9540D;outline:2px solid #D9540D;outline-offset:1px;border-radius:8px}
 .ghub-thumb button i{font-size:1.1rem}
 /* V160_GUEST_HUB_FIXES_2026_11_17: on phone viewports the site black bottom nav (.mobile-bottom-nav, z-index 2100 in styles.css) painted over the Guest Hub thumb bar (#guest-hub 2000 / .ghub-thumb 2001), so a guest could not see Home / Service Request / Documents / Chat / Account. Raise the Hub above it only at phone widths (max-width 920px, the breakpoint where the site nav shows). Desktop keeps 2000/2001; styles.css is untouched, so the Associate Hub and the site nav are unaffected. */
 @media (max-width:920px){#guest-hub{z-index:2200}.ghub-thumb{z-index:2201}}
@@ -10035,7 +10129,7 @@ html[data-theme="dark"] .ghub-qa-label,html[data-theme="dark"] .ghub-side-label,
 html[data-theme="dark"] .ghub-side{background:var(--surface,#221B14);border-right-color:var(--line,#3A2F24)}
 html[data-theme="dark"] .ghub-tab{color:var(--ink,#F0E8DA);background:var(--surface,#221B14);border-color:var(--line,#3A2F24)}
 html[data-theme="dark"] .ghub-tab:hover{border-color:#D9540D;color:#F5B98A}
-html[data-theme="dark"] .ghub-tab.active{background:#D9540D;border-color:#D9540D;color:#fff}
+html[data-theme="dark"] .ghub-tab.active{background:transparent;border-color:#D9540D;outline:2px solid #D9540D;outline-offset:2px}
 html[data-theme="dark"] .ghub-panel h2{color:var(--ink,#F0E8DA)}
 html[data-theme="dark"] .ghub-card{background:var(--surface,#221B14);border-color:var(--line,#3A2F24)}
 html[data-theme="dark"] .ghub-muted{color:var(--muted,#A89880)}
@@ -10071,8 +10165,12 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
     <div class="ghub-qa-label">QUICK ACTIONS</div>
     <!-- V163_GUEST_QA_2026_11_17 (Austin, Nov 17, 2026): Quick Actions
          parity with the Associate Hub — same row, same order, same
-         behaviour, minus guest-inappropriate features: Home, New Service
-         Request, Get App, Refresh, Back to site, Log Out, moon LAST.
+         behaviour, minus guest-inappropriate features: Home, Get App,
+         Refresh, Back to site, Log Out, moon LAST. (V176_QA_MYSERVICES_REMOVED
+         2026_11_19, Austin, Nov 19, 2026: the My Services quick action is
+         GONE - the sidebar already has a My Services action button, so the
+         duplicate was removed. The new-request form stays reachable from the
+         "Schedule a repair" button inside My Services.)
          Home is FIRST in both hubs. Guests NEVER get the Square button
          (the Associate Hub has Square; the Guest Hub does not). Exactly
          ONE Refresh in the Hub, here only — no per-panel Refresh
@@ -10081,7 +10179,6 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
          wrong. -->
     <div class="ghub-qa">
       <button class="btn btn-outline btn-sm" type="button" data-ghub-qa="home"><i class="fas fa-house"></i> Home</button>
-      <button class="btn btn-primary btn-sm" type="button" data-ghub-qa="myservices"><i class="fas fa-clipboard-list"></i> My Services</button> <!-- V174_QA_MYSERVICES_2026_11_18 (Austin, Nov 18, 2026): this button used to read "New Service Request" — it now reads "My Services" and opens the guest's services list. The new-request form stays reachable from the "Schedule a repair" button inside My Services. -->
       <button class="btn btn-outline btn-sm" type="button" data-ghub-qa="getapp"><i class="fas fa-download"></i> Get App</button>
       <button class="btn btn-outline btn-sm" type="button" data-ghub-qa="refresh"><i class="fas fa-rotate-right"></i> Refresh</button>
       <a class="btn btn-outline btn-sm" href="https://austinstechrepairgroup.com/" data-ghub-qa="backsite"><i class="fas fa-arrow-left"></i> Back to site</a>
@@ -10103,6 +10200,16 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
       <!-- V171_VIEW_SWITCHER_2026_11_18 (Austin, Nov 18, 2026): third option — Associate opens the Associate Hub (portal.html), the real one staff already reach; the switcher is one control for all three views. No preview state inside the Associate Hub. -->
       <button class="btn btn-outline btn-sm" type="button" data-ghub-preview="associate" aria-pressed="false">Associate</button>
     </div>
+      <!-- V176_GETAPP_2026_11_19 (Austin, Nov 19, 2026): Get App opens the
+           install steps right here inside the hub - it never closes the hub
+           and never jumps to the main page. iOS: Share -> Add to Home Screen.
+           Android/Chrome: the real install prompt when the browser offers it,
+           else the same steps. -->
+      <div id="ghub-getapp-panel" hidden>
+        <div class="ghub-getapp-title">Add ATRG to your Home Screen</div>
+        <p class="ghub-getapp-steps" id="ghub-getapp-steps"></p>
+        <button type="button" class="btn btn-outline btn-sm" id="ghub-getapp-close">Close</button>
+      </div>
   </div>
   <div class="ghub-body">
     <nav class="ghub-side" id="ghub-side" aria-label="Guest Hub actions">
@@ -10494,6 +10601,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
       </div>
       <div class="ghub-pane" data-pane="chat" hidden>
         <h2>Service Messages</h2>
+        <p class="ghub-chat-sub">General chat with the shop. Messages about one repair live in that repair's thread — open the repair in My Services to see them.</p>
         <!-- Messages inbox — CUSTOMER_INBOX_2026_11_05 (owner,
              Nov 5, 2026): "our message to them goes to their
              message/inbox button on their account page… and vice
@@ -10873,7 +10981,24 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
     }
   }
 
+  var ghubCurrentTab = 'home';
+  function paintGhubQaRing() {
+    /* V176_HUB_RING_2026_11_19 (Austin, Nov 19, 2026): the Quick Actions
+       button for the open pane gets the orange RING (.ghub-qa-active), never
+       a solid fill (HUB PARITY RULE). Only Home maps to a Quick Actions
+       button - the other panes are reached from the sidebar. */
+    var name = ghubCurrentTab || 'home';
+    document.querySelectorAll('#guest-hub [data-ghub-qa]').forEach(function (b) {
+      b.classList.toggle('ghub-qa-active', b.getAttribute('data-ghub-qa') === 'home' && name === 'home');
+    });
+  }
   function showTab(name) {
+    /* V176_HUB_STATE_2026_11_19 (Austin, Nov 19, 2026): remember the open
+       pane so a reload re-opens the hub on the same pane instead of kicking
+       the guest back to the main site. Cleared by closeHub / sign-out. */
+    ghubCurrentTab = name;
+    try { sessionStorage.setItem('atr-ghub-state', JSON.stringify({ open: true, tab: name })); } catch (e) {}
+    paintGhubQaRing();
     document.querySelectorAll('#guest-hub .ghub-tab').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-ghub') === name); });
     document.querySelectorAll('#guest-hub .ghub-thumb button').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-ghub') === name); });
     document.querySelectorAll('#guest-hub .ghub-pane').forEach(function (p) { p.hidden = p.getAttribute('data-pane') !== name; });
@@ -10893,9 +11018,18 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
      * to run now. A list mid-load ("Loading your repairs…") or a painted
      * fallback is left alone — the fallback carries its own Retry. */
     if (name === 'myservices') {
+      /* V176_MYSERVICES_BLANKFIX_2026_11_19 (Austin, Nov 19, 2026): opening
+         a ticket hides #acct-repairs, and nothing unhid it on the way back
+         - the pane came back blank (heading only). Unhide the list here,
+         every time the pane opens, and repaint it from the rows already
+         loaded so it is never stale either. */
+      var r0 = $('acct-repairs'); if (r0) r0.hidden = false;
+      var th0 = $('acct-thread'); if (th0) th0.hidden = true;
+      var nt0 = $('acct-newticket'); if (nt0) nt0.hidden = true;
       var sl = $('acct-ticket-list');
       if (sl && sl.innerHTML.indexOf('Loading your services') !== -1
         && typeof window.atrReloadMyRepairs === 'function') window.atrReloadMyRepairs();
+      else if (myRepairsRows) renderMyServicesList();
     }
     if (name === 'oneonones') {
       var ol = $('acct-support-list');
@@ -11168,13 +11302,15 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
       if (next) {
         /* V169_GUEST_HOME_2026_11_18: the Home calendar — the guest's upcoming
            repairs (not finished, newest first), each with its device,
-           status, date and arrival window. */
+           status, date and arrival window. V176_NEXT_CLICK_2026_11_19
+           (Austin, Nov 19, 2026): each repair is a BUTTON - tapping it
+           opens that ticket in My Services. */
         var upcoming = (tickets || []).filter(function (t) { return t.status !== 'Job Complete' && !/^\[SERVICE\]/.test(t.issue || '') && t.device_type !== 'Support'; });
         if (!upcoming.length) {
           next.innerHTML = '<h3>Your upcoming repairs</h3><p class="ghub-muted">No upcoming repairs — when you book a service, it will show here.</p>';
         } else {
           next.innerHTML = '<h3>Your upcoming repairs</h3>' + upcoming.map(function (t) {
-            return '<p><strong>' + esc(deviceOf(t)) + '</strong> — ' + esc(t.status || '') + (apptLine(t) ? '<br>' + esc(apptLine(t)) : '') + '</p>';
+            return '<button type="button" class="ghub-next-btn" data-ghub-ticket="' + t.id + '"><strong>' + esc(deviceOf(t)) + '</strong> — ' + esc(t.status || '') + (apptLine(t) ? '<br>' + esc(apptLine(t)) : '') + ' ›</button>';
           }).join('');
         }
       }
@@ -11491,7 +11627,26 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
   function closeHub() {
     var hub = $('guest-hub'); if (!hub) return;
     hub.hidden = true; document.body.style.overflow = '';
+    /* V176_HUB_STATE_2026_11_19: closing the hub clears the saved state, so
+       a later reload lands on the main site, not the hub. Sign-out also
+       closes the hub, so a fresh sign-in starts clean too. */
+    try { sessionStorage.removeItem('atr-ghub-state'); } catch (e) {}
   }
+  window.atrRestoreGuestHub = function () {
+    /* V176_HUB_STATE_2026_11_19 (Austin, Nov 19, 2026): after a reload, if
+       the hub was open and the guest is still signed in, re-open it on the
+       same pane. A reload used to kick the guest back to the main site. */
+    try {
+      var raw = sessionStorage.getItem('atr-ghub-state');
+      if (!raw) return false;
+      var st = JSON.parse(raw);
+      if (!st || !st.open) return false;
+      var hub = $('guest-hub');
+      if (!hub || !hub.hidden) return false;
+      openHub(st.tab || 'home');
+      return true;
+    } catch (e) { return false; }
+  };
   /* V163_GUEST_QA_2026_11_17: the Hub moon mirrors the site header moon
      — same 'atr-theme' switch, same sun-in-dark / moon-in-light icon.
      Both icons are synced here so the header and the Hub never disagree. */
@@ -11628,6 +11783,16 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
         showTab(b.getAttribute('data-ghub'));
       });
     });
+    /* V176_NEXT_CLICK_2026_11_19 (Austin, Nov 19, 2026): an upcoming repair
+       on Home opens that ticket in My Services. */
+    var ghubHomeNext = $('ghub-home-next');
+    if (ghubHomeNext) ghubHomeNext.addEventListener('click', function (e) {
+      var b = e.target && e.target.closest ? e.target.closest('.ghub-next-btn') : null;
+      if (!b) return;
+      var tid = b.getAttribute('data-ghub-ticket');
+      var found = (tickets || []).filter(function (t) { return String(t.id) === tid; })[0];
+      if (found && window.atrOpenGuestTicket) window.atrOpenGuestTicket(found);
+    });
     var gsInput = $('ghub-search-input');
     if (gsInput) gsInput.addEventListener('input', function () { renderGhubSearch(gsInput.value); });
     var gsClose = $('ghub-search-close');
@@ -11649,22 +11814,58 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
       closeGhubSearch();
       showTab(r.getAttribute('data-ghub-search'));
     });
+    /* V176_REFRESH_STAYS_2026_11_19 (Austin, Nov 19, 2026): Refresh
+       re-fetches the panel you are on and STAYS there - it never acts as a
+       Home button. */
+    function ghubRefreshCurrent() {
+      var tab = ghubCurrentTab || 'home';
+      if (tab === 'home') { loaded = false; loadAll(); showTab('home'); }
+      else if (tab === 'myservices' || tab === 'oneonones') { if (typeof window.atrReloadMyRepairs === 'function') window.atrReloadMyRepairs(); showTab(tab); }
+      else if (tab === 'estimates') { if (typeof window.atrReloadMyEstimates === 'function') window.atrReloadMyEstimates(); showTab('estimates'); }
+      else if (tab === 'chat') { loadInbox(currentCust); showTab('chat'); }
+      else if (tab === 'documents') { renderDocs(); showTab('documents'); }
+      else if (tab === 'warranty') { prefillGhubWarranty(); showTab('warranty'); }
+      else { showTab(tab); }
+    }
+    /* V176_GETAPP_2026_11_19 (Austin, Nov 19, 2026): Get App opens the
+       install steps INSIDE the hub - it never closes the hub and never jumps
+       to the main page. On Android/Chrome the real install prompt fires when
+       the browser offers it; otherwise the steps panel opens. iOS has no
+       install prompt, so iPad/iPhone always get the Share -> Add to Home
+       Screen steps. The main site's #install-prompt banner is untouched. */
+    var ghubDeferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', function (e) { ghubDeferredPrompt = e; });
+    function ghubStepsText() {
+      var ua = navigator.userAgent || '';
+      if (/iPhone|iPad|iPod/i.test(ua)) return 'On iPhone or iPad: tap Share, then Add to Home Screen. ATRG will live on your Home Screen like an app.';
+      if (/Android/i.test(ua)) return 'On Android: tap the menu, then Add to Home screen (or Install app). ATRG will live on your Home Screen like an app.';
+      return 'In your browser menu, choose Add to Home screen (or Install app). ATRG will live on your Home Screen like an app.';
+    }
+    function ghubToggleGetApp() {
+      if (ghubDeferredPrompt) {
+        var p = ghubDeferredPrompt; ghubDeferredPrompt = null;
+        if (p.prompt) p.prompt();
+        return;
+      }
+      var panel = $('ghub-getapp-panel');
+      if (!panel) return;
+      if (panel.hidden) {
+        var steps = $('ghub-getapp-steps'); if (steps) steps.textContent = ghubStepsText();
+        panel.hidden = false;
+        panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      } else {
+        panel.hidden = true;
+      }
+    }
+    var ghubGetAppClose = $('ghub-getapp-close');
+    if (ghubGetAppClose) ghubGetAppClose.addEventListener('click', function () { var p = $('ghub-getapp-panel'); if (p) p.hidden = true; });
     document.querySelectorAll('#guest-hub [data-ghub-qa]').forEach(function (b) {
       b.addEventListener('click', function () {
         var k = b.getAttribute('data-ghub-qa');
-        if (k === 'backsite') return; /* a real link to the public site — the browser takes it from here, same as the Associate Hub */
-        if (k === 'refresh') { loaded = false; loadAll(); showTab('home'); }
+        if (k === 'backsite') { try { sessionStorage.removeItem('atr-ghub-state'); } catch (e) {} return; } /* a real link to the public site — the browser takes it from here, same as the Associate Hub. The saved hub state clears first, or a later reload would bounce the guest straight back into the hub. */
+        if (k === 'refresh') { ghubRefreshCurrent(); }
         if (k === 'home') showTab('home');
-        if (k === 'myservices') { showTab('myservices'); } /* V174_QA_MYSERVICES_2026_11_18 */
-        if (k === 'getapp') {
-          /* Same install door as the site's own Get App: close the Hub
-             and open the Add to Home Screen prompt the guest asked for.
-             An explicit tap overrides a past dismissal — the prompt's
-             own close button still dismisses it. */
-          closeHub();
-          var ip = document.getElementById('install-prompt');
-          if (ip) { ip.hidden = false; try { ip.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {} }
-        }
+        if (k === 'getapp') { ghubToggleGetApp(); }
         if (k === 'logout') {
           clearGhubStaffRole(); /* V174_BOTH_HUBS_2026_11_18: sign-out clears the cached staff role. */
           if (sb) { try { var pr = sb.auth.signOut(); if (pr && pr.catch) pr.catch(function () {}); } catch (e) {} }

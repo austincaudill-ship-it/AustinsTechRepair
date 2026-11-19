@@ -864,7 +864,8 @@
       'Keyboard': 'fas fa-keyboard',
       'Virus / Software cleanup': 'fas fa-bug',
       'Band / Button': 'fas fa-clock',
-      'Something else': 'fas fa-circle-question'
+      'Something else': 'fas fa-circle-question',
+      'Cleaning and liquid metal replacement': 'fas fa-broom'
     };
     function bkIconHtml(rawName) {
       var spec = BK_TILE_ICONS[rawName] || 'fas fa-wrench';
@@ -1074,11 +1075,20 @@
          is an unpriced pick exactly like Board / Solder ("Price
          on request"), toggles through rfToggleIssue like any
          other pick, and always renders, for every device and model,
-         right before the One-on-One tile (which stays last). */ /* V173_PRICING_FLOOR_2026_11_18 */
-      var seTile = bkTile('Something else', 'Price on request', bkIconHtml('Something else')); /* V173_PRICING_FLOOR_2026_11_18 */
+         right before the One-on-One tile (which stays last). V176_PS5_CLEANING_2026_11_19: on the PlayStation 5 picker this tile is "Cleaning and liquid metal replacement" at $49.99 instead. */ /* V173_PRICING_FLOOR_2026_11_18 */
+      /* V176_PS5_CLEANING_2026_11_19 (Austin, Nov 19, 2026): on the PlayStation 5
+         picker the catch-all tile is "Cleaning and liquid metal replacement"
+         at the flat $49.99 cleaning price - liquid metal is part of cleaning,
+         never itemized, and the $60 estimate floor does not apply to a flat
+         service. Every other device keeps the "Something else" tile. */
+      var isPs5Picker = (typeKey === 'Game Console' && brandKey === 'PlayStation' && modelKey === 'PlayStation 5');
+      var seTile = isPs5Picker
+        ? bkTile('Cleaning and liquid metal replacement', bkFmt(49.99), bkIconHtml('Cleaning and liquid metal replacement'))
+        : bkTile('Something else', 'Price on request', bkIconHtml('Something else')); /* V173_PRICING_FLOOR_2026_11_18 */
       seTile.setAttribute('data-bk-something-else', '1');
       seTile.addEventListener('click', function () {
-        rfToggleIssue('Something else', null, seTile, null);
+        if (isPs5Picker) rfToggleIssue('Cleaning and liquid metal replacement', 49.99, seTile, null);
+        else rfToggleIssue('Something else', null, seTile, null);
       });
       repairGrid.appendChild(seTile);
       /* BOOKING_OO_TILE_2026_11_09 (Austin, Nov 9, 2026): One-on-One is
@@ -1148,8 +1158,18 @@
       });
       /* V173_PRICING_FLOOR_2026_11_18 (Austin, Nov 18, 2026): no estimated price below $60 — base labor is $50.
          The floor lands here, the one place every site estimate total is summed, so the
-         summary, the estimate step, and the intake handoff all read the same floored total. */
-      if (any) { lo = Math.max(60, lo); hi = Math.max(60, hi); }
+         summary, the estimate step, and the intake handoff all read the same floored total.
+         V176_PS5_CLEANING_2026_11_19: cleaning is a FLAT $49.99 service, not a repair
+         estimate - the floor never lifts it. The floor applies to the repair portion
+         only; a cleaning-only total stays $49.99. */
+      var cleanAmt = 0;
+      repairState.issues.forEach(function (it) { if (it.name === 'Cleaning and liquid metal replacement' && typeof it.price === 'number') cleanAmt += it.price; });
+      if (any) {
+        var repLo = lo - cleanAmt, repHi = hi - cleanAmt;
+        if (repLo > 0) repLo = Math.max(60, repLo);
+        if (repHi > 0) repHi = Math.max(60, repHi);
+        lo = repLo + cleanAmt; hi = repHi + cleanAmt;
+      }
       return { any: any, unpriced: unpriced, lo: lo, hi: hi };
     }
     function rfCombinedText(t) {
@@ -6554,11 +6574,17 @@ if ("serviceWorker" in navigator) {
         });
       }
       /* The catch-all renders for every device, and the One-on-One
-         tile closes the grid — same as the booking form. */
-      var se = tileShell(shared.iconHtml('Something else') + '<strong>Something else</strong>' + subSpan('Price on request')); /* V173_PRICING_FLOOR_2026_11_18 */
+         tile closes the grid — same as the booking form. V176_PS5_CLEANING_2026_11_19:
+         on the PlayStation 5 picker the catch-all is "Cleaning and liquid metal
+         replacement" at $49.99 instead. */
+      var isPs5Picker = (typeKey === 'Game Console' && st.brandKey === 'PlayStation' && st.modelKey === 'PlayStation 5');
+      var se = isPs5Picker
+        ? tileShell(shared.iconHtml('Cleaning and liquid metal replacement') + '<strong>Cleaning and liquid metal replacement</strong>' + subSpan(shared.fmt(49.99)))
+        : tileShell(shared.iconHtml('Something else') + '<strong>Something else</strong>' + subSpan('Price on request')); /* V173_PRICING_FLOOR_2026_11_18 */
       se.setAttribute('data-svc-something-else', '1');
       se.addEventListener('click', function () {
-        togglePick(pane, { name: 'Something else', price: null, priceRange: null }, se);
+        if (isPs5Picker) togglePick(pane, { name: 'Cleaning and liquid metal replacement', price: 49.99, priceRange: null }, se);
+        else togglePick(pane, { name: 'Something else', price: null, priceRange: null }, se);
       });
       grid.appendChild(se);
       var oo = doorTile('fas fa-graduation-cap', 'One-on-One', 'Lessons & help on this device \u2014 $' + (document.body.classList.contains('aud-business') ? 49.99 : 24.99) + ' an hour');
@@ -6623,8 +6649,17 @@ if ("serviceWorker" in navigator) {
         if (r) { lo += r.lo; hi += r.hi; any = true; } else { unpriced++; }
       });
       /* V173_PRICING_FLOOR_2026_11_18 (Austin, Nov 18, 2026): no estimated price below $60 — base labor is $50.
-         Same floor as the booking-flow totals, for the service-picker estimate. */
-      if (any) { lo = Math.max(60, lo); hi = Math.max(60, hi); }
+         Same floor as the booking-flow totals, for the service-picker estimate.
+         V176_PS5_CLEANING_2026_11_19: cleaning is a FLAT $49.99 service - the floor
+         never lifts it (repair portion only; cleaning-only stays $49.99). */
+      var cleanAmt = 0;
+      picks.forEach(function (it) { if (it.name === 'Cleaning and liquid metal replacement' && typeof it.price === 'number') cleanAmt += it.price; });
+      if (any) {
+        var repLo = lo - cleanAmt, repHi = hi - cleanAmt;
+        if (repLo > 0) repLo = Math.max(60, repLo);
+        if (repHi > 0) repHi = Math.max(60, repHi);
+        lo = repLo + cleanAmt; hi = repHi + cleanAmt;
+      }
       return { any: any, unpriced: unpriced, lo: lo, hi: hi };
     }
 

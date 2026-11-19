@@ -291,6 +291,10 @@
         <button class="portal-tab" id="portal-tab-documents" type="button" role="tab" data-tab="documents">
           <i class="fas fa-folder-open"></i> Documents
         </button>
+        <!-- V176_RECORDS_2026_11_19 (Austin, Nov 19, 2026): Records lives under Guest Accounts, under Documents — signed & filed documents. Admin stays back-office only. -->
+        <button class="portal-tab" id="portal-tab-records" type="button" role="tab" data-tab="records">
+          <i class="fas fa-archive"></i> View Records
+        </button>
         <!-- WARRANTY_PORTAL_2026_11_03 (Austin, Nov 3, 2026): a Warranty Action Button in the Guest group, last in the group — warranty requests are guest-originated work (customers file them from the website's warranty form), and every staff role works them here, Pepper included: this is her lane. Panel: portal-panel-warranty, loader loadWarrantyRequests in portal.js. -->
         <button class="portal-tab" id="portal-tab-warranty" type="button" role="tab" data-tab="warranty">
           <i class="fas fa-shield-halved"></i> Warranty <span class="portal-count" id="portal-count-warranty" hidden></span>
@@ -705,20 +709,12 @@
           <p class="portal-muted portal-small">The business&rsquo;s unsigned documents. Tap one to pull it up.</p>
           <div id="portal-docs-blanks"><p class="portal-muted">Loading&hellip;</p></div>
         </div>
-        <div class="portal-card" style="margin-bottom:1rem;">
-          <h3 style="margin-top:0;">Attach to repair</h3>
-          <p class="portal-muted portal-small">Upload a scan, photo, or PDF. It lands here unattached; file it onto a repair with its Attach button below and it shows on that ticket too.</p>
-          <div class="p2-form">
-            <div class="p2-form-row">
-              <select id="portal-docs-up-type" aria-label="Document type"><option value="receipt">Receipt</option><option value="part_order">Part order</option><option value="repair_authorization">Signed authorization</option><option value="other">Other</option></select>
-              <input type="text" id="portal-docs-up-signer" placeholder="Signer name (for a signed authorization)" maxlength="120" aria-label="Signer name" />
-            </div>
-            <div class="p2-form-row">
-              <input type="file" id="portal-docs-up-file" accept="image/*,application/pdf" aria-label="Choose a document file" />
-              <button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="portal-docs-up-btn"><i class="fas fa-upload"></i> Upload</button>
-            </div>
-            <p class="portal-error" id="portal-docs-up-msg" hidden></p>
-          </div>
+      </div>
+
+      <!-- RECORDS — V176_RECORDS_2026_11_19 (Austin, Nov 19, 2026): signed & filed documents live here now, under Guest Accounts, under Documents. Admin stays back-office only — Records is not admin. -->
+      <div class="portal-panel" id="portal-panel-records" role="tabpanel" hidden>
+        <div class="portal-panel-head">
+          <h2 class="portal-h2">Records</h2>
         </div>
         <div class="portal-card">
           <h3 style="margin-top:0;">Signed &amp; filed documents</h3>
@@ -6173,8 +6169,16 @@
  * (plus a small brand-family expansion: iPhone→Apple, Galaxy→Samsung,
  * Pixel→Google, PlayStation/Xbox/Switch→console brands). Each guide is
  * scored by token hits — device field ×3, title ×2, tags/category ×1.
- * Guides scoring 3+ are listed, best score first; ties put
- * Manufacturer sources first, then iFixit, then Internal/Video.
+ * V176_MANUALS_MODEL_2026_11_19 (Austin, Nov 19, 2026): the ticket's
+ * EXACT model + serial (portal.js sets window.atrCurrentTicketModel /
+ * atrCurrentTicketSerial when the drawer opens) weigh heavily — +6 per
+ * exact-model token hit, +10 when the guide carries the full model
+ * phrase — so a model-tagged guide beats the generic device list.
+ * Guides pinned to this ticket (guides.ticket_id) list first with an
+ * "On this ticket" badge. Guides scoring 3+ are listed, best score
+ * first; ties put Manufacturer sources first, then iFixit, then
+ * Internal/Video. The add form below the filter pastes a guide link
+ * onto this ticket and saves it for the device.
  * No matches (or no device on the ticket) still shows the section with
  * a filter box and a "Search all guides" button that jumps to the
  * Guides tab with the device text pre-filled — no dead ends. */
@@ -6317,7 +6321,7 @@
     return tokens.concat(extra);
   }
 
-  function scoreGuide(g, tokens) {
+  function scoreGuide(g, tokens, modelTokens) {
     var device = String(g.device || '').toLowerCase();
     var title = String(g.title || '').toLowerCase();
     var tags = String(g.tags || '').toLowerCase();
@@ -6329,18 +6333,28 @@
       if (tags.indexOf(t) !== -1) score += 1;
       if (cat.indexOf(t) !== -1) score += 1;
     });
+    /* V176_MANUALS_MODEL_2026_11_19 (Austin, Nov 19, 2026): the exact model
+       weighs heavily - a model-tagged guide must beat the generic list. */
+    var model = String(window.atrCurrentTicketModel || '').toLowerCase().trim();
+    if (model && (device.indexOf(model) !== -1 || tags.indexOf(model) !== -1)) score += 10;
+    (modelTokens || []).forEach(function (t) {
+      if (device.indexOf(t) !== -1 || title.indexOf(t) !== -1 || tags.indexOf(t) !== -1) score += 6;
+    });
     return score;
   }
 
   function matchGuides(deviceText) {
     var tokens = expandTokens(tokenize(deviceText));
+    var modelTokens = expandTokens(tokenize((window.atrCurrentTicketModel || '') + ' ' + (window.atrCurrentTicketSerial || '')));
     if (!tokens.length || !allGuides) return [];
     var scored = [];
+    var curTicket = window.atrCurrentTicketId || null;
     allGuides.forEach(function (g) {
-      var s = scoreGuide(g, tokens);
-      if (s >= MIN_SCORE) scored.push({ g: g, s: s });
+      var s = scoreGuide(g, tokens, modelTokens);
+      if (s >= MIN_SCORE) scored.push({ g: g, s: s, pinned: !!(curTicket && g.ticket_id && String(g.ticket_id) === String(curTicket)) });
     });
     scored.sort(function (a, b) {
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
       if (b.s !== a.s) return b.s - a.s;
       var r = sourceRank(a.g.kind) - sourceRank(b.g.kind);
       if (r !== 0) return r;
@@ -6349,13 +6363,14 @@
     return scored;
   }
 
-  function rowHtml(g) {
+  function rowHtml(g, pinned) {
     var url = safeUrl(g.url);
     var notes = trim(g.notes);
     if (notes.length > 160) notes = notes.slice(0, 160) + '\u2026';
     return '<article class="portal-card p31-card">' +
       '<div class="portal-card-top"><p class="portal-card-title">' + esc(g.title) + '</p>' +
-      '<span class="portal-badge p31-src p31-src-' + esc(g.kind || 'link') + '">' + esc(sourceLabel(g.kind)) + '</span></div>' +
+      '<span class="portal-badge p31-src p31-src-' + esc(g.kind || 'link') + '">' + esc(sourceLabel(g.kind)) + '</span>' +
+      (pinned ? '<span class="portal-badge" style="background:#DFF0EA;color:#0b5a4d;">On this ticket</span>' : '') + '</div>' +
       '<p class="portal-card-meta">' +
         (g.device ? esc(g.device) + ' \u00b7 ' : '') + esc(g.category || 'General') +
         (g.tags ? ' \u00b7 ' + esc(g.tags) : '') + '</p>' +
@@ -6364,6 +6379,7 @@
         (g.file_path ? '<button type="button" class="portal-btn portal-btn-outline portal-btn-sm" data-p31-pdf="' + esc(g.file_path) + '"><i class="fas fa-file-pdf"></i> View PDF</button>'
           : (url ? '<a href="' + esc(url) + '" target="_blank" rel="noopener"><i class="fas fa-arrow-up-right-from-square"></i> Open manual / guide</a>'
               : '<span class="portal-muted">Internal how-to — see notes</span>')) +
+        (pinned ? '' : (window.atrCurrentTicketId ? ' <button type="button" class="portal-btn portal-btn-outline portal-btn-sm" data-p31-attach="' + esc(g.id) + '"><i class="fas fa-paperclip"></i> Attach to this ticket</button>' : '')) +
       '</p></article>';
   }
 
@@ -6400,7 +6416,7 @@
       list.innerHTML = '<div class="portal-empty">Nothing here matches that filter. Clear it, or search all guides.</div>';
       return;
     }
-    var html = rows.slice(0, MAX_ROWS).map(function (m) { return rowHtml(m.g); }).join('');
+    var html = rows.slice(0, MAX_ROWS).map(function (m) { return rowHtml(m.g, m.pinned); }).join('');
     if (rows.length > MAX_ROWS) {
       html += '<p class="portal-muted portal-small p31-more">+ ' + (rows.length - MAX_ROWS) +
         ' more match' + (rows.length - MAX_ROWS === 1 ? '' : 'es') + ' — use &ldquo;Search all guides&rdquo; to browse them.</p>';
@@ -6442,6 +6458,79 @@
       .catch(function () { loadFailed = true; renderList(); });
   }
 
+  /* V176_ADD_GUIDE_2026_11_19 (Austin, Nov 19, 2026): add / update a guide
+   * from inside the ticket. The guides row IS the library entry (device /
+   * tags carry the device, so the matcher finds it for that device again)
+   * and guides.ticket_id pins it to this ticket; deleting the ticket
+   * unlinks the guide, it never deletes it. A guide with the same URL
+   * already in the library is UPDATED (ticket_id + title / device / tags
+   * refreshed), never duplicated. */
+  function guideDeviceForTicket() {
+    var titleEl = document.querySelector('#portal-drawer-body .portal-card-title');
+    return titleEl ? trim(titleEl.textContent) : '';
+  }
+  function afterGuideSaved(savedRow, msgText) {
+    var msgEl = $('p31-add-msg');
+    if (msgEl) msgEl.textContent = msgText;
+    if (savedRow) {
+      var i = -1;
+      (allGuides || []).forEach(function (g, ix) { if (String(g.id) === String(savedRow.id)) i = ix; });
+      if (i >= 0) allGuides[i] = savedRow; else allGuides.push(savedRow);
+      currentMatches = matchGuides(currentKey);
+      renderList();
+    }
+    var urlEl = $('p31-add-url'), titleEl = $('p31-add-title');
+    if (urlEl) urlEl.value = ''; if (titleEl) titleEl.value = '';
+  }
+  function addGuideFromTicket() {
+    var urlEl = $('p31-add-url'), titleEl = $('p31-add-title'), msgEl = $('p31-add-msg');
+    var url = safeUrl(urlEl ? urlEl.value : '');
+    var title = titleEl ? trim(titleEl.value) : '';
+    function note(t) { if (msgEl) msgEl.textContent = t; }
+    if (!url) { note('Paste a guide link first.'); return; }
+    if (!title) { note('Add the guide title too.'); return; }
+    var ticketId = window.atrCurrentTicketId || null;
+    if (!ticketId) { note('Open a ticket first — the guide attaches to the ticket you are in.'); return; }
+    var client = getClient();
+    if (!client) { note('Couldn\u2019t reach the database — try again.'); return; }
+    var model = String(window.atrCurrentTicketModel || '');
+    var serial = String(window.atrCurrentTicketSerial || '');
+    var device = guideDeviceForTicket();
+    var kind = /ifixit\.com/i.test(url) ? 'ifixit' : 'other';
+    var tags = expandTokens(tokenize(device + ' ' + model + ' ' + serial)).join(', ');
+    var category = /playstation|xbox|switch|console/i.test(device + ' ' + model) ? 'Console' : 'General';
+    note('Saving…');
+    client.from('guides').select('id').eq('url', url).limit(1).then(function (q) {
+      if (q.error) { note('Couldn\u2019t save that guide — try again.'); return; }
+      var base = { title: title, device: device, category: category, kind: kind, url: url, tags: tags, ticket_id: ticketId };
+      if (q.data && q.data.length) {
+        client.from('guides').update(base).eq('id', q.data[0].id).select().then(function (u) {
+          if (u.error) { note('Couldn\u2019t save that guide — try again.'); return; }
+          afterGuideSaved(u.data && u.data[0], 'Guide updated and attached to this ticket.');
+        });
+      } else {
+        base.notes = 'Added from a ticket in the drawer.';
+        client.from('guides').insert(base).select().then(function (ins) {
+          if (ins.error) { note('Couldn\u2019t save that guide — try again.'); return; }
+          afterGuideSaved(ins.data && ins.data[0], 'Guide added to this ticket.');
+        });
+      }
+    }).catch(function () { note('Couldn\u2019t save that guide — try again.'); });
+  }
+  function attachGuideToTicket(guideId) {
+    var ticketId = window.atrCurrentTicketId || null;
+    if (!ticketId) return;
+    var client = getClient();
+    if (!client) return;
+    client.from('guides').update({ ticket_id: ticketId }).eq('id', guideId).select().then(function (u) {
+      if (u.error || !u.data || !u.data.length) return;
+      var savedRow = u.data[0];
+      (allGuides || []).forEach(function (g, ix) { if (String(g.id) === String(savedRow.id)) allGuides[ix] = savedRow; });
+      currentMatches = matchGuides(currentKey);
+      renderList();
+    });
+  }
+
   /* ============ SECTION TEMPLATE (the drawer markup, injected) ============ */
   function sectionHtml(deviceText, hasDevice) {
     /* PORTAL_TICKET_ACCORDION_2026_11_02: header button + body
@@ -6459,6 +6548,15 @@
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p31-all-btn">' +
           '<i class="fas fa-magnifying-glass"></i> Search all guides</button>' +
       '</div>' +
+      '<div class="p31-add" style="margin:0 0 0.7rem;">' +
+        '<p class="portal-muted portal-small" style="margin:0 0 0.4rem;">Found the right guide while working? Paste its link here — it attaches to this ticket and is saved for this device.</p>' +
+        '<div class="p2-form-row">' +
+          '<input type="url" id="p31-add-url" placeholder="Paste the guide link (iFixit, manufacturer…)" aria-label="Guide link" />' +
+          '<input type="text" id="p31-add-title" placeholder="Guide title" aria-label="Guide title" />' +
+        '</div>' +
+        '<div class="p2-form-row"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p31-add-btn"><i class="fas fa-plus"></i> Add guide to this ticket</button>' +
+        '<span class="portal-muted portal-small" id="p31-add-msg"></span></div>' +
+      '</div>' +
       '<div id="p31-list"><p class="portal-muted">Loading manuals&hellip;</p></div></div>';
   }
 
@@ -6474,6 +6572,16 @@
     if (search) search.addEventListener('input', renderList);
     var btn = section.querySelector('#p31-all-btn');
     if (btn) btn.addEventListener('click', function () { searchAllGuides(deviceText); });
+    /* V176_ADD_GUIDE_2026_11_19 (Austin, Nov 19, 2026): add / update a guide
+       from inside the ticket - paste the link, it attaches to this ticket
+       and is saved for this device. Attach buttons on matched rows pin an
+       existing guide to this ticket. */
+    var addBtn = section.querySelector('#p31-add-btn');
+    if (addBtn) addBtn.addEventListener('click', addGuideFromTicket);
+    section.addEventListener('click', function (e) {
+      var ab = e.target.closest ? e.target.closest('[data-p31-attach]') : null;
+      if (ab) attachGuideToTicket(ab.getAttribute('data-p31-attach'));
+    });
     /* PORTAL_TICKET_ACCORDION_2026_11_02: fold/unfold with the same
      * 220ms height animation the portal.js sections use. */
     var head = section.querySelector('[data-acc-toggle="manuals"]');

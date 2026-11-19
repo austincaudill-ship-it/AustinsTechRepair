@@ -2303,3 +2303,8 @@ html[data-theme="dark"] .portal-quickactions-label {
 .bizcard-row i { color: #0057B8; width: 18px; text-align: center; }
 .bizcard-row a { color: var(--text, #2b2118); }
 .bizcard-open { display: block; margin: 0 20px 20px; text-align: center; }
+
+/* V176_NO_ZOOM_BREAK_2026_11_19 (Austin, Nov 19, 2026): a double-tap must
+   not zoom the page and break the layout on iPad/phone. manipulation kills
+   double-tap zoom only - pinch zoom still works. */
+body{ touch-action: manipulation; }
