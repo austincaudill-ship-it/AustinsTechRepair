@@ -17,6 +17,13 @@
   margin: 0;
 }
 
+/* V176_11_EDGE_TO_EDGE_2026_11_20 (Austin, Nov 20, 2026): the html element
+   had no background, so in dark mode any strip the body does not paint —
+   the status-bar / safe-area strip at the top, the gesture strip at the
+   bottom — showed default white. html paints the same --bg as the body,
+   so it follows the theme (light #FAF6EE, dark #14100B). */
+html { background: var(--bg, #FAF6EE); }
+
 /* ---------- Top bar ---------- */
 .portal-topbar {
   background: var(--surface, #FFFDF8);
@@ -859,6 +866,20 @@ body.portal-scroll-locked{position:fixed;left:0;right:0;width:100%;overflow:hidd
    already zeroes this margin; its rule is restated last, at winning
    specificity, so this block never loosens it. */
 .portal-topbar-actions{display:flex;align-items:center;gap:.55rem}
+/* V176_11_QA_TIGHTEN_2026_11_20 (Austin, Nov 20, 2026): the Associate Hub
+   Quick Actions were ragged and left-aligned (justify-content:space-between
+   on the inner) while the Guest/Business Hub is a tight centered pill grid.
+   Same look now: the brand line (brand + Associate Hub tag on one line)
+   takes its own centered row, the QUICK ACTIONS label sits centered
+   directly underneath it, and the buttons move up tight under the label
+   (row gap .3rem, same as the Guest Hub's .ghub-qa margin). All 8 buttons
+   stay — Home first (order rules below), New Service Request and Square
+   stay too, Get App stays. Layout only; no id, handler, or button removed. */
+.portal-topbar-inner{justify-content:center;text-align:center;gap:.3rem 1rem;padding-top:calc(.8rem + env(safe-area-inset-top))} /* V176_11_EDGE_TO_EDGE_2026_11_20: the bar's background extends into the notch / status-bar safe area so the installed app fills edge to edge. */
+.portal-brandline{flex-basis:100%;justify-content:center}
+.portal-quickactions-label{text-align:center}
+.portal-topbar-actions{justify-content:center;flex-basis:100%;gap:.45rem;flex-wrap:wrap}
+.portal-topbar-actions .portal-btn{padding:.5rem .9rem;font-size:.85rem}
 body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-logout{display:none}
 @media (min-width:641px){
   #portal-dash-view .portal-head-actions{display:none}
@@ -1705,7 +1726,7 @@ body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-hub-refresh-b
    the panel keeps its drop-down presentation untouched. */
 @media (max-width: 920px) {
   .portal-topbar-actions { gap: 0.45rem; }
-  .portal-topbar-actions .portal-btn { padding: 0.55rem 0.7rem; font-size: 0.88rem; min-width: 0; }
+  .portal-topbar-actions .portal-btn { padding: 0.5rem 0.9rem; font-size: 0.85rem; min-width: 0; } /* V176_11_QA_TIGHTEN_2026_11_20: Guest Hub parity — same pill padding as .ghub-qa .btn. */
   .portal-topbar-actions #portal-hub-home-btn { order: 1; } /* V163_QA_HOME_2026_11_17 (Austin, Nov 17, 2026): Home goes FIRST in Quick Actions in BOTH hubs — the row runs Home, New Service Request, Square, Get App, Refresh, Back to site, Log Out, and the theme toggle last, at every width */
   .portal-topbar-actions #portal-hub-new-btn { order: 2; }
   .portal-topbar-actions #portal-hub-square-btn { order: 3; }
@@ -1879,7 +1900,7 @@ body:has(#portal-dash-view[hidden]) .portal-thumbbar { display: none; }
    dock below is retired. */
 #portal-getapp-btn { margin-left: 0; } /* HUB_HEADER_2026_11_11: was margin-left:auto when the button docked beside the tag; it sits in the actions row now */
 @media (max-width: 920px) {
-  #portal-getapp-btn { padding: 0.55rem 0.7rem; font-size: 0.88rem; }
+  #portal-getapp-btn { padding: 0.5rem 0.9rem; font-size: 0.85rem; } /* V176_11_QA_TIGHTEN_2026_11_20: same pill padding as the other Quick Actions buttons at phone widths (the ID rule beats the class rule here). */
 }
 @media (display-mode: standalone) {
   #portal-getapp-btn, #hub-getapp-panel { display: none !important; }

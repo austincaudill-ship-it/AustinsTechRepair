@@ -2018,8 +2018,10 @@
     function setTheme(theme) {
       root.setAttribute('data-theme', theme);
       if (icon) {
-        icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        icon.className = theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun'; /* V176_11_THEME_ICON_2026_11_20 (Austin, Nov 20, 2026): the icon shows the mode you are IN — moon in dark, sun in light. It was backwards. */
       }
+      /* V176_11_EDGE_TO_EDGE_2026_11_20: the meta theme-color follows the active theme so the Android status / nav bars match the app surface instead of the old navy #0a1628. */
+      var mc = document.querySelector('meta[name="theme-color"]'); if (mc) mc.setAttribute('content', theme === 'dark' ? '#221B14' : '#FFFDF8');
     }
     function applyTheme(theme) {
       setTheme(theme);

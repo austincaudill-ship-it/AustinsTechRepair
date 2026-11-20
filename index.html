@@ -53,7 +53,7 @@
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
   <link rel="manifest" href="manifest.webmanifest" />
-  <meta name="theme-color" content="#0a1628" />
+  <meta name="theme-color" content="#FFFDF8" /> <!-- V176_11_EDGE_TO_EDGE_2026_11_20 (Austin, Nov 20, 2026): was navy #0a1628 — it painted the Android status bar / nav bar and the installed-app splash blue. Now the light app surface; the theme sync in script.js + syncGhubThemeIcon flips it to #221B14 in dark mode. -->
   <script>(function(){try{var s=localStorage.getItem('atr-theme');var t=(s==='dark'||s==='light')?s:((window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
 </head>
 <body>
@@ -10057,7 +10057,8 @@
 <style>
 #guest-hub[hidden]{display:none!important}
 #guest-hub{position:fixed;inset:0;z-index:2000;background:#FAF6EE;color:#2C231A;font-family:'Plus Jakarta Sans',-apple-system,sans-serif;overflow:hidden;display:flex;flex-direction:column} /* V173_SIDEBAR_SCROLL_2026_11_18: the only in-flow children are the topbar and the body (thumb nav, doc overlay and search sheet are fixed/absolute) — the body now takes exactly the space below the real topbar. */
-.ghub-topbar{background:#FFFDF8;border-bottom:1px solid #E6D9C0;padding:.6rem .9rem;text-align:center;flex:none} /* V173_CENTER_QUICK_ACTIONS_2026_11_18 */ /* V173_SIDEBAR_SCROLL_2026_11_18: the topbar never shrinks — the body takes what is left. */
+.ghub-topbar{background:#FFFDF8;border-bottom:1px solid #E6D9C0;padding:.6rem .9rem;text-align:center;flex:none} /* V173_CENTER_QUICK_ACTIONS_2026_11_18 */
+.ghub-topbar{padding-top:calc(.6rem + env(safe-area-inset-top))} /* V176_11_EDGE_TO_EDGE_2026_11_20 (Austin, Nov 20, 2026): the top bar's background extends into the notch / status-bar safe area so the installed app fills edge to edge instead of leaving a white strip above the bar. Desktop (inset 0) is unchanged. */ /* V173_SIDEBAR_SCROLL_2026_11_18: the topbar never shrinks — the body takes what is left. */
 .ghub-brand{font-weight:800;font-size:1rem}
 .ghub-tag{display:inline-block;background:#D9540D;color:#fff;border-radius:999px;padding:.1rem .6rem;font-size:.72rem;font-weight:800;margin-left:.5rem}
 .ghub-qa-label{font-size:.68rem;font-weight:800;letter-spacing:1.5px;color:#7D6C5B;margin-top:.45rem}
@@ -10114,10 +10115,6 @@
 .ghub-greet-line{margin:.5rem 0 0;font-size:.95rem;color:#7D6C5B;text-align:center} /* V173_CENTER_QUICK_ACTIONS_2026_11_18 */
 .ghub-greet-line #ghub-greet{font-weight:800;color:#2C231A}
 .ghub-greet-role{display:inline-block;background:#D9540D;color:#fff;border-radius:999px;padding:.05rem .55rem;font-size:.72rem;font-weight:800}
-/* V171_PREVIEW_2026_11_18: staff-only "Preview as" switcher — sits under the greeting in Quick Actions, never a guest feature. */
-.ghub-preview{display:contents} /* V176_6_2_PREVIEW_INLINE_2026_11_19 (Austin, Nov 19, 2026): the wrapper makes no box of its own — the three buttons lay out as Quick Actions row items. The .ghub-preview[hidden] guard below still hides them for guests; the aria-pressed ring rule below still marks the active preview. */
-.ghub-preview[hidden]{display:none} /* V172_AUDIENCE_OFFERS_2026_11_18 (Austin, Nov 18, 2026): the "Preview as" switcher is staff-only — without this guard its display:flex rule beats [hidden] and it renders for guests too (caught by v172's visual proof; same class of bug as the v171 signup EIN field). */
-.ghub-preview button[aria-pressed="true"]{background:transparent;border-color:#D9540D;color:var(--ghub-text);outline:2px solid #D9540D;outline-offset:1px}
 .ghub-greet-sep{margin:0 .1rem}
 html[data-theme="dark"] .ghub-greet-line{color:var(--muted,#A89880)}
 html[data-theme="dark"] .ghub-greet-line #ghub-greet{color:var(--ink,#F0E8DA)}
@@ -10231,8 +10228,6 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
       <a class="btn btn-outline btn-sm" href="https://austinstechrepairgroup.com/" data-ghub-qa="backsite"><i class="fas fa-arrow-left"></i> Back to site</a>
       <button class="btn btn-outline btn-sm" type="button" data-ghub-qa="logout"><i class="fas fa-sign-out-alt"></i> Log Out</button>
       <button class="btn btn-outline btn-sm" type="button" data-ghub-qa="theme" aria-label="Toggle dark mode" title="Toggle dark/light mode"><i class="fas fa-moon" id="ghub-theme-icon"></i></button>
-      <!-- V176_6_2_PREVIEW_INLINE_2026_11_19 (Austin, Nov 19, 2026): the "Preview as (staff testing)" row ate a whole strip of iPad height. The three buttons live in the Quick Actions row now, next to the moon button — same buttons, same staff-only gating (paintGhubPreview still owns #ghub-preview), no label, no extra row. -->
-      <span class="ghub-preview" id="ghub-preview" hidden><button class="btn btn-outline btn-sm" type="button" data-ghub-preview="guest" aria-pressed="false">Guest</button><button class="btn btn-outline btn-sm" type="button" data-ghub-preview="business" aria-pressed="false">Business</button><!-- V171_VIEW_SWITCHER_2026_11_18 (Austin, Nov 18, 2026): third option — Associate opens the Associate Hub (portal.html), the real one staff already reach; the switcher is one control for all three views. No preview state inside the Associate Hub. --><button class="btn btn-outline btn-sm" type="button" data-ghub-preview="associate" aria-pressed="false">Associate</button></span>
     </div>
     <!-- V169_GUEST_GREETING_2026_11_18 (Austin, Nov 18, 2026): the daypart greeting + first
          name + status + time + date lives IN QUICK ACTIONS under the Home
@@ -10241,7 +10236,6 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
          every pane, so no pane switch can hide it. Same ids the Home pane
          used to carry, so paintHome() below needs no id changes. -->
     <p class="ghub-greet-line"><span id="ghub-greet">Hello</span> <span class="ghub-greet-sep" aria-hidden="true">&middot;</span> <span class="ghub-greet-role" id="ghub-greet-role">Guest</span> <span class="ghub-greet-sep" aria-hidden="true">&middot;</span> <span class="ghub-clock" id="ghub-clock"></span> <span class="ghub-greet-sep" aria-hidden="true">&middot;</span> <span class="acct-muted" id="acct-app-version" hidden></span></p><!-- V173_APP_VERSION_MOVE_2026_11_18 (owner, Nov 18, 2026): the version line lives here now, next to the date in the greeting line under Quick Actions — visible in every pane, never buried. Same id, same fill logic (paintAppVersion), same recording. -->
-    <!-- V171_PREVIEW_2026_11_18 (Austin, Nov 18, 2026): staff-only "Preview as" switcher — Super Admin / staff can flip the Hub between the Guest face, the Business face, and the Associate Hub to test what each audience sees. Hidden by default; only a confirmed staff role reveals it. Session-only override, nothing stored — a reload returns to the account's real audience. -->
       <!-- V176_GETAPP_2026_11_19 (Austin, Nov 19, 2026): Get App opens the
            install steps right here inside the hub - it never closes the hub
            and never jumps to the main page. iOS: Share -> Add to Home Screen.
@@ -11425,24 +11419,18 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
     if (ghubStaffRole !== undefined || ghubStaffRoleLoading) return;
     sb = sb || client(); if (!sb) return;
     function run(u) {
-      if (!u) { ghubStaffRole = null; ghubStaffRoleUid = ''; paintGhubPreview(); return; }
+      if (!u) { ghubStaffRole = null; ghubStaffRoleUid = ''; return; }
       ghubStaffRoleUid = u; ghubStaffRoleLoading = true;
       sb.from('employee_profiles').select('id,role').eq('id', u).maybeSingle().then(function (r) {
         ghubStaffRoleLoading = false;
         ghubStaffRole = (r.data && r.data.id) ? (r.data.role || '') : null;
-        paintHome(); paintGhubPreview();
-      }).catch(function () { ghubStaffRoleLoading = false; ghubStaffRole = null; ghubStaffRoleUid = u; paintHome(); paintGhubPreview(); /* V174_BOTH_HUBS_2026_11_18: a failed read fails closed — not staff — so a stale role can never survive a bad read. The role re-reads on the next sign-in (a new uid invalidates the cache) or reload. */ });
+        paintHome();
+      }).catch(function () { ghubStaffRoleLoading = false; ghubStaffRole = null; ghubStaffRoleUid = u; paintHome(); /* V174_BOTH_HUBS_2026_11_18: a failed read fails closed — not staff — so a stale role can never survive a bad read. The role re-reads on the next sign-in (a new uid invalidates the cache) or reload. */ });
     }
     if (uid) run(uid);
-    else sb.auth.getSession().then(function (s) { var u2 = s && s.data && s.data.session && s.data.session.user; run(u2 && u2.id); }).catch(function () { ghubStaffRole = null; paintHome(); paintGhubPreview(); /* V174_BOTH_HUBS_2026_11_18: fail closed on a failed session read too. */ });
+    else sb.auth.getSession().then(function (s) { var u2 = s && s.data && s.data.session && s.data.session.user; run(u2 && u2.id); }).catch(function () { ghubStaffRole = null; paintHome(); /* V174_BOTH_HUBS_2026_11_18: fail closed on a failed session read too. */ });
   }
-  /* V171_PREVIEW_2026_11_18 (Austin, Nov 18, 2026): staff-only preview override —
-     in-memory only, nothing stored. A reload returns to the account's real
-     audience. While previewing, the Hub paints the previewed face everywhere
-     paintBhubAudience reaches (tag, offers, consent prices, door label,
-     Documents head) — but the greeting badge does NOT follow the preview:
-     it always shows the staff role for staff (V173_GREETING_BADGE_2026_11_18), because the badge
-     says who is signed in, not which face is showing. */
+  /* V176_11_SWITCHER_OUT_2026_11_20 (Austin, Nov 20, 2026): the Preview-as switcher is gone — the Hub always shows the account's real audience now. ghubPreview stays null forever; ghubIsBusiness() and ghubGreetRole() still read it and fall through to the real audience. The greeting badge still shows the staff role (V173_GREETING_BADGE). Staff reach the Associate Hub via the account dropdown #emp-dash-link (portal.html), staff-gated by the portal-visibility module in script.js. */
   var ghubPreview = null; /* null = real audience; 'guest' | 'business' = staff preview */
   function ghubRealIsBusiness() {
     var t = (user && user.user_metadata && user.user_metadata.account_type) || '';
@@ -11461,29 +11449,6 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
     if (ghubPreview) return ghubPreview === 'business' ? 'Business' : 'Guest';
     return ghubIsBusiness() ? 'Business' : 'Guest';
   }
-  function paintGhubPreview() {
-    var box = $('ghub-preview'); if (!box) return;
-    var staff = !!ghubStaffRole;
-    box.hidden = !staff;
-    if (!staff) return;
-    var eff = ghubPreview || (ghubRealIsBusiness() ? 'business' : 'guest');
-    box.querySelectorAll('[data-ghub-preview]').forEach(function (b) {
-      b.setAttribute('aria-pressed', b.getAttribute('data-ghub-preview') === eff ? 'true' : 'false');
-    });
-  }
-  function setGhubPreview(aud) {
-    if (!ghubStaffRole) return; /* staff-only: a tap can only land while the switcher is shown */
-    /* V171_VIEW_SWITCHER_2026_11_18 (Austin, Nov 18, 2026): the Associate option opens
-       the Associate Hub (portal.html) — the real one staff already reach.
-       It is a navigation, not a preview: no preview state is set and
-       nothing is stored. */
-    if (aud === 'associate') { window.location.href = 'portal.html'; return; }
-    ghubPreview = (aud === 'guest' || aud === 'business') ? aud : null;
-    paintBhubAudience();
-    paintHome();
-    paintGhubPreview();
-  }
-  window.atrGhubPreview = setGhubPreview;
   window.atrGhubGreetRole = ghubGreetRole;
   window.atrGhubStaffRole = function () { return ghubStaffRole; };
   window.atrGhubPreviewValue = function () { return ghubPreview; };
@@ -11508,7 +11473,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
     var sheet = $('ghub-search-sheet'); if (sheet) sheet.setAttribute('aria-label', 'Search the ' + name);
     var st = $('ghub-search-title'); if (st) st.textContent = 'Search the ' + name;
     var si = $('ghub-search-input'); if (si) si.setAttribute('aria-label', 'Search the ' + name);
-    var bl = $('acct-guesthub-label'); if (bl) bl.textContent = ghubStaffRole ? 'Guest Hub' : name; /* V172_BUSINESS_HUB_ROW_2026_11_18: for staff the row is the fixed "Guest Hub" entry (it opens the Guest face); only a non-staff account's own row reads its hub. */
+    var bl = $('acct-guesthub-label'); if (bl) bl.textContent = ghubStaffRole ? 'Guest Hub' : name; /* V176_11_SWITCHER_OUT_2026_11_20: for staff the row is the fixed "Guest Hub" entry (it opens the Hub in the account's real audience); only a non-staff account's own row reads its hub. */
     var nh = $('acct-notif-hub'); if (nh) nh.textContent = name;
     /* display:none inline (not the hidden property): .mm-tier-row
        carries author display rules, which would beat [hidden]. */
@@ -11571,7 +11536,6 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
     if (ac && cust) ac.innerHTML = '<p><strong>' + esc(cust.name || '') + '</strong></p><p>' + esc(cust.email || '') + '</p><p>' + esc(cust.phone || '') + '</p><p>' + esc(cust.address || '') + '</p><p class="ghub-muted">Only your own details are shown here.</p>';
     var mc = $('ghub-member-card');
     if (mc) { var tier = $('acct-qr-tier'), pts = $('acct-points-num'); mc.innerHTML = '<p><strong>' + esc(tier ? tier.textContent : 'ATR One Free') + '</strong></p><p>Reward points: <strong>' + esc(pts ? pts.textContent : '0') + '</strong></p>'; }
-    paintGhubPreview(); /* V171_PREVIEW_2026_11_18: keep the switcher state fresh on every paint */
   }
   /* V169_GUEST_HOME_2026_11_18: the Home landing page reads the same two tables the
      Associate Hub Home reads — company news (portal_home_posts) and
@@ -11655,10 +11619,10 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
       if (!u) { btn.hidden = true; var _bb0 = $('acct-bizhub-btn'); if (_bb0) _bb0.hidden = true; /* V172_BUSINESS_HUB_ROW_2026_11_18 */ return; }
       return sb.from('employee_profiles').select('id,role').eq('id', u.id).maybeSingle().then(function (r) {
         var staff = !!(r.data && r.data.id);
-        /* V172_BUSINESS_HUB_ROW_2026_11_18 (Austin, Nov 18, 2026): staff see all three hub rows — Guest Hub opens the Guest face, Business Hub opens the Business face, Associate Hub is the real Associate Hub. The Guest Hub row is no longer hidden for staff (it was); non-staff still see only their own hub row, and never the Business Hub row. */
+        /* V176_11_SWITCHER_OUT_2026_11_20 (Austin, Nov 20, 2026): staff see all three hub rows — both Hub rows open the Hub in the account's real audience now that the preview is gone; Associate Hub is the real Associate Hub. The Guest Hub row is no longer hidden for staff (it was); non-staff still see only their own hub row, and never the Business Hub row. */
         btn.hidden = false; /* V172_BUSINESS_HUB_ROW_2026_11_18 */
         var bizBtn = $('acct-bizhub-btn'); if (bizBtn) bizBtn.hidden = !staff; /* V172_BUSINESS_HUB_ROW_2026_11_18 */
-        /* V172_BUSINESS_HUB_ROW_2026_11_18: stash the staff role where the hub's preview helpers read it, so the row taps can set the preview synchronously — the hub's own role read may not have run yet when the account page opens. Only on a clean read: a transient error leaves the cached role alone, same as loadGhubStaffRole. */
+        /* V172_BUSINESS_HUB_ROW_2026_11_18: stash the staff role where the hub's preview helpers read it, so the greeting badge can show the staff role at once — the hub's own role read may not have run yet when the account page opens. Only on a clean read: a transient error leaves the cached role alone, same as loadGhubStaffRole. */
         if (!r.error && staff && r.data && r.data.role) { ghubStaffRole = r.data.role; ghubStaffRoleUid = u.id; } else if (!r.error && !staff) { ghubStaffRole = null; ghubStaffRoleUid = u.id; } else if (r.error) { ghubStaffRole = null; ghubStaffRoleUid = u.id; } /* V173_GREETING_BADGE_2026_11_18: never stash an empty role — '' would pin ghubStaffRole to a falsy 'read' value, loadGhubStaffRole would never re-read, and the badge would stay on the audience forever. A staff row with no role leaves the cached role alone so the Hub's own read can still resolve it. V174_BOTH_HUBS_2026_11_18: a failed read (r.error) fails closed to not-staff instead — a stale staff role is what showed Daniel both hubs. */
         /* V170_ROUTING_2026_11_18: the account-page door reads the hub the account
            actually lands in — Business Hub for a business account, Guest
@@ -11708,12 +11672,13 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
     } catch (e) { return false; }
   };
   /* V163_GUEST_QA_2026_11_17: the Hub moon mirrors the site header moon
-     — same 'atr-theme' switch, same sun-in-dark / moon-in-light icon.
+     — same 'atr-theme' switch — the icon shows the mode you are IN: moon in dark, sun in light (V176_11, Austin Nov 20, 2026 — it was backwards).
      Both icons are synced here so the header and the Hub never disagree. */
   function syncGhubThemeIcon() {
     var dark = document.documentElement.getAttribute('data-theme') === 'dark';
-    var gi = $('ghub-theme-icon'); if (gi) gi.className = dark ? 'fas fa-sun' : 'fas fa-moon';
-    var si = document.getElementById('theme-icon'); if (si) si.className = dark ? 'fas fa-sun' : 'fas fa-moon';
+    var gi = $('ghub-theme-icon'); if (gi) gi.className = dark ? 'fas fa-moon' : 'fas fa-sun'; /* V176_11_THEME_ICON_2026_11_20 (Austin, Nov 20, 2026): the icon shows the mode you are IN — moon in dark, sun in light. It was backwards. */
+    var si = document.getElementById('theme-icon'); if (si) si.className = dark ? 'fas fa-moon' : 'fas fa-sun';
+    var mc = document.querySelector('meta[name="theme-color"]'); if (mc) mc.setAttribute('content', dark ? '#221B14' : '#FFFDF8'); /* V176_11_EDGE_TO_EDGE_2026_11_20: the Android status / nav bars follow the active theme — the meta was stuck on navy #0a1628, which painted a blue band. Light #FFFDF8, dark #221B14 (the surfaces). */
   }
   window.atrGuestHubSyncThemeIcon = syncGhubThemeIcon;
   /* V163_GUEST_SEARCH_2026_11_17 (Austin, Nov 17, 2026): the Guest Hub
@@ -11825,16 +11790,15 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
   window.atrOpenGuestHub = openHub;
   window.atrCloseGuestHub = closeHub;
   window.atrGhubGate = gate; /* V172_BUSINESS_HUB_ROW_2026_11_18: opening My Account re-runs the hub-row gate (see the account-open handler) so the rows always match the current session. */
-  /* V172_BUSINESS_HUB_ROW_2026_11_18 (Austin, Nov 18, 2026): the account dropdown's hub rows open the Hub in a face — staff tap Guest Hub for the Guest face, Business Hub for the Business face. The preview is the same session-only override as the "Preview as" switcher (reload resets, nothing stored). The row is hidden unless gate() confirmed staff, and setGhubPreview itself refuses non-staff, so a tap from a non-staff account simply opens the real audience. Both rows land on Home — opening the Hub lands on Home, never straight into the Service Request (V174_HUB_LANDING_2026_11_18). */
-  function openHubAs(aud) {
-    if (ghubStaffRole) setGhubPreview(aud); /* V172_BUSINESS_HUB_ROW_2026_11_18 */
+  /* V176_11_SWITCHER_OUT_2026_11_20 (Austin, Nov 20, 2026): the Preview-as switcher is gone — the account dropdown's hub rows open the Hub in the account's real audience now. Staff tap Guest Hub or Business Hub and land on Home in the account's real audience; the Business Hub row is still hidden unless gate() confirmed staff. Both rows land on Home — opening the Hub lands on Home, never straight into the Service Request (V174_HUB_LANDING_2026_11_18). */
+  function openHubAs(aud) { /* aud is kept for the callers; the preview override is gone, so the argument no longer changes anything. */
     openHub('home'); /* V174_HUB_LANDING_2026_11_18 (Austin, Nov 18, 2026): opening the Guest Hub or the Business Hub lands on Home, never straight into the Service Request. */
   }
   document.addEventListener('DOMContentLoaded', function () {
     var btn = $('acct-guesthub-btn');
-    if (btn) btn.addEventListener('click', function () { openHubAs('guest'); }); /* V172_BUSINESS_HUB_ROW_2026_11_18: staff preview the Guest face; non-staff open their own hub, unchanged. */
+    if (btn) btn.addEventListener('click', function () { openHubAs('guest'); }); /* V176_11_SWITCHER_OUT_2026_11_20: the preview is gone — the row opens the Hub in the account's real audience. */
     var bizBtn = $('acct-bizhub-btn'); /* V172_BUSINESS_HUB_ROW_2026_11_18 */
-    if (bizBtn) bizBtn.addEventListener('click', function () { openHubAs('business'); }); /* V172_BUSINESS_HUB_ROW_2026_11_18 */
+    if (bizBtn) bizBtn.addEventListener('click', function () { openHubAs('business'); }); /* V176_11_SWITCHER_OUT_2026_11_20 */
     document.querySelectorAll('#guest-hub [data-ghub]').forEach(function (b) {
       b.addEventListener('click', function () {
         if (b.getAttribute('data-ghub') === 'search') { openGhubSearch(); return; }
@@ -11954,10 +11918,6 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
           syncGhubThemeIcon();
         }
       });
-    });
-    /* V171_PREVIEW_2026_11_18: the staff-only "Preview as" switcher — same direct-listener pattern as the Quick Actions row above. */
-    document.querySelectorAll('#guest-hub [data-ghub-preview]').forEach(function (b) {
-      b.addEventListener('click', function () { setGhubPreview(b.getAttribute('data-ghub-preview')); });
     });
     var ne = $('acct-notif-email'), nt2 = $('acct-notif-text');
     /* V162_GUEST_GUIDES_2026_11_17 (Austin, Nov 17, 2026): the Guides

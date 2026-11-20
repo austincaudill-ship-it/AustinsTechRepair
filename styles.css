@@ -44,7 +44,7 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; font-size: 16px; }
+html { scroll-behavior: smooth; font-size: 16px; background: var(--bg); } /* V176_11_EDGE_TO_EDGE_2026_11_20 (Austin, Nov 20, 2026): the html element had no background, so in dark mode any strip the body does not paint — the status-bar / safe-area strip at the top, the gesture strip at the bottom — showed default white. html paints the same --bg as the body, so it follows the theme (light #FAF6EE, dark #14100B). */
 body {
   font-family: var(--font-body);
   background: var(--bg);

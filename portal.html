@@ -6401,12 +6401,37 @@
     if (out.indexOf('playstation') !== -1) { add('ps5'); add('ps4'); }
     return out;
   }
+  /* V176_11_GUIDES_MULTILINE_2026_11_20 (Austin, Nov 20, 2026): a general
+   * manual hub tagged for MANY devices (e.g. "Apple Manuals, Specs &
+   * Downloads", tagged Mac, iPad, iPhone, Watch, AirPods) is not this
+   * device's manual — the v176.10 gate still let it through because it
+   * carries the brand word and one product word. A guide whose device /
+   * title / tags span two or more product lines never lists on a
+   * single-device ticket. Same-line aliases (ps5/ps4/playstation,
+   * mac/macbook) count as ONE line; pinned guides still list. */
+  var PRODUCT_LINES = [
+    ['iphone'], ['ipad'], ['mac', 'macbook', 'imac'],
+    ['watch', 'smartwatch'], ['airpods'], ['homepod'],
+    ['playstation', 'ps4', 'ps5'], ['xbox'], ['switch', 'nintendo'],
+    ['galaxy'], ['pixel']
+  ];
+  function guideProductLines(g) {
+    var hay = [g.device, g.title, g.tags].join(' ').toLowerCase();
+    var n = 0;
+    PRODUCT_LINES.forEach(function (line) {
+      var hit = line.some(function (t) { return hay.indexOf(t) !== -1; });
+      if (hit) n++;
+    });
+    return n;
+  }
   function guideBelongs(g, brandTokens, productTokens, ticketId) {
     if (ticketId && g.ticket_id && String(g.ticket_id) === String(ticketId)) return true;
     var hay = [g.device, g.title, g.tags].join(' ').toLowerCase();
     var brandHit = brandTokens.some(function (t) { return hay.indexOf(t) !== -1; });
     if (!brandHit) return false;
-    return productTokens.some(function (t) { return hay.indexOf(t) !== -1; });
+    if (!productTokens.some(function (t) { return hay.indexOf(t) !== -1; })) return false;
+    /* V176_11_GUIDES_MULTILINE_2026_11_20: a multi-device hub is not this device's manual. */
+    return guideProductLines(g) < 2;
   }
 
   function scoreGuide(g, tokens, modelTokens) {

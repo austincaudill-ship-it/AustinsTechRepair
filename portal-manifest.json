@@ -5,7 +5,7 @@
   "start_url": "portal.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#FAF6EE",
+  "background_color": "#FFFDF8",
   "theme_color": "#FFFDF8",
   "icons": [
     {
