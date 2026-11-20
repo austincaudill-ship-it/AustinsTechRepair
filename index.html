@@ -11411,7 +11411,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
   var ghubStaffRoleUid = '';
   var ghubStaffRoleLoading = false;
   /* V174_BOTH_HUBS_2026_11_18 (Austin, Nov 18, 2026): the cached staff role is cleared on sign-out (hub Log Out + exitAccount) and re-checked on entering the hub — a stale staff session must never show a guest both hubs again. A failed role read fails closed (not staff), never leaves a stale staff role behind. */
-  function clearGhubStaffRole() { ghubStaffRole = undefined; ghubStaffRoleUid = ''; ghubStaffRoleLoading = false; }
+  function clearGhubStaffRole() { ghubStaffRole = undefined; ghubStaffRoleUid = ''; ghubStaffRoleLoading = false; ghubPreview = null; /* V176_12_DROPDOWN_HUBS_2026_11_20 (Austin, Nov 20, 2026): sign-out clears the dropdown-chosen hub face too, so the next sign-in on this page life never inherits the last session's face — the same stale-hub class of bug as V174 (Daniel saw both hubs). */ }
   window.atrClearGhubStaffRole = clearGhubStaffRole;
   function loadGhubStaffRole() {
     var uid = (user && user.id) || '';
@@ -11430,7 +11430,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
     if (uid) run(uid);
     else sb.auth.getSession().then(function (s) { var u2 = s && s.data && s.data.session && s.data.session.user; run(u2 && u2.id); }).catch(function () { ghubStaffRole = null; paintHome(); /* V174_BOTH_HUBS_2026_11_18: fail closed on a failed session read too. */ });
   }
-  /* V176_11_SWITCHER_OUT_2026_11_20 (Austin, Nov 20, 2026): the Preview-as switcher is gone — the Hub always shows the account's real audience now. ghubPreview stays null forever; ghubIsBusiness() and ghubGreetRole() still read it and fall through to the real audience. The greeting badge still shows the staff role (V173_GREETING_BADGE). Staff reach the Associate Hub via the account dropdown #emp-dash-link (portal.html), staff-gated by the portal-visibility module in script.js. */
+  /* V176_12_DROPDOWN_HUBS_2026_11_20 (Austin, Nov 20, 2026): the Preview-as switcher stays OUT of the hubs (v176.11) — no in-hub UI ever sets the audience. But the account dropdown's hub rows DO set it, staff-only: ghubPreview is the dropdown-chosen hub face ('guest' | 'business'), set by openHubAs() only when the staff role is known, and cleared on sign-out (clearGhubStaffRole) so the next sign-in on this page life never inherits it. With no override, ghubIsBusiness() and ghubGreetRole() fall through to the account's real audience, exactly as v176.11 left it. The override is in-memory only: a reload re-opens the Hub in the real audience. The greeting badge still shows the staff role (V173_GREETING_BADGE). Staff reach the Associate Hub via the account dropdown #emp-dash-link (portal.html), staff-gated by the portal-visibility module in script.js. */
   var ghubPreview = null; /* null = real audience; 'guest' | 'business' = staff preview */
   function ghubRealIsBusiness() {
     var t = (user && user.user_metadata && user.user_metadata.account_type) || '';
@@ -11473,7 +11473,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
     var sheet = $('ghub-search-sheet'); if (sheet) sheet.setAttribute('aria-label', 'Search the ' + name);
     var st = $('ghub-search-title'); if (st) st.textContent = 'Search the ' + name;
     var si = $('ghub-search-input'); if (si) si.setAttribute('aria-label', 'Search the ' + name);
-    var bl = $('acct-guesthub-label'); if (bl) bl.textContent = ghubStaffRole ? 'Guest Hub' : name; /* V176_11_SWITCHER_OUT_2026_11_20: for staff the row is the fixed "Guest Hub" entry (it opens the Hub in the account's real audience); only a non-staff account's own row reads its hub. */
+    var bl = $('acct-guesthub-label'); if (bl) bl.textContent = ghubStaffRole ? 'Guest Hub' : name; /* V176_12_DROPDOWN_HUBS_2026_11_20: for staff the row is the fixed "Guest Hub" entry (it opens the guest face via openHubAs); only a non-staff account's own row reads its hub. */
     var nh = $('acct-notif-hub'); if (nh) nh.textContent = name;
     /* display:none inline (not the hidden property): .mm-tier-row
        carries author display rules, which would beat [hidden]. */
@@ -11619,7 +11619,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
       if (!u) { btn.hidden = true; var _bb0 = $('acct-bizhub-btn'); if (_bb0) _bb0.hidden = true; /* V172_BUSINESS_HUB_ROW_2026_11_18 */ return; }
       return sb.from('employee_profiles').select('id,role').eq('id', u.id).maybeSingle().then(function (r) {
         var staff = !!(r.data && r.data.id);
-        /* V176_11_SWITCHER_OUT_2026_11_20 (Austin, Nov 20, 2026): staff see all three hub rows — both Hub rows open the Hub in the account's real audience now that the preview is gone; Associate Hub is the real Associate Hub. The Guest Hub row is no longer hidden for staff (it was); non-staff still see only their own hub row, and never the Business Hub row. */
+        /* V176_12_DROPDOWN_HUBS_2026_11_20 (Austin, Nov 20, 2026): staff see all three hub rows — the Guest Hub row opens the guest face and the Business Hub row the business face (openHubAs, staff-only override); Associate Hub is the real Associate Hub (portal.html). The Guest Hub row is no longer hidden for staff (it was); non-staff still see only their own hub row, and never the Business Hub row. */
         btn.hidden = false; /* V172_BUSINESS_HUB_ROW_2026_11_18 */
         var bizBtn = $('acct-bizhub-btn'); if (bizBtn) bizBtn.hidden = !staff; /* V172_BUSINESS_HUB_ROW_2026_11_18 */
         /* V172_BUSINESS_HUB_ROW_2026_11_18: stash the staff role where the hub's preview helpers read it, so the greeting badge can show the staff role at once — the hub's own role read may not have run yet when the account page opens. Only on a clean read: a transient error leaves the cached role alone, same as loadGhubStaffRole. */
@@ -11790,15 +11790,16 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
   window.atrOpenGuestHub = openHub;
   window.atrCloseGuestHub = closeHub;
   window.atrGhubGate = gate; /* V172_BUSINESS_HUB_ROW_2026_11_18: opening My Account re-runs the hub-row gate (see the account-open handler) so the rows always match the current session. */
-  /* V176_11_SWITCHER_OUT_2026_11_20 (Austin, Nov 20, 2026): the Preview-as switcher is gone — the account dropdown's hub rows open the Hub in the account's real audience now. Staff tap Guest Hub or Business Hub and land on Home in the account's real audience; the Business Hub row is still hidden unless gate() confirmed staff. Both rows land on Home — opening the Hub lands on Home, never straight into the Service Request (V174_HUB_LANDING_2026_11_18). */
-  function openHubAs(aud) { /* aud is kept for the callers; the preview override is gone, so the argument no longer changes anything. */
+  /* V176_12_DROPDOWN_HUBS_2026_11_20 (Austin, Nov 20, 2026): the account dropdown's hub rows open THAT hub — Guest Hub opens the guest face, Business Hub the business face — for staff only. The audience override is the old ghubPreview variable (v171) with no in-hub UI behind it: the Preview-as switcher stays gone (v176.11). A non-staff tap never gets an override, so the row opens the Hub in the account's real audience and a guest can never reach the other face. Both rows land on Home — opening the Hub lands on Home, never straight into the Service Request (V174_HUB_LANDING_2026_11_18). */
+  function openHubAs(aud) {
+    if ((aud === 'guest' || aud === 'business') && ghubStaffRole) ghubPreview = aud; /* V176_12_DROPDOWN_HUBS_2026_11_20: staff-only — ghubStaffRole is a role string for staff, null for a guest, undefined until the role read resolves; all three falsy cases fail closed to the real audience. */
     openHub('home'); /* V174_HUB_LANDING_2026_11_18 (Austin, Nov 18, 2026): opening the Guest Hub or the Business Hub lands on Home, never straight into the Service Request. */
   }
   document.addEventListener('DOMContentLoaded', function () {
     var btn = $('acct-guesthub-btn');
-    if (btn) btn.addEventListener('click', function () { openHubAs('guest'); }); /* V176_11_SWITCHER_OUT_2026_11_20: the preview is gone — the row opens the Hub in the account's real audience. */
+    if (btn) btn.addEventListener('click', function () { openHubAs('guest'); }); /* V176_12_DROPDOWN_HUBS_2026_11_20: staff open the guest face; anyone else opens the Hub in the account's real audience. */
     var bizBtn = $('acct-bizhub-btn'); /* V172_BUSINESS_HUB_ROW_2026_11_18 */
-    if (bizBtn) bizBtn.addEventListener('click', function () { openHubAs('business'); }); /* V176_11_SWITCHER_OUT_2026_11_20 */
+    if (bizBtn) bizBtn.addEventListener('click', function () { openHubAs('business'); }); /* V176_12_DROPDOWN_HUBS_2026_11_20: staff-only row (gate) — opens the business face. */
     document.querySelectorAll('#guest-hub [data-ghub]').forEach(function (b) {
       b.addEventListener('click', function () {
         if (b.getAttribute('data-ghub') === 'search') { openGhubSearch(); return; }
