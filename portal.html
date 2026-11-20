@@ -6191,6 +6191,14 @@
  * first; ties put Manufacturer sources first, then iFixit, then
  * Internal/Video. The add form below the filter pastes a guide link
  * onto this ticket and saves it for the device.
+ * V176_10_GUIDES_GATE_2026_11_20 (Austin, Nov 20, 2026): before scoring,
+ * each guide must belong to this device - pinned to this ticket, or
+ * passing BOTH a brand check (a token from the ticket brand's family)
+ * and a product check (a token from the ticket's device-type + model
+ * words). The scorer alone let iPhone, iPad, Mac, Samsung and Xbox
+ * guides onto an Apple Watch ticket; only the 3 Watch guides belong
+ * there. The gate applies ONLY to this list - "Search all guides"
+ * and the Guides tab still show the full library.
  * No matches (or no device on the ticket) still shows the section with
  * a filter box and a "Search all guides" button that jumps to the
  * Guides tab with the device text pre-filled — no dead ends. */
@@ -6362,6 +6370,45 @@
     return tokens.concat(extra);
   }
 
+  /* V176_10_GUIDES_GATE_2026_11_20 (Austin, Nov 20, 2026): the ticket
+   * shows ONLY manuals for the device on that ticket. A guide lists
+   * here only if it is pinned to this ticket (guides.ticket_id) or it
+   * passes BOTH checks against its device / title / tags:
+   *  - brand: at least one token from the ticket brand's family
+   *    (apple -> apple/iphone/ipad/mac; sony/playstation ->
+   *    sony/playstation/ps5/ps4; samsung/galaxy; google/pixel;
+   *    xbox/microsoft; nintendo/switch). 'console' is NOT a brand
+   *    word - it would let every console guide through the brand
+   *    check, so it is dropped from the family here.
+   *  - product: at least one product token from the ticket's
+   *    device-type words + model words (the device label minus the
+   *    brand words, plus the model). PlayStation tickets also match
+   *    ps5/ps4-filed guides - same product line. */
+  var BRAND_KEYS = ['apple', 'iphone', 'ipad', 'mac', 'macbook', 'samsung', 'galaxy', 'google', 'pixel', 'sony', 'playstation', 'ps5', 'ps4', 'xbox', 'microsoft', 'nintendo', 'switch'];
+  function ticketBrandTokens(deviceText) {
+    var keys = tokenize(deviceText).filter(function (t) { return BRAND_KEYS.indexOf(t) !== -1; });
+    return expandTokens(keys).filter(function (t) { return t !== 'console'; });
+  }
+  function ticketProductTokens(deviceText, model) {
+    var dt = tokenize(deviceText);
+    var mt = tokenize(model || '');
+    var brand = dt.filter(function (t) { return BRAND_KEYS.indexOf(t) !== -1; });
+    var set = {};
+    var out = [];
+    function add(t) { if (!set[t]) { set[t] = true; out.push(t); } }
+    dt.forEach(function (t) { if (brand.indexOf(t) === -1 && mt.indexOf(t) === -1) add(t); });
+    mt.forEach(add);
+    if (out.indexOf('playstation') !== -1) { add('ps5'); add('ps4'); }
+    return out;
+  }
+  function guideBelongs(g, brandTokens, productTokens, ticketId) {
+    if (ticketId && g.ticket_id && String(g.ticket_id) === String(ticketId)) return true;
+    var hay = [g.device, g.title, g.tags].join(' ').toLowerCase();
+    var brandHit = brandTokens.some(function (t) { return hay.indexOf(t) !== -1; });
+    if (!brandHit) return false;
+    return productTokens.some(function (t) { return hay.indexOf(t) !== -1; });
+  }
+
   function scoreGuide(g, tokens, modelTokens) {
     var device = String(g.device || '').toLowerCase();
     var title = String(g.title || '').toLowerCase();
@@ -6388,9 +6435,19 @@
     var tokens = expandTokens(tokenize(deviceText));
     var modelTokens = expandTokens(tokenize((window.atrCurrentTicketModel || '') + ' ' + (window.atrCurrentTicketSerial || '')));
     if (!tokens.length || !allGuides) return [];
+    /* V176_10_GUIDES_GATE_2026_11_20 (Austin, Nov 20, 2026): only manuals
+     * for THIS device list here - a guide must be pinned to this ticket
+     * or pass both the brand check and the product check (see
+     * guideBelongs). The fuzzy scorer alone let other devices in
+     * (brand expansion + the shared token 'series'), so the gate runs
+     * before scoring. "Search all guides" and the Guides tab are the
+     * full-library path and are not gated. */
+    var brandTokens = ticketBrandTokens(deviceText);
+    var productTokens = ticketProductTokens(deviceText, window.atrCurrentTicketModel || '');
     var scored = [];
     var curTicket = window.atrCurrentTicketId || null;
     allGuides.forEach(function (g) {
+      if (!guideBelongs(g, brandTokens, productTokens, curTicket)) return;
       var s = scoreGuide(g, tokens, modelTokens);
       if (s >= MIN_SCORE) scored.push({ g: g, s: s, pinned: !!(curTicket && g.ticket_id && String(g.ticket_id) === String(curTicket)) });
     });

@@ -67,20 +67,28 @@
   /* V176_STATUS_EIGHT_2026_11_19 (Austin, Nov 19, 2026): the Ticket status
      * dropdown holds Austin's eight options only - display labels, QC pass/fail
      * last. The DB statuses live in TICKET_DB_STATUSES (practice ticket) and
-     * the label -> value map below. */
-  var TICKET_STATUSES = ['Pre-inspection', 'Need to order parts', 'Job completed', 'Customer needs to pay', 'Status paid', 'En Route', 'QC pass', 'QC fail'];
+     * the label -> value map below.
+     * V176_10_DRAWER_STATUS_2026_11_20 (Austin, Nov 20, 2026): the six DB
+     * statuses the drawer could never pick are back as plain options, after
+     * the eight - Awaiting Scheduling, Awaiting Customer Response, In
+     * Progress, Quality Control, Rework / Warranty, Support Requested.
+     * Awaiting Estimate stays out: it is an estimate-only state, never a
+     * manual ticket pick. */
+  var TICKET_STATUSES = ['Pre-inspection', 'Need to order parts', 'Job completed', 'Customer needs to pay', 'Status paid', 'En Route', 'QC pass', 'QC fail', 'Awaiting Scheduling', 'Awaiting Customer Response', 'In Progress', 'Quality Control', 'Rework / Warranty', 'Support Requested'];
   var TICKET_DB_STATUSES = ['Awaiting Estimate', 'Awaiting Scheduling', 'Support Requested', 'Awaiting Diagnostics', 'Awaiting Customer Response', 'Awaiting Parts', 'Awaiting Repair', 'En Route to Customer', 'Rework / Warranty', 'In Progress', 'Quality Control', 'Ready', 'Job Complete'];
-  var TICKET_STATUS_DB = { 'Pre-inspection': 'Awaiting Diagnostics', 'Need to order parts': 'Awaiting Parts', 'Job completed': 'Job Complete', 'Customer needs to pay': 'Ready', 'Status paid': '__paid', 'En Route': 'En Route to Customer', 'QC pass': '__qcpass', 'QC fail': '__qcfail' };
+  var TICKET_STATUS_DB = { 'Pre-inspection': 'Awaiting Diagnostics', 'Need to order parts': 'Awaiting Parts', 'Job completed': 'Job Complete', 'Customer needs to pay': 'Ready', 'Status paid': '__paid', 'En Route': 'En Route to Customer', 'QC pass': '__qcpass', 'QC fail': '__qcfail', 'Awaiting Scheduling': 'Awaiting Scheduling', 'Awaiting Customer Response': 'Awaiting Customer Response', 'In Progress': 'In Progress', 'Quality Control': 'Quality Control', 'Rework / Warranty': 'Rework / Warranty', 'Support Requested': 'Support Requested' };
   function ticketStatusLabel(db) {
-    var m = { 'Awaiting Diagnostics': 'Pre-inspection', 'Awaiting Parts': 'Need to order parts', 'Job Complete': 'Job completed', 'Ready': 'Customer needs to pay', 'En Route to Customer': 'En Route' };
+    var m = { 'Awaiting Diagnostics': 'Pre-inspection', 'Awaiting Parts': 'Need to order parts', 'Job Complete': 'Job completed', 'Ready': 'Customer needs to pay', 'En Route to Customer': 'En Route', 'Awaiting Scheduling': 'Awaiting Scheduling', 'Awaiting Customer Response': 'Awaiting Customer Response', 'In Progress': 'In Progress', 'Quality Control': 'Quality Control', 'Rework / Warranty': 'Rework / Warranty', 'Support Requested': 'Support Requested' };
     return m[db] || db;
   }
   function ticketStatusOptions(currentDb) {
     /* V176_STATUS_EIGHT_2026_11_19: each option carries the DB value (or the
-     * __paid / __qcpass / __qcfail choice) and shows Austin's label. A ticket
-     * sitting in a DB status with no label (Awaiting Scheduling, In Progress,
-     * Quality Control...) keeps that status as a selected extra option, so
-     * the dropdown never lies about where the ticket stands. */
+     * __paid / __qcpass / __qcfail choice) and shows Austin's label.
+     * V176_10_DRAWER_STATUS_2026_11_20: the six restored statuses carry
+     * their DB value as both value and label, so a ticket sitting in one
+     * of them shows that option selected - the extra-option fallback
+     * below now only fires for Awaiting Estimate, the one DB status
+     * with no dropdown option. */
     var cur = ticketStatusLabel(currentDb);
     var opts = TICKET_STATUSES.map(function (label) {
       var val = TICKET_STATUS_DB[label] || label;
@@ -3611,82 +3619,6 @@ function loadTicketThread(client, ticketId) {
            * by default, so there is no second click to edit. */
           '<div class="portal-drawer-section tk-acc" data-acc="details">' + tkAccHead('details', 'Ticket details') + tkAccBodyOpen('details') +
           '<div class="portal-card-top"><p class="portal-card-title">' + esc(ticketTitle(t)) + '</p><span>' + (isServiceTicket(t) ? '<span class="portal-badge portal-badge-service">SERVICE</span> ' : '') + badge(t.status) + '</span></div>' +
-          /* V176_STATUS_REWORK_2026_11_19 (Austin, Nov 19, 2026): Status action
-           * holds ONLY what updates the ticket, in this order: Assign to
-           * (auto-saves), Job timer, Ticket status (auto-saves), and the
-           * repair-log note box that appears under every status change. The
-           * duplicate status-choice button row is GONE - the dropdown holds
-           * every status. The document / label / delete buttons moved out:
-           * Receipt / Estimate / Invoice actions + Print device label live
-           * in Charges and Payment now; Delete ticket is the last button in
-           * Ticket details. */
-          '<div class="portal-drawer-section tk-acc" data-acc="statusaction">' + tkAccHead('statusaction', 'Status action') + tkAccBodyOpen('statusaction') +
-          /* AVATARS_2026_11_03: who is on this job. The assignee is
-           * the person the customer sees in their repair view —
-           * picture + name as "Your technician" (ticket_technician
-           * in avatars.sql). Options load in loadTicketAssignees.
-           * V176: picking an assignee saves at once — no Save button. */
-          '<div class="portal-status-row"><label for="portal-ticket-assignee">Assign to</label>' +
-          '<select id="portal-ticket-assignee" aria-label="Assigned technician"><option value="">Unassigned</option></select>' +
-          '<span class="portal-muted portal-small" id="portal-ticket-assignee-msg"></span></div>' +
-          /* V176_JOB_TIMER_IN_STATUS_2026_11_19 (Austin, Nov 19, 2026): the job
-           * timer lives here now, right under Assign to - it used to be its
-           * own section at the bottom of the drawer. Same ids, same wiring. */
-          '<p class="portal-muted" id="portal-timer-total">Loading time on this job&hellip;</p>' +
-          '<div class="portal-status-row"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="portal-timer-btn">Start timer</button>' +
-          '<span class="portal-muted portal-small" id="portal-timer-msg"></span></div>' +
-          '<div id="portal-timer-list"></div>' +
-          /* V176_STATUS_EIGHT_2026_11_19: Ticket status - one dropdown with
-           * Austin's eight options only (Pre-inspection, Need to order parts,
-           * Job completed, Customer needs to pay, Status paid, En Route, QC
-           * pass, QC fail - QC last). Picking a status saves at once (after
-           * the repair-log note) - no Save button. Status paid is the __paid
-           * choice: it runs the paid flow instead of a status save. QC pass /
-           * fail map to Ready / Awaiting Repair. */
-          '<div class="portal-status-row"><label for="portal-ticket-status">Ticket status</label><select id="portal-ticket-status" aria-label="Ticket status">' +
-          ticketStatusOptions(t.status) + '</select>' +
-          '<span class="portal-muted portal-small" id="portal-ticket-status-msg"></span></div>' +
-          /* V174_STATUS_NOTE_2026_11_18 (Austin, Nov 18, 2026): every status change requires a note — the dropdown opens asking for a brief description of the new status; submit, it goes away. No status change without a note.
-           * V176: this box IS the repair log for the change - it asks what is happening with the repair and why the status changed. */
-          '<div id="portal-status-note-box" hidden><div class="portal-field"><label for="portal-status-note-input">What is happening with this repair?</label>' +
-          '<input type="text" id="portal-status-note-input" placeholder="e.g. Screen arrived, starting the swap" aria-label="What is happening with this repair?" /></div>' +
-          '<p class="portal-muted portal-small">Why did the status change? This note goes on the repair log.</p>' +
-          '<div class="p2-actions"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="portal-status-note-submit">Submit</button> ' +
-          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="portal-status-note-cancel">Cancel</button> ' +
-          '<span class="portal-muted portal-small" id="portal-status-note-msg"></span></div></div>' +
-          /* V176_REPAIR_LOG_IN_STATUS_2026_11_19 (Austin, Nov 19, 2026): the
-           * repair log lives here now, inside Status action - it used to be
-           * its own section below Message guest. The log entries, the
-           * proof-photo strip and Attach a photo all move with it. The
-           * standalone composer is gone: every status change already asks
-           * for its note in the box above, and that note IS the repair-log
-           * entry. */
-          '<p class="portal-muted portal-small">Repair log — internal tech documentation for this repair, not shown to the guest.</p>' +
-          (t.status === 'In Progress' ? '<p class="portal-muted"><strong>This repair is in progress. Please log what is happening here.</strong></p>' : '') +
-          '<div class="portal-thread" id="portal-repair-log-list"><p class="portal-muted">Loading repair log&hellip;</p></div>' +
-          '<div id="portal-repair-log-photos"></div>' +
-          '<div class="p2-actions"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="portal-repair-log-photo-btn"><i class="fas fa-camera"></i> Attach a photo</button>' +
-          '<span class="portal-muted portal-small" id="portal-repair-log-photo-msg"></span></div>' +
-          '<input type="file" id="portal-repair-log-photo-file" accept="image/*" hidden />' +
-          '<p class="portal-error" id="portal-repair-log-photo-error" hidden></p></div></div>' +
-                    /* V176_DOCS_SIGS_2026_11_19 (Austin, Nov 19, 2026): Documents holds
-           * the filed documents + the attach controls. Signatures is its own
-           * dropdown below - the sign action lives ON the preloaded signature
-           * rows there (tap a row to sign in person), not on buttons here. */
-'<div class="portal-drawer-section tk-acc" data-acc="documents">' + tkAccHead('documents', 'Documents') + tkAccBodyOpen('documents') +
-          '<div id="p4-docs"><p class="portal-muted">Loading documents&hellip;</p></div>' +
-          '<div class="p2-actions">' +
-          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p4-attach-btn"><i class="fas fa-paperclip"></i> Attach document</button>' +
-          '<select id="p4-attach-type" aria-label="Attach as document type" style="padding:0.4rem;border:2px solid var(--line, #d8cbb6);border-radius:8px;background:var(--bg, #fff);color:var(--ink, #2c231a);"><option value="receipt">Receipt</option><option value="part_order">Part order</option><option value="repair_authorization">Signed authorization</option><option value="other">Other</option></select>' +
-          '<input type="file" id="p4-attach-file" accept="image/*,application/pdf" hidden />' +
-          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p4-existing-btn"><i class="fas fa-link"></i> Attach an existing document</button></div>' +
-          '<div class="p2-form" id="p4-existing-picker" hidden>' +
-          '<div id="p4-existing-list"><p class="portal-muted portal-small">Loading documents&hellip;</p></div></div>' +
-          '<p class="portal-muted portal-small">Documents file themselves on this ticket. Signed copies live under Signatures below. The media release is separate: sign it only when the guest agrees to photos or clips of the device and the repair work.</p>' +
-          '<p class="portal-muted portal-small">Signing is in person only — the guest signs on this screen, on the signature row under Signatures. To send a document for the guest to sign in their own account, use Send to guest to sign on the Documents tab.</p>' +
-          '<p class="portal-error" id="p4-doc-msg" hidden></p></div></div>' +
-          '<div class="portal-drawer-section tk-acc" data-acc="signatures">' + tkAccHead('signatures', 'Signatures') + tkAccBodyOpen('signatures') +
-          '<div id="p4-signatures"><p class="portal-muted">Loading signatures&hellip;</p></div></div></div>' +
           /* V163_DETAILS_INLINE_2026_11_17 (Austin, Nov 17, 2026): the
            * edit form lives here now, right under the Ticket details
            * heading — the separate Edit details dropdown is gone. */
@@ -3753,6 +3685,85 @@ function loadTicketThread(client, ticketId) {
           '<button class="portal-btn p2-btn-danger portal-btn-sm" type="button" id="p2-delete-yes">Yes, delete it</button> ' +
           '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p2-delete-no">Keep ticket</button></div></div>' +
           '</div></div>' + /* PORTAL_TICKET_DETAILS_COLLAPSE_2026_11_03: close the Ticket details accordion body and section. */
+          /* V176_STATUS_REWORK_2026_11_19 (Austin, Nov 19, 2026): Status action
+           * holds ONLY what updates the ticket, in this order: Assign to
+           * (auto-saves), Job timer, Ticket status (auto-saves), and the
+           * repair-log note box that appears under every status change. The
+           * duplicate status-choice button row is GONE - the dropdown holds
+           * every status. The document / label / delete buttons moved out:
+           * Receipt / Estimate / Invoice actions + Print device label live
+           * in Charges and Payment now; Delete ticket is the last button in
+           * Ticket details. */
+          '<div class="portal-drawer-section tk-acc" data-acc="statusaction">' + tkAccHead('statusaction', 'Status action') + tkAccBodyOpen('statusaction') +
+          /* AVATARS_2026_11_03: who is on this job. The assignee is
+           * the person the customer sees in their repair view —
+           * picture + name as "Your technician" (ticket_technician
+           * in avatars.sql). Options load in loadTicketAssignees.
+           * V176: picking an assignee saves at once — no Save button. */
+          '<div class="portal-status-row"><label for="portal-ticket-assignee">Assign to</label>' +
+          '<select id="portal-ticket-assignee" aria-label="Assigned technician"><option value="">Unassigned</option></select>' +
+          '<span class="portal-muted portal-small" id="portal-ticket-assignee-msg"></span></div>' +
+          /* V176_JOB_TIMER_IN_STATUS_2026_11_19 (Austin, Nov 19, 2026): the job
+           * timer lives here now, right under Assign to - it used to be its
+           * own section at the bottom of the drawer. Same ids, same wiring. */
+          '<p class="portal-muted" id="portal-timer-total">Loading time on this job&hellip;</p>' +
+          '<div class="portal-status-row"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="portal-timer-btn">Start timer</button>' +
+          '<span class="portal-muted portal-small" id="portal-timer-msg"></span></div>' +
+          '<div id="portal-timer-list"></div>' +
+          /* V176_STATUS_EIGHT_2026_11_19: Ticket status - one dropdown with
+           * Austin's eight options (Pre-inspection, Need to order parts,
+           * Job completed, Customer needs to pay, Status paid, En Route, QC
+           * pass, QC fail - QC last), plus the six restored statuses
+           * (V176_10_DRAWER_STATUS_2026_11_20: Awaiting Scheduling, Awaiting
+           * Customer Response, In Progress, Quality Control, Rework /
+           * Warranty, Support Requested). Picking a status saves at once
+           * (after the repair-log note) - no Save button. Status paid is
+           * the __paid choice: it runs the paid flow instead of a status
+           * save. QC pass / fail map to Ready / Awaiting Repair. */
+          '<div class="portal-status-row"><label for="portal-ticket-status">Ticket status</label><select id="portal-ticket-status" aria-label="Ticket status">' +
+          ticketStatusOptions(t.status) + '</select>' +
+          '<span class="portal-muted portal-small" id="portal-ticket-status-msg"></span></div>' +
+          /* V174_STATUS_NOTE_2026_11_18 (Austin, Nov 18, 2026): every status change requires a note — the dropdown opens asking for a brief description of the new status; submit, it goes away. No status change without a note.
+           * V176: this box IS the repair log for the change - it asks what is happening with the repair and why the status changed. */
+          '<div id="portal-status-note-box" hidden><div class="portal-field"><label for="portal-status-note-input">What is happening with this repair?</label>' +
+          '<input type="text" id="portal-status-note-input" placeholder="e.g. Screen arrived, starting the swap" aria-label="What is happening with this repair?" /></div>' +
+          '<p class="portal-muted portal-small">Why did the status change? This note goes on the repair log.</p>' +
+          '<div class="p2-actions"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="portal-status-note-submit">Submit</button> ' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="portal-status-note-cancel">Cancel</button> ' +
+          '<span class="portal-muted portal-small" id="portal-status-note-msg"></span></div></div>' +
+          /* V176_REPAIR_LOG_IN_STATUS_2026_11_19 (Austin, Nov 19, 2026): the
+           * repair log lives here now, inside Status action - it used to be
+           * its own section below Message guest. The log entries, the
+           * proof-photo strip and Attach a photo all move with it. The
+           * standalone composer is gone: every status change already asks
+           * for its note in the box above, and that note IS the repair-log
+           * entry. */
+          '<p class="portal-muted portal-small">Repair log — internal tech documentation for this repair, not shown to the guest.</p>' +
+          (t.status === 'In Progress' ? '<p class="portal-muted"><strong>This repair is in progress. Please log what is happening here.</strong></p>' : '') +
+          '<div class="portal-thread" id="portal-repair-log-list"><p class="portal-muted">Loading repair log&hellip;</p></div>' +
+          '<div id="portal-repair-log-photos"></div>' +
+          '<div class="p2-actions"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="portal-repair-log-photo-btn"><i class="fas fa-camera"></i> Attach a photo</button>' +
+          '<span class="portal-muted portal-small" id="portal-repair-log-photo-msg"></span></div>' +
+          '<input type="file" id="portal-repair-log-photo-file" accept="image/*" hidden />' +
+          '<p class="portal-error" id="portal-repair-log-photo-error" hidden></p></div></div>' +
+                    /* V176_DOCS_SIGS_2026_11_19 (Austin, Nov 19, 2026): Documents holds
+           * the filed documents + the attach controls. Signatures is its own
+           * dropdown below - the sign action lives ON the preloaded signature
+           * rows there (tap a row to sign in person), not on buttons here. */
+'<div class="portal-drawer-section tk-acc" data-acc="documents">' + tkAccHead('documents', 'Documents') + tkAccBodyOpen('documents') +
+          '<div id="p4-docs"><p class="portal-muted">Loading documents&hellip;</p></div>' +
+          '<div class="p2-actions">' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p4-attach-btn"><i class="fas fa-paperclip"></i> Attach document</button>' +
+          '<select id="p4-attach-type" aria-label="Attach as document type" style="padding:0.4rem;border:2px solid var(--line, #d8cbb6);border-radius:8px;background:var(--bg, #fff);color:var(--ink, #2c231a);"><option value="receipt">Receipt</option><option value="part_order">Part order</option><option value="repair_authorization">Signed authorization</option><option value="other">Other</option></select>' +
+          '<input type="file" id="p4-attach-file" accept="image/*,application/pdf" hidden />' +
+          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p4-existing-btn"><i class="fas fa-link"></i> Attach an existing document</button></div>' +
+          '<div class="p2-form" id="p4-existing-picker" hidden>' +
+          '<div id="p4-existing-list"><p class="portal-muted portal-small">Loading documents&hellip;</p></div></div>' +
+          '<p class="portal-muted portal-small">Documents file themselves on this ticket. Signed copies live under Signatures below. The media release is separate: sign it only when the guest agrees to photos or clips of the device and the repair work.</p>' +
+          '<p class="portal-muted portal-small">Signing is in person only — the guest signs on this screen, on the signature row under Signatures. To send a document for the guest to sign in their own account, use Send to guest to sign on the Documents tab.</p>' +
+          '<p class="portal-error" id="p4-doc-msg" hidden></p></div></div>' +
+          '<div class="portal-drawer-section tk-acc" data-acc="signatures">' + tkAccHead('signatures', 'Signatures') + tkAccBodyOpen('signatures') +
+          '<div id="p4-signatures"><p class="portal-muted">Loading signatures&hellip;</p></div></div></div>' +
           /* V163_DETAILS_INLINE_2026_11_17 (Austin, Nov 17, 2026): Parts
            * sits in the drawer below Signatures, behind its own dropdown. */
           /* V167_PARTS_COLLAPSE_2026_11_18 (Austin, Nov 18, 2026): the Parts
@@ -3813,10 +3824,6 @@ function loadTicketThread(client, ticketId) {
           '<p class="portal-muted portal-small" id="portal-gv-text-msg"></p>' +
           '<p class="portal-muted portal-small">Notes are saved to this ticket&rsquo;s message thread as Tech.</p>' +
           '<p class="portal-error" id="portal-note-error" hidden></p></form></div></div>' +
-          
-          '<div class="portal-drawer-section tk-acc" data-acc="atrone">' + tkAccHead('atrone', 'ATR One') + tkAccBodyOpen('atrone') +
-          '<div id="p5-atrone"><p class="portal-muted">Loading membership&hellip;</p></div>' +
-          '<p class="portal-error" id="p5-atr-msg" hidden></p></div></div>' +
           '<div class="portal-drawer-section tk-acc" data-acc="charges">' + tkAccHead('charges', 'Charges and Payment') + tkAccBodyOpen('charges') +
           '<div id="p2-charges"><p class="portal-muted">Loading charges&hellip;</p></div>' +
           /* V176_3_PAYMENT_BUTTONS_2026_11_19 (Austin, Nov 19, 2026): the four
@@ -3930,7 +3937,6 @@ function loadTicketThread(client, ticketId) {
            filed invoice row. */
         if (section === 'invoice' && docsP && docsP.then) docsP.then(function () { focusDrawerInvoice(); });
         wireDocuments(client, t);
-        loadMembership(client, t);
         loadStockItems(client, t);
         loadJobTimers(client, t);
         var timerBtn = $('portal-timer-btn');
@@ -12190,111 +12196,6 @@ function loadTicketThread(client, ticketId) {
     return d.getFullYear() + '-' + (mm < 10 ? '0' : '') + mm + '-' + (dd < 10 ? '0' : '') + dd;
   }
 
-  function atrMsg(text) {
-    var m = $('p5-atr-msg');
-    if (!m) return;
-    if (text) { m.textContent = text; m.hidden = false; }
-    else { m.hidden = true; m.textContent = ''; }
-  }
-
-  function loadMembership(client, t, afterMsg) {
-    var box = $('p5-atrone');
-    if (!box) return;
-    if (!t.customer_id) {
-      box.innerHTML = '<p class="portal-muted">This ticket is not linked to a guest account yet (web submission), so an ATR One membership can&rsquo;t be recorded on it. Memberships live on the guest record.</p>';
-      return;
-    }
-    client.from('customer_memberships').select('*').eq('customer_id', t.customer_id).eq('status', 'active')
-      .order('started_on', { ascending: false }).limit(1).then(function (res) {
-        if (res.error) { box.innerHTML = '<p class="portal-muted">Memberships are not set up for this portal yet.</p>'; return; }
-        renderMembership(client, t, (res.data && res.data[0]) || null);
-        if (afterMsg) atrMsg(afterMsg);
-      }).catch(function () { box.innerHTML = '<p class="portal-muted">Membership could not be loaded.</p>'; });
-  }
-
-  function renderMembership(client, t, m) {
-    var box = $('p5-atrone');
-    if (!box) return;
-    atrMsg('');
-    if (m) {
-      var tier = ATRONE_TIERS[m.tier] || null;
-      box.innerHTML =
-        '<p style="margin:0 0 .35rem"><span class="portal-badge portal-badge-atrone"><i class="fas fa-star"></i> ATR One Plus member</span></p>' +
-        '<p style="margin:.2rem 0"><strong>' + esc(atroneTierName(m.tier)) + '</strong>' +
-        (tier ? ' &middot; ' + fmtMoney(tier.price) + '/mo' : '') +
-        ' &middot; member since ' + esc(fmtJobDate(m.started_on) || fmtDate(m.started_on)) + '</p>' +
-        '<p class="portal-muted portal-small" style="margin:.2rem 0">Earns ' + pointsRateForTier(m.tier) + ' points per $1 on completed repairs, credited at Job Complete.</p>' +
-        (m.note ? '<p class="portal-muted portal-small" style="margin:.2rem 0">' + esc(m.note) + '</p>' : '') +
-        '<p class="portal-muted portal-small" style="margin:.35rem 0">' + ATRONE_BENEFIT_LINE + '</p>' +
-        '<div class="p2-actions"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p5-atr-cancel">Cancel membership</button></div>' +
-        '<div id="p5-atr-cancel-confirm" hidden><p class="portal-error">Cancel this ATR One Plus membership? The membership record and its signup charge stay on file; the member benefits stop. Normally this matches a cancellation in Square too.</p>' +
-        '<button class="portal-btn p2-btn-danger portal-btn-sm" type="button" id="p5-atr-cancel-yes">Yes, cancel membership</button> ' +
-        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="p5-atr-cancel-no">Keep membership</button></div>';
-      var cancelBtn = $('p5-atr-cancel'), confirmBox = $('p5-atr-cancel-confirm');
-      if (cancelBtn && confirmBox) {
-        cancelBtn.addEventListener('click', function () { confirmBox.hidden = false; cancelBtn.hidden = true; });
-        $('p5-atr-cancel-no').addEventListener('click', function () { confirmBox.hidden = true; cancelBtn.hidden = false; });
-        $('p5-atr-cancel-yes').addEventListener('click', function () {
-          atrMsg('');
-          client.from('customer_memberships').update({ status: 'cancelled', cancelled_on: todayDateOnly() }).eq('id', m.id).then(function (res) {
-            if (res.error) { atrMsg('Could not cancel — try again.'); return; }
-            loadMembership(client, t, 'Membership cancelled and recorded. The signup charge stays on the ticket.');
-          }).catch(function () { atrMsg('Could not cancel — try again.'); });
-        });
-      }
-      return;
-    }
-    /* V163_TIER_BLANK_2026_11_17 (Austin, Nov 17, 2026): a non-member
-     * shows NO tier — the blank option is selected, never Individual,
-     * so the Add handler's "Pick a tier first" guard can finally fire. */
-    var opts = '<option value="" selected>Not a member \u2014 no tier</option>' +
-      Object.keys(ATRONE_TIERS).map(function (k) {
-        var tr = ATRONE_TIERS[k];
-        return '<option value="' + k + '">' + esc(tr.name) + ' — ' + fmtMoney(tr.price) + '/mo</option>';
-      }).join('');
-    box.innerHTML =
-      '<p class="portal-muted" style="margin-top:0">No ATR One Plus membership on this guest — they are on ATR One Free (1 point per $1). If they sign up during this visit (through the Square signup links), record it here so it lives on the ticket.</p>' +
-      '<div class="p2-form-row"><select id="p5-atr-tier" aria-label="ATR One tier">' + opts + '</select>' +
-      '<input id="p5-atr-note" type="text" placeholder="Note (optional)" maxlength="200" aria-label="Membership note" /></div>' +
-      '<div class="p2-actions" style="margin-top:.5rem"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p5-atr-add"><i class="fas fa-plus"></i> Add ATR One membership</button></div>' +
-      '<p class="portal-muted portal-small">Adding files the signup as a charge line on this ticket at the tier price, so it shows in Charges and counts in Financials. Record the payment itself in the Payment section when it comes in.</p>';
-    var addBtn = $('p5-atr-add');
-    if (addBtn) addBtn.addEventListener('click', function () {
-      atrMsg('');
-      var tierKey = $('p5-atr-tier').value;
-      var tier = ATRONE_TIERS[tierKey] || null;
-      if (!tier) { atrMsg('Pick a tier first.'); return; }
-      var note = trim($('p5-atr-note').value) || null;
-      addBtn.disabled = true; addBtn.textContent = 'Adding…';
-      client.from('customer_memberships').insert({
-        customer_id: t.customer_id, tier: tierKey, status: 'active',
-        started_on: todayDateOnly(), note: note
-      }).then(function (res) {
-        if (res.error) {
-          addBtn.disabled = false; addBtn.textContent = 'Add ATR One membership';
-          atrMsg(res.error && res.error.code === '23505'
-            ? 'This guest already has an active ATR One membership on file.'
-            : 'Could not save the membership — try again.');
-          return;
-        }
-        var desc = 'ATR One membership signup — ' + tier.name + ' (' + fmtMoney(tier.price) + '/mo)';
-        var handMsg = 'Membership saved, but the signup charge line could not be added. Add it by hand in Charges below: Other charge, "' + desc + '", ' + fmtMoney(tier.price) + '.';
-        client.from('ticket_charges').insert({
-          ticket_id: t.id, kind: 'one_off', description: desc,
-          qty: 1, unit_price: tier.price, unit_cost: null
-        }).then(function (res2) {
-          loadCharges(client, t);
-          loadMembership(client, t, res2.error ? handMsg : 'Membership recorded on this guest, and the signup charge is on this ticket.');
-        }).catch(function () {
-          loadMembership(client, t, handMsg);
-        });
-      }).catch(function () {
-        addBtn.disabled = false; addBtn.textContent = 'Add ATR One membership';
-        atrMsg('Could not save the membership — try again.');
-      });
-    });
-  }
-
   /* ================= ATR ONE MEMBERS PANEL =================
    * PORTAL_MEMBERS_EDIT_2026_11_02 (Austin, Nov 2, 2026): the panel is now
    * EDITABLE, like the customer profiles. Each row carries a status
@@ -12315,8 +12216,11 @@ function loadTicketThread(client, ticketId) {
    * and its editor show Individual / Family / Business / Business Pro
    * at $9.99 / $19.99 / $49.99 / $99.99 per month. That mapping lives in
    * ATRONE_DISPLAY_TIERS below and is used ONLY by this panel and its
-   * editor: the shared ATRONE_TIERS map above still drives the ticket
-   * drawer's signup flow and its charge lines, and its prices were
+   * editor: the shared ATRONE_TIERS map above still drives the
+   * member-discount tier lookup in Charges
+   * (V176_10_ATRONE_OFF_TICKET_2026_11_20: the ticket drawer's ATR One
+   * section is gone, so the signup flow it drove is gone with it),
+   * and its prices were
    * deliberately NOT changed here — they are what Square currently
    * bills, and repricing them is tied to updating Square first.
    * Database tier values (single/family/business_plus/business_pro)
