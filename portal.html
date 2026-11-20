@@ -1023,7 +1023,7 @@
           <h2 class="portal-h2">ATR One Members</h2>
         </div>
         <!-- ATRONE_POINTS_TIERS_2026_11_06: the intro below states the tiered points rates -->
-        <p class="portal-muted portal-small">Everyone with an ATR One membership on file. Green dot: the membership is on (good standing). Red dot: it is off. Tap a member to turn their membership off or on, or to correct their tier. New memberships are still added from a guest&rsquo;s ticket. Points: ATR One Free earns 1 point per $1 of a completed repair; ATR One Plus earns 5 points per $1 (Individual, Family) or 10 points per $1 (Business, Business Pro), credited at Job Complete.</p>
+        <p class="portal-muted portal-small">Everyone with an ATR One membership on file. Green dot: the membership is on (good standing). Red dot: it is off. Tap a member to turn their membership off or on, or to correct their tier. New memberships are still added from a guest&rsquo;s ticket. Points: ATR One Free earns 1 point per $1 for guests and 5 points per $1 for business on a completed repair; ATR One Plus earns 5 points per $1 (Individual), 10 points per $1 (Family, Business), or 15 points per $1 (Business Pro), credited at Job Complete.</p> <!-- V176_14_POINTS_2026_11_20 --> <!-- V176_14_FREE_BIZ_2026_11_20 -->
         <div id="portal-members-list"><p class="portal-muted">Loading members&hellip;</p></div>
       </div>
 
@@ -4603,7 +4603,14 @@
         var hay = [g.title, g.device, g.category, g.tags, g.notes].join(' ').toLowerCase();
         return q.split(/\s+/).every(function (w) { return hay.indexOf(w) !== -1; });
       });
-      if (count) count.textContent = rows.length + (rows.length === 1 ? ' guide' : ' guides') + (q || cat !== 'all' ? ' match your search.' : ' in the database.');
+      /* V176_14_GUIDES_SEARCH_2026_11_20 (Nov 20, 2026 stress test): the count
+       * names the active scope, so a filtered 0 is never silent — the old
+       * line just said "0 guides match your search" while a leftover
+       * category filter was doing the hiding. */
+      if (count) count.textContent = rows.length + (rows.length === 1 ? ' guide' : ' guides') +
+        (q && cat !== 'all' ? ' match your search in ' + cat + '.' :
+          q ? ' match your search.' :
+          cat !== 'all' ? ' in ' + cat + '.' : ' in the database.');
       if (!rows.length) {
         list.innerHTML = '<div class="portal-empty">' + (allGuides.length ? 'No guides match that search yet.' : 'No guides yet. Add the first one with the form below.') + '</div>';
         return;
@@ -4924,7 +4931,22 @@
       if (guideCancelEdit) guideCancelEdit.addEventListener('click', function () { resetGuideEdit(); });
       resolveGuideRole();
       var search = $('portal-guide-search');
-      if (search) search.addEventListener('input', renderGuides);
+      /* V176_14_GUIDES_SEARCH_2026_11_20 (Nov 20, 2026 stress test): a search
+       * must search the WHOLE library. The category dropdown used to sit
+       * silently on a leftover value (e.g. General, left over from checking
+       * the Watch guides) and veto every match — "iPhone 13 battery" came
+       * back 0 guides even though the guide was in the list. Typing a
+       * search now resets the category to All first, so a fresh search can
+       * never be hidden by a filter the searcher forgot was on. Picking a
+       * category AFTER typing still narrows the typed search — that is a
+       * deliberate choice, visible in the dropdown. searchAllGuides from
+       * the ticket drawer dispatches a real 'input' event, so it gets the
+       * reset too. */
+      if (search) search.addEventListener('input', function () {
+        var catFilter = $('portal-guide-category-filter');
+        if (trim(search.value) && catFilter && catFilter.value !== 'all') catFilter.value = 'all';
+        renderGuides();
+      });
       var catFilter = $('portal-guide-category-filter');
       if (catFilter) catFilter.addEventListener('change', renderGuides);
       var list = $('portal-guides-list');

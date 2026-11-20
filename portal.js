@@ -41,13 +41,22 @@
    * the job is marked Job Complete (see awardPointsOnComplete).
    * ATRONE_POINTS_TIERS_2026_11_06 (Austin, Nov 6, 2026): the rate is
    * PER TIER now. ATR One Free (and no membership row at all) earns
-   * POINTS_PER_DOLLAR = 1; ATR One Plus Individual/Family earn 5;
-   * Business/Business Pro earn 10. Stored tier values are the legacy
+   * POINTS_PER_DOLLAR = 1 for guests and POINTS_FREE_RATE_BUSINESS = 5
+   * for business (Austin, Nov 20, 2026 voice call); Individual earns 5;
+   * Family and Business earn 10; Business Pro earns 15.
+   * V176_14_POINTS_2026_11_20: rates updated to the confirmed ladder (Free guest 1 / Free business 5, Individual 5, Family 10, Business 10, Business Pro 15).
+   * V176_14_FREE_BIZ_2026_11_20: the Free rate is audience-aware now —
+   * pointsRateForTier takes isBusiness; paid tiers never consult it.
+   * Stored tier values are the legacy
    * ones (single/family/business_plus/business_pro) — they never
    * change; only this mapping interprets them. */
   var POINTS_PER_DOLLAR = 1;
-  var POINTS_RATE_BY_TIER = { single: 5, family: 5, business: 10, business_plus: 10, business_pro: 10 };
-  function pointsRateForTier(tier) { return POINTS_RATE_BY_TIER[tier] || POINTS_PER_DOLLAR; }
+  var POINTS_FREE_RATE_BUSINESS = 5; /* V176_14_FREE_BIZ_2026_11_20: Free business accounts earn 5 per $1; guests earn 1 (POINTS_PER_DOLLAR) */
+  var POINTS_RATE_BY_TIER = { single: 5, family: 10, business: 10, business_plus: 10, business_pro: 15 }; /* V176_14_POINTS_2026_11_20 */
+  function pointsRateForTier(tier, isBusiness) {
+    if (POINTS_RATE_BY_TIER[tier]) return POINTS_RATE_BY_TIER[tier];
+    return isBusiness ? POINTS_FREE_RATE_BUSINESS : POINTS_PER_DOLLAR;
+  }
 
   /* Ticket statuses: EXACT values from the tickets.status check
    * constraint (supabase-phase2-tickets.sql). Do not add values here
@@ -4574,13 +4583,18 @@ function loadTicketThread(client, ticketId) {
   }
 
   /* ATRONE_POINTS_TIERS_2026_11_06: the member multiplier IS the tier's
-   * earn rate (Free / no membership = 1, Individual/Family = 5,
-   * Business/Business Pro = 10). awardPointsOnComplete looks the
+   * earn rate (Free / no membership = 1 for guests, 5 for business,
+   * Individual = 5, Family = 10,
+   * Business = 10, Business Pro = 15). awardPointsOnComplete looks the
+   * V176_14_POINTS_2026_11_20: rates corrected to the settled Nov 20
+   * ladder (was Individual/Family = 5, Business/Business Pro = 10).
+   * V176_14_FREE_BIZ_2026_11_20: the Free rate is audience-aware now
+   * (Austin, Nov 20, 2026 voice call) — see pointsRateForTier.
    * customer's ACTIVE membership up fresh at completion time and
    * passes its stored tier value here — this function stays the one
    * place the rate is interpreted. */
-  function pointsMultiplierFor(tier) {
-    return pointsRateForTier(tier);
+  function pointsMultiplierFor(tier, isBusiness) {
+    return pointsRateForTier(tier, isBusiness);
   }
 
   /* Short display name for the points note: "Janae Saunders" -> "Janae S." */
@@ -4593,7 +4607,13 @@ function loadTicketThread(client, ticketId) {
   /* PORTAL_POINTS_EARN_2026_10_30 + ATRONE_POINTS_TIERS_2026_11_06:
    * award loyalty points when a ticket reaches Job Complete. Amount:
    * floor(ticket total) x the customer's tier rate (pointsRateForTier:
-   * 1 Free/none, 5 Individual/Family, 10 Business/Business Pro), where
+   * 1 Free/none, 5 Individual, 10 Family/Business, 15 Business Pro), where
+   * V176_14_POINTS_2026_11_20: rates corrected to the settled Nov 20
+   * ladder (was 5 Individual/Family, 10 Business/Business Pro).
+   * V176_14_FREE_BIZ_2026_11_20: Free is audience-aware now (Austin,
+   * Nov 20, 2026 voice call) — 1 per $1 for guests, 5 per $1 for
+   * business. The audience comes from pointsIsBusinessFromCharges
+   * (the ticket's own visit-fee row); paid tiers never consult it.
    * the ticket total is the charges subtotal from chargeTotals() — the
    * same figure the receipt is built from — read fresh from
    * ticket_charges at completion time. Deposit credits are payments
@@ -4612,6 +4632,34 @@ function loadTicketThread(client, ticketId) {
    * after a successful claim, the claim is released (best effort) so a
    * later completion can retry instead of losing the points.
    * onAwarded(pts), when given, fires only after the credit lands. */
+  /* V176_14_FREE_BIZ_2026_11_20 (Austin, Nov 20, 2026 voice call):
+   * the Free earn rate is audience-aware — 1 point per $1 for guests,
+   * 5 points per $1 for business. The portal has no audience column
+   * to read: account_type lives only in auth user_metadata, and
+   * neither tickets nor customers carries it. The only audience
+   * signal the award code can see is the ticket's own visit-fee
+   * (dispatch) row, which the portal itself writes at ticket
+   * creation with the audience-correct fee — $14.99 guest, $34.99
+   * business. A dispatch line of $34.99 or more reads as a business
+   * ticket. Limits, stated plainly: a custom visit fee Austin types
+   * by hand can misread (a guest charged $34.99 or more reads as
+   * business), and a ticket with no dispatch row at all (ATR One
+   * members pay no visit fee) reads as guest — a business Free member
+   * on such a ticket still earns 1 until a customers.account_type
+   * column or a staff RPC carries the real audience. Paid tiers never
+   * consult this — their rate comes from the membership tier alone.
+   * Pure helper — no DOM, no database call. */
+  function pointsIsBusinessFromCharges(rows) {
+    var i, ch, amt;
+    for (i = 0; i < (rows || []).length; i++) {
+      ch = rows[i];
+      if (!ch || (ch.kind !== 'dispatch' && ch.kind !== 'visit')) continue;
+      amt = Number(ch.qty || 0) * Number(ch.unit_price || 0);
+      if (amt >= 34.99) return true;
+    }
+    return false;
+  }
+
   function awardPointsOnComplete(client, t, onAwarded) {
     if (!t || !t.customer_id) return;
     client.from('ticket_charges').select('*').eq('ticket_id', t.id).then(function (res) {
@@ -4624,7 +4672,7 @@ function loadTicketThread(client, ticketId) {
       client.from('customer_memberships').select('tier').eq('customer_id', t.customer_id).eq('status', 'active')
         .order('started_on', { ascending: false }).limit(1).then(function (mem) {
           var tier = (!mem.error && mem.data && mem.data[0]) ? mem.data[0].tier : null;
-          claimAndCredit(Math.floor(wholeDollars * pointsMultiplierFor(tier)));
+          claimAndCredit(Math.floor(wholeDollars * pointsMultiplierFor(tier, pointsIsBusinessFromCharges(res.data || [])))); /* V176_14_FREE_BIZ_2026_11_20: Free business accounts earn 5 per $1 — the audience comes from the ticket's own visit-fee row (see pointsIsBusinessFromCharges); paid tiers ignore it */
         }).catch(function () { claimAndCredit(Math.floor(wholeDollars * pointsMultiplierFor(null))); });
       function claimAndCredit(pts) {
         if (!(pts > 0)) return;
@@ -6360,8 +6408,8 @@ function loadTicketThread(client, ticketId) {
    * atr-one-*-membership-agreement.txt files beside this build. */
   var ATRONE_INDIVIDUAL_TEXT = "ATR One Individual Membership Agreement\nAustin's Tech Repair Group — State of Ohio, USA — Last updated November 17, 2026\nPLEASE READ THIS DOCUMENT CAREFULLY. By joining ATR One, you (\"Member,\" \"you\") agree to these terms with Austin's Tech Repair Group (\"Company,\" \"we,\" \"us,\" \"our\"), a sole proprietorship operating in the State of Ohio. This agreement covers your ATR One Individual membership. Repair work itself is authorized and warranted under our Repair Authorization & Service Agreement and our 1-Year Limited Warranty, which are separate documents.\n1. Membership Plans\nFree membership: Anyone may join ATR One free. Free members earn rewards points — 1 point for every $1 spent with us — and 100 points take $5 off a future purchase or repair. Free membership does not include the paid plan benefits in Section 2.\nYour plan: ATR One Individual — $9.99 per month. Covers 1 device.\nCovered devices: Plan benefits apply only to the devices covered under your plan. Your membership, your plan, and your covered devices are recorded on your guest account with us.\n2. Member Benefits — Paid Plans\nWhile your paid membership is active, you receive the following on your covered devices:\nIndividual: 20% off repairs and 25% off accessories.\nWholesale parts pricing: Paid members pay our wholesale cost for parts on covered repairs — the cost we pay, with no markup added.\nVisit fee: Paid members pay no visit fee for covered devices.\nDiagnostics: Diagnostics on covered devices are free.\nParts shipping: Free priority shipping on parts ordered for covered devices.\nPriority queue: Member work is scheduled ahead of non-member work.\nRemote support: Free remote guest service.\nAccessory returns: Accessories you purchase from us can be exchanged or returned within 14 days of purchase.\nWallet card: After signup, you receive your ATR One member card to add to Apple Wallet or Google Wallet.\nScreen protector: When we repair a covered device, a screen protector for that device is included free and installed at that repair. The free screen protector is part of a repair we perform on a device we repaired — it is not available on its own.\n3. Billing & Renewal\nPaid plans are billed monthly through Square. Your plan renews each month and continues until you cancel it.\n[AUSTIN TO DECIDE: price changes — whether plan prices may change, and how far ahead members are told.]\n[AUSTIN TO DECIDE: past-due payments — what happens when a monthly payment fails, including any grace period and when benefits pause.]\n4. Cancellation\nYou may cancel at any time. To stop the next monthly charge, cancel at least 3 days before your next billing date. If a monthly payment has already gone through and you cancel within 3 days of that payment, that payment is refunded in full. Your benefits continue to the end of the current billing period.\n5. Warranty\nThis membership does not change our repair warranty. Every repair we perform carries our 1-Year Limited Warranty on the parts we install and the labor we perform, under that warranty's own terms. Membership neither extends nor limits the warranty, and the warranty neither extends nor limits this membership.\n6. Governing Law & Entire Agreement\nThis Agreement is governed by the laws of the State of Ohio. Disputes will first be addressed through good-faith negotiation; if unresolved, they will be submitted to a court of competent jurisdiction in Greene County, Ohio. This document is the entire agreement between you and Austin's Tech Repair Group for the ATR One membership. If any provision is found unenforceable, the rest remain in effect.\n7. Your Signature\nBy signing this agreement, you agree to be billed monthly through Square for the plan you select, and you confirm that you understand ATR One is a monthly subscription that renews each month until you cancel it.\nAustin's Tech Repair Group\nAustin Tyler Caudill, Owner\nState of Ohio, USA — (937) 280-6243";
   var ATRONE_FAMILY_TEXT = "ATR One Family Membership Agreement\nAustin's Tech Repair Group — State of Ohio, USA — Last updated November 17, 2026\nPLEASE READ THIS DOCUMENT CAREFULLY. By joining ATR One, you (\"Member,\" \"you\") agree to these terms with Austin's Tech Repair Group (\"Company,\" \"we,\" \"us,\" \"our\"), a sole proprietorship operating in the State of Ohio. This agreement covers your ATR One Family membership. Repair work itself is authorized and warranted under our Repair Authorization & Service Agreement and our 1-Year Limited Warranty, which are separate documents.\n1. Membership Plans\nFree membership: Anyone may join ATR One free. Free members earn rewards points — 1 point for every $1 spent with us — and 100 points take $5 off a future purchase or repair. Free membership does not include the paid plan benefits in Section 2.\nYour plan: ATR One Family — $19.99 per month. Covers up to 5 devices.\nCovered devices: Plan benefits apply only to the devices covered under your plan. Your membership, your plan, and your covered devices are recorded on your guest account with us.\n2. Member Benefits — Paid Plans\nWhile your paid membership is active, you receive the following on your covered devices:\nFamily: 25% off repairs and 30% off accessories.\nWholesale parts pricing: Paid members pay our wholesale cost for parts on covered repairs — the cost we pay, with no markup added.\nVisit fee: Paid members pay no visit fee for covered devices.\nDiagnostics: Diagnostics on covered devices are free.\nParts shipping: Free priority shipping on parts ordered for covered devices.\nPriority queue: Member work is scheduled ahead of non-member work.\nRemote support: Free remote guest service.\nAccessory returns: Accessories you purchase from us can be exchanged or returned within 14 days of purchase.\nWallet card: After signup, you receive your ATR One member card to add to Apple Wallet or Google Wallet.\nScreen protector: When we repair a covered device, a screen protector for that device is included free and installed at that repair. The free screen protector is part of a repair we perform on a device we repaired — it is not available on its own.\n3. Billing & Renewal\nPaid plans are billed monthly through Square. Your plan renews each month and continues until you cancel it.\n[AUSTIN TO DECIDE: price changes — whether plan prices may change, and how far ahead members are told.]\n[AUSTIN TO DECIDE: past-due payments — what happens when a monthly payment fails, including any grace period and when benefits pause.]\n4. Cancellation\nYou may cancel at any time. To stop the next monthly charge, cancel at least 3 days before your next billing date. If a monthly payment has already gone through and you cancel within 3 days of that payment, that payment is refunded in full. Your benefits continue to the end of the current billing period.\n5. Warranty\nThis membership does not change our repair warranty. Every repair we perform carries our 1-Year Limited Warranty on the parts we install and the labor we perform, under that warranty's own terms. Membership neither extends nor limits the warranty, and the warranty neither extends nor limits this membership.\n6. Governing Law & Entire Agreement\nThis Agreement is governed by the laws of the State of Ohio. Disputes will first be addressed through good-faith negotiation; if unresolved, they will be submitted to a court of competent jurisdiction in Greene County, Ohio. This document is the entire agreement between you and Austin's Tech Repair Group for the ATR One membership. If any provision is found unenforceable, the rest remain in effect.\n7. Your Signature\nBy signing this agreement, you agree to be billed monthly through Square for the plan you select, and you confirm that you understand ATR One is a monthly subscription that renews each month until you cancel it.\nAustin's Tech Repair Group\nAustin Tyler Caudill, Owner\nState of Ohio, USA — (937) 280-6243";
-  var ATRONE_BUSINESS_TEXT = "ATR One Business Membership Agreement\nAustin's Tech Repair Group — State of Ohio, USA — Last updated November 17, 2026\nPLEASE READ THIS DOCUMENT CAREFULLY. By joining ATR One, you (\"Member,\" \"you\") agree to these terms with Austin's Tech Repair Group (\"Company,\" \"we,\" \"us,\" \"our\"), a sole proprietorship operating in the State of Ohio. This agreement covers your ATR One Business membership. Repair work itself is authorized and warranted under our Repair Authorization & Service Agreement and our 1-Year Limited Warranty, which are separate documents.\n1. Membership Plans\nFree membership: Anyone may join ATR One free. Free members earn rewards points — 1 point for every $1 spent with us — and 100 points take $5 off a future purchase or repair. Free membership does not include the paid plan benefits in Section 2.\nYour plan: ATR One Business — $49.99 per month. Covers business computers, printers, and cash drawers.\nBusiness membership requires the business's EIN at signup.\nBusiness setup: On a business plan, we can come out and set up your point of sale for you — we set up Square, cash drawers, and your systems. Austin's Tech Repair Group is not a payment processing company: we help you set it up, and we do not process payments.\nCovered devices: Plan benefits apply only to the devices covered under your plan. Your membership, your plan, and your covered devices are recorded on your guest account with us.\n2. Member Benefits — Paid Plans\nWhile your paid membership is active, you receive the following on your covered devices:\nBusiness: 35% off repairs and 40% off accessories.\nWholesale parts pricing: Paid members pay our wholesale cost for parts on covered repairs — the cost we pay, with no markup added.\nVisit fee: Paid members pay no visit fee for covered devices.\nDiagnostics: Diagnostics on covered devices are free.\nParts shipping: Free priority shipping on parts ordered for covered devices.\nPriority queue: Member work is scheduled ahead of non-member work.\nRemote support: Free remote guest service.\nAccessory returns: Accessories you purchase from us can be exchanged or returned within 14 days of purchase.\nWallet card: After signup, you receive your ATR One member card to add to Apple Wallet or Google Wallet.\nScreen protector: When we repair a covered device, a screen protector for that device is included free and installed at that repair. The free screen protector is part of a repair we perform on a device we repaired — it is not available on its own.\n3. Billing & Renewal\nPaid plans are billed monthly through Square. Your plan renews each month and continues until you cancel it.\n[AUSTIN TO DECIDE: price changes — whether plan prices may change, and how far ahead members are told.]\n[AUSTIN TO DECIDE: past-due payments — what happens when a monthly payment fails, including any grace period and when benefits pause.]\n4. Cancellation\nYou may cancel at any time. To stop the next monthly charge, cancel at least 3 days before your next billing date. If a monthly payment has already gone through and you cancel within 3 days of that payment, that payment is refunded in full. Your benefits continue to the end of the current billing period.\n5. Warranty\nThis membership does not change our repair warranty. Every repair we perform carries our 1-Year Limited Warranty on the parts we install and the labor we perform, under that warranty's own terms. Membership neither extends nor limits the warranty, and the warranty neither extends nor limits this membership.\n6. Governing Law & Entire Agreement\nThis Agreement is governed by the laws of the State of Ohio. Disputes will first be addressed through good-faith negotiation; if unresolved, they will be submitted to a court of competent jurisdiction in Greene County, Ohio. This document is the entire agreement between you and Austin's Tech Repair Group for the ATR One membership. If any provision is found unenforceable, the rest remain in effect.\n7. Your Signature\nBy signing this agreement, you agree to be billed monthly through Square for the plan you select, and you confirm that you understand ATR One is a monthly subscription that renews each month until you cancel it.\nAustin's Tech Repair Group\nAustin Tyler Caudill, Owner\nState of Ohio, USA — (937) 280-6243";
-  var ATRONE_BUSINESS_PRO_TEXT = "ATR One Business Pro Membership Agreement\nAustin's Tech Repair Group — State of Ohio, USA — Last updated November 17, 2026\nPLEASE READ THIS DOCUMENT CAREFULLY. By joining ATR One, you (\"Member,\" \"you\") agree to these terms with Austin's Tech Repair Group (\"Company,\" \"we,\" \"us,\" \"our\"), a sole proprietorship operating in the State of Ohio. This agreement covers your ATR One Business Pro membership. Repair work itself is authorized and warranted under our Repair Authorization & Service Agreement and our 1-Year Limited Warranty, which are separate documents.\n1. Membership Plans\nFree membership: Anyone may join ATR One free. Free members earn rewards points — 1 point for every $1 spent with us — and 100 points take $5 off a future purchase or repair. Free membership does not include the paid plan benefits in Section 2.\nYour plan: ATR One Business Pro — $99.99 per month. Full IT management, including server setup.\nBusiness Pro membership requires the business's EIN at signup.\nBusiness setup: On a business plan, we can come out and set up your point of sale for you — we set up Square, cash drawers, and your systems. Austin's Tech Repair Group is not a payment processing company: we help you set it up, and we do not process payments.\nCovered devices: Plan benefits apply only to the devices covered under your plan. Your membership, your plan, and your covered devices are recorded on your guest account with us.\n2. Member Benefits — Paid Plans\nWhile your paid membership is active, you receive the following on your covered devices:\nBusiness Pro: 45% off repairs and 55% off accessories.\nWholesale parts pricing: Paid members pay our wholesale cost for parts on covered repairs — the cost we pay, with no markup added.\nVisit fee: Paid members pay no visit fee for covered devices.\nDiagnostics: Diagnostics on covered devices are free.\nParts shipping: Free priority shipping on parts ordered for covered devices.\nPriority queue: Member work is scheduled ahead of non-member work.\nRemote support: Free remote guest service.\nAccessory returns: Accessories you purchase from us can be exchanged or returned within 14 days of purchase.\nWallet card: After signup, you receive your ATR One member card to add to Apple Wallet or Google Wallet.\nScreen protector: When we repair a covered device, a screen protector for that device is included free and installed at that repair. The free screen protector is part of a repair we perform on a device we repaired — it is not available on its own.\n3. Billing & Renewal\nPaid plans are billed monthly through Square. Your plan renews each month and continues until you cancel it.\n[AUSTIN TO DECIDE: price changes — whether plan prices may change, and how far ahead members are told.]\n[AUSTIN TO DECIDE: past-due payments — what happens when a monthly payment fails, including any grace period and when benefits pause.]\n4. Cancellation\nYou may cancel at any time. To stop the next monthly charge, cancel at least 3 days before your next billing date. If a monthly payment has already gone through and you cancel within 3 days of that payment, that payment is refunded in full. Your benefits continue to the end of the current billing period.\n5. Warranty\nThis membership does not change our repair warranty. Every repair we perform carries our 1-Year Limited Warranty on the parts we install and the labor we perform, under that warranty's own terms. Membership neither extends nor limits the warranty, and the warranty neither extends nor limits this membership.\n6. Governing Law & Entire Agreement\nThis Agreement is governed by the laws of the State of Ohio. Disputes will first be addressed through good-faith negotiation; if unresolved, they will be submitted to a court of competent jurisdiction in Greene County, Ohio. This document is the entire agreement between you and Austin's Tech Repair Group for the ATR One membership. If any provision is found unenforceable, the rest remain in effect.\n7. Your Signature\nBy signing this agreement, you agree to be billed monthly through Square for the plan you select, and you confirm that you understand ATR One is a monthly subscription that renews each month until you cancel it.\nAustin's Tech Repair Group\nAustin Tyler Caudill, Owner\nState of Ohio, USA — (937) 280-6243";
+  var ATRONE_BUSINESS_TEXT = "ATR One Business Membership Agreement\nAustin's Tech Repair Group — State of Ohio, USA — Last updated November 17, 2026\nPLEASE READ THIS DOCUMENT CAREFULLY. By joining ATR One, you (\"Member,\" \"you\") agree to these terms with Austin's Tech Repair Group (\"Company,\" \"we,\" \"us,\" \"our\"), a sole proprietorship operating in the State of Ohio. This agreement covers your ATR One Business membership. Repair work itself is authorized and warranted under our Repair Authorization & Service Agreement and our 1-Year Limited Warranty, which are separate documents.\n1. Membership Plans\nFree membership: Anyone may join ATR One free. Free members earn rewards points — 5 points for every $1 spent with us — and 100 points take $5 off a future purchase or repair. Free membership does not include the paid plan benefits in Section 2.\nYour plan: ATR One Business — $49.99 per month. Covers business computers, printers, and cash drawers.\nBusiness membership requires the business's EIN at signup.\nBusiness setup: On a business plan, we can come out and set up your point of sale for you — we set up Square, cash drawers, and your systems. Austin's Tech Repair Group is not a payment processing company: we help you set it up, and we do not process payments.\nCovered devices: Plan benefits apply only to the devices covered under your plan. Your membership, your plan, and your covered devices are recorded on your guest account with us.\n2. Member Benefits — Paid Plans\nWhile your paid membership is active, you receive the following on your covered devices:\nBusiness: 35% off repairs and 40% off accessories.\nWholesale parts pricing: Paid members pay our wholesale cost for parts on covered repairs — the cost we pay, with no markup added.\nVisit fee: Paid members pay no visit fee for covered devices.\nDiagnostics: Diagnostics on covered devices are free.\nParts shipping: Free priority shipping on parts ordered for covered devices.\nPriority queue: Member work is scheduled ahead of non-member work.\nRemote support: Free remote guest service.\nAccessory returns: Accessories you purchase from us can be exchanged or returned within 14 days of purchase.\nWallet card: After signup, you receive your ATR One member card to add to Apple Wallet or Google Wallet.\nScreen protector: When we repair a covered device, a screen protector for that device is included free and installed at that repair. The free screen protector is part of a repair we perform on a device we repaired — it is not available on its own.\n3. Billing & Renewal\nPaid plans are billed monthly through Square. Your plan renews each month and continues until you cancel it.\n[AUSTIN TO DECIDE: price changes — whether plan prices may change, and how far ahead members are told.]\n[AUSTIN TO DECIDE: past-due payments — what happens when a monthly payment fails, including any grace period and when benefits pause.]\n4. Cancellation\nYou may cancel at any time. To stop the next monthly charge, cancel at least 3 days before your next billing date. If a monthly payment has already gone through and you cancel within 3 days of that payment, that payment is refunded in full. Your benefits continue to the end of the current billing period.\n5. Warranty\nThis membership does not change our repair warranty. Every repair we perform carries our 1-Year Limited Warranty on the parts we install and the labor we perform, under that warranty's own terms. Membership neither extends nor limits the warranty, and the warranty neither extends nor limits this membership.\n6. Governing Law & Entire Agreement\nThis Agreement is governed by the laws of the State of Ohio. Disputes will first be addressed through good-faith negotiation; if unresolved, they will be submitted to a court of competent jurisdiction in Greene County, Ohio. This document is the entire agreement between you and Austin's Tech Repair Group for the ATR One membership. If any provision is found unenforceable, the rest remain in effect.\n7. Your Signature\nBy signing this agreement, you agree to be billed monthly through Square for the plan you select, and you confirm that you understand ATR One is a monthly subscription that renews each month until you cancel it.\nAustin's Tech Repair Group\nAustin Tyler Caudill, Owner\nState of Ohio, USA — (937) 280-6243";
+  var ATRONE_BUSINESS_PRO_TEXT = "ATR One Business Pro Membership Agreement\nAustin's Tech Repair Group — State of Ohio, USA — Last updated November 17, 2026\nPLEASE READ THIS DOCUMENT CAREFULLY. By joining ATR One, you (\"Member,\" \"you\") agree to these terms with Austin's Tech Repair Group (\"Company,\" \"we,\" \"us,\" \"our\"), a sole proprietorship operating in the State of Ohio. This agreement covers your ATR One Business Pro membership. Repair work itself is authorized and warranted under our Repair Authorization & Service Agreement and our 1-Year Limited Warranty, which are separate documents.\n1. Membership Plans\nFree membership: Anyone may join ATR One free. Free members earn rewards points — 5 points for every $1 spent with us — and 100 points take $5 off a future purchase or repair. Free membership does not include the paid plan benefits in Section 2.\nYour plan: ATR One Business Pro — $99.99 per month. Full IT management, including server setup.\nBusiness Pro membership requires the business's EIN at signup.\nBusiness setup: On a business plan, we can come out and set up your point of sale for you — we set up Square, cash drawers, and your systems. Austin's Tech Repair Group is not a payment processing company: we help you set it up, and we do not process payments.\nCovered devices: Plan benefits apply only to the devices covered under your plan. Your membership, your plan, and your covered devices are recorded on your guest account with us.\n2. Member Benefits — Paid Plans\nWhile your paid membership is active, you receive the following on your covered devices:\nBusiness Pro: 45% off repairs and 55% off accessories.\nWholesale parts pricing: Paid members pay our wholesale cost for parts on covered repairs — the cost we pay, with no markup added.\nVisit fee: Paid members pay no visit fee for covered devices.\nDiagnostics: Diagnostics on covered devices are free.\nParts shipping: Free priority shipping on parts ordered for covered devices.\nPriority queue: Member work is scheduled ahead of non-member work.\nRemote support: Free remote guest service.\nAccessory returns: Accessories you purchase from us can be exchanged or returned within 14 days of purchase.\nWallet card: After signup, you receive your ATR One member card to add to Apple Wallet or Google Wallet.\nScreen protector: When we repair a covered device, a screen protector for that device is included free and installed at that repair. The free screen protector is part of a repair we perform on a device we repaired — it is not available on its own.\n3. Billing & Renewal\nPaid plans are billed monthly through Square. Your plan renews each month and continues until you cancel it.\n[AUSTIN TO DECIDE: price changes — whether plan prices may change, and how far ahead members are told.]\n[AUSTIN TO DECIDE: past-due payments — what happens when a monthly payment fails, including any grace period and when benefits pause.]\n4. Cancellation\nYou may cancel at any time. To stop the next monthly charge, cancel at least 3 days before your next billing date. If a monthly payment has already gone through and you cancel within 3 days of that payment, that payment is refunded in full. Your benefits continue to the end of the current billing period.\n5. Warranty\nThis membership does not change our repair warranty. Every repair we perform carries our 1-Year Limited Warranty on the parts we install and the labor we perform, under that warranty's own terms. Membership neither extends nor limits the warranty, and the warranty neither extends nor limits this membership.\n6. Governing Law & Entire Agreement\nThis Agreement is governed by the laws of the State of Ohio. Disputes will first be addressed through good-faith negotiation; if unresolved, they will be submitted to a court of competent jurisdiction in Greene County, Ohio. This document is the entire agreement between you and Austin's Tech Repair Group for the ATR One membership. If any provision is found unenforceable, the rest remain in effect.\n7. Your Signature\nBy signing this agreement, you agree to be billed monthly through Square for the plan you select, and you confirm that you understand ATR One is a monthly subscription that renews each month until you cancel it.\nAustin's Tech Repair Group\nAustin Tyler Caudill, Owner\nState of Ohio, USA — (937) 280-6243";
   /* The four agreements, keyed by database tier value: title,
    * display short name, text, and file spec. DOC_SIGNERS, the
    * Documents library (BLANK_DOCS), and the check-in auto-attach
@@ -12767,6 +12815,15 @@ function loadTicketThread(client, ticketId) {
    *   ticket_charges: kind, qty, unit_price, ticket_id, created_at.
    *     Revenue   = every line that is NOT a deposit_credit
    *                 (qty x unit_price — what tickets billed).
+   *     V176_14_REVENUE_2026_11_20: plus, per ticket, any amount
+   *                 PAID above what was billed (collected minus
+   *                 billed, never below $0) — a payment recorded
+   *                 with no billed line behind it, e.g. a Venmo
+   *                 payment recorded on its own as a deposit_credit
+   *                 ("Paid in Venmo"), still counts as revenue in
+   *                 that ticket's month. A ticket billed and paid
+   *                 in full adds nothing extra, so nothing is
+   *                 ever counted twice.
    *     Collected = deposit_credit lines (payments are recorded on
    *                 the ticket itself as "Deposit received (credit)"
    *                 lines, e.g. the cash button's "Paid in cash").
@@ -12818,6 +12875,38 @@ function loadTicketThread(client, ticketId) {
     return true;
   }
 
+  /* V176_14_REVENUE_2026_11_20 (Nov 20, 2026 stress test): per-ticket
+   * billed-vs-paid totals, shared by finSum and finMonths so the two
+   * agree. Root cause: the month table (and the Revenue card) counted
+   * ONLY non-deposit_credit lines, so a job whose only record is a
+   * payment — a Venmo / cash payment recorded on its own as a
+   * deposit_credit ("Paid in Venmo", "Paid in cash", the manual-add
+   * form, the drawer pay buttons) with no part / labor / visit line
+   * behind it — contributed $0 revenue even though the money was
+   * really paid. unbilledPaid is the amount paid above what was
+   * billed on that ticket (collected minus billed, floored at $0,
+   * rounded to the cent so float dust never counts): $0 for a ticket
+   * billed and paid in full, so a normal ticket is never counted
+   * twice, and the full payment for a payment-only ticket. Groups
+   * are dated by the ticket's job date (finRowDate), falling back
+   * to the row's created_at; a row with no ticket is its own group.
+   * Warranty-exempt tickets contribute $0 here, same as everywhere
+   * in finSum. Pure helper — no DOM, no database call. */
+  function finTicketRevenueGroups(charges, jobByTicket) {
+    var byTicket = {}, order = [];
+    (charges || []).forEach(function (c, idx) {
+      if (!c || finChargeExempt(c)) return;
+      var key = c.ticket_id ? String(c.ticket_id) : '__orphan__' + idx;
+      var g = byTicket[key];
+      if (!g) { g = byTicket[key] = { billed: 0, collected: 0, date: null }; order.push(g); }
+      var amt = Number(c.qty || 0) * Number(c.unit_price || 0);
+      if (c.kind === 'deposit_credit') g.collected += amt; else g.billed += amt;
+      if (!g.date) g.date = finRowDate(c, jobByTicket);
+    });
+    order.forEach(function (g) { g.unbilledPaid = Math.max(0, Math.round((g.collected - g.billed) * 100) / 100); });
+    return order;
+  }
+
   function finSum(charges, parts, jobByTicket, inPeriod) {
     var revenue = 0, collected = 0, partsCost = 0;
     charges.forEach(function (c) {
@@ -12826,6 +12915,14 @@ function loadTicketThread(client, ticketId) {
       if (inPeriod && !finInPeriod(d)) return;
       var amt = Number(c.qty || 0) * Number(c.unit_price || 0);
       if (c.kind === 'deposit_credit') collected += amt; else revenue += amt;
+    });
+    /* V176_14_REVENUE_2026_11_20: add each ticket's paid-above-billed
+     * amount (see finTicketRevenueGroups) so a payment recorded with
+     * no billed line behind it counts as revenue in the ticket's
+     * month. $0 for a ticket billed and paid in full — no double
+     * count. Collected above is untouched. */
+    finTicketRevenueGroups(charges, jobByTicket).forEach(function (g) {
+      if (g.unbilledPaid > 0 && (!inPeriod || finInPeriod(g.date))) revenue += g.unbilledPaid;
     });
     parts.forEach(function (p) {
       if (p.status === 'Cancelled') return;
@@ -12937,6 +13034,17 @@ function loadTicketThread(client, ticketId) {
       var b = byKey[finMonthKey(dt)]; if (!b) return;
       b.revenue += Number(c.qty || 0) * Number(c.unit_price || 0);
     });
+    /* V176_14_REVENUE_2026_11_20: a payment recorded with no billed
+     * line behind it was skipped by the loop above (deposit_credit
+     * lines return early), so its month read $0 even though the job
+     * was completed and paid. Add each ticket's paid-above-billed
+     * amount (see finTicketRevenueGroups) into that ticket's month.
+     * $0 for a ticket billed and paid in full — no double count. */
+    finTicketRevenueGroups(charges, jobByTicket).forEach(function (g) {
+      if (!(g.unbilledPaid > 0) || !g.date) return;
+      var b2 = byKey[finMonthKey(g.date)]; if (!b2) return;
+      b2.revenue += g.unbilledPaid;
+    });
     parts.forEach(function (p) {
       if (p.status === 'Cancelled') return;
       var dt = finRowDate(p, jobByTicket); if (!dt) return;
@@ -12985,6 +13093,18 @@ function loadTicketThread(client, ticketId) {
     if (!canSeeMoney()) { body.innerHTML = ''; renderPayrollSummary(); return; }
     var t = finSum(finCache.charges, finCache.parts, finCache.jobByTicket, true);
     var sq = finSquareSum(finCache.squarePayments || [], finCache.jobByTicket, true);
+    /* V176_14_TAX_UNIFY_2026_11_20: the 'Tax collected' top card
+     * below used to read sq.tax — the Square ledger
+     * (square_payments), a table that does not exist, so it always
+     * read $0 while the TAX area read $3.59. One source now: the
+     * same finTaxCollected aggregation over the ticket_charges
+     * kind-'tax' rows the TAX area (finTaxHtml) uses, so both
+     * displays show the same number. The Square ledger fetch stays
+     * — it still feeds the fees card, Net collected, and the bottom
+     * line. Note the TAX area is an all-time running total by
+     * design, so this card now shows the all-time figure too,
+     * matching the TAX area in every period. */
+    var taxCollectedTop = finTaxCollected(finCache.charges).total;
     var margin = t.revenue > 0 ? (t.gross / t.revenue * 100) : null;
     var html = '';
     if (!finCache.charges.length && !finCache.parts.length) {
@@ -12999,7 +13119,7 @@ function loadTicketThread(client, ticketId) {
       '</div>';
     html += '<div class="fin-cards">' +
       finCard('Square fees (actual)', sq.fees) +
-      finCard('Tax collected', sq.tax) +
+      finCard('Tax collected', taxCollectedTop) + /* V176_14_TAX_UNIFY_2026_11_20: was sq.tax (square_payments — table does not exist, always $0); now the TAX area's own finTaxCollected total so both agree */
       finCard('Net collected', t.collected - sq.fees) +
       '</div>';
     if (finCache.squareLedgerMissing) {
@@ -13044,7 +13164,7 @@ function loadTicketThread(client, ticketId) {
         return '<tr><td>' + esc(m.label) + '</td><td>' + esc(fmtMoney(m.revenue)) + '</td><td>' + esc(fmtMoney(m.partsCost)) + '</td><td>' + esc(fmtMoney(m.revenue - m.partsCost)) + '</td></tr>';
       }).join('') +
       '</tbody></table></div>';
-    html += '<p class="portal-muted portal-small">Counted by each ticket&rsquo;s job date. Part orders with no cost recorded count as $0; cancelled part orders are left out.</p>';
+    html += '<p class="portal-muted portal-small">Counted by each ticket&rsquo;s job date. Part orders with no cost recorded count as $0; cancelled part orders are left out. A payment recorded with no billed line behind it counts as revenue in that ticket&rsquo;s month, up to the amount paid.</p>'; /* V176_14_REVENUE_2026_11_20: footnote states the payment-only rule */
     /* PORTAL_FINANCIALS_2026_11_02: payroll, processing, and the
      * true bottom line (finBottomLineHtml, in the block below). */
     html += finBottomLineHtml(t, sq);

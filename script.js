@@ -7284,6 +7284,13 @@ document.addEventListener('click', function (e) {
      The associate confirms the payment in Square before the session
      starts — the same trust pattern the booking step used. A
      signed-out guest is told plainly to sign in first. */
+  /* V176_14_PAY_FLOW_2026_11_20 (Nov 20, 2026 stress test): same verbatim-error defect as the ticket Pay path — the checkout function's own error used to print word for word to the guest, so a staff-side refusal landed on a guest's screen as if the guest had to be an administrator. Server errors are translated to guest-safe words here; the raw error still goes to the console. */
+  function payVooError(serverErr) {
+    var e = String(serverErr || '');
+    if (e === 'Employee access only') return 'We could not open the payment page just now — call or text (937) 280-6243 and we will send the payment link.';
+    if (e === 'Sign in required') return 'To pay the first hour, sign in first (or make your free account) with the same email you booked with, then tap Pay again.';
+    return 'The payment step is not connected yet. Tell your associate — they will get you connected.';
+  }
   (function wirePaywall() {
     if (!paywallEl || !payConsent || !payBtn) return;
     payConsent.addEventListener('change', function () { payBtn.disabled = !payConsent.checked; });
@@ -7311,7 +7318,7 @@ document.addEventListener('click', function (e) {
               var wv = document.getElementById('voo-waiver');
               if (wv) { wv.hidden = false; try { wv.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {} }
             } else {
-              if (payMsg) payMsg.textContent = (j && j.error) ? j.error : 'The payment step is not connected yet. Tell your associate — they will get you connected.';
+              var vooErr = (j && j.error) ? String(j.error) : ''; try { if (window.console && window.console.warn) window.console.warn('atr-pay-voo: checkout refused', vooErr); } catch (e2) {} if (payMsg) payMsg.textContent = payVooError(vooErr); /* V176_14_PAY_FLOW_2026_11_20: never print a raw server error to a guest — see payVooError above. */
               payBtn.disabled = false;
             }
           })
