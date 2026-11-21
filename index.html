@@ -11323,7 +11323,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
     }
     if (!sb || !tickets.length) { paint([]); return; }
     var ids = tickets.map(function (t) { return t.id; });
-    /* V173_DOCS_SPLIT_2026_11_18: this panel reads signatures only — the filed estimate / invoice / receipt copies used to ride along here, but signed copies live on the repair ticket now, not in this panel, so there is no second query. */
+    /* V176_16_DOCS_HOME_PARITY_2026_11_21 (Austin, Nov 19, 2026 rule; Nov 21, 2026 audit): this panel reads signatures only and is the ONE renderer for both hub faces — Guest and Business share it, so a signed document shows identically in both, with View, Download, Re-sign right here. Signed documents live in Documents, never on the repair ticket (V176_6_DOCS_HOME_2026_11_19). The filed estimate / invoice / receipt copies live on the ticket's own Documents section, so there is no second query here. */
     sb.from('document_signatures').select('id,ticket_id,document_type,signer_name,signed_at').in('ticket_id', ids).order('signed_at', { ascending: false })
       .then(function (res) { paint((res && res.data) || []); })
       .catch(function () { paint([]); });
