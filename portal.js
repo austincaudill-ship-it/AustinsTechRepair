@@ -14323,6 +14323,9 @@ function loadTicketThread(client, ticketId) {
      * panels does — Payroll keeps it on an Admin's sidebar. */
     var gFin = $('portal-nav-group-financials');
     if (gFin) gFin.style.display = isAdminOrAbove() ? '' : 'none';
+    /* V176_15_SQUARE_FIN_2026_11_21 (Austin, Nov 20, 2026): the Square link under Financials is a plain anchor (class portal-tab-link, NOT portal-tab, so initTabs never binds it as a panel tab) — gate it by id, same money tier as Financials/Business Files (canSeeMoney = top tier). */
+    var sqFin = $('portal-tab-square-fin');
+    if (sqFin) sqFin.style.display = canSeeMoney() ? '' : 'none';
   }
 
   function roleLabel(role) {

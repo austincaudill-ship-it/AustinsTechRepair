@@ -377,6 +377,8 @@
         <button class="portal-tab" id="portal-tab-businessfiles" type="button" role="tab" data-tab="businessfiles">
           <i class="fas fa-briefcase"></i> Business Files
         </button>
+        <!-- V176_15_SQUARE_FIN_2026_11_21 (Austin, Nov 20, 2026): Square moves OUT of Links and UNDER Financials — its own action button in the Financials group, directly under Business Files (bottom of the group), money-tier gated like Financials in applyRoleNav (portal.js). Plain link out to the Square Balance page in a NEW TAB (target="_blank"): Square blocks framing (CSP frame-ancestors 'self', X-Frame-Options SAMEORIGIN), so no iframe overlay is possible — the portal tab stays open behind it with Financials exactly where he left it. Class is portal-tab-link, NOT portal-tab, so the tab-switch wiring in initTabs never treats it as a panel tab (no data-tab, no panel). -->
+        <a class="portal-tab-link" id="portal-tab-square-fin" href="https://app.squareup.com/dashboard/balance" target="_blank" rel="noopener"><i class="fas fa-credit-card"></i> Square</a>
       </nav>
       </div>
 
@@ -1945,7 +1947,7 @@
         <div id="p2-price-results"><p class="portal-muted">Opening the price book&hellip;</p></div>
       </div>
 
-      <!-- SQUARE_ATRONE_SPLIT_2026_11_11 (Austin, Nov 11, 2026): this panel used to be "Square & ATR One". His ruling: Square and ATR One don't need to be in the same action button — ATR One stays here, and Square lives inside Links, as it already does. The Square Dashboard card was removed from this panel because the Links panel (portal_links) already carries a Square Dashboard row. Display text only: the tab key 'square' and panel id portal-panel-square are unchanged. -->
+      <!-- SQUARE_ATRONE_SPLIT_2026_11_11 (Austin, Nov 11, 2026): this panel used to be "Square & ATR One". His ruling: Square and ATR One don't need to be in the same action button — ATR One stays here, and Square lives inside Links, as it already does. V176_15_SQUARE_FIN_2026_11_21 (Austin, Nov 20, 2026): Square has since moved OUT of Links and under Financials as its own action button (portal-tab-square-fin, Balance page, new tab); the Links seed row is gone (the DB row needs its own delete) and the Quick Actions Square button stays. The Square Dashboard card was removed from this panel because the Links panel (portal_links) already carries a Square Dashboard row. Display text only: the tab key 'square' and panel id portal-panel-square are unchanged. -->
       <div class="portal-panel" id="portal-panel-square" role="tabpanel" hidden>
         <div class="portal-panel-head"><h2 class="portal-h2">ATR One</h2></div>
         <p class="portal-muted portal-small">Ticket checkout is built into every ticket (open one &rarr; Payment &rarr; Charge / Check out). These are the quick doors:</p>
@@ -5023,8 +5025,12 @@
    * (two-tap confirm); the table's RLS matches (links-table.sql).
    * FALLBACK: if the table read errors — links-table.sql has not
    * run yet, or the connection is down — the module renders
-   * LINKS_SEED, an exact copy of the seed rows, so the panel is
-   * never empty. Fallback cards carry no row id, so they render
+   * LINKS_SEED, the seed rows, so the panel is
+   * never empty. V176_15_SQUARE_FIN_2026_11_21 (Austin, Nov 20, 2026):
+   * Square Dashboard is out of the seed — it moved under Financials.
+   * The seed no longer mirrors the DB table exactly: the
+   * public.portal_links row still needs its own delete before Square
+   * actually leaves the live Links grid. Fallback cards carry no row id, so they render
    * without Edit / Delete. A successful read of an EMPTY table is
    * not a fallback: the grid honestly shows that there are no
    * links (an admin can then add the first one). */
@@ -5046,7 +5052,6 @@
       { label: 'Google\u2019s Prices', url: 'https://store.google.com/us/repair-cost-estimator', note: 'Official repair price anchor', icon: 'fab fa-google', sort: 90 },
       { label: 'GSMArena', url: 'https://www.gsmarena.com/compare.php3', note: 'Compare phones side by side', icon: 'fas fa-scale-balanced', sort: 100 },
       { label: 'Swappa', url: 'https://swappa.com/prices', note: 'Used phone values', icon: 'fas fa-dollar-sign', sort: 110 },
-      { label: 'Square Dashboard', url: 'https://squareup.com/dashboard', note: 'Sales, payouts, settings', icon: 'fas fa-square', sort: 120 },
       { label: 'FedEx', url: 'https://www.fedex.com/fedextrack/', note: 'Track a package', icon: 'fas fa-truck-fast', sort: 130 },
       { label: 'UPS', url: 'https://www.ups.com/track', note: 'Track a package', icon: 'fas fa-truck', sort: 140 },
       { label: 'USPS', url: 'https://tools.usps.com/go/TrackConfirmAction_input', note: 'Track a package', icon: 'fas fa-envelope', sort: 150 },

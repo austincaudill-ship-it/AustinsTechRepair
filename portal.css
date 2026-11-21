@@ -131,12 +131,13 @@ html { background: var(--bg, #FAF6EE); }
   display: flex; gap: 0.5rem; flex-wrap: wrap;
   margin-bottom: 1.5rem; border-bottom: 2px solid var(--line, #E6D9C0); padding-bottom: 0.75rem;
 }
-.portal-tab {
+/* V176_15_SQUARE_FIN_2026_11_21: .portal-tab-link shares the sidebar tab look for the Financials Square anchor (a plain link-out, not a panel tab) — grouped with .portal-tab everywhere except the active state, which it never gets. */
+.portal-tab, .portal-tab-link {
   background: var(--surface, #FFFDF8); border: 1px solid var(--line, #E6D9C0); color: var(--ink, #2C231A);
   padding: 0.6rem 1rem; border-radius: 999px; cursor: pointer; font-family: inherit; font-size: 0.92rem;
-  display: inline-flex; align-items: center; gap: 0.45rem;
+  display: inline-flex; align-items: center; gap: 0.45rem; text-decoration: none;
 }
-.portal-tab:hover { border-color: var(--brand, #D9540D); }
+.portal-tab:hover, .portal-tab-link:hover { border-color: var(--brand, #D9540D); }
 .portal-tab.active { background: var(--brand, #D9540D); border-color: var(--brand, #D9540D); color: #fff; }
 .portal-count {
   background: #fff; color: var(--brand, #D9540D); border-radius: 999px;
@@ -265,7 +266,7 @@ html { background: var(--bg, #FAF6EE); }
 @media (max-width: 640px) {
   .portal-tabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; scrollbar-width: none; }
   .portal-tabs::-webkit-scrollbar { display: none; }
-  .portal-tab { flex: none; white-space: nowrap; }
+  .portal-tab, .portal-tab-link { flex: none; white-space: nowrap; }
 }
 
 /* ===== Portal redesign 2026-10-23: greeting header, left nav, queue ===== */
@@ -277,7 +278,7 @@ html { background: var(--bg, #FAF6EE); }
 #portal-dash-view .portal-error{grid-column:1/-1}
 #portal-dash-view .portal-panel{grid-column:2;min-width:0}
 .portal-tabs{flex-direction:column;align-items:stretch;gap:3px;background:var(--surface,#fff);border:1px solid var(--line,#e5d9c8);border-radius:14px;padding:10px;position:sticky;top:12px;max-height:calc(100vh - 24px);overflow-y:auto}
-.portal-tab{justify-content:flex-start;width:100%;border-radius:9px;padding:9px 11px}
+.portal-tab, .portal-tab-link{justify-content:flex-start;width:100%;border-radius:9px;padding:9px 11px}
 .portal-tab.active{background:var(--brand,#b4551f);color:#fff}
 /* PORTAL_NAV_GROUPS_2026_10_30: group headers restyled to read as clear section labels, not faint captions (Austin could not see the grouping on his iPad) */
 .portal-nav-group{font-size:.82rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--brand-deep,#A63E06);margin:15px 6px 5px;padding-bottom:4px;border-bottom:2px solid var(--line,#e5d9c8)}
@@ -414,7 +415,7 @@ html { background: var(--bg, #FAF6EE); }
    overflows vertically into the nav's own scrollbar, and clip the
    horizontal axis so the sidebar can never scroll left/right. */
 .portal-tabs{flex-wrap:nowrap;overflow-x:hidden}
-.portal-tab{min-width:0}
+.portal-tab, .portal-tab-link{min-width:0}
 
 /* PORTAL_DRAWER_SCROLL_LOCK_2026_11_02 (Austin, Nov 2, 2026): freeze the
    page behind the open ticket drawer. portal.js adds .portal-scroll-locked
