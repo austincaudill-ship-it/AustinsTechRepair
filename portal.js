@@ -499,7 +499,42 @@
   }
 
   /* ================= AUTH ================= */
-  var resetSuccessMessage = null; function isRecoveryHash() { var h = window.location.hash || ""; var q = window.location.search || ""; return h.indexOf("type=recovery") !== -1 || q.indexOf("type=recovery") !== -1; } function showResetView(msg) { var dv = $("portal-dash-view"); if (dv) { dv.hidden = true; } var lv = $("portal-login-view"); if (lv) { lv.hidden = false; } var rf = $("portal-login-form"); if (rf) { rf.hidden = true; } var rv = $("portal-reset-view"); if (rv) { rv.hidden = false; } var mv2 = $("portal-mfa-view"); if (mv2) { mv2.hidden = true; } /* PORTAL_MFA_2026_11_02: recovery view never shares the card with the two-step check. */ var re = $("portal-reset-error"); if (re) { if (msg) { re.textContent = msg; re.hidden = false; } else { re.hidden = true; re.textContent = ""; } } var fm2 = $("portal-forgot-msg"); if (fm2) { fm2.hidden = true; } } function initPasswordReset() { withClient(function (client) { if (!client) { return; } var fb = $("portal-forgot-btn"); if (fb) { fb.addEventListener("click", function () { var em = $("portal-login-email"); var email = em ? trim(em.value) : ""; var mg = $("portal-forgot-msg"); if (!email) { if (mg) { mg.textContent = "Enter your associate email first"; mg.hidden = false; } return; } client.auth.resetPasswordForEmail(email, { redirectTo: "https://austinstechrepairgroup.com/portal.html" }).then(function (res) { if (mg) { if (res.error) { mg.textContent = res.error.message || "Could not send the reset email. Try again."; } else { mg.textContent = "Check your email for a password reset link"; } mg.hidden = false; } }).catch(function (err) { if (mg) { mg.textContent = (err && err.message) || "Could not send the reset email. Try again."; mg.hidden = false; } }); }); } /* PORTAL_DEADEND_2026_10_30: "Back to sign in" exits the recovery view and restores the normal sign-in form. */ var bb = $("portal-reset-back-btn"); if (bb) { bb.addEventListener("click", function () { /* PORTAL_DEVICE_TRUST_2026_11_02: during a forced 30-day rotation, Back is the only exit and it must close the session - landing on the plain form with a live session would bounce straight back to the forced step. signOut fires SIGNED_OUT, whose handler shows the sign-in form. */ if (pwGateState.forced) { pwGateState.forced = false; var _pn = $("portal-reset-note"); if (_pn) { _pn.hidden = true; } client.auth.signOut(); return; } showLogin(null); }); } var rb = $("portal-reset-btn"); if (rb) { rb.addEventListener("click", function () { var pwEl = $("portal-reset-password"); var cfEl = $("portal-reset-confirm"); var er = $("portal-reset-error"); var pw = pwEl ? pwEl.value : ""; var cf = cfEl ? cfEl.value : ""; if (er) { er.hidden = true; er.textContent = ""; } if (pw !== cf) { if (er) { er.textContent = "Passwords do not match"; er.hidden = false; } return; } if (pw.length < 8) { if (er) { er.textContent = "Password must be at least 8 characters"; er.hidden = false; } return; } client.auth.updateUser({ password: pw }).then(function (res) { if (res.error) { if (er) { er.textContent = res.error.message || "Could not update the password. Try again."; er.hidden = false; } return; } /* PORTAL_DEVICE_TRUST_2026_11_02: any successful set through this view restarts the 30-day password clock (best-effort stamp, see stampPasswordChanged). A forced rotation then continues straight to the dashboard - password and authenticator both already passed, and the factor is untouched. The email-link recovery path keeps its original sign-out ending below. */ stampPasswordChanged(client, function () { if (pwGateState.forced) { pwGateState.forced = false; var _pn2 = $("portal-reset-note"); if (_pn2) { _pn2.hidden = true; } if (state.profile) { state.profile.password_changed_at = new Date().toISOString(); } proceedToDashboard(); return; } var doneMsg = "Password updated. Sign in with your new password."; resetSuccessMessage = doneMsg; client.auth.signOut().then(function () { showLogin(doneMsg); }); }); }).catch(function (err) { if (er) { er.textContent = (err && err.message) || "Could not update the password. Try again."; er.hidden = false; } }); }); } }); } function showLogin(errorMsg) {
+  var resetSuccessMessage = null; function isRecoveryHash() { var h = window.location.hash || ""; var q = window.location.search || ""; return h.indexOf("type=recovery") !== -1 || q.indexOf("type=recovery") !== -1; } function showResetView(msg) { clearSigningIn(); var dv = $("portal-dash-view"); if (dv) { dv.hidden = true; } var lv = $("portal-login-view"); if (lv) { lv.hidden = false; } var rf = $("portal-login-form"); if (rf) { rf.hidden = true; } var rv = $("portal-reset-view"); if (rv) { rv.hidden = false; } var mv2 = $("portal-mfa-view"); if (mv2) { mv2.hidden = true; } /* PORTAL_MFA_2026_11_02: recovery view never shares the card with the two-step check. */ var re = $("portal-reset-error"); if (re) { if (msg) { re.textContent = msg; re.hidden = false; } else { re.hidden = true; re.textContent = ""; } } var fm2 = $("portal-forgot-msg"); if (fm2) { fm2.hidden = true; } } function initPasswordReset() { withClient(function (client) { if (!client) { return; } var fb = $("portal-forgot-btn"); if (fb) { fb.addEventListener("click", function () { var em = $("portal-login-email"); var email = em ? trim(em.value) : ""; var mg = $("portal-forgot-msg"); if (!email) { if (mg) { mg.textContent = "Enter your associate email first"; mg.hidden = false; } return; } client.auth.resetPasswordForEmail(email, { redirectTo: "https://austinstechrepairgroup.com/portal.html" }).then(function (res) { if (mg) { if (res.error) { mg.textContent = res.error.message || "Could not send the reset email. Try again."; } else { mg.textContent = "Check your email for a password reset link"; } mg.hidden = false; } }).catch(function (err) { if (mg) { mg.textContent = (err && err.message) || "Could not send the reset email. Try again."; mg.hidden = false; } }); }); } /* PORTAL_DEADEND_2026_10_30: "Back to sign in" exits the recovery view and restores the normal sign-in form. */ var bb = $("portal-reset-back-btn"); if (bb) { bb.addEventListener("click", function () { /* PORTAL_DEVICE_TRUST_2026_11_02: during a forced 30-day rotation, Back is the only exit and it must close the session - landing on the plain form with a live session would bounce straight back to the forced step. signOut fires SIGNED_OUT, whose handler shows the sign-in form. */ if (pwGateState.forced) { pwGateState.forced = false; var _pn = $("portal-reset-note"); if (_pn) { _pn.hidden = true; } client.auth.signOut(); return; } showLogin(null); }); } var rb = $("portal-reset-btn"); if (rb) { rb.addEventListener("click", function () { var pwEl = $("portal-reset-password"); var cfEl = $("portal-reset-confirm"); var er = $("portal-reset-error"); var pw = pwEl ? pwEl.value : ""; var cf = cfEl ? cfEl.value : ""; if (er) { er.hidden = true; er.textContent = ""; } if (pw !== cf) { if (er) { er.textContent = "Passwords do not match"; er.hidden = false; } return; } if (pw.length < 8) { if (er) { er.textContent = "Password must be at least 8 characters"; er.hidden = false; } return; } client.auth.updateUser({ password: pw }).then(function (res) { if (res.error) { if (er) { er.textContent = res.error.message || "Could not update the password. Try again."; er.hidden = false; } return; } /* PORTAL_DEVICE_TRUST_2026_11_02: any successful set through this view restarts the 30-day password clock (best-effort stamp, see stampPasswordChanged). A forced rotation then continues straight to the dashboard - password and authenticator both already passed, and the factor is untouched. The email-link recovery path keeps its original sign-out ending below. */ stampPasswordChanged(client, function () { if (pwGateState.forced) { pwGateState.forced = false; var _pn2 = $("portal-reset-note"); if (_pn2) { _pn2.hidden = true; } if (state.profile) { state.profile.password_changed_at = new Date().toISOString(); } proceedToDashboard(); return; } var doneMsg = "Password updated. Sign in with your new password."; resetSuccessMessage = doneMsg; client.auth.signOut().then(function () { showLogin(doneMsg); }); }); }).catch(function (err) { if (er) { er.textContent = (err && err.message) || "Could not update the password. Try again."; er.hidden = false; } }); }); } }); }   /* V176_27_SIGNING_IN_2026_11_22 (Austin, Nov 22, 2026): the sign-in card
+   * says the sign-in is still running. After a correct password, the gate
+   * chain (associate-profile check, assurance level, device trust, factor
+   * list, authenticator challenge) runs one step after another before the
+   * two-step view or the dashboard appears, and the card used to sit
+   * unchanged through all of it, so the wait looked like the click did
+   * nothing. These helpers only show and hide one status line and the
+   * Sign In button state — no auth, routing, or gate logic changes.
+   * showSigningIn runs synchronously in the submit handler, before the
+   * password goes out; clearSigningIn runs in exactly the four view
+   * functions that resolve a sign-in (showLogin, showDashboard,
+   * showMfaView, showResetView), so the line can never stick past a
+   * resolution. The two-step view itself is untouched: its shield icon
+   * and every element on it stay exactly as they are. */
+  var signingInActive = false;
+  function showSigningIn() {
+    signingInActive = true;
+    var m = $('portal-signing-in-msg'); if (m) m.hidden = false;
+    var b = $('portal-login-btn'); if (b) b.disabled = true;
+  }
+  function clearSigningIn() {
+    signingInActive = false;
+    var m = $('portal-signing-in-msg'); if (m) m.hidden = true;
+    var b = $('portal-login-btn');
+    if (b) { b.disabled = false; b.innerHTML = '<i class="fas fa-right-to-bracket"></i> Sign In'; }
+  }
+  function showRestoredSigningIn() {
+    var lv = $('portal-login-view'); if (lv) lv.hidden = false;
+    var lf = $('portal-login-form'); if (lf) lf.hidden = true;
+    var rv = $('portal-reset-view'); if (rv) rv.hidden = true;
+    var mv = $('portal-mfa-view'); if (mv) mv.hidden = true;
+    showSigningIn();
+  }
+
+function showLogin(errorMsg) {
+    clearSigningIn();
     $('portal-dash-view').hidden = true;
     $('portal-login-view').hidden = false;
     var _rf = $("portal-login-form"); if (_rf) { _rf.hidden = false; }
@@ -515,6 +550,7 @@
   }
 
   function showDashboard() {
+    clearSigningIn();
     $('portal-login-view').hidden = true;
     $('portal-dash-view').hidden = false;
     $('portal-emp-name').textContent = state.profile.name || state.user.email || 'teammate';
@@ -1092,6 +1128,7 @@
   }
 
   function showMfaView(errorMsg) {
+    clearSigningIn();
     var dv = $('portal-dash-view'); if (dv) dv.hidden = true;
     var lv = $('portal-login-view'); if (lv) lv.hidden = false;
     var lf = $('portal-login-form'); if (lf) lf.hidden = true;
@@ -1740,7 +1777,7 @@
       var _lv = $("portal-login-view"); if (_lv) { _lv.hidden = true; }
     client.auth.getSession().then(function (res) {
         var session = res.data && res.data.session;
-        if (session && session.user && isRecoveryHash()) { showResetView(null); } else if (session && session.user) { enterIfEmployee(client, session.user); }
+        if (session && session.user && isRecoveryHash()) { showResetView(null); } else if (session && session.user) { showRestoredSigningIn(); enterIfEmployee(client, session.user); }
         else { showLogin(null); }
       }).catch(function () { showLogin(null); });
 
@@ -1776,6 +1813,7 @@
 
       $('portal-login-form').addEventListener('submit', function (e) {
         e.preventDefault();
+        if (signingInActive) { return; }
         var email = trim($('portal-login-email').value);
         var password = $('portal-login-password').value;
         var err = $('portal-login-error');
@@ -1791,14 +1829,14 @@
          * fails, the gates never run and the snapshot is simply
          * never used. */
         noteSignInTrustChoice();
+        showSigningIn();
         var btn = $('portal-login-btn');
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in&hellip;';
         client.auth.signInWithPassword({ email: email, password: password })
           .then(function (res) {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-right-to-bracket"></i> Sign In';
             if (res.error) {
+              clearSigningIn();
               err.textContent = 'Sign-in failed: ' + res.error.message + ' Double-check the email and password and try again.';
               err.hidden = false;
               return;
@@ -1807,8 +1845,7 @@
             enterIfEmployee(client, res.data.user);
           })
           .catch(function () {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-right-to-bracket"></i> Sign In';
+            clearSigningIn();
             err.textContent = 'Sign-in failed. Check your connection and try again.';
             err.hidden = false;
           });
