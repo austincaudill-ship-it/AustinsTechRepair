@@ -1916,7 +1916,7 @@
     var qaBtn = name === 'home' ? $('portal-hub-home-btn') : ((name === 'checkin' || name === 'estimate') ? $('portal-hub-new-btn') : null);
     ['portal-hub-home-btn', 'portal-hub-new-btn'].forEach(function (id) { var b = $(id); if (b) b.classList.toggle('qa-active', b === qaBtn); });
     /* PASS10_2026_11_04: 'tracking' (the Live Tracking panel) hides and shows with the rest too */
-    ['tickets', 'estimates', 'invoices', 'applications', 'investors', 'feedback', 'customers', 'leads', 'members', 'inventory', 'timeclock', 'links', 'square', 'checkin', 'requests', 'prices', 'tracking', 'documents', 'records', 'financials', 'payroll', 'businessfiles', 'mileage', 'businesscard', /* V166_BUSINESS_CARD_2026_11_17: the Business Card panel hides and shows with the rest too */ 'teamchat', 'guestchat', 'associateaccounts', 'warranty', 'setup', 'home', 'virtual'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too; ASSOCIATE_ACCOUNTS_2026_11_03: 'associateaccounts' hides and shows with the rest too (it absorbed ACCOUNT_CONTROLS_2026_11_03's 'accountcontrols' and the roster's 'associates'); WARRANTY_PORTAL_2026_11_03: 'warranty' hides and shows with the rest too; PORTAL_SETUP_2026_11_04: 'setup' hides and shows with the rest too; PORTAL_HOME_2026_11_09: 'home' hides and shows with the rest too; LEADS_2026_11_15: 'leads' hides and shows with the rest too; QR_FIX_PASS_2026_11_05: 'scanin' is GONE from this list — the scanner is a popup now, there is no scanin panel to hide or show */
+    ['tickets', 'estimates', 'invoices', 'applications', 'investors', 'feedback', 'customers', 'leads', 'members', 'inventory', 'timeclock', 'square', 'checkin', 'requests', 'prices', 'tracking', 'documents', 'records', 'financials', 'payroll', 'businessfiles', 'mileage', 'businesscard', 'suppliers', 'shippers', /* V176_17_LINKS_MOVE_2026_11_22: the Suppliers and Shippers panels hide and show with the rest too */ 'teamchat', 'guestchat', 'associateaccounts', 'warranty', 'setup', 'home', 'virtual'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too; ASSOCIATE_ACCOUNTS_2026_11_03: 'associateaccounts' hides and shows with the rest too (it absorbed ACCOUNT_CONTROLS_2026_11_03's 'accountcontrols' and the roster's 'associates'); WARRANTY_PORTAL_2026_11_03: 'warranty' hides and shows with the rest too; PORTAL_SETUP_2026_11_04: 'setup' hides and shows with the rest too; PORTAL_HOME_2026_11_09: 'home' hides and shows with the rest too; LEADS_2026_11_15: 'leads' hides and shows with the rest too; QR_FIX_PASS_2026_11_05: 'scanin' is GONE from this list — the scanner is a popup now, there is no scanin panel to hide or show */
       $('portal-panel-' + n).hidden = n !== name;
     });
     closeDrawer();
@@ -10683,11 +10683,12 @@ function loadTicketThread(client, ticketId) {
   }
   function renderCustomActionButtons() {
     var nav = $('portal-nav');
-    var linksPanel = $('portal-panel-links');
-    if (!nav || !linksPanel) return;
+    /* V176_17_LINKS_MOVE_2026_11_22: the Links panel is gone — anchor the custom panels' container on the Service Queue panel instead (same #portal-dash-view parent as every panel). The old anchor on the deleted panel would have made this whole function return early, and no custom action button would render. */
+    var anchorPanel = $('portal-panel-tickets');
+    if (!nav || !anchorPanel) return;
     var oldBtns = nav.querySelectorAll('[data-custom-tab]');
     for (var i = oldBtns.length - 1; i >= 0; i--) oldBtns[i].parentNode.removeChild(oldBtns[i]);
-    var container = linksPanel.parentNode;
+    var container = anchorPanel.parentNode;
     var oldPanels = container.querySelectorAll('[data-custom-panel]');
     for (var j = oldPanels.length - 1; j >= 0; j--) oldPanels[j].parentNode.removeChild(oldPanels[j]);
     if (!setupRows || setupDbMissing) return;
@@ -20377,7 +20378,7 @@ function loadTicketThread(client, ticketId) {
     nav.classList.add('open');
   }
   function initExtraTabs() {
-    ['timeclock', 'links', 'square', 'checkin', 'mileage'].forEach(function (name) { /* PORTAL_MILEAGE_2026_11_02 */
+    ['timeclock', 'square', 'checkin', 'mileage'].forEach(function (name) { /* PORTAL_MILEAGE_2026_11_02 */
       var tab = $('portal-tab-' + name);
       if (tab) tab.addEventListener('click', function () { showExtraPanel(name); });
     });
@@ -23807,8 +23808,8 @@ function loadTicketThread(client, ticketId) {
     customers: 'Guest', guestchat: 'Guest Chat', members: 'Members', virtual: 'Virtual',
     leads: 'Leads', /* LEADS_2026_11_15: thumb-bar short label for the Leads tab. */
     documents: 'Documents', warranty: 'Warranty', inventory: 'Inventory',
-    links: 'Links', prices: 'Prices', guides: 'Guides', tracking: 'Tracking',
-    teamchat: 'Team Chat', requests: 'Requests', timeclock: 'Time Clock',
+    prices: 'Prices', guides: 'Guides', tracking: 'Tracking',
+    teamchat: 'Team Chat', suppliers: 'Suppliers', shippers: 'Shippers', requests: 'Requests', timeclock: 'Time Clock',
     mileage: 'Mileage', businesscard: 'Business Card', /* V166_BUSINESS_CARD_2026_11_17 */ associateaccounts: 'Accounts', investors: 'Investors',
     feedback: 'Feedback', square: 'Square', newhires: 'Onboarding',
     teamdocs: 'Team Docs', applications: 'Applications', setup: 'Setup',

@@ -303,10 +303,6 @@
         <button class="portal-tab" id="portal-tab-inventory" type="button" role="tab" data-tab="inventory">
           <i class="fas fa-boxes"></i> Inventory &amp; Orders
         </button>
-        <!-- PASS10_2026_11_04 (Austin, Nov 4, 2026): this button and its panel are just "Links" now — the Printers section moved to Setup and the tracking lookup got its own Live Tracking button below, so there is no tool left in here. Label only: the id, data-tab="links", gates and handlers are unchanged. -->
-        <button class="portal-tab" id="portal-tab-links" type="button" role="tab" data-tab="links">
-          <i class="fas fa-link"></i> Links
-        </button>
         <button class="portal-tab" id="portal-tab-prices" type="button" role="tab" data-tab="prices">
           <i class="fas fa-tags"></i> Price Book
         </button>
@@ -318,9 +314,18 @@
           <i class="fas fa-truck-fast"></i> Live Tracking
         </button>
         <div class="portal-nav-group">Associates</div>
+        <!-- V176_17_LINKS_MOVE_2026_11_22 (Austin, Nov 20, 2026): the Links panel is gone — Zoho Mail gets its own button in Associates, directly above Team Chat. A plain link-out (class portal-tab-link, NOT portal-tab, so initTabs never binds it as a panel tab), same pattern as the Financials Square anchor. Mail lives in Zoho, never in the portal. -->
+        <a class="portal-tab-link" id="portal-tab-zohomail" href="https://mail.zoho.com/" target="_blank" rel="noopener"><i class="fas fa-envelope"></i> Zoho Mail</a>
         <!-- TEAMCHAT_2026_11_03 (Austin, Nov 3, 2026): "build the internal team chat in associates action button." An internal Team Chat Action Button, first in the Associates group (the roster button that originally sat above it moved to Admin in the TEAMCHAT_CHANNELS_2026_11_03 build) — the office channel where Alfred, Pepper and the associates talk inside the portal, never on a personal account. Panel: portal-panel-teamchat, loader loadTeamChat in portal.js (same LOADERS wiring as Payroll); messages live in public.team_messages (see team-chat.sql in this build folder). -->
         <button class="portal-tab" id="portal-tab-teamchat" type="button" role="tab" data-tab="teamchat">
           <i class="fas fa-comments"></i> Team Chat
+        </button>
+        <!-- V176_17_LINKS_MOVE_2026_11_22 (Austin, Nov 20, 2026): the Links panel is gone — Suppliers and Shippers are their own action buttons in Associates, each opening a static panel of the same link cards the Links grid carried. Same tier as the other Associates buttons (no TAB_GATES entry). -->
+        <button class="portal-tab" id="portal-tab-suppliers" type="button" role="tab" data-tab="suppliers">
+          <i class="fas fa-warehouse"></i> Suppliers
+        </button>
+        <button class="portal-tab" id="portal-tab-shippers" type="button" role="tab" data-tab="shippers">
+          <i class="fas fa-truck-fast"></i> Shippers
         </button>
         <!-- PORTAL_CUSTOMER_PROFILE_2026_11_02 (Austin correction, Nov 2, 2026): the Requests button moved out of the first group into this group — Requests is the associates' queue (shop requests plus the change requests the owner approves). The button, its count span and the panel are otherwise byte-identical; group headings are NOT renamed here (the rename pass owns them). -->
         <button class="portal-tab" id="portal-tab-requests" type="button" role="tab" data-tab="requests">
@@ -1444,6 +1449,18 @@
         <p class="portal-muted portal-small" id="portal-guides-count"></p>
         <div id="portal-guides-list"><p class="portal-muted">Loading guides&hellip;</p></div>
 
+        <!-- V176_17_LINKS_MOVE_2026_11_22 (Austin, Nov 20-22, 2026): the Links panel is gone — its reference links live here. Static anchors ONLY: they are not guide rows, they never enter guide search, the exact-model ticket matcher, or auto-attach, and they never appear on a ticket. Sickw has no home in the Nov 20 spec; it sits here with the other lookup tools rather than being dropped — it is the IMEI lookup Austin uses to see what parts to order. -->
+        <div class="portal-panel-head portal-subhead">
+          <h3 class="portal-h3">Reference links</h3>
+        </div>
+        <div class="link-grid">
+          <a class="link-card" href="https://www.ifixit.com" target="_blank" rel="noopener"><i class="fas fa-screwdriver-wrench"></i><strong>iFixit</strong><span>Guides &amp; genuine Pixel parts</span></a>
+          <a class="link-card" href="https://support.apple.com/iphone/repair" target="_blank" rel="noopener"><i class="fab fa-apple"></i><strong>Apple Support</strong><span>Official repair price anchor</span></a>
+          <a class="link-card" href="https://www.sickw.com/" target="_blank" rel="noopener"><i class="fas fa-barcode"></i><strong>Sickw</strong><span>Exact model &amp; variant by IMEI</span></a>
+          <a class="link-card" href="https://www.gsmarena.com/compare.php3" target="_blank" rel="noopener"><i class="fas fa-scale-balanced"></i><strong>GSMArena</strong><span>Compare phones side by side</span></a>
+          <a class="link-card" href="https://swappa.com/prices" target="_blank" rel="noopener"><i class="fas fa-dollar-sign"></i><strong>Swappa</strong><span>Used phone values</span></a>
+        </div>
+
         <div class="portal-panel-head portal-subhead">
           <h3 class="portal-h3" id="portal-guide-form-title">Add a guide</h3>
         </div>
@@ -1841,38 +1858,26 @@
         <div id="ml-owner-sections"></div>
       </div>
 
-      <!-- TOOLS & LINKS -->
-      <div class="portal-panel" id="portal-panel-links" role="tabpanel" hidden>
-        <div class="portal-panel-head"><h2 class="portal-h2">Links</h2></div>
-        <p class="portal-muted portal-small">Parts suppliers, price anchors, and carrier tracking &mdash; everything a tech needs, one tap away.</p>
-        <!-- CUSTOM_ACTION_BUTTONS_2026_11_04: Austin's custom buttons do not render into this grid — they are real sidebar action buttons now (Admin → Setup → Custom action buttons). PORTAL_CRUD_BATCH_B_2026_11_05: the cards themselves are no longer hardcoded either. The LINKS module at the bottom of this file renders this grid from public.portal_links (links-table.sql seeds the table with the same 16 cards; the module mirrors them as an offline fallback), and Admin tier and above get Add / Edit / Delete controls. -->
-        <div class="link-grid" id="portal-tools-grid"><p class="portal-muted">Loading links&hellip;</p></div>
-        <div id="portal-links-manage" hidden>
-          <div class="portal-panel-head portal-subhead">
-            <h3 class="portal-h3" id="portal-links-form-title">Add a link</h3>
-          </div>
-          <form id="portal-link-form" novalidate>
-            <div class="portal-nh-grid">
-              <div class="portal-field">
-                <label for="portal-link-label">Label <span aria-hidden="true">*</span></label>
-                <input type="text" id="portal-link-label" placeholder="e.g. Mobile Sentrix" required />
-              </div>
-              <div class="portal-field">
-                <label for="portal-link-url">Link (URL) <span aria-hidden="true">*</span></label>
-                <input type="url" id="portal-link-url" placeholder="https://&hellip;" required />
-              </div>
-              <div class="portal-field portal-nh-wide">
-                <label for="portal-link-note">Note (optional)</label>
-                <input type="text" id="portal-link-note" placeholder="e.g. Primary parts supplier" />
-              </div>
-            </div>
-            <p class="portal-error" id="portal-link-error" hidden></p>
-            <p class="portal-success" id="portal-link-success" hidden>Link saved.</p>
-            <button class="portal-btn portal-btn-primary" id="portal-link-submit" type="submit">
-              <i class="fas fa-plus"></i> Add link
-            </button>
-            <button class="portal-btn portal-btn-outline" id="portal-link-cancel-edit" type="button" hidden>Cancel edit</button>
-          </form>
+      <!-- V176_17_LINKS_MOVE_2026_11_22 (Austin, Nov 20, 2026): the Links panel is gone — Suppliers is its own action button in Associates, opening this static panel. No loader, no database reads: the same three supplier cards the Links grid carried. -->
+      <div class="portal-panel" id="portal-panel-suppliers" role="tabpanel" hidden>
+        <div class="portal-panel-head"><h2 class="portal-h2">Suppliers</h2></div>
+        <p class="portal-muted portal-small">Parts suppliers &mdash; everything a tech needs, one tap away.</p>
+        <div class="link-grid">
+          <a class="link-card" href="https://www.mobilesentrix.com" target="_blank" rel="noopener"><i class="fas fa-mobile-screen"></i><strong>Mobile Sentrix</strong><span>Primary parts supplier</span></a>
+          <a class="link-card" href="https://www.amazon.com/business" target="_blank" rel="noopener"><i class="fab fa-amazon"></i><strong>Amazon Business</strong><span>Accessories &amp; general</span></a>
+          <a class="link-card" href="https://www.ebay.com" target="_blank" rel="noopener"><i class="fab fa-ebay"></i><strong>eBay</strong><span>Computer parts</span></a>
+        </div>
+      </div>
+
+      <!-- V176_17_LINKS_MOVE_2026_11_22 (Austin, Nov 20, 2026): the Links panel is gone — Shippers is its own action button in Associates, opening this static panel. No loader, no database reads: the same four carrier cards the Links grid carried. -->
+      <div class="portal-panel" id="portal-panel-shippers" role="tabpanel" hidden>
+        <div class="portal-panel-head"><h2 class="portal-h2">Shippers</h2></div>
+        <p class="portal-muted portal-small">Carrier tracking &mdash; everything a tech needs, one tap away.</p>
+        <div class="link-grid">
+          <a class="link-card" href="https://www.fedex.com/fedextrack/" target="_blank" rel="noopener"><i class="fas fa-truck-fast"></i><strong>FedEx</strong><span>Track a package</span></a>
+          <a class="link-card" href="https://www.ups.com/track" target="_blank" rel="noopener"><i class="fas fa-truck"></i><strong>UPS</strong><span>Track a package</span></a>
+          <a class="link-card" href="https://tools.usps.com/go/TrackConfirmAction_input" target="_blank" rel="noopener"><i class="fas fa-envelope"></i><strong>USPS</strong><span>Track a package</span></a>
+          <a class="link-card" href="https://www.dhl.com/us-en/home/tracking.html" target="_blank" rel="noopener"><i class="fas fa-plane"></i><strong>DHL</strong><span>Track a package</span></a>
         </div>
       </div>
 
@@ -1922,6 +1927,13 @@
              the website too) or the saved copy baked into this page (the
              live list could not be reached). It is filled in by pbLoadLive. -->
         <p class="portal-muted portal-small" id="pb-live-note" hidden></p>
+        <!-- V176_17_LINKS_MOVE_2026_11_22 (Austin, Nov 20, 2026): the Links panel is gone — the four price-source boxes live here, directly above "How pricing works", in Austin's order: Apple, Google, Samsung, ours. Links to each price source, not the price sheet itself. -->
+        <div class="link-grid">
+          <a class="link-card" href="https://support.apple.com/iphone/repair" target="_blank" rel="noopener"><i class="fab fa-apple"></i><strong>Apple&rsquo;s Prices</strong><span>Official repair price anchor</span></a>
+          <a class="link-card" href="https://store.google.com/us/repair-cost-estimator" target="_blank" rel="noopener"><i class="fab fa-google"></i><strong>Google&rsquo;s Prices</strong><span>Official repair price anchor</span></a>
+          <a class="link-card" href="https://www.samsung.com/us/support/cracked-screen-repair/" target="_blank" rel="noopener"><i class="fab fa-android"></i><strong>Samsung&rsquo;s Prices</strong><span>Official repair price anchor</span></a>
+          <a class="link-card" href="https://austinstechrepairgroup.com/#prices" target="_blank" rel="noopener"><i class="fas fa-tags"></i><strong>Our Price Sheet</strong><span>Website price wizard</span></a>
+        </div>
         <div class="portal-panel-head portal-subhead" style="margin-top:0.5rem;"><h3 class="portal-h3">How pricing works</h3></div>
         <!-- V143_PRICEBOOK_PRICES_2026_11_13 (owner, Nov 13, 2026): "How pricing works" now carries the full settled price list, so anyone logging in sees how prices are built. The old "$50 for standard repairs / $100 for soldering and folding devices / $15 or $35 visit fee" lines were the pre-Nov-12 model and are gone; "folding devices" has no standard time of its own — flag it if one is needed. -->
         <ul class="portal-muted portal-small" style="margin:0 0 4px; padding-left:1.25rem; line-height:2;">
@@ -1947,7 +1959,7 @@
         <div id="p2-price-results"><p class="portal-muted">Opening the price book&hellip;</p></div>
       </div>
 
-      <!-- SQUARE_ATRONE_SPLIT_2026_11_11 (Austin, Nov 11, 2026): this panel used to be "Square & ATR One". His ruling: Square and ATR One don't need to be in the same action button — ATR One stays here, and Square lives inside Links, as it already does. V176_15_SQUARE_FIN_2026_11_21 (Austin, Nov 20, 2026): Square has since moved OUT of Links and under Financials as its own action button (portal-tab-square-fin, Balance page, new tab); the Links seed row is gone (the DB row needs its own delete) and the Quick Actions Square button stays. The Square Dashboard card was removed from this panel because the Links panel (portal_links) already carries a Square Dashboard row. Display text only: the tab key 'square' and panel id portal-panel-square are unchanged. -->
+      <!-- SQUARE_ATRONE_SPLIT_2026_11_11 (Austin, Nov 11, 2026): this panel used to be "Square & ATR One". His ruling: Square and ATR One don't need to be in the same action button — ATR One stays here, and Square lives inside Links, as it already does. V176_15_SQUARE_FIN_2026_11_21 (Austin, Nov 20, 2026): Square has since moved OUT of Links and under Financials as its own action button (portal-tab-square-fin, Balance page, new tab); the Links seed row is gone (the DB row needs its own delete) and the Quick Actions Square button stays. The Square Dashboard card was removed from this panel because the Links panel (portal_links) already carries a Square Dashboard row. Display text only: the tab key 'square' and panel id portal-panel-square are unchanged. V176_17_LINKS_MOVE_2026_11_22: the Links panel itself is now gone — its links live under Suppliers, Shippers, Guides, and Price Book. -->
       <div class="portal-panel" id="portal-panel-square" role="tabpanel" hidden>
         <div class="portal-panel-head"><h2 class="portal-h2">ATR One</h2></div>
         <p class="portal-muted portal-small">Ticket checkout is built into every ticket (open one &rarr; Payment &rarr; Charge / Check out). These are the quick doors:</p>
@@ -5011,286 +5023,7 @@
     .portal-nh-check input[type="checkbox"] { width: 1.15rem; height: 1.15rem; margin: 0; flex: none; }
     #portal-newhire-form .portal-btn-primary { margin-top: 0.25rem; }
   </style>
-  <script>
-  /* ================= LINKS (portal_links) =================
-   * PORTAL_CRUD_BATCH_B_2026_11_05 (Austin, Nov 5, 2026): the Links
-   * grid used to be 16 hardcoded cards — every change was a website
-   * publish, and there was no Add / Edit / Delete anywhere (his
-   * portal-wide rule: every list panel gets both). The cards now
-   * live in public.portal_links and this module renders the grid
-   * from the table, ordered by sort then label, through its own
-   * client on the portal session key like the other inline modules.
-   * Admin tier and above (super_admin / co_super_admin / admin)
-   * additionally get an Add link form and per-card Edit / Delete
-   * (two-tap confirm); the table's RLS matches (links-table.sql).
-   * FALLBACK: if the table read errors — links-table.sql has not
-   * run yet, or the connection is down — the module renders
-   * LINKS_SEED, the seed rows, so the panel is
-   * never empty. V176_15_SQUARE_FIN_2026_11_21 (Austin, Nov 20, 2026):
-   * Square Dashboard is out of the seed — it moved under Financials.
-   * The seed no longer mirrors the DB table exactly: the
-   * public.portal_links row still needs its own delete before Square
-   * actually leaves the live Links grid. Fallback cards carry no row id, so they render
-   * without Edit / Delete. A successful read of an EMPTY table is
-   * not a fallback: the grid honestly shows that there are no
-   * links (an admin can then add the first one). */
-  (function () {
-    'use strict';
 
-    var SUPABASE_URL = 'https://lyujxpuicarblpkdzuuc.supabase.co';
-    var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
-
-    var LINKS_SEED = [
-      { label: 'Mobile Sentrix', url: 'https://www.mobilesentrix.com', note: 'Primary parts supplier', icon: 'fas fa-mobile-screen', sort: 10 },
-      { label: 'Sickw', url: 'https://www.sickw.com/', note: 'Exact model & variant by IMEI', icon: 'fas fa-barcode', sort: 20 },
-      { label: 'Amazon Business', url: 'https://www.amazon.com/business', note: 'Accessories & general', icon: 'fab fa-amazon', sort: 30 },
-      { label: 'eBay', url: 'https://www.ebay.com', note: 'Computer parts', icon: 'fab fa-ebay', sort: 40 },
-      { label: 'iFixit', url: 'https://www.ifixit.com', note: 'Guides & genuine Pixel parts', icon: 'fas fa-screwdriver-wrench', sort: 50 },
-      { label: 'Our Price Sheet', url: 'https://austinstechrepairgroup.com/#prices', note: 'Website price wizard', icon: 'fas fa-tags', sort: 60 },
-      { label: 'Apple\u2019s Prices', url: 'https://support.apple.com/iphone/repair', note: 'Official repair price anchor', icon: 'fab fa-apple', sort: 70 },
-      { label: 'Samsung\u2019s Prices', url: 'https://www.samsung.com/us/support/cracked-screen-repair/', note: 'Official repair price anchor', icon: 'fab fa-android', sort: 80 },
-      { label: 'Google\u2019s Prices', url: 'https://store.google.com/us/repair-cost-estimator', note: 'Official repair price anchor', icon: 'fab fa-google', sort: 90 },
-      { label: 'GSMArena', url: 'https://www.gsmarena.com/compare.php3', note: 'Compare phones side by side', icon: 'fas fa-scale-balanced', sort: 100 },
-      { label: 'Swappa', url: 'https://swappa.com/prices', note: 'Used phone values', icon: 'fas fa-dollar-sign', sort: 110 },
-      { label: 'FedEx', url: 'https://www.fedex.com/fedextrack/', note: 'Track a package', icon: 'fas fa-truck-fast', sort: 130 },
-      { label: 'UPS', url: 'https://www.ups.com/track', note: 'Track a package', icon: 'fas fa-truck', sort: 140 },
-      { label: 'USPS', url: 'https://tools.usps.com/go/TrackConfirmAction_input', note: 'Track a package', icon: 'fas fa-envelope', sort: 150 },
-      { label: 'DHL', url: 'https://www.dhl.com/us-en/home/tracking.html', note: 'Track a package', icon: 'fas fa-plane', sort: 160 }
-    ];
-
-    var allLinks = [];
-    var linksLoaded = false;
-    var linksIsAdmin = false;
-    var confirmLinkDeleteId = null;
-    var editingLinkId = null;
-
-    function $(id) { return document.getElementById(id); }
-
-    function esc(v) {
-      return String(v == null ? '' : v)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-    }
-
-    function trim(v) { return String(v == null ? '' : v).trim(); }
-
-    function safeUrl(u) {
-      var s = trim(u);
-      if (/^https:\/\//i.test(s) || /^http:\/\//i.test(s)) return s;
-      return '';
-    }
-
-    function getClient() {
-      if (window.supabase && window.supabase.createClient) {
-        /* Same reasoning as the Guides module: queries must run as
-         * signed-in staff on the portal's own session storage key,
-         * or RLS serves zero rows to an anonymous client. */
-        try {
-          return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-            auth: { storageKey: 'sb-atrg-portal-auth-token', persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
-          });
-        }
-        catch (e) { return null; }
-      }
-      return null;
-    }
-
-    /* Legacy role names map the way portal.js normRole maps them. */
-    function linkIsAdminRole(role) {
-      if (role === 'owner') role = 'super_admin';
-      return role === 'super_admin' || role === 'co_super_admin' || role === 'admin';
-    }
-
-    function resolveLinksRole() {
-      var client = getClient();
-      if (!client || !client.auth || !client.auth.getUser) return;
-      client.auth.getUser().then(function (res) {
-        var user = res && res.data ? res.data.user : null;
-        if (!user) return null;
-        return client.from('employee_profiles').select('role').eq('id', user.id).maybeSingle();
-      }).then(function (roleRes) {
-        if (!roleRes || !roleRes.data) return;
-        var was = linksIsAdmin;
-        linksIsAdmin = linkIsAdminRole(roleRes.data.role);
-        if (linksIsAdmin) { var m = $('portal-links-manage'); if (m) m.hidden = false; }
-        if (linksIsAdmin !== was) renderLinks();
-      }).catch(function () { /* gate stays closed on any doubt */ });
-    }
-
-    function renderLinks() {
-      var grid = $('portal-tools-grid');
-      if (!grid) return;
-      if (!allLinks.length) {
-        grid.innerHTML = '<p class="portal-muted">No links yet.' + (linksIsAdmin ? ' Add the first one with the form below.' : '') + '</p>';
-        return;
-      }
-      grid.innerHTML = allLinks.map(function (l) {
-        var url = safeUrl(l.url);
-        var card = '<a class="link-card" href="' + esc(url || '#') + '" target="_blank" rel="noopener">' +
-          '<i class="' + esc(l.icon || 'fas fa-link') + '"></i><strong>' + esc(l.label) + '</strong>' +
-          (l.note ? '<span>' + esc(l.note) + '</span>' : '') + '</a>';
-        if (!linksIsAdmin || !l.id) return '<div class="link-card-cell">' + card + '</div>';
-        var confirming = confirmLinkDeleteId === l.id;
-        return '<div class="link-card-cell">' + card +
-          '<p class="portal-link-actions">' +
-            '<button type="button" class="portal-link-edit" data-link-edit="' + esc(l.id) + '">Edit</button>' +
-            '<button type="button" class="portal-link-del' + (confirming ? ' confirming' : '') + '" data-link-del="' + esc(l.id) + '">' +
-            (confirming ? 'Confirm delete?' : 'Delete') + '</button>' +
-          '</p></div>';
-      }).join('');
-    }
-
-    function loadLinks() {
-      var client = getClient();
-      if (!client) { allLinks = LINKS_SEED.slice(); linksLoaded = true; renderLinks(); return; }
-      client.from('portal_links').select('*').order('sort', { ascending: true }).order('label', { ascending: true })
-        .then(function (res) {
-          linksLoaded = true;
-          if (res.error) { allLinks = LINKS_SEED.slice(); renderLinks(); return; }
-          allLinks = res.data || [];
-          renderLinks();
-        })
-        .catch(function () { linksLoaded = true; allLinks = LINKS_SEED.slice(); renderLinks(); });
-    }
-
-    function linkSubmitHtml() {
-      return editingLinkId
-        ? '<i class="fas fa-check"></i> Save changes'
-        : '<i class="fas fa-plus"></i> Add link';
-    }
-
-    function resetLinkEdit() {
-      editingLinkId = null;
-      var form = $('portal-link-form');
-      if (form) form.reset();
-      var btn = $('portal-link-submit');
-      if (btn) { btn.disabled = false; btn.innerHTML = linkSubmitHtml(); }
-      var title = $('portal-links-form-title'); if (title) title.textContent = 'Add a link';
-      var cancel = $('portal-link-cancel-edit'); if (cancel) cancel.hidden = true;
-    }
-
-    function startLinkEdit(id) {
-      var l = null;
-      for (var i = 0; i < allLinks.length; i++) { if (allLinks[i].id === id) { l = allLinks[i]; break; } }
-      if (!l) return;
-      editingLinkId = id;
-      confirmLinkDeleteId = null;
-      $('portal-link-label').value = l.label || '';
-      $('portal-link-url').value = l.url || '';
-      $('portal-link-note').value = l.note || '';
-      var err = $('portal-link-error'); if (err) { err.hidden = true; err.textContent = ''; }
-      var ok = $('portal-link-success'); if (ok) ok.hidden = true;
-      var btn = $('portal-link-submit'); if (btn) btn.innerHTML = linkSubmitHtml();
-      var title = $('portal-links-form-title'); if (title) title.textContent = 'Edit link';
-      var cancel = $('portal-link-cancel-edit'); if (cancel) cancel.hidden = false;
-      renderLinks();
-      var form = $('portal-link-form');
-      if (form && form.scrollIntoView) { try { form.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {} }
-    }
-
-    function initLinkForm() {
-      var form = $('portal-link-form');
-      if (!form) return;
-      form.addEventListener('submit', function (e) {
-        e.preventDefault();
-        var err = $('portal-link-error');
-        var ok = $('portal-link-success');
-        err.hidden = true; err.textContent = '';
-        ok.hidden = true;
-        var label = trim($('portal-link-label').value);
-        if (!label) { err.textContent = 'Label is required.'; err.hidden = false; return; }
-        var url = trim($('portal-link-url').value);
-        if (!url || !safeUrl(url)) { err.textContent = 'That link doesn\u2019t look right \u2014 links must start with https://'; err.hidden = false; return; }
-        var note = trim($('portal-link-note').value) || null;
-        var btn = $('portal-link-submit');
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving&hellip;';
-        var client = getClient();
-        if (!client) {
-          btn.disabled = false;
-          btn.innerHTML = linkSubmitHtml();
-          err.textContent = 'Couldn\u2019t reach the database. Check your connection and try again.';
-          err.hidden = false;
-          return;
-        }
-        var wasEditing = editingLinkId;
-        var req;
-        if (wasEditing) {
-          req = client.from('portal_links').update({ label: label, url: url, note: note }).eq('id', wasEditing);
-        } else {
-          var nextSort = 10;
-          allLinks.forEach(function (l) { if (typeof l.sort === 'number' && l.sort >= nextSort) nextSort = l.sort + 10; });
-          req = client.from('portal_links').insert({ label: label, url: url, note: note, icon: null, sort: nextSort });
-        }
-        req.then(function (res) {
-          btn.disabled = false;
-          btn.innerHTML = linkSubmitHtml();
-          if (res.error) { err.textContent = 'Couldn\u2019t save that link: ' + res.error.message; err.hidden = false; return; }
-          if (wasEditing) { resetLinkEdit(); } else { form.reset(); }
-          ok.hidden = false;
-          loadLinks();
-        }).catch(function () {
-          btn.disabled = false;
-          btn.innerHTML = linkSubmitHtml();
-          err.textContent = 'Couldn\u2019t save that link. Try again.';
-          err.hidden = false;
-        });
-      });
-      var cancel = $('portal-link-cancel-edit');
-      if (cancel) cancel.addEventListener('click', function () { resetLinkEdit(); });
-    }
-
-    function initLinks() {
-      var grid = $('portal-tools-grid');
-      if (grid) grid.addEventListener('click', function (e) {
-        var editBtn = e.target.closest ? e.target.closest('[data-link-edit]') : null;
-        if (editBtn) { startLinkEdit(editBtn.getAttribute('data-link-edit')); return; }
-        var btn = e.target.closest ? e.target.closest('[data-link-del]') : null;
-        if (!btn) return;
-        var id = btn.getAttribute('data-link-del');
-        if (confirmLinkDeleteId !== id) { confirmLinkDeleteId = id; renderLinks(); return; }
-        confirmLinkDeleteId = null;
-        btn.disabled = true;
-        btn.textContent = 'Deleting\u2026';
-        var client = getClient();
-        if (!client) { renderLinks(); return; }
-        client.from('portal_links').delete().eq('id', id).then(function (res) {
-          if (res.error) {
-            var err = $('portal-link-error');
-            if (err) { err.textContent = 'Couldn\u2019t delete that link: ' + res.error.message; err.hidden = false; }
-            renderLinks();
-            return;
-          }
-          if (id === editingLinkId) resetLinkEdit();
-          loadLinks();
-        }).catch(function () { renderLinks(); });
-      });
-      var tab = $('portal-tab-links');
-      if (tab) tab.addEventListener('click', function () { loadLinks(); });
-      initLinkForm();
-      resolveLinksRole();
-      loadLinks();
-    }
-
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initLinks);
-    } else {
-      initLinks();
-    }
-  })();
-  </script>
-  <style>
-    .link-card-cell { display: flex; flex-direction: column; }
-    .link-card-cell .link-card { flex: 1; }
-    .portal-link-actions { display: flex; gap: 1rem; align-items: center; margin: 0.35rem 0.2rem 0; }
-    .portal-link-edit { background: none; border: none; color: var(--brand-deep, #A63E06); cursor: pointer; font: inherit; font-size: 0.85rem; padding: 0; }
-    .portal-link-del { background: none; border: none; color: #b3382e; cursor: pointer; font: inherit; font-size: 0.85rem; padding: 0; }
-    .portal-link-del.confirming { font-weight: 700; text-decoration: underline; }
-    #portal-link-form .portal-btn-primary { margin-top: 0.25rem; }
-  </style>
   <script>
   /* ================= REQUESTS (tech request queue) =================
    * Phase 3: the shop's ask-for-it queue — swag/merch, tools, parts and
