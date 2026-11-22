@@ -2554,6 +2554,122 @@
     } catch (e) {}
   }
   function v165VisitFee(audience) { return audience === 'business' ? 34.99 : 14.99; }
+  /* V176_20_MILEAGE_2026_11_22 (Austin, Nov 20-22, 2026): the estimate
+   * flow calculates road miles. The visit fee covers the first 25
+   * road miles from Spring Valley (V154_MILEAGE_INCLUDED); over 25
+   * miles is $1 a mile. Miles come from the free OpenStreetMap stack
+   * — the same throttled, per-address-cached nominatimGeocode and
+   * osrmRoute the Mileage panel already uses — from the fixed home
+   * pin (the v176.6 Nominatim result for the home address with the
+   * lot number stripped). A manual miles value always wins over a
+   * computed one; a failed lookup falls back to the flat fee and
+   * never blocks the submit. The record rides in the estimate's
+   * estimate_note (a field nothing displays); the charge row on the
+   * ticket carries the breakdown in its description. */
+  var V176_20_SHOP_ORIGIN = { lat: 39.6171906, lng: -84.0088582 };
+  function v176_20RoundMiles(m) { var v = Number(m); if (!(v > 0) || !isFinite(v)) return null; return Math.round(v * 10) / 10; }
+  function v176_20DispatchFee(audience, miles) {
+    var base = v165VisitFee(audience);
+    var m = v176_20RoundMiles(miles);
+    if (!m) return base;
+    var over = Math.max(0, m - V154_MILEAGE_INCLUDED);
+    return Math.round((base + over) * 100) / 100;
+  }
+  function v176_20MileageNote(miles, audience, byHand, member) {
+    var m = v176_20RoundMiles(miles);
+    if (member) {
+      if (!m) return null;
+      return 'Mileage ' + m + ' road miles from Spring Valley; no dispatch fee (ATR One member covers the trip).';
+    }
+    if (!m) return 'Mileage could not be calculated for this address; dispatch fee is the flat $' + v165VisitFee(audience).toFixed(2) + '. Set the miles by hand if the trip runs over 25 miles.';
+    var fee = v176_20DispatchFee(audience, m);
+    var over = Math.max(0, m - V154_MILEAGE_INCLUDED);
+    var tail = over > 0 ? '25 miles included, ' + (Math.round(over * 10) / 10) + ' over at $1 a mile' : 'within the 25 included miles';
+    return 'Mileage ' + m + ' road miles from Spring Valley' + (byHand ? ', set by hand' : '') + ' (' + tail + '); dispatch fee $' + fee.toFixed(2) + '.';
+  }
+  function v176_20ParseMileageNote(note) {
+    var s = String(note || '');
+    var m = s.match(/Mileage ([\d.]+) road miles from Spring Valley(, set by hand)?/);
+    if (!m) return null;
+    var miles = v176_20RoundMiles(parseFloat(m[1]));
+    if (!miles) return null;
+    return { miles: miles, byHand: !!m[2] };
+  }
+  function v176_20ChargeDesc(parsed) {
+    var over = Math.max(0, parsed.miles - V154_MILEAGE_INCLUDED);
+    return 'Visit fee \u2014 ' + parsed.miles + ' road miles from Spring Valley' + (parsed.byHand ? ', set by hand' : '') + ' (' + (over > 0 ? '25 included, ' + (Math.round(over * 10) / 10) + ' over at $1/mile' : '25 miles included') + ')';
+  }
+  function v176_20FeeLine(e) {
+    var member = e.atr_one === 'member';
+    var stored = v176_20ParseMileageNote(e.estimate_note);
+    if (member) return { fee: 0, text: stored ? 'About ' + stored.miles + ' road miles from Spring Valley \u2014 no visit fee (ATR One member covers the trip).' : 'No visit fee (ATR One member).' };
+    if (stored) {
+      var fee = v176_20DispatchFee(e.audience, stored.miles);
+      var over = Math.max(0, stored.miles - V154_MILEAGE_INCLUDED);
+      return { fee: fee, text: 'About ' + stored.miles + ' road miles from Spring Valley' + (stored.byHand ? ' (set by hand)' : '') + ' \u2014 25 miles included' + (over > 0 ? ', ' + (Math.round(over * 10) / 10) + ' over at $1 a mile' : '') + '.' };
+    }
+    return { fee: v165VisitFee(e.audience), text: '' };
+  }
+  function v176_20FeeTextForDisplay(audience, member, miles, failed) {
+    if (member) return miles ? 'None \u2014 ATR One member (about ' + miles + ' road miles from Spring Valley)' : 'None \u2014 ATR One member';
+    if (miles) return '$' + v176_20DispatchFee(audience, miles).toFixed(2) + ' (' + miles + ' road miles from Spring Valley)';
+    return '$' + v165VisitFee(audience).toFixed(2) + (failed ? ' (road miles could not be calculated)' : '');
+  }
+  function v176_20GeocodeOhio(text) {
+    return nominatimGeocode(text).then(function (g) {
+      if (g && /ohio/i.test(g.label || '')) return g;
+      var cleaned = v154CleanAddress(text);
+      if (cleaned && cleaned !== trim(text)) {
+        return nominatimGeocode(cleaned).then(function (g2) {
+          if (g2 && /ohio/i.test(g2.label || '')) return g2;
+          return null;
+        });
+      }
+      return null;
+    }).catch(function () { return null; });
+  }
+  function v176_20ComputeMiles(address) {
+    return new Promise(function (resolve) {
+      var settled = false;
+      function done(v) { if (!settled) { settled = true; resolve(v); } }
+      var to = setTimeout(function () { done({ error: 'timed out' }); }, 15000);
+      if (!trim(address)) { clearTimeout(to); done({ error: 'no address' }); return; }
+      v176_20GeocodeOhio(address).then(function (g) {
+        if (!g) { clearTimeout(to); done({ error: 'not found' }); return; }
+        osrmRoute(V176_20_SHOP_ORIGIN, { lat: g.lat, lng: g.lng }).then(function (rt) {
+          clearTimeout(to);
+          if (rt && rt.miles > 0) done({ miles: v176_20RoundMiles(rt.miles) });
+          else done({ error: 'no route' });
+        }).catch(function () { clearTimeout(to); done({ error: 'no route' }); });
+      }).catch(function () { clearTimeout(to); done({ error: 'not found' }); });
+    });
+  }
+  /* Resolve the mileage record for an estimate. Manual override wins,
+   * then the stored note, then a live compute, then the flat fee.
+   * Never rejects; a provider failure falls back to the flat fee and
+   * never blocks the submit. cb receives { miles, fee, byHand, note,
+   * failed }. */
+  function v176_20ResolveMileage(e, overrideMiles, cb) {
+    var member = e.atr_one === 'member';
+    var base = v165VisitFee(e.audience);
+    var ov = v176_20RoundMiles(overrideMiles);
+    if (ov) {
+      cb({ miles: ov, fee: member ? 0 : v176_20DispatchFee(e.audience, ov), byHand: true, note: v176_20MileageNote(ov, e.audience, true, member), failed: false });
+      return;
+    }
+    var stored = v176_20ParseMileageNote(e.estimate_note);
+    if (stored) {
+      cb({ miles: stored.miles, fee: member ? 0 : v176_20DispatchFee(e.audience, stored.miles), byHand: stored.byHand, note: e.estimate_note, failed: false });
+      return;
+    }
+    v176_20ComputeMiles(e.service_address || '').then(function (r) {
+      if (r && r.miles > 0) {
+        cb({ miles: r.miles, fee: member ? 0 : v176_20DispatchFee(e.audience, r.miles), byHand: false, note: v176_20MileageNote(r.miles, e.audience, false, member), failed: false });
+      } else {
+        cb({ miles: null, fee: member ? 0 : base, byHand: false, note: member ? null : v176_20MileageNote(null, e.audience, false, false), failed: true });
+      }
+    });
+  }
   function estimatePageLink(e) {
     return window.location.origin + '/#estimate/' + (e.public_token || e.id);
   }
@@ -2632,7 +2748,7 @@
     if (sub) sub.addEventListener('click', ciEstSubmit);
   }
   function ciEstReset() {
-    ['ci-est-name', 'ci-est-contact', 'ci-est-phone', 'ci-est-email', 'ci-est-address', 'ci-est-brand', 'ci-est-model', 'ci-est-issue', 'ci-est-amount'].forEach(function (id) { var el = $(id); if (el) el.value = ''; });
+    ['ci-est-name', 'ci-est-contact', 'ci-est-phone', 'ci-est-email', 'ci-est-address', 'ci-est-miles', 'ci-est-brand', 'ci-est-model', 'ci-est-issue', 'ci-est-amount'].forEach(function (id) { var el = $(id); if (el) el.value = ''; });
     var dv = $('ci-est-device'); if (dv) dv.selectedIndex = 0;
     var at = $('ci-est-atrone'); if (at) at.value = '';
     ciEstType = 'guest'; ciEstPaintType();
@@ -2675,7 +2791,12 @@
       status: 'Awaiting Estimate', source: 'check-in',
       terms_accepted: false, work_auth_accepted: false
     };
-    withClient(function (client) {
+    var ciEstOv = v176_20RoundMiles($('ci-est-miles') ? $('ci-est-miles').value : '');
+    var ciEstMember = ($('ci-est-atrone') ? $('ci-est-atrone').value : '') === 'member';
+    function ciEstInsertWithMileage(note, miles, failed) {
+      row.estimate_note = note;
+      var feeText = v176_20FeeTextForDisplay(ciEstType, ciEstMember, miles, failed);
+      withClient(function (client) {
       if (!client) { if (btn) btn.disabled = false; fail("Couldn't reach the database — try again."); return; }
       client.from('estimates').insert(row).select('id').single().then(function (res) {
         if (btn) btn.disabled = false;
@@ -2686,6 +2807,7 @@
           ['Device', estimateDeviceLabel(row)],
           ["What's wrong", issue],
           ['Estimate', estimateMoney(estFloorAmt(amount, issue)) /* V173_PRICING_FLOOR_2026_11_18 */],
+          ['Visit fee when confirmed', feeText],
           ['Your estimate page', estimatePageLink(row)],
           ['What happens next', 'Tap the link above to view your estimate. You can confirm or decline it there — nothing is booked until you confirm.']
         ], 'estimate-link', row.public_token);
@@ -2695,6 +2817,12 @@
         loadEstimates(true);
         setTimeout(function () { docMsg('Estimate created — the guest gets an email with their estimate link.'); }, 450);
       }).catch(function () { if (btn) btn.disabled = false; fail('Could not create the estimate — try again.'); });
+      });
+    }
+    if (ciEstOv) { ciEstInsertWithMileage(v176_20MileageNote(ciEstOv, ciEstType, true, ciEstMember), ciEstOv, false); return; }
+    v176_20ComputeMiles(address).then(function (r) {
+      if (r && r.miles > 0) ciEstInsertWithMileage(v176_20MileageNote(r.miles, ciEstType, false, ciEstMember), r.miles, false);
+      else ciEstInsertWithMileage(ciEstMember ? null : v176_20MileageNote(null, ciEstType, false, false), null, true);
     });
   }
 
@@ -2722,8 +2850,9 @@
     }
     list.innerHTML = view.map(function (e) {
       var pill = '<span class="portal-badge">' + esc(e.status || '') + '</span>';
-      var v175EstTax = atrTaxEstimate(estFloorAmt(e.estimate_amount, e.issue), e.atr_one === 'member' ? 0 : v165VisitFee(e.audience), e.service_address);
-      var amt = '<p class="portal-card-meta"><strong>Estimate: ' + esc(estimateMoney(estFloorAmt(e.estimate_amount, e.issue)) /* V173_PRICING_FLOOR_2026_11_18 */) + '</strong> &middot; visit fee ' + esc(estimateMoney(v165VisitFee(e.audience))) + ' due only when confirmed' + (v175EstTax ? ' &middot; est. sales tax ' + esc(estimateMoney(v175EstTax.amount)) + ' (' + esc(v175EstTax.county) + ' County, ' + esc(v175EstTax.rate.toFixed(2)) + '%)' : '') + '</p>';
+      var v176_20fl = v176_20FeeLine(e);
+      var v175EstTax = atrTaxEstimate(estFloorAmt(e.estimate_amount, e.issue), v176_20fl.fee, e.service_address);
+      var amt = '<p class="portal-card-meta"><strong>Estimate: ' + esc(estimateMoney(estFloorAmt(e.estimate_amount, e.issue)) /* V173_PRICING_FLOOR_2026_11_18 */) + '</strong> &middot; visit fee ' + esc(estimateMoney(v176_20fl.fee)) + (v176_20fl.text ? ' (' + esc(v176_20fl.text) + ')' : '') + ' due only when confirmed' + (v175EstTax ? ' &middot; est. sales tax ' + esc(estimateMoney(v175EstTax.amount)) + ' (' + esc(v175EstTax.county) + ' County, ' + esc(v175EstTax.rate.toFixed(2)) + '%)' : '') + '</p>';
       var who = esc(e.name || 'No name given') + (e.audience === 'business' && e.contact_name ? ' &middot; ' + esc(e.contact_name) : '') + (e.audience === 'business' ? ' <span class="portal-badge portal-badge-source">Business</span>' : '');
       var phone = trim(e.phone);
       var phoneHtml = phone ? ' &middot; <a href="tel:' + esc(phone.replace(/[^0-9+]/g, '')) + '">' + esc(phone) + '</a>' : '';
@@ -2948,9 +3077,11 @@
         insertRow(row).then(function (ires) {
           if (ires.error) { fail('Could not create the ticket — try again.'); return; }
           var newId = ires.data && ires.data.id;
-          var fee = (e.atr_one === 'member') ? 0 : v165VisitFee(e.audience);
+          var v176_20ov = $('est-miles-override') ? $('est-miles-override').value : '';
+          v176_20ResolveMileage(e, v176_20ov, function (res) {
+          var fee = res.fee;
           var finish = function () {
-            client.from('estimates').update({ status: 'Accepted', ticket_id: newId, decided_at: new Date().toISOString() }).eq('id', id).then(function () {
+            client.from('estimates').update({ status: 'Accepted', ticket_id: newId, decided_at: new Date().toISOString(), estimate_note: (res.note != null ? res.note : e.estimate_note) }).eq('id', id).then(function () {
               if (newId) notifyTicketCreated(client, row, newId);
               if (newId && e.audience === 'business' && e.contact_name) {
                 try {
@@ -2965,8 +3096,9 @@
             });
           };
           if (fee > 0 && newId) {
-            client.from('ticket_charges').insert({ ticket_id: newId, kind: 'dispatch', description: 'Visit fee', qty: 1, unit_price: fee }).then(function () { finish(); }, function () { finish(); });
+            client.from('ticket_charges').insert({ ticket_id: newId, kind: 'dispatch', description: res.miles ? v176_20ChargeDesc(res) : 'Visit fee', qty: 1, unit_price: fee }).then(function () { finish(); }, function () { finish(); });
           } else { finish(); }
+          });
         }).catch(function () { fail('Could not create the ticket — try again.'); });
       }).catch(function () { fail("Couldn't load that estimate — try again."); });
     });
@@ -3005,6 +3137,7 @@
           ['Device', estimateDeviceLabel(e)],
           ["What's wrong", e.issue || ''],
           ['Estimate', estimateMoney(estFloorAmt(e.estimate_amount, e.issue)) /* V173_PRICING_FLOOR_2026_11_18 */],
+          ['Visit fee when confirmed', (function () { var fl = v176_20FeeLine(e); return e.atr_one === 'member' ? 'None — ATR One member' : estimateMoney(fl.fee) + (fl.text ? ' (' + fl.text + ')' : ''); })()],
           ['Your estimate page', estimatePageLink(e)],
           ['What happens next', 'Tap the link above to view your estimate. You can confirm or decline it there — nothing is booked until you confirm.']
         ], 'estimate-link', e.public_token);
@@ -3022,7 +3155,9 @@
           return;
         }
         var e = res.data;
-        var v175EstTax = atrTaxEstimate(estFloorAmt(e.estimate_amount, e.issue), e.atr_one === 'member' ? 0 : v165VisitFee(e.audience), e.service_address);
+        var v176_20fl = v176_20FeeLine(e);
+        var v176_20stored = v176_20ParseMileageNote(e.estimate_note);
+        var v175EstTax = atrTaxEstimate(estFloorAmt(e.estimate_amount, e.issue), v176_20fl.fee, e.service_address);
         var body =
           '<div class="portal-drawer-section"><h3>Estimate</h3>' +
           '<dl class="portal-kv">' +
@@ -3034,7 +3169,7 @@
           '<dt>Device</dt><dd>' + esc(estimateDeviceLabel(e)) + '</dd>' +
           '<dt>Issue</dt><dd>' + esc(e.issue || '—') + '</dd>' +
           '<dt>Estimate</dt><dd><strong>' + esc(estimateMoney(estFloorAmt(e.estimate_amount, e.issue)) /* V173_PRICING_FLOOR_2026_11_18 */) + '</strong></dd>' +
-          '<dt>Visit fee when confirmed</dt><dd>' + esc(estimateMoney(v165VisitFee(e.audience))) + (e.atr_one === 'member' ? ' (ATR One member — no visit fee)' : '') + '</dd>' +
+          '<dt>Visit fee when confirmed</dt><dd>' + esc(estimateMoney(v176_20fl.fee)) + (v176_20fl.text ? ' — ' + esc(v176_20fl.text) : (e.atr_one === 'member' ? ' (ATR One member — no visit fee)' : '')) + '</dd>' +
           (v175EstTax ? '<dt>Estimated sales tax</dt><dd>' + esc(estimateMoney(v175EstTax.amount)) + ' (' + esc(v175EstTax.county) + ' County, ' + esc(v175EstTax.rate.toFixed(2)) + '%)' + (v175EstTax.fallback ? ' \u2014 county not determined from the service address, Greene County rate applied' : '') + '</dd>' + '<dt>Estimated total</dt><dd><strong>' + esc(estimateMoney(v175EstTax.total)) + '</strong></dd>' : '') +
           '<dt>Received</dt><dd>' + esc(fmtDateTime(e.created_at)) + '</dd>' +
           '</dl></div>';
@@ -3042,6 +3177,8 @@
           body += '<div class="portal-drawer-section" id="est-confirm-block"><h3>Confirm or deny</h3>' +
             '<p class="portal-muted portal-small">Live path: the guest is on the phone now. Read them the estimate, and when they confirm, tick the box and tap Record Confirm — the estimate becomes a ticket in the Service Queue, the visit fee goes on the ticket, and you book the date and time with them.</p>' +
             '<label class="ci-consent-verbal"><input type="checkbox" id="est-phone-confirm" /> <span>The guest confirmed on the phone and signed the Repair Authorization and Service Agreement and the 1-Year Limited Warranty.</span></label>' +
+            '<div class="portal-field"><label for="est-miles-override">Road miles from Spring Valley (optional \u2014 overrides the calculated miles)</label><input type="number" id="est-miles-override" min="0" step="0.1" inputmode="decimal" value="' + esc(v176_20stored ? String(v176_20stored.miles) : '') + '" /></div>' +
+            '<p class="portal-muted portal-small" id="est-fee-preview">Visit fee when confirmed: ' + esc(estimateMoney(v176_20fl.fee)) + (v176_20fl.text ? ' \u2014 ' + esc(v176_20fl.text) : '') + '</p>' +
             '<div class="p2-actions">' +
             '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="est-accept-btn">Record Confirm</button>' +
             '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="est-decline-btn">Record Deny</button>' +
@@ -3055,6 +3192,7 @@
             '<div class="portal-field"><label for="est-edit-address">Service address</label><input type="text" id="est-edit-address" value="' + esc(e.service_address || '') + '" /></div>' +
             '<div class="portal-field"><label for="est-edit-issue">Issue</label><textarea id="est-edit-issue" rows="2">' + esc(e.issue || '') + '</textarea></div>' +
             '<div class="portal-field"><label for="est-edit-amount">Estimate amount ($)</label><input type="number" id="est-edit-amount" min="0" step="0.01" value="' + esc(e.estimate_amount == null ? '' : String(e.estimate_amount)) + '" /></div>' +
+            '<div class="portal-field"><label for="est-edit-miles">Road miles (optional \u2014 blank recalculates from the address)</label><input type="number" id="est-edit-miles" min="0" step="0.1" inputmode="decimal" value="' + esc(v176_20stored ? String(v176_20stored.miles) : '') + '" /></div>' +
             '<div class="p2-actions"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="est-save-btn">Save changes</button><span class="portal-muted portal-small" id="est-save-msg"></span></div>' +
             '</div></div>';
         } else if (e.status === 'Accepted' && e.ticket_id) {
@@ -3076,22 +3214,47 @@
         });
         var sb = $('est-send-email-btn');
         if (sb) sb.addEventListener('click', function () { sendEstimateEmail(id); });
+        var v176_20mo = $('est-miles-override'), v176_20fp = $('est-fee-preview');
+        if (v176_20mo && v176_20fp) {
+          v176_20mo.addEventListener('input', function () {
+            var mv = v176_20RoundMiles(v176_20mo.value);
+            if (!mv) { v176_20fp.textContent = 'Visit fee when confirmed: ' + estimateMoney(v176_20fl.fee) + (v176_20fl.text ? ' \u2014 ' + v176_20fl.text : ''); return; }
+            v176_20fp.textContent = 'Visit fee when confirmed: ' + estimateMoney(e.atr_one === 'member' ? 0 : v176_20DispatchFee(e.audience, mv)) + ' (' + mv + ' road miles, set by hand).';
+          });
+        }
         var sv = $('est-save-btn');
         if (sv) sv.addEventListener('click', function () {
           var amt = Number($('est-edit-amount') ? $('est-edit-amount').value : NaN);
           var sm = $('est-save-msg');
           if (isNaN(amt) || amt < 60) { if (sm) sm.textContent = 'Estimates start at $60 — base labor is $50.'; return; } /* V173_PRICING_FLOOR_2026_11_18 */
-          withClient(function (c2) {
-            if (!c2) return;
-            c2.from('estimates').update({
-              name: trim($('est-edit-name').value), phone: trim($('est-edit-phone').value),
-              email: trim($('est-edit-email').value) || null, service_address: trim($('est-edit-address').value) || null,
-              issue: trim($('est-edit-issue').value), estimate_amount: amt
-            }).eq('id', id).then(function (r2) {
-              if (sm) sm.textContent = r2.error ? "Couldn't save — try again." : 'Saved.';
-              if (!r2.error) { state.loaded.estimates = false; loadEstimates(true); }
+          var upd = {
+            name: trim($('est-edit-name').value), phone: trim($('est-edit-phone').value),
+            email: trim($('est-edit-email').value) || null, service_address: trim($('est-edit-address').value) || null,
+            issue: trim($('est-edit-issue').value), estimate_amount: amt
+          };
+          var newAddr = upd.service_address;
+          var milesVal = v176_20RoundMiles($('est-edit-miles') ? $('est-edit-miles').value : '');
+          var memberNow = e.atr_one === 'member';
+          function doSave() {
+            withClient(function (c2) {
+              if (!c2) return;
+              c2.from('estimates').update(upd).eq('id', id).then(function (r2) {
+                if (sm) sm.textContent = r2.error ? "Couldn't save — try again." : 'Saved.';
+                if (!r2.error) { state.loaded.estimates = false; loadEstimates(true); }
+              });
             });
-          });
+          }
+          if (milesVal) { upd.estimate_note = v176_20MileageNote(milesVal, e.audience, true, memberNow); doSave(); return; }
+          if (newAddr && newAddr !== e.service_address) {
+            if (sm) sm.textContent = 'Calculating road miles\u2026';
+            v176_20ComputeMiles(newAddr).then(function (r) {
+              if (r && r.miles > 0) upd.estimate_note = v176_20MileageNote(r.miles, e.audience, false, memberNow);
+              else if (!memberNow) upd.estimate_note = v176_20MileageNote(null, e.audience, false, false);
+              doSave();
+            });
+            return;
+          }
+          doSave();
         });
         if (focusConfirm) {
           var cb = $('est-confirm-block');

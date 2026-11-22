@@ -158,6 +158,90 @@
   }
 
   /* ---------------- small helpers ---------------- */
+  /* V176_20_MILEAGE_2026_11_22 (Austin, Nov 20-22, 2026): the website
+   * estimate form calculates road miles on submit only. The visit fee
+   * covers the first 25 road miles from Spring Valley; over 25 miles
+   * is $1 a mile. Free Nominatim + OSRM stack, fixed home pin (the
+   * v176.6 Nominatim result, lot number stripped), lot-strip retry,
+   * Ohio check, per-address cache. A failed lookup falls back to the
+   * flat fee and never blocks the submit. The record rides in the
+   * estimate's estimate_note. */
+  var V176_20_INCLUDED_MILES = 25;
+  var V176_20_SHOP_ORIGIN = { lat: 39.6171906, lng: -84.0088582 };
+  function v176_20RoundMiles(m) { var v = Number(m); if (!(v > 0) || !isFinite(v)) return null; return Math.round(v * 10) / 10; }
+  function v176_20BaseFee(audience) { return audience === 'business' ? 34.99 : 14.99; }
+  function v176_20DispatchFee(audience, miles) {
+    var base = v176_20BaseFee(audience);
+    var m = v176_20RoundMiles(miles);
+    if (!m) return base;
+    var over = Math.max(0, m - V176_20_INCLUDED_MILES);
+    return Math.round((base + over) * 100) / 100;
+  }
+  function v176_20MileageNote(miles, audience, member) {
+    var m = v176_20RoundMiles(miles);
+    if (member) {
+      if (!m) return null;
+      return 'Mileage ' + m + ' road miles from Spring Valley; no dispatch fee (ATR One member covers the trip).';
+    }
+    if (!m) return 'Mileage could not be calculated for this address; dispatch fee is the flat $' + v176_20BaseFee(audience).toFixed(2) + '. Set the miles by hand if the trip runs over 25 miles.';
+    var fee = v176_20DispatchFee(audience, m);
+    var over = Math.max(0, m - V176_20_INCLUDED_MILES);
+    var tail = over > 0 ? '25 miles included, ' + (Math.round(over * 10) / 10) + ' over at $1 a mile' : 'within the 25 included miles';
+    return 'Mileage ' + m + ' road miles from Spring Valley (' + tail + '); dispatch fee $' + fee.toFixed(2) + '.';
+  }
+  function v176_20FeeTextForDisplay(audience, member, miles, failed) {
+    if (member) return miles ? 'None \u2014 ATR One member (about ' + miles + ' road miles from Spring Valley)' : 'None \u2014 ATR One member';
+    if (miles) return '$' + v176_20DispatchFee(audience, miles).toFixed(2) + ' (' + miles + ' road miles from Spring Valley)';
+    return '$' + v176_20BaseFee(audience).toFixed(2) + (failed ? ' (road miles could not be calculated)' : '');
+  }
+  var v176_20GeoCache = {};
+  function v176_20CleanAddress(q) { return String(q || '').replace(/\blot\s*\d+[a-z]?\b/i, '').replace(/\s{2,}/g, ' ').trim(); }
+  function v176_20Geocode(text) {
+    var key = trim(text).toLowerCase();
+    if (!key) return Promise.resolve(null);
+    if (v176_20GeoCache[key]) return Promise.resolve(v176_20GeoCache[key]);
+    function once(q) {
+      return fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&q=' + encodeURIComponent(q), { headers: { 'Accept': 'application/json' } })
+        .then(function (r) { return r.json(); })
+        .then(function (rows) {
+          if (!rows || !rows.length) return null;
+          var out = { lat: parseFloat(rows[0].lat), lng: parseFloat(rows[0].lon), label: rows[0].display_name };
+          if (!/ohio/i.test(out.label || '')) return null;
+          v176_20GeoCache[key] = out;
+          return out;
+        }).catch(function () { return null; });
+    }
+    return once(trim(text)).then(function (g) {
+      if (g) return g;
+      var cleaned = v176_20CleanAddress(text);
+      if (cleaned && cleaned !== trim(text)) return once(cleaned);
+      return null;
+    });
+  }
+  function v176_20Route(a, b) {
+    return fetch('https://router.project-osrm.org/route/v1/driving/' + a.lng + ',' + a.lat + ';' + b.lng + ',' + b.lat + '?overview=false')
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (!j || j.code !== 'Ok' || !j.routes || !j.routes.length) return null;
+        return { miles: Math.round(j.routes[0].distance / 1609.344 * 10) / 10 };
+      }).catch(function () { return null; });
+  }
+  function v176_20ComputeMiles(address) {
+    return new Promise(function (resolve) {
+      var settled = false;
+      function done(v) { if (!settled) { settled = true; resolve(v); } }
+      var to = setTimeout(function () { done({ error: 'timed out' }); }, 15000);
+      if (!trim(address)) { clearTimeout(to); done({ error: 'no address' }); return; }
+      v176_20Geocode(address).then(function (g) {
+        if (!g) { clearTimeout(to); done({ error: 'not found' }); return; }
+        v176_20Route(V176_20_SHOP_ORIGIN, { lat: g.lat, lng: g.lng }).then(function (rt) {
+          clearTimeout(to);
+          if (rt && rt.miles > 0) done({ miles: v176_20RoundMiles(rt.miles) });
+          else done({ error: 'no route' });
+        }).catch(function () { clearTimeout(to); done({ error: 'no route' }); });
+      }).catch(function () { clearTimeout(to); done({ error: 'not found' }); });
+    });
+  }
   function trim(v) { return String(v == null ? '' : v).trim(); }
 
   function field(form, name) {
@@ -1104,33 +1188,47 @@
         var doInsert = function () {
         if (!isOO) {
           /* V165_ESTIMATE_2026_11_17 (Austin, Nov 17, 2026): estimate-first — a repair request from the website becomes an ESTIMATE, never a ticket and never a queue entry. No appointment is booked, no visit fee is charged, no account is made or offered here: the guest gets the estimate by email, and the account is made only when they tap the link in it. The web signature they drew is recorded as signer + accepted on the estimate row; the signature document itself is collected when the ticket is created (see REPORT.md). */
-          var estRow = {
-            id: newEstimateId(), public_token: newEstimateId(),
-            customer_id: null, ticket_id: null,
-            audience: (guidedEarly && guidedEarly.business) ? 'business' : 'guest',
-            name: row.customer_name, contact_name: null,
-            phone: v.phone, email: v.email, service_address: address || null,
-            device_type: v.device_type, brand: guided && guided.brand ? guided.brand : null, model: v.device_info || null,
-            issue: issue, estimate_amount: null,
-            estimate_note: guided && guided.priceRange ? ('Guided estimate shown: ' + guided.priceRange) : null,
-            atr_one: atrOneCovered || '',
-            status: 'Awaiting Estimate', source: leadSource(form) || 'website',
-            terms_accepted: !!field(form, 'terms_accepted'),
-            work_auth_accepted: !!field(form, 'work_auth_accepted'),
-            preferred_date: visitDate || null, preferred_window: arrivalWindow || null
-          };
-          client.from('estimates').insert(estRow).then(function (res) {
-            setBusy(form, false);
-            if (res.error) { showFormError(form, dbFailMessage()); return; }
-            sendAlert("Your estimate from Austin's Tech Repair Group", [
-              ['Email', v.email], ['Name', row.customer_name],
-              ['Device', [v.device_type, v.device_info].filter(Boolean).join(' · ')],
-              ["What's wrong", v.problem || v.repair_needed || ''],
-              ['Your estimate page', window.location.origin + '/#estimate/' + estRow.public_token],
-              ['What happens next', 'Tap the link above to view your estimate. You can confirm or decline it there — nothing is booked until you confirm.']
-            ], 'estimate-link', estRow.public_token);
-            showSuccess(form, 'service-estimate', v);
-          }).catch(function () { setBusy(form, false); showFormError(form, dbFailMessage()); });
+          var estAudience = (guidedEarly && guidedEarly.business) ? 'business' : 'guest';
+          var estNoteBase = guided && guided.priceRange ? ('Guided estimate shown: ' + guided.priceRange) : null;
+          /* V176_20_MILEAGE_2026_11_22: the public form records ATR One
+             coverage as Yes/No/Not sure — never 'member' — so the
+             existing fee rule (member means atr_one === 'member')
+             treats every website estimate as a non-member. Preserved
+             exactly; the coverage mapping is a separate decision. */
+          function v176_20GoEstimate(note, miles, failed) {
+            var estRow = {
+              id: newEstimateId(), public_token: newEstimateId(),
+              customer_id: null, ticket_id: null,
+              audience: estAudience,
+              name: row.customer_name, contact_name: null,
+              phone: v.phone, email: v.email, service_address: address || null,
+              device_type: v.device_type, brand: guided && guided.brand ? guided.brand : null, model: v.device_info || null,
+              issue: issue, estimate_amount: null,
+              estimate_note: [estNoteBase, note].filter(Boolean).join(' '),
+              atr_one: atrOneCovered || '',
+              status: 'Awaiting Estimate', source: leadSource(form) || 'website',
+              terms_accepted: !!field(form, 'terms_accepted'),
+              work_auth_accepted: !!field(form, 'work_auth_accepted'),
+              preferred_date: visitDate || null, preferred_window: arrivalWindow || null
+            };
+            client.from('estimates').insert(estRow).then(function (res) {
+              setBusy(form, false);
+              if (res.error) { showFormError(form, dbFailMessage()); return; }
+              sendAlert("Your estimate from Austin's Tech Repair Group", [
+                ['Email', v.email], ['Name', row.customer_name],
+                ['Device', [v.device_type, v.device_info].filter(Boolean).join(' · ')],
+                ["What's wrong", v.problem || v.repair_needed || ''],
+                ['Visit fee when confirmed', v176_20FeeTextForDisplay(estAudience, false, miles, failed)],
+                ['Your estimate page', window.location.origin + '/#estimate/' + estRow.public_token],
+                ['What happens next', 'Tap the link above to view your estimate. You can confirm or decline it there — nothing is booked until you confirm.']
+              ], 'estimate-link', estRow.public_token);
+              showSuccess(form, 'service-estimate', v);
+            }).catch(function () { setBusy(form, false); showFormError(form, dbFailMessage()); });
+          }
+          v176_20ComputeMiles(address || '').then(function (r) {
+            if (r && r.miles > 0) v176_20GoEstimate(v176_20MileageNote(r.miles, estAudience, false), r.miles, false);
+            else v176_20GoEstimate(v176_20MileageNote(null, estAudience, false), null, true);
+          });
           return;
         }
         client.from('tickets').insert(row).then(function (res) {

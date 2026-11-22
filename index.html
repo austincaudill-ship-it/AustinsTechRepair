@@ -4626,7 +4626,8 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
   <script src="turnstile.js"></script>
   <script src="script.js"></script>
-  <script src="atr-forms.js"></script>
+  <!-- V176_20_MILEAGE_2026_11_22: atr-forms.js carries a version query (?v=176-20) so a fresh index.html can never pair with a stale cached atr-forms.js (the v176.19 mixed-version lesson). Bump the query on every future version that touches atr-forms.js. -->
+  <script src="atr-forms.js?v=176-20"></script>
 
   <!-- SITE_ACCT_FIX_2026_10_30 / SITE_CART_BADGE_2026_10_30 — account-box
        safety net. The account menu's view switching normally lives in
@@ -6450,7 +6451,7 @@
     var list = $('acct-estimates-list');
     if (!list || !sb || !cust) return;
     list.innerHTML = '<p class="acct-muted">Loading your estimates…</p>';
-    sb.from('estimates').select('id, public_token, created_at, device_type, brand, model, issue, estimate_amount, status, audience, service_address, atr_one')
+    sb.from('estimates').select('id, public_token, created_at, device_type, brand, model, issue, estimate_amount, status, audience, service_address, atr_one, estimate_note')
       .eq('customer_id', cust.id).order('created_at', { ascending: false }).limit(50)
       .then(function (res) {
         if (res.error) throw res.error;
@@ -6461,7 +6462,7 @@
         }
         list.innerHTML = rows.map(function (e) {
           var awaiting = e.status === 'Awaiting Estimate';
-          var v175EstTax = atrTaxEstimate(estFloor(e.estimate_amount, e.issue), e.atr_one === 'member' ? 0 : (e.audience === 'business' ? 34.99 : 14.99), e.service_address);
+          var v175EstTax = atrTaxEstimate(estFloor(e.estimate_amount, e.issue), v176_20FeeFor(e), e.service_address);
           var cls = e.status === 'Accepted' ? 'acct-st-done' : 'acct-st-waiting';
           return '<div class="acct-ticket-card" style="cursor:default">' +
             '<span class="acct-ticket-top"><strong>' + escX(estDeviceLabel(e)) + '</strong><span class="acct-status ' + cls + '">' + escX(e.status || '') + '</span></span>' +
@@ -6530,13 +6531,14 @@
     var body = $('est-view-body');
     if (!body || !estViewRow) return;
     var e = estViewRow;
-    var fee = e.audience === 'business' ? 34.99 : 14.99;
+    var fee = v176_20FeeFor(e);
     var html = '<div class="est-view-card">' +
       '<p class="acct-muted" style="margin-top:0">' + escX(e.audience === 'business' ? 'For your business' : 'For you') + ' · ' + escX(estDate(e)) + '</p>' +
       '<h3 style="margin-top:0">' + escX(estDeviceLabel(e)) + '</h3>' +
       '<p>' + escX(e.issue || '') + '</p>' +
       '<p><strong>Estimate: ' + escX(estMoney(estFloor(e.estimate_amount, e.issue))) /* V173_PRICING_FLOOR_2026_11_18 */ + '</strong></p>' +
       (function () { var tx = atrTaxEstimate(estFloor(e.estimate_amount, e.issue), e.atr_one === 'member' ? 0 : fee, e.service_address); if (!tx) return ''; return '<p>Estimated sales tax (' + escX(tx.county) + ' County, ' + escX(tx.rate.toFixed(2)) + '%): <strong>' + escX(estMoney(tx.amount)) + '</strong>' + (tx.fallback ? ' <span class="acct-muted">\u2014 county not determined from the service address, Greene County rate applied</span>' : '') + '</p><p><strong>Estimated total: ' + escX(estMoney(tx.total)) + '</strong></p>'; })() +
+      (function () { var bd = v176_20BreakdownText(e); return bd ? '<p class="acct-muted">' + escX(bd) + '</p>' : ''; })() +
       '<p class="acct-muted">When you confirm, the visit fee (' + escX(estMoney(fee)) + ') is due as we schedule your visit, and we will confirm your date and time with you. Nothing is booked until you confirm.</p>' +
       '</div>';
     if (e.status === 'Accepted') {
@@ -6664,6 +6666,126 @@
       fail('Account created — check your email for a confirmation link, then come back and log in to confirm this estimate.');
     }).catch(function () { fail('Something went wrong — please try again.'); });
   }
+  /* V176_20_MILEAGE_2026_11_22 (Austin, Nov 20-22, 2026): the estimate
+   * flow calculates road miles — same rule and stack as the portal
+   * (free Nominatim + OSRM, fixed home pin from the v176.6 Nominatim
+   * result, lot-strip retry, Ohio check, per-address cache). The
+   * record rides in the estimate's estimate_note; the charge row on
+   * the ticket carries the breakdown. A failed lookup falls back to
+   * the flat fee and never blocks the decision. */
+  var V176_20_INCLUDED_MILES = 25;
+  var V176_20_SHOP_ORIGIN = { lat: 39.6171906, lng: -84.0088582 };
+  function v176_20RoundMiles(m) { var v = Number(m); if (!(v > 0) || !isFinite(v)) return null; return Math.round(v * 10) / 10; }
+  function v176_20BaseFee(audience) { return audience === 'business' ? 34.99 : 14.99; }
+  function v176_20DispatchFee(audience, miles) {
+    var base = v176_20BaseFee(audience);
+    var m = v176_20RoundMiles(miles);
+    if (!m) return base;
+    var over = Math.max(0, m - V176_20_INCLUDED_MILES);
+    return Math.round((base + over) * 100) / 100;
+  }
+  function v176_20MileageNote(miles, audience, byHand, member) {
+    var m = v176_20RoundMiles(miles);
+    if (member) {
+      if (!m) return null;
+      return 'Mileage ' + m + ' road miles from Spring Valley; no dispatch fee (ATR One member covers the trip).';
+    }
+    if (!m) return 'Mileage could not be calculated for this address; dispatch fee is the flat $' + v176_20BaseFee(audience).toFixed(2) + '. Set the miles by hand if the trip runs over 25 miles.';
+    var fee = v176_20DispatchFee(audience, m);
+    var over = Math.max(0, m - V176_20_INCLUDED_MILES);
+    var tail = over > 0 ? '25 miles included, ' + (Math.round(over * 10) / 10) + ' over at $1 a mile' : 'within the 25 included miles';
+    return 'Mileage ' + m + ' road miles from Spring Valley' + (byHand ? ', set by hand' : '') + ' (' + tail + '); dispatch fee $' + fee.toFixed(2) + '.';
+  }
+  function v176_20ParseMileageNote(note) {
+    var s = String(note || '');
+    var m = s.match(/Mileage ([\d.]+) road miles from Spring Valley(, set by hand)?/);
+    if (!m) return null;
+    var miles = v176_20RoundMiles(parseFloat(m[1]));
+    if (!miles) return null;
+    return { miles: miles, byHand: !!m[2] };
+  }
+  function v176_20ChargeDesc(parsed) {
+    var over = Math.max(0, parsed.miles - V176_20_INCLUDED_MILES);
+    return 'Visit fee \u2014 ' + parsed.miles + ' road miles from Spring Valley' + (parsed.byHand ? ', set by hand' : '') + ' (' + (over > 0 ? '25 included, ' + (Math.round(over * 10) / 10) + ' over at $1/mile' : '25 miles included') + ')';
+  }
+  function v176_20FeeFor(e) {
+    var stored = v176_20ParseMileageNote(e.estimate_note);
+    if (e.atr_one === 'member') return 0;
+    if (stored) return v176_20DispatchFee(e.audience, stored.miles);
+    return v176_20BaseFee(e.audience);
+  }
+  function v176_20BreakdownText(e) {
+    var member = e.atr_one === 'member';
+    var stored = v176_20ParseMileageNote(e.estimate_note);
+    if (!stored) return '';
+    var over = Math.max(0, stored.miles - V176_20_INCLUDED_MILES);
+    if (member) return 'About ' + stored.miles + ' road miles from Spring Valley \u2014 no visit fee (ATR One member covers the trip).';
+    return 'About ' + stored.miles + ' road miles from Spring Valley' + (stored.byHand ? ' (set by hand)' : '') + ' \u2014 25 miles included' + (over > 0 ? ', ' + (Math.round(over * 10) / 10) + ' over at $1 a mile' : '') + '.';
+  }
+  var v176_20GeoCache = {};
+  function v176_20CleanAddress(q) { return String(q || '').replace(/\blot\s*\d+[a-z]?\b/i, '').replace(/\s{2,}/g, ' ').trim(); }
+  function v176_20Geocode(text) {
+    var key = String(text || '').trim().toLowerCase();
+    if (!key) return Promise.resolve(null);
+    if (v176_20GeoCache[key]) return Promise.resolve(v176_20GeoCache[key]);
+    function once(q) {
+      return fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&q=' + encodeURIComponent(q), { headers: { 'Accept': 'application/json' } })
+        .then(function (r) { return r.json(); })
+        .then(function (rows) {
+          if (!rows || !rows.length) return null;
+          var out = { lat: parseFloat(rows[0].lat), lng: parseFloat(rows[0].lon), label: rows[0].display_name };
+          if (!/ohio/i.test(out.label || '')) return null;
+          v176_20GeoCache[key] = out;
+          return out;
+        }).catch(function () { return null; });
+    }
+    return once(String(text).trim()).then(function (g) {
+      if (g) return g;
+      var cleaned = v176_20CleanAddress(text);
+      if (cleaned && cleaned !== String(text).trim()) return once(cleaned);
+      return null;
+    });
+  }
+  function v176_20Route(a, b) {
+    return fetch('https://router.project-osrm.org/route/v1/driving/' + a.lng + ',' + a.lat + ';' + b.lng + ',' + b.lat + '?overview=false')
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (!j || j.code !== 'Ok' || !j.routes || !j.routes.length) return null;
+        return { miles: Math.round(j.routes[0].distance / 1609.344 * 10) / 10 };
+      }).catch(function () { return null; });
+  }
+  function v176_20ComputeMiles(address) {
+    return new Promise(function (resolve) {
+      var settled = false;
+      function done(v) { if (!settled) { settled = true; resolve(v); } }
+      var to = setTimeout(function () { done({ error: 'timed out' }); }, 15000);
+      if (!String(address || '').trim()) { clearTimeout(to); done({ error: 'no address' }); return; }
+      v176_20Geocode(address).then(function (g) {
+        if (!g) { clearTimeout(to); done({ error: 'not found' }); return; }
+        v176_20Route(V176_20_SHOP_ORIGIN, { lat: g.lat, lng: g.lng }).then(function (rt) {
+          clearTimeout(to);
+          if (rt && rt.miles > 0) done({ miles: v176_20RoundMiles(rt.miles) });
+          else done({ error: 'no route' });
+        }).catch(function () { clearTimeout(to); done({ error: 'no route' }); });
+      }).catch(function () { clearTimeout(to); done({ error: 'not found' }); });
+    });
+  }
+  function v176_20ResolveMileage(e, cb) {
+    var member = e.atr_one === 'member';
+    var base = v176_20BaseFee(e.audience);
+    var stored = v176_20ParseMileageNote(e.estimate_note);
+    if (stored) {
+      cb({ miles: stored.miles, fee: member ? 0 : v176_20DispatchFee(e.audience, stored.miles), byHand: stored.byHand, note: e.estimate_note, failed: false });
+      return;
+    }
+    v176_20ComputeMiles(e.service_address || '').then(function (r) {
+      if (r && r.miles > 0) {
+        cb({ miles: r.miles, fee: member ? 0 : v176_20DispatchFee(e.audience, r.miles), byHand: false, note: v176_20MileageNote(r.miles, e.audience, false, member), failed: false });
+      } else {
+        cb({ miles: null, fee: member ? 0 : base, byHand: false, note: member ? null : v176_20MileageNote(null, e.audience, false, false), failed: true });
+      }
+    });
+  }
   function estViewDecideDirect(decision, done, custId) {
     var e = estViewRow;
     var cust = custId ? { id: custId } : ((typeof currentCust !== 'undefined' && currentCust) ? currentCust : null);
@@ -6676,18 +6798,20 @@
       }).catch(function () { done(false); });
       return;
     }
-    var fee = (e.atr_one === 'member') ? 0 : (e.audience === 'business' ? 34.99 : 14.99);
+    v176_20ResolveMileage(e, function (res) {
+    var fee = res.fee;
     var row = { customer_id: cust.id, customer_name: e.name, customer_phone: e.phone, customer_email: e.email || null, service_address: e.service_address || null, device_type: e.device_type, brand: e.brand || null, model: e.model || null, issue: e.issue, issue_reason: e.issue, job_date: null, appointment_at: null, source: 'estimate', status: 'Awaiting Scheduling', terms_accepted: true, dispatch_acknowledged: true, work_auth_accepted: true, marketing_opt_in: false };
     sb.from('tickets').insert(row).select('id').single().then(function (ires) {
       if (ires.error) { done(false); return; }
       var newId = ires.data && ires.data.id;
       var finish = function () {
-        sb.from('estimates').update({ status: 'Accepted', ticket_id: newId, customer_id: cust.id, decided_at: new Date().toISOString() }).eq('id', e.id).then(function () { done(true); }).catch(function () { done(true); });
+        sb.from('estimates').update({ status: 'Accepted', ticket_id: newId, customer_id: cust.id, decided_at: new Date().toISOString(), estimate_note: (res.note != null ? res.note : e.estimate_note) }).eq('id', e.id).then(function () { done(true); }).catch(function () { done(true); });
       };
       if (fee > 0 && newId) {
-        sb.from('ticket_charges').insert({ ticket_id: newId, kind: 'dispatch', description: 'Visit fee', qty: 1, unit_price: fee }).then(function () { finish(); }, function () { finish(); });
+        sb.from('ticket_charges').insert({ ticket_id: newId, kind: 'dispatch', description: res.miles ? v176_20ChargeDesc(res) : 'Visit fee', qty: 1, unit_price: fee }).then(function () { finish(); }, function () { finish(); });
       } else finish();
     }).catch(function () { done(false); });
+    });
   }
   function estViewSendDeclineEmail(e) {
     try {
