@@ -5092,8 +5092,8 @@ function loadTicketThread(client, ticketId) {
 
   /* V176_7_CARD_FEE_2026_11_19 (Austin, Nov 19, 2026): the card
    * processing fee is passed through to the guest at Square's actual
-   * rate, never more. Payment Links / online checkout: 2.9% + $0.30.
-   * In person (Square app / card terminal): 2.6% + $0.10. The fee is
+   * rate, never more. Payment Links / online checkout: 3.3% + $0.30.
+   * In person (Square app / card terminal): 2.6% + $0.15. The fee is
    * grossed up so it equals exactly what Square charges on the final
    * total: fee = (rate x pre-fee amount + fixed) / (1 - rate),
    * rounded to the cent. The fee is ONE ticket_charges row (kind
@@ -5104,11 +5104,18 @@ function loadTicketThread(client, ticketId) {
    * carries a fee. The fee is NOT taxed (atrTaxBaseOf excludes it)
    * and earns NO points (awardPointsOnComplete excludes it) — it is a
    * separately stated payment-method charge, not part of the taxable
-   * sales price or the spend. This block is IDENTICAL in portal.js
+   * sales price or the spend. V176_26_SQUARE_FREE_FEES_2026_11_22
+   * (Austin, Nov 22, 2026): Square Free actuals — 3.3% + $0.30
+   * online, 2.6% + $0.15 in person. ATR One members pay NO card
+   * processing fee: atrCardFeeTotalFor takes isMember and returns
+   * fee 0 for a member (the portal sync, the drawer display, and
+   * the guest preview all pass the membership state they already
+   * hold; the checkout function is the authority at payment time).
+   * This block is IDENTICAL in portal.js
    * and index.html — keep the two copies in sync; the harness proves
    * both against the same cases. */
-  var ATR_CARD_FEE_LINK = { rate: 0.029, fixed: 0.30 };
-  var ATR_CARD_FEE_INPERSON = { rate: 0.026, fixed: 0.10 };
+  var ATR_CARD_FEE_LINK = { rate: 0.033, fixed: 0.30 };
+  var ATR_CARD_FEE_INPERSON = { rate: 0.026, fixed: 0.15 };
   function atrCardFeeCents(preFeeCents, rate, fixed) {
     var x = (rate * preFeeCents + fixed * 100) / (1 - rate);
     return Math.round(x);
@@ -5118,18 +5125,35 @@ function loadTicketThread(client, ticketId) {
     return atrCardFeeCents(Math.round(Number(amount || 0) * 100), r.rate, r.fixed) / 100;
   }
   function atrCardFeeDesc(which) {
-    return (which === 'inperson') ? 'Square pass-through (2.6% + $0.10)' : 'Square pass-through (2.9% + $0.30)';
+    return (which === 'inperson') ? 'Square pass-through (2.6% + $0.15)' : 'Square pass-through (3.3% + $0.30)';
   }
   function atrFeeTotalIn(rows) {
     var f = 0;
     (rows || []).forEach(function (ch) { if (ch.kind === 'fee') f += Number(ch.qty || 0) * Number(ch.unit_price || 0); });
     return Math.round(f * 100) / 100;
   }
-  function atrCardFeeTotalFor(balance, rows, which) {
+  function atrCardFeeTotalFor(balance, rows, which, isMember) {
     var preFee = Math.round((Number(balance || 0) - atrFeeTotalIn(rows)) * 100) / 100;
     if (!(preFee > 0)) return { preFee: 0, fee: 0, total: 0 };
+    if (isMember) return { preFee: preFee, fee: 0, total: preFee };
     var fee = atrCardFeeFor(preFee, which);
     return { preFee: preFee, fee: fee, total: Math.round((preFee + fee) * 100) / 100 };
+  }
+
+  /* V176_26_SQUARE_FREE_FEES_2026_11_22 (Austin, Nov 22, 2026):
+   * ATR One members pay no card processing fee. The membership
+   * check is the same one the discount gating and the points award
+   * already use: the latest ACTIVE row in customer_memberships for
+   * the ticket's customer. A failed lookup reads as non-member, so
+   * the fee still applies — a fee is never silently waived. */
+  function v176_26IsAtrOneMember(client, customerId, done) {
+    if (!client || !customerId) { try { done(false); } catch (e) {} return; }
+    try {
+      client.from('customer_memberships').select('tier').eq('customer_id', customerId).eq('status', 'active').order('started_on', { ascending: false }).limit(1).maybeSingle().then(function (res) {
+        var ok = !!(res && !res.error && res.data && res.data.tier);
+        try { done(ok); } catch (e) {}
+      }).catch(function () { try { done(false); } catch (e) {} });
+    } catch (e) { try { done(false); } catch (e) {} }
   }
 
   /* V175_COUNTY_TAX_2026_11_19: the tax-row sync - staff-side only.
@@ -5435,14 +5459,14 @@ function loadTicketThread(client, ticketId) {
        * Balance due reads $0.00. ticket_charges itself is untouched. */
       /* V176_7_CARD_FEE_2026_11_19: the in-person card total — what Austin charges on the terminal when the guest pays by card at the job. The fee is NOT in the balance yet (it is added when the card payment is recorded); this line tells staff the exact amount to charge so the fee is never eaten. */
       var v176CardView = null;
-      if (!t.warranty_exempt && v175Balance > 0) v176CardView = atrCardFeeTotalFor(v175Balance, rows, 'inperson');
+      if (!t.warranty_exempt && v175Balance > 0) v176CardView = atrCardFeeTotalFor(v175Balance, rows, 'inperson', !!t._atrOneMember);
       html += '<div class="p2-totals">' +
         '<div><span>Subtotal</span><span>' + fmtMoney(v175Subtotal) + '</span></div>' +
         (tot.deposits ? '<div><span>Deposits received</span><span>&minus;' + fmtMoney(tot.deposits) + '</span></div>' : '') +
         (t.warranty_exempt
           ? '<div><span>Warranty exemption</span><span>&minus;' + fmtMoney(v175Balance) + '</span></div>' +
             '<div class="p2-grand"><span>Balance due</span><span>' + fmtMoney(0) + '</span></div></div>'
-          : '<div class="p2-grand"><span>Balance due</span><span>' + fmtMoney(v175Balance) + '</span></div>' + (v176CardView && v176CardView.fee > 0 ? '<div><span>Card total (in person)</span><span>' + fmtMoney(v176CardView.total) + ' (includes ' + fmtMoney(v176CardView.fee) + ' fee)</span></div>' : '') + '</div>');
+          : '<div class="p2-grand"><span>Balance due</span><span>' + fmtMoney(v175Balance) + '</span></div>' + (v176CardView && v176CardView.fee > 0 ? '<div><span>Card total (in person)</span><span>' + fmtMoney(v176CardView.total) + ' (includes ' + fmtMoney(v176CardView.fee) + ' fee)</span></div>' : (v176CardView && t._atrOneMember ? '<div><span>Card total (in person)</span><span>' + fmtMoney(v176CardView.total) + ' (no processing fee - ATR One member)</span></div>' : '')) + '</div>');
       if (v175TaxSyncNote) html += '<p class="portal-muted portal-small">' + esc(v175TaxSyncNote) + '</p>';
       box.innerHTML = exemptBar + html;
     }
@@ -5473,7 +5497,11 @@ function loadTicketThread(client, ticketId) {
       /* V175_COUNTY_TAX_2026_11_19: every drawer open (and every charge change, which funnels back here) syncs the one sales-tax row first, so the drawer, the receipt, the invoice and the Square checkout all read the same tax-inclusive figures. */
       v175SyncTaxRow(client, t, res.data || [], function (fresh) {
         t._charges = fresh;
-        renderCharges(t, t._charges);
+        /* V176_26_SQUARE_FREE_FEES_2026_11_22: the card-fee display and the card-payment sync both read the membership state resolved here, fresh on every drawer open. */
+        v176_26IsAtrOneMember(client, t.customer_id, function (isMember) {
+          t._atrOneMember = !!isMember;
+          renderCharges(t, t._charges);
+        });
       });
     }).catch(function () {});
   }
@@ -9867,11 +9895,20 @@ function loadTicketThread(client, ticketId) {
         client.from('ticket_charges').select('*').eq('ticket_id', t.id).order('created_at', { ascending: true }).then(function (r) {
           if (r.error) { fail(r.error); return; }
           var rows = r.data || [];
+          /* V176_26_SQUARE_FREE_FEES_2026_11_22: ATR One members pay no card processing fee — the same latest-ACTIVE-row check as the discount gating. A member's card total is the pre-fee balance, and any fee row synced before the membership is removed so it can never be charged. */
+          v176_26IsAtrOneMember(client, t.customer_id, function (isMember) {
           var preFee = Math.round((chargeTotals(rows).balance - atrFeeTotalIn(rows)) * 100) / 100;
           if (!(preFee > 0)) { fail(new Error('nothing due')); return; }
-          var fee = atrCardFeeFor(preFee, 'inperson');
           var existing = rows.filter(function (ch) { return ch.kind === 'fee'; });
-          if (existing.length === 1 && Number(existing[0].qty || 0) === 1 && Math.round(Number(existing[0].unit_price || 0) * 100) / 100 === fee) { try { done(null, Math.round((preFee + fee) * 100) / 100); } catch (e) {} return; }
+          if (isMember) {
+            (function delAllMember(list, i, next) {
+              if (i >= list.length) { next(); return; }
+              try { client.from('ticket_charges').delete().eq('id', list[i].id).then(function () { delAllMember(list, i + 1, next); }).catch(function () { delAllMember(list, i + 1, next); }); } catch (e) { delAllMember(list, i + 1, next); }
+            })(existing, 0, function () { try { done(null, preFee); } catch (e) {} });
+            return;
+          }
+          var fee = atrCardFeeFor(preFee, 'inperson');
+          if (existing.length === 1 && Number(existing[0].qty || 0) === 1 && Math.round(Number(existing[0].unit_price || 0) * 100) / 100 === fee && String(existing[0].description || '') === atrCardFeeDesc('inperson')) { try { done(null, Math.round((preFee + fee) * 100) / 100); } catch (e) {} return; }
           var cardTotal = Math.round((preFee + fee) * 100) / 100;
           (function delAll(list, i, next) {
             if (i >= list.length) { next(); return; }
@@ -9883,6 +9920,7 @@ function loadTicketThread(client, ticketId) {
                 try { done(null, cardTotal); } catch (e) {}
               }).catch(function (e) { fail(e); });
             } catch (e) { fail(e); }
+          });
           });
         }).catch(function (e) { fail(e); });
       } catch (e) { fail(e); }
@@ -9906,9 +9944,10 @@ function loadTicketThread(client, ticketId) {
         if (btn.getAttribute('data-confirm') !== '1') {
           btn.setAttribute('data-confirm', '1');
           /* V176_7_CARD_FEE_2026_11_19: the armed button names the card total — the amount to charge on the terminal, fee included — so the fee is never eaten by accident. */
-          var v176Arm = atrCardFeeTotalFor(chargeTotals(t._charges || []).balance, t._charges || [], 'inperson');
+          var v176Arm = atrCardFeeTotalFor(chargeTotals(t._charges || []).balance, t._charges || [], 'inperson', !!t._atrOneMember);
           btn.innerHTML = icon + ' Confirm \u2014 ' + desc.toLowerCase() + (v176Arm.fee > 0 ? ' ' + fmtMoney(v176Arm.total) + '?' : '?');
           if (v176Arm.fee > 0) msg.textContent = 'Card total ' + fmtMoney(v176Arm.total) + ' \u2014 includes a ' + fmtMoney(v176Arm.fee) + ' processing fee (Square pass-through). Charge that amount, then confirm.';
+          else if (t._atrOneMember) msg.textContent = 'Card total ' + fmtMoney(v176Arm.total) + ' \u2014 no processing fee (ATR One member). Charge that amount, then confirm.';
           return;
         }
         btn.removeAttribute('data-confirm');

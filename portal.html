@@ -13,7 +13,8 @@
   <!-- V176_25_DROPPED_OFF_2026_11_22: ?v= bumped to 176-25 with the estimate "Dropped off" checkbox (portal.js). Same rule as below: both queries carry the current version, so a fresh portal.html can never pair with stale cached subresources. -->
   <!-- V176_24_PORTAL_BACK_2026_11_22: ?v= bumped to 176-24 with in-portal Back navigation (portal.js + portal.css). Same rule as below: both queries carry the current version, so a fresh portal.html can never pair with stale cached subresources. -->
   <!-- V176_22_CONFIRM_LABEL_2026_11_22: ?v= bumped to 176-22 with the Record Confirm mileage-label fix (portal.js). portal.css itself is unchanged; both queries carry the current version so a fresh portal.html can never pair with stale cached subresources. -->
-  <link rel="stylesheet" href="portal.css?v=176-25" />
+  <!-- V176_26_SQUARE_FREE_FEES_2026_11_22: ?v= bumped to 176-26 with the Square Free fee rates, the ATR One fee exemption, and the Square fees table (portal.js). portal.css itself is unchanged; both queries carry the current version so a fresh portal.html can never pair with stale cached subresources. -->
+  <link rel="stylesheet" href="portal.css?v=176-26" />
   <!-- PORTAL_APP_2026_11_09 (Austin, Nov 9, 2026): the Associate Hub
        is its own installable app. portal-manifest.json is a
        DECLARATION only — the installed app is this very page
@@ -389,7 +390,10 @@
           <i class="fas fa-briefcase"></i> Business Files
         </button>
         <!-- V176_15_SQUARE_FIN_2026_11_21 (Austin, Nov 20, 2026): Square moves OUT of Links and UNDER Financials — its own action button in the Financials group, directly under Business Files (bottom of the group), money-tier gated like Financials in applyRoleNav (portal.js). Plain link out to the Square Balance page in a NEW TAB (target="_blank"): Square blocks framing (CSP frame-ancestors 'self', X-Frame-Options SAMEORIGIN), so no iframe overlay is possible — the portal tab stays open behind it with Financials exactly where he left it. Class is portal-tab-link, NOT portal-tab, so the tab-switch wiring in initTabs never treats it as a panel tab (no data-tab, no panel). -->
-        <a class="portal-tab-link" id="portal-tab-square-fin" href="https://app.squareup.com/dashboard/balance" target="_blank" rel="noopener"><i class="fas fa-credit-card"></i> Square</a>
+        <!-- V176_26_SQUARE_FREE_FEES_2026_11_22 (Austin, Nov 22, 2026): the Square button now OPENS the Square panel (portal-panel-square) instead of leaving the portal — the panel carries the Square Free fees table, the ATR One member exemption line, and link-outs to the Square Dashboard and Square's fees page. Same id, same money-tier gating in applyRoleNav; TAB_GATES already lists square as money-tier; 'square' is not a passcode-gated panel (no business figures on it — the rates are Square's public schedule). -->
+        <button class="portal-tab" id="portal-tab-square-fin" type="button" role="tab" data-tab="square">
+          <i class="fas fa-credit-card"></i> Square
+        </button>
       </nav>
       </div>
 
@@ -2011,6 +2015,25 @@
 
       <!-- SQUARE_ATRONE_SPLIT_2026_11_11 (Austin, Nov 11, 2026): this panel used to be "Square & ATR One". His ruling: Square and ATR One don't need to be in the same action button — ATR One stays here, and Square lives inside Links, as it already does. V176_15_SQUARE_FIN_2026_11_21 (Austin, Nov 20, 2026): Square has since moved OUT of Links and under Financials as its own action button (portal-tab-square-fin, Balance page, new tab); the Links seed row is gone (the DB row needs its own delete) and the Quick Actions Square button stays. The Square Dashboard card was removed from this panel because the Links panel (portal_links) already carries a Square Dashboard row. Display text only: the tab key 'square' and panel id portal-panel-square are unchanged. V176_17_LINKS_MOVE_2026_11_22: the Links panel itself is now gone — its links live under Suppliers, Shippers, Guides, and Price Book. -->
       <div class="portal-panel" id="portal-panel-square" role="tabpanel" hidden>
+        <!-- V176_26_SQUARE_FREE_FEES_2026_11_22: Square processing fees on the Square Free plan — the plan ATRG uses. Rates are Square's public schedule; the ATR One block below is unchanged. -->
+        <div class="portal-panel-head"><h2 class="portal-h2">Square</h2></div>
+        <p class="portal-muted portal-small">Processing fees on the Square Free plan. Card payments pass the fee through at exactly Square&rsquo;s rate, never more. ATR One members pay no processing fee.</p>
+        <div class="portal-table-wrap"><table class="portal-table">
+          <thead><tr><th>How the guest pays</th><th>Square Free rate</th></tr></thead>
+          <tbody>
+            <tr><td>In person &mdash; tap, dip, or swipe</td><td>2.6% + 15 cents</td></tr>
+            <tr><td>Online &mdash; payment links and invoices</td><td>3.3% + 30 cents</td></tr>
+            <tr><td>Manual entry or card on file</td><td>3.5% + 15 cents</td></tr>
+            <tr><td>ACH via invoice</td><td>1% ($1 minimum)</td></tr>
+            <tr><td>Afterpay</td><td>6% + 30 cents</td></tr>
+            <tr><td>Cash or check</td><td>Free</td></tr>
+          </tbody>
+        </table></div>
+        <p class="portal-muted portal-small">ATR One members pay no card processing fee &mdash; another membership benefit.</p>
+        <div class="link-grid">
+          <a class="link-card" href="https://app.squareup.com/dashboard/balance" target="_blank" rel="noopener"><i class="fas fa-credit-card"></i><strong>Square Dashboard</strong><span>Balance, payouts, and payments</span></a>
+          <a class="link-card" href="https://squareup.com/us/en/payments/our-fees" target="_blank" rel="noopener"><i class="fas fa-percent"></i><strong>Square fees page</strong><span>Full current rate schedule</span></a>
+        </div>
         <div class="portal-panel-head"><h2 class="portal-h2">ATR One</h2></div>
         <p class="portal-muted portal-small">Ticket checkout is built into every ticket (open one &rarr; Payment &rarr; Charge / Check out). These are the quick doors:</p>
         <div class="link-grid">
@@ -2301,7 +2324,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <!-- PORTAL_RECEIPT_SEND_2026_11_02: vendored html2pdf (html2canvas + jsPDF in one self-contained bundle, loaded locally, no CDN) — Download receipt and Email receipt render the PDF from the exact receipt markup. -->
   <script src="html2pdf.bundle.min.js"></script>
-  <script src="portal.js?v=176-25"></script>
+  <script src="portal.js?v=176-26"></script>
   <script>
   /* ================= TEAM DOCUMENTS + HIRE DOCUMENTS =================
    * Section logic for the Team Documents tab and the per-hire document
