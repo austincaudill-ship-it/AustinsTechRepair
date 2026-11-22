@@ -2198,6 +2198,8 @@
     lastPortalTab = name;
     /* V173_ADD_GUEST_COLLAPSED_2026_11_18 (Austin, Nov 18, 2026): the Add Guest form starts closed on every visit to the Guest panel — the list is what shows first. setCustAddFormOpen only flips hidden + the chevron, so a half-filled form keeps its values when the panel is reopened. */
     if (name === 'customers') setCustAddFormOpen(false);
+    /* V176_23_HOME_ACCORDION_2026_11_22 (Austin, Nov 22, 2026): returning to Home resets the Home sections — Your day open, the other six closed — so Home is always a short scroll on arrival. Same visit-reset precedent as the Add Guest form above; the section toggles stay independent while Home is open. */
+    if (name === 'home') homeAccReset();
     /* V165_ESTIMATE_2026_11_17: opening New Service Request shows the request form as built — the Guest/Business toggle inside it (v164) does the version work. */
     if (name === 'checkin') ciShowNsr();
     /* TEAMCHAT_2026_11_03: reopening Team Chat restarts its refresh
@@ -19479,9 +19481,57 @@ function loadTicketThread(client, ticketId) {
     });
   }
 
+  /* V176_23_HOME_ACCORDION_2026_11_22 (Austin, Nov 22, 2026): the Associate Hub
+   * Home panel folds into tappable sections, like the check-in
+   * form's ci-acc sections (the drawer's tk-acc wiring is scoped
+   * to the drawer, so Home carries its own parallel pattern:
+   * home-acc markup in portal.html, home-acc classes in
+   * portal.css, and this wiring). Your day starts open, the
+   * other six start closed; toggles are independent. State is
+   * in-memory only (homeAccState) — a reload restores the markup
+   * defaults, and activateTab resets the sections on every
+   * return to Home, so Home is always a short scroll on arrival.
+   * Nothing inside a section changed — same fields, same ids,
+   * same submit flows; the tools and edit buttons that unhide
+   * the forms all live inside their section's body. The Tips
+   * section keeps its own wrapper id (portal-home-tips-section):
+   * renderHomeTips hides the whole section when the tip bank has
+   * nothing active, header included. */
+  var homeAccState = { yourday: true };
+  function homeAccReset() {
+    var panel = $('portal-panel-home');
+    if (!panel) return;
+    panel.querySelectorAll('[data-home-acc-toggle]').forEach(function (btn) {
+      var key = btn.getAttribute('data-home-acc-toggle');
+      var open = key === 'yourday';
+      homeAccState[key] = open;
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      btn.classList.toggle('home-acc-open', open);
+    });
+    panel.querySelectorAll('[data-home-acc-body]').forEach(function (body) {
+      body.hidden = body.getAttribute('data-home-acc-body') !== 'yourday';
+    });
+  }
+  function wireHomeAccordions() {
+    var panel = $('portal-panel-home');
+    if (!panel || panel.getAttribute('data-home-acc-wired')) return;
+    panel.setAttribute('data-home-acc-wired', '1');
+    panel.querySelectorAll('[data-home-acc-toggle]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var key = btn.getAttribute('data-home-acc-toggle');
+        var open = !homeAccState[key];
+        homeAccState[key] = open;
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        btn.classList.toggle('home-acc-open', open);
+        var body = panel.querySelector('[data-home-acc-body="' + key + '"]');
+        if (body) body.hidden = !open;
+      });
+    });
+  }
   function wireHome() {
     if (homeWired) return;
     homeWired = true;
+    wireHomeAccordions(); /* V176_23_HOME_ACCORDION_2026_11_22 */
     var monthForm = $('portal-home-month-form');
     if (monthForm) monthForm.addEventListener('submit', function (e) {
       e.preventDefault();

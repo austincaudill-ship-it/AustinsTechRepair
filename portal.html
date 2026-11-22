@@ -9,8 +9,9 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
   <!-- V176_21_MILEAGE_GATE_FIX_2026_11_22 (mileage fallback chain + visible failure + drawer re-render; gate save path unchanged) -->
   <!-- V176_20_MILEAGE_2026_11_22 (Austin, Nov 20-22, 2026): version query bumped to ?v=176-20 with the mileage calculator (portal.js). V176_19 rule stands: bump the query on every future version that touches portal.js or portal.css, so a fresh portal.html can never pair with stale cached subresources. -->
+  <!-- V176_23_HOME_ACCORDION_2026_11_22: ?v= bumped to 176-23 with the Home accordion (portal.js + portal.css). Same rule as below: both queries carry the current version, so a fresh portal.html can never pair with stale cached subresources. -->
   <!-- V176_22_CONFIRM_LABEL_2026_11_22: ?v= bumped to 176-22 with the Record Confirm mileage-label fix (portal.js). portal.css itself is unchanged; both queries carry the current version so a fresh portal.html can never pair with stale cached subresources. -->
-  <link rel="stylesheet" href="portal.css?v=176-22" />
+  <link rel="stylesheet" href="portal.css?v=176-23" />
   <!-- PORTAL_APP_2026_11_09 (Austin, Nov 9, 2026): the Associate Hub
        is its own installable app. portal-manifest.json is a
        DECLARATION only — the installed app is this very page
@@ -408,19 +409,22 @@
         <!-- HUB_HEADER_2026_11_11 (Austin, Nov 11, 2026): the Home panel's install card (the get-the-app card) was removed — the header Get App button is the one install door now. Its PORTAL_APP install-card wiring in portal.js went with it; the header button's own GETAPP module is untouched. -->
 
         <!-- HUB_HOME_2026_11_09 (v62): YOUR DAY — who is on the clock now, the signed-in associate's hours this week, and their clock state, read from time_entries. Read-only: the punch actions stay in Time Clock. Logic: loadYourDay in portal.js. -->
-        <div class="portal-panel-head portal-subhead">
-          <h3 class="portal-h3">Your day</h3>
-        </div>
+        <!-- V176_23_HOME_ACCORDION_2026_11_22 (Austin, Nov 22, 2026): Home folds into tappable sections, like the check-in form's sections — Your day starts open, the other six start closed, and opening one never closes another. Every field id is exactly as it was; only the folding wrappers were added. Returning to Home resets the sections (Your day open, rest closed) — see homeAccReset in portal.js. -->
+        <div class="home-acc" data-home-acc="yourday">
+          <button type="button" class="home-acc-head home-acc-open" data-home-acc-toggle="yourday" aria-expanded="true"><span class="home-acc-title">Your day</span><i class="fas fa-chevron-down home-acc-chev" aria-hidden="true"></i></button>
+          <div class="home-acc-body" data-home-acc-body="yourday">
         <div id="portal-home-yourday"><p class="portal-muted">Loading&hellip;</p></div>
 
         <!-- V173_CELEBRATIONS_HOME_2026_11_18 (Austin, Nov 18, 2026): Celebrations moved here from the Guest panel — guest birthdays in the next 30 days live on Home now, so the guest list is the first thing on the Guest panel. Same block, same 30-day window, same read-only list. -->
         <div id="portal-celebrations"></div>
+          </div>
+        </div>
 
         <!-- HUB_HOME_2026_11_09 (v62): TIPS OF THE DAY — one repair tip and one safety tip, the same pair for the whole team all day, turning over each morning from public.portal_home_tips. The whole section hides when the bank has no active tip to show (never a placeholder). Admin+ manages the bank in-panel below. Logic: loadHomeTips in portal.js. -->
         <div id="portal-home-tips-section">
-          <div class="portal-panel-head portal-subhead">
-            <h3 class="portal-h3">Tips of the day</h3>
-          </div>
+          <div class="home-acc" data-home-acc="tips">
+            <button type="button" class="home-acc-head" data-home-acc-toggle="tips" aria-expanded="false"><span class="home-acc-title">Tips of the day</span><i class="fas fa-chevron-down home-acc-chev" aria-hidden="true"></i></button>
+            <div class="home-acc-body" data-home-acc-body="tips" hidden>
           <div class="hh-tips-grid" id="portal-home-tips"></div>
           <div id="portal-home-tips-tools"></div>
           <div id="portal-home-tips-manage" hidden>
@@ -454,10 +458,12 @@
               <button class="portal-btn portal-btn-outline" id="portal-home-tip-cancel" type="button" hidden>Cancel edit</button>
             </form>
           </div>
+            </div>
+          </div>
         </div>
-        <div class="portal-panel-head portal-subhead">
-          <h3 class="portal-h3">This month at ATRG</h3>
-        </div>
+        <div class="home-acc" data-home-acc="month">
+          <button type="button" class="home-acc-head" data-home-acc-toggle="month" aria-expanded="false"><span class="home-acc-title">This month at ATRG</span><i class="fas fa-chevron-down home-acc-chev" aria-hidden="true"></i></button>
+          <div class="home-acc-body" data-home-acc-body="month" hidden>
         <div id="portal-home-month"><p class="portal-muted">Loading&hellip;</p></div>
         <form id="portal-home-month-form" novalidate hidden>
           <div class="portal-nh-grid">
@@ -480,10 +486,12 @@
           </button>
           <button class="portal-btn portal-btn-outline" id="portal-home-month-cancel" type="button">Cancel</button>
         </form>
-
-        <div class="portal-panel-head portal-subhead">
-          <h3 class="portal-h3">Company feed</h3>
+          </div>
         </div>
+
+        <div class="home-acc" data-home-acc="feed">
+          <button type="button" class="home-acc-head" data-home-acc-toggle="feed" aria-expanded="false"><span class="home-acc-title">Company feed</span><i class="fas fa-chevron-down home-acc-chev" aria-hidden="true"></i></button>
+          <div class="home-acc-body" data-home-acc-body="feed" hidden>
         <div id="portal-home-feed"><p class="portal-muted">Loading&hellip;</p></div>
         <div id="portal-home-feed-tools"></div>
         <form id="portal-home-post-form" novalidate hidden>
@@ -524,12 +532,14 @@
           </button>
           <button class="portal-btn portal-btn-outline" id="portal-home-post-cancel" type="button" hidden>Cancel edit</button>
         </form>
+          </div>
+        </div>
 
 
         <!-- HUB_HOME_2026_11_09 (v62): SHIFT CENTER — available shifts from public.portal_shifts. Admin+ posts; any associate claims, and a claim is instant (first come — the claim write only lands while the shift is still open). A claimed shift can be offered back to the board. Logic: loadHomeShifts in portal.js. -->
-        <div class="portal-panel-head portal-subhead">
-          <h3 class="portal-h3">Shift Center</h3>
-        </div>
+        <div class="home-acc" data-home-acc="shifts">
+          <button type="button" class="home-acc-head" data-home-acc-toggle="shifts" aria-expanded="false"><span class="home-acc-title">Shift Center</span><i class="fas fa-chevron-down home-acc-chev" aria-hidden="true"></i></button>
+          <div class="home-acc-body" data-home-acc-body="shifts" hidden>
         <div id="portal-home-shifts"><p class="portal-muted">Loading&hellip;</p></div>
         <p class="portal-small" id="portal-home-shift-msg" hidden></p>
         <div id="portal-home-shift-tools"></div>
@@ -565,11 +575,13 @@
           </button>
           <button class="portal-btn portal-btn-outline" id="portal-home-shift-cancel" type="button">Cancel</button>
         </form>
+          </div>
+        </div>
 
         <!-- HUB_HOME_2026_11_09 (v62): SHARED CALENDAR — one month for the whole team: public.portal_calendar_events (outings, special days, days off, notes), associate birthdays from employee_profiles (entered once, back every year — team only), the scheduled guest jobs from tickets, and shifts from the Shift Center. Admin+ adds and edits calendar items in-panel. Logic: loadHomeCalendar in portal.js. -->
-        <div class="portal-panel-head portal-subhead">
-          <h3 class="portal-h3">Shared Calendar</h3>
-        </div>
+        <div class="home-acc" data-home-acc="calendar">
+          <button type="button" class="home-acc-head" data-home-acc-toggle="calendar" aria-expanded="false"><span class="home-acc-title">Shared Calendar</span><i class="fas fa-chevron-down home-acc-chev" aria-hidden="true"></i></button>
+          <div class="home-acc-body" data-home-acc-body="calendar" hidden>
         <div id="portal-home-calendar"><p class="portal-muted">Loading&hellip;</p></div>
         <div id="portal-home-cal-tools"></div>
         <form id="portal-home-cal-form" novalidate hidden>
@@ -609,9 +621,11 @@
           </button>
           <button class="portal-btn portal-btn-outline" id="portal-home-cal-cancel" type="button" hidden>Cancel edit</button>
         </form>
-        <div class="portal-panel-head portal-subhead">
-          <h3 class="portal-h3">Holidays &amp; days off</h3>
+          </div>
         </div>
+        <div class="home-acc" data-home-acc="holidays">
+          <button type="button" class="home-acc-head" data-home-acc-toggle="holidays" aria-expanded="false"><span class="home-acc-title">Holidays &amp; days off</span><i class="fas fa-chevron-down home-acc-chev" aria-hidden="true"></i></button>
+          <div class="home-acc-body" data-home-acc-body="holidays" hidden>
         <div id="portal-home-holidays"><p class="portal-muted">Loading&hellip;</p></div>
         <div id="portal-home-holiday-tools"></div>
         <form id="portal-home-holiday-form" novalidate hidden>
@@ -638,6 +652,8 @@
           </button>
           <button class="portal-btn portal-btn-outline" id="portal-home-holiday-cancel" type="button" hidden>Cancel edit</button>
         </form>
+          </div>
+        </div>
       </div>
 
       <!-- TICKETS -->
@@ -2281,7 +2297,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <!-- PORTAL_RECEIPT_SEND_2026_11_02: vendored html2pdf (html2canvas + jsPDF in one self-contained bundle, loaded locally, no CDN) — Download receipt and Email receipt render the PDF from the exact receipt markup. -->
   <script src="html2pdf.bundle.min.js"></script>
-  <script src="portal.js?v=176-22"></script>
+  <script src="portal.js?v=176-23"></script>
   <script>
   /* ================= TEAM DOCUMENTS + HIRE DOCUMENTS =================
    * Section logic for the Team Documents tab and the per-hire document
