@@ -2343,7 +2343,9 @@ body{ touch-action: manipulation; }
  * until the code matches; it is visible by default in the markup
  * so any path that shows a panel without the gate still shows
  * the cover, never the figures. */
-.portal-gated-panel { position: relative; }
+/* V176_19_PASSCODE_GATE_FIX_2026_11_22: the v176.18 rule above lost the cascade — #portal-dash-view .portal-panel (ID + class) sets position:sticky at 641px and up and position:static on coarse-pointer tablets and short landscape, so the absolute cover's containing block escaped the panel and the cover never clipped to it. This ID-scoped rule wins at every viewport. The :has() rule locks panel scrolling while the cover is visible: a scroll container's absolute child scrolls with its content, so without it tall figures could be scrolled out from under the cover. */
+#portal-dash-view .portal-panel.portal-gated-panel { position: relative; }
+#portal-dash-view .portal-panel.portal-gated-panel:has(> .portal-gate-overlay:not([hidden])) { overflow: hidden; }
 .portal-gate-overlay {
   position: absolute; inset: 0; z-index: 5;
   display: flex; align-items: flex-start; justify-content: center;

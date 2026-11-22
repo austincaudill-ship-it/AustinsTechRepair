@@ -7,7 +7,8 @@
   <meta name="description" content="Staff-only operations portal for Austin's Tech Repair Group: tickets, job applications, investors, feedback, guests, inventory, new hires." />
   <meta name="robots" content="noindex, nofollow" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
-  <link rel="stylesheet" href="portal.css" />
+  <!-- V176_19_PASSCODE_GATE_FIX_2026_11_22 (Austin, Nov 20, 2026): portal.js and portal.css carry a version query (?v=176-19) so a fresh portal.html can never pair with stale cached subresources in the browser cache — the mixed-version serving that left the v176.18 gate box unstyled and its code unrun live. Bump the query on every future version that touches portal.js or portal.css. -->
+  <link rel="stylesheet" href="portal.css?v=176-19" />
   <!-- PORTAL_APP_2026_11_09 (Austin, Nov 9, 2026): the Associate Hub
        is its own installable app. portal-manifest.json is a
        DECLARATION only — the installed app is this very page
@@ -2276,7 +2277,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <!-- PORTAL_RECEIPT_SEND_2026_11_02: vendored html2pdf (html2canvas + jsPDF in one self-contained bundle, loaded locally, no CDN) — Download receipt and Email receipt render the PDF from the exact receipt markup. -->
   <script src="html2pdf.bundle.min.js"></script>
-  <script src="portal.js"></script>
+  <script src="portal.js?v=176-19"></script>
   <script>
   /* ================= TEAM DOCUMENTS + HIRE DOCUMENTS =================
    * Section logic for the Team Documents tab and the per-hire document
