@@ -10,9 +10,10 @@
   <!-- V176_21_MILEAGE_GATE_FIX_2026_11_22 (mileage fallback chain + visible failure + drawer re-render; gate save path unchanged) -->
   <!-- V176_20_MILEAGE_2026_11_22 (Austin, Nov 20-22, 2026): version query bumped to ?v=176-20 with the mileage calculator (portal.js). V176_19 rule stands: bump the query on every future version that touches portal.js or portal.css, so a fresh portal.html can never pair with stale cached subresources. -->
   <!-- V176_23_HOME_ACCORDION_2026_11_22: ?v= bumped to 176-23 with the Home accordion (portal.js + portal.css). Same rule as below: both queries carry the current version, so a fresh portal.html can never pair with stale cached subresources. -->
+  <!-- V176_25_DROPPED_OFF_2026_11_22: ?v= bumped to 176-25 with the estimate "Dropped off" checkbox (portal.js). Same rule as below: both queries carry the current version, so a fresh portal.html can never pair with stale cached subresources. -->
   <!-- V176_24_PORTAL_BACK_2026_11_22: ?v= bumped to 176-24 with in-portal Back navigation (portal.js + portal.css). Same rule as below: both queries carry the current version, so a fresh portal.html can never pair with stale cached subresources. -->
   <!-- V176_22_CONFIRM_LABEL_2026_11_22: ?v= bumped to 176-22 with the Record Confirm mileage-label fix (portal.js). portal.css itself is unchanged; both queries carry the current version so a fresh portal.html can never pair with stale cached subresources. -->
-  <link rel="stylesheet" href="portal.css?v=176-24" />
+  <link rel="stylesheet" href="portal.css?v=176-25" />
   <!-- PORTAL_APP_2026_11_09 (Austin, Nov 9, 2026): the Associate Hub
        is its own installable app. portal-manifest.json is a
        DECLARATION only — the installed app is this very page
@@ -1816,7 +1817,9 @@
             <div class="portal-field" id="ci-est-contact-wrap" hidden><label for="ci-est-contact">Contact name *</label><input type="text" id="ci-est-contact" placeholder="Person you are speaking to" /></div>
             <div class="portal-field"><label for="ci-est-phone">Phone *</label><input type="tel" id="ci-est-phone" required /></div>
             <div class="portal-field"><label for="ci-est-email">Email *</label><input type="email" id="ci-est-email" required /></div>
-            <div class="portal-field"><label for="ci-est-address">Service address *</label><input type="text" id="ci-est-address" required placeholder="Street, city, ZIP" /></div>
+            <div class="portal-field"><label for="ci-est-address" id="ci-est-address-label">Service address *</label><input type="text" id="ci-est-address" required placeholder="Street, city, ZIP" /></div>
+            <!-- V176_25_DROPPED_OFF_2026_11_22: the device was dropped off at the shop — no service address, so checking this box drops the address requirement and the form submits with no address. -->
+            <div class="portal-field portal-nh-check"><label for="ci-est-droppedoff"><input type="checkbox" id="ci-est-droppedoff" /> Dropped off</label></div>
             <!-- V176_20_MILEAGE_2026_11_22: optional road-miles override — blank calculates on submit. -->
             <div class="portal-field"><label for="ci-est-miles">Road miles from Spring Valley (optional)</label><input type="number" id="ci-est-miles" min="0" step="0.1" inputmode="decimal" placeholder="Leave blank to calculate" /></div>
           </div>
@@ -2298,7 +2301,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <!-- PORTAL_RECEIPT_SEND_2026_11_02: vendored html2pdf (html2canvas + jsPDF in one self-contained bundle, loaded locally, no CDN) — Download receipt and Email receipt render the PDF from the exact receipt markup. -->
   <script src="html2pdf.bundle.min.js"></script>
-  <script src="portal.js?v=176-24"></script>
+  <script src="portal.js?v=176-25"></script>
   <script>
   /* ================= TEAM DOCUMENTS + HIRE DOCUMENTS =================
    * Section logic for the Team Documents tab and the per-hire document

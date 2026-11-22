@@ -2702,6 +2702,18 @@
     } catch (e) {}
   }
   function v165VisitFee(audience) { return audience === 'business' ? 34.99 : 14.99; }
+  /* V176_25_DROPPED_OFF_2026_11_22 (Austin, Nov 22, 2026): the estimate
+   * sheet gets a "Dropped off" checkbox — the device was left at the
+   * shop, so there is no service address and no trip. The record
+   * carries the dropped-off note in estimate_note (a field nothing
+   * displays directly; the fee line and the guest page read it), the
+   * dispatch fee stays the flat base fee, and every later mileage
+   * resolution recognizes the note and preserves it instead of
+   * recomputing from an address that does not exist. */
+  function v176_25DroppedOffNote(audience) {
+    return 'Dropped off \u2014 no service address; dispatch fee is the flat $' + v165VisitFee(audience).toFixed(2) + '.';
+  }
+  function v176_25IsDroppedOffNote(note) { return /dropped off/i.test(String(note || '')); }
   /* V176_20_MILEAGE_2026_11_22 (Austin, Nov 20-22, 2026): the estimate
    * flow calculates road miles. The visit fee covers the first 25
    * road miles from Spring Valley (V154_MILEAGE_INCLUDED); over 25
@@ -2757,12 +2769,14 @@
       var over = Math.max(0, stored.miles - V154_MILEAGE_INCLUDED);
       return { fee: fee, text: 'About ' + stored.miles + ' road miles from Spring Valley' + (stored.approx ? ' (approximate)' : '') + (stored.byHand ? ' (set by hand)' : '') + ' \u2014 25 miles included' + (over > 0 ? ', ' + (Math.round(over * 10) / 10) + ' over at $1 a mile' : '') + '.' };
     }
+    if (v176_25IsDroppedOffNote(e.estimate_note)) return { fee: v165VisitFee(e.audience), text: 'Dropped off \u2014 flat fee, no trip.' }; /* V176_25_DROPPED_OFF_2026_11_22 */
     var failedNote = /could not be calculated/i.test(e.estimate_note || '');
     return { fee: v165VisitFee(e.audience), text: failedNote ? 'Road miles could not be calculated \u2014 flat fee; set miles by hand in the estimate.' : '' };
   }
-  function v176_20FeeTextForDisplay(audience, member, miles, failed, approx) {
+  function v176_20FeeTextForDisplay(audience, member, miles, failed, approx, droppedOff) {
     if (member) return miles ? 'None \u2014 ATR One member (about ' + miles + ' road miles from Spring Valley' + (approx ? ', approximate' : '') + ')' : 'None \u2014 ATR One member';
     if (miles) return '$' + v176_20DispatchFee(audience, miles).toFixed(2) + ' (' + miles + ' road miles from Spring Valley' + (approx ? ', approximate' : '') + ')';
+    if (droppedOff) return '$' + v165VisitFee(audience).toFixed(2) + ' (dropped off \u2014 flat fee)'; /* V176_25_DROPPED_OFF_2026_11_22 */
     return '$' + v165VisitFee(audience).toFixed(2) + (failed ? ' (road miles could not be calculated \u2014 flat fee)' : '');
   }
   function v176_20GeocodeCandidates(address) {
@@ -2833,6 +2847,10 @@
       cb({ miles: ov, fee: member ? 0 : v176_20DispatchFee(e.audience, ov), byHand: true, approx: false, note: v176_20MileageNote(ov, e.audience, true, member), failed: false });
       return;
     }
+    if (v176_25IsDroppedOffNote(e.estimate_note)) { /* V176_25_DROPPED_OFF_2026_11_22 */
+      cb({ miles: null, fee: member ? 0 : base, byHand: false, approx: false, note: e.estimate_note, failed: false });
+      return;
+    }
     var stored = v176_20ParseMileageNote(e.estimate_note);
     if (stored) {
       cb({ miles: stored.miles, fee: member ? 0 : v176_20DispatchFee(e.audience, stored.miles), byHand: stored.byHand, approx: stored.approx, note: e.estimate_note, failed: false });
@@ -2891,7 +2909,7 @@
     if (et) et.classList.add('active');
     if (ct) ct.classList.remove('active');
     wireCiEstForm();
-    ciEstPaintType();
+    ciEstPaintType(); v176_25PaintDroppedOff(); /* V176_25_DROPPED_OFF_2026_11_22 */
   }
 
   /* ---------- the ONE estimate sheet ---------- */
@@ -2911,6 +2929,18 @@
     var sc = $('ci-est-script');
     if (sc) sc.textContent = biz ? CI_CONSENT_SCRIPT_BUSINESS : CI_CONSENT_SCRIPT_GUEST;
   }
+  /* V176_25_DROPPED_OFF_2026_11_22: the address label carries the
+   * asterisk only while the address is required. The typed address
+   * is never cleared — checking the box skips the requirement,
+   * not the field. */
+  function v176_25PaintDroppedOff() {
+    var df = $('ci-est-droppedoff');
+    var checked = !!(df && df.checked);
+    var lbl = $('ci-est-address-label');
+    if (lbl) lbl.textContent = checked ? 'Service address' : 'Service address *';
+    var inp = $('ci-est-address');
+    if (inp) inp.required = !checked;
+  }
   function wireCiEstForm() {
     if (ciEstWired) return;
     var g = $('ci-est-type-guest'), b = $('ci-est-type-business');
@@ -2922,12 +2952,15 @@
     if (back) back.addEventListener('click', ciShowNsr);
     var sub = $('ci-est-submit');
     if (sub) sub.addEventListener('click', ciEstSubmit);
+    var df = $('ci-est-droppedoff');
+    if (df) df.addEventListener('change', v176_25PaintDroppedOff); /* V176_25_DROPPED_OFF_2026_11_22 */
   }
   function ciEstReset() {
     ['ci-est-name', 'ci-est-contact', 'ci-est-phone', 'ci-est-email', 'ci-est-address', 'ci-est-miles', 'ci-est-brand', 'ci-est-model', 'ci-est-issue', 'ci-est-amount'].forEach(function (id) { var el = $(id); if (el) el.value = ''; });
     var dv = $('ci-est-device'); if (dv) dv.selectedIndex = 0;
     var at = $('ci-est-atrone'); if (at) at.value = '';
-    ciEstType = 'guest'; ciEstPaintType();
+    var df0 = $('ci-est-droppedoff'); if (df0) df0.checked = false;
+    ciEstType = 'guest'; ciEstPaintType(); v176_25PaintDroppedOff(); /* V176_25_DROPPED_OFF_2026_11_22 */
   }
   function ciEstSubmit() {
     var err = $('ci-est-error');
@@ -2939,12 +2972,13 @@
     var phone = trim($('ci-est-phone') ? $('ci-est-phone').value : '');
     var email = trim($('ci-est-email') ? $('ci-est-email').value : '');
     var address = trim($('ci-est-address') ? $('ci-est-address').value : '');
+    var droppedOff = !!($('ci-est-droppedoff') && $('ci-est-droppedoff').checked); /* V176_25_DROPPED_OFF_2026_11_22 */
     var device = $('ci-est-device') ? $('ci-est-device').value : '';
     var brand = trim($('ci-est-brand') ? $('ci-est-brand').value : '');
     var model = trim($('ci-est-model') ? $('ci-est-model').value : '');
     var issue = trim($('ci-est-issue') ? $('ci-est-issue').value : '');
     var amount = Number($('ci-est-amount') ? $('ci-est-amount').value : NaN);
-    if (!name || !phone || !email || !address || !issue || (biz && !contact)) {
+    if (!name || !phone || !email || (!address && !droppedOff) || !issue || (biz && !contact)) { /* V176_25_DROPPED_OFF_2026_11_22: an empty address is allowed only while Dropped off is checked */
       fail(biz ? 'Business name, contact name, phone, email, service address, and an issue are required for an estimate.' : 'Name, phone, email, service address, and an issue are required for an estimate.');
       return;
     }
@@ -2969,9 +3003,9 @@
     };
     var ciEstOv = v176_20RoundMiles($('ci-est-miles') ? $('ci-est-miles').value : '');
     var ciEstMember = ($('ci-est-atrone') ? $('ci-est-atrone').value : '') === 'member';
-    function ciEstInsertWithMileage(note, miles, failed, approx) {
+    function ciEstInsertWithMileage(note, miles, failed, approx, droppedOff) {
       row.estimate_note = note;
-      var feeText = v176_20FeeTextForDisplay(ciEstType, ciEstMember, miles, failed, approx);
+      var feeText = v176_20FeeTextForDisplay(ciEstType, ciEstMember, miles, failed, approx, droppedOff);
       withClient(function (client) {
       if (!client) { if (btn) btn.disabled = false; fail("Couldn't reach the database — try again."); return; }
       client.from('estimates').insert(row).select('id').single().then(function (res) {
@@ -2995,7 +3029,8 @@
       }).catch(function () { if (btn) btn.disabled = false; fail('Could not create the estimate — try again.'); });
       });
     }
-    if (ciEstOv) { ciEstInsertWithMileage(v176_20MileageNote(ciEstOv, ciEstType, true, ciEstMember), ciEstOv, false, false); return; }
+    if (ciEstOv) { ciEstInsertWithMileage(v176_20MileageNote(ciEstOv, ciEstType, true, ciEstMember), ciEstOv, false, false, false); return; }
+    if (droppedOff && !address) { ciEstInsertWithMileage(ciEstMember ? null : v176_25DroppedOffNote(ciEstType), null, false, false, true); return; } /* V176_25_DROPPED_OFF_2026_11_22 */
     v176_20ComputeMiles(address).then(function (r) {
       if (r && r.miles > 0) ciEstInsertWithMileage(v176_20MileageNote(r.miles, ciEstType, false, ciEstMember, r.approx), r.miles, false, r.approx);
       else ciEstInsertWithMileage(ciEstMember ? null : v176_20MileageNote(null, ciEstType, false, false), null, true, false);

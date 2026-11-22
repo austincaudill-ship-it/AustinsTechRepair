@@ -6723,6 +6723,7 @@
   function v176_20BreakdownText(e) {
     var member = e.atr_one === 'member';
     var stored = v176_20ParseMileageNote(e.estimate_note);
+    if (/dropped off/i.test(e.estimate_note || '')) return 'Dropped off \u2014 flat visit fee, no trip.'; /* V176_25_DROPPED_OFF_2026_11_22 */
     if (!stored) return /could not be calculated/i.test(e.estimate_note || '') ? 'Visit fee \u2014 road miles could not be calculated \u2014 flat fee; set miles by hand.' : '';
     var over = Math.max(0, stored.miles - V176_20_INCLUDED_MILES);
     if (member) return 'About ' + stored.miles + ' road miles from Spring Valley' + (stored.approx ? ' (approximate)' : '') + ' \u2014 no visit fee (ATR One member covers the trip).';
@@ -6802,6 +6803,10 @@
   function v176_20ResolveMileage(e, cb) {
     var member = e.atr_one === 'member';
     var base = v176_20BaseFee(e.audience);
+    if (/dropped off/i.test(e.estimate_note || '')) { /* V176_25_DROPPED_OFF_2026_11_22 */
+      cb({ miles: null, fee: member ? 0 : base, byHand: false, approx: false, note: e.estimate_note, failed: false });
+      return;
+    }
     var stored = v176_20ParseMileageNote(e.estimate_note);
     if (stored) {
       cb({ miles: stored.miles, fee: member ? 0 : v176_20DispatchFee(e.audience, stored.miles), byHand: stored.byHand, approx: stored.approx, note: e.estimate_note, failed: false });
