@@ -638,6 +638,10 @@ body.portal-scroll-locked{position:fixed;left:0;right:0;width:100%;overflow:hidd
 .home-acc-head.home-acc-open .home-acc-chev { transform: rotate(180deg); }
 .home-acc-body[hidden] { display: none; }
 /* end V176_23_HOME_ACCORDION_2026_11_22 */
+/* V176_24_PORTAL_BACK_2026_11_22: the Back button rides in the ACTION PANEL label row, above the open panel — the label keeps its grid placement at every width, and the button only appears once there is a previous panel to return to. The [hidden] rule is explicit because .portal-btn sets its own display. */
+#portal-dash-view .portal-panel-col-label{display:flex;justify-content:space-between;align-items:center;gap:10px}
+#portal-back-btn[hidden]{display:none !important}
+/* end V176_24_PORTAL_BACK_2026_11_22 */
 
 /* PORTAL_ADMIN_CONTROLS_2026_11_04: the role select in the owner
  * section of an Associate Accounts card sits in .assoc-pay-edit,

@@ -569,6 +569,10 @@
     if (bootBtn) { bootBtn.click(); } else { activateTab('home'); }
     /* ATRONE_QR_2026_11_05: a scanned account code beats the remembered tab. */
     try { routePendingScan(); } catch (e) {}
+    /* V176_24_PORTAL_BACK_2026_11_22: Back navigation starts here —
+     * the boot activation above already ran, so init reads the
+     * visible panel as the landing entry (no history push). */
+    portalNavInit();
   }
 
   /* The employee gate: signed-in is NOT enough — the auth user's id
@@ -2152,7 +2156,145 @@
     });
   }
 
-  function activateTab(name) {
+  /* V176_24_PORTAL_BACK_2026_11_22 (Austin, Nov 22, 2026): Back
+   * navigation for the Associate Hub. On his phone there was no way
+   * back to the previous action button without Search or the
+   * browser back button, which exits the portal for the main site
+   * and loses his place. A back-stack records every panel switch
+   * through the three funnels (activateTab, showExtraPanel,
+   * showCustomPanel); the Back button in the ACTION PANEL label
+   * row pops it, and pushState/popstate makes the browser back
+   * button and the iOS swipe-back gesture step through panels
+   * instead of exiting. Back from the first entry exits exactly
+   * as today — nothing traps the user. Scroll positions are
+   * saved per panel (the panel's own scroll on tablet/desktop,
+   * the page scroll on phones) and restored on the way back;
+   * loaders already run once per panel (state.loaded), so
+   * returning never re-fetches or wipes a panel beyond the
+   * resets that already exist (Home accordion, Add Guest form).
+   * The passcode gate is untouched: Back into a gated panel
+   * runs activateTab, which re-prompts on every open. */
+  var portalNavStack = [];
+  var portalNavCurrent = null;
+  var portalNavReady = false;
+  var portalNavBackTarget = null;
+  var portalNavScroll = {};
+  var portalNavDrawerMarked = false;
+  var portalNavPopWired = false;
+  function portalNavPanelEl(name) { return name ? $('portal-panel-' + name) : null; }
+  function portalNavVisibleName() {
+    var found = null;
+    try {
+      document.querySelectorAll('.portal-panel').forEach(function (pn) {
+        if (!pn.hidden && pn.id && pn.id.indexOf('portal-panel-') === 0) found = pn.id.slice(13);
+      });
+    } catch (e) {}
+    return found;
+  }
+  function portalNavSaveScroll(name) {
+    if (!name) return;
+    var el = portalNavPanelEl(name);
+    var top = 0;
+    try { top = el ? el.scrollTop || 0 : 0; } catch (e) {}
+    var wy = 0;
+    try { wy = window.scrollY || window.pageYOffset || 0; } catch (e) {}
+    portalNavScroll[name] = { panel: top, win: wy };
+  }
+  function portalNavRestoreScroll(name) {
+    var s = portalNavScroll[name];
+    if (!s) return;
+    var el = portalNavPanelEl(name);
+    try { if (el) el.scrollTop = s.panel; } catch (e) {}
+    try { window.scrollTo(0, s.win); } catch (e) {}
+  }
+  function portalNavUpdateBackBtn() {
+    var btn = $('portal-back-btn');
+    if (btn) btn.hidden = !(portalNavReady && portalNavStack.length > 0);
+  }
+  function portalNavNote() {
+    if (!portalNavReady || !portalNavCurrent) return;
+    portalNavSaveScroll(portalNavCurrent);
+  }
+  function portalNavRecord(name, opts) {
+    if (!portalNavReady || !name) return;
+    if (opts && opts.norecord) return;
+    if (portalNavBackTarget) {
+      portalNavCurrent = name;
+      portalNavBackTarget = null;
+      portalNavUpdateBackBtn();
+      return;
+    }
+    if (name === portalNavCurrent) return;
+    portalNavStack.push(portalNavCurrent);
+    portalNavCurrent = name;
+    try { if (window.history && window.history.pushState) window.history.pushState({ portalTab: name }, '', window.location.href); } catch (e) {}
+    portalNavUpdateBackBtn();
+  }
+  function portalNavGo(name) {
+    if (!name) return;
+    if (name.indexOf('cab-') === 0) { showCustomPanel(name.slice(4)); return; }
+    activateTab(name);
+  }
+  function portalNavGoBack() {
+    if (!portalNavReady) return;
+    var dr = $('portal-drawer');
+    if (dr && dr.classList && dr.classList.contains('open')) { closeDrawer(); return; }
+    if (!portalNavStack.length) return;
+    var name = portalNavStack.pop();
+    portalNavBackTarget = name;
+    portalNavGo(name);
+    portalNavRestoreScroll(name);
+    portalNavUpdateBackBtn();
+  }
+  function portalNavOnPopState(ev) {
+    if (!portalNavReady) return;
+    var dv = $('portal-dash-view');
+    if (!dv || dv.hidden) return;
+    var st = ev && ev.state;
+    if (!st || !st.portalTab) return;
+    var name = st.portalTab;
+    if (name === portalNavCurrent) {
+      portalNavBackTarget = name;
+      portalNavGo(name);
+      portalNavRestoreScroll(name);
+      portalNavUpdateBackBtn();
+      return;
+    }
+    var idx = portalNavStack.lastIndexOf(name);
+    if (idx >= 0) portalNavStack.length = idx; else portalNavStack.length = 0;
+    portalNavBackTarget = name;
+    portalNavGo(name);
+    portalNavRestoreScroll(name);
+    portalNavUpdateBackBtn();
+  }
+  function portalNavDrawerOpened() {
+    if (!portalNavReady || portalNavDrawerMarked || !portalNavCurrent) return;
+    portalNavDrawerMarked = true;
+    try { if (window.history && window.history.pushState) window.history.pushState({ portalTab: portalNavCurrent, drawer: true }, '', window.location.href); } catch (e) {}
+  }
+  function portalNavDrawerClosed() { portalNavDrawerMarked = false; }
+  function portalNavInit() {
+    portalNavStack = [];
+    portalNavScroll = {};
+    portalNavDrawerMarked = false;
+    portalNavBackTarget = null;
+    portalNavCurrent = portalNavVisibleName() || 'home';
+    portalNavReady = true;
+    try { if (window.history && window.history.replaceState) window.history.replaceState({ portalTab: portalNavCurrent }, '', window.location.href); } catch (e) {}
+    var btn = $('portal-back-btn');
+    if (btn && !btn.getAttribute('data-nav-wired')) {
+      btn.setAttribute('data-nav-wired', '1');
+      btn.addEventListener('click', portalNavGoBack);
+    }
+    if (!portalNavPopWired) {
+      portalNavPopWired = true;
+      window.addEventListener('popstate', portalNavOnPopState);
+    }
+    portalNavUpdateBackBtn();
+  }
+
+  function activateTab(name, opts) {
+    portalNavNote();
     /* PORTAL_ROLE_LADDER_2026_11_04: a gated tab (the Admin
      * group, the money surfaces) never opens for a tier that may
      * not see it — a remembered tab or a stale click lands on
@@ -2160,10 +2302,11 @@
     if (!tabAllowed(name)) name = 'tickets';
     /* V165_ESTIMATE_2026_11_17: New Service Estimate is its own sidebar button directly above New Service Request. It opens this same panel on the estimate sheet instead of the request form. */
     if (name === 'estimate') {
-      activateTab('checkin');
+      activateTab('checkin', { norecord: true });
       saveActiveTab('estimate');
       lastPortalTab = 'estimate';
       ciChooseEstimate();
+      portalNavRecord('estimate', opts);
       return;
     }
     /* QR_FIX_PASS_2026_11_05: Scan In is a popup, not a tab — hand it
@@ -2213,8 +2356,9 @@
      * Business Files ask for the passcode on every open — the
      * panel stays covered until the code matches, and the loader
      * waits for the unlock (gatePanelOpen runs it). */
-    if (GATE_PANELS[name]) { gatePanelOpen(name); return; }
+    if (GATE_PANELS[name]) { gatePanelOpen(name); portalNavRecord(name, opts); return; }
     if (!state.loaded[name] && LOADERS[name]) LOADERS[name](false);
+    portalNavRecord(name, opts);
   }
 
   function initTabs() {
@@ -2303,6 +2447,7 @@
     d.classList.add('open');
     d.setAttribute('aria-hidden', 'false');
     lockBodyScroll(); /* PORTAL_DRAWER_SCROLL_LOCK_2026_11_02 */
+    portalNavDrawerOpened();
   }
 
   function closeDrawer() {
@@ -2311,6 +2456,7 @@
     var scanCid = scanBehindCustomerId;
     scanBehindCustomerId = null;
     $('portal-drawer-overlay').hidden = true;
+    portalNavDrawerClosed();
     var d = $('portal-drawer');
     d.classList.remove('open');
     d.setAttribute('aria-hidden', 'true');
@@ -11221,6 +11367,7 @@ function loadTicketThread(client, ticketId) {
     return panel;
   }
   function showCustomPanel(id) {
+    portalNavNote();
     var r = cabRowById(id);
     if (!r || !cabVisible(r)) { activateTab('tickets'); return; }
     saveActiveTab('cab-' + id);
@@ -11231,6 +11378,7 @@ function loadTicketThread(client, ticketId) {
     closeDrawer();
     if (typeof stopTeamChatPoll === 'function') stopTeamChatPoll();
     var nav = $('portal-nav'); if (nav) nav.classList.remove('open');
+    portalNavRecord('cab-' + id);
   }
   /* Checking a box persists through ONE narrow door: the
    * portal_set_checklist_state function (custom-action-buttons.sql)
@@ -20845,6 +20993,7 @@ function loadTicketThread(client, ticketId) {
   var EXTRA_LOADERS = { timeclock: loadTimeClock, checkin: loadCheckinCustomers, mileage: loadMileage /* PORTAL_MILEAGE_2026_11_02 */ }; /* CUSTOM_ACTION_BUTTONS_2026_11_04: the Links panel no longer pulls anything in — custom buttons render in the sidebar at sign-in (loadCustomActionButtons), so the old links loader entry is gone. */
   var extraLoaded = {};
   function showExtraPanel(name) {
+    portalNavNote();
     /* PORTAL_ROLE_LADDER_2026_11_04: same tier gate as
      * activateTab — Square & ATR One is money (memberships and
      * payment links), so it stays top-tier only. */
@@ -20858,6 +21007,7 @@ function loadTicketThread(client, ticketId) {
     closeDrawer();
     var nav = $('portal-nav'); if (nav) nav.classList.remove('open');
     if (!extraLoaded[name] && EXTRA_LOADERS[name]) { extraLoaded[name] = true; EXTRA_LOADERS[name](false); }
+    portalNavRecord(name);
   }
   /* MENU_CLEAR_PANEL_2026_11_04 (Austin, Nov 4, 2026): "If I push a
    * button and then I hit menu, that button should go away
