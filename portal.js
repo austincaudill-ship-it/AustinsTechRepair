@@ -1881,6 +1881,277 @@
     } catch (e) { return false; }
   }
 
+  /* ================= FINANCIALS PASSCODE GATE =================
+   * V176_18_PASSCODE_GATE_2026_11_22 (Austin, Nov 20, 2026): opening
+   * Financials, Payroll, or Business Files pops a small passcode box
+   * BEFORE anything in that panel shows. One code guards all three
+   * panels, it is asked on EVERY open (no remember-me, no session
+   * unlock), and nothing else in the portal asks for it. The code
+   * itself is never in this file: Austin sets and rotates it in
+   * Setup, and only a salted hash lives in the database
+   * (public.financials_passcode — see passcode-gate.sql in this
+   * build folder; the table is a follow-up database step, and
+   * until it runs the gate fails closed with the setup-owed
+   * message instead of pretending). This is a UI-level gate, not
+   * a security boundary: the panels' data is still governed by
+   * row level security, and a loader called from another panel
+   * (Payroll fills the Financials figures) can put figures in
+   * memory while a panel is still covered — the cover is what
+   * the gate promises. The hash check reuses sha256Hex (the
+   * device-trust helper): SHA-256 of salt + '|' + code, compared
+   * with the stored hash. A failed hash, a missing table, or a
+   * wrong code all keep the panel covered. */
+  var GATE_PANELS = { financials: 1, payroll: 1, businessfiles: 1 };
+  var GATE_ROW_KEY = 'financials';
+  var passcodeRow = null;
+  var passcodeDbMissing = false;
+  var gateOpenRow = null;
+
+  function passcodeIsMissing(err) {
+    return !!err && /financials_passcode|does not exist|schema cache|relation/i.test(String((err && err.message) || err));
+  }
+  function passcodeSalt() {
+    try {
+      if (window.crypto && window.crypto.getRandomValues) {
+        var bytes = new Uint8Array(16);
+        window.crypto.getRandomValues(bytes);
+        var hex = '';
+        for (var i = 0; i < bytes.length; i++) hex += ('0' + bytes[i].toString(16)).slice(-2);
+        if (hex) return hex;
+      }
+    } catch (e) {}
+    return 's' + Date.now().toString(16) + Math.floor(Math.random() * 1000000000).toString(16);
+  }
+  function passcodeHash(code, salt, done) {
+    sha256Hex(salt + '|' + code, done);
+  }
+  /* Fetch the stored row. done(state, row): state is 'row',
+   * 'unset' (the table exists but no row is set yet), 'setup-owed'
+   * (the table is missing — the database step is owed), or
+   * 'error'. A fetch failure never unlocks anything. */
+  function passcodeFetch(done) {
+    withClient(function (sb) {
+      if (!sb) { if (done) done('error', null); return; }
+      sb.from('financials_passcode').select('setting_key, code_hash, code_salt').eq('setting_key', GATE_ROW_KEY).maybeSingle()
+        .then(function (res) {
+          if (res.error) {
+            if (passcodeIsMissing(res.error)) { passcodeDbMissing = true; if (done) done('setup-owed', null); }
+            else if (done) done('error', null);
+            return;
+          }
+          passcodeDbMissing = false;
+          if (!res.data) { passcodeRow = false; if (done) done('unset', null); return; }
+          passcodeRow = res.data;
+          if (done) done('row', res.data);
+        })
+        .catch(function () { if (done) done('error', null); });
+    });
+  }
+  function gateOverlay(name) { return $('portal-gate-' + name); }
+  function gateSetMsg(ov, text) {
+    var m = ov ? ov.querySelector('[data-gate-msg]') : null;
+    if (!m) return;
+    if (text) { m.textContent = text; m.hidden = false; } else { m.textContent = ''; m.hidden = true; }
+  }
+  function gateSetState(name, st) {
+    var ov = gateOverlay(name);
+    if (!ov) return;
+    var note = ov.querySelector('[data-gate-note]');
+    var form = ov.querySelector('[data-gate-form]');
+    var alt = ov.querySelector('[data-gate-alt]');
+    var setupBtn = ov.querySelector('[data-gate-setup]');
+    var retryBtn = ov.querySelector('[data-gate-retry]');
+    gateSetMsg(ov, '');
+    if (form) form.hidden = (st !== 'prompt');
+    if (alt) alt.hidden = !(st === 'unset' || st === 'setup-owed' || st === 'error');
+    if (setupBtn) setupBtn.hidden = !(st === 'unset' || st === 'setup-owed') || !canSeeMoney();
+    if (retryBtn) retryBtn.hidden = (st !== 'error');
+    if (!note) return;
+    if (st === 'checking') note.textContent = 'Checking the passcode…';
+    else if (st === 'prompt') note.textContent = 'Enter the passcode to open this panel. It is asked every time.';
+    else if (st === 'unset') note.textContent = canSeeMoney() ? 'No passcode is set yet. Set one in Setup — one code guards Financials, Payroll, and Business Files.' : 'No passcode is set yet. Ask Austin to set one in Setup.';
+    else if (st === 'setup-owed') note.textContent = 'The passcode store is not in place yet, so this panel stays covered. The database step in the build notes is owed.';
+    else if (st === 'error') note.textContent = 'The passcode could not be checked. The panel stays covered.';
+  }
+  function gatePanelOpen(name) {
+    var panel = $('portal-panel-' + name);
+    var ov = gateOverlay(name);
+    if (!ov) { if (panel) panel.hidden = true; return; }
+    wireGateOverlay(name);
+    gateOpenRow = null;
+    ov.hidden = false;
+    var input = ov.querySelector('[data-gate-code]');
+    if (input) input.value = '';
+    gateSetState(name, 'checking');
+    passcodeFetch(function (st, row) {
+      /* A stale fetch (the viewer moved to another panel while it
+       * ran) never unlocks or rewrites the open panel. */
+      if (lastPortalTab !== name) return;
+      if (st === 'row') {
+        gateOpenRow = row;
+        gateSetState(name, 'prompt');
+        var inp = ov.querySelector('[data-gate-code]');
+        if (inp) { try { inp.focus(); } catch (e) {} }
+      } else gateSetState(name, st);
+    });
+  }
+  function gateTryUnlock(name) {
+    var ov = gateOverlay(name);
+    if (!ov || ov.hidden) return;
+    var input = ov.querySelector('[data-gate-code]');
+    var code = input ? trim(input.value || '') : '';
+    if (!code) { gateSetMsg(ov, 'Enter the passcode.'); if (input) { try { input.focus(); } catch (e) {} } return; }
+    var row = gateOpenRow;
+    if (!row) { gateSetMsg(ov, 'The passcode could not be checked. Try again.'); return; }
+    var btn = ov.querySelector('[data-gate-unlock]');
+    if (btn) btn.disabled = true;
+    passcodeHash(code, row.code_salt, function (hex) {
+      if (input) input.value = '';
+      if (btn) btn.disabled = false;
+      /* Fail closed: no hash, no match, no unlock. The only
+       * unlock branch in this build sits behind this match. */
+      if (!hex) { gateSetMsg(ov, 'This browser could not check the passcode.'); return; }
+      if (hex === row.code_hash) { gateUnlock(name); return; }
+      gateSetMsg(ov, 'That passcode did not match. Try again.');
+      if (input) { try { input.focus(); } catch (e) {} }
+    });
+  }
+  function gateUnlock(name) {
+    var ov = gateOverlay(name);
+    if (ov) ov.hidden = true;
+    if (!state.loaded[name] && LOADERS[name]) LOADERS[name](false);
+  }
+  function wireGateOverlay(name) {
+    var ov = gateOverlay(name);
+    if (!ov || ov.getAttribute('data-wired') === '1') return;
+    ov.setAttribute('data-wired', '1');
+    var unlock = ov.querySelector('[data-gate-unlock]');
+    if (unlock) unlock.addEventListener('click', function () { gateTryUnlock(name); });
+    var cancel = ov.querySelector('[data-gate-cancel]');
+    if (cancel) cancel.addEventListener('click', function () { activateTab('home'); });
+    var setup = ov.querySelector('[data-gate-setup]');
+    if (setup) setup.addEventListener('click', function () { activateTab('setup'); });
+    var retry = ov.querySelector('[data-gate-retry]');
+    if (retry) retry.addEventListener('click', function () { gatePanelOpen(name); });
+    var input = ov.querySelector('[data-gate-code]');
+    if (input) input.addEventListener('keydown', function (ev) {
+      if (ev && (ev.key === 'Enter' || ev.keyCode === 13)) { ev.preventDefault(); gateTryUnlock(name); }
+    });
+  }
+
+  /* ---- Financials passcode setting (Setup) ----
+   * V176_18_PASSCODE_GATE_2026_11_22: Austin sets and rotates the
+   * code himself, here in Setup. Only the top tier sees this
+   * section. A change asks for the current code first and checks
+   * it against the stored hash before anything is written; the
+   * code itself is never displayed and never stored as plain
+   * text. */
+  var passcodeSectionWired = false;
+  function renderPasscodeSection() {
+    var sec = $('portal-passcode-section');
+    if (!sec) return;
+    if (!canSeeMoney()) { sec.hidden = true; return; }
+    sec.hidden = false;
+    wirePasscodeSection();
+    var status = $('portal-passcode-status');
+    var dbnote = $('portal-passcode-dbnote');
+    var create = $('portal-passcode-create');
+    var change = $('portal-passcode-change');
+    var msg = $('portal-passcode-msg');
+    if (msg) msg.textContent = '';
+    if (dbnote) dbnote.hidden = true;
+    if (status) status.textContent = 'Checking…';
+    if (create) create.hidden = true;
+    if (change) change.hidden = true;
+    passcodeFetch(function (st, row) {
+      if (st === 'setup-owed') {
+        if (dbnote) { dbnote.textContent = 'The passcode store is not in place yet — the database step in the build notes is owed, so nothing here can save yet. Everything else in the portal works as normal.'; dbnote.hidden = false; }
+        if (status) status.textContent = 'No passcode is set.';
+        return;
+      }
+      if (st === 'error') {
+        if (status) status.textContent = 'The passcode could not be checked. Try opening Setup again.';
+        return;
+      }
+      if (st === 'unset') {
+        if (status) status.textContent = 'No passcode is set yet.';
+        if (create) create.hidden = false;
+        return;
+      }
+      if (status) status.textContent = 'A passcode is set. It is never shown here.';
+      if (change) change.hidden = false;
+    });
+  }
+  function wirePasscodeSection() {
+    if (passcodeSectionWired) return;
+    passcodeSectionWired = true;
+    var cb = $('portal-passcode-create-btn');
+    if (cb) cb.addEventListener('click', function () { passcodeSave(false); });
+    var hb = $('portal-passcode-change-btn');
+    if (hb) hb.addEventListener('click', function () { passcodeSave(true); });
+  }
+  function passcodeSave(isChange) {
+    var msg = $('portal-passcode-msg');
+    function say(t) { if (msg) msg.textContent = t; }
+    var current = '';
+    var fresh = '';
+    var fresh2 = '';
+    if (isChange) {
+      current = trim(($('portal-passcode-current') || {}).value || '');
+      fresh = trim(($('portal-passcode-changenew') || {}).value || '');
+      fresh2 = trim(($('portal-passcode-changenew2') || {}).value || '');
+      if (!current) { say('Enter the current passcode.'); return; }
+    } else {
+      fresh = trim(($('portal-passcode-new') || {}).value || '');
+      fresh2 = trim(($('portal-passcode-new2') || {}).value || '');
+    }
+    if (!fresh) { say('Enter a passcode.'); return; }
+    if (fresh !== fresh2) { say('The two new passcodes do not match.'); return; }
+    passcodeFetch(function (st, row) {
+      if (st === 'setup-owed') { say('The passcode store is not in place yet — the database step is owed, so nothing was saved.'); return; }
+      if (st === 'error') { say('The passcode could not be checked. Nothing was saved.'); return; }
+      if (isChange) {
+        if (st !== 'row') { say('No passcode is set yet. Set one with the form above.'); return; }
+        passcodeHash(current, row.code_salt, function (hex) {
+          if (!hex || hex !== row.code_hash) { say('The current passcode did not match. Nothing was changed.'); return; }
+          passcodeWrite(fresh, say);
+        });
+      } else {
+        passcodeWrite(fresh, say);
+      }
+    });
+  }
+  function passcodeWrite(code, say) {
+    var salt = passcodeSalt();
+    passcodeHash(code, salt, function (hex) {
+      if (!hex) { say('This browser could not save the passcode.'); return; }
+      withClient(function (sb) {
+        if (!sb) { say('Could not save. Try again.'); return; }
+        var payload = { setting_key: GATE_ROW_KEY, code_hash: hex, code_salt: salt, updated_at: new Date().toISOString(), updated_by: (state.user && state.user.id) || '' };
+        sb.from('financials_passcode').select('setting_key').eq('setting_key', GATE_ROW_KEY).maybeSingle()
+          .then(function (res) {
+            if (res.error && !passcodeIsMissing(res.error)) { say('Could not save: ' + (res.error.message || 'try again.')); return; }
+            var q = res.data
+              ? sb.from('financials_passcode').update(payload).eq('setting_key', GATE_ROW_KEY)
+              : sb.from('financials_passcode').insert(payload);
+            return q.then(function (res2) {
+              if (res2.error) {
+                if (passcodeIsMissing(res2.error)) say('The passcode store is not in place yet — the database step is owed, so nothing was saved.');
+                else say('Could not save: ' + (res2.error.message || 'try again.'));
+                return;
+              }
+              passcodeRow = { setting_key: GATE_ROW_KEY, code_hash: hex, code_salt: salt };
+              passcodeDbMissing = false;
+              ['portal-passcode-current', 'portal-passcode-new', 'portal-passcode-new2', 'portal-passcode-changenew', 'portal-passcode-changenew2'].forEach(function (id) { var el = $(id); if (el) el.value = ''; });
+              say('Saved.');
+              renderPasscodeSection();
+            });
+          })
+          .catch(function () { say('Could not save. Try again.'); });
+      });
+    });
+  }
+
   function activateTab(name) {
     /* PORTAL_ROLE_LADDER_2026_11_04: a gated tab (the Admin
      * group, the money surfaces) never opens for a tier that may
@@ -1936,6 +2207,11 @@
     /* GUEST_CHAT_2026_11_08: Guest Chat polls on the same discipline
      * — runs only while its panel is the open one. */
     if (name === 'guestchat') resumeGuestChat(); else stopGuestChatPoll();
+    /* V176_18_PASSCODE_GATE_2026_11_22: Financials, Payroll, and
+     * Business Files ask for the passcode on every open — the
+     * panel stays covered until the code matches, and the loader
+     * waits for the unlock (gatePanelOpen runs it). */
+    if (GATE_PANELS[name]) { gatePanelOpen(name); return; }
     if (!state.loaded[name] && LOADERS[name]) LOADERS[name](false);
   }
 
@@ -11868,6 +12144,7 @@ function loadTicketThread(client, ticketId) {
     if (note) note.hidden = !setupDbMissing;
     renderSetupButtonList();
     renderSetupDeviceList();
+    renderPasscodeSection();
   }
   function setupEmpty(el, text) { if (el) el.innerHTML = '<div class="portal-empty">' + esc(text) + '</div>'; }
   function renderSetupButtonList() {

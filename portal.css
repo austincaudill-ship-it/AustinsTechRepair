@@ -2336,3 +2336,20 @@ body{ touch-action: manipulation; }
    RULE, same as the Guest Hub (.ghub-qa-active there). Toggled by
    activateTab in portal.js. The Preview-as toggle uses the same ring. */
 .qa-active{ outline: 2px solid #D9540D !important; outline-offset: 2px; }
+
+/* V176_18_PASSCODE_GATE_2026_11_22 (Austin, Nov 20, 2026): the
+ * passcode cover over Financials, Payroll, and Business Files.
+ * The cover fills the whole panel and sits above its contents
+ * until the code matches; it is visible by default in the markup
+ * so any path that shows a panel without the gate still shows
+ * the cover, never the figures. */
+.portal-gated-panel { position: relative; }
+.portal-gate-overlay {
+  position: absolute; inset: 0; z-index: 5;
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 2rem 1rem; box-sizing: border-box;
+  background: var(--pvc-surface, #FFFFFF); border-radius: inherit;
+}
+.portal-gate-overlay[hidden] { display: none; }
+.portal-gate-box { width: min(26rem, 100%); }
+.portal-gate-title { font-size: 1.05rem; font-weight: 700; margin: 0 0 0.5rem; color: var(--ink, #2C231A); }

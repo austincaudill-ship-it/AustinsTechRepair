@@ -979,6 +979,31 @@
           </div>
         </div>
         <div id="portal-setup-dev-list"><p class="portal-muted">Loading devices&hellip;</p></div>
+        <!-- V176_18_PASSCODE_GATE_2026_11_22 (Austin, Nov 20, 2026): the Financials passcode lives here — one code guards Financials, Payroll, and Business Files, asked on every open. Only the top tier sees this section; only a salted hash is stored, never the code itself. -->
+        <div id="portal-passcode-section" hidden>
+          <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Financials passcode</h3></div>
+          <p class="portal-muted portal-small">One passcode guards Financials, Payroll, and Business Files. It is asked every time one of those panels is opened. Only the top tier can set or change it here. The code itself is never shown and never stored as plain text — only a salted hash is kept.</p>
+          <p class="portal-error" id="portal-passcode-dbnote" hidden></p>
+          <p class="portal-muted" id="portal-passcode-status">Checking&hellip;</p>
+          <div id="portal-passcode-create" hidden>
+            <div class="portal-field"><label for="portal-passcode-new">New passcode</label>
+              <input type="password" id="portal-passcode-new" autocomplete="off" aria-label="New passcode" /></div>
+            <div class="portal-field"><label for="portal-passcode-new2">New passcode again</label>
+              <input type="password" id="portal-passcode-new2" autocomplete="off" aria-label="New passcode again" /></div>
+            <p><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="portal-passcode-create-btn">Set passcode</button></p>
+          </div>
+          <div id="portal-passcode-change" hidden>
+            <div class="portal-field"><label for="portal-passcode-current">Current passcode</label>
+              <input type="password" id="portal-passcode-current" autocomplete="off" aria-label="Current passcode" /></div>
+            <div class="portal-field"><label for="portal-passcode-changenew">New passcode</label>
+              <input type="password" id="portal-passcode-changenew" autocomplete="off" aria-label="New passcode" /></div>
+            <div class="portal-field"><label for="portal-passcode-changenew2">New passcode again</label>
+              <input type="password" id="portal-passcode-changenew2" autocomplete="off" aria-label="New passcode again" /></div>
+            <p><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="portal-passcode-change-btn">Change passcode</button></p>
+          </div>
+          <p class="portal-muted portal-small" id="portal-passcode-msg"></p>
+        </div>
+
       </div>
 
       <!-- CUSTOMERS (panel label "Guest" — PORTAL_SIDEBAR_ROSTER_2026_11_02: Austin's word for customers; panel id, search and every control below are unchanged) -->
@@ -1974,7 +1999,24 @@
       </div>
 
       <!-- FINANCIALS -->
-      <div class="portal-panel" id="portal-panel-financials" role="tabpanel" hidden>
+      <div class="portal-panel portal-gated-panel" id="portal-panel-financials" role="tabpanel" hidden>
+      <!-- V176_18_PASSCODE_GATE_2026_11_22 (Austin, Nov 20, 2026): this panel is covered until the Financials passcode matches. The cover is the first child of the panel and shows by default — any path that shows the panel without the gate still shows the cover, never the figures. -->
+      <div class="portal-gate-overlay" id="portal-gate-financials" data-gate-panel="financials">
+        <div class="portal-gate-box">
+          <p class="portal-gate-title"><i class="fas fa-lock"></i> Financials is locked</p>
+          <p class="portal-muted portal-small" data-gate-note>Enter the passcode to open this panel. It is asked every time.</p>
+          <p class="portal-error" data-gate-msg hidden></p>
+          <div data-gate-form>
+            <div class="portal-field"><label for="portal-gate-code-financials">Passcode</label>
+              <input type="password" id="portal-gate-code-financials" data-gate-code autocomplete="off" aria-label="Financials passcode" /></div>
+            <p><button class="portal-btn portal-btn-primary" type="button" data-gate-unlock>Unlock</button>
+            <button class="portal-btn portal-btn-outline" type="button" data-gate-cancel>Cancel</button></p>
+          </div>
+          <p data-gate-alt hidden><button class="portal-btn portal-btn-outline" type="button" data-gate-setup hidden>Open Setup</button>
+          <button class="portal-btn portal-btn-outline" type="button" data-gate-retry hidden>Try again</button></p>
+        </div>
+      </div>
+
         <div class="portal-panel-head">
           <h2 class="portal-h2">Financials</h2>
         </div>
@@ -1988,7 +2030,24 @@
       </div>
 
       <!-- PAYROLL — PAYROLL_SPLIT_2026_11_03 (Austin, Nov 3, 2026): payroll is its own panel now, split out of Financials ("you've got payroll and you've got what we made in the same thing"). Contents: (1) Payroll totals — the per-associate hours / rate / pay table that used to render inside the Financials bottom line, rendered by portal.js finPayrollTableHtml() into #portal-payroll-summary from the same finCache data, so the figures here and the approved / awaiting lines in Financials can never disagree; the mileage-rate setting moved here with it. (2) Time cards — the week stepper and #tc-cards moved here out of the Time Clock panel, element ids unchanged, so renderTimeCards / wireTcManual / the weekly approval / the owner manual-entry bar all work exactly as before from their new home. Loader: loadPayroll in portal.js. -->
-      <div class="portal-panel" id="portal-panel-payroll" role="tabpanel" hidden>
+      <div class="portal-panel portal-gated-panel" id="portal-panel-payroll" role="tabpanel" hidden>
+      <!-- V176_18_PASSCODE_GATE_2026_11_22 (Austin, Nov 20, 2026): this panel is covered until the Financials passcode matches. The cover is the first child of the panel and shows by default — any path that shows the panel without the gate still shows the cover, never the figures. -->
+      <div class="portal-gate-overlay" id="portal-gate-payroll" data-gate-panel="payroll">
+        <div class="portal-gate-box">
+          <p class="portal-gate-title"><i class="fas fa-lock"></i> Payroll is locked</p>
+          <p class="portal-muted portal-small" data-gate-note>Enter the passcode to open this panel. It is asked every time.</p>
+          <p class="portal-error" data-gate-msg hidden></p>
+          <div data-gate-form>
+            <div class="portal-field"><label for="portal-gate-code-payroll">Passcode</label>
+              <input type="password" id="portal-gate-code-payroll" data-gate-code autocomplete="off" aria-label="Payroll passcode" /></div>
+            <p><button class="portal-btn portal-btn-primary" type="button" data-gate-unlock>Unlock</button>
+            <button class="portal-btn portal-btn-outline" type="button" data-gate-cancel>Cancel</button></p>
+          </div>
+          <p data-gate-alt hidden><button class="portal-btn portal-btn-outline" type="button" data-gate-setup hidden>Open Setup</button>
+          <button class="portal-btn portal-btn-outline" type="button" data-gate-retry hidden>Try again</button></p>
+        </div>
+      </div>
+
         <div class="portal-panel-head">
           <h2 class="portal-h2">Payroll</h2>
         </div>
@@ -2005,7 +2064,24 @@
       </div>
 
       <!-- BUSINESS FILES — V176_8_FIN_TAX_2026_11_19 (Austin, Nov 19, 2026): the business's official IDs, top-tier only. Panel logic: loadBusinessFiles in portal.js. -->
-      <div class="portal-panel" id="portal-panel-businessfiles" role="tabpanel" hidden>
+      <div class="portal-panel portal-gated-panel" id="portal-panel-businessfiles" role="tabpanel" hidden>
+      <!-- V176_18_PASSCODE_GATE_2026_11_22 (Austin, Nov 20, 2026): this panel is covered until the Financials passcode matches. The cover is the first child of the panel and shows by default — any path that shows the panel without the gate still shows the cover, never the figures. -->
+      <div class="portal-gate-overlay" id="portal-gate-businessfiles" data-gate-panel="businessfiles">
+        <div class="portal-gate-box">
+          <p class="portal-gate-title"><i class="fas fa-lock"></i> Business Files is locked</p>
+          <p class="portal-muted portal-small" data-gate-note>Enter the passcode to open this panel. It is asked every time.</p>
+          <p class="portal-error" data-gate-msg hidden></p>
+          <div data-gate-form>
+            <div class="portal-field"><label for="portal-gate-code-businessfiles">Passcode</label>
+              <input type="password" id="portal-gate-code-businessfiles" data-gate-code autocomplete="off" aria-label="Business Files passcode" /></div>
+            <p><button class="portal-btn portal-btn-primary" type="button" data-gate-unlock>Unlock</button>
+            <button class="portal-btn portal-btn-outline" type="button" data-gate-cancel>Cancel</button></p>
+          </div>
+          <p data-gate-alt hidden><button class="portal-btn portal-btn-outline" type="button" data-gate-setup hidden>Open Setup</button>
+          <button class="portal-btn portal-btn-outline" type="button" data-gate-retry hidden>Try again</button></p>
+        </div>
+      </div>
+
         <div class="portal-panel-head">
           <h2 class="portal-h2">Business Files</h2>
         </div>
