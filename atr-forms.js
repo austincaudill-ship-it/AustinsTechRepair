@@ -177,7 +177,8 @@
     var over = Math.max(0, m - V176_20_INCLUDED_MILES);
     return Math.round((base + over) * 100) / 100;
   }
-  function v176_20MileageNote(miles, audience, member) {
+  /* V176_21_MILEAGE_GATE_FIX_2026_11_22: approx param + sequential geocode chain below. */
+  function v176_20MileageNote(miles, audience, member, approx) {
     var m = v176_20RoundMiles(miles);
     if (member) {
       if (!m) return null;
@@ -187,15 +188,33 @@
     var fee = v176_20DispatchFee(audience, m);
     var over = Math.max(0, m - V176_20_INCLUDED_MILES);
     var tail = over > 0 ? '25 miles included, ' + (Math.round(over * 10) / 10) + ' over at $1 a mile' : 'within the 25 included miles';
-    return 'Mileage ' + m + ' road miles from Spring Valley (' + tail + '); dispatch fee $' + fee.toFixed(2) + '.';
+    return 'Mileage ' + m + ' road miles from Spring Valley' + (approx ? ', approximate' : '') + ' (' + tail + '); dispatch fee $' + fee.toFixed(2) + '.';
   }
-  function v176_20FeeTextForDisplay(audience, member, miles, failed) {
+  function v176_20FeeTextForDisplay(audience, member, miles, failed, approx) {
     if (member) return miles ? 'None \u2014 ATR One member (about ' + miles + ' road miles from Spring Valley)' : 'None \u2014 ATR One member';
-    if (miles) return '$' + v176_20DispatchFee(audience, miles).toFixed(2) + ' (' + miles + ' road miles from Spring Valley)';
-    return '$' + v176_20BaseFee(audience).toFixed(2) + (failed ? ' (road miles could not be calculated)' : '');
+    if (miles) return '$' + v176_20DispatchFee(audience, miles).toFixed(2) + ' (' + miles + ' road miles from Spring Valley' + (approx ? ', approximate' : '') + ')';
+    return '$' + v176_20BaseFee(audience).toFixed(2) + (failed ? ' (road miles could not be calculated \u2014 flat fee)' : '');
   }
   var v176_20GeoCache = {};
   function v176_20CleanAddress(q) { return String(q || '').replace(/\blot\s*\d+[a-z]?\b/i, '').replace(/\s{2,}/g, ' ').trim(); }
+  function v176_20GeocodeCandidates(text) {
+    var seen = {};
+    var out = [];
+    function push(query, approx) {
+      query = String(query || '').replace(/\s+/g, ' ').trim();
+      if (!query || seen[query]) return;
+      seen[query] = true;
+      out.push({ query: query, approx: !!approx });
+    }
+    push(text, false);
+    push(v176_20CleanAddress(text), false);
+    var parts = String(text || '').split(',');
+    var street = (parts[0] || '').trim();
+    var noNumber = street.replace(/^\s*\d+[^,\s]*\s+/, '').trim();
+    if (noNumber && noNumber !== street) push(noNumber + (parts.length > 1 ? ',' + parts.slice(1).join(',') : ''), true);
+    if (parts.length >= 2) push(parts.slice(-2).join(',').trim(), true);
+    return out;
+  }
   function v176_20Geocode(text) {
     var key = trim(text).toLowerCase();
     if (!key) return Promise.resolve(null);
@@ -211,12 +230,17 @@
           return out;
         }).catch(function () { return null; });
     }
-    return once(trim(text)).then(function (g) {
-      if (g) return g;
-      var cleaned = v176_20CleanAddress(text);
-      if (cleaned && cleaned !== trim(text)) return once(cleaned);
-      return null;
-    });
+    var candidates = v176_20GeocodeCandidates(text);
+    var i = 0;
+    function next() {
+      if (i >= candidates.length) return Promise.resolve(null);
+      var cand = candidates[i++];
+      return once(cand.query).then(function (g) {
+        if (g) { g.approx = cand.approx; return g; }
+        return next();
+      });
+    }
+    return next();
   }
   function v176_20Route(a, b) {
     return fetch('https://router.project-osrm.org/route/v1/driving/' + a.lng + ',' + a.lat + ';' + b.lng + ',' + b.lat + '?overview=false')
@@ -236,7 +260,7 @@
         if (!g) { clearTimeout(to); done({ error: 'not found' }); return; }
         v176_20Route(V176_20_SHOP_ORIGIN, { lat: g.lat, lng: g.lng }).then(function (rt) {
           clearTimeout(to);
-          if (rt && rt.miles > 0) done({ miles: v176_20RoundMiles(rt.miles) });
+          if (rt && rt.miles > 0) done({ miles: v176_20RoundMiles(rt.miles), approx: !!g.approx });
           else done({ error: 'no route' });
         }).catch(function () { clearTimeout(to); done({ error: 'no route' }); });
       }).catch(function () { clearTimeout(to); done({ error: 'not found' }); });
@@ -1195,7 +1219,7 @@
              existing fee rule (member means atr_one === 'member')
              treats every website estimate as a non-member. Preserved
              exactly; the coverage mapping is a separate decision. */
-          function v176_20GoEstimate(note, miles, failed) {
+          function v176_20GoEstimate(note, miles, failed, approx) {
             var estRow = {
               id: newEstimateId(), public_token: newEstimateId(),
               customer_id: null, ticket_id: null,
@@ -1218,7 +1242,7 @@
                 ['Email', v.email], ['Name', row.customer_name],
                 ['Device', [v.device_type, v.device_info].filter(Boolean).join(' · ')],
                 ["What's wrong", v.problem || v.repair_needed || ''],
-                ['Visit fee when confirmed', v176_20FeeTextForDisplay(estAudience, false, miles, failed)],
+                ['Visit fee when confirmed', v176_20FeeTextForDisplay(estAudience, false, miles, failed, approx)],
                 ['Your estimate page', window.location.origin + '/#estimate/' + estRow.public_token],
                 ['What happens next', 'Tap the link above to view your estimate. You can confirm or decline it there — nothing is booked until you confirm.']
               ], 'estimate-link', estRow.public_token);
@@ -1226,8 +1250,8 @@
             }).catch(function () { setBusy(form, false); showFormError(form, dbFailMessage()); });
           }
           v176_20ComputeMiles(address || '').then(function (r) {
-            if (r && r.miles > 0) v176_20GoEstimate(v176_20MileageNote(r.miles, estAudience, false), r.miles, false);
-            else v176_20GoEstimate(v176_20MileageNote(null, estAudience, false), null, true);
+            if (r && r.miles > 0) v176_20GoEstimate(v176_20MileageNote(r.miles, estAudience, false, r.approx), r.miles, false, r.approx);
+            else v176_20GoEstimate(v176_20MileageNote(null, estAudience, false), null, true, false);
           });
           return;
         }

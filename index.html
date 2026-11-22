@@ -4627,7 +4627,8 @@
   <script src="turnstile.js"></script>
   <script src="script.js"></script>
   <!-- V176_20_MILEAGE_2026_11_22: atr-forms.js carries a version query (?v=176-20) so a fresh index.html can never pair with a stale cached atr-forms.js (the v176.19 mixed-version lesson). Bump the query on every future version that touches atr-forms.js. -->
-  <script src="atr-forms.js?v=176-20"></script>
+  <script src="atr-forms.js?v=176-21"></script>
+  <!-- V176_21_MILEAGE_GATE_FIX_2026_11_22 -->
 
   <!-- SITE_ACCT_FIX_2026_10_30 / SITE_CART_BADGE_2026_10_30 — account-box
        safety net. The account menu's view switching normally lives in
@@ -5254,6 +5255,10 @@
   .est-view-inner{max-width:640px;margin:0 auto}
   .est-view-eyebrow{letter-spacing:.12em;text-transform:uppercase;font-size:.8rem;color:var(--muted,#666);margin:0 0 .25rem}
   .est-view-card{border:1px solid #e3ddd2;border-radius:12px;padding:1rem;margin:.75rem 0}
+  /* V176_21_ESTVIEW_2026_11_22: dark-mode parity for the estimate overlay — the overlay kept the light fallback background while the site theme flipped the ink light (pale headings on white, screenshot 6:54 AM Nov 22). Scoped to dark only; light mode untouched. Tokens mirror the Guest Hub dark rules in this file. */
+  html[data-theme="dark"] #est-view{background:var(--bg,#14100B);color:var(--ink,#F0E8DA)}
+  html[data-theme="dark"] .est-view-card{border-color:var(--line,#3A2F24)}
+  html[data-theme="dark"] .est-view-eyebrow{color:var(--muted,#A89880)}
   .est-actions{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1rem}
   .acct-field{display:block;margin-bottom:1rem}
   /* V171_SIGNUP_SPLIT_2026_11_18 (owner, Nov 18, 2026): a hidden .acct-field must actually hide — the author display:block above beats the browser's [hidden] handling, which is why the Business EIN showed on Guest sign-up. */
@@ -6506,13 +6511,13 @@
     if (!sb) { estViewRenderError(); return; }
     function direct() {
       sb.from('estimates').select('*').eq('public_token', token).maybeSingle().then(function (res) {
-        if (!res.error && res.data) { estViewRow = res.data; estViewRender(); return; }
+        if (!res.error && res.data && res.data.id) { estViewRow = res.data; estViewRender(); return; }
         estViewRenderError();
       }).catch(function () { estViewRenderError(); });
     }
     if (sb.rpc) {
       sb.rpc('get_estimate_by_token', { p_token: token }).then(function (res) {
-        if (!res.error && res.data) { estViewRow = res.data; estViewRender(); return; }
+        if (!res.error && res.data && res.data.id) { estViewRow = res.data; estViewRender(); return; }
         direct();
       }).catch(function () { direct(); });
     } else direct();
@@ -6529,7 +6534,7 @@
   }
   function estViewRender() {
     var body = $('est-view-body');
-    if (!body || !estViewRow) return;
+    if (!body || !estViewRow || !estViewRow.id) { estViewRenderError(); return; }
     var e = estViewRow;
     var fee = v176_20FeeFor(e);
     var html = '<div class="est-view-card">' +
@@ -6684,7 +6689,8 @@
     var over = Math.max(0, m - V176_20_INCLUDED_MILES);
     return Math.round((base + over) * 100) / 100;
   }
-  function v176_20MileageNote(miles, audience, byHand, member) {
+  /* V176_21_MILEAGE_GATE_FIX_2026_11_22: sequential fallback chain. Nominatim has no record for some real streets (e.g. Stone Meadows Blvd, West Milton), so a single address query can return []. Try, in order: the full address, the lot-stripped address, the address with the house number dropped, and the locality/ZIP tail (last two comma segments). The first Ohio match wins; results from steps 3-4 are approximate (locality centroid). */
+  function v176_20MileageNote(miles, audience, byHand, member, approx) {
     var m = v176_20RoundMiles(miles);
     if (member) {
       if (!m) return null;
@@ -6694,19 +6700,19 @@
     var fee = v176_20DispatchFee(audience, m);
     var over = Math.max(0, m - V176_20_INCLUDED_MILES);
     var tail = over > 0 ? '25 miles included, ' + (Math.round(over * 10) / 10) + ' over at $1 a mile' : 'within the 25 included miles';
-    return 'Mileage ' + m + ' road miles from Spring Valley' + (byHand ? ', set by hand' : '') + ' (' + tail + '); dispatch fee $' + fee.toFixed(2) + '.';
+    return 'Mileage ' + m + ' road miles from Spring Valley' + (approx ? ', approximate' : '') + (byHand ? ', set by hand' : '') + ' (' + tail + '); dispatch fee $' + fee.toFixed(2) + '.';
   }
   function v176_20ParseMileageNote(note) {
     var s = String(note || '');
-    var m = s.match(/Mileage ([\d.]+) road miles from Spring Valley(, set by hand)?/);
+    var m = s.match(/Mileage ([\d.]+) road miles from Spring Valley(, approximate)?(, set by hand)?/);
     if (!m) return null;
     var miles = v176_20RoundMiles(parseFloat(m[1]));
     if (!miles) return null;
-    return { miles: miles, byHand: !!m[2] };
+    return { miles: miles, byHand: !!m[3], approx: !!m[2] };
   }
   function v176_20ChargeDesc(parsed) {
     var over = Math.max(0, parsed.miles - V176_20_INCLUDED_MILES);
-    return 'Visit fee \u2014 ' + parsed.miles + ' road miles from Spring Valley' + (parsed.byHand ? ', set by hand' : '') + ' (' + (over > 0 ? '25 included, ' + (Math.round(over * 10) / 10) + ' over at $1/mile' : '25 miles included') + ')';
+    return 'Visit fee \u2014 ' + parsed.miles + ' road miles from Spring Valley' + (parsed.approx ? ', approximate' : '') + (parsed.byHand ? ', set by hand' : '') + ' (' + (over > 0 ? '25 included, ' + (Math.round(over * 10) / 10) + ' over at $1/mile' : '25 miles included') + ')';
   }
   function v176_20FeeFor(e) {
     var stored = v176_20ParseMileageNote(e.estimate_note);
@@ -6717,13 +6723,31 @@
   function v176_20BreakdownText(e) {
     var member = e.atr_one === 'member';
     var stored = v176_20ParseMileageNote(e.estimate_note);
-    if (!stored) return '';
+    if (!stored) return /could not be calculated/i.test(e.estimate_note || '') ? 'Visit fee \u2014 road miles could not be calculated \u2014 flat fee; set miles by hand.' : '';
     var over = Math.max(0, stored.miles - V176_20_INCLUDED_MILES);
-    if (member) return 'About ' + stored.miles + ' road miles from Spring Valley \u2014 no visit fee (ATR One member covers the trip).';
-    return 'About ' + stored.miles + ' road miles from Spring Valley' + (stored.byHand ? ' (set by hand)' : '') + ' \u2014 25 miles included' + (over > 0 ? ', ' + (Math.round(over * 10) / 10) + ' over at $1 a mile' : '') + '.';
+    if (member) return 'About ' + stored.miles + ' road miles from Spring Valley' + (stored.approx ? ' (approximate)' : '') + ' \u2014 no visit fee (ATR One member covers the trip).';
+    return 'About ' + stored.miles + ' road miles from Spring Valley' + (stored.approx ? ' (approximate)' : '') + (stored.byHand ? ' (set by hand)' : '') + ' \u2014 25 miles included' + (over > 0 ? ', ' + (Math.round(over * 10) / 10) + ' over at $1 a mile' : '') + '.';
   }
   var v176_20GeoCache = {};
   function v176_20CleanAddress(q) { return String(q || '').replace(/\blot\s*\d+[a-z]?\b/i, '').replace(/\s{2,}/g, ' ').trim(); }
+  function v176_20GeocodeCandidates(text) {
+    var seen = {};
+    var out = [];
+    function push(query, approx) {
+      query = String(query || '').replace(/\s+/g, ' ').trim();
+      if (!query || seen[query]) return;
+      seen[query] = true;
+      out.push({ query: query, approx: !!approx });
+    }
+    push(text, false);
+    push(v176_20CleanAddress(text), false);
+    var parts = String(text || '').split(',');
+    var street = (parts[0] || '').trim();
+    var noNumber = street.replace(/^\s*\d+[^,\s]*\s+/, '').trim();
+    if (noNumber && noNumber !== street) push(noNumber + (parts.length > 1 ? ',' + parts.slice(1).join(',') : ''), true);
+    if (parts.length >= 2) push(parts.slice(-2).join(',').trim(), true);
+    return out;
+  }
   function v176_20Geocode(text) {
     var key = String(text || '').trim().toLowerCase();
     if (!key) return Promise.resolve(null);
@@ -6739,12 +6763,17 @@
           return out;
         }).catch(function () { return null; });
     }
-    return once(String(text).trim()).then(function (g) {
-      if (g) return g;
-      var cleaned = v176_20CleanAddress(text);
-      if (cleaned && cleaned !== String(text).trim()) return once(cleaned);
-      return null;
-    });
+    var candidates = v176_20GeocodeCandidates(text);
+    var i = 0;
+    function next() {
+      if (i >= candidates.length) return Promise.resolve(null);
+      var cand = candidates[i++];
+      return once(cand.query).then(function (g) {
+        if (g) { g.approx = cand.approx; return g; }
+        return next();
+      });
+    }
+    return next();
   }
   function v176_20Route(a, b) {
     return fetch('https://router.project-osrm.org/route/v1/driving/' + a.lng + ',' + a.lat + ';' + b.lng + ',' + b.lat + '?overview=false')
@@ -6764,7 +6793,7 @@
         if (!g) { clearTimeout(to); done({ error: 'not found' }); return; }
         v176_20Route(V176_20_SHOP_ORIGIN, { lat: g.lat, lng: g.lng }).then(function (rt) {
           clearTimeout(to);
-          if (rt && rt.miles > 0) done({ miles: v176_20RoundMiles(rt.miles) });
+          if (rt && rt.miles > 0) done({ miles: v176_20RoundMiles(rt.miles), approx: !!g.approx });
           else done({ error: 'no route' });
         }).catch(function () { clearTimeout(to); done({ error: 'no route' }); });
       }).catch(function () { clearTimeout(to); done({ error: 'not found' }); });
@@ -6775,12 +6804,12 @@
     var base = v176_20BaseFee(e.audience);
     var stored = v176_20ParseMileageNote(e.estimate_note);
     if (stored) {
-      cb({ miles: stored.miles, fee: member ? 0 : v176_20DispatchFee(e.audience, stored.miles), byHand: stored.byHand, note: e.estimate_note, failed: false });
+      cb({ miles: stored.miles, fee: member ? 0 : v176_20DispatchFee(e.audience, stored.miles), byHand: stored.byHand, approx: stored.approx, note: e.estimate_note, failed: false });
       return;
     }
     v176_20ComputeMiles(e.service_address || '').then(function (r) {
       if (r && r.miles > 0) {
-        cb({ miles: r.miles, fee: member ? 0 : v176_20DispatchFee(e.audience, r.miles), byHand: false, note: v176_20MileageNote(r.miles, e.audience, false, member), failed: false });
+        cb({ miles: r.miles, fee: member ? 0 : v176_20DispatchFee(e.audience, r.miles), byHand: false, approx: r.approx, note: v176_20MileageNote(r.miles, e.audience, false, member, r.approx), failed: false });
       } else {
         cb({ miles: null, fee: member ? 0 : base, byHand: false, note: member ? null : v176_20MileageNote(null, e.audience, false, false), failed: true });
       }

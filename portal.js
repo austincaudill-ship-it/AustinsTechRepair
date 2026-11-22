@@ -2575,7 +2575,8 @@
     var over = Math.max(0, m - V154_MILEAGE_INCLUDED);
     return Math.round((base + over) * 100) / 100;
   }
-  function v176_20MileageNote(miles, audience, byHand, member) {
+  /* V176_21_MILEAGE_GATE_FIX_2026_11_22: sequential fallback chain. Nominatim has no record for some real streets (e.g. Stone Meadows Blvd, West Milton), so a single address query can return []. Try, in order: the full address, the lot-stripped address, the address with the house number dropped, and the locality/ZIP tail (last two comma segments). The first Ohio match wins; results from steps 3-4 are approximate (locality centroid). */
+  function v176_20MileageNote(miles, audience, byHand, member, approx) {
     var m = v176_20RoundMiles(miles);
     if (member) {
       if (!m) return null;
@@ -2585,48 +2586,67 @@
     var fee = v176_20DispatchFee(audience, m);
     var over = Math.max(0, m - V154_MILEAGE_INCLUDED);
     var tail = over > 0 ? '25 miles included, ' + (Math.round(over * 10) / 10) + ' over at $1 a mile' : 'within the 25 included miles';
-    return 'Mileage ' + m + ' road miles from Spring Valley' + (byHand ? ', set by hand' : '') + ' (' + tail + '); dispatch fee $' + fee.toFixed(2) + '.';
+    return 'Mileage ' + m + ' road miles from Spring Valley' + (approx ? ', approximate' : '') + (byHand ? ', set by hand' : '') + ' (' + tail + '); dispatch fee $' + fee.toFixed(2) + '.';
   }
   function v176_20ParseMileageNote(note) {
     var s = String(note || '');
-    var m = s.match(/Mileage ([\d.]+) road miles from Spring Valley(, set by hand)?/);
+    var m = s.match(/Mileage ([\d.]+) road miles from Spring Valley(, approximate)?(, set by hand)?/);
     if (!m) return null;
     var miles = v176_20RoundMiles(parseFloat(m[1]));
     if (!miles) return null;
-    return { miles: miles, byHand: !!m[2] };
+    return { miles: miles, byHand: !!m[3], approx: !!m[2] };
   }
   function v176_20ChargeDesc(parsed) {
     var over = Math.max(0, parsed.miles - V154_MILEAGE_INCLUDED);
-    return 'Visit fee \u2014 ' + parsed.miles + ' road miles from Spring Valley' + (parsed.byHand ? ', set by hand' : '') + ' (' + (over > 0 ? '25 included, ' + (Math.round(over * 10) / 10) + ' over at $1/mile' : '25 miles included') + ')';
+    return 'Visit fee \u2014 ' + parsed.miles + ' road miles from Spring Valley' + (parsed.approx ? ', approximate' : '') + (parsed.byHand ? ', set by hand' : '') + ' (' + (over > 0 ? '25 included, ' + (Math.round(over * 10) / 10) + ' over at $1/mile' : '25 miles included') + ')';
   }
   function v176_20FeeLine(e) {
     var member = e.atr_one === 'member';
     var stored = v176_20ParseMileageNote(e.estimate_note);
-    if (member) return { fee: 0, text: stored ? 'About ' + stored.miles + ' road miles from Spring Valley \u2014 no visit fee (ATR One member covers the trip).' : 'No visit fee (ATR One member).' };
+    if (member) return { fee: 0, text: stored ? 'About ' + stored.miles + ' road miles from Spring Valley' + (stored.approx ? ' (approximate)' : '') + ' \u2014 no visit fee (ATR One member covers the trip).' : 'No visit fee (ATR One member).' };
     if (stored) {
       var fee = v176_20DispatchFee(e.audience, stored.miles);
       var over = Math.max(0, stored.miles - V154_MILEAGE_INCLUDED);
-      return { fee: fee, text: 'About ' + stored.miles + ' road miles from Spring Valley' + (stored.byHand ? ' (set by hand)' : '') + ' \u2014 25 miles included' + (over > 0 ? ', ' + (Math.round(over * 10) / 10) + ' over at $1 a mile' : '') + '.' };
+      return { fee: fee, text: 'About ' + stored.miles + ' road miles from Spring Valley' + (stored.approx ? ' (approximate)' : '') + (stored.byHand ? ' (set by hand)' : '') + ' \u2014 25 miles included' + (over > 0 ? ', ' + (Math.round(over * 10) / 10) + ' over at $1 a mile' : '') + '.' };
     }
-    return { fee: v165VisitFee(e.audience), text: '' };
+    var failedNote = /could not be calculated/i.test(e.estimate_note || '');
+    return { fee: v165VisitFee(e.audience), text: failedNote ? 'Road miles could not be calculated \u2014 flat fee; set miles by hand in the estimate.' : '' };
   }
-  function v176_20FeeTextForDisplay(audience, member, miles, failed) {
-    if (member) return miles ? 'None \u2014 ATR One member (about ' + miles + ' road miles from Spring Valley)' : 'None \u2014 ATR One member';
-    if (miles) return '$' + v176_20DispatchFee(audience, miles).toFixed(2) + ' (' + miles + ' road miles from Spring Valley)';
-    return '$' + v165VisitFee(audience).toFixed(2) + (failed ? ' (road miles could not be calculated)' : '');
+  function v176_20FeeTextForDisplay(audience, member, miles, failed, approx) {
+    if (member) return miles ? 'None \u2014 ATR One member (about ' + miles + ' road miles from Spring Valley' + (approx ? ', approximate' : '') + ')' : 'None \u2014 ATR One member';
+    if (miles) return '$' + v176_20DispatchFee(audience, miles).toFixed(2) + ' (' + miles + ' road miles from Spring Valley' + (approx ? ', approximate' : '') + ')';
+    return '$' + v165VisitFee(audience).toFixed(2) + (failed ? ' (road miles could not be calculated \u2014 flat fee)' : '');
+  }
+  function v176_20GeocodeCandidates(address) {
+    var seen = {};
+    var out = [];
+    function push(query, approx) {
+      query = trim(String(query || '').replace(/\s+/g, ' '));
+      if (!query || seen[query]) return;
+      seen[query] = true;
+      out.push({ query: query, approx: !!approx });
+    }
+    push(address, false);
+    push(v154CleanAddress(address), false);
+    var parts = String(address || '').split(',');
+    var street = trim(parts[0] || '');
+    var noNumber = street.replace(/^\s*\d+[^\s,]*\s+/, '').trim();
+    if (noNumber && noNumber !== street) push(noNumber + (parts.length > 1 ? ',' + parts.slice(1).join(',') : ''), true);
+    if (parts.length >= 2) push(parts.slice(-2).join(',').trim(), true);
+    return out;
   }
   function v176_20GeocodeOhio(text) {
-    return nominatimGeocode(text).then(function (g) {
-      if (g && /ohio/i.test(g.label || '')) return g;
-      var cleaned = v154CleanAddress(text);
-      if (cleaned && cleaned !== trim(text)) {
-        return nominatimGeocode(cleaned).then(function (g2) {
-          if (g2 && /ohio/i.test(g2.label || '')) return g2;
-          return null;
-        });
-      }
-      return null;
-    }).catch(function () { return null; });
+    var candidates = v176_20GeocodeCandidates(text);
+    var i = 0;
+    function next() {
+      if (i >= candidates.length) return Promise.resolve(null);
+      var cand = candidates[i++];
+      return nominatimGeocode(cand.query).then(function (g) {
+        if (g && /ohio/i.test(g.label || '')) return { lat: g.lat, lng: g.lng, label: g.label, approx: cand.approx };
+        return next();
+      }).catch(function () { return next(); });
+    }
+    return next().catch(function () { return null; });
   }
   function v176_20ComputeMiles(address) {
     return new Promise(function (resolve) {
@@ -2638,7 +2658,7 @@
         if (!g) { clearTimeout(to); done({ error: 'not found' }); return; }
         osrmRoute(V176_20_SHOP_ORIGIN, { lat: g.lat, lng: g.lng }).then(function (rt) {
           clearTimeout(to);
-          if (rt && rt.miles > 0) done({ miles: v176_20RoundMiles(rt.miles) });
+          if (rt && rt.miles > 0) done({ miles: v176_20RoundMiles(rt.miles), approx: !!g.approx });
           else done({ error: 'no route' });
         }).catch(function () { clearTimeout(to); done({ error: 'no route' }); });
       }).catch(function () { clearTimeout(to); done({ error: 'not found' }); });
@@ -2654,17 +2674,17 @@
     var base = v165VisitFee(e.audience);
     var ov = v176_20RoundMiles(overrideMiles);
     if (ov) {
-      cb({ miles: ov, fee: member ? 0 : v176_20DispatchFee(e.audience, ov), byHand: true, note: v176_20MileageNote(ov, e.audience, true, member), failed: false });
+      cb({ miles: ov, fee: member ? 0 : v176_20DispatchFee(e.audience, ov), byHand: true, approx: false, note: v176_20MileageNote(ov, e.audience, true, member), failed: false });
       return;
     }
     var stored = v176_20ParseMileageNote(e.estimate_note);
     if (stored) {
-      cb({ miles: stored.miles, fee: member ? 0 : v176_20DispatchFee(e.audience, stored.miles), byHand: stored.byHand, note: e.estimate_note, failed: false });
+      cb({ miles: stored.miles, fee: member ? 0 : v176_20DispatchFee(e.audience, stored.miles), byHand: stored.byHand, approx: stored.approx, note: e.estimate_note, failed: false });
       return;
     }
     v176_20ComputeMiles(e.service_address || '').then(function (r) {
       if (r && r.miles > 0) {
-        cb({ miles: r.miles, fee: member ? 0 : v176_20DispatchFee(e.audience, r.miles), byHand: false, note: v176_20MileageNote(r.miles, e.audience, false, member), failed: false });
+        cb({ miles: r.miles, fee: member ? 0 : v176_20DispatchFee(e.audience, r.miles), byHand: false, approx: r.approx, note: v176_20MileageNote(r.miles, e.audience, false, member, r.approx), failed: false });
       } else {
         cb({ miles: null, fee: member ? 0 : base, byHand: false, note: member ? null : v176_20MileageNote(null, e.audience, false, false), failed: true });
       }
@@ -2793,9 +2813,9 @@
     };
     var ciEstOv = v176_20RoundMiles($('ci-est-miles') ? $('ci-est-miles').value : '');
     var ciEstMember = ($('ci-est-atrone') ? $('ci-est-atrone').value : '') === 'member';
-    function ciEstInsertWithMileage(note, miles, failed) {
+    function ciEstInsertWithMileage(note, miles, failed, approx) {
       row.estimate_note = note;
-      var feeText = v176_20FeeTextForDisplay(ciEstType, ciEstMember, miles, failed);
+      var feeText = v176_20FeeTextForDisplay(ciEstType, ciEstMember, miles, failed, approx);
       withClient(function (client) {
       if (!client) { if (btn) btn.disabled = false; fail("Couldn't reach the database — try again."); return; }
       client.from('estimates').insert(row).select('id').single().then(function (res) {
@@ -2819,10 +2839,10 @@
       }).catch(function () { if (btn) btn.disabled = false; fail('Could not create the estimate — try again.'); });
       });
     }
-    if (ciEstOv) { ciEstInsertWithMileage(v176_20MileageNote(ciEstOv, ciEstType, true, ciEstMember), ciEstOv, false); return; }
+    if (ciEstOv) { ciEstInsertWithMileage(v176_20MileageNote(ciEstOv, ciEstType, true, ciEstMember), ciEstOv, false, false); return; }
     v176_20ComputeMiles(address).then(function (r) {
-      if (r && r.miles > 0) ciEstInsertWithMileage(v176_20MileageNote(r.miles, ciEstType, false, ciEstMember), r.miles, false);
-      else ciEstInsertWithMileage(ciEstMember ? null : v176_20MileageNote(null, ciEstType, false, false), null, true);
+      if (r && r.miles > 0) ciEstInsertWithMileage(v176_20MileageNote(r.miles, ciEstType, false, ciEstMember, r.approx), r.miles, false, r.approx);
+      else ciEstInsertWithMileage(ciEstMember ? null : v176_20MileageNote(null, ciEstType, false, false), null, true, false);
     });
   }
 
@@ -3240,7 +3260,7 @@
               if (!c2) return;
               c2.from('estimates').update(upd).eq('id', id).then(function (r2) {
                 if (sm) sm.textContent = r2.error ? "Couldn't save — try again." : 'Saved.';
-                if (!r2.error) { state.loaded.estimates = false; loadEstimates(true); }
+                if (!r2.error) { state.loaded.estimates = false; loadEstimates(true); openEstimate(id, false); }
               });
             });
           }
@@ -3248,7 +3268,7 @@
           if (newAddr && newAddr !== e.service_address) {
             if (sm) sm.textContent = 'Calculating road miles\u2026';
             v176_20ComputeMiles(newAddr).then(function (r) {
-              if (r && r.miles > 0) upd.estimate_note = v176_20MileageNote(r.miles, e.audience, false, memberNow);
+              if (r && r.miles > 0) upd.estimate_note = v176_20MileageNote(r.miles, e.audience, false, memberNow, r.approx);
               else if (!memberNow) upd.estimate_note = v176_20MileageNote(null, e.audience, false, false);
               doSave();
             });
