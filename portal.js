@@ -2669,6 +2669,14 @@
    * Never rejects; a provider failure falls back to the flat fee and
    * never blocks the submit. cb receives { miles, fee, byHand, note,
    * failed }. */
+  /* V176_22_CONFIRM_LABEL_2026_11_22: an untouched system pre-fill is NOT a hand override. Both drawer miles inputs are pre-filled with the stored miles, so Record Confirm and Edit save must only treat the field as an override when its rounded value differs from the rounded stored miles (or when no stored note exists). Otherwise the stored note — including its ', approximate' flag — is preserved verbatim and the charge description keeps it. Rounding-tolerant: the pre-fill can carry float noise (e.g. 32.70000076293945 vs stored 32.7). */
+  function v176_22EffectiveOverride(e, fieldValue) {
+    var ov = v176_20RoundMiles(fieldValue);
+    if (!ov) return '';
+    var stored = v176_20ParseMileageNote(e.estimate_note);
+    if (stored && ov === stored.miles) return '';
+    return fieldValue;
+  }
   function v176_20ResolveMileage(e, overrideMiles, cb) {
     var member = e.atr_one === 'member';
     var base = v165VisitFee(e.audience);
@@ -3097,8 +3105,8 @@
         insertRow(row).then(function (ires) {
           if (ires.error) { fail('Could not create the ticket — try again.'); return; }
           var newId = ires.data && ires.data.id;
-          var v176_20ov = $('est-miles-override') ? $('est-miles-override').value : '';
-          v176_20ResolveMileage(e, v176_20ov, function (res) {
+          var v176_22ov = v176_22EffectiveOverride(e, $('est-miles-override') ? $('est-miles-override').value : '');
+          v176_20ResolveMileage(e, v176_22ov, function (res) {
           var fee = res.fee;
           var finish = function () {
             client.from('estimates').update({ status: 'Accepted', ticket_id: newId, decided_at: new Date().toISOString(), estimate_note: (res.note != null ? res.note : e.estimate_note) }).eq('id', id).then(function () {
@@ -3238,7 +3246,7 @@
         if (v176_20mo && v176_20fp) {
           v176_20mo.addEventListener('input', function () {
             var mv = v176_20RoundMiles(v176_20mo.value);
-            if (!mv) { v176_20fp.textContent = 'Visit fee when confirmed: ' + estimateMoney(v176_20fl.fee) + (v176_20fl.text ? ' \u2014 ' + v176_20fl.text : ''); return; }
+            if (!mv || (v176_20stored && mv === v176_20stored.miles)) { v176_20fp.textContent = 'Visit fee when confirmed: ' + estimateMoney(v176_20fl.fee) + (v176_20fl.text ? ' \u2014 ' + v176_20fl.text : ''); return; }
             v176_20fp.textContent = 'Visit fee when confirmed: ' + estimateMoney(e.atr_one === 'member' ? 0 : v176_20DispatchFee(e.audience, mv)) + ' (' + mv + ' road miles, set by hand).';
           });
         }
@@ -3253,7 +3261,7 @@
             issue: trim($('est-edit-issue').value), estimate_amount: amt
           };
           var newAddr = upd.service_address;
-          var milesVal = v176_20RoundMiles($('est-edit-miles') ? $('est-edit-miles').value : '');
+          var milesVal = v176_20RoundMiles(v176_22EffectiveOverride(e, $('est-edit-miles') ? $('est-edit-miles').value : ''));
           var memberNow = e.atr_one === 'member';
           function doSave() {
             withClient(function (c2) {
