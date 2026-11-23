@@ -2382,10 +2382,7 @@ function showLogin(errorMsg) {
     var nav = $('portal-nav'); if (nav) nav.classList.remove('open');
     var tabs = document.querySelectorAll('.portal-tab');
     tabs.forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === name); });
-    /* V176_30_ONE_BUTTON_ESTIMATE_2026_11_23: the check-in sidebar button is
-     * gone (merged into Estimate) — a remembered 'checkin' tab still lights
-     * the Estimate button, so the active marker never points nowhere. */
-    if (name === 'checkin') { var etab = $('portal-tab-estimate'); if (etab) etab.classList.add('active'); }
+    /* V176_33_ATRONE_GUEST_2026_11_23: the sidebar Estimate button is gone (Quick Actions only) — when the estimate form opens via activateTab('estimate') -> activateTab('checkin'), no sidebar button lights; the Quick Actions Estimate button carries the orange ring (qa-active) for the open form. */
     /* V176_QA_RING_2026_11_19 (Austin, Nov 19, 2026): the Quick Actions button
        for the open pane gets the orange RING (.qa-active), never a solid
        fill - HUB PARITY RULE, same as the Guest Hub. Only Home and New
@@ -2393,7 +2390,7 @@ function showLogin(errorMsg) {
     var qaBtn = name === 'home' ? $('portal-hub-home-btn') : ((name === 'checkin' || name === 'estimate') ? $('portal-hub-new-btn') : null);
     ['portal-hub-home-btn', 'portal-hub-new-btn'].forEach(function (id) { var b = $(id); if (b) b.classList.toggle('qa-active', b === qaBtn); });
     /* PASS10_2026_11_04: 'tracking' (the Live Tracking panel) hides and shows with the rest too */
-    ['tickets', 'estimates', 'invoices', 'applications', 'investors', 'feedback', 'customers', 'leads', 'members', 'inventory', 'timeclock', 'square', 'checkin', 'requests', 'prices', 'tracking', 'documents', 'records', 'financials', 'payroll', 'businessfiles', 'mileage', 'businesscard', 'suppliers', 'shippers', /* V176_17_LINKS_MOVE_2026_11_22: the Suppliers and Shippers panels hide and show with the rest too */ 'teamchat', 'guestchat', 'associateaccounts', 'warranty', 'setup', 'home', 'virtual'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too; ASSOCIATE_ACCOUNTS_2026_11_03: 'associateaccounts' hides and shows with the rest too (it absorbed ACCOUNT_CONTROLS_2026_11_03's 'accountcontrols' and the roster's 'associates'); WARRANTY_PORTAL_2026_11_03: 'warranty' hides and shows with the rest too; PORTAL_SETUP_2026_11_04: 'setup' hides and shows with the rest too; PORTAL_HOME_2026_11_09: 'home' hides and shows with the rest too; LEADS_2026_11_15: 'leads' hides and shows with the rest too; QR_FIX_PASS_2026_11_05: 'scanin' is GONE from this list — the scanner is a popup now, there is no scanin panel to hide or show */
+    ['tickets', 'estimates', 'invoices', 'applications', 'investors', 'feedback', 'customers', 'leads', 'members', 'atrone', 'inventory', 'timeclock', 'square', 'checkin', 'requests', 'prices', 'tracking', 'documents', 'records', 'financials', 'payroll', 'businessfiles', 'mileage', 'businesscard', 'suppliers', 'shippers', /* V176_17_LINKS_MOVE_2026_11_22: the Suppliers and Shippers panels hide and show with the rest too */ 'teamchat', 'guestchat', 'associateaccounts', 'warranty', 'setup', 'home', 'virtual'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too; ASSOCIATE_ACCOUNTS_2026_11_03: 'associateaccounts' hides and shows with the rest too (it absorbed ACCOUNT_CONTROLS_2026_11_03's 'accountcontrols' and the roster's 'associates'); WARRANTY_PORTAL_2026_11_03: 'warranty' hides and shows with the rest too; PORTAL_SETUP_2026_11_04: 'setup' hides and shows with the rest too; PORTAL_HOME_2026_11_09: 'home' hides and shows with the rest too; LEADS_2026_11_15: 'leads' hides and shows with the rest too; QR_FIX_PASS_2026_11_05: 'scanin' is GONE from this list — the scanner is a popup now, there is no scanin panel to hide or show. V176_33_ATRONE_GUEST_2026_11_23: 'atrone' hides and shows with the rest too; 'estimate' and 'scanin' have no panels and stay out (the estimate form is the checkin panel; Scan In is a popup). */
       $('portal-panel-' + n).hidden = n !== name;
     });
     closeDrawer();
@@ -2468,6 +2465,17 @@ function showLogin(errorMsg) {
     var hubRefreshBtn = $('portal-hub-refresh-btn');
     if (hubRefreshBtn) hubRefreshBtn.addEventListener('click', function () {
       window.location.reload();
+    });
+    /* V176_33_ATRONE_GUEST_2026_11_23 (Austin, Nov 23, 2026): the sidebar slide-out toggle — wide screens only (portal.css shows the button above 920px). The dashboard section starts with portal-nav-hidden in the markup, so the sidebar is hidden on every load; this flips it, the accessible name, and the chevron. No persistence, by order. */
+    var navCollapseBtn = $('portal-nav-collapse-btn');
+    if (navCollapseBtn) navCollapseBtn.addEventListener('click', function () {
+      var dash = $('portal-dash-view');
+      if (!dash) return;
+      var hidden = dash.classList.toggle('portal-nav-hidden');
+      navCollapseBtn.setAttribute('aria-expanded', hidden ? 'false' : 'true');
+      navCollapseBtn.setAttribute('aria-label', hidden ? 'Show action buttons' : 'Hide action buttons');
+      var navCollapseIcon = navCollapseBtn.querySelector('i');
+      if (navCollapseIcon) navCollapseIcon.setAttribute('class', hidden ? 'fas fa-chevron-right' : 'fas fa-chevron-left');
     });
   }
 
@@ -7641,7 +7649,7 @@ function loadTicketThread(client, ticketId) {
   function loadDocumentsTab(force) {
     /* V176_RECORDS_2026_11_19 (Austin, Nov 19, 2026): the Documents panel
        holds BLANKS only now. Signed & filed documents live in Records
-       (Guest Accounts > Documents > View Records) - see loadRecordsTab. */
+       (Admin > View Records) - see loadRecordsTab. */
     withClient(function (client) {
       renderBlankDocs();
     });
@@ -7649,8 +7657,8 @@ function loadTicketThread(client, ticketId) {
 
   function loadRecordsTab(force) {
     /* V176_RECORDS_2026_11_19 (Austin, Nov 19, 2026): signed & filed
-       documents live here now, under Guest Accounts, under Documents.
-       Admin stays back-office only - Records is not admin. */
+       documents live here now; the Records button sits in Admin,
+       directly before Setup (V176_33_ATRONE_GUEST_2026_11_23 move, Austin Nov 23, 2026). */
     withClient(function (client) {
       var listBox = $('portal-docs-list');
       if (!client) { if (listBox) listBox.innerHTML = '<p class="portal-error">Couldn&rsquo;t reach the database. Reload the page to try again.</p>'; return; }
@@ -11684,7 +11692,7 @@ function loadTicketThread(client, ticketId) {
    * custom panels again whenever a built-in tab is tapped. */
   var CAB_TEMPLATES = { links: 'Links', info: 'Info page', checklist: 'Checklist', training: 'Training program' }; /* PORTAL_TRAINING_PROGRAM_2026_11_06: 'training' template */
   var CAB_GROUPS = {
-    guest: 'Guest Accounts', parts_tools: 'Parts & Tools', associates: 'Associates',
+    guest: 'Guest Services', parts_tools: 'Parts & Tools', associates: 'Associates',
     admin: 'Admin', financials: 'Financials'
   };
   var CAB_MINROLE_LABELS = {
@@ -21490,8 +21498,8 @@ function loadTicketThread(client, ticketId) {
   function showExtraPanel(name) {
     portalNavNote();
     /* PORTAL_ROLE_LADDER_2026_11_04: same tier gate as
-     * activateTab — Square & ATR One is money (memberships and
-     * payment links), so it stays top-tier only. */
+     * activateTab — Square is money (payment links), so it stays
+     * top-tier only. (V176_33_ATRONE_GUEST_2026_11_23: ATR One has its own ungated panel now.) */
     if (!tabAllowed(name)) name = 'tickets';
     saveActiveTab(name);
     closeScanInPopup(); /* QR_FIX_PASS_2026_11_05: an extra panel taking over dismisses the Scan In popup and releases its camera too (was stopScanInCamera, ATRONE_QR_2026_11_05 pass 4) */
@@ -24186,7 +24194,7 @@ function loadTicketThread(client, ticketId) {
      * group label are the Action Buttons (Home). Role gates still
      * rule: hidden tabs are skipped, so a group with nothing visible
      * never renders. */
-    var HS_GROUP_ORDER = ['ACTION BUTTONS', 'GUEST ACCOUNTS', 'PARTS & TOOLS', 'ASSOCIATES', 'ADMIN', 'FINANCIALS'];
+    var HS_GROUP_ORDER = ['ACTION BUTTONS', 'GUEST SERVICES', 'PARTS & TOOLS', 'ASSOCIATES', 'ADMIN', 'FINANCIALS'];
     function sections() {
       var out = [], group = 'ACTION BUTTONS';
       document.querySelectorAll('#portal-nav > *').forEach(function (el) {

@@ -2378,3 +2378,13 @@ body{ touch-action: manipulation; }
 .portal-gate-overlay[hidden] { display: none; }
 .portal-gate-box { width: min(26rem, 100%); }
 .portal-gate-title { font-size: 1.05rem; font-weight: 700; margin: 0 0 0.5rem; color: var(--ink, #2C231A); }
+
+/* V176_33_ATRONE_GUEST_2026_11_23 (Austin, Nov 23, 2026): the action-button sidebar slides out on wide screens. The dashboard section carries portal-nav-hidden in the markup, so the sidebar starts hidden on every load — no persistence, by order. A small icon button at the left edge of the dashboard head (portal-nav-collapse-btn, a real button with aria-label + aria-expanded) slides it out and back. The slide is the file's own short motion (.22s ease, the portal-panel-in rhythm): the sidebar column's width animates and the auto grid track follows it, so the panel grows to full width, while the column fades — no grid-track animation, so it moves the same in every browser. Narrow screens (920px and down) are untouched: the button stays hidden and the Menu-button sidebar works exactly as before. Sticky positioning and the sidebar's independent scroll are untouched — the rules below only set width/visibility on the column. FLAG: hidden-by-default is Austin's confirmed description; if that default proves wrong in his eyes it is a one-line change (drop portal-nav-hidden from the section tag). */
+.portal-nav-collapse-btn{display:none}
+@media (min-width:921px){
+  #portal-dash-view{grid-template-columns:auto 1fr;transition:column-gap .22s ease}
+  #portal-dash-view .portal-nav-col{width:228px;min-width:0;box-sizing:border-box;overflow:hidden;transition:width .22s ease,opacity .22s ease,visibility 0s linear 0s}
+  #portal-dash-view.portal-nav-hidden{column-gap:0}
+  #portal-dash-view.portal-nav-hidden .portal-nav-col{width:0;min-width:0;padding-left:0;padding-right:0;border-left-width:0;border-right-width:0;opacity:0;visibility:hidden;transition:width .22s ease,opacity .22s ease,visibility 0s linear .22s}
+  #portal-dash-view .portal-dash-head .portal-nav-collapse-btn{display:inline-flex;flex:none;align-items:center;justify-content:center;width:34px;height:34px;padding:0}
+}

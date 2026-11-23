@@ -14,7 +14,8 @@
   <!-- V176_24_PORTAL_BACK_2026_11_22: ?v= bumped to 176-24 with in-portal Back navigation (portal.js + portal.css). Same rule as below: both queries carry the current version, so a fresh portal.html can never pair with stale cached subresources. -->
   <!-- V176_22_CONFIRM_LABEL_2026_11_22: ?v= bumped to 176-22 with the Record Confirm mileage-label fix (portal.js). portal.css itself is unchanged; both queries carry the current version so a fresh portal.html can never pair with stale cached subresources. -->
   <!-- V176_26_SQUARE_FREE_FEES_2026_11_22: ?v= bumped to 176-26 with the Square Free fee rates, the ATR One fee exemption, and the Square fees table (portal.js). portal.css itself is unchanged; both queries carry the current version so a fresh portal.html can never pair with stale cached subresources. -->
-  <link rel="stylesheet" href="portal.css?v=176-30" />
+  <!-- V176_33_ATRONE_GUEST_2026_11_23 (Austin, Nov 23, 2026): ?v= bumped to 176-33 with the ATR One separation, the Guest Services rename, the Records move, and the wide-screen sidebar slide-out (portal.html + portal.js + portal.css). portal.css itself carries the new collapse rules; both queries carry the current version so a fresh portal.html can never pair with stale cached subresources. -->
+  <link rel="stylesheet" href="portal.css?v=176-33" />
   <!-- PORTAL_APP_2026_11_09 (Austin, Nov 9, 2026): the Associate Hub
        is its own installable app. portal-manifest.json is a
        DECLARATION only — the installed app is this very page
@@ -193,7 +194,7 @@
     </section>
 
     <!-- ==================== DASHBOARD VIEW ==================== -->
-    <section id="portal-dash-view" hidden>
+    <section id="portal-dash-view" class="portal-nav-hidden" hidden>
 
       <!-- CUSTOM_BAR_2026_11_09 (v64): the Available tabs tray. Hidden
            until edit mode; portal.js docks it directly above the thumb
@@ -213,6 +214,8 @@
         </div>
       </div>
       <div class="portal-dash-head">
+        <!-- V176_33_ATRONE_GUEST_2026_11_23 (Austin, Nov 23, 2026): the sidebar slide-out toggle — wide screens only (portal.css shows it above 920px). The sidebar starts hidden on every load (portal-nav-hidden on the dashboard section); this button slides it out and back. A real button with an accessible name and aria-expanded; narrow screens keep the Menu button exactly as before. -->
+        <button class="portal-btn portal-btn-outline portal-nav-collapse-btn" id="portal-nav-collapse-btn" type="button" aria-label="Show action buttons" aria-expanded="false" aria-controls="portal-nav"><i class="fas fa-chevron-right"></i></button>
         <!-- MERGE_2026_11_03: the brand div + PORTAL_HEADER_CLEANUP_2026_11_02 block below is grafted verbatim from the live portal.html; the staged stack branched before the header cleanup published and still carried the old in-column greeting/clock paragraphs. See MERGE-REPORT.md. -->
         <div class="portal-head-brand">
           <p class="portal-eyebrow">Austin's Tech Repair Group</p>
@@ -253,18 +256,12 @@
              duplicate sidebar button goes. The top-bar Home button now calls
              activateTab('home') directly (portal.js) instead of clicking this
              button. -->
-        <div class="portal-nav-group">Guest Accounts</div>
-        <!-- V176_30_ONE_BUTTON_ESTIMATE_2026_11_23 (Austin, Nov 22-23, 2026): ONE Estimate button — New Service Estimate and New Service Request are merged. The check-in form IS the estimate form now; everything starts as an estimate, no ticket until the guest confirms. The old New Service Request button below is gone. -->
-        <button class="portal-tab" id="portal-tab-estimate" type="button" role="tab" data-tab="estimate">
-          <i class="fas fa-file-invoice-dollar"></i> Estimate
-        </button>
+        <div class="portal-nav-group">Guest Services</div>
+        <!-- V176_33_ATRONE_GUEST_2026_11_23 (Austin, Nov 23, 2026): the sidebar Estimate button is gone — the estimate form lives ONLY in Quick Actions (portal-hub-new-btn opens it directly). The merged v176.30 form itself is untouched. -->
         <button class="portal-tab active" id="portal-tab-tickets" type="button" role="tab" data-tab="tickets">
           <i class="fas fa-list-ol"></i> Service Queue <span class="portal-count" id="portal-count-tickets" hidden></span>
         </button>
-                <!-- ATRONE_QR_2026_11_05 (pass 4, Austin, Nov 5, 2026): "Now we have to build the receiving end into the portal — goes under Check-In, says Scan In." Scan In is the staff side of the member QR: it sits directly under Estimate in the Guest group — camera scan of the member's code (or the account number typed by hand) routes through the very same scan routing as the ?scan= deep link, straight to the guest's open job or their Guest record. QR_FIX_PASS_2026_11_05: it opens the Scan In popup (portal-scanin-modal, by the drawer markup below), not a panel — the button itself is unchanged, a visual peer of Check-In. -->
-        <button class="portal-tab" id="portal-tab-scanin" type="button" role="tab" data-tab="scanin">
-          <i class="fas fa-qrcode"></i> Scan In
-        </button>
+        <!-- V176_33_ATRONE_GUEST_2026_11_23 (Austin, Nov 23, 2026): the sidebar Scan In button is gone — Scan In lives ONLY in Quick Actions (portal-hub-scanin-btn opens the popup directly). The Scan In popup itself (portal-scanin-modal, by the drawer markup below) is untouched, and the ?scan= deep-link routing is untouched. -->
         <!-- V165_ESTIMATE_2026_11_17 (Austin, Nov 17, 2026): Estimates live in their own list, next to the Service Queue — every estimate sits here before acceptance, guest or business, and it is NOT in the queue until it is confirmed. Same tier as the queue (no TAB_GATES entry). Panel: portal-panel-estimates, loader loadEstimates in portal.js. -->
         <button class="portal-tab" id="portal-tab-estimates" type="button" role="tab" data-tab="estimates">
           <i class="fas fa-file-invoice-dollar"></i> Estimates <span class="portal-count" id="portal-count-estimates" hidden></span>
@@ -293,12 +290,12 @@
         <button class="portal-tab" id="portal-tab-members" type="button" role="tab" data-tab="members">
           <i class="fas fa-star"></i> ATR One Members
         </button>
+        <!-- V176_33_ATRONE_GUEST_2026_11_23 (Austin, Nov 23, 2026): ATR One's own action button, directly after ATR One Members — the four membership signup links live in its own panel now, on their own key (data-tab="atrone"), nothing shared with Square. The old Admin button (portal-tab-square, data-tab="square") shared Square's key, so tapping either lit both and both opened one panel. fa-crown: fa-star is taken by ATR One Members and fa-id-card by Business Card. -->
+        <button class="portal-tab" id="portal-tab-atrone" type="button" role="tab" data-tab="atrone">
+          <i class="fas fa-crown"></i> ATR One
+        </button>
         <button class="portal-tab" id="portal-tab-documents" type="button" role="tab" data-tab="documents">
           <i class="fas fa-folder-open"></i> Documents
-        </button>
-        <!-- V176_RECORDS_2026_11_19 (Austin, Nov 19, 2026): Records lives under Guest Accounts, under Documents — signed & filed documents. Admin stays back-office only. -->
-        <button class="portal-tab" id="portal-tab-records" type="button" role="tab" data-tab="records">
-          <i class="fas fa-archive"></i> View Records
         </button>
         <!-- WARRANTY_PORTAL_2026_11_03 (Austin, Nov 3, 2026): a Warranty Action Button in the Guest group, last in the group — warranty requests are guest-originated work (customers file them from the website's warranty form), and every staff role works them here, Pepper included: this is her lane. Panel: portal-panel-warranty, loader loadWarrantyRequests in portal.js. -->
         <button class="portal-tab" id="portal-tab-warranty" type="button" role="tab" data-tab="warranty">
@@ -359,9 +356,7 @@
         <button class="portal-tab" id="portal-tab-feedback" type="button" role="tab" data-tab="feedback">
           <i class="fas fa-star"></i> Feedback
         </button>
-        <button class="portal-tab" id="portal-tab-square" type="button" role="tab" data-tab="square">
-          <i class="fas fa-square"></i> ATR One
-        </button>
+        <!-- V176_33_ATRONE_GUEST_2026_11_23 (Austin, Nov 23, 2026): the ATR One button that sat here is gone — it carried data-tab="square", the same key as the Financials Square button, so the two lit together and opened one shared panel. ATR One now has its own button and panel in the first sidebar group (portal-tab-atrone, data-tab="atrone"). -->
         <button class="portal-tab" id="portal-tab-newhires" type="button" role="tab" data-tab="newhires">
           <i class="fas fa-user-plus"></i> Associate Onboarding
         </button>
@@ -370,6 +365,10 @@
         </button>
         <button class="portal-tab" id="portal-tab-applications" type="button" role="tab" data-tab="applications">
           <i class="fas fa-file-lines"></i> Job Applications <span class="portal-count" id="portal-count-applications" hidden></span>
+        </button>
+        <!-- V176_33_ATRONE_GUEST_2026_11_23 (Austin, Nov 23, 2026): Records moved here from the first sidebar group (Austin's order) — directly before Setup, which stays last in Admin. The button and its panel are unchanged; only its place moved. Visibility is unchanged too: Records has no TAB_GATES entry, so every staff tier sees it exactly as before. -->
+        <button class="portal-tab" id="portal-tab-records" type="button" role="tab" data-tab="records">
+          <i class="fas fa-archive"></i> View Records
         </button>
         <!-- PORTAL_SETUP_2026_11_04 (Austin, Nov 4, 2026): "Printers needs to be in admin like a button that says set up or something where we can add new action buttons and set up our printers and iPads etc" — a Setup Action Button, last in the Admin group, opening portal-panel-setup: custom buttons from templates and the printers & devices registry (public.portal_setup_items, portal-setup-items.sql). Panel logic: loadSetup in portal.js. -->
         <button class="portal-tab" id="portal-tab-setup" type="button" role="tab" data-tab="setup">
@@ -752,7 +751,7 @@
         </div>
       </div>
 
-      <!-- RECORDS — V176_RECORDS_2026_11_19 (Austin, Nov 19, 2026): signed & filed documents live here now, under Guest Accounts, under Documents. Admin stays back-office only — Records is not admin. -->
+      <!-- RECORDS — V176_RECORDS_2026_11_19 (Austin, Nov 19, 2026): signed & filed documents live here. V176_33_ATRONE_GUEST_2026_11_23 (Austin, Nov 23, 2026): the Records action button moved from the first sidebar group into Admin, directly before Setup — the panel itself is unchanged. -->
       <div class="portal-panel" id="portal-panel-records" role="tabpanel" hidden>
         <div class="portal-panel-head">
           <h2 class="portal-h2">Records</h2>
@@ -1978,9 +1977,20 @@
         <div id="p2-price-results"><p class="portal-muted">Opening the price book&hellip;</p></div>
       </div>
 
-      <!-- SQUARE_ATRONE_SPLIT_2026_11_11 (Austin, Nov 11, 2026): this panel used to be "Square & ATR One". His ruling: Square and ATR One don't need to be in the same action button — ATR One stays here, and Square lives inside Links, as it already does. V176_15_SQUARE_FIN_2026_11_21 (Austin, Nov 20, 2026): Square has since moved OUT of Links and under Financials as its own action button (portal-tab-square-fin, Balance page, new tab); the Links seed row is gone (the DB row needs its own delete) and the Quick Actions Square button stays. The Square Dashboard card was removed from this panel because the Links panel (portal_links) already carries a Square Dashboard row. Display text only: the tab key 'square' and panel id portal-panel-square are unchanged. V176_17_LINKS_MOVE_2026_11_22: the Links panel itself is now gone — its links live under Suppliers, Shippers, Guides, and Price Book. -->
+      <!-- V176_33_ATRONE_GUEST_2026_11_23 (Austin, Nov 23, 2026): ATR One's own panel — the four membership signup links, moved out of the shared Square panel below, on their own key (data-tab="atrone"). Nothing here is Square's; the fees table and dashboard links stay in portal-panel-square. -->
+      <div class="portal-panel" id="portal-panel-atrone" role="tabpanel" hidden>
+        <div class="portal-panel-head"><h2 class="portal-h2">ATR One</h2></div>
+        <div class="link-grid">
+          <a class="link-card" href="https://square.link/u/eFKxDvyo" target="_blank" rel="noopener"><i class="fas fa-user"></i><strong>ATR One Plus &mdash; Individual</strong><span>$9.99/mo signup link</span></a>
+          <a class="link-card" href="https://square.link/u/ZA7502vD" target="_blank" rel="noopener"><i class="fas fa-users"></i><strong>ATR One Plus &mdash; Family</strong><span>$19.99/mo signup link</span></a>
+          <a class="link-card" href="https://square.link/u/HtnQBIG1" target="_blank" rel="noopener"><i class="fas fa-briefcase"></i><strong>ATR One Plus &mdash; Business</strong><span>$49.99/mo signup link</span></a>
+          <a class="link-card" href="https://square.link/u/V8WCkjbW" target="_blank" rel="noopener"><i class="fas fa-building"></i><strong>ATR One Plus &mdash; Business Pro</strong><span>$99.99/mo signup link</span></a>
+        </div>
+      </div>
+
+      <!-- SQUARE_ATRONE_SPLIT_2026_11_11 (Austin, Nov 11, 2026): this panel used to be "Square & ATR One". His ruling: Square and ATR One don't need to be in the same action button — ATR One stays here, and Square lives inside Links, as it already does. V176_15_SQUARE_FIN_2026_11_21 (Austin, Nov 20, 2026): Square has since moved OUT of Links and under Financials as its own action button (portal-tab-square-fin, Balance page, new tab); the Links seed row is gone (the DB row needs its own delete) and the Quick Actions Square button stays. The Square Dashboard card was removed from this panel because the Links panel (portal_links) already carries a Square Dashboard row. Display text only: the tab key 'square' and panel id portal-panel-square are unchanged. V176_17_LINKS_MOVE_2026_11_22: the Links panel itself is now gone — its links live under Suppliers, Shippers, Guides, and Price Book. V176_33_ATRONE_GUEST_2026_11_23 (Austin, Nov 23, 2026): the ATR One heading, intro, and four signup cards moved out of this panel into portal-panel-atrone, and the Website Shop card was deleted — this panel is Square-only now (fees table, member exemption line, Dashboard and fees-page links). -->
       <div class="portal-panel" id="portal-panel-square" role="tabpanel" hidden>
-        <!-- V176_26_SQUARE_FREE_FEES_2026_11_22: Square processing fees on the Square Free plan — the plan ATRG uses. Rates are Square's public schedule; the ATR One block below is unchanged. -->
+        <!-- V176_26_SQUARE_FREE_FEES_2026_11_22: Square processing fees on the Square Free plan — the plan ATRG uses. Rates are Square's public schedule; the ATR One member exemption lines below are unchanged. -->
         <div class="portal-panel-head"><h2 class="portal-h2">Square</h2></div>
         <p class="portal-muted portal-small">Processing fees on the Square Free plan. Card payments pass the fee through at exactly Square&rsquo;s rate, never more. ATR One members pay no processing fee.</p>
         <div class="portal-table-wrap"><table class="portal-table">
@@ -1998,16 +2008,6 @@
         <div class="link-grid">
           <a class="link-card" href="https://app.squareup.com/dashboard/balance" target="_blank" rel="noopener"><i class="fas fa-credit-card"></i><strong>Square Dashboard</strong><span>Balance, payouts, and payments</span></a>
           <a class="link-card" href="https://squareup.com/us/en/payments/our-fees" target="_blank" rel="noopener"><i class="fas fa-percent"></i><strong>Square fees page</strong><span>Full current rate schedule</span></a>
-        </div>
-        <div class="portal-panel-head"><h2 class="portal-h2">ATR One</h2></div>
-        <p class="portal-muted portal-small">Ticket checkout is built into every ticket (open one &rarr; Payment &rarr; Charge / Check out). These are the quick doors:</p>
-        <div class="link-grid">
-          <!-- PORTAL_SHOP_LINK_2026_11_02: this card pointed at the bare home page, so it felt dead (Austin, Nov 2, 2026). It now lands on the shop page itself, same new-tab behavior as its sibling cards. -->
-          <a class="link-card" href="https://austinstechrepairgroup.com/#shop" target="_blank" rel="noopener"><i class="fas fa-store"></i><strong>Website Shop</strong><span>Accessories storefront</span></a>
-          <a class="link-card" href="https://square.link/u/eFKxDvyo" target="_blank" rel="noopener"><i class="fas fa-user"></i><strong>ATR One Plus &mdash; Individual</strong><span>$9.99/mo signup link</span></a>
-          <a class="link-card" href="https://square.link/u/ZA7502vD" target="_blank" rel="noopener"><i class="fas fa-users"></i><strong>ATR One Plus &mdash; Family</strong><span>$19.99/mo signup link</span></a>
-          <a class="link-card" href="https://square.link/u/HtnQBIG1" target="_blank" rel="noopener"><i class="fas fa-briefcase"></i><strong>ATR One Plus &mdash; Business</strong><span>$49.99/mo signup link</span></a>
-          <a class="link-card" href="https://square.link/u/V8WCkjbW" target="_blank" rel="noopener"><i class="fas fa-building"></i><strong>ATR One Plus &mdash; Business Pro</strong><span>$99.99/mo signup link</span></a>
         </div>
       </div>
 
@@ -2289,7 +2289,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <!-- PORTAL_RECEIPT_SEND_2026_11_02: vendored html2pdf (html2canvas + jsPDF in one self-contained bundle, loaded locally, no CDN) — Download receipt and Email receipt render the PDF from the exact receipt markup. -->
   <script src="html2pdf.bundle.min.js"></script>
-  <script src="portal.js?v=176-31"></script>
+  <script src="portal.js?v=176-33"></script>
   <script>
   /* ================= TEAM DOCUMENTS + HIRE DOCUMENTS =================
    * Section logic for the Team Documents tab and the per-hire document
