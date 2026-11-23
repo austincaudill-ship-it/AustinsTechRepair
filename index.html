@@ -943,6 +943,7 @@
                   <li><span>Device</span><strong id="rf-sum-device">Not picked yet</strong><button type="button" class="rf-change" data-rf-change="1">Change</button></li>
                   <li><span>Make</span><strong id="rf-sum-brand">&mdash;</strong><button type="button" class="rf-change" data-rf-change="2">Change</button></li>
                   <li><span>Model</span><strong id="rf-sum-model">&mdash;</strong><button type="button" class="rf-change" data-rf-change="2">Change</button></li>
+                  <li id="rf-sum-build-row" hidden><span>Your build</span><strong id="rf-sum-build">&mdash;</strong><button type="button" class="rf-change" data-rf-change="2">Change</button></li>
                   <li><span id="rf-sum-repair-label">Service</span><strong id="rf-sum-repair">&mdash;</strong><button type="button" class="rf-change" data-rf-change="2">Change</button></li>
                   <li><span id="rf-sum-estimate-label">Estimate</span><strong id="rf-sum-estimate">&mdash;</strong><button type="button" class="rf-change" data-rf-change="3">Change</button></li>
                   <li><span>ATR One</span><strong id="rf-sum-atrone">Not answered yet</strong><button type="button" class="rf-change" data-rf-change="2">Change</button></li>
@@ -997,6 +998,23 @@
                 <select class="form-field" id="bk-year-select" style="margin-bottom: 1.4rem;">
                   <option value="">Choose the year&hellip;</option>
                 </select>
+              </div>
+              <!-- V176_32_CUSTOM_BUILD_BOX_2026_11_23 (owner, Nov 23, 2026): a custom-built computer picked as Other make gets a describe box on this same step — graphics card, power supply, motherboard, processor, cooling, and anything else about the build, all free text and optional — so the step is not empty and the specs ride the estimate to the ticket. -->
+              <div id="bk-build-wrap" hidden>
+                <p class="field-label">Your custom build <span class="atr-optional">(optional)</span></p>
+                <p class="atr-help">If this is a custom-built computer, tell us what is in it. Anything you know helps. Leave blank anything you do not know.</p>
+                <label class="field-label" for="bk-build-gpu">Graphics card <span class="atr-optional">(optional)</span></label>
+                <input class="form-field" type="text" id="bk-build-gpu" placeholder="Example: NVIDIA RTX 4070" style="margin-bottom: 1.4rem;">
+                <label class="field-label" for="bk-build-psu">Power supply <span class="atr-optional">(optional)</span></label>
+                <input class="form-field" type="text" id="bk-build-psu" placeholder="Example: 750W" style="margin-bottom: 1.4rem;">
+                <label class="field-label" for="bk-build-board">Motherboard <span class="atr-optional">(optional)</span></label>
+                <input class="form-field" type="text" id="bk-build-board" placeholder="Example: ASUS B650" style="margin-bottom: 1.4rem;">
+                <label class="field-label" for="bk-build-cpu">Processor <span class="atr-optional">(optional)</span></label>
+                <input class="form-field" type="text" id="bk-build-cpu" placeholder="Example: AMD Ryzen 7 or Intel Core i7" style="margin-bottom: 1.4rem;">
+                <label class="field-label" for="bk-build-cooling">Cooling <span class="atr-optional">(optional)</span></label>
+                <input class="form-field" type="text" id="bk-build-cooling" placeholder="Example: liquid cooled or air cooled" style="margin-bottom: 1.4rem;">
+                <label class="field-label" for="bk-build-other">Anything else about the build <span class="atr-optional">(optional)</span></label>
+                <input class="form-field" type="text" id="bk-build-other" placeholder="Anything else about your build" style="margin-bottom: 1.4rem;">
               </div>
               <div id="bk-repair-wrap" hidden>
                 <!-- SUPPORT_BOOKING_2026_11_06 (label refinement, Austin,

@@ -392,7 +392,7 @@
     }
 
     /* ---------------- Repair wizard ---------------- */
-    var repairState = { device: '', brand: '', model: '', issue: '', issues: [], atrOne: '', describe: '', modelState: 'pending', priceRange: '$60 \u2013 $150', priceExact: null, /* V173_PRICING_FLOOR_2026_11_18 */
+    var repairState = { device: '', brand: '', model: '', issue: '', issues: [], atrOne: '', describe: '', /* V176_32_CUSTOM_BUILD_BOX_2026_11_23 (owner, Nov 23, 2026): custom-build spec fields — free text, optional, never gating. */ buildGpu: '', buildPsu: '', buildBoard: '', buildCpu: '', buildCooling: '', buildOther: '', modelState: 'pending', priceRange: '$60 \u2013 $150', priceExact: null, /* V173_PRICING_FLOOR_2026_11_18 */
       /* SUPPORT_BOOKING_2026_11_06 (design pivot): One-on-One mode of this
          same wizard — serviceKind is one of the eight service bubbles,
          ooHours is 1 or 2 (pure $24.99/hr). */
@@ -445,6 +445,10 @@
       rfSet('rf-sum-device', repairState.device || 'Not picked yet');
       rfSet('rf-sum-brand', repairState.brand || '\u2014');
       rfSet('rf-sum-model', repairState.model ? rfModelWithYear() : (repairState.modelState === 'notlisted' ? ('Not listed' + (repairState.year ? ' (' + repairState.year + ')' : '')) : (repairState.modelState === 'na' ? 'Not applicable' : '\u2014')));
+      var buildLines = rfBuildLines();
+      var buildRow = document.getElementById('rf-sum-build-row');
+      if (buildRow) buildRow.hidden = buildLines.length === 0;
+      rfSet('rf-sum-build', buildLines.length ? buildLines.join('; ') : '\u2014');
       var repairs = repairState.issues.length ? repairState.issues.map(function (i) { return i.name; }).join(', ') : (repairState.issue || '\u2014');
       if (repairState.mode === 'oneonone') {
         /* SUPPORT_BOOKING_2026_11_06: the same two summary rows carry the
@@ -493,6 +497,41 @@
         ? !!(repairState.device && repairState.brand && modelOk && repairState.serviceKind && repairState.ooHours && repairState.atrOne && repairState.ooPlace)
         : !!(repairState.device && repairState.brand && modelOk && yearOk && repairState.issues.length && repairState.atrOne);
       cont.disabled = !ready;
+    }
+    /* V176_32_CUSTOM_BUILD_BOX_2026_11_23 (owner, Nov 23, 2026):
+       a custom-built computer arrives as Computer + Other make, and
+       the make/model step used to sit empty for it. The six spec
+       fields are free text, optional, and never gate Continue
+       (no-limits rule: no character caps, no dropdowns). The labeled
+       lines ride the guided contract into the intake problem text,
+       so they reach the estimate and the ticket as readable lines. */
+    var BK_BUILD_FIELDS = [
+      { key: 'buildGpu', id: 'bk-build-gpu', label: 'Graphics card' },
+      { key: 'buildPsu', id: 'bk-build-psu', label: 'Power supply' },
+      { key: 'buildBoard', id: 'bk-build-board', label: 'Motherboard' },
+      { key: 'buildCpu', id: 'bk-build-cpu', label: 'Processor' },
+      { key: 'buildCooling', id: 'bk-build-cooling', label: 'Cooling' },
+      { key: 'buildOther', id: 'bk-build-other', label: 'Other build details' }
+    ];
+    function rfBuildLines() {
+      var lines = [];
+      BK_BUILD_FIELDS.forEach(function (f) {
+        var v = String(repairState[f.key] || '').trim();
+        if (v) lines.push(f.label + ': ' + v);
+      });
+      return lines;
+    }
+    function rfBuildBoxSync() {
+      var wrap = document.getElementById('bk-build-wrap');
+      if (wrap) wrap.hidden = !(repairState.device === 'Computer' && repairState.brand === 'Other');
+    }
+    function rfBuildClear() {
+      BK_BUILD_FIELDS.forEach(function (f) {
+        repairState[f.key] = '';
+        var el = document.getElementById(f.id);
+        if (el) el.value = '';
+      });
+      rfBuildBoxSync();
     }
     function rfShowFlowExtras() {
       var d = document.getElementById('bk-describe-wrap'); if (d) d.hidden = false;
@@ -636,6 +675,7 @@
           repairState.atrOne = '';
           repairState.modelState = 'pending';
           repairState.priceExact = null;
+          rfBuildClear();
           document.querySelectorAll('input[name="bk-atrone"]').forEach(function (r) { r.checked = false; });
           rfRenderSummary(); rfGate();
           document.querySelectorAll('[data-device]').forEach(function (b) { b.classList.remove('selected'); });
@@ -679,6 +719,15 @@
           repairState.describe = bkDescribe.value.trim();
         });
       }
+      BK_BUILD_FIELDS.forEach(function (f) {
+        var buildEl = document.getElementById(f.id);
+        if (buildEl) {
+          buildEl.addEventListener('input', function () {
+            repairState[f.key] = buildEl.value;
+            rfRenderSummary();
+          });
+        }
+      });
       document.querySelectorAll('input[name="bk-atrone"]').forEach(function (r) {
         r.addEventListener('change', function () {
           if (r.checked) { repairState.atrOne = r.value; rfRenderSummary(); rfGate(); refreshDispatchAck(); }
@@ -768,7 +817,7 @@
           data.brands.map(function (brand) { return [brand, brand]; }),
           'Choose your make\u2026');
         brandSel.onchange = function () {
-          if (brandSel.value) { repairState.brand = brandSel.value; repairState.modelState = 'na'; rfRenderSummary(); rfGate(); }
+          if (brandSel.value) { repairState.brand = brandSel.value; repairState.modelState = 'na'; rfBuildClear(); rfRenderSummary(); rfGate(); }
         };
       }
       repairState.modelState = 'na';
@@ -980,6 +1029,7 @@
         repairState.brand = brandKey === '__other__' ? 'Other' : brandKey;
         repairState.model = '';
         repairState.year = '';
+        rfBuildClear();
         var ywReset = document.getElementById('bk-year-wrap');
         if (ywReset) ywReset.hidden = true;
         repairState.issue = '';
@@ -1302,6 +1352,12 @@
         issues: repairState.issues.map(function (i) { return i.name; }),
         atrOne: repairState.atrOne || '',
         describe: repairState.describe || '',
+        buildGpu: repairState.buildGpu || '',
+        buildPsu: repairState.buildPsu || '',
+        buildBoard: repairState.buildBoard || '',
+        buildCpu: repairState.buildCpu || '',
+        buildCooling: repairState.buildCooling || '',
+        buildOther: repairState.buildOther || '',
         priceRange: repairState.priceRange || '',
         price: (typeof repairState.priceExact === 'number') ? repairState.priceExact : null,
         /* SUPPORT_BOOKING_2026_11_06: the One-on-One contract the intake
@@ -1344,7 +1400,17 @@
       var atrSel = document.getElementById('sr-atr-one');
       if (atrSel && !atrSel.value && g.atrOne) atrSel.value = g.atrOne;
       var prob = document.getElementById('sr-problem');
-      if (prob && !prob.value && g.describe) prob.value = g.describe;
+      /* V176_32_CUSTOM_BUILD_BOX_2026_11_23: the custom-build lines ride the problem text
+         (the same carry as describe) — labeled, one per line, only the fields
+         the guest filled — so they reach the estimate's issue text
+         and the ticket. Never overwrites text already typed in the
+         intake field. */
+      var buildText = BK_BUILD_FIELDS.map(function (f) {
+        var bv = String(g[f.key] || '').trim();
+        return bv ? (f.label + ': ' + bv) : '';
+      }).filter(Boolean).join('\n');
+      var probText = [g.describe, buildText].filter(Boolean).join('\n');
+      if (prob && !prob.value && probText) prob.value = probText;
       try {
         var acct = JSON.parse(localStorage.getItem('atr-account') || 'null');
         if (acct) {
