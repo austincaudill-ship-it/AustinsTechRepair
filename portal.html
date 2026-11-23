@@ -667,25 +667,27 @@
           <div class="portal-panel-tools">
             <select id="portal-ticket-filter" aria-label="Filter tickets by status">
               <option value="all">All statuses</option>
-              <option value="Awaiting Estimate">Awaiting Estimate</option>
-              <option value="Awaiting Scheduling">Awaiting Scheduling</option>
+              <!-- V176_31_STATUS_RENAME_2026_11_23: filter uses the approved 19 labels in order; Support Requested stays as a history option only. -->
+              <option value="New Request / Estimate">New Request / Estimate</option>
+              <option value="Scheduled">Scheduled</option>
               <option value="Support Requested">Support Requested</option>
-              <option value="Awaiting Diagnostics">Awaiting Diagnostics</option>
-              <option value="Diagnostics In Progress">Diagnostics In Progress</option>
-              <option value="Diagnostics Completed">Diagnostics Completed</option>
-              <option value="Unrepairable">Unrepairable</option>
-              <option value="Awaiting Approval">Awaiting Approval</option>
-              <option value="Awaiting Guest Response">Awaiting Guest Response</option>
-              <option value="Awaiting Parts">Awaiting Parts</option>
-              <option value="Awaiting Repair">Awaiting Repair</option>
-              <option value="En Route to Customer">En Route to Customer</option>
-              <!-- WARRANTY_PORTAL_2026_11_03: the Rework / Warranty status filters like every other status; it sits immediately before In Progress in the pipeline. -->
-              <option value="Rework / Warranty">Rework / Warranty</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Quality Control">Quality Control</option>
-              <option value="Ready">Ready</option>
-              <option value="Job Complete">Job Complete</option>
               <option value="Cancelled">Cancelled</option>
+              <option value="En Route">En Route</option>
+              <option value="In Diagnostics">In Diagnostics</option>
+              <option value="Unrepairable">Unrepairable</option>
+              <option value="Quote Sent">Quote Sent</option>
+              <option value="Awaiting Response">Awaiting Response</option>
+              <option value="Approved">Approved</option>
+              <option value="Parts Ordered">Parts Ordered</option>
+              <option value="Ready for Repair">Ready for Repair</option>
+              <option value="In Repair">In Repair</option>
+              <option value="Quality Check">Quality Check</option>
+              <option value="QC Passed">QC Passed</option>
+              <option value="QC Failed">QC Failed</option>
+              <option value="Completed">Completed</option>
+              <option value="Awaiting Payment">Awaiting Payment</option>
+              <option value="Paid &amp; Closed">Paid &amp; Closed</option>
+              <option value="Warranty Claim">Warranty Claim</option>
             </select>
           </div>
         </div>
@@ -771,7 +773,7 @@
             <i class="fas fa-pen-to-square"></i> New claim &mdash; we fill it in
           </button>
         </div>
-        <p class="portal-muted portal-small">Warranty requests, newest first. Start rework right on a card &mdash; it links the original ticket, sets it to Rework / Warranty, and exempts its charges, so the guest owes $0.</p>
+        <p class="portal-muted portal-small">Warranty requests, newest first. Start rework right on a card &mdash; it links the original ticket, sets it to Warranty Claim, and exempts its charges, so the guest owes $0.</p>
         <!-- WARRANTY_CONTROLS_2026_11_04: internal claim intake. The website form is not the only door — when a customer calls, texts, or emails instead, staff file the claim for them here. The pickers attach the claim to the customer and their original repair in the database, and saving starts the rework on that ticket exactly like Start rework does on a card. Wired in portal.js (wireWarrantyClaimForm). -->
         <div id="portal-warranty-claim" hidden>
           <div class="portal-card">
@@ -2287,7 +2289,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <!-- PORTAL_RECEIPT_SEND_2026_11_02: vendored html2pdf (html2canvas + jsPDF in one self-contained bundle, loaded locally, no CDN) — Download receipt and Email receipt render the PDF from the exact receipt markup. -->
   <script src="html2pdf.bundle.min.js"></script>
-  <script src="portal.js?v=176-30"></script>
+  <script src="portal.js?v=176-31"></script>
   <script>
   /* ================= TEAM DOCUMENTS + HIRE DOCUMENTS =================
    * Section logic for the Team Documents tab and the per-hire document

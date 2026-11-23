@@ -6247,19 +6247,26 @@
   var currentCust = null, repairsWired = false, openTicket = null;
   window.atrCustomer = function () { return currentCust; };
   var STATUS_COPY = {
+    'New Request / Estimate': { label: 'New request / estimate', note: 'We got your request — we are putting together your free estimate.' },
+    'Scheduled': { label: 'Scheduled', note: "We got your request — we'll text you to confirm your appointment window." },
     'Support Requested': { label: 'Support requested', note: 'We got your support booking — we\'ll reach out shortly to confirm your visit.' },
-    'Awaiting Scheduling': { label: 'Awaiting scheduling', note: "We got your request — we'll text you to confirm your appointment window." },
-    'Awaiting Repair': { label: 'Awaiting repair', note: 'Your repair is booked in — see your appointment time below.' },
-    'Awaiting Diagnostics': { label: 'Awaiting diagnostics', note: "We'll diagnose it and text you to confirm your appointment window." },
-    'Awaiting Estimate': { label: 'Awaiting estimate', note: 'We are working out your price and will text it to you.' },
-    'Awaiting Customer Response': { label: 'Awaiting your response', note: 'We sent you an estimate. Reply to it and we will get your repair moving.' },
-    'Awaiting Guest Response': { label: 'Awaiting your response', note: 'We sent you an estimate. Reply to it and we will get your repair moving.' },
-    'Awaiting Parts': { label: 'Awaiting parts', note: 'Your part is ordered and on its way to us. We\'ll text you when it\'s in.' },
-    'En Route to Customer': { label: 'On the way to you', note: 'Your technician is on the way to your home or office.' },
-    'In Progress': { label: 'In progress', note: 'Your repair is underway at your place. We\'ll update this page and text you as it moves.' },
-    'Quality Control': { label: 'Quality control', note: 'Your repair is done and being tested before it comes back to you.' },
-    'Ready': { label: 'Ready!', note: 'Your repair is complete. We\'ll text you to arrange getting your device back to you.' },
-    'Job Complete': { label: 'Job complete', note: 'All done \u2014 thanks for trusting us! This repair is covered by our 1-Year Limited Warranty.' }
+    'Cancelled': { label: 'Cancelled', note: 'This repair request has been cancelled. Reply to this email if you need anything else.' },
+    'En Route': { label: 'On the way to you', note: 'Your technician is on the way to your home or office.' },
+    'In Diagnostics': { label: 'In diagnostics', note: "Your device is on the bench and diagnostics are underway. We'll let you know what we find." },
+    'Unrepairable': { label: 'Unrepairable', note: 'We went over your device and it cannot be repaired. You owe only the tech bench fee for the check.' },
+    'Quote Sent': { label: 'Quote sent', note: 'Your estimate is ready. Look it over and let us know — no work begins until you approve.' },
+    'Awaiting Response': { label: 'Awaiting your response', note: 'We sent you an estimate. Reply to it and we will get your repair moving.' },
+    'Approved': { label: 'Approved', note: 'You approved the quote — we are ordering parts and getting your repair moving.' },
+    'Parts Ordered': { label: 'Parts ordered', note: 'Your part is ordered and on its way to us. We\'ll text you when it\'s in.' },
+    'Ready for Repair': { label: 'Ready for repair', note: 'Everything your repair needs is ready, and your device is in line to be worked on.' },
+    'In Repair': { label: 'In repair', note: 'Your repair is underway. We\'ll update this page and text you as it moves.' },
+    'Quality Check': { label: 'Quality check', note: 'Your repair is done and being tested before it comes back to you.' },
+    'QC Passed': { label: 'Ready!', note: 'Your repair is complete. We\'ll text you to arrange getting your device back to you.' },
+    'QC Failed': { label: 'Needs another look', note: 'Testing found an issue — we are going over the repair again to make it right.' },
+    'Completed': { label: 'Job complete', note: 'All done \u2014 thanks for trusting us! This repair is covered by our 1-Year Limited Warranty.' },
+    'Awaiting Payment': { label: 'Awaiting payment', note: 'Your repair is complete. The balance below is ready to pay.' },
+    'Paid & Closed': { label: 'Paid & closed', note: 'Paid in full — thanks! This repair is covered by our 1-Year Limited Warranty.' },
+    'Warranty Claim': { label: 'Warranty claim', note: 'Your repair is back with us under warranty. We are making it right.' }
   };
   function escX(x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function ticketDevice(t) { return [t.device_type, t.brand, t.model].filter(function (p) { return p && String(p).trim() !== ''; }).join(' ') || 'Your device'; }
@@ -6316,7 +6323,7 @@
   var myRepairsRows = null;
   var myServicesFilter = 'open'; /* 'open' | 'completed' */
   var myServicesFilterWired = false;
-  function myServicesIsComplete(t) { return t.status === 'Job Complete'; }
+  function myServicesIsComplete(t) { return t.status === 'Completed' || t.status === 'Paid & Closed'; }
   function myServicesTicketCard(t, isSupport) {
     var c = STATUS_COPY[t.status] || { note: '' };
     var dev = isSupport ? (t.model || 'One-on-one support') : ticketDevice(t);
@@ -6959,7 +6966,7 @@
     var services = intake.services || [];
     var isOO = !!(intake.oneonone && String(intake.oneonone).toLowerCase() === 'yes');
     var isCleaning = !isOO && services.indexOf('Cleaning') !== -1;
-    var row = { customer_id: cust.id, customer_name: e.name, customer_phone: e.phone, customer_email: e.email || null, service_address: e.service_address || null, device_type: e.device_type, brand: e.brand || null, model: e.model || null, serial_imei: intake.serial || null, issue: e.issue, issue_reason: isOO ? (intake.kind || e.issue) : (services.length ? services.join(', ') : e.issue), triage_volts: intake.volts || null, triage_amps: intake.amps || null, triage_watts: intake.watts || null, power_on: intake.powersOn || null, backed_up: intake.backedUp || null, prior_repair: intake.prior || null, warranty_status: intake.warranty || null, job_date: jobDate || null, appointment_at: v176_30ApptAt(jobDate || '', intake.windowStart), source: 'estimate', status: 'Awaiting Scheduling', terms_accepted: true, dispatch_acknowledged: true, work_auth_accepted: true, marketing_opt_in: false };
+    var row = { customer_id: cust.id, customer_name: e.name, customer_phone: e.phone, customer_email: e.email || null, service_address: e.service_address || null, device_type: e.device_type, brand: e.brand || null, model: e.model || null, serial_imei: intake.serial || null, issue: e.issue, issue_reason: isOO ? (intake.kind || e.issue) : (services.length ? services.join(', ') : e.issue), triage_volts: intake.volts || null, triage_amps: intake.amps || null, triage_watts: intake.watts || null, power_on: intake.powersOn || null, backed_up: intake.backedUp || null, prior_repair: intake.prior || null, warranty_status: intake.warranty || null, job_date: jobDate || null, appointment_at: v176_30ApptAt(jobDate || '', intake.windowStart), source: 'estimate', status: 'Approved', terms_accepted: true, dispatch_acknowledged: true, work_auth_accepted: true, marketing_opt_in: false };
     sb.from('tickets').insert(row).select('id').single().then(function (ires) {
       if (ires.error) { done(false); return; }
       var newId = ires.data && ires.data.id;
@@ -7273,13 +7280,13 @@
     return s;
   }
   function atrTaxClosedPaid(t, rows) {
-    /* V176_TAX_GUARD_2026_11_19 (Austin, Nov 19, 2026): Job Complete + paid
+    /* V176_TAX_GUARD_2026_11_19 (Austin, Nov 19, 2026): Completed + paid
        in full means the figures are final - no tax line is ever added to
        such a ticket. Future tickets only: Daniel's closed ticket stays
        $69.99 and is never touched. A tax row synced while the ticket was
        open is part of the paid record and stays; only a NEW line is
        stopped. */
-    if (!t || t.status !== 'Job Complete') return false;
+    if (!t || t.status !== 'Completed') return false;
     var sub = 0, dep = 0;
     (rows || []).forEach(function (c) {
       var amt = Number(c.qty || 0) * Number(c.unit_price || 0);
@@ -8005,12 +8012,12 @@
         var taxView = atrTaxEffective(rows, t.service_address, atrTaxClosedPaid(t, rows)); /* V176_TAX_GUARD_2026_11_19 */
         var subtotal = rowsSubtotal + taxView.amount;
         var balance = subtotal - deposits, html = '';
-        if (t.status === 'Awaiting Customer Response' || t.status === 'Awaiting Guest Response') {
+        if (t.status === 'Awaiting Response' || t.status === 'Quote Sent') {
           html += '<div class="acct-actions-row"><p class="acct-muted" style="text-align:left;margin:0 0 .5rem;">Your estimate is ready — ' + escX(fmtMoneyX(subtotal)) + '. Accept it and we will get your repair moving.</p>' +
             '<button type="button" class="btn btn-primary" id="atr-accept-estimate">Accept estimate</button> <span class="acct-muted" id="atr-accept-note"></span></div>';
         }
-        /* V174_PAY_GATE_2026_11_18 (Austin, Nov 18, 2026): the repair balance opens for payment ONLY after Job Complete is pushed — never before, "we're never going to scam anybody". Job Complete, Quality Control and Ready are all past that push (QC follows Job Complete, Ready follows QC); every earlier status reads plainly that the balance opens once the job is complete. Parts and dispatch keep their own up-front flows and never ride this button. */
-        var payOpen = t.status === 'Job Complete' || t.status === 'Quality Control' || t.status === 'Ready';
+        /* V174_PAY_GATE_2026_11_18 (Austin, Nov 18, 2026): the repair balance opens for payment ONLY after Completed is pushed — never before, "we're never going to scam anybody". Completed, Quality Check, QC Passed and Awaiting Payment are all past that push; every earlier status reads plainly that the balance opens once the job is complete. Parts and dispatch keep their own up-front flows and never ride this button. */
+        var payOpen = t.status === 'Completed' || t.status === 'Quality Check' || t.status === 'QC Passed' || t.status === 'Awaiting Payment';
         /* V176_7_CARD_FEE_2026_11_19: the Square total — the link the Pay button opens adds the card processing fee at Square's actual rate, so the guest sees the full total before tapping, never a surprise at checkout. */
         /* V176_26_SQUARE_FREE_FEES_2026_11_22: ATR One members pay no card processing fee — window.mmPlan is the paid-plan state the account card already resolved (an object with a tier = paid member; null = Free; undefined = lookup unavailable, which reads as non-member so the fee preview still shows and the checkout function, the authority, charges none). */
         var v176IsMember = !!(window.mmPlan && window.mmPlan.tier);
@@ -8023,8 +8030,8 @@
         } else if (rows.length) {
           html += '<div class="acct-actions-row"><p class="acct-muted" style="text-align:left;margin:0;">Paid in full \u2014 thank you!</p><p class="acct-muted" style="text-align:left;margin:0;" id="atr-receipt-note"></p></div>';
         }
-        /* V174_REWORK_TICKET_2026_11_18 (Austin, Nov 18, 2026): the warranty-repair request lives on the service itself — the guest asks right here on the ticket, no warranty form needed. Warranty coverage shows only after the repair is complete, so the button renders only once Job Complete has been pushed (Job Complete, Quality Control, Ready — the same past-that-push set as the pay gate). */
-        if (t.status === 'Job Complete' || t.status === 'Quality Control' || t.status === 'Ready') {
+        /* V174_REWORK_TICKET_2026_11_18 (Austin, Nov 18, 2026): the warranty-repair request lives on the service itself — the guest asks right here on the ticket, no warranty form needed. Warranty coverage shows only after the repair is complete, so the button renders only once Completed has been pushed (Completed, Quality Check, QC Passed, Awaiting Payment — the same past-that-push set as the pay gate). */
+        if (t.status === 'Completed' || t.status === 'Quality Check' || t.status === 'QC Passed' || t.status === 'Awaiting Payment') {
           html += '<div class="acct-actions-row"><button type="button" class="btn btn-outline" id="atr-warranty-rework">Request warranty repair</button> <span class="acct-muted" id="atr-warranty-note"></span></div>';
         }
         box.innerHTML = html;
@@ -8101,7 +8108,7 @@
             model: t.model || null,
             issue: 'Warranty rework \u2014 inspection needed: ' + ticketDevice(t) + ' \u2014 ' + (t.issue || 'repair') + ' \u2014 original ticket #' + code,
             service_address: t.service_address || null,
-            status: 'Rework / Warranty',
+            status: 'Warranty Claim',
             source: 'guest-hub'
           }).then(function (res) {
             if (res.error) { wr.disabled = false; if (wnote) wnote.textContent = 'Could not send that request \u2014 try again, or call or text (937) 280-6243.'; return; }
@@ -8145,18 +8152,24 @@
     var S = ['todo', 'todo', 'todo', 'todo', 'todo', 'todo', 'todo', 'todo'];
     function doneTo(i) { for (var k = 0; k <= i; k++) S[k] = 'done'; }
     switch (status) {
-      case 'Awaiting Estimate': doneTo(0); S[1] = 'current'; break;
-      case 'Awaiting Diagnostics': doneTo(0); S[1] = 'current'; break;
-      case 'Awaiting Customer Response': doneTo(1); S[2] = 'next'; break;
-      case 'Awaiting Guest Response': doneTo(1); S[2] = 'next'; break;
-      case 'Awaiting Parts': doneTo(2); S[3] = 'current'; break;
-      case 'Awaiting Repair': doneTo(3); S[4] = 'next'; break;
-      case 'En Route to Customer': doneTo(3); S[4] = 'current'; break;
-      case 'In Progress': doneTo(3); S[4] = 'current'; break;
-      case 'Quality Control': doneTo(4); S[5] = 'current'; break;
-      case 'Ready': doneTo(5); S[6] = 'current'; break;
-      case 'Job Complete': doneTo(6); S[7] = 'current'; break;
-      case 'Rework / Warranty': doneTo(6); S[7] = 'current'; break;
+      case 'New Request / Estimate': doneTo(0); S[1] = 'current'; break;
+      case 'Scheduled': doneTo(0); S[1] = 'current'; break;
+      case 'In Diagnostics': doneTo(0); S[1] = 'current'; break;
+      case 'Unrepairable': doneTo(0); S[1] = 'current'; break;
+      case 'Quote Sent': doneTo(1); S[2] = 'next'; break;
+      case 'Awaiting Response': doneTo(1); S[2] = 'next'; break;
+      case 'Approved': doneTo(1); S[2] = 'current'; break;
+      case 'Parts Ordered': doneTo(2); S[3] = 'current'; break;
+      case 'Ready for Repair': doneTo(3); S[4] = 'next'; break;
+      case 'En Route': doneTo(3); S[4] = 'current'; break;
+      case 'In Repair': doneTo(3); S[4] = 'current'; break;
+      case 'Quality Check': doneTo(4); S[5] = 'current'; break;
+      case 'QC Failed': doneTo(4); S[5] = 'current'; break;
+      case 'QC Passed': doneTo(5); S[6] = 'current'; break;
+      case 'Completed': doneTo(6); S[7] = 'current'; break;
+      case 'Awaiting Payment': doneTo(6); S[7] = 'current'; break;
+      case 'Paid & Closed': doneTo(6); S[7] = 'current'; break;
+      case 'Warranty Claim': doneTo(6); S[7] = 'current'; break;
       default: doneTo(0); S[1] = 'current'; break;
     }
     return S;
@@ -8197,7 +8210,7 @@
       var awaitingShip = live.filter(function (p) { return p.status === 'Ordered' && !(p.tracking_number && String(p.tracking_number).trim() !== ''); });
       if (received.length && received.length === live.length) {
         extras[3] = 'Arrived ' + fmtDayX(received.map(function (p) { return p.received_at; }).sort().slice(-1)[0]);
-        if (t.status === 'Awaiting Parts') { states[3] = 'done'; if (states[4] === 'todo') states[4] = 'next'; }
+        if (t.status === 'Parts Ordered') { states[3] = 'done'; if (states[4] === 'todo') states[4] = 'next'; }
       } else if (states[3] === 'current') {
         if (inTransit.length) extras[3] = 'On its way to us — tracking is in Parts below.';
         else if (awaitingShip.length) extras[3] = 'Ordered — tracking shows in Parts below as soon as it ships.';
@@ -8205,8 +8218,8 @@
         extras[3] = 'Arrived ' + fmtDayX(received.map(function (p) { return p.received_at; }).sort().slice(-1)[0]);
       }
     }
-    if (t.status === 'Job Complete') extras[7] = 'Covered by our 1-Year Limited Warranty on parts and labor.';
-    if (t.status === 'Rework / Warranty') extras[7] = 'We are taking another look at your device under warranty.';
+    if (t.status === 'Completed' || t.status === 'Paid & Closed') extras[7] = 'Covered by our 1-Year Limited Warranty on parts and labor.';
+    if (t.status === 'Warranty Claim') extras[7] = 'We are taking another look at your device under warranty.';
     var steps = TL_STAGES.map(function (label, i) {
       var st = states[i];
       var tag = TL_STATE_TAG[st] ? '<span class="acct-tl-tag">' + TL_STATE_TAG[st] + '</span>' : '';
@@ -11223,12 +11236,13 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
   function client() { try { return window.supabase.createClient(URL, KEY); } catch (e) { return null; } }
   var sb = null, user = null, cust = null, tickets = [], loaded = false, loading = false;
   var KIND = { part: 'Part', labor: 'Labor', one_off: 'Other charge', dispatch: 'Visit fee', visit: 'Visit fee', deposit_credit: 'Deposit received', tip: 'Tip', discount: 'Discount' };
-  var STEPS = ['Booked', 'Awaiting Repair', 'In Progress', 'Job Complete'];
+  var STEPS = ['Booked', 'Ready for Repair', 'In Repair', 'Completed'];
   function stepIdx(status) {
     if (!status) return 0;
     if (/complete/i.test(status)) return 3;
-    if (/progress|repairing|working/i.test(status)) return 2;
-    if (/awaiting repair/i.test(status)) return 1;
+    if (/paid & closed/i.test(status)) return 3;
+    if (/progress|repairing|working|in repair/i.test(status)) return 2;
+    if (/ready for repair/i.test(status)) return 1;
     return 0;
   }
   function apptLine(t) {
@@ -11300,7 +11314,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
          progress. A ticket still in Awaiting Diagnostics wrongly showed
          a full year of coverage. Gate on the completion state, not the
          job date. */
-      var repairs = (tickets || []).filter(function (t) { return t.status === 'Job Complete' && !/^\[SERVICE\]/.test(t.issue || '') && t.device_type !== 'Support'; });
+      var repairs = (tickets || []).filter(function (t) { return (t.status === 'Completed' || t.status === 'Paid & Closed') && !/^\[SERVICE\]/.test(t.issue || '') && t.device_type !== 'Support'; });
       cov.innerHTML = repairs.length
         ? '<h3>Your warranty coverage</h3>' + repairs.map(ghubWarrantyLine).join('')
         : '<h3>Your warranty coverage</h3><p class="ghub-muted">Your warranty coverage lives here. When you have a repair or service done, your warranty will show here.</p>';
@@ -11451,7 +11465,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
   }
   function ghubAnchorTicket() {
     if (!tickets.length) return null;
-    for (var i = 0; i < tickets.length; i++) { if (tickets[i].status !== 'Job Complete') return tickets[i]; }
+    for (var i = 0; i < tickets.length; i++) { if (tickets[i].status !== 'Completed' && tickets[i].status !== 'Paid & Closed') return tickets[i]; }
     return tickets[0];
   }
   function ghubDocDay(iso) {
@@ -11691,7 +11705,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
            status, date and arrival window. V176_NEXT_CLICK_2026_11_19
            (Austin, Nov 19, 2026): each repair is a BUTTON - tapping it
            opens that ticket in My Services. */
-        var upcoming = (tickets || []).filter(function (t) { return t.status !== 'Job Complete' && !/^\[SERVICE\]/.test(t.issue || '') && t.device_type !== 'Support'; });
+        var upcoming = (tickets || []).filter(function (t) { return t.status !== 'Completed' && t.status !== 'Paid & Closed' && !/^\[SERVICE\]/.test(t.issue || '') && t.device_type !== 'Support'; });
         if (!upcoming.length) {
           next.innerHTML = '<h3>Your upcoming repairs</h3><p class="ghub-muted">No upcoming repairs — when you book a service, it will show here.</p>';
         } else {

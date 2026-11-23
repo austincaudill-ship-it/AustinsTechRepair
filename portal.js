@@ -38,7 +38,7 @@
 
   /* PORTAL_POINTS_EARN_2026_10_30: loyalty points earning rate —
    * customers earn points per whole dollar of a ticket's total when
-   * the job is marked Job Complete (see awardPointsOnComplete).
+   * the job is marked Completed (see awardPointsOnComplete).
    * ATRONE_POINTS_TIERS_2026_11_06 (Austin, Nov 6, 2026): the rate is
    * PER TIER now. ATR One Free (and no membership row at all) earns
    * POINTS_PER_DOLLAR = 1 for guests and POINTS_FREE_RATE_BUSINESS = 5
@@ -94,21 +94,19 @@
      * Progress, Quality Control, Rework / Warranty, Support Requested.
      * Awaiting Estimate stays out: it is an estimate-only state, never a
      * manual ticket pick. */
-  var TICKET_STATUSES = ['Awaiting Diagnostics', 'Diagnostics in progress', 'Diagnostics completed', 'Unrepairable', 'Awaiting Approval', 'Awaiting Parts', 'Awaiting repair', 'Job completed', 'Guest needs to pay', 'Status paid', 'En Route', 'QC pass', 'QC fail', 'Awaiting Scheduling', 'Awaiting guest response', 'In Progress', 'Quality Control', 'Rework / Warranty', 'Cancelled'];
-  var TICKET_DB_STATUSES = ['Awaiting Estimate', 'Awaiting Scheduling', 'Support Requested', 'Awaiting Diagnostics', 'Diagnostics In Progress', 'Diagnostics Completed', 'Unrepairable', 'Awaiting Approval', 'Awaiting Guest Response', 'Awaiting Parts', 'Awaiting Repair', 'En Route to Customer', 'Rework / Warranty', 'In Progress', 'Quality Control', 'Ready', 'Job Complete', 'Cancelled'];
-  var TICKET_STATUS_DB = { 'Awaiting Diagnostics': 'Awaiting Diagnostics', 'Diagnostics in progress': 'Diagnostics In Progress', 'Diagnostics completed': 'Diagnostics Completed', 'Unrepairable': 'Unrepairable', 'Awaiting Approval': 'Awaiting Approval', 'Awaiting Parts': 'Awaiting Parts', 'Awaiting repair': 'Awaiting Repair', 'Job completed': 'Job Complete', 'Guest needs to pay': 'Ready', 'Status paid': '__paid', 'En Route': 'En Route to Customer', 'QC pass': '__qcpass', 'QC fail': '__qcfail', 'Awaiting Scheduling': 'Awaiting Scheduling', 'Awaiting guest response': 'Awaiting Guest Response', 'In Progress': 'In Progress', 'Quality Control': 'Quality Control', 'Rework / Warranty': 'Rework / Warranty', 'Support Requested': 'Support Requested', 'Cancelled': 'Cancelled' };
+  /* V176_31_STATUS_RENAME_2026_11_23 (Austin, Nov 23, 2026: "Use Gemini's list with the renames"): the drawer dropdown, the filter list, the badge/queue maps, the email function and the DB constraint all use the SAME 19 labels, in the approved order. Labels now EQUAL the DB values, so the label<->DB maps are identity maps and the __paid/__qcpass/__qcfail pseudo-choices are gone — QC Passed, QC Failed and Paid & Closed are real statuses. D5 (Awaiting Estimate out of the dropdown) is SUPERSEDED: New Request / Estimate is pickable. Support Requested stays a DB-only value (constraint + filter option for history), hidden from the drawer dropdown. The estimates TABLE keeps its own 'Awaiting Estimate' value (estimate-decide v6 depends on it) — only tickets values rename. */
+  var TICKET_STATUSES = ['New Request / Estimate', 'Scheduled', 'Cancelled', 'En Route', 'In Diagnostics', 'Unrepairable', 'Quote Sent', 'Awaiting Response', 'Approved', 'Parts Ordered', 'Ready for Repair', 'In Repair', 'Quality Check', 'QC Passed', 'QC Failed', 'Completed', 'Awaiting Payment', 'Paid & Closed', 'Warranty Claim'];
+  var TICKET_DB_STATUSES = ['New Request / Estimate', 'Scheduled', 'Support Requested', 'Cancelled', 'En Route', 'In Diagnostics', 'Unrepairable', 'Quote Sent', 'Awaiting Response', 'Approved', 'Parts Ordered', 'Ready for Repair', 'In Repair', 'Quality Check', 'QC Passed', 'QC Failed', 'Completed', 'Awaiting Payment', 'Paid & Closed', 'Warranty Claim'];
+  var TICKET_STATUS_DB = { 'New Request / Estimate': 'New Request / Estimate', 'Scheduled': 'Scheduled', 'Cancelled': 'Cancelled', 'En Route': 'En Route', 'In Diagnostics': 'In Diagnostics', 'Unrepairable': 'Unrepairable', 'Quote Sent': 'Quote Sent', 'Awaiting Response': 'Awaiting Response', 'Approved': 'Approved', 'Parts Ordered': 'Parts Ordered', 'Ready for Repair': 'Ready for Repair', 'In Repair': 'In Repair', 'Quality Check': 'Quality Check', 'QC Passed': 'QC Passed', 'QC Failed': 'QC Failed', 'Completed': 'Completed', 'Awaiting Payment': 'Awaiting Payment', 'Paid & Closed': 'Paid & Closed', 'Warranty Claim': 'Warranty Claim', 'Support Requested': 'Support Requested' };
   function ticketStatusLabel(db) {
-    var m = { 'Awaiting Diagnostics': 'Awaiting Diagnostics', 'Diagnostics In Progress': 'Diagnostics in progress', 'Diagnostics Completed': 'Diagnostics completed', 'Unrepairable': 'Unrepairable', 'Awaiting Approval': 'Awaiting Approval', 'Awaiting Parts': 'Awaiting Parts', 'Awaiting Repair': 'Awaiting repair', 'Job Complete': 'Job completed', 'Ready': 'Guest needs to pay', 'En Route to Customer': 'En Route', 'Awaiting Scheduling': 'Awaiting Scheduling', 'Awaiting Guest Response': 'Awaiting guest response', 'In Progress': 'In Progress', 'Quality Control': 'Quality Control', 'Rework / Warranty': 'Rework / Warranty', 'Support Requested': 'Support Requested', 'Cancelled': 'Cancelled' };
+    var m = { 'New Request / Estimate': 'New Request / Estimate', 'Scheduled': 'Scheduled', 'Cancelled': 'Cancelled', 'En Route': 'En Route', 'In Diagnostics': 'In Diagnostics', 'Unrepairable': 'Unrepairable', 'Quote Sent': 'Quote Sent', 'Awaiting Response': 'Awaiting Response', 'Approved': 'Approved', 'Parts Ordered': 'Parts Ordered', 'Ready for Repair': 'Ready for Repair', 'In Repair': 'In Repair', 'Quality Check': 'Quality Check', 'QC Passed': 'QC Passed', 'QC Failed': 'QC Failed', 'Completed': 'Completed', 'Awaiting Payment': 'Awaiting Payment', 'Paid & Closed': 'Paid & Closed', 'Warranty Claim': 'Warranty Claim', 'Support Requested': 'Support Requested' };
     return m[db] || db;
   }
   function ticketStatusOptions(currentDb) {
-    /* V176_STATUS_EIGHT_2026_11_19: each option carries the DB value (or the
-     * __paid / __qcpass / __qcfail choice) and shows Austin's label.
-     * V176_10_DRAWER_STATUS_2026_11_20: the six restored statuses carry
-     * their DB value as both value and label, so a ticket sitting in one
-     * of them shows that option selected - the extra-option fallback
-     * below now only fires for Awaiting Estimate, the one DB status
-     * with no dropdown option. */
+    /* V176_31_STATUS_RENAME_2026_11_23: each option carries the DB value,
+     * which now EQUALS the label — no translation, no pseudo-choices.
+     * The extra-option fallback below only fires for Support Requested
+     * and other legacy DB values with no dropdown option. */
     var cur = ticketStatusLabel(currentDb);
     var opts = TICKET_STATUSES.map(function (label) {
       var val = TICKET_STATUS_DB[label] || label;
@@ -118,7 +116,7 @@
     return opts;
   }
   /* V176_29_STATUS_EXTENSION_2026_11_23 (Austin, Nov 23, 2026, morning approval: "Approve all updates"): D2 Unrepairable and D4 Cancelled are now staged (see REPORT.md sections 5/8 — both were proposed-only in the first staging pass), and D3 hides Support Requested from the dropdown only. D1/D5/D6/D7 stay exactly as staged. The two new states are terminal: they keep no queue number and do not count as open (ticketIsClosedStatus, used by the queue numbering and the open-ticket count only). */
-  function ticketIsClosedStatus(s) { return s === 'Job Complete' || s === 'Unrepairable' || s === 'Cancelled'; }
+  function ticketIsClosedStatus(s) { return s === 'Completed' || s === 'Paid & Closed' || s === 'Unrepairable' || s === 'Cancelled'; }
   var APPLICATION_STATUSES = ['New', 'Reviewed', 'Contacted', 'Rejected'];
   var INVESTOR_STATUSES = ['New', 'Reviewed', 'Contacted', 'Closed'];
 
@@ -447,13 +445,21 @@
       reviewed: 'portal-st-reviewed', ordered: 'portal-st-reviewed',
       contacted: 'portal-st-contacted',
       /* WARRANTY_PORTAL_2026_11_03: badge colors for the warranty
-       * request statuses (Approved / Denied) and for the Rework /
-       * Warranty ticket status (calm teal — portal.css .portal-st-rework). */
+       * request statuses (Approved / Denied) and for the Warranty Claim
+       * ticket status (calm teal — portal.css .portal-st-rework). */
       approved: 'portal-st-ready', denied: 'portal-st-rejected',
       /* LEADS_2026_11_15: badge colors for the lead statuses —
        * Booked is a win, Lost is closed out. */
       booked: 'portal-st-ready', lost: 'portal-st-rejected',
       reworkwarranty: 'portal-st-rework',
+      newrequestestimate: 'portal-st-waiting', scheduled: 'portal-st-waiting',
+      enroute: 'portal-st-inprogress', indiagnostics: 'portal-st-inprogress',
+      quotesent: 'portal-st-contacted', awaitingresponse: 'portal-st-contacted',
+      partsordered: 'portal-st-waitingparts', readyforrepair: 'portal-st-waitingparts',
+      inrepair: 'portal-st-inprogress', qualitycheck: 'portal-st-reviewed',
+      qcpassed: 'portal-st-ready', qcfailed: 'portal-st-rejected',
+      awaitingpayment: 'portal-st-ready', paidclosed: 'portal-st-done',
+      warrantyclaim: 'portal-st-rework',
       cancelled: 'portal-st-cancelled', rejected: 'portal-st-rejected', closed: 'portal-st-closed',
       draft: 'portal-st-draft'
     };
@@ -805,7 +811,7 @@ function showLogin(errorMsg) {
           if (res.error || !res.data) { showScanNotFound(customerId); return; }
           activateTab('customers');
           client.from('tickets').select('id, status, updated_at')
-            .eq('customer_id', customerId).neq('status', 'Job Complete')
+            .eq('customer_id', customerId).neq('status', 'Completed').neq('status', 'Paid & Closed')
             .order('updated_at', { ascending: false }).limit(1)
             .then(function (tres) {
               var open = (!tres.error && tres.data && tres.data.length) ? tres.data[0] : null;
@@ -889,7 +895,7 @@ function showLogin(errorMsg) {
         });
         var chosen = null;
         for (var i = 0; i < matches.length; i++) {
-          if (matches[i].status !== 'Job Complete') { chosen = matches[i]; break; }
+          if (matches[i].status !== 'Completed' && matches[i].status !== 'Paid & Closed') { chosen = matches[i]; break; }
         }
         scanBehindCustomerId = null; /* a ticket scan has no guest profile behind the drawer */
         openTicket((chosen || matches[0]).id);
@@ -2658,10 +2664,10 @@ function showLogin(errorMsg) {
   }
   /* /PORTAL_SERVICE_QUEUE_2026_11_06 helpers */
 
-  /* WARRANTY_PORTAL_2026_11_03: 'Rework / Warranty' gets the calm
+  /* WARRANTY_PORTAL_2026_11_03: 'Warranty Claim' gets the calm
    * teal queue treatment (portal.css q-rework) — active work, but
-   * visually distinct from the yellow In Progress. */
-  var QCLASS = { 'Awaiting Diagnostics': 'q-red', 'Diagnostics In Progress': 'q-yellow', 'Diagnostics Completed': 'q-lime', 'Unrepairable': 'q-done', 'Awaiting Approval': 'q-yellow', 'Awaiting Estimate': 'q-red', 'Awaiting Scheduling': 'q-red', 'Support Requested': 'q-red', 'Awaiting Guest Response': 'q-yellow', 'Awaiting Parts': 'q-orange', 'Awaiting Repair': 'q-orange', 'En Route to Customer': 'q-yellow', 'Rework / Warranty': 'q-rework', 'In Progress': 'q-yellow', 'Quality Control': 'q-lime', 'Ready': 'q-green', 'Job Complete': 'q-done', 'Cancelled': 'q-done' };
+   * visually distinct from the yellow In Repair. */
+  var QCLASS = { 'New Request / Estimate': 'q-red', 'Scheduled': 'q-red', 'Support Requested': 'q-red', 'Cancelled': 'q-done', 'En Route': 'q-yellow', 'In Diagnostics': 'q-yellow', 'Unrepairable': 'q-done', 'Quote Sent': 'q-yellow', 'Awaiting Response': 'q-yellow', 'Approved': 'q-lime', 'Parts Ordered': 'q-orange', 'Ready for Repair': 'q-orange', 'In Repair': 'q-yellow', 'Quality Check': 'q-lime', 'QC Passed': 'q-green', 'QC Failed': 'q-red', 'Completed': 'q-done', 'Awaiting Payment': 'q-green', 'Paid & Closed': 'q-done', 'Warranty Claim': 'q-rework' };
   /* SCAN_TICKET_2026_11_11: the queue search narrows the rows the
    * status filter already fetched — queueAllRows is the current
    * view (whatever loadTickets last loaded) and the search only
@@ -3374,7 +3380,7 @@ function showLogin(errorMsg) {
       warranty_status: intake.warranty || null,
       job_date: jobDate || null, appointment_at: v154ApptAt(jobDate || '', intake.windowStart),
       source: 'estimate',
-      status: 'Awaiting Scheduling',
+      status: 'Approved',
       terms_accepted: true,
       dispatch_acknowledged: true,
       work_auth_accepted: true,
@@ -4486,7 +4492,7 @@ function loadTicketThread(client, ticketId) {
         window.atrCurrentTicketId = t.id;
         window.atrCurrentTicketModel = t.model || '';
         window.atrCurrentTicketSerial = t.serial_imei || '';
-        var gateBanner = t.status === 'Awaiting Parts'
+        var gateBanner = t.status === 'Parts Ordered'
           ? '<div class="portal-gate"><i class="fas fa-triangle-exclamation"></i> <strong>Parts not on hand yet.</strong> Don&rsquo;t start this repair until the part is in and scanned to the ticket.</div>'
           : '';
         var body = gateBanner +
@@ -4587,18 +4593,12 @@ function loadTicketThread(client, ticketId) {
           '<div class="portal-status-row"><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="portal-timer-btn">Start timer</button>' +
           '<span class="portal-muted portal-small" id="portal-timer-msg"></span></div>' +
           '<div id="portal-timer-list"></div>' +
-          /* V176_STATUS_EIGHT_2026_11_19: Ticket status - one dropdown with
-           * Austin's options in pipeline order (Awaiting Diagnostics,
-           * Diagnostics in progress, Diagnostics completed, Awaiting
-           * Approval, Awaiting Parts, Awaiting repair, Job completed,
-           * Guest needs to pay, Status paid, En Route, QC pass, QC fail),
-           * plus the six restored statuses
-           * (V176_10_DRAWER_STATUS_2026_11_20: Awaiting Scheduling, Awaiting
-           * guest response, In Progress, Quality Control, Rework /
-           * Warranty, Support Requested). Picking a status saves at once
-           * (after the repair-log note) - no Save button. Status paid is
-           * the __paid choice: it runs the paid flow instead of a status
-           * save. QC pass / fail map to Ready / Awaiting Repair. */
+          /* V176_31_STATUS_RENAME_2026_11_23: Ticket status - one dropdown
+           * with the 19 approved labels in flow order. Every option is a
+           * real status that saves at once (after the repair-log note) -
+           * no Save button, no pseudo-choices. Picking Paid & Closed runs
+           * the paid flow instead of opening the note box; picking
+           * Awaiting Payment arms the Square pay link on save. */
           '<div class="portal-status-row"><label for="portal-ticket-status">Ticket status</label><select id="portal-ticket-status" aria-label="Ticket status">' +
           ticketStatusOptions(t.status) + '</select>' +
           '<span class="portal-muted portal-small" id="portal-ticket-status-msg"></span></div>' +
@@ -4618,7 +4618,7 @@ function loadTicketThread(client, ticketId) {
            * for its note in the box above, and that note IS the repair-log
            * entry. */
           '<p class="portal-muted portal-small">Repair log — internal tech documentation for this repair, not shown to the guest.</p>' +
-          (t.status === 'In Progress' ? '<p class="portal-muted"><strong>This repair is in progress. Please log what is happening here.</strong></p>' : '') +
+          (t.status === 'In Repair' ? '<p class="portal-muted"><strong>This repair is in progress. Please log what is happening here.</strong></p>' : '') +
           '<div class="portal-thread" id="portal-repair-log-list"><p class="portal-muted">Loading repair log&hellip;</p></div>' +
           '<div id="portal-repair-log-photos"></div>' +
           '<div class="p2-actions"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="portal-repair-log-photo-btn"><i class="fas fa-camera"></i> Attach a photo</button>' +
@@ -5004,12 +5004,12 @@ function loadTicketThread(client, ticketId) {
             if (res2.error) { if (msg) msg.textContent = 'Couldn’t save — try again.'; return; }
             if (msg) msg.textContent = 'Saved.';
             t.status = next; /* V176_STATUS_REWORK_2026_11_19: the closure's ticket keeps the saved status, so a later cancel reverts to it. */
-            /* V175_COUNTY_TAX_2026_11_19: backstop - the drawer open already syncs the tax row, and a status change never changes the charges, but this makes sure the row exists before Job Complete opens the pay gate even if the drawer was opened before this build. Fire-and-forget; the next drawer open re-renders. */
+            /* V175_COUNTY_TAX_2026_11_19: backstop - the drawer open already syncs the tax row, and a status change never changes the charges, but this makes sure the row exists before Completed opens the pay gate even if the drawer was opened before this build. Fire-and-forget; the next drawer open re-renders. */
             v175SyncTaxRow(client, t, t._charges || [], function (fresh) { try { t._charges = fresh; } catch (e) {} });
             /* V174_STATUS_NOTE_2026_11_18: the note is filed on the repair log, so the reason for the status change stays with the ticket. Fire-and-forget — a failed note never fails the status change itself. */
             client.from('ticket_notes').insert({ ticket_id: t.id, author: (state.profile && state.profile.name) || null, note: 'Status → ' + next + ': ' + noteText }).then(function () { loadRepairLog(client, t.id); }).catch(function () {});
             notifyStatusEmail(client, t, next); /* STATUS_UPDATE_EMAILS_2026_11_06: automatic customer status email (no-reply), fire-and-forget */
-            if (next === 'Job Complete') {
+            if (next === 'Completed') {
               /* PORTAL_POINTS_EARN_2026_10_30: credit the customer's
                * loyalty points for this job (once per ticket — see
                * awardPointsOnComplete) and note it next to the save
@@ -5019,8 +5019,8 @@ function loadTicketThread(client, ticketId) {
                 if (m2) m2.textContent = 'Saved. +' + pts + ' pts to ' + pointsNameLabel(t) + '.';
               });
             }
-            if (next === 'Awaiting Parts') { showTrackingPopup(client, t); }
-            if (next === 'Ready' && trim(t.customer_phone)) {
+            if (next === 'Parts Ordered') { showTrackingPopup(client, t); }
+            if (next === 'QC Passed' && trim(t.customer_phone)) {
               var digits = String(t.customer_phone).replace(/\D/g, '');
               if (digits.length === 10) digits = '1' + digits;
               var first = trim(t.customer_name || '').split(' ')[0] || 'there';
@@ -5032,7 +5032,7 @@ function loadTicketThread(client, ticketId) {
             state.loaded.tickets = false;
             loadTickets(true);
             v174CloseStatusNote();
-            /* V176_STATUS_EIGHT_2026_11_19: no re-open after Job Complete any
+            /* V176_STATUS_EIGHT_2026_11_19: no re-open after Completed any
                more - the dropdown holds every status (QC pass/fail included),
                so there is nothing to re-render for. */
           }).catch(function () { if (msg) msg.textContent = 'Couldn’t save — try again.'; });
@@ -5060,18 +5060,18 @@ function loadTicketThread(client, ticketId) {
             if (lb) { lb.innerHTML = '<p class="portal-card-meta"><a href="' + esc(url) + '" target="_blank" rel="noopener">' + esc(url) + '</a></p>'; lb.hidden = false; }
           }).catch(function () { if (msg) msg.textContent = 'Saved, but the payment link could not be made — try Charge / Check out in Charges and Payment.'; });
         }
-        /* V176_STATUS_EIGHT_2026_11_19 (Austin, Nov 19, 2026): picking a
+        /* V176_31_STATUS_RENAME_2026_11_23 (Austin, Nov 19, 2026): picking a
            status auto-saves after the repair-log note - there is no Save
-           status button any more. "Status paid" (__paid) is not a status:
-           it runs the paid flow at once (balance must be $0, receipt
-           generated) and never opens the note box. "Customer needs to pay"
-           sends the guest the Square pay link on save (the old button's
-           job); QC pass moves to Ready with no pay link. */
+           status button any more. "Paid & Closed" is a real status: it
+           runs the paid flow at once (balance must be $0, receipt
+           generated) and never opens the note box. "Awaiting Payment"
+           arms the Square pay link on save (the old button's job);
+           QC Passed sends the ready text with no pay link. */
         var v176StatusSel = $('portal-ticket-status');
         if (v176StatusSel) v176StatusSel.addEventListener('change', function () {
           var val = v176StatusSel.value;
-          if (val === '__paid') { v174RunStatusPaid(); return; }
-          if (val === 'Ready') v174PayLinkPending = true;
+          if (val === 'Paid & Closed') { v174RunStatusPaid(); return; }
+          if (val === 'Awaiting Payment') v174PayLinkPending = true;
           v174OpenStatusNote();
         });
         var v174NoteSubmit = $('portal-status-note-submit');
@@ -5080,12 +5080,10 @@ function loadTicketThread(client, ticketId) {
           var nmsg = $('portal-status-note-msg');
           var noteText = input ? trim(input.value) : '';
           if (!noteText) { if (nmsg) nmsg.textContent = 'Add a brief description first — no status change without a note.'; return; }
-          /* V176_STATUS_EIGHT_2026_11_19: the dropdown carries choices, not DB
-             statuses - translate before saving. */
+          /* V176_31_STATUS_RENAME_2026_11_23: the dropdown carries DB values
+             directly — no translation before saving. */
           var rawChoice = $('portal-ticket-status').value;
-          if (rawChoice === '__paid') { v174RunStatusPaid(); return; }
-          if (rawChoice === '__qcpass') rawChoice = 'Ready';
-          if (rawChoice === '__qcfail') rawChoice = 'Awaiting Repair';
+          if (rawChoice === 'Paid & Closed') { v174RunStatusPaid(); return; }
           v174SaveTicketStatus(rawChoice, noteText);
         });
         var v174NoteCancel = $('portal-status-note-cancel');
@@ -5094,34 +5092,43 @@ function loadTicketThread(client, ticketId) {
            row (Pre-inspection, Need to order parts, Job completed, Customer
            needs to pay, Status paid, En Route) is GONE - the dropdown holds
            every status. Its wiring is deleted with it. */
-        /* V176_STATUS_EIGHT_2026_11_19: the QC pass/fail row is GONE - QC pass
-           and QC fail are choices in the Ticket status dropdown itself
-           (__qcpass / __qcfail), so there is no [data-v174-qc] wiring any
-           more. The note-submit handler translates them to Ready /
-           Awaiting Repair. */
-        /* V176_STATUS_EIGHT_2026_11_19: Status paid is the __paid choice in
-           the Ticket status dropdown now - the paid flow below runs from the
-           change listener (and from the note-submit guard), not from a
-           button. The balance must already be $0: the payment itself is
-           recorded in Charges and Payment (cash / card / Square app /
-           Square link), where the method is written down. A balance still
-           due is refused here, plainly. The dropdown always goes back to
-           the ticket's saved status afterwards - Status paid is not a
-           status, so it never sticks as the selection. */
+        /* V176_31_STATUS_RENAME_2026_11_23: the QC pass/fail row is GONE - QC
+           Passed and QC Failed are real statuses in the Ticket status
+           dropdown itself, so there is no [data-v174-qc] wiring any
+           more. Picking QC Failed saves it directly; it sits until staff
+           move the ticket back to In Repair. */
+        /* V176_31_STATUS_RENAME_2026_11_23: Paid & Closed is a real status
+           now - the paid flow below runs from the change listener (and
+           from the note-submit guard), not from a button. The balance
+           must already be $0: the payment itself is recorded in Charges
+           and Payment (cash / card / Square app / Square link), where
+           the method is written down. A balance still due is refused
+           here, plainly. On success the flow saves the Paid & Closed
+           status, files the repair-log note, and fires the status
+           email, exactly like a drawer status save. */
         function v174RunStatusPaid() {
           var msg = $('portal-ticket-status-msg');
           var sel = $('portal-ticket-status');
           var tot = chargeTotals(t._charges || []);
           if (tot.balance > 0) {
-            if (msg) msg.textContent = 'There is still ' + fmtMoney(tot.balance) + ' due — record the payment in Charges and Payment first, then pick Status paid.';
+            if (msg) msg.textContent = 'There is still ' + fmtMoney(tot.balance) + ' due — record the payment in Charges and Payment first, then pick Paid & Closed.';
             if (sel) sel.value = t.status;
             return;
           }
           if (msg) msg.textContent = 'Generating receipt…';
           generateReceipt(client, t, function (ok) {
             if (!ok) { if (msg) msg.textContent = 'Couldn’t generate the receipt — try again.'; return; }
-            if (msg) msg.textContent = 'Paid — receipt ready.';
-            if (sel) sel.value = t.status;
+            /* V176_31_STATUS_RENAME_2026_11_23: Paid & Closed is a real status — the paid flow saves it once the receipt exists, files the repair-log note, and fires the status email, exactly like a drawer status save. */
+            client.from('tickets').update({ status: 'Paid & Closed' }).eq('id', t.id).then(function (res2) {
+              if (res2.error) { if (msg) msg.textContent = 'Paid — receipt ready, but the status could not save — try again.'; return; }
+              t.status = 'Paid & Closed';
+              client.from('ticket_notes').insert({ ticket_id: t.id, author: (state.profile && state.profile.name) || null, note: 'Status → Paid & Closed: paid in full, receipt generated.' }).then(function () { loadRepairLog(client, t.id); }).catch(function () {});
+              notifyStatusEmail(client, t, 'Paid & Closed');
+              if (msg) msg.textContent = 'Paid — receipt ready.';
+              if (sel) sel.value = t.status;
+              state.loaded.tickets = false;
+              loadTickets(true);
+            }).catch(function () { if (msg) msg.textContent = 'Paid — receipt ready, but the status could not save — try again.'; });
             client.from('ticket_documents').select('id, storage_path, file_name').eq('ticket_id', t.id).eq('doc_type', 'receipt').order('created_at', { ascending: false }).limit(1).then(function (q) {
               if (!q.error && q.data && q.data.length) viewStoredDocument(client, q.data[0].storage_path, q.data[0].file_name, function () {});
             }).catch(function () {});
@@ -5291,13 +5298,13 @@ function loadTicketThread(client, ticketId) {
     return s;
   }
   function atrTaxClosedPaid(t, rows) {
-    /* V176_TAX_GUARD_2026_11_19 (Austin, Nov 19, 2026): Job Complete + paid
+    /* V176_TAX_GUARD_2026_11_19 (Austin, Nov 19, 2026): Completed + paid
        in full means the figures are final - no tax row is ever added to
        such a ticket. Future tickets only: Daniel's closed ticket stays
        $69.99 and is never touched. A tax row synced while the ticket was
        open is part of the paid record and stays; only a NEW row is
        stopped. */
-    if (!t || t.status !== 'Job Complete') return false;
+    if (!t || t.status !== 'Completed') return false;
     /* Money is compared in whole cents: 20 + 49.99 - 69.99 is 1.4e-14 in
        float, not 0, so an unrounded compare would never fire. */
     return Math.round(chargeTotals(rows || []).balance * 100) / 100 <= 0;
@@ -5392,7 +5399,7 @@ function loadTicketThread(client, ticketId) {
    * Called from loadCharges after every charges read (drawer open and
    * every charge change, which funnels back through loadCharges) and
    * as a backstop after a status save, so the one tax row exists
-   * before Job Complete opens the pay gate. Exactly one row: any
+   * before Completed opens the pay gate. Exactly one row: any
    * stale tax rows are deleted first, then the one right row is
    * inserted. When the computed tax is $0 (no taxable charges) any
    * existing tax row is removed. done(freshRows) always fires
@@ -5404,7 +5411,7 @@ function loadTicketThread(client, ticketId) {
   var v175TaxSyncNote = '';
   function v175SyncTaxRow(client, t, rows, done) {
     function finish(fresh) { try { done(fresh || rows); } catch (e) {} }
-    /* V176_TAX_GUARD_2026_11_19: Job Complete + paid in full - the figures are final. Skip the sync entirely: no tax row is added, and a row synced while the ticket was open is left exactly as it is (it is part of the paid record). */
+    /* V176_TAX_GUARD_2026_11_19: Completed + paid in full - the figures are final. Skip the sync entirely: no tax row is added, and a row synced while the ticket was open is left exactly as it is (it is part of the paid record). */
     if (atrTaxClosedPaid(t, rows)) { v175TaxSyncNote = ''; finish(rows); return; }
     var info = null;
     try { info = atrTaxCompute(rows, t.service_address); } catch (e) { info = null; }
@@ -5574,7 +5581,7 @@ function loadTicketThread(client, ticketId) {
   }
 
   /* PORTAL_POINTS_EARN_2026_10_30 + ATRONE_POINTS_TIERS_2026_11_06:
-   * award loyalty points when a ticket reaches Job Complete. Amount:
+   * award loyalty points when a ticket reaches Completed. Amount:
    * floor(ticket total) x the customer's tier rate (pointsRateForTier:
    * 1 Free/none, 5 Individual, 10 Family/Business, 15 Business Pro), where
    * V176_14_POINTS_2026_11_20: rates corrected to the settled Nov 20
@@ -6222,7 +6229,7 @@ function loadTicketThread(client, ticketId) {
     }).catch(function () { t._invById = {}; renderParts(t, t._parts); });
   }
 
-  /* Awaiting Parts popup: when a ticket is set to Awaiting Parts, ask for the
+  /* Parts Ordered popup: when a ticket is set to Parts Ordered, ask for the
    * newest part's carrier / tracking number / order number right then.
    * N.A. closes it saving nothing — tracking can be added later from the
    * part's Tracking button. Never blocks the status change itself. */
@@ -7900,12 +7907,12 @@ function loadTicketThread(client, ticketId) {
     var card = '<div style="background:#FFFFFF;color:#2C231A;border-radius:14px;max-width:430px;width:100%;padding:1.25rem;box-shadow:0 18px 50px rgba(0,0,0,0.35);">' +
       '<h3 style="margin:0 0 0.5rem;">Part tracking</h3>';
     if (part) {
-      card += '<p class="portal-muted portal-small" style="margin:0 0 0.75rem;">This ticket is now Awaiting Parts. Add the shipping details for <strong>' + esc(part.description) + '</strong> and the guest can follow the package. No tracking yet? Tap N.A. and add it later from the part&rsquo;s Tracking button.</p>' +
+      card += '<p class="portal-muted portal-small" style="margin:0 0 0.75rem;">This ticket is now Parts Ordered. Add the shipping details for <strong>' + esc(part.description) + '</strong> and the guest can follow the package. No tracking yet? Tap N.A. and add it later from the part&rsquo;s Tracking button.</p>' +
         '<div class="portal-field"><label for="p2-pop-carrier">Carrier</label><select id="p2-pop-carrier">' + carrierOptions(part.carrier) + '</select></div>' +
         '<div class="portal-field"><label for="p2-pop-number">Tracking number</label><input type="text" id="p2-pop-number" maxlength="80" value="' + esc(part.tracking_number || '') + '" /></div>' +
         '<div class="portal-field"><label for="p2-pop-order">Order number</label><input type="text" id="p2-pop-order" maxlength="80" value="' + esc(part.order_number || '') + '" /></div>';
     } else {
-      card += '<p class="portal-muted portal-small" style="margin:0 0 0.75rem;">This ticket is now Awaiting Parts, but no part has been added to it yet. Add the part in the Parts section, then use its Tracking button to enter the carrier, tracking number, and order number when you have them.</p>';
+      card += '<p class="portal-muted portal-small" style="margin:0 0 0.75rem;">This ticket is now Parts Ordered, but no part has been added to it yet. Add the part in the Parts section, then use its Tracking button to enter the carrier, tracking number, and order number when you have them.</p>';
     }
     card += '<div class="p2-actions" style="margin-top:0.75rem;">' +
       (part ? '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="p2-pop-save">Save tracking</button> ' : '') +
@@ -8615,7 +8622,7 @@ function loadTicketThread(client, ticketId) {
    * ticket changed, quote updated): the automatic guest email for
    * ticket creation and for generated estimates/invoices, sent by
    * the ticket-email Edge Function (Zoho SMTP, From no-reply@,
-   * Reply-To service@ — warranty@ for Rework / Warranty). The body
+   * Reply-To service@ — warranty@ for Warranty Claim). The body
    * carries ONLY the ticket id and the kind — the function resolves
    * the guest, the charges and the filed document server-side. Same
    * fetch shape as notifyStatusEmail: the caller's own session JWT
@@ -10780,7 +10787,7 @@ function loadTicketThread(client, ticketId) {
    * The card leads with the request's ticket_ref as "Original
    * ticket: ..." — the ticket number from the customer's receipt.
    * That reference is how a request connects to the rework: staff
-   * open that ticket, set its status to Rework / Warranty, and press
+   * open that ticket, set its status to Warranty Claim, and press
    * Warranty exemption in its Charges.
    *
    * Status values are the portal's canonical set below. The stored
@@ -10798,7 +10805,7 @@ function loadTicketThread(client, ticketId) {
    * the ticket id, uppercased (see the receipt builders) — links the
    * request to that ticket and its customer (the customer_id /
    * ticket_id columns from warranty-requests-linking.sql), marks the
-   * request Approved, flips the ticket to 'Rework / Warranty', and
+   * request Approved, flips the ticket to 'Warranty Claim', and
    * applies the same warranty_exempt field update the drawer's
    * Warranty exemption button performs (wireWarrantyExemptButton —
    * that handler is bound to the open drawer ticket, so it cannot be
@@ -11143,10 +11150,10 @@ function loadTicketThread(client, ticketId) {
       row.customer_id = ticket.customer_id || null;
       row.ticket_id = ticket.id;
       row.status = 'Approved';
-      client.from('tickets').update({ status: 'Rework / Warranty', warranty_exempt: true }).eq('id', ticket.id).then(function (tres) {
+      client.from('tickets').update({ status: 'Warranty Claim', warranty_exempt: true }).eq('id', ticket.id).then(function (tres) {
         if (tres.error) {
           renderWarrantyRequests(warrantyRowsCache);
-          warrantySay(row.id, 'Claim linked, but the ticket itself could not be updated — open it and set Rework / Warranty plus the Warranty exemption.');
+          warrantySay(row.id, 'Claim linked, but the ticket itself could not be updated — open it and set Warranty Claim plus the Warranty exemption.');
           return;
         }
         warrantyConfirm = { id: row.id, text: 'Rework started on ticket #' + shortCode(ticket) + ' — guest owes $0.' };
@@ -11155,7 +11162,7 @@ function loadTicketThread(client, ticketId) {
         setCount('portal-count-warranty', warrantyRowsCache.filter(function (r) { return warrantyStatusOf(r) === 'New'; }).length);
       }).catch(function () {
         renderWarrantyRequests(warrantyRowsCache);
-        warrantySay(row.id, 'Claim linked, but the ticket itself could not be updated — open it and set Rework / Warranty plus the Warranty exemption.');
+        warrantySay(row.id, 'Claim linked, but the ticket itself could not be updated — open it and set Warranty Claim plus the Warranty exemption.');
       });
     }).catch(function () { warrantySay(row.id, 'Linking needs the database step first — nothing was changed.'); });
   }
@@ -11294,9 +11301,9 @@ function loadTicketThread(client, ticketId) {
       };
       client.from('warranty_requests').insert(row).then(function (res) {
         if (res.error) { say('Couldn’t save the claim — if the linking columns are not live yet, the database step has to run first.'); return; }
-        client.from('tickets').update({ status: 'Rework / Warranty', warranty_exempt: true }).eq('id', ticket.id).then(function (tres) {
+        client.from('tickets').update({ status: 'Warranty Claim', warranty_exempt: true }).eq('id', ticket.id).then(function (tres) {
           if (tres.error) {
-            say('Claim saved, but the ticket could not be flipped — open ticket #' + shortCode(ticket) + ' and set Rework / Warranty plus the Warranty exemption.');
+            say('Claim saved, but the ticket could not be flipped — open ticket #' + shortCode(ticket) + ' and set Warranty Claim plus the Warranty exemption.');
             state.loaded.warranty = false;
             loadWarrantyRequests(true);
             return;
@@ -11305,7 +11312,7 @@ function loadTicketThread(client, ticketId) {
           state.loaded.warranty = false;
           loadWarrantyRequests(true);
         }).catch(function () {
-          say('Claim saved, but the ticket could not be flipped — open it and set Rework / Warranty plus the Warranty exemption.');
+          say('Claim saved, but the ticket could not be flipped — open it and set Warranty Claim plus the Warranty exemption.');
         });
       }).catch(function () { say('Couldn’t save the claim — try again.'); });
     });
@@ -12669,7 +12676,7 @@ function loadTicketThread(client, ticketId) {
       askedModel: false,
       number: 'PRACTICE-' + (1000 + Math.floor(Math.random() * 9000)),
       fields: { name: '', email: '', phone: '', address: '', type: 'Laptop', brand: '', model: '', need: '' },
-      status: 'Awaiting Diagnostics',  /* the real repair check-in starting status */
+      status: 'In Diagnostics',  /* the real repair check-in starting status */
       statusSel: '',
       statusMoves: 0,
       notes: [],                 /* {text, at} */
@@ -14583,7 +14590,7 @@ function loadTicketThread(client, ticketId) {
     box.innerHTML = '<p class="portal-muted">Loading tickets…</p>';
     withClient(function (client) {
       if (!client) { box.innerHTML = '<p class="portal-error">Could not reach the portal. Try Refresh.</p>'; return; }
-      client.from('tickets').select('id, customer_name, status, created_at').neq('status', 'Job Complete').order('created_at', { ascending: false }).limit(200)
+      client.from('tickets').select('id, customer_name, status, created_at').neq('status', 'Completed').neq('status', 'Paid & Closed').order('created_at', { ascending: false }).limit(200)
         .then(function (res) {
           var tickets = res.error ? [] : (res.data || []);
           var opts = '<option value="">Pick a ticket…</option>' + tickets.map(function (tk) {
@@ -19582,7 +19589,7 @@ function loadTicketThread(client, ticketId) {
     }
     withClient(function (client) {
       if (!client) { $('inv-attach-results').innerHTML = '<p class="portal-error">Couldn&rsquo;t reach the database.</p>'; return; }
-      var q = client.from('tickets').select('*').neq('status', 'Job Complete');
+      var q = client.from('tickets').select('*').neq('status', 'Completed').neq('status', 'Paid & Closed');
       q = q.order('job_date', { ascending: false });
       q = q.order('created_at', { ascending: false }).limit(200);
       q.then(function (res) {
@@ -21131,7 +21138,7 @@ function loadTicketThread(client, ticketId) {
       if (jobRows === null || jobDateRows === null) return;
       var seenJ = {}, merged = [];
       jobRows.concat(jobDateRows).forEach(function (t) {
-        if (t.status === 'Job Complete' || seenJ[t.id]) return;
+        if (t.status === 'Completed' || t.status === 'Paid & Closed' || seenJ[t.id]) return;
         seenJ[t.id] = 1;
         merged.push(t);
       });
@@ -22687,7 +22694,7 @@ function loadTicketThread(client, ticketId) {
         if (res.error) return;
         var opts = '';
         (res.data || []).forEach(function (t) {
-          if (!trim(t.service_address) || t.status === 'Job Complete') return;
+          if (!trim(t.service_address) || t.status === 'Completed' || t.status === 'Paid & Closed') return;
           opts += '<option value="' + esc(t.service_address) + '">Job — ' + esc(t.service_address) + ' (' + esc(t.status || '') + ')</option>';
         });
         pick.innerHTML = html + opts;
@@ -22971,8 +22978,8 @@ function loadTicketThread(client, ticketId) {
    *   entering a job fence → the open Driving entry is ended and
    *                        its miles computed by routing between
    *                        the entry's endpoints; an offer (never
-   *                        silent) to flip the ticket In Progress —
-   *                        arrival means In Progress in this portal,
+   *                        silent) to flip the ticket In Repair —
+   *                        arrival means In Repair in this portal,
    *                        and the fence asks for the same tap the
    *                        tech would make by hand
    *   leaving a job fence → offer to start the return trip
@@ -23244,7 +23251,7 @@ function loadTicketThread(client, ticketId) {
     } else if (ev === 'enter' && f.kind === 'ticket') {
       geoEndOpenTrip(f);
       if (f.ticket_id) {
-        geoShowPrompt('You arrived at ' + f.label + '. Mark the job In Progress?', 'Mark In Progress', function () { geoMarkInProgress(f); });
+        geoShowPrompt('You arrived at ' + f.label + '. Mark the job In Repair?', 'Mark In Repair', function () { geoMarkInProgress(f); });
       } else {
         geoShowPrompt('You arrived at ' + f.label + '.', null, null);
       }
@@ -23316,12 +23323,12 @@ function loadTicketThread(client, ticketId) {
 
   function geoMarkInProgress(f) {
     if (!geoClientRef || !f.ticket_id) return;
-    geoClientRef.from('tickets').update({ status: 'In Progress' }).eq('id', f.ticket_id)
+    geoClientRef.from('tickets').update({ status: 'In Repair' }).eq('id', f.ticket_id)
       .then(function (res) {
-        if (res.error) { geoShowPrompt('Could not mark the job In Progress — open the ticket and set it there.', null, null); return; }
-        geoShowPrompt('Job marked In Progress. Welcome to ' + f.label + '.', null, null);
+        if (res.error) { geoShowPrompt('Could not mark the job In Repair — open the ticket and set it there.', null, null); return; }
+        geoShowPrompt('Job marked In Repair. Welcome to ' + f.label + '.', null, null);
       })
-      .catch(function () { geoShowPrompt('Could not mark the job In Progress — open the ticket and set it there.', null, null); });
+      .catch(function () { geoShowPrompt('Could not mark the job In Repair — open the ticket and set it there.', null, null); });
   }
 
   /* Auto-create a fence for every En Route ticket that lacks one,
@@ -23329,7 +23336,7 @@ function loadTicketThread(client, ticketId) {
    * idempotent, and geocodes at the throttled Nominatim pace. */
   function geoSyncTicketFences(client) {
     if (!client || !geoFencesKnown) return;
-    client.from('tickets').select('id, status, service_address').eq('status', 'En Route to Customer').limit(50)
+    client.from('tickets').select('id, status, service_address').eq('status', 'En Route').limit(50)
       .then(function (res) {
         if (res.error) return;
         (res.data || []).forEach(function (t) {

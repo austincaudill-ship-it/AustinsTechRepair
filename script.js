@@ -3922,19 +3922,30 @@
   var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
   var SESSION_KEY = 'atr-account';
 
-  var STATUSES = ['Awaiting Estimate', 'Awaiting Scheduling', 'Awaiting Diagnostics', 'Awaiting Customer Response', 'Awaiting Guest Response', 'Awaiting Parts', 'En Route to Customer', 'In Progress', 'Quality Control', 'Ready', 'Job Complete'];
+  var STATUSES = ['New Request / Estimate', 'Scheduled', 'Support Requested', 'Cancelled', 'En Route', 'In Diagnostics', 'Unrepairable', 'Quote Sent', 'Awaiting Response', 'Approved', 'Parts Ordered', 'Ready for Repair', 'In Repair', 'Quality Check', 'QC Passed', 'QC Failed', 'Completed', 'Awaiting Payment', 'Paid & Closed', 'Warranty Claim'];
   var STATUS_CLASS = {
-    'Awaiting Diagnostics': 'acct-st-waiting',
-    'Awaiting Estimate': 'acct-st-waiting',
-    'Awaiting Scheduling': 'acct-st-waiting',
+    'New Request / Estimate': 'acct-st-waiting',
+    'Scheduled': 'acct-st-waiting',
+    'Support Requested': 'acct-st-waiting',
+    'Cancelled': 'acct-st-done',
+    'En Route': 'acct-st-progress',
+    'In Diagnostics': 'acct-st-progress',
+    'Unrepairable': 'acct-st-done',
+    'Quote Sent': 'acct-st-progress',
+    'Awaiting Response': 'acct-st-progress',
+    'Approved': 'acct-st-ready',
+    'Parts Ordered': 'acct-st-parts',
+    'Ready for Repair': 'acct-st-parts',
+    'In Repair': 'acct-st-progress',
+    'Quality Check': 'acct-st-progress',
+    'QC Passed': 'acct-st-ready',
+    'QC Failed': 'acct-st-waiting',
+    'Completed': 'acct-st-done',
+    'Awaiting Payment': 'acct-st-ready',
+    'Paid & Closed': 'acct-st-done',
+    'Warranty Claim': 'acct-st-progress',
     'Awaiting Customer Response': 'acct-st-progress',
-    'Awaiting Guest Response': 'acct-st-progress',
-    'Awaiting Parts': 'acct-st-parts',
-    'En Route to Customer': 'acct-st-progress',
-    'In Progress': 'acct-st-progress',
-    'Quality Control': 'acct-st-progress',
-    'Ready': 'acct-st-ready',
-    'Job Complete': 'acct-st-done'
+    'Awaiting Estimate': 'acct-st-waiting'
   };
 
   document.addEventListener('DOMContentLoaded', function () {
@@ -4088,7 +4099,7 @@
               var old = document.getElementById('acct-tech');
               if (old) old.remove();
               if (!tech) return;
-              var live = (t.status === 'En Route to Customer' || t.status === 'In Progress');
+              var live = (t.status === 'En Route' || t.status === 'In Repair');
               var pic = tech.tech_avatar_url
                 ? '<img class="acct-tech-pic" src="' + esc(tech.tech_avatar_url) + '" alt="" loading="lazy">'
                 : '<span class="acct-tech-pic acct-tech-disc">' + esc(initialsOf(tech.tech_name)) + '</span>';
@@ -4654,7 +4665,7 @@ if ("serviceWorker" in navigator) {
 
 /* ==================== POINTS SPENDING ====================
    SITE_POINTS_SPEND_2026_10_30. Earning already exists (the portal
-   credits the rewards table when a ticket reaches Job Complete). This
+   credits the rewards table when a ticket reaches Completed). This
    module is the spending half, and window.atrPoints is the money API
    every surface shares:
      getSession()          the localStorage 'atr-account' mirror, or null
@@ -7393,7 +7404,7 @@ document.addEventListener('click', function (e) {
   var SUPABASE_URL = 'https://lyujxpuicarblpkdzuuc.supabase.co';
   var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
   var DOC_LABELS = { agreement: 'Repair Authorization and Service Agreement', estimate: 'Estimate', invoice: 'Invoice', terms: 'Terms & Conditions', warranty: '1-Year Limited Warranty' };
-  var COMPLETE = { 'Job Complete': true };
+  var COMPLETE = { 'Completed': true, 'Paid & Closed': true };
 
   var sb = null;
   try {
