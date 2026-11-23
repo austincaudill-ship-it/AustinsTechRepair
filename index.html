@@ -6253,6 +6253,7 @@
     'Awaiting Diagnostics': { label: 'Awaiting diagnostics', note: "We'll diagnose it and text you to confirm your appointment window." },
     'Awaiting Estimate': { label: 'Awaiting estimate', note: 'We are working out your price and will text it to you.' },
     'Awaiting Customer Response': { label: 'Awaiting your response', note: 'We sent you an estimate. Reply to it and we will get your repair moving.' },
+    'Awaiting Guest Response': { label: 'Awaiting your response', note: 'We sent you an estimate. Reply to it and we will get your repair moving.' },
     'Awaiting Parts': { label: 'Awaiting parts', note: 'Your part is ordered and on its way to us. We\'ll text you when it\'s in.' },
     'En Route to Customer': { label: 'On the way to you', note: 'Your technician is on the way to your home or office.' },
     'In Progress': { label: 'In progress', note: 'Your repair is underway at your place. We\'ll update this page and text you as it moves.' },
@@ -7865,7 +7866,7 @@
         var taxView = atrTaxEffective(rows, t.service_address, atrTaxClosedPaid(t, rows)); /* V176_TAX_GUARD_2026_11_19 */
         var subtotal = rowsSubtotal + taxView.amount;
         var balance = subtotal - deposits, html = '';
-        if (t.status === 'Awaiting Customer Response') {
+        if (t.status === 'Awaiting Customer Response' || t.status === 'Awaiting Guest Response') {
           html += '<div class="acct-actions-row"><p class="acct-muted" style="text-align:left;margin:0 0 .5rem;">Your estimate is ready — ' + escX(fmtMoneyX(subtotal)) + '. Accept it and we will get your repair moving.</p>' +
             '<button type="button" class="btn btn-primary" id="atr-accept-estimate">Accept estimate</button> <span class="acct-muted" id="atr-accept-note"></span></div>';
         }
@@ -8008,6 +8009,7 @@
       case 'Awaiting Estimate': doneTo(0); S[1] = 'current'; break;
       case 'Awaiting Diagnostics': doneTo(0); S[1] = 'current'; break;
       case 'Awaiting Customer Response': doneTo(1); S[2] = 'next'; break;
+      case 'Awaiting Guest Response': doneTo(1); S[2] = 'next'; break;
       case 'Awaiting Parts': doneTo(2); S[3] = 'current'; break;
       case 'Awaiting Repair': doneTo(3); S[4] = 'next'; break;
       case 'En Route to Customer': doneTo(3); S[4] = 'current'; break;

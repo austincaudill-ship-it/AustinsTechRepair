@@ -58,6 +58,17 @@
     return isBusiness ? POINTS_FREE_RATE_BUSINESS : POINTS_PER_DOLLAR;
   }
 
+  /* V176_29_STATUS_REWORK_2026_11_23 (Austin, Nov 23, 2026): the
+   * Ticket status dropdown now speaks the "Awaiting ..." family —
+   * Awaiting Diagnostics, Diagnostics in progress, Diagnostics
+   * completed, Awaiting Approval, Awaiting Parts — with every label
+   * saying GUEST, never customer. Three new DB values below, three
+   * label-only renames, and one DB rename (Awaiting Customer Response
+   * becomes Awaiting Guest Response); the staged widening+migration
+   * SQL in the build REPORT must run before or with this set's
+   * publish, or the constraint will reject the new values and old
+   * rows will keep the old wording. Nothing was removed; Support
+   * Requested stays until Austin rules on its fate. */
   /* Ticket statuses: EXACT values from the tickets.status check
    * constraint (supabase-phase2-tickets.sql). Do not add values here
    * without updating the database constraint first.
@@ -83,11 +94,11 @@
      * Progress, Quality Control, Rework / Warranty, Support Requested.
      * Awaiting Estimate stays out: it is an estimate-only state, never a
      * manual ticket pick. */
-  var TICKET_STATUSES = ['Pre-inspection', 'Need to order parts', 'Job completed', 'Customer needs to pay', 'Status paid', 'En Route', 'QC pass', 'QC fail', 'Awaiting Scheduling', 'Awaiting Customer Response', 'In Progress', 'Quality Control', 'Rework / Warranty', 'Support Requested'];
-  var TICKET_DB_STATUSES = ['Awaiting Estimate', 'Awaiting Scheduling', 'Support Requested', 'Awaiting Diagnostics', 'Awaiting Customer Response', 'Awaiting Parts', 'Awaiting Repair', 'En Route to Customer', 'Rework / Warranty', 'In Progress', 'Quality Control', 'Ready', 'Job Complete'];
-  var TICKET_STATUS_DB = { 'Pre-inspection': 'Awaiting Diagnostics', 'Need to order parts': 'Awaiting Parts', 'Job completed': 'Job Complete', 'Customer needs to pay': 'Ready', 'Status paid': '__paid', 'En Route': 'En Route to Customer', 'QC pass': '__qcpass', 'QC fail': '__qcfail', 'Awaiting Scheduling': 'Awaiting Scheduling', 'Awaiting Customer Response': 'Awaiting Customer Response', 'In Progress': 'In Progress', 'Quality Control': 'Quality Control', 'Rework / Warranty': 'Rework / Warranty', 'Support Requested': 'Support Requested' };
+  var TICKET_STATUSES = ['Awaiting Diagnostics', 'Diagnostics in progress', 'Diagnostics completed', 'Unrepairable', 'Awaiting Approval', 'Awaiting Parts', 'Awaiting repair', 'Job completed', 'Guest needs to pay', 'Status paid', 'En Route', 'QC pass', 'QC fail', 'Awaiting Scheduling', 'Awaiting guest response', 'In Progress', 'Quality Control', 'Rework / Warranty', 'Cancelled'];
+  var TICKET_DB_STATUSES = ['Awaiting Estimate', 'Awaiting Scheduling', 'Support Requested', 'Awaiting Diagnostics', 'Diagnostics In Progress', 'Diagnostics Completed', 'Unrepairable', 'Awaiting Approval', 'Awaiting Guest Response', 'Awaiting Parts', 'Awaiting Repair', 'En Route to Customer', 'Rework / Warranty', 'In Progress', 'Quality Control', 'Ready', 'Job Complete', 'Cancelled'];
+  var TICKET_STATUS_DB = { 'Awaiting Diagnostics': 'Awaiting Diagnostics', 'Diagnostics in progress': 'Diagnostics In Progress', 'Diagnostics completed': 'Diagnostics Completed', 'Unrepairable': 'Unrepairable', 'Awaiting Approval': 'Awaiting Approval', 'Awaiting Parts': 'Awaiting Parts', 'Awaiting repair': 'Awaiting Repair', 'Job completed': 'Job Complete', 'Guest needs to pay': 'Ready', 'Status paid': '__paid', 'En Route': 'En Route to Customer', 'QC pass': '__qcpass', 'QC fail': '__qcfail', 'Awaiting Scheduling': 'Awaiting Scheduling', 'Awaiting guest response': 'Awaiting Guest Response', 'In Progress': 'In Progress', 'Quality Control': 'Quality Control', 'Rework / Warranty': 'Rework / Warranty', 'Support Requested': 'Support Requested', 'Cancelled': 'Cancelled' };
   function ticketStatusLabel(db) {
-    var m = { 'Awaiting Diagnostics': 'Pre-inspection', 'Awaiting Parts': 'Need to order parts', 'Job Complete': 'Job completed', 'Ready': 'Customer needs to pay', 'En Route to Customer': 'En Route', 'Awaiting Scheduling': 'Awaiting Scheduling', 'Awaiting Customer Response': 'Awaiting Customer Response', 'In Progress': 'In Progress', 'Quality Control': 'Quality Control', 'Rework / Warranty': 'Rework / Warranty', 'Support Requested': 'Support Requested' };
+    var m = { 'Awaiting Diagnostics': 'Awaiting Diagnostics', 'Diagnostics In Progress': 'Diagnostics in progress', 'Diagnostics Completed': 'Diagnostics completed', 'Unrepairable': 'Unrepairable', 'Awaiting Approval': 'Awaiting Approval', 'Awaiting Parts': 'Awaiting Parts', 'Awaiting Repair': 'Awaiting repair', 'Job Complete': 'Job completed', 'Ready': 'Guest needs to pay', 'En Route to Customer': 'En Route', 'Awaiting Scheduling': 'Awaiting Scheduling', 'Awaiting Guest Response': 'Awaiting guest response', 'In Progress': 'In Progress', 'Quality Control': 'Quality Control', 'Rework / Warranty': 'Rework / Warranty', 'Support Requested': 'Support Requested', 'Cancelled': 'Cancelled' };
     return m[db] || db;
   }
   function ticketStatusOptions(currentDb) {
@@ -106,6 +117,8 @@
     if (TICKET_STATUSES.indexOf(cur) === -1) opts = '<option value="' + esc(currentDb) + '" selected>' + esc(currentDb) + '</option>' + opts;
     return opts;
   }
+  /* V176_29_STATUS_EXTENSION_2026_11_23 (Austin, Nov 23, 2026, morning approval: "Approve all updates"): D2 Unrepairable and D4 Cancelled are now staged (see REPORT.md sections 5/8 — both were proposed-only in the first staging pass), and D3 hides Support Requested from the dropdown only. D1/D5/D6/D7 stay exactly as staged. The two new states are terminal: they keep no queue number and do not count as open (ticketIsClosedStatus, used by the queue numbering and the open-ticket count only). */
+  function ticketIsClosedStatus(s) { return s === 'Job Complete' || s === 'Unrepairable' || s === 'Cancelled'; }
   var APPLICATION_STATUSES = ['New', 'Reviewed', 'Contacted', 'Rejected'];
   var INVESTOR_STATUSES = ['New', 'Reviewed', 'Contacted', 'Closed'];
 
@@ -423,7 +436,9 @@
       inprogress: 'portal-st-inprogress', processing: 'portal-st-inprogress',
       waitingforparts: 'portal-st-waitingparts',
       awaitingdiagnostics: 'portal-st-waiting', awaitingestimate: 'portal-st-waiting', awaitingscheduling: 'portal-st-waiting', supportrequested: 'portal-st-waiting',
-      awaitingcustomerresponse: 'portal-st-contacted', awaitingparts: 'portal-st-waitingparts',
+      diagnosticsinprogress: 'portal-st-inprogress', diagnosticscompleted: 'portal-st-reviewed', awaitingapproval: 'portal-st-contacted',
+      unrepairable: 'portal-st-rejected',
+      awaitingguestresponse: 'portal-st-contacted', awaitingparts: 'portal-st-waitingparts',
       awaitingrepair: 'portal-st-waitingparts',
       enroutetocustomer: 'portal-st-inprogress', qualitycontrol: 'portal-st-reviewed',
       ready: 'portal-st-ready', jobcomplete: 'portal-st-done',
@@ -2643,7 +2658,7 @@ function showLogin(errorMsg) {
   /* WARRANTY_PORTAL_2026_11_03: 'Rework / Warranty' gets the calm
    * teal queue treatment (portal.css q-rework) — active work, but
    * visually distinct from the yellow In Progress. */
-  var QCLASS = { 'Awaiting Diagnostics': 'q-red', 'Awaiting Estimate': 'q-red', 'Awaiting Scheduling': 'q-red', 'Support Requested': 'q-red', 'Awaiting Customer Response': 'q-yellow', 'Awaiting Parts': 'q-orange', 'Awaiting Repair': 'q-orange', 'En Route to Customer': 'q-yellow', 'Rework / Warranty': 'q-rework', 'In Progress': 'q-yellow', 'Quality Control': 'q-lime', 'Ready': 'q-green', 'Job Complete': 'q-done' };
+  var QCLASS = { 'Awaiting Diagnostics': 'q-red', 'Diagnostics In Progress': 'q-yellow', 'Diagnostics Completed': 'q-lime', 'Unrepairable': 'q-done', 'Awaiting Approval': 'q-yellow', 'Awaiting Estimate': 'q-red', 'Awaiting Scheduling': 'q-red', 'Support Requested': 'q-red', 'Awaiting Guest Response': 'q-yellow', 'Awaiting Parts': 'q-orange', 'Awaiting Repair': 'q-orange', 'En Route to Customer': 'q-yellow', 'Rework / Warranty': 'q-rework', 'In Progress': 'q-yellow', 'Quality Control': 'q-lime', 'Ready': 'q-green', 'Job Complete': 'q-done', 'Cancelled': 'q-done' };
   /* SCAN_TICKET_2026_11_11: the queue search narrows the rows the
    * status filter already fetched — queueAllRows is the current
    * view (whatever loadTickets last loaded) and the search only
@@ -2667,7 +2682,7 @@ function showLogin(errorMsg) {
     var list = $('portal-ticket-list');
     queueAllRows = rows || [];
     var posMap = {}, n = 0;
-    for (var i = queueAllRows.length - 1; i >= 0; i--) { if (queueAllRows[i].status !== 'Job Complete') { n++; posMap[queueAllRows[i].id] = n; } }
+    for (var i = queueAllRows.length - 1; i >= 0; i--) { if (!ticketIsClosedStatus(queueAllRows[i].status)) { n++; posMap[queueAllRows[i].id] = n; } }
     var view = queueSearchTerm ? queueAllRows.filter(function (t) { return queueRowMatches(t, queueSearchTerm); }) : queueAllRows;
     if (!view.length) {
       emptyState(list, queueSearchTerm
@@ -3530,7 +3545,7 @@ function showLogin(errorMsg) {
       function done(res) {
         state.loaded.tickets = true;
         renderTickets(res.data || []);
-        var open = (res.data || []).filter(function (t) { return t.status !== 'Job Complete'; }).length;
+        var open = (res.data || []).filter(function (t) { return !ticketIsClosedStatus(t.status); }).length;
         setCount('portal-count-tickets', $('portal-ticket-filter').value === 'all' ? open : 0);
       }
       function run(useJobDate) {
@@ -3705,7 +3720,57 @@ function showLogin(errorMsg) {
       '<i class="fas fa-comment-sms" aria-hidden="true"></i> ' + esc(label) + '</span>';
   }
 
-  function renderTicketThread(messages, outboundByMessage) {
+  /* V176_29_THREAD_DELETE_2026_11_23 (Austin, Nov 23, 2026, voice order): a delete control on EACH entry of this thread — staff drawer ONLY (never Team Chat, never the Repair Log). The control is one small × per entry; tapping it opens an inline confirm strip with the plain wording below. Confirm deletes exactly that one `messages` row and re-renders the thread; Cancel does nothing. Deletion removes the thread copy only — it cannot unsend a text that already went out, and it never touches outbound_texts rows, ticket_notes, or any other table. */
+  function v176_29DeleteThreadMessage(client, messageId) {
+    return client.from('messages').delete().eq('id', messageId).then(function (res) {
+      if (res.error) throw res.error;
+      return { ok: true, id: messageId };
+    });
+  }
+  function v176_29WireThreadDelete(box, ticketId, getClient, reloadFn) {
+    if (!box || !box.querySelectorAll) return;
+    function byId(list, attr, id) {
+      for (var i = 0; i < list.length; i++) { if (list[i].getAttribute(attr) === String(id)) return list[i]; }
+      return null;
+    }
+    var dels = box.querySelectorAll('[data-thread-del]');
+    var strips = box.querySelectorAll('[data-thread-del-confirm]');
+    var yeses = box.querySelectorAll('[data-thread-del-yes]');
+    var nos = box.querySelectorAll('[data-thread-del-no]');
+    dels.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = btn.getAttribute('data-thread-del');
+        var strip = byId(strips, 'data-thread-del-confirm', id);
+        if (strip) strip.hidden = false;
+        btn.hidden = true;
+      });
+    });
+    nos.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = btn.getAttribute('data-thread-del-no');
+        var strip = byId(strips, 'data-thread-del-confirm', id);
+        var del = byId(dels, 'data-thread-del', id);
+        if (strip) strip.hidden = true;
+        if (del) del.hidden = false;
+      });
+    });
+    yeses.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = btn.getAttribute('data-thread-del-yes');
+        btn.disabled = true;
+        getClient(function (client) {
+          v176_29DeleteThreadMessage(client, id).then(function () {
+            reloadFn(client, ticketId);
+          }).catch(function () {
+            btn.disabled = false;
+            reloadFn(client, ticketId);
+          });
+        });
+      });
+    });
+  }
+
+  function renderTicketThread(messages, outboundByMessage, ticketId) {
     var box = $('portal-thread');
     if (!box) return;
     if (!messages.length) {
@@ -3715,10 +3780,16 @@ function showLogin(errorMsg) {
     box.innerHTML = messages.map(function (m) {
       var who = m.sender === 'tech' ? 'Tech' : 'Guest';
       var gv = (m.sender === 'tech' && outboundByMessage) ? gvTextStatusHtml(outboundByMessage[m.id]) : '';
-      return '<div class="portal-msg portal-msg-' + (m.sender === 'tech' ? 'tech' : 'customer') + '">' +
+      return '<div class="portal-msg portal-msg-' + (m.sender === 'tech' ? 'tech' : 'customer') + '" data-thread-row="' + esc(m.id) + '">' +
         esc(m.message) + gv +
-        '<span class="portal-msg-meta">' + who + ' · ' + esc(fmtDateTime(m.created_at)) + '</span></div>';
+        '<span class="portal-msg-meta">' + who + ' · ' + esc(fmtDateTime(m.created_at)) + '</span>' +
+        '<button class="portal-msg-del" type="button" data-thread-del="' + esc(m.id) + '" aria-label="Delete this message from the thread">&times;</button>' +
+        '<div class="portal-msg-del-confirm" data-thread-del-confirm="' + esc(m.id) + '" hidden>' +
+        '<p>Delete this message from the thread? It cannot unsend a text that already went out.</p>' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-thread-del-yes="' + esc(m.id) + '">Delete</button> ' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-thread-del-no="' + esc(m.id) + '">Cancel</button></div></div>';
     }).join('');
+    v176_29WireThreadDelete(box, ticketId, withClient, loadTicketThread);
     box.scrollTop = box.scrollHeight;
   }
 
@@ -3798,11 +3869,11 @@ function loadTicketThread(client, ticketId) {
           .then(function (ores) {
             var map = {};
             if (!ores.error) (ores.data || []).forEach(function (o) { if (o.message_id) map[o.message_id] = o; });
-            renderTicketThread(msgs, map);
+            renderTicketThread(msgs, map, ticketId);
           })
-          .catch(function () { renderTicketThread(msgs, {}); });
+          .catch(function () { renderTicketThread(msgs, {}, ticketId); });
       })
-      .catch(function () { renderTicketThread([]); });
+      .catch(function () { renderTicketThread([], ticketId); });
   }
 
   /* ================= TICKET_MENTIONS_2026_11_03 =================
@@ -4408,11 +4479,13 @@ function loadTicketThread(client, ticketId) {
           '<span class="portal-muted portal-small" id="portal-timer-msg"></span></div>' +
           '<div id="portal-timer-list"></div>' +
           /* V176_STATUS_EIGHT_2026_11_19: Ticket status - one dropdown with
-           * Austin's eight options (Pre-inspection, Need to order parts,
-           * Job completed, Customer needs to pay, Status paid, En Route, QC
-           * pass, QC fail - QC last), plus the six restored statuses
+           * Austin's options in pipeline order (Awaiting Diagnostics,
+           * Diagnostics in progress, Diagnostics completed, Awaiting
+           * Approval, Awaiting Parts, Awaiting repair, Job completed,
+           * Guest needs to pay, Status paid, En Route, QC pass, QC fail),
+           * plus the six restored statuses
            * (V176_10_DRAWER_STATUS_2026_11_20: Awaiting Scheduling, Awaiting
-           * Customer Response, In Progress, Quality Control, Rework /
+           * guest response, In Progress, Quality Control, Rework /
            * Warranty, Support Requested). Picking a status saves at once
            * (after the repair-log note) - no Save button. Status paid is
            * the __paid choice: it runs the paid flow instead of a status
@@ -5074,6 +5147,8 @@ function loadTicketThread(client, ticketId) {
     var base = 0;
     (rows || []).forEach(function (ch) {
       if (ch.kind === 'deposit_credit' || ch.kind === 'tax' || ch.kind === 'fee') return;
+      /* V176_29_PART_PAID_2026_11_23: a part line the button marked paid AND covered with its own credit leaves the tax base — the credit already took the part (and its tax share) off the balance. A paid flag covered by a pre-existing deposit stays IN the base: a deposit lowers the balance but never the tax, so the synced tax row must not move (Nick fixture: $80 deposit present, mark paid keeps tax $10.90 and balance $92.43). */
+      if (ch.kind === 'part' && v176_29PartPaidViaCredit(rows, ch)) return;
       base += Number(ch.qty || 0) * Number(ch.unit_price || 0);
     });
     return Math.round(base * 100) / 100;
@@ -5294,6 +5369,69 @@ function loadTicketThread(client, ticketId) {
     return m ? m[1] : String((c && c.description) || '');
   }
 
+  /* V176_29_PART_PAID_2026_11_23 (Austin, Nov 23, 2026, morning approval): the "Mark part paid" button. A part charge line can be flagged paid WITHOUT claiming a payment method: the flag is a description marker, the same pattern as the waived-charge marker above (" [part paid]" at the end of the description), so it persists in the existing ticket_charges.description column with no schema change, and every reader that prints the description uses partPaidName() to show the clean name. The flag NEVER names cash, card, or Square — how the part was actually paid lives in the deposit/note record, never in this flag.
+   *
+   * Deposit-aware (Austin, Nov 23, 2026, spec change): marking paid adds a minus-guest-price credit ONLY when no existing deposit already covers the part. Existing deposits form one pool; part lines flagged paid WITHOUT a button-added credit consume that pool (see v176_29PartPaidPool). When the pool covers the line, the button sets the flag only — no second credit, no balance change. Marking unpaid removes ONLY the credit this button added (matched by the "Part paid — " prefix); a pre-existing deposit is never touched.
+   *
+   * Tax: a flagged line covered by its own button-added credit leaves the tax base (atrTaxBaseOf) — the credit already removed the part from what is owed. A flagged line covered by a pre-existing deposit stays IN the tax base: deposits lower the balance but never the tax, so the synced tax row must not move (Nick fixture: $80 deposit present, mark paid keeps tax $10.90 and balance $92.43).
+   *
+   * Quantity greater than 1: the flag applies to the WHOLE line (all units), and the credit is the whole line total. */
+  var PART_PAID_MARK_RE = /^(.*) \[part paid\]$/;
+  var PART_PAID_CREDIT_PREFIX = 'Part paid — ';
+  function partPaidFlag(c) {
+    if (!c || c.kind !== 'part') return false;
+    return PART_PAID_MARK_RE.test(String(c.description || ''));
+  }
+  function partPaidName(c) {
+    if (!c) return '';
+    var m = String(c.description || '').match(PART_PAID_MARK_RE);
+    return m ? m[1] : String(c.description || '');
+  }
+  function partPaidLineTotal(c) {
+    return Math.round(Number(c.qty || 0) * Number(c.unit_price || 0) * 100) / 100;
+  }
+  function partPaidCreditFor(rows, line) {
+    var wantDesc = PART_PAID_CREDIT_PREFIX + partPaidName(line);
+    var wantAmt = partPaidLineTotal(line);
+    var i, c, amt;
+    for (i = 0; i < (rows || []).length; i++) {
+      c = rows[i];
+      if (!c || c.kind !== 'deposit_credit') continue;
+      if (String(c.description || '') !== wantDesc) continue;
+      amt = Math.round(Number(c.qty || 0) * Number(c.unit_price || 0) * 100) / 100;
+      if (amt === wantAmt) return c;
+    }
+    return null;
+  }
+  function v176_29PartPaidViaCredit(rows, line) {
+    return partPaidFlag(line) && !!partPaidCreditFor(rows, line);
+  }
+  function v176_29PartPaidPool(rows, exceptId) {
+    var generic = 0, consumed = 0, i, c;
+    for (i = 0; i < (rows || []).length; i++) {
+      c = rows[i];
+      if (!c || c.kind !== 'deposit_credit') continue;
+      if (String(c.description || '').indexOf(PART_PAID_CREDIT_PREFIX) !== 0) generic += Number(c.qty || 0) * Number(c.unit_price || 0);
+    }
+    for (i = 0; i < (rows || []).length; i++) {
+      c = rows[i];
+      if (!c || c.id === exceptId || c.kind !== 'part') continue;
+      if (partPaidFlag(c) && !partPaidCreditFor(rows, c)) consumed += partPaidLineTotal(c);
+    }
+    var cov = Math.round((generic - consumed) * 100) / 100;
+    return cov > 0 ? cov : 0;
+  }
+  function v176_29PartPaidPlan(rows, chargeId) {
+    var line = null, i;
+    for (i = 0; i < (rows || []).length; i++) { if (rows[i] && rows[i].id === chargeId) line = rows[i]; }
+    if (!line || line.kind !== 'part') return { ok: false, error: 'not_a_part_line' };
+    var total = partPaidLineTotal(line);
+    if (!(total > 0)) return { ok: false, error: 'nothing_to_mark' };
+    if (partPaidFlag(line)) return { ok: true, action: 'unmark', line: line, total: total, credit: partPaidCreditFor(rows, line) };
+    var coverage = v176_29PartPaidPool(rows, line.id);
+    return { ok: true, action: 'mark', line: line, total: total, needsCredit: coverage < total, coverage: coverage };
+  }
+
   /* ATRONE_POINTS_TIERS_2026_11_06: the member multiplier IS the tier's
    * earn rate (Free / no membership = 1 for guests, 5 for business,
    * Individual = 5, Family = 10,
@@ -5481,10 +5619,16 @@ function loadTicketThread(client, ticketId) {
             '<div class="p2-line-amt"><s class="p2-waived-face">' + fmtMoney(face) + '</s> ' + fmtMoney(0) + '</div>' +
             '<button class="p2-x" type="button" data-charge-del="' + esc(c.id) + '" aria-label="Remove charge">&times;</button></div>';
         }
-        return '<div class="p2-line"><div class="p2-line-main"><span class="p2-kind">' + esc(kindLabel) + '</span> ' + esc(c.description) +
+        /* V176_29_PART_PAID_2026_11_23: the Paid marker + Mark part paid button, part lines only. The description shown is the clean name (the " [part paid]" flag marker never prints). */
+        var v176PaidMark = (c.kind === 'part' && partPaidFlag(c)) ? '<span class="p2-paid-mark">Paid</span>' : '';
+        var v176PaidBtn = '';
+        if (c.kind === 'part' && amt > 0 && canMoveMoney()) {
+          v176PaidBtn = '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-part-paid="' + esc(c.id) + '">' + (partPaidFlag(c) ? 'Mark unpaid' : 'Mark part paid') + '</button>';
+        }
+        return '<div class="p2-line"><div class="p2-line-main"><span class="p2-kind">' + esc(kindLabel) + '</span> ' + esc(c.kind === 'part' ? partPaidName(c) : c.description) + v176PaidMark +
           '<span class="portal-muted portal-small"> &times;' + esc(c.qty) + ' @ ' + fmtMoney(c.unit_price) +
           (c.unit_cost != null ? ' (our cost ' + fmtMoney(c.unit_cost) + ')' : '') + '</span></div>' +
-          '<div class="p2-line-amt">' + sign + fmtMoney(Math.abs(amt)) + '</div>' +
+          '<div class="p2-line-amt">' + sign + fmtMoney(Math.abs(amt)) + '</div>' + v176PaidBtn +
           '<button class="p2-x" type="button" data-charge-del="' + esc(c.id) + '" aria-label="Remove charge">&times;</button></div>';
       }).join('');
       /* V175_COUNTY_TAX_2026_11_19: no synced row yet (the sync runs on drawer open, so this is the failed-save path) - show the computed tax line so the drawer never hides the tax. */
@@ -5517,6 +5661,13 @@ function loadTicketThread(client, ticketId) {
         });
       });
     });
+    /* V176_29_PART_PAID_2026_11_23: wire the Mark part paid buttons rendered above. */
+    box.querySelectorAll('[data-part-paid]').forEach(function (btn) {
+      var line = null;
+      (rows || []).forEach(function (c) { if (c.id === btn.getAttribute('data-part-paid')) line = c; });
+      if (!line) return;
+      v176_29WirePartPaidButton(btn, t, line.id, Math.abs(Number(line.qty || 0) * Number(line.unit_price || 0)), partPaidFlag(line));
+    });
     wireWarrantyExemptButton(t);
     /* PORTAL_TICKET_ACCORDION_2026_11_02: the closed Charges header
      * carries the balance, so a due amount is never hidden.
@@ -5542,6 +5693,64 @@ function loadTicketThread(client, ticketId) {
         });
       });
     }).catch(function () {});
+  }
+
+  /* V176_29_PART_PAID_2026_11_23: the write half of the part-paid toggle. Flag-first ordering: set the flag, then insert the credit (when the deposit pool does not cover the line); if the credit insert fails, the flag is rolled back, so a failed mark never leaves a paid marker with no credit behind it. Un-mark deletes ONLY the button-added credit, then clears the flag. Fires no email and no text — it only writes ticket_charges rows. Returns a promise of { ok, action, ... }. */
+  function v176_29PartPaidApply(client, ticketId, chargeId) {
+    function readRows() {
+      return client.from('ticket_charges').select('*').eq('ticket_id', ticketId).order('created_at', { ascending: true }).then(function (res) {
+        if (res.error) throw res.error;
+        return res.data || [];
+      });
+    }
+    return readRows().then(function (rows) {
+      var plan = v176_29PartPaidPlan(rows, chargeId);
+      if (!plan.ok) return plan;
+      if (plan.action === 'unmark') {
+        var del = plan.credit
+          ? client.from('ticket_charges').delete().eq('id', plan.credit.id).then(function (r) { if (r.error) throw r.error; })
+          : Promise.resolve();
+        return del.then(function () {
+          return client.from('ticket_charges').update({ description: partPaidName(plan.line) }).eq('id', plan.line.id).then(function (r) {
+            if (r.error) throw r.error;
+            return { ok: true, action: 'unmark', removedCredit: !!plan.credit, total: plan.total };
+          });
+        });
+      }
+      var flaggedDesc = partPaidName(plan.line) + ' [part paid]';
+      return client.from('ticket_charges').update({ description: flaggedDesc }).eq('id', plan.line.id).then(function (r) {
+        if (r.error) throw r.error;
+        if (!plan.needsCredit) return { ok: true, action: 'mark', addedCredit: false, total: plan.total };
+        return client.from('ticket_charges').insert({ ticket_id: ticketId, kind: 'deposit_credit', description: PART_PAID_CREDIT_PREFIX + partPaidName(plan.line), qty: 1, unit_price: plan.total }).then(function (ins) {
+          if (ins.error) {
+            return client.from('ticket_charges').update({ description: partPaidName(plan.line) }).eq('id', plan.line.id).then(function () { throw ins.error; }, function () { throw ins.error; });
+          }
+          return { ok: true, action: 'mark', addedCredit: true, total: plan.total };
+        });
+      });
+    }).catch(function (e) {
+      return { ok: false, error: String((e && e.message) || e || 'failed') };
+    });
+  }
+
+  /* V176_29_PART_PAID_2026_11_23: one inline confirm naming the amount, shared by the charge-line button and the Parts-entry button. First tap arms ("Confirm — mark paid $76.55?"); second tap runs the toggle and reloads charges + parts. No email, no text. */
+  function v176_29WirePartPaidButton(btn, t, chargeId, amount, isPaid) {
+    btn.addEventListener('click', function () {
+      if (!canMoveMoney()) return;
+      if (btn.getAttribute('data-confirm') !== '1') {
+        btn.setAttribute('data-confirm', '1');
+        btn.textContent = (isPaid ? 'Confirm — mark unpaid ' : 'Confirm — mark paid ') + fmtMoney(amount) + '?';
+        return;
+      }
+      btn.removeAttribute('data-confirm');
+      btn.disabled = true;
+      btn.textContent = 'Saving…';
+      withClient(function (client) {
+        v176_29PartPaidApply(client, t.id, chargeId).then(function () {
+          loadCharges(client, t); loadParts(client, t);
+        }).catch(function () { loadCharges(client, t); loadParts(client, t); });
+      });
+    });
   }
 
   var CARRIERS = ['FedEx', 'UPS', 'USPS', 'Other'];
@@ -5652,6 +5861,30 @@ function loadTicketThread(client, ticketId) {
     }).join(' ') + '</div>';
   }
 
+  /* V176_29_PART_PAID_2026_11_23: the Parts-entry paid button toggles the SAME flag as the charge-line button, through the charge line linked to the part order (same description the part-add flow writes, falling back to guest-price + qty). No charge line means nothing to mark paid: the button renders disabled with the reason in its title. */
+  function v176_29ChargeLineForPart(rows, p) {
+    var name = trim(p.description || ''), i, c;
+    for (i = 0; i < (rows || []).length; i++) {
+      c = rows[i];
+      if (c && c.kind === 'part' && trim(partPaidName(c)) === name) return c;
+    }
+    if (p.retail_price != null) {
+      for (i = 0; i < (rows || []).length; i++) {
+        c = rows[i];
+        if (c && c.kind === 'part' && Number(c.unit_price) === Number(p.retail_price) && Number(c.qty) === Number(p.qty)) return c;
+      }
+    }
+    return null;
+  }
+  function v176_29PartPaidBtnHtml(t, p) {
+    if (!canMoveMoney()) return '';
+    var line = v176_29ChargeLineForPart(t._charges || [], p);
+    if (!line) return '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" disabled title="Add this part\u2019s guest price to Charges first \u2014 there is no charge line to mark paid.">Mark part paid</button>';
+    var total = Math.abs(Number(line.qty || 0) * Number(line.unit_price || 0));
+    if (!(total > 0)) return '';
+    return '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-part-paid-order="' + esc(p.id) + '" data-part-paid-charge="' + esc(line.id) + '">' + (partPaidFlag(line) ? 'Mark unpaid' : 'Mark part paid') + '</button>';
+  }
+
   function renderParts(t, rows) {
     var box = $('p2-parts');
     if (!box) return;
@@ -5680,6 +5913,7 @@ function loadTicketThread(client, ticketId) {
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-part-label="' + esc(p.id) + '"><i class="fas fa-tag"></i> Label</button>' +
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-part-track="' + esc(p.id) + '"><i class="fas fa-truck"></i> Tracking</button>' +
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-part-invoice="' + esc(p.id) + '"><i class="fas fa-paperclip"></i> Invoice</button>' +
+        v176_29PartPaidBtnHtml(t, p) +
         /* PORTAL_PARTS_TO_INVENTORY_2026_11_02 */ partReorderHtml(t, p) +
         '<button class="p2-x" type="button" data-part-del="' + esc(p.id) + '" aria-label="Remove part order">&times;</button></div>' +
         liveTrackHtml(p) +
@@ -5701,6 +5935,14 @@ function loadTicketThread(client, ticketId) {
           });
         });
       });
+    });
+    /* V176_29_PART_PAID_2026_11_23: wire the Parts-entry paid buttons (disabled ones — no charge line — are skipped). */
+    box.querySelectorAll('[data-part-paid-order]').forEach(function (btn) {
+      if (btn.disabled) return;
+      var line = null;
+      (t._charges || []).forEach(function (c) { if (c.id === btn.getAttribute('data-part-paid-charge')) line = c; });
+      if (!line) return;
+      v176_29WirePartPaidButton(btn, t, line.id, Math.abs(Number(line.qty || 0) * Number(line.unit_price || 0)), partPaidFlag(line));
     });
     box.querySelectorAll('[data-part-del]').forEach(function (btn) {
       btn.addEventListener('click', function () {
@@ -5800,10 +6042,21 @@ function loadTicketThread(client, ticketId) {
        * list under each part row is filtered from these rows (see
        * p2PartInvoicesHtml). A failed fetch just renders the parts
        * without their invoices. */
-      client.from('ticket_documents').select('*').eq('ticket_id', t.id).order('created_at', { ascending: true }).then(function (dres) {
-        t._partInvoices = (dres.error ? [] : (dres.data || [])).filter(function (d) { return d.file_name && d.file_name.indexOf(PART_INVOICE_PREFIX) === 0; });
-        loadPartsInventory(client, t);
-      }).catch(function () { t._partInvoices = []; loadPartsInventory(client, t); });
+      function afterPartsDocs() {
+        client.from('ticket_documents').select('*').eq('ticket_id', t.id).order('created_at', { ascending: true }).then(function (dres) {
+          t._partInvoices = (dres.error ? [] : (dres.data || [])).filter(function (d) { return d.file_name && d.file_name.indexOf(PART_INVOICE_PREFIX) === 0; });
+          loadPartsInventory(client, t);
+        }).catch(function () { t._partInvoices = []; loadPartsInventory(client, t); });
+      }
+      /* V176_29_PART_PAID_2026_11_23: the Parts-entry paid button derives its state from the ticket's charge lines — fetch them first when the drawer has not loaded charges yet (loadCharges normally runs first at drawer open, but the two fetches race). A plain read; the tax sync still runs only through loadCharges. */
+      if (!t._charges) {
+        client.from('ticket_charges').select('*').eq('ticket_id', t.id).order('created_at', { ascending: true }).then(function (cres) {
+          if (!cres.error) t._charges = cres.data || [];
+          afterPartsDocs();
+        }).catch(function () { afterPartsDocs(); });
+        return;
+      }
+      afterPartsDocs();
     }).catch(function () {});
   }
   function loadPartsInventory(client, t) {
@@ -7784,7 +8037,10 @@ function loadTicketThread(client, ticketId) {
     var lines = rows.map(function (c) {
       var amt = Number(c.qty || 0) * Number(c.unit_price || 0);
       var kindLabel = { part: 'Part', labor: 'Labor', one_off: 'Other charge', dispatch: 'Visit fee', visit: 'Visit fee', tip: 'Tip', discount: 'Discount', tax: 'Sales tax', fee: 'Card processing fee' }[c.kind] || '';
-      var label = c.kind === 'deposit_credit' ? esc(c.description) + ' (deposit)' : (kindLabel ? esc(kindLabel) + ' — ' + esc(c.description) : esc(c.description));
+      /* V176_29_PART_PAID_2026_11_23: a paid part line prints its clean name with a "— paid" marker; the flag marker itself never prints. The credit line below it prints as its own deposit row. */
+      var v176PaidMark = (c.kind === 'part' && partPaidFlag(c)) ? ' — paid' : '';
+      var v176DispName = (c.kind === 'part') ? partPaidName(c) : c.description;
+      var label = c.kind === 'deposit_credit' ? esc(c.description) + ' (deposit)' : (kindLabel ? esc(kindLabel) + ' — ' + esc(v176DispName) : esc(v176DispName));
       var sign = (c.kind === 'deposit_credit' || c.kind === 'discount') ? '&minus;' : '';
       /* PORTAL_CHARGE_DEDUCTOR_2026_11_02: a waived line prints its
        * name followed by "— waived", its face amount struck through,
@@ -7795,7 +8051,7 @@ function loadTicketThread(client, ticketId) {
       if (face != null) {
         return '<tr><td>' + esc(waivedName(c)) + ' &mdash; waived</td><td class="rc-num">' + esc(c.qty) + '</td><td class="rc-num"><s>' + fmtMoney(face) + '</s> ' + fmtMoney(0) + '</td></tr>';
       }
-      return '<tr><td>' + label + '</td><td class="rc-num">' + esc(c.qty) + '</td><td class="rc-num">' + sign + fmtMoney(Math.abs(amt)) + '</td></tr>';
+      return '<tr><td>' + label + v176PaidMark + '</td><td class="rc-num">' + esc(c.qty) + '</td><td class="rc-num">' + sign + fmtMoney(Math.abs(amt)) + '</td></tr>';
     }).join('');
     if (!rows.length) lines = '<tr><td colspan="3">No charges recorded.</td></tr>';
     var sigHtml = '';
@@ -8492,13 +8748,15 @@ function loadTicketThread(client, ticketId) {
   function ticketDocChargeLines(rows) {
     var lines = rows.map(function (c) {
       var amt = Number(c.qty || 0) * Number(c.unit_price || 0);
-      var label = c.kind === 'deposit_credit' ? esc(c.description) + ' (deposit)' : (c.kind === 'tax' ? 'Sales tax &mdash; ' + esc(c.description) : (c.kind === 'fee' ? 'Card processing fee &mdash; ' + esc(c.description) : esc(c.description)));
+      /* V176_29_PART_PAID_2026_11_23: same paid-marker rule as the receipt composer — clean name + "— paid", flag marker never prints. */
+      var v176PaidMark = (c.kind === 'part' && partPaidFlag(c)) ? ' — paid' : '';
+      var label = c.kind === 'deposit_credit' ? esc(c.description) + ' (deposit)' : (c.kind === 'tax' ? 'Sales tax &mdash; ' + esc(c.description) : (c.kind === 'fee' ? 'Card processing fee &mdash; ' + esc(c.description) : esc((c.kind === 'part') ? partPaidName(c) : c.description)));
       var sign = (c.kind === 'deposit_credit' || c.kind === 'discount') ? '&minus;' : '';
       var face = waivedFace(c);
       if (face != null) {
         return '<tr><td>' + esc(waivedName(c)) + ' &mdash; waived</td><td class="rc-num">' + esc(c.qty) + '</td><td class="rc-num"><s>' + fmtMoney(face) + '</s> ' + fmtMoney(0) + '</td></tr>';
       }
-      return '<tr><td>' + label + '</td><td class="rc-num">' + esc(c.qty) + '</td><td class="rc-num">' + sign + fmtMoney(Math.abs(amt)) + '</td></tr>';
+      return '<tr><td>' + label + v176PaidMark + '</td><td class="rc-num">' + esc(c.qty) + '</td><td class="rc-num">' + sign + fmtMoney(Math.abs(amt)) + '</td></tr>';
     }).join('');
     if (!rows.length) lines = '<tr><td colspan="3">No charges recorded.</td></tr>';
     return lines;

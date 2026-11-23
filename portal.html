@@ -675,7 +675,11 @@
               <option value="Awaiting Scheduling">Awaiting Scheduling</option>
               <option value="Support Requested">Support Requested</option>
               <option value="Awaiting Diagnostics">Awaiting Diagnostics</option>
-              <option value="Awaiting Customer Response">Awaiting Customer Response</option>
+              <option value="Diagnostics In Progress">Diagnostics In Progress</option>
+              <option value="Diagnostics Completed">Diagnostics Completed</option>
+              <option value="Unrepairable">Unrepairable</option>
+              <option value="Awaiting Approval">Awaiting Approval</option>
+              <option value="Awaiting Guest Response">Awaiting Guest Response</option>
               <option value="Awaiting Parts">Awaiting Parts</option>
               <option value="Awaiting Repair">Awaiting Repair</option>
               <option value="En Route to Customer">En Route to Customer</option>
@@ -685,6 +689,7 @@
               <option value="Quality Control">Quality Control</option>
               <option value="Ready">Ready</option>
               <option value="Job Complete">Job Complete</option>
+              <option value="Cancelled">Cancelled</option>
             </select>
           </div>
         </div>
@@ -2326,7 +2331,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <!-- PORTAL_RECEIPT_SEND_2026_11_02: vendored html2pdf (html2canvas + jsPDF in one self-contained bundle, loaded locally, no CDN) — Download receipt and Email receipt render the PDF from the exact receipt markup. -->
   <script src="html2pdf.bundle.min.js"></script>
-  <script src="portal.js?v=176-28"></script>
+  <script src="portal.js?v=176-29"></script>
   <script>
   /* ================= TEAM DOCUMENTS + HIRE DOCUMENTS =================
    * Section logic for the Team Documents tab and the per-hire document
@@ -5943,6 +5948,19 @@
     .p2-kind { display: inline-block; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
       background: var(--surface-warm, #f7f0e1); border: 1px solid var(--line, #d8cbb6); border-radius: 999px; padding: 0.1rem 0.5rem; margin-right: 0.35rem; }
     .p2-line-amt { font-weight: 700; white-space: nowrap; display: block; overflow: hidden; text-overflow: ellipsis; }
+    /* V176_29_DRAWER_CLIP_FIX_2026_11_23 (Austin, Nov 23, 2026, photo of Nick's drawer): charge amounts clipped at the drawer's right edge — $34.99 read "$3…", the part and tax amounts were cut off, and the totals ran past the edge. Root cause: .p2-line-amt is a DIRECT flex child of .p2-line, and with no flex:none it shrank below its content and ellipsis-truncated (the Nov 3 DOCROW fix chose ellipsis for the TITLE spans nested inside .p2-line-main — those keep it). A charge amount is never a title: a direct-child amount never shrinks and never truncates; the description side shrinks and wraps instead. The totals rows get a gap and a non-shrinking right value so the value never runs past the edge. Drawer scope only. */
+    .p2-line > .p2-line-amt { flex: 0 0 auto; overflow: visible; text-overflow: clip; }
+    .p2-line-main { overflow-wrap: break-word; }
+    .p2-totals > div { gap: 1rem; }
+    .p2-totals > div > span { min-width: 0; }
+    .p2-totals > div > span:last-child { flex: 0 0 auto; text-align: right; }
+    /* V176_29_PART_PAID_2026_11_23: the Paid pill on a part line. */
+    .p2-paid-mark { display: inline-block; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; background: #e3f2e4; border: 1px solid #9ec7a1; color: #2f6b33; border-radius: 999px; padding: 0.1rem 0.5rem; margin-left: 0.35rem; }
+    /* V176_29_THREAD_DELETE_2026_11_23: the per-entry delete control in the Message guest thread. Small and muted; the confirm strip wraps inside the bubble and never overflows it. */
+    .portal-msg-del { background: none; border: none; color: inherit; opacity: 0.55; font-size: 1rem; line-height: 1; cursor: pointer; padding: 0.15rem 0.35rem; }
+    .portal-msg-del:hover { opacity: 1; }
+    .portal-msg-del-confirm { margin-top: 0.45rem; padding-top: 0.45rem; border-top: 1px solid rgba(128, 128, 128, 0.35); font-size: 0.85rem; overflow-wrap: break-word; }
+    .portal-msg-del-confirm p { margin: 0 0 0.45rem; }
     .p2-x { background: none; border: none; color: #b3382e; font-size: 1.25rem; line-height: 1; cursor: pointer; padding: 0.2rem 0.4rem; flex: none; }
     /* PORTAL_LIVE_TRACKING_2026_11_01: little Live tracking box on a ticket part + Tools tracker result */
     .p2-live-track { flex: 1 1 100%; margin: 0.35rem 0 0.55rem; padding: 0.55rem 0.7rem; border: 1px solid var(--line, #d8cbb6); border-left: 4px solid var(--brand, #E07B2A); border-radius: 8px; background: var(--surface-warm, #f7f0e1); }
