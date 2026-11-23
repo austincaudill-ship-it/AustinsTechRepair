@@ -2911,9 +2911,8 @@ function showLogin(errorMsg) {
     var v = Number(n);
     return isNaN(v) ? '—' : '$' + v.toFixed(2);
   }
-  /* V173_PRICING_FLOOR_2026_11_18 (Austin, Nov 18, 2026): no estimated price below $60 — base labor is $50.
-     Floors ESTIMATE amounts only; visit fees use estimateMoney directly and are never floored. */
-  function estFloorAmt(n, issue) { if (n === null || n === undefined || n === '') return n; var v = Number(n); if (isNaN(v)) return n; if (issue === 'Cleaning and liquid metal replacement') return v; return Math.max(60, v); } /* V173_PRICING_FLOOR_2026_11_18: a missing amount passes through untouched — Number(null) is 0, and flooring that to 60 would invent a $60 price for an estimate that has no amount yet. V176_CLEANING_ALL_2026_11_19: cleaning is a FLAT $49.99 service - the floor never lifts it. */
+  /* V176_28_FLOOR_REMOVAL_2026_11_22 (Austin, Nov 22, 2026): the $60 estimate floor is REMOVED — an estimate amount is shown and saved exactly as entered, whatever the amount. A missing amount passes through untouched. */
+  function estFloorAmt(n, issue) { if (n === null || n === undefined || n === '') return n; var v = Number(n); if (isNaN(v)) return n; return v; } /* V176_28_FLOOR_REMOVAL_2026_11_22: passthrough — kept as a named function so all existing call sites keep working unchanged. */
   function estimateDeclineRows(e) {
     return [
       ['Email', e.email || ''],
@@ -3014,13 +3013,14 @@ function showLogin(errorMsg) {
     var brand = trim($('ci-est-brand') ? $('ci-est-brand').value : '');
     var model = trim($('ci-est-model') ? $('ci-est-model').value : '');
     var issue = trim($('ci-est-issue') ? $('ci-est-issue').value : '');
-    var amount = Number($('ci-est-amount') ? $('ci-est-amount').value : NaN);
+    var amountRaw = $('ci-est-amount') ? $('ci-est-amount').value : '';
+    var amount = (amountRaw.trim() === '') ? NaN : Number(amountRaw); /* V176_28_FLOOR_REMOVAL_2026_11_22: a blank amount is missing (NaN), so it is still rejected below — the old < 60 check used to reject it. */
     if (!name || !phone || !email || (!address && !droppedOff) || !issue || (biz && !contact)) { /* V176_25_DROPPED_OFF_2026_11_22: an empty address is allowed only while Dropped off is checked */
       fail(biz ? 'Business name, contact name, phone, email, service address, and an issue are required for an estimate.' : 'Name, phone, email, service address, and an issue are required for an estimate.');
       return;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { fail("That email address doesn't look right."); return; }
-    if (isNaN(amount) || amount < 60) { fail('Estimates start at $60 — base labor is $50. Enter the estimate amount — the price you quoted the guest.'); return; } /* V173_PRICING_FLOOR_2026_11_18 */
+    if (isNaN(amount) || amount < 0) { fail('Enter the estimate amount — the price you quoted the guest.'); return; } /* V176_28_FLOOR_REMOVAL_2026_11_22: the $60 floor is removed — any non-negative amount saves. */
     var btn = $('ci-est-submit');
     if (btn) btn.disabled = true;
     /* NO account, NO guest record, NO ticket: the estimate row
@@ -3472,9 +3472,10 @@ function showLogin(errorMsg) {
         }
         var sv = $('est-save-btn');
         if (sv) sv.addEventListener('click', function () {
-          var amt = Number($('est-edit-amount') ? $('est-edit-amount').value : NaN);
+          var amtRaw = $('est-edit-amount') ? $('est-edit-amount').value : '';
+          var amt = (amtRaw.trim() === '') ? NaN : Number(amtRaw); /* V176_28_FLOOR_REMOVAL_2026_11_22: a blank amount is missing (NaN), so it is still rejected below. */
           var sm = $('est-save-msg');
-          if (isNaN(amt) || amt < 60) { if (sm) sm.textContent = 'Estimates start at $60 — base labor is $50.'; return; } /* V173_PRICING_FLOOR_2026_11_18 */
+          if (isNaN(amt) || amt < 0) { if (sm) sm.textContent = 'Enter a valid estimate amount.'; return; } /* V176_28_FLOOR_REMOVAL_2026_11_22: the $60 floor is removed — any non-negative amount saves. */
           var upd = {
             name: trim($('est-edit-name').value), phone: trim($('est-edit-phone').value),
             email: trim($('est-edit-email').value) || null, service_address: trim($('est-edit-address').value) || null,
@@ -8531,7 +8532,7 @@ function loadTicketThread(client, ticketId) {
       '<table class="rc-table rc-totals"><tbody>' +
       '<tr><td>Subtotal</td><td class="rc-num">' + fmtMoney(tot.subtotal) + '</td></tr>' +
       (tot.deposits ? '<tr><td>Deposits received</td><td class="rc-num">&minus;' + fmtMoney(tot.deposits) + '</td></tr>' : '') +
-      '<tr class="rc-grand"><td>' + (kind === 'estimate' ? 'Estimated total' : 'Balance due') + '</td><td class="rc-num">' + fmtMoney(kind === 'estimate' ? Math.max(60, tot.balance) : tot.balance) + '</td></tr>' + /* V173_PRICING_FLOOR_2026_11_18: the Estimated total shown never drops below $60; the charge lines above it stay the real figures. */
+      '<tr class="rc-grand"><td>' + (kind === 'estimate' ? 'Estimated total' : 'Balance due') + '</td><td class="rc-num">' + fmtMoney(tot.balance) + '</td></tr>' + /* V176_28_FLOOR_REMOVAL_2026_11_22: the Estimated total shows the real balance — the $60 floor is removed. */
       '</tbody></table>' +
       (kind === 'invoice' && tot.balance <= 0 && tot.subtotal > 0 ? '<p class="rc-paid">PAID IN FULL — thank you!</p>' : '') +
       noteHtml +
@@ -8769,7 +8770,7 @@ function loadTicketThread(client, ticketId) {
         'Subtotal: ' + fmtMoney(tot.subtotal)
       ];
       if (tot.deposits) lines.push('Deposits received: -' + fmtMoney(tot.deposits));
-      if (kind === 'estimate') lines.push('Estimated total: ' + fmtMoney(Math.max(60, tot.balance))); /* V173_PRICING_FLOOR_2026_11_18 */
+      if (kind === 'estimate') lines.push('Estimated total: ' + fmtMoney(tot.balance)); /* V176_28_FLOOR_REMOVAL_2026_11_22: the $60 floor is removed — the real total is shown. */
       else if (tot.balance <= 0 && tot.subtotal > 0) lines.push('Paid in full \u2014 thank you!');
       else lines.push('Balance due: ' + fmtMoney(tot.balance));
       lines.push('');

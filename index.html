@@ -6448,9 +6448,8 @@
     var v = Number(n);
     return isNaN(v) ? '—' : '$' + v.toFixed(2);
   }
-  /* V173_PRICING_FLOOR_2026_11_18 (Austin, Nov 18, 2026): no estimated price below $60 — base labor is $50.
-     Floors ESTIMATE amounts only; visit fees use estMoney directly and are never floored. */
-  function estFloor(n, issue) { if (n === null || n === undefined || n === '') return n; var v = Number(n); if (isNaN(v)) return n; if (issue === 'Cleaning and liquid metal replacement') return v; return Math.max(60, v); } /* V173_PRICING_FLOOR_2026_11_18: a missing amount passes through untouched — Number(null) is 0, and flooring that to 60 would invent a $60 price for an estimate that has no amount yet. V176_CLEANING_ALL_2026_11_19: cleaning is a FLAT $49.99 service - the floor never lifts it. */
+  /* V176_28_FLOOR_REMOVAL_2026_11_22 (Austin, Nov 22, 2026): the $60 estimate floor is REMOVED — an estimate amount is shown exactly as entered, whatever the amount. A missing amount passes through untouched. */
+  function estFloor(n, issue) { if (n === null || n === undefined || n === '') return n; var v = Number(n); if (isNaN(v)) return n; return v; } /* V176_28_FLOOR_REMOVAL_2026_11_22: passthrough — kept as a named function so all existing call sites keep working unchanged. */
   function estDate(e) {
     try { return new Date(e.created_at).toLocaleDateString(); } catch (err) { return ''; }
   }
@@ -10162,10 +10161,10 @@
       hideVerdict();
       if (state.price !== null) {
         /* Same wording law as the Prices lookup: an estimated price,
-           never below $60; the exact price is confirmed after
+           exactly as priced in the book; the exact price is confirmed after
            a full diagnostics. Never flat, never final. */
         label.textContent = 'Your estimated repair price'; /* V173_PRICING_FLOOR_2026_11_18 */
-        amount.style.display = ''; amount.textContent = fmt(Math.max(60, state.price)); /* V173_PRICING_FLOOR_2026_11_18 */
+        amount.style.display = ''; amount.textContent = fmt(state.price); /* V176_28_FLOOR_REMOVAL_2026_11_22: the $60 floor is removed — the book price shows as priced. */
         note.textContent = name + ' for ' + state.model + ' \u2014 estimate covering parts and labor. Your exact price is confirmed once we have checked your device.';
         if (disc) disc.hidden = false;
         bookResult.innerHTML = 'Book This Repair <i class="fas fa-arrow-right"></i>';
@@ -10195,8 +10194,8 @@
       var raw = String(replInput.value || '').replace(/[^0-9.]/g, '');
       var repl = parseFloat(raw);
       if (!isFinite(repl) || repl <= 0) { hideVerdict(); return; }
-      /* V173_PRICING_FLOOR_2026_11_18: the verdict judges the price the guest will actually be quoted — never below $60 — so the shown price, the percentage, and the band all read from the floored price. */
-      var shown = Math.max(60, state.price);
+      /* V176_28_FLOOR_REMOVAL_2026_11_22: the verdict judges the price the guest will actually be quoted, so the shown price, the percentage, and the band all read from the book price. */
+      var shown = state.price;
       var pct = (shown / repl) * 100;
       var band = (pct <= 40) ? 'fix' : (pct <= 65) ? 'borderline' : 'replace';
       verdict.setAttribute('data-band', band);

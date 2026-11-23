@@ -1061,8 +1061,8 @@
       }
       repairs.forEach(function (r) {
         var price = priceOf(r);
-        /* V173_PRICING_FLOOR_2026_11_18 (Austin, Nov 18, 2026): repair prices show as estimates with no "starting at" — the bare estimated price, never below $60 (base labor is $50). No price in the book means "Price on request", never "confirmed up front". The Nov 12 iPad "Starting at" rule is gone with it. */
-        var b = bkTile(BK_FRIENDLY[r] || r, (typeof price === 'number') ? bkFmt(Math.max(60, price)) : 'Price on request', bkIconHtml(r));
+        /* V176_28_FLOOR_REMOVAL_2026_11_22 (Austin, Nov 22, 2026): repair prices show as estimates with no "starting at" — the bare estimated price from the book, whatever it is. No price in the book means "Price on request", never "confirmed up front". The Nov 12 iPad "Starting at" rule is gone with it. */
+        var b = bkTile(BK_FRIENDLY[r] || r, (typeof price === 'number') ? bkFmt(price) : 'Price on request', bkIconHtml(r));
         /* REPAIR_FLOW_UPDATE_2026_11_05: repairs are multi-select — tapping toggles, nothing
            auto-advances; Continue is gated below the ATR One question. */
         b.addEventListener('click', function () {
@@ -1153,20 +1153,7 @@
         var r = rfParseRange(it.priceRange);
         if (r) { lo += r.lo; hi += r.hi; any = true; } else { unpriced++; }
       });
-      /* V173_PRICING_FLOOR_2026_11_18 (Austin, Nov 18, 2026): no estimated price below $60 — base labor is $50.
-         The floor lands here, the one place every site estimate total is summed, so the
-         summary, the estimate step, and the intake handoff all read the same floored total.
-         V176_CLEANING_ALL_2026_11_19: cleaning is a FLAT $49.99 service, not a repair
-         estimate - the floor never lifts it. The floor applies to the repair portion
-         only; a cleaning-only total stays $49.99. */
-      var cleanAmt = 0;
-      repairState.issues.forEach(function (it) { if (it.name === 'Cleaning and liquid metal replacement' && typeof it.price === 'number') cleanAmt += it.price; });
-      if (any) {
-        var repLo = lo - cleanAmt, repHi = hi - cleanAmt;
-        if (repLo > 0) repLo = Math.max(60, repLo);
-        if (repHi > 0) repHi = Math.max(60, repHi);
-        lo = repLo + cleanAmt; hi = repHi + cleanAmt;
-      }
+      /* V176_28_FLOOR_REMOVAL_2026_11_22 (Austin, Nov 22, 2026): the $60 estimate floor is removed — totals are the plain sum of the selected repairs. Cleaning stays a flat $49.99 service, unchanged. */
       return { any: any, unpriced: unpriced, lo: lo, hi: hi };
     }
     function rfCombinedText(t) {
@@ -5439,7 +5426,7 @@ if ("serviceWorker" in navigator) {
               var title = brand + ' ' + model + ' \u2014 ' + rname;
               index.push({
                 kind: 'repair', title: title,
-                sub: (typeof price === 'number') ? fmtPrice(Math.max(60, price)) : 'Price on request', /* V173_PRICING_FLOOR_2026_11_18 */
+                sub: (typeof price === 'number') ? fmtPrice(price) : 'Price on request', /* V176_28_FLOOR_REMOVAL_2026_11_22: the $60 floor is removed. */
                 type: type, brand: brand, model: model, repair: rname,
                 price: (typeof price === 'number') ? price : null,
                 hay: norm(title + ' ' + type)
@@ -6556,7 +6543,7 @@ if ("serviceWorker" in navigator) {
             var price = priceOf(r);
             var label = shared.friendly[r] || r;
             var b = tileShell(shared.iconHtml(r) + '<strong>' + esc(label) + '</strong>' +
-              subSpan(typeof price === 'number' ? shared.fmt(Math.max(60, price)) : 'Price on request')) /* V173_PRICING_FLOOR_2026_11_18 */;
+              subSpan(typeof price === 'number' ? shared.fmt(price) : 'Price on request')) /* V176_28_FLOOR_REMOVAL_2026_11_22: the $60 floor is removed. */;
             b.setAttribute('data-raw', r);
             b.addEventListener('click', function () {
               togglePick(pane, { name: label, price: typeof price === 'number' ? price : null, priceRange: null }, b);
@@ -6646,18 +6633,7 @@ if ("serviceWorker" in navigator) {
         var r = parseRange(it.priceRange);
         if (r) { lo += r.lo; hi += r.hi; any = true; } else { unpriced++; }
       });
-      /* V173_PRICING_FLOOR_2026_11_18 (Austin, Nov 18, 2026): no estimated price below $60 — base labor is $50.
-         Same floor as the booking-flow totals, for the service-picker estimate.
-         V176_CLEANING_ALL_2026_11_19: cleaning is a FLAT $49.99 service - the floor
-         never lifts it (repair portion only; cleaning-only stays $49.99). */
-      var cleanAmt = 0;
-      picks.forEach(function (it) { if (it.name === 'Cleaning and liquid metal replacement' && typeof it.price === 'number') cleanAmt += it.price; });
-      if (any) {
-        var repLo = lo - cleanAmt, repHi = hi - cleanAmt;
-        if (repLo > 0) repLo = Math.max(60, repLo);
-        if (repHi > 0) repHi = Math.max(60, repHi);
-        lo = repLo + cleanAmt; hi = repHi + cleanAmt;
-      }
+      /* V176_28_FLOOR_REMOVAL_2026_11_22 (Austin, Nov 22, 2026): the $60 estimate floor is removed — totals are the plain sum of the picked repairs. Cleaning stays a flat $49.99 service, unchanged. */
       return { any: any, unpriced: unpriced, lo: lo, hi: hi };
     }
 
