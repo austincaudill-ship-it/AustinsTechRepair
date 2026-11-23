@@ -1531,6 +1531,7 @@ body.portal-body #portal-dash-view textarea {
    reset and two-step screens never offer them. */
 body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-hub-home-btn,
 body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-hub-new-btn,
+body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-hub-scanin-btn,
 body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-hub-square-btn,
 body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-hub-refresh-btn { display: none; }
 /* GLOBAL_REFRESH_2026_11_11 (Austin, Nov 11, 2026): the top-bar Refresh button follows the same hide rule as its neighbours (added to the list above), and sits LAST in the row — HUB_HEADER_2026_11_11 put Get App between Square and Refresh, so Refresh is order 5 in both width blocks below (Home is 1, Get App is 4; Square is 3 on phones, where Square itself is hidden on wide screens). */
@@ -1748,14 +1749,15 @@ body:has(#portal-dash-view[hidden]) .portal-topbar-actions #portal-hub-refresh-b
 @media (max-width: 920px) {
   .portal-topbar-actions { gap: 0.45rem; }
   .portal-topbar-actions .portal-btn { padding: 0.5rem 0.9rem; font-size: 0.85rem; min-width: 0; } /* V176_11_QA_TIGHTEN_2026_11_20: Guest Hub parity — same pill padding as .ghub-qa .btn. */
-  .portal-topbar-actions #portal-hub-home-btn { order: 1; } /* V163_QA_HOME_2026_11_17 (Austin, Nov 17, 2026): Home goes FIRST in Quick Actions in BOTH hubs — the row runs Home, New Service Request, Square, Get App, Refresh, Back to site, Log Out, and the theme toggle last, at every width */
+  .portal-topbar-actions #portal-hub-home-btn { order: 1; } /* V163_QA_HOME_2026_11_17 (Austin, Nov 17, 2026): Home goes FIRST in Quick Actions in BOTH hubs — the row runs Home, Estimate, Scan In, Square, Get App, Refresh, Back to site, Log Out, and the theme toggle last, at every width */
   .portal-topbar-actions #portal-hub-new-btn { order: 2; }
-  .portal-topbar-actions #portal-hub-square-btn { order: 3; }
-  .portal-topbar-actions #portal-getapp-btn { order: 4; }
-  .portal-topbar-actions #portal-hub-refresh-btn { order: 5; }
-  .portal-topbar-actions > a:first-of-type { order: 6; } /* Back to site — the row's first anchor */
-  .portal-topbar-actions #portal-logout { order: 7; }
-  .portal-topbar-actions #portal-theme-btn { order: 8; } /* dark/light toggle last, like the moon on the website */
+  .portal-topbar-actions #portal-hub-scanin-btn { order: 3; }
+  .portal-topbar-actions #portal-hub-square-btn { order: 4; }
+  .portal-topbar-actions #portal-getapp-btn { order: 5; }
+  .portal-topbar-actions #portal-hub-refresh-btn { order: 6; }
+  .portal-topbar-actions > a:first-of-type { order: 7; } /* Back to site — the row's first anchor */
+  .portal-topbar-actions #portal-logout { order: 8; }
+  .portal-topbar-actions #portal-theme-btn { order: 9; } /* dark/light toggle last, like the moon on the website */
   .portal-hubsearch {
     top: var(--hs-vv-top, 0px); height: var(--hs-vv-height, 100dvh); bottom: auto;
     display: flex; flex-direction: column; justify-content: flex-end;
@@ -1846,12 +1848,13 @@ body:has(#portal-dash-view[hidden]) .portal-thumbbar { display: none; }
   .portal-topbar-actions #portal-hub-square-btn { display: none; }
   .portal-topbar-actions #portal-hub-home-btn { order: 1; } /* V163_QA_HOME_2026_11_17: Home first, same as the <=920px block */
   .portal-topbar-actions #portal-hub-new-btn { order: 2; }
-  .portal-topbar-actions #portal-hub-square-btn { order: 3; }
-  .portal-topbar-actions #portal-getapp-btn { order: 4; }
-  .portal-topbar-actions #portal-hub-refresh-btn { order: 5; }
-  .portal-topbar-actions > a:first-of-type { order: 6; } /* Back to site */
-  .portal-topbar-actions #portal-logout { order: 7; }
-  .portal-topbar-actions #portal-theme-btn { order: 8; }
+  .portal-topbar-actions #portal-hub-scanin-btn { order: 3; }
+  .portal-topbar-actions #portal-hub-square-btn { order: 4; }
+  .portal-topbar-actions #portal-getapp-btn { order: 5; }
+  .portal-topbar-actions #portal-hub-refresh-btn { order: 6; }
+  .portal-topbar-actions > a:first-of-type { order: 7; } /* Back to site */
+  .portal-topbar-actions #portal-logout { order: 8; }
+  .portal-topbar-actions #portal-theme-btn { order: 9; }
 }
 @media (max-width: 920px) {
   .portal-hubsearch { padding: 0.75rem; overflow: hidden; }

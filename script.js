@@ -4192,25 +4192,28 @@
       var btn = ticketForm.querySelector('button[type="submit"]');
       if (btn) { btn.disabled = true; btn.innerHTML = 'Submitting…'; }
 
-      sb.from('tickets').insert({
-        customer_id: s.id,
-        customer_name: s.name || null,
-        customer_phone: s.phone || null,
-        device_type: deviceType,
-        brand: brand || null,
-        model: model || null,
-        issue: issue,
-        status: 'Awaiting Estimate',
+      /* V176_30_ONE_BUTTON_ESTIMATE_2026_11_23: estimate-first — a repair request from the account area creates an estimate, never a ticket. The guest confirms it from My Estimates. (This legacy handler only fires with a legacy localStorage session; the live path is the index.html handler — both now create estimates.) */
+      var estAudience = (s.account_type || s.audience) === 'business' ? 'business' : 'guest';
+      var estId = (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : ('est-' + Date.now() + '-' + Math.floor(Math.random() * 1000000000));
+      var estToken = (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : estId;
+      sb.from('estimates').insert({
+        id: estId, public_token: estToken,
+        customer_id: s.id, ticket_id: null,
+        audience: estAudience, name: s.name || null, contact_name: null,
+        phone: s.phone || null, email: s.email || null,
+        device_type: deviceType, brand: brand || null, model: model || null,
+        issue: issue, estimate_amount: null, estimate_note: null, atr_one: '',
+        status: 'Awaiting Estimate', terms_accepted: false, work_auth_accepted: false,
+        preferred_date: null, preferred_window: null,
         source: (window.atrLeadSource ? window.atrLeadSource() : '') || 'website'
       }).select('id').single()
         .then(function (res) {
           if (btn) { btn.disabled = false; btn.innerHTML = 'Submit Request <i class="fas fa-arrow-right"></i>'; }
           if (res.error) throw res.error;
-          // Reset form and open the new ticket thread
           document.getElementById('acct-t-brand').value = '';
           document.getElementById('acct-t-model').value = '';
           document.getElementById('acct-t-issue').value = '';
-          openThread(res.data.id);
+          if (typeof window.atrGuestHubShowTab === 'function') window.atrGuestHubShowTab('estimates');
         })
         .catch(function () {
           if (btn) { btn.disabled = false; btn.innerHTML = 'Submit Request <i class="fas fa-arrow-right"></i>'; }

@@ -1219,6 +1219,21 @@
              existing fee rule (member means atr_one === 'member')
              treats every website estimate as a non-member. Preserved
              exactly; the coverage mapping is a separate decision. */
+          /* V176_30_ONE_BUTTON_ESTIMATE_2026_11_23: the website estimate
+             carries the triage answers as v176_30 segments (composer-only
+             mirror of portal.js v176_30IntakeNote — the portal parser
+             reads them back at conversion). The window already rides
+             preferred_date / preferred_window. */
+          function v176_30WebsiteTriage(r) {
+            var parts = [];
+            function add(key, v) { if (v != null && String(v).trim() !== '') parts.push(key + ': ' + String(v).trim()); }
+            add('powers-on', r.power_on);
+            add('backed-up', r.backed_up);
+            add('prior', r.prior_repair);
+            add('warranty', r.warranty_status);
+            add('serial', r.serial_imei);
+            return parts.join('; ');
+          }
           function v176_20GoEstimate(note, miles, failed, approx) {
             var estRow = {
               id: newEstimateId(), public_token: newEstimateId(),
@@ -1228,7 +1243,7 @@
               phone: v.phone, email: v.email, service_address: address || null,
               device_type: v.device_type, brand: guided && guided.brand ? guided.brand : null, model: v.device_info || null,
               issue: issue, estimate_amount: null,
-              estimate_note: [estNoteBase, note].filter(Boolean).join(' '),
+              estimate_note: [estNoteBase, note, v176_30WebsiteTriage(row)].filter(Boolean).join(' '),
               atr_one: atrOneCovered || '',
               status: 'Awaiting Estimate', source: leadSource(form) || 'website',
               terms_accepted: !!field(form, 'terms_accepted'),

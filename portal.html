@@ -14,7 +14,7 @@
   <!-- V176_24_PORTAL_BACK_2026_11_22: ?v= bumped to 176-24 with in-portal Back navigation (portal.js + portal.css). Same rule as below: both queries carry the current version, so a fresh portal.html can never pair with stale cached subresources. -->
   <!-- V176_22_CONFIRM_LABEL_2026_11_22: ?v= bumped to 176-22 with the Record Confirm mileage-label fix (portal.js). portal.css itself is unchanged; both queries carry the current version so a fresh portal.html can never pair with stale cached subresources. -->
   <!-- V176_26_SQUARE_FREE_FEES_2026_11_22: ?v= bumped to 176-26 with the Square Free fee rates, the ATR One fee exemption, and the Square fees table (portal.js). portal.css itself is unchanged; both queries carry the current version so a fresh portal.html can never pair with stale cached subresources. -->
-  <link rel="stylesheet" href="portal.css?v=176-27" />
+  <link rel="stylesheet" href="portal.css?v=176-30" />
   <!-- PORTAL_APP_2026_11_09 (Austin, Nov 9, 2026): the Associate Hub
        is its own installable app. portal-manifest.json is a
        DECLARATION only — the installed app is this very page
@@ -69,7 +69,7 @@
       <p class="portal-muted portal-head-status"><span class="portal-head-status-greet"><span class="portal-head-status-greetline"><span id="portal-greeting">Welcome back</span>, <span id="portal-emp-name">teammate</span></span> <span class="portal-badge portal-badge-role" id="portal-emp-role"></span></span> <span class="portal-head-status-sep" aria-hidden="true">&middot;</span> <span class="portal-head-status-clock"><i class="far fa-clock"></i> <span id="portal-clock"></span> &middot; <span id="portal-date"></span></span></p>
       <!-- HUB_NAV_2026_11_09 (Austin, Nov 9, 2026): New Service Request and Search join the top row at every width. New Service Request clicks the real sidebar Check-In tab and Search opens the Hub search dropdown under this bar (the HUB_SEARCH section in portal.js); portal.css hides both beside Log Out whenever the dashboard is not the showing view, so the sign-in screens never offer them. SEARCH_SWAP_2026_11_09 (v65): Search left this row for the thumb bar (it is the bar's fifth item now, opening the Hub Search sheet); a Square anchor took its seat here, straight to Square's Balance page, where Cash out lives. Log Out moved up beside Back to site the same day: portal.css orders the four at phone widths as Back to site / Log Out, then New Service Request / Square. SEARCH_SHEET_FIX_2026_11_09 (v68): the Search button above is back in this row for screens over 920px only (portal.css gates it there, and gates Square to phone widths in exchange) — the pre-v65 large-screen arrangement, because the thumb bar exists only on phones and iPad, Mac and PC had no door to the Hub search at all. --><!-- GETAPP_2026_11_10 (Austin, Nov 10, 2026): the Get App button sits in the top bar where Austin circled it on his screenshot — right of the Associate Hub tag, docked right by margin-left:auto in portal.css. One button on every device: portal.js fires the real install prompt where the browser offers one (Android/Chrome), and opens the steps panel below everywhere else (iPhone Share -> Add to Home Screen). It hides itself once the Hub is installed / running as the app (CSS display-mode guard + portal.js). It is NOT gated by the dashboard-view hides: a new associate can install from the sign-in screen before ever signing in. HUB_HEADER_2026_11_11 AMENDMENT (Austin, Nov 11, 2026): the button moved INTO .portal-topbar-actions, between Square and Refresh, and Refresh is last in the row; the margin-left:auto dock is gone (portal.css). -->
       <span class="portal-topbar-tag portal-quickactions-label">QUICK ACTIONS</span>
-      <span class="portal-topbar-actions"><!-- V163_QA_HOME_2026_11_17 (Austin, Nov 17, 2026): Home goes FIRST in Quick Actions in BOTH hubs — this button clicks the real sidebar Home tab, same as New Service Request clicks Check-In. --><button class="portal-btn portal-btn-outline" id="portal-hub-home-btn" type="button"><i class="fas fa-house"></i> Home</button> <a class="portal-btn portal-btn-outline" href="https://austinstechrepairgroup.com/">Back to site</a> <button class="portal-btn portal-btn-outline" id="portal-hub-new-btn" type="button"><i class="fas fa-clipboard-check"></i> New Service Request</button> <a class="portal-btn portal-btn-outline" id="portal-hub-square-btn" href="https://app.squareup.com/dashboard/balance" target="_blank" rel="noopener"><i class="fas fa-credit-card"></i> Square</a> <button class="portal-btn portal-btn-outline" id="portal-getapp-btn" type="button"><i class="fas fa-download"></i> Get App</button> <!-- GLOBAL_REFRESH_2026_11_11 (Austin, Nov 11, 2026): one Refresh button in the top bar that can never be lost — it refreshes whichever panel is open (wiring in portal.js, GLOBAL_REFRESH block in initTabs; visibility + order in portal.css). HUB_HEADER_2026_11_11: Get App sits between Square and Refresh, so Refresh is the LAST button in the row. --> <button class="portal-btn portal-btn-outline" id="portal-hub-refresh-btn" type="button"><i class="fas fa-rotate-right"></i> Refresh</button> <!-- V176_9_QA_SEARCH_OUT_2026_11_19 (Austin, Nov 19, 2026): Search is out of Quick Actions in all hubs — the thumb bar's Search item (window.portalOpenHubSearch) is the only door to the Hub search now. --> <button class="portal-btn portal-btn-outline" id="portal-logout" type="button"><i class="fas fa-sign-out-alt"></i> Log Out</button> <button class="portal-btn portal-btn-outline" id="portal-theme-btn" type="button" aria-label="Toggle dark mode" title="Toggle dark/light mode"><i class="fas fa-moon" id="portal-theme-icon"></i></button></span>
+      <span class="portal-topbar-actions"><!-- V163_QA_HOME_2026_11_17 (Austin, Nov 17, 2026): Home goes FIRST in Quick Actions in BOTH hubs — this button clicks the real sidebar Home tab, same as New Service Request clicks Check-In. --><button class="portal-btn portal-btn-outline" id="portal-hub-home-btn" type="button"><i class="fas fa-house"></i> Home</button> <a class="portal-btn portal-btn-outline" href="https://austinstechrepairgroup.com/">Back to site</a> <button class="portal-btn portal-btn-outline" id="portal-hub-new-btn" type="button"><i class="fas fa-file-invoice-dollar"></i> Estimate</button> <button class="portal-btn portal-btn-outline" id="portal-hub-scanin-btn" type="button"><i class="fas fa-qrcode"></i> Scan In</button> <a class="portal-btn portal-btn-outline" id="portal-hub-square-btn" href="https://app.squareup.com/dashboard/balance" target="_blank" rel="noopener"><i class="fas fa-credit-card"></i> Square</a> <button class="portal-btn portal-btn-outline" id="portal-getapp-btn" type="button"><i class="fas fa-download"></i> Get App</button> <!-- GLOBAL_REFRESH_2026_11_11 (Austin, Nov 11, 2026): one Refresh button in the top bar that can never be lost — it refreshes whichever panel is open (wiring in portal.js, GLOBAL_REFRESH block in initTabs; visibility + order in portal.css). HUB_HEADER_2026_11_11: Get App sits between Square and Refresh, so Refresh is the LAST button in the row. --> <button class="portal-btn portal-btn-outline" id="portal-hub-refresh-btn" type="button"><i class="fas fa-rotate-right"></i> Refresh</button> <!-- V176_9_QA_SEARCH_OUT_2026_11_19 (Austin, Nov 19, 2026): Search is out of Quick Actions in all hubs — the thumb bar's Search item (window.portalOpenHubSearch) is the only door to the Hub search now. --> <button class="portal-btn portal-btn-outline" id="portal-logout" type="button"><i class="fas fa-sign-out-alt"></i> Log Out</button> <button class="portal-btn portal-btn-outline" id="portal-theme-btn" type="button" aria-label="Toggle dark mode" title="Toggle dark/light mode"><i class="fas fa-moon" id="portal-theme-icon"></i></button></span>
     </div>
   </header>
 
@@ -254,20 +254,16 @@
              activateTab('home') directly (portal.js) instead of clicking this
              button. -->
         <div class="portal-nav-group">Guest Accounts</div>
-        <!-- V165_ESTIMATE_2026_11_17 (Austin, Nov 17, 2026): New Service Estimate — one button, right above New Service Request. It opens the same panel on the estimate sheet instead of the request form. -->
+        <!-- V176_30_ONE_BUTTON_ESTIMATE_2026_11_23 (Austin, Nov 22-23, 2026): ONE Estimate button — New Service Estimate and New Service Request are merged. The check-in form IS the estimate form now; everything starts as an estimate, no ticket until the guest confirms. The old New Service Request button below is gone. -->
         <button class="portal-tab" id="portal-tab-estimate" type="button" role="tab" data-tab="estimate">
-          <i class="fas fa-file-invoice-dollar"></i> New Service Estimate
-        </button>
-        <!-- CUSTOMER_INBOX_2026_11_05 (owner naming ruling, Nov 5, 2026): this tab's visible label is "New Service Request" now — the customer's side dropped its own "Check In" name the same day, so the two no longer collide. Ids, data-tab, handlers, and behavior are unchanged; Scan In below keeps its name. -->
-        <button class="portal-tab" id="portal-tab-checkin" type="button" role="tab" data-tab="checkin">
-          <i class="fas fa-clipboard-check"></i> New Service Request
-        </button>
-        <!-- ATRONE_QR_2026_11_05 (pass 4, Austin, Nov 5, 2026): "Now we have to build the receiving end into the portal — goes under Check-In, says Scan In." Scan In is the staff side of the member QR: it sits directly under Check-In in the Guest group — camera scan of the member's code (or the account number typed by hand) routes through the very same scan routing as the ?scan= deep link, straight to the guest's open job or their Guest record. QR_FIX_PASS_2026_11_05: it opens the Scan In popup (portal-scanin-modal, by the drawer markup below), not a panel — the button itself is unchanged, a visual peer of Check-In. -->
-        <button class="portal-tab" id="portal-tab-scanin" type="button" role="tab" data-tab="scanin">
-          <i class="fas fa-qrcode"></i> Scan In
+          <i class="fas fa-file-invoice-dollar"></i> Estimate
         </button>
         <button class="portal-tab active" id="portal-tab-tickets" type="button" role="tab" data-tab="tickets">
           <i class="fas fa-list-ol"></i> Service Queue <span class="portal-count" id="portal-count-tickets" hidden></span>
+        </button>
+                <!-- ATRONE_QR_2026_11_05 (pass 4, Austin, Nov 5, 2026): "Now we have to build the receiving end into the portal — goes under Check-In, says Scan In." Scan In is the staff side of the member QR: it sits directly under Estimate in the Guest group — camera scan of the member's code (or the account number typed by hand) routes through the very same scan routing as the ?scan= deep link, straight to the guest's open job or their Guest record. QR_FIX_PASS_2026_11_05: it opens the Scan In popup (portal-scanin-modal, by the drawer markup below), not a panel — the button itself is unchanged, a visual peer of Check-In. -->
+        <button class="portal-tab" id="portal-tab-scanin" type="button" role="tab" data-tab="scanin">
+          <i class="fas fa-qrcode"></i> Scan In
         </button>
         <!-- V165_ESTIMATE_2026_11_17 (Austin, Nov 17, 2026): Estimates live in their own list, next to the Service Queue — every estimate sits here before acceptance, guest or business, and it is NOT in the queue until it is confirmed. Same tier as the queue (no TAB_GATES entry). Panel: portal-panel-estimates, loader loadEstimates in portal.js. -->
         <button class="portal-tab" id="portal-tab-estimates" type="button" role="tab" data-tab="estimates">
@@ -277,17 +273,17 @@
         <button class="portal-tab" id="portal-tab-invoices" type="button" role="tab" data-tab="invoices">
           <i class="fas fa-file-invoice"></i> Invoices <span class="portal-count" id="portal-count-invoices" hidden></span>
         </button>
-        <!-- PORTAL_SIDEBAR_ROSTER_2026_11_02 (Austin, Nov 2, 2026): this button's display label is "Guest" — his word for customers. Display text ONLY: the tab id (portal-tab-customers) and data-tab="customers" are unchanged, and every handler stays keyed to those ids, never to the label text. -->
-        <button class="portal-tab" id="portal-tab-customers" type="button" role="tab" data-tab="customers">
-          <i class="fas fa-users"></i> Guest
-        </button>
-        <!-- LEADS_2026_11_15 (Austin, Nov 15, 2026): a Leads button in the Guest group, directly after Guest — people who reached out but are not guests yet (a Google Voice call, a walk-in, a referral) get tracked here until they book or go cold, instead of living in someone's head. Panel: portal-panel-leads, loader loadLeads in portal.js. Visible to every staff tier that sees the Guest group, same as the Guest button. -->
+        <!-- LEADS_2026_11_15 (Austin, Nov 15, 2026): a Leads button in the Guest group — people who reached out but are not guests yet (a Google Voice call, a walk-in, a referral) get tracked here until they book or go cold, instead of living in someone's head. Panel: portal-panel-leads, loader loadLeads in portal.js. Visible to every staff tier that sees the Guest group, same as the Guest button. -->
         <button class="portal-tab" id="portal-tab-leads" type="button" role="tab" data-tab="leads">
           <i class="fas fa-user-plus"></i> Leads <span class="portal-count" id="portal-count-leads" hidden></span>
         </button>
         <!-- GUEST_CHAT_2026_11_08 (Austin, Nov 8, 2026): "where is that customer — shouldn't there be like a guest chat [beside] team chat." A Guest Chat button in the Guest group, directly after Guest: every customer conversation in one list — repair threads and the General conversation from the account's Send us a message — readable and answerable here. Panel: portal-panel-guestchat, loader loadGuestChat in portal.js. fa-comments belongs to Team Chat, so this one carries fa-comment-dots. -->
         <button class="portal-tab" id="portal-tab-guestchat" type="button" role="tab" data-tab="guestchat">
           <i class="fas fa-comment-dots"></i> Guest Chat <span class="portal-count" id="portal-count-guestchat" hidden></span>
+        </button>
+        <!-- PORTAL_SIDEBAR_ROSTER_2026_11_02 (Austin, Nov 2, 2026): this button's display label is "Guest" — his word for customers. Display text ONLY: the tab id (portal-tab-customers) and data-tab="customers" are unchanged, and every handler stays keyed to those ids, never to the label text. -->
+        <button class="portal-tab" id="portal-tab-customers" type="button" role="tab" data-tab="customers">
+          <i class="fas fa-users"></i> Guest
         </button>
         <!-- ATRG_REMOTE_2026_11_10 (Austin, Nov 10, 2026): ATRG Remote is the ASSOCIATE side of Virtual One-on-One — it moved to the Guest group Nov 12, 2026 by Austin's order ("ATRG remote should not be in associates. It should be in guests"), after Guest Chat: Guest Chat is the guest-conversation surface, Remote is the guest-session surface, so they sit together. ATRG Connect is the guest side (the website page the guest opens). From Remote an associate runs the session: makes the one-time code, sends the guest their ATRG Connect link (text or email), and controls the session. The gate itself lives in the virtual-session Edge Function; this panel only mints and revokes. Panel: portal-panel-virtual, loader loadVirtualSessions in portal.js. -->
         <button class="portal-tab" id="portal-tab-virtual" type="button" role="tab" data-tab="virtual">
@@ -722,10 +718,10 @@
           </div>
         </div>
         <div class="portal-queue-search">
-          <input type="search" id="portal-estimates-search" placeholder="Search estimates &mdash; name, device, or phone" aria-label="Search estimates" autocomplete="off" />
+          <input type="search" id="portal-estimates-search" placeholder="Search estimates and leads &mdash; name, device, or phone" aria-label="Search estimates" autocomplete="off" />
           <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="portal-estimates-search-clear" aria-label="Clear the estimates search" hidden>&times;</button>
         </div>
-        <p class="portal-muted portal-small">Estimates live and die here &mdash; an estimate stays here even after the guest answers it. When the guest confirms, a ticket is made for them and it shows in the Service Queue; the estimate itself never becomes a ticket. No account is made when an estimate is created; the account is made only when the guest taps the link in their estimate email.</p> <!-- V176_6_ESTIMATE_WORDS_2026_11_19 (Austin, Nov 19, 2026) -->
+        <p class="portal-muted portal-small">Estimates and leads together, newest first &mdash; staff only. When the guest confirms an estimate, it becomes a Service Queue item and leaves this list. A declined estimate stays here. No account is made when an estimate is created; the account is made only when the guest taps the link in their estimate email. Leads are read-only here &mdash; work them from the Leads list.</p> <!-- V176_6_ESTIMATE_WORDS_2026_11_19 (Austin, Nov 19, 2026) -->
         <div id="portal-estimates-list"><p class="portal-muted">Loading estimates&hellip;</p></div>
       </div>
 
@@ -1625,8 +1621,8 @@
       <!-- V154_TICKET_FORM_2026_11_16: date + 2-hour window picker in New Service Request (same box), map under the service address, ticket-detail Receipt/Estimate/Invoice menus, mileage calculator in Charges (portal.js). -->
       <!-- CHECK-IN / TRIAGE -->
       <div class="portal-panel" id="portal-panel-checkin" role="tabpanel" hidden>
-        <div class="portal-panel-head"><h2 class="portal-h2">New Service Request &mdash; Triage</h2></div>
-        <p class="portal-muted portal-small">Walk-in and phone check-ins. Find the guest (or add them) &mdash; email and service address are required, because we come to them. For a repair, pick the device and the reason and run the power test. For a one-on-one lesson, tap One-on-One in the Service tiles, pick 1, 2, or 3 hours, and write what they want to get done. Either way the ticket lands straight in the Service Queue. Confirm the money with the guest before submitting &mdash; repairs: $14.99 visit fee for guests ($34.99 for business) for a known repair, plus $34.99 diagnostics for guests ($64.99 for business) only if the job needs a full diagnosis &mdash; we tell the guest first. One-on-one: $24.99 an hour for guests ($49.99 for business) for the time booked, and the visit fee charged separately. ATR One members pay no visit fee or diagnostics on covered devices.</p>
+        <div class="portal-panel-head"><h2 class="portal-h2">Estimate</h2></div>
+        <p class="portal-muted portal-small">Walk-in and phone estimates. Find the guest (or add them) &mdash; email and service address are required, because we come to them. For a repair, pick the device and the reason and run the power test. For a one-on-one lesson, tap One-on-One in the Service tiles, pick 1, 2, or 3 hours, and write what they want to get done. Either way this creates an ESTIMATE only &mdash; no ticket, no queue entry &mdash; until the guest confirms it. Confirm the money with the guest before submitting &mdash; repairs: $14.99 visit fee for guests ($34.99 for business) for a known repair, plus $34.99 diagnostics for guests ($64.99 for business) only if the job needs a full diagnosis &mdash; we tell the guest first. One-on-one: $24.99 an hour for guests ($49.99 for business) for the time booked, and the visit fee charged separately. ATR One members pay no visit fee or diagnostics on covered devices.</p>
         <form id="ci-form" novalidate>
           <!-- CHECKIN_COLLAPSE_2026_11_04 (Austin, Nov 4, 2026): the check-in form folds into tappable sections, like the ticket drawer's sections in the Service Queue — Customer starts open, the rest start closed, and the Create ticket button and Clear check-in stay outside the sections at the bottom, always visible. Every field id is exactly as it was; only the folding wrappers were added. -->
           <div class="ci-acc" data-ci-acc="customer">
@@ -1650,7 +1646,8 @@
             <div class="portal-field" id="ci-contact-wrap" hidden><label for="ci-contact">Contact name *</label><input type="text" id="ci-contact" placeholder="Person you are speaking to" /></div>
             <div class="portal-field"><label for="ci-phone">Phone *</label><input type="tel" id="ci-phone" required /></div>
             <div class="portal-field"><label for="ci-email">Email *</label><input type="email" id="ci-email" required /></div>
-            <div class="portal-field"><label for="ci-address">Service address *</label><input type="text" id="ci-address" required placeholder="Street, city, ZIP" /></div>
+            <div class="portal-field"><label for="ci-address" id="ci-address-label">Service address *</label><input type="text" id="ci-address" required placeholder="Street, city, ZIP" /></div>
+            <div class="portal-field portal-nh-check"><label for="ci-droppedoff"><input type="checkbox" id="ci-droppedoff" /> Dropped off</label></div>
           </div>
           <div class="v154-map" id="ci-address-map" hidden><iframe id="ci-address-map-frame" title="Map of the service address" loading="lazy" src=""></iframe><p class="portal-muted portal-small" id="ci-address-map-note"></p></div>
           <!-- V161_CHECKIN_LAYOUT_2026_11_17 (Austin, Nov 17, 2026): When — date & time moved up from after Device and issue to directly under the service address, inside the Guest accordion. Whole accordion moved verbatim; ids, classes and JS wiring unchanged; starts closed as before. -->
@@ -1709,8 +1706,9 @@
           </div>
           <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">What service does it need?</h3></div>
           <p class="portal-muted portal-small">Tap all that apply</p>
-          <!-- PORTAL_ISSUE_TILES_2026_10_30: touch-friendly issue picker — big tappable tiles with icons replace the old text chips. Selected tile labels (data-label) feed issue_reason and lead the ticket's issue text; the check-in notes box below stays for detail (see portal.js check-in submit). -->
+          <!-- PORTAL_ISSUE_TILES_2026_10_30: touch-friendly issue picker — big tappable tiles with icons replace the old text chips. Selected tile labels (data-label) feed issue_reason and lead the ticket's issue text; the check-in notes box below stays for detail (see portal.js check-in submit). V176_30_ONE_BUTTON_ESTIMATE_2026_11_23: the repair tiles live in #ci-reason-tiles and are device-dependent — a Game Console gets the console set (disc drive, power supply, side panels, fans, storage, software issues); every other device keeps this set. One-on-One, Cleaning and Other stay outside the container, always shown. -->
           <div class="ci-tiles" id="ci-reasons" role="group" aria-label="Issue picker">
+            <div id="ci-reason-tiles" style="display:contents">
             <button type="button" class="ci-tile" data-label="Cracked display" aria-pressed="false"><i class="fas fa-mobile-screen" aria-hidden="true"></i><span>Cracked display</span></button>
             <button type="button" class="ci-tile" data-label="Battery" aria-pressed="false"><i class="fas fa-battery-half" aria-hidden="true"></i><span>Battery</span></button>
             <button type="button" class="ci-tile" data-label="Charging port" aria-pressed="false"><i class="fas fa-bolt" aria-hidden="true"></i><span>Charging port</span></button>
@@ -1722,6 +1720,7 @@
             <button type="button" class="ci-tile" data-label="Back glass" aria-pressed="false"><i class="fas fa-mobile" aria-hidden="true"></i><span>Back glass</span></button>
             <button type="button" class="ci-tile" data-label="Buttons" aria-pressed="false"><i class="fas fa-toggle-on" aria-hidden="true"></i><span>Buttons</span></button>
             <button type="button" class="ci-tile" data-label="Software issue" aria-pressed="false"><i class="fas fa-bug" aria-hidden="true"></i><span>Software issue</span></button>
+            </div>
             <!-- PORTAL_SERVICE_QUEUE_2026_11_06 (intake refinements): the One-on-One tile lives in the Service grid itself. Tapping it opens the three hour buttons under it; Other stays last, underneath them. Wired in portal.js. -->
             <button type="button" class="ci-tile ci-tile-oneonone" id="ci-oneonone" data-oneonone="1" aria-pressed="false"><i class="fas fa-chalkboard-user" aria-hidden="true"></i><span>One-on-One</span></button>
             <div class="ci-hours" id="ci-hours" hidden role="group" aria-label="One-on-One time">
@@ -1760,6 +1759,11 @@
           </div>
           </div>
           </div>
+          <div class="portal-field">
+            <label for="ci-amount">Estimate amount ($) *</label>
+            <input type="number" id="ci-amount" min="0" step="0.01" inputmode="decimal" placeholder="0.00" required />
+            <p class="portal-muted portal-small">The price you quoted the guest &mdash; any amount saves and shows exactly as entered.</p>
+          </div>
           <div class="ci-acc" data-ci-acc="service" id="ci-service-section" hidden>
           <button type="button" class="ci-acc-head ci-acc-open" data-ci-acc-toggle="service" aria-expanded="true"><span class="ci-acc-title">Service details</span><i class="fas fa-chevron-down ci-acc-chev" aria-hidden="true"></i></button>
           <div class="ci-acc-body" data-ci-acc-body="service">
@@ -1784,73 +1788,25 @@
           </div>
           </div>
           <div class="ci-acc" data-ci-acc="notes">
-          <button type="button" class="ci-acc-head" data-ci-acc-toggle="notes" aria-expanded="false"><span class="ci-acc-title">Notes and agreements</span><i class="fas fa-chevron-down ci-acc-chev" aria-hidden="true"></i></button>
+          <button type="button" class="ci-acc-head" data-ci-acc-toggle="notes" aria-expanded="false"><span class="ci-acc-title">Notes</span><i class="fas fa-chevron-down ci-acc-chev" aria-hidden="true"></i></button>
           <div class="ci-acc-body" data-ci-acc-body="notes" hidden>
           <div class="portal-field">
             <label for="ci-notes">Check-in notes &mdash; the symptom, and how you verified it</label>
             <textarea id="ci-notes" rows="3" placeholder="e.g. Left bud silent; swapped buds in case, fault follows the bud. Case charges fine."></textarea>
           </div>
-          <!-- PORTAL_CHECKIN_CONSENT_2026_10_30: Agreements section (one contiguous block; wired in portal.js by wireCiConsent). The read-aloud script text itself lives in portal.js (CI_CONSENT_SCRIPT_GUEST / CI_CONSENT_SCRIPT_BUSINESS, picked by the Guest or Business selector) so the filed verbal record quotes the same string the staff read. -->
-          <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Agreements</h3></div>
-          <p class="portal-muted portal-small">One agreement covers everything &mdash; the Repair Authorization, the Terms &amp; Conditions, and the 1-Year Warranty. Take it now, in person or by phone, and it files itself on the ticket. Skipping is fine too &mdash; it can be signed later from the ticket&rsquo;s Documents section.</p>
-          <p class="portal-muted portal-small" style="margin-bottom:0.25rem;">By phone, read this statement to the guest, word for word:</p>
-          <div class="ci-consent-script" id="ci-consent-script" aria-label="Statement to read to the guest by phone"></div>
-          <div class="p2-actions">
-            <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="ci-terms-btn"><i class="fas fa-book-open"></i> Read the full terms</button>
-            <button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="ci-sign-btn"><i class="fas fa-pen-nib"></i> Guest signs now</button>
-            <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="ci-consent-clear" hidden>Clear agreement</button>
-          </div>
-          <label class="ci-consent-verbal"><input type="checkbox" id="ci-verbal-check" /> <span>Verbal agreement by phone &mdash; I read the statement above and they verbally agreed</span></label>
-          <p class="portal-muted portal-small" id="ci-consent-status">No agreement captured yet.</p>
+          <!-- V176_30_ONE_BUTTON_ESTIMATE_2026_11_23: the intake agreement capture is gone — an estimate has no ticket to file a signature on. Signatures happen when the guest confirms the estimate, or later from the ticket's Documents section. The read-aloud statement stays: it is the same script the estimate sheet read (CI_CONSENT_SCRIPT_GUEST / CI_CONSENT_SCRIPT_BUSINESS in portal.js, picked by the Guest or Business selector). -->
+          <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Read this to the guest, word for word</h3></div>
+          <div class="ci-consent-script" id="ci-script" aria-label="Statement to read to the guest by phone"></div>
+          <p class="portal-muted portal-small">No account is made now. The guest gets an email with a link to this estimate &mdash; only when they tap that link is their account made, and only when they press Confirm does this become a ticket.</p>
           </div>
           </div>
           <p class="portal-error" id="ci-error" hidden></p>
-          <button class="portal-btn portal-btn-primary" id="ci-submit" type="submit"><i class="fas fa-arrow-right"></i> Create ticket &amp; add to queue</button>
+          <button class="portal-btn portal-btn-primary" id="ci-submit" type="submit"><i class="fas fa-file-invoice-dollar"></i> Create estimate</button>
           <!-- PORTAL_DEADEND_MINORS_2026_10_30: whole-form start-over for a half-finished check-in (wired in portal.js, initCheckin) -->
           <div class="p2-actions" style="margin-top:0.6rem;">
             <button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="ci-clear"><i class="fas fa-eraser"></i> Clear check-in</button>
           </div>
         </form>
-        <!-- V165_ESTIMATE_2026_11_17 (Austin, Nov 17, 2026): ONE estimate sheet for guest and business. The Guest / Business buttons at the top switch the fields, the prices and the read-aloud script. Creating an estimate writes ONE row in public.estimates and emails the guest a link to their estimate page — no account is made, no ticket is created, nothing enters the Service Queue. The account is made only when the guest taps the link in that email; the ticket is made only when they press Confirm (or staff Record Confirm on the phone). -->
-        <div id="ci-est-form" hidden>
-          <div class="p2-actions" style="margin-bottom:0.75rem;"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" id="ci-est-back"><i class="fas fa-arrow-left"></i> Back to New Service Request</button></div>
-          <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">New Service Estimate</h3></div>
-          <p class="portal-muted portal-small">An estimate is an inquiry &mdash; the services offered and what they cost. No diagnostics and no estimate are done yet. It creates no ticket and no queue entry; it sits in the Estimates list until the guest confirms it.</p>
-          <div class="portal-field">
-            <label>Guest or Business *</label>
-            <div class="ci-est-type" role="group" aria-label="Guest or Business">
-              <button type="button" class="portal-btn portal-btn-primary portal-btn-sm" id="ci-est-type-guest" aria-pressed="true">Guest</button>
-              <button type="button" class="portal-btn portal-btn-outline portal-btn-sm" id="ci-est-type-business" aria-pressed="false">Business</button>
-            </div>
-          </div>
-          <div class="portal-nh-grid">
-            <div class="portal-field"><label for="ci-est-name" id="ci-est-name-label">Name *</label><input type="text" id="ci-est-name" required /></div>
-            <div class="portal-field" id="ci-est-contact-wrap" hidden><label for="ci-est-contact">Contact name *</label><input type="text" id="ci-est-contact" placeholder="Person you are speaking to" /></div>
-            <div class="portal-field"><label for="ci-est-phone">Phone *</label><input type="tel" id="ci-est-phone" required /></div>
-            <div class="portal-field"><label for="ci-est-email">Email *</label><input type="email" id="ci-est-email" required /></div>
-            <div class="portal-field"><label for="ci-est-address" id="ci-est-address-label">Service address *</label><input type="text" id="ci-est-address" required placeholder="Street, city, ZIP" /></div>
-            <!-- V176_25_DROPPED_OFF_2026_11_22: the device was dropped off at the shop — no service address, so checking this box drops the address requirement and the form submits with no address. -->
-            <div class="portal-field portal-nh-check"><label for="ci-est-droppedoff"><input type="checkbox" id="ci-est-droppedoff" /> Dropped off</label></div>
-            <!-- V176_20_MILEAGE_2026_11_22: optional road-miles override — blank calculates on submit. -->
-            <div class="portal-field"><label for="ci-est-miles">Road miles from Spring Valley (optional)</label><input type="number" id="ci-est-miles" min="0" step="0.1" inputmode="decimal" placeholder="Leave blank to calculate" /></div>
-          </div>
-          <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Device and issue</h3></div>
-          <div class="portal-nh-grid">
-            <div class="portal-field"><label for="ci-est-device">Device type *</label><select id="ci-est-device"><option>Phone</option><option>Tablet</option><option>Laptop</option><option>Desktop</option><option>Game Console</option><option>Smartwatch</option><option>Earbuds / Hearable</option><option>Other</option></select></div>
-            <div class="portal-field"><label for="ci-est-brand">Brand</label><input type="text" id="ci-est-brand" placeholder="e.g. Samsung" /></div>
-            <div class="portal-field"><label for="ci-est-model">Model</label><input type="text" id="ci-est-model" placeholder="e.g. Galaxy A15" /></div>
-          </div>
-          <div class="portal-field"><label for="ci-est-issue">What&rsquo;s wrong? *</label><textarea id="ci-est-issue" rows="3" placeholder="Describe the problem&hellip;"></textarea></div>
-          <div class="portal-nh-grid">
-            <div class="portal-field"><label for="ci-est-amount">Estimate amount ($) *</label><input type="number" id="ci-est-amount" min="0" step="0.01" inputmode="decimal" placeholder="0.00" required /></div>
-            <div class="portal-field"><label for="ci-est-atrone" id="ci-est-atrone-label">Is this guest an ATR One Plus (paid) member?</label><select id="ci-est-atrone"><option value="">No paid plan (ATR One Free)</option><option value="member">Yes &mdash; ATR One Plus member</option><option value="signup">Wants to sign up for ATR One Plus</option></select></div>
-          </div>
-          <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Read this to the guest, word for word</h3></div>
-          <div class="ci-consent-script" id="ci-est-script" aria-label="Statement to read to the guest by phone"></div>
-          <p class="portal-muted portal-small">No account is made now. The guest gets an email with a link to this estimate &mdash; only when they tap that link is their account made, and only when they press Confirm does this become a ticket. On the phone, read the statement above, and when they confirm, Record Confirm from the Estimates list.</p>
-          <p class="portal-error" id="ci-est-error" hidden></p>
-          <button class="portal-btn portal-btn-primary" id="ci-est-submit" type="button"><i class="fas fa-file-invoice-dollar"></i> Create estimate</button>
-        </div>
       </div>
 
       <div class="portal-panel" id="portal-panel-timeclock" role="tabpanel" hidden>
@@ -2331,7 +2287,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <!-- PORTAL_RECEIPT_SEND_2026_11_02: vendored html2pdf (html2canvas + jsPDF in one self-contained bundle, loaded locally, no CDN) — Download receipt and Email receipt render the PDF from the exact receipt markup. -->
   <script src="html2pdf.bundle.min.js"></script>
-  <script src="portal.js?v=176-29"></script>
+  <script src="portal.js?v=176-30"></script>
   <script>
   /* ================= TEAM DOCUMENTS + HIRE DOCUMENTS =================
    * Section logic for the Team Documents tab and the per-hire document

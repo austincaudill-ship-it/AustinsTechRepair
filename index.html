@@ -4629,7 +4629,7 @@
   <script src="turnstile.js"></script>
   <script src="script.js"></script>
   <!-- V176_20_MILEAGE_2026_11_22: atr-forms.js carries a version query (?v=176-20) so a fresh index.html can never pair with a stale cached atr-forms.js (the v176.19 mixed-version lesson). Bump the query on every future version that touches atr-forms.js. -->
-  <script src="atr-forms.js?v=176-21"></script>
+  <script src="atr-forms.js?v=176-30"></script>
   <!-- V176_21_MILEAGE_GATE_FIX_2026_11_22 -->
 
   <!-- SITE_ACCT_FIX_2026_10_30 / SITE_CART_BADGE_2026_10_30 — account-box
@@ -6454,17 +6454,31 @@
   function estDate(e) {
     try { return new Date(e.created_at).toLocaleDateString(); } catch (err) { return ''; }
   }
+  /* V176_30_ONE_BUTTON_ESTIMATE_2026_11_23: the requested visit (date +
+   * 2-hour window) shows on the guest's estimate cards and estimate page
+   * when the estimate captured it. The RPC get_estimate_by_token may not
+   * return the columns — the line degrades away, never an error. */
+  function v176_30VisitLine(e) {
+    var d = (e && e.preferred_date) || '', w = (e && e.preferred_window) || '';
+    if (!d && !w) return '';
+    var ds = d;
+    try {
+      if (d) { var dt = new Date(d + 'T12:00:00'); if (!isNaN(dt.getTime())) ds = dt.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }); }
+    } catch (err) {}
+    return 'Requested visit: ' + ds + ((ds && w) ? ' \u00b7 ' : '') + w;
+  }
   function loadMyEstimates(cust) {
     var list = $('acct-estimates-list');
     if (!list || !sb || !cust) return;
     list.innerHTML = '<p class="acct-muted">Loading your estimates…</p>';
-    sb.from('estimates').select('id, public_token, created_at, device_type, brand, model, issue, estimate_amount, status, audience, service_address, atr_one, estimate_note')
+    sb.from('estimates').select('id, public_token, created_at, device_type, brand, model, issue, estimate_amount, status, audience, service_address, atr_one, estimate_note, preferred_date, preferred_window')
       .eq('customer_id', cust.id).order('created_at', { ascending: false }).limit(50)
       .then(function (res) {
         if (res.error) throw res.error;
-        var rows = res.data || [];
+        var allRows = res.data || [];
+        var rows = allRows.filter(function (e) { return e.status !== 'Accepted'; }); /* V176_30_ONE_BUTTON_ESTIMATE_2026_11_23: a confirmed estimate is a ticket now — it lives in My Services, not here. */
         if (!rows.length) {
-          list.innerHTML = '<p class="acct-muted">No estimates yet — when you ask for an estimate, it will show up here for you to confirm or decline.</p>';
+          list.innerHTML = '<p class="acct-muted">' + (allRows.length ? 'No open estimates — confirmed estimates live in My Services.' : 'No estimates yet — when you ask for an estimate, it will show up here for you to confirm or decline.') + '</p>';
           return;
         }
         list.innerHTML = rows.map(function (e) {
@@ -6474,6 +6488,7 @@
           return '<div class="acct-ticket-card" style="cursor:default">' +
             '<span class="acct-ticket-top"><strong>' + escX(estDeviceLabel(e)) + '</strong><span class="acct-status ' + cls + '">' + escX(e.status || '') + '</span></span>' +
             '<span class="acct-ticket-issue">' + escX(e.issue || '') + '</span>' +
+            (function () { var vl = v176_30VisitLine(e); return vl ? '<span class="acct-ticket-meta">' + escX(vl) + '</span>' : ''; })() +
             '<span class="acct-ticket-meta">' + escX(estMoney(estFloor(e.estimate_amount, e.issue))) /* V173_PRICING_FLOOR_2026_11_18 */ + (awaiting ? ' · waiting for your answer' : '') + (v175EstTax ? ' · + ' + escX(estMoney(v175EstTax.amount)) + ' est. tax (' + escX(v175EstTax.county) + ' County, ' + escX(v175EstTax.rate.toFixed(2)) + '%)' : '') + '</span>' +
             (awaiting && e.public_token ? '<span class="acct-ticket-cta"><a class="btn btn-primary btn-sm" href="#estimate/' + escX(e.public_token) + '">View estimate</a></span>' : '') +
           '</div>';
@@ -6543,10 +6558,11 @@
       '<p class="acct-muted" style="margin-top:0">' + escX(e.audience === 'business' ? 'For your business' : 'For you') + ' · ' + escX(estDate(e)) + '</p>' +
       '<h3 style="margin-top:0">' + escX(estDeviceLabel(e)) + '</h3>' +
       '<p>' + escX(e.issue || '') + '</p>' +
+      (function () { var vl = v176_30VisitLine(e); return vl ? '<p>' + escX(vl) + '</p>' : ''; })() +
       '<p><strong>Estimate: ' + escX(estMoney(estFloor(e.estimate_amount, e.issue))) /* V173_PRICING_FLOOR_2026_11_18 */ + '</strong></p>' +
       (function () { var tx = atrTaxEstimate(estFloor(e.estimate_amount, e.issue), e.atr_one === 'member' ? 0 : fee, e.service_address); if (!tx) return ''; return '<p>Estimated sales tax (' + escX(tx.county) + ' County, ' + escX(tx.rate.toFixed(2)) + '%): <strong>' + escX(estMoney(tx.amount)) + '</strong>' + (tx.fallback ? ' <span class="acct-muted">\u2014 county not determined from the service address, Greene County rate applied</span>' : '') + '</p><p><strong>Estimated total: ' + escX(estMoney(tx.total)) + '</strong></p>'; })() +
       (function () { var bd = v176_20BreakdownText(e); return bd ? '<p class="acct-muted">' + escX(bd) + '</p>' : ''; })() +
-      '<p class="acct-muted">When you confirm, the visit fee (' + escX(estMoney(fee)) + ') is due as we schedule your visit, and we will confirm your date and time with you. Nothing is booked until you confirm.</p>' +
+      (fee > 0 ? '<p class="acct-muted">When you confirm, the visit fee (' + escX(estMoney(fee)) + ') is due as we schedule your visit, and we will confirm your date and time with you. Nothing is booked until you confirm.</p>' : '<p class="acct-muted">No visit fee — this is a drop-off, so there is no trip charge. Nothing is booked until you confirm.</p>') +
       '</div>';
     if (e.status === 'Accepted') {
       html += '<div class="est-view-card"><p><strong>You confirmed this estimate.</strong></p><p class="acct-muted">Your repair is booked in — you can follow it in My Services.</p><p><a class="btn btn-primary btn-sm" href="#account">View my services</a></p></div>';
@@ -6717,6 +6733,7 @@
     return 'Visit fee \u2014 ' + parsed.miles + ' road miles from Spring Valley' + (parsed.approx ? ', approximate' : '') + (parsed.byHand ? ', set by hand' : '') + ' (' + (over > 0 ? '25 included, ' + (Math.round(over * 10) / 10) + ' over at $1/mile' : '25 miles included') + ')';
   }
   function v176_20FeeFor(e) {
+    if (/dropped off/i.test(e.estimate_note || '')) return 0; /* V176_30_DROPPED_OFF_FEE_2026_11_23: a drop-off carries no visit fee. */
     var stored = v176_20ParseMileageNote(e.estimate_note);
     if (e.atr_one === 'member') return 0;
     if (stored) return v176_20DispatchFee(e.audience, stored.miles);
@@ -6725,7 +6742,7 @@
   function v176_20BreakdownText(e) {
     var member = e.atr_one === 'member';
     var stored = v176_20ParseMileageNote(e.estimate_note);
-    if (/dropped off/i.test(e.estimate_note || '')) return 'Dropped off \u2014 flat visit fee, no trip.'; /* V176_25_DROPPED_OFF_2026_11_22 */
+    if (/dropped off/i.test(e.estimate_note || '')) return 'Dropped off — no visit fee, no trip.'; /* V176_30_DROPPED_OFF_FEE_2026_11_23 */
     if (!stored) return /could not be calculated/i.test(e.estimate_note || '') ? 'Visit fee \u2014 road miles could not be calculated \u2014 flat fee; set miles by hand.' : '';
     var over = Math.max(0, stored.miles - V176_20_INCLUDED_MILES);
     if (member) return 'About ' + stored.miles + ' road miles from Spring Valley' + (stored.approx ? ' (approximate)' : '') + ' \u2014 no visit fee (ATR One member covers the trip).';
@@ -6806,7 +6823,7 @@
     var member = e.atr_one === 'member';
     var base = v176_20BaseFee(e.audience);
     if (/dropped off/i.test(e.estimate_note || '')) { /* V176_25_DROPPED_OFF_2026_11_22 */
-      cb({ miles: null, fee: member ? 0 : base, byHand: false, approx: false, note: e.estimate_note, failed: false });
+      cb({ miles: null, fee: 0, byHand: false, approx: false, note: e.estimate_note, failed: false }); /* V176_30_DROPPED_OFF_FEE_2026_11_23: a drop-off carries no visit fee. */
       return;
     }
     var stored = v176_20ParseMileageNote(e.estimate_note);
@@ -6822,6 +6839,106 @@
       }
     });
   }
+  /* V176_30_ONE_BUTTON_ESTIMATE_2026_11_23: the client fallback for a
+   * guest Confirm (used only when the estimate-decide Edge Function path
+   * is unavailable) carries the same window + triage mapping as
+   * portal.js estimateTicketRow. v176_30WindowStart / v176_30IntakeNote /
+   * v176_30ParseIntake are duplicated VERBATIM from portal.js — keep the
+   * copies in lockstep (see the parity note in REPORT.md). The Edge
+   * Function companion update is OWED (REPORT.md); until it deploys, the
+   * guest-path preservation is proven for this fallback only. */
+  function v176_30WindowStart(label) {
+    var s = String(label || '');
+    var toks = [], re = /(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?/gi, mm, anyMer = false, i;
+    while ((mm = re.exec(s))) { toks.push(mm); if (mm[3]) anyMer = true; }
+    if (!toks.length) return null;
+    var first = toks[0];
+    if (!anyMer) {
+      var h0 = parseInt(first[1], 10);
+      if (h0 > 12) return h0 + (first[2] ? parseInt(first[2], 10) / 60 : 0);
+    }
+    var mer = (first[3] || '').toUpperCase();
+    if (!mer) {
+      for (i = toks.length - 1; i >= 0; i--) { if (toks[i][3]) { mer = toks[i][3].toUpperCase(); break; } }
+      if (!mer) mer = 'AM';
+    }
+    var h = parseInt(first[1], 10) % 12 + (mer === 'PM' ? 12 : 0);
+    return h + (first[2] ? parseInt(first[2], 10) / 60 : 0);
+  }
+  function v176_30IntakeNote(f) {
+    var parts = [];
+    function add(key, v) { if (v != null && String(v).trim() !== '') parts.push(key + ': ' + String(v).trim()); }
+    add('window', f.windowLabel);
+    if (f.services && f.services.length) add('services', f.services.join(', '));
+    add('power', f.power);
+    add('powers-on', f.powersOn);
+    add('backed-up', f.backedUp);
+    add('prior', f.prior);
+    add('warranty', f.warranty);
+    add('serial', f.serial);
+    add('oneonone', f.oneonone);
+    add('hours', f.hours);
+    add('kind', f.kind);
+    add('goal', f.goal);
+    return parts.join('; ');
+  }
+  function v176_30ParseIntake(e) {
+    var out = { date: (e && e.preferred_date) || null, windowLabel: (e && e.preferred_window) || null,
+      windowStart: v176_30WindowStart(e && e.preferred_window), services: [],
+      power: null, volts: null, amps: null, watts: null,
+      powersOn: null, backedUp: null, prior: null, warranty: null, serial: null,
+      oneonone: null, hours: null, kind: null, goal: null };
+    var note = String((e && e.estimate_note) || '');
+    if (!note) return out;
+    var keys = ['window', 'services', 'power', 'powers-on', 'backed-up', 'prior', 'warranty', 'serial', 'oneonone', 'hours', 'kind', 'goal'];
+    var re = new RegExp('(?:^|[;.])\\s*(' + keys.join('|') + '):\\s*', 'g');
+    var segs = [], m, last = null;
+    while ((m = re.exec(note))) {
+      if (last) last.end = m.index;
+      last = { key: m[1], start: m.index + m[0].length, end: note.length };
+      segs.push(last);
+    }
+    segs.forEach(function (seg) {
+      var v = note.slice(seg.start, seg.end).replace(/;\s*$/, '').trim();
+      if (!v) return;
+      if (seg.key === 'window') { if (!out.windowLabel) out.windowLabel = v; if (out.windowStart == null) out.windowStart = v176_30WindowStart(v); }
+      else if (seg.key === 'services') out.services = v.split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+      else if (seg.key === 'power') { out.power = v; var mv = v.match(/([\d.]+)\s*V/i); if (mv) out.volts = mv[1]; var ma = v.match(/([\d.]+)\s*A/i); if (ma) out.amps = ma[1]; var mw = v.match(/([\d.]+)\s*W/i); if (mw) out.watts = mw[1]; }
+      else if (seg.key === 'powers-on') out.powersOn = v;
+      else if (seg.key === 'backed-up') out.backedUp = v;
+      else if (seg.key === 'prior') out.prior = v;
+      else if (seg.key === 'warranty') out.warranty = v;
+      else if (seg.key === 'serial') out.serial = v;
+      else if (seg.key === 'oneonone') out.oneonone = v;
+      else if (seg.key === 'hours') out.hours = v;
+      else if (seg.key === 'kind') out.kind = v;
+      else if (seg.key === 'goal') out.goal = v;
+    });
+    if (out.windowStart == null && out.windowLabel) out.windowStart = v176_30WindowStart(out.windowLabel);
+    return out;
+  }
+  /* Parity mirror of portal.js ciServiceChargeRows — same flat guest
+   * rates, same descriptions (the business-rate quirk rides along
+   * unchanged; see REPORT.md). */
+  function v176_30ServiceChargeRows(ticketId, kindLabel, hoursVal, atrVal) {
+    var rows = [];
+    if (atrVal !== 'member') {
+      rows.push({ ticket_id: ticketId, kind: 'visit', description: 'Visit fee — no diagnostics', qty: 1, unit_price: 14.99, unit_cost: null });
+    }
+    var n = parseInt(hoursVal, 10);
+    if (n) {
+      rows.push({ ticket_id: ticketId, kind: 'labor', description: 'Service — ' + kindLabel + ' (' + n + ' hour' + (n === 1 ? '' : 's') + ' at $24.99/hr)', qty: n, unit_price: 24.99, unit_cost: null });
+    }
+    return rows;
+  }
+  function v176_30ApptAt(dateStr, startHour) {
+    if (!dateStr || startHour == null) return null;
+    var h = Math.floor(startHour), m = Math.round((startHour - h) * 60);
+    var hh = String(h).padStart(2, '0'), mm = String(m).padStart(2, '0');
+    var d = new Date(dateStr + 'T' + hh + ':' + mm + ':00');
+    if (isNaN(d.getTime())) return null;
+    return d.toISOString();
+  }
   function estViewDecideDirect(decision, done, custId) {
     var e = estViewRow;
     var cust = custId ? { id: custId } : ((typeof currentCust !== 'undefined' && currentCust) ? currentCust : null);
@@ -6836,16 +6953,38 @@
     }
     v176_20ResolveMileage(e, function (res) {
     var fee = res.fee;
-    var row = { customer_id: cust.id, customer_name: e.name, customer_phone: e.phone, customer_email: e.email || null, service_address: e.service_address || null, device_type: e.device_type, brand: e.brand || null, model: e.model || null, issue: e.issue, issue_reason: e.issue, job_date: null, appointment_at: null, source: 'estimate', status: 'Awaiting Scheduling', terms_accepted: true, dispatch_acknowledged: true, work_auth_accepted: true, marketing_opt_in: false };
+    var intake = v176_30ParseIntake(e);
+    var jobDate = intake.date;
+    if (intake.windowStart != null && !jobDate) { var _ld = new Date(); jobDate = _ld.getFullYear() + '-' + String(_ld.getMonth() + 1).padStart(2, '0') + '-' + String(_ld.getDate()).padStart(2, '0'); }
+    var services = intake.services || [];
+    var isOO = !!(intake.oneonone && String(intake.oneonone).toLowerCase() === 'yes');
+    var isCleaning = !isOO && services.indexOf('Cleaning') !== -1;
+    var row = { customer_id: cust.id, customer_name: e.name, customer_phone: e.phone, customer_email: e.email || null, service_address: e.service_address || null, device_type: e.device_type, brand: e.brand || null, model: e.model || null, serial_imei: intake.serial || null, issue: e.issue, issue_reason: isOO ? (intake.kind || e.issue) : (services.length ? services.join(', ') : e.issue), triage_volts: intake.volts || null, triage_amps: intake.amps || null, triage_watts: intake.watts || null, power_on: intake.powersOn || null, backed_up: intake.backedUp || null, prior_repair: intake.prior || null, warranty_status: intake.warranty || null, job_date: jobDate || null, appointment_at: v176_30ApptAt(jobDate || '', intake.windowStart), source: 'estimate', status: 'Awaiting Scheduling', terms_accepted: true, dispatch_acknowledged: true, work_auth_accepted: true, marketing_opt_in: false };
     sb.from('tickets').insert(row).select('id').single().then(function (ires) {
       if (ires.error) { done(false); return; }
       var newId = ires.data && ires.data.id;
       var finish = function () {
-        sb.from('estimates').update({ status: 'Accepted', ticket_id: newId, customer_id: cust.id, decided_at: new Date().toISOString(), estimate_note: (res.note != null ? res.note : e.estimate_note) }).eq('id', e.id).then(function () { done(true); }).catch(function () { done(true); });
+        var segText = v176_30IntakeNote(intake);
+        var keptNote = res.note;
+        if (res.note != null && segText && res.note.indexOf(segText) === -1) keptNote = [res.note, segText].filter(Boolean).join(' ');
+        else if (res.note == null) keptNote = e.estimate_note;
+        sb.from('estimates').update({ status: 'Accepted', ticket_id: newId, customer_id: cust.id, decided_at: new Date().toISOString(), estimate_note: keptNote }).eq('id', e.id).then(function () { done(true); }).catch(function () { done(true); });
       };
-      if (fee > 0 && newId) {
-        sb.from('ticket_charges').insert({ ticket_id: newId, kind: 'dispatch', description: res.miles ? v176_20ChargeDesc(res) : 'Visit fee', qty: 1, unit_price: fee }).then(function () { finish(); }, function () { finish(); });
-      } else finish();
+      var chargeSteps = [];
+      if (!isOO && fee > 0 && newId) chargeSteps.push(function (next) {
+        sb.from('ticket_charges').insert({ ticket_id: newId, kind: 'dispatch', description: res.miles ? v176_20ChargeDesc(res) : 'Visit fee', qty: 1, unit_price: fee }).then(function () { next(); }, function () { next(); });
+      });
+      if (isOO && newId) chargeSteps.push(function (next) {
+        var svcRows = v176_30ServiceChargeRows(newId, intake.kind || '', intake.hours || '', e.atr_one || '');
+        if (svcRows.length) sb.from('ticket_charges').insert(svcRows).then(function () { next(); }, function () { next(); });
+        else next();
+      });
+      if (isCleaning && newId) chargeSteps.push(function (next) {
+        var cleanRow = { ticket_id: newId, kind: 'labor', description: 'Cleaning — ' + ([row.device_type, row.brand, row.model].filter(function (x) { return x; }).join(' ') || 'device'), qty: 1, unit_price: 49.99 };
+        sb.from('ticket_charges').insert(cleanRow).then(function () { next(); }, function () { next(); });
+      });
+      var stepI = 0;
+      (function runStep() { if (stepI >= chargeSteps.length) { finish(); return; } chargeSteps[stepI++](runStep); })();
     }).catch(function () { done(false); });
     });
   }
@@ -9044,24 +9183,21 @@
       if (!row.terms_accepted) { err.textContent = 'Please accept the Terms and Conditions to continue.'; err.hidden = false; return; }
       if (!row.dispatch_acknowledged) { err.textContent = 'Please acknowledge the dispatch fee to continue.'; err.hidden = false; return; }
       if (!row.work_auth_accepted) { err.textContent = 'Please authorize the work order to continue.'; err.hidden = false; return; }
-      var submitRow = sb.from('tickets').insert(row);
-      if (ptsBlocks > 0) {
-        submitRow = submitRow.then(function (first) {
-          if (!first.error) return first;
-          var fallback = {};
-          Object.keys(row).forEach(function (k) { if (k !== 'points_blocks_requested') fallback[k] = row[k]; });
-          fallback.issue = (fallback.issue || '') + '\n[Points: guest asked to use ' + (ptsBlocks * 100) + ' points ($' + (ptsBlocks * 5) + ') toward this repair — apply at the visit.]';
-          return sb.from('tickets').insert(fallback);
-        });
-      }
-      submitRow.then(function (res) {
-        if (res.error) { err.textContent = 'Couldn\'t submit \u2014 try again, or call or text (937) 280-6243.'; err.hidden = false; return; }
+      /* V176_30_ONE_BUTTON_ESTIMATE_2026_11_23 (Austin, Nov 22-23, 2026): a signed-in repair request starts as an ESTIMATE — no ticket until the guest confirms it from My Estimates. The visit date and arrival window ride preferred_date / preferred_window (the window label, so the guest reads it back) and land on the ticket at conversion. Points intent rides in the issue text. No estimate email on this path — the guest is signed in and sees it in My Estimates. */
+      var estAudience = (typeof window.atrAccountType === 'string' && window.atrAccountType === 'business') ? 'business' : 'guest';
+      var estWindowEl = $('acct-t-window');
+      var estWindowLabel = '';
+      if (estWindowEl && estWindowEl.selectedIndex >= 0 && estWindowEl.options[estWindowEl.selectedIndex]) estWindowLabel = estWindowEl.options[estWindowEl.selectedIndex].text || '';
+      if (!estWindowLabel || estWindowLabel === 'Pick a time') estWindowLabel = estWindowEl ? estWindowEl.value : '';
+      var estIssue = row.issue + (ptsBlocks > 0 ? '\n[Points: guest asked to use ' + (ptsBlocks * 100) + ' points ($' + (ptsBlocks * 5) + ') toward this repair — apply at the visit.]' : '');
+      var estRow = { customer_id: currentCust.id, ticket_id: null, audience: estAudience, name: row.customer_name, contact_name: null, phone: row.customer_phone, email: row.customer_email, service_address: row.service_address, device_type: row.device_type, brand: row.brand, model: row.model, issue: estIssue, estimate_amount: null, estimate_note: null, atr_one: '', status: 'Awaiting Estimate', source: 'website-account', terms_accepted: row.terms_accepted, work_auth_accepted: row.work_auth_accepted, preferred_date: row.job_date, preferred_window: estWindowLabel || null };
+      sb.from('estimates').insert(estRow).then(function (res) {
+        if (res.error) { err.textContent = 'Couldn\'t submit — try again, or call or text (937) 280-6243.'; err.hidden = false; return; }
         tForm.reset();
         var ptsAmt = $('acct-t-points-amount'); if (ptsAmt) ptsAmt.hidden = true;
-        showRepairsView();
-        loadMyRepairs(currentCust);
-        loadMyEstimates(currentCust); /* V165_ESTIMATE_2026_11_17 */
-      }).catch(function () { err.textContent = 'Couldn\'t submit \u2014 try again.'; err.hidden = false; });
+        if (typeof window.atrGuestHubShowTab === 'function') window.atrGuestHubShowTab('estimates');
+        loadMyEstimates(currentCust);
+      }).catch(function () { err.textContent = 'Couldn\'t submit — try again.'; err.hidden = false; });
     });
   }
 
@@ -10566,7 +10702,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
         <!-- New ticket form -->
         <div class="acct-newticket" id="acct-newticket" hidden>
           <button class="btn btn-outline btn-sm" id="acct-newticket-back" type="button"><i class="fas fa-arrow-left"></i> Back to services</button>
-          <h4><i class="fas fa-calendar-check"></i> Schedule a service</h4>
+          <h4><i class="fas fa-calendar-check"></i> Request an estimate</h4>
           <form id="acct-ticket-form" novalidate>
             <label class="acct-field">
               <span>Device type</span>

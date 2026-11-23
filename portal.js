@@ -2352,12 +2352,13 @@ function showLogin(errorMsg) {
      * not see it — a remembered tab or a stale click lands on
      * the ticket queue instead. */
     if (!tabAllowed(name)) name = 'tickets';
-    /* V165_ESTIMATE_2026_11_17: New Service Estimate is its own sidebar button directly above New Service Request. It opens this same panel on the estimate sheet instead of the request form. */
+    /* V176_30_ONE_BUTTON_ESTIMATE_2026_11_23: ONE Estimate button — the
+     * check-in form IS the estimate form now, so Estimate opens this same
+     * panel on the form itself. No sheet, no second view. */
     if (name === 'estimate') {
       activateTab('checkin', { norecord: true });
       saveActiveTab('estimate');
       lastPortalTab = 'estimate';
-      ciChooseEstimate();
       portalNavRecord('estimate', opts);
       return;
     }
@@ -2375,6 +2376,10 @@ function showLogin(errorMsg) {
     var nav = $('portal-nav'); if (nav) nav.classList.remove('open');
     var tabs = document.querySelectorAll('.portal-tab');
     tabs.forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === name); });
+    /* V176_30_ONE_BUTTON_ESTIMATE_2026_11_23: the check-in sidebar button is
+     * gone (merged into Estimate) — a remembered 'checkin' tab still lights
+     * the Estimate button, so the active marker never points nowhere. */
+    if (name === 'checkin') { var etab = $('portal-tab-estimate'); if (etab) etab.classList.add('active'); }
     /* V176_QA_RING_2026_11_19 (Austin, Nov 19, 2026): the Quick Actions button
        for the open pane gets the orange RING (.qa-active), never a solid
        fill - HUB PARITY RULE, same as the Guest Hub. Only Home and New
@@ -2395,8 +2400,6 @@ function showLogin(errorMsg) {
     if (name === 'customers') setCustAddFormOpen(false);
     /* V176_23_HOME_ACCORDION_2026_11_22 (Austin, Nov 22, 2026): returning to Home resets the Home sections — Your day open, the other six closed — so Home is always a short scroll on arrival. Same visit-reset precedent as the Add Guest form above; the section toggles stay independent while Home is open. */
     if (name === 'home') homeAccReset();
-    /* V165_ESTIMATE_2026_11_17: opening New Service Request shows the request form as built — the Guest/Business toggle inside it (v164) does the version work. */
-    if (name === 'checkin') ciShowNsr();
     /* TEAMCHAT_2026_11_03: reopening Team Chat restarts its refresh
      * poll and pulls anything new; switching to any other tab stops
      * the poll so a closed panel is never polled. */
@@ -2759,11 +2762,11 @@ function showLogin(errorMsg) {
    * shop, so there is no service address and no trip. The record
    * carries the dropped-off note in estimate_note (a field nothing
    * displays directly; the fee line and the guest page read it), the
-   * dispatch fee stays the flat base fee, and every later mileage
+   * no visit fee is charged, and every later mileage
    * resolution recognizes the note and preserves it instead of
    * recomputing from an address that does not exist. */
   function v176_25DroppedOffNote(audience) {
-    return 'Dropped off \u2014 no service address; dispatch fee is the flat $' + v165VisitFee(audience).toFixed(2) + '.';
+    return 'Dropped off — no service address, no trip; no visit fee.';
   }
   function v176_25IsDroppedOffNote(note) { return /dropped off/i.test(String(note || '')); }
   /* V176_20_MILEAGE_2026_11_22 (Austin, Nov 20-22, 2026): the estimate
@@ -2821,14 +2824,14 @@ function showLogin(errorMsg) {
       var over = Math.max(0, stored.miles - V154_MILEAGE_INCLUDED);
       return { fee: fee, text: 'About ' + stored.miles + ' road miles from Spring Valley' + (stored.approx ? ' (approximate)' : '') + (stored.byHand ? ' (set by hand)' : '') + ' \u2014 25 miles included' + (over > 0 ? ', ' + (Math.round(over * 10) / 10) + ' over at $1 a mile' : '') + '.' };
     }
-    if (v176_25IsDroppedOffNote(e.estimate_note)) return { fee: v165VisitFee(e.audience), text: 'Dropped off \u2014 flat fee, no trip.' }; /* V176_25_DROPPED_OFF_2026_11_22 */
+    if (v176_25IsDroppedOffNote(e.estimate_note)) return { fee: 0, text: 'Dropped off — no visit fee, no trip.' }; /* V176_30_DROPPED_OFF_FEE_2026_11_23: a drop-off carries no visit fee. */
     var failedNote = /could not be calculated/i.test(e.estimate_note || '');
     return { fee: v165VisitFee(e.audience), text: failedNote ? 'Road miles could not be calculated \u2014 flat fee; set miles by hand in the estimate.' : '' };
   }
   function v176_20FeeTextForDisplay(audience, member, miles, failed, approx, droppedOff) {
     if (member) return miles ? 'None \u2014 ATR One member (about ' + miles + ' road miles from Spring Valley' + (approx ? ', approximate' : '') + ')' : 'None \u2014 ATR One member';
     if (miles) return '$' + v176_20DispatchFee(audience, miles).toFixed(2) + ' (' + miles + ' road miles from Spring Valley' + (approx ? ', approximate' : '') + ')';
-    if (droppedOff) return '$' + v165VisitFee(audience).toFixed(2) + ' (dropped off \u2014 flat fee)'; /* V176_25_DROPPED_OFF_2026_11_22 */
+    if (droppedOff) return 'None — dropped off, no trip, no visit fee'; /* V176_30_DROPPED_OFF_FEE_2026_11_23 */
     return '$' + v165VisitFee(audience).toFixed(2) + (failed ? ' (road miles could not be calculated \u2014 flat fee)' : '');
   }
   function v176_20GeocodeCandidates(address) {
@@ -2900,7 +2903,7 @@ function showLogin(errorMsg) {
       return;
     }
     if (v176_25IsDroppedOffNote(e.estimate_note)) { /* V176_25_DROPPED_OFF_2026_11_22 */
-      cb({ miles: null, fee: member ? 0 : base, byHand: false, approx: false, note: e.estimate_note, failed: false });
+      cb({ miles: null, fee: 0, byHand: false, approx: false, note: e.estimate_note, failed: false }); /* V176_30_DROPPED_OFF_FEE_2026_11_23: a drop-off carries no visit fee. */
       return;
     }
     var stored = v176_20ParseMileageNote(e.estimate_note);
@@ -2936,156 +2939,161 @@ function showLogin(errorMsg) {
     ];
   }
 
-  /* ---------- New Service Request vs New Service Estimate ----------
-   * V165_ESTIMATE_2026_11_17 (Austin, Nov 17, 2026 — supersedes the
-   * earlier "two versions" wording): ONE New Service Request button;
-   * the Guest/Business toggle INSIDE the form (v164) changes it.
-   * New Service Estimate is its own sidebar button directly ABOVE
-   * New Service Request, and it opens this same panel on the
-   * estimate sheet instead. */
-  function ciShowNsr() {
-    var f = $('ci-form'), ef = $('ci-est-form');
-    if (f) f.hidden = false;
-    if (ef) ef.hidden = true;
-    var et = $('portal-tab-estimate'), ct = $('portal-tab-checkin');
-    if (et) et.classList.remove('active');
-    if (ct) ct.classList.add('active');
-    saveActiveTab('checkin');
-  }
-  function ciChooseEstimate() {
-    var f = $('ci-form'), ef = $('ci-est-form');
-    if (f) f.hidden = true;
-    if (ef) ef.hidden = false;
-    var et = $('portal-tab-estimate'), ct = $('portal-tab-checkin');
-    if (et) et.classList.add('active');
-    if (ct) ct.classList.remove('active');
-    wireCiEstForm();
-    ciEstPaintType(); v176_25PaintDroppedOff(); /* V176_25_DROPPED_OFF_2026_11_22 */
-  }
-
-  /* ---------- the ONE estimate sheet ---------- */
-  var ciEstType = 'guest';
-  var ciEstWired = false;
-  function ciEstPaintType() {
-    var biz = ciEstType === 'business';
-    var g = $('ci-est-type-guest'), b = $('ci-est-type-business');
-    if (g) { g.className = 'portal-btn portal-btn-sm ' + (biz ? 'portal-btn-outline' : 'portal-btn-primary'); g.setAttribute('aria-pressed', biz ? 'false' : 'true'); }
-    if (b) { b.className = 'portal-btn portal-btn-sm ' + (biz ? 'portal-btn-primary' : 'portal-btn-outline'); b.setAttribute('aria-pressed', biz ? 'true' : 'false'); }
-    var lbl = $('ci-est-name-label');
-    if (lbl) lbl.textContent = biz ? 'Business name *' : 'Name *';
-    var cw = $('ci-est-contact-wrap');
-    if (cw) cw.hidden = !biz;
-    var al = $('ci-est-atrone-label');
-    if (al) al.textContent = biz ? 'Is this business an ATR One Plus (paid) member?' : 'Is this guest an ATR One Plus (paid) member?';
-    var sc = $('ci-est-script');
-    if (sc) sc.textContent = biz ? CI_CONSENT_SCRIPT_BUSINESS : CI_CONSENT_SCRIPT_GUEST;
-  }
-  /* V176_25_DROPPED_OFF_2026_11_22: the address label carries the
-   * asterisk only while the address is required. The typed address
-   * is never cleared — checking the box skips the requirement,
-   * not the field. */
-  function v176_25PaintDroppedOff() {
-    var df = $('ci-est-droppedoff');
-    var checked = !!(df && df.checked);
-    var lbl = $('ci-est-address-label');
-    if (lbl) lbl.textContent = checked ? 'Service address' : 'Service address *';
-    var inp = $('ci-est-address');
-    if (inp) inp.required = !checked;
-  }
-  function wireCiEstForm() {
-    if (ciEstWired) return;
-    var g = $('ci-est-type-guest'), b = $('ci-est-type-business');
-    if (!g || !b) return;
-    ciEstWired = true;
-    g.addEventListener('click', function () { ciEstType = 'guest'; ciEstPaintType(); });
-    b.addEventListener('click', function () { ciEstType = 'business'; ciEstPaintType(); });
-    var back = $('ci-est-back');
-    if (back) back.addEventListener('click', ciShowNsr);
-    var sub = $('ci-est-submit');
-    if (sub) sub.addEventListener('click', ciEstSubmit);
-    var df = $('ci-est-droppedoff');
-    if (df) df.addEventListener('change', v176_25PaintDroppedOff); /* V176_25_DROPPED_OFF_2026_11_22 */
-  }
-  function ciEstReset() {
-    ['ci-est-name', 'ci-est-contact', 'ci-est-phone', 'ci-est-email', 'ci-est-address', 'ci-est-miles', 'ci-est-brand', 'ci-est-model', 'ci-est-issue', 'ci-est-amount'].forEach(function (id) { var el = $(id); if (el) el.value = ''; });
-    var dv = $('ci-est-device'); if (dv) dv.selectedIndex = 0;
-    var at = $('ci-est-atrone'); if (at) at.value = '';
-    var df0 = $('ci-est-droppedoff'); if (df0) df0.checked = false;
-    ciEstType = 'guest'; ciEstPaintType(); v176_25PaintDroppedOff(); /* V176_25_DROPPED_OFF_2026_11_22 */
-  }
-  function ciEstSubmit() {
-    var err = $('ci-est-error');
-    function fail(msg) { if (err) { err.textContent = msg; err.hidden = false; } }
-    if (err) err.hidden = true;
-    var biz = ciEstType === 'business';
-    var name = trim($('ci-est-name') ? $('ci-est-name').value : '');
-    var contact = trim($('ci-est-contact') ? $('ci-est-contact').value : '');
-    var phone = trim($('ci-est-phone') ? $('ci-est-phone').value : '');
-    var email = trim($('ci-est-email') ? $('ci-est-email').value : '');
-    var address = trim($('ci-est-address') ? $('ci-est-address').value : '');
-    var droppedOff = !!($('ci-est-droppedoff') && $('ci-est-droppedoff').checked); /* V176_25_DROPPED_OFF_2026_11_22 */
-    var device = $('ci-est-device') ? $('ci-est-device').value : '';
-    var brand = trim($('ci-est-brand') ? $('ci-est-brand').value : '');
-    var model = trim($('ci-est-model') ? $('ci-est-model').value : '');
-    var issue = trim($('ci-est-issue') ? $('ci-est-issue').value : '');
-    var amountRaw = $('ci-est-amount') ? $('ci-est-amount').value : '';
-    var amount = (amountRaw.trim() === '') ? NaN : Number(amountRaw); /* V176_28_FLOOR_REMOVAL_2026_11_22: a blank amount is missing (NaN), so it is still rejected below — the old < 60 check used to reject it. */
-    if (!name || !phone || !email || (!address && !droppedOff) || !issue || (biz && !contact)) { /* V176_25_DROPPED_OFF_2026_11_22: an empty address is allowed only while Dropped off is checked */
-      fail(biz ? 'Business name, contact name, phone, email, service address, and an issue are required for an estimate.' : 'Name, phone, email, service address, and an issue are required for an estimate.');
-      return;
+  /* ---------- V176_30 one-button Estimate: intake carrier + conversion ----------
+   * V176_30_ONE_BUTTON_ESTIMATE_2026_11_23 (Austin, Nov 22-23, 2026): ONE
+   * Estimate button. The check-in form IS the estimate form: it writes ONE
+   * row in public.estimates (no ticket, no queue entry, no charges, no
+   * guest record, no filed signature) and the estimate becomes a Service
+   * Queue ticket only when the guest confirms — staff Record Confirm or
+   * the guest's own Confirm on the estimate page. The old estimate sheet
+   * and the direct ticket creation from this form are gone.
+   * The arrival window + triage answers ride the estimate row two ways:
+   * preferred_date / preferred_window columns (written by the website
+   * form too) and v176_30 segments in estimate_note (the portal form's
+   * services / power readings / one-on-one detail, which have no
+   * columns). estimateTicketRow parses both back onto the ticket.
+   * The guest Confirm PRIMARY path is the estimate-decide Edge Function
+   * (v6 live) — its companion update (parse preferred_* + segments on
+   * ticket creation, same mapping as estimateTicketRow) is OWED and is
+   * specified in REPORT.md; until it deploys, the client fallback in
+   * index.html (estViewDecideDirect) carries the same mapping. The
+   * parser/composer/window functions below are duplicated verbatim in
+   * index.html and atr-forms.js carries the composer only — keep the
+   * three copies in lockstep (see the parity note in REPORT.md). */
+  function v176_30WindowStart(label) {
+    var s = String(label || '');
+    var toks = [], re = /(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?/gi, mm, anyMer = false, i;
+    while ((mm = re.exec(s))) { toks.push(mm); if (mm[3]) anyMer = true; }
+    if (!toks.length) return null;
+    var first = toks[0];
+    if (!anyMer) {
+      var h0 = parseInt(first[1], 10);
+      if (h0 > 12) return h0 + (first[2] ? parseInt(first[2], 10) / 60 : 0);
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { fail("That email address doesn't look right."); return; }
-    if (isNaN(amount) || amount < 0) { fail('Enter the estimate amount — the price you quoted the guest.'); return; } /* V176_28_FLOOR_REMOVAL_2026_11_22: the $60 floor is removed — any non-negative amount saves. */
-    var btn = $('ci-est-submit');
-    if (btn) btn.disabled = true;
-    /* NO account, NO guest record, NO ticket: the estimate row
-     * carries the person's details itself, and customer_id stays
-     * null until the guest taps the email link and makes an
-     * account. That link step lives on the estimate page. */
-    var row = {
+    var mer = (first[3] || '').toUpperCase();
+    if (!mer) {
+      for (i = toks.length - 1; i >= 0; i--) { if (toks[i][3]) { mer = toks[i][3].toUpperCase(); break; } }
+      if (!mer) mer = 'AM';
+    }
+    var h = parseInt(first[1], 10) % 12 + (mer === 'PM' ? 12 : 0);
+    return h + (first[2] ? parseInt(first[2], 10) / 60 : 0);
+  }
+  function v176_30IntakeNote(f) {
+    var parts = [];
+    function add(key, v) { if (v != null && String(v).trim() !== '') parts.push(key + ': ' + String(v).trim()); }
+    add('window', f.windowLabel);
+    if (f.services && f.services.length) add('services', f.services.join(', '));
+    add('power', f.power);
+    add('powers-on', f.powersOn);
+    add('backed-up', f.backedUp);
+    add('prior', f.prior);
+    add('warranty', f.warranty);
+    add('serial', f.serial);
+    add('oneonone', f.oneonone);
+    add('hours', f.hours);
+    add('kind', f.kind);
+    add('goal', f.goal);
+    return parts.join('; ');
+  }
+  function v176_30ParseIntake(e) {
+    var out = { date: (e && e.preferred_date) || null, windowLabel: (e && e.preferred_window) || null,
+      windowStart: v176_30WindowStart(e && e.preferred_window), services: [],
+      power: null, volts: null, amps: null, watts: null,
+      powersOn: null, backedUp: null, prior: null, warranty: null, serial: null,
+      oneonone: null, hours: null, kind: null, goal: null };
+    var note = String((e && e.estimate_note) || '');
+    if (!note) return out;
+    var keys = ['window', 'services', 'power', 'powers-on', 'backed-up', 'prior', 'warranty', 'serial', 'oneonone', 'hours', 'kind', 'goal'];
+    var re = new RegExp('(?:^|[;.])\\s*(' + keys.join('|') + '):\\s*', 'g');
+    var segs = [], m, last = null;
+    while ((m = re.exec(note))) {
+      if (last) last.end = m.index;
+      last = { key: m[1], start: m.index + m[0].length, end: note.length };
+      segs.push(last);
+    }
+    segs.forEach(function (seg) {
+      var v = note.slice(seg.start, seg.end).replace(/;\s*$/, '').trim();
+      if (!v) return;
+      if (seg.key === 'window') { if (!out.windowLabel) out.windowLabel = v; if (out.windowStart == null) out.windowStart = v176_30WindowStart(v); }
+      else if (seg.key === 'services') out.services = v.split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+      else if (seg.key === 'power') { out.power = v; var mv = v.match(/([\d.]+)\s*V/i); if (mv) out.volts = mv[1]; var ma = v.match(/([\d.]+)\s*A/i); if (ma) out.amps = ma[1]; var mw = v.match(/([\d.]+)\s*W/i); if (mw) out.watts = mw[1]; }
+      else if (seg.key === 'powers-on') out.powersOn = v;
+      else if (seg.key === 'backed-up') out.backedUp = v;
+      else if (seg.key === 'prior') out.prior = v;
+      else if (seg.key === 'warranty') out.warranty = v;
+      else if (seg.key === 'serial') out.serial = v;
+      else if (seg.key === 'oneonone') out.oneonone = v;
+      else if (seg.key === 'hours') out.hours = v;
+      else if (seg.key === 'kind') out.kind = v;
+      else if (seg.key === 'goal') out.goal = v;
+    });
+    if (out.windowStart == null && out.windowLabel) out.windowStart = v176_30WindowStart(out.windowLabel);
+    return out;
+  }
+  function v176_30WindowLabel(date, start) {
+    if (start == null) return null;
+    var ws = v154WindowsForDate(date || v154LocalDateStr());
+    for (var i = 0; i < ws.length; i++) if (ws[i].start === start) return ws[i].label;
+    return null;
+  }
+  function v176_30EstimateRow(f) {
+    return {
       id: v165NewId(), public_token: v165NewId(),
       customer_id: null, ticket_id: null,
-      audience: ciEstType, name: name, contact_name: biz ? contact : null,
-      phone: phone, email: email, service_address: address,
-      device_type: device, brand: brand || null, model: model || null,
-      issue: issue, estimate_amount: amount, estimate_note: null,
-      atr_one: $('ci-est-atrone') ? $('ci-est-atrone').value : '',
-      status: 'Awaiting Estimate', source: 'check-in',
-      terms_accepted: false, work_auth_accepted: false
+      audience: f.audience, name: f.name, contact_name: f.biz ? f.contact : null,
+      phone: f.phone, email: f.email, service_address: f.address || null,
+      device_type: f.device, brand: f.brand || null, model: f.model || null,
+      issue: f.issue, estimate_amount: f.amount, estimate_note: f.note || null,
+      atr_one: f.atrOne, status: 'Awaiting Estimate', source: 'check-in',
+      terms_accepted: false, work_auth_accepted: false,
+      preferred_date: f.jobDate || null, preferred_window: f.windowLabel || null
     };
-    var ciEstOv = v176_20RoundMiles($('ci-est-miles') ? $('ci-est-miles').value : '');
-    var ciEstMember = ($('ci-est-atrone') ? $('ci-est-atrone').value : '') === 'member';
-    function ciEstInsertWithMileage(note, miles, failed, approx, droppedOff) {
-      row.estimate_note = note;
-      var feeText = v176_20FeeTextForDisplay(ciEstType, ciEstMember, miles, failed, approx, droppedOff);
-      withClient(function (client) {
-      if (!client) { if (btn) btn.disabled = false; fail("Couldn't reach the database — try again."); return; }
-      client.from('estimates').insert(row).select('id').single().then(function (res) {
-        if (btn) btn.disabled = false;
-        if (res.error) { fail('Could not create the estimate — try again.'); return; }
-        v165SendAlert("Your estimate from Austin's Tech Repair Group", [
-          ['Email', email],
-          ['Name', name],
-          ['Device', estimateDeviceLabel(row)],
-          ["What's wrong", issue],
-          ['Estimate', estimateMoney(estFloorAmt(amount, issue)) /* V173_PRICING_FLOOR_2026_11_18 */],
-          ['Visit fee when confirmed', feeText],
-          ['Your estimate page', estimatePageLink(row)],
-          ['What happens next', 'Tap the link above to view your estimate. You can confirm or decline it there — nothing is booked until you confirm.']
-        ], 'estimate-link', row.public_token);
-        ciEstReset();
-        state.loaded.estimates = false;
-        activateTab('estimates');
-        loadEstimates(true);
-        setTimeout(function () { docMsg('Estimate created — the guest gets an email with their estimate link.'); }, 450);
-      }).catch(function () { if (btn) btn.disabled = false; fail('Could not create the estimate — try again.'); });
-      });
+  }
+  function v176_30PaintDroppedOff() {
+    var df = $('ci-droppedoff');
+    var checked = !!(df && df.checked);
+    var lbl = $('ci-address-label');
+    if (lbl) lbl.textContent = checked ? 'Service address' : 'Service address *';
+    var inp = $('ci-address');
+    if (inp) inp.required = !checked;
+  }
+  /* Device-dependent service tiles. Only the console set is
+   * Austin-specified (Nov 22-23, 2026): disc drive, power supply, side
+   * panels, fans, storage, software issues. Every other device keeps the
+   * long-standing default set, captured verbatim from the markup on
+   * first paint so the default tiles never drift from the page. The
+   * One-on-One, Cleaning and Other tiles sit outside #ci-reason-tiles
+   * and are always shown. Picked services are staff-only prebuilt
+   * services attaching internally to the ticket — never website links. */
+  var V176_30_REASON_TILES_CONSOLE = [
+    { label: 'Disc drive', icon: 'fa-compact-disc' },
+    { label: 'Power supply', icon: 'fa-plug-circle-bolt' },
+    { label: 'Side panels', icon: 'fa-layer-group' },
+    { label: 'Fans', icon: 'fa-fan' },
+    { label: 'Storage', icon: 'fa-hard-drive' },
+    { label: 'Software issues', icon: 'fa-bug' }
+  ];
+  var v176_30DefaultReasonTilesHtml = null;
+  function v176_30PaintReasonTiles() {
+    var box = $('ci-reason-tiles');
+    if (!box) return;
+    var device = $('ci-type') ? $('ci-type').value : '';
+    var selected = {};
+    box.querySelectorAll('.ci-tile.on').forEach(function (t) { selected[t.getAttribute('data-label')] = true; });
+    if (v176_30DefaultReasonTilesHtml == null) {
+      v176_30DefaultReasonTilesHtml = box.innerHTML.replace(/ class="ci-tile on"/g, ' class="ci-tile"').replace(/aria-pressed="true"/g, 'aria-pressed="false"');
     }
-    if (ciEstOv) { ciEstInsertWithMileage(v176_20MileageNote(ciEstOv, ciEstType, true, ciEstMember), ciEstOv, false, false, false); return; }
-    if (droppedOff && !address) { ciEstInsertWithMileage(ciEstMember ? null : v176_25DroppedOffNote(ciEstType), null, false, false, true); return; } /* V176_25_DROPPED_OFF_2026_11_22 */
-    v176_20ComputeMiles(address).then(function (r) {
-      if (r && r.miles > 0) ciEstInsertWithMileage(v176_20MileageNote(r.miles, ciEstType, false, ciEstMember, r.approx), r.miles, false, r.approx);
-      else ciEstInsertWithMileage(ciEstMember ? null : v176_20MileageNote(null, ciEstType, false, false), null, true, false);
+    if (device === 'Game Console') {
+      box.innerHTML = V176_30_REASON_TILES_CONSOLE.map(function (t) {
+        return '<button type="button" class="ci-tile" data-label="' + esc(t.label) + '" aria-pressed="false"><i class="fas ' + t.icon + '" aria-hidden="true"></i><span>' + esc(t.label) + '</span></button>';
+      }).join('');
+    } else {
+      box.innerHTML = v176_30DefaultReasonTilesHtml;
+    }
+    box.querySelectorAll('.ci-tile').forEach(function (t) {
+      var on = !!selected[t.getAttribute('data-label')];
+      t.classList.toggle('on', on);
+      t.setAttribute('aria-pressed', on ? 'true' : 'false');
     });
   }
 
@@ -3093,6 +3101,7 @@ function showLogin(errorMsg) {
   var estimatesAllRows = [];
   var estimatesSearchTerm = '';
   var estimatesSearchWired = false;
+  var estimatesCombinedLeads = [];
   function estimateRowMatches(e, term) {
     var q = String(term || '').trim().toLowerCase();
     if (!q) return true;
@@ -3103,42 +3112,79 @@ function showLogin(errorMsg) {
     if (digits && !/[a-z]/.test(q) && String(e.phone || '').replace(/\D/g, '').indexOf(digits) !== -1) return true;
     return false;
   }
+  function renderEstimateCard(e) {
+    var pill = '<span class="portal-badge">' + esc(e.status || '') + '</span>';
+    var v176_20fl = v176_20FeeLine(e);
+    var v175EstTax = atrTaxEstimate(estFloorAmt(e.estimate_amount, e.issue), v176_20fl.fee, e.service_address);
+    var amt = '<p class="portal-card-meta"><strong>Estimate: ' + esc(estimateMoney(estFloorAmt(e.estimate_amount, e.issue)) /* V173_PRICING_FLOOR_2026_11_18 */) + '</strong> &middot; visit fee ' + esc(estimateMoney(v176_20fl.fee)) + (v176_20fl.text ? ' (' + esc(v176_20fl.text) + ')' : '') + ' due only when confirmed' + (v175EstTax ? ' &middot; est. sales tax ' + esc(estimateMoney(v175EstTax.amount)) + ' (' + esc(v175EstTax.county) + ' County, ' + esc(v175EstTax.rate.toFixed(2)) + '%)' : '') + '</p>';
+    var who = esc(e.name || 'No name given') + (e.audience === 'business' && e.contact_name ? ' &middot; ' + esc(e.contact_name) : '') + (e.audience === 'business' ? ' <span class="portal-badge portal-badge-source">Business</span>' : '');
+    var phone = trim(e.phone);
+    var phoneHtml = phone ? ' &middot; <a href="tel:' + esc(phone.replace(/[^0-9+]/g, '')) + '">' + esc(phone) + '</a>' : '';
+    var actions = '';
+    if (e.status === 'Awaiting Estimate') {
+      actions = '<div class="portal-card-actions">' +
+        '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-est-confirm="' + esc(e.id) + '"><i class="fas fa-check"></i> Confirm</button>' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-est-decline="' + esc(e.id) + '"><i class="fas fa-xmark"></i> Deny</button>' +
+        '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-view-estimate="' + esc(e.id) + '"><i class="fas fa-eye"></i> View details</button></div>';
+    } else if (e.status === 'Accepted' && e.ticket_id) {
+      actions = '<div class="portal-card-actions"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-view-ticket="' + esc(e.ticket_id) + '"><i class="fas fa-eye"></i> View ticket</button></div>';
+    } else {
+      actions = '<div class="portal-card-actions"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-view-estimate="' + esc(e.id) + '"><i class="fas fa-eye"></i> View details</button></div>';
+    }
+    return '<article class="portal-card" data-view-estimate="' + esc(e.id) + '" style="cursor:pointer">' +
+      '<div class="portal-card-top"><p class="portal-card-title">' + esc(estimateDeviceLabel(e)) + '</p><span class="portal-card-topright">' + pill + '</span></div>' +
+      '<p class="portal-card-meta"><i class="fas fa-user"></i> ' + who + phoneHtml + '</p>' +
+      (e.email ? '<p class="portal-card-meta"><i class="fas fa-envelope"></i> ' + esc(e.email) + '</p>' : '') +
+      amt +
+      '<p class="portal-card-issue">' + esc(e.issue || '') + '</p>' +
+      '<p class="portal-card-meta">Received ' + esc(fmtDateTime(e.created_at)) + '</p>' +
+      actions + '</article>';
+  }
+  function leadCombinedMatches(r, term) {
+    var q = String(term || '').trim().toLowerCase();
+    if (!q) return true;
+    if (String(r.name || '').toLowerCase().indexOf(q) !== -1) return true;
+    if (String(r.need || '').toLowerCase().indexOf(q) !== -1) return true;
+    if (String(r.source || '').toLowerCase().indexOf(q) !== -1) return true;
+    var digits = q.replace(/\D/g, '');
+    if (digits && !/[a-z]/.test(q) && String(r.phone || '').replace(/\D/g, '').indexOf(digits) !== -1) return true;
+    return false;
+  }
+  function renderCombinedLeadCard(r) {
+    var st = leadStatusOf(r);
+    return '<article class="portal-card">' +
+      '<div class="portal-card-top"><p class="portal-card-title">' + esc(r.name || 'Lead') + '</p><span class="portal-card-topright"><span class="portal-badge">Lead</span> ' + badge(st) + '</span></div>' +
+      (trim(r.phone) ? '<p class="portal-card-meta"><i class="fas fa-phone"></i> ' + esc(r.phone) + '</p>' : '') +
+      (trim(r.source) ? '<p class="portal-card-meta"><span class="portal-badge portal-st-reviewed">' + esc(r.source) + '</span></p>' : '') +
+      (trim(r.need) ? '<p class="portal-card-issue">' + esc(r.need).replace(/\n/g, '<br>') + '</p>' : '') +
+      '<p class="portal-card-meta">First heard from ' + esc(fmtDateTime(r.created_at)) + '</p>' +
+      '<div class="portal-card-actions"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-combined-lead="1">Open in Leads</button></div></article>';
+  }
   function renderEstimates(rows) {
     var list = $('portal-estimates-list');
     estimatesAllRows = rows || [];
     var view = estimatesSearchTerm ? estimatesAllRows.filter(function (e) { return estimateRowMatches(e, estimatesSearchTerm); }) : estimatesAllRows;
-    if (!view.length) {
-      emptyState(list, estimatesSearchTerm ? 'No estimates match that search. Clear the search to see them all.' : 'No estimates yet — create one from New Service Estimate.' /* V176_6_ESTIMATE_WORDS_2026_11_19 */);
+    var filter = $('portal-estimates-filter') ? $('portal-estimates-filter').value : 'all';
+    /* V176_30_ONE_BUTTON_ESTIMATE_2026_11_23 (Austin, Nov 23, 2026 —
+     * confirmed staff-side only): estimates + leads in ONE combined
+     * list, newest first, kind-labeled. Leads show only under All
+     * statuses, read-only here — status edits and deletes stay in the
+     * Leads list. The Guest Hub split is untouched. */
+    var items = view.map(function (e) { return { t: e.created_at || '', html: renderEstimateCard(e) }; });
+    if (filter === 'all') {
+      var leads = estimatesCombinedLeads || [];
+      if (estimatesSearchTerm) leads = leads.filter(function (r) { return leadCombinedMatches(r, estimatesSearchTerm); });
+      leads.forEach(function (r) { items.push({ t: r.created_at || '', html: renderCombinedLeadCard(r) }); });
+    }
+    if (!items.length) {
+      emptyState(list, estimatesSearchTerm ? 'No estimates or leads match that search. Clear the search to see them all.' : 'No estimates or leads yet — create one from Estimate.');
       return;
     }
-    list.innerHTML = view.map(function (e) {
-      var pill = '<span class="portal-badge">' + esc(e.status || '') + '</span>';
-      var v176_20fl = v176_20FeeLine(e);
-      var v175EstTax = atrTaxEstimate(estFloorAmt(e.estimate_amount, e.issue), v176_20fl.fee, e.service_address);
-      var amt = '<p class="portal-card-meta"><strong>Estimate: ' + esc(estimateMoney(estFloorAmt(e.estimate_amount, e.issue)) /* V173_PRICING_FLOOR_2026_11_18 */) + '</strong> &middot; visit fee ' + esc(estimateMoney(v176_20fl.fee)) + (v176_20fl.text ? ' (' + esc(v176_20fl.text) + ')' : '') + ' due only when confirmed' + (v175EstTax ? ' &middot; est. sales tax ' + esc(estimateMoney(v175EstTax.amount)) + ' (' + esc(v175EstTax.county) + ' County, ' + esc(v175EstTax.rate.toFixed(2)) + '%)' : '') + '</p>';
-      var who = esc(e.name || 'No name given') + (e.audience === 'business' && e.contact_name ? ' &middot; ' + esc(e.contact_name) : '') + (e.audience === 'business' ? ' <span class="portal-badge portal-badge-source">Business</span>' : '');
-      var phone = trim(e.phone);
-      var phoneHtml = phone ? ' &middot; <a href="tel:' + esc(phone.replace(/[^0-9+]/g, '')) + '">' + esc(phone) + '</a>' : '';
-      var actions = '';
-      if (e.status === 'Awaiting Estimate') {
-        actions = '<div class="portal-card-actions">' +
-          '<button class="portal-btn portal-btn-primary portal-btn-sm" type="button" data-est-confirm="' + esc(e.id) + '"><i class="fas fa-check"></i> Confirm</button>' +
-          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-est-decline="' + esc(e.id) + '"><i class="fas fa-xmark"></i> Deny</button>' +
-          '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-view-estimate="' + esc(e.id) + '"><i class="fas fa-eye"></i> View details</button></div>';
-      } else if (e.status === 'Accepted' && e.ticket_id) {
-        actions = '<div class="portal-card-actions"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-view-ticket="' + esc(e.ticket_id) + '"><i class="fas fa-eye"></i> View ticket</button></div>';
-      } else {
-        actions = '<div class="portal-card-actions"><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-view-estimate="' + esc(e.id) + '"><i class="fas fa-eye"></i> View details</button></div>';
-      }
-      return '<article class="portal-card" data-view-estimate="' + esc(e.id) + '" style="cursor:pointer">' +
-        '<div class="portal-card-top"><p class="portal-card-title">' + esc(estimateDeviceLabel(e)) + '</p><span class="portal-card-topright">' + pill + '</span></div>' +
-        '<p class="portal-card-meta"><i class="fas fa-user"></i> ' + who + phoneHtml + '</p>' +
-        (e.email ? '<p class="portal-card-meta"><i class="fas fa-envelope"></i> ' + esc(e.email) + '</p>' : '') +
-        amt +
-        '<p class="portal-card-issue">' + esc(e.issue || '') + '</p>' +
-        '<p class="portal-card-meta">Received ' + esc(fmtDateTime(e.created_at)) + '</p>' +
-        actions + '</article>';
-    }).join('');
+    items.sort(function (a, b) { return String(b.t || '').localeCompare(String(a.t || '')); });
+    list.innerHTML = items.map(function (x) { return x.html; }).join('');
+    list.querySelectorAll('[data-combined-lead]').forEach(function (btn) {
+      btn.addEventListener('click', function (ev) { ev.stopPropagation(); activateTab('leads'); });
+    });
   }
   function loadEstimates(force) {
     var list = $('portal-estimates-list');
@@ -3150,12 +3196,22 @@ function showLogin(errorMsg) {
       var filter = $('portal-estimates-filter') ? $('portal-estimates-filter').value : 'all';
       var q = client.from('estimates').select('*').order('created_at', { ascending: false }).limit(200);
       if (filter !== 'all') q = q.eq('status', filter);
+      else q = q.neq('status', 'Accepted'); /* V176_30: a confirmed estimate leaves this list — it lives in the Service Queue now. The Accepted filter still reaches it. */
       q.then(function (res) {
         if (res.error) { listError(list, 'estimates'); return; }
         state.loaded.estimates = true;
-        renderEstimates(res.data || []);
-        var open = (res.data || []).filter(function (e) { return e.status === 'Awaiting Estimate'; }).length;
+        var estRows = res.data || [];
+        var open = estRows.filter(function (e) { return e.status === 'Awaiting Estimate'; }).length;
         setCount('portal-count-estimates', $('portal-estimates-filter') && $('portal-estimates-filter').value === 'all' ? open : 0);
+        if (filter === 'all') {
+          client.from('leads').select('*').order('created_at', { ascending: false }).limit(200).then(function (lres) {
+            estimatesCombinedLeads = (!lres.error && lres.data) ? lres.data : [];
+            renderEstimates(estRows);
+          }).catch(function () { estimatesCombinedLeads = []; renderEstimates(estRows); });
+        } else {
+          estimatesCombinedLeads = [];
+          renderEstimates(estRows);
+        }
       }).catch(function () { listError(list, 'estimates'); });
     });
   }
@@ -3286,6 +3342,17 @@ function showLogin(errorMsg) {
     if (clearBtn) clearBtn.addEventListener('click', function () { inp.value = ''; applyInvoicesSearch(); try { inp.focus(); } catch (e) {} });
   }
   function estimateTicketRow(e, guestId) {
+    /* V176_30_ONE_BUTTON_ESTIMATE_2026_11_23: the conversion carries the
+     * arrival window + triage answers the estimate captured — the stale
+     * build dropped them (job_date / appointment_at stayed null, triage
+     * stayed empty). A window with no date means today, same rule the
+     * intake form applies. issue stays exactly as the estimate wrote
+     * it; issue_reason is the picked services (or the one-on-one kind). */
+    var intake = v176_30ParseIntake(e);
+    var jobDate = intake.date;
+    if (intake.windowStart != null && !jobDate) jobDate = v154LocalDateStr();
+    var services = intake.services || [];
+    var isOO = !!(intake.oneonone && String(intake.oneonone).toLowerCase() === 'yes');
     return {
       customer_id: guestId || e.customer_id || null,
       customer_name: e.name,
@@ -3295,9 +3362,17 @@ function showLogin(errorMsg) {
       device_type: e.device_type,
       brand: e.brand || null,
       model: e.model || null,
+      serial_imei: intake.serial || null,
       issue: e.issue,
-      issue_reason: e.issue,
-      job_date: null, appointment_at: null,
+      issue_reason: isOO ? (intake.kind || e.issue) : (services.length ? services.join(', ') : e.issue),
+      triage_volts: intake.volts || null,
+      triage_amps: intake.amps || null,
+      triage_watts: intake.watts || null,
+      power_on: intake.powersOn || null,
+      backed_up: intake.backedUp || null,
+      prior_repair: intake.prior || null,
+      warranty_status: intake.warranty || null,
+      job_date: jobDate || null, appointment_at: v154ApptAt(jobDate || '', intake.windowStart),
       source: 'estimate',
       status: 'Awaiting Scheduling',
       terms_accepted: true,
@@ -3342,25 +3417,55 @@ function showLogin(errorMsg) {
           var newId = ires.data && ires.data.id;
           var v176_22ov = v176_22EffectiveOverride(e, $('est-miles-override') ? $('est-miles-override').value : '');
           v176_20ResolveMileage(e, v176_22ov, function (res) {
-          var fee = res.fee;
-          var finish = function () {
-            client.from('estimates').update({ status: 'Accepted', ticket_id: newId, decided_at: new Date().toISOString(), estimate_note: (res.note != null ? res.note : e.estimate_note) }).eq('id', id).then(function () {
-              if (newId) notifyTicketCreated(client, row, newId);
-              if (newId && e.audience === 'business' && e.contact_name) {
-                try {
-                  client.from('ticket_notes').insert({ ticket_id: newId, author: (state.profile && state.profile.name) || 'Associate', note: 'Business contact: ' + e.contact_name + ' — the person who spoke for the business at check-in.' }).then(function () {}, function () {});
-                } catch (err) {}
-              }
-              state.loaded.tickets = false; state.loaded.estimates = false;
-              closeDrawer();
-              loadEstimates(true); loadTickets(true);
-              if (newId) setTimeout(function () { openTicket(newId); }, 450);
-              setTimeout(function () { docMsg('Estimate confirmed — book the date and time with the guest. The visit fee is on the ticket.'); }, 900);
+            var fee = res.fee;
+            var intake = v176_30ParseIntake(e);
+            var isOO = !!(intake.oneonone && String(intake.oneonone).toLowerCase() === 'yes');
+            var isCleaning = !isOO && (intake.services || []).indexOf('Cleaning') !== -1;
+            var finish = function () {
+              /* V176_30: the mileage resolution rebuilds the note from the
+               * address — the intake segments ride along so the record
+               * keeps them. When the resolution kept the stored note
+               * (dropped-off / stored-miles paths) the segments are
+               * already in it and are not doubled. */
+              var segText = v176_30IntakeNote(intake);
+              var keptNote = res.note;
+              if (res.note != null && segText && res.note.indexOf(segText) === -1) keptNote = [res.note, segText].filter(Boolean).join(' ');
+              else if (res.note == null) keptNote = e.estimate_note;
+              client.from('estimates').update({ status: 'Accepted', ticket_id: newId, decided_at: new Date().toISOString(), estimate_note: keptNote }).eq('id', id).then(function () {
+                if (newId) notifyTicketCreated(client, row, newId);
+                if (newId && e.audience === 'business' && e.contact_name) {
+                  try {
+                    client.from('ticket_notes').insert({ ticket_id: newId, author: (state.profile && state.profile.name) || 'Associate', note: 'Business contact: ' + e.contact_name + ' — the person who spoke for the business at check-in.' }).then(function () {}, function () {});
+                  } catch (err) {}
+                }
+                state.loaded.tickets = false; state.loaded.estimates = false;
+                closeDrawer();
+                loadEstimates(true); loadTickets(true);
+                if (newId) setTimeout(function () { openTicket(newId); }, 450);
+                setTimeout(function () { docMsg('Estimate confirmed — the ticket is in the Service Queue with the date and arrival window.'); }, 900);
+              });
+            };
+            /* Charges ride the conversion the way intake used to file them:
+             * a repair gets the mileage dispatch charge; a one-on-one gets
+             * its own service rows INSTEAD (no dispatch charge — the visit
+             * fee rides inside ciServiceChargeRows); Cleaning files its
+             * $49.99 flat labor line. A failed charge never blocks the
+             * ticket; the finish still runs. */
+            var chargeSteps = [];
+            if (!isOO && fee > 0 && newId) chargeSteps.push(function (next) {
+              client.from('ticket_charges').insert({ ticket_id: newId, kind: 'dispatch', description: res.miles ? v176_20ChargeDesc(res) : 'Visit fee', qty: 1, unit_price: fee }).then(function () { next(); }, function () { next(); });
             });
-          };
-          if (fee > 0 && newId) {
-            client.from('ticket_charges').insert({ ticket_id: newId, kind: 'dispatch', description: res.miles ? v176_20ChargeDesc(res) : 'Visit fee', qty: 1, unit_price: fee }).then(function () { finish(); }, function () { finish(); });
-          } else { finish(); }
+            if (isOO && newId) chargeSteps.push(function (next) {
+              var svcRows = ciServiceChargeRows(newId, intake.kind || '', intake.hours || '', e.atr_one || '');
+              if (svcRows.length) client.from('ticket_charges').insert(svcRows).then(function () { next(); }, function () { next(); });
+              else next();
+            });
+            if (isCleaning && newId) chargeSteps.push(function (next) {
+              var cleanRow = { ticket_id: newId, kind: 'labor', description: 'Cleaning — ' + ([row.device_type, row.brand, row.model].filter(function (x) { return x; }).join(' ') || 'device'), qty: 1, unit_price: 49.99 };
+              client.from('ticket_charges').insert(cleanRow).then(function () { next(); }, function () { next(); });
+            });
+            var stepI = 0;
+            (function runStep() { if (stepI >= chargeSteps.length) { finish(); return; } chargeSteps[stepI++](runStep); })();
           });
         }).catch(function () { fail('Could not create the ticket — try again.'); });
       }).catch(function () { fail("Couldn't load that estimate — try again."); });
@@ -3485,6 +3590,8 @@ function showLogin(errorMsg) {
             v176_20fp.textContent = 'Visit fee when confirmed: ' + estimateMoney(e.atr_one === 'member' ? 0 : v176_20DispatchFee(e.audience, mv)) + ' (' + mv + ' road miles, set by hand).';
           });
         }
+        var v176_30segText = v176_30IntakeNote(v176_30ParseIntake(e)); /* V176_30_ONE_BUTTON_ESTIMATE_2026_11_23: Edit save rebuilds the mileage note — the intake segments ride along, or the window + triage answers are lost. */
+        function v176_30withSegs(note) { if (!note) return v176_30segText || null; return v176_30segText ? note + ' ' + v176_30segText : note; }
         var sv = $('est-save-btn');
         if (sv) sv.addEventListener('click', function () {
           var amtRaw = $('est-edit-amount') ? $('est-edit-amount').value : '';
@@ -3508,12 +3615,12 @@ function showLogin(errorMsg) {
               });
             });
           }
-          if (milesVal) { upd.estimate_note = v176_20MileageNote(milesVal, e.audience, true, memberNow); doSave(); return; }
+          if (milesVal) { upd.estimate_note = v176_30withSegs(v176_20MileageNote(milesVal, e.audience, true, memberNow)); doSave(); return; }
           if (newAddr && newAddr !== e.service_address) {
             if (sm) sm.textContent = 'Calculating road miles\u2026';
             v176_20ComputeMiles(newAddr).then(function (r) {
-              if (r && r.miles > 0) upd.estimate_note = v176_20MileageNote(r.miles, e.audience, false, memberNow, r.approx);
-              else if (!memberNow) upd.estimate_note = v176_20MileageNote(null, e.audience, false, false);
+              if (r && r.miles > 0) upd.estimate_note = v176_30withSegs(v176_20MileageNote(r.miles, e.audience, false, memberNow, r.approx));
+              else if (!memberNow) upd.estimate_note = v176_30withSegs(v176_20MileageNote(null, e.audience, false, false));
               doSave();
             });
             return;
@@ -3835,6 +3942,7 @@ function showLogin(errorMsg) {
     return h ? (h + 'h ' + r + 'm') : (r + 'm');
   }
   function loadJobTimers(client, ticketId) {
+    if (ticketId && typeof ticketId === 'object') ticketId = ticketId.id; /* V176_30_TIMER_STOP_2026_11_23: callers used to pass the ticket object — the .eq() then queried '[object Object]' and the timer never loaded, so Stop looked dead. */
     var totalEl = $('portal-timer-total'), listEl = $('portal-timer-list'), btn = $('portal-timer-btn');
     if (!totalEl || !listEl) return;
     client.from('job_timers').select('*').eq('ticket_id', ticketId).order('started_at', { ascending: true }).then(function (res) {
@@ -4315,6 +4423,7 @@ function loadTicketThread(client, ticketId) {
         tkAccState[key] = open;
         btn.setAttribute('aria-expanded', open ? 'true' : 'false');
         btn.classList.toggle('tk-acc-open', open);
+        if (key === 'parts' && open && v176_30PartsLastRows) { v176_30AckParts(); v176_30ApplyPartsHint(v176_30PartsLastRows); } /* V176_30_PARTS_BADGE_2026_11_23: opening Parts acknowledges the notice. */
         var panel = body.querySelector('[data-acc-body="' + key + '"]');
         if (!panel) return;
         if (open) {
@@ -4708,16 +4817,26 @@ function loadTicketThread(client, ticketId) {
         if (section === 'invoice' && docsP && docsP.then) docsP.then(function () { focusDrawerInvoice(); });
         wireDocuments(client, t);
         loadStockItems(client, t);
-        loadJobTimers(client, t);
+        loadJobTimers(client, t.id);
         var timerBtn = $('portal-timer-btn');
         if (timerBtn) timerBtn.addEventListener('click', function () {
           var msg = $('portal-timer-msg');
           var running = timerBtn.getAttribute('data-running');
           if (running) {
-            client.from('job_timers').update({ stopped_at: new Date().toISOString() }).eq('id', running).then(function () { loadJobTimers(client, t); }).catch(function () { if (msg) msg.textContent = 'Could not stop the timer. Try again.'; });
+            /* V176_30_TIMER_STOP_BEGIN */
+            /* V176_30_TIMER_STOP_2026_11_23: the stop update used to
+             * swallow a failed update — the promise resolves with
+             * {error}, the .then ran anyway, the reload re-read the
+             * unstopped row and the button stayed on Stop looking
+             * dead. Surface the failure, and re-query the button
+             * fresh instead of trusting the captured element. */
+            var stopBtn = $('portal-timer-btn');
+            if (stopBtn) stopBtn.disabled = true;
+            client.from('job_timers').update({ stopped_at: new Date().toISOString() }).eq('id', running).then(function (res) { if (stopBtn) stopBtn.disabled = false; if (res && res.error) { if (msg) msg.textContent = 'Could not stop the timer. Try again.'; return; } loadJobTimers(client, t.id); }).catch(function () { if (stopBtn) stopBtn.disabled = false; if (msg) msg.textContent = 'Could not stop the timer. Try again.'; });
+            /* V176_30_TIMER_STOP_END */
           } else {
             timerBtn.disabled = true;
-            client.from('job_timers').insert({ ticket_id: t.id, employee_name: (state.profile && state.profile.name) || null, started_at: new Date().toISOString() }).select().then(function (res) { timerBtn.disabled = false; if (res.error) { if (msg) msg.textContent = 'Could not start the timer. Try again.'; return; } var nid = res.data && res.data[0] ? res.data[0].id : null; if (nid) { timerBtn.textContent = 'Stop timer'; timerBtn.setAttribute('data-running', nid); var tot = $('portal-timer-total'); if (tot) tot.textContent = 'Time on this job: 0m (timer running)'; } loadJobTimers(client, t); }).catch(function () { timerBtn.disabled = false; if (msg) msg.textContent = 'Could not start the timer. Try again.'; });
+            client.from('job_timers').insert({ ticket_id: t.id, employee_name: (state.profile && state.profile.name) || null, started_at: new Date().toISOString() }).select().then(function (res) { timerBtn.disabled = false; if (res.error) { if (msg) msg.textContent = 'Could not start the timer. Try again.'; return; } var nid = res.data && res.data[0] ? res.data[0].id : null; if (nid) { timerBtn.textContent = 'Stop timer'; timerBtn.setAttribute('data-running', nid); var tot = $('portal-timer-total'); if (tot) tot.textContent = 'Time on this job: 0m (timer running)'; } loadJobTimers(client, t.id); }).catch(function () { timerBtn.disabled = false; if (msg) msg.textContent = 'Could not start the timer. Try again.'; });
           }
         });
         var gvCheckEl = $('portal-gv-text-check');
@@ -5829,6 +5948,7 @@ function loadTicketThread(client, ticketId) {
       part.tracking_eta = out.eta || null;
       part.tracking_checked_at = new Date().toISOString();
       if (box) ltRender(box, part);
+      if (v176_30PartsLastRows) v176_30ApplyPartsHint(v176_30PartsLastRows); /* V176_30_PARTS_BADGE_2026_11_23: a fresh tracking word re-arms the notice. */
       client.from('part_orders').update({
         tracking_status: part.tracking_status,
         tracking_detail: part.tracking_detail,
@@ -5885,12 +6005,48 @@ function loadTicketThread(client, ticketId) {
     return '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-part-paid-order="' + esc(p.id) + '" data-part-paid-charge="' + esc(line.id) + '">' + (partPaidFlag(line) ? 'Mark unpaid' : 'Mark part paid') + '</button>';
   }
 
+  /* V176_30_PARTS_BADGE_2026_11_23 (Austin, Nov 22-23, 2026 — default
+   * (1) in REPORT.md): the closed Parts header hint IS the parts
+   * notice. Closing the awaiting-parts (tracking) popup does NOT
+   * acknowledge it — the notice stays until staff OPEN the Parts
+   * section, which records the parts state as seen. It returns only
+   * when the parts state changes (a new tracking word, a status
+   * change, a tracking number added). 'All received' / 'No parts
+   * ordered yet' are plain state, never suppressed. */
+  var v176_30PartsAckSig = null;
+  var v176_30PartsLastSig = null;
+  var v176_30PartsLastRows = null;
+  function v176_30PartsSig(rows) {
+    return (rows || []).map(function (p) { return [p.id, p.status, p.tracking_number, p.tracking_status, p.received_at].join('|'); }).join(';;');
+  }
+  function v176_30PartsHintText(rows) {
+    var accOpenParts = (rows || []).filter(function (p) { return p.status !== 'Received' && p.status !== 'Cancelled'; });
+    var accTracked = accOpenParts.filter(function (p) { return !!p.tracking_status; });
+    if (accTracked.length) return accTracked[0].tracking_status;
+    if (accOpenParts.length) return accOpenParts.length + (accOpenParts.length === 1 ? ' part on the way' : ' parts on the way');
+    if ((rows || []).some(function (p) { return p.status === 'Received'; })) return 'All received';
+    if ((rows || []).length) return rows.length + (rows.length === 1 ? ' part' : ' parts');
+    return 'No parts ordered yet';
+  }
+  function v176_30PartsIsNotify(rows) {
+    return (rows || []).some(function (p) { return p.status !== 'Received' && p.status !== 'Cancelled'; });
+  }
+  function v176_30ApplyPartsHint(rows) {
+    v176_30PartsLastRows = rows || [];
+    v176_30PartsLastSig = v176_30PartsSig(rows);
+    var text = v176_30PartsHintText(rows);
+    if (v176_30PartsAckSig && v176_30PartsAckSig === v176_30PartsLastSig && v176_30PartsIsNotify(rows)) text = '';
+    tkAccSetHint('parts', text);
+  }
+  function v176_30AckParts() {
+    if (v176_30PartsLastSig) v176_30PartsAckSig = v176_30PartsLastSig;
+  }
   function renderParts(t, rows) {
     var box = $('p2-parts');
     if (!box) return;
     if (!rows.length) {
       box.innerHTML = '<p class="portal-muted">No parts ordered for this ticket yet.</p>';
-      tkAccSetHint('parts', 'No parts ordered yet'); /* V167_PARTS_COLLAPSE_2026_11_18: a closed Parts header says so — every section starts closed now. */
+      v176_30ApplyPartsHint([]); /* V167_PARTS_COLLAPSE_2026_11_18: a closed Parts header says so — every section starts closed now. */
       return;
     }
     box.innerHTML = rows.map(function (p) {
@@ -6020,17 +6176,10 @@ function loadTicketThread(client, ticketId) {
     });
     /* PORTAL_TICKET_ACCORDION_2026_11_02: the closed Parts header
      * carries the freshest tracking word for parts still out, so a
-     * shipment update is never hidden behind the fold. */
-    var accOpenParts = rows.filter(function (p) { return p.status !== 'Received' && p.status !== 'Cancelled'; });
-    var accTracked = accOpenParts.filter(function (p) { return !!p.tracking_status; });
-    /* V167_PARTS_COLLAPSE_2026_11_18: every section starts closed now, so the
-     * Parts header must always say what is behind it — a count when
-     * no other case applies, and 'No parts ordered yet' when there
-     * is nothing at all (the empty branch above sets that one). */
-    tkAccSetHint('parts', accTracked.length ? accTracked[0].tracking_status :
-      (accOpenParts.length ? accOpenParts.length + (accOpenParts.length === 1 ? ' part on the way' : ' parts on the way') :
-      (rows.some(function (p) { return p.status === 'Received'; }) ? 'All received' :
-      (rows.length ? rows.length + (rows.length === 1 ? ' part' : ' parts') : 'No parts ordered yet'))));
+     * shipment update is never hidden behind the fold — unless staff
+     * already opened Parts and saw this exact parts state (the V176_30
+     * acknowledge rule above). */
+    v176_30ApplyPartsHint(rows);
   }
 
   function loadParts(client, t) {
@@ -7226,41 +7375,6 @@ function loadTicketThread(client, ticketId) {
       '</div></body></html>';
   }
 
-  /* PORTAL_ATRONE_PER_TIER_2026_11_02 (Austin, Nov 2, 2026): the
-   * check-in auto-attach. When a check-in is created with "Wants to
-   * sign up for ATR One", the agreement for the tier the customer
-   * picked at check-in (ciAtroneTier, recorded when a tier card in
-   * the signup box is tapped) files itself on the new ticket in its
-   * pending state — an unsigned copy with signer_name and
-   * signed_at empty, the same pending state the Documents upload
-   * path uses for unsigned documents — so it sits on the ticket
-   * ready to view and to sign on the job through that agreement's
-   * own Sign flow (DOC_SIGNERS). Signing files the signed copy on
-   * the same ticket beside this one. When NO tier was picked,
-   * nothing is attached rather than guessing a tier, and that is
-   * not an error. done(errText): errText is null on success. The
-   * ticket exists either way; an attach failure never blocks it. */
-  function attachAtrOneAgreementAtCheckin(client, ticketId, row, done, tierKey) {
-    var agreement = tierKey ? ATRONE_AGREEMENTS[tierKey] : null;
-    if (!agreement) { done(null); return; }
-    var meta = { customerName: row.customer_name, phone: row.customer_phone, device: deviceLabel(row) };
-    var html = unsignedAtrOneAgreementHtml(meta, agreement.text, agreement.title);
-    var path = ticketId + '/' + agreement.spec.pathPrefix + '-' + docStamp() + '.html';
-    client.storage.from(DOC_BUCKET).upload(path, new Blob([html], { type: 'text/html' }), { contentType: 'text/html', upsert: false }).then(function (up) {
-      if (up.error) { done('The ATR One membership agreement could not be attached.'); return; }
-      var docRow = {
-        ticket_id: ticketId, doc_type: 'other', storage_path: path,
-        file_name: agreement.title + ' \u2014 awaiting signature.html',
-        signer_name: null, signed_at: null,
-        note: agreement.title + ' \u2014 attached at check-in (guest wants to sign up for ATR One); awaiting signature'
-      };
-      client.from('ticket_documents').insert(docRow).then(function (res) {
-        if (res.error) { done('The ATR One membership agreement could not be attached.'); return; }
-        done(null);
-      }).catch(function () { done('The ATR One membership agreement could not be attached.'); });
-    }).catch(function () { done('The ATR One membership agreement could not be attached.'); });
-  }
-
   /* The shared sign modal for the Documents tab path: the same
    * signature popup as everywhere else — the config's opts pick the
    * document it shows, and a null opts gives the popup's built-in
@@ -7799,6 +7913,11 @@ function loadTicketThread(client, ticketId) {
       '<span class="portal-muted portal-small" id="p2-pop-msg"></span></div></div>';
     wrap.innerHTML = card;
     document.body.appendChild(wrap);
+    /* V176_30_PARTS_BADGE_2026_11_23 (working reading, flagged for Austin's
+     * yes in REPORT.md): closing this popup does NOT acknowledge the
+     * Parts notice — the closed-header hint stays until staff open
+     * the Parts section. Only a successful tracking save reloads
+     * Parts, so the saved tracking reaches the header. */
     function close() { if (wrap.parentNode) wrap.parentNode.removeChild(wrap); }
     wrap.addEventListener('click', function (e) { if (e.target === wrap) close(); });
     var na = wrap.querySelector('#p2-pop-na');
@@ -7814,8 +7933,7 @@ function loadTicketThread(client, ticketId) {
       };
       client.from('part_orders').update(patch).eq('id', part.id).then(function (res) {
         if (res.error) { if (msg) msg.textContent = 'Couldn\u2019t save \u2014 try again.'; return; }
-        close();
-        loadParts(client, t);
+        close(); loadParts(client, t);
       }).catch(function () { if (msg) msg.textContent = 'Couldn\u2019t save \u2014 try again.'; });
     });
   }
@@ -23464,35 +23582,9 @@ function loadTicketThread(client, ticketId) {
     if (cw) cw.hidden = !biz;
     var al = $('ci-atrone-label');
     if (al) al.textContent = biz ? 'Is this business an ATR One Plus (paid) member?' : 'Is this guest an ATR One Plus (paid) member?';
-    var box = $('ci-consent-script');
+    var box = $('ci-script');
     if (box) box.textContent = ciConsentScript();
   }
-  var ciConsent = null;
-
-  function ciConsentStatus() {
-    var status = $('ci-consent-status');
-    var clearBtn = $('ci-consent-clear');
-    var verbal = $('ci-verbal-check');
-    if (verbal) {
-      var shouldCheck = !!(ciConsent && ciConsent.mode === 'verbal');
-      if (verbal.checked !== shouldCheck) verbal.checked = shouldCheck;
-    }
-    if (clearBtn) clearBtn.hidden = !ciConsent;
-    if (!status) return;
-    if (!ciConsent) {
-      status.textContent = 'No agreement captured yet \u2014 the ticket can still be created, and the signature can be taken later from the ticket\u2019s Documents section.';
-    } else if (ciConsent.mode === 'signed') {
-      status.textContent = 'Signature captured from ' + ciConsent.signerName + ' \u2014 it files itself on this ticket when you create it.';
-    } else {
-      status.textContent = 'Verbal agreement recorded \u2014 a consent record files itself on this ticket when you create it.';
-    }
-  }
-
-  function ciConsentReset() {
-    ciConsent = null;
-    ciConsentStatus();
-  }
-
   /* "Read the full terms": one popup with the FULL existing legal
    * texts \u2014 the same BLANK_DOCS strings the Documents tab shows
    * (AUTH_TERMS_TEXT / WARRANTY_TEXT), reused verbatim, no new legal
@@ -23522,97 +23614,6 @@ function loadTicketThread(client, ticketId) {
     function close() { if (wrap.parentNode) wrap.parentNode.removeChild(wrap); }
     wrap.addEventListener('click', function (e) { if (e.target === wrap) close(); });
     wrap.querySelector('#ci-terms-close').addEventListener('click', close);
-  }
-
-  function wireCiConsent() {
-    var scriptBox = $('ci-consent-script');
-    if (scriptBox) scriptBox.textContent = ciConsentScript();
-    var termsBtn = $('ci-terms-btn');
-    if (termsBtn && !termsBtn.getAttribute('data-wired')) {
-      termsBtn.setAttribute('data-wired', '1');
-      termsBtn.addEventListener('click', showAllAgreements);
-    }
-    var signBtn = $('ci-sign-btn');
-    if (signBtn && !signBtn.getAttribute('data-wired')) {
-      signBtn.setAttribute('data-wired', '1');
-      signBtn.addEventListener('click', function () {
-        var signer = ciCustomerType() === 'business' ? (ciContactName() || ($('ci-name') ? $('ci-name').value : '')) : ($('ci-name') ? $('ci-name').value : '');
-        openSignatureCapture(signer, function (blob, name, finish) {
-          ciConsent = { mode: 'signed', blob: blob, signerName: name };
-          ciConsentStatus();
-          finish();
-        });
-      });
-    }
-    var verbal = $('ci-verbal-check');
-    if (verbal && !verbal.getAttribute('data-wired')) {
-      verbal.setAttribute('data-wired', '1');
-      verbal.addEventListener('change', function () {
-        if (verbal.checked) ciConsent = { mode: 'verbal' };
-        else if (ciConsent && ciConsent.mode === 'verbal') ciConsent = null;
-        ciConsentStatus();
-      });
-    }
-    var clearBtn = $('ci-consent-clear');
-    if (clearBtn && !clearBtn.getAttribute('data-wired')) {
-      clearBtn.setAttribute('data-wired', '1');
-      clearBtn.addEventListener('click', function () { ciConsentReset(); });
-    }
-    ciConsentStatus();
-  }
-
-  /* File the check-in consent on the just-created ticket. Signed:
-   * the shared drawer filing (signed document + repair_authorization
-   * row + consent flags). Verbal: a generated text record naming the
-   * customer, the ticket, the staff member, and the date/time, with
-   * the exact statement that was read \u2014 filed as an 'other'
-   * document labeled as the verbal consent record, then the same
-   * consent flags via markAuthorizationAccepted. Because the rows and
-   * storage paths match the drawer flow's shape, the drawer's
-   * Documents section lists them exactly like a drawer-signed
-   * document. done(errText): errText is null on success. */
-  function fileCiConsent(client, ticketId, row, consent, done, contactName) {
-    if (!consent) { done(null); return; }
-    if (consent.mode === 'signed') {
-      fileSignedAuthorization(client, ticketId, consent.blob, consent.signerName, done,
-        { customerName: row.customer_name, phone: row.customer_phone, device: deviceLabel(row) });
-      return;
-    }
-    var when = new Date();
-    var staff = (state.profile && state.profile.name) || (state.user && state.user.email) || 'Staff';
-    var guestLine = 'Guest: ' + (row.customer_name || '');
-    if (contactName) guestLine += '\nBusiness contact: ' + contactName;
-    var text = [
-      'Verbal Consent Record',
-      "Austin's Tech Repair Group",
-      '',
-      guestLine,
-      'Phone: ' + (row.customer_phone || ''),
-      'Ticket ID: ' + ticketId,
-      'Device: ' + deviceLabel(row),
-      'Date and time: ' + when.toLocaleString() + ' (' + when.toISOString() + ')',
-      'Recorded by: ' + staff,
-      '',
-      'How this consent was taken: the staff member named above read the statement below aloud to the guest by phone, and the guest verbally agreed to it. By that agreement, the guest agreed to the Repair Authorization & Service Agreement, the Terms & Conditions of Service, and the 1-Year Limited Warranty of Austin\u2019s Tech Repair Group, in full.',
-      '',
-      'Statement read to the guest:',
-      '\u201C' + ciConsentScript() + '\u201D'
-    ].join('\n');
-    var blob = new Blob([text], { type: 'text/plain' });
-    var path = ticketId + '/verbal-consent-' + docStamp() + '.txt';
-    client.storage.from(DOC_BUCKET).upload(path, blob, { contentType: 'text/plain', upsert: false }).then(function (up) {
-      if (up.error) { done('The ticket was created, but the verbal consent record could not be saved \u2014 take the signature from the ticket\u2019s Documents section.'); return; }
-      var docRow = {
-        ticket_id: ticketId, doc_type: 'other', storage_path: path,
-        file_name: 'Verbal consent record.txt', signer_name: null,
-        signed_at: when.toISOString(),
-        note: 'Verbal agreement by phone at check-in \u2014 read-aloud statement agreed'
-      };
-      client.from('ticket_documents').insert(docRow).then(function (res) {
-        if (res.error) { done('The ticket was created, but the verbal consent record could not be filed \u2014 take the signature from the ticket\u2019s Documents section.'); return; }
-        markAuthorizationAccepted(client, { id: ticketId }).then(function () { done(null); }).catch(function () { done(null); });
-      }).catch(function () { done('The ticket was created, but the verbal consent record could not be filed \u2014 take the signature from the ticket\u2019s Documents section.'); });
-    }).catch(function () { done('The ticket was created, but the verbal consent record could not be saved \u2014 take the signature from the ticket\u2019s Documents section.'); });
   }
 
   /* ================= TICKET GUEST LINK =================
@@ -23732,12 +23733,6 @@ function loadTicketThread(client, ticketId) {
   var ciRequestType = 'repair';
   var ciServiceHours = '';
   var ciWindowStart = null; /* V154_TICKET_FORM_2026_11_16: picked arrival-window start hour, or null */
-  /* PORTAL_ATRONE_PER_TIER_2026_11_02: the tier picked at check-in
-   * — set when a Square tier card in the signup box is tapped (each
-   * card's plan link identifies its tier), read at submit so the
-   * agreement attached to the new ticket is that tier's agreement.
-   * Null when no card was tapped: then no agreement is attached. */
-  var ciAtroneTier = null;
   function loadCheckinCustomers() {
     withClient(function (client) {
       if (!client) return;
@@ -23811,22 +23806,6 @@ function loadTicketThread(client, ticketId) {
       typeSel.setAttribute('data-wired', '1');
       typeSel.addEventListener('change', ciPaintType);
     }
-    /* PORTAL_ATRONE_PER_TIER_2026_11_02: tapping a tier card in the
-     * signup box records the tier — each card links to its own
-     * Square plan, and the plan link identifies the tier. */
-    var ciSignupBox = $('ci-atrone-signup');
-    if (ciSignupBox && !ciSignupBox.getAttribute('data-wired')) {
-      ciSignupBox.setAttribute('data-wired', '1');
-      ciSignupBox.querySelectorAll('a').forEach(function (a) {
-        a.addEventListener('click', function () {
-          var href = a.getAttribute('href') || '';
-          if (href.indexOf('eFKxDvyo') !== -1) ciAtroneTier = 'single';
-          else if (href.indexOf('ZA7502vD') !== -1) ciAtroneTier = 'family';
-          else if (href.indexOf('HtnQBIG1') !== -1) ciAtroneTier = 'business_plus';
-          else if (href.indexOf('V8WCkjbW') !== -1) ciAtroneTier = 'business_pro';
-        });
-      });
-    }
     /* PORTAL_SERVICE_QUEUE_2026_11_06 (intake refinements): the
      * Service grid carries the One-on-One tile — there is no
      * separate Repair/Service switch. Tapping One-on-One switches
@@ -23884,18 +23863,35 @@ function loadTicketThread(client, ticketId) {
         ciSetRequestType('service');
       });
     });
-    document.querySelectorAll('#ci-reasons .ci-tile:not([data-oneonone])').forEach(function (t) {
-      t.addEventListener('click', ciLeaveService);
-    });
-    ciSetRequestType('repair');
-    /* PORTAL_ISSUE_TILES_2026_10_30: issue picker tiles toggle .on */
-    document.querySelectorAll('#ci-reasons .ci-tile:not([data-oneonone])').forEach(function (tile) {
-      tile.addEventListener('click', function () {
+    /* V176_30_ONE_BUTTON_ESTIMATE_2026_11_23: the repair tiles re-render
+     * per device type, so the tile clicks are delegated on #ci-reasons
+     * (one listener, survives re-renders) instead of per-tile bindings.
+     * Same two steps as before, same order: leave one-on-one mode, then
+     * toggle .on. The One-on-One tile keeps its own handler above. */
+    var ciReasonsBox = $('ci-reasons');
+    if (ciReasonsBox && !ciReasonsBox.getAttribute('data-v176-30-wired')) {
+      ciReasonsBox.setAttribute('data-v176-30-wired', '1');
+      ciReasonsBox.addEventListener('click', function (e) {
+        var tile = e.target && e.target.closest ? e.target.closest('.ci-tile:not([data-oneonone])') : null;
+        if (!tile || !ciReasonsBox.contains(tile)) return;
+        ciLeaveService();
         var on = tile.classList.toggle('on');
         tile.setAttribute('aria-pressed', on ? 'true' : 'false');
       });
-    });
-    wireCiConsent();
+    }
+    var ciTypeSel = $('ci-type');
+    if (ciTypeSel && !ciTypeSel.getAttribute('data-wired')) {
+      ciTypeSel.setAttribute('data-wired', '1');
+      ciTypeSel.addEventListener('change', v176_30PaintReasonTiles);
+    }
+    v176_30PaintReasonTiles();
+    var ciDroppedOffEl = $('ci-droppedoff');
+    if (ciDroppedOffEl && !ciDroppedOffEl.getAttribute('data-wired')) {
+      ciDroppedOffEl.setAttribute('data-wired', '1');
+      ciDroppedOffEl.addEventListener('change', v176_30PaintDroppedOff);
+    }
+    v176_30PaintDroppedOff();
+    ciSetRequestType('repair');
     ciPaintType(); /* V164_GUEST_BUSINESS_2026_11_17: fields, ATR One label and script follow the selector from the start */
     /* V154_TICKET_FORM_2026_11_16: date + window picker in the same box,
      * and the map under the service address. Tapping a picked window
@@ -23945,7 +23941,7 @@ function loadTicketThread(client, ticketId) {
       return snap.join('|');
     }
     function ciFormDirty() {
-      if (ciCustomerId || ciConsent) return true;
+      if (ciCustomerId) return true;
       if (ciRequestType === 'service') return true; /* PORTAL_SERVICE_QUEUE_2026_11_06: entering a service request counts as entered, like any other field */
       if (document.querySelector('#ci-reasons .ci-tile.on')) return true;
       return ciFieldSnapshot() !== ciPristine;
@@ -23955,7 +23951,6 @@ function loadTicketThread(client, ticketId) {
       ciPaintType();
       ciSetRequestType('repair'); /* PORTAL_SERVICE_QUEUE_2026_11_06 */
       ciCustomerId = null;
-      ciAtroneTier = null;
       ciWindowStart = null; ciPaintWindows();
       v154HideAddressMap($('ci-address-map'));
       document.querySelectorAll('#ci-reasons .ci-tile.on').forEach(function (c) { c.classList.remove('on'); c.setAttribute('aria-pressed', 'false'); });
@@ -23963,13 +23958,14 @@ function loadTicketThread(client, ticketId) {
       var err = $('ci-error'); if (err) { err.textContent = ''; err.hidden = true; }
       var signup = $('ci-atrone-signup'), atr = $('ci-atrone');
       if (signup && atr) signup.hidden = atr.value !== 'signup';
-      ciConsentReset();
+      v176_30PaintReasonTiles();
+      v176_30PaintDroppedOff();
     }
     var ciClearBtn = $('ci-clear');
     if (ciClearBtn && !ciClearBtn.getAttribute('data-wired')) {
       ciClearBtn.setAttribute('data-wired', '1');
       ciClearBtn.addEventListener('click', function () {
-        if (ciFormDirty() && !window.confirm('Clear this check-in and start over? Everything entered here will be discarded.')) return;
+        if (ciFormDirty() && !window.confirm('Clear this estimate and start over? Everything entered here will be discarded.')) return;
         ciResetForm();
       });
     }
@@ -23977,231 +23973,116 @@ function loadTicketThread(client, ticketId) {
       e.preventDefault();
       var err = $('ci-error'); err.hidden = true;
       var reasons = Array.prototype.map.call(document.querySelectorAll('#ci-reasons .ci-tile.on:not([data-oneonone])'), function (c) { return c.getAttribute('data-label') || c.textContent.trim(); }).join(', ');
-      /* PORTAL_SERVICE_QUEUE_2026_11_06 (intake refinements): a
-       * one-on-one picked in the Service grid composes a service
-       * row instead — the kind of help and the goal come from
-       * Service details, the hours from the grid buttons ('' when
-       * no hour button is tapped — the time is not set yet), and
-       * the device fields ride along exactly as a repair records
-       * them, because a lesson is on a device; identity is the
-       * [SERVICE] issue lead. The ticket starts at Awaiting
-       * Scheduling (build of record, with the one-time insert
-       * fallback below). Both rows carry the service address
-       * (tickets.service_address). */
       /* V154_TICKET_FORM_2026_11_16: the visit date + window ride the
-       * ticket — job_date plus appointment_at at the window start, so
-       * the ticket shows on the calendar. A window with no date means
-       * today. No date and no window: both stay empty, as before. */
+       * estimate — preferred_date plus preferred_window at the window
+       * start, so the ticket shows on the calendar when the guest
+       * confirms. A window with no date means today. No date and no
+       * window: both stay empty, as before. */
       var ciJobDate = ciJobDateEl ? ciJobDateEl.value : '';
       if (ciWindowStart != null && !ciJobDate) { ciJobDate = v154LocalDateStr(); if (ciJobDateEl) ciJobDateEl.value = ciJobDate; }
-      var ciApptAt = v154ApptAt(ciJobDate, ciWindowStart);
       var isSvc = ciRequestType === 'service' || !!(ciOneOnOne && ciOneOnOne.classList.contains('on'));
-      /* V163_CLEANING_2026_11_17: Cleaning is a repair service, not a
-       * one-on-one — its $49.99 flat charge files at intake below. */
-      var isCleaning = !isSvc && reasons.split(', ').indexOf('Cleaning') !== -1;
       var svcKind = isSvc ? $('ci-svc-kind').value : '';
       var svcGoal = isSvc ? $('ci-svc-goal').value.trim() : '';
       var svcHours = isSvc ? ciServiceHours : '';
       var ciAddress = $('ci-address').value.trim();
-      /* V164_GUEST_BUSINESS_2026_11_17: the display name is the guest
-       * name or the business name, from the same field; the contact
-       * person only exists for a business. */
+      var droppedOff = !!($('ci-droppedoff') && $('ci-droppedoff').checked); /* V176_25_DROPPED_OFF_2026_11_22: an empty address is allowed only while Dropped off is checked */
       var ciType = ciCustomerType();
       var ciNameVal = $('ci-name').value.trim();
       var ciContactVal = ciType === 'business' ? ciContactName() : '';
-      var row = isSvc ? {
-        customer_id: ciCustomerId || null,
-        customer_name: ciNameVal,
-        customer_phone: $('ci-phone').value.trim(),
-        customer_email: $('ci-email').value.trim() || null,
-        service_address: ciAddress || null,
-        device_type: $('ci-type').value,
-        brand: $('ci-brand').value.trim() || null,
-        model: $('ci-model').value.trim() || null,
-        serial_imei: $('ci-serial').value.trim() || null,
-        issue_reason: svcKind || null,
-        issue: svcKind ? ciServiceIssueText(svcKind, svcGoal, svcHours, $('ci-atrone') ? $('ci-atrone').value : '') : '',
-        triage_volts: null,
-        triage_amps: null,
-        triage_watts: null, /* V171_POWER_TEST_2026_11_18 */
-        power_on: null,
-        backed_up: null,
-        prior_repair: null,
-        warranty_status: null,
-        job_date: ciJobDate || null,
-        appointment_at: ciApptAt,
-        source: 'check-in',
-        status: 'Awaiting Scheduling',
-        terms_accepted: true,
-        dispatch_acknowledged: true,
-        work_auth_accepted: false,
-        marketing_opt_in: false
-      } : {
-        customer_id: ciCustomerId || null,
-        customer_name: ciNameVal,
-        customer_phone: $('ci-phone').value.trim(),
-        customer_email: $('ci-email').value.trim() || null,
-        service_address: ciAddress || null,
-        device_type: $('ci-type').value,
-        brand: $('ci-brand').value.trim() || null,
-        model: $('ci-model').value.trim() || null,
-        serial_imei: $('ci-serial').value.trim() || null,
-        issue_reason: reasons || null,
-        issue: (function () {
-          /* PORTAL_ISSUE_TILES_2026_10_30: picked issue labels lead the
-           * issue text, followed by " — " + the notes when notes were
-           * typed; tiles only → just the labels; no tiles → the notes
-           * alone, exactly as before. ATR One prefixes still lead. */
-          var notes = $('ci-notes').value.trim();
-          var text = reasons ? (notes ? reasons + ' — ' + notes : reasons) : notes;
-          var atr = $('ci-atrone') ? $('ci-atrone').value : '';
-          if (atr === 'member') return '[ATR One member] ' + text;
-          if (atr === 'signup') return '[Wants ATR One signup] ' + text;
-          return text;
-        })(),
-        triage_volts: $('ci-volts').value.trim() || null,
-        triage_amps: $('ci-amps').value.trim() || null,
-        triage_watts: $('ci-watts').value.trim() || null, /* V171_POWER_TEST_2026_11_18 */
-        power_on: $('ci-power').value || null,
-        backed_up: $('ci-backup').value || null,
-        prior_repair: $('ci-prior').value || null,
-        warranty_status: $('ci-warranty').value || null,
-        job_date: ciJobDate || null,
-        appointment_at: ciApptAt,
-        source: 'check-in',
-        status: 'Awaiting Diagnostics',
-        terms_accepted: true,
-        dispatch_acknowledged: true,
-        work_auth_accepted: false,
-        marketing_opt_in: false
-      };
+      var email = $('ci-email').value.trim();
+      var phone = $('ci-phone').value.trim();
+      var amountRaw = $('ci-amount') ? $('ci-amount').value : '';
+      var amount = (String(amountRaw).trim() === '') ? NaN : Number(amountRaw); /* V176_28_FLOOR_REMOVAL_2026_11_22: a blank amount is missing (NaN), so it is still rejected below — any non-negative amount saves, no floor. */
       if (isSvc) {
-        if (!row.customer_name || !row.customer_phone || !row.customer_email || !row.service_address || !svcKind || !svcGoal || (ciType === 'business' && !ciContactVal)) {
-          err.textContent = ciType === 'business' ? 'Business name, contact name, phone, email, service address, the kind of help, and what they want to get done are required for a service request.' : 'Name, phone, email, service address, the kind of help, and what they want to get done are required for a service request.'; err.hidden = false; return;
+        if (!ciNameVal || !phone || !email || (!ciAddress && !droppedOff) || !svcKind || !svcGoal || (ciType === 'business' && !ciContactVal)) {
+          err.textContent = ciType === 'business' ? 'Business name, contact name, phone, email, service address, the kind of help, and what they want to get done are required for an estimate.' : 'Name, phone, email, service address, the kind of help, and what they want to get done are required for an estimate.'; err.hidden = false; return;
         }
-      } else if (!row.customer_name || !row.customer_phone || !row.customer_email || !row.service_address || !row.issue || (ciType === 'business' && !ciContactVal)) {
-        err.textContent = ciType === 'business' ? 'Business name, contact name, phone, email, service address, and an issue are required \u2014 tap an issue tile or write check-in notes.' : 'Name, phone, email, service address, and an issue are required \u2014 tap an issue tile or write check-in notes.'; err.hidden = false; return;
+      } else if (!ciNameVal || !phone || !email || (!ciAddress && !droppedOff) || !(reasons || $('ci-notes').value.trim()) || (ciType === 'business' && !ciContactVal)) {
+        err.textContent = ciType === 'business' ? 'Business name, contact name, phone, email, service address, and an issue are required — tap an issue tile or write check-in notes.' : 'Name, phone, email, service address, and an issue are required — tap an issue tile or write check-in notes.'; err.hidden = false; return;
       }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { err.textContent = "That email address doesn't look right."; err.hidden = false; return; }
+      if (isNaN(amount) || amount < 0) { err.textContent = 'Enter the estimate amount — the price you quoted the guest.'; err.hidden = false; return; }
       var btn = $('ci-submit'); btn.disabled = true;
-      var consent = ciConsent;
-      /* PORTAL_ATRONE_DOC_2026_11_02: captured before the insert —
-       * the form (and this select) is reset once the ticket exists. */
-      var wantsAtrOneSignup = $('ci-atrone') ? $('ci-atrone').value === 'signup' : false;
-      var signupTier = wantsAtrOneSignup ? ciAtroneTier : null;
-      withClient(function (client) {
-        if (!client) { btn.disabled = false; return; }
-        var insertRow = function (r) { return client.from('tickets').insert(r).select('id').single(); };
-        /* TICKET_GUEST_LINK_2026_11_09: no guest picked in the
-         * search box -> find-or-create the guest record first and
-         * link it on the row, so every check-in ticket lands on a
-         * guest. The picked path is untouched, the service-status
-         * retry below reuses insertRow with the id already riding
-         * on its copy of the row, and a guest-step failure resolves
-         * null and the ticket is created exactly as before. */
-        if (!row.customer_id) {
-          insertRow = (function (orig) {
-            return function (r) {
-              if (r.customer_id) return orig(r);
-              return ensureGuestForTicket(client, { name: r.customer_name, email: r.customer_email, phone: r.customer_phone, address: r.service_address }).then(function (guestId) {
-                if (guestId) r.customer_id = guestId;
-                return orig(r);
-              });
-            };
-          })(insertRow);
-        }
-        insertRow(row).then(function (res) {
-          if (res.error && isSvc && row.status === 'Awaiting Scheduling') {
-            var retryRow = {}; for (var rk in row) retryRow[rk] = row[rk]; retryRow.status = 'Awaiting Estimate';
-            return insertRow(retryRow).then(function (res2) { row.status = retryRow.status; return res2; });
-          }
-          return res;
-        }).then(function (res) {
-          if (res.error) { btn.disabled = false; err.textContent = 'Could not create the ticket — try again.'; err.hidden = false; return; }
-          var newId = res.data && res.data.id;
-          /* PORTAL_SERVICE_QUEUE_2026_11_06: charges ride the row's final status — the receipt and agreement builders read row.status. */
-          var cleanFailed = false;
-          var proceed = function (consentFailed, atroneAttachFailed, svcChargeFailed) {
-            /* V155_TICKET_EMAILS_2026_11_16: the ticket exists now,
-             * so the guest gets the automatic confirmation email
-             * (and a login account when none exists for their
-             * email). Fire-and-forget — never blocks the form. */
-            if (newId) notifyTicketCreated(client, row, newId);
-            /* V164_GUEST_BUSINESS_2026_11_17: the business contact person
-             * rides a repair-log note on the ticket (ticket_notes, the
-             * existing staff note table) — see ciCustomerType().
-             * Fire-and-forget: a failed note never blocks the ticket. */
-            if (newId && ciType === 'business' && ciContactVal) {
-              try {
-                client.from('ticket_notes').insert({ ticket_id: newId, author: (state.profile && state.profile.name) || 'Associate', note: 'Business contact: ' + ciContactVal + ' \u2014 the person who spoke for the business at check-in.' }).then(function () {}, function () {});
-              } catch (e) { /* note is staff convenience only; never blocks */ }
-            }
+      /* The issue text is composed exactly as the old ticket issue was:
+       * picked tile labels lead, then the notes; a one-on-one composes
+       * from the kind, the goal and the hours. The ticket keeps this
+       * text verbatim when the estimate converts. */
+      var atrVal = $('ci-atrone') ? $('ci-atrone').value : '';
+      var issueText;
+      if (isSvc) {
+        issueText = ciServiceIssueText(svcKind, svcGoal, svcHours, atrVal);
+      } else {
+        var notes = $('ci-notes').value.trim();
+        var text = reasons ? (notes ? reasons + ' — ' + notes : reasons) : notes;
+        if (atrVal === 'member') issueText = '[ATR One member] ' + text;
+        else if (atrVal === 'signup') issueText = '[Wants ATR One signup] ' + text;
+        else issueText = text;
+      }
+      var volts = $('ci-volts').value.trim(), amps = $('ci-amps').value.trim(), watts = $('ci-watts').value.trim();
+      var powerParts = [];
+      if (volts) powerParts.push(volts + 'V');
+      if (amps) powerParts.push(amps + 'A');
+      if (watts) powerParts.push(watts + 'W');
+      var intake = {
+        windowLabel: v176_30WindowLabel(ciJobDate, ciWindowStart),
+        services: reasons ? reasons.split(', ') : [],
+        power: isSvc ? '' : powerParts.join(' / '),
+        powersOn: isSvc ? '' : ($('ci-power').value || ''),
+        backedUp: isSvc ? '' : ($('ci-backup').value || ''),
+        prior: isSvc ? '' : ($('ci-prior').value || ''),
+        warranty: isSvc ? '' : ($('ci-warranty').value || ''),
+        serial: $('ci-serial').value.trim(),
+        oneonone: isSvc ? 'yes' : '',
+        hours: svcHours,
+        kind: svcKind,
+        goal: svcGoal
+      };
+      var member = atrVal === 'member';
+      /* NO ticket, NO guest record, NO charges, NO filed signature: the
+       * estimate row carries the person's details itself, and
+       * customer_id stays null until the guest taps the email link and
+       * makes an account. The mileage note rides in front of the
+       * v176_30 segments, exactly as the old sheet composed it. */
+      function insertWithMileage(note, miles, failed, approx) {
+        var row = v176_30EstimateRow({
+          audience: ciType, name: ciNameVal, biz: ciType === 'business', contact: ciContactVal,
+          phone: phone, email: email, address: ciAddress,
+          device: $('ci-type').value, brand: $('ci-brand').value.trim(), model: $('ci-model').value.trim(),
+          issue: issueText, amount: amount, note: [note, v176_30IntakeNote(intake)].filter(Boolean).join(' '),
+          atrOne: atrVal, jobDate: ciJobDate, windowLabel: intake.windowLabel
+        });
+        var feeText = v176_20FeeTextForDisplay(ciType, member, miles, failed, approx, droppedOff);
+        withClient(function (client) {
+          if (!client) { btn.disabled = false; err.textContent = "Couldn't reach the database — try again."; err.hidden = false; return; }
+          client.from('estimates').insert(row).select('id').single().then(function (res) {
             btn.disabled = false;
-            $('ci-form').reset(); ciPaintType(); ciCustomerId = null; ciAtroneTier = null;
+            if (res.error) { err.textContent = 'Could not create the estimate — try again.'; err.hidden = false; return; }
+            v165SendAlert("Your estimate from Austin's Tech Repair Group", [
+              ['Email', email],
+              ['Name', ciNameVal],
+              ['Device', estimateDeviceLabel(row)],
+              ["What's wrong", issueText],
+              ['Estimate', estimateMoney(estFloorAmt(amount, issueText)) /* V173_PRICING_FLOOR_2026_11_18 */],
+              ['Visit fee when confirmed', feeText],
+              ['Your estimate page', estimatePageLink(row)],
+              ['What happens next', 'Tap the link above to view your estimate. You can confirm or decline it there — nothing is booked until you confirm.']
+            ], 'estimate-link', row.public_token);
+            $('ci-form').reset(); ciPaintType(); ciSetRequestType('repair');
+            ciCustomerId = null;
             ciWindowStart = null; ciPaintWindows(); v154HideAddressMap($('ci-address-map'));
-            ciSetRequestType('repair'); /* PORTAL_SERVICE_QUEUE_2026_11_06 */
             document.querySelectorAll('#ci-reasons .ci-tile.on').forEach(function (c) { c.classList.remove('on'); c.setAttribute('aria-pressed', 'false'); });
-            ciConsentReset();
-            state.loaded.tickets = false;
-            activateTab('tickets');
-            loadTickets(true);
-            if (newId) setTimeout(function () { openTicket(newId); }, 450);
-            if (consentFailed) setTimeout(function () { docMsg('The ticket was created, but the check-in agreement could not be filed — take the signature here in Documents.'); }, 900);
-            if (atroneAttachFailed) setTimeout(function () { docMsg('The ticket was created, but the ATR One membership agreement could not be attached — take the signature here in Documents.'); }, 900);
-            if (svcChargeFailed) setTimeout(function () { docMsg('The service ticket was created, but its charges could not be added — add the $14.99 visit fee and the $24.99/hr service time in Charges.'); }, 900);
-            if (cleanFailed) setTimeout(function () { docMsg('The ticket was created, but the $49.99 cleaning charge could not be added — add it in Charges.'); }, 900);
-          };
-          /* PORTAL_CHECKIN_CONSENT_2026_10_30: consent captured on the
-           * form files itself on the new ticket, in the drawer flow's
-           * order (create ticket → upload + file → set flags);
-           * no consent → the ticket is created exactly as before. */
-          /* PORTAL_ATRONE_PER_TIER_2026_11_02: a wants-signup
-           * check-in gets the agreement for the tier picked at
-           * check-in filed on the new ticket right after creation
-           * — after any check-in consent, the drawer flow's order
-           * (create ticket → file documents) — so the agreement
-           * is on the ticket for the customer to view and sign;
-           * staff never fetch it from Documents by hand. No tier
-           * picked → nothing attached, never a guess. Every other
-           * check-in follows the exact path it always has. */
-          var afterConsent = function (consentFailed, svcChargeFailed) {
-            if (wantsAtrOneSignup && newId) {
-              attachAtrOneAgreementAtCheckin(client, newId, row, function (attachErr) { proceed(consentFailed, !!attachErr, svcChargeFailed); }, signupTier);
-            } else {
-              proceed(consentFailed, false, svcChargeFailed);
-            }
-          };
-          /* PORTAL_SERVICE_QUEUE_2026_11_06: a service ticket gets
-           * its charges at intake — the $14.99 visit fee plus $24.99 an
-           * hour for the time booked (no fee row for ATR One
-           * members). A failed charge never blocks the ticket; it
-           * surfaces as a note so staff add it in Charges. */
-          var startChain = function (svcChargeFailed) {
-            if (consent && newId) {
-              fileCiConsent(client, newId, row, consent, function (fileErr) { afterConsent(!!fileErr, svcChargeFailed); }, ciContactVal);
-            } else {
-              afterConsent(!!consent, svcChargeFailed);
-            }
-          };
-          if (isSvc && newId) {
-            var svcRows = ciServiceChargeRows(newId, svcKind, svcHours, $('ci-atrone') ? $('ci-atrone').value : '');
-            if (svcRows.length) {
-              client.from('ticket_charges').insert(svcRows).then(function (cres) { startChain(!!cres.error); }).catch(function () { startChain(true); });
-            } else { startChain(false); }
-          } else if (isCleaning && newId) {
-            /* V163_CLEANING_2026_11_17 (Austin, Nov 17, 2026): a Cleaning
-             * check-in is a repair ticket with the settled $49.99 flat
-             * cleaning charge on it from intake — one labor line, every
-             * device; liquid metal is part of cleaning, never itemized.
-             * Same shape as the service charges above: a failed charge
-             * never blocks the ticket, it surfaces as a note. */
-            var cleanRow = { ticket_id: newId, kind: 'labor',
-              description: 'Cleaning \u2014 ' + ([row.device_type, row.brand, row.model].filter(function (x) { return x; }).join(' ') || 'device'),
-              qty: 1, unit_price: 49.99 };
-            client.from('ticket_charges').insert(cleanRow).then(function (cres) { cleanFailed = !!cres.error; startChain(!!cres.error); }).catch(function () { cleanFailed = true; startChain(true); });
-          } else {
-            startChain(false);
-          }
-        }).catch(function () { btn.disabled = false; err.textContent = 'Could not create the ticket — try again.'; err.hidden = false; });
+            v176_30PaintReasonTiles(); v176_30PaintDroppedOff();
+            state.loaded.estimates = false;
+            activateTab('estimates');
+            loadEstimates(true);
+            setTimeout(function () { docMsg('Estimate created — the guest gets an email with their estimate link.'); }, 450);
+          }).catch(function () { btn.disabled = false; err.textContent = 'Could not create the estimate — try again.'; err.hidden = false; });
+        });
+      }
+      if (droppedOff && !ciAddress) { insertWithMileage(member ? null : v176_25DroppedOffNote(ciType), null, false, false); return; }
+      v176_20ComputeMiles(ciAddress).then(function (r) {
+        if (r && r.miles > 0) insertWithMileage(v176_20MileageNote(r.miles, ciType, false, member, r.approx), r.miles, false, r.approx);
+        else insertWithMileage(member ? null : v176_20MileageNote(null, ciType, false, false), null, true, false);
       });
     });
   }
@@ -24645,10 +24526,10 @@ function loadTicketThread(client, ticketId) {
         }
       });
     }
-    if (newBtn) newBtn.addEventListener('click', function () {
-      var t = $('portal-tab-checkin');
-      if (t) t.click();
-    });
+    /* V176_30_ONE_BUTTON_ESTIMATE_2026_11_23: the sidebar Check-In tab is
+       gone (merged into Estimate) — the Quick Action button opens the
+       merged Estimate form directly instead of clicking the tab. */
+    if (newBtn) newBtn.addEventListener('click', function () { activateTab('estimate'); });
     /* V163_QA_HOME_2026_11_17 (Austin, Nov 17, 2026): Home first in Quick
        Actions — clicks the real sidebar Home tab, same pattern as
        New Service Request above. */
@@ -24658,6 +24539,11 @@ function loadTicketThread(client, ticketId) {
          now) — open the Home panel directly instead of clicking it. */
       activateTab('home');
     });
+    /* V176_30_ONE_BUTTON_ESTIMATE_2026_11_23: Scan In joins Quick Actions —
+       one tap opens the scan popup, the same route as the sidebar Scan In
+       item, and never becomes the remembered tab. */
+    var scanQaBtn = $('portal-hub-scanin-btn');
+    if (scanQaBtn) scanQaBtn.addEventListener('click', function () { activateTab('scanin'); });
   })();
   /* ================= end HUB_SEARCH_2026_11_09 ================= */
 })();
