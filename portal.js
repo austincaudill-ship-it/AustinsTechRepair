@@ -1945,9 +1945,12 @@ function showLogin(errorMsg) {
 
   /* ================= FINANCIALS PASSCODE GATE =================
    * V176_18_PASSCODE_GATE_2026_11_22 (Austin, Nov 20, 2026): opening
-   * Financials, Payroll, or Business Files pops a small passcode box
-   * BEFORE anything in that panel shows. One code guards all three
-   * panels, it is asked on EVERY open (no remember-me, no session
+   * Financials, Payroll, Business Files, or Square pops a small
+   * passcode box BEFORE anything in that panel shows. One code
+   * guards all four panels — V176_34_SQUARE_GATE_2026_11_23
+   * (Austin, Nov 23, 2026): Square joins the gate on Austin's
+   * order. The code is asked on EVERY open (no remember-me,
+   * no session
    * unlock), and nothing else in the portal asks for it. The code
    * itself is never in this file: Austin sets and rotates it in
    * Setup, and only a salted hash lives in the database
@@ -1963,7 +1966,7 @@ function showLogin(errorMsg) {
    * device-trust helper): SHA-256 of salt + '|' + code, compared
    * with the stored hash. A failed hash, a missing table, or a
    * wrong code all keep the panel covered. */
-  var GATE_PANELS = { financials: 1, payroll: 1, businessfiles: 1 };
+  var GATE_PANELS = { financials: 1, payroll: 1, businessfiles: 1, square: 1 };
   var GATE_ROW_KEY = 'financials';
   var passcodeRow = null;
   var passcodeDbMissing = false;
@@ -2031,7 +2034,7 @@ function showLogin(errorMsg) {
     if (!note) return;
     if (st === 'checking') note.textContent = 'Checking the passcode…';
     else if (st === 'prompt') note.textContent = 'Enter the passcode to open this panel. It is asked every time.';
-    else if (st === 'unset') note.textContent = canSeeMoney() ? 'No passcode is set yet. Set one in Setup — one code guards Financials, Payroll, and Business Files.' : 'No passcode is set yet. Ask Austin to set one in Setup.';
+    else if (st === 'unset') note.textContent = canSeeMoney() ? 'No passcode is set yet. Set one in Setup — one code guards Financials, Payroll, Business Files, and Square.' : 'No passcode is set yet. Ask Austin to set one in Setup.';
     else if (st === 'setup-owed') note.textContent = 'The passcode store is not in place yet, so this panel stays covered. The database step in the build notes is owed.';
     else if (st === 'error') note.textContent = 'The passcode could not be checked. The panel stays covered.';
   }
@@ -2410,10 +2413,11 @@ function showLogin(errorMsg) {
     /* GUEST_CHAT_2026_11_08: Guest Chat polls on the same discipline
      * — runs only while its panel is the open one. */
     if (name === 'guestchat') resumeGuestChat(); else stopGuestChatPoll();
-    /* V176_18_PASSCODE_GATE_2026_11_22: Financials, Payroll, and
-     * Business Files ask for the passcode on every open — the
-     * panel stays covered until the code matches, and the loader
-     * waits for the unlock (gatePanelOpen runs it). */
+    /* V176_18_PASSCODE_GATE_2026_11_22: Financials, Payroll,
+     * Business Files, and Square ask for the passcode on every
+     * open — the panel stays covered until the code matches,
+     * and the loader waits for the unlock (gatePanelOpen runs
+     * it). V176_34_SQUARE_GATE_2026_11_23: Square joins the gate. */
     if (GATE_PANELS[name]) { gatePanelOpen(name); portalNavRecord(name, opts); return; }
     if (!state.loaded[name] && LOADERS[name]) LOADERS[name](false);
     portalNavRecord(name, opts);
@@ -14397,6 +14401,116 @@ function loadTicketThread(client, ticketId) {
     });
   }
 
+  /* V176_34_SHOP_EXPENSES_2026_11_23 (Austin, Nov 23, 2026): Shop
+   * Expenses — what the shop itself spends on consumables, inside
+   * the Financials panel so the Financials passcode gate covers it
+   * (no separate gate, no separate code). Stored apart from guest
+   * part costs and owner draws: public.shop_expenses (see
+   * shop-expenses.sql — the table is a database step, and until it
+   * runs the list degrades to the step-owed note and nothing
+   * saves, the same degrade pattern as the tax remittances).
+   * Row total is amount + tax charged + shipping; the footer total
+   * is the sum of the row totals. Remove takes an entry back out
+   * with no confirmation, like the tax-remittance Remove. */
+  var shopExpensesWired = false;
+  function shopExpensePayload(o) {
+    var description = String(o.description || '').trim();
+    if (!description) return { ok: false, error: 'Enter a description.' };
+    var amount = Number(o.amount);
+    if (!isFinite(amount) || amount <= 0) return { ok: false, error: 'Enter the amount.' };
+    var tax = (o.tax === '' || o.tax == null) ? 0 : Number(o.tax);
+    if (!isFinite(tax) || tax < 0) return { ok: false, error: 'Tax charged must be zero or more.' };
+    var shipping = (o.shipping === '' || o.shipping == null) ? 0 : Number(o.shipping);
+    if (!isFinite(shipping) || shipping < 0) return { ok: false, error: 'Shipping must be zero or more.' };
+    return { ok: true, row: { description: description, amount: Math.round(amount * 100) / 100, tax_charged: Math.round(tax * 100) / 100, shipping: Math.round(shipping * 100) / 100, notes: String(o.notes || '').trim() } };
+  }
+  function shopExpenseRowTotal(r) {
+    return (Number(r.amount) || 0) + (Number(r.tax_charged) || 0) + (Number(r.shipping) || 0);
+  }
+  function shopExpensesRender(rows) {
+    var list = $('portal-shop-expenses-list');
+    var totalEl = $('portal-shop-exp-total');
+    if (!list) return;
+    if (!rows || !rows.length) {
+      list.innerHTML = '<p class="portal-muted">No shop expenses recorded yet.</p>';
+      if (totalEl) totalEl.textContent = '';
+      return;
+    }
+    var total = 0;
+    var html = '<div class="portal-table-wrap"><table class="portal-table"><thead><tr><th>Description</th><th>Amount</th><th>Tax</th><th>Shipping</th><th>Total</th><th>Notes</th><th>Recorded</th><th></th></tr></thead><tbody>';
+    rows.forEach(function (r) {
+      var t = shopExpenseRowTotal(r);
+      total += t;
+      html += '<tr><td>' + esc(r.description) + '</td><td>' + fmtMoney(r.amount) + '</td><td>' + fmtMoney(r.tax_charged) + '</td><td>' + fmtMoney(r.shipping) + '</td><td>' + fmtMoney(t) + '</td><td>' + esc(r.notes || '') + '</td><td>' + fmtDate(r.created_at) + '</td><td><button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-shop-exp-del="' + esc(r.id) + '">Remove</button></td></tr>';
+    });
+    html += '</tbody></table></div>';
+    list.innerHTML = html;
+    if (totalEl) totalEl.textContent = 'Total shop expenses: ' + fmtMoney(total) + ' (' + rows.length + (rows.length === 1 ? ' entry' : ' entries') + ')';
+  }
+  function shopExpensesMissing() {
+    var totalEl = $('portal-shop-exp-total');
+    if (totalEl) totalEl.textContent = '';
+    var list = $('portal-shop-expenses-list');
+    if (list) list.innerHTML = '<p class="portal-muted">Shop expense records need the database step first (shop-expenses.sql) — nothing was saved.</p>';
+  }
+  function loadShopExpenses() {
+    var list = $('portal-shop-expenses-list');
+    if (!list) return;
+    withClient(function (client) {
+      if (!client) { list.innerHTML = '<p class="portal-error">Couldn&rsquo;t load shop expenses.</p>'; return; }
+      client.from('shop_expenses').select('id, description, amount, tax_charged, shipping, notes, created_at')
+        .order('created_at', { ascending: false }).limit(500)
+        .then(function (res) {
+          if (res.error) {
+            if (finMissingTable(res.error)) shopExpensesMissing();
+            else list.innerHTML = '<p class="portal-error">Couldn&rsquo;t load shop expenses. Try Refresh.</p>';
+            return;
+          }
+          shopExpensesRender(res.data || []);
+        })
+        .catch(function () { list.innerHTML = '<p class="portal-error">Couldn&rsquo;t load shop expenses. Try Refresh.</p>'; });
+    });
+  }
+  function wireShopExpenses() {
+    if (shopExpensesWired) return;
+    shopExpensesWired = true;
+    var add = $('portal-shop-exp-add');
+    if (add) add.addEventListener('click', function () {
+      var msg = $('portal-shop-exp-msg');
+      function say(t) { if (msg) msg.textContent = t; }
+      say('');
+      var check = shopExpensePayload({ description: ($('portal-shop-exp-desc') || {}).value, amount: ($('portal-shop-exp-amount') || {}).value, tax: ($('portal-shop-exp-tax') || {}).value, shipping: ($('portal-shop-exp-shipping') || {}).value, notes: ($('portal-shop-exp-notes') || {}).value });
+      if (!check.ok) { say(check.error); return; }
+      add.disabled = true;
+      say('Recording…');
+      withClient(function (client) {
+        if (!client) { add.disabled = false; say('Could not reach the portal. Try again.'); return; }
+        client.from('shop_expenses').insert(check.row).then(function (res) {
+          add.disabled = false;
+          if (res.error) {
+            if (finMissingTable(res.error)) say('Shop expense records need the database step first (shop-expenses.sql) — nothing was saved.');
+            else say('Could not record that expense. Try again.');
+            return;
+          }
+          ['portal-shop-exp-desc', 'portal-shop-exp-amount', 'portal-shop-exp-tax', 'portal-shop-exp-shipping', 'portal-shop-exp-notes'].forEach(function (id) { var el = $(id); if (el) el.value = ''; });
+          say('Recorded ' + fmtMoney(check.row.amount) + '.');
+          loadShopExpenses();
+        }).catch(function () { add.disabled = false; say('Could not record that expense. Try again.'); });
+      });
+    });
+    var list = $('portal-shop-expenses-list');
+    if (list) list.addEventListener('click', function (ev) {
+      var btn = ev.target && ev.target.closest ? ev.target.closest('[data-shop-exp-del]') : null;
+      if (!btn) return;
+      var id = btn.getAttribute('data-shop-exp-del');
+      btn.disabled = true;
+      withClient(function (client) {
+        if (!client) { btn.disabled = false; return; }
+        client.from('shop_expenses').delete().eq('id', id).then(function () { loadShopExpenses(); }).catch(function () { btn.disabled = false; });
+      });
+    });
+  }
+
   /* V176_8_FIN_TAX_2026_11_19: Business Files — the business's
    * official IDs, top-tier only. One row in public.business_files
    * (see tax-business-files.sql — the table does not exist yet, so
@@ -14717,6 +14831,7 @@ function loadTicketThread(client, ticketId) {
       });
     }
     if (body) body.innerHTML = '<p class="portal-muted">Loading financials&hellip;</p>';
+    loadShopExpenses(); /* V176_34_SHOP_EXPENSES_2026_11_23: the Shop Expenses list loads with Financials, into its own section — a missing table degrades to the step-owed note, never a blanked panel. */
     withClient(function (client) {
       if (!client) { if (body) body.innerHTML = '<p class="portal-error">Couldn&rsquo;t load financials.</p>'; return; }
       var got = { charges: null, parts: null, tickets: null, time: null, profiles: null, approvals: null, square: null, squareMissing: false, remit: null, remitMissing: false, bf: null }, failed = false;
@@ -20009,6 +20124,7 @@ function loadTicketThread(client, ticketId) {
   /* ================= INIT ================= */
   function init() {
     initTabs();
+    wireShopExpenses(); /* V176_34_SHOP_EXPENSES_2026_11_23: the Shop Expenses form is wired once here so it works whenever the Financials panel opens. */
     initExtraTabs();
     initDrawer();
     initDelegation();

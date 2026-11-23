@@ -14,8 +14,8 @@
   <!-- V176_24_PORTAL_BACK_2026_11_22: ?v= bumped to 176-24 with in-portal Back navigation (portal.js + portal.css). Same rule as below: both queries carry the current version, so a fresh portal.html can never pair with stale cached subresources. -->
   <!-- V176_22_CONFIRM_LABEL_2026_11_22: ?v= bumped to 176-22 with the Record Confirm mileage-label fix (portal.js). portal.css itself is unchanged; both queries carry the current version so a fresh portal.html can never pair with stale cached subresources. -->
   <!-- V176_26_SQUARE_FREE_FEES_2026_11_22: ?v= bumped to 176-26 with the Square Free fee rates, the ATR One fee exemption, and the Square fees table (portal.js). portal.css itself is unchanged; both queries carry the current version so a fresh portal.html can never pair with stale cached subresources. -->
-  <!-- V176_33_ATRONE_GUEST_2026_11_23 (Austin, Nov 23, 2026): ?v= bumped to 176-33 with the ATR One separation, the Guest Services rename, the Records move, and the wide-screen sidebar slide-out (portal.html + portal.js + portal.css). portal.css itself carries the new collapse rules; both queries carry the current version so a fresh portal.html can never pair with stale cached subresources. -->
-  <link rel="stylesheet" href="portal.css?v=176-33" />
+  <!-- V176_34_SQUARE_GATE_SHOP_EXPENSES_2026_11_23 (Austin, Nov 23, 2026): ?v= bumped to 176-34 with the Square passcode gate and the Shop Expenses tracker (portal.html + portal.js; portal.css unchanged in content, query bumped with the version so a fresh portal.html can never pair with stale cached subresources). -->
+  <link rel="stylesheet" href="portal.css?v=176-34" />
   <!-- PORTAL_APP_2026_11_09 (Austin, Nov 9, 2026): the Associate Hub
        is its own installable app. portal-manifest.json is a
        DECLARATION only — the installed app is this very page
@@ -387,7 +387,7 @@
           <i class="fas fa-briefcase"></i> Business Files
         </button>
         <!-- V176_15_SQUARE_FIN_2026_11_21 (Austin, Nov 20, 2026): Square moves OUT of Links and UNDER Financials — its own action button in the Financials group, directly under Business Files (bottom of the group), money-tier gated like Financials in applyRoleNav (portal.js). Plain link out to the Square Balance page in a NEW TAB (target="_blank"): Square blocks framing (CSP frame-ancestors 'self', X-Frame-Options SAMEORIGIN), so no iframe overlay is possible — the portal tab stays open behind it with Financials exactly where he left it. Class is portal-tab-link, NOT portal-tab, so the tab-switch wiring in initTabs never treats it as a panel tab (no data-tab, no panel). -->
-        <!-- V176_26_SQUARE_FREE_FEES_2026_11_22 (Austin, Nov 22, 2026): the Square button now OPENS the Square panel (portal-panel-square) instead of leaving the portal — the panel carries the Square Free fees table, the ATR One member exemption line, and link-outs to the Square Dashboard and Square's fees page. Same id, same money-tier gating in applyRoleNav; TAB_GATES already lists square as money-tier; 'square' is not a passcode-gated panel (no business figures on it — the rates are Square's public schedule). -->
+        <!-- V176_26_SQUARE_FREE_FEES_2026_11_22 (Austin, Nov 22, 2026): the Square button now OPENS the Square panel (portal-panel-square) instead of leaving the portal — the panel carries the Square Free fees table, the ATR One member exemption line, and link-outs to the Square Dashboard and Square's fees page. Same id, same money-tier gating in applyRoleNav; TAB_GATES already lists square as money-tier; 'square' IS a passcode-gated panel now (V176_34_SQUARE_GATE_2026_11_23, Austin Nov 23, 2026 — the same code that guards Financials, Payroll, and Business Files, asked on every open; the rates are still Square's public schedule). The Quick Actions Square button is a plain link out and is not gated. -->
         <button class="portal-tab" id="portal-tab-square-fin" type="button" role="tab" data-tab="square">
           <i class="fas fa-credit-card"></i> Square
         </button>
@@ -1008,10 +1008,10 @@
           </div>
         </div>
         <div id="portal-setup-dev-list"><p class="portal-muted">Loading devices&hellip;</p></div>
-        <!-- V176_18_PASSCODE_GATE_2026_11_22 (Austin, Nov 20, 2026): the Financials passcode lives here — one code guards Financials, Payroll, and Business Files, asked on every open. Only the top tier sees this section; only a salted hash is stored, never the code itself. -->
+        <!-- V176_18_PASSCODE_GATE_2026_11_22 (Austin, Nov 20, 2026): the Financials passcode lives here — one code guards Financials, Payroll, Business Files, and Square, asked on every open. Only the top tier sees this section; only a salted hash is stored, never the code itself. -->
         <div id="portal-passcode-section" hidden>
           <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Financials passcode</h3></div>
-          <p class="portal-muted portal-small">One passcode guards Financials, Payroll, and Business Files. It is asked every time one of those panels is opened. Only the top tier can set or change it here. The code itself is never shown and never stored as plain text — only a salted hash is kept.</p>
+          <p class="portal-muted portal-small">One passcode guards Financials, Payroll, Business Files, and Square. It is asked every time one of those panels is opened. Only the top tier can set or change it here. The code itself is never shown and never stored as plain text — only a salted hash is kept.</p>
           <p class="portal-error" id="portal-passcode-dbnote" hidden></p>
           <p class="portal-muted" id="portal-passcode-status">Checking&hellip;</p>
           <div id="portal-passcode-create" hidden>
@@ -1989,7 +1989,24 @@
       </div>
 
       <!-- SQUARE_ATRONE_SPLIT_2026_11_11 (Austin, Nov 11, 2026): this panel used to be "Square & ATR One". His ruling: Square and ATR One don't need to be in the same action button — ATR One stays here, and Square lives inside Links, as it already does. V176_15_SQUARE_FIN_2026_11_21 (Austin, Nov 20, 2026): Square has since moved OUT of Links and under Financials as its own action button (portal-tab-square-fin, Balance page, new tab); the Links seed row is gone (the DB row needs its own delete) and the Quick Actions Square button stays. The Square Dashboard card was removed from this panel because the Links panel (portal_links) already carries a Square Dashboard row. Display text only: the tab key 'square' and panel id portal-panel-square are unchanged. V176_17_LINKS_MOVE_2026_11_22: the Links panel itself is now gone — its links live under Suppliers, Shippers, Guides, and Price Book. V176_33_ATRONE_GUEST_2026_11_23 (Austin, Nov 23, 2026): the ATR One heading, intro, and four signup cards moved out of this panel into portal-panel-atrone, and the Website Shop card was deleted — this panel is Square-only now (fees table, member exemption line, Dashboard and fees-page links). -->
-      <div class="portal-panel" id="portal-panel-square" role="tabpanel" hidden>
+      <div class="portal-panel portal-gated-panel" id="portal-panel-square" role="tabpanel" hidden>
+      <!-- V176_34_SQUARE_GATE_2026_11_23 (Austin, Nov 23, 2026): this panel is covered until the Financials passcode matches — the same code and the same cover as Financials, Payroll, and Business Files. The cover is the first child of the panel and shows by default — any path that shows the panel without the gate still shows the cover, never the figures. -->
+      <div class="portal-gate-overlay" id="portal-gate-square" data-gate-panel="square">
+        <div class="portal-gate-box">
+          <p class="portal-gate-title"><i class="fas fa-lock"></i> Square is locked</p>
+          <p class="portal-muted portal-small" data-gate-note>Enter the passcode to open this panel. It is asked every time.</p>
+          <p class="portal-error" data-gate-msg hidden></p>
+          <div data-gate-form>
+            <div class="portal-field"><label for="portal-gate-code-square">Passcode</label>
+              <input type="password" id="portal-gate-code-square" data-gate-code autocomplete="off" aria-label="Square passcode" /></div>
+            <p><button class="portal-btn portal-btn-primary" type="button" data-gate-unlock>Unlock</button>
+            <button class="portal-btn portal-btn-outline" type="button" data-gate-cancel>Cancel</button></p>
+          </div>
+          <p data-gate-alt hidden><button class="portal-btn portal-btn-outline" type="button" data-gate-setup hidden>Open Setup</button>
+          <button class="portal-btn portal-btn-outline" type="button" data-gate-retry hidden>Try again</button></p>
+        </div>
+      </div>
+
         <!-- V176_26_SQUARE_FREE_FEES_2026_11_22: Square processing fees on the Square Free plan — the plan ATRG uses. Rates are Square's public schedule; the ATR One member exemption lines below are unchanged. -->
         <div class="portal-panel-head"><h2 class="portal-h2">Square</h2></div>
         <p class="portal-muted portal-small">Processing fees on the Square Free plan. Card payments pass the fee through at exactly Square&rsquo;s rate, never more. ATR One members pay no processing fee.</p>
@@ -2040,6 +2057,23 @@
           <button class="portal-btn portal-btn-outline portal-btn-sm fin-period" type="button" data-fin-period="30d">Last 30 days</button>
         </div>
         <div id="portal-financials-body"><p class="portal-muted">Loading financials&hellip;</p></div>
+
+        <!-- V176_34_SHOP_EXPENSES_2026_11_23 (Austin, Nov 23, 2026): Shop Expenses — what the shop itself spends on consumables (shop rags, alcohol, canned air, gas and fuel, oil changes, anything the business buys that is not a guest part). This section lives INSIDE the Financials panel, so the Financials passcode gate covers it — no separate gate, no separate code. Stored and shown apart from guest part costs and owner draws, so the books stay clean and every dollar is accounted for. The table is public.shop_expenses (see shop-expenses.sql) — until that database step runs, the list shows the step is owed and nothing saves. -->
+        <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">Shop Expenses</h3></div>
+        <p class="portal-muted portal-small">What the shop itself spends on consumables — shop rags, alcohol, canned air, gas and fuel, oil changes, and anything the business buys that is not a guest part. Kept apart from guest part costs and owner draws.</p>
+        <div class="portal-field"><label for="portal-shop-exp-desc">Description</label>
+          <input type="text" id="portal-shop-exp-desc" autocomplete="off" aria-label="Expense description" /></div>
+        <div class="portal-field"><label for="portal-shop-exp-amount">Amount</label>
+          <input type="number" id="portal-shop-exp-amount" inputmode="decimal" step="0.01" min="0" placeholder="0.00" aria-label="Expense amount" /></div>
+        <div class="portal-field"><label for="portal-shop-exp-tax">Tax charged</label>
+          <input type="number" id="portal-shop-exp-tax" inputmode="decimal" step="0.01" min="0" placeholder="0.00" aria-label="Tax charged" /></div>
+        <div class="portal-field"><label for="portal-shop-exp-shipping">Shipping</label>
+          <input type="number" id="portal-shop-exp-shipping" inputmode="decimal" step="0.01" min="0" placeholder="0.00" aria-label="Shipping" /></div>
+        <div class="portal-field"><label for="portal-shop-exp-notes">Notes</label>
+          <input type="text" id="portal-shop-exp-notes" autocomplete="off" aria-label="Expense notes" /></div>
+        <p><button class="portal-btn portal-btn-primary portal-btn-sm" type="button" id="portal-shop-exp-add">Add expense</button> <span class="portal-muted portal-small" id="portal-shop-exp-msg"></span></p>
+        <p class="portal-muted" id="portal-shop-exp-total"></p>
+        <div id="portal-shop-expenses-list"><p class="portal-muted">Loading shop expenses&hellip;</p></div>
       </div>
 
       <!-- PAYROLL — PAYROLL_SPLIT_2026_11_03 (Austin, Nov 3, 2026): payroll is its own panel now, split out of Financials ("you've got payroll and you've got what we made in the same thing"). Contents: (1) Payroll totals — the per-associate hours / rate / pay table that used to render inside the Financials bottom line, rendered by portal.js finPayrollTableHtml() into #portal-payroll-summary from the same finCache data, so the figures here and the approved / awaiting lines in Financials can never disagree; the mileage-rate setting moved here with it. (2) Time cards — the week stepper and #tc-cards moved here out of the Time Clock panel, element ids unchanged, so renderTimeCards / wireTcManual / the weekly approval / the owner manual-entry bar all work exactly as before from their new home. Loader: loadPayroll in portal.js. -->
@@ -2289,7 +2323,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <!-- PORTAL_RECEIPT_SEND_2026_11_02: vendored html2pdf (html2canvas + jsPDF in one self-contained bundle, loaded locally, no CDN) — Download receipt and Email receipt render the PDF from the exact receipt markup. -->
   <script src="html2pdf.bundle.min.js"></script>
-  <script src="portal.js?v=176-33"></script>
+  <script src="portal.js?v=176-34"></script>
   <script>
   /* ================= TEAM DOCUMENTS + HIRE DOCUMENTS =================
    * Section logic for the Team Documents tab and the per-hire document
