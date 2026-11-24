@@ -508,7 +508,7 @@
   var state = {
     user: null,
     profile: null,
-    loaded: { tickets: false, applications: false, investors: false, feedback: false, customers: false, members: false, inventory: false, financials: false, businessfiles: false, associateaccounts: false, warranty: false, leads: false }, /* ASSOCIATE_ACCOUNTS_2026_11_03: one loaded flag for the merged panel (was 'associates' + the Account Controls loads); WARRANTY_PORTAL_2026_11_03: 'warranty' flag for the Warranty panel; LEADS_2026_11_15: 'leads' flag for the Leads panel */
+    loaded: { tickets: false, applications: false, investors: false, feedback: false, customers: false, members: false, inventory: false, financials: false, businessfiles: false, associateaccounts: false, warranty: false, leads: false, vehicle: false, incident: false, activity: false, vehicleinbox: false, incidentinbox: false, activityinbox: false }, /* ASSOCIATE_ACCOUNTS_2026_11_03: one loaded flag for the merged panel (was 'associates' + the Account Controls loads); WARRANTY_PORTAL_2026_11_03: 'warranty' flag for the Warranty panel; LEADS_2026_11_15: 'leads' flag for the Leads panel */
     customersCache: [], inventoryCache: []
   };
 
@@ -1918,6 +1918,13 @@ function showLogin(errorMsg) {
     /* PORTAL_HOME_2026_11_09: the Home panel — the Associate
      * Hub homepage at the top of the sidebar. */
     home: loadHome,
+    /* V176_37_REPORTS_2026_11_24: the report forms + mailboxes. */
+    vehicle: function (force) { loadReportForm('vehicle'); },
+    incident: function (force) { loadReportForm('incident'); },
+    activity: function (force) { loadReportForm('activity'); },
+    vehicleinbox: function (force) { loadReportInbox('vehicleinbox'); },
+    incidentinbox: function (force) { loadReportInbox('incidentinbox'); },
+    activityinbox: function (force) { loadReportInbox('activityinbox'); },
   };
 
   /* PORTAL_TAB_MEMORY_2026_10_30: remember the last active tab across
@@ -2401,7 +2408,7 @@ function showLogin(errorMsg) {
     var qaBtn = name === 'home' ? $('portal-hub-home-btn') : ((name === 'checkin' || name === 'estimate') ? $('portal-hub-new-btn') : null);
     ['portal-hub-home-btn', 'portal-hub-new-btn'].forEach(function (id) { var b = $(id); if (b) b.classList.toggle('qa-active', b === qaBtn); });
     /* PASS10_2026_11_04: 'tracking' (the Live Tracking panel) hides and shows with the rest too */
-    ['tickets', 'estimates', 'invoices', 'applications', 'investors', 'feedback', 'customers', 'leads', 'members', 'atrone', 'inventory', 'timeclock', 'square', 'checkin', 'requests', 'prices', 'tracking', 'documents', 'records', 'financials', 'payroll', 'businessfiles', 'mileage', 'businesscard', 'suppliers', 'shippers', /* V176_17_LINKS_MOVE_2026_11_22: the Suppliers and Shippers panels hide and show with the rest too */ 'teamchat', 'guestchat', 'associateaccounts', 'warranty', 'setup', 'home', 'virtual'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too; ASSOCIATE_ACCOUNTS_2026_11_03: 'associateaccounts' hides and shows with the rest too (it absorbed ACCOUNT_CONTROLS_2026_11_03's 'accountcontrols' and the roster's 'associates'); WARRANTY_PORTAL_2026_11_03: 'warranty' hides and shows with the rest too; PORTAL_SETUP_2026_11_04: 'setup' hides and shows with the rest too; PORTAL_HOME_2026_11_09: 'home' hides and shows with the rest too; LEADS_2026_11_15: 'leads' hides and shows with the rest too; QR_FIX_PASS_2026_11_05: 'scanin' is GONE from this list — the scanner is a popup now, there is no scanin panel to hide or show. V176_33_ATRONE_GUEST_2026_11_23: 'atrone' hides and shows with the rest too; 'estimate' and 'scanin' have no panels and stay out (the estimate form is the checkin panel; Scan In is a popup). */
+    ['tickets', 'estimates', 'invoices', 'applications', 'investors', 'feedback', 'customers', 'leads', 'members', 'atrone', 'inventory', 'timeclock', 'square', 'checkin', 'requests', 'vehicle', 'incident', 'activity', 'prices', 'tracking', 'documents', 'records', 'financials', 'payroll', 'businessfiles', 'mileage', 'businesscard', 'suppliers', 'shippers', /* V176_17_LINKS_MOVE_2026_11_22: the Suppliers and Shippers panels hide and show with the rest too */ 'teamchat', 'guestchat', 'associateaccounts', 'warranty', 'setup', 'vehicleinbox', 'incidentinbox', 'activityinbox', 'home', 'virtual'].forEach(function (n) { /* PORTAL_MILEAGE_2026_11_02: the Mileage panel hides and shows with the rest; PAYROLL_SPLIT_2026_11_03: 'payroll' hides and shows with the rest too; TEAMCHAT_2026_11_03: 'teamchat' hides and shows with the rest too; ASSOCIATE_ACCOUNTS_2026_11_03: 'associateaccounts' hides and shows with the rest too (it absorbed ACCOUNT_CONTROLS_2026_11_03's 'accountcontrols' and the roster's 'associates'); WARRANTY_PORTAL_2026_11_03: 'warranty' hides and shows with the rest too; PORTAL_SETUP_2026_11_04: 'setup' hides and shows with the rest too; PORTAL_HOME_2026_11_09: 'home' hides and shows with the rest too; LEADS_2026_11_15: 'leads' hides and shows with the rest too; QR_FIX_PASS_2026_11_05: 'scanin' is GONE from this list — the scanner is a popup now, there is no scanin panel to hide or show. V176_33_ATRONE_GUEST_2026_11_23: 'atrone' hides and shows with the rest too; 'estimate' and 'scanin' have no panels and stay out (the estimate form is the checkin panel; Scan In is a popup). */
       $('portal-panel-' + n).hidden = n !== name;
     });
     closeDrawer();
@@ -2490,6 +2497,303 @@ function showLogin(errorMsg) {
       navCollapseBtn.setAttribute('aria-label', hidden ? 'Show action buttons' : 'Hide action buttons');
       var navCollapseIcon = navCollapseBtn.querySelector('i');
       if (navCollapseIcon) navCollapseIcon.setAttribute('class', hidden ? 'fas fa-chevron-right' : 'fas fa-chevron-left');
+    });
+  }
+
+  /* ================= REPORTS ================= */
+  /* V176_37_REPORTS_2026_11_24 (Austin, Nov 24, 2026): three report
+   * forms — Vehicle Inspection, Incident Report, Activity — each
+   * its own sidebar button directly under Requests in Associates,
+   * each opening its own panel with only that form; plus three
+   * matching mailboxes under Admin, one per kind, Admin-only.
+   * Austin's rule: everything needs a corresponding form, and the
+   * mailboxes are visible to NOBODY except admin — the forms are
+   * the tools for associates to send reports in, only admin sees
+   * what was sent. One table, public.portal_reports (see
+   * portal-reports.sql): kind + a JSONB payload + who sent it +
+   * the reviewed stamp. No emails on submit. Until
+   * portal-reports.sql runs, every panel shows the step-owed note
+   * and nothing saves — the tax-remittance precedent
+   * (finMissingTable branch), never a raw database error. */
+  var REPORTS_TABLE = 'portal_reports';
+  var REPORT_KINDS = {
+    vehicle: { label: 'Vehicle Inspection', plural: 'vehicle inspection reports' },
+    incident: { label: 'Incident Report', plural: 'incident reports' },
+    activity: { label: 'Activity', plural: 'activity reports' }
+  };
+  var REPORT_FORMS = {
+    vehicle: { form: 'portal-rep-vehicle-form', err: 'rep-vehicle-error', ok: 'rep-vehicle-success', submit: 'rep-vehicle-submit', missing: 'portal-rep-vehicle-missing' },
+    incident: { form: 'portal-rep-incident-form', err: 'rep-incident-error', ok: 'rep-incident-success', submit: 'rep-incident-submit', missing: 'portal-rep-incident-missing' },
+    activity: { form: 'portal-rep-activity-form', err: 'rep-activity-error', ok: 'rep-activity-success', submit: 'rep-activity-submit', missing: 'portal-rep-activity-missing' }
+  };
+  var REPORT_INBOXES = {
+    vehicleinbox: { kind: 'vehicle', list: 'portal-repinbox-vehicle-list', missing: 'portal-repinbox-vehicle-missing', search: 'portal-repinbox-vehicle-search' },
+    incidentinbox: { kind: 'incident', list: 'portal-repinbox-incident-list', missing: 'portal-repinbox-incident-missing', search: 'portal-repinbox-incident-search' },
+    activityinbox: { kind: 'activity', list: 'portal-repinbox-activity-list', missing: 'portal-repinbox-activity-missing', search: 'portal-repinbox-activity-search' }
+  };
+  var repFormsWired = {};
+  var repInboxRows = {};
+  var repInboxQuery = {};
+  var repInboxWired = {};
+
+  function repVal(id) { var el = $(id); return el ? trim(el.value) : ''; }
+
+  function repTodayStr() { var d = new Date(); return hhDayStr(d.getFullYear(), d.getMonth() + 1, d.getDate()); }
+
+  function repDefaultDates(form) {
+    var dates = form.querySelectorAll('input[type="date"]');
+    for (var i = 0; i < dates.length; i++) { if (!dates[i].value) dates[i].value = repTodayStr(); }
+  }
+
+  /* REPORT_FORMS_2026_11_24: field lists are the builder's read of
+   * the guard-app Reports pattern + portal conventions — Austin
+   * specified the three kinds and the placement, not the fields
+   * (see REPORT.md §6). A payload is one flat object per kind;
+   * empty optionals store null so the inbox can skip them. */
+  function buildReportPayload(kind) {
+    if (kind === 'vehicle') {
+      var date = repVal('rep-vehicle-date');
+      var vehicle = repVal('rep-vehicle-name');
+      if (!date) return { error: 'Pick the inspection date first.' };
+      if (!vehicle) return { error: 'Name the vehicle first.' };
+      var mileageRaw = repVal('rep-vehicle-mileage');
+      var mileage = null;
+      if (mileageRaw) {
+        mileage = Number(mileageRaw);
+        if (isNaN(mileage) || mileage < 0) return { error: 'Mileage can\u2019t be negative.' };
+      }
+      var flags = [];
+      var boxes = document.querySelectorAll('#portal-rep-vehicle-form [data-rep-check]:checked');
+      for (var i = 0; i < boxes.length; i++) flags.push(boxes[i].getAttribute('data-rep-check'));
+      return { data: { date: date, vehicle: vehicle, mileage: mileage, overall: repVal('rep-vehicle-overall') || 'Good', flags: flags, issues: repVal('rep-vehicle-issues') || null } };
+    }
+    if (kind === 'incident') {
+      var idate = repVal('rep-incident-date');
+      var location = repVal('rep-incident-location');
+      var what = repVal('rep-incident-what');
+      if (!idate) return { error: 'Pick the incident date first.' };
+      if (!location) return { error: 'Say where it happened first.' };
+      if (!what) return { error: 'Describe what happened first.' };
+      return { data: { date: idate, time: repVal('rep-incident-time') || null, location: location, severity: repVal('rep-incident-severity') || 'Medium', people: repVal('rep-incident-people') || null, what: what, action: repVal('rep-incident-action') || null } };
+    }
+    var adate = repVal('rep-activity-date');
+    var activity = repVal('rep-activity-what');
+    if (!adate) return { error: 'Pick the activity date first.' };
+    if (!activity) return { error: 'Say what the activity was first.' };
+    var hoursRaw = repVal('rep-activity-hours');
+    var hours = null;
+    if (hoursRaw) {
+      hours = Number(hoursRaw);
+      if (isNaN(hours) || hours < 0) return { error: 'Time spent can\u2019t be negative.' };
+    }
+    return { data: { date: adate, activity: activity, hours: hours, ticket: repVal('rep-activity-ticket') || null, notes: repVal('rep-activity-notes') || null } };
+  }
+
+  function loadReportForm(kind) {
+    var cfg = REPORT_FORMS[kind];
+    var missing = $(cfg.missing);
+    var submitBtn = $(cfg.submit);
+    function disable(v) { if (submitBtn) submitBtn.disabled = v; }
+    withClient(function (client) {
+      if (!client) return;
+      client.from(REPORTS_TABLE).select('id').limit(1).then(function (res) {
+        if (res.error && finMissingTable(res.error)) {
+          if (missing) missing.hidden = false;
+          disable(true);
+        } else {
+          if (missing) missing.hidden = true;
+          disable(false);
+        }
+        if (!repFormsWired[kind]) { repFormsWired[kind] = true; wireReportForm(kind, client); }
+        state.loaded[kind] = true;
+      }).catch(function () { /* probe failed transiently — retry on the next open */ });
+    });
+  }
+
+  function wireReportForm(kind, client) {
+    var cfg = REPORT_FORMS[kind];
+    var form = $(cfg.form);
+    if (!form || form.getAttribute('data-rep-wired') === '1') return;
+    form.setAttribute('data-rep-wired', '1');
+    repDefaultDates(form);
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var errEl = $(cfg.err), okEl = $(cfg.ok), btn = $(cfg.submit);
+      errEl.hidden = true; errEl.textContent = '';
+      okEl.hidden = true;
+      var built = buildReportPayload(kind);
+      if (built.error) { errEl.textContent = built.error; errEl.hidden = false; return; }
+      btn.disabled = true;
+      /* REQUESTS_2026_11_04 precedent: .select() returns the new
+       * row; the insert names the submitter from the session, the
+       * same way tech_requests records requested_by. */
+      client.auth.getSession().then(function (sres) {
+        var user = sres && sres.data && sres.data.session ? sres.data.session.user : null;
+        return client.from(REPORTS_TABLE).insert({
+          kind: kind,
+          payload: built.data,
+          submitted_by: user ? user.id : null,
+          submitted_by_name: hhMyName()
+        }).select();
+      }).then(function (res) {
+        btn.disabled = false;
+        if (res.error) {
+          errEl.textContent = finMissingTable(res.error)
+            ? 'Reports need the database step first (portal-reports.sql). Nothing was saved.'
+            : 'Couldn\u2019t save that report: ' + res.error.message;
+          errEl.hidden = false;
+          return;
+        }
+        form.reset();
+        repDefaultDates(form);
+        okEl.hidden = false;
+        /* A fresh submission lands in the mailboxes — the next
+         * inbox open refetches instead of trusting its cache. */
+        ['vehicleinbox', 'incidentinbox', 'activityinbox'].forEach(function (k) { state.loaded[k] = false; });
+      }).catch(function () {
+        btn.disabled = false;
+        errEl.textContent = 'Couldn\u2019t save that report. Try again.';
+        errEl.hidden = false;
+      });
+    });
+  }
+
+  function loadReportInbox(name) {
+    var cfg = REPORT_INBOXES[name];
+    var list = $(cfg.list);
+    if (!list) return;
+    /* MAILBOX_GATE_2026_11_24: the mailbox is Admin-only — the
+     * button is gated in TAB_GATES and activateTab falls back to
+     * the ticket queue, but the loader checks again so a stale
+     * click or a remembered tab can never fetch. RLS is the third
+     * lock (see portal-reports.sql). */
+    if (!isAdminOrAbove()) {
+      list.innerHTML = '<p class="portal-muted">Only Admins and above see submitted reports.</p>';
+      state.loaded[name] = true;
+      return;
+    }
+    list.innerHTML = '<p class="portal-muted">Loading reports&hellip;</p>';
+    if (!repInboxWired[name]) { repInboxWired[name] = true; wireReportInboxSearch(name); }
+    withClient(function (client) {
+      if (!client) { list.innerHTML = '<p class="portal-error">Couldn&rsquo;t reach the database. Reload the page to try again.</p>'; return; }
+      client.from(REPORTS_TABLE).select('*').eq('kind', cfg.kind).order('created_at', { ascending: false }).limit(300)
+        .then(function (res) {
+          var m = $(cfg.missing);
+          if (res.error) {
+            if (finMissingTable(res.error)) {
+              if (m) m.hidden = false;
+              repInboxRows[name] = [];
+            } else {
+              list.innerHTML = '<p class="portal-error">Couldn&rsquo;t load reports: ' + esc(res.error.message) + '</p>';
+              return;
+            }
+          } else {
+            if (m) m.hidden = true;
+            repInboxRows[name] = res.data || [];
+          }
+          state.loaded[name] = true;
+          renderReportInbox(name);
+        })
+        .catch(function () { list.innerHTML = '<p class="portal-error">Couldn&rsquo;t load reports. Check your connection and hit Refresh.</p>'; });
+    });
+  }
+
+  function wireReportInboxSearch(name) {
+    var cfg = REPORT_INBOXES[name];
+    var input = $(cfg.search);
+    if (!input) return;
+    input.addEventListener('input', function () { repInboxQuery[name] = trim(input.value).toLowerCase(); renderReportInbox(name); });
+  }
+
+  function repInboxHeadline(kind, p) {
+    if (kind === 'vehicle') return (p.vehicle || 'Vehicle inspection') + ' \u2014 ' + (p.overall || 'Good');
+    if (kind === 'incident') return (p.severity || 'Medium') + ' severity \u2014 ' + (p.location || 'Incident');
+    return p.activity || 'Activity';
+  }
+
+  function repDetailRows(kind, p) {
+    var rows = [];
+    function add(label, value) { if (value !== null && value !== undefined && value !== '') rows.push([label, String(value)]); }
+    if (kind === 'vehicle') {
+      add('Date', fmtDate(p.date));
+      add('Vehicle', p.vehicle);
+      add('Mileage', p.mileage == null ? null : p.mileage + ' miles');
+      add('Overall condition', p.overall);
+      add('Needs attention', (p.flags && p.flags.length) ? p.flags.join(', ') : 'Nothing flagged');
+      add('Issues found', p.issues);
+    } else if (kind === 'incident') {
+      add('Date', fmtDate(p.date) + (p.time ? ' at ' + p.time : ''));
+      add('Location', p.location);
+      add('Severity', p.severity);
+      add('People involved', p.people);
+      add('What happened', p.what);
+      add('Action taken / follow-up', p.action);
+    } else {
+      add('Date', fmtDate(p.date));
+      add('Activity', p.activity);
+      add('Time spent', p.hours == null ? null : p.hours + ' hours');
+      add('Related ticket or guest', p.ticket);
+      add('Notes', p.notes);
+    }
+    return rows;
+  }
+
+  function renderReportInbox(name) {
+    var cfg = REPORT_INBOXES[name];
+    var list = $(cfg.list);
+    if (!list) return;
+    var rows = repInboxRows[name] || [];
+    var q = repInboxQuery[name] || '';
+    var shown = rows.filter(function (r) {
+      if (!q) return true;
+      var hay = JSON.stringify(r.payload || {}).toLowerCase() + ' ' + String(r.submitted_by_name || '').toLowerCase();
+      return hay.indexOf(q) >= 0;
+    });
+    if (!shown.length) {
+      list.innerHTML = '<div class="portal-empty">' + (rows.length ? 'Nothing matches that search.' : 'No ' + esc(REPORT_KINDS[cfg.kind].plural) + ' yet. When an associate sends one in, it lands here.') + '</div>';
+      return;
+    }
+    list.innerHTML = shown.map(function (r) {
+      var p = r.payload || {};
+      var detail = repDetailRows(cfg.kind, p).map(function (kv) {
+        return '<p class="portal-card-meta"><strong>' + esc(kv[0]) + ':</strong> ' + esc(kv[1]) + '</p>';
+      }).join('');
+      var reviewed = r.reviewed_at
+        ? '<p class="portal-card-meta">Reviewed by ' + esc(r.reviewed_by || 'Admin') + ' &middot; ' + esc(fmtDate(r.reviewed_at)) + '</p>'
+        : '';
+      var markBtn = r.reviewed_at ? '' : '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-rep-reviewed="' + esc(r.id) + '">Mark reviewed</button>';
+      var meta = [];
+      if (r.submitted_by_name) meta.push('by ' + esc(r.submitted_by_name));
+      if (r.created_at) meta.push(esc(fmtDate(r.created_at)));
+      return '<article class="portal-card">' +
+        '<div class="portal-card-top"><p class="portal-card-title">' + esc(repInboxHeadline(cfg.kind, p)) + '</p></div>' +
+        '<p class="portal-card-meta">' + esc(REPORT_KINDS[cfg.kind].label) + (meta.length ? ' &middot; ' + meta.join(' &middot; ') : '') + '</p>' +
+        detail + reviewed +
+        (markBtn ? '<div class="p3-req-actions">' + markBtn + '</div>' : '') +
+        '</article>';
+    }).join('');
+    var btns = list.querySelectorAll('[data-rep-reviewed]');
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].addEventListener('click', function () { repMarkReviewed(name, this.getAttribute('data-rep-reviewed'), this); });
+    }
+  }
+
+  /* No delete, no edit — a submitted report is a record. The only
+   * change an admin makes is the reviewed stamp, and only the
+   * reviewed columns ever leave the page in an update. */
+  function repMarkReviewed(name, id, btn) {
+    btn.disabled = true;
+    var stamp = new Date().toISOString();
+    var by = hhMyName();
+    withClient(function (client) {
+      if (!client) { btn.disabled = false; return; }
+      client.from(REPORTS_TABLE).update({ reviewed_at: stamp, reviewed_by: by }).eq('id', id)
+        .then(function (res) {
+          if (res.error) { btn.disabled = false; state.loaded[name] = false; loadReportInbox(name); return; }
+          (repInboxRows[name] || []).forEach(function (r) { if (r.id === id) { r.reviewed_at = stamp; r.reviewed_by = by; } });
+          renderReportInbox(name);
+        })
+        .catch(function () { btn.disabled = false; state.loaded[name] = false; loadReportInbox(name); });
     });
   }
 
@@ -15613,6 +15917,7 @@ function loadTicketThread(client, ticketId) {
     associateaccounts: 'adminAbove', investors: 'adminAbove', feedback: 'adminAbove',
     newhires: 'adminAbove', teamdocs: 'adminAbove', applications: 'adminAbove',
     setup: 'adminAbove', payroll: 'adminAbove',
+    vehicleinbox: 'adminAbove', incidentinbox: 'adminAbove', activityinbox: 'adminAbove',
     square: 'money', financials: 'money', businessfiles: 'money'
   };
   function tabAllowed(name) {

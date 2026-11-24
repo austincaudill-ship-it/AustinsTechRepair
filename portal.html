@@ -14,10 +14,11 @@
   <!-- V176_24_PORTAL_BACK_2026_11_22: ?v= bumped to 176-24 with in-portal Back navigation (portal.js + portal.css). Same rule as below: both queries carry the current version, so a fresh portal.html can never pair with stale cached subresources. -->
   <!-- V176_22_CONFIRM_LABEL_2026_11_22: ?v= bumped to 176-22 with the Record Confirm mileage-label fix (portal.js). portal.css itself is unchanged; both queries carry the current version so a fresh portal.html can never pair with stale cached subresources. -->
   <!-- V176_26_SQUARE_FREE_FEES_2026_11_22: ?v= bumped to 176-26 with the Square Free fee rates, the ATR One fee exemption, and the Square fees table (portal.js). portal.css itself is unchanged; both queries carry the current version so a fresh portal.html can never pair with stale cached subresources. -->
+  <!-- V176_37_REPORTS_2026_11_24 (Austin, Nov 24, 2026): ?v= bumped to 176-37 with the report forms and admin mailboxes (portal.js). portal.css itself is unchanged; both queries carry the current version so a fresh portal.html can never pair with stale cached subresources. -->
   <!-- V176_36_BRIEFING_2026_11_24 (Austin, Nov 24, 2026): ?v= bumped to 176-36 with the Your Day morning briefing (portal.js). portal.css itself is unchanged; both queries carry the current version so a fresh portal.html can never pair with stale cached subresources. -->
   <!-- V176_35_CAB_PASSCODE_2026_11_24 (Austin, Nov 23-24, 2026): everything under Financials behind the 4-digit passcode; custom action buttons set to Admin and up (or higher) ask for the same code. -->
-  <!-- V176_34_SQUARE_GATE_SHOP_EXPENSES_2026_11_23 (Austin, Nov 23, 2026): ?v= bumped to 176-36 with the Financials passcode on every Admin-and-up action button, the Back-button drawer fix, the language-law wording fixes, and the Your Day morning briefing (portal.html + portal.js; portal.css unchanged in content, query bumped with the version so a fresh portal.html can never pair with stale cached subresources). -->
-  <link rel="stylesheet" href="portal.css?v=176-36" />
+  <!-- V176_34_SQUARE_GATE_SHOP_EXPENSES_2026_11_23 (Austin, Nov 23, 2026): ?v= bumped to 176-37 with the Financials passcode on every Admin-and-up action button, the Back-button drawer fix, the language-law wording fixes, the Your Day morning briefing, and the report forms and mailboxes (portal.html + portal.js; portal.css unchanged in content, query bumped with the version so a fresh portal.html can never pair with stale cached subresources). -->
+  <link rel="stylesheet" href="portal.css?v=176-37" />
   <!-- PORTAL_APP_2026_11_09 (Austin, Nov 9, 2026): the Associate Hub
        is its own installable app. portal-manifest.json is a
        DECLARATION only — the installed app is this very page
@@ -335,6 +336,16 @@
         <button class="portal-tab" id="portal-tab-requests" type="button" role="tab" data-tab="requests">
           <i class="fas fa-clipboard-list"></i> Requests <span class="portal-count" id="portal-count-requests" hidden></span>
         </button>
+        <!-- V176_37_REPORTS_2026_11_24 (Austin, Nov 24, 2026): three report forms, each its own button directly under Requests in Associates — Vehicle Inspection, Incident Report, Activity. Each opens its own panel with only that form; nothing lives inside the Requests panel. -->
+        <button class="portal-tab" id="portal-tab-vehicle" type="button" role="tab" data-tab="vehicle">
+          <i class="fas fa-car"></i> Vehicle Inspection
+        </button>
+        <button class="portal-tab" id="portal-tab-incident" type="button" role="tab" data-tab="incident">
+          <i class="fas fa-triangle-exclamation"></i> Incident Report
+        </button>
+        <button class="portal-tab" id="portal-tab-activity" type="button" role="tab" data-tab="activity">
+          <i class="fas fa-file-lines"></i> Activity
+        </button>
         <button class="portal-tab" id="portal-tab-timeclock" type="button" role="tab" data-tab="timeclock">
           <i class="fas fa-clock"></i> Time Clock
         </button>
@@ -367,6 +378,16 @@
         </button>
         <button class="portal-tab" id="portal-tab-applications" type="button" role="tab" data-tab="applications">
           <i class="fas fa-file-lines"></i> Job Applications <span class="portal-count" id="portal-count-applications" hidden></span>
+        </button>
+        <!-- V176_37_REPORTS_2026_11_24 (Austin, Nov 24, 2026): the three report mailboxes — one per form, Admin-only (TAB_GATES 'adminAbove'), each listing only its own kind. Visible to NOBODY except admin. -->
+        <button class="portal-tab" id="portal-tab-vehicleinbox" type="button" role="tab" data-tab="vehicleinbox">
+          <i class="fas fa-inbox"></i> Vehicle Inspection Inbox
+        </button>
+        <button class="portal-tab" id="portal-tab-incidentinbox" type="button" role="tab" data-tab="incidentinbox">
+          <i class="fas fa-inbox"></i> Incident Report Inbox
+        </button>
+        <button class="portal-tab" id="portal-tab-activityinbox" type="button" role="tab" data-tab="activityinbox">
+          <i class="fas fa-inbox"></i> Activity Inbox
         </button>
         <!-- V176_33_ATRONE_GUEST_2026_11_23 (Austin, Nov 23, 2026): Records moved here from the first sidebar group (Austin's order) — directly before Setup, which stays last in Admin. The button and its panel are unchanged; only its place moved. Visibility is unchanged too: Records has no TAB_GATES entry, so every staff tier sees it exactly as before. -->
         <button class="portal-tab" id="portal-tab-records" type="button" role="tab" data-tab="records">
@@ -810,6 +831,46 @@
           <h2 class="portal-h2">Job Applications</h2>
         </div>
         <div id="portal-application-list"><p class="portal-muted">Loading applications&hellip;</p></div>
+      </div>
+
+      <!-- V176_37_REPORTS_2026_11_24 (Austin, Nov 24, 2026): the three report mailboxes — one per form, Admin-only, each listing only its own kind. Visible to NOBODY except admin. -->
+      <div class="portal-panel" id="portal-panel-vehicleinbox" role="tabpanel" hidden>
+        <div class="portal-panel-head">
+          <h2 class="portal-h2">Vehicle Inspection Inbox</h2>
+        </div>
+        <p class="portal-muted portal-small">Vehicle inspections the team sends in, newest first. Only Admins and above see this panel.</p>
+        <p class="portal-error" id="portal-repinbox-vehicle-missing" hidden>Reports need the database step first (portal-reports.sql) &mdash; nothing is saved yet.</p>
+        <div class="portal-field">
+          <label for="portal-repinbox-vehicle-search">Search</label>
+          <input type="search" id="portal-repinbox-vehicle-search" placeholder="Search vehicle, issues, or who sent it" />
+        </div>
+        <div id="portal-repinbox-vehicle-list"><p class="portal-muted">Loading reports&hellip;</p></div>
+      </div>
+
+      <div class="portal-panel" id="portal-panel-incidentinbox" role="tabpanel" hidden>
+        <div class="portal-panel-head">
+          <h2 class="portal-h2">Incident Report Inbox</h2>
+        </div>
+        <p class="portal-muted portal-small">Incident reports the team sends in, newest first. Only Admins and above see this panel.</p>
+        <p class="portal-error" id="portal-repinbox-incident-missing" hidden>Reports need the database step first (portal-reports.sql) &mdash; nothing is saved yet.</p>
+        <div class="portal-field">
+          <label for="portal-repinbox-incident-search">Search</label>
+          <input type="search" id="portal-repinbox-incident-search" placeholder="Search location, what happened, or who sent it" />
+        </div>
+        <div id="portal-repinbox-incident-list"><p class="portal-muted">Loading reports&hellip;</p></div>
+      </div>
+
+      <div class="portal-panel" id="portal-panel-activityinbox" role="tabpanel" hidden>
+        <div class="portal-panel-head">
+          <h2 class="portal-h2">Activity Inbox</h2>
+        </div>
+        <p class="portal-muted portal-small">Activity reports the team sends in, newest first. Only Admins and above see this panel.</p>
+        <p class="portal-error" id="portal-repinbox-activity-missing" hidden>Reports need the database step first (portal-reports.sql) &mdash; nothing is saved yet.</p>
+        <div class="portal-field">
+          <label for="portal-repinbox-activity-search">Search</label>
+          <input type="search" id="portal-repinbox-activity-search" placeholder="Search activity, notes, or who sent it" />
+        </div>
+        <div id="portal-repinbox-activity-list"><p class="portal-muted">Loading reports&hellip;</p></div>
       </div>
 
       <!-- INVESTORS -->
@@ -2193,6 +2254,144 @@
           </button>
         </form>
       </div>
+
+      <!-- V176_37_REPORTS_2026_11_24 (Austin, Nov 24, 2026): the three report forms, each its own panel — Vehicle Inspection, Incident Report, Activity. Each button under Requests opens only its own panel; nothing lives inside the Requests panel. -->
+      <div class="portal-panel" id="portal-panel-vehicle" role="tabpanel" hidden>
+        <div class="portal-panel-head">
+          <h2 class="portal-h2">Vehicle Inspection</h2>
+        </div>
+        <p class="portal-muted portal-small">Check a vehicle over before it goes out — tires, lights, brakes, fluids, and everything else on the list. What needs attention goes to the admin in the Vehicle Inspection Inbox.</p>
+        <p class="portal-error" id="portal-rep-vehicle-missing" hidden>Reports need the database step first (portal-reports.sql) &mdash; nothing is saved yet.</p>
+        <form id="portal-rep-vehicle-form" novalidate>
+          <div class="portal-nh-grid">
+            <div class="portal-field">
+              <label for="rep-vehicle-date">Date <span aria-hidden="true">*</span></label>
+              <input type="date" id="rep-vehicle-date" required />
+            </div>
+            <div class="portal-field">
+              <label for="rep-vehicle-name">Vehicle <span aria-hidden="true">*</span></label>
+              <input type="text" id="rep-vehicle-name" placeholder="e.g. 2019 Ford Transit — Van 1" required />
+            </div>
+            <div class="portal-field">
+              <label for="rep-vehicle-mileage">Mileage</label>
+              <input type="number" id="rep-vehicle-mileage" min="0" step="1" inputmode="numeric" placeholder="e.g. 84210" />
+            </div>
+            <div class="portal-field">
+              <label for="rep-vehicle-overall">Overall condition</label>
+              <select id="rep-vehicle-overall">
+                <option value="Good" selected>Good</option>
+                <option value="Fair">Fair</option>
+                <option value="Out of service">Out of service</option>
+              </select>
+            </div>
+          </div>
+          <div class="portal-field">
+            <label>Check over &mdash; tick everything that needs attention</label>
+            <div id="rep-vehicle-checks">
+              <div><label><input type="checkbox" data-rep-check="Tires" /> Tires &mdash; needs attention</label></div>
+              <div><label><input type="checkbox" data-rep-check="Lights" /> Lights &mdash; needs attention</label></div>
+              <div><label><input type="checkbox" data-rep-check="Brakes" /> Brakes &mdash; needs attention</label></div>
+              <div><label><input type="checkbox" data-rep-check="Fluids" /> Fluids &mdash; needs attention</label></div>
+              <div><label><input type="checkbox" data-rep-check="Wipers" /> Wipers &mdash; needs attention</label></div>
+              <div><label><input type="checkbox" data-rep-check="Glass and body" /> Glass and body &mdash; needs attention</label></div>
+              <div><label><input type="checkbox" data-rep-check="Horn" /> Horn &mdash; needs attention</label></div>
+              <div><label><input type="checkbox" data-rep-check="Mirrors" /> Mirrors &mdash; needs attention</label></div>
+              <div><label><input type="checkbox" data-rep-check="Fuel / charge" /> Fuel / charge &mdash; needs attention</label></div>
+              <div><label><input type="checkbox" data-rep-check="Emergency kit" /> Emergency kit &mdash; needs attention</label></div>
+            </div>
+          </div>
+          <div class="portal-field">
+            <label for="rep-vehicle-issues">Issues found</label>
+            <textarea id="rep-vehicle-issues" rows="3" placeholder="What needs attention, and anything else found on the walk-around"></textarea>
+          </div>
+          <p class="portal-error" id="rep-vehicle-error" hidden></p>
+          <p class="portal-muted" id="rep-vehicle-success" hidden><i class="fas fa-circle-check"></i> Inspection sent. The admin sees it in the Vehicle Inspection Inbox.</p>
+          <button class="portal-btn portal-btn-primary" id="rep-vehicle-submit" type="submit"><i class="fas fa-paper-plane"></i> Send inspection</button>
+        </form>
+      </div>
+
+      <div class="portal-panel" id="portal-panel-incident" role="tabpanel" hidden>
+        <div class="portal-panel-head">
+          <h2 class="portal-h2">Incident Report</h2>
+        </div>
+        <p class="portal-muted portal-small">Record what happened, where, and who was involved, while it is fresh. The admin sees it in the Incident Report Inbox.</p>
+        <p class="portal-error" id="portal-rep-incident-missing" hidden>Reports need the database step first (portal-reports.sql) &mdash; nothing is saved yet.</p>
+        <form id="portal-rep-incident-form" novalidate>
+          <div class="portal-nh-grid">
+            <div class="portal-field">
+              <label for="rep-incident-date">Date <span aria-hidden="true">*</span></label>
+              <input type="date" id="rep-incident-date" required />
+            </div>
+            <div class="portal-field">
+              <label for="rep-incident-time">Time</label>
+              <input type="time" id="rep-incident-time" />
+            </div>
+            <div class="portal-field">
+              <label for="rep-incident-location">Location <span aria-hidden="true">*</span></label>
+              <input type="text" id="rep-incident-location" placeholder="e.g. Guest driveway, 123 Main St" required />
+            </div>
+            <div class="portal-field">
+              <label for="rep-incident-severity">Severity</label>
+              <select id="rep-incident-severity">
+                <option value="Low">Low</option>
+                <option value="Medium" selected>Medium</option>
+                <option value="High">High</option>
+              </select>
+            </div>
+            <div class="portal-field portal-nh-wide">
+              <label for="rep-incident-people">People involved</label>
+              <input type="text" id="rep-incident-people" placeholder="Names of everyone involved, if anyone" />
+            </div>
+            <div class="portal-field portal-nh-wide">
+              <label for="rep-incident-what">What happened <span aria-hidden="true">*</span></label>
+              <textarea id="rep-incident-what" rows="4" placeholder="What happened, in order, with the facts only" required></textarea>
+            </div>
+            <div class="portal-field portal-nh-wide">
+              <label for="rep-incident-action">Action taken / follow-up needed</label>
+              <textarea id="rep-incident-action" rows="2" placeholder="What was done on the spot, and what still needs doing"></textarea>
+            </div>
+          </div>
+          <p class="portal-error" id="rep-incident-error" hidden></p>
+          <p class="portal-muted" id="rep-incident-success" hidden><i class="fas fa-circle-check"></i> Incident report sent. The admin sees it in the Incident Report Inbox.</p>
+          <button class="portal-btn portal-btn-primary" id="rep-incident-submit" type="submit"><i class="fas fa-paper-plane"></i> Send incident report</button>
+        </form>
+      </div>
+
+      <div class="portal-panel" id="portal-panel-activity" role="tabpanel" hidden>
+        <div class="portal-panel-head">
+          <h2 class="portal-h2">Activity</h2>
+        </div>
+        <p class="portal-muted portal-small">Log the work — a house call, shop work, a supply run, anything the day held. The admin sees it in the Activity Inbox.</p>
+        <p class="portal-error" id="portal-rep-activity-missing" hidden>Reports need the database step first (portal-reports.sql) &mdash; nothing is saved yet.</p>
+        <form id="portal-rep-activity-form" novalidate>
+          <div class="portal-nh-grid">
+            <div class="portal-field">
+              <label for="rep-activity-date">Date <span aria-hidden="true">*</span></label>
+              <input type="date" id="rep-activity-date" required />
+            </div>
+            <div class="portal-field">
+              <label for="rep-activity-what">Activity <span aria-hidden="true">*</span></label>
+              <input type="text" id="rep-activity-what" placeholder="e.g. House call, shop work, supply run" required />
+            </div>
+            <div class="portal-field">
+              <label for="rep-activity-hours">Time spent (hours)</label>
+              <input type="number" id="rep-activity-hours" min="0" step="0.25" inputmode="decimal" placeholder="e.g. 1.5" />
+            </div>
+            <div class="portal-field">
+              <label for="rep-activity-ticket">Related ticket or guest</label>
+              <input type="text" id="rep-activity-ticket" placeholder="Ticket code or guest name, if it ties to a job" />
+            </div>
+            <div class="portal-field portal-nh-wide">
+              <label for="rep-activity-notes">Notes</label>
+              <textarea id="rep-activity-notes" rows="3" placeholder="Anything worth the record"></textarea>
+            </div>
+          </div>
+          <p class="portal-error" id="rep-activity-error" hidden></p>
+          <p class="portal-muted" id="rep-activity-success" hidden><i class="fas fa-circle-check"></i> Activity sent. The admin sees it in the Activity Inbox.</p>
+          <button class="portal-btn portal-btn-primary" id="rep-activity-submit" type="submit"><i class="fas fa-paper-plane"></i> Send activity</button>
+        </form>
+      </div>
+
     </section>
   </main>
 
@@ -2327,7 +2526,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <!-- PORTAL_RECEIPT_SEND_2026_11_02: vendored html2pdf (html2canvas + jsPDF in one self-contained bundle, loaded locally, no CDN) — Download receipt and Email receipt render the PDF from the exact receipt markup. -->
   <script src="html2pdf.bundle.min.js"></script>
-  <script src="portal.js?v=176-36"></script>
+  <script src="portal.js?v=176-37"></script>
   <script>
   /* ================= TEAM DOCUMENTS + HIRE DOCUMENTS =================
    * Section logic for the Team Documents tab and the per-hire document
