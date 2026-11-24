@@ -1966,6 +1966,14 @@ function showLogin(errorMsg) {
    * device-trust helper): SHA-256 of salt + '|' + code, compared
    * with the stored hash. A failed hash, a missing table, or a
    * wrong code all keep the panel covered. */
+  /* V176_35_CAB_PASSCODE_2026_11_24 (Austin, Nov 23-24, 2026): a
+   * custom action button whose EFFECTIVE audience is Admin and up
+   * or higher asks for this same code too — computed at open time
+   * by cabNeedsPasscode (the min_role pick, or the Admin /
+   * Financials group rule when the pick is "Same as the group"),
+   * so buttons saved before this build gain the gate without
+   * re-saving. The cover is built into the custom panel by
+   * cabBuildPanel and the open runs the same gatePanelOpen. */
   var GATE_PANELS = { financials: 1, payroll: 1, businessfiles: 1, square: 1 };
   var GATE_ROW_KEY = 'financials';
   var passcodeRow = null;
@@ -2034,7 +2042,7 @@ function showLogin(errorMsg) {
     if (!note) return;
     if (st === 'checking') note.textContent = 'Checking the passcode…';
     else if (st === 'prompt') note.textContent = 'Enter the passcode to open this panel. It is asked every time.';
-    else if (st === 'unset') note.textContent = canSeeMoney() ? 'No passcode is set yet. Set one in Setup — one code guards Financials, Payroll, Business Files, and Square.' : 'No passcode is set yet. Ask Austin to set one in Setup.';
+    else if (st === 'unset') note.textContent = canSeeMoney() ? 'No passcode is set yet. Set one in Setup — one code guards Financials, Payroll, Business Files, Square, and any Admin-and-up action button.' : 'No passcode is set yet. Ask Austin to set one in Setup.';
     else if (st === 'setup-owed') note.textContent = 'The passcode store is not in place yet, so this panel stays covered. The database step in the build notes is owed.';
     else if (st === 'error') note.textContent = 'The passcode could not be checked. The panel stays covered.';
   }
@@ -2417,7 +2425,9 @@ function showLogin(errorMsg) {
      * Business Files, and Square ask for the passcode on every
      * open — the panel stays covered until the code matches,
      * and the loader waits for the unlock (gatePanelOpen runs
-     * it). V176_34_SQUARE_GATE_2026_11_23: Square joins the gate. */
+     * it). V176_34_SQUARE_GATE_2026_11_23: Square joins the gate.
+     * V176_35_CAB_PASSCODE_2026_11_24: custom Admin-and-up buttons
+     * run the same gate from showCustomPanel. */
     if (GATE_PANELS[name]) { gatePanelOpen(name); portalNavRecord(name, opts); return; }
     if (!state.loaded[name] && LOADERS[name]) LOADERS[name](false);
     portalNavRecord(name, opts);
@@ -4549,7 +4559,7 @@ function loadTicketThread(client, ticketId) {
           '<div class="p2-form-row"><div class="portal-field"><label for="p2-edit-power">Powers on?</label><select id="p2-edit-power"><option value="">Not checked</option><option value="Yes"' + (t.power_on === 'Yes' ? ' selected' : '') + '>Yes</option><option value="No"' + (t.power_on === 'No' ? ' selected' : '') + '>No</option></select></div>' +
           '<div class="portal-field"><label for="p2-edit-backup">Backed up?</label><select id="p2-edit-backup"><option value="">Unknown</option><option value="Yes"' + (t.backed_up === 'Yes' ? ' selected' : '') + '>Yes</option><option value="No"' + (t.backed_up === 'No' ? ' selected' : '') + '>No</option></select></div>' +
           '<div class="portal-field"><label for="p2-edit-prior">Repaired before?</label><select id="p2-edit-prior"><option value="">Unknown</option><option value="Yes"' + (t.prior_repair === 'Yes' ? ' selected' : '') + '>Yes</option><option value="No"' + (t.prior_repair === 'No' ? ' selected' : '') + '>No</option></select></div></div>' +
-          '<div class="portal-field"><label for="p2-edit-warranty">Under manufacturer warranty?</label><select id="p2-edit-warranty"><option value="">Unknown</option><option value="Yes &mdash; customer told our work may void it"' + (t.warranty_status && t.warranty_status.indexOf('Yes') === 0 ? ' selected' : '') + '>Yes &mdash; customer told our work may void it</option><option value="No"' + (t.warranty_status === 'No' ? ' selected' : '') + '>No</option></select></div>' +
+          '<div class="portal-field"><label for="p2-edit-warranty">Under manufacturer warranty?</label><select id="p2-edit-warranty"><option value="">Unknown</option><option value="Yes &mdash; guest told our work may void it"' + (t.warranty_status && t.warranty_status.indexOf('Yes') === 0 ? ' selected' : '') + '>Yes &mdash; guest told our work may void it</option><option value="No"' + (t.warranty_status === 'No' ? ' selected' : '') + '>No</option></select></div>' +
           '<div class="p2-form-row"><div class="portal-field"><label for="p2-edit-terms">Terms accepted</label><select id="p2-edit-terms"><option value="true"' + (t.terms_accepted ? ' selected' : '') + '>Yes</option><option value="false"' + (!t.terms_accepted ? ' selected' : '') + '>No</option></select></div>' +
           '<div class="portal-field"><label for="p2-edit-dispatch">Visit fee acknowledged</label><select id="p2-edit-dispatch"><option value="true"' + (t.dispatch_acknowledged ? ' selected' : '') + '>Yes</option><option value="false"' + (!t.dispatch_acknowledged ? ' selected' : '') + '>No</option></select></div></div>' +
           '<div class="p2-form-row"><div class="portal-field"><label for="p2-edit-workauth">Work authorized</label><select id="p2-edit-workauth"><option value="true"' + (t.work_auth_accepted ? ' selected' : '') + '>Yes</option><option value="false"' + (!t.work_auth_accepted ? ' selected' : '') + '>No</option></select></div>' +
@@ -6985,7 +6995,7 @@ function loadTicketThread(client, ticketId) {
       '<div style="white-space:pre-wrap;font-size:0.92rem;line-height:1.5;border:1px solid #E6D9C0;border-radius:8px;padding:1rem;background:#FFFDF8;">' + esc(AUTH_TERMS_TEXT) + '</div>' +
       '<h2 style="font-size:1.1rem;margin:1.75rem 0 0.5rem;">Signature</h2>' +
       '<div style="border:1px solid #E6D9C0;border-radius:8px;padding:1rem;background:#fff;">' +
-      '<img alt="Customer signature" src="' + signatureDataUrl + '" style="display:block;max-width:100%;width:420px;height:auto;">' +
+      '<img alt="Guest signature" src="' + signatureDataUrl + '" style="display:block;max-width:100%;width:420px;height:auto;">' +
       '<div style="border-top:2px solid #2C231A;margin-top:0.4rem;padding-top:0.5rem;font-size:0.95rem;">Signed by: ' + esc(signerName || '') + '</div>' +
       '<div style="font-size:0.95rem;margin-top:0.25rem;">Date: ' + esc(fmtDateTime(signedAtIso)) + '</div>' +
       '</div>' +
@@ -7189,7 +7199,7 @@ function loadTicketThread(client, ticketId) {
       '<div style="white-space:pre-wrap;font-size:0.92rem;line-height:1.5;border:1px solid #E6D9C0;border-radius:8px;padding:1rem;background:#FFFDF8;">' + esc(MEDIA_RELEASE_TEXT) + '</div>' +
       '<h2 style="font-size:1.1rem;margin:1.75rem 0 0.5rem;">Signature</h2>' +
       '<div style="border:1px solid #E6D9C0;border-radius:8px;padding:1rem;background:#fff;">' +
-      '<img alt="Customer signature" src="' + signatureDataUrl + '" style="display:block;max-width:100%;width:420px;height:auto;">' +
+      '<img alt="Guest signature" src="' + signatureDataUrl + '" style="display:block;max-width:100%;width:420px;height:auto;">' +
       '<div style="border-top:2px solid #2C231A;margin-top:0.4rem;padding-top:0.5rem;font-size:0.95rem;">Signed by: ' + esc(signerName || '') + '</div>' +
       '<div style="font-size:0.95rem;margin-top:0.25rem;">Date: ' + esc(fmtDateTime(signedAtIso)) + '</div>' +
       '</div>' +
@@ -7284,7 +7294,7 @@ function loadTicketThread(client, ticketId) {
       '<div style="white-space:pre-wrap;font-size:0.92rem;line-height:1.5;border:1px solid #E6D9C0;border-radius:8px;padding:1rem;background:#FFFDF8;">' + esc(bodyText) + '</div>' +
       '<h2 style="font-size:1.1rem;margin:1.75rem 0 0.5rem;">Signature</h2>' +
       '<div style="border:1px solid #E6D9C0;border-radius:8px;padding:1rem;background:#fff;">' +
-      '<img alt="Customer signature" src="' + signatureDataUrl + '" style="display:block;max-width:100%;width:420px;height:auto;">' +
+      '<img alt="Guest signature" src="' + signatureDataUrl + '" style="display:block;max-width:100%;width:420px;height:auto;">' +
       '<div style="border-top:2px solid #2C231A;margin-top:0.4rem;padding-top:0.5rem;font-size:0.95rem;">Signed by: ' + esc(signerName || '') + '</div>' +
       '<div style="font-size:0.95rem;margin-top:0.25rem;">Date: ' + esc(fmtDateTime(signedAtIso)) + '</div>' +
       '</div>' +
@@ -8146,7 +8156,7 @@ function loadTicketThread(client, ticketId) {
                 });
               };
               fetch(url).then(function (resp) { return resp.text(); }).then(function (text) {
-                var m = String(text || '').match(/alt="Customer signature"\s+src="(data:image\/[^"]+)"/);
+                var m = String(text || '').match(/alt="(?:Customer|Guest) signature"\s+src="(data:image\/[^"]+)"/);
                 if (m) auth.sigSrc = m[1];
                 finishWithCode();
               }).catch(function () { finishWithCode(); });
@@ -8205,7 +8215,7 @@ function loadTicketThread(client, ticketId) {
         RECEIPT_SIGNED_SUMMARY.map(function (line) { return '<li>' + line + '</li>'; }).join('') +
         '</ul></div>';
       sigHtml = '<div class="rc-sig">' +
-        (auth.sigSrc ? '<p class="rc-sig-head">Customer signature</p><img class="rc-sig-img" src="' + esc(auth.sigSrc) + '" alt="Customer signature"/>' : '') +
+        (auth.sigSrc ? '<p class="rc-sig-head">Guest signature</p><img class="rc-sig-img" src="' + esc(auth.sigSrc) + '" alt="Guest signature"/>' : '') +
         (auth.signerName || auth.signedAt ? '<p class="rc-sig-cap">Signed by ' + esc(auth.signerName) + (auth.signedAt ? ' &middot; ' + esc(fmtDateTime(auth.signedAt)) : '') + '</p>' : '') +
         (auth.viewerUrl ? '<p class="rc-auth"><a href="' + esc(auth.viewerUrl) + '">View your signed Repair Authorization</a></p>' : '') +
         (auth.viewerUrl && auth.docCode ? '<p class="rc-auth-short">To open it later, go to <strong>' + esc(DOC_SHORT_PATH) + '</strong> and enter code <strong>' + esc(fmtDocCode(auth.docCode)) + '</strong></p>' : '') +
@@ -11729,6 +11739,45 @@ function loadTicketThread(client, ticketId) {
     if (r.min_role) return cabRank(myRole()) >= cabRank(r.min_role);
     return true;
   }
+  /* V176_35_CAB_PASSCODE_2026_11_24: the passcode gate for a custom
+   * button is COMPUTED from its effective audience at open time —
+   * the stricter of the group rule and the min_role pick, the same
+   * "whichever is stricter wins" rule cabVisible enforces. Admin
+   * and up or higher asks for the shared Financials code; anything
+   * below never asks. A button in the Financials group is always
+   * gated (its group audience is the top tier); a button in the
+   * Admin group with "Same as the group" is gated too. Buttons
+   * saved before this build gain the gate without re-saving. */
+  function cabNeedsPasscode(r) {
+    if (!r) return false;
+    var eff = cabRank(r.min_role || '');
+    if (r.location === 'financials') eff = Math.max(eff, 5);
+    else if (r.location === 'admin') eff = Math.max(eff, 3);
+    return eff >= 3;
+  }
+  /* The gate cover for a gated custom panel — the same hooks and
+   * the same default-visible markup as the built-in covers in
+   * portal.html, so the generic gatePanelOpen / gateTryUnlock /
+   * gateUnlock / wireGateOverlay run it unchanged. The overlay id
+   * follows the gateOverlay(name) lookup for the 'cab-<id>' key,
+   * and the cover is the panel's first child, like the built-ins. */
+  function cabGateOverlayHtml(r) {
+    var key = 'cab-' + r.id;
+    return '<div class="portal-gate-overlay" id="portal-gate-' + esc(key) + '" data-gate-panel="' + esc(key) + '">' +
+      '<div class="portal-gate-box">' +
+      '<p class="portal-gate-title"><i class="fas fa-lock"></i> ' + esc(r.label) + ' is locked</p>' +
+      '<p class="portal-muted portal-small" data-gate-note>Enter the passcode to open this panel. It is asked every time.</p>' +
+      '<p class="portal-error" data-gate-msg hidden></p>' +
+      '<div data-gate-form>' +
+      '<div class="portal-field"><label for="portal-gate-code-' + esc(key) + '">Passcode</label>' +
+      '<input type="password" id="portal-gate-code-' + esc(key) + '" data-gate-code autocomplete="off" aria-label="' + esc(r.label) + ' passcode" /></div>' +
+      '<p><button class="portal-btn portal-btn-primary" type="button" data-gate-unlock>Unlock</button> ' +
+      '<button class="portal-btn portal-btn-outline" type="button" data-gate-cancel>Cancel</button></p>' +
+      '</div>' +
+      '<p data-gate-alt hidden><button class="portal-btn portal-btn-outline" type="button" data-gate-setup hidden>Open Setup</button> ' +
+      '<button class="portal-btn portal-btn-outline" type="button" data-gate-retry hidden>Try again</button></p>' +
+      '</div></div>';
+  }
   function cabRowById(id) {
     var rows = setupRows || [];
     for (var i = 0; i < rows.length; i++) { if (rows[i].id === id && cabIsActionRow(rows[i])) return rows[i]; }
@@ -11833,7 +11882,7 @@ function loadTicketThread(client, ticketId) {
   function cabBuildPanel(r) {
     var cfg = setupCfg(r);
     var panel = document.createElement('div');
-    panel.className = 'portal-panel';
+    panel.className = 'portal-panel' + (cabNeedsPasscode(r) ? ' portal-gated-panel' : '');
     panel.id = 'portal-panel-cab-' + r.id;
     panel.setAttribute('role', 'tabpanel');
     panel.setAttribute('data-custom-panel', r.id);
@@ -11870,7 +11919,7 @@ function loadTicketThread(client, ticketId) {
     } else if (r.template === 'training') {
       html += '<div data-training-root="' + esc(r.id) + '">' + trainingShellHtml(r) + '</div>';
     }
-    panel.innerHTML = html;
+    panel.innerHTML = (cabNeedsPasscode(r) ? cabGateOverlayHtml(r) : '') + html;
     return panel;
   }
   function showCustomPanel(id) {
@@ -11885,6 +11934,11 @@ function loadTicketThread(client, ticketId) {
     closeDrawer();
     if (typeof stopTeamChatPoll === 'function') stopTeamChatPoll();
     var nav = $('portal-nav'); if (nav) nav.classList.remove('open');
+    /* V176_35_CAB_PASSCODE_2026_11_24: Admin-and-up buttons ask for
+     * the shared Financials code on every open, like the built-in
+     * gated panels — lastPortalTab must name this panel or the
+     * gate's fetch callback treats the open as stale. */
+    if (cabNeedsPasscode(r)) { lastPortalTab = 'cab-' + id; gatePanelOpen('cab-' + id); }
     portalNavRecord('cab-' + id);
   }
   /* Checking a box persists through ONE narrow door: the
@@ -13014,7 +13068,7 @@ function loadTicketThread(client, ticketId) {
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-setup-edit-btn="' + esc(r.id) + '"><i class="fas fa-pen"></i> Edit</button>' +
         '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-setup-del-btn="' + esc(r.id) + '"><i class="fas fa-trash"></i> Delete</button></span></div>' +
         '<p class="portal-card-meta">' + esc(CAB_TEMPLATES[r.template]) + ' template \u00b7 ' + esc(CAB_GROUPS[r.location]) + ' group \u00b7 ' + detail + '</p>' +
-        '<p class="portal-card-meta">Seen by: ' + esc(CAB_MINROLE_LABELS[r.min_role || ''] || 'Same as the group') + ' (the group rule still applies)</p>' +
+        '<p class="portal-card-meta">Seen by: ' + esc(CAB_MINROLE_LABELS[r.min_role || ''] || 'Same as the group') + ' (the group rule still applies)' + (cabNeedsPasscode(r) ? ' \u00b7 Asks for the Financials passcode' : '') + '</p>' +
         '</article>';
     }).join('');
   }
@@ -13081,11 +13135,22 @@ function loadTicketThread(client, ticketId) {
     $('portal-setup-cab-info-body').value = row && row.template === 'info' ? (cfg.body || '') : '';
     $('portal-setup-cab-items').value = row && row.template === 'checklist' ? (cfg.items || []).join('\n') : '';
     cabSyncTemplateEditor();
+    cabSyncPasscodeNote();
     $('portal-setup-btn-msg').textContent = '';
     form.hidden = false;
   }
   /* CUSTOM_ACTION_BUTTONS_2026_11_04: the template picker swaps
    * which content editor shows under it. */
+  /* V176_35_CAB_PASSCODE_2026_11_24: the form says so under "Who can
+   * see it" — the note shows whenever the picked group + visibility
+   * combination asks for the passcode at open time. */
+  function cabSyncPasscodeNote() {
+    var note = $('portal-setup-btn-passcode-note');
+    if (!note) return;
+    var g = $('portal-setup-btn-group');
+    var m = $('portal-setup-btn-minrole');
+    note.hidden = !cabNeedsPasscode({ location: g ? g.value : '', min_role: m ? m.value : '' });
+  }
   function cabSyncTemplateEditor() {
     var t = $('portal-setup-btn-template').value;
     $('portal-setup-cab-edit-links').hidden = t !== 'links';
@@ -13290,6 +13355,12 @@ function loadTicketThread(client, ticketId) {
      * its content editor; the links editor grows/shrinks box rows. */
     var tmplSel = $('portal-setup-btn-template');
     if (tmplSel) tmplSel.addEventListener('change', cabSyncTemplateEditor);
+    /* V176_35_CAB_PASSCODE_2026_11_24: group + visibility both feed
+     * the passcode note, so both selects refresh it. */
+    var grpSel = $('portal-setup-btn-group');
+    if (grpSel) grpSel.addEventListener('change', cabSyncPasscodeNote);
+    var roleSel = $('portal-setup-btn-minrole');
+    if (roleSel) roleSel.addEventListener('change', cabSyncPasscodeNote);
     var linkAdd = $('portal-setup-cab-link-add');
     if (linkAdd) linkAdd.addEventListener('click', function () {
       var box = $('portal-setup-cab-link-rows');

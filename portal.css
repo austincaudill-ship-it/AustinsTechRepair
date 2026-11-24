@@ -215,6 +215,14 @@ html { background: var(--bg, #FAF6EE); }
   display: flex; flex-direction: column;
 }
 .portal-drawer.open { transform: translateX(0); }
+/* V176_35_BACK_ABOVE_DRAWER_2026_11_24: the Back button lives in the
+ * ACTION PANEL label row at the top of the panel column, and the
+ * ticket drawer slides in over that column — with no z-index the
+ * button sat under the drawer overlay and could not be tapped on
+ * desktop (proven). Raising just the button keeps it tappable with
+ * a drawer open; its first tap closes the drawer (portalNavGoBack),
+ * the next navigates back. It stays below the Scan In modal. */
+#portal-back-btn { position: relative; z-index: 62; }
 .portal-drawer-head {
   display: flex; justify-content: space-between; align-items: center; gap: 1rem;
   padding: 1rem 1.25rem; border-bottom: 1px solid var(--line, #E6D9C0);
