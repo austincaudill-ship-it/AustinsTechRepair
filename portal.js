@@ -20898,33 +20898,6 @@ function loadTicketThread(client, ticketId) {
   function hhMyId() { return state.user ? state.user.id : null; }
   function hhMyName() { return (state.profile && state.profile.name) || (state.user && state.user.email) || 'Associate'; }
 
-  /* PURE: the signed-in associate's week math from their own
-   * time_entries rows — the same Monday-start pay week and the
-   * same closed-row sums renderTimeCards() shows, plus the
-   * still-open entry counted to `now` and today's total.
-   * Returns { closedMs, openMs, openSince, todayMs }. */
-  function hhWeekMath(rows, wsDate, now) {
-    var we = new Date(wsDate); we.setDate(we.getDate() + 7);
-    var closedMs = 0, openMs = 0, openSince = null, todayMs = 0;
-    var t0 = new Date(now); t0.setHours(0, 0, 0, 0);
-    var t1 = new Date(t0); t1.setDate(t1.getDate() + 1);
-    (rows || []).forEach(function (r) {
-      if (!r.clock_in) return;
-      var ci = new Date(r.clock_in);
-      if (isNaN(ci.getTime())) return;
-      var co = r.clock_out ? new Date(r.clock_out) : null;
-      if (co && isNaN(co.getTime())) co = null;
-      var end = co || now;
-      if (ci >= wsDate && ci < we) {
-        if (co) closedMs += (co - ci);
-        else { openMs += Math.max(0, now - ci); if (!openSince || ci < openSince) openSince = ci; }
-      }
-      if (ci >= t0 && ci < t1) todayMs += Math.max(0, end - ci);
-      else if (!co && ci < t0) { /* an overnight open entry still runs today */ todayMs += Math.max(0, now - Math.max(ci, t0)); if (ci >= wsDate && ci < we) { /* already counted above */ } }
-    });
-    return { closedMs: closedMs, openMs: openMs, openSince: openSince, todayMs: todayMs };
-  }
-
   /* PURE: day-of-year in local time (DST-safe via UTC parts). */
   function hhDayOfYear(dt) {
     var start = Date.UTC(dt.getFullYear(), 0, 0);
@@ -21077,55 +21050,94 @@ function loadTicketThread(client, ticketId) {
   }
 
   /* ---- Your day ---- */
+  /* V176_36_BRIEFING_2026_11_24 (Austin, Nov 24, 2026: "Your day" is a
+   * morning briefing for everyone — it tells each tech what their day
+   * looks like: today's guest jobs and calendar events only. No
+   * time-clock lines, no hours bar, no on-the-clock list, no
+   * birthdays or celebrations; everything else on Home stays as it
+   * is.): the box reads the same two stores the shared calendar
+   * reads — portal_calendar_events rows and tickets carrying an
+   * appointment — and shows today only, through the same
+   * hhMonthItems day-bucketing the calendar uses (a multi-day event
+   * spans into today). Birthdays and shifts are never passed in, so
+   * they can never appear here; they stay on the shared calendar
+   * and in Shift Center. Read-only; no new tables, no writes. The
+   * old clock reads and the week-math render went with the
+   * clock view — the Time Clock panel itself is untouched. */
   function loadYourDay(client) {
     var box = $('portal-home-yourday');
     if (!box || !state.user) return;
-    var myId = hhMyId();
-    var mineDone = false, openDone = false;
-    var myRows = [], openRows = null;
+    var today = new Date();
+    var todayStr = hhDayStr(today.getFullYear(), today.getMonth() + 1, today.getDate());
+    var t0 = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    var t1 = new Date(t0); t1.setDate(t1.getDate() + 1);
+    var tomorrowStr = hhDayStr(t1.getFullYear(), t1.getMonth() + 1, t1.getDate());
+    var evDone = false, jobsDone = false;
+    var events = [], jobs = [];
     function render() {
-      if (!mineDone || !openDone) return;
-      renderYourDay(box, myRows, openRows, myId);
+      if (!evDone || !jobsDone) return;
+      renderYourDayBriefing(box, events, jobs, todayStr);
     }
-    client.from('time_entries').select('*').eq('employee_id', myId).order('clock_in', { ascending: false }).limit(300)
-      .then(function (res) { myRows = res.error ? [] : (res.data || []); mineDone = true; render(); })
-      .catch(function () { myRows = []; mineDone = true; render(); });
-    client.from('time_entries').select('employee_id, employee_name, clock_in').is('clock_out', null).order('clock_in', { ascending: true })
-      .then(function (res) { openRows = res.error ? null : (res.data || []); openDone = true; render(); })
-      .catch(function () { openRows = null; openDone = true; render(); });
+    client.from('portal_calendar_events').select('*').order('event_date', { ascending: true }).limit(300)
+      .then(function (res) { events = res.error ? [] : (res.data || []); evDone = true; render(); })
+      .catch(function () { events = []; evDone = true; render(); });
+    /* Same two-query merge as the shared calendar: appointments in
+     * today's window plus job_date rows for today, deduped. The
+     * calendar hides finished jobs; the briefing hides finished
+     * AND cancelled ones — a cancelled job is not part of the day. */
+    var jobRows = null, jobDateRows = null;
+    function jobsRender() {
+      if (jobRows === null || jobDateRows === null) return;
+      var seen = {}, merged = [];
+      jobRows.concat(jobDateRows).forEach(function (t) {
+        if (!t || seen[t.id]) return;
+        seen[t.id] = 1;
+        if (t.status === 'Cancelled' || t.status === 'Completed' || t.status === 'Paid & Closed') return;
+        merged.push(t);
+      });
+      jobs = merged; jobsDone = true; render();
+    }
+    client.from('tickets').select('id, customer_name, device_type, brand, model, issue, status, appointment_at, job_date')
+      .gte('appointment_at', t0.toISOString()).lt('appointment_at', t1.toISOString()).limit(300)
+      .then(function (res) { jobRows = res.error ? [] : (res.data || []); jobsRender(); })
+      .catch(function () { jobRows = []; jobsRender(); });
+    client.from('tickets').select('id, customer_name, device_type, brand, model, issue, status, appointment_at, job_date')
+      .gte('job_date', todayStr).lt('job_date', tomorrowStr).limit(300)
+      .then(function (res) { jobDateRows = res.error ? [] : (res.data || []); jobsRender(); })
+      .catch(function () { jobDateRows = []; jobsRender(); });
   }
 
-  function renderYourDay(box, myRows, openRows, myId) {
+  function renderYourDayBriefing(box, events, jobs, todayStr) {
     var now = new Date();
-    var math = hhWeekMath(myRows, weekStart(), now);
-    var weekHrs = (math.closedMs + math.openMs) / 3600000;
-    var pct = Math.max(0, Math.min(100, (weekHrs / 40) * 100));
-    var html = '';
-    if (openRows && openRows.length) {
-      html += '<p class="portal-card-meta"><i class="fas fa-circle hh-on-dot"></i> <strong>On the clock now</strong></p>' +
-        openRows.map(function (r) {
-          return '<div class="tc-row"><span><strong>' + esc(r.employee_name || 'Associate') + '</strong></span>' +
-            '<span class="portal-muted">since ' + esc(hhFmtClockTime(r.clock_in)) + '</span></div>';
-        }).join('');
-    } else if (openRows) {
-      html += '<p class="portal-muted">Nobody is on the clock right now.</p>';
-    } else {
-      var mine = myRows.filter(function (r) { return !r.clock_out; });
-      html += mine.length
-        ? '<p class="portal-muted">You are on the clock since ' + esc(hhFmtClockTime(mine[0].clock_in)) + '.</p>'
-        : '<p class="portal-muted">You are off the clock.</p>';
+    var items = hhMonthItems(now.getFullYear(), now.getMonth() + 1, events, [], jobs, [], null)[todayStr] || [];
+    var todays = items.filter(function (it) { return it.kind === 'job' || String(it.kind).indexOf('event-') === 0; });
+    /* Chronological: timed jobs earliest first (by the ticket's own
+     * appointment), untimed events and untimed jobs after, in
+     * calendar order. */
+    var byId = {};
+    jobs.forEach(function (t) { if (t) byId[t.id] = t; });
+    function apptMs(it) {
+      var t = it.kind === 'job' ? byId[it.id] : null;
+      return (t && t.appointment_at) ? new Date(t.appointment_at).getTime() : NaN;
     }
-    html += '<div class="hh-weekrow"><div class="hh-hrs">' + esc((Math.round(weekHrs * 10) / 10).toString()) + ' <small>hrs</small></div>' +
-      '<div class="portal-muted">your hours this week &middot; of 40</div></div>' +
-      '<div class="hh-bar"><i style="width:' + pct.toFixed(1) + '%"></i></div>';
-    if (math.openSince) {
-      html += '<p class="hh-state"><i class="fas fa-clock"></i> You clocked in at <strong>' + esc(hhFmtClockTime(math.openSince.toISOString())) + '</strong> &middot; ' + esc(fmtHours(math.todayMs)) + ' today</p>';
-    } else if (math.todayMs > 0) {
-      html += '<p class="hh-state"><i class="fas fa-clock"></i> You worked ' + esc(fmtHours(math.todayMs)) + ' today and are off the clock now.</p>';
+    todays.sort(function (a, b) {
+      var da = apptMs(a), db = apptMs(b);
+      var aT = !isNaN(da), bT = !isNaN(db);
+      if (aT !== bT) return aT ? -1 : 1;
+      if (aT && bT && da !== db) return da - db;
+      return 0;
+    });
+    var html = '<p class="portal-card-meta"><strong>' + esc(homeFmtDay(todayStr)) + '</strong></p>';
+    if (!todays.length) {
+      html += '<p class="portal-muted">Nothing scheduled today.</p>';
     } else {
-      html += '<p class="hh-state"><i class="fas fa-clock"></i> No time logged yet today.</p>';
+      html += todays.map(function (it) {
+        var kindLabel = HH_CAL_KIND_LABEL[it.kind] || 'Event';
+        return '<div class="p2-line"><div class="p2-line-main"><span class="p2-line-amt">' + esc(kindLabel) + '</span> &mdash; <span>' + esc(it.label) + '</span>' +
+          (it.time ? '<br /><span class="portal-muted portal-small">' + esc(it.time) + '</span>' : '') +
+          (it.sub ? '<br /><span class="portal-muted portal-small">' + esc(it.sub) + '</span>' : '') + '</div></div>';
+      }).join('');
     }
-    html += '<p class="portal-muted portal-small">Clock in, break, lunch, and clock out live in Time Clock.</p>';
     box.innerHTML = html;
   }
 
