@@ -6383,7 +6383,8 @@ function loadTicketThread(client, ticketId) {
       return;
     }
     box.innerHTML = rows.map(function (p) {
-      var statusOpts = ['Ordered', 'Received', 'Cancelled'].map(function (s) {
+      /* V176_38_SEND_BACK_2026_11_24 (Austin, Nov 24, 2026): a part that has to go back to the supplier gets its own status, beside Ordered, Received and Cancelled. Same select, same save path; only Received stamps received_at. */
+      var statusOpts = ['Ordered', 'Received', 'Needs to send back', 'Cancelled'].map(function (s) {
         return '<option value="' + s + '"' + (p.status === s ? ' selected' : '') + '>' + s + '</option>';
       }).join('');
       return '<div class="p2-line p2-part"><div class="p2-line-main">' + esc(p.description) +
