@@ -992,10 +992,20 @@
                   <option value="">Choose your model&hellip;</option>
                 </select>
               </div>
-              <!-- V176_39_WATCH_SIZE_2026_11_25 (owner, Nov 25, 2026): Apple Watch size box under Make and Model, shown for Smart Watch + Apple only — the size rides the estimate to the ticket so nobody has to ask. Filled and wired in script.js. -->
+              <!-- V176_40_WATCH_SIZE_2026_11_25 (owner, Nov 25, 2026): smartwatch size box under Make and Model, shown for any Smart Watch brand — every manufacturer sizes watches differently, and the size rides the estimate to the ticket so nobody has to ask. Filled and wired in script.js. -->
               <div id="bk-size-wrap" hidden>
                 <label class="field-label" for="bk-size">Size</label>
                 <input class="form-field" type="text" id="bk-size" placeholder="Example: 42mm" autocomplete="off" style="margin-bottom: 1.4rem;">
+              </div>
+              <!-- V176_40_WATCH_CONN_2026_11_25 (owner, Nov 25, 2026): GPS-or-Cellular pick, shown with the size step for any Smart Watch brand — GPS-only vs GPS + Cellular display assemblies differ on some generations, so the pick rides the ticket with the size. Optional; filled and wired in script.js. -->
+              <div id="bk-conn-wrap" hidden>
+                <label class="field-label" for="bk-conn">GPS or Cellular?</label>
+                <select class="form-field" id="bk-conn" style="margin-bottom: 1.4rem;">
+                  <option value="">Choose&hellip;</option>
+                  <option value="GPS only">GPS only</option>
+                  <option value="GPS + Cellular">GPS + Cellular</option>
+                  <option value="Not sure">Not sure</option>
+                </select>
               </div>
               <!-- COMPUTER_YEAR_2026_11_10 (owner, Nov 10, 2026): computers take a year pick after make and model, before the service picks — like searching for a vehicle; parts are listed by year. Filled and wired in script.js (BK_YEARS); shown for the Computer device only. -->
               <div id="bk-year-wrap" hidden>

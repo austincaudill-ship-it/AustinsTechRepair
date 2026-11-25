@@ -14,13 +14,13 @@
   <!-- V176_24_PORTAL_BACK_2026_11_22: ?v= bumped to 176-24 with in-portal Back navigation (portal.js + portal.css). Same rule as below: both queries carry the current version, so a fresh portal.html can never pair with stale cached subresources. -->
   <!-- V176_22_CONFIRM_LABEL_2026_11_22: ?v= bumped to 176-22 with the Record Confirm mileage-label fix (portal.js). portal.css itself is unchanged; both queries carry the current version so a fresh portal.html can never pair with stale cached subresources. -->
   <!-- V176_26_SQUARE_FREE_FEES_2026_11_22: ?v= bumped to 176-26 with the Square Free fee rates, the ATR One fee exemption, and the Square fees table (portal.js). portal.css itself is unchanged; both queries carry the current version so a fresh portal.html can never pair with stale cached subresources. -->
-  <!-- V176_39_WATCH_SIZE_2026_11_25 (owner, Nov 25, 2026): portal.html carries the Size field in Repair Triage (shown for Smartwatch + Apple only) and portal.js carries it onto the estimate and the ticket as "Apple Watch Series 4 (42mm)". -->
+  <!-- V176_40_WATCH_SIZE_2026_11_25 (owner, Nov 25, 2026): portal.html carries the Size field + GPS/Cellular pick in Repair Triage (shown for any Smartwatch brand) and portal.js carries both onto the estimate and the ticket as "Apple Watch Series 4 (42mm) (GPS + Cellular)". -->
   <!-- V176_38_SEND_BACK_2026_11_24 (Austin, Nov 24, 2026): ?v= bumped to 176-38 with the Needs to send back part status (portal.js). portal.css itself is unchanged; both queries carry the current version so a fresh portal.html can never pair with stale cached subresources. -->
   <!-- V176_37_REPORTS_2026_11_24 (Austin, Nov 24, 2026): ?v= bumped to 176-37 with the report forms and admin mailboxes (portal.js). portal.css itself is unchanged; both queries carry the current version so a fresh portal.html can never pair with stale cached subresources. -->
   <!-- V176_36_BRIEFING_2026_11_24 (Austin, Nov 24, 2026): ?v= bumped to 176-36 with the Your Day morning briefing (portal.js). portal.css itself is unchanged; both queries carry the current version so a fresh portal.html can never pair with stale cached subresources. -->
   <!-- V176_35_CAB_PASSCODE_2026_11_24 (Austin, Nov 23-24, 2026): everything under Financials behind the 4-digit passcode; custom action buttons set to Admin and up (or higher) ask for the same code. -->
-  <!-- V176_34_SQUARE_GATE_SHOP_EXPENSES_2026_11_23 (Austin, Nov 23, 2026): ?v= bumped to 176-39 with the Financials passcode on every Admin-and-up action button, the Back-button drawer fix, the language-law wording fixes, the Your Day morning briefing, and the report forms and mailboxes, and the Needs to send back part status, and the Apple Watch Size field (portal.html + portal.js; portal.css unchanged in content, query bumped with the version so a fresh portal.html can never pair with stale cached subresources). -->
-  <link rel="stylesheet" href="portal.css?v=176-39" />
+  <!-- V176_34_SQUARE_GATE_SHOP_EXPENSES_2026_11_23 (Austin, Nov 23, 2026): ?v= bumped to 176-40 with the Financials passcode on every Admin-and-up action button, the Back-button drawer fix, the language-law wording fixes, the Your Day morning briefing, and the report forms and mailboxes, and the Needs to send back part status, and the watch Size and Connection fields (portal.html + portal.js; portal.css unchanged in content, query bumped with the version so a fresh portal.html can never pair with stale cached subresources). -->
+  <link rel="stylesheet" href="portal.css?v=176-40" />
   <!-- PORTAL_APP_2026_11_09 (Austin, Nov 9, 2026): the Associate Hub
        is its own installable app. portal-manifest.json is a
        DECLARATION only — the installed app is this very page
@@ -1770,8 +1770,9 @@
               <select id="ci-type"><option>Phone</option><option>Tablet</option><option>Laptop</option><option>Desktop</option><option>Game Console</option><option>Smartwatch</option><option>Earbuds / Hearable</option><option>Other</option></select></div>
             <div class="portal-field"><label for="ci-brand">Brand</label><input type="text" id="ci-brand" placeholder="e.g. Samsung" /></div>
             <div class="portal-field"><label for="ci-model">Model</label><input type="text" id="ci-model" placeholder="e.g. Galaxy Buds2 Pro" /></div>
-            <!-- V176_39_WATCH_SIZE_2026_11_25 (owner, Nov 25, 2026): Size box under Brand/Model in Repair Triage, shown for Smartwatch + Apple only — the size rides the estimate to the ticket so nobody has to ask. Shown/hidden in portal.js (v176_39PaintSize). -->
+            <!-- V176_40_WATCH_SIZE_2026_11_25 (owner, Nov 25, 2026): Size box + GPS/Cellular pick under Brand/Model in Repair Triage, shown for any Smartwatch brand — the size and connection ride the estimate to the ticket so nobody has to ask. Shown/hidden in portal.js (v176_40PaintSize). -->
             <div class="portal-field" id="ci-size-wrap" hidden><label for="ci-size">Size</label><input type="text" id="ci-size" placeholder="e.g. 42mm" autocomplete="off" /></div>
+            <div class="portal-field" id="ci-conn-wrap" hidden><label for="ci-conn">GPS or Cellular?</label><select id="ci-conn"><option value="">Choose&hellip;</option><option value="GPS only">GPS only</option><option value="GPS + Cellular">GPS + Cellular</option><option value="Not sure">Not sure</option></select></div>
             <div class="portal-field"><label for="ci-serial">Serial / IMEI</label><input type="text" id="ci-serial" /></div>
           </div>
           <div class="portal-panel-head portal-subhead"><h3 class="portal-h3">What service does it need?</h3></div>
@@ -2530,7 +2531,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <!-- PORTAL_RECEIPT_SEND_2026_11_02: vendored html2pdf (html2canvas + jsPDF in one self-contained bundle, loaded locally, no CDN) — Download receipt and Email receipt render the PDF from the exact receipt markup. -->
   <script src="html2pdf.bundle.min.js"></script>
-  <script src="portal.js?v=176-39"></script>
+  <script src="portal.js?v=176-40"></script>
   <script>
   /* ================= TEAM DOCUMENTS + HIRE DOCUMENTS =================
    * Section logic for the Team Documents tab and the per-hire document

@@ -407,8 +407,10 @@
          for a vehicle; parts are listed by year). '' until picked;
          'Not sure' is a real pick, so nobody is trapped. */
       year: '',
-      /* V176_39_WATCH_SIZE_2026_11_25 (owner, Nov 25, 2026): Apple Watch size pick (make, model, then size — the size rides the estimate to the ticket so nobody has to ask). '' until typed; required when the size step shows. */
+      /* V176_40_WATCH_SIZE_2026_11_25 (owner, Nov 25, 2026): smartwatch size pick (make, model, then size — the size rides the estimate to the ticket so nobody has to ask). '' until typed; required when the size step shows. */
       size: '',
+      /* V176_40_WATCH_CONN_2026_11_25 (owner, Nov 25, 2026): GPS-only vs GPS + Cellular pick — the display assemblies differ on some generations, so the pick rides the ticket with the size. Optional; '' until picked, and 'Not sure' rides nothing. */
+      conn: '',
       /* V144_EIN_REMOVAL_2026_11_13 (owner, Nov 13, 2026):
          business bookings — business is set only when the guest
          enters from Business Services (data-business) or the
@@ -429,13 +431,16 @@
        ticket see it — with the picked year riding on it, e.g.
        "MacBook Air (2021)". repairState.model itself stays the
        plain model name (the learning stats key off it).
-       V176_39_WATCH_SIZE_2026_11_25: the picked size rides the same
-       parenthetical — "Apple Watch Series 4 (42mm)". */
+       V176_40_WATCH_SIZE_2026_11_25: the picked size rides the same
+       parenthetical — "Apple Watch Series 4 (42mm)" — and the
+       connection pick rides after it when definite:
+       "Apple Watch Series 4 (42mm) (GPS + Cellular)". */
     function rfModelWithYear() {
       if (!repairState.model) return '';
       var m = repairState.model;
       if (repairState.year) m += ' (' + repairState.year + ')';
       if (repairState.size) m += ' (' + repairState.size + ')';
+      if (repairState.conn && repairState.conn !== 'Not sure') m += ' (' + repairState.conn + ')';
       return m;
     }
     /* V145_ONEONONE_2499_2026_11_13 (owner, Nov 13, 2026 - settled
@@ -451,7 +456,7 @@
     function rfRenderSummary() {
       rfSet('rf-sum-device', repairState.device || 'Not picked yet');
       rfSet('rf-sum-brand', repairState.brand || '\u2014');
-      rfSet('rf-sum-model', repairState.model ? rfModelWithYear() : (repairState.modelState === 'notlisted' ? ('Not listed' + (repairState.year ? ' (' + repairState.year + ')' : '') + (repairState.size ? ' (' + repairState.size + ')' : '')) : (repairState.modelState === 'na' ? 'Not applicable' : '\u2014')));
+      rfSet('rf-sum-model', repairState.model ? rfModelWithYear() : (repairState.modelState === 'notlisted' ? ('Not listed' + (repairState.year ? ' (' + repairState.year + ')' : '') + (repairState.size ? ' (' + repairState.size + ')' : '') + (repairState.conn && repairState.conn !== 'Not sure' ? ' (' + repairState.conn + ')' : '')) : (repairState.modelState === 'na' ? 'Not applicable' : '\u2014')));
       var buildLines = rfBuildLines();
       var buildRow = document.getElementById('rf-sum-build-row');
       if (buildRow) buildRow.hidden = buildLines.length === 0;
@@ -497,8 +502,8 @@
       /* COMPUTER_YEAR_2026_11_10: a computer in repair mode needs
          its year pick before Continue ('Not sure' counts). */
       var yearOk = repairState.mode === 'oneonone' || repairState.device !== 'Computer' || !!repairState.year;
-      /* V176_39_WATCH_SIZE_2026_11_25: an Apple Watch in repair mode needs its size pick before Continue — the guest must enter it, so nobody has to ask. */
-      var sizeApplies = repairState.mode !== 'oneonone' && repairState.device === 'Smart Watch' && repairState.brand === 'Apple' && (repairState.modelState === 'chosen' || repairState.modelState === 'notlisted');
+      /* V176_40_WATCH_SIZE_2026_11_25: a smartwatch in repair mode needs its size pick before Continue — the guest must enter it, so nobody has to ask. Any brand: every manufacturer sizes watches differently. */
+      var sizeApplies = repairState.mode !== 'oneonone' && repairState.device === 'Smart Watch' && (repairState.modelState === 'chosen' || repairState.modelState === 'notlisted');
       var sizeOk = !sizeApplies || !!repairState.size;
       /* V144_EIN_REMOVAL_2026_11_13: no EIN gate — Continue never
          depends on an EIN. Scheduling uses the EIN on file from
@@ -681,6 +686,7 @@
           repairState.model = '';
           repairState.year = '';
           bkResetSize();
+          bkResetConn();
           repairState.issue = '';
           repairState.issues = [];
           repairState.atrOne = '';
@@ -1001,15 +1007,17 @@
       if (repairWrap) repairWrap.hidden = true;
       if (yearWrap) { yearWrap.hidden = false; try { yearWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {} }
     }
-    /* V176_39_WATCH_SIZE_2026_11_25 (owner, Nov 25, 2026): Apple Watch size — a Size box under Make and Model, shown only for Smart Watch + Apple, required before Continue, so the size rides the estimate to the ticket and nobody has to ask. Same step pattern as the Computer year pick: the service tiles wait for the size. */
+    /* V176_40_WATCH_SIZE_2026_11_25 (owner, Nov 25, 2026): smartwatch size — a Size box under Make and Model, shown for any Smart Watch brand, required before Continue, so the size rides the estimate to the ticket and nobody has to ask. Same step pattern as the Computer year pick: the service tiles wait for the size. The connection pick (V176_40_WATCH_CONN) shares the step. */
     function bkSizeApplies() {
-      return repairState.mode !== 'oneonone' && repairState.device === 'Smart Watch' && repairState.brand === 'Apple';
+      return repairState.mode !== 'oneonone' && repairState.device === 'Smart Watch';
     }
     function bkShowSizeStep() {
       var sizeWrap = document.getElementById('bk-size-wrap');
+      var connWrap = document.getElementById('bk-conn-wrap');
       var repairWrap = document.getElementById('bk-repair-wrap');
       if (repairWrap) repairWrap.hidden = true;
       if (sizeWrap) { sizeWrap.hidden = false; try { sizeWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {} }
+      if (connWrap) connWrap.hidden = false;
     }
     function bkResetSize() {
       repairState.size = '';
@@ -1017,6 +1025,14 @@
       if (sizeWrap) sizeWrap.hidden = true;
       var sizeInput = document.getElementById('bk-size');
       if (sizeInput) sizeInput.value = '';
+    }
+    /* V176_40_WATCH_CONN_2026_11_25: reset the connection pick alongside the size step — same four reset sites (device, picker, brand, model). */
+    function bkResetConn() {
+      repairState.conn = '';
+      var connWrap = document.getElementById('bk-conn-wrap');
+      if (connWrap) connWrap.hidden = true;
+      var connSel = document.getElementById('bk-conn');
+      if (connSel) connSel.value = '';
     }
     function populateBookingPicker(device) {
       var DATA = bkData();
@@ -1031,6 +1047,7 @@
       if (repairWrap) repairWrap.hidden = true;
       if (yearWrap) yearWrap.hidden = true;
       bkResetSize();
+      bkResetConn();
       /* COMPUTER_YEAR_2026_11_10: the year select is filled and
          wired here, once per device pick like the rest of step 2.
          A year pick sets the state and renders the service tiles
@@ -1048,7 +1065,7 @@
           renderBkRepairs(typeKey, brandSel.value, mSel ? mSel.value : '');
         };
       }
-      /* V176_39_WATCH_SIZE_2026_11_25: the size box — free text, required when shown. Typing a size sets the state and renders the service tiles once (the repair wrap stays hidden until then, so a later edit never re-renders picked tiles away). */
+      /* V176_40_WATCH_SIZE_2026_11_25: the size box — free text, required when shown. Typing a size sets the state and renders the service tiles once (the repair wrap stays hidden until then, so a later edit never re-renders picked tiles away). */
       var sizeInput = document.getElementById('bk-size');
       if (sizeInput) {
         var onSizeInput = function () {
@@ -1063,6 +1080,16 @@
         sizeInput.oninput = onSizeInput;
         sizeInput.onchange = onSizeInput;
       }
+      /* V176_40_WATCH_CONN_2026_11_25: the connection pick — GPS-only vs GPS + Cellular display assemblies differ on some generations, so the pick rides the ticket with the size. Optional: it never gates Continue, and "Not sure" rides nothing. Typing a size is still what renders the tiles. */
+      var connSel = document.getElementById('bk-conn');
+      if (connSel) {
+        var onConnInput = function () {
+          repairState.conn = connSel.value;
+          rfRenderSummary(); rfGate();
+        };
+        connSel.oninput = onConnInput;
+        connSel.onchange = onConnInput;
+      }
       if (!brandSel) { populateBrandsAndIssues(device); return; }
       bkFillSelect(brandSel,
         Object.keys(DATA[typeKey]).map(function (k) { return [k, k]; }).concat([['__other__', 'Other make']]),
@@ -1074,6 +1101,7 @@
         repairState.model = '';
         repairState.year = '';
         bkResetSize();
+        bkResetConn();
         rfBuildClear();
         var ywReset = document.getElementById('bk-year-wrap');
         if (ywReset) ywReset.hidden = true;
@@ -1112,6 +1140,7 @@
         var ySelReset = document.getElementById('bk-year-select');
         if (ySelReset) ySelReset.value = '';
         bkResetSize();
+        bkResetConn();
         rfRenderSummary(); rfGate();
         /* BOOKING_OO_TILE_2026_11_09: model changed while One-on-One
            mode is on — the Learn topic takes the new model's name. */
@@ -1396,6 +1425,7 @@
         model: repairState.model || '',
         year: repairState.year || '',
         size: repairState.size || '',
+        conn: repairState.conn || '',
         issue: repairState.issue || '',
         issues: repairState.issues.map(function (i) { return i.name; }),
         atrOne: repairState.atrOne || '',
@@ -1435,8 +1465,8 @@
          into the ticket (atr-forms.js files it as the ticket's
          model), so the picked year rides on it — "MacBook Air
          (2021)". With no model named, it rides on the brand. */
-      /* V176_39_WATCH_SIZE_2026_11_25: the size rides the same parenthetical as the year — "Apple Watch Series 4 (42mm)" — so it files as the ticket's model text exactly like the year does. */
-      if (info && !info.value && (g.model || g.brand)) { var mv = g.model || g.brand; if (g.year) mv += ' (' + g.year + ')'; if (g.size) mv += ' (' + g.size + ')'; info.value = mv; }
+      /* V176_40_WATCH_SIZE_2026_11_25: the size rides the same parenthetical as the year — "Apple Watch Series 4 (42mm)" — and the definite connection pick rides after it, so both file as the ticket's model text exactly like the year does. */
+      if (info && !info.value && (g.model || g.brand)) { var mv = g.model || g.brand; if (g.year) mv += ' (' + g.year + ')'; if (g.size) mv += ' (' + g.size + ')'; if (g.conn && g.conn !== 'Not sure') mv += ' (' + g.conn + ')'; info.value = mv; }
       var needSel = document.getElementById('sr-repair-needed');
       if (needSel && !needSel.value && g.mode !== 'oneonone' && REPAIR_NEEDED_MAP[g.issue]) needSel.value = REPAIR_NEEDED_MAP[g.issue];
       /* REPAIR_FLOW_UPDATE_2026_11_05: ATR One answer + describe text carry
@@ -1973,7 +2003,7 @@
            question still open, ATR One coverage. */
         setTimeout(function () {
           var sizeWrap = document.getElementById('bk-size-wrap');
-          if (sizeWrap && !sizeWrap.hidden) return; /* V176_39_WATCH_SIZE: the size step is still open — the guest types the size first; never scroll past it. */
+          if (sizeWrap && !sizeWrap.hidden) return; /* V176_40_WATCH_SIZE: the size step is still open — the guest types the size first; never scroll past it. */
           var wrap = document.getElementById('bk-atrone-wrap');
           if (wrap && !wrap.hidden) {
             try { wrap.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
@@ -7059,7 +7089,7 @@ if ("serviceWorker" in navigator) {
         cont.click();
         setTimeout(function () {
           var sizeWrap = document.getElementById('bk-size-wrap');
-          if (sizeWrap && !sizeWrap.hidden) return; /* V176_39_WATCH_SIZE: the size step is still open — the guest types the size first; never scroll past it. */
+          if (sizeWrap && !sizeWrap.hidden) return; /* V176_40_WATCH_SIZE: the size step is still open — the guest types the size first; never scroll past it. */
           var wrap = document.getElementById('bk-atrone-wrap');
           if (wrap && !wrap.hidden) {
             try { wrap.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}

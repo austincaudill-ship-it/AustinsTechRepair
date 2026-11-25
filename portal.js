@@ -3381,26 +3381,31 @@ function showLogin(errorMsg) {
       preferred_date: f.jobDate || null, preferred_window: f.windowLabel || null
     };
   }
-  /* V176_39_WATCH_SIZE_2026_11_25 (owner, Nov 25, 2026): Apple Watch size in Repair Triage — a Size box under Brand/Model, shown only when the device type is Smartwatch and the brand reads Apple. The size rides the model string ("Apple Watch Series 4 (42mm)"), exactly the way brand/model already flow: estimates row -> estimateTicketRow -> ticket, and every device line that reads t.model shows it. No new column, no conversion change. Staff-side the field is optional (unlike the guest booking form, where it gates Continue); a size typed for a non-watch, or with no model, never rides. */
-  function v176_39PaintSize() {
+  /* V176_40_WATCH_SIZE_2026_11_25 (owner, Nov 25, 2026): smartwatch size + connection in Repair Triage — a Size box and a GPS/Cellular pick under Brand/Model, shown whenever the device type is Smartwatch, any brand (every manufacturer sizes watches differently). Both ride the model string ("Apple Watch Series 4 (42mm) (GPS + Cellular)"), exactly the way brand/model already flow: estimates row -> estimateTicketRow -> ticket, and every device line that reads t.model shows them. No new column, no conversion change. Staff-side both fields are optional (unlike the guest booking form, where size gates Continue); a size or pick typed for a non-watch, or with no model, never rides. The connection pick matters because GPS-only vs GPS + Cellular display assemblies differ on some generations (the LTE radio lives in the display) — a definite pick rides, 'Not sure' rides nothing. */
+  function v176_40PaintSize() {
     var wrap = $('ci-size-wrap');
-    if (!wrap) return;
+    var cwrap = $('ci-conn-wrap');
     var type = $('ci-type') ? $('ci-type').value : '';
-    var brand = $('ci-brand') ? $('ci-brand').value.trim().toLowerCase() : '';
-    var show = type === 'Smartwatch' && brand === 'apple';
-    wrap.hidden = !show;
-    if (!show) { var inp = $('ci-size'); if (inp) inp.value = ''; }
+    var show = type === 'Smartwatch';
+    if (wrap) wrap.hidden = !show;
+    if (cwrap) cwrap.hidden = !show;
+    if (!show) {
+      var inp = $('ci-size'); if (inp) inp.value = '';
+      var sel = $('ci-conn'); if (sel) sel.value = '';
+    }
   }
-  function v176_39ModelWithSize(model) {
+  function v176_40ModelWithSize(model) {
     var m = String(model == null ? '' : model).trim();
     if (!m) return model;
+    var type = $('ci-type') ? $('ci-type').value : '';
+    if (type !== 'Smartwatch') return model;
     var inp = $('ci-size');
     var size = inp ? inp.value.trim() : '';
-    if (!size) return model;
-    var type = $('ci-type') ? $('ci-type').value : '';
-    var brand = $('ci-brand') ? $('ci-brand').value.trim().toLowerCase() : '';
-    if (type !== 'Smartwatch' || brand !== 'apple') return model;
-    return m + ' (' + size + ')';
+    if (size) m += ' (' + size + ')';
+    var sel = $('ci-conn');
+    var conn = sel ? sel.value : '';
+    if (conn && conn !== 'Not sure') m += ' (' + conn + ')';
+    return m;
   }
   function v176_30PaintDroppedOff() {
     var df = $('ci-droppedoff');
@@ -24426,18 +24431,18 @@ function loadTicketThread(client, ticketId) {
       ciTypeSel.addEventListener('change', v176_30PaintReasonTiles);
     }
     v176_30PaintReasonTiles();
-    /* V176_39_WATCH_SIZE_2026_11_25: the Size box follows the device type + brand text — type change and brand typing both re-paint it. */
-    if (ciTypeSel && !ciTypeSel.getAttribute('data-v176-39-size-wired')) {
-      ciTypeSel.setAttribute('data-v176-39-size-wired', '1');
-      ciTypeSel.addEventListener('change', v176_39PaintSize);
+    /* V176_40_WATCH_SIZE_2026_11_25: the Size box follows the device type — type change re-paints it; brand typing re-paints too (harmless now that gating is brand-blind, kept so a future brand rule repaints correctly). */
+    if (ciTypeSel && !ciTypeSel.getAttribute('data-v176-40-size-wired')) {
+      ciTypeSel.setAttribute('data-v176-40-size-wired', '1');
+      ciTypeSel.addEventListener('change', v176_40PaintSize);
     }
     var ciBrandEl = $('ci-brand');
-    if (ciBrandEl && !ciBrandEl.getAttribute('data-v176-39-size-wired')) {
-      ciBrandEl.setAttribute('data-v176-39-size-wired', '1');
-      ciBrandEl.addEventListener('input', v176_39PaintSize);
-      ciBrandEl.addEventListener('change', v176_39PaintSize);
+    if (ciBrandEl && !ciBrandEl.getAttribute('data-v176-40-size-wired')) {
+      ciBrandEl.setAttribute('data-v176-40-size-wired', '1');
+      ciBrandEl.addEventListener('input', v176_40PaintSize);
+      ciBrandEl.addEventListener('change', v176_40PaintSize);
     }
-    v176_39PaintSize();
+    v176_40PaintSize();
     var ciDroppedOffEl = $('ci-droppedoff');
     if (ciDroppedOffEl && !ciDroppedOffEl.getAttribute('data-wired')) {
       ciDroppedOffEl.setAttribute('data-wired', '1');
@@ -24513,7 +24518,7 @@ function loadTicketThread(client, ticketId) {
       if (signup && atr) signup.hidden = atr.value !== 'signup';
       v176_30PaintReasonTiles();
       v176_30PaintDroppedOff();
-      v176_39PaintSize();
+      v176_40PaintSize();
     }
     var ciClearBtn = $('ci-clear');
     if (ciClearBtn && !ciClearBtn.getAttribute('data-wired')) {
@@ -24601,7 +24606,7 @@ function loadTicketThread(client, ticketId) {
         var row = v176_30EstimateRow({
           audience: ciType, name: ciNameVal, biz: ciType === 'business', contact: ciContactVal,
           phone: phone, email: email, address: ciAddress,
-          device: $('ci-type').value, brand: $('ci-brand').value.trim(), model: v176_39ModelWithSize($('ci-model').value.trim()),
+          device: $('ci-type').value, brand: $('ci-brand').value.trim(), model: v176_40ModelWithSize($('ci-model').value.trim()),
           issue: issueText, amount: amount, note: [note, v176_30IntakeNote(intake)].filter(Boolean).join(' '),
           atrOne: atrVal, jobDate: ciJobDate, windowLabel: intake.windowLabel
         });
@@ -24621,7 +24626,7 @@ function loadTicketThread(client, ticketId) {
               ['Your estimate page', estimatePageLink(row)],
               ['What happens next', 'Tap the link above to view your estimate. You can confirm or decline it there — nothing is booked until you confirm.']
             ], 'estimate-link', row.public_token);
-            $('ci-form').reset(); ciPaintType(); v176_39PaintSize(); ciSetRequestType('repair');
+            $('ci-form').reset(); ciPaintType(); v176_40PaintSize(); ciSetRequestType('repair');
             ciCustomerId = null;
             ciWindowStart = null; ciPaintWindows(); v154HideAddressMap($('ci-address-map'));
             document.querySelectorAll('#ci-reasons .ci-tile.on').forEach(function (c) { c.classList.remove('on'); c.setAttribute('aria-pressed', 'false'); });
