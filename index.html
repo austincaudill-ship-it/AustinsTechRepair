@@ -726,7 +726,7 @@
          moved off the bottom of the home page into its own routed page.
          The block inside is the home-page block verbatim (same header,
          same #feedback wrapper, same form with data-form="feedback"),
-         so atr-forms.js and the Turnstile gate bind exactly as before. -->
+         so atr-forms.js binds exactly as before. -->
     <section id="review" class="page">
       <div class="section">
         <div class="container">
@@ -3317,26 +3317,25 @@
               <li>To schedule, perform, and follow up on repair services.</li>
               <li>To send appointment confirmations, receipts, and warranty information.</li>
               <li>To run your account and your ATR One membership, including your covered devices, points, and vouchers.</li>
-              <li>To confirm who you are when you sign in, and to check that form submissions are from a real person and not an automated program.</li>
+              <li>To confirm who you are when you sign in.</li>
               <li>To improve our services and fix problems with the website.</li>
               <li>To keep records we need for warranty and tax purposes, and to meet our legal obligations.</li>
               <li>We do not sell your personal information to anyone.</li>
             </ul>
 
-            <!-- V150_LEGAL_SEPARATION_2026_11_16: Processor list updated Nov 16, 2026 (Austin: the store no longer uses the removed provider) — list is now Square, Calendly, Supabase, Cloudflare Turnstile, GitHub Pages. -->
+            <!-- V150_LEGAL_SEPARATION_2026_11_16: Processor list updated Nov 16, 2026 (Austin: the store no longer uses the removed provider) - list is now Square, Calendly, Supabase, GitHub Pages. V176_42_NO_HUMAN_CHECKS_2026_11_26: Cloudflare Turnstile removed from the list, the human check is gone outright. -->
             <h3>3. How We Share Your Information</h3>
             <p>We share your information only with the providers we need to run the service, and only the information each one needs:</p>
             <ul>
               <li><strong>Square</strong> &mdash; card payments, gift cards, and ATR One membership billing.</li>
               <li><strong>Calendly</strong> &mdash; scheduling.</li>
               <li><strong>Supabase</strong> &mdash; service records, guest accounts, and portal data.</li>
-              <li><strong>Cloudflare Turnstile</strong> &mdash; the automatic human check on sign-in and on forms, which keeps automated submissions out.</li>
               <li><strong>GitHub Pages</strong> &mdash; website hosting.</li>
             </ul>
             <p>Each provider handles data under its own privacy policy. We do not sell your personal information, and we do not share it with anyone else except when the law requires it, or when it is needed to protect the safety of our guests, our team, or the business.</p>
 
             <h3>4. Cookies and Similar Technology</h3>
-            <p>Our website stores a small amount of information on your own device so it works properly &mdash; for example, what is in your shopping bag, your display settings, and items you have chosen to hide. The human check on sign-in and on forms may also set a cookie to confirm you are a real person. We do not use third-party advertising trackers on our website. You can clear stored data from your browser settings at any time; some parts of the site, such as your bag, may not remember your choices after you do.</p>
+            <p>Our website stores a small amount of information on your own device so it works properly &mdash; for example, what is in your shopping bag, your display settings, and items you have chosen to hide. We do not use third-party advertising trackers on our website. You can clear stored data from your browser settings at any time; some parts of the site, such as your bag, may not remember your choices after you do.</p>
 
             <h3>5. Data Retention</h3>
             <p>Service records are kept for warranty and tax purposes. Account records are kept while your account is active. When records are no longer needed for warranty, tax, or legal reasons, they are deleted. If you ask us to delete your information, we will do so except for records we are required to keep for tax or legal reasons, and except for records tied to a repair or warranty claim that is still open.</p>
@@ -4294,7 +4293,6 @@
                     <input type="checkbox" id="voo-wv-camera">
                     <span><strong>Also allow my camera</strong> (your choice). So my associate can see me during the session. It starts off &mdash; I turn it on, and I can stop it at any time.</span>
                   </label>
-                  <div class="atr-turnstile" id="ts-voo"></div>
                   <p><button class="btn btn-primary" type="button" id="voo-session-start" disabled><i class="fas fa-display"></i> Start my session</button></p>
                   <p class="voo-msg" id="voo-wv-msg" role="status" hidden></p>
                 </div>
@@ -4608,9 +4606,9 @@
              so the existing panel wiring works unchanged. -->
         <span class="footer-wordmark">ATR Group</span>
       </div>
-      <!-- FOOTER_CLOUDFLARE_BOTTOM_2026_11_10 (owner, Nov 10, 2026): the Cloudflare line and the official "Protected by Cloudflare" badge sit at the very bottom of the page, below the copyright row - small, muted, tucked in the bottom corner, out of the way. The sentence is the plain-words form of the Nov 6 footer line; same meaning, forms only. CLOUDFLARE_BADGE_LINK_2026_11_10 (owner, Nov 10, 2026): the badge is a link to cloudflare.com, so a guest can tap it and see the badge is legitimate. -->
+      <!-- FOOTER_CLOUDFLARE_BOTTOM_2026_11_10 (owner, Nov 10, 2026): the Cloudflare line and the official "Protected by Cloudflare" badge sit at the very bottom of the page, below the copyright row - small, muted, tucked in the bottom corner, out of the way. V176_42_NO_HUMAN_CHECKS_2026_11_26: the sentence is gone outright with the human check; the badge alone sits at the very bottom. CLOUDFLARE_BADGE_LINK_2026_11_10 (owner, Nov 10, 2026): the badge is a link to cloudflare.com, so a guest can tap it and see the badge is legitimate. -->
       <div class="footer-cf">
-        <span class="footer-cf-text">Cloudflare is not our product. We only use its check on our forms to confirm a real person is sending them.</span> <a href="https://www.cloudflare.com" target="_blank" rel="noopener"><img class="cf-badge-img" src="images/protected-by-cloudflare.jpg" alt="Protected by Cloudflare" width="761" height="264" loading="lazy"></a>
+        <a href="https://www.cloudflare.com" target="_blank" rel="noopener"><img class="cf-badge-img" src="images/protected-by-cloudflare.jpg" alt="Protected by Cloudflare" width="761" height="264" loading="lazy"></a>
       </div>
     </div>
   </footer>
@@ -4664,14 +4662,13 @@
     <button class="a11y-reset" id="a11y-reset" type="button">Reset all</button>
   </div>
 
-  <!-- SITE_TURNSTILE_2026_11_02 (staged): Cloudflare Turnstile API
-       (explicit render) + the shared ATR Turnstile helper. Must load
-       before script.js / atr-forms.js, which mount the widgets. -->
-  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
-  <script src="turnstile.js"></script>
+  <!-- V176_42_NO_HUMAN_CHECKS_2026_11_26 (owner, Nov 26, 2026): the
+       Cloudflare Turnstile API and shared helper scripts are gone
+       outright, no human check on any form. turnstile.js stays in
+       the repo unreferenced and inert. -->
   <script src="script.js"></script>
-  <!-- V176_20_MILEAGE_2026_11_22: atr-forms.js carries a version query (?v=176-20) so a fresh index.html can never pair with a stale cached atr-forms.js (the v176.19 mixed-version lesson). Bump the query on every future version that touches atr-forms.js. -->
-  <script src="atr-forms.js?v=176-30"></script>
+  <!-- V176_20_MILEAGE_2026_11_22: atr-forms.js carries a version query (?v=176-42) so a fresh index.html can never pair with a stale cached atr-forms.js (the v176.19 mixed-version lesson). Bump the query on every future version that touches atr-forms.js. -->
+  <script src="atr-forms.js?v=176-42"></script>
   <!-- V176_21_MILEAGE_GATE_FIX_2026_11_22 -->
 
   <!-- SITE_ACCT_FIX_2026_10_30 / SITE_CART_BADGE_2026_10_30 — account-box
@@ -4933,8 +4930,9 @@
     var client = getClient();
     if (!client) { showErr('atr-reset-req-err', 'Could not start the reset. Please try again in a moment.'); return; }
     /* V157_NO_TURNSTILE_AUTH_2026_11_17 (owner, Nov 17, 2026): password reset
-     * carries no human check — the check is only for guests
-     * submitting forms. The code request goes out at once instead
+     * carries no human check. V176_42_NO_HUMAN_CHECKS_2026_11_26
+     * (owner, Nov 26, 2026): there is no human check anywhere on
+     * the site any more. The code request goes out at once instead
      * of waiting on a check that can stall the timer that sends
      * the code. */
     btn.disabled = true; btn.textContent = 'Sending…';
@@ -7167,11 +7165,7 @@
     if (_thEl) _thEl.classList.toggle('acct-thread-chat', threadOrigin === 'messages' && !t.__general);
     var r = $('acct-repairs'), th = $('acct-thread'), nt = $('acct-newticket'), ib = $('acct-inbox');
     if (r) r.hidden = true; if (nt) nt.hidden = true; if (ib) ib.hidden = true; if (th) th.hidden = false;
-    /* ACCOUNT_FIX_PASS_3_2026_11_06: the reply box's human check
-       renders as the thread opens (either door — Repairs or
-       Messages), while it is on screen; see the new-request mount
-       in wireRepairs for why it no longer renders at page load. */
-    if (window.atrTurnstile) window.atrTurnstile.mount($('ts-acct-msg'));
+    
     var back = $('acct-thread-back');
     if (back) back.innerHTML = '<i class="fas fa-arrow-left"></i> Back to ' + (threadOrigin === 'messages' ? 'messages' : 'services');
     var info = $('acct-thread-info');
@@ -9700,9 +9694,10 @@
     var SB_UNAVAILABLE = 'Sign-in could not load \u2014 check your connection and refresh the page. If it keeps happening, call or text us at (937) 280-6243.';
 
     /* V157_NO_TURNSTILE_AUTH_2026_11_17 (owner, Nov 17, 2026): sign-in and sign-up
-     * carry no human check — the check is only for guests submitting
-     * forms. The auth widgets and their mounts are gone; nothing here
-     * waits on a token. */
+     * carry no human check. V176_42_NO_HUMAN_CHECKS_2026_11_26
+     * (owner, Nov 26, 2026): there is no human check anywhere on
+     * the site any more. The auth widgets and their mounts are
+     * gone; nothing here waits on a token. */
     var acctOpenBtn = $('account-open-btn');
     if (acctOpenBtn) acctOpenBtn.addEventListener('click', function () {
       /* ACCOUNT_FIX_PASS_3_2026_11_06: the button is a toggle — when
@@ -9789,10 +9784,9 @@
     /* LOGIN_SPEED_2026_11_10: passkey sign-in. No email is asked
        first — signInWithPasskey() runs the discoverable-credential
        ceremony and the device picks the account (Supabase docs:
-       "no email or phone needed upfront"). There is NO Turnstile
-       token on this path on purpose: a passkey is bound to the
-       device and the person holding it, so the human check would
-       add nothing. Success follows the same road as password
+       "no email or phone needed upfront"). There is no human check on this path (V176_42_NO_HUMAN_CHECKS_2026_11_26:
+       none anywhere on the site): a passkey is bound to the
+       device and the person holding it. Success follows the same road as password
        login (enterAccount); any failure lands soft on the
        password form with one plain line. */
     var pkBtn=$('authx-passkey-btn'); if(pkBtn)pkBtn.addEventListener('click',function(){ showErr($('authx-login-error'),''); if(!sb||!sb.auth||!sb.auth.signInWithPasskey){ showErr($('authx-login-error'),'Passkeys are not available in this browser. Sign in with your password below.'); return; } pkBtn.disabled=true; sb.auth.signInWithPasskey().then(function(res){ pkBtn.disabled=false; if(res.error){ showErr($('authx-login-error'),'Passkey sign-in did not work on this device. Sign in with your password below \u2014 if you have never set up a passkey, you can set one up in your profile after you sign in.'); return; } if(res.data&&res.data.session){ enterAccount(res.data.session); } else { window.location.reload(); } }).catch(function(){ pkBtn.disabled=false; showErr($('authx-login-error'),'Passkey sign-in was cancelled. Sign in with your password below.'); }); }); var forgot = $('authx-forgot-btn');
@@ -9811,10 +9805,11 @@
       if (!sb) { showErr($('authx-login-error'), SB_UNAVAILABLE); return; }
       var btn = loginForm.querySelector('button[type="submit"]');
       /* V157_NO_TURNSTILE_AUTH_2026_11_17 (owner, Nov 17, 2026): sign-in carries no
-       * human check — the check is only for guests submitting forms.
-       * The token wait and the captchaToken are gone; a slow
-       * connection can no longer stall the sign-in on a check that
-       * never finishes. */
+       * human check. V176_42_NO_HUMAN_CHECKS_2026_11_26 (owner,
+       * Nov 26, 2026): there is no human check anywhere on the
+       * site any more. The token wait and the captchaToken are
+       * gone; a slow connection can no longer stall the sign-in
+       * on a check that never finishes. */
       function submitLogin() {
         if (btn) { btn.disabled = true; btn.innerHTML = 'Logging in…'; }
         sb.auth.signInWithPassword({ email: email, password: pass }).then(function (res) {
@@ -9872,10 +9867,11 @@
       if (bizSignup) { signupMeta.business_name = name; signupMeta.business_phone = phone; signupMeta.personal_phone = personalPhone; signupMeta.business_address = address; signupMeta.ein = ein; }
       var btn = signupForm.querySelector('button[type="submit"]');
       /* V157_NO_TURNSTILE_AUTH_2026_11_17 (owner, Nov 17, 2026): sign-up carries no
-       * human check — the check is only for guests submitting forms.
-       * The token wait and the captchaToken are gone; a slow
-       * connection can no longer stall account creation on a check
-       * that never finishes. */
+       * human check. V176_42_NO_HUMAN_CHECKS_2026_11_26 (owner,
+       * Nov 26, 2026): there is no human check anywhere on the
+       * site any more. The token wait and the captchaToken are
+       * gone; a slow connection can no longer stall account
+       * creation on a check that never finishes. */
       function submitSignup() {
       if (btn) { btn.disabled = true; btn.innerHTML = 'Creating account…'; }
       sb.auth.signUp({
@@ -10749,7 +10745,6 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
               <input type="text" id="acct-msg-input" placeholder="Write a message…" autocomplete="off" maxlength="1000" aria-label="Write a message">
               <button class="btn btn-primary btn-sm" type="submit" aria-label="Send message"><i class="fas fa-paper-plane"></i></button>
             </div>
-            <div class="atr-turnstile" id="ts-acct-msg"></div>
             <p class="acct-error" id="acct-msg-error" hidden></p>
           </form>
         </div>
@@ -10843,7 +10838,6 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
               </label>
               <p class="acct-muted" style="text-align:left;padding:0;">Nothing is deducted now — we apply the discount at your visit.</p>
             </div>
-            <div class="atr-turnstile" id="ts-acct-ticket"></div>
             <p class="acct-error" id="acct-ticket-error" hidden></p>
             <button class="btn btn-primary btn-lg acct-submit" type="submit">Submit Request <i class="fas fa-arrow-right"></i></button>
           </form>

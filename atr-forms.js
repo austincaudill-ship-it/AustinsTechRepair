@@ -49,15 +49,17 @@
  * retired; do not reuse that link until Square holds a link
  * for the settled amount.
  *
- * SITE_TURNSTILE_2026_11_02 (staged): every form below is gated by
- * Cloudflare Turnstile. init() injects the widget container and
- * registers the shared submit gate (turnstile.js) BEFORE the real
- * handler: no token + no server confirmation from the
- * verify-turnstile Edge Function = no insert, and the email
- * alert (which only runs inside the handlers) never fires either.
- * The honeypot check still runs first inside each handler — spam
- * that fills it gets the usual fake success without ever reaching
- * the insert. See CHANGES.md for the residual-risk note.
+ * V176_42_NO_HUMAN_CHECKS_2026_11_26 (owner, Nov 26, 2026): NO human
+ * check on any form below. The Cloudflare Turnstile gate
+ * (SITE_TURNSTILE_2026_11_02) was removed outright by the owner's
+ * direct order. init() binds the real handler only: every submit
+ * runs the handler at once, with no token and no server
+ * confirmation. The honeypot check still runs first inside each
+ * handler: spam that fills it gets the usual fake success
+ * without ever reaching the insert. The verify-turnstile Edge
+ * Function is never called and is inert. See the v176.42 report
+ * for the residual-risk note (honeypot plus staged server-side
+ * rate limiting, not yet deployed).
  * ===================================================================== */
 (function () {
   'use strict';
@@ -658,14 +660,26 @@
 
   /* Honeypot: a hidden field real people never fill.
    * HONEYPOT_FAKESUCCESS_REMOVED_2026_11_04: the old trap faked a
-   * success and wrote nothing when the field had any value — but
+   * success and wrote nothing when the field had any value, but
    * browser autofill can fill it for real people, and on Nov 4, 2026
    * it silently ate the owner's own warranty test submission
-   * (success screen, no database row, no alert email). The Cloudflare
-   * human check (Turnstile) already gates every form, so the trap is
-   * retired: isSpam always returns false and the field is ignored. */
+   * (success screen, no database row, no alert email). The trap was
+   * retired while the Cloudflare human check gated every form.
+   * V176_42_NO_HUMAN_CHECKS_2026_11_26 (owner, Nov 26, 2026): the
+   * human check is gone outright, so the trap is the only invisible
+   * backstop left in this file, reinstated. The field stays
+   * off-screen (atr-forms.css .atr-honeypot), tabindex -1,
+   * autocomplete off, named "_honey" (no autofill token matches
+   * it). A filled field still fakes success and writes nothing;
+   * the Nov 4 autofill risk is unchanged and stays recorded here.
+   * Server-side rate limiting is staged separately (see the
+   * v176.42 report) and is not live in this file. */
   function isSpam(form) {
-    return false;
+    try {
+      var el = form.elements ? form.elements['_honey'] : null;
+      var v = el ? String(el.value || '') : '';
+      return v.trim() !== '';
+    } catch (e) { return false; }
   }
 
   /* ---------------- email alert (fire-and-forget) ----------------
@@ -1798,31 +1812,13 @@
     document.querySelectorAll('form[data-form]').forEach(function (form) {
       var kind = form.getAttribute('data-form');
       if (!HANDLERS[kind]) return;
-      /* SITE_TURNSTILE_2026_11_02: one widget per form, injected
-       * just above the submit button (the service-request form is
-       * also the repair wizard's step 4, so the wizard intake is
-       * covered by this same gate), and the gate listener is
-       * registered BEFORE the real handler so it can hold the
-       * submit until the server confirms the token. If turnstile.js
-       * failed to load, the gate is skipped rather than breaking
-       * the form outright — the publish checklist requires
-       * turnstile.js to be live alongside this file. */
-      var slot = document.createElement('div');
-      slot.className = 'atr-turnstile';
-      var btn = form.querySelector('[type="submit"]');
-      if (btn && btn.parentNode === form) form.insertBefore(slot, btn);
-      else if (btn && btn.parentNode) btn.parentNode.insertBefore(slot, btn);
-      else form.appendChild(slot);
-      if (window.atrTurnstile) {
-        window.atrTurnstile.mount(slot);
-        window.atrTurnstile.gate(form, slot, {
-          onBlocked: function (reason) {
-            showFormError(form, reason === 'failed'
-              ? 'The human check did not pass. Please complete it again, or call or text us at (937) 280-6243.'
-              : 'Please complete the quick human check above the button, then send again. Stuck? Call or text us at (937) 280-6243.');
-          }
-        });
-      }
+      /* V176_42_NO_HUMAN_CHECKS_2026_11_26 (owner, Nov 26, 2026):
+       * no human check on any form — the Turnstile slot injection
+       * and submit gate are gone outright (the service-request
+       * form is also the repair wizard's step 4, so the wizard
+       * intake submits with no check either). The real handler
+       * below runs on every submit; the honeypot (isSpam) is the
+       * only invisible backstop in this file. */
       HANDLERS[kind](form);
     });
   }

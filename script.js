@@ -4302,12 +4302,13 @@
     if (newTicketBtn) newTicketBtn.addEventListener('click', showNewTicket);
 
     /* V157 (expanded scope, Nov 17, 2026): NO Turnstile gate on the
-     * account forms any more. The check lives only on website form
-     * submissions — never on account / portal flows. The old gate
-     * block (ts-acct-msg / ts-acct-ticket, with the session-JWT
-     * bearer) is deleted outright; the real submit handlers below
-     * are untouched and now run ungated, exactly as they did once
-     * a token had passed. */
+     * account forms any more. V176_42_NO_HUMAN_CHECKS_2026_11_26
+     * (owner, Nov 26, 2026): the check is gone outright from the
+     * whole site — never on account / portal flows, and no longer
+     * on website form submissions either. The old gate block
+     * (ts-acct-msg / ts-acct-ticket, with the session-JWT bearer)
+     * is deleted outright; the real submit handlers below are
+     * untouched and run ungated. */
 
     /* ---------- send message ---------- */
     if (msgForm) msgForm.addEventListener('submit', function (e) {
@@ -6207,8 +6208,7 @@ if ("serviceWorker" in navigator) {
    header account button itself — they click #account-open-btn, so the tap
    runs the exact routing that button uses (script.js goAccount + the
    index.html twin handler: signed-in visitors land on their dashboard,
-   signed-out visitors on the sign-in view, the quick glance closes, and
-   the human checks mount after the page switch). There is deliberately no
+   signed-out visitors on the sign-in view, the quick glance closes). There is deliberately no
    data-page attribute on either link: the generic router would switch the
    page without choosing the right account view. If the header button is
    ever missing, the fallback is a plain hash navigation to the account
@@ -7315,24 +7315,15 @@ document.addEventListener('click', function (e) {
     var wvMsg = document.getElementById('voo-wv-msg');
     var wvBlock = document.getElementById('voo-waiver');
     var finalBlock = document.getElementById('voo-final');
-    var tsSlot = document.getElementById('ts-voo');
     if (!wvScreen || !startSessionBtn) return;
-    /* HUMAN_CHECK_2026_11_11: mount the human-check widget with
-       the waiver (explicit render works while the block is still
-       hidden; the Start handler re-mounts, a no-op once live). */
-    if (tsSlot && window.atrTurnstile) window.atrTurnstile.mount(tsSlot);
     wvScreen.addEventListener('change', function () {
       startSessionBtn.disabled = !wvScreen.checked;
     });
-    /* HUMAN_CHECK_2026_11_11 (owner, Nov 11, 2026): Start my
-       session stays inert until the site's human check confirms
-       a person — the same Cloudflare Turnstile widget and the
-       same verify-turnstile server path the sign-in and
-       booking forms already use (turnstile.js,
-       window.atrTurnstile.verify; no new machinery, no new
-       function). Only then does the waiver record, and the
-       redirect fires exactly as before. Like the rest of the
-       site this fails closed: no confirmed check, no start. */
+    /* V176_42_NO_HUMAN_CHECKS_2026_11_26 (owner, Nov 26, 2026):
+       no human check anywhere on the site — the Start handler
+       goes straight to recording the waiver once the screen
+       box is ticked. The old mount / token / verify block is
+       gone outright. */
     /* CONNECT_QS_BARE_LINK_2026_11_13 (owner, Nov 13, 2026 —
        REPLACES the Nov 12 CONNECT_QS_URL device-aware routing):
        the guest destination is now the bare
@@ -7387,29 +7378,7 @@ document.addEventListener('click', function (e) {
     }
     startSessionBtn.addEventListener('click', function () {
       if (!wvScreen.checked) return;
-      if (!tsSlot || !window.atrTurnstile) {
-        if (wvMsg) { wvMsg.textContent = 'The human check could not load on this device. Please reload the page — or call or text us and we will get you connected.'; wvMsg.hidden = false; }
-        return;
-      }
-      window.atrTurnstile.mount(tsSlot);
-      var tok = window.atrTurnstile.token(tsSlot);
-      if (!tok) {
-        if (wvMsg) { wvMsg.textContent = 'One quick human check first — tick the box just above, then tap Start my session again.'; wvMsg.hidden = false; }
-        return;
-      }
-      startSessionBtn.disabled = true;
-      if (wvMsg) { wvMsg.textContent = 'Checking…'; wvMsg.hidden = false; }
-      bearer(function (b) {
-        window.atrTurnstile.verify(tok, b, function (ok) {
-          window.atrTurnstile.reset(tsSlot);
-          if (!ok) {
-            startSessionBtn.disabled = false;
-            if (wvMsg) { wvMsg.textContent = 'The human check did not pass. Please tick the box once more, then tap Start my session again.'; wvMsg.hidden = false; }
-            return;
-          }
-          recordWaiver();
-        });
-      });
+      recordWaiver();
     });
   })();
 
