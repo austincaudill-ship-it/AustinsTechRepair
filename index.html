@@ -282,13 +282,13 @@
                  the FIRST slide is the holiday slide, and it follows
                  the calendar on its own. The script right below the
                  hero controls fills it for whichever holiday is in
-                 season (Black Friday Nov 25-27, then Thanksgiving,
+                 season (Black Friday Nov 27, then Thanksgiving,
                  Christmas after it, then New Year's, and the rest of
                  the year), and takes the slide out entirely when no
                  holiday is on. The default content below is
                  Thanksgiving. No discounts or deal terms on any
                  holiday EXCEPT Black Friday: Austin ordered 30% off
-                 repair labor for everybody, Nov 25-27, 2026 (owner,
+                 repair labor for everybody, Nov 27, 2026 (owner,
                  Nov 12, 2026), parts stay at cost. -->
             <div class="hero-slide is-active" id="holiday-slide">
               <p class="eyebrow" id="holiday-eyebrow">Thanksgiving</p>
@@ -406,9 +406,9 @@
                 eyebrow: 'Veterans Day', headline: 'Thank you to those who served.',
                 sub: 'We are closed on Veterans Day to honor those who served. Veterans take 15% off today &mdash; our thank-you. Book online any time &mdash; we will be back the next day.',
                 img: 'images/holiday-flag.webp', alt: 'An American flag waving on a porch at golden hour', ctas: STD },
-              { when: function () { return between(now, minus(tg, 1), plus(tg, 1)); },
+              { when: function () { return between(now, plus(tg, 1), plus(tg, 1)); },
                 eyebrow: 'Black Friday', headline: '30% off labor this Black Friday.',
-                sub: '30% off repair labor for everybody, November 25 to 27. Parts stay at cost. We are closed Thanksgiving Day, November 26 &mdash; book ahead and we will be there.',
+                sub: '30% off repair labor for everybody, November 27 only, ends 10 PM. Parts stay at cost. We are closed Thanksgiving Day, November 26 &mdash; book ahead and we will be there.',
                 img: 'images/work/phone-repair.jpg', alt: 'Technician repairing a smartphone', ctas: STD },
               { when: function () { return between(now, day(y, 10, 1), tg); },
                 eyebrow: 'Thanksgiving', headline: 'Dropped your phone after the holidays?',
