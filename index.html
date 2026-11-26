@@ -2045,6 +2045,8 @@
               <span class="pw-wrap"><input type="password" id="authx-login-password" placeholder="••••••••" autocomplete="current-password" aria-label="Password" required><button class="pw-eye" type="button" data-pw-eye aria-label="Show password"><i class="fas fa-eye"></i></button></span>
             </label>
             <p class="acct-error" id="authx-login-error" hidden></p>
+            <!-- V176_44_SIGNUP_NOTE_2026_11_26 (owner, Nov 26, 2026): the check-your-email note after a new signup, on the login form so it stays visible after the switch from Sign Up — the signup form's own note is hidden with the form. -->
+            <p class="acct-muted" id="authx-login-note" hidden></p>
             <button class="btn btn-primary btn-lg acct-submit" type="submit">Log In <i class="fas fa-arrow-right"></i></button>
             <button class="authx-forgot" id="authx-forgot-btn" type="button">Forgot your password?</button>
           </form>
@@ -9801,6 +9803,7 @@
     if (loginForm) loginForm.addEventListener('submit', function (e) {
       e.preventDefault();
       showErr($('authx-login-error'), '');
+      var ln0 = $('authx-login-note'); if (ln0) { ln0.textContent = ''; ln0.hidden = true; }
       var email = String($('authx-login-email').value || '').trim().toLowerCase();
       var pass = $('authx-login-password').value || '';
       if (!validEmail(email)) { showErr($('authx-login-error'), 'Please enter a valid email address.'); return; }
@@ -9893,6 +9896,9 @@
         var note = $('authx-signup-note');
         if (note) { note.textContent = 'Account created — check your email for a confirmation link, then come back and log in.'; note.hidden = false; }
         var le = $('authx-login-email'); if (le) le.value = email;
+        /* V176_44_SIGNUP_NOTE_2026_11_26 (owner, Nov 26, 2026): the note above lives on the signup form, which selectTab('login') hides — the guest saw a bare login view and no message. The same note now rides on the login form too, so it stays visible after the switch. */
+        var lnote = $('authx-login-note');
+        if (lnote) { lnote.textContent = 'Account created — check your email for a confirmation link, then come back and log in.'; lnote.hidden = false; }
         selectTab('login');
       }).catch(function () {
         if (btn) { btn.disabled = false; btn.innerHTML = 'Create Account <i class="fas fa-arrow-right"></i>'; }
