@@ -21035,7 +21035,7 @@ function loadTicketThread(client, ticketId) {
     var tools = $('portal-home-holiday-tools');
     if (tools) {
       tools.innerHTML = (!homeHolidaysMissing && isAdminOrAbove())
-        ? '<p><button class="portal-btn portal-btn-primary" type="button" data-home-holiday-add><i class="fas fa-plus"></i> Add a holiday or day off</button></p>' : '';
+        ? '<p><button class="portal-btn portal-btn-primary" type="button" data-home-holiday-add><i class="fas fa-plus"></i> Add a holiday</button></p>' : '';
       var addBtn = tools.querySelector('[data-home-holiday-add]');
       if (addBtn) addBtn.addEventListener('click', function () { openHomeHolidayEditor(null); });
     }
@@ -21049,7 +21049,7 @@ function loadTicketThread(client, ticketId) {
      * rows carry _cal and render without edit buttons: they are
      * edited on the calendar, not here. */
     var allHol = homeHolidays.concat((typeof hhDayoffEvents !== 'undefined' ? hhDayoffEvents : []).map(function (ev) { return { id: 'cal-' + ev.id, day: ev.event_date, name: ev.title, note: ev.note, _cal: true }; }));
-    if (!allHol.length) { box.innerHTML = '<p class="portal-muted">No holidays or days off posted yet.</p>'; return; }
+    if (!allHol.length) { box.innerHTML = '<p class="portal-muted">No holidays posted yet.</p>'; return; }
     var today = homeTodayStr();
     var upcoming = allHol.filter(function (h) { return String(h.day) >= today; });
     var past = allHol.filter(function (h) { return String(h.day) < today; });
@@ -21085,11 +21085,11 @@ function loadTicketThread(client, ticketId) {
     homeEditingHolidayId = id || null;
     var row = null;
     if (id) homeHolidays.forEach(function (h) { if (String(h.id) === String(id)) row = h; });
-    $('portal-home-holiday-form-title').textContent = row ? 'Edit holiday or day off' : 'Add a holiday or day off';
+    $('portal-home-holiday-form-title').textContent = row ? 'Edit holiday' : 'Add a holiday';
     $('portal-home-holiday-date').value = row ? (row.day || '') : '';
     $('portal-home-holiday-name').value = row ? (row.name || '') : '';
     $('portal-home-holiday-note').value = row ? (row.note || '') : '';
-    $('portal-home-holiday-submit').innerHTML = row ? '<i class="fas fa-check"></i> Save day' : '<i class="fas fa-plus"></i> Add day';
+    $('portal-home-holiday-submit').innerHTML = row ? '<i class="fas fa-check"></i> Save holiday' : '<i class="fas fa-plus"></i> Add holiday';
     $('portal-home-holiday-cancel').hidden = !row;
     $('portal-home-holiday-error').hidden = true;
     form.hidden = false;
@@ -21302,10 +21302,15 @@ function loadTicketThread(client, ticketId) {
     });
     (shifts || []).forEach(function (s) {
       var mine = myId && s.claimed_by && String(s.claimed_by) === String(myId);
-      if (s.status !== 'open' && !mine) return;
+      /* V176_49_SHIFT_VISIBILITY_2026_11_27: only an admin sees another
+       * associate's claimed shift in the calendar. Everyone sees open
+       * shifts and their own. Associates keep exactly today's view. */
+      if (s.status !== 'open' && !mine && !isAdminOrAbove()) return;
+      var other = s.status !== 'open' && !mine;
+      var who = s.claimed_by_name || '';
       add(String(s.shift_date || '').slice(0, 10), {
-        kind: mine ? 'shift-mine' : 'shift-open', id: s.id,
-        label: (mine ? 'Your shift' : 'Open shift') + ' \u2014 ' + hhFmtTimeOfDay(s.start_time) + ' &ndash; ' + hhFmtTimeOfDay(s.end_time),
+        kind: mine ? 'shift-mine' : (other ? 'shift-other' : 'shift-open'), id: s.id,
+        label: (mine ? 'Your shift' : (other ? (who ? who : 'Claimed shift') : 'Open shift')) + ' \u2014 ' + hhFmtTimeOfDay(s.start_time) + ' &ndash; ' + hhFmtTimeOfDay(s.end_time),
         sub: s.role_needed || s.note || ''
       });
     });
@@ -21697,8 +21702,8 @@ function loadTicketThread(client, ticketId) {
       .catch(function () { shDone = true; render(); });
   }
 
-  var HH_CAL_KIND_LABEL = { 'event-outing': 'Outing', 'event-special': 'Special day', 'event-dayoff': 'Day off', 'event-note': 'Note', birthday: 'Birthday', job: 'Guest job', 'shift-mine': 'Your shift', 'shift-open': 'Open shift' };
-  var HH_CAL_DOT = { 'event-outing': 'hh-dot-outing', 'event-special': 'hh-dot-special', 'event-dayoff': 'hh-dot-dayoff', 'event-note': 'hh-dot-note', birthday: 'hh-dot-birthday', job: 'hh-dot-job', 'shift-mine': 'hh-dot-shift', 'shift-open': 'hh-dot-shift' };
+  var HH_CAL_KIND_LABEL = { 'event-outing': 'Outing', 'event-special': 'Special day', 'event-dayoff': 'Holiday', 'event-note': 'Note', birthday: 'Birthday', job: 'Guest job', 'shift-mine': 'Your shift', 'shift-open': 'Open shift', 'shift-other': 'Shift' };
+  var HH_CAL_DOT = { 'event-outing': 'hh-dot-outing', 'event-special': 'hh-dot-special', 'event-dayoff': 'hh-dot-dayoff', 'event-note': 'hh-dot-note', birthday: 'hh-dot-birthday', job: 'hh-dot-job', 'shift-mine': 'hh-dot-shift', 'shift-open': 'hh-dot-shift', 'shift-other': 'hh-dot-shift' };
 
   /* V176_48_CAL_GROUPS_2026_11_27: Coming-up groups, in legend order.
    * Each renders as a collapsible sub-fold inside the Shared Calendar,
@@ -21707,7 +21712,7 @@ function loadTicketThread(client, ticketId) {
     { key: 'outing', label: 'Outings', kinds: ['event-outing'] },
     { key: 'birthday', label: 'Birthdays', kinds: ['birthday'] },
     { key: 'job', label: 'Guest jobs', kinds: ['job'] },
-    { key: 'shift', label: 'Shifts', kinds: ['shift-mine', 'shift-open'] },
+    { key: 'shift', label: 'Shifts', kinds: ['shift-mine', 'shift-open', 'shift-other'] },
     { key: 'special', label: 'Special days', kinds: ['event-special'] },
     { key: 'note', label: 'Notes', kinds: ['event-note'] }
   ];
@@ -21766,7 +21771,7 @@ function loadTicketThread(client, ticketId) {
       if ((firstDow + d) % 7 === 0 && d < daysInMonth) html += '</div><div class="hh-cal-week">';
     }
     html += '</div></div>';
-    html += '<p class="portal-small portal-muted hh-cal-legend"><span><i class="hh-dot hh-dot-outing"></i> Outing</span> <span><i class="hh-dot hh-dot-birthday"></i> Birthday</span> <span><i class="hh-dot hh-dot-dayoff"></i> Day off</span> <span><i class="hh-dot hh-dot-job"></i> Guest job</span> <span><i class="hh-dot hh-dot-shift"></i> Shift</span></p>';
+    html += '<p class="portal-small portal-muted hh-cal-legend"><span><i class="hh-dot hh-dot-outing"></i> Outing</span> <span><i class="hh-dot hh-dot-birthday"></i> Birthday</span> <span><i class="hh-dot hh-dot-dayoff"></i> Holiday</span> <span><i class="hh-dot hh-dot-job"></i> Guest job</span> <span><i class="hh-dot hh-dot-shift"></i> Shift</span></p>';
     if (hhCalSelected && items[hhCalSelected] && items[hhCalSelected].length) {
       html += '<div class="hh-cal-daydetail"><p class="portal-card-meta"><strong>' + esc(homeFmtDay(hhCalSelected)) + '</strong></p>' +
         items[hhCalSelected].map(function (it) {

@@ -445,10 +445,6 @@
           </div>
         </div>
 
-        <!-- V176_36_BRIEFING_2026_11_24: the Celebrations block moved out of the Your Day fold — the fold holds only the briefing now. The block itself is unchanged (same 30-day window, same read-only list, same loader below). -->
-        <!-- V173_CELEBRATIONS_HOME_2026_11_18 (Austin, Nov 18, 2026): Celebrations moved here from the Guest panel — guest birthdays in the next 30 days live on Home now, so the guest list is the first thing on the Guest panel. Same block, same 30-day window, same read-only list. -->
-        <div id="portal-celebrations"></div>
-
         <!-- HUB_HOME_2026_11_09 (v62): TIPS OF THE DAY — one repair tip and one safety tip, the same pair for the whole team all day, turning over each morning from public.portal_home_tips. The whole section hides when the bank has no active tip to show (never a placeholder). Admin+ manages the bank in-panel below. Logic: loadHomeTips in portal.js. -->
         <div id="portal-home-tips-section">
           <div class="home-acc" data-home-acc="tips">
@@ -612,15 +608,15 @@
           <button type="button" class="home-acc-head" data-home-acc-toggle="calendar" aria-expanded="false"><span class="home-acc-title">Shared Calendar</span><i class="fas fa-chevron-down home-acc-chev" aria-hidden="true"></i></button>
           <div class="home-acc-body" data-home-acc-body="calendar" hidden>
         <div id="portal-home-calendar"><p class="portal-muted">Loading&hellip;</p></div>
-        <!-- V176_48_CAL_GROUPS_2026_11_27: Holidays & days off now lives inside Shared Calendar as a sub-fold. -->
+        <!-- V176_49_CAL_GROUPS_2026_11_27: Holidays now lives inside Shared Calendar as a sub-fold. -->
         <div class="home-acc" data-home-acc="holidays">
-          <button type="button" class="home-acc-head" data-home-acc-toggle="holidays" aria-expanded="false"><span class="home-acc-title">Holidays &amp; days off</span><i class="fas fa-chevron-down home-acc-chev" aria-hidden="true"></i></button>
+          <button type="button" class="home-acc-head" data-home-acc-toggle="holidays" aria-expanded="false"><span class="home-acc-title">Holidays</span><i class="fas fa-chevron-down home-acc-chev" aria-hidden="true"></i></button>
           <div class="home-acc-body" data-home-acc-body="holidays" hidden>
         <div id="portal-home-holidays"><p class="portal-muted">Loading&hellip;</p></div>
         <div id="portal-home-holiday-tools"></div>
         <form id="portal-home-holiday-form" novalidate hidden>
           <div class="portal-panel-head portal-subhead">
-            <h3 class="portal-h3" id="portal-home-holiday-form-title">Add a holiday or day off</h3>
+            <h3 class="portal-h3" id="portal-home-holiday-form-title">Add a holiday</h3>
           </div>
           <div class="portal-nh-grid">
             <div class="portal-field">
@@ -638,53 +634,13 @@
           </div>
           <p class="portal-error" id="portal-home-holiday-error" hidden></p>
           <button class="portal-btn portal-btn-primary" id="portal-home-holiday-submit" type="submit">
-            <i class="fas fa-plus"></i> Add day
+            <i class="fas fa-plus"></i> Add holiday
           </button>
           <button class="portal-btn portal-btn-outline" id="portal-home-holiday-cancel" type="button" hidden>Cancel edit</button>
         </form>
           </div>
         </div>
-        <div id="portal-home-cal-tools"></div>
-        <form id="portal-home-cal-form" novalidate hidden>
-          <div class="portal-panel-head portal-subhead">
-            <h3 class="portal-h3" id="portal-home-cal-form-title">Add to the calendar</h3>
-          </div>
-          <div class="portal-nh-grid">
-            <div class="portal-field">
-              <label for="portal-home-cal-kind">Kind</label>
-              <select id="portal-home-cal-kind">
-                <option value="outing">Outing</option>
-                <option value="special">Special day</option>
-                <option value="dayoff">Day off</option>
-                <option value="note" selected>Note</option>
-              </select>
-            </div>
-            <div class="portal-field">
-              <label for="portal-home-cal-title">Title <span aria-hidden="true">*</span></label>
-              <input type="text" id="portal-home-cal-title" placeholder="e.g. Team night at Main Event" required />
-            </div>
-            <div class="portal-field">
-              <label for="portal-home-cal-date">Date <span aria-hidden="true">*</span></label>
-              <input type="date" id="portal-home-cal-date" required />
-            </div>
-            <div class="portal-field">
-              <label for="portal-home-cal-end">End date (optional)</label>
-              <input type="date" id="portal-home-cal-end" />
-            </div>
-            <div class="portal-field portal-nh-wide">
-              <label for="portal-home-cal-note">Note (optional)</label>
-              <input type="text" id="portal-home-cal-note" placeholder="e.g. Meet at 6 PM" />
-            </div>
-          </div>
-          <p class="portal-error" id="portal-home-cal-error" hidden></p>
-          <button class="portal-btn portal-btn-primary" id="portal-home-cal-submit" type="submit">
-            <i class="fas fa-plus"></i> Add item
-          </button>
-          <button class="portal-btn portal-btn-outline" id="portal-home-cal-cancel" type="button" hidden>Cancel edit</button>
-        </form>
-          </div>
-        </div>
-
+        <!-- V176_47_CELEBRATIONS_REMOVED_2026_11_27 (Austin, Nov 27, 2026): Celebrations block removed from Home entirely — birthdays are seen on the shared calendar. -->
       </div>
 
       <!-- TICKETS -->
@@ -777,6 +733,47 @@
           <p class="portal-muted portal-small">The business&rsquo;s unsigned documents. Tap one to pull it up.</p>
           <div id="portal-docs-blanks"><p class="portal-muted">Loading&hellip;</p></div>
         </div>
+        <div id="portal-home-cal-tools"></div>
+        <form id="portal-home-cal-form" novalidate hidden>
+          <div class="portal-panel-head portal-subhead">
+            <h3 class="portal-h3" id="portal-home-cal-form-title">Add to the calendar</h3>
+          </div>
+          <div class="portal-nh-grid">
+            <div class="portal-field">
+              <label for="portal-home-cal-kind">Kind</label>
+              <select id="portal-home-cal-kind">
+                <option value="outing">Outing</option>
+                <option value="special">Special day</option>
+                <option value="dayoff">Holiday</option>
+                <option value="note" selected>Note</option>
+              </select>
+            </div>
+            <div class="portal-field">
+              <label for="portal-home-cal-title">Title <span aria-hidden="true">*</span></label>
+              <input type="text" id="portal-home-cal-title" placeholder="e.g. Team night at Main Event" required />
+            </div>
+            <div class="portal-field">
+              <label for="portal-home-cal-date">Date <span aria-hidden="true">*</span></label>
+              <input type="date" id="portal-home-cal-date" required />
+            </div>
+            <div class="portal-field">
+              <label for="portal-home-cal-end">End date (optional)</label>
+              <input type="date" id="portal-home-cal-end" />
+            </div>
+            <div class="portal-field portal-nh-wide">
+              <label for="portal-home-cal-note">Note (optional)</label>
+              <input type="text" id="portal-home-cal-note" placeholder="e.g. Meet at 6 PM" />
+            </div>
+          </div>
+          <p class="portal-error" id="portal-home-cal-error" hidden></p>
+          <button class="portal-btn portal-btn-primary" id="portal-home-cal-submit" type="submit">
+            <i class="fas fa-plus"></i> Add item
+          </button>
+          <button class="portal-btn portal-btn-outline" id="portal-home-cal-cancel" type="button" hidden>Cancel edit</button>
+        </form>
+          </div>
+        </div>
+
       </div>
 
       <!-- RECORDS — V176_RECORDS_2026_11_19 (Austin, Nov 19, 2026): signed & filed documents live here. V176_33_ATRONE_GUEST_2026_11_23 (Austin, Nov 23, 2026): the Records action button moved from the first sidebar group into Admin, directly before Setup — the panel itself is unchanged. -->
@@ -2533,7 +2530,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <!-- PORTAL_RECEIPT_SEND_2026_11_02: vendored html2pdf (html2canvas + jsPDF in one self-contained bundle, loaded locally, no CDN) — Download receipt and Email receipt render the PDF from the exact receipt markup. -->
   <script src="html2pdf.bundle.min.js"></script>
-  <script src="portal.js?v=176-48"></script>
+  <script src="portal.js?v=176-49"></script>
   <script>
   /* ================= TEAM DOCUMENTS + HIRE DOCUMENTS =================
    * Section logic for the Team Documents tab and the per-hire document
@@ -5795,120 +5792,6 @@
   })();
   </script>
   <script>
-  /* ================= CELEBRATIONS (customer birthdays) =================
-   * Phase 3 foundation for the customer-love touches: at the top of the
-   * Customers tab, lists customers whose birthday falls in the next 30
-   * days so the team can reach out. Read-only. The automated birthday /
-   * holiday email sends are staged — they turn on once the shop email
-   * sender is wired up as a Supabase secret (see the Phase 3 notes).
-   * Birthdays are set by staff on each customer card, or by the
-   * customer themselves from their account page on the website. */
-  (function () {
-    'use strict';
-
-    var SUPABASE_URL = 'https://lyujxpuicarblpkdzuuc.supabase.co';
-    var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
-
-    function $(id) { return document.getElementById(id); }
-
-    function esc(v) {
-      return String(v == null ? '' : v)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-    }
-
-    function getClient() {
-      if (window.supabase && window.supabase.createClient) {
-        /* SESSION FIX (Nov 4, 2026): Celebrations reads the customers
-         * table (birthdays) for staff — run as signed-in staff (the
-         * portal's own session storage key, same auth options as
-         * portal.js), not as the anonymous default-key client. Same
-         * root cause as the Guides panel. */
-        try {
-          return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-            auth: { storageKey: 'sb-atrg-portal-auth-token', persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
-          });
-        }
-        catch (e) { return null; }
-      }
-      return null;
-    }
-
-    function nextBirthday(bday, today) {
-      var parts = String(bday || '').split('-');
-      if (parts.length !== 2 && parts.length !== 3) return null;
-      var m = parseInt(parts.length === 3 ? parts[1] : parts[0], 10) - 1;
-      var d = parseInt(parts.length === 3 ? parts[2] : parts[1], 10);
-      if (isNaN(m) || isNaN(d)) return null;
-      var t = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      var next = new Date(t.getFullYear(), m, d);
-      if (next < t) next = new Date(t.getFullYear() + 1, m, d);
-      return {
-        date: next,
-        days: Math.round((next - t) / 86400000)
-      };
-    }
-
-    function fmtDay(d) { return d.toLocaleDateString([], { month: 'short', day: 'numeric' }); }
-
-    function renderCelebrations() {
-      var box = $('portal-celebrations');
-      if (!box) return;
-      var client = getClient();
-      if (!client) { box.innerHTML = ''; return; }
-      client.from('customers').select('id, name, email, phone, birthday').not('birthday', 'is', null).limit(500)
-        .then(function (res) {
-          if (res.error) { box.innerHTML = ''; return; }
-          var today = new Date();
-          var ups = [];
-          (res.data || []).forEach(function (c) {
-            var u = nextBirthday(c.birthday, today);
-            if (u && u.days <= 30) ups.push({ c: c, u: u });
-          });
-          ups.sort(function (a, b) { return a.u.days - b.u.days; });
-          var head = '<div class="portal-card p3-celeb"><p class="portal-card-title"><i class="fas fa-cake-candles"></i> Celebrations &mdash; birthdays in the next 30 days</p>';
-          if (!ups.length) {
-            box.innerHTML = head + '<p class="portal-card-meta">No guest birthdays coming up. Birthdays are added on each guest card &mdash; or by the guest from their account page on the website.</p></div>';
-            return;
-          }
-          var rows = ups.map(function (x) {
-            var when = x.u.days === 0 ? '<strong>Today!</strong>' : x.u.days === 1 ? 'Tomorrow' : 'in ' + x.u.days + ' days';
-            var bits = [esc(fmtDay(x.u.date))];
-            if (x.c.phone) bits.push(esc(x.c.phone));
-            if (x.c.email) bits.push(esc(x.c.email));
-            return '<p class="portal-card-meta p3-celeb-row"><strong>' + esc(x.c.name || 'Guest') + '</strong> &mdash; ' + when + ' &middot; ' + bits.join(' &middot; ') + '</p>';
-          }).join('');
-          box.innerHTML = head + rows +
-            '<p class="portal-muted portal-small">Birthday guests get 15% off their next repair or accessories, and get an automatic birthday email on the day. Birthdays are month and day only, no year.</p></div>';
-        })
-        .catch(function () {});
-    }
-
-    function initCelebrations() {
-      renderCelebrations();
-      document.addEventListener('click', function (e) {
-        var t = e.target;
-        while (t && t !== document) {
-          if (t.getAttribute) {
-            if (t.getAttribute('data-tab') === 'home') { renderCelebrations(); return; } /* V173_CELEBRATIONS_HOME_2026_11_18: the block lives on Home now, so it re-renders when Home opens (it still renders once at boot, and still re-renders 900ms after a birthday save). */
-            if (t.getAttribute('data-bday-save')) { window.setTimeout(renderCelebrations, 900); return; }
-          }
-          t = t.parentNode;
-        }
-      });
-    }
-
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initCelebrations);
-    } else {
-      initCelebrations();
-    }
-  })();
-  </script>
-  <script>
   /* ================= SCAN-TO-ATTACH (part label QR links) =================
    * Phase 3: part Zebra labels carry a QR code encoding
    * portal.html?part=<part_orders id>. A phone camera opens the link;
@@ -6097,8 +5980,6 @@
     #portal-request-form textarea { width: 100%; box-sizing: border-box; padding: 0.6rem 0.7rem; border: 1px solid var(--line, #E6D9C0); border-radius: 8px; background: var(--bg, #FAF6EE); color: var(--ink, #2C231A); font-size: 0.95rem; font-family: inherit; }
     #portal-request-form .portal-btn-primary, #portal-inv-form .portal-btn-primary { margin-top: 0.25rem; }
     .p3-req-actions { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin-top: 0.35rem; }
-    .p3-celeb { border-color: var(--brand, #E07B2A); }
-    .p3-celeb-row { margin: 0.2rem 0; }
     .p3-scan-banner { border: 2px solid var(--brand, #E07B2A); margin-bottom: 1rem; }
     .p3-scan-actions { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; margin-top: 0.5rem; }
     .lbl-flex { display: flex; gap: 6pt; align-items: flex-start; }
