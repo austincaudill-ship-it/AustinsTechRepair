@@ -3406,11 +3406,11 @@ html[data-theme="dark"] .site-search-mic.is-listening { color: var(--gold); }
   .cookie-banner { bottom: calc(var(--bottom-stack, 59px) + env(safe-area-inset-bottom)); }
 }
 
-/* V176_52_PINNED_ACTION_BAR_2026_11_27: pinned Book-a-visit / Call-or-text bar on phones, stacked directly above the thumb nav (fix-document item 19). Same 920px breakpoint as the nav. Its height and the nav height are measured by JS (syncBottomStack) into --thumb-nav-h / --bottom-stack, which also lift the cookie banner (V74 rule above) — the three layers never overlap. */
-.mobile-action-bar { position: fixed; left: 0; right: 0; z-index: 2099; display: none; gap: 0.6rem; padding: 0.55rem 0.8rem; background: var(--surface); border-top: 1px solid var(--line); }
+/* V176_57_TOP_ACTION_BAR_2026_11_27 (Austin, Nov 27, 2026): Book-a-visit / Call-or-text bar directly underneath the sticky top header on phones (same 920px breakpoint as the nav). Sticky in flow right after </header>; top is the measured header height (--header-h, set in syncBottomStack) so it sticks exactly below the header. No bottom rule remains; the bottom stack (thumb nav + cookie banner) no longer includes this bar. */
+.mobile-action-bar { position: sticky; top: var(--header-h, 76px); left: 0; right: 0; z-index: 999; display: none; gap: 0.6rem; padding: 0.55rem 0.8rem; background: var(--surface); border-bottom: 1px solid var(--line); }
 .mobile-action-bar .btn { flex: 1; }
 @media (max-width: 920px) {
-  .mobile-action-bar { display: flex; bottom: calc(var(--thumb-nav-h, 59px) + env(safe-area-inset-bottom)); }
+  .mobile-action-bar { display: flex; }
 }
 
 /* V74_CART_GLANCE_SHADE_2026_11_10 */

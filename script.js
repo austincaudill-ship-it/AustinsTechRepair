@@ -2207,14 +2207,15 @@
     /* V176_52_BOTTOM_STACK_2026_11_27: the fixed bottom layers (thumb nav, pinned action bar, cookie banner) stack without overlap. Measure the real heights and reserve the total as body bottom padding; expose the nav/action heights as CSS vars so the banner and action bar sit above them. */
     function syncBottomStack() {
       var nav = document.querySelector('.mobile-bottom-nav');
-      var action = document.getElementById('mobile-action-bar');
       var navH = nav ? nav.offsetHeight : 0;
-      var actionH = action ? action.offsetHeight : 0;
       var cookieH = (banner && !banner.hidden) ? banner.offsetHeight : 0;
       var root = document.documentElement;
       root.style.setProperty('--thumb-nav-h', navH + 'px');
-      root.style.setProperty('--bottom-stack', (navH + actionH) + 'px');
-      document.body.style.paddingBottom = (navH + actionH + cookieH) + 'px';
+      root.style.setProperty('--bottom-stack', navH + 'px');
+      document.body.style.paddingBottom = (navH + cookieH) + 'px';
+      /* V176_57_TOP_ACTION_BAR_2026_11_27: the header is sticky (styles.css .header, top:0), so measure its real height for the bar sitting directly under it. */
+      var hdr = document.querySelector('.header');
+      if (hdr) { root.style.setProperty('--header-h', hdr.offsetHeight + 'px'); }
     }
     function getConsent() {
       try {

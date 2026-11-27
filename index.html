@@ -190,6 +190,12 @@
            bar's Repair. -->
     </div>
   </header>
+  <!-- V176_57_TOP_ACTION_BAR_2026_11_27 (Austin, Nov 27, 2026): Book-a-visit / Call-or-text bar directly underneath the sticky top header on phones, on every page. Moved off the bottom in v176.57: it sat above the thumb nav and covered CTAs. Same buttons, same links, same function. -->
+  <div class="mobile-action-bar" id="mobile-action-bar">
+    <a class="btn btn-primary btn-sm" href="#repair" data-page="repair"><i class="fas fa-calendar-check"></i> Book a visit</a>
+    <a class="btn btn-dark btn-sm" href="tel:9372806243"><i class="fas fa-phone"></i> Call or text</a>
+  </div>
+
 
   <!-- SITE_NAV_DRAWER_PILLS_2026_11_02: drawer links become rounded pills matching the top nav; footer gains the Book a Repair CTA pill -->
   <!-- MOBILE MENU -->
@@ -297,7 +303,7 @@
               <h1 class="hero-headline" id="holiday-headline">Dropped your phone after the holidays?</h1>
               <p class="hero-sub" id="holiday-sub">It happens. We come to you and fix it at your door. Closed Thanksgiving Day &mdash; book before or after and we will be there.</p>
               <div class="hero-cta-group" id="holiday-ctas">
-                <a class="btn btn-primary btn-lg" href="#whatwedo" data-page="whatwedo" data-services-route><i class="fas fa-wrench"></i> Start a Service</a>
+                <a class="btn btn-primary btn-lg" href="#whatwedo" data-page="whatwedo" data-services-route><i class="fas fa-wrench"></i> Book a visit</a>
                 <a class="btn btn-outline btn-lg" href="tel:+19372806243"><i class="fas fa-phone"></i> 937-280-6243</a>
               </div>
               <div class="hero-photo">
@@ -309,7 +315,7 @@
               <p class="hero-sub">Professional mobile repairs for phones, computers, tablets, and game consoles &mdash; done at your home or office, backed by a 1-year warranty.</p>
               <p class="hero-fineprint">*Within 25 miles &mdash; $14.99 dispatch for guests, $34.99 for business. Over 25 miles is an extra $1 per mile.</p>
               <div class="hero-cta-group">
-                <a class="btn btn-primary btn-lg" href="#whatwedo" data-page="whatwedo" data-services-route><i class="fas fa-wrench"></i> Start a Service</a>
+                <a class="btn btn-primary btn-lg" href="#whatwedo" data-page="whatwedo" data-services-route><i class="fas fa-wrench"></i> Book a visit</a>
                 <a class="btn btn-outline btn-lg" href="tel:+19372806243"><i class="fas fa-phone"></i> 937-280-6243</a>
               </div>
               <div class="hero-photo">
@@ -332,7 +338,7 @@
               <h2 class="hero-headline">Same-day <em>diagnostics.</em></h2>
               <p class="hero-sub">We can come out same-day to diagnose your device, then order parts and return for the repair.</p>
               <div class="hero-cta-group">
-                <a class="btn btn-primary btn-lg" href="#whatwedo" data-page="whatwedo" data-services-route><i class="fas fa-wrench"></i> Start a Service</a>
+                <a class="btn btn-primary btn-lg" href="#whatwedo" data-page="whatwedo" data-services-route><i class="fas fa-wrench"></i> Book a visit</a>
                 <a class="btn btn-outline btn-lg" href="tel:+19372806243"><i class="fas fa-phone"></i> 937-280-6243</a>
               </div>
               <div class="hero-photo">
@@ -343,7 +349,7 @@
               <h2 class="hero-headline">Free estimates, <em>always.</em></h2>
               <p class="hero-sub">Tell us what is wrong and get a straight answer on price before any work starts. No charge to find out what your repair will cost.</p>
               <div class="hero-cta-group">
-                <a class="btn btn-primary btn-lg" href="#whatwedo" data-page="whatwedo" data-services-route><i class="fas fa-wrench"></i> Start a Service</a>
+                <a class="btn btn-primary btn-lg" href="#whatwedo" data-page="whatwedo" data-services-route><i class="fas fa-wrench"></i> Book a visit</a>
                 <a class="btn btn-outline btn-lg" href="tel:+19372806243"><i class="fas fa-phone"></i> 937-280-6243</a>
               </div>
               <div class="hero-photo">
@@ -354,7 +360,7 @@
               <h2 class="hero-headline">Backed by a <em>1-year warranty.</em></h2>
               <p class="hero-sub">One year on ATRG-supplied parts and labor. Every technology, big or small &mdash; we tackle them all, since 2010.</p>
               <div class="hero-cta-group">
-                <a class="btn btn-primary btn-lg" href="#whatwedo" data-page="whatwedo" data-services-route><i class="fas fa-wrench"></i> Start a Service</a>
+                <a class="btn btn-primary btn-lg" href="#whatwedo" data-page="whatwedo" data-services-route><i class="fas fa-wrench"></i> Book a visit</a>
                 <a class="btn btn-outline btn-lg" href="tel:+19372806243"><i class="fas fa-phone"></i> 937-280-6243</a>
               </div>
               <div class="hero-photo">
@@ -396,7 +402,7 @@
             var mem = lastDow(y, 4, 1);
             var lab = nthDow(y, 8, 1, 1);
             var STD = [
-              { href: '#whatwedo', page: 'whatwedo', icon: 'fas fa-wrench', text: 'Start a Service', route: 1 },
+              { href: '#whatwedo', page: 'whatwedo', icon: 'fas fa-wrench', text: 'Book a visit', route: 1 },
               { href: 'tel:+19372806243', page: null, icon: 'fas fa-phone', text: '937-280-6243' }
             ];
             var GIFT = [
@@ -717,7 +723,7 @@
             <h2>Ready to get it fixed?</h2>
             <p>Start your repair request online in under a minute, or call us and we can come out today to diagnose it.</p>
             <div class="hero-cta-group">
-              <a class="btn btn-cream btn-lg" href="#whatwedo" data-page="whatwedo" data-services-route><i class="fas fa-wrench"></i> Start a Service</a>
+              <a class="btn btn-cream btn-lg" href="#whatwedo" data-page="whatwedo" data-services-route><i class="fas fa-wrench"></i> Book a visit</a>
               <a class="btn btn-ghostlight btn-lg" href="tel:9372806243"><i class="fas fa-phone"></i> 937-280-6243</a>
             </div>
           </div>
@@ -904,7 +910,7 @@
             <p>Custom repairs are quoted individually as one estimated price &mdash; parts and labor included. Estimates are always free.</p>
             <p class="price-note">Within 25 miles, the dispatch fee is the price listed above. Over 25 miles, add $1 per mile.</p>
             <p class="price-note">* See note 3 in the footer below.</p>
-            <a class="btn btn-primary btn-lg" href="#repair" data-page="repair" data-guest="1" style="margin-top:.5rem;">Start a Service <i class="fas fa-arrow-right"></i></a>
+            <a class="btn btn-primary btn-lg" href="#repair" data-page="repair" data-guest="1" style="margin-top:.5rem;">Book a visit <i class="fas fa-arrow-right"></i></a>
           </div>
         </div>
       </div>
@@ -916,7 +922,7 @@
         <div class="container">
           <div class="section-header center">
             <p class="eyebrow">Service Request</p>
-            <h2 class="section-title">Start your service</h2>
+            <h2 class="section-title">Book a visit</h2>
             <p class="section-copy">Pick your device, make and model, see your exact price &mdash; then send it straight to us.</p>
             <!-- CHECKIN_DROPDOWNS_2026_11_05: honest trust line in place of UBIF-style volume claims (no invented repair counts). Austin to approve wording. -->
             <p class="section-copy">You&rsquo;re in good hands &mdash; we come to you, and every repair is backed by our 1-year warranty.</p>
@@ -2523,7 +2529,7 @@
             <p class="price-note">ATRG Business Plus and Business Pro members pay no visit fee on covered devices.</p>
             <p class="price-note">To schedule, sign in with your business account. Your EIN is already on file from sign-up.</p>
             <p class="price-note">* See note 3 in the footer below.</p>
-            <a class="btn btn-primary btn-lg" href="#repair" data-page="repair" data-business="1" style="margin-top:.5rem;">Start a Service <i class="fas fa-arrow-right"></i></a>
+            <a class="btn btn-primary btn-lg" href="#repair" data-page="repair" data-business="1" style="margin-top:.5rem;">Book a visit <i class="fas fa-arrow-right"></i></a>
           </div>
         </div>
       </div>
@@ -3900,8 +3906,8 @@
           <p class="aud-g">A phone is glued together, with thin cables and a battery that has to be handled right. A rushed home repair can tear a cable, damage a connector, or leave a phone that looks fixed but loses touch or Face ID calibration. We test the screen, touch, charging, camera, and speakers before we leave &mdash; 1-year warranty on parts we supply and on our labor.</p>
           <p class="aud-b">A phone is glued together, with thin cables and a battery that has to be handled right. A rushed repair can tear a cable or leave a phone that looks fixed but loses touch or Face ID calibration &mdash; and a staff phone down is work stopped. We test the screen, touch, charging, camera, and speakers before we leave &mdash; 1-year warranty on parts we supply and on our labor.</p>
           </div>
-          <a class="btn btn-primary aud-g" href="#repair" data-guest="1" data-page="repair" data-wizard-device="Phone"><i class="fas fa-wrench"></i> Start a Service</a>
-          <a class="btn btn-primary aud-b" href="#repair" data-page="repair" data-wizard-device="Phone" data-business="1"><i class="fas fa-wrench"></i> Start a Service</a>
+          <a class="btn btn-primary aud-g" href="#repair" data-guest="1" data-page="repair" data-wizard-device="Phone"><i class="fas fa-wrench"></i> Book a visit</a>
+          <a class="btn btn-primary aud-b" href="#repair" data-page="repair" data-wizard-device="Phone" data-business="1"><i class="fas fa-wrench"></i> Book a visit</a>
           <a class="btn btn-outline aud-g" href="#whatwedo" data-guest="1" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services We Offer</a>
           <a class="btn btn-outline aud-b" href="#b2b" data-page="b2b" data-business="1" style="margin-left:0.5rem;">Back to Business Services</a>
         </div>
@@ -3924,8 +3930,8 @@
           <p class="aud-g">Big glass and strong adhesive are where home tablet repairs go wrong. Prying a tablet open without heat and patience cracks the display underneath, and a tablet that is not tested after the repair can leave you with dead touch in one corner. We take the time the job actually needs, test touch across the whole screen, and make sure it charges before we leave.</p>
           <p class="aud-b">Big glass and strong adhesive are where tablet repairs go wrong. Prying a tablet open without heat and patience cracks the display underneath &mdash; and a staff tablet down is work stopped. We take the time the job actually needs, test touch across the whole screen, and make sure it charges before we leave.</p>
           </div>
-          <a class="btn btn-primary aud-g" href="#repair" data-guest="1" data-page="repair" data-wizard-device="Tablet"><i class="fas fa-wrench"></i> Start a Service</a>
-          <a class="btn btn-primary aud-b" href="#repair" data-page="repair" data-wizard-device="Tablet" data-business="1"><i class="fas fa-wrench"></i> Start a Service</a>
+          <a class="btn btn-primary aud-g" href="#repair" data-guest="1" data-page="repair" data-wizard-device="Tablet"><i class="fas fa-wrench"></i> Book a visit</a>
+          <a class="btn btn-primary aud-b" href="#repair" data-page="repair" data-wizard-device="Tablet" data-business="1"><i class="fas fa-wrench"></i> Book a visit</a>
           <a class="btn btn-outline aud-g" href="#whatwedo" data-guest="1" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services We Offer</a>
           <a class="btn btn-outline aud-b" href="#b2b" data-page="b2b" data-business="1" style="margin-left:0.5rem;">Back to Business Services</a>
         </div>
@@ -3948,8 +3954,8 @@
           <p class="aud-g">A computer repair is only worth doing if the machine is actually better when we leave. That means testing after the upgrade, checking that your files and programs are still there, and telling you honestly when a manufacturer repair is the better option for the same price. We do not guess at parts, and we do not leave a machine half working.</p>
           <p class="aud-b">A computer repair is only worth doing if the machine is actually better when we leave. That means testing after the upgrade, checking that your files and programs are still there, and telling you honestly when a manufacturer repair is the better option for the same price &mdash; so your staff stays working. We do not guess at parts, and we do not leave a machine half working.</p>
           </div>
-          <a class="btn btn-primary aud-g" href="#repair" data-guest="1" data-page="repair" data-wizard-device="Computer"><i class="fas fa-wrench"></i> Start a Service</a>
-          <a class="btn btn-primary aud-b" href="#repair" data-page="repair" data-wizard-device="Computer" data-business="1"><i class="fas fa-wrench"></i> Start a Service</a>
+          <a class="btn btn-primary aud-g" href="#repair" data-guest="1" data-page="repair" data-wizard-device="Computer"><i class="fas fa-wrench"></i> Book a visit</a>
+          <a class="btn btn-primary aud-b" href="#repair" data-page="repair" data-wizard-device="Computer" data-business="1"><i class="fas fa-wrench"></i> Book a visit</a>
           <a class="btn btn-outline aud-g" href="#whatwedo" data-guest="1" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services We Offer</a>
           <a class="btn btn-outline aud-b" href="#b2b" data-page="b2b" data-business="1" style="margin-left:0.5rem;">Back to Business Services</a>
         </div>
@@ -3972,8 +3978,8 @@
           <p class="aud-g">Consoles are packed tight, with small connectors and heat that builds up fast. Opening one without the right tools can damage the board or the drive, and a console that is put back together without testing will fail again the first time it gets hot. We test the console under load before we leave, so it plays, reads discs, and stays cool.</p>
           <p class="aud-b">Consoles are packed tight, with small connectors and heat that builds up fast. Opening one without the right tools can damage the board or the drive, and a console that is put back together without testing will fail again the first time it gets hot. We test the console under load before we leave, so it plays, reads discs, and stays cool &mdash; your break room stays open.</p>
           </div>
-          <a class="btn btn-primary aud-g" href="#repair" data-guest="1" data-page="repair" data-wizard-device="Game Console"><i class="fas fa-wrench"></i> Start a Service</a>
-          <a class="btn btn-primary aud-b" href="#repair" data-page="repair" data-wizard-device="Game Console" data-business="1"><i class="fas fa-wrench"></i> Start a Service</a>
+          <a class="btn btn-primary aud-g" href="#repair" data-guest="1" data-page="repair" data-wizard-device="Game Console"><i class="fas fa-wrench"></i> Book a visit</a>
+          <a class="btn btn-primary aud-b" href="#repair" data-page="repair" data-wizard-device="Game Console" data-business="1"><i class="fas fa-wrench"></i> Book a visit</a>
           <a class="btn btn-outline aud-g" href="#whatwedo" data-guest="1" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services We Offer</a>
           <a class="btn btn-outline aud-b" href="#b2b" data-page="b2b" data-business="1" style="margin-left:0.5rem;">Back to Business Services</a>
         </div>
@@ -3996,8 +4002,8 @@
           <p class="aud-g">The size is the whole problem with watches. Tiny screws, glued parts, and seals that are hard to restore once opened mean a home repair can easily lose a part or crack a small screen. We work on a bench with the right tools, test the screen, touch, charging, and pairing with your phone, and tell you before we start if the repair is not worth doing.</p>
           <p class="aud-b">The size is the whole problem with watches. Tiny screws, glued parts, and seals that are hard to restore once opened mean a repair can easily lose a part or crack a small screen. We work on a bench with the right tools, test the screen, touch, charging, and pairing, and tell you before we start if the repair is not worth doing &mdash; so a staff watch is never down for nothing.</p>
           </div>
-          <a class="btn btn-primary aud-g" href="#repair" data-guest="1" data-page="repair" data-wizard-device="Smart Watch"><i class="fas fa-wrench"></i> Start a Service</a>
-          <a class="btn btn-primary aud-b" href="#repair" data-page="repair" data-wizard-device="Smart Watch" data-business="1"><i class="fas fa-wrench"></i> Start a Service</a>
+          <a class="btn btn-primary aud-g" href="#repair" data-guest="1" data-page="repair" data-wizard-device="Smart Watch"><i class="fas fa-wrench"></i> Book a visit</a>
+          <a class="btn btn-primary aud-b" href="#repair" data-page="repair" data-wizard-device="Smart Watch" data-business="1"><i class="fas fa-wrench"></i> Book a visit</a>
           <a class="btn btn-outline aud-g" href="#whatwedo" data-guest="1" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services We Offer</a>
           <a class="btn btn-outline aud-b" href="#b2b" data-page="b2b" data-business="1" style="margin-left:0.5rem;">Back to Business Services</a>
         </div>
@@ -4021,8 +4027,8 @@
           <p class="aud-g">A half-finished website costs real visitors, and a site with a broken form or a wrong phone number is worse than no site at all. We build it end to end, check that the phone number, the forms, and the booking all work, and show you how to update it. It is built for you, not an agency template with an agency price tag.</p>
           <p class="aud-b">A half-finished website costs real guests, and a site with a broken form or a wrong phone number is worse than no site at all. We build it end to end, check that the phone number, the forms, and the booking all work, and show you how to update it. It is built for your business, not an agency template with an agency price tag.</p>
           </div>
-          <a class="btn btn-primary aud-g" href="#repair" data-guest="1" data-page="repair" data-wizard-device="Business / Other"><i class="fas fa-wrench"></i> Start a Service</a>
-          <a class="btn btn-primary aud-b" href="#repair" data-page="repair" data-wizard-device="Business / Other" data-business="1"><i class="fas fa-wrench"></i> Start a Service</a>
+          <a class="btn btn-primary aud-g" href="#repair" data-guest="1" data-page="repair" data-wizard-device="Business / Other"><i class="fas fa-wrench"></i> Book a visit</a>
+          <a class="btn btn-primary aud-b" href="#repair" data-page="repair" data-wizard-device="Business / Other" data-business="1"><i class="fas fa-wrench"></i> Book a visit</a>
           <a class="btn btn-outline aud-g" href="#whatwedo" data-guest="1" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services We Offer</a>
           <a class="btn btn-outline aud-b" href="#b2b" data-page="b2b" data-business="1" style="margin-left:0.5rem;">Back to Business Services</a>
         </div>
@@ -4050,8 +4056,8 @@
             <a class="service-card aud-g" href="#cabling" data-guest="1" data-page="cabling"><img class="service-card-img" src="images/values/values-transparency-parts.webp" alt="Cables and parts organized on the shop wall" loading="lazy" /><div class="service-icon"><i class="fas fa-plug"></i></div><h3>Internet Cabling</h3><p>Ethernet cable runs to a room, terminated and tested.</p></a>
             <a class="service-card aud-b" href="#cabling" data-page="cabling" data-business="1"><img class="service-card-img" src="images/values/values-transparency-parts.webp" alt="Cables and parts organized on the shop wall" loading="lazy" /><div class="service-icon"><i class="fas fa-plug"></i></div><h3>Internet Cabling</h3><p>Ethernet cable runs to a room, terminated and tested.</p></a>
           </div>
-          <a class="btn btn-primary aud-g" href="#repair" data-guest="1" data-page="repair" data-wizard-device="Networking"><i class="fas fa-wrench"></i> Start a Service</a>
-          <a class="btn btn-primary aud-b" href="#repair" data-page="repair" data-wizard-device="Networking" data-business="1"><i class="fas fa-wrench"></i> Start a Service</a>
+          <a class="btn btn-primary aud-g" href="#repair" data-guest="1" data-page="repair" data-wizard-device="Networking"><i class="fas fa-wrench"></i> Book a visit</a>
+          <a class="btn btn-primary aud-b" href="#repair" data-page="repair" data-wizard-device="Networking" data-business="1"><i class="fas fa-wrench"></i> Book a visit</a>
           <a class="btn btn-outline aud-g" href="#whatwedo" data-guest="1" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services We Offer</a>
           <a class="btn btn-outline aud-b" href="#b2b" data-page="b2b" data-business="1" style="margin-left:0.5rem;">Back to Business Services</a>
         </div>
@@ -4074,8 +4080,8 @@
           <p class="aud-g">Cabling fails quietly when it is not tested. A bad termination looks finished but drops the connection, and finding it later means opening walls again. We test every run before we leave, finish the wall plate, and confirm the connection works at the device, not just at the router.</p>
           <p class="aud-b">Cabling fails quietly when it is not tested. A bad termination looks finished but drops the connection, and finding it later means opening walls again. We test every run before we leave, finish the wall plate, and confirm the connection works at the device, not just at the router &mdash; so your office stays connected.</p>
           </div>
-          <a class="btn btn-primary aud-g" href="#repair" data-guest="1" data-page="repair" data-wizard-device="Networking"><i class="fas fa-wrench"></i> Start a Service</a>
-          <a class="btn btn-primary aud-b" href="#repair" data-page="repair" data-wizard-device="Networking" data-business="1"><i class="fas fa-wrench"></i> Start a Service</a>
+          <a class="btn btn-primary aud-g" href="#repair" data-guest="1" data-page="repair" data-wizard-device="Networking"><i class="fas fa-wrench"></i> Book a visit</a>
+          <a class="btn btn-primary aud-b" href="#repair" data-page="repair" data-wizard-device="Networking" data-business="1"><i class="fas fa-wrench"></i> Book a visit</a>
           <a class="btn btn-outline aud-g" href="#whatwedo" data-guest="1" data-page="whatwedo" style="margin-left:0.5rem;">Back to Services We Offer</a>
           <a class="btn btn-outline aud-b" href="#b2b" data-page="b2b" data-business="1" style="margin-left:0.5rem;">Back to Business Services</a>
         </div>
@@ -4098,7 +4104,7 @@
           <h3>Why we should fix it</h3>
           <p>A register that will not ring up a sale costs real money while it sits. We set the whole system up on site and test it before we leave &mdash; take a payment, print a receipt, and run the day. We help with the setup; we do not process payments.</p>
           </div>
-          <a class="btn btn-primary" href="#repair" data-page="repair" data-wizard-device="Business / Other" data-business="1"><i class="fas fa-wrench"></i> Start a Service</a>
+          <a class="btn btn-primary" href="#repair" data-page="repair" data-wizard-device="Business / Other" data-business="1"><i class="fas fa-wrench"></i> Book a visit</a>
           <a class="btn btn-outline" href="#b2b" data-page="b2b" data-business="1" style="margin-left:0.5rem;">Back to Business Services</a>
         </div>
       </div>
@@ -4421,7 +4427,7 @@
               <h2>One boundary, stated plainly</h2>
               <p>We handle the office technology &mdash; the computers, printers, and networks around the care. We do not repair medical devices or medical equipment.</p>
               <a class="btn btn-primary" href="#contact" data-page="contact">Talk to Us <i class="fas fa-arrow-right"></i></a>
-              <a class="btn btn-outline" href="#repair" data-page="repair" style="margin-left:0.5rem;">Start a Service</a>
+              <a class="btn btn-outline" href="#repair" data-page="repair" style="margin-left:0.5rem;">Book a visit</a>
             </div>
             <div class="feature-media">
               <img src="images/work/hp-laptop-board.jpg" alt="Laptop computer on a repair bench" loading="lazy" />
@@ -4475,7 +4481,7 @@
               <h2>One call, on site, no runaround</h2>
               <p>Call or text <a href="tel:9372806243">(937) 280-6243</a>.</p>
               <a class="btn btn-primary" href="#contact" data-page="contact">Talk to Us <i class="fas fa-arrow-right"></i></a>
-              <a class="btn btn-outline" href="#repair" data-page="repair" style="margin-left:0.5rem;">Start a Service</a>
+              <a class="btn btn-outline" href="#repair" data-page="repair" style="margin-left:0.5rem;">Book a visit</a>
             </div>
             <div class="feature-media">
               <img src="images/work/network-install.webp" alt="Network installed and cabled at a business &mdash; router, switch, and Wi-Fi access point on the shelf" loading="lazy" />
@@ -4648,11 +4654,6 @@
        retired, and its five destinations (About, ATR One,
        One-on-One, Help Guides, Reviews) live in the search
        overlay's Quick Links instead of a hidden menu. -->
-  <!-- V176_52_PINNED_ACTION_BAR_2026_11_27: pinned Book-a-visit / Call-or-text bar on phones, stacked above the thumb nav (fix-document item 19). Same 920px breakpoint as the nav; heights measured by JS (syncBottomStack). -->
-  <div class="mobile-action-bar" id="mobile-action-bar">
-    <a class="btn btn-primary btn-sm" href="#repair" data-page="repair"><i class="fas fa-calendar-check"></i> Book a visit</a>
-    <a class="btn btn-dark btn-sm" href="tel:9372806243"><i class="fas fa-phone"></i> Call or text</a>
-  </div>
   <nav class="mobile-bottom-nav" aria-label="Mobile Bottom Navigation">
     <!-- SERVICES_SINGLE_DOOR_2026_11_09 (owner, Nov 9, 2026): slot 1 is the logo itself — the badge is the home button. -->
     <a href="#home" class="bottom-nav-item bottom-nav-logo active" data-page="home" aria-label="Home"><img class="bottom-nav-logo-img" src="logo-duo.png" alt=""><span class="sr-only">Home</span></a>
