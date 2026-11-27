@@ -640,6 +640,46 @@
         </form>
           </div>
         </div>
+        <div id="portal-home-cal-tools"></div>
+        <form id="portal-home-cal-form" novalidate hidden>
+          <div class="portal-panel-head portal-subhead">
+            <h3 class="portal-h3" id="portal-home-cal-form-title">Add to the calendar</h3>
+          </div>
+          <div class="portal-nh-grid">
+            <div class="portal-field">
+              <label for="portal-home-cal-kind">Kind</label>
+              <select id="portal-home-cal-kind">
+                <option value="outing">Outing</option>
+                <option value="special">Special day</option>
+                <option value="dayoff">Holiday</option>
+                <option value="note" selected>Note</option>
+              </select>
+            </div>
+            <div class="portal-field">
+              <label for="portal-home-cal-title">Title <span aria-hidden="true">*</span></label>
+              <input type="text" id="portal-home-cal-title" placeholder="e.g. Team night at Main Event" required />
+            </div>
+            <div class="portal-field">
+              <label for="portal-home-cal-date">Date <span aria-hidden="true">*</span></label>
+              <input type="date" id="portal-home-cal-date" required />
+            </div>
+            <div class="portal-field">
+              <label for="portal-home-cal-end">End date (optional)</label>
+              <input type="date" id="portal-home-cal-end" />
+            </div>
+            <div class="portal-field portal-nh-wide">
+              <label for="portal-home-cal-note">Note (optional)</label>
+              <input type="text" id="portal-home-cal-note" placeholder="e.g. Meet at 6 PM" />
+            </div>
+          </div>
+          <p class="portal-error" id="portal-home-cal-error" hidden></p>
+          <button class="portal-btn portal-btn-primary" id="portal-home-cal-submit" type="submit">
+            <i class="fas fa-plus"></i> Add item
+          </button>
+          <button class="portal-btn portal-btn-outline" id="portal-home-cal-cancel" type="button" hidden>Cancel edit</button>
+        </form>
+          </div>
+        </div>
         <!-- V176_47_CELEBRATIONS_REMOVED_2026_11_27 (Austin, Nov 27, 2026): Celebrations block removed from Home entirely — birthdays are seen on the shared calendar. -->
       </div>
 
@@ -733,47 +773,6 @@
           <p class="portal-muted portal-small">The business&rsquo;s unsigned documents. Tap one to pull it up.</p>
           <div id="portal-docs-blanks"><p class="portal-muted">Loading&hellip;</p></div>
         </div>
-        <div id="portal-home-cal-tools"></div>
-        <form id="portal-home-cal-form" novalidate hidden>
-          <div class="portal-panel-head portal-subhead">
-            <h3 class="portal-h3" id="portal-home-cal-form-title">Add to the calendar</h3>
-          </div>
-          <div class="portal-nh-grid">
-            <div class="portal-field">
-              <label for="portal-home-cal-kind">Kind</label>
-              <select id="portal-home-cal-kind">
-                <option value="outing">Outing</option>
-                <option value="special">Special day</option>
-                <option value="dayoff">Holiday</option>
-                <option value="note" selected>Note</option>
-              </select>
-            </div>
-            <div class="portal-field">
-              <label for="portal-home-cal-title">Title <span aria-hidden="true">*</span></label>
-              <input type="text" id="portal-home-cal-title" placeholder="e.g. Team night at Main Event" required />
-            </div>
-            <div class="portal-field">
-              <label for="portal-home-cal-date">Date <span aria-hidden="true">*</span></label>
-              <input type="date" id="portal-home-cal-date" required />
-            </div>
-            <div class="portal-field">
-              <label for="portal-home-cal-end">End date (optional)</label>
-              <input type="date" id="portal-home-cal-end" />
-            </div>
-            <div class="portal-field portal-nh-wide">
-              <label for="portal-home-cal-note">Note (optional)</label>
-              <input type="text" id="portal-home-cal-note" placeholder="e.g. Meet at 6 PM" />
-            </div>
-          </div>
-          <p class="portal-error" id="portal-home-cal-error" hidden></p>
-          <button class="portal-btn portal-btn-primary" id="portal-home-cal-submit" type="submit">
-            <i class="fas fa-plus"></i> Add item
-          </button>
-          <button class="portal-btn portal-btn-outline" id="portal-home-cal-cancel" type="button" hidden>Cancel edit</button>
-        </form>
-          </div>
-        </div>
-
       </div>
 
       <!-- RECORDS — V176_RECORDS_2026_11_19 (Austin, Nov 19, 2026): signed & filed documents live here. V176_33_ATRONE_GUEST_2026_11_23 (Austin, Nov 23, 2026): the Records action button moved from the first sidebar group into Admin, directly before Setup — the panel itself is unchanged. -->
@@ -2530,7 +2529,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <!-- PORTAL_RECEIPT_SEND_2026_11_02: vendored html2pdf (html2canvas + jsPDF in one self-contained bundle, loaded locally, no CDN) — Download receipt and Email receipt render the PDF from the exact receipt markup. -->
   <script src="html2pdf.bundle.min.js"></script>
-  <script src="portal.js?v=176-49"></script>
+  <script src="portal.js?v=176-53"></script>
   <script>
   /* ================= TEAM DOCUMENTS + HIRE DOCUMENTS =================
    * Section logic for the Team Documents tab and the per-hire document

@@ -18592,6 +18592,14 @@ function loadTicketThread(client, ticketId) {
   function renderCustomers(rows) {
     var list = $('portal-customer-list');
     if (!rows.length) { emptyState(list, 'No guests match. Guest accounts from the website will show up here.'); return; }
+    /* V176_53_GUEST_SORT_2026_11_27 (Austin, Nov 27, 2026): the guest list under the Guests action button reads A to Z by guest name. Display-only sort here in the render — stored order and the cache are untouched, and search keeps working because applyCustomerSearch filters the same cache before this render. Guests with no name sort last. */
+    rows = rows.slice().sort(function (a, b) {
+      var an = String(a.name || ''), bn = String(b.name || '');
+      if (!an && !bn) return 0;
+      if (!an) return 1;
+      if (!bn) return -1;
+      return an.toLowerCase().localeCompare(bn.toLowerCase());
+    });
     list.innerHTML = rows.map(function (c) {
       return '<article class="portal-card">' +
         '<div class="portal-card-top"><p class="portal-card-title">' + esc(c.name || 'Guest') + '</p>' +
