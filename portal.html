@@ -679,9 +679,7 @@
         </form>
           </div>
         </div>
-        <!-- V176_46_CELEBRATIONS_BOTTOM_2026_11_27 (Austin, Nov 27, 2026): Celebrations lives at the bottom of Home, below every fold — out of the Your day briefing zone. The block itself is unchanged (same 30-day window, same read-only list, same loader). -->
-        <!-- V173_CELEBRATIONS_HOME_2026_11_18 (Austin, Nov 18, 2026): Celebrations moved here from the Guest panel — guest birthdays in the next 30 days live on Home now, so the guest list is the first thing on the Guest panel. Same block, same 30-day window, same read-only list. -->
-        <div id="portal-celebrations"></div>
+        <!-- V176_47_CELEBRATIONS_REMOVED_2026_11_27 (Austin, Nov 27, 2026): Celebrations block removed from Home entirely — birthdays are seen on the shared calendar. -->
       </div>
 
       <!-- TICKETS -->
@@ -5792,120 +5790,6 @@
   })();
   </script>
   <script>
-  /* ================= CELEBRATIONS (customer birthdays) =================
-   * Phase 3 foundation for the customer-love touches: at the top of the
-   * Customers tab, lists customers whose birthday falls in the next 30
-   * days so the team can reach out. Read-only. The automated birthday /
-   * holiday email sends are staged — they turn on once the shop email
-   * sender is wired up as a Supabase secret (see the Phase 3 notes).
-   * Birthdays are set by staff on each customer card, or by the
-   * customer themselves from their account page on the website. */
-  (function () {
-    'use strict';
-
-    var SUPABASE_URL = 'https://lyujxpuicarblpkdzuuc.supabase.co';
-    var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dWp4cHVpY2FyYmxwa2R6dXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxNjAxMjQsImV4cCI6MjEwNzczNjEyNH0.io4qD7pw878Xx97yoS6xzclO33aa4QYKENpwIyZ06xg';
-
-    function $(id) { return document.getElementById(id); }
-
-    function esc(v) {
-      return String(v == null ? '' : v)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-    }
-
-    function getClient() {
-      if (window.supabase && window.supabase.createClient) {
-        /* SESSION FIX (Nov 4, 2026): Celebrations reads the customers
-         * table (birthdays) for staff — run as signed-in staff (the
-         * portal's own session storage key, same auth options as
-         * portal.js), not as the anonymous default-key client. Same
-         * root cause as the Guides panel. */
-        try {
-          return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-            auth: { storageKey: 'sb-atrg-portal-auth-token', persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
-          });
-        }
-        catch (e) { return null; }
-      }
-      return null;
-    }
-
-    function nextBirthday(bday, today) {
-      var parts = String(bday || '').split('-');
-      if (parts.length !== 2 && parts.length !== 3) return null;
-      var m = parseInt(parts.length === 3 ? parts[1] : parts[0], 10) - 1;
-      var d = parseInt(parts.length === 3 ? parts[2] : parts[1], 10);
-      if (isNaN(m) || isNaN(d)) return null;
-      var t = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      var next = new Date(t.getFullYear(), m, d);
-      if (next < t) next = new Date(t.getFullYear() + 1, m, d);
-      return {
-        date: next,
-        days: Math.round((next - t) / 86400000)
-      };
-    }
-
-    function fmtDay(d) { return d.toLocaleDateString([], { month: 'short', day: 'numeric' }); }
-
-    function renderCelebrations() {
-      var box = $('portal-celebrations');
-      if (!box) return;
-      var client = getClient();
-      if (!client) { box.innerHTML = ''; return; }
-      client.from('customers').select('id, name, email, phone, birthday').not('birthday', 'is', null).limit(500)
-        .then(function (res) {
-          if (res.error) { box.innerHTML = ''; return; }
-          var today = new Date();
-          var ups = [];
-          (res.data || []).forEach(function (c) {
-            var u = nextBirthday(c.birthday, today);
-            if (u && u.days <= 30) ups.push({ c: c, u: u });
-          });
-          ups.sort(function (a, b) { return a.u.days - b.u.days; });
-          var head = '<div class="portal-card p3-celeb"><p class="portal-card-title"><i class="fas fa-cake-candles"></i> Celebrations &mdash; birthdays in the next 30 days</p>';
-          if (!ups.length) {
-            box.innerHTML = head + '<p class="portal-card-meta">No guest birthdays coming up. Birthdays are added on each guest card &mdash; or by the guest from their account page on the website.</p></div>';
-            return;
-          }
-          var rows = ups.map(function (x) {
-            var when = x.u.days === 0 ? '<strong>Today!</strong>' : x.u.days === 1 ? 'Tomorrow' : 'in ' + x.u.days + ' days';
-            var bits = [esc(fmtDay(x.u.date))];
-            if (x.c.phone) bits.push(esc(x.c.phone));
-            if (x.c.email) bits.push(esc(x.c.email));
-            return '<p class="portal-card-meta p3-celeb-row"><strong>' + esc(x.c.name || 'Guest') + '</strong> &mdash; ' + when + ' &middot; ' + bits.join(' &middot; ') + '</p>';
-          }).join('');
-          box.innerHTML = head + rows +
-            '<p class="portal-muted portal-small">Birthday guests get 15% off their next repair or accessories, and get an automatic birthday email on the day. Birthdays are month and day only, no year.</p></div>';
-        })
-        .catch(function () {});
-    }
-
-    function initCelebrations() {
-      renderCelebrations();
-      document.addEventListener('click', function (e) {
-        var t = e.target;
-        while (t && t !== document) {
-          if (t.getAttribute) {
-            if (t.getAttribute('data-tab') === 'home') { renderCelebrations(); return; } /* V173_CELEBRATIONS_HOME_2026_11_18: the block lives on Home now, so it re-renders when Home opens (it still renders once at boot, and still re-renders 900ms after a birthday save). */
-            if (t.getAttribute('data-bday-save')) { window.setTimeout(renderCelebrations, 900); return; }
-          }
-          t = t.parentNode;
-        }
-      });
-    }
-
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initCelebrations);
-    } else {
-      initCelebrations();
-    }
-  })();
-  </script>
-  <script>
   /* ================= SCAN-TO-ATTACH (part label QR links) =================
    * Phase 3: part Zebra labels carry a QR code encoding
    * portal.html?part=<part_orders id>. A phone camera opens the link;
@@ -6094,8 +5978,6 @@
     #portal-request-form textarea { width: 100%; box-sizing: border-box; padding: 0.6rem 0.7rem; border: 1px solid var(--line, #E6D9C0); border-radius: 8px; background: var(--bg, #FAF6EE); color: var(--ink, #2C231A); font-size: 0.95rem; font-family: inherit; }
     #portal-request-form .portal-btn-primary, #portal-inv-form .portal-btn-primary { margin-top: 0.25rem; }
     .p3-req-actions { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin-top: 0.35rem; }
-    .p3-celeb { border-color: var(--brand, #E07B2A); }
-    .p3-celeb-row { margin: 0.2rem 0; }
     .p3-scan-banner { border: 2px solid var(--brand, #E07B2A); margin-bottom: 1rem; }
     .p3-scan-actions { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; margin-top: 0.5rem; }
     .lbl-flex { display: flex; gap: 6pt; align-items: flex-start; }
