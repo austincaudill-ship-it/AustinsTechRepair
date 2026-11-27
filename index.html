@@ -10668,15 +10668,15 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
       <div class="ghub-panel-label">ACTION PANEL</div>
       <div class="ghub-pane" data-pane="home">
         <h2>Welcome back</h2>
-        <p class="ghub-muted">News, offers, and your upcoming service — all in one place.</p>
+        <p class="ghub-muted">Offers and your upcoming service — all in one place.</p>
         <div class="ghub-qa" style="margin:.6rem 0 .9rem"><button class="btn btn-outline btn-sm" type="button" id="ghub-home-guides-btn"><i class="fas fa-book-open"></i> Help Guides</button></div>
         <!-- V169_GUEST_HOME_2026_11_18 (Austin, Nov 18, 2026): Home is a landing page
-             for guests — ATR One offers, company news, occasional coupons,
+             for guests — ATR One offers, occasional coupons,
              a contact button, a calendar of the guest's upcoming repair,
              and the days we are closed for the holidays. The greeting does
              NOT live here — it lives in Quick Actions under the Home
              button, and it always stays. No "Your day", no "Tips of the
-             day" — those are associate-only. -->
+             day" — those are associate-only. V176_51_FEED_STAFF_ONLY_2026_11_27 (Austin, Nov 27, 2026): company news REMOVED from this page — the Company feed is the internal team newsletter and stays staff-only in the Associate Hub. -->
         <div class="ghub-card" id="ghub-home-offers">
           <h3>ATR One offers</h3>
           <p data-offer-tier="guest"><strong>Individual — $9.99/month</strong><br>20% off repairs &middot; 25% off accessories &middot; 1 device</p>
@@ -10687,10 +10687,6 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
           <button class="btn btn-primary btn-sm" type="button" id="ghub-home-offers-btn">See ATR One Membership</button>
         </div>
         <div class="ghub-card" id="ghub-home-next"><p class="ghub-muted">Loading your service requests&hellip;</p></div>
-        <div class="ghub-card" id="ghub-home-news">
-          <h3>Company news</h3>
-          <div id="ghub-home-news-list"><p class="ghub-muted">Loading news&hellip;</p></div>
-        </div>
         <div class="ghub-card" id="ghub-home-coupons">
           <h3>Coupons</h3>
           <p class="ghub-muted">No coupons right now — check back soon.</p>
@@ -11731,7 +11727,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
   function loadAll() {
     if (loaded || loading) return; loading = true;
     sb = client(); if (!sb) { loading = false; return; }
-    loadGhubHomeFeed(); loadGhubHomeHolidays();
+    loadGhubHomeHolidays();
     sb.auth.getSession().then(function (s) {
       var u = s && s.data && s.data.session && s.data.session.user;
       if (!u) { loading = false; return; }
@@ -11929,30 +11925,7 @@ html[data-theme="dark"] .ghub-docline{border-bottom-color:var(--line,#3A2F24)}
     var mc = $('ghub-member-card');
     if (mc) { var tier = $('acct-qr-tier'), pts = $('acct-points-num'); mc.innerHTML = '<p><strong>' + esc(tier ? tier.textContent : 'ATR One Free') + '</strong></p><p>Reward points: <strong>' + esc(pts ? pts.textContent : '0') + '</strong></p>'; }
   }
-  /* V169_GUEST_HOME_2026_11_18: the Home landing page reads the same two tables the
-     Associate Hub Home reads — company news (portal_home_posts) and
-     holiday closures (portal_home_holidays) — title/body/date only, no
-     images, no edit buttons. If the read fails (the guest role may not
-     be allowed to read them), the card says so honestly instead of
-     pretending. Coupons have no table — that card stays an honest
-     empty slot until Austin supplies coupons. */
-  function loadGhubHomeFeed() {
-    var box = $('ghub-home-news-list');
-    if (!box || !sb) return;
-    sb.from('portal_home_posts').select('*').order('pinned', { ascending: false }).order('created_at', { ascending: false }).limit(200)
-      .then(function (res) {
-        if (res.error) { box.innerHTML = '<p class="ghub-muted">Company news is not set up yet.</p>'; return; }
-        var rows = res.data || [];
-        if (!rows.length) { box.innerHTML = '<p class="ghub-muted">No news yet — company updates will show up here.</p>'; return; }
-        box.innerHTML = rows.map(function (p) {
-          var meta = p.created_at ? esc(new Date(p.created_at).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })) : '';
-          return '<article><p><strong>' + (p.pinned ? '<i class="fas fa-thumbtack"></i> ' : '') + esc(p.title || 'Update') + '</strong></p>'
-            + (meta ? '<p class="ghub-muted">' + meta + '</p>' : '')
-            + (p.body ? '<p>' + esc(p.body) + '</p>' : '') + '</article>';
-        }).join('');
-      })
-      .catch(function () { box.innerHTML = '<p class="ghub-muted">Company news is not set up yet.</p>'; });
-  }
+  /* V176_51_FEED_STAFF_ONLY_2026_11_27 (Austin, Nov 27, 2026): the Company feed is the internal team newsletter — staff-only, Associate Hub only. The guest-page loader that read portal_home_posts into this page is REMOVED, not gated: no guest or business session ever queries that table from this page. The Associate Hub feed in portal.js is untouched, and the days-closed card below still reads portal_home_holidays. */
   function loadGhubHomeHolidays() {
     var box = $('ghub-home-holidays-list');
     if (!box || !sb) return;
