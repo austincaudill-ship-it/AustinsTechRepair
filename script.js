@@ -640,7 +640,7 @@
       'Business / Other': {
         brands: ['Office / Network', 'POS system', 'Printer / peripheral', 'Other device'],
         issues: [
-          { name: 'On-site diagnostic & support', price: '$95/hr + house call' },
+          { name: 'On-site diagnostic & support', price: 'Price on request' },
           { name: 'Setup / install / cabling', price: 'Custom quote' },
           { name: 'Websites for Business', price: 'Custom quote' }
         ]
@@ -858,21 +858,7 @@
           });
           grid.appendChild(iBtn);
         });
-        /* V176_CLEANING_ALL_2026_11_19 (Austin, Nov 19, 2026): the fallback
-           grid carries the same tile as every other picker - "Cleaning and
-           liquid metal replacement" at the flat $49.99 cleaning price.
-           There is no "Something else" tile any more. */
-        var seBtn = document.createElement('button');
-        seBtn.type = 'button';
-        seBtn.className = 'option-btn';
-        seBtn.setAttribute('data-bk-something-else', '1');
-        seBtn.style.alignItems = 'flex-start';
-        seBtn.style.textAlign = 'left';
-        seBtn.innerHTML = bkIconHtml('Cleaning and liquid metal replacement') + '<strong>Cleaning and liquid metal replacement</strong><span style="font-size:0.78rem; color: var(--brand-deep); font-weight:800;">' + bkFmt(49.99) + '</span>';
-        seBtn.addEventListener('click', function () {
-          rfToggleIssue('Cleaning and liquid metal replacement', 49.99, seBtn, null);
-        });
-        grid.appendChild(seBtn);
+        /* V176_52_CLEANING_GATE_2026_11_27: no cleaning tile in the fallback grid — it serves non-book devices and no model is known here, so the family cannot be priced. The gated tile lives in the book picker (bkCleaningFor). */
         /* BOOKING_OO_TILE_2026_11_09: the fallback grid (Business /
            Other) ends with the same One-on-One tile, so this path
            offers the mode inside its grid too. */
@@ -932,7 +918,8 @@
       'Virus / Software cleanup': 'fas fa-bug',
       'Band / Button': 'fas fa-clock',
       'Something else': 'fas fa-circle-question',
-      'Cleaning and liquid metal replacement': 'fas fa-broom'
+      'Cleaning and liquid metal replacement': 'fas fa-broom',
+      'Cleaning and thermal paste replacement': 'fas fa-broom'
     };
     function bkIconHtml(rawName) {
       var spec = BK_TILE_ICONS[rawName] || 'fas fa-wrench';
@@ -1165,6 +1152,14 @@
       });
       return BK_REPAIR_ORDER.filter(function (r) { return seen[r]; });
     }
+    /* V176_52_CLEANING_GATE_2026_11_27: cleaning is gated by device family. PS5 family (PS5, PS5 Slim, PS5 Pro) gets cleaning + liquid metal replacement at $49.99; every other known console model gets cleaning + thermal paste replacement at $24.99; non-consoles and unlisted/unknown models get no cleaning tile — the family is unknown, so no price is invented. */
+    var BK_PS5_FAMILY = ['PlayStation 5', 'PlayStation 5 Slim', 'PlayStation 5 Pro'];
+    function bkCleaningFor(typeKey, modelKey) {
+      if (typeKey !== 'Game Console') return null;
+      if (!modelKey || modelKey === '__other__' || modelKey === '__notlisted__') return null;
+      if (BK_PS5_FAMILY.indexOf(modelKey) !== -1) return { name: 'Cleaning and liquid metal replacement', price: 49.99 };
+      return { name: 'Cleaning and thermal paste replacement', price: 24.99 };
+    }
     function renderBkRepairs(typeKey, brandKey, modelKey) {
       var DATA = bkData();
       var repairWrap = document.getElementById('bk-repair-wrap');
@@ -1201,19 +1196,18 @@
          standard grid reads eight buttons like the lesson grid. It
          is an unpriced pick exactly like Board / Solder ("Price
          on request"), toggles through rfToggleIssue like any
-         other pick, and always renders, for every device and model,
-         right before the One-on-One tile (which stays last). V176_CLEANING_ALL_2026_11_19: on EVERY device picker this tile is "Cleaning and liquid metal replacement" at $49.99. */ /* V173_PRICING_FLOOR_2026_11_18 */
-      /* V176_CLEANING_ALL_2026_11_19 (Austin, Nov 19, 2026): on EVERY device
-         picker the catch-all tile is "Cleaning and liquid metal replacement"
-         at the flat $49.99 cleaning price - liquid metal is part of cleaning,
-         never itemized, and the $60 estimate floor does not apply to a flat
-         service. There is no "Something else" tile any more. */
-      var seTile = bkTile('Cleaning and liquid metal replacement', bkFmt(49.99), bkIconHtml('Cleaning and liquid metal replacement'));
-      seTile.setAttribute('data-bk-something-else', '1');
-      seTile.addEventListener('click', function () {
-        rfToggleIssue('Cleaning and liquid metal replacement', 49.99, seTile, null);
-      });
-      repairGrid.appendChild(seTile);
+         other pick, and renders, when the gated cleaning applies,
+         right before the One-on-One tile (which stays last). V176_52_CLEANING_GATE_2026_11_27: the cleaning tile is gated by device family (bkCleaningFor). */ /* V173_PRICING_FLOOR_2026_11_18 */
+      /* V176_52_CLEANING_GATE_2026_11_27: gated cleaning tile — PS5 family liquid metal $49.99, other known consoles thermal paste $24.99, anything else no tile. */
+      var cleaning = bkCleaningFor(typeKey, modelKey);
+      if (cleaning) {
+        var seTile = bkTile(cleaning.name, bkFmt(cleaning.price), bkIconHtml(cleaning.name));
+        seTile.setAttribute('data-bk-something-else', '1');
+        seTile.addEventListener('click', function () {
+          rfToggleIssue(cleaning.name, cleaning.price, seTile, null);
+        });
+        repairGrid.appendChild(seTile);
+      }
       /* BOOKING_OO_TILE_2026_11_09 (Austin, Nov 9, 2026): One-on-One is
          the LAST tile in this grid — same tile family as the repairs
          (strong label, brand-deep subline, like Board / Solder), not a
@@ -1242,6 +1236,7 @@
       friendly: BK_FRIENDLY,
       order: BK_REPAIR_ORDER,
       typeKey: bkTypeKey,
+      cleaningFor: bkCleaningFor,
       fmt: bkFmt,
       data: bkData,
       fallback: deviceData,
@@ -1333,8 +1328,8 @@
          dispatch and diagnostics are separate. Guest $14.99 + $34.99
          diagnostics; business $34.99 + $64.99. */
       var feeNote = repairState.business
-        ? 'A separate visit fee applies to the visit &mdash; $34.99 &mdash; plus diagnostics of $64.99 if your device needs a full diagnosis &mdash; due at booking and non-refundable. Estimates are always free. ATR One members pay no visit fee or diagnostics for devices covered under their subscription.'
-        : 'A separate visit fee applies to the visit &mdash; $14.99 &mdash; plus diagnostics of $34.99 if your device needs a full diagnosis &mdash; due at booking and non-refundable. Estimates are always free. ATR One members pay no visit fee or diagnostics for devices covered under their subscription.';
+        ? 'A separate visit fee applies to the visit &mdash; $34.99 &mdash; plus a tech bench fee of $64.99 if your device needs a full diagnosis &mdash; due at booking and non-refundable. Estimates are always free. ATR One members pay no visit fee or tech bench fee for devices covered under their subscription.'
+        : 'A separate visit fee applies to the visit &mdash; $14.99 &mdash; plus a tech bench fee of $34.99 if your device needs a full diagnosis &mdash; due at booking and non-refundable. Estimates are always free. ATR One members pay no visit fee or tech bench fee for devices covered under their subscription.';
       var t = rfEstimateTotals();
       if (lbl) lbl.textContent = 'Your estimated repair price';
       if (t.any && t.unpriced === 0) {
@@ -1416,7 +1411,8 @@
       'Something else': 'Other / not sure',
       /* V176_CLEANING_ALL_2026_11_19 (Austin, Nov 19, 2026): cleaning is a
          real service now, so it prefills its own intake option. */
-      'Cleaning and liquid metal replacement': 'Cleaning and liquid metal replacement'
+      'Cleaning and liquid metal replacement': 'Cleaning and liquid metal replacement',
+      'Cleaning and thermal paste replacement': 'Cleaning and thermal paste replacement'
     };
     function prefillIntakeFromGuided() {
       window.atrGuidedSelection = {
@@ -1469,6 +1465,17 @@
       if (info && !info.value && (g.model || g.brand)) { var mv = g.model || g.brand; if (g.year) mv += ' (' + g.year + ')'; if (g.size) mv += ' (' + g.size + ')'; if (g.conn && g.conn !== 'Not sure') mv += ' (' + g.conn + ')'; info.value = mv; }
       var needSel = document.getElementById('sr-repair-needed');
       if (needSel && !needSel.value && g.mode !== 'oneonone' && REPAIR_NEEDED_MAP[g.issue]) needSel.value = REPAIR_NEEDED_MAP[g.issue];
+      /* V176_52_CLEANING_GATE_2026_11_27: the intake select offers only the cleaning matching the picked model family (hidden + disabled where it does not apply). */
+      if (needSel) {
+        var ps5Models = ['PlayStation 5', 'PlayStation 5 Slim', 'PlayStation 5 Pro'];
+        var cleanName = (g.device === 'Game Console' && g.model) ? (ps5Models.indexOf(g.model) !== -1 ? 'Cleaning and liquid metal replacement' : 'Cleaning and thermal paste replacement') : '';
+        var lmOpt = needSel.querySelector('option[value="Cleaning and liquid metal replacement"]');
+        var tpOpt = needSel.querySelector('option[value="Cleaning and thermal paste replacement"]');
+        if (lmOpt) { lmOpt.hidden = (cleanName !== 'Cleaning and liquid metal replacement'); lmOpt.disabled = lmOpt.hidden; }
+        if (tpOpt) { tpOpt.hidden = (cleanName !== 'Cleaning and thermal paste replacement'); tpOpt.disabled = tpOpt.hidden; }
+        if (needSel.value === 'Cleaning and liquid metal replacement' && lmOpt && lmOpt.hidden) needSel.value = '';
+        if (needSel.value === 'Cleaning and thermal paste replacement' && tpOpt && tpOpt.hidden) needSel.value = '';
+      }
       /* REPAIR_FLOW_UPDATE_2026_11_05: ATR One answer + describe text carry
          into the intake; signed-in My Account customers (localStorage
          'atr-account' mirror written by the account module in index.html:
@@ -1751,8 +1758,8 @@
        $14.99 + $34.99 diagnostics; business $34.99 + $64.99. The
        business variant is new: Repair mode never had one, so a
        business repair booker used to see the guest numbers. */
-    var SR_DISPATCH_REPAIR_FALLBACK_HTML = 'I understand the <strong>visit fee is $14.99</strong> &mdash; and <strong>diagnostics is $34.99</strong> if my device needs a full diagnosis &mdash; covers the trip to me, is due at scheduling, and is <strong>non-refundable</strong>. *';
-    var SR_DISPATCH_REPAIR_BIZ_HTML = 'I understand the <strong>visit fee is $34.99</strong> &mdash; and <strong>diagnostics is $64.99</strong> if my device needs a full diagnosis &mdash; covers the trip to me, is due at scheduling, and is <strong>non-refundable</strong>. *';
+    var SR_DISPATCH_REPAIR_FALLBACK_HTML = 'I understand the <strong>visit fee is $14.99</strong> &mdash; and <strong>tech bench fee is $34.99</strong> if my device needs a full diagnosis &mdash; covers the trip to me, is due at scheduling, and is <strong>non-refundable</strong>. *';
+    var SR_DISPATCH_REPAIR_BIZ_HTML = 'I understand the <strong>visit fee is $34.99</strong> &mdash; and <strong>tech bench fee is $64.99</strong> if my device needs a full diagnosis &mdash; covers the trip to me, is due at scheduling, and is <strong>non-refundable</strong>. *';
     function srDispatchAckHtml(virtual, mode) {
       var member = repairState.atrOne === 'Yes';
       var biz = repairState.business;
@@ -2197,6 +2204,18 @@
     var functionalBox = document.getElementById('cookie-pref-functional');
     var analyticsBox = document.getElementById('cookie-pref-analytics');
 
+    /* V176_52_BOTTOM_STACK_2026_11_27: the fixed bottom layers (thumb nav, pinned action bar, cookie banner) stack without overlap. Measure the real heights and reserve the total as body bottom padding; expose the nav/action heights as CSS vars so the banner and action bar sit above them. */
+    function syncBottomStack() {
+      var nav = document.querySelector('.mobile-bottom-nav');
+      var action = document.getElementById('mobile-action-bar');
+      var navH = nav ? nav.offsetHeight : 0;
+      var actionH = action ? action.offsetHeight : 0;
+      var cookieH = (banner && !banner.hidden) ? banner.offsetHeight : 0;
+      var root = document.documentElement;
+      root.style.setProperty('--thumb-nav-h', navH + 'px');
+      root.style.setProperty('--bottom-stack', (navH + actionH) + 'px');
+      document.body.style.paddingBottom = (navH + actionH + cookieH) + 'px';
+    }
     function getConsent() {
       try {
         var raw = localStorage.getItem('atr-cookie-consent');
@@ -2209,6 +2228,7 @@
         localStorage.setItem('atr-cookie-consent', JSON.stringify(consent));
       } catch (e) {}
       if (banner) banner.hidden = true;
+      syncBottomStack();
       if (consent && consent.analytics) loadAnalytics();
     }
 
@@ -2233,11 +2253,13 @@
       banner.hidden = false;
     }
     if (storedConsent && storedConsent.analytics) loadAnalytics();
+    syncBottomStack();
 
     if (customizeBtn && prefs) {
       customizeBtn.addEventListener('click', function () {
         var isHidden = prefs.hidden;
         prefs.hidden = !isHidden;
+        syncBottomStack();
         customizeBtn.textContent = isHidden ? 'Save Choices' : 'Customize';
         if (!isHidden) {
           // Save the customized choices
@@ -2262,6 +2284,8 @@
         saveConsent({ essential: true, functional: false, analytics: false, at: new Date().toISOString() });
       });
     }
+    window.addEventListener('resize', syncBottomStack);
+    window.addEventListener('load', syncBottomStack);
   });
 })();
 
@@ -3525,7 +3549,7 @@
       }
       var price = PRICES[brand][repair];
       if (amount) amount.textContent = 'From $' + price;
-      if (note) note.textContent = REPAIR_LABELS[repair] + ' for ' + PRICES[brand].label + ' — starting price, parts and labor included. Your exact price is confirmed for your exact model after diagnostics. A separate visit fee applies to the visit — $14.99 for guests, $34.99 for business — plus diagnostics of $34.99 for guests, $64.99 for business, if your device needs a full diagnosis — due at booking, non-refundable.';
+      if (note) note.textContent = REPAIR_LABELS[repair] + ' for ' + PRICES[brand].label + ' — starting price, parts and labor included. Your exact price is confirmed for your exact model after diagnostics. A separate visit fee applies to the visit — $14.99 for guests, $34.99 for business — plus a tech bench fee of $34.99 for guests, $64.99 for business, if your device needs a full diagnosis — due at booking, non-refundable.';
       if (result) { result.hidden = false; result.classList.add('show'); }
       // Store the quote for the repair form
       try {
@@ -5549,6 +5573,7 @@ if ("serviceWorker" in navigator) {
     var DESTS = [
       { title: 'About', page: 'about', keys: 'about us company austin owner story meet' },
       { title: 'ATR One', page: 'atr-one', keys: 'atr one membership plus points rewards plans join subscription' },
+      { title: 'Organizations', page: 'b2b', keys: 'organizations business education healthcare government schools agencies enterprise' },
       { title: 'One-on-One', oo: true, keys: 'one-on-one one on one lessons classes tutoring learn training' },
       { title: 'Help Guides', page: 'help-guides', keys: 'help guides how to instructions do it yourself diy' },
       { title: 'Reviews', page: 'home', guide: 'home-reviews', keys: 'reviews ratings testimonials what local guests are saying stars feedback' }
@@ -6484,8 +6509,8 @@ if ("serviceWorker" in navigator) {
     function feeNoteText() {
       var biz = document.body.classList.contains('aud-business');
       return biz
-        ? 'A separate visit fee applies to the visit \u2014 $34.99 \u2014 plus diagnostics of $64.99 if your device needs a full diagnosis \u2014 due at booking and non-refundable. Estimates are always free. ATR One members pay no visit fee or diagnostics for devices covered under their subscription.'
-        : 'A separate visit fee applies to the visit \u2014 $14.99 \u2014 plus diagnostics of $34.99 if your device needs a full diagnosis \u2014 due at booking and non-refundable. Estimates are always free. ATR One members pay no visit fee or diagnostics for devices covered under their subscription.';
+        ? 'A separate visit fee applies to the visit \u2014 $34.99 \u2014 plus a tech bench fee of $64.99 if your device needs a full diagnosis \u2014 due at booking and non-refundable. Estimates are always free. ATR One members pay no visit fee or tech bench fee for devices covered under their subscription.'
+        : 'A separate visit fee applies to the visit \u2014 $14.99 \u2014 plus a tech bench fee of $34.99 if your device needs a full diagnosis \u2014 due at booking and non-refundable. Estimates are always free. ATR One members pay no visit fee or tech bench fee for devices covered under their subscription.';
     }
     /* COMPUTER_YEAR_2026_11_10 (owner, Nov 10, 2026): the same
        year list the booking form uses (BK_YEARS there) — computers
@@ -6724,16 +6749,16 @@ if ("serviceWorker" in navigator) {
           grid.appendChild(b);
         });
       }
-      /* The catch-all renders for every device, and the One-on-One
-         tile closes the grid — same as the booking form. V176_CLEANING_ALL_2026_11_19:
-         on every device the catch-all is "Cleaning and liquid metal
-         replacement" at $49.99. */
-      var se = tileShell(shared.iconHtml('Cleaning and liquid metal replacement') + '<strong>Cleaning and liquid metal replacement</strong>' + subSpan(shared.fmt(49.99)));
-      se.setAttribute('data-svc-something-else', '1');
-      se.addEventListener('click', function () {
-        togglePick(pane, { name: 'Cleaning and liquid metal replacement', price: 49.99, priceRange: null }, se);
-      });
-      grid.appendChild(se);
+      /* V176_52_CLEANING_GATE_2026_11_27: gated cleaning tile (shared.cleaningFor) — PS5 family liquid metal $49.99, other known consoles thermal paste $24.99, fallback panes and non-consoles get no tile. */
+      var svcCleaning = shared.cleaningFor(shared.typeKey(st.device), st.modelKey);
+      if (svcCleaning) {
+        var se = tileShell(shared.iconHtml(svcCleaning.name) + '<strong>' + esc(svcCleaning.name) + '</strong>' + subSpan(shared.fmt(svcCleaning.price)));
+        se.setAttribute('data-svc-something-else', '1');
+        se.addEventListener('click', function () {
+          togglePick(pane, { name: svcCleaning.name, price: svcCleaning.price, priceRange: null }, se);
+        });
+        grid.appendChild(se);
+      }
       var oo = doorTile('fas fa-graduation-cap', 'One-on-One', 'Lessons & help on this device \u2014 $' + (document.body.classList.contains('aud-business') ? 49.99 : 24.99) + ' an hour');
       oo.setAttribute('data-svc-oo-door', '1');
       oo.addEventListener('click', function () { switchPath('oneonone'); });
@@ -7001,7 +7026,7 @@ if ("serviceWorker" in navigator) {
       driveFormPicker(pane);
       if (isPicker(pane)) {
         st.picks.forEach(function (pick) {
-          if (pick.name === 'Something else' || pick.name === 'Cleaning and liquid metal replacement') {
+          if (pick.name === 'Something else' || pick.name === 'Cleaning and liquid metal replacement' || pick.name === 'Cleaning and thermal paste replacement') {
             var se = document.querySelector('#bk-repair-grid [data-bk-something-else]');
             if (se) se.click();
             return;
@@ -7014,7 +7039,7 @@ if ("serviceWorker" in navigator) {
         });
       } else {
         st.picks.forEach(function (pick) {
-          if (pick.name === 'Something else' || pick.name === 'Cleaning and liquid metal replacement') {
+          if (pick.name === 'Something else' || pick.name === 'Cleaning and liquid metal replacement' || pick.name === 'Cleaning and thermal paste replacement') {
             var sef = document.querySelector('#issue-list [data-bk-something-else]');
             if (sef) sef.click();
             return;

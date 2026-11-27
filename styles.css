@@ -596,26 +596,27 @@ html[data-theme="dark"] .header {
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999;
   background: var(--surface); border-top: 2px solid var(--line);
   box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.18);
-  padding: 1.25rem 1rem calc(1.25rem + env(safe-area-inset-bottom));
+  padding: 0.6rem 1rem calc(0.6rem + env(safe-area-inset-bottom));
 }
-.cookie-content { max-width: var(--content); margin: 0 auto; }
-.cookie-title { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; margin-bottom: 0.35rem; }
+/* V176_52_SLIM_COOKIE_BAR_2026_11_27: slim single-line bar — title, text and buttons share one row on wide screens and wrap on narrow ones; the prefs panel takes its own row when opened. Height is measured by JS (syncBottomStack) and reserved as body padding, so the bar never covers buttons or fields. */
+.cookie-content { max-width: var(--content); margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 1rem; }
+.cookie-title { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; margin-bottom: 0; white-space: nowrap; }
 .cookie-title i { color: var(--gold); margin-right: 0.4rem; }
-.cookie-text { font-size: 0.88rem; color: var(--muted); margin-bottom: 0.75rem; max-width: 720px; }
-.cookie-prefs { display: flex; flex-direction: column; gap: 0.45rem; margin-bottom: 0.75rem; padding: 0.75rem; background: var(--surface-warm); border-radius: var(--radius-sm); }
+.cookie-text { font-size: 0.88rem; color: var(--muted); margin-bottom: 0; flex: 1 1 260px; max-width: 720px; }
+.cookie-prefs { display: flex; flex-direction: column; gap: 0.45rem; flex-basis: 100%; margin-bottom: 0; padding: 0.75rem; background: var(--surface-warm); border-radius: var(--radius-sm); }
 .cookie-prefs[hidden] { display: none; }
 .pof-line { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
 .pof-line select, .pof-line input { flex: 1; }
 .cookie-pref { display: flex; align-items: flex-start; gap: 0.55rem; font-size: 0.85rem; cursor: pointer; }
 .cookie-pref input { margin-top: 0.2rem; accent-color: var(--brand); }
-.cookie-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; margin-bottom: 0.6rem; }
+.cookie-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; margin-bottom: 0; }
 .btn-sm { padding: 0.55rem 1.1rem; font-size: 0.85rem; }
 .cookie-link { background: none; border: none; color: var(--brand); font-size: 0.85rem; font-weight: 600; cursor: pointer; text-decoration: underline; padding: 0.4rem 0.2rem; }
-.cookie-disclosure { font-size: 0.78rem; color: var(--faint); }
+.cookie-disclosure { font-size: 0.78rem; color: var(--faint); flex-basis: 100%; }
 .cookie-disclosure a { color: var(--brand); }
 
 @media (max-width: 600px) {
-  .cookie-banner { padding: 1rem 0.85rem calc(1rem + env(safe-area-inset-bottom)); }
+  .cookie-banner { padding: 0.6rem 0.85rem calc(0.6rem + env(safe-area-inset-bottom)); }
   .theme-toggle { width: 38px; height: 38px; }
 }
 
@@ -3402,7 +3403,14 @@ html[data-theme="dark"] .site-search-mic.is-listening { color: var(--gold); }
    banner keeps bottom: 0 there). Consent controls stay fully
    reachable in both themes; nobody is trapped. */
 @media (max-width: 920px) {
-  .cookie-banner { bottom: calc(59px + env(safe-area-inset-bottom)); }
+  .cookie-banner { bottom: calc(var(--bottom-stack, 59px) + env(safe-area-inset-bottom)); }
+}
+
+/* V176_52_PINNED_ACTION_BAR_2026_11_27: pinned Book-a-visit / Call-or-text bar on phones, stacked directly above the thumb nav (fix-document item 19). Same 920px breakpoint as the nav. Its height and the nav height are measured by JS (syncBottomStack) into --thumb-nav-h / --bottom-stack, which also lift the cookie banner (V74 rule above) — the three layers never overlap. */
+.mobile-action-bar { position: fixed; left: 0; right: 0; z-index: 2099; display: none; gap: 0.6rem; padding: 0.55rem 0.8rem; background: var(--surface); border-top: 1px solid var(--line); }
+.mobile-action-bar .btn { flex: 1; }
+@media (max-width: 920px) {
+  .mobile-action-bar { display: flex; bottom: calc(var(--thumb-nav-h, 59px) + env(safe-area-inset-bottom)); }
 }
 
 /* V74_CART_GLANCE_SHADE_2026_11_10 */

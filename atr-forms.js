@@ -1113,7 +1113,7 @@
         work_auth_accepted: webSignature ? true : !!field(form, 'work_auth_accepted'), // set from the completed signature (the submit gate above guarantees it)
         marketing_opt_in: !!field(form, 'marketing_opt_in'),
         source: leadSource(form) || 'website',
-        status: 'Awaiting Estimate'
+        status: 'New Request / Estimate' /* V176_52: tickets constraint has no 'Awaiting Estimate' (estimates-table value only) */
         // customer_id intentionally omitted: anonymous web submission.
       };
 
@@ -1380,7 +1380,7 @@
         device_type: 'Contact message',
         issue: v.message,
         source: 'contact',
-        status: 'Awaiting Estimate'
+        status: 'New Request / Estimate' /* V176_52: 'Awaiting Estimate' is rejected by tickets_status_check */
       };
 
       setBusy(form, true);
