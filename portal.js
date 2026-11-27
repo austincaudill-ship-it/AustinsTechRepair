@@ -21700,7 +21700,40 @@ function loadTicketThread(client, ticketId) {
   var HH_CAL_KIND_LABEL = { 'event-outing': 'Outing', 'event-special': 'Special day', 'event-dayoff': 'Day off', 'event-note': 'Note', birthday: 'Birthday', job: 'Guest job', 'shift-mine': 'Your shift', 'shift-open': 'Open shift' };
   var HH_CAL_DOT = { 'event-outing': 'hh-dot-outing', 'event-special': 'hh-dot-special', 'event-dayoff': 'hh-dot-dayoff', 'event-note': 'hh-dot-note', birthday: 'hh-dot-birthday', job: 'hh-dot-job', 'shift-mine': 'hh-dot-shift', 'shift-open': 'hh-dot-shift' };
 
+  /* V176_48_CAL_GROUPS_2026_11_27: Coming-up groups, in legend order.
+   * Each renders as a collapsible sub-fold inside the Shared Calendar,
+   * reusing the home-acc head/body styles. Only groups with items render. */
+  var HH_COMING_GROUPS = [
+    { key: 'outing', label: 'Outings', kinds: ['event-outing'] },
+    { key: 'birthday', label: 'Birthdays', kinds: ['birthday'] },
+    { key: 'job', label: 'Guest jobs', kinds: ['job'] },
+    { key: 'shift', label: 'Shifts', kinds: ['shift-mine', 'shift-open'] },
+    { key: 'special', label: 'Special days', kinds: ['event-special'] },
+    { key: 'note', label: 'Notes', kinds: ['event-note'] }
+  ];
+  var hhCalGroupsWired = false;
+  function wireCalGroups() {
+    if (hhCalGroupsWired) return;
+    hhCalGroupsWired = true;
+    /* Delegated: the sub-folds are re-rendered with the calendar, so a
+     * boot-time binding would miss them. Scoped to the calendar box. */
+    document.addEventListener('click', function (e) {
+      var btn = e.target && e.target.closest ? e.target.closest('[data-hh-group-toggle]') : null;
+      if (!btn) return;
+      var calBox = btn.closest('#portal-home-calendar');
+      if (!calBox) return;
+      var key = btn.getAttribute('data-hh-group-toggle');
+      var body = calBox.querySelector('[data-hh-group-body="' + key + '"]');
+      if (!body) return;
+      var open = body.hidden;
+      body.hidden = !open;
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      btn.classList.toggle('home-acc-open', open);
+    });
+  }
+
   function renderHomeCalendar(client) {
+    wireCalGroups(); /* V176_48_CAL_GROUPS_2026_11_27 */
     var tools = $('portal-home-cal-tools');
     if (tools) {
       tools.innerHTML = (!hhCalEventsMissing && isAdminOrAbove())
@@ -21742,19 +21775,32 @@ function loadTicketThread(client, ticketId) {
             (it.sub ? '<br /><span class="portal-muted portal-small">' + esc(it.sub) + '</span>' : '') + '</div></div>';
         }).join('') + '</div>';
     }
-    var up = hhComingUp(hhCalEvents, hhCalProfiles, hhCalJobs, hhShifts, hhMyId(), new Date(), 8);
+    /* V176_48_CAL_GROUPS_2026_11_27: Coming up is grouped by type into
+     * collapsible sub-folds, so it is not one long list. Day-off events
+     * are left out here — they live in the Holidays & days off fold
+     * nested below, inside this same Shared Calendar fold. The helper
+     * still caps the pool; the filter + slice keep 8 non-holiday items. */
+    var upAll = hhComingUp(hhCalEvents, hhCalProfiles, hhCalJobs, hhShifts, hhMyId(), new Date(), 24);
+    var up = upAll.filter(function (it) { return it.kind !== 'event-dayoff'; }).slice(0, 8);
     html += '<p class="hh-sec">Coming up</p>';
     if (!up.length) {
-      html += '<p class="portal-muted">Nothing on the calendar right now.</p>';
+      html += '<p class="portal-muted">Nothing else coming up right now.</p>';
     } else {
-      html += up.map(function (it) {
-        var line = '<div class="p2-line"><div class="p2-line-main"><span class="p2-line-amt">' + esc(homeFmtDay(it.day)) + '</span> &mdash; <span>' + esc(it.label) + '</span>' +
-          (it.sub ? '<br /><span class="portal-muted portal-small">' + esc(it.sub) + '</span>' : '') + '</div>';
-        if (isAdminOrAbove() && String(it.kind).indexOf('event-') === 0) {
-          line += '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-home-cal-edit="' + esc(it.id) + '"><i class="fas fa-pen"></i> Edit</button> ' +
-            '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-home-cal-del="' + esc(it.id) + '"><i class="fas fa-trash"></i> Delete</button>';
-        }
-        return line + '</div>';
+      html += HH_COMING_GROUPS.map(function (g) {
+        var rows = up.filter(function (it) { return g.kinds.indexOf(it.kind) !== -1; });
+        if (!rows.length) return '';
+        var body = rows.map(function (it) {
+          var line = '<div class="p2-line"><div class="p2-line-main"><span class="p2-line-amt">' + esc(homeFmtDay(it.day)) + '</span> &mdash; <span>' + esc(it.label) + '</span>' +
+            (it.sub ? '<br /><span class="portal-muted portal-small">' + esc(it.sub) + '</span>' : '') + '</div>';
+          if (isAdminOrAbove() && String(it.kind).indexOf('event-') === 0) {
+            line += '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-home-cal-edit="' + esc(it.id) + '"><i class="fas fa-pen"></i> Edit</button> ' +
+              '<button class="portal-btn portal-btn-outline portal-btn-sm" type="button" data-home-cal-del="' + esc(it.id) + '"><i class="fas fa-trash"></i> Delete</button>';
+          }
+          return line + '</div>';
+        }).join('');
+        return '<div class="home-acc">' +
+          '<button type="button" class="home-acc-head" data-hh-group-toggle="' + g.key + '" aria-expanded="false"><span class="home-acc-title">' + esc(g.label) + ' (' + rows.length + ')</span><i class="fas fa-chevron-down home-acc-chev" aria-hidden="true"></i></button>' +
+          '<div class="home-acc-body" data-hh-group-body="' + g.key + '" hidden>' + body + '</div></div>';
       }).join('');
     }
     box.innerHTML = html;
